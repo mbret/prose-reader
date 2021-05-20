@@ -1,0 +1,17 @@
+{
+  "name": "root",
+  "private": true,
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Maxime Bret <bret.maxime@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start-dev": "lerna exec --parallel -- yarn start-dev"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
