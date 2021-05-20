@@ -1,0 +1,16 @@
+{
+  "name": "@oboku/reader-react",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "start-dev": "webpack build --config ./webpack.config.js"
+  },
+  "peerDependencies": {
+    "@types/react-dom": "*",
+    "@types/react": "*",
+    "@oboku/reader": "0.0.1",
+    "react": "*",
+    "react-dom": "*"
+  }
+}
