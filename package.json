@@ -9,7 +9,8 @@
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start-dev": "lerna exec --parallel -- yarn start-dev"
+    "start-dev": "lerna exec --parallel -- yarn start-dev",
+    "publish-packages": "lerna publish"
   },
   "workspaces": [
     "packages/*"
