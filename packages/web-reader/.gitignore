@@ -22,3 +22,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dist
+
+public/epubs/*
+!public/epubs/accessible_epub_3.epub
+!public/epubs/haruko-html-jpeg.epub
+!public/epubs/moby-dick_txt.txt
+!public/epubs/mymedia_lite.epub
