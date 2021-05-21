@@ -9,8 +9,9 @@
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start-dev": "lerna exec --parallel -- yarn start-dev",
-    "publish-packages": "lerna publish"
+    "start": "lerna exec --parallel -- yarn start",
+    "publish-packages": "lerna publish",
+    "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"
   },
   "workspaces": [
     "packages/*"
