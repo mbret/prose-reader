@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react"
 import { createReader, Manifest } from '@oboku/reader'
 
+type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
 type Pagination = ReturnType<ReturnType<typeof createReader>['getPaginationInfo']>
 
-export const Reader = ({ manifest, onReady, onReader, loadOptions, onPaginationChange }: {
+export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPaginationChange }: {
   manifest?: Manifest,
   onReady?: () => void,
   onReader?: (reader: ReturnType<typeof createReader>) => void,
   onPaginationChange?: (pagination: Pagination) => void,
+  options?: Omit<Options, 'containerElement'>,
   loadOptions?: LoadOptions & {
     cfi?: string
   }
@@ -50,14 +52,13 @@ export const Reader = ({ manifest, onReady, onReader, loadOptions, onPaginationC
 
   return (
     <div
-      id="container"
       style={{
         width: `100%`,
         height: `100%`
       }}
       ref={ref => {
         if (ref && !reader) {
-          const reader = createReader({ containerElement: ref })
+          const reader = createReader({ containerElement: ref, ...options })
           setReader(reader)
           onReader && onReader(reader)
         }

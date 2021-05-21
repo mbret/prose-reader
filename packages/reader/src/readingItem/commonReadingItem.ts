@@ -196,6 +196,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
     position: absolute;
     left: 0;
     top: 0;
+    background-color: white;
   `
   // frame.style.cssText = `
   //   height: 100%;

@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { createGestureHandler } from "./gesture";
-import { createReader, Manifest } from "@oboku/reader";
+import { Reader as ReactReader } from "@oboku/reader-react";
 import { QuickMenu } from './QuickMenu';
 import { bookReadyState, isComicState, manifestState, paginationState } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
+import { Loading } from './Loading';
+import { Reader as ReaderInstance, Manifest } from './types';
 
 export const Reader = () => {
   const fontsSettings = useRecoilValue(fontsSettingsState)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
+  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
   const [gestureHandler, setGestureHandler$] = useState<ReturnType<typeof createGestureHandler> | undefined>(undefined)
   const [manifest, setManifestState] = useRecoilState(manifestState)
   const isComic = useRecoilValue(isComicState)
@@ -105,43 +107,33 @@ export const Reader = () => {
     return () => reader?.destroy()
   }, [reader])
 
+  const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
+
   return (
     <>
-      <div ref={ref => {
-        if (ref && !gestureHandler && reader) {
-          setGestureHandler$(createGestureHandler(ref, reader))
-        }
-      }}>
-        <>
-          <div id="container" ref={ref => {
-            if (ref && !reader) {
-              const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
-
-              const reader = createReader({
-                containerElement: ref,
-                fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
-                lineHeight: storedLineHeight || undefined,
-                theme: `sepia`
-              })
-              setReader(reader)
-            }
-          }} />
-          {!bookReady && (
-            <div
-              style={{
-                height: '100%',
-                width: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                backgroundColor: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            ><h5>Loading book</h5></div>
-          )}
-        </>
+      <div
+        style={{
+          height: `100vh`,
+          width: `100vw`,
+        }}
+        ref={ref => {
+          if (ref && !gestureHandler && reader) {
+            setGestureHandler$(createGestureHandler(ref, reader))
+          }
+        }}
+      >
+        <ReactReader
+          manifest={manifest}
+          onReader={setReader}
+          options={{
+            fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
+            lineHeight: storedLineHeight || undefined,
+            theme: `sepia`
+          }}
+        />
+        {!bookReady && (
+          <Loading />
+        )}
       </div>
       <QuickMenu
         open={isMenuOpen}

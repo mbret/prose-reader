@@ -11,10 +11,10 @@
   "dependencies": {
     "@types/xmldoc": "^1.1.5",
     "xmldoc": "^1.1.2",
-    "buffer": "6.0.2"
+    "buffer": "6.0.3"
   },
   "devDependencies": {
-    "ts-loader": "^8.0.18",
+    "ts-loader": "^9.2.1",
     "typescript": "^4.2.3",
     "webpack": "^5.26",
     "webpack-cli": "^4.5.0",
