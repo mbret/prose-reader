@@ -46,20 +46,20 @@ export const navigationEnhancer: Enhancer<{
   let readerSubscription: Subscription | undefined
   const iframeEventBridgeElement = createIframeEventBridgeElement(options.containerElement)
 
-  // const goToNextSpineItem = () => {
-  //   const currentSpineIndex = reader.readingOrderView.readingItemManager.getFocusedReadingItemIndex() || 0
-  //   const numberOfSpineItems = reader.context.manifest.readingOrder.length || 1
-  //   if (currentSpineIndex < (numberOfSpineItems - 1)) {
-  //     reader.readingOrderView.goTo(currentSpineIndex + 1)
-  //   }
-  // }
+  const goToNextSpineItem = () => {
+    const currentSpineIndex = reader.getFocusedReadingItemIndex() || 0
+    const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length || 1
+    if (currentSpineIndex < (numberOfSpineItems - 1)) {
+      reader.goTo(currentSpineIndex + 1)
+    }
+  }
 
-  // const goToPreviousSpineItem = () => {
-  //   const currentSpineIndex = reader.readingOrderView.readingItemManager.getFocusedReadingItemIndex() || 0
-  //   if (currentSpineIndex > 0) {
-  //     reader.readingOrderView.goTo(currentSpineIndex - 1)
-  //   }
-  // }
+  const goToPreviousSpineItem = () => {
+    const currentSpineIndex = reader.getFocusedReadingItemIndex() || 0
+    if (currentSpineIndex > 0) {
+      reader.goTo(currentSpineIndex - 1)
+    }
+  }
 
   const handleIframeClickEvent = (frame: HTMLIFrameElement, event: PointerEvent | MouseEvent) => {
     const frameWindow = frame.contentWindow
@@ -120,28 +120,28 @@ export const navigationEnhancer: Enhancer<{
     //     reader.readingOrderView.goTo(foundItem.id)
     //   }
     // },
-    // goToHref: (href: string) => {
-    //   reader.readingOrderView.goToUrl(href)
-    // },
+    goToHref: (href: string) => {
+      reader.goToUrl(href)
+    },
     // goToPageOfCurrentChapter: (pageIndex: number) => {
     //   return reader.readingOrderView.goToPageOfCurrentChapter(pageIndex)
     // },
     // goToNextSpineItem,
     // goToPreviousSpineItem,
-    // goToLeftSpineItem: () => {
-    //   if (reader.context.isRTL()) {
-    //     return goToNextSpineItem()
-    //   }
+    goToLeftSpineItem: () => {
+      if (reader.context.isRTL()) {
+        return goToNextSpineItem()
+      }
 
-    //   return goToPreviousSpineItem()
-    // },
-    // goToRightSpineItem: () => {
-    //   if (reader.context.isRTL()) {
-    //     return goToPreviousSpineItem()
-    //   }
+      return goToPreviousSpineItem()
+    },
+    goToRightSpineItem: () => {
+      if (reader.context.isRTL()) {
+        return goToPreviousSpineItem()
+      }
 
-    //   return goToNextSpineItem()
-    // },
+      return goToNextSpineItem()
+    },
     getEventInformation: Report.measurePerformance(`getEventInformation`, 10, (e: PointerEvent | MouseEvent | TouchEvent) => {
       const pagination = reader.pagination
       const context = reader.context
