@@ -3,12 +3,15 @@
   "version": "0.0.2",
   "main": "dist/index.js",
   "license": "MIT",
+  "files": ["/dist"],
   "scripts": {
-    "start-dev": "webpack build --config ./webpack.config.js"
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "prepublishOnly": "NODE_ENV=production webpack build --config ./webpack.config.js"
   },
   "dependencies": {
     "@types/xmldoc": "^1.1.5",
-    "xmldoc": "^1.1.2"
+    "xmldoc": "^1.1.2",
+    "buffer": "6.0.2"
   },
   "devDependencies": {
     "ts-loader": "^8.0.18",
