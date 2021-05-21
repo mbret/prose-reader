@@ -30,6 +30,9 @@ export const navigationEnhancer: Enhancer<{
   turnRight: () => void,
   goTo: (spineIndexOrIdOrCfi: number | string) => void,
   goToPageOfCurrentChapter: (pageIndex: number) => void,
+  goToHref: (href: string) => void,
+  goToLeftSpineItem: () => void,
+  goToRightSpineItem: () => void,
   getEventInformation: (e: PointerEvent | MouseEvent | TouchEvent) => {
     event: PointerEvent | MouseEvent | TouchEvent,
     iframeOriginalEvent?: Event | undefined,
