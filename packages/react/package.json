@@ -2,9 +2,14 @@
   "name": "@oboku/reader-react",
   "version": "0.0.2",
   "main": "dist/index.js",
+  "private": false,
   "license": "MIT",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "start-dev": "webpack build --config ./webpack.config.js"
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "prepublishOnly": "NODE_ENV=production webpack build --config ./webpack.config.js"
   },
   "peerDependencies": {
     "@oboku/reader": "0.0.1",
