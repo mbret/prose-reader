@@ -60,7 +60,7 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
   readingItemFrame$ = readingItemFrame.$.subscribe((event) => {
     if (event.event === 'layout') {
       if (event.data.isFirstLayout && event.data.isReady) {
-        loadingElement.style.opacity = `0`
+        loadingElement.style.visibility = 'hidden'
       }
     }
   })
@@ -75,7 +75,7 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     readingItemFrame.unload()
 
     if (loadingElement) {
-      loadingElement.style.opacity = `1`
+      loadingElement.style.visibility = 'visible'
     }
   }
 
