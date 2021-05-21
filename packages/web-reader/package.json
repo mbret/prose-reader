@@ -1,6 +1,6 @@
 {
   "name": "@oboku/web-reader",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
@@ -11,9 +11,9 @@
     "watch": "nodemon"
   },
   "dependencies": {
-    "@oboku/reader": "0.0.2",
-    "@oboku/reader-react": "0.0.2",
-    "@oboku/reader-streamer": "0.0.2",
+    "@oboku/reader": "^0.0.3",
+    "@oboku/reader-react": "^0.0.3",
+    "@oboku/reader-streamer": "^0.0.3",
     "@types/css-font-loading-module": "^0.0.4",
     "@types/hammerjs": "^2.0.39",
     "@types/react": "*",
