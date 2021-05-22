@@ -1,9 +1,32 @@
-import { Archive } from "../types"
+export type Archive = {
+  filename: string,
+  files: {
+    dir: boolean
+    name: string
+    blob: () => Promise<Blob>
+    string: () => Promise<string>
+    base64: () => Promise<string>
+    size: number,
+    encodingFormat?: undefined | `text/plain`
+  }[]
+}
 
-export const generateArchiveFromTxtContent = async (content: string, options?: {
+export const getArchiveOpfInfo = (archive: Archive) => {
+  const filesAsArray = Object.values(archive.files).filter(file => !file.dir)
+  const file = filesAsArray.find(file => file.name.endsWith(`.opf`))
+
+  return {
+    data: file,
+    basePath: file?.name.substring(0, file.name.lastIndexOf(`/`)) || ''
+  }
+}
+
+/**
+ * Useful to create archive from txt content
+ */
+export const createArchiveFromString = async (content: string, options?: {
   direction: 'ltr' | 'rtl'
-  // ...
-}): Promise<Archive> => {
+}) => {
 
   const txtOpfContent = `
     <?xml version="1.0" encoding="UTF-8"?>
@@ -16,13 +39,13 @@ export const generateArchiveFromTxtContent = async (content: string, options?: {
       <manifest>
           <item id="p01" href="p01.xhtml" media-type="application/xhtml+xml"/>
       </manifest>
-      <spine page-progression-direction="ltr">
+      <spine page-progression-direction="${options?.direction || 'ltr'}">
         <itemref idref="p01" />
       </spine>
     </package>
   `
 
-  return {
+  const archive: Archive = {
     filename: `content.txt`,
     files: [{
       dir: false,
@@ -42,4 +65,6 @@ export const generateArchiveFromTxtContent = async (content: string, options?: {
       encodingFormat: 'text/plain'
     }]
   }
+
+  return archive
 }

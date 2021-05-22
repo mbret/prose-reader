@@ -1,5 +1,6 @@
 import xmldoc, { XmlElement } from 'xmldoc'
-import { Archive, Manifest } from '../types'
+import { Archive } from '../archives';
+import { Manifest } from '../types'
 
 const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePath: string, baseUrl: string }) => {
   const chp: Manifest['nav']['toc'][number] = {

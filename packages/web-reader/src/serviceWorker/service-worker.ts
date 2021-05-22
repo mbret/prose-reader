@@ -1,5 +1,5 @@
 import { loadEpub } from './loadEpub';
-import { generateResourceResponse, generateManifestResponse } from '@oboku/reader-streamer'
+import { getResourceFromArchive, getManifestFromArchive } from '@oboku/reader-streamer'
 
 // @todo typing
 const worker: any = self as any;
@@ -48,7 +48,7 @@ worker.addEventListener('fetch', (event: any) => {
          * Hit to manifest
          */
         if (url.pathname.endsWith(`/manifest`)) {
-          return await generateManifestResponse(archive, { baseUrl: `${url.origin}/${URL_PREFIX}/${epubFileName}` })
+          return await getManifestFromArchive(archive, { baseUrl: `${url.origin}/${URL_PREFIX}/${epubFileName}` })
         }
 
         /**
@@ -56,7 +56,7 @@ worker.addEventListener('fetch', (event: any) => {
          */
         const resourcePath = getResourcePath(event)
 
-        return await generateResourceResponse(archive, resourcePath)
+        return await getResourceFromArchive(archive, resourcePath)
       } catch (e) {
         console.error(e)
 

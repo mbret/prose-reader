@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { createReader, Manifest } from '@oboku/reader'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
 type Pagination = ReturnType<ReturnType<typeof createReader>['getPaginationInfo']>
 
-export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPaginationChange }: {
+type Props = {
   manifest?: Manifest,
   onReady?: () => void,
   onReader?: (reader: ReturnType<typeof createReader>) => void,
@@ -14,12 +14,18 @@ export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPa
   loadOptions?: LoadOptions & {
     cfi?: string
   }
-}) => {
+}
+
+export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPaginationChange }: Props) => {
   const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
 
-  useEffect(() => {
-
-  }, [])
+  const onRef = useCallback(ref => {
+    if (ref && !reader) {
+      const reader = createReader({ containerElement: ref, ...options })
+      setReader(reader)
+      onReader && onReader(reader)
+    }
+  }, [setReader, onReader, reader, options])
 
   useEffect(() => {
     const readerSubscription$ = reader?.$.subscribe((data) => {
@@ -52,16 +58,15 @@ export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPa
 
   return (
     <div
-      style={{
-        width: `100%`,
-        height: `100%`
-      }}
-      ref={ref => {
-        if (ref && !reader) {
-          const reader = createReader({ containerElement: ref, ...options })
-          setReader(reader)
-          onReader && onReader(reader)
-        }
-      }} />
+      style={styles.reader}
+      ref={onRef}
+    />
   )
+}
+
+const styles = {
+  reader: {
+    width: `100%`,
+    height: `100%`
+  }
 }

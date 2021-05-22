@@ -1,4 +1,4 @@
-import { Archive } from "../types";
+import { Archive } from "../archives";
 import xmldoc from 'xmldoc'
 
 type KoboInformation = {
