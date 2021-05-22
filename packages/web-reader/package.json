@@ -19,7 +19,7 @@
     "@types/react": "*",
     "@types/react-dom": "*",
     "concurrently": "^6.0.0",
-    "copy-webpack-plugin": "^8.0.0",
+    "copy-webpack-plugin": "^9.0.0",
     "css-loader": "^5.2.1",
     "hammerjs": "^2.0.8",
     "http-server": "^0.12.3",

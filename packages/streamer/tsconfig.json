@@ -13,8 +13,6 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
-    "sourceMap": true,
   },
   "exclude": ["webpack.config.js", "dist"]
 }
