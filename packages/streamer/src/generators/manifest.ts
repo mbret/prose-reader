@@ -17,7 +17,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
 
   const data = await opsFile.string()
 
-  Report.log(data)
+  Report.log(data, koboInformation)
 
   const opfXmlDoc = new xmldoc.XmlDocument(data)
 
