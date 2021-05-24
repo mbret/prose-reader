@@ -3,14 +3,12 @@ import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { createGestureHandler } from "./gesture";
 import { Reader as ReactReader } from "@oboku/reader-react";
-import { ReaderWithEnhancer } from "@oboku/reader";
+import { Reader as ReaderInstance } from "@oboku/reader";
 import { QuickMenu } from './QuickMenu';
 import { bookReadyState, isComicState, manifestState, paginationState } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
 import { Manifest } from './types';
-
-export type ReaderInstance = ReaderWithEnhancer<typeof bookmarksEnhancer>
 
 export const Reader = () => {
   const fontsSettings = useRecoilValue(fontsSettingsState)
@@ -28,7 +26,7 @@ export const Reader = () => {
   useEffect(() => {
     const subscription = gestureHandler?.$?.subscribe(({ event }) => {
       if (event === 'tap') {
-        if (reader?.magnifier.isActive()) return
+        // if (reader?.magnifier.isActive()) return
         setIsMenuOpen(!isMenuOpen)
       }
     })
