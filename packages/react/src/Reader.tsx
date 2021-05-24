@@ -1,27 +1,28 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { createReader, Manifest } from '@oboku/reader'
+import { createReader, Enhancer, Manifest, ReaderWithEnhancer } from '@oboku/reader'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
 type Pagination = ReturnType<ReturnType<typeof createReader>['getPaginationInfo']>
 
-type Props = {
+type Props<Ext = {}> = {
   manifest?: Manifest,
   onReady?: () => void,
-  onReader?: (reader: ReturnType<typeof createReader>) => void,
+  onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
   onPaginationChange?: (pagination: Pagination) => void,
   options?: Omit<Options, 'containerElement'>,
   loadOptions?: LoadOptions & {
     cfi?: string
-  }
+  },
+  enhancer?: Enhancer<Ext>
 }
 
-export const Reader = ({ manifest, onReady, onReader, loadOptions, options, onPaginationChange }: Props) => {
-  const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
+export function Reader<Ext = {}, >({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
+  const [reader, setReader] = useState<ReaderWithEnhancer<Enhancer<Ext>> | undefined>(undefined)
 
   const onRef = useCallback(ref => {
     if (ref && !reader) {
-      const reader = createReader({ containerElement: ref, ...options })
+      const reader = createReader({ containerElement: ref, ...options }, enhancer)
       setReader(reader)
       onReader && onReader(reader)
     }
