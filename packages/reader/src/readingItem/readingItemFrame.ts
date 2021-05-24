@@ -67,7 +67,7 @@ export const createReadingItemFrame = (
   }
 
   const getWritingMode = () => {
-    if (frameElement?.contentDocument) {
+    if (frameElement?.contentDocument && frameElement.contentDocument.body) {
       return frameElement?.contentWindow?.getComputedStyle(frameElement.contentDocument.body).writingMode as 'vertical-rl' | 'horizontal-tb' | undefined
     }
   }

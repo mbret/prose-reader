@@ -30,6 +30,22 @@
 
 import { Report } from "../report";
 
+/**
+ * Global env agnostic method to detect if an element is HtmlElement.
+ *
+ * @example
+ * checking instance of element from iframe will not work because
+ * `window.HtmlElement` is not the same as iframe.window.HtmlElement
+ * element instanceof HtmlElement -> false
+ *
+ * isHtmlElement(element) -> true
+ */
+export const isHtmlElement = (element?: Element | Node | null): element is HTMLElement => {
+  return (
+    typeof element === `object` && element?.nodeType === Node.ELEMENT_NODE && `innerText` in (element as HTMLElement)
+  );
+};
+
 function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: number) {
   if (typeof doc.caretPositionFromPoint != "undefined") {
     return doc.caretPositionFromPoint(startX, startY);

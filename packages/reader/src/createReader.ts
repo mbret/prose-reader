@@ -10,7 +10,7 @@ type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
 export type Enhancer<Ext = {}> = (next: EnhancerCreator<Ext>) => EnhancerCreator<Ext>
 
-export type EnhancerCreator<Ext = {}> = (
+type EnhancerCreator<Ext = {}> = (
   options: {
     containerElement: HTMLElement,
     fontScale?: number,
