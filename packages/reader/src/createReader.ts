@@ -52,22 +52,32 @@ const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
   return exposedReader
 }
 
-export const createReaderWithEnhancers = <Ext = {}>(options: {
+type ExposedReader = ReturnType<typeof exposeReader>
+
+type RemovedKeys = Omit<ReaderPublicApi, keyof ExposedReader>
+
+const internalEnhancer = composeEnhancer(
+  paginationEnhancer,
+  navigationEnhancer,
+  linksEnhancer,
+  fontsEnhancer,
+  themeEnhancer,
+)
+
+type InternalEnhancer = ReturnType<typeof internalEnhancer>
+
+type Options = {
   containerElement: HTMLElement,
   fontScale?: number,
   lineHeight?: number,
   fontWeight?: typeof FONT_WEIGHT[number],
   fontJustification?: typeof FONT_JUSTIFICATION[number],
   theme?: Theme,
-}, enhancer?: Enhancer<Ext>) => {
-  const internalEnhancer = composeEnhancer(
-    paginationEnhancer,
-    navigationEnhancer,
-    linksEnhancer,
-    fontsEnhancer,
-    themeEnhancer,
-  )
+}
 
+export function createReaderWithEnhancers(options: Options): Omit<ReturnType<InternalEnhancer>, keyof RemovedKeys>
+export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>): Omit<ReturnType<InternalEnhancer> & Ext, keyof RemovedKeys>
+export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>) {
   if (enhancer) {
     return exposeReader(createReader(options, composeEnhancer(
       enhancer,
@@ -77,3 +87,11 @@ export const createReaderWithEnhancers = <Ext = {}>(options: {
     return exposeReader(createReader(options, internalEnhancer))
   }
 }
+
+// export type ReaderWithEnhancer<E extends Enhancer<any>> = ReturnType<typeof createInternalReader>
+export type ReaderWithEnhancer<E extends Enhancer<any>> =
+  Omit<
+    ReturnType<typeof createReaderWithEnhancers>
+    & ReturnType<ReturnType<E>>,
+    keyof RemovedKeys
+  >
