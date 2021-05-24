@@ -9,7 +9,7 @@ type ManipulatableFrame = {
   removeStyle: (id: string) => void,
   addStyle: (id: string, style: CSSStyleDeclaration['cssText']) => void,
 }
-type Hook = { name: `onLoad`, fn: (manipulableFrame: ManipulatableFrame) => void }
+type Hook = { name: `onLoad`, fn: (manipulableFrame: ManipulatableFrame) => (() => void) | void }
 
 export const createReadingItemFrame = (
   parent: HTMLElement,
@@ -24,6 +24,7 @@ export const createReadingItemFrame = (
   let isReady = false
   const src = item.href
   let hooks: Hook[] = []
+  let hookDestroyFunctions: ReturnType<Hook['fn']>[] = []
 
   const getManipulableFrame = () => {
     if (isLoaded && frameElement) {
@@ -60,6 +61,7 @@ export const createReadingItemFrame = (
       isReady = false
       isLoaded = false
       loading = false
+      hookDestroyFunctions.forEach(fn => fn && fn())
       frameElement?.remove()
       frameElement = undefined
       subject.next({ event: 'layout', data: { isFirstLayout: false, isReady: false } })
@@ -113,9 +115,9 @@ export const createReadingItemFrame = (
 
               const manipulableFrame = getManipulableFrame()
 
-              hooks
+              hookDestroyFunctions = hooks
                 .filter(hook => hook.name === `onLoad`)
-                .forEach(hook => manipulableFrame && hook.fn(manipulableFrame))
+                .map(hook => manipulableFrame && hook.fn(manipulableFrame))
 
               subject.next({ event: 'domReady', data: frameElement })
 

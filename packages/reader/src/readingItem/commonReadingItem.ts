@@ -9,7 +9,8 @@ type Hook =
     name: `onLoad`,
     fn: (manipulableFrame: ReturnType<typeof createFrameManipulator> & {
       container: HTMLElement,
-      loadingElement: HTMLElement
+      loadingElement: HTMLElement,
+      item: Manifest['readingOrder'][number],
     }) => void
   }
 
@@ -108,7 +109,7 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     if (hook.name === `onLoad`) {
       readingItemFrame.registerHook({
         name: `onLoad`,
-        fn: (iframeData) => hook.fn({ ...iframeData, container: element, loadingElement })
+        fn: (iframeData) => hook.fn({ ...iframeData, container: element, loadingElement, item })
       })
     }
   }
@@ -144,16 +145,17 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     },
     getIsReady: () => readingItemFrame.getIsReady(),
     manipulateReadingItem: (
-      cb: (manipulableFrame: {
+      cb: (options: {
         container: HTMLElement,
-        loadingElement: HTMLElement
+        loadingElement: HTMLElement,
+        item: Manifest['readingOrder'][number]
       } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
     ) => {
       const manipulableFrame = readingItemFrame.getManipulableFrame()
 
-      if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement })
+      if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement, item })
 
-      return cb({ container: element, loadingElement, frame: undefined, removeStyle: () => { }, addStyle: () => { } })
+      return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { } })
     },
     $: subject,
   }

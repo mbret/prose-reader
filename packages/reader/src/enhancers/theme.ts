@@ -38,7 +38,11 @@ export const themeEnhancer: Enhancer<{
       ${foundTheme?.foregroundColor
         ? `
           body * {
-            color: ${foundTheme.foregroundColor} !important;
+            ${/*
+              Ideally, we would like to use !important but it could break publisher specific
+              cases
+            */``}
+            color: ${foundTheme.foregroundColor};
           }
         `
         : ``}

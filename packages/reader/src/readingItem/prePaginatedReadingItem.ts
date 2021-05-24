@@ -11,7 +11,6 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement 
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement })
   let element = commonReadingItem.element
-  let loadingElement = commonReadingItem.loadingElement
   let readingItemFrame = commonReadingItem.readingItemFrame
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
