@@ -3,11 +3,14 @@ import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { createGestureHandler } from "./gesture";
 import { Reader as ReactReader } from "@oboku/reader-react";
+import { ReaderWithEnhancer } from "@oboku/reader";
 import { QuickMenu } from './QuickMenu';
 import { bookReadyState, isComicState, manifestState, paginationState } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
-import { Reader as ReaderInstance, Manifest } from './types';
+import { Manifest } from './types';
+
+export type ReaderInstance = ReaderWithEnhancer<typeof bookmarksEnhancer>
 
 export const Reader = () => {
   const fontsSettings = useRecoilValue(fontsSettingsState)
@@ -25,6 +28,7 @@ export const Reader = () => {
   useEffect(() => {
     const subscription = gestureHandler?.$?.subscribe(({ event }) => {
       if (event === 'tap') {
+        if (reader?.magnifier.isActive()) return
         setIsMenuOpen(!isMenuOpen)
       }
     })
@@ -45,6 +49,7 @@ export const Reader = () => {
 
     const linksSubscription = reader?.links$.subscribe((data) => {
       if (data.event === 'linkClicked') {
+        if (!data.data.href) return
         const url = new URL(data.data.href)
         if (window.location.host !== url.host) {
           const response = confirm(`You are going to be redirected to external link`)

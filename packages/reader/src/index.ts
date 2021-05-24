@@ -1,11 +1,11 @@
 export { Manifest } from './types'
 
-import { createReaderWithEnhancers as createReader } from './createReader'
+import { createReaderWithEnhancers as createReader, Enhancer, ReaderWithEnhancer } from './createReader'
 
 export type Reader = ReturnType<typeof createReader>
-export type Pagination = ReturnType<ReturnType<typeof createReader>['getPaginationInfo']>
-export type ReaderPublicApi = ReturnType<typeof createReader>
 
 export {
-  createReader
+  createReader,
+  Enhancer,
+  ReaderWithEnhancer
 }
