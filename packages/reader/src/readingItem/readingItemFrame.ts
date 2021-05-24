@@ -2,6 +2,7 @@ import { Subject } from "rxjs"
 import { Report } from "../report"
 import { Manifest } from "../types"
 import { Context } from "../context"
+import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -178,61 +179,12 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
     const frame = document.createElement('iframe')
     frame.frameBorder = 'no'
     frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
-    // const accessibilityLayout = ReadingSingleton.getInstance().getViewContext()
-    //   .accessibilityLayout
-    // if (!accessibilityLayout) {
-    //   frame.scrolling = 'no'
-    // }
-    // frame.onload = () => {
-    //   frame.onload = null
-    //   frame.setAttribute('role', 'main')
-    //   frame.setAttribute('tab-index', '0')
-    //   resolve(frame)
-    // }
 
     resolve(frame)
 
     container.appendChild(frame)
   })
 })
-
-const getAttributeValueFromString = (string: string, key: string) => {
-  const regExp = new RegExp(key + '\\s*=\\s*([0-9.]+)', 'i')
-  const match = string.match(regExp) || []
-  const firstMatch = match[1] || `0`
-
-  return (match && parseFloat(firstMatch)) || 0
-}
-
-const createRemoveStyleHelper = (frameElement: HTMLIFrameElement | undefined) => (id: string) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
-    const styleElement = frameElement.contentDocument.getElementById(id)
-    if (styleElement) {
-      styleElement.remove()
-    }
-  }
-}
-
-const createAddStyleHelper = (frameElement: HTMLIFrameElement | undefined) => (id: string, style: string, prepend = false) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
-    const userStyle = document.createElement('style')
-    userStyle.id = id
-    userStyle.innerHTML = style
-    if (prepend) {
-      frameElement.contentDocument.head.prepend(userStyle)
-    } else {
-      frameElement.contentDocument.head.appendChild(userStyle)
-    }
-  }
-}
 
 export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   frame: frameElement,

@@ -119,7 +119,6 @@ export const createNavigator = ({ context, readingItemManager }: {
     const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
     const isNewNavigationInCurrentItem = arePositionsDifferent(readingItemNavigation, readingItemPosition)
 
-    console.warn(`getNavigationForLeftPage`, { position, readingItemPosition, readingItemNavigation, isNewNavigationInCurrentItem })
     if (!isNewNavigationInCurrentItem) {
       const nextPosition = context.isRTL()
         ? position.x + context.getPageSize().width

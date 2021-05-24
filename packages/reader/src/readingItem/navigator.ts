@@ -1,6 +1,4 @@
 import { ReadingItem } from ".";
-import { Report } from "../report";
-import { extractObokuMetadataFromCfi } from "../cfi";
 import { Context } from "../context";
 import { getNumberOfPages } from "../pagination";
 import { createLocator } from "./locator";
@@ -10,20 +8,6 @@ type ReadingItemPosition = { x: number, y: number }
 
 export const createNavigator = ({ context }: { context: Context }) => {
   const readingItemLocator = createLocator({ context })
-
-  // const getNavigationForLeftPage = (currentPageIndex: number, readingItem: ReadingItem): NavigationEntry => {
-  //   const currentViewport = readingItemLocator.getReadingItemPositionFromPageIndex(currentPageIndex, readingItem)
-
-  //   const nextViewport = currentViewport - context.getPageSize().width
-
-  //   const newPage = readingItemLocator.getReadingItemPageIndexFromPosition(nextViewport, readingItem)
-
-  //   if (newPage !== currentPageIndex) {
-  //     return { x: nextViewport, y: 0 }
-  //   }
-
-  //   return { x: currentViewport, y: 0 }
-  // }
 
   const getNavigationForLeftPage = (position: ReadingItemPosition, readingItem: ReadingItem): NavigationEntry => {
     let nextPotentialPosition = {
