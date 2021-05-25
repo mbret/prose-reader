@@ -24,7 +24,7 @@ export const getArchiveOpfInfo = (archive: Archive) => {
 /**
  * Useful to create archive from txt content
  */
-export const createArchiveFromString = async (content: string, options?: {
+export const createArchiveFromText = async (content: string | Blob | File, options?: {
   direction: 'ltr' | 'rtl'
 }) => {
 
@@ -58,13 +58,31 @@ export const createArchiveFromString = async (content: string, options?: {
     {
       dir: false,
       name: `p01.xhtml`,
-      blob: async () => new Blob([content]),
-      string: async () => content,
-      base64: async () => btoa(content),
-      size: content.length,
+      blob: async () => {
+        if (typeof content === `string`) return new Blob([content])
+        return content
+      },
+      string: async () => {
+        if (typeof content === `string`) return content
+        return content.text()
+      },
+      base64: async () => {
+        if (typeof content === `string`) return btoa(content)
+        return blobToBase64(content)
+      },
+      size: typeof content === `string` ? content.length : content.size,
       encodingFormat: 'text/plain'
     }]
   }
 
   return archive
 }
+
+const blobToBase64 = async (blob: Blob | File) => new Promise<string>(resolve => {
+  var reader = new FileReader();
+  reader.readAsDataURL(blob);
+  reader.onloadend = function () {
+    var base64data = reader.result as string;
+    resolve(base64data)
+  }
+})

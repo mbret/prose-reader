@@ -1,6 +1,6 @@
 import JSZip, { loadAsync } from 'jszip'
 import { Report } from '../report'
-import { createArchiveFromString, Archive,  } from '@oboku/reader-streamer'
+import { createArchiveFromText, Archive,  } from '@oboku/reader-streamer'
 
 let loading = false
 let archive: Archive | undefined = undefined
@@ -36,7 +36,7 @@ export const loadEpub = async (url: string) => {
 
   if (url.endsWith(`.txt`)) {
     const content = await response.text()
-    archive = await createArchiveFromString(content)
+    archive = await createArchiveFromText(content)
   } else {
     const epubData = await response.blob()
     const jszip = await loadAsync(epubData)
