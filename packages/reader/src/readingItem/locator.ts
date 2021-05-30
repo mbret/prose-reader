@@ -5,8 +5,6 @@ import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetI
 import { ReadingItem } from "."
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 
-const NAMESPACE = `readingItemLocator`
-
 type ReadingItemPosition = { x: number, y: number }
 
 export const createLocator = ({ context }: {
@@ -73,10 +71,10 @@ export const createLocator = ({ context }: {
     return getClosestValidOffsetFromApproximateOffsetInPages(offsetOfAnchor, pageWidth, itemWidth)
   }
 
-  const getReadingItemOffsetFromCfi = (cfi: string, readingItem: ReadingItem) => {
+  const getReadingItemPositionFromCfi = (cfi: string, readingItem: ReadingItem) => {
     const { node, offset = 0 } = resolveCfi(cfi, readingItem) || {}
 
-    let offsetOfNodeInReadingItem = 0
+    let offsetOfNodeInReadingItem: number | undefined = undefined
 
     // for some reason `img` does not work with range (x always = 0)
     if (node?.nodeName === `img` || node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE) {
@@ -89,11 +87,14 @@ export const createLocator = ({ context }: {
     const readingItemWidth = readingItem.getBoundingClientRect()?.width || 0
     const pageWidth = context.getPageSize().width
 
-    const val = getClosestValidOffsetFromApproximateOffsetInPages(offsetOfNodeInReadingItem, pageWidth, readingItemWidth)
+    if (offsetOfNodeInReadingItem) {
+      const val = getClosestValidOffsetFromApproximateOffsetInPages(offsetOfNodeInReadingItem, pageWidth, readingItemWidth)
 
-    Report.log(NAMESPACE, `getReadingItemOffsetFromCfi`, { node, offset, offsetOfNodeInReadingItem, itemOffset: val })
+      // @todo vertical
+      return { x: val, y: 0 }
+    }
 
-    return val
+    return undefined
   }
 
   /**
@@ -119,7 +120,6 @@ export const createLocator = ({ context }: {
         bottom: top + pageSize.height
       }
 
-      console.warn(viewport, pageIndex)
       const res = getFirstVisibleNodeForViewport(frame.contentWindow.document, viewport)
 
       return res
@@ -138,7 +138,6 @@ export const createLocator = ({ context }: {
     // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
     const offset = `|[oboku~offset~${nodeOrRange?.offset || 0}]`
 
-    console.warn(nodeOrRange, pageIndex, readingItem)
     if (nodeOrRange && doc) {
       const cfiString = CFI.generate(nodeOrRange.node, 0, `${itemAnchor}${offset}`)
 
@@ -148,6 +147,9 @@ export const createLocator = ({ context }: {
     return `epubcfi(/0${itemAnchor}) `
   })
 
+  /**
+   * Returns the node and offset for the given cfi.
+   */
   const resolveCfi = (cfiString: string | undefined, readingItem: ReadingItem) => {
     if (!cfiString) return undefined
 
@@ -178,13 +180,11 @@ export const createLocator = ({ context }: {
       y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height),
     }
 
-    console.warn(`getReadingItemClosestPositionFromUnsafePosition`, { unsafePosition, adjustedPosition })
-
     return adjustedPosition
   }
 
   return {
-    getReadingItemOffsetFromCfi,
+    getReadingItemPositionFromCfi,
     getReadingItemPositionFromPageIndex,
     getReadingItemOffsetFromAnchor,
     getReadingItemPageIndexFromPosition,

@@ -1,16 +1,22 @@
-export const Report = {
+const ROOT_NAMESPACE = `@oboku/reader`
+
+const wrap = (str: string) => `[${str}]`
+
+const createReport = (namespace?: string) => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
     if (process.env.NODE_ENV === 'development') {
       // eslint-disable-next-line no-console
-      console.log(`[oboku-reader]`, ...data);
+      if (namespace) console.log(wrap(ROOT_NAMESPACE), wrap(namespace), ...data);
+      else console.log(wrap(ROOT_NAMESPACE), ...data);
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
     if (process.env.NODE_ENV === 'development') {
       // eslint-disable-next-line no-console
-      console.warn(`[oboku-reader]`, ...data);
+      if (namespace) console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data);
+      else console.warn(wrap(ROOT_NAMESPACE), ...data);
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,4 +73,9 @@ export const Report = {
       return response;
     };
   },
-};
+})
+
+export const Report = ({
+  ...createReport(),
+  namespace: (namespace: string) => createReport(namespace),
+});

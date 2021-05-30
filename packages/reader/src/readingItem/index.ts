@@ -5,17 +5,18 @@ import { createReflowableReadingItem } from "./reflowableReadingItem"
 
 export type ReadingItem = ReturnType<typeof createReadingItem>
 
-export const createReadingItem = ({ item, context, containerElement }: { 
+export const createReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: { 
   item: Manifest['readingOrder'][number], 
-  containerElement: HTMLElement, 
+  containerElement: HTMLElement,
+  iframeEventBridgeElement: HTMLElement,
   context: Context,
  }) => {
   let readingItem: ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem> 
 
   if (item.renditionLayout === 'pre-paginated') {
-    readingItem = createPrePaginatedReadingItem({ item, context, containerElement })
+    readingItem = createPrePaginatedReadingItem({ item, context, containerElement, iframeEventBridgeElement })
   } else {
-    readingItem = createReflowableReadingItem({ item, context, containerElement })
+    readingItem = createReflowableReadingItem({ item, context, containerElement, iframeEventBridgeElement })
   }
 
   return {

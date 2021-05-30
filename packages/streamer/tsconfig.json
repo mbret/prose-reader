@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "outDir": "dist",
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
@@ -13,8 +13,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
-    "sourceMap": true,
+    "declaration": true
   },
-  "exclude": ["webpack.config.js", "dist"]
+  "exclude": ["webpack.config.js", "**/dist", "../../**/dist"]
 }

@@ -1,0 +1,21 @@
+{
+  "name": "@oboku/reader-react",
+  "version": "0.0.5",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "prepublishOnly": "NODE_ENV=production webpack build --config ./webpack.config.js"
+  },
+  "peerDependencies": {
+    "@oboku/reader": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "react": "*",
+    "react-dom": "*"
+  },
+  "gitHead": "8b583006834a39acc61e17b58a35e16f64959f62"
+}

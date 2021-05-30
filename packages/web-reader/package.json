@@ -1,0 +1,39 @@
+{
+  "name": "@oboku/web-reader",
+  "version": "0.0.9",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "webpack serve --config ./webpack.config.js",
+    "build": "yarn build-reader && yarn build-streamer",
+    "build-reader": "webpack build --config ./webpack/webpack.reader.config.js",
+    "watch": "nodemon"
+  },
+  "dependencies": {
+    "@oboku/reader": "^0.0.9",
+    "@oboku/reader-react": "^0.0.5",
+    "@oboku/reader-streamer": "^0.0.6",
+    "@oboku/reader-enhancer-bookmarks": "^0.0.1",
+    "@types/hammerjs": "^2.0.39",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "copy-webpack-plugin": "^9.0.0",
+    "css-loader": "^5.2.1",
+    "hammerjs": "^2.0.8",
+    "http-server": "^0.12.3",
+    "jszip": "^3.5.0",
+    "nodemon": "^2.0.7",
+    "rc-slider": "^9.7.2",
+    "react": "*",
+    "react-dom": "*",
+    "recoil": "^0.3.1",
+    "rxjs": "*",
+    "style-loader": "2.0.0",
+    "ts-loader": "^9.2.2",
+    "typescript": "^4.3.2",
+    "webpack": "^5.26",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2"
+  }
+}

@@ -15,8 +15,6 @@
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "declaration": true,
-    "emitDeclarationOnly": false,
-    "sourceMap": true,
   },
   "include": ["src/**/*"],
   "exclude": ["dist"],

@@ -1,20 +1,29 @@
 {
   "name": "@oboku/reader-streamer",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "main": "dist/index.js",
   "license": "MIT",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "start-dev": "webpack build --config ./webpack.config.js"
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "prepublishOnly": "NODE_ENV=production webpack build --config ./webpack.config.js"
   },
   "dependencies": {
     "@types/xmldoc": "^1.1.5",
+    "buffer": "6.0.3",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
-    "typescript": "^4.2.3",
+    "ts-loader": "^9.2.2",
+    "typescript": "^4.3.2",
     "webpack": "^5.26",
     "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.2",
-    "ts-loader": "^8.0.18"
-  }
+    "webpack-dev-server": "^3.11.2"
+  },
+  "peerDependencies": {
+    "@oboku/reader": "*"
+  },
+  "gitHead": "8b583006834a39acc61e17b58a35e16f64959f62"
 }

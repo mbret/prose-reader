@@ -54,7 +54,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         if (index < (activeReadingItemIndex - numberOfAdjacentSpineItemToPreLoad) || index > (activeReadingItemIndex + numberOfAdjacentSpineItemToPreLoad)) {
           orderedReadingItem.unloadContent()
         } else {
-          if (!orderedReadingItem.getIsReady()) {
+          if (!orderedReadingItem.isFrameReady()) {
             orderedReadingItem.loadContent()
           }
         }
@@ -93,75 +93,83 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
   const getFocusedReadingItem = () => activeReadingItemIndex !== undefined ? orderedReadingItems[activeReadingItemIndex] : undefined
 
-  const isAfter = (item1: ReadingItem, item2: ReadingItem) => {
-    return orderedReadingItems.indexOf(item1) > orderedReadingItems.indexOf(item2)
-  }
-
   const comparePositionOf = (toCompare: ReadingItem, withItem: ReadingItem) => {
-    if (isAfter(toCompare, withItem)) {
+    const isAfter = orderedReadingItems.indexOf(toCompare) > orderedReadingItems.indexOf(withItem)
+
+    if (isAfter) {
       return 'after'
     }
 
     return 'before'
   }
 
+  const destroy = () => {
+    orderedReadingItems.forEach(item => item.destroy())
+    readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
+    readingItemSubscriptions = []
+  }
+
+  const getReadingItemIndex = (readingItem: ReadingItem) => {
+    return orderedReadingItems.indexOf(readingItem)
+  }
+
+  const add = (readingItem: ReadingItem) => {
+    orderedReadingItems.push(readingItem)
+
+    const readingItemSubscription = readingItem.$.subscribe((event) => {
+      if (event.event === 'layout') {
+        // @todo at this point the inner item has an upstream layout so we only need to adjust
+        // left/right position of it. We don't need to layout, maybe a `adjustPositionOfItems()` is enough
+        adjustPositionOfItems()
+      }
+    })
+
+    readingItemSubscriptions.push(readingItemSubscription)
+
+    readingItem.load()
+  }
+
+  const getAll = () => orderedReadingItems
+
+  const getLength = () => {
+    return orderedReadingItems.length
+  }
+
+  const getFocusedReadingItemIndex = () => {
+    const item = getFocusedReadingItem()
+    return item && getReadingItemIndex(item)
+  }
+
+  const getReadingItemAtOffset = (offset: number) => {
+    const detectedItem = orderedReadingItems.find(item => {
+      const { start, end } = getPositionOf(item)
+      return offset >= start && offset < end
+    })
+
+    if (offset === 0 && !detectedItem) return orderedReadingItems[0]
+
+    if (!detectedItem) {
+      return getFocusedReadingItem()
+    }
+
+    return detectedItem || getFocusedReadingItem()
+  }
+
   return {
-    add: (readingItem: ReadingItem) => {
-      orderedReadingItems.push(readingItem)
-
-      const readingItemSubscription = readingItem.$.subscribe((event) => {
-        if (event.event === 'layout') {
-          // @todo at this point the inner item has an upstream layout so we only need to adjust
-          // left/right position of it. We don't need to layout, maybe a `adjustPositionOfItems()` is enough
-          adjustPositionOfItems()
-        }
-      })
-
-      readingItemSubscriptions.push(readingItemSubscription)
-
-      readingItem.load()
-    },
+    add,
     get,
-    getAll: () => orderedReadingItems,
-    set: (readingItems: ReturnType<typeof createReadingItem>[]) => {
-      orderedReadingItems = readingItems
-    },
-    getLength() {
-      return orderedReadingItems.length
-    },
+    getAll,
+    getLength,
     layout,
     focus,
     loadContents,
-    isAfter,
     comparePositionOf,
     getPositionOf,
-    getReadingItemAtOffset: (offset: number) => {
-      const detectedItem = orderedReadingItems.find(item => {
-        const { start, end } = getPositionOf(item)
-        return offset >= start && offset < end
-      })
-
-      if (offset === 0 && !detectedItem) return orderedReadingItems[0]
-
-      if (!detectedItem) {
-        return getFocusedReadingItem()
-      }
-
-      return detectedItem || getFocusedReadingItem()
-    },
+    getReadingItemAtOffset,
     getFocusedReadingItem,
-    getFocusedReadingItemIndex: () => {
-      const item = getFocusedReadingItem()
-      return item && orderedReadingItems.indexOf(item)
-    },
-    getReadingItemIndex: (readingItem: ReadingItem) => {
-      return orderedReadingItems.indexOf(readingItem)
-    },
-    destroy: () => {
-      orderedReadingItems.forEach(item => item.destroy())
-      readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
-      readingItemSubscriptions = []
-    },
+    getFocusedReadingItemIndex,
+    getReadingItemIndex,
+    destroy,
     $: subject.asObservable()
   }
 }

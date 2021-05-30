@@ -15,6 +15,7 @@ export const createPagination = ({ context }: { context: Context }) => {
   let numberOfPages = 0
   // let isAtEndOfChapter = false
   let cfi: string | undefined = undefined
+  let beginReadingItemIndex: number | undefined = undefined
 
   return {
     getPageIndex() {
@@ -23,11 +24,15 @@ export const createPagination = ({ context }: { context: Context }) => {
     getNumberOfPages() {
       return numberOfPages
     },
+    getBeginReadingItemIndex() {
+      return beginReadingItemIndex
+    },
     // getIsAtEndOfChapter() {
     //   return isAtEndOfChapter
     // },
     update: (
       readingItem: ReadingItem,
+      readingItemIndex: number,
       readingItemPosition: { x: number, y: number },
       options: {
         isAtEndOfChapter?: boolean,
@@ -38,6 +43,7 @@ export const createPagination = ({ context }: { context: Context }) => {
       numberOfPages = readingItemPaginator.getReadingItemNumberOfPages(readingItem)
       // pageIndex = getPageFromOffset(offsetInReadingItem, pageWidth, numberOfPages)
       pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(readingItemPosition, readingItem)
+      beginReadingItemIndex = readingItemIndex
       // isAtEndOfChapter = readingItem.isContentReady() && pageIndex === (numberOfPages - 1)
       // if (options.isAtEndOfChapter) {
       //   isAtEndOfChapter = options.isAtEndOfChapter

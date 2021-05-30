@@ -1,4 +1,4 @@
-import { Manifest } from "@oboku/reader-streamer"
+import { Manifest } from './Manifest'
 
 export type LoadOptions = {
   /**

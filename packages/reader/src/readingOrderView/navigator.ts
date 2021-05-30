@@ -1,10 +1,10 @@
 import { Report } from "../report"
-import { extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
 import { ReadingItemManager } from "../readingItemManager"
 import { ReadingItem } from "../readingItem"
 import { createNavigator as createReadingItemNavigator } from "../readingItem/navigator"
 import { createLocator } from "./locator"
+import { createCfiHelper } from "./cfiHelper"
 
 type NavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
 type ReadingItemPosition = { x: number, y: number }
@@ -16,6 +16,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   readingItemManager: ReadingItemManager
 }) => {
   const readingItemNavigator = createReadingItemNavigator({ context })
+  const cfiHelper = createCfiHelper({ readingItemManager, context })
   const locator = createLocator({ context, readingItemManager })
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
@@ -35,20 +36,14 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForCfi = (cfi: string): NavigationEntry => {
-    const { itemId } = extractObokuMetadataFromCfi(cfi)
-    if (!itemId) {
-      Report.warn(`ReadingOrderView`, `unable to extract item id from cfi ${cfi}`)
+    const readingItem = cfiHelper.getReadingItemFromCfi(cfi)
+    if (!readingItem) {
+      Report.warn(`ReadingOrderView`, `unable to detect item id from cfi ${cfi}`)
     } else {
-      const { itemId } = extractObokuMetadataFromCfi(cfi)
-      const readingItem = (itemId ? readingItemManager.get(itemId) : undefined) || readingItemManager.get(0)
-      if (readingItem) {
-        const navigation = readingItemNavigator.getNavigationForCfi(cfi, readingItem)
-        const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(navigation, readingItem)
+      const navigation = readingItemNavigator.getNavigationForCfi(cfi, readingItem)
+      const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(navigation, readingItem)
 
-        return { ...readingOffset, readingItem }
-      } else {
-        Report.warn(`ReadingOrderView`, `unable to detect item id from cfi ${cfi}`)
-      }
+      return { ...readingOffset, readingItem }
     }
 
     return { x: 0, y: 0 }
@@ -119,7 +114,6 @@ export const createNavigator = ({ context, readingItemManager }: {
     const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
     const isNewNavigationInCurrentItem = arePositionsDifferent(readingItemNavigation, readingItemPosition)
 
-    console.warn(`getNavigationForLeftPage`, { position, readingItemPosition, readingItemNavigation, isNewNavigationInCurrentItem })
     if (!isNewNavigationInCurrentItem) {
       const nextPosition = context.isRTL()
         ? position.x + context.getPageSize().width

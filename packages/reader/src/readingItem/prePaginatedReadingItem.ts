@@ -2,19 +2,16 @@ import { Subscription } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { createCommonReadingItem } from "./commonReadingItem"
-import { createFingerTracker, createSelectionTracker } from "./trackers"
 
-export const createPrePaginatedReadingItem = ({ item, context, containerElement }: {
+export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
+  iframeEventBridgeElement: HTMLElement,
   context: Context,
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement })
+  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
   let element = commonReadingItem.element
-  let loadingElement = commonReadingItem.loadingElement
   let readingItemFrame = commonReadingItem.readingItemFrame
-  const fingerTracker = createFingerTracker()
-  const selectionTracker = createSelectionTracker()
   let readingItemFrame$: Subscription | undefined
 
   const getDimensions = () => {
@@ -96,13 +93,6 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement 
   }
 
   commonReadingItem.readingItemFrame.$.subscribe((data) => {
-    if (data.event === `domReady`) {
-      fingerTracker.track(data.data)
-      selectionTracker.track(data.data)
-
-      // applySize()
-    }
-
     if (data.event === 'layout') {
       layout()
       commonReadingItem.$.next(data)
@@ -112,13 +102,9 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement 
   return {
     ...commonReadingItem,
     layout,
-    fingerTracker,
-    selectionTracker,
     destroy: () => {
       commonReadingItem.destroy()
       readingItemFrame$?.unsubscribe()
-      fingerTracker.destroy()
-      selectionTracker.destroy()
     },
   }
 }

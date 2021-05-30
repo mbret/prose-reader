@@ -1,7 +1,6 @@
-import { getArchiveOpfInfo } from "../archiveHelpers"
-import { Archive } from "../types"
+import { getArchiveOpfInfo, Archive } from "../archives"
 
-export const generateResourceResponse = async (archive: Archive, resourcePath: string) => {
+export const getResourceFromArchive = async (archive: Archive, resourcePath: string) => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
   const treatAsImageArchive = !opsFile
   const file = Object.values(archive.files).find(file => file.name === resourcePath)

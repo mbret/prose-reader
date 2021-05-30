@@ -1,12 +1,13 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
-import { getArchiveOpfInfo } from '../archiveHelpers'
-import { Archive, Manifest } from '../types'
+import { getArchiveOpfInfo, Archive } from '../archives'
+import { Manifest } from '@oboku/reader'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
+import { Report } from '../report'
 
 type SpineItemProperties = 'rendition:layout-reflowable' | 'page-spread-left' | 'page-spread-right'
 
-export const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
+const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
   const koboInformation = await extractKoboInformationFromArchive(archive)
 
@@ -16,7 +17,7 @@ export const generateManifestFromEpub = async (archive: Archive, baseUrl: string
 
   const data = await opsFile.string()
 
-  console.log(data)
+  Report.log(data, koboInformation)
 
   const opfXmlDoc = new xmldoc.XmlDocument(data)
 
@@ -73,7 +74,7 @@ export const generateManifestFromEpub = async (archive: Archive, baseUrl: string
   }
 }
 
-export const generateManifestFromArchive = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
+const generateManifestFromArchive = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
   const files = Object.values(archive.files).filter(file => !file.dir)
 
   return {
@@ -100,7 +101,7 @@ export const generateManifestFromArchive = async (archive: Archive, baseUrl: str
   }
 }
 
-export const generateManifestResponse = async (archive: Archive, { baseUrl }: {
+export const getManifestFromArchive = async (archive: Archive, { baseUrl }: {
   baseUrl: string
 }) => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)

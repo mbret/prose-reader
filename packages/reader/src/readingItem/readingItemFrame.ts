@@ -2,6 +2,7 @@ import { Subject } from "rxjs"
 import { Report } from "../report"
 import { Manifest } from "../types"
 import { Context } from "../context"
+import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -9,7 +10,7 @@ type ManipulatableFrame = {
   removeStyle: (id: string) => void,
   addStyle: (id: string, style: CSSStyleDeclaration['cssText']) => void,
 }
-type Hook = { name: `onLoad`, fn: (manipulableFrame: ManipulatableFrame) => void }
+type Hook = { name: `onLoad`, fn: (manipulableFrame: ManipulatableFrame) => (() => void) | void }
 
 export const createReadingItemFrame = (
   parent: HTMLElement,
@@ -24,6 +25,7 @@ export const createReadingItemFrame = (
   let isReady = false
   const src = item.href
   let hooks: Hook[] = []
+  let hookDestroyFunctions: ReturnType<Hook['fn']>[] = []
 
   const getManipulableFrame = () => {
     if (isLoaded && frameElement) {
@@ -60,6 +62,7 @@ export const createReadingItemFrame = (
       isReady = false
       isLoaded = false
       loading = false
+      hookDestroyFunctions.forEach(fn => fn && fn())
       frameElement?.remove()
       frameElement = undefined
       subject.next({ event: 'layout', data: { isFirstLayout: false, isReady: false } })
@@ -67,7 +70,7 @@ export const createReadingItemFrame = (
   }
 
   const getWritingMode = () => {
-    if (frameElement?.contentDocument) {
+    if (frameElement?.contentDocument && frameElement.contentDocument.body) {
       return frameElement?.contentWindow?.getComputedStyle(frameElement.contentDocument.body).writingMode as 'vertical-rl' | 'horizontal-tb' | undefined
     }
   }
@@ -113,16 +116,21 @@ export const createReadingItemFrame = (
 
               const manipulableFrame = getManipulableFrame()
 
-              hooks
+              hookDestroyFunctions = hooks
                 .filter(hook => hook.name === `onLoad`)
-                .forEach(hook => manipulableFrame && hook.fn(manipulableFrame))
+                .map(hook => manipulableFrame && hook.fn(manipulableFrame))
 
+              // we conveniently wait for all the hooks so that the dom is correctly prepared
+              // in addition to be ready.
               subject.next({ event: 'domReady', data: frameElement })
 
               frameElement.contentDocument?.fonts.ready.then(() => {
                 if (frameElement && !isCancelled()) {
                   isReady = true
                   loading = false
+
+                  // @todo hook onContentReady, dom is ready + first fonts are ready. we can assume is kind of already good enough
+                  
                   subject.next({ event: 'layout', data: { isFirstLayout: true, isReady: true } })
                 }
               })
@@ -176,61 +184,12 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
     const frame = document.createElement('iframe')
     frame.frameBorder = 'no'
     frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
-    // const accessibilityLayout = ReadingSingleton.getInstance().getViewContext()
-    //   .accessibilityLayout
-    // if (!accessibilityLayout) {
-    //   frame.scrolling = 'no'
-    // }
-    // frame.onload = () => {
-    //   frame.onload = null
-    //   frame.setAttribute('role', 'main')
-    //   frame.setAttribute('tab-index', '0')
-    //   resolve(frame)
-    // }
 
     resolve(frame)
 
     container.appendChild(frame)
   })
 })
-
-const getAttributeValueFromString = (string: string, key: string) => {
-  const regExp = new RegExp(key + '\\s*=\\s*([0-9.]+)', 'i')
-  const match = string.match(regExp) || []
-  const firstMatch = match[1] || `0`
-
-  return (match && parseFloat(firstMatch)) || 0
-}
-
-const createRemoveStyleHelper = (frameElement: HTMLIFrameElement | undefined) => (id: string) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
-    const styleElement = frameElement.contentDocument.getElementById(id)
-    if (styleElement) {
-      styleElement.remove()
-    }
-  }
-}
-
-const createAddStyleHelper = (frameElement: HTMLIFrameElement | undefined) => (id: string, style: string, prepend = false) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
-    const userStyle = document.createElement('style')
-    userStyle.id = id
-    userStyle.innerHTML = style
-    if (prepend) {
-      frameElement.contentDocument.head.prepend(userStyle)
-    } else {
-      frameElement.contentDocument.head.appendChild(userStyle)
-    }
-  }
-}
 
 export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   frame: frameElement,

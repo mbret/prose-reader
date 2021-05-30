@@ -1,12 +1,19 @@
 const path = require('path');
 
+const IS_PROD = process.env.NODE_ENV !== 'development'
+
 module.exports = {
   entry: {
     'index': './src/index.ts',
   },
-  watch: true,
-  mode: 'development',
+  mode: IS_PROD ? 'production' : 'development',
   devtool: 'source-map',
+  externals: [
+    'react-dom',
+    'react',
+    'rxjs',
+    'rxjs/operators',
+  ],
   module: {
     rules: [
       {

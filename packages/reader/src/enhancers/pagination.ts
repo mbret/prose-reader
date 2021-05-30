@@ -11,7 +11,7 @@ export const paginationEnhancer: Enhancer<{
       },
       pageIndexInChapter: number | undefined,
       numberOfPagesInChapter: number | undefined,
-      spineItemIndex: number | undefined,
+      readingItemIndex: number | undefined,
       cfi: string | undefined,
     },
     spineItemReadingDirection: string | undefined,
@@ -47,7 +47,7 @@ export const paginationEnhancer: Enhancer<{
           // domIndex: number;
           // charOffset: number;
           // serializeString?: string;
-          spineItemIndex: focusedReadingItemIndex,
+          readingItemIndex: focusedReadingItemIndex,
           spineItemPath: focusedReadingItem?.item.path,
           spineItemId: focusedReadingItem?.item.id,
           cfi: pagination.getCfi(),
@@ -64,8 +64,8 @@ export const paginationEnhancer: Enhancer<{
         pagesOfBook: Infinity,
         // chaptersOfBook: number;
         // chapter: string;
-        // hasNextChapter: (reader.readingOrderView.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
-        // hasPreviousChapter: (reader.readingOrderView.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
+        // hasNextChapter: (reader.readingOrderView.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
+        // hasPreviousChapter: (reader.readingOrderView.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
         numberOfSpineItems: context.getManifest()?.readingOrder.length
       }
     }

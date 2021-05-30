@@ -3,25 +3,52 @@ import { createFrameManipulator, createReadingItemFrame, ReadingItemFrame } from
 import { Manifest } from "../types"
 import { Subject, Subscription } from "rxjs"
 import { Report } from "../report"
+import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "../constants"
+import { createFingerTracker, createSelectionTracker } from "./trackers"
 
 type Hook =
   {
     name: `onLoad`,
     fn: (manipulableFrame: ReturnType<typeof createFrameManipulator> & {
       container: HTMLElement,
-      loadingElement: HTMLElement
+      loadingElement: HTMLElement,
+      item: Manifest['readingOrder'][number],
     }) => void
   }
 
-export const createCommonReadingItem = ({ item, context, containerElement }: {
+const pointerEvents = [
+  "pointercancel" as const,
+  "pointerdown" as const,
+  "pointerenter" as const,
+  "pointerleave" as const,
+  "pointermove" as const,
+  "pointerout" as const,
+  "pointerover" as const,
+  "pointerup" as const
+]
+
+const mouseEvents = [
+  'mousedown' as const,
+  'mouseup' as const,
+  'mouseenter' as const,
+  'mouseleave' as const,
+  'mousemove' as const,
+  'mouseout' as const,
+  'mouseover' as const,
+]
+
+export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
+  iframeEventBridgeElement: HTMLElement,
   context: Context,
 }) => {
   const subject = new Subject<{ event: 'selectionchange' | 'selectstart', data: Selection } | { event: 'layout', data: { isFirstLayout: boolean, isReady: boolean } }>()
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item)
   const readingItemFrame = createReadingItemFrame(element, item, context)
+  const fingerTracker = createFingerTracker()
+  const selectionTracker = createSelectionTracker()
   containerElement.appendChild(element)
   element.appendChild(loadingElement)
   let hooks: Hook[] = []
@@ -57,14 +84,6 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     return undefined
   }
 
-  readingItemFrame$ = readingItemFrame.$.subscribe((event) => {
-    if (event.event === 'layout') {
-      if (event.data.isFirstLayout && event.data.isReady) {
-        loadingElement.style.opacity = `0`
-      }
-    }
-  })
-
   const getFrameLayoutInformation = () => readingItemFrame.getManipulableFrame()?.frame?.getBoundingClientRect()
 
   const loadContent = () => {
@@ -75,7 +94,7 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     readingItemFrame.unload()
 
     if (loadingElement) {
-      loadingElement.style.opacity = `1`
+      loadingElement.style.visibility = 'visible'
     }
   }
 
@@ -108,11 +127,62 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     if (hook.name === `onLoad`) {
       readingItemFrame.registerHook({
         name: `onLoad`,
-        fn: (iframeData) => hook.fn({ ...iframeData, container: element, loadingElement })
+        fn: (iframeData) => hook.fn({ ...iframeData, container: element, loadingElement, item })
       })
     }
   }
 
+  const handleIframeClickEvent = (frame: HTMLIFrameElement, event: PointerEvent | MouseEvent) => {
+    const frameWindow = frame.contentWindow
+
+    if (!frameWindow) return
+
+    // safe way to detect PointerEvent
+    if (`pointerId` in event) {
+      const iframeEvent = event as PointerEvent
+      const bridgeEvent = new PointerEvent(iframeEvent.type, iframeEvent)
+      // @ts-ignore
+      bridgeEvent[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY] = { event: iframeEvent, iframeTarget: iframeEvent.target }
+      iframeEventBridgeElement.dispatchEvent(bridgeEvent)
+    } else if (event instanceof (frameWindow as any).MouseEvent) {
+      const iframeEvent = event as MouseEvent
+      const bridgeEvent = new MouseEvent(iframeEvent.type, iframeEvent)
+      // @ts-ignore
+      bridgeEvent[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY] = { event: iframeEvent, iframeTarget: iframeEvent.target }
+      iframeEventBridgeElement.dispatchEvent(bridgeEvent)
+    }
+  }
+
+  readingItemFrame.registerHook({
+    name: `onLoad`,
+    fn: ({ frame }) => {
+      pointerEvents.forEach(event => {
+        frame.contentDocument?.addEventListener(event, (e) => {
+          handleIframeClickEvent(frame, e)
+        })
+      })
+
+      mouseEvents.forEach(event => {
+        frame.contentDocument?.addEventListener(event, (e) => {
+          handleIframeClickEvent(frame, e)
+        })
+      })
+    }
+  })
+
+  readingItemFrame$ = readingItemFrame.$.subscribe((event) => {
+    if (event.event === `domReady`) {
+      fingerTracker.track(event.data)
+      selectionTracker.track(event.data)
+    }
+
+    if (event.event === 'layout') {
+      if (event.data.isFirstLayout && event.data.isReady) {
+        loadingElement.style.visibility = 'hidden'
+      }
+    }
+  })
+  
   return {
     load: () => { },
     registerHook,
@@ -129,32 +199,36 @@ export const createCommonReadingItem = ({ item, context, containerElement }: {
     getFrameLayoutInformation,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
-    isContentReady: () => !!readingItemFrame?.getIsReady(),
     destroy: () => {
       loadingElement.onload = () => { }
       loadingElement.remove()
       element.remove()
       readingItemFrame?.destroy()
       readingItemFrame$?.unsubscribe()
+      fingerTracker.destroy()
+      selectionTracker.destroy()
       hooks = []
     },
     isUsingVerticalWriting: () => readingItemFrame.getWritingMode()?.startsWith(`vertical`),
     getReadingDirection: () => {
       return readingItemFrame.getReadingDirection() || context.getReadingDirection()
     },
-    getIsReady: () => readingItemFrame.getIsReady(),
+    isFrameReady: () => readingItemFrame.getIsReady(),
     manipulateReadingItem: (
-      cb: (manipulableFrame: {
+      cb: (options: {
         container: HTMLElement,
-        loadingElement: HTMLElement
+        loadingElement: HTMLElement,
+        item: Manifest['readingOrder'][number]
       } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
     ) => {
       const manipulableFrame = readingItemFrame.getManipulableFrame()
 
-      if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement })
+      if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement, item })
 
-      return cb({ container: element, loadingElement, frame: undefined, removeStyle: () => { }, addStyle: () => { } })
+      return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { } })
     },
+    selectionTracker,
+    fingerTracker,
     $: subject,
   }
 }
@@ -196,6 +270,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
     position: absolute;
     left: 0;
     top: 0;
+    background-color: white;
   `
   // frame.style.cssText = `
   //   height: 100%;

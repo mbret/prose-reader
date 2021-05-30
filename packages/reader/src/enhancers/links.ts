@@ -11,6 +11,8 @@ export const linksEnhancer: Enhancer<{
   const subject = new Subject<SubjectData>()
 
   const handleNavigationForClick = (element: HTMLAnchorElement) => {
+    if (!element.href) return
+    
     const hrefUrl = new URL(element.href)
     const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
     // internal link, we can handle

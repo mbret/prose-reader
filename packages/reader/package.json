@@ -1,25 +1,31 @@
 {
   "name": "@oboku/reader",
-  "version": "0.0.1",
+  "version": "0.0.9",
   "main": "dist/index.js",
   "license": "MIT",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "start-dev": "webpack build --config ./webpack.config.js"
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "prepublishOnly": "NODE_ENV=production webpack build --config ./webpack.config.js"
+  },
+  "dependencies": {
+    "@types/css-font-loading-module": "*"
   },
   "peerDependencies": {
-    "rxjs": "*",
-    "@types/react-dom": "*",
     "@types/react": "*",
+    "@types/react-dom": "*",
     "react": "*",
     "react-dom": "*",
-    "@types/css-font-loading-module": "*"
+    "rxjs": "*"
   },
   "devDependencies": {
-    "typescript": "^4.2.3",
+    "ts-loader": "^9.2.2",
+    "typescript": "^4.3.2",
     "webpack": "^5.26",
     "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.2",
-    "ts-loader": "^8.0.18",
-    "@types/css-font-loading-module": "*"
-  }
+    "webpack-dev-server": "^3.11.2"
+  },
+  "gitHead": "8b583006834a39acc61e17b58a35e16f64959f62"
 }

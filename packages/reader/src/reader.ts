@@ -4,6 +4,9 @@ import { createContext as createBookContext } from "./context";
 import { createPagination } from "./pagination";
 import { createReadingOrderView } from "./readingOrderView/readingOrderView";
 import { LoadOptions, Manifest } from "./types";
+import { translateFramePositionIntoPage } from "./frames";
+import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
+import { tap } from "rxjs/operators";
 
 type ReadingOrderView = ReturnType<typeof createReadingOrderView>
 
@@ -11,6 +14,7 @@ export type Reader = ReturnType<typeof createReader>
 
 const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
 const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
+const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
 type ReadingOrderViewHook = Parameters<ReadingOrderView['registerHook']>[0]
 type ManipulateReadingItemsCallback = Parameters<ReadingOrderView['manipulateReadingItems']>[0]
@@ -23,18 +27,22 @@ type Hooks = {
 export const createReader = ({ containerElement }: {
   containerElement: HTMLElement
 }) => {
-  const subject = new Subject<{ event: 'iframe', data: HTMLIFrameElement } | { event: 'ready' }>()
+  const subject = new Subject<{ type: 'iframe', data: HTMLIFrameElement } | { type: 'ready' } | { type: `layoutUpdate` }>()
   const paginationSubject = new Subject<{ event: 'change' }>()
   const context = createBookContext()
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
+  const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   const readingOrderView = createReadingOrderView({
     containerElement: element,
+    iframeEventBridgeElement,
     context,
     pagination,
   })
   let paginationSubscription: Subscription | undefined
+
   containerElement.appendChild(element)
+  element.appendChild(iframeEventBridgeElement)
 
   const layout = () => {
     const dimensions = {
@@ -96,22 +104,7 @@ export const createReader = ({ containerElement }: {
     paginationSubscription?.unsubscribe()
     paginationSubscription = pagination.$.subscribe(paginationSubject)
 
-    subject.next({ event: 'ready' })
-  }
-
-  /**
-   * Free up resources, and dispose the whole reader.
-   * You should call this method if you leave the reader.
-   * 
-   * This is not possible to use any of the reader features once it
-   * has been destroyed. If you need to open a new book you need to
-   * either create a new reader or call `load` with a different manifest
-   * instead of destroying it.
-   */
-  const destroy = () => {
-    readingOrderView?.destroy()
-    paginationSubscription?.unsubscribe()
-    element.remove()
+    subject.next({ type: 'ready' })
   }
 
   function registerHook(name: typeof READING_ITEM_ON_LOAD_HOOK, fn: Hooks[typeof READING_ITEM_ON_LOAD_HOOK]['fn']): void
@@ -133,6 +126,79 @@ export const createReader = ({ containerElement }: {
     cb(element)
   }
 
+  const getEventInformation = Report.measurePerformance(`getEventInformation`, 10, (e: PointerEvent | MouseEvent | TouchEvent) => {
+    const normalizedEventPointerPositions = {
+      ...`clientX` in e && {
+        clientX: e.clientX,
+      },
+      ...`x` in e && {
+        x: e.x
+      },
+      ...`y` in e && {
+        y: e.y
+      }
+    }
+
+    const eventIsComingFromBridge = e.target === iframeEventBridgeElement
+    const eventIsComingFromIframe = !!e.view?.frameElement
+
+    if (!eventIsComingFromBridge && !eventIsComingFromIframe) {
+      return { event: e, normalizedEventPointerPositions }
+    }
+
+    if (!context || !pagination) return { event: e, normalizedEventPointerPositions }
+
+    let translatedFramePosition = { x: 0, y: 0 }
+
+    if (`x` in e && `y` in e) {
+      translatedFramePosition = translateFramePositionIntoPage(
+        context,
+        pagination,
+        { x: e.x, y: e.y },
+        readingOrderView.getFocusedReadingItem(),
+      )
+    }
+
+    let iframeOriginalEvent: Event | undefined = eventIsComingFromIframe
+      ? e
+      // @ts-ignore
+      : e[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY]?.event
+
+    return {
+      event: e,
+      iframeOriginalEvent,
+      normalizedEventPointerPositions: {
+        ...`clientX` in e && {
+          clientX: e.clientX,
+        },
+        ...translatedFramePosition
+      }
+    }
+  })
+
+  const readingOrderViewSubscription = readingOrderView.$
+    .pipe(
+      tap(event => subject.next(event))
+    )
+    .subscribe()
+
+  /**
+   * Free up resources, and dispose the whole reader.
+   * You should call this method if you leave the reader.
+   * 
+   * This is not possible to use any of the reader features once it
+   * has been destroyed. If you need to open a new book you need to
+   * either create a new reader or call `load` with a different manifest
+   * instead of destroying it.
+   */
+  const destroy = () => {
+    readingOrderView?.destroy()
+    readingOrderViewSubscription?.unsubscribe()
+    paginationSubscription?.unsubscribe()
+    element.remove()
+    iframeEventBridgeElement.remove()
+  }
+
   const reader = {
     pagination,
     context,
@@ -149,11 +215,18 @@ export const createReader = ({ containerElement }: {
     getFocusedReadingItemIndex: () => readingOrderView?.getFocusedReadingItemIndex(),
     getSelection: () => readingOrderView?.getSelection(),
     isSelecting: () => readingOrderView?.isSelecting(),
+    getEventInformation,
+    getCfiInformation: readingOrderView.getCfiInformation,
     layout,
     load,
     destroy,
     pagination$: paginationSubject.asObservable(),
-    $: subject.asObservable()
+    $: subject.asObservable(),
+    __debug: {
+      pagination,
+      context,
+      readingOrderView,
+    }
   }
 
   return reader
@@ -166,4 +239,16 @@ const createWrapperElement = (containerElement: HTMLElement) => {
   element.style.setProperty(`position`, `relative`)
 
   return element
+}
+
+const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
+  const iframeEventBridgeElement = containerElement.ownerDocument.createElement('div')
+  iframeEventBridgeElement.id = IFRAME_EVENT_BRIDGE_ELEMENT_ID
+  iframeEventBridgeElement.style.cssText = `
+    position: absolute;
+    height: 100%;
+    width: 100%;
+  `
+
+  return iframeEventBridgeElement
 }

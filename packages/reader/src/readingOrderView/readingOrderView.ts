@@ -9,7 +9,7 @@ import { Pagination } from "../pagination"
 import { createReadingItem } from "../readingItem"
 import { createReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
-import { createFrameManipulator } from "../readingItem/readingItemFrame"
+import { createCfiHelper } from "./cfiHelper"
 
 const NAMESPACE = 'readingOrderView'
 
@@ -29,14 +29,16 @@ type Hook = {
   fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
 }
 
-export const createReadingOrderView = ({ containerElement, context, pagination }: {
-  containerElement: HTMLElement
+export const createReadingOrderView = ({ containerElement, context, pagination, iframeEventBridgeElement }: {
+  containerElement: HTMLElement,
+  iframeEventBridgeElement: HTMLElement,
   context: Context,
   pagination: Pagination,
 }) => {
-  const subject = new Subject()
+  const subject = new Subject<{ type: `layoutUpdate` }>()
   const doc = containerElement.ownerDocument
   const readingItemManager = createReadingItemManager({ context })
+  const cfiHelper = createCfiHelper({ readingItemManager, context })
   const element = createElement(doc)
   containerElement.appendChild(element)
   const viewportNavigator = createViewportNavigator({ context, pagination, readingItemManager, element })
@@ -55,6 +57,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
       const readingItem = createReadingItem({
         item: resource,
         containerElement: element,
+        iframeEventBridgeElement,
         context,
       })
       hooks.forEach(hook => {
@@ -89,10 +92,12 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
       readingItemManager.getAll().forEach(item => item.registerHook({ name: `onLoad`, fn: hook.fn }))
     }
   }
-  
+
   readingItemManagerSubscription = readingItemManager.$.pipe(
     tap((event) => {
       if (event.event === 'layout') {
+        subject.next({ type: `layoutUpdate` })
+
         const focusedReadingItem = readingItemManager.getFocusedReadingItem()
         if (focusedReadingItem) {
           viewportNavigator.adjustReadingOffsetPosition(focusedReadingItem, { shouldAdjustCfi: false })
@@ -104,7 +109,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
         const fingerTracker$ = readingItem.fingerTracker.$
         const selectionTracker$ = readingItem.selectionTracker.$
 
-        if (readingItem.getIsReady()) {
+        if (readingItem.isFrameReady()) {
           // @todo maybe we need to adjust cfi here ? it should be fine since if it's already
           // ready then the navigation should have caught the right cfi, if not the observable
           // will catch it
@@ -179,13 +184,18 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
           }
 
           const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
+          const itemIndex = readingItemManager.getReadingItemIndex(readingItemForCurrentNavigation)
 
-          pagination.update(readingItemForCurrentNavigation, readingItemPosition, {
-            isAtEndOfChapter: false,
-            cfi: lastExpectedNavigation?.type === 'navigate-from-cfi'
-              ? lastExpectedNavigation.data
-              : undefined
-          })
+          pagination.update(
+            readingItemForCurrentNavigation,
+            itemIndex,
+            readingItemPosition,
+            {
+              isAtEndOfChapter: false,
+              cfi: lastExpectedNavigation?.type === 'navigate-from-cfi'
+                ? lastExpectedNavigation.data
+                : undefined
+            })
 
           Report.log(NAMESPACE, `navigateTo`, `navigate success`, { readingItemHasChanged, readingItemForCurrentNavigation, offset: data, readingItemPosition, lastExpectedNavigation })
 
@@ -204,11 +214,17 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
           : lastCfi?.startsWith(`epubcfi(/0`)
         if (currentReadingItem) {
           const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(data.data, currentReadingItem)
-          pagination.update(currentReadingItem, readingItemPosition, {
-            shouldUpdateCfi,
-            cfi: shouldUpdateCfi ? undefined : lastCfi,
-            isAtEndOfChapter: false
-          })
+          const itemIndex = readingItemManager.getReadingItemIndex(currentReadingItem)
+
+          pagination.update(
+            currentReadingItem,
+            itemIndex,
+            readingItemPosition,
+            {
+              shouldUpdateCfi,
+              cfi: shouldUpdateCfi ? undefined : lastCfi,
+              isAtEndOfChapter: false
+            })
         }
       }
     }))
@@ -217,6 +233,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination }
   return {
     ...viewportNavigator,
     element,
+    getCfiInformation: cfiHelper.getCfiInformation,
     getFocusedReadingItem: () => readingItemManager.getFocusedReadingItem(),
     getFocusedReadingItemIndex: () => readingItemManager.getFocusedReadingItemIndex(),
     registerHook,

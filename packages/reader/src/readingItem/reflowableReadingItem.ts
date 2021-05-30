@@ -2,18 +2,16 @@ import { Subscription } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { createCommonReadingItem } from "./commonReadingItem"
-import { createFingerTracker, createSelectionTracker } from "./trackers"
 
-export const createReflowableReadingItem = ({ item, context, containerElement }: {
+export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
+  iframeEventBridgeElement: HTMLElement,
   context: Context,
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement })
+  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
   let element = commonReadingItem.element
   let readingItemFrame = commonReadingItem.readingItemFrame
-  const fingerTracker = createFingerTracker()
-  const selectionTracker = createSelectionTracker()
   let readingItemFrame$: Subscription | undefined
 
   const getDimensions = () => {
@@ -121,11 +119,6 @@ export const createReflowableReadingItem = ({ item, context, containerElement }:
   }
 
   readingItemFrame$ = commonReadingItem.readingItemFrame.$.subscribe((data) => {
-    if (data.event === `domReady`) {
-      fingerTracker.track(data.data)
-      selectionTracker.track(data.data)
-    }
-
     if (data.event === 'layout') {
       applySize()
       commonReadingItem.$.next(data)
@@ -136,13 +129,9 @@ export const createReflowableReadingItem = ({ item, context, containerElement }:
     ...commonReadingItem,
     unloadContent,
     layout,
-    fingerTracker,
-    selectionTracker,
     destroy: () => {
       commonReadingItem.destroy()
       readingItemFrame$?.unsubscribe()
-      fingerTracker.destroy()
-      selectionTracker.destroy()
     },
   }
 }

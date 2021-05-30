@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es6",
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "strict": true,
+    "allowJs": false,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+  },
+  // important to avoid infinite build from resolved path
+  "exclude": ["**/dist"]
+}
