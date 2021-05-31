@@ -14,10 +14,6 @@
     "@types/css-font-loading-module": "*"
   },
   "peerDependencies": {
-    "@types/react": "*",
-    "@types/react-dom": "*",
-    "react": "*",
-    "react-dom": "*",
     "rxjs": "*"
   },
   "devDependencies": {
