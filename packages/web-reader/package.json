@@ -1,6 +1,6 @@
 {
   "name": "@oboku/web-reader",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
@@ -11,10 +11,10 @@
     "watch": "nodemon"
   },
   "dependencies": {
-    "@oboku/reader": "^0.0.9",
-    "@oboku/reader-react": "^0.0.5",
-    "@oboku/reader-streamer": "^0.0.6",
-    "@oboku/reader-enhancer-bookmarks": "^0.0.1",
+    "@oboku/reader": "^0.0.10",
+    "@oboku/reader-enhancer-bookmarks": "^0.0.2",
+    "@oboku/reader-react": "^0.0.6",
+    "@oboku/reader-streamer": "^0.0.7",
     "@types/hammerjs": "^2.0.39",
     "@types/react": "*",
     "@types/react-dom": "*",
