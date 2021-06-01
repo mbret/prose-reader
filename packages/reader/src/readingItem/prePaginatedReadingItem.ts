@@ -10,7 +10,6 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   context: Context,
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
-  let element = commonReadingItem.element
   let readingItemFrame = commonReadingItem.readingItemFrame
   let readingItemFrame$: Subscription | undefined
 
@@ -27,16 +26,13 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   const applySize = () => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
 
-    if (!element) return { width: pageWidth, height: pageHeight }
-
     /**
      * if there is no frame it means the content is not active yet
      * we will just use page to resize
      */
     if (!readingItemFrame?.getIsLoaded()) {
       const { width, height } = context.getPageSize()
-      element.style.width = `${width}px`
-      element.style.height = `${height}px`
+      commonReadingItem.layout({ width, height })
 
       return { width, height }
     }
@@ -44,12 +40,9 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation() || {}
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
-    if (element && frameElement?.contentDocument && frameElement?.contentWindow) {
+    if (frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
-
-      // debugger
-      // console.log('PAGES', frameElement.contentWindow.document.body.scrollWidth, pageWidth)
 
       const cssLink = buildDefaultStyle(getDimensions())
 
@@ -73,8 +66,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         })
       }
 
-      element.style.width = `${contentWidth}px`
-      element.style.height = `${contentHeight}px`
+      commonReadingItem.layout({ width: contentWidth, height: contentHeight })
 
       return { width: contentWidth, height: contentHeight }
     }
@@ -88,7 +80,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     return {
       width: newSize.width,
       height: newSize.height,
-      x: element?.getBoundingClientRect().x
+      x: commonReadingItem.getBoundingClientRect().x
     }
   }
 

@@ -9,8 +9,6 @@ module.exports = {
   mode: IS_PROD ? 'production' : 'development',
   devtool: 'source-map',
   externals: [
-    'react-dom',
-    'react',
     'rxjs',
     'rxjs/operators',
   ],

@@ -53,6 +53,29 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   element.appendChild(loadingElement)
   let hooks: Hook[] = []
   let readingItemFrame$: Subscription | undefined
+  let memoizedBoundingClientRect: DOMRect | undefined = undefined
+
+  const getBoundingClientRect = () => {
+    if (memoizedBoundingClientRect) {
+      return memoizedBoundingClientRect
+    }
+
+    const rect = element.getBoundingClientRect()
+    const normalizedValues = {
+      ...rect,
+      width: Math.floor(rect.width),
+      x: Math.floor(rect.x),
+      left: Math.floor(rect.left),
+      y: Math.floor(rect.y),
+      top: Math.floor(rect.top),
+      height: Math.floor(rect.height),
+    }
+
+    memoizedBoundingClientRect = normalizedValues
+
+    return memoizedBoundingClientRect
+  }
+
 
   const injectStyle = (readingItemFrame: ReadingItemFrame, cssText: string) => {
     readingItemFrame.getManipulableFrame()?.removeStyle('oboku-reader-css')
@@ -108,20 +131,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
   }
 
-  const getBoundingClientRect = () => {
-    const rect = element.getBoundingClientRect()
-
-    return {
-      ...rect,
-      width: Math.floor(rect.width),
-      x: Math.floor(rect.x),
-      left: Math.floor(rect.left),
-      y: Math.floor(rect.y),
-      top: Math.floor(rect.top),
-      height: Math.floor(rect.height),
-    }
-  }
-
   function registerHook(hook: Hook) {
     hooks.push(hook)
     if (hook.name === `onLoad`) {
@@ -153,6 +162,16 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
   }
 
+  const setLayoutDirty = () => {
+    memoizedBoundingClientRect = undefined
+  }
+
+  const layout = ({ height, width }: { height: number, width: number }) => {
+    element.style.width = `${width}px`
+    element.style.height = `${height}px`
+    setLayoutDirty()
+  }
+
   readingItemFrame.registerHook({
     name: `onLoad`,
     fn: ({ frame }) => {
@@ -182,14 +201,16 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       }
     }
   })
-  
+
   return {
     load: () => { },
+    layout,
     registerHook,
     adjustPositionOfElement,
     createWrapperElement,
     createLoadingElement,
     getBoundingClientRect,
+    setLayoutDirty,
     injectStyle,
     loadContent,
     unloadContent,
