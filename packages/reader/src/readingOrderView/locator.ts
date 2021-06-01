@@ -2,6 +2,7 @@ import { Context } from "../context"
 import { ReadingItem } from "../readingItem"
 import { createLocator as createReadingItemLocator } from "../readingItem/locator"
 import { ReadingItemManager } from "../readingItemManager"
+import { Report } from "../report"
 
 type ReadingOrderViewPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number }
@@ -65,11 +66,11 @@ export const createLocator = ({ readingItemManager, context }: {
     }
   }
 
-  const getReadingItemFromOffset = (offset: number) => {
+  const getReadingItemFromOffset = Report.measurePerformance(`getReadingItemFromOffset`, 10, (offset: number) => {
     const readingItem = readingItemManager.getReadingItemAtOffset(offset)
 
     return readingItem
-  }
+  })
 
   const getReadingOrderViewOffsetFromReadingItem = (readingItem: ReadingItem) => {
     return getReadingOrderViewPositionFromReadingItemPosition({ x: 0, y: 0 }, readingItem)

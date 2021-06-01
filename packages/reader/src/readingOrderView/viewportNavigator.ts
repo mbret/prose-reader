@@ -31,13 +31,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     | { type: 'navigate-from-anchor', data: string }
     = undefined
 
-  const adjustReadingOffset = ({ x, y }: { x: number, y: number }) => {
+  const adjustReadingOffset = Report.measurePerformance(`adjustReadingOffset`, 10, ({ x, y }: { x: number, y: number }) => {
     if (context.isRTL()) {
       element.style.transform = `translateX(${x}px) translateY(-${y}px)`
     } else {
       element.style.transform = `translateX(-${x}px) translateY(-${y}px)`
     }
-  }
+  })
 
   const areNavigationDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
@@ -46,7 +46,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     y: Math.floor(Math.abs(element.getBoundingClientRect().y)),
   })
 
-  const turnTo = (navigation: { x: number, y: number }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
+  const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: { x: number, y: number }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
     const currentReadingItem = readingItemManager.getFocusedReadingItem()
 
     if (!currentReadingItem) return
@@ -68,7 +68,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       lastUserExpectedNavigation = undefined
       navigateTo(navigation)
     }
-  }
+  })
 
   const turnLeft = Report.measurePerformance(`${NAMESPACE} turnLeft`, 10, ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
     const navigation = navigator.getNavigationForLeftPage(getCurrentViewport())
@@ -126,7 +126,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   /**
    * @todo optimize this function to not being called several times
    */
-  const navigateTo = (navigation: { x: number, y: number, readingItem?: ReadingItem }) => {
+  const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }) => {
     if (!isFirstNavigation && !areNavigationDifferent(navigation, getCurrentViewport())) {
       Report.warn(NAMESPACE, `prevent useless navigation`)
       return
@@ -137,7 +137,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     adjustReadingOffset(navigation)
 
     subject.next({ event: 'navigation', data: navigation })
-  }
+  })
 
   /**
    * Verify that current offset is within the current reading item and is at 

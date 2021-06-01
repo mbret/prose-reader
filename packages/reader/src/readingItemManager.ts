@@ -68,7 +68,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return orderedReadingItems.find(({ item }) => item.id === indexOrId)
   }
 
-  const getPositionOf = (readingItemOrIndex: ReadingItem | number) => {
+  const getPositionOf = Report.measurePerformance(`getPositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const distance = orderedReadingItems.slice(0, indexOfItem + 1).reduce((acc, readingItem) => {
@@ -89,7 +89,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       ...readingItemOrIndex.getBoundingClientRect(),
       ...distance
     }
-  }
+  }, { disable: true })
 
   const getFocusedReadingItem = () => activeReadingItemIndex !== undefined ? orderedReadingItems[activeReadingItemIndex] : undefined
 
@@ -140,7 +140,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return item && getReadingItemIndex(item)
   }
 
-  const getReadingItemAtOffset = (offset: number) => {
+  const getReadingItemAtOffset = Report.measurePerformance(`getReadingItemAtOffset`, 10, (offset: number) => {
     const detectedItem = orderedReadingItems.find(item => {
       const { start, end } = getPositionOf(item)
       return offset >= start && offset < end
@@ -153,7 +153,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     }
 
     return detectedItem || getFocusedReadingItem()
-  }
+  })
 
   return {
     add,
