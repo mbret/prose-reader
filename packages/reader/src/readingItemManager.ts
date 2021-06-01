@@ -47,7 +47,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     subject.next({ event: 'focus', data: readingItemToFocus })
   }
 
-  const loadContents = () => {
+  const loadContents = Report.measurePerformance(`loadContents`, 10, () => {
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
     orderedReadingItems.forEach((orderedReadingItem, index) => {
       if (activeReadingItemIndex !== undefined) {
@@ -60,7 +60,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         }
       }
     })
-  }
+  })
 
   const get = (indexOrId: number | string) => {
     if (typeof indexOrId === `number`) return orderedReadingItems[indexOrId]

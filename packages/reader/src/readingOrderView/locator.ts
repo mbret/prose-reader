@@ -13,7 +13,7 @@ export const createLocator = ({ readingItemManager, context }: {
 }) => {
   const readingItemLocator = createReadingItemLocator({ context })
 
-  const getReadingItemPositionFromReadingOrderViewPosition = (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
+  const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
     const { end, start } = readingItemManager.getPositionOf(readingItem)
 
     /**
@@ -34,7 +34,7 @@ export const createLocator = ({ readingItemManager, context }: {
     }
 
     return { x: position.x - start, y: position.y }
-  }
+  })
 
   const getReadingOrderViewPositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): ReadingOrderViewPosition => {
     const { end, start } = readingItemManager.getPositionOf(readingItem)

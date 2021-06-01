@@ -116,7 +116,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   const unloadContent = async () => {
     readingItemFrame.unload()
 
-    if (loadingElement) {
+    if (loadingElement && loadingElement.style.visibility !== `visible`) {
       loadingElement.style.visibility = 'visible'
     }
   }
@@ -203,7 +203,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   })
 
   return {
-    load: () => { },
+    load: () => { 
+      setLayoutDirty()
+    },
     layout,
     registerHook,
     adjustPositionOfElement,
