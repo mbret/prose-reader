@@ -105,7 +105,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     return {
       width: newSize.width,
       height: newSize.height,
-      x: commonReadingItem.getBoundingClientRect().x
+      x: commonReadingItem.element.getBoundingClientRect().x
     }
   }
 

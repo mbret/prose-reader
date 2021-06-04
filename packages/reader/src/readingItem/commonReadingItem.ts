@@ -53,27 +53,26 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   element.appendChild(loadingElement)
   let hooks: Hook[] = []
   let readingItemFrame$: Subscription | undefined
-  let memoizedBoundingClientRect: DOMRect | undefined = undefined
+  // Do not memoize x,y,top,left as they change relatively to the viewport all the time
+  let memoizedElementDimensions: { width: number, height: number } | undefined = undefined
 
-  const getBoundingClientRect = () => {
-    if (memoizedBoundingClientRect) {
-      return memoizedBoundingClientRect
+  const getElementDimensions = () => {
+    if (memoizedElementDimensions) {
+      return memoizedElementDimensions
     }
 
     const rect = element.getBoundingClientRect()
     const normalizedValues = {
       ...rect,
-      width: Math.floor(rect.width),
-      x: Math.floor(rect.x),
-      left: Math.floor(rect.left),
-      y: Math.floor(rect.y),
-      top: Math.floor(rect.top),
-      height: Math.floor(rect.height),
+      // we want to round to first decimal because it's possible to have half pixel
+      // however browser engine can also gives back x.yyyy based on their precision
+      width: Math.round(rect.width * 10) / 10,
+      height: Math.round(rect.height * 10) / 10,
     }
 
-    memoizedBoundingClientRect = normalizedValues
+    memoizedElementDimensions = normalizedValues
 
-    return memoizedBoundingClientRect
+    return memoizedElementDimensions
   }
 
 
@@ -163,7 +162,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   }
 
   const setLayoutDirty = () => {
-    memoizedBoundingClientRect = undefined
+    memoizedElementDimensions = undefined
   }
 
   const layout = ({ height, width }: { height: number, width: number }) => {
@@ -203,7 +202,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   })
 
   return {
-    load: () => { 
+    load: () => {
       setLayoutDirty()
     },
     layout,
@@ -211,7 +210,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     adjustPositionOfElement,
     createWrapperElement,
     createLoadingElement,
-    getBoundingClientRect,
+    getElementDimensions,
     setLayoutDirty,
     injectStyle,
     loadContent,
@@ -284,7 +283,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
   loadingElement.classList.add(`loading`)
   loadingElement.style.cssText = `
     height: 100%;
-    width: 100vw;
+    width: 100%;
     text-align: center;
     display: flex;
     justify-content: center;

@@ -44,11 +44,11 @@ export const createNavigator = ({ context }: { context: Context }) => {
   const getNavigationForLastPage = (readingItem: ReadingItem): NavigationEntry => {
     if (readingItem.isUsingVerticalWriting()) {
       const pageHeight = context.getPageSize().height
-      const numberOfPages = getNumberOfPages(readingItem.getBoundingClientRect().height, pageHeight)
+      const numberOfPages = getNumberOfPages(readingItem.getElementDimensions().height, pageHeight)
       return getNavigationForPage(numberOfPages - 1, readingItem)
     } else {
       const pageWidth = context.getPageSize().width
-      const numberOfPages = getNumberOfPages(readingItem.getBoundingClientRect().width, pageWidth)
+      const numberOfPages = getNumberOfPages(readingItem.getElementDimensions().width, pageWidth)
       return getNavigationForPage(numberOfPages - 1, readingItem)
     }
   }

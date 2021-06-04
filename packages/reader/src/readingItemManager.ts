@@ -26,7 +26,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
   const adjustPositionOfItems = () => {
     orderedReadingItems.reduce((edgeOffset, item) => {
-      const itemWidth = item.getBoundingClientRect().width
+      const itemWidth = item.getElementDimensions().width
       item.adjustPositionOfElement(edgeOffset)
 
       return itemWidth + edgeOffset
@@ -74,19 +74,19 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const distance = orderedReadingItems.slice(0, indexOfItem + 1).reduce((acc, readingItem) => {
       return {
         start: acc.end,
-        end: acc.end + (readingItem.getBoundingClientRect()?.width || 0)
+        end: acc.end + (readingItem.getElementDimensions()?.width || 0)
       }
     }, { start: 0, end: 0 })
 
     if (typeof readingItemOrIndex === 'number') {
       return {
-        ...get(readingItemOrIndex)?.getBoundingClientRect(),
+        ...get(readingItemOrIndex)?.getElementDimensions(),
         ...distance
       }
     }
 
     return {
-      ...readingItemOrIndex.getBoundingClientRect(),
+      ...readingItemOrIndex.getElementDimensions(),
       ...distance
     }
   }, { disable: true })

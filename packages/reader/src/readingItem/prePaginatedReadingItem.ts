@@ -80,7 +80,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     return {
       width: newSize.width,
       height: newSize.height,
-      x: commonReadingItem.getBoundingClientRect().x
+      x: commonReadingItem.element.getBoundingClientRect().x
     }
   }
 

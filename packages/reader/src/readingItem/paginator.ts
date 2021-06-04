@@ -5,7 +5,7 @@ export const createPaginator = ({ context }: { context: Context }) => {
 
   const getReadingItemNumberOfPages = (readingItem: ReadingItem) => {
     const writingMode = readingItem.readingItemFrame.getWritingMode()
-    const { width, height } = readingItem.getBoundingClientRect()
+    const { width, height } = readingItem.getElementDimensions()
 
     if (writingMode === 'vertical-rl') {
       return getNumberOfPages(height, context.getPageSize().height)

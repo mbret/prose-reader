@@ -8,6 +8,8 @@ export const translateFramePositionIntoPage = (
   position: { x: number, y: number },
   readingItem: ReadingItem | undefined
 ) => {
+  // @todo check when frame is moving cause the x will probably change
+  // when only static turn, it will always be 0 ? but when global viewport move it will change as well
   const { left: iframeLeft = 0, width: iframeWidth = 0 } = readingItem?.getFrameLayoutInformation() || {}
   const { computedScale = 1 } = readingItem?.getViewPortInformation() || {}
   const pageSize = context.getPageSize()
