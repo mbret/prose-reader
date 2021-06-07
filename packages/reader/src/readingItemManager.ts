@@ -68,7 +68,11 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return orderedReadingItems.find(({ item }) => item.id === indexOrId)
   }
 
-  const getPositionOf = Report.measurePerformance(`getPositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
+  /**
+   * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
+   * current window (viewport).
+   */
+  const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const distance = orderedReadingItems.slice(0, indexOfItem + 1).reduce((acc, readingItem) => {
@@ -142,7 +146,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
   const getReadingItemAtOffset = Report.measurePerformance(`getReadingItemAtOffset`, 10, (offset: number) => {
     const detectedItem = orderedReadingItems.find(item => {
-      const { start, end } = getPositionOf(item)
+      const { start, end } = getAbsolutePositionOf(item)
       return offset >= start && offset < end
     })
 
@@ -164,7 +168,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     focus,
     loadContents,
     comparePositionOf,
-    getPositionOf,
+    getAbsolutePositionOf,
     getReadingItemAtOffset,
     getFocusedReadingItem,
     getFocusedReadingItemIndex,
