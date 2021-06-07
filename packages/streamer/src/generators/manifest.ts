@@ -18,7 +18,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const data = await opsFile.string()
 
   Report.log(data, koboInformation)
-
+  
   const opfXmlDoc = new xmldoc.XmlDocument(data)
 
   const toc = (await parseToc(opfXmlDoc, archive, { opfBasePath, baseUrl })) || []
@@ -68,6 +68,8 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
           renditionLayout: `reflowable`,
         },
         progressionWeight: itemSize / totalSize,
+        pageSpreadLeft: properties.some(property => property === 'page-spread-left') || undefined,
+        pageSpreadRight: properties.some(property => property === 'page-spread-right') || undefined,
         size: itemSize
       }
     }) || []
@@ -95,7 +97,9 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
         // href: `${baseUrl}/${file.name}.xhtml`,
         href: `${baseUrl}/${file.name}`,
         renditionLayout: `pre-paginated`,
-        progressionWeight: (1 / files.length)
+        progressionWeight: (1 / files.length),
+        pageSpreadLeft: undefined,
+        pageSpreadRight: undefined,
       }
     })
   }

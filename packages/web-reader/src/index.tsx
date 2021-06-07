@@ -1,3 +1,5 @@
+window.__OBOKU_READER_DEBUG = true
+
 import ReactDOM from "react-dom";
 import React from 'react';
 import { App } from "./App";
@@ -17,4 +19,3 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-

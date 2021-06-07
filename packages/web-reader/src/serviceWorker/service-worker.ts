@@ -4,6 +4,8 @@ import { getResourceFromArchive, getManifestFromArchive } from '@oboku/reader-st
 // @todo typing
 const worker: any = self as any;
 
+self.__OBOKU_READER_DEBUG = true
+
 worker.addEventListener('install', function (e: any) {
   console.log('service worker install')
   e.waitUntil(worker.skipWaiting()); // Activate worker immediately

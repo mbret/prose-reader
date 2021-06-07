@@ -29,4 +29,10 @@ export type LoadOptions = {
   numberOfAdjacentSpineItemToPreLoad?: number,
 }
 
+declare global {
+  interface Window {
+    __OBOKU_READER_DEBUG?: boolean
+  }
+}
+
 export { Manifest }

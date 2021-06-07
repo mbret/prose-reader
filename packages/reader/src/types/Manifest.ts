@@ -18,6 +18,8 @@ export type Manifest = {
     href: string,
     path: string,
     renditionLayout: `reflowable` | `pre-paginated`,
-    progressionWeight: number
+    progressionWeight: number,
+    pageSpreadLeft: true | undefined,
+    pageSpreadRight: true | undefined,
   }[]
 }

@@ -1,14 +1,20 @@
+declare global {
+  interface WorkerGlobalScope {
+    __OBOKU_READER_DEBUG?: boolean
+  }
+}
+
 export const Report = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (self.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.log(`[oboku-reader-streamer]`, ...data);
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (self.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.warn(`[oboku-reader-streamer]`, ...data);
     }
@@ -19,20 +25,20 @@ export const Report = {
     console.error(...data);
   },
   time: (label?: string | undefined) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (self.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.time(`[oboku-reader-streamer] [metric] ${label}`);
     }
   },
   timeEnd: (label?: string | undefined) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (self.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.timeEnd(`[oboku-reader-streamer] [metric] ${label}`);
     }
   },
   metric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = Infinity) => {
     const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
-    if (process.env.NODE_ENV === 'development') {
+    if (self.__OBOKU_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
         console.log(`[oboku-reader-streamer] [metric] `, `${performanceEntry.name} took ${duration}ms`);
