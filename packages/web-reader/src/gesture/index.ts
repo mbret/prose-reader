@@ -10,7 +10,6 @@ export const createGestureHandler = (container: HTMLElement, reader: ReaderInsta
   hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
   hammer.get('pinch').set({ enable: true })
   hammer.get('press').set({ time: 500 })
-
   hammer.on('tap', function (ev) {
     handleSingleTap(ev)
   })
@@ -29,27 +28,27 @@ export const createGestureHandler = (container: HTMLElement, reader: ReaderInsta
     }
   }
 
-  function handleSingleTap({ srcEvent, target }: HammerInput) {
+  function handleSingleTap({ srcEvent, target, center }: HammerInput) {
     const width = window.innerWidth
     const height = window.innerHeight
     const pageTurnMargin = 0.15
-    const { normalizedEventPointerPositions, iframeOriginalEvent } = reader.getEventInformation(srcEvent)
 
-    console.log('handleSingleTap', srcEvent.target, srcEvent.type, iframeOriginalEvent?.type, srcEvent, normalizedEventPointerPositions)
+    const normalizedEvent = reader.normalizeEvent(srcEvent)
+    console.log('handleSingleTap', srcEvent.target, srcEvent.type, center)
 
     if (reader.getSelection()) return
 
-    if (iframeOriginalEvent?.target) {
-      const target = iframeOriginalEvent.target as HTMLElement
+    if (normalizedEvent?.target) {
+      const target = normalizedEvent.target as HTMLElement
 
       // don't do anything if it was clicked on link
       if (target.nodeName === `a` || target.closest('a')) return
     }
 
-    if (`x` in normalizedEventPointerPositions) {
-      const { x = 0 } = normalizedEventPointerPositions
+    if (`x` in normalizedEvent) {
+      const { x = 0 } = normalizedEvent
 
-      if (reader.bookmarks.isClickEventInsideBookmarkArea(srcEvent)) {
+      if (reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)) {
         return
       }
 

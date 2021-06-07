@@ -14,7 +14,7 @@ export const createLocator = ({ readingItemManager, context }: {
   const readingItemLocator = createReadingItemLocator({ context })
 
   const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
-    const { end, start } = readingItemManager.getPositionOf(readingItem)
+    const { end, start } = readingItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -33,11 +33,13 @@ export const createLocator = ({ readingItemManager, context }: {
       return { x: (end - position.x) - context.getPageSize().width, y: position.y }
     }
 
+    // console.log({ position, end, start })
+
     return { x: position.x - start, y: position.y }
   })
 
   const getReadingOrderViewPositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): ReadingOrderViewPosition => {
-    const { end, start } = readingItemManager.getPositionOf(readingItem)
+    const { end, start, width } = readingItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item

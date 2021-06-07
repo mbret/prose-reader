@@ -5,7 +5,7 @@ const wrap = (str: string) => `[${str}]`
 const createReport = (namespace?: string) => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (window.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.log(wrap(ROOT_NAMESPACE), wrap(namespace), ...data);
       else console.log(wrap(ROOT_NAMESPACE), ...data);
@@ -13,7 +13,7 @@ const createReport = (namespace?: string) => ({
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (window.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data);
       else console.warn(wrap(ROOT_NAMESPACE), ...data);
@@ -25,23 +25,23 @@ const createReport = (namespace?: string) => ({
     console.error(...data);
   },
   time: (label?: string | undefined) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (window.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.time(`[oboku-reader] [metric] ${label}`);
     }
   },
   timeEnd: (label?: string | undefined) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (window.__OBOKU_READER_DEBUG) {
       // eslint-disable-next-line no-console
       console.timeEnd(`[oboku-reader] [metric] ${label}`);
     }
   },
   metric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = Infinity) => {
     const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
-    if (process.env.NODE_ENV === 'development') {
+    if (window.__OBOKU_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
+        // console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
       } else {
         // eslint-disable-next-line no-console
         console.warn(

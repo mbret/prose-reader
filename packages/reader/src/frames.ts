@@ -1,36 +1,4 @@
-import { Context } from "./context"
-import { Pagination } from "./pagination"
-import { ReadingItem } from "./readingItem"
-
-export const translateFramePositionIntoPage = (
-  context: Context,
-  pagination: Pagination,
-  position: { x: number, y: number },
-  readingItem: ReadingItem | undefined
-) => {
-  // @todo check when frame is moving cause the x will probably change
-  // when only static turn, it will always be 0 ? but when global viewport move it will change as well
-  const { left: iframeLeft = 0, width: iframeWidth = 0 } = readingItem?.getFrameLayoutInformation() || {}
-  const { computedScale = 1 } = readingItem?.getViewPortInformation() || {}
-  const pageSize = context.getPageSize()
-  const numberOfPages = pagination.getNumberOfPages() || 0
-  const pageIndex = pagination.getPageIndex() || 0
-
-  const scaledX = position.x * computedScale
-  const offsetAdjustedX = Math.max(0, iframeLeft + scaledX)
-
-  const adjustedX = offsetAdjustedX > pageSize.width
-    ? context.isRTL()
-      ? offsetAdjustedX - (pageSize.width * ((numberOfPages - 1) - pageIndex))
-      : offsetAdjustedX - (pageSize.width * pageIndex)
-    : offsetAdjustedX
-
-  return {
-    x: adjustedX,
-    // @todo
-    y: position.y,
-  }
-}
+import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
 
 export const createRemoveStyleHelper = (frameElement: HTMLIFrameElement | undefined) => (id: string) => {
   if (
@@ -68,4 +36,13 @@ export const getAttributeValueFromString = (string: string, key: string) => {
   const firstMatch = match[1] || `0`
 
   return (match && parseFloat(firstMatch)) || 0
+}
+
+export const getOriginalFrameEventFromDocumentEvent = <E extends Event>(event: E): E | undefined => {
+  // @ts-ignore
+  return event[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY]
+}
+
+export const attachOriginalFrameEventToDocumentEvent = <E extends Event>(event: E, frameEvent: E) => {
+  Object.defineProperty(event, __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY, { value: frameEvent, enumerable: true });
 }

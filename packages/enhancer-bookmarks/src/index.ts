@@ -19,7 +19,7 @@ type SubjectType = { type: `update`, data: ExportableBookmark[] }
 
 export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookmarks: ExportableBookmark[] }): Enhancer<{
   bookmarks: {
-    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent | TouchEvent) => boolean
+    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
   },
   bookmarks$: Observable<SubjectType>
 }> =>
@@ -132,13 +132,14 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     /**
      * Bookmark area is top right corner
      */
-    const isClickEventInsideBookmarkArea = (e: PointerEvent | MouseEvent | TouchEvent) => {
-      const { normalizedEventPointerPositions } = reader.getEventInformation(e)
+    const isClickEventInsideBookmarkArea = (e: MouseEvent | PointerEvent) => {
+      const event = reader.normalizeEvent(e)
+
       const { width } = reader.context.getVisibleAreaRect()
 
       if (
-        ((normalizedEventPointerPositions.x || 0) >= (width - settings.areaWidth))
-        && ((normalizedEventPointerPositions.y || 0) <= settings.areaHeight)
+        ((event.x || 0) >= (width - settings.areaWidth))
+        && ((event.y || 0) <= settings.areaHeight)
       ) {
         return true
       }

@@ -2,7 +2,6 @@ import { EMPTY, interval, Subject, Subscription } from "rxjs"
 import { catchError, debounce, filter, switchMap, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
-import { translateFramePositionIntoPage } from "../frames"
 import { buildChapterInfoFromReadingItem } from "../navigation"
 import { createViewportNavigator } from "./viewportNavigator"
 import { Pagination } from "../pagination"
@@ -10,6 +9,7 @@ import { createReadingItem } from "../readingItem"
 import { createReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createCfiHelper } from "./cfiHelper"
+import { createEventsHelper } from "./eventsHelper"
 
 const NAMESPACE = 'readingOrderView'
 
@@ -43,6 +43,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   containerElement.appendChild(element)
   const viewportNavigator = createViewportNavigator({ context, pagination, readingItemManager, element })
   const locator = createLocator({ context, readingItemManager })
+  const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement })
   let selectionSubscription: Subscription | undefined
   let readingItemManagerSubscription: Subscription | undefined
   let focusedReadingItemSubscription: Subscription | undefined
@@ -239,8 +240,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     getFocusedReadingItem: () => readingItemManager.getFocusedReadingItem(),
     getFocusedReadingItemIndex: () => readingItemManager.getFocusedReadingItemIndex(),
     registerHook,
+    normalizeEvent: eventsHelper.normalizeEvent,
     manipulateReadingItems,
-    // manipulateReadingItemElement,
     goToNextSpineItem: () => {
       const currentSpineIndex = readingItemManager.getFocusedReadingItemIndex() || 0
       const numberOfSpineItems = context?.getManifest()?.readingOrder.length || 1

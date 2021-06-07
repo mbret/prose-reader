@@ -5,6 +5,8 @@ import { Subject, Subscription } from "rxjs"
 import { Report } from "../report"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "../constants"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
+import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
+import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 
 type Hook =
   {
@@ -36,6 +38,9 @@ const mouseEvents = [
   'mouseout' as const,
   'mouseover' as const,
 ]
+
+
+const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
 export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
   item: Manifest['readingOrder'][number],
@@ -140,27 +145,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
   }
 
-  const handleIframeClickEvent = (frame: HTMLIFrameElement, event: PointerEvent | MouseEvent) => {
-    const frameWindow = frame.contentWindow
-
-    if (!frameWindow) return
-
-    // safe way to detect PointerEvent
-    if (`pointerId` in event) {
-      const iframeEvent = event as PointerEvent
-      const bridgeEvent = new PointerEvent(iframeEvent.type, iframeEvent)
-      // @ts-ignore
-      bridgeEvent[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY] = { event: iframeEvent, iframeTarget: iframeEvent.target }
-      iframeEventBridgeElement.dispatchEvent(bridgeEvent)
-    } else if (event instanceof (frameWindow as any).MouseEvent) {
-      const iframeEvent = event as MouseEvent
-      const bridgeEvent = new MouseEvent(iframeEvent.type, iframeEvent)
-      // @ts-ignore
-      bridgeEvent[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY] = { event: iframeEvent, iframeTarget: iframeEvent.target }
-      iframeEventBridgeElement.dispatchEvent(bridgeEvent)
-    }
-  }
-
   const setLayoutDirty = () => {
     memoizedElementDimensions = undefined
   }
@@ -174,15 +158,22 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   readingItemFrame.registerHook({
     name: `onLoad`,
     fn: ({ frame }) => {
-      pointerEvents.forEach(event => {
+      passthroughEvents.forEach(event => {
         frame.contentDocument?.addEventListener(event, (e) => {
-          handleIframeClickEvent(frame, e)
-        })
-      })
+          let convertedEvent = e
 
-      mouseEvents.forEach(event => {
-        frame.contentDocument?.addEventListener(event, (e) => {
-          handleIframeClickEvent(frame, e)
+          if (isPointerEvent(e)) {
+            convertedEvent = new PointerEvent(e.type, e)
+          }
+
+          if (isMouseEvent(e)) {
+            convertedEvent = new MouseEvent(e.type, e);
+          }
+
+          if (convertedEvent !== e) {
+            attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
+            iframeEventBridgeElement.dispatchEvent(convertedEvent)
+          }
         })
       })
     }
@@ -211,6 +202,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     createWrapperElement,
     createLoadingElement,
     getElementDimensions,
+    translateFramePositionIntoPage,
     setLayoutDirty,
     injectStyle,
     loadContent,

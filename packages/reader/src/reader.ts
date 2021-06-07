@@ -4,7 +4,6 @@ import { createContext as createBookContext } from "./context";
 import { createPagination } from "./pagination";
 import { createReadingOrderView } from "./readingOrderView/readingOrderView";
 import { LoadOptions, Manifest } from "./types";
-import { translateFramePositionIntoPage } from "./frames";
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
 import { tap } from "rxjs/operators";
 
@@ -126,56 +125,6 @@ export const createReader = ({ containerElement }: {
     cb(element)
   }
 
-  const getEventInformation = Report.measurePerformance(`getEventInformation`, 10, (e: PointerEvent | MouseEvent | TouchEvent) => {
-    const normalizedEventPointerPositions = {
-      ...`clientX` in e && {
-        clientX: e.clientX,
-      },
-      ...`x` in e && {
-        x: e.x
-      },
-      ...`y` in e && {
-        y: e.y
-      }
-    }
-
-    const eventIsComingFromBridge = e.target === iframeEventBridgeElement
-    const eventIsComingFromIframe = !!e.view?.frameElement
-
-    if (!eventIsComingFromBridge && !eventIsComingFromIframe) {
-      return { event: e, normalizedEventPointerPositions }
-    }
-
-    if (!context || !pagination) return { event: e, normalizedEventPointerPositions }
-
-    let translatedFramePosition = { x: 0, y: 0 }
-
-    if (`x` in e && `y` in e) {
-      translatedFramePosition = translateFramePositionIntoPage(
-        context,
-        pagination,
-        { x: e.x, y: e.y },
-        readingOrderView.getFocusedReadingItem(),
-      )
-    }
-
-    let iframeOriginalEvent: Event | undefined = eventIsComingFromIframe
-      ? e
-      // @ts-ignore
-      : e[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY]?.event
-
-    return {
-      event: e,
-      iframeOriginalEvent,
-      normalizedEventPointerPositions: {
-        ...`clientX` in e && {
-          clientX: e.clientX,
-        },
-        ...translatedFramePosition
-      }
-    }
-  })
-
   const readingOrderViewSubscription = readingOrderView.$
     .pipe(
       tap(event => subject.next(event))
@@ -215,7 +164,7 @@ export const createReader = ({ containerElement }: {
     getFocusedReadingItemIndex: () => readingOrderView?.getFocusedReadingItemIndex(),
     getSelection: () => readingOrderView?.getSelection(),
     isSelecting: () => readingOrderView?.isSelecting(),
-    getEventInformation,
+    normalizeEvent: readingOrderView.normalizeEvent,
     getCfiInformation: readingOrderView.getCfiInformation,
     layout,
     load,
