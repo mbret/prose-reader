@@ -99,6 +99,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         subject.next({ type: `layoutUpdate` })
 
         const focusedReadingItem = readingItemManager.getFocusedReadingItem()
+
         if (focusedReadingItem) {
           viewportNavigator.adjustReadingOffsetPosition(focusedReadingItem, { shouldAdjustCfi: false })
         }
@@ -149,12 +150,12 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
                 ),
                 tap(({ data }) => {
                   if (data) {
-                    const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
-                    if (fingerPosition.x >= context.getPageSize().width) {
-                      viewportNavigator.turnRight({ allowReadingItemChange: false })
-                    } else if (fingerPosition.x <= context.getPageSize().width) {
-                      viewportNavigator.turnLeft({ allowReadingItemChange: false })
-                    }
+                    // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
+                    // if (fingerPosition.x >= context.getPageSize().width) {
+                    //   viewportNavigator.turnRight({ allowReadingItemChange: false })
+                    // } else if (fingerPosition.x <= context.getPageSize().width) {
+                    //   viewportNavigator.turnLeft({ allowReadingItemChange: false })
+                    // }
                   }
                 })
               )
