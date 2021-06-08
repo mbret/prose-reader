@@ -111,8 +111,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     return { computedScale: 1, ...viewportDimensions }
   }
 
-  const getFrameLayoutInformation = () => readingItemFrame.getManipulableFrame()?.frame?.getBoundingClientRect()
-
   const loadContent = () => {
     readingItemFrame.load().catch(Report.error)
   }
@@ -281,12 +279,6 @@ const createWrapperElement = (containerElement: HTMLElement, item: Manifest['rea
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
 const createLoadingElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number], context: Context) => {
-  // const frame = document.createElement('iframe')
-  // frame.frameBorder = 'no'
-  // frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
-  // frame.setAttribute('role', 'main')
-  // frame.setAttribute('tab-index', '0')
-
   const loadingElement = containerElement.ownerDocument.createElement('div')
   loadingElement.classList.add(`loading`)
   loadingElement.style.cssText = `
@@ -303,14 +295,6 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
     top: 0;
     background-color: white;
   `
-  // frame.style.cssText = `
-  //   height: 100%;
-  //   width: 100vw;
-  //   opacity: 1;
-  //   position: absolute;
-  //   pointer-events: none;
-  //   background-color: white;
-  // `
 
   const logoElement = containerElement.ownerDocument.createElement('div')
   logoElement.innerText = `oboku`
@@ -333,21 +317,4 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
   loadingElement.appendChild(detailsElement)
 
   return loadingElement
-  // frame.srcdoc = `
-  //   <html>
-  //     <head>
-  //       <style>
-  //         html, body {
-  //           height: 100%;
-  //           width: 100vw;
-  //           margin: 0;
-  //           padding: 0;
-  //         }
-  //       </style>
-  //     </head>
-  //     <body>${loadingElement.outerHTML}</body>
-  //   </html>
-  // `
-
-  // return frame
 }
