@@ -29,8 +29,10 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const titleElm = metadataElm?.childNamed(`dc:title`)
   const metaElmChildren = metadataElm?.childrenNamed(`meta`) || []
   const metaElmWithRendition = metaElmChildren.find(meta => meta.attr['property'] === `rendition:layout`)
+  const metaElmWithRenditionSpread = metaElmChildren.find(meta => meta.attr['property'] === `rendition:spread`)
 
   const defaultRenditionLayout = metaElmWithRendition?.val as 'reflowable' | 'pre-paginated' | undefined
+  const renditionSpread = metaElmWithRenditionSpread?.val as `auto` | undefined
   const title = titleElm?.val || ''
   const pageProgressionDirection = spineElm?.attr['page-progression-direction'] as `ltr` | `rtl` | undefined
 
@@ -51,6 +53,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
       toc,
     },
     renditionLayout: defaultRenditionLayout || koboInformation.renditionLayout || 'reflowable',
+    renditionSpread,
     title,
     readingDirection: pageProgressionDirection || 'ltr',
     readingOrder: spineElm?.childrenNamed(`itemref`).map((itemrefElm) => {
@@ -86,9 +89,10 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
     },
     title: ``,
     renditionLayout: `pre-paginated`,
+    renditionSpread: `auto`,
     readingDirection: 'ltr',
     readingOrder: files.map((file) => {
-      const filenameWithoutExtension = file.name.substring(0, file.name.lastIndexOf(`.`))
+      // const filenameWithoutExtension = file.name.substring(0, file.name.lastIndexOf(`.`))
 
       return {
         id: file.name,
