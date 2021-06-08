@@ -11,7 +11,6 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
   let readingItemFrame = commonReadingItem.readingItemFrame
-  let readingItemFrame$: Subscription | undefined
 
   const getDimensions = () => {
     const pageSize = context.getPageSize()
@@ -47,6 +46,8 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     if (frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
+
+      frameElement?.style.setProperty(`visibility`, `visible`)
 
       if (viewportDimensions) {
         const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
@@ -100,34 +101,30 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
     readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
-    const newSize = applySize()
-
-    return {
-      width: newSize.width,
-      height: newSize.height,
-      x: commonReadingItem.element.getBoundingClientRect().x
-    }
+    return applySize()
   }
 
   const unloadContent = () => {
     commonReadingItem.unloadContent()
   }
 
-  readingItemFrame$ = commonReadingItem.readingItemFrame.$.subscribe((data) => {
+  const commonReadingItemSubscription = commonReadingItem.readingItemFrame.$.subscribe((data) => {
     if (data.event === 'layout') {
       applySize()
       commonReadingItem.$.next(data)
     }
   })
 
+  const destroy = () => {
+    commonReadingItem.destroy()
+    commonReadingItemSubscription.unsubscribe()
+  }
+
   return {
     ...commonReadingItem,
     unloadContent,
     layout,
-    destroy: () => {
-      commonReadingItem.destroy()
-      readingItemFrame$?.unsubscribe()
-    },
+    destroy,
   }
 }
 

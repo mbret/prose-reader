@@ -83,6 +83,7 @@ export const createReadingItemFrame = (
     getIsReady: () => isReady,
     getIsLoaded: () => isLoaded,
     getViewportDimensions,
+    getFrameElement: () => frameElement,
     load: Report.measurePerformance(`ReadingItemFrame load`, Infinity, async () => {
       if (loading || isReady) return
       loading = true
@@ -184,6 +185,9 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
     const frame = document.createElement('iframe')
     frame.frameBorder = 'no'
     frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
+    frame.style.cssText = `
+      visibility: hidden;
+    `
 
     resolve(frame)
 

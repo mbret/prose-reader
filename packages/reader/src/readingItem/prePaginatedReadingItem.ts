@@ -11,7 +11,6 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
   let readingItemFrame = commonReadingItem.readingItemFrame
-  let readingItemFrame$: Subscription | undefined
 
   const getDimensions = () => {
     const pageSize = context.getPageSize()
@@ -87,7 +86,6 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
 
   const destroy = () => {
     commonReadingItem.destroy()
-    readingItemFrame$?.unsubscribe()
     commonReadingItemSubscription.unsubscribe()
   }
 
