@@ -39,7 +39,6 @@ const mouseEvents = [
   'mouseover' as const,
 ]
 
-
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
 export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
@@ -48,6 +47,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   iframeEventBridgeElement: HTMLElement,
   context: Context,
 }) => {
+  const isReflowable = false
   const subject = new Subject<{ event: 'selectionchange' | 'selectstart', data: Selection } | { event: 'layout', data: { isFirstLayout: boolean, isReady: boolean } }>()
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item, context)
@@ -226,6 +226,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     readingItemFrame,
     element,
     loadingElement,
+    isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     destroy: () => {

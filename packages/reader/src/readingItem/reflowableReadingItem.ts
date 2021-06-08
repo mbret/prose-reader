@@ -122,6 +122,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
   return {
     ...commonReadingItem,
+    isReflowable: true,
     unloadContent,
     layout,
     destroy,
