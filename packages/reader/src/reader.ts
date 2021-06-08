@@ -92,13 +92,13 @@ export const createReader = ({ containerElement }: {
     context.load(manifest, loadOptions)
     readingOrderView.load()
 
+    layout()
+
     if (!cfi) {
       readingOrderView.goToSpineItem(0)
     } else {
       readingOrderView.goToCfi(cfi)
     }
-
-    layout()
 
     paginationSubscription?.unsubscribe()
     paginationSubscription = pagination.$.subscribe(paginationSubject)

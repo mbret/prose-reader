@@ -90,7 +90,7 @@ export const Reader = () => {
         reader.load(bookManifest, {
           fetchResource: 'http',
 
-          // numberOfAdjacentSpineItemToPreLoad: 100,
+          numberOfAdjacentSpineItemToPreLoad: 0,
         }, localStorage.getItem(`cfi`) || undefined)
         // })
         // }, `epubcfi(/2/4/2/2/2|[oboku~anchor~spi_ad]|[oboku~offset~0])`)

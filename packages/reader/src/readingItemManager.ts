@@ -1,7 +1,7 @@
 import { Subject, Subscription } from "rxjs"
 import { Report } from "./report"
 import { Context } from "./context"
-import { createReadingItem, ReadingItem } from "./readingItem"
+import { ReadingItem } from "./readingItem"
 
 export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
 
@@ -9,8 +9,18 @@ const NAMESPACE = `readingItemManager`
 
 export const createReadingItemManager = ({ context }: { context: Context }) => {
   const subject = new Subject<{ event: 'focus', data: ReadingItem } | { event: 'layout' }>()
-  let orderedReadingItems: ReturnType<typeof createReadingItem>[] = []
-  let activeReadingItemIndex: number | undefined = undefined
+  let orderedReadingItems: ReadingItem[] = []
+  /**
+   * focused item represent the current item that the user navigated to.
+   * It can be either the left or right page for a spread, not necessarily the begin item
+   * either. This focused item is very important for everything that is related to navigation
+   * and adjustment of viewport.
+   * 
+   * @important
+   * The focused item can sometime not be visible on the screen, in case of a viewport misalignment.
+   * However it means the next adjustment will use the focused item to detect when to move the viewport.
+   */
+  let focusedReadingItemIndex: number | undefined = undefined
   let readingItemSubscriptions: Subscription[] = []
 
   const layout = () => {
@@ -41,9 +51,11 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     if (!readingItemToFocus) return
 
     const newActiveReadingItemIndex = orderedReadingItems.indexOf(readingItemToFocus)
-    activeReadingItemIndex = newActiveReadingItemIndex
 
-    Report.log(NAMESPACE, `focus item ${activeReadingItemIndex}`, readingItemToFocus)
+    if (newActiveReadingItemIndex === focusedReadingItemIndex) return
+    
+    focusedReadingItemIndex = newActiveReadingItemIndex
+
     subject.next({ event: 'focus', data: readingItemToFocus })
   }
 
@@ -95,7 +107,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     }
   }, { disable: true })
 
-  const getFocusedReadingItem = () => activeReadingItemIndex !== undefined ? orderedReadingItems[activeReadingItemIndex] : undefined
+  const getFocusedReadingItem = () => focusedReadingItemIndex !== undefined ? orderedReadingItems[focusedReadingItemIndex] : undefined
 
   const comparePositionOf = (toCompare: ReadingItem, withItem: ReadingItem) => {
     const isAfter = orderedReadingItems.indexOf(toCompare) > orderedReadingItems.indexOf(withItem)
@@ -113,8 +125,11 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     readingItemSubscriptions = []
   }
 
-  const getReadingItemIndex = (readingItem: ReadingItem) => {
-    return orderedReadingItems.indexOf(readingItem)
+  function getReadingItemIndex(readingItem: ReadingItem | undefined) {
+    if (!readingItem) return undefined
+    const index = orderedReadingItems.indexOf(readingItem)
+
+    return index < 0 ? undefined : index
   }
 
   const add = (readingItem: ReadingItem) => {
