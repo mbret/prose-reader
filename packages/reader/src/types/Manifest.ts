@@ -11,7 +11,8 @@ export type Manifest = {
     toc: TocItem[]
   },
   title: string
-  renditionLayout:  `reflowable` | `pre-paginated` | undefined
+  renditionLayout:  `reflowable` | `pre-paginated` | undefined,
+  renditionSpread: `none` | `landscape` | `portrait` | `both` | `auto` | undefined,
   readingDirection: 'ltr' | 'rtl',
   readingOrder: {
     id: string,
