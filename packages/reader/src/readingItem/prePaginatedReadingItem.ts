@@ -37,7 +37,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       return { width, height }
     }
 
-    const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation() || {}
+    const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation()
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
     if (frameElement?.contentDocument && frameElement?.contentWindow) {
@@ -45,6 +45,8 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
       const cssLink = buildDefaultStyle(getDimensions())
+
+      frameElement?.style.setProperty(`visibility`, `visible`)
 
       if (viewportDimensions) {
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
@@ -74,30 +76,25 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     return { width: pageWidth, height: pageHeight }
   }
 
-  const layout = () => {
-    const newSize = applySize()
+  const layout = () => applySize()
 
-    return {
-      width: newSize.width,
-      height: newSize.height,
-      x: commonReadingItem.element.getBoundingClientRect().x
-    }
-  }
-
-  commonReadingItem.readingItemFrame.$.subscribe((data) => {
+  const commonReadingItemSubscription = commonReadingItem.readingItemFrame.$.subscribe((data) => {
     if (data.event === 'layout') {
       layout()
       commonReadingItem.$.next(data)
     }
   })
 
+  const destroy = () => {
+    commonReadingItem.destroy()
+    readingItemFrame$?.unsubscribe()
+    commonReadingItemSubscription.unsubscribe()
+  }
+
   return {
     ...commonReadingItem,
     layout,
-    destroy: () => {
-      commonReadingItem.destroy()
-      readingItemFrame$?.unsubscribe()
-    },
+    destroy,
   }
 }
 
