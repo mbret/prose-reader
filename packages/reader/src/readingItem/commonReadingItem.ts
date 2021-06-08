@@ -5,7 +5,7 @@ import { Subject, Subscription } from "rxjs"
 import { Report } from "../report"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "../constants"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
-import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
+import { isMouseEvent, isPointerEvent } from "../utils/dom"
 import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 
 type Hook =
@@ -50,7 +50,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 }) => {
   const subject = new Subject<{ event: 'selectionchange' | 'selectstart', data: Selection } | { event: 'layout', data: { isFirstLayout: boolean, isReady: boolean } }>()
   const element = createWrapperElement(containerElement, item)
-  const loadingElement = createLoadingElement(containerElement, item)
+  const loadingElement = createLoadingElement(containerElement, item, context)
   const readingItemFrame = createReadingItemFrame(element, item, context)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
@@ -108,7 +108,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       return { computedScale, viewportDimensions }
     }
 
-    return undefined
+    return { computedScale: 1, ...viewportDimensions }
   }
 
   const getFrameLayoutInformation = () => readingItemFrame.getManipulableFrame()?.frame?.getBoundingClientRect()
@@ -152,6 +152,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   const layout = ({ height, width }: { height: number, width: number }) => {
     element.style.width = `${width}px`
     element.style.height = `${height}px`
+
+    loadingElement.style.setProperty(`max-width`, `${context.getVisibleAreaRect().width}px`)
+
     setLayoutDirty()
   }
 
@@ -225,7 +228,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     readingItemFrame,
     element,
     loadingElement,
-    getFrameLayoutInformation,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     destroy: () => {
@@ -264,7 +266,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
 const createWrapperElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number]) => {
   const element = containerElement.ownerDocument.createElement('div')
-  element.id = item.id
   element.classList.add('readingItem')
   element.classList.add(`readingItem-${item.renditionLayout}`)
   element.style.cssText = `
@@ -279,7 +280,7 @@ const createWrapperElement = (containerElement: HTMLElement, item: Manifest['rea
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
-const createLoadingElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number]) => {
+const createLoadingElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number], context: Context) => {
   // const frame = document.createElement('iframe')
   // frame.frameBorder = 'no'
   // frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
@@ -291,6 +292,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
   loadingElement.style.cssText = `
     height: 100%;
     width: 100%;
+    max-width: ${context.getVisibleAreaRect().width}px;
     text-align: center;
     display: flex;
     justify-content: center;
