@@ -60,7 +60,7 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
         touches,
         changedTouches: touches,
         targetTouches: touches,
-      })
+      }) as E
     }
 
     return event

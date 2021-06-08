@@ -45,7 +45,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   const locator = createLocator({ context, readingItemManager })
   const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement })
   let selectionSubscription: Subscription | undefined
-  let readingItemManagerSubscription: Subscription | undefined
   let focusedReadingItemSubscription: Subscription | undefined
   let hooks: Hook[] = []
 
@@ -105,7 +104,9 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         }
       }
 
-      if (event.event === 'focus') {
+      // @todo track tail as well (selection, finger etc)
+
+      if (event.event === `focus`) {
         const readingItem = event.data
         const fingerTracker$ = readingItem.fingerTracker.$
         const selectionTracker$ = readingItem.selectionTracker.$
@@ -173,20 +174,23 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     .pipe(
       tap((data) => {
         if (data.event === 'navigation') {
-
           const currentReadingItem = readingItemManager.getFocusedReadingItem()
           const readingItemForCurrentNavigation = data.data.readingItem || locator.getReadingItemFromOffset(data.data.x)
 
           if (readingItemForCurrentNavigation) {
             const readingItemHasChanged = readingItemForCurrentNavigation !== currentReadingItem
-            const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(data.data, readingItemForCurrentNavigation)
+            const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(data.data, readingItemForCurrentNavigation)
+
+            if (readingItemPosition.x < 0 || readingItemPosition.y < 0) {
+              Report.error(`invalid navigation. viewport window not synced with reading item ${readingItemForCurrentNavigation.item.id}`)
+            }
 
             if (readingItemHasChanged) {
               readingItemManager.focus(readingItemForCurrentNavigation)
             }
 
             const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
-            const itemIndex = readingItemManager.getReadingItemIndex(readingItemForCurrentNavigation)
+            const itemIndex = readingItemManager.getReadingItemIndex(readingItemForCurrentNavigation) ?? 0
 
             pagination.update(
               readingItemForCurrentNavigation,
@@ -215,8 +219,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             ? true
             : lastCfi?.startsWith(`epubcfi(/0`)
           if (currentReadingItem) {
-            const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(data.data, currentReadingItem)
-            const itemIndex = readingItemManager.getReadingItemIndex(currentReadingItem)
+            const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(data.data, currentReadingItem)
+            const itemIndex = readingItemManager.getReadingItemIndex(currentReadingItem) ?? 0
 
             pagination.update(
               currentReadingItem,

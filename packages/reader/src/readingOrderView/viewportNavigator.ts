@@ -41,9 +41,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   const areNavigationDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
-  const getCurrentViewport = () => ({
-    x: Math.floor(Math.abs(element.getBoundingClientRect().x)),
-    y: Math.floor(Math.abs(element.getBoundingClientRect().y)),
+  const getCurrentPosition = () => ({
+    // we want to round to first decimal because it's possible to have half pixel
+    // however browser engine can also gives back x.yyyy based on their precision
+    x: Math.round(Math.abs(element.getBoundingClientRect().x) * 10) / 10,
+    y: Math.round(Math.abs(element.getBoundingClientRect().y) * 10) / 10,
   })
 
   const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: { x: number, y: number }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
@@ -71,13 +73,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   })
 
   const turnLeft = Report.measurePerformance(`${NAMESPACE} turnLeft`, 10, ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const navigation = navigator.getNavigationForLeftPage(getCurrentViewport())
+    const currentPosition = getCurrentPosition()
+    const navigation = navigator.getNavigationForLeftPage(currentPosition)
 
     turnTo(navigation, { allowReadingItemChange })
   })
 
   const turnRight = Report.measurePerformance(`${NAMESPACE} turnRight`, 10, ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const navigation = navigator.getNavigationForRightPage(getCurrentViewport())
+    const currentPosition = getCurrentPosition()
+    const navigation = navigator.getNavigationForRightPage(currentPosition)
 
     turnTo(navigation, { allowReadingItemChange })
   })
@@ -93,8 +97,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   }
 
   const goToCfi = (cfi: string) => {
-    Report.log(NAMESPACE, `goToCfi`, { cfi })
     const navigation = navigator.getNavigationForCfi(cfi)
+    Report.log(NAMESPACE, `goToCfi`, { cfi, navigation })
     lastUserExpectedNavigation = { type: 'navigate-from-cfi', data: cfi }
     navigateTo(navigation)
   }
@@ -127,8 +131,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @todo optimize this function to not being called several times
    */
   const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }) => {
-    if (!isFirstNavigation && !areNavigationDifferent(navigation, getCurrentViewport())) {
+    if (!isFirstNavigation && !areNavigationDifferent(navigation, getCurrentPosition())) {
       Report.warn(NAMESPACE, `prevent useless navigation`)
+
+      subject.next({ event: 'navigation', data: navigation })
+
       return
     }
 
@@ -151,7 +158,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @todo this is being called a lot, try to optimize
    */
   const adjustReadingOffsetPosition = (readingItem: ReadingItem, { shouldAdjustCfi }: { shouldAdjustCfi: boolean }) => {
-    const currentViewportPosition = getCurrentViewport()
+    const currentViewportPosition = getCurrentPosition()
     const lastCfi = pagination.getCfi()
     let expectedReadingOrderViewPosition = currentViewportPosition
     let offsetInReadingItem = 0
@@ -214,7 +221,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   return {
     adjustOffset: adjustReadingOffset,
-    getCurrentOffset: getCurrentViewport,
+    getCurrentPosition,
     turnLeft,
     turnRight,
     goTo,
