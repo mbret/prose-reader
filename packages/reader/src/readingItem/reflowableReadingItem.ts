@@ -249,5 +249,8 @@ const buildStyleWithMultiColumn = ({ columnHeight, columnWidth, horizontalMargin
       max-width: ${columnWidth}px !important;
       table-layout: fixed;
     }
+    td {
+      max-width: ${columnWidth}px;
+    }
   `
 }
