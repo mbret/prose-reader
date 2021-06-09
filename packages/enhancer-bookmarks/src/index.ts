@@ -147,35 +147,45 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       return false
     }
 
+    const onDocumentClick = (e: MouseEvent) => {
+      if (isClickEventInsideBookmarkArea(e)) {
+        const newBookmark = createBookmarkFromCurrentPagination()
+
+        if (!newBookmark) {
+          logger.warn(`Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`)
+          return
+        }
+
+        if (bookmarks.find(({ cfi }) => newBookmark.cfi === cfi)) {
+          logger.warn(`A bookmark for this cfi already exist, skipping process!`)
+          return
+        }
+
+        e.stopPropagation()
+        e.preventDefault()
+
+        bookmarks.push(newBookmark)
+        redrawBookmarks()
+
+        subject.next({ type: `update`, data: bookmarks.map(exportBookmark) })
+
+        logger.log(`added new bookmark`, newBookmark)
+      }
+    }
+
     // Register hook to trigger bookmark when user click on iframe.
     // By design clicking on bookmark is possible only once the frame
     // is loaded.
+    reader.manipulateContainer(container => {
+      container.addEventListener('click', onDocumentClick, { capture: true })
+
+      return () => {
+        container.removeEventListener(`click`, onDocumentClick)
+      }
+    })
+
     reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
-      frame.contentWindow?.addEventListener('click', e => {
-        if (isClickEventInsideBookmarkArea(e)) {
-          const newBookmark = createBookmarkFromCurrentPagination()
-
-          if (!newBookmark) {
-            logger.warn(`Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`)
-            return
-          }
-
-          if (bookmarks.find(({ cfi }) => newBookmark.cfi === cfi)) {
-            logger.warn(`A bookmark for this cfi already exist, skipping process!`)
-            return
-          }
-
-          e.stopPropagation()
-          e.preventDefault()
-
-          bookmarks.push(newBookmark)
-          redrawBookmarks()
-
-          subject.next({ type: `update`, data: bookmarks.map(exportBookmark) })
-
-          logger.log(`added new bookmark`, newBookmark)
-        }
-      }, { capture: true })
+      frame.contentWindow?.addEventListener(`click`, onDocumentClick, { capture: true })
     })
 
     // We only need to redraw bookmarks when the pagination
@@ -197,13 +207,15 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       )
       .subscribe()
 
+    const destroy = () => {
+      paginationSubscription.unsubscribe()
+      readerSubscription.unsubscribe()
+      return reader.destroy()
+    }
+
     return {
       ...reader,
-      destroy: () => {
-        paginationSubscription.unsubscribe()
-        readerSubscription.unsubscribe()
-        return reader.destroy()
-      },
+      destroy,
       bookmarks: {
         isClickEventInsideBookmarkArea,
         __debug: () => bookmarks
