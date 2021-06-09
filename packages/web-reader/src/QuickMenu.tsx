@@ -1,6 +1,7 @@
 import React from 'react'
 import { useRecoilValue } from 'recoil'
 import { useToggleFontsSettings } from './FontsSettings'
+import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, manifestState, paginationState } from './state'
 
@@ -9,12 +10,13 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
   onPageChange: (index: number) => void,
   onReadingItemChange: (index: number) => void,
 }) => {
+  const reader = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
   const pagination = useRecoilValue(paginationState)
   const pageIndex = (pagination?.begin.pageIndexInChapter || 0) + 1
   const isComic = useRecoilValue(isComicState)
-  const currentreadingItemIndex = pagination?.begin.readingItemIndex || 0
+  const currentReadingItemIndex = pagination?.begin.readingItemIndex || 0
   const toggleFontsSettings = useToggleFontsSettings()
 
   const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>['begin']['chapterInfo']): string => {
@@ -71,12 +73,12 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           <div style={{
             paddingLeft: 10
           }}>
-            {manifest?.readingDirection === 'ltr' && currentreadingItemIndex > 0 && (
-              <button onClick={_ => onReadingItemChange(currentreadingItemIndex - 1)}>{`<<`}</button>
-            )}
-            {manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1 && (
-              <button onClick={_ => onReadingItemChange(currentreadingItemIndex + 1)}>{`<<`}</button>
-            )}
+            {(
+              (manifest?.readingDirection === 'ltr' && currentReadingItemIndex > 0)
+              || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1)
+            ) && (
+                <button onClick={_ => reader?.goToLeftSpineItem()}>{`<<`}</button>
+              )}
           </div>
           <div style={{
             width: `100%`,
@@ -112,12 +114,12 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           <div style={{
             paddingRight: 10
           }}>
-            {manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1 && (
-              <button onClick={_ => onReadingItemChange(currentreadingItemIndex + 1)}>{`>>`}</button>
-            )}
-            {manifest?.readingDirection !== 'ltr' && currentreadingItemIndex > 0 && (
-              <button onClick={_ => onReadingItemChange(currentreadingItemIndex - 1)}>{`>>`}</button>
-            )}
+            {(
+              (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1)
+              || (manifest?.readingDirection !== 'ltr' && currentReadingItemIndex > 0)
+            ) && (
+                <button onClick={_ => reader?.goToRightSpineItem()}>{`>>`}</button>
+              )}
           </div>
         </div>
       )}

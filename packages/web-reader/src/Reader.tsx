@@ -10,11 +10,12 @@ import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
 import { Manifest, ReaderInstance } from './types';
 import { useBookmarks } from './useBookmarks';
+import { useReader } from './ReaderProvider';
 
-export const Reader = () => {
+export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
   const fontsSettings = useRecoilValue(fontsSettingsState)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [reader, setReader] = useState<ReaderInstance | undefined>(undefined)
+  const reader = useReader()
   const [gestureHandler, setGestureHandler$] = useState<ReturnType<typeof createGestureHandler> | undefined>(undefined)
   const [manifest, setManifestState] = useRecoilState(manifestState)
   const isComic = useRecoilValue(isComicState)
@@ -133,7 +134,7 @@ export const Reader = () => {
         {readerEnhancer && (
           <ReactReader
             manifest={manifest}
-            onReader={setReader}
+            onReader={onReader}
             options={{
               fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
               lineHeight: storedLineHeight || undefined,
