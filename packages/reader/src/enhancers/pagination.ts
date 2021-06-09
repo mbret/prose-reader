@@ -27,8 +27,8 @@ export const paginationEnhancer: Enhancer<{
     getPaginationInfo: () => {
       const pagination = reader.pagination
       const context = reader.context
-      const focusedReadingItem = reader.getFocusedReadingItem()
       const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
+      const focusedReadingItem = reader.getReadingItem(focusedReadingItemIndex)
 
       if (!pagination || !context) return undefined
 

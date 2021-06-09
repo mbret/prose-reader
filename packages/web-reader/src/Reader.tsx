@@ -3,12 +3,12 @@ import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { createGestureHandler } from "./gesture";
 import { Reader as ReactReader } from "@oboku/reader-react";
-import { composeEnhancer } from "@oboku/reader";
+import { composeEnhancer, Manifest } from "@oboku/reader";
 import { QuickMenu } from './QuickMenu';
 import { bookReadyState, isComicState, manifestState, paginationState } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
-import { Manifest, ReaderInstance } from './types';
+import { ReaderInstance } from './types';
 import { useBookmarks } from './useBookmarks';
 import { useReader } from './ReaderProvider';
 

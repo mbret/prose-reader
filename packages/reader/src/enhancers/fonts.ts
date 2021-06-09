@@ -57,7 +57,7 @@ export const fontsEnhancer: Enhancer<{
       body *:not([class^="mjx-"]) {
     */``}
     body {
-      ${fontScale !== 1
+      ${currentFontScale !== 1
       ? `font-size: ${currentFontScale}em !important;`
       : ``}
       ${currentLineHeight !== undefined

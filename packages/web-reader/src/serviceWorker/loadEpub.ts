@@ -1,4 +1,4 @@
-import JSZip, { loadAsync } from 'jszip'
+import { loadAsync } from 'jszip'
 import { Report } from '../report'
 import { createArchiveFromText, Archive,  } from '@oboku/reader-streamer'
 
@@ -14,7 +14,6 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000)
 
-// export const loadEpub = Report.measurePerformance(`serviceWorker`, Infinity, async (url: string) => {
 export const loadEpub = async (url: string) => {
   if (url !== lastUrl) {
     archive = undefined

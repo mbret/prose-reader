@@ -1,61 +1,32 @@
-import { Subscription } from "rxjs";
 import { Enhancer } from "../createReader";
 
 export const navigationEnhancer: Enhancer<{
-  turnLeft: () => void,
-  turnRight: () => void,
-  goTo: (spineIndexOrIdOrCfi: number | string) => void,
-  goToPageOfCurrentChapter: (pageIndex: number) => void,
-  goToHref: (href: string) => void,
   goToLeftSpineItem: () => void,
   goToRightSpineItem: () => void,
 }> = (next) => (options) => {
   const reader = next(options)
 
-  let contextSubscription: Subscription | undefined
-  let readerSubscription: Subscription | undefined
-
   const goToNextSpineItem = () => {
-    const currentSpineIndex = reader.getFocusedReadingItemIndex() || 0
-    const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length || 1
-    if (currentSpineIndex < (numberOfSpineItems - 1)) {
-      reader.goTo(currentSpineIndex + 1)
+    const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
+    const { end = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentPosition()) || {}
+    const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length ?? 0
+    let nextItem = end + 1
+    if (nextItem < numberOfSpineItems) {
+      reader.goTo(nextItem)
     }
   }
 
   const goToPreviousSpineItem = () => {
-    const currentSpineIndex = reader.getFocusedReadingItemIndex() || 0
-    if (currentSpineIndex > 0) {
-      reader.goTo(currentSpineIndex - 1)
+    const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
+    const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentPosition()) || {}
+    let nextItem = begin - 1
+    if (nextItem >= 0) {
+      reader.goTo(nextItem)
     }
   }
 
   return {
     ...reader,
-    destroy: () => {
-      reader.destroy()
-      contextSubscription?.unsubscribe()
-      readerSubscription?.unsubscribe()
-    },
-    turnLeft: () => reader.turnLeft(),
-    turnRight: () => reader.turnRight(),
-    goTo: (spineIndexOrIdOrCfi: number | string) => reader.goTo(spineIndexOrIdOrCfi),
-    goToPageOfCurrentChapter: (pageIndex: number) => reader.goToPageOfCurrentChapter(pageIndex),
-    // goToPath: (path: string) => {
-    //   const manifest = reader.context.manifest
-    //   const foundItem = manifest?.readingOrder.find(item => item.path === path)
-    //   if (foundItem) {
-    //     reader.readingOrderView.goTo(foundItem.id)
-    //   }
-    // },
-    goToHref: (href: string) => {
-      reader.goToUrl(href)
-    },
-    // goToPageOfCurrentChapter: (pageIndex: number) => {
-    //   return reader.readingOrderView.goToPageOfCurrentChapter(pageIndex)
-    // },
-    // goToNextSpineItem,
-    // goToPreviousSpineItem,
     goToLeftSpineItem: () => {
       if (reader.context.isRTL()) {
         return goToNextSpineItem()
@@ -70,5 +41,12 @@ export const navigationEnhancer: Enhancer<{
 
       return goToNextSpineItem()
     },
+    // goToPath: (path: string) => {
+    //   const manifest = reader.context.manifest
+    //   const foundItem = manifest?.readingOrder.find(item => item.path === path)
+    //   if (foundItem) {
+    //     reader.readingOrderView.goTo(foundItem.id)
+    //   }
+    // },
   }
 }
