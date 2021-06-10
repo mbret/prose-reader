@@ -23,23 +23,54 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   let focusedReadingItemIndex: number | undefined = undefined
   let readingItemSubscriptions: Subscription[] = []
 
+  /**
+   * @todo
+   * make sure to check how many times it is being called and try to reduce number of layouts
+   */
   const layout = () => {
-    orderedReadingItems.reduce((edgeOffset, item) => {
-      const { width } = item.layout()
+    orderedReadingItems.reduce((edgeOffset, item, index) => {
+      let minimumWidth = context.getPageSize().width
+      let blankPagePosition: `none` | `before` | `after` = `none`
+      const itemStartOnNewScreen = edgeOffset % context.getVisibleAreaRect().width === 0
+
+      if (context.shouldDisplaySpread()) {
+        /**
+         * for now every reflowable content that has reflow siblings takes the entire screen by default
+         * this simplify many things and I am not sure the specs allow one reflow
+         * to end and an other one to start on the same screen anyway
+         * 
+         * @important
+         * For now this is impossible to have reflow not taking all screen. This is because
+         * when an element is unloaded, the next element will move back its x, then an adjustment
+         *  will occurs and the previous element will become visible again, meaning it will be loaded,
+         * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
+         * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
+         * book with spread on to make it work.
+         */
+        if (item.isReflowable && index !== orderedReadingItems.length - 1) {
+          minimumWidth = context.getPageSize().width * 2
+        }
+
+        // mainly to make loading screen looks good
+        if (item.isReflowable && index === orderedReadingItems.length - 1 && itemStartOnNewScreen) {
+          minimumWidth = context.getPageSize().width * 2
+        }
+
+        if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
+          blankPagePosition = `before`
+          minimumWidth = context.getPageSize().width * 2
+        }
+
+        if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
+          blankPagePosition = `before`
+          minimumWidth = context.getPageSize().width * 2
+        }
+      }
+
+      const { width } = item.layout({ minimumWidth, blankPagePosition })
       item.adjustPositionOfElement(edgeOffset)
 
       return width + edgeOffset
-    }, 0)
-
-    subject.next({ event: 'layout' })
-  }
-
-  const adjustPositionOfItems = () => {
-    orderedReadingItems.reduce((edgeOffset, item) => {
-      const itemWidth = item.getElementDimensions().width
-      item.adjustPositionOfElement(edgeOffset)
-
-      return itemWidth + edgeOffset
     }, 0)
 
     subject.next({ event: 'layout' })
@@ -53,22 +84,23 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const newActiveReadingItemIndex = orderedReadingItems.indexOf(readingItemToFocus)
 
     if (newActiveReadingItemIndex === focusedReadingItemIndex) return
-    
+
     focusedReadingItemIndex = newActiveReadingItemIndex
 
     subject.next({ event: 'focus', data: readingItemToFocus })
   }
 
-  const loadContents = Report.measurePerformance(`loadContents`, 10, () => {
+  const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
+    const [leftIndex, rightIndex] = rangeOfIndex
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
     orderedReadingItems.forEach((orderedReadingItem, index) => {
-      if (activeReadingItemIndex !== undefined) {
-        if (index < (activeReadingItemIndex - numberOfAdjacentSpineItemToPreLoad) || index > (activeReadingItemIndex + numberOfAdjacentSpineItemToPreLoad)) {
-          orderedReadingItem.unloadContent()
-        } else {
-          if (!orderedReadingItem.isFrameReady()) {
-            orderedReadingItem.loadContent()
-          }
+      const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
+      const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
+      if (isBeforeFocusedWithPreload || isAfterTailWithPreload) {
+        orderedReadingItem.unloadContent()
+      } else {
+        if (!orderedReadingItem.isFrameReady()) {
+          orderedReadingItem.loadContent()
         }
       }
     })
@@ -88,14 +120,18 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const distance = orderedReadingItems.slice(0, indexOfItem + 1).reduce((acc, readingItem) => {
+      const width = readingItem.getElementDimensions().width
+
       return {
         start: acc.end,
-        end: acc.end + (readingItem.getElementDimensions()?.width || 0)
+        end: acc.end + width,
+        width
       }
     }, { start: 0, end: 0 })
 
     if (typeof readingItemOrIndex === 'number') {
       return {
+        width: 0,
         ...get(readingItemOrIndex)?.getElementDimensions(),
         ...distance
       }
@@ -119,12 +155,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return 'before'
   }
 
-  const destroy = () => {
-    orderedReadingItems.forEach(item => item.destroy())
-    readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
-    readingItemSubscriptions = []
-  }
-
   function getReadingItemIndex(readingItem: ReadingItem | undefined) {
     if (!readingItem) return undefined
     const index = orderedReadingItems.indexOf(readingItem)
@@ -136,10 +166,10 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     orderedReadingItems.push(readingItem)
 
     const readingItemSubscription = readingItem.$.subscribe((event) => {
-      if (event.event === 'layout') {
-        // @todo at this point the inner item has an upstream layout so we only need to adjust
-        // left/right position of it. We don't need to layout, maybe a `adjustPositionOfItems()` is enough
-        adjustPositionOfItems()
+      if (event.event === 'contentLayoutChange') {
+        // upstream change, meaning we need to layout again to both resize correctly each item but also to
+        // adjust positions, etc
+        layout()
       }
     })
 
@@ -172,7 +202,13 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     }
 
     return detectedItem || getFocusedReadingItem()
-  })
+  }, { disable: true })
+
+  const destroy = () => {
+    orderedReadingItems.forEach(item => item.destroy())
+    readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
+    readingItemSubscriptions = []
+  }
 
   return {
     add,

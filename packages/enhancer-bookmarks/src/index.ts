@@ -33,7 +33,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     }
 
     const createBookmarkFromCurrentPagination = () => {
-      const cfi = reader.pagination.getCfi()
+      const cfi = reader.pagination.getBeginInfo().cfi
 
       if (cfi) {
         const { pageIndex, readingItemIndex } = reader.getCfiInformation(cfi) || {}
@@ -47,11 +47,9 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     const exportBookmark = (bookmark: Bookmark) => ({ cfi: bookmark.cfi })
 
     const redrawBookmarks = () => {
-      const currentPageIndex = reader.pagination.getPageIndex()
-      const currentCfi = reader.pagination.getCfi()
-      const beginReadingItemIndex = reader.pagination.getBeginReadingItemIndex()
+      const { cfi: currentCfi, pageIndex: currentPageIndex, readingItemIndex: currentReadingItemIndex } = reader.pagination.getBeginInfo()
 
-      if (currentPageIndex === undefined || beginReadingItemIndex === undefined) {
+      if (currentPageIndex === undefined || currentReadingItemIndex === undefined) {
         destroyBookmarkElement()
 
         return
@@ -60,7 +58,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       const bookmarkOnPage = bookmarks.find(bookmark =>
         (
           bookmark.pageIndex === currentPageIndex
-          && bookmark.readingItemIndex === beginReadingItemIndex
+          && bookmark.readingItemIndex === currentReadingItemIndex
         )
         // sometime the next page contains part of the previous page and the cfi is actually
         // the same for the page too. This special case can happens for
@@ -107,7 +105,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const removeBookmarksOnCurrentPage = () => {
       // @todo handle spread
-      const beginReadingItem = reader.pagination.getBeginReadingItemIndex()
+      const beginReadingItem = reader.pagination.getBeginInfo().readingItemIndex
       if (beginReadingItem !== undefined) {
         bookmarks = bookmarks.filter(bookmark => bookmark.readingItemIndex !== beginReadingItem)
       }

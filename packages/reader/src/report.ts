@@ -41,7 +41,7 @@ const createReport = (namespace?: string) => ({
     if (window.__OBOKU_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        // console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
+        console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
       } else {
         // eslint-disable-next-line no-console
         console.warn(

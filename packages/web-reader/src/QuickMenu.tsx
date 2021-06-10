@@ -13,10 +13,15 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
   const reader = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
+  const numberOfSpineItems = manifest?.readingOrder.length ?? 0
   const pagination = useRecoilValue(paginationState)
-  const pageIndex = (pagination?.begin.pageIndexInChapter || 0) + 1
+  const [pageIndex, endPageIndex] = [(pagination?.begin.pageIndexInChapter || 0) + 1, (pagination?.end.pageIndexInChapter || 0) + 1].sort()
+  const beginAndEndAreDifferent =
+    (pagination?.begin.pageIndexInChapter !== pagination?.end.pageIndexInChapter)
+    || (pagination?.begin.readingItemIndex !== pagination?.end.readingItemIndex)
   const isComic = useRecoilValue(isComicState)
   const currentReadingItemIndex = pagination?.begin.readingItemIndex || 0
+  const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [pagination?.begin.absolutePageIndex, pagination?.end.absolutePageIndex].sort()
   const toggleFontsSettings = useToggleFontsSettings()
 
   const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>['begin']['chapterInfo']): string => {
@@ -75,7 +80,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           }}>
             {(
               (manifest?.readingDirection === 'ltr' && currentReadingItemIndex > 0)
-              || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1)
+              || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
             ) && (
                 <button onClick={_ => reader?.goToLeftSpineItem()}>{`<<`}</button>
               )}
@@ -99,14 +104,28 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
               <div style={{
                 color: 'white'
               }}>
-                {`page ${pageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}
+                {beginAndEndAreDifferent && (
+                  <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
+                )}
+                {!beginAndEndAreDifferent && (
+                  <>{`page ${pageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
+                )}
               </div>
             )}
             {isComic && (
               <div style={{
                 color: 'white'
               }}>
-                {`page ${(pagination?.begin.readingItemIndex || 0) + 1} of ${pagination?.numberOfSpineItems}`}
+                {beginAndEndAreDifferent && (
+                  <>
+                    {`page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
+                  </>
+                )}
+                {!beginAndEndAreDifferent && (
+                  <>
+                    {`page ${absoluteBeginPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
+                  </>
+                )}
               </div>
             )}
             <Scrubber onPageChange={onPageChange} />
@@ -115,7 +134,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
             paddingRight: 10
           }}>
             {(
-              (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < (pagination?.numberOfSpineItems || 0) - 1)
+              (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
               || (manifest?.readingDirection !== 'ltr' && currentReadingItemIndex > 0)
             ) && (
                 <button onClick={_ => reader?.goToRightSpineItem()}>{`>>`}</button>

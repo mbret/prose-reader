@@ -3,83 +3,130 @@ import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
 import { Report } from "./report"
 import { createLocator } from "./readingItem/locator"
-import { createPaginator } from "./readingItem/paginator"
 
 export type Pagination = ReturnType<typeof createPagination>
 
 export const createPagination = ({ context }: { context: Context }) => {
   const subject = new Subject<{ event: 'change' }>()
   const readingItemLocator = createLocator({ context })
-  const readingItemPaginator = createPaginator({ context })
-  let pageIndex: number | undefined
-  let numberOfPages = 0
-  // let isAtEndOfChapter = false
-  let cfi: string | undefined = undefined
+  let beginPageIndex: number | undefined
+  let beginNumberOfPages = 0
+  let beginCfi: string | undefined = undefined
   let beginReadingItemIndex: number | undefined = undefined
+  let endPageIndex: number | undefined
+  let endNumberOfPages = 0
+  let endCfi: string | undefined = undefined
+  let endReadingItemIndex: number | undefined = undefined
+  let numberOfPagesPerItems: number[] = []
+
+  const getReadingItemNumberOfPages = (readingItem: ReadingItem) => {
+    // pre-paginated always are only one page
+    // if (!readingItem.isReflowable) return 1
+
+    const writingMode = readingItem.readingItemFrame.getWritingMode()
+    const { width, height } = readingItem.getElementDimensions()
+
+    if (writingMode === 'vertical-rl') {
+      return getNumberOfPages(height, context.getPageSize().height)
+    }
+
+    return getNumberOfPages(width, context.getPageSize().width)
+  }
+
+  const getInfoForUpdate = (info: {
+    readingItem: ReadingItem,
+    readingItemPosition: { x: number, y: number },
+    options: {
+      isAtEndOfChapter?: boolean,
+      cfi?: string
+    }
+  }) => {
+    const numberOfPages = getReadingItemNumberOfPages(info.readingItem)
+    const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
+    let cfi: string | undefined = undefined
+
+    // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
+    // @todo update cfi also whenever a resize occurs in the iframe
+    // - load
+    // - font loaded
+    // - resize
+    // future changes would potentially only be resize (easy to track) and font size family change.
+    // to track that we can have a hidden text element and track it and send event back
+    if (info.options.cfi === undefined) {
+      cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
+      Report.log(`pagination`, `cfi`, pageIndex, beginCfi)
+    } else {
+      cfi = info.options.cfi
+    }
+
+    return {
+      numberOfPages,
+      pageIndex,
+      cfi
+    }
+  }
 
   return {
-    getPageIndex() {
-      return pageIndex
-    },
-    getNumberOfPages() {
-      return numberOfPages
-    },
-    getBeginReadingItemIndex() {
-      return beginReadingItemIndex
-    },
-    // getIsAtEndOfChapter() {
-    //   return isAtEndOfChapter
-    // },
-    update: (
-      readingItem: ReadingItem,
-      readingItemIndex: number,
-      readingItemPosition: { x: number, y: number },
-      options: {
-        isAtEndOfChapter?: boolean,
-        shouldUpdateCfi?: boolean,
-        cfi?: string
+    getBeginInfo() {
+      return {
+        pageIndex: beginPageIndex,
+        absolutePageIndex: numberOfPagesPerItems
+          .slice(0, beginReadingItemIndex)
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
+        cfi: beginCfi,
+        numberOfPages: beginNumberOfPages,
+        readingItemIndex: beginReadingItemIndex,
       }
-    ) => {
-      numberOfPages = readingItemPaginator.getReadingItemNumberOfPages(readingItem)
-      // pageIndex = getPageFromOffset(offsetInReadingItem, pageWidth, numberOfPages)
-      pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(readingItemPosition, readingItem)
-      beginReadingItemIndex = readingItemIndex
-      // isAtEndOfChapter = readingItem.isContentReady() && pageIndex === (numberOfPages - 1)
-      // if (options.isAtEndOfChapter) {
-      //   isAtEndOfChapter = options.isAtEndOfChapter
-      // }
-
-      // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
-      // @todo update cfi also whenever a resize occurs in the iframe
-      // - load
-      // - font loaded
-      // - resize
-      // future changes would potentially only be resize (easy to track) and font size family change.
-      // to track that we can have a hidden text element and track it and send event back
-      if (options.cfi === undefined) {
-        cfi = readingItemLocator.getCfi(pageIndex, readingItem)
-        Report.log(`pagination`, `cfi`, pageIndex, cfi)
-      } else {
-        cfi = options.cfi
+    },
+    getEndInfo() {
+      return {
+        pageIndex: endPageIndex,
+        absolutePageIndex: numberOfPagesPerItems
+          .slice(0, endReadingItemIndex)
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
+        cfi: endCfi,
+        numberOfPages: endNumberOfPages,
+        readingItemIndex: endReadingItemIndex,
       }
+    },
+    getTotalNumberOfPages: () => numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0),
+    updateTotalNumberOfPages: (readingItems: ReadingItem[]) => {
+      numberOfPagesPerItems = readingItems.map((item) => {
+        // Some pre-paginated first page can have blank page to push them on right/left to make
+        // it looks more like a real book
+        // if (index === 0 && !item.isReflowable) {
+        //   return acc + 1
+        // }
+        return getReadingItemNumberOfPages(item)
+      }, 0)
 
       subject.next({ event: 'change' })
     },
-    getCfi() {
-      return cfi
+    updateBeginAndEnd: (
+      begin: Parameters<typeof getInfoForUpdate>[0] & {
+        readingItemIndex: number,
+      },
+      end: Parameters<typeof getInfoForUpdate>[0] & {
+        readingItemIndex: number,
+      }
+    ) => {
+      const beginInfo = getInfoForUpdate(begin)
+      const endInfo = getInfoForUpdate(end)
+
+      beginPageIndex = beginInfo.pageIndex
+      beginNumberOfPages = beginInfo.numberOfPages
+      beginCfi = beginInfo.cfi
+      beginReadingItemIndex = begin.readingItemIndex
+
+      endPageIndex = endInfo.pageIndex
+      endNumberOfPages = endInfo.numberOfPages
+      endCfi = endInfo.cfi
+      endReadingItemIndex = end.readingItemIndex
+
+      subject.next({ event: 'change' })
     },
     $: subject.asObservable()
   }
-}
-
-export const getPageFromOffset = (offset: number, pageWidth: number, numberOfPages: number) => {
-  const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
-
-  if (offset <= 0) return 0
-
-  if (offset >= (numberOfPages * pageWidth)) return numberOfPages - 1
-
-  return Math.max(0, offsetValues.findIndex(offsetRange => offset < (offsetRange + pageWidth)))
 }
 
 export const getItemOffsetFromPageIndex = (pageWidth: number, pageIndex: number, itemWidth: number) => {
@@ -93,7 +140,6 @@ export const getNumberOfPages = (itemWidth: number, pageWidth: number) => {
   if ((pageWidth || 0) === 0 || (itemWidth || 0) === 0) return 1
   return Math.floor(Math.max(1, itemWidth / pageWidth))
 }
-
 
 export const getClosestValidOffsetFromApproximateOffsetInPages = (offset: number, pageWidth: number, itemWidth: number) => {
   const numberOfPages = getNumberOfPages(itemWidth, pageWidth)

@@ -41,6 +41,8 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
+type SubjectEvent = { event: 'selectionchange' | 'selectstart', data: Selection } | { event: 'contentLayoutChange', data: { isFirstLayout: boolean, isReady: boolean } }
+
 export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
@@ -48,12 +50,13 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   context: Context,
 }) => {
   const isReflowable = false
-  const subject = new Subject<{ event: 'selectionchange' | 'selectstart', data: Selection } | { event: 'layout', data: { isFirstLayout: boolean, isReady: boolean } }>()
+  const subject = new Subject<SubjectEvent>()
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item, context)
   const readingItemFrame = createReadingItemFrame(element, item, context)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
+  let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
   containerElement.appendChild(element)
   element.appendChild(loadingElement)
   let hooks: Hook[] = []
@@ -147,11 +150,13 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     memoizedElementDimensions = undefined
   }
 
-  const layout = ({ height, width }: { height: number, width: number }) => {
+  const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
     element.style.width = `${width}px`
     element.style.height = `${height}px`
 
     loadingElement.style.setProperty(`max-width`, `${context.getVisibleAreaRect().width}px`)
+
+    layoutInformation = newLayoutInformation
 
     setLayoutDirty()
   }
@@ -170,6 +175,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       y: adjustedY,
     }
   }
+
+  // const getLayoutInformation = () => layoutInformation
 
   readingItemFrame.registerHook({
     name: `onLoad`,
@@ -201,10 +208,11 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       selectionTracker.track(event.data)
     }
 
-    if (event.event === 'layout') {
+    if (event.event === 'contentLayoutChange') {
       if (event.data.isFirstLayout && event.data.isReady) {
         loadingElement.style.visibility = 'hidden'
       }
+      subject.next(event)
     }
   })
 
@@ -227,6 +235,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     element,
     loadingElement,
     isReflowable,
+    // shouldDisplaySpread,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     destroy: () => {
@@ -257,6 +266,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
       return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { } })
     },
+    // getLayoutInformation,
     selectionTracker,
     fingerTracker,
     $: subject,

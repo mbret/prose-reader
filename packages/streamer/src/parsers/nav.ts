@@ -43,8 +43,6 @@ const buildTOCFromNav = (doc: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { op
     navDataChildren = doc.descendantWithPath('body.section.nav.ol')?.children;
   }
 
-  // console.log(navDataChildren)
-
   if (navDataChildren && navDataChildren.length > 0) {
     navDataChildren
       .filter((li) => (li as XmlElement).name === 'li')

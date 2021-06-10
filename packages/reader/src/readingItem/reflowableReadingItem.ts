@@ -1,4 +1,3 @@
-import { Subscription } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { createCommonReadingItem } from "./commonReadingItem"
@@ -12,11 +11,15 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
   let readingItemFrame = commonReadingItem.readingItemFrame
 
-  const getDimensions = () => {
+  const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
     const pageSize = context.getPageSize()
     const horizontalMargin = context.getHorizontalMargin()
-    const columnWidth = pageSize.width - (horizontalMargin * 2)
+    let columnWidth = pageSize.width - (horizontalMargin * 2)
     const columnHeight = pageSize.height - (horizontalMargin * 2)
+
+    if (isUsingVerticalWriting) {
+      columnWidth = minimumWidth - (horizontalMargin * 2)
+    }
 
     return {
       columnHeight,
@@ -26,24 +29,13 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     }
   }
 
-  const applySize = () => {
+  const applySize = ({ minimumWidth, blankPagePosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-
-    /**
-     * if there is no frame it means the content is not active yet
-     * we will just use page to resize
-     */
-    if (!readingItemFrame?.getIsLoaded()) {
-      const { width, height } = context.getPageSize()
-      commonReadingItem.layout({ width, height })
-
-      return { width, height }
-    }
-
     const viewportDimensions = readingItemFrame.getViewportDimensions()
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
-    if (frameElement?.contentDocument && frameElement?.contentWindow) {
+
+    if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
@@ -63,15 +55,17 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
-        commonReadingItem.injectStyle(readingItemFrame, buildStyleWithMultiColumn(getDimensions()))
-        if (readingItemFrame.getWritingMode() === 'vertical-rl') {
+        const frameStyle = buildStyleWithMultiColumn(getDimensions(readingItemFrame.isUsingVerticalWriting(), minimumWidth))
+        commonReadingItem.injectStyle(readingItemFrame, frameStyle)
+
+        if (readingItemFrame.isUsingVerticalWriting()) {
           const pages = Math.ceil(
             frameElement.contentDocument.documentElement.scrollHeight / pageHeight
           )
           contentHeight = pages * pageHeight
 
           readingItemFrame.staticLayout({
-            width: contentWidth,
+            width: minimumWidth,
             height: contentHeight,
           })
         } else {
@@ -87,37 +81,44 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         }
       }
 
-      commonReadingItem.layout({ width: contentWidth, height: contentHeight })
+      const isFillingAllScreen = contentWidth % minimumWidth === 0
+
+      // when a reflow iframe does not fill the entire screen (when spread) we will
+      // enlarge the container to make sure no other reflow item starts on the same screen
+      if (!isFillingAllScreen) {
+        contentWidth = contentWidth + pageWidth
+        if (context.isRTL() && !commonReadingItem.isUsingVerticalWriting()) {
+          frameElement?.style.setProperty(`margin-left`, `${pageWidth}px`)
+        }
+      } else {
+        frameElement?.style.setProperty(`margin-left`, `0px`)
+      }
+
+      commonReadingItem.layout({ width: contentWidth, height: contentHeight, blankPagePosition, minimumWidth })
 
       return { width: contentWidth, height: contentHeight }
+    } else {
+      commonReadingItem.layout({ width: minimumWidth, height: pageHeight, blankPagePosition, minimumWidth })
     }
 
-    return { width: pageWidth, height: pageHeight }
+    return { width: minimumWidth, height: pageHeight }
   }
 
-  const layout = () => {
+  const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     // reset width of iframe to be able to retrieve real size later
     readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
     readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
-    return applySize()
+    return applySize(layoutInformation)
   }
 
   const unloadContent = () => {
     commonReadingItem.unloadContent()
   }
 
-  const commonReadingItemSubscription = commonReadingItem.readingItemFrame.$.subscribe((data) => {
-    if (data.event === 'layout') {
-      applySize()
-      commonReadingItem.$.next(data)
-    }
-  })
-
   const destroy = () => {
     commonReadingItem.destroy()
-    commonReadingItemSubscription.unsubscribe()
   }
 
   return {

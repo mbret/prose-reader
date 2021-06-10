@@ -45,7 +45,10 @@ const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
     pagination,
     manipulateContainer,
     manipulateReadingItems,
-    getFocusedReadingItem,
+    getFocusedReadingItemIndex,
+    getCurrentPosition,
+    getReadingItem,
+    locator,
     ...exposedReader
   } = reader
 

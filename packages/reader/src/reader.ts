@@ -32,6 +32,7 @@ export const createReader = ({ containerElement }: {
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
+  let containerManipulationCbList: (() => void)[] = []
   const readingOrderView = createReadingOrderView({
     containerElement: element,
     iframeEventBridgeElement,
@@ -121,8 +122,11 @@ export const createReader = ({ containerElement }: {
     readingOrderView.manipulateReadingItems(cb)
   }
 
-  const manipulateContainer = (cb: (container: HTMLElement) => void) => {
-    cb(element)
+  const manipulateContainer = (cb: (container: HTMLElement) => (() => void) | void) => {
+    const returnCb = cb(element)
+    if (returnCb) {
+      containerManipulationCbList.push(returnCb)
+    }
   }
 
   const readingOrderViewSubscription = readingOrderView.$
@@ -141,6 +145,8 @@ export const createReader = ({ containerElement }: {
    * instead of destroying it.
    */
   const destroy = () => {
+    containerManipulationCbList.forEach(cb => cb())
+    containerManipulationCbList = []
     readingOrderView?.destroy()
     readingOrderViewSubscription?.unsubscribe()
     paginationSubscription?.unsubscribe()
@@ -154,18 +160,20 @@ export const createReader = ({ containerElement }: {
     registerHook,
     manipulateReadingItems,
     manipulateContainer,
-    turnLeft: () => readingOrderView.turnLeft(),
-    turnRight: () => readingOrderView.turnRight(),
-    goToPageOfCurrentChapter: (pageIndex: number) => readingOrderView.goToPageOfCurrentChapter(pageIndex),
-    goTo: (spineIndexOrSpineItemIdOrCfi: string | number) => readingOrderView.goTo(spineIndexOrSpineItemIdOrCfi),
-    goToUrl: (url: string | URL) => readingOrderView.goToUrl(url),
-    getChapterInfo: () => readingOrderView?.getChapterInfo(),
-    getFocusedReadingItem: () => readingOrderView?.getFocusedReadingItem(),
-    getFocusedReadingItemIndex: () => readingOrderView?.getFocusedReadingItemIndex(),
-    getSelection: () => readingOrderView?.getSelection(),
-    isSelecting: () => readingOrderView?.isSelecting(),
+    turnLeft: readingOrderView.turnLeft,
+    turnRight: readingOrderView.turnRight,
+    goToPageOfCurrentChapter: readingOrderView.goToPageOfCurrentChapter,
+    goTo: readingOrderView.goTo,
+    goToUrl: readingOrderView.goToUrl,
+    getChapterInfo: readingOrderView.getChapterInfo,
+    getFocusedReadingItemIndex: readingOrderView.getFocusedReadingItemIndex,
+    getReadingItem: readingOrderView.getReadingItem,
+    getSelection: readingOrderView.getSelection,
+    isSelecting: readingOrderView.isSelecting,
     normalizeEvent: readingOrderView.normalizeEvent,
     getCfiInformation: readingOrderView.getCfiInformation,
+    locator: readingOrderView.locator,
+    getCurrentPosition: readingOrderView.getCurrentPosition,
     layout,
     load,
     destroy,

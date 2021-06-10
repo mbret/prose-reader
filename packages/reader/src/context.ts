@@ -20,7 +20,23 @@ export const createContext = () => {
   const marginTop = 0
   const marginBottom = 0
 
-  const shouldDisplaySpread = () => false
+  /**
+   * Global spread behavior
+   * @see http://idpf.org/epub/fxl/#property-spread
+   * @todo user setting
+   */
+  const shouldDisplaySpread = () => {
+    const { height, width } = visibleAreaRect
+    const isLandscape = width > height
+
+    // portrait only
+    if (!isLandscape && manifest?.renditionSpread === `portrait`) {
+      return true
+    }
+
+    // default auto behavior
+    return (isLandscape && (manifest?.renditionSpread === undefined || manifest?.renditionSpread === `auto` || manifest?.renditionSpread === `landscape` || manifest?.renditionSpread === `both`))
+  }
 
   return {
     load: (newManifest: Manifest, newLoadOptions: LoadOptions) => {
@@ -31,6 +47,7 @@ export const createContext = () => {
     getLoadOptions: () => loadOptions,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
+    shouldDisplaySpread,
     setVisibleAreaRect: (
       x: number,
       y: number,

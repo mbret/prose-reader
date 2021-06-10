@@ -20,30 +20,36 @@ export const createNavigator = ({ context, readingItemManager }: {
   const locator = createLocator({ context, readingItemManager })
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
+  const wrapPositionWithSafeEdge = (position: ReadingItemPosition) => {
 
-  const isWithinNavigableRange = (position: { x: number, y: number }) => {
+    // @todo use container width instead to increase performances
     const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
-    const distanceOfLastReadingItem = readingItemManager.getPositionOf(lastReadingItem || 0)
+    const distanceOfLastReadingItem = readingItemManager.getAbsolutePositionOf(lastReadingItem || 0)
     const maximumOffset = distanceOfLastReadingItem.end - context.getPageSize().width
 
-    // prevent to go outside of edges
-    if (position.x < 0 || (position.x > maximumOffset)) {
-      Report.log(NAMESPACE, `navigateToOffsetOrCfi`, `prevent due to out of bound offset`)
-      return false
+    return {
+      x: Math.min(Math.max(0, position.x), maximumOffset),
+      y: Math.max(0, position.y)
     }
+  }
 
-    return true
+  const getAdjustedPositionForSpread = ({ x, y }: { x: number, y: number }) => {
+    const isOffsetNotAtEdge = (x % context.getVisibleAreaRect().width) !== 0
+    const correctedX = isOffsetNotAtEdge ? x - context.getPageSize().width : x
+
+    return { x: correctedX, y }
   }
 
   const getNavigationForCfi = (cfi: string): NavigationEntry => {
     const readingItem = cfiHelper.getReadingItemFromCfi(cfi)
     if (!readingItem) {
-      Report.warn(`ReadingOrderView`, `unable to detect item id from cfi ${cfi}`)
+      Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {
-      const navigation = readingItemNavigator.getNavigationForCfi(cfi, readingItem)
-      const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(navigation, readingItem)
+      const readingItemNavigation = readingItemNavigator.getNavigationForCfi(cfi, readingItem)
+      const readingPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
-      return { ...readingOffset, readingItem }
+      // very important to always return a reading item since we want to focus on that particular one
+      return { ...getAdjustedPositionForSpread(readingPosition), readingItem }
     }
 
     return { x: 0, y: 0 }
@@ -53,27 +59,28 @@ export const createNavigator = ({ context, readingItemManager }: {
     const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
     const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
-    return readingOffset
+    return getAdjustedPositionForSpread(readingOffset)
   }
 
   const getNavigationForLastPage = (readingItem: ReadingItem): NavigationEntry => {
     const readingItemNavigation = readingItemNavigator.getNavigationForLastPage(readingItem)
-    const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+    const position = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
-    return readingOffset
+    return getAdjustedPositionForSpread(position)
   }
 
   const getNavigationForSpineIndexOrId = (indexOrId: number | string): NavigationEntry => {
     const readingItem = readingItemManager.get(indexOrId)
     if (readingItem) {
-      const readingOffset = locator.getReadingOrderViewOffsetFromReadingItem(readingItem)
-      return { ...readingOffset, readingItem }
+      const position = locator.getReadingOrderViewOffsetFromReadingItem(readingItem)
+
+      return { ...getAdjustedPositionForSpread(position), readingItem }
     }
 
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForRightPage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
     const readingItem = locator.getReadingItemFromOffset(position.x)
     const defaultNavigation = position
 
@@ -81,28 +88,27 @@ export const createNavigator = ({ context, readingItemManager }: {
       return defaultNavigation
     }
 
-    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
-    const readingItemNavigation = readingItemNavigator.getNavigationForRightPage(readingItemPosition, readingItem)
-    const isNewNavigationInCurrentItem = arePositionsDifferent(readingItemNavigation, readingItemPosition)
+    // translate viewport position into reading item local position
+    const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(position, readingItem)
+    // get reading item local position for right page
+    const readingItemNavigationForRightPage = readingItemNavigator.getNavigationForRightPage(readingItemPosition, readingItem)
+    // check both position to see if we moved out of it
+    const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigationForRightPage, readingItemPosition)
 
     if (!isNewNavigationInCurrentItem) {
-      let nextPosition = context.isRTL()
-        ? position.x - context.getPageSize().width
-        : position.x + context.getPageSize().width
-
-      if (isWithinNavigableRange({ x: nextPosition, y: 0 })) {
-        return { x: nextPosition, y: 0 }
-      }
+      return wrapPositionWithSafeEdge(
+        context.isRTL()
+          ? { x: position.x - context.getPageSize().width, y: 0 }
+          : { x: position.x + context.getPageSize().width, y: 0 }
+      )
     } else {
-      const readingOrderOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+      const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigationForRightPage, readingItem)
 
-      return readingOrderOffset
+      return readingOrderPosition
     }
-
-    return defaultNavigation
   }
 
-  const getNavigationForLeftPage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
     const readingItem = locator.getReadingItemFromOffset(position.x)
     const defaultNavigation = { ...position, readingItem }
 
@@ -110,25 +116,96 @@ export const createNavigator = ({ context, readingItemManager }: {
       return defaultNavigation
     }
 
-    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
+    const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(position, readingItem)
+    readingItemNavigator.getNavigationForCfi
     const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
-    const isNewNavigationInCurrentItem = arePositionsDifferent(readingItemNavigation, readingItemPosition)
+    const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigation, readingItemPosition)
 
     if (!isNewNavigationInCurrentItem) {
-      const nextPosition = context.isRTL()
-        ? position.x + context.getPageSize().width
-        : position.x - context.getPageSize().width
-
-      if (isWithinNavigableRange({ x: nextPosition, y: 0 })) {
-        return { x: nextPosition, y: 0 }
-      }
+      return wrapPositionWithSafeEdge(
+        context.isRTL()
+          ? { x: position.x + context.getPageSize().width, y: 0 }
+          : { x: position.x - context.getPageSize().width, y: 0 }
+      )
     } else {
       const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
-      return { ...readingOrderPosition, readingItem }
+      return readingOrderPosition
+    }
+  }
+
+  /**
+   * Very naive approach for spread. It could be optimized but by using this approach
+   * we do not add complexity to the code and use the current logic to handle it correctly.
+   * 
+   * @important
+   * Special case for vertical content, read content
+   */
+  const getNavigationForRightPage = (position: ReadingItemPosition): NavigationEntry => {
+    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x)
+
+    let navigation = getNavigationForRightSinglePage(position)
+
+    // when we move withing vertical content, because only y moves, we don't need two navigation
+    if (readingItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+      return getAdjustedPositionForSpread(navigation)
     }
 
-    return defaultNavigation
+    if (context.shouldDisplaySpread()) {
+      // in case of spread the entire screen is taken as one real page for vertical content
+      // in order to move out from it we add an extra page width.
+      // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
+      // for the next item in case it's also a vertical content
+      if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+        return getAdjustedPositionForSpread({
+          ...navigation,
+          x: context.isRTL()
+            ? navigation.x - context.getPageSize().width
+            : navigation.x + context.getPageSize().width
+        })
+      }
+
+      navigation = getNavigationForRightSinglePage(navigation)
+    }
+
+    return getAdjustedPositionForSpread(navigation)
+  }
+
+  /**
+   * Very naive approach for spread. It could be optimized but by using this approach
+   * we do not add complexity to the code and use the current logic to handle it correctly.
+   * 
+   * @important
+   * Special case for vertical content, read content
+   */
+  const getNavigationForLeftPage = (position: ReadingItemPosition): NavigationEntry => {
+    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x)
+
+    let navigation = getNavigationForLeftSinglePage(position)
+
+    // when we move withing vertical content, because only y moves, we don't need two navigation
+    if (readingItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+      return getAdjustedPositionForSpread(navigation)
+    }
+
+    if (context.shouldDisplaySpread()) {
+      // in case of spread the entire screen is taken as one real page for vertical content
+      // in order to move out from it we add an extra page width.
+      // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
+      // for the next item in case it's also a vertical content
+      if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+        return getAdjustedPositionForSpread({
+          ...navigation,
+          x: context.isRTL()
+            ? navigation.x + context.getPageSize().width
+            : navigation.x - context.getPageSize().width
+        })
+      }
+
+      navigation = getNavigationForLeftSinglePage(navigation)
+    }
+
+    return getAdjustedPositionForSpread(navigation)
   }
 
   const getNavigationForUrl = (url: string | URL): NavigationEntry & { url: URL } | undefined => {
@@ -146,7 +223,7 @@ export const createNavigator = ({ context, readingItemManager }: {
         if (readingItem) {
           const position = getNavigationForAnchor(validUrl.hash, readingItem)
 
-          return { ...position, url: validUrl }
+          return { ...getAdjustedPositionForSpread(position), url: validUrl }
         }
       }
     }
@@ -155,7 +232,9 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForAnchor = (anchor: string, readingItem: ReadingItem) => {
-    return locator.getReadingOrderViewPositionFromReadingOrderAnchor(anchor, readingItem)
+    const position = locator.getReadingOrderViewPositionFromReadingOrderAnchor(anchor, readingItem)
+
+    return getAdjustedPositionForSpread(position)
   }
 
   return {

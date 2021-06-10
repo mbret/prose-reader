@@ -1,4 +1,3 @@
-import { Subscription } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { createCommonReadingItem } from "./commonReadingItem"
@@ -22,24 +21,13 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     return { columnHeight, columnWidth, horizontalMargin }
   }
 
-  const applySize = () => {
+  const applySize = ({ blankPagePosition, minimumWidth }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-
-    /**
-     * if there is no frame it means the content is not active yet
-     * we will just use page to resize
-     */
-    if (!readingItemFrame?.getIsLoaded()) {
-      const { width, height } = context.getPageSize()
-      commonReadingItem.layout({ width, height })
-
-      return { width, height }
-    }
-
     const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation()
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
-    if (frameElement?.contentDocument && frameElement?.contentWindow) {
+
+    if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
@@ -56,7 +44,13 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         frameElement?.style.setProperty('--scale', `${computedScale}`)
         frameElement?.style.setProperty('position', `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
-        frameElement?.style.setProperty(`left`, `50%`)
+        frameElement?.style.setProperty(`left`,
+          blankPagePosition === `before`
+            ? context.isRTL() ? `25%` : `75%`
+            : blankPagePosition === `after`
+              ? context.isRTL() ? `75%` : `25%`
+              : `50%`
+        )
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
@@ -67,26 +61,22 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         })
       }
 
-      commonReadingItem.layout({ width: contentWidth, height: contentHeight })
+      commonReadingItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
 
-      return { width: contentWidth, height: contentHeight }
+      return { width: minimumWidth, height: contentHeight }
+    } else {
+      commonReadingItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
     }
 
-    return { width: pageWidth, height: pageHeight }
+    return { width: minimumWidth, height: pageHeight }
   }
 
-  const layout = () => applySize()
-
-  const commonReadingItemSubscription = commonReadingItem.readingItemFrame.$.subscribe((data) => {
-    if (data.event === 'layout') {
-      layout()
-      commonReadingItem.$.next(data)
-    }
-  })
+  const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
+    return applySize(layoutInformation)
+  }
 
   const destroy = () => {
     commonReadingItem.destroy()
-    commonReadingItemSubscription.unsubscribe()
   }
 
   return {

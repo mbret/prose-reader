@@ -41,9 +41,7 @@ const getChapterInfo = (path: string, tocItems: Manifest['nav']['toc']): Chapter
   }, undefined)
 }
 
-export const getPercentageEstimate = (context: Context, currentSpineIndex: number, pagination: Pagination) => {
-  const numberOfPages = pagination.getNumberOfPages()
-  const currentPageIndex = pagination.getPageIndex() || 0
+export const getPercentageEstimate = (context: Context, currentSpineIndex: number, numberOfPages: number, pageIndex: number) => {
   const readingOrderLength = context.getManifest()?.readingOrder.length || 0
   const estimateBeforeThisItem = context.getManifest()?.readingOrder
     .slice(0, currentSpineIndex)
@@ -53,12 +51,12 @@ export const getPercentageEstimate = (context: Context, currentSpineIndex: numbe
   // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
   // const progressWeightGap = (currentItemWeight + estimateBeforeThisItem) - estimateBeforeThisItem
 
-  const progressWithinThisItem = (currentPageIndex + 1) * (currentItemWeight / numberOfPages)
+  const progressWithinThisItem = (pageIndex + 1) * (currentItemWeight / numberOfPages)
   const totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
   // because the rounding of weight use a lot of decimals we will end up with
   // something like 0.999878 for the last page
-  if ((currentSpineIndex === readingOrderLength - 1) && (currentPageIndex === numberOfPages - 1)) {
+  if ((currentSpineIndex === readingOrderLength - 1) && (pageIndex === numberOfPages - 1)) {
     return 1
   }
 

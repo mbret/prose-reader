@@ -60,10 +60,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       if (allowReadingItemChange) {
         if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === 'before') {
           lastUserExpectedNavigation = { type: 'navigate-from-next-item' }
-          navigateTo(navigator.getNavigationForLastPage(newReadingItem))
+          navigateTo(navigation)
         } else {
           lastUserExpectedNavigation = { type: 'navigate-from-previous-item' }
-          navigateTo(navigator.getNavigationForPage(0, newReadingItem))
+          navigateTo(navigation)
         }
       }
     } else {
@@ -86,6 +86,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     turnTo(navigation, { allowReadingItemChange })
   })
 
+  // @todo it's wrong because we can be in two different chapter on same page for spread
   const goToPageOfCurrentChapter = (pageIndex: number) => {
     const readingItem = readingItemManager.getFocusedReadingItem()
 
@@ -159,7 +160,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   const adjustReadingOffsetPosition = (readingItem: ReadingItem, { shouldAdjustCfi }: { shouldAdjustCfi: boolean }) => {
     const currentViewportPosition = getCurrentPosition()
-    const lastCfi = pagination.getCfi()
+    const lastCfi = pagination.getBeginInfo().cfi
     let expectedReadingOrderViewPosition = currentViewportPosition
     let offsetInReadingItem = 0
 
@@ -205,7 +206,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
        */
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
-      const currentPageIndex = pagination.getPageIndex() || 0
+      const currentPageIndex = pagination.getBeginInfo().pageIndex || 0
       expectedReadingOrderViewPosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `use guess strategy`, {})
     }

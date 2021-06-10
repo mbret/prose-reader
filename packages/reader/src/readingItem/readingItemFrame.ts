@@ -12,12 +12,20 @@ type ManipulatableFrame = {
 }
 type Hook = { name: `onLoad`, fn: (manipulableFrame: ManipulatableFrame) => (() => void) | void }
 
+type SubjectEvent =
+  | { event: 'domReady', data: HTMLIFrameElement }
+  /**
+   * This is used as upstream layout change. This event is being listened to by upper app
+   * in order to layout again and adjust every element based on the new content.
+   */
+  | { event: 'contentLayoutChange', data: { isFirstLayout: boolean, isReady: boolean } }
+
 export const createReadingItemFrame = (
   parent: HTMLElement,
   item: Manifest['readingOrder'][number],
   context: Context,
 ) => {
-  const subject = new Subject<{ event: 'domReady', data: HTMLIFrameElement } | { event: 'layout', data: { isFirstLayout: boolean, isReady: boolean } }>()
+  const subject = new Subject<SubjectEvent>()
   let isLoaded = false
   let currentLoadingId = 0
   let loading = false
@@ -65,7 +73,7 @@ export const createReadingItemFrame = (
       hookDestroyFunctions.forEach(fn => fn && fn())
       frameElement?.remove()
       frameElement = undefined
-      subject.next({ event: 'layout', data: { isFirstLayout: false, isReady: false } })
+      subject.next({ event: 'contentLayoutChange', data: { isFirstLayout: false, isReady: false } })
     }
   }
 
@@ -73,6 +81,10 @@ export const createReadingItemFrame = (
     if (frameElement?.contentDocument && frameElement.contentDocument.body) {
       return frameElement?.contentWindow?.getComputedStyle(frameElement.contentDocument.body).writingMode as 'vertical-rl' | 'horizontal-tb' | undefined
     }
+  }
+
+  const isUsingVerticalWriting = () => {
+    return !!getWritingMode()?.startsWith(`vertical`)
   }
 
   function registerHook(hook: Hook) {
@@ -131,8 +143,8 @@ export const createReadingItemFrame = (
                   loading = false
 
                   // @todo hook onContentReady, dom is ready + first fonts are ready. we can assume is kind of already good enough
-                  
-                  subject.next({ event: 'layout', data: { isFirstLayout: true, isReady: true } })
+
+                  subject.next({ event: 'contentLayoutChange', data: { isFirstLayout: true, isReady: true } })
                 }
               })
 
@@ -171,6 +183,7 @@ export const createReadingItemFrame = (
       }
       return undefined
     },
+    isUsingVerticalWriting,
     getWritingMode,
     destroy: () => {
       unload()

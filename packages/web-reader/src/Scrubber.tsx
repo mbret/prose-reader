@@ -10,11 +10,10 @@ export const Scrubber: FC<{
   const isComic = useRecoilValue(isComicState)
   const pagination = useRecoilValue(paginationState)
   const manifest = useRecoilValue(manifestState)
-  const currentPage = isComic ? pagination?.begin.readingItemIndex : pagination?.begin.pageIndexInChapter
-  const totalApproximatePages = isComic ? pagination?.numberOfSpineItems : (pagination?.begin.numberOfPagesInChapter || 1)
+  const currentPage = isComic ? pagination?.end.absolutePageIndex : pagination?.end.pageIndexInChapter
+  const totalApproximatePages = isComic ? pagination?.numberOfTotalPages : (pagination?.begin.numberOfPagesInChapter || 1)
   const [value, setValue] = useState(currentPage || 0)
   const max = (totalApproximatePages || 0) - 1
-  // const step = !isComic ? 0.01 : 1
   const step = 1
 
   useEffect(() => {
@@ -25,9 +24,7 @@ export const Scrubber: FC<{
     return null
   }
 
-  const reverse = isComic 
-  ? manifest?.readingDirection === 'rtl'
-  : pagination?.spineItemReadingDirection === 'rtl'
+  const reverse = manifest?.readingDirection === 'rtl'
 
   return (
     <RcSlider
@@ -40,7 +37,6 @@ export const Scrubber: FC<{
       reverse={reverse}
       step={step}
       onAfterChange={(value) => {
-        console.log(value)
         onPageChange(Math.floor(value))
       }}
     />

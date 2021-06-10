@@ -1,7 +1,7 @@
 import { Report } from "../report"
 import { CFI, extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
-import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getPageFromOffset, getNumberOfPages } from "../pagination"
+import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getNumberOfPages } from "../pagination"
 import { ReadingItem } from "."
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 
@@ -38,6 +38,11 @@ export const createLocator = ({ context }: {
     }
   }
 
+  /**
+   * @important
+   * This calculation takes blank page into account, the iframe could be only one page but with a blank page
+   * positioned before. Resulting on two page index possible values (0 & 1).
+   */
   const getReadingItemPageIndexFromPosition = (position: ReadingItemPosition, readingItem: ReadingItem) => {
     const { width: itemWidth, height: itemHeight } = readingItem.getElementDimensions()
     const itemReadingDirection = readingItem.getReadingDirection()
@@ -50,14 +55,16 @@ export const createLocator = ({ context }: {
       offsetNormalizedForLtr = (itemWidth - offsetNormalizedForLtr) - context.getPageSize().width
     }
 
+
     if (readingItem.isUsingVerticalWriting()) {
       const numberOfPages = getNumberOfPages(itemHeight, pageHeight)
 
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
     } else {
       const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
+      const pageIndex = getPageFromOffset(offsetNormalizedForLtr, pageWidth, numberOfPages)
 
-      return getPageFromOffset(offsetNormalizedForLtr, pageWidth, numberOfPages)
+      return pageIndex
     }
   }
 
@@ -181,6 +188,16 @@ export const createLocator = ({ context }: {
     }
 
     return adjustedPosition
+  }
+
+  const getPageFromOffset = (offset: number, pageWidth: number, numberOfPages: number) => {
+    const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
+  
+    if (offset <= 0) return 0
+  
+    if (offset >= (numberOfPages * pageWidth)) return numberOfPages - 1
+  
+    return Math.max(0, offsetValues.findIndex(offsetRange => offset < (offsetRange + pageWidth)))
   }
 
   return {
