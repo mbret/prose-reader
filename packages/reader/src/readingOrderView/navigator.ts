@@ -20,8 +20,8 @@ export const createNavigator = ({ context, readingItemManager }: {
   const locator = createLocator({ context, readingItemManager })
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
+  
   const wrapPositionWithSafeEdge = (position: ReadingItemPosition) => {
-
     // @todo use container width instead to increase performances
     const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
     const distanceOfLastReadingItem = readingItemManager.getAbsolutePositionOf(lastReadingItem || 0)
@@ -157,12 +157,13 @@ export const createNavigator = ({ context, readingItemManager }: {
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
       if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
-        return getAdjustedPositionForSpread({
-          ...navigation,
-          x: context.isRTL()
-            ? navigation.x - context.getPageSize().width
-            : navigation.x + context.getPageSize().width
-        })
+        return getAdjustedPositionForSpread(
+          wrapPositionWithSafeEdge(
+            context.isRTL()
+              ? { ...navigation, x: navigation.x - context.getPageSize().width }
+              : { ...navigation, x: navigation.x + context.getPageSize().width }
+          )
+        )
       }
 
       navigation = getNavigationForRightSinglePage(navigation)
@@ -194,12 +195,13 @@ export const createNavigator = ({ context, readingItemManager }: {
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
       if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
-        return getAdjustedPositionForSpread({
-          ...navigation,
-          x: context.isRTL()
-            ? navigation.x + context.getPageSize().width
-            : navigation.x - context.getPageSize().width
-        })
+        return getAdjustedPositionForSpread(
+          wrapPositionWithSafeEdge(
+            context.isRTL()
+              ? { ...navigation, x: navigation.x + context.getPageSize().width }
+              : { ...navigation, x: navigation.x - context.getPageSize().width }
+          )
+        )
       }
 
       navigation = getNavigationForLeftSinglePage(navigation)
