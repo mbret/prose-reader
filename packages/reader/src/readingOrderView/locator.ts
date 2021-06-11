@@ -45,7 +45,7 @@ export const createLocator = ({ readingItemManager, context }: {
       x: Math.max(0, position.x - start),
       y: position.y
     }
-  })
+  }, { disable: true })
 
   /**
    * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when

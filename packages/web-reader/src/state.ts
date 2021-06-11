@@ -31,3 +31,8 @@ export const isComicState = selector({
     return manifest?.renditionLayout === 'pre-paginated' || manifest?.readingOrder.every(item => item.renditionLayout === 'pre-paginated')
   }
 })
+
+export const isMenuOpenState = atom({
+  key: `isMenuOpenState`,
+  default: false
+})

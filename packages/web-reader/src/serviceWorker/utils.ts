@@ -1,8 +1,8 @@
-import { URL_PREFIX } from "./constants"
+import { STREAMER_URL_PREFIX } from "./constants"
 
-const extractEpubName = (url: string) => {
+const extractEpubLocationFromUrl = (url: string) => {
   const { pathname } = new URL(url)
-  const urlWithoutPrefix = pathname.substring(`/${URL_PREFIX}/`.length)
+  const urlWithoutPrefix = pathname.substring(`/${STREAMER_URL_PREFIX}/`.length)
   const nextSlashIndex = urlWithoutPrefix.indexOf('/')
 
   if (nextSlashIndex !== -1) {
@@ -12,10 +12,18 @@ const extractEpubName = (url: string) => {
   return urlWithoutPrefix
 }
 
+export const getEpubUrlFromLocation = (epubLocation: string) =>{
+  try {
+    return atob(epubLocation)
+  } catch (e) {
+    return `${location.origin}/epubs/${epubLocation}`
+  }
+}
+
 export const extractInfoFromEvent = (event: any) => {
-  const uri = new URL(event.request.url)
-  const epubFileName = extractEpubName(event.request.url)
-  const epubUrl = decodeURI(`${uri.origin}/epubs/${epubFileName}`)
+  const epubLocation = extractEpubLocationFromUrl(event.request.url)
+  const epubFileName = epubLocation
+  const epubUrl = getEpubUrlFromLocation(epubLocation)
 
   return {
     epubUrl,
@@ -27,5 +35,5 @@ export const getResourcePath = (event: any) => {
   const url = new URL(event.request.url)
   const { epubFileName } = extractInfoFromEvent(event)
 
-  return decodeURIComponent(url.pathname.replace(`/${URL_PREFIX}/${epubFileName}/`, ``))
+  return decodeURIComponent(url.pathname.replace(`/${STREAMER_URL_PREFIX}/${epubFileName}/`, ``))
 }

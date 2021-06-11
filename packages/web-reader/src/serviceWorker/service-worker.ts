@@ -1,6 +1,6 @@
 import { loadEpub } from './loadEpub';
 import { getResourceFromArchive, getManifestFromArchive } from '@oboku/reader-streamer'
-import { URL_PREFIX } from './constants';
+import { STREAMER_URL_PREFIX } from './constants';
 import { extractInfoFromEvent, getResourcePath } from './utils';
 
 // @todo typing
@@ -37,10 +37,12 @@ worker.addEventListener('activate', function (event: any) {
 worker.addEventListener('fetch', (event: any) => {
   const url = new URL(event.request.url)
 
-  if (url.pathname.startsWith(`/${URL_PREFIX}`)) {
+  if (url.pathname.startsWith(`/${STREAMER_URL_PREFIX}`)) {
 
     const { epubUrl, epubFileName } = extractInfoFromEvent(event)
 
+    console.warn(epubUrl, epubFileName)
+    
     event.respondWith((async () => {
       try {
         const archive = await loadEpub(epubUrl)
@@ -49,7 +51,7 @@ worker.addEventListener('fetch', (event: any) => {
          * Hit to manifest
          */
         if (url.pathname.endsWith(`/manifest`)) {
-          return await getManifestFromArchive(archive, { baseUrl: `${url.origin}/${URL_PREFIX}/${epubFileName}` })
+          return await getManifestFromArchive(archive, { baseUrl: `${url.origin}/${STREAMER_URL_PREFIX}/${epubFileName}` })
         }
 
         /**

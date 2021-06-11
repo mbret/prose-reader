@@ -1,1 +1,1 @@
-export const URL_PREFIX = `reader`
+export const STREAMER_URL_PREFIX = `streamer`

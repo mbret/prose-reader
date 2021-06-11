@@ -1,47 +1,39 @@
 import React, { useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { createGestureHandler } from "./gesture";
+import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
-import { composeEnhancer, Manifest } from "@oboku/reader";
+import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from './QuickMenu';
-import { bookReadyState, isComicState, manifestState, paginationState } from './state';
+import { bookReadyState, isComicState, isMenuOpenState, manifestState, paginationState } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
 import { ReaderInstance } from './types';
 import { useBookmarks } from './useBookmarks';
 import { useReader } from './ReaderProvider';
 import { useManifest } from './useManifest';
+import { useParams } from 'react-router';
+import { BookError } from './BookError';
+import { getEpubUrlFromLocation } from './serviceWorker/utils';
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
+  const { url } = useParams<{ url: string }>();
   const fontsSettings = useRecoilValue(fontsSettingsState)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const reader = useReader()
-  const [gestureHandler, setGestureHandler$] = useState<ReturnType<typeof createGestureHandler> | undefined>(undefined)
   const setManifestState = useSetRecoilState(manifestState)
+  const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const isComic = useRecoilValue(isComicState)
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
+  const isMenuOpen = useRecoilValue(isMenuOpenState)
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const epubUrl = urlParams.get(`epub`);
+  const { manifest, error: manifestError } = useManifest(url)
 
-  const manifest = useManifest(epubUrl || ``)
+  useGestureHandler(container)
 
   // compose final enhancer
   const readerEnhancer = bookmarksEnhancer ? composeEnhancer(bookmarksEnhancer) : undefined
-
-  useEffect(() => {
-    const subscription = gestureHandler?.$?.subscribe(({ event }) => {
-      if (event === 'tap') {
-        // if (reader?.magnifier.isActive()) return
-        setIsMenuOpen(!isMenuOpen)
-      }
-    })
-
-    return () => subscription?.unsubscribe()
-  }, [gestureHandler, isMenuOpen])
 
   useEffect(() => {
     window.addEventListener(`resize`, () => {
@@ -79,7 +71,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       paginationSubscription?.unsubscribe()
       linksSubscription?.unsubscribe()
     }
-  }, [reader, gestureHandler, setBookReady, setPaginationState])
+  }, [reader, setBookReady, setPaginationState])
 
   useEffect(() => {
     if (!reader || !manifest) return
@@ -105,8 +97,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           width: `100vw`,
         }}
         ref={ref => {
-          if (ref && !gestureHandler && reader) {
-            setGestureHandler$(createGestureHandler(ref, reader))
+          if (ref) {
+            setContainer(ref)
           }
         }}
       >
@@ -126,7 +118,10 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
             enhancer={readerEnhancer}
           />
         )}
-        {!bookReady && (
+        {manifestError && (
+          <BookError url={getEpubUrlFromLocation(url)} />
+        )}
+        {!bookReady && !manifestError && (
           <Loading />
         )}
       </div>
