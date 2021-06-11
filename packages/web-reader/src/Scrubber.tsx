@@ -3,10 +3,10 @@ import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { useRecoilValue } from 'recoil';
 import { isComicState, paginationState, manifestState } from './state';
+import { useReader } from './ReaderProvider';
 
-export const Scrubber: FC<{
-  onPageChange: (index: number) => void
-}> = ({ onPageChange }) => {
+export const Scrubber = () => {
+  const reader = useReader()
   const isComic = useRecoilValue(isComicState)
   const pagination = useRecoilValue(paginationState)
   const manifest = useRecoilValue(manifestState)
@@ -32,12 +32,18 @@ export const Scrubber: FC<{
       max={max}
       min={0}
       onChange={value => {
+        console.log(value)
         setValue(value)
       }}
       reverse={reverse}
       step={step}
       onAfterChange={(value) => {
-        onPageChange(Math.floor(value))
+        const pageIndex = Math.floor(value)
+        if (isComic) {
+          reader?.goTo(pageIndex)
+        } else {
+          reader?.goToPageOfCurrentChapter(pageIndex)
+        }
       }}
     />
   );

@@ -7,9 +7,8 @@ import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, manifestState, paginationState } from './state'
 
-export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
+export const QuickMenu = ({ open, onReadingItemChange }: {
   open: boolean,
-  onPageChange: (index: number) => void,
   onReadingItemChange: (index: number) => void,
 }) => {
   const history = useHistory()
@@ -52,7 +51,13 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           <div style={{
             color: 'white',
           }}>
-            <Button onClick={() => history.goBack()}>{`<`}</Button>
+            <Button onClick={() => {
+              if (window.history.state === null && history.location.pathname !== `'/`) {
+                history.replace(`'/`)
+              } else {
+                history.goBack()
+              }
+            }}>{`<`}</Button>
           </div>
           <div style={{
             color: 'white',
@@ -133,7 +138,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
                 )}
               </div>
             )}
-            <Scrubber onPageChange={onPageChange} />
+            <Scrubber />
           </div>
           <div style={{
             paddingRight: 10

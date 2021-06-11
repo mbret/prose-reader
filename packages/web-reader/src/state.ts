@@ -1,5 +1,6 @@
-import { atom, selector } from "recoil";
+import { atom, selector, useRecoilCallback } from "recoil";
 import { Reader, Manifest } from "@oboku/reader";
+import { useEffect } from "react";
 
 export const bookTitleState = selector({
   key: `bookTitleState`,
@@ -36,3 +37,20 @@ export const isMenuOpenState = atom({
   key: `isMenuOpenState`,
   default: false
 })
+
+const statesToReset = [
+  isMenuOpenState,
+  paginationState,
+  manifestState,
+  bookReadyState,
+]
+
+export const useResetStateOnUnMount = () => {
+  const resetStates = useRecoilCallback(({ reset }) => () => {
+    statesToReset.forEach(state => reset(state))
+  }, [])
+
+  useEffect(() => {
+    return () => resetStates()
+  }, [resetStates])
+}

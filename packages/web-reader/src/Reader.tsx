@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from './QuickMenu';
-import { bookReadyState, isComicState, isMenuOpenState, manifestState, paginationState } from './state';
+import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from './state';
 import { FontsSettings, fontsSettingsState } from './FontsSettings'
 import { Loading } from './Loading';
 import { ReaderInstance } from './types';
@@ -22,7 +22,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
-  const isComic = useRecoilValue(isComicState)
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
@@ -34,6 +33,12 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
 
   // compose final enhancer
   const readerEnhancer = bookmarksEnhancer ? composeEnhancer(bookmarksEnhancer) : undefined
+
+  const onPaginationChange: ComponentProps<typeof ReactReader>['onPaginationChange'] = (info) => {
+    localStorage.setItem(`cfi`, info?.begin.cfi || ``)
+    setPaginationState(info)
+    console.warn(`foo.pagination.change`, info?.begin.readingItemIndex)
+  }
 
   useEffect(() => {
     window.addEventListener(`resize`, () => {
@@ -59,16 +64,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       }
     })
 
-    const paginationSubscription = reader?.pagination$.subscribe(data => {
-      if (data.event === 'change') {
-        localStorage.setItem(`cfi`, reader.getPaginationInfo()?.begin.cfi || ``)
-        return setPaginationState(reader.getPaginationInfo())
-      }
-    })
-
     return () => {
       readerSubscription$?.unsubscribe()
-      paginationSubscription?.unsubscribe()
       linksSubscription?.unsubscribe()
     }
   }, [reader, setBookReady, setPaginationState])
@@ -83,11 +80,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     return () => reader?.destroy()
   }, [reader])
 
-  useEffect(() => {
-    return () => {
-      setBookReady(false)
-    }
-  }, [setBookReady])
+  useResetStateOnUnMount()
 
   const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
 
@@ -116,6 +109,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
               cfi: localStorage.getItem(`cfi`) || undefined,
               numberOfAdjacentSpineItemToPreLoad: manifest?.renditionLayout === 'pre-paginated' ? 1 : 0
             }}
+            onPaginationChange={onPaginationChange}
             options={{
               fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
               lineHeight: storedLineHeight || undefined,
@@ -136,13 +130,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
         onReadingItemChange={index => {
           reader?.goTo(index)
         }}
-        onPageChange={pageIndex => {
-          if (isComic) {
-            reader?.goTo(pageIndex)
-          } else {
-            reader?.goToPageOfCurrentChapter(pageIndex)
-          }
-        }} />
+      />
       {fontsSettings && reader && <FontsSettings reader={reader} />}
     </>
   )

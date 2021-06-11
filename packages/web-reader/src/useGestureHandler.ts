@@ -10,24 +10,33 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
   useEffect(() => {
     const hammer = new Hammer(container || document.body)
-    // let hammer: HammerManager | undefined
-
     hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
     hammer.get('pinch').set({ enable: true })
     hammer.get('press').set({ time: 500 })
+    
     hammer.on('tap', function (ev) {
       handleSingleTap(ev)
     })
 
     hammer?.on('panmove panstart panend', onPanMove)
 
+    /**
+     * @important
+     * For some reason, when rapidly clicking on the edges and the navigation happens we also have this
+     * event being dispatched. This is a false positive since we are not actually swiping. My guess is that
+     * somehow hammer has some problem dealing with iframe changing around right after clicking.
+     * Luckily the velocity is usually below 1
+     * 
+     * @todo
+     * Understand the above behavior, try to fix it or come up with solid workaround.
+     */
     function onPanMove(ev: HammerInput) {
       if (ev.isFinal && !reader?.isSelecting()) {
         const velocity = ev.velocityX
-        if (velocity < -0.5) {
+        if (velocity < -1) {
           reader?.turnRight()
         }
-        if (velocity > 0.5) {
+        if (velocity > 1) {
           reader?.turnLeft()
         }
       }
