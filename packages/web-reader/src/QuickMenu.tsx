@@ -87,7 +87,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
               (manifest?.readingDirection === 'ltr' && currentReadingItemIndex > 0)
               || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
             ) && (
-                <button onClick={_ => reader?.goToLeftSpineItem()}>{`<<`}</button>
+                <Button onClick={_ => reader?.goToLeftSpineItem()}>{`<<`}</Button>
               )}
           </div>
           <div style={{

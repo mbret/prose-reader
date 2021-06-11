@@ -5,9 +5,15 @@ export type Context = ReturnType<typeof createContext>
 
 export type ContextObservableEvents = {}
 
-export const createContext = () => {
+type Settings = { forceSinglePageMode: boolean }
+
+export const createContext = (initialSettings: Partial<Settings>) => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
+  let settings: Settings = {
+    forceSinglePageMode: false,
+    ...initialSettings
+  }
   const subject = new Subject<ContextObservableEvents>()
   const visibleAreaRect = {
     width: 0,
@@ -29,6 +35,8 @@ export const createContext = () => {
     const { height, width } = visibleAreaRect
     const isLandscape = width > height
 
+    if (settings.forceSinglePageMode) return false
+    
     // portrait only
     if (!isLandscape && manifest?.renditionSpread === `portrait`) {
       return true
@@ -38,13 +46,22 @@ export const createContext = () => {
     return (isLandscape && (manifest?.renditionSpread === undefined || manifest?.renditionSpread === `auto` || manifest?.renditionSpread === `landscape` || manifest?.renditionSpread === `both`))
   }
 
+  const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
+    manifest = newManifest
+    loadOptions = newLoadOptions
+  }
+
+  const isRTL = () => manifest?.readingDirection === 'rtl'
+
+  const setSettings = (newSettings: Partial<typeof settings>) => {
+    settings = { ...settings, ...newSettings }
+  }
+
   return {
-    load: (newManifest: Manifest, newLoadOptions: LoadOptions) => {
-      manifest = newManifest
-      loadOptions = newLoadOptions
-    },
-    isRTL: () => manifest?.readingDirection === 'rtl',
+    load,
+    isRTL,
     getLoadOptions: () => loadOptions,
+    setSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
     shouldDisplaySpread,

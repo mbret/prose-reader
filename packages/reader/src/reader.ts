@@ -23,12 +23,13 @@ type Hooks = {
   [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onCreated' }>
 }
 
-export const createReader = ({ containerElement }: {
-  containerElement: HTMLElement
+export const createReader = ({ containerElement, ...settings }: {
+  containerElement: HTMLElement,
+  forceSinglePageMode?: boolean
 }) => {
   const subject = new Subject<{ type: 'iframe', data: HTMLIFrameElement } | { type: 'ready' } | { type: `layoutUpdate` }>()
   const paginationSubject = new Subject<{ event: 'change' }>()
-  const context = createBookContext()
+  const context = createBookContext(settings)
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)

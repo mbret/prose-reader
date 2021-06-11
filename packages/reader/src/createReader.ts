@@ -8,23 +8,25 @@ import { createReader as createInternalReader } from './reader'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
+type InternalReaderCreateParameter = Parameters<typeof createInternalReader>[0]
+
 export type Enhancer<Ext = {}> = (next: EnhancerCreator<Ext>) => EnhancerCreator<Ext>
 
+type Options = InternalReaderCreateParameter & {
+  containerElement: HTMLElement,
+  fontScale?: number,
+  lineHeight?: number,
+  fontWeight?: typeof FONT_WEIGHT[number],
+  fontJustification?: typeof FONT_JUSTIFICATION[number],
+  theme?: Theme,
+}
+
 type EnhancerCreator<Ext = {}> = (
-  options: {
-    containerElement: HTMLElement,
-    fontScale?: number,
-    lineHeight?: number,
-    fontWeight?: typeof FONT_WEIGHT[number],
-    fontJustification?: typeof FONT_JUSTIFICATION[number],
-    theme?: Theme,
-  },
+  options: Options,
 ) => ReaderPublicApi & Ext
 
 function createReader<Ext>(
-  options: {
-    containerElement: HTMLElement,
-  },
+  options: InternalReaderCreateParameter,
   enhancer?: Enhancer<Ext>
 ): ReaderPublicApi & Ext {
   if (enhancer) return enhancer(createReader)(options) as ReaderPublicApi & Ext
@@ -68,15 +70,6 @@ const internalEnhancer = composeEnhancer(
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>
-
-type Options = {
-  containerElement: HTMLElement,
-  fontScale?: number,
-  lineHeight?: number,
-  fontWeight?: typeof FONT_WEIGHT[number],
-  fontJustification?: typeof FONT_JUSTIFICATION[number],
-  theme?: Theme,
-}
 
 export function createReaderWithEnhancers(options: Options): Omit<ReturnType<InternalEnhancer>, keyof RemovedKeys>
 export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>): Omit<ReturnType<InternalEnhancer> & Ext, keyof RemovedKeys>
