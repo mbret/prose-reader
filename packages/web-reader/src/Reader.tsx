@@ -83,6 +83,12 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     return () => reader?.destroy()
   }, [reader])
 
+  useEffect(() => {
+    return () => {
+      setBookReady(false)
+    }
+  }, [setBookReady])
+
   const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
 
   // debug
@@ -93,8 +99,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     <>
       <div
         style={{
-          height: `100vh`,
-          width: `100vw`,
+          height: `100%`,
+          width: `100%`,
         }}
         ref={ref => {
           if (ref) {
