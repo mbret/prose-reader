@@ -11,17 +11,23 @@ import { Loading } from './Loading';
 import { ReaderInstance } from './types';
 import { useBookmarks } from './useBookmarks';
 import { useReader } from './ReaderProvider';
+import { useManifest } from './useManifest';
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
   const fontsSettings = useRecoilValue(fontsSettingsState)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const reader = useReader()
   const [gestureHandler, setGestureHandler$] = useState<ReturnType<typeof createGestureHandler> | undefined>(undefined)
-  const [manifest, setManifestState] = useRecoilState(manifestState)
+  const setManifestState = useSetRecoilState(manifestState)
   const isComic = useRecoilValue(isComicState)
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const epubUrl = urlParams.get(`epub`);
+
+  const manifest = useManifest(epubUrl || ``)
 
   // compose final enhancer
   const readerEnhancer = bookmarksEnhancer ? composeEnhancer(bookmarksEnhancer) : undefined
@@ -76,37 +82,10 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   }, [reader, gestureHandler, setBookReady, setPaginationState])
 
   useEffect(() => {
-    if (!reader) return
+    if (!reader || !manifest) return
 
-    (async () => {
-      try {
-        const bookManifest = await fetchManifest()
-
-        // bookManifest.readingDirection = 'rtl'
-
-        setManifestState(bookManifest)
-
-        console.warn('MANIFEST', { bookManifest, cfi: localStorage.getItem(`cfi`) })
-        // console.warn('MANIFEST', { bookManifest, cfi: `epubcfi(/2/4/20/16|[oboku~anchor~chapter1]|[oboku~offset~0])` })
-        reader.load(bookManifest, {
-          fetchResource: 'http',
-
-          numberOfAdjacentSpineItemToPreLoad: 0,
-        }, localStorage.getItem(`cfi`) || undefined)
-        // })
-        // }, `epubcfi(/2/4/2/2/2|[oboku~anchor~spi_ad]|[oboku~offset~0])`)
-        // }, `epubcfi(/2/4/10/2|[oboku~anchor~chapter1]|[oboku~offset~0])`)
-        // }, `epubcfi(/2/4/20/16|[oboku~anchor~chapter1]|[oboku~offset~0])`)
-        // }, `epubcfi(/2/4/16/16|[oboku~anchor~chapter1]|[oboku~offset~0])`)
-        // }, `epubcfi(/2/4/2/1|[oboku~anchor~chapter1]|[oboku~offset~9])`)
-        // reader.load(bookManifest, `epubcfi(/0[oboku:id-id2629773])`)
-        // reader.load(bookManifest, 3)
-        // reader.load(bookManifest, `epubcfi(/2/4[oboku:Vol.04 Ch.0022.1 (gb) [Sense Scans]/004.jpg])`)
-      } catch (e) {
-        console.error(e)
-      }
-    })()
-  }, [setManifestState, reader])
+    setManifestState(manifest)
+  }, [setManifestState, reader, manifest])
 
   useEffect(() => {
     return () => reader?.destroy()
@@ -135,10 +114,14 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           <ReactReader
             manifest={manifest}
             onReader={onReader}
+            loadOptions={{
+              cfi: localStorage.getItem(`cfi`) || undefined,
+              numberOfAdjacentSpineItemToPreLoad: 0
+            }}
             options={{
               fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
               lineHeight: storedLineHeight || undefined,
-              theme: `sepia`
+              theme: `sepia`,
             }}
             enhancer={readerEnhancer}
           />
@@ -162,14 +145,4 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       {fontsSettings && reader && <FontsSettings reader={reader} />}
     </>
   )
-}
-
-const fetchManifest = async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const epubPath = urlParams.get(`epub`);
-
-  const response = await fetch(`http://localhost:9000/reader/${epubPath}/manifest`)
-  const bookManifest: Manifest = await response.json()
-
-  return bookManifest
 }
