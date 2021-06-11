@@ -1,9 +1,12 @@
 import xmldoc, { XmlElement } from 'xmldoc'
 import { Archive } from '../archives';
-import { Manifest } from '@oboku/reader'
+import type { Manifest } from '@oboku/reader/src/types/Manifest'
+
+type Toc= Manifest['nav']['toc']
+type TocItem = Manifest['nav']['toc'][number]
 
 const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePath: string, baseUrl: string }) => {
-  const chp: Manifest['nav']['toc'][number] = {
+  const chp: TocItem = {
     contents: [],
     path: ``,
     href: ``,
@@ -34,7 +37,7 @@ const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePa
 };
 
 const buildTOCFromNav = (doc: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { opfBasePath: string, baseUrl: string }) => {
-  const toc: Manifest['nav']['toc'] = [];
+  const toc: Toc = [];
 
   let navDataChildren;
   if (doc.descendantWithPath('body.nav.ol')) {
@@ -68,7 +71,7 @@ const parseTocFromNavPath = async (opfXmlDoc: xmldoc.XmlDocument, archive: Archi
 
 const extractNcxChapter = (point: xmldoc.XmlElement, { opfBasePath, baseUrl }: { opfBasePath: string, baseUrl: string }) => {
   const src = point?.childNamed('content')?.attr.src || ''
-  const out: Manifest['nav']['toc'][number] = {
+  const out: TocItem = {
     title: point?.descendantWithPath('navLabel.text')?.val || '',
     path: opfBasePath ? `${opfBasePath}/${src}` : `${src}`,
     href: opfBasePath ? `${baseUrl}/${opfBasePath}/${src}` : `${baseUrl}/${src}`,

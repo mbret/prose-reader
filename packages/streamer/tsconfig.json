@@ -15,5 +15,5 @@
     "noUncheckedIndexedAccess": true,
     "declaration": true
   },
-  "exclude": ["webpack.config.js", "**/dist", "../../**/dist"]
+  "exclude": ["webpack.config.js", "**/dist"]
 }

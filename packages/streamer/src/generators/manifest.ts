@@ -1,7 +1,7 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
 import { getArchiveOpfInfo, Archive } from '../archives'
-import { Manifest } from '@oboku/reader'
+import type { Manifest } from '@oboku/reader/src/types/Manifest'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
 

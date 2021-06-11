@@ -1,4 +1,4 @@
-type TocItem = {
+export type TocItem = {
   title: string,
   path: string,
   contents: TocItem[],
