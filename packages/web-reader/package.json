@@ -7,7 +7,7 @@
   "scripts": {
     "start": "webpack serve --config ./webpack.config.js",
     "build": "webpack build --config ./webpack.config.js",
-    "build-reader": "webpack build --config ./webpack/webpack.reader.config.js",
+    "build-vercel": "yarn tsc && yarn build",
     "watch": "nodemon"
   },
   "dependencies": {

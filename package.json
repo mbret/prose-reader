@@ -10,7 +10,7 @@
   "license": "MIT",
   "scripts": {
     "start": "lerna exec --parallel -- yarn start",
-    "publish-packages": "lerna publish",
+    "publish-packages": "yarn tsc && lerna publish",
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna exec --parallel -- yarn lint",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"

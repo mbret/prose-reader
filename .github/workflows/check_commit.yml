@@ -1,0 +1,25 @@
+name: check_commit
+
+on: [push, pull_request]
+
+jobs:
+  release-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.4
+        with:
+          node-version: '12'
+      - uses: actions/checkout@v2
+
+      - name: Checkout release branch
+        run: git checkout -b release
+
+      - name: Install
+        run: |
+          yarn
+
+      - name: Check typescript
+        run: |
+          yarn tsc
