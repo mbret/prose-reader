@@ -1,5 +1,7 @@
 import React from 'react'
+import { useHistory } from 'react-router'
 import { useRecoilValue } from 'recoil'
+import { Button } from './common/Button'
 import { useToggleFontsSettings } from './FontsSettings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
@@ -10,6 +12,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
   onPageChange: (index: number) => void,
   onReadingItemChange: (index: number) => void,
 }) => {
+  const history = useHistory()
   const reader = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
@@ -47,8 +50,10 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           justifyContent: 'space-around',
         }}>
           <div style={{
-
-          }}></div>
+            color: 'white',
+          }}>
+            <Button onClick={() => history.goBack()}>{`<`}</Button>
+          </div>
           <div style={{
             color: 'white',
             // flex: 1
@@ -58,7 +63,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
           <div style={{
 
           }}>
-            <button onClick={toggleFontsSettings}>aA</button>
+            <Button onClick={toggleFontsSettings}>aA</Button>
           </div>
         </div>
       )}
@@ -137,7 +142,7 @@ export const QuickMenu = ({ open, onPageChange, onReadingItemChange }: {
               (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
               || (manifest?.readingDirection !== 'ltr' && currentReadingItemIndex > 0)
             ) && (
-                <button onClick={_ => reader?.goToRightSpineItem()}>{`>>`}</button>
+                <Button onClick={_ => reader?.goToRightSpineItem()}>{`>>`}</Button>
               )}
           </div>
         </div>
