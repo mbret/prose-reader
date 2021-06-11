@@ -119,7 +119,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
             options={{
               fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
               lineHeight: storedLineHeight || undefined,
-              theme: `sepia`,
+              theme: undefined,
             }}
             enhancer={readerEnhancer}
           />
