@@ -108,7 +108,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
             onReader={onReader}
             loadOptions={{
               cfi: localStorage.getItem(`cfi`) || undefined,
-              numberOfAdjacentSpineItemToPreLoad: 0
+              numberOfAdjacentSpineItemToPreLoad: manifest?.renditionLayout === 'pre-paginated' ? 1 : 0
             }}
             options={{
               fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
