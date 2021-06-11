@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "webpack serve --config ./webpack.config.js",
-    "build": "yarn build-reader && yarn build-streamer",
+    "build": "webpack build --config ./webpack.config.js",
     "build-reader": "webpack build --config ./webpack/webpack.reader.config.js",
     "watch": "nodemon"
   },
