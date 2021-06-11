@@ -1,6 +1,6 @@
 {
   "name": "@oboku/web-reader",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
