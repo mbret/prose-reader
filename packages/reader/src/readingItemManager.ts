@@ -90,6 +90,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     subject.next({ event: 'focus', data: readingItemToFocus })
   }
 
+  // @todo analyze poor performances
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
