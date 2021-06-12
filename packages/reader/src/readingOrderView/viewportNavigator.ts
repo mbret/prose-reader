@@ -31,11 +31,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     | { type: 'navigate-from-anchor', data: string }
     = undefined
 
+  /**
+   * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
+   * for remark about flicker / fonts smoothing
+   */
   const adjustReadingOffset = Report.measurePerformance(`adjustReadingOffset`, 10, ({ x, y }: { x: number, y: number }) => {
     if (context.isRTL()) {
-      element.style.transform = `translateX(${x}px) translateY(-${y}px)`
+      element.style.transform = `translate3d(${x}px, -${y}px, 0)`
     } else {
-      element.style.transform = `translateX(-${x}px) translateY(-${y}px)`
+      element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
     }
   })
 
