@@ -103,7 +103,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             <div style={{
               color: 'white'
             }}>
-              {`Progression: ${(pagination?.percentageEstimateOfBook || 0) * 100}%`}
+              {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
             </div>
             <div style={{
               color: 'white'

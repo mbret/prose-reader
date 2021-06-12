@@ -96,7 +96,7 @@ export const paginationEnhancer: Enhancer<{
          * It is recommended to use this progress only for reflow books. For pre-paginated books
          * the number of pages and current index can be used instead since 1 page = 1 chapter. 
          */
-        percentageEstimateOfBook: getPercentageEstimate(context, paginationBegin.readingItemIndex ?? 0, paginationEnd.numberOfPages, paginationEnd.pageIndex || 0),
+        percentageEstimateOfBook: getPercentageEstimate(context, paginationEnd.readingItemIndex ?? 0, paginationEnd.numberOfPages, paginationEnd.pageIndex || 0),
         numberOfTotalPages: pagination.getTotalNumberOfPages(),
         // chaptersOfBook: number;
         // chapter: string;
