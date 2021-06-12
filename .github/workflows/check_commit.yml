@@ -3,7 +3,7 @@ name: check_commit
 on: [push, pull_request]
 
 jobs:
-  release-server:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +19,10 @@ jobs:
       - name: Install
         run: |
           yarn
+
+      - name: Install
+        run: |
+          yarn build-core
 
       - name: Check typescript
         run: |
