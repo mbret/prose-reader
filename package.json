@@ -11,7 +11,7 @@
   "scripts": {
     "start": "lerna exec --parallel -- yarn start",
     "publish-packages": "yarn tsc && lerna publish",
-    "build-core": "cd packages/reader && yarn build && cd ../streamer && yarn build && cd ../react && yarn build && cd ../reader-enhancer-bookmarks && yarn build",
+    "build-core": "cd packages/reader && yarn build && cd ../streamer && yarn build && cd ../react && yarn build && cd ../enhancer-bookmarks && yarn build",
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna exec --parallel -- yarn lint",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"
