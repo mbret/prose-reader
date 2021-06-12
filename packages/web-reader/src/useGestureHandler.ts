@@ -25,7 +25,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * For some reason, when rapidly clicking on the edges and the navigation happens we also have this
      * event being dispatched. This is a false positive since we are not actually swiping. My guess is that
      * somehow hammer has some problem dealing with iframe changing around right after clicking.
-     * Luckily the velocity is usually below 1
+     * Luckily the velocity is usually below 1. Happens a lot on firefox, on chrome just a few panend popup
+     * from nowhere
      * 
      * @todo
      * Understand the above behavior, try to fix it or come up with solid workaround.
