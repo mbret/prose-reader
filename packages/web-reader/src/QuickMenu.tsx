@@ -52,8 +52,8 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             color: 'white',
           }}>
             <Button onClick={() => {
-              if (window.history.state === null && history.location.pathname !== `'/`) {
-                history.replace(`'/`)
+              if (window.history.state === null && history.location.pathname !== `/`) {
+                history.replace(`/`)
               } else {
                 history.goBack()
               }
