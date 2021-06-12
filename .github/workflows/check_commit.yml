@@ -20,7 +20,7 @@ jobs:
         run: |
           yarn
 
-      - name: Install
+      - name: Build
         run: |
           yarn build-core
 
