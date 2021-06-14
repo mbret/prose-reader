@@ -25,21 +25,29 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
     if (isPointerEvent(event)) {
       const { x, y } = readingItem.translateFramePositionIntoPage({ x: event.clientX, y: event.clientY })
 
-      return new PointerEvent(event.type, {
+      const newEvent = new PointerEvent(event.type, {
         ...event,
         clientX: x,
         clientY: y,
       }) as E;
+
+      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true });
+
+      return newEvent
     }
 
     if (isMouseEvent(event)) {
       const { x, y } = readingItem.translateFramePositionIntoPage({ x: event.clientX, y: event.clientY })
 
-      return new MouseEvent(event.type, {
+      const newEvent = new MouseEvent(event.type, {
         ...event,
         clientX: x,
         clientY: y,
       }) as E;
+
+      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true });
+
+      return newEvent
     }
 
     if (isTouchEvent(event)) {
@@ -56,11 +64,15 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
         },
       )
 
-      return new TouchEvent(event.type, {
+      const newEvent = new TouchEvent(event.type, {
         touches,
         changedTouches: touches,
         targetTouches: touches,
       }) as E
+
+      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true });
+
+      return newEvent
     }
 
     return event
