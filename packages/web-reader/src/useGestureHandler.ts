@@ -13,12 +13,14 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL })
     hammer.get('pinch').set({ enable: true })
     hammer.get('press').set({ time: 500 })
-    
+
     hammer.on('tap', function (ev) {
       handleSingleTap(ev)
     })
 
     hammer?.on('panmove panstart panend', onPanMove)
+
+    let hasHadPanStart = false
 
     /**
      * @important
@@ -32,14 +34,26 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * Understand the above behavior, try to fix it or come up with solid workaround.
      */
     function onPanMove(ev: HammerInput) {
-      if (ev.isFinal && !reader?.isSelecting()) {
+
+      // used to ensure we ignore false positive on firefox
+      if (ev.type === `panstart`) {
+        hasHadPanStart = true
+      }
+
+      if (hasHadPanStart && ev.isFinal && !reader?.isSelecting()) {
         const velocity = ev.velocityX
-        if (velocity < -1) {
+        console.log(`hammer.onPanMove.velocity`, velocity)
+        if (velocity < -0.5) {
           reader?.turnRight()
         }
-        if (velocity > 1) {
+        if (velocity > 0.5) {
           reader?.turnLeft()
         }
+      }
+
+      // used to ensure we ignore false positive on firefox
+      if (ev.type === `panend`) {
+        hasHadPanStart = false
       }
     }
 
