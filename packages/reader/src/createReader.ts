@@ -1,5 +1,6 @@
 import { chromeEnhancer } from './enhancers/chrome'
 import { fontsEnhancer, FONT_JUSTIFICATION, FONT_WEIGHT } from './enhancers/fonts'
+import { hotkeysEnhancer } from './enhancers/hotkeys'
 import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
 import { paginationEnhancer } from './enhancers/pagination'
@@ -68,6 +69,7 @@ const internalEnhancer = composeEnhancer(
   linksEnhancer,
   fontsEnhancer,
   themeEnhancer,
+  hotkeysEnhancer,
   chromeEnhancer,
 )
 
