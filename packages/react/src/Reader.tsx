@@ -11,9 +11,7 @@ type Props<Ext = {}> = {
   onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
   onPaginationChange?: (pagination: Pagination) => void,
   options?: Omit<Options, 'containerElement'>,
-  loadOptions?: LoadOptions & {
-    cfi?: string
-  },
+  loadOptions?: LoadOptions,
   enhancer?: Enhancer<Ext>
 }
 
@@ -49,7 +47,7 @@ export function Reader<Ext = {}, >({ manifest, onReady, onReader, loadOptions, o
 
   useEffect(() => {
     if (manifest && reader) {
-      reader.load(manifest, loadOptions, loadOptions?.cfi)
+      reader.load(manifest, loadOptions)
     }
   }, [manifest, reader, loadOptions])
 

@@ -80,26 +80,25 @@ export const createReader = ({ containerElement, ...settings }: {
   const load = (
     manifest: Manifest,
     loadOptions: LoadOptions = {
-      fetchResource: `http`
+      fetchResource: `http`,
     },
-    cfi?: string | null
   ) => {
     if (context.getManifest()) {
       Report.warn(`loading a new book is not supported yet`)
       return
     }
 
-    Report.log(`load`, { manifest, spineIndexOrIdOrCfi: cfi })
+    Report.log(`load`, { manifest, loadOptions })
 
     context.load(manifest, loadOptions)
     readingOrderView.load()
 
     layout()
 
-    if (!cfi) {
+    if (!loadOptions.cfi) {
       readingOrderView.goToSpineItem(0)
     } else {
-      readingOrderView.goToCfi(cfi)
+      readingOrderView.goToCfi(loadOptions.cfi)
     }
 
     paginationSubscription?.unsubscribe()

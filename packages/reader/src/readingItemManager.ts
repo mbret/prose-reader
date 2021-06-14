@@ -198,11 +198,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
     if (offset === 0 && !detectedItem) return orderedReadingItems[0]
 
-    if (!detectedItem) {
-      return getFocusedReadingItem()
-    }
-
-    return detectedItem || getFocusedReadingItem()
+    return detectedItem
   }, { disable: true })
 
   const destroy = () => {
