@@ -1,12 +1,72 @@
 import * as Hammer from 'hammerjs'
 import { useEffect } from 'react'
-import { useSetRecoilState } from 'recoil'
+import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from './ReaderProvider'
-import { isMenuOpenState } from './state'
+import { hasCurrentHighlightState, isMenuOpenState } from './state'
 
 export const useGestureHandler = (container: HTMLElement | undefined) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
+
+  const handleSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
+    /**
+     * @important
+     * On touch device `selectionchange` is being triggered after the onclick event, meaning
+     * we can detect that there is still a current highlight and therefore hide the menu or not open it.
+     * However on desktop (mouse) `selectionchange` is being triggered before the click, meaning we detect
+     * no highlight too soon and therefore can show the menu right after a click of the use to deselect text.
+     * 
+     * @todo
+     * Investigate a proper way to not show the menu right after a deselect for mouse devices.
+     */
+    const hasCurrentHighlight = await snapshot.getPromise(hasCurrentHighlightState)
+
+    if (!reader) return
+
+    const width = window.innerWidth
+    const height = window.innerHeight
+    const pageTurnMargin = 0.15
+
+    const normalizedEvent = reader.normalizeEvent(srcEvent)
+    console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
+
+    // if (reader?.getSelection()) return
+
+    if (normalizedEvent?.target) {
+      const target = normalizedEvent.target as HTMLElement
+
+      // don't do anything if it was clicked on link
+      if (target.nodeName === `a` || target.closest('a')) return
+    }
+
+    if (`x` in normalizedEvent) {
+      const { x = 0 } = normalizedEvent
+
+      if (reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)) {
+        return
+      }
+
+      console.log('hammer.tap', x, width * pageTurnMargin)
+      if (x < width * pageTurnMargin) {
+        reader.turnLeft()
+        console.log('hammer.tap.left')
+      } else if (x > width * (1 - pageTurnMargin)) {
+        reader.turnRight()
+      } else {
+        if (hasCurrentHighlight) {
+          setMenuOpenState(false)
+        } else {
+          setMenuOpenState(val => !val)
+        }
+      }
+    }
+  }, [setMenuOpenState, reader])
+
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setHasPreviouslyHighlight(hasCurrentHighlight)
+  //   }, 5)
+  // }, [hasCurrentHighlight, setHasPreviouslyHighlight])
 
   useEffect(() => {
     const hammer = new Hammer(container || document.body)
@@ -14,12 +74,12 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     hammer.get('pinch').set({ enable: true })
     hammer.get('press').set({ time: 500 })
 
-    hammer.on('tap', function (ev) {
-      handleSingleTap(ev)
-    })
+    hammer.on('tap', handleSingleTap)
 
     hammer?.on('panmove panstart panend', onPanMove)
 
+    let movingStarted = false
+    let movingStartOffset = 0
     let hasHadPanStart = false
 
     /**
@@ -34,12 +94,37 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * Understand the above behavior, try to fix it or come up with solid workaround.
      */
     function onPanMove(ev: HammerInput) {
+      const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
+
+      // console.log(`hammer.onPanMove`, ev.type, ev.eventType, (normalizedEvent as any)?.x)
+
+      // if (ev.type === `panstart`) {
+      //   if (normalizedEvent && `x` in normalizedEvent) {
+      //     movingStarted = true
+      //     movingStartOffset = normalizedEvent?.x
+      //     reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x })
+      //   }
+      // }
+
+      // if (ev.type === `panmove`) {
+      //   if (normalizedEvent && `x` in normalizedEvent) {
+      //     reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x })
+      //   }
+      // }
+
+      // if (ev.type === `panend` && movingStarted) {
+      //   if (normalizedEvent && `x` in normalizedEvent) {
+      //     movingStarted = false
+      //     return reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x }, { final: true })
+      //   }
+      // }
 
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panstart`) {
         hasHadPanStart = true
       }
 
+      // if (!movingStarted && ev.isFinal && !reader?.isSelecting()) {
       if (hasHadPanStart && ev.isFinal && !reader?.isSelecting()) {
         const velocity = ev.velocityX
         console.log(`hammer.onPanMove.velocity`, velocity)
@@ -57,44 +142,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       }
     }
 
-    function handleSingleTap({ srcEvent, target, center }: HammerInput) {
-      if (!reader) return
-
-      const width = window.innerWidth
-      const height = window.innerHeight
-      const pageTurnMargin = 0.15
-
-      const normalizedEvent = reader.normalizeEvent(srcEvent)
-      console.log('handleSingleTap', srcEvent.target, srcEvent.type, center)
-
-      if (reader?.getSelection()) return
-
-      if (normalizedEvent?.target) {
-        const target = normalizedEvent.target as HTMLElement
-
-        // don't do anything if it was clicked on link
-        if (target.nodeName === `a` || target.closest('a')) return
-      }
-
-      if (`x` in normalizedEvent) {
-        const { x = 0 } = normalizedEvent
-
-        if (reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)) {
-          return
-        }
-
-        if (x < width * pageTurnMargin) {
-          reader.turnLeft()
-        } else if (x > width * (1 - pageTurnMargin)) {
-          reader.turnRight()
-        } else {
-          setMenuOpenState(val => !val)
-        }
-      }
-    }
-
     return () => {
       hammer.destroy()
     }
-  }, [reader, container, setMenuOpenState])
+  }, [reader, container, setMenuOpenState, handleSingleTap])
 }

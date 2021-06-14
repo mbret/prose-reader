@@ -1,6 +1,6 @@
-import React, { ComponentProps, useState } from 'react';
+import React, { ComponentProps, useCallback, useMemo, useState } from 'react';
 import { useEffect } from "react"
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
@@ -16,6 +16,8 @@ import { useParams } from 'react-router';
 import { BookError } from './BookError';
 import { getEpubUrlFromLocation } from './serviceWorker/utils';
 
+type ReactReaderProps = ComponentProps<typeof ReactReader>
+
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
   const { url } = useParams<{ url: string }>();
   const fontsSettings = useRecoilValue(fontsSettingsState)
@@ -26,7 +28,13 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
-
+  const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
+  const [readerOptions] = useState({
+    fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
+    lineHeight: storedLineHeight || undefined,
+    theme: undefined,
+  })
+  const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)
 
   useGestureHandler(container)
@@ -40,15 +48,13 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     console.warn(`foo.pagination.change`, info?.begin.readingItemIndex)
   }
 
+  const onReady = useCallback(() => {
+    setBookReady(true)
+  }, [setBookReady])
+
   useEffect(() => {
     window.addEventListener(`resize`, () => {
       reader?.layout()
-    })
-
-    const readerSubscription$ = reader?.$.subscribe((data) => {
-      if (data.type === 'ready') {
-        setBookReady(true)
-      }
     })
 
     const linksSubscription = reader?.links$.subscribe((data) => {
@@ -65,7 +71,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     })
 
     return () => {
-      readerSubscription$?.unsubscribe()
       linksSubscription?.unsubscribe()
     }
   }, [reader, setBookReady, setPaginationState])
@@ -77,14 +82,20 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   }, [setManifestState, reader, manifest])
 
   useEffect(() => {
+    if (manifest) {
+      setReaderLoadOptions({
+        cfi: localStorage.getItem(`cfi`) || undefined,
+        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 1 : 0
+      })
+    }
+  }, [manifest, setReaderLoadOptions])
+
+  useEffect(() => {
     return () => reader?.destroy()
   }, [reader])
 
   useResetStateOnUnMount()
 
-  const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
-
-  // debug
   // @ts-ignore
   window.reader = reader
 
@@ -101,20 +112,14 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           }
         }}
       >
-        {readerEnhancer && (
+        {readerEnhancer && readerLoadOptions && (
           <ReactReader
             manifest={manifest}
             onReader={onReader}
-            loadOptions={{
-              cfi: localStorage.getItem(`cfi`) || undefined,
-              numberOfAdjacentSpineItemToPreLoad: manifest?.renditionLayout === 'pre-paginated' ? 3 : 0
-            }}
+            onReady={onReady}
+            loadOptions={readerLoadOptions}
             onPaginationChange={onPaginationChange}
-            options={{
-              fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
-              lineHeight: storedLineHeight || undefined,
-              theme: undefined,
-            }}
+            options={readerOptions}
             enhancer={readerEnhancer}
           />
         )}
