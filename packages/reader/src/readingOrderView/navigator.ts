@@ -81,7 +81,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItem = locator.getReadingItemFromOffset(position.x)
+    const readingItem = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
     if (!readingItem) {
@@ -109,7 +109,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItem = locator.getReadingItemFromOffset(position.x)
+    const readingItem = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
     if (!readingItem) {
@@ -142,7 +142,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * Special case for vertical content, read content
    */
   const getNavigationForRightPage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x)
+    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForRightSinglePage(position)
 
@@ -180,7 +180,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * Special case for vertical content, read content
    */
   const getNavigationForLeftPage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x)
+    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForLeftSinglePage(position)
 
@@ -248,5 +248,6 @@ export const createNavigator = ({ context, readingItemManager }: {
     getNavigationForLeftPage,
     getNavigationForUrl,
     getNavigationForAnchor,
+    wrapPositionWithSafeEdge,
   }
 }

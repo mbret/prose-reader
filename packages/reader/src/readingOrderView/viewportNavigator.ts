@@ -112,6 +112,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     const navigation = navigator.getNavigationForSpineIndexOrId(indexOrId)
     // always want to be at the beginning of the item
     lastUserExpectedNavigation = { type: 'navigate-from-previous-item' }
+
     navigateTo(navigation)
   }
 
@@ -130,6 +131,43 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       lastUserExpectedNavigation = { type: 'navigate-from-anchor', data: navigation.url.hash }
       navigateTo(navigation)
     }
+  }
+
+  let moveToInitialViewportOffset: number | undefined = undefined
+
+  /**
+   * @prototype
+   */
+  const moveTo = ({ offset, startOffset }: { startOffset: number, offset: number }, { final }: { final?: boolean } = {}) => {
+    if (moveToInitialViewportOffset === undefined) {
+      moveToInitialViewportOffset = getCurrentPosition().x
+    }
+
+    let navigation = { x: (offset - startOffset) + moveToInitialViewportOffset, y: 0 }
+
+    if (final) {
+      moveToInitialViewportOffset = undefined
+    }
+
+    // console.log(moveToInitialViewportOffset, (offset - startOffset) + moveToInitialViewportOffset)
+
+    if (final) {
+      const { x: offsetAtMidScreen } = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
+      const readingItem = locator.getReadingItemFromOffset(offsetAtMidScreen) || readingItemManager.getFocusedReadingItem()
+      const index = readingItemManager.getReadingItemIndex(readingItem)
+
+      // console.log(`moveTo`, { offsetAtMidScreen, index, navigation })
+
+      if (index !== undefined) {
+        navigation = navigator.getNavigationForSpineIndexOrId(index)
+
+        lastUserExpectedNavigation = undefined
+
+        return navigateTo(navigation)
+      }
+    }
+
+    adjustReadingOffset(navigation)
   }
 
   /**
@@ -235,6 +273,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     goToCfi,
     goToPageOfCurrentChapter,
     adjustReadingOffsetPosition,
+    moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: subject.asObservable(),
   }

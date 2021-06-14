@@ -1,6 +1,7 @@
 import { Manifest } from './Manifest'
 
 export type LoadOptions = {
+  cfi?: string,
   /**
    * Specify how you want to fetch resources for each spine item.
    * By default the reader will use an HTTP request with the uri provided in the manifest. We encourage

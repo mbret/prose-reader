@@ -113,7 +113,7 @@ export const createLocator = ({ readingItemManager, context }: {
     endPosition: ReadingOrderViewPosition
   } | undefined => {
     const beginItemIndex = readingItemManager.getReadingItemIndex(
-      getReadingItemFromOffset(position.x)
+      getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
     )
 
     if (beginItemIndex === undefined) return undefined
@@ -125,7 +125,7 @@ export const createLocator = ({ readingItemManager, context }: {
     }
 
     const endItemIndex = readingItemManager.getReadingItemIndex(
-      getReadingItemFromOffset(endPosition.x)
+      getReadingItemFromOffset(endPosition.x) || readingItemManager.getFocusedReadingItem()
     ) ?? beginItemIndex
 
     const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort()
