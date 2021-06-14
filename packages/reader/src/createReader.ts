@@ -1,3 +1,4 @@
+import { chromeEnhancer } from './enhancers/chrome'
 import { fontsEnhancer, FONT_JUSTIFICATION, FONT_WEIGHT } from './enhancers/fonts'
 import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
@@ -67,6 +68,7 @@ const internalEnhancer = composeEnhancer(
   linksEnhancer,
   fontsEnhancer,
   themeEnhancer,
+  chromeEnhancer,
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>
