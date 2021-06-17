@@ -14,22 +14,41 @@ export const createCfiHelper = ({ readingItemManager, context }: {
     if (itemId) {
       const { itemId } = extractObokuMetadataFromCfi(cfi)
       const readingItem = (itemId ? readingItemManager.get(itemId) : undefined) || readingItemManager.get(0)
-      
+
       return readingItem
     }
     return undefined
   }
 
-  const getCfiInformation = (cfi: string) => {
+  const getCfiMetaInformation = (cfi: string) => {
     const readingItem = getReadingItemFromCfi(cfi)
 
     if (readingItem) {
-      const position = readingItemLocator.getReadingItemPositionFromCfi(cfi, readingItem)
-      const pageIndex = position ? readingItemLocator.getReadingItemPageIndexFromPosition(position, readingItem) : undefined
-      
       return {
         readingItemIndex: readingItemManager.getReadingItemIndex(readingItem),
-        pageIndex
+      }
+    }
+
+    return undefined
+  }
+
+  const resolveCfi = (cfi: string) => {
+    const { readingItemIndex = -1 } = getCfiMetaInformation(cfi) || {}
+    const readingItem = readingItemManager.get(readingItemIndex)
+
+    if (readingItem) {
+      let position: { x: number, y: number } | undefined = undefined
+      const { node, offset = 0 } = readingItemLocator.resolveCfi(cfi, readingItem) || {}
+      if (node) {
+        position = readingItemLocator.getReadingItemPositionFromNode(node, offset, readingItem)
+      }
+      const pageIndex = position ? readingItemLocator.getReadingItemPageIndexFromPosition(position, readingItem) : undefined
+
+      return {
+        readingItemIndex,
+        pageIndex,
+        node,
+        offset,
       }
     }
 
@@ -38,6 +57,7 @@ export const createCfiHelper = ({ readingItemManager, context }: {
 
   return {
     getReadingItemFromCfi,
-    getCfiInformation,
+    getCfiMetaInformation,
+    resolveCfi,
   }
 }

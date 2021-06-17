@@ -10,6 +10,7 @@ import { createReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createCfiHelper } from "./cfiHelper"
 import { createEventsHelper } from "./eventsHelper"
+import { createSelection } from "../selection"
 
 const NAMESPACE = 'readingOrderView'
 
@@ -21,13 +22,24 @@ type RequireLayout = boolean
 type ManipulableReadingItemCallback = Parameters<ReadingItem['manipulateReadingItem']>[0]
 type ManipulableReadingItemCallbackPayload = Parameters<ManipulableReadingItemCallback>[0]
 
-type Hook = {
-  name: `readingItem.onLoad`,
-  fn: Extract<ReadingItemHook, { name: 'onLoad' }>['fn']
-} | {
-  name: `readingItem.onCreated`,
-  fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
-}
+type Hook =
+  | {
+    name: `readingItem.onLoad`,
+    fn: Extract<ReadingItemHook, { name: 'onLoad' }>['fn']
+  }
+  | {
+    name: `readingItem.onLayout`,
+    fn: (params: Parameters<Extract<ReadingItemHook, { name: 'onLayout' }>['fn']>[0] & { index: number }) => ReturnType<Extract<ReadingItemHook, { name: 'onLayout' }>['fn']>
+  }
+  | {
+    name: `readingItem.onCreated`,
+    fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
+  }
+
+type Event =
+  { type: `layoutUpdate` }
+  | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
+  | { type: `onNavigationChange` }
 
 export const createReadingOrderView = ({ containerElement, context, pagination, iframeEventBridgeElement }: {
   containerElement: HTMLElement,
@@ -35,7 +47,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   context: Context,
   pagination: Pagination,
 }) => {
-  const subject = new Subject<{ type: `layoutUpdate` }>()
+  const subject = new Subject<Event>()
   const doc = containerElement.ownerDocument
   const readingItemManager = createReadingItemManager({ context })
   const cfiHelper = createCfiHelper({ readingItemManager, context })
@@ -53,16 +65,19 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   }
 
   const load = () => {
-    context.getManifest()?.readingOrder.map(async (resource) => {
+    context.getManifest()?.readingOrder.map(async (resource, index) => {
       const readingItem = createReadingItem({
         item: resource,
         containerElement: element,
         iframeEventBridgeElement,
         context,
       })
-      hooks.forEach(hook => {
+      hooks.forEach((hook) => {
         if (hook.name === `readingItem.onLoad`) {
           readingItem.registerHook({ name: `onLoad`, fn: hook.fn })
+        }
+        if (hook.name === `readingItem.onLayout`) {
+          readingItem.registerHook({ name: `onLayout`, fn: (params) => hook.fn({ ...params, index }) })
         }
       })
       readingItemManager.add(readingItem)
@@ -88,9 +103,14 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   function registerHook(hook: Hook) {
     hooks.push(hook)
 
-    if (hook.name === `readingItem.onLoad`) {
-      readingItemManager.getAll().forEach(item => item.registerHook({ name: `onLoad`, fn: hook.fn }))
-    }
+    readingItemManager.getAll().forEach((item, index) => {
+      if (hook.name === `readingItem.onLoad`) {
+        item.registerHook({ name: `onLoad`, fn: hook.fn })
+      }
+      if (hook.name === `readingItem.onLayout`) {
+        item.registerHook({ name: `onLayout`, fn: (params) => hook.fn({ ...params, index }) })
+      }
+    })
   }
 
   const preparePaginationUpdateInfo = (beginReadingItem: ReadingItem, endReadingItem: ReadingItem, beginPosition: { x: number, y: number }, endPosition: { x: number, y: number }) => {
@@ -175,34 +195,44 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             ).subscribe()
 
             selectionSubscription?.unsubscribe()
-            selectionSubscription = selectionTracker$
-              .pipe(filter(({ event }) => event === 'selectstart'))
-              .pipe(
-                switchMap(_ => fingerTracker$
-                  .pipe(
-                    filter(({ event }) => event === 'fingermove'),
-                    debounce(() => interval(1000)),
-                    takeUntil(fingerTracker$
-                      .pipe(
-                        filter(({ event }) => event === 'fingerout'),
-                        tap(() => {
+            selectionSubscription = merge(
+              selectionTracker$
+                .pipe(
+                  filter(event => event.event === 'selectionchange'),
+                  tap(event => {
+                    subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, readingItem.item) : null })
+                  })
+                ),
+              selectionTracker$
+                .pipe(
+                  filter(({ event }) => event === 'selectstart'),
+                  switchMap(_ => fingerTracker$
+                    .pipe(
+                      filter(({ event }) => event === 'fingermove'),
+                      debounce(() => interval(1000)),
+                      takeUntil(fingerTracker$
+                        .pipe(
+                          filter(({ event }) => event === 'fingerout'),
+                          tap(() => {
 
-                        })
-                      )
-                    ),
-                    tap(({ data }) => {
-                      if (data) {
-                        // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
-                        // if (fingerPosition.x >= context.getPageSize().width) {
-                        //   viewportNavigator.turnRight({ allowReadingItemChange: false })
-                        // } else if (fingerPosition.x <= context.getPageSize().width) {
-                        //   viewportNavigator.turnLeft({ allowReadingItemChange: false })
-                        // }
-                      }
-                    })
+                          })
+                        )
+                      ),
+                      tap(({ data }) => {
+                        console.log(data)
+                        if (data) {
+                          // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
+                          // if (fingerPosition.x >= context.getPageSize().width) {
+                          //   viewportNavigator.turnRight({ allowReadingItemChange: false })
+                          // } else if (fingerPosition.x <= context.getPageSize().width) {
+                          //   viewportNavigator.turnLeft({ allowReadingItemChange: false })
+                          // }
+                        }
+                      })
+                    )
                   )
                 )
-              )
+            )
               .subscribe()
           }
         }),
@@ -255,6 +285,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
             Report.log(NAMESPACE, `navigateTo`, `navigate success`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, readingItemToFocus, offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation })
           }
+
+          subject.next({ type: `onNavigationChange` })
         }
 
         if (data.event === 'adjust') {
@@ -263,6 +295,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
           const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
           const beginLastCfi = pagination.getBeginInfo().cfi
           const endLastCfi = pagination.getEndInfo().cfi
+
+          // @todo if focused is not on either do not do anything
 
           // because we adjusted the position, the offset may have changed and with it current page, etc
           // because this is an adjustment we do not want to update the cfi (anchor)
@@ -294,6 +328,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
               }
             })
           }
+
+          subject.next({ type: `onNavigationChange` })
         }
       })
     )
@@ -303,7 +339,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     ...viewportNavigator,
     element,
     locator,
-    getCfiInformation: cfiHelper.getCfiInformation,
+    getCfiMetaInformation: cfiHelper.getCfiMetaInformation,
+    resolveCfi: cfiHelper.resolveCfi,
     getFocusedReadingItemIndex: () => readingItemManager.getFocusedReadingItemIndex(),
     getReadingItem: readingItemManager.get,
     registerHook,
@@ -350,7 +387,15 @@ const createElement = (doc: Document) => {
   element.id = 'ReadingOrderView'
   element.className = 'ReadingOrderView'
   element.style.height = `100%`
-  element.style.willChange = `transform`
+  /**
+   * Beware of this property, do not try to change anything else or remove it.
+   * This is early forced optimization and is used for this specific context.
+   * @see https://developer.mozilla.org/en-US/docs/Web/CSS/will-change
+   * 
+   * @important
+   * This seems to be responsible for the screen freeze issue
+   */
+  // element.style.willChange = `transform`
   element.style.transformOrigin = `0 0`
 
   return element
