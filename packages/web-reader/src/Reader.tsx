@@ -15,6 +15,8 @@ import { useManifest } from './useManifest';
 import { useParams } from 'react-router';
 import { BookError } from './BookError';
 import { getEpubUrlFromLocation } from './serviceWorker/utils';
+import { HighlightMenu } from './HighlightMenu';
+import { useHighlights } from './useHighlights';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -27,6 +29,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
+  const highlightsEnhancer = useHighlights(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
   const [readerOptions] = useState({
@@ -40,7 +43,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   useGestureHandler(container)
 
   // compose final enhancer
-  const readerEnhancer = bookmarksEnhancer ? composeEnhancer(bookmarksEnhancer) : undefined
+  const readerEnhancer = bookmarksEnhancer && highlightsEnhancer ? composeEnhancer(highlightsEnhancer, bookmarksEnhancer) : undefined
 
   const onPaginationChange: ComponentProps<typeof ReactReader>['onPaginationChange'] = (info) => {
     localStorage.setItem(`cfi`, info?.begin.cfi || ``)
@@ -85,7 +88,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 1 : 0
+        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 2 : 0
       })
     }
   }, [manifest, setReaderLoadOptions])
@@ -130,6 +133,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           <Loading />
         )}
       </div>
+      <HighlightMenu />
       <QuickMenu
         open={isMenuOpen}
         onReadingItemChange={index => {

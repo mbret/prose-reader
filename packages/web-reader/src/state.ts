@@ -1,5 +1,5 @@
 import { atom, selector, useRecoilCallback } from "recoil";
-import { Reader, Manifest, ReaderSelection } from "@oboku/reader";
+import { Reader, Manifest } from "@oboku/reader";
 import { useEffect } from "react";
 
 export const bookTitleState = selector({
@@ -38,7 +38,7 @@ export const isMenuOpenState = atom({
   default: false
 })
 
-export const currentHighlight = atom<ReaderSelection | undefined>({
+export const currentHighlight = atom<{ anchorCfi: string, focusCfi: string, text?: string, id?: number } | undefined>({
   key: `currentHighlightState`,
   default: undefined
 })

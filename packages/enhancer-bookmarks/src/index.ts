@@ -36,7 +36,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       const cfi = reader.pagination.getBeginInfo().cfi
 
       if (cfi) {
-        const { pageIndex, readingItemIndex } = reader.getCfiInformation(cfi) || {}
+        const { pageIndex, readingItemIndex } = reader.resolveCfi(cfi) || {}
 
         return { cfi, pageIndex, readingItemIndex }
       }
@@ -121,7 +121,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const updateBookmarkLocations = () => {
       bookmarks.forEach(bookmark => {
-        const { pageIndex, readingItemIndex } = reader.getCfiInformation(bookmark.cfi) || {}
+        const { pageIndex, readingItemIndex } = reader.resolveCfi(bookmark.cfi) || {}
         bookmark.pageIndex = pageIndex
         bookmark.readingItemIndex = readingItemIndex
       })

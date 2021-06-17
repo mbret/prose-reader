@@ -42,7 +42,12 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     if (`x` in normalizedEvent) {
       const { x = 0 } = normalizedEvent
 
-      if (reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)) {
+      console.log(srcEvent)
+
+      if (
+        reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)
+        || reader.highlights.isHighlightClicked(srcEvent)
+      ) {
         return
       }
 

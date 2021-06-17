@@ -13,6 +13,7 @@
   "dependencies": {
     "@oboku/reader": "^0.0.14",
     "@oboku/reader-enhancer-bookmarks": "^0.0.4",
+    "@oboku/reader-enhancer-highlights": "^0.0.1",
     "@oboku/reader-react": "^0.0.7",
     "@oboku/reader-streamer": "^0.0.9",
     "@types/hammerjs": "^2.0.39",
