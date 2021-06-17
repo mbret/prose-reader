@@ -197,9 +197,15 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
   return new Promise<HTMLIFrameElement>((resolve) => {
     const frame = document.createElement('iframe')
     frame.frameBorder = 'no'
+    frame.tabIndex = 0
     frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
+    frame.scrolling = 'no'
     frame.style.cssText = `
       visibility: hidden;
+      overflow: hidden;
+      background-color: transparent;
+      border: 0px none transparent;
+      padding: 0px;
     `
 
     resolve(frame)
