@@ -56,7 +56,7 @@ function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: numb
 
 type ViewPort = { left: number, right: number, top: number, bottom: number }
 
-export const getFirstVisibleNodeForViewport = (documentOrElement: Document | Element, viewport: ViewPort) => {
+export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirstVisibleNodeForViewport`, 1, (documentOrElement: Document | Element, viewport: ViewPort) => {
   const element = (`body` in documentOrElement)
     ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
     : getFirstVisibleElementForViewport(documentOrElement, viewport)
@@ -78,10 +78,17 @@ export const getFirstVisibleNodeForViewport = (documentOrElement: Document | Ele
       if (visibleRect) {
         lastValidRange = range.cloneRange()
 
-        // now we will try to refine the search to get the offset
-        // this is an incredibly expensive operation so we will try to 
-        // use native functions to get something 
-        const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, visibleRect.left, visibleRect.top)
+        /**
+         * Now we will try to refine the search to get the offset 
+         * this is an incredibly expensive operation so we will try to 
+         * use native functions to get something 
+         * @important
+         * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
+         * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
+         * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
+         */
+        const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, Math.ceil(visibleRect.left), Math.ceil(visibleRect.top))
+        
         // good news we found something with same node so we can assume the offset is already better than nothing
         if (rangeOrCaret && `startContainer` in rangeOrCaret && rangeOrCaret.startContainer === lastValidRange.startContainer) {
           lastValidOffset = rangeOrCaret.startOffset
@@ -102,7 +109,7 @@ export const getFirstVisibleNodeForViewport = (documentOrElement: Document | Ele
   }
 
   return undefined
-}
+})
 
 const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort) => {
   let lastValidElement: Element | undefined = undefined
