@@ -6,6 +6,7 @@ import { createReadingOrderView } from "./readingOrderView/readingOrderView";
 import { LoadOptions, Manifest } from "./types";
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
 import { tap } from "rxjs/operators";
+import { createSelection } from "./selection";
 
 type ReadingOrderView = ReturnType<typeof createReadingOrderView>
 
@@ -13,6 +14,7 @@ export type Reader = ReturnType<typeof createReader>
 
 const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
 const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
+const READING_ITEM_ON_LAYOUT_HOOK = 'readingItem.onLayout'
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
 type ReadingOrderViewHook = Parameters<ReadingOrderView['registerHook']>[0]
@@ -21,13 +23,22 @@ type ManipulateReadingItemsCallback = Parameters<ReadingOrderView['manipulateRea
 type Hooks = {
   [READING_ITEM_ON_LOAD_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onLoad' }>
   [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onCreated' }>
+  [READING_ITEM_ON_LAYOUT_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onLayout' }>
 }
+
+type Event =
+  { type: 'iframe', data: HTMLIFrameElement }
+  | { type: 'ready' }
+  | { type: `layoutUpdate` }
+  | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
+  | { type: `onNavigationChange` }
 
 export const createReader = ({ containerElement, ...settings }: {
   containerElement: HTMLElement,
   forceSinglePageMode?: boolean
 }) => {
-  const subject = new Subject<{ type: 'iframe', data: HTMLIFrameElement } | { type: 'ready' } | { type: `layoutUpdate` }>()
+  const subject = new Subject<Event>()
+  const destroy$ = new Subject<void>()
   const paginationSubject = new Subject<{ event: 'change' }>()
   const context = createBookContext(settings)
   const pagination = createPagination({ context })
@@ -109,12 +120,11 @@ export const createReader = ({ containerElement, ...settings }: {
 
   function registerHook(name: typeof READING_ITEM_ON_LOAD_HOOK, fn: Hooks[typeof READING_ITEM_ON_LOAD_HOOK]['fn']): void
   function registerHook(name: typeof READING_ITEM_ON_CREATED_HOOK, fn: Hooks[typeof READING_ITEM_ON_CREATED_HOOK]['fn']): void
+  function registerHook(name: typeof READING_ITEM_ON_LAYOUT_HOOK, fn: Hooks[typeof READING_ITEM_ON_LAYOUT_HOOK]['fn']): void
   function registerHook(name: string, fn: any) {
-    if (name === READING_ITEM_ON_LOAD_HOOK) {
-      readingOrderView.registerHook({ name: `readingItem.onLoad`, fn })
-    }
-    if (name === READING_ITEM_ON_CREATED_HOOK) {
-      readingOrderView.registerHook({ name: `readingItem.onCreated`, fn })
+    const validHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK, READING_ITEM_ON_LAYOUT_HOOK] as const
+    if (validHooks.includes(name as typeof validHooks[number])) {
+      readingOrderView.registerHook({ name: name as typeof validHooks[number] , fn })
     }
   }
 
@@ -145,6 +155,8 @@ export const createReader = ({ containerElement, ...settings }: {
    * instead of destroying it.
    */
   const destroy = () => {
+    destroy$.next()
+    destroy$.complete()
     containerManipulationCbList.forEach(cb => cb())
     containerManipulationCbList = []
     readingOrderView?.destroy()
@@ -160,6 +172,7 @@ export const createReader = ({ containerElement, ...settings }: {
     registerHook,
     manipulateReadingItems,
     manipulateContainer,
+    moveTo: readingOrderView.moveTo,
     turnLeft: readingOrderView.turnLeft,
     turnRight: readingOrderView.turnRight,
     goToPageOfCurrentChapter: readingOrderView.goToPageOfCurrentChapter,
@@ -171,7 +184,8 @@ export const createReader = ({ containerElement, ...settings }: {
     getSelection: readingOrderView.getSelection,
     isSelecting: readingOrderView.isSelecting,
     normalizeEvent: readingOrderView.normalizeEvent,
-    getCfiInformation: readingOrderView.getCfiInformation,
+    getCfiMetaInformation: readingOrderView.getCfiMetaInformation,
+    resolveCfi: readingOrderView.resolveCfi,
     locator: readingOrderView.locator,
     getCurrentPosition: readingOrderView.getCurrentPosition,
     layout,
@@ -179,6 +193,7 @@ export const createReader = ({ containerElement, ...settings }: {
     destroy,
     pagination$: paginationSubject.asObservable(),
     $: subject.asObservable(),
+    destroy$,
     __debug: {
       pagination,
       context,
