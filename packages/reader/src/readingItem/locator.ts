@@ -81,6 +81,14 @@ export const createLocator = ({ context }: {
   const getReadingItemPositionFromCfi = (cfi: string, readingItem: ReadingItem) => {
     const { node, offset = 0 } = resolveCfi(cfi, readingItem) || {}
 
+    if (node) {
+      return getReadingItemPositionFromNode(node, offset, readingItem)
+    }
+
+    return undefined
+  }
+
+  const getReadingItemPositionFromNode = (node: Node, offset: number, readingItem: ReadingItem) => {
     let offsetOfNodeInReadingItem: number | undefined = undefined
 
     // for some reason `img` does not work with range (x always = 0)
@@ -167,9 +175,9 @@ export const createLocator = ({ context }: {
 
     if (doc) {
       try {
-        const { node } = cfi.resolve(doc, {})
+        const { node, offset: resolvedOffset } = cfi.resolve(doc, {})
 
-        return { node, offset }
+        return { node, offset: offset ?? resolvedOffset }
       } catch (e) {
         Report.error(e)
         return undefined
@@ -202,6 +210,7 @@ export const createLocator = ({ context }: {
 
   return {
     getReadingItemPositionFromCfi,
+    getReadingItemPositionFromNode,
     getReadingItemPositionFromPageIndex,
     getReadingItemOffsetFromAnchor,
     getReadingItemPageIndexFromPosition,
