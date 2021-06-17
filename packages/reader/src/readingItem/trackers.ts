@@ -22,7 +22,7 @@ export const createFingerTracker = () => {
       fingerPositionInIframe.y = undefined
       subject.next({ event: 'fingerout', data: undefined })
     })
-    
+
     frame.contentDocument?.addEventListener('mousemove', (e) => {
       if (isMouseDown) {
         subject.next({ event: 'fingermove', data: { x: e.x, y: e.y } })
@@ -36,7 +36,7 @@ export const createFingerTracker = () => {
       return (fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined) ? undefined : fingerPositionInIframe
     },
     destroy: () => {
-      
+
     },
     $: subject.asObservable()
   }
@@ -45,32 +45,46 @@ export const createFingerTracker = () => {
 export const createSelectionTracker = () => {
   let isSelecting = false
   let frame: HTMLIFrameElement | undefined
-  const subject = new Subject<{ event: 'selectionchange' | 'selectstart' | 'selectend', data: Selection | null | undefined }>()
+  const subject = new Subject<
+    { event: 'selectionchange', data: Selection | null }
+    | { event: 'selectstart', data: Selection | null }
+    | { event: 'selectend', data: Selection | null }
+  >()
+  const mouseUpEvents = [
+    'mouseup' as const,
+    "pointerup" as const
+  ]
 
   const track = (frameToTrack: HTMLIFrameElement) => {
     frame = frameToTrack
 
-    frameToTrack.contentWindow?.addEventListener('mouseup', (e) => {
-      isSelecting = false
-      subject.next({ event: 'selectend', data: frame?.contentDocument?.getSelection() })
+    mouseUpEvents.forEach(eventName => {
+      frameToTrack.contentWindow?.addEventListener(eventName, (e) => {
+        isSelecting = false
+        // console.log(`${eventName} selectend`, frame?.contentWindow?.getSelection(), frame?.contentWindow?.getSelection()?.toString())
+        // subject.next({ event: 'selectend', data: frame?.contentWindow?.getSelection() || null })
+      })
     })
 
-    frameToTrack.contentWindow?.addEventListener('selectionchange', e => {
-      subject.next({ event: 'selectionchange', data: frame?.contentDocument?.getSelection() })
+    frameToTrack.contentDocument?.addEventListener('selectionchange', e => {
+      subject.next({ event: 'selectionchange', data: frame?.contentWindow?.getSelection() || null })
     })
 
     frameToTrack.contentWindow?.addEventListener('selectstart', e => {
       isSelecting = true
-      subject.next({ event: 'selectstart', data: frame?.contentDocument?.getSelection() })
+      // console.log(`selectstart`, e)
+      // subject.next({ event: 'selectstart', data: frame?.contentWindow?.getSelection() || null })
     })
+  }
+
+  const destroy = () => {
+
   }
 
   return {
     track,
-    destroy: () => {
-
-    },
-    isSelecting: () => isSelecting, 
+    destroy,
+    isSelecting: () => isSelecting,
     getSelection: () => {
       const selection = frame?.contentWindow?.getSelection()
       if (!selection?.anchorNode || selection.type === 'None' || selection.type === 'Caret') return undefined
