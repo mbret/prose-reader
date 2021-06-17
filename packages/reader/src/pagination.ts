@@ -54,7 +54,7 @@ export const createPagination = ({ context }: { context: Context }) => {
     // to track that we can have a hidden text element and track it and send event back
     if (info.options.cfi === undefined) {
       cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
-      Report.log(`pagination`, `cfi`, pageIndex, beginCfi)
+      Report.log(`pagination`, `cfi`, pageIndex, cfi)
     } else {
       cfi = info.options.cfi
     }
