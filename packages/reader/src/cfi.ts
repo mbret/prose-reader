@@ -1089,7 +1089,7 @@ class CFI {
     };
   }
 
-  resolve(doc: Document, opts: {}): { node: Node } | { node?: undefined } {
+  resolve(doc: Document, opts: {}): { node: Node, offset?: number } | { node?: undefined, offset?: number } {
     // @ts-ignore
     return this.resolveLast(doc, opts);
   }
@@ -1102,7 +1102,7 @@ export {
 export const extractObokuMetadataFromCfi = (cfi: string): {
   cleanedCfi: string,
   itemId?: string
-  offset: number
+  offset?: number
 } => {
   const [itemId] = cfi
     .match(/\|(\[oboku\~anchor[^\]]*\])+/ig)
@@ -1113,10 +1113,11 @@ export const extractObokuMetadataFromCfi = (cfi: string): {
     ?.map(s => s.replace(/\|\[oboku\~offset\~/, '')
       .replace(/\]/, '')) || []
   const cleanedCfi = cfi.replace(/\|(\[oboku\~[^\]]*\~[^\]]*\])+/ig, '')
+  const foundOffset = parseInt(offset || ``)
 
   return {
     cleanedCfi,
     itemId: itemId ? decodeURIComponent(itemId) : itemId,
-    offset: parseInt(offset || '0') || 0
+    offset: isNaN(foundOffset) ? undefined : foundOffset
   }
 }
