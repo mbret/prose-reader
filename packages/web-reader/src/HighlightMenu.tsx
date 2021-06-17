@@ -1,72 +1,22 @@
-import React, { useCallback, useEffect } from 'react'
-import { useRecoilState, useSetRecoilState } from 'recoil'
-import { tap } from 'rxjs/operators'
+import React, { useCallback } from 'react'
+import { useRecoilState } from 'recoil'
 import { Button } from './common/Button'
 import { useCSS } from './common/css'
 import { useReader } from './ReaderProvider'
-import { currentHighlight, isMenuOpenState } from './state'
+import { currentHighlight } from './state'
 
 export const HighlightMenu = () => {
   const reader = useReader()
   const [currentSelection, setCurrentSelection] = useRecoilState(currentHighlight)
   const isCurrentSelectionSaved = currentSelection?.id !== undefined
-  const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const styles = useStyles()
-
-  useEffect(() => {
-    const readerSubscription = reader?.$
-      .pipe(
-        tap(event => {
-          if (event.type === `onSelectionChange`) {
-            if (event.data?.toString() !== ``) {
-              console.log('change', event.data?.getAnchorCfi(), event.data?.getFocusCfi())
-
-              const anchorCfi = event.data?.getAnchorCfi()
-              const focusCfi = event.data?.getFocusCfi()
-
-              if (anchorCfi && focusCfi) {
-                const highlight = { anchorCfi, focusCfi, text: event.data?.toString() }
-                setCurrentSelection(highlight)
-                setMenuOpenState(false)
-              }
-            } else {
-              setCurrentSelection(undefined)
-            }
-          }
-        })
-      )
-      .subscribe()
-
-    return () => {
-      readerSubscription?.unsubscribe()
-    }
-  }, [reader, setMenuOpenState])
-
-  useEffect(() => {
-    const subscription = reader?.highlights$.pipe(
-      tap(event => {
-        if (event.type === `onHighlightClick`) {
-          setCurrentSelection(event.data)
-          setMenuOpenState(false)
-        }
-
-        if (event.type === `onUpdate`) {
-          const toStore = event.data.map(({ anchorCfi, focusCfi }) => ({ anchorCfi, focusCfi }))
-          localStorage.setItem(`highlights`, JSON.stringify(toStore))
-        }
-      }),
-    ).subscribe()
-
-    return () => {
-      subscription?.unsubscribe()
-    }
-  }, [setCurrentSelection, setMenuOpenState, reader])
 
   const addHighlight = useCallback(() => {
     if (currentSelection) {
       reader?.highlights.add(currentSelection)
+      setCurrentSelection(undefined)
     }
-  }, [currentSelection, reader])
+  }, [currentSelection, reader, setCurrentSelection])
 
   const removeHighlight = useCallback(() => {
     if (currentSelection?.id !== undefined) {
