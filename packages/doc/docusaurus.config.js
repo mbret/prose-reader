@@ -14,7 +14,7 @@ module.exports = {
       title: 'oboku-reader',
       logo: {
         alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        src: 'img/icon-512x512.png',
       },
       items: [
         {
@@ -60,7 +60,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} oboku-reader, Inc. Built with Docusaurus.`,
     },
   },
   presets: [
