@@ -11,11 +11,11 @@ npm install @oboku/reader @oboku/reader-streamer rxjs
 ```
 
 You don't absolutely need to have `@oboku/reader-streamer` installed to run the reader but the utilities provided are very useful to start quickly.
-We also have to install `rxjs` because it is a peer-dependency of oboku-reader.
+ `rxjs` it a peer-dependency of oboku-reader and needs to be installed alongside.
 
 ## Create your reader
 
-On your html file you need to define a container for the reader. We will use a full screen reader but you can have any dimensions.
+On your html file you need to define a container for the reader. We will be using a full screen reader but you can have any dimensions.
 
 `index.html`
 ```html
@@ -94,7 +94,7 @@ const reader = createReader({
    * Because we do not have a streamer, we just serve directly from the archive from
    * our script.
    *
-   * This is not recommended to bypass the HTTP default fetch.
+   * It works for our example or light documents but is not really recommended.
    */
   reader.load(manifest, {
     fetchResource: (item) => getResourceFromArchive(archive, item.path)
