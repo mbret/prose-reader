@@ -4,7 +4,6 @@ export const hotkeysEnhancer: Enhancer<{}> = (next) => (options) => {
   const reader = next(options)
 
   const onKeyPress = (e: KeyboardEvent) => {
-    console.log(e.key)
     if (e.key === `ArrowRight`) {
       reader.turnRight()
     }
