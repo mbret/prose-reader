@@ -18,7 +18,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const data = await opsFile.string()
 
   Report.log(data, koboInformation)
-  
+
   const opfXmlDoc = new xmldoc.XmlDocument(data)
 
   const toc = (await parseToc(opfXmlDoc, archive, { opfBasePath, baseUrl })) || []
@@ -109,9 +109,9 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
   }
 }
 
-export const getManifestFromArchive = async (archive: Archive, { baseUrl }: {
-  baseUrl: string
-}) => {
+export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: {
+  baseUrl?: string
+} = {}) => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
 
   if (!!opsFile) {

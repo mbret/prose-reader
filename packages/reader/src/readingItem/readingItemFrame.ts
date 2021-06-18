@@ -110,7 +110,12 @@ export const createReadingItemFrame = (
       if (!fetchResource || fetchResource === 'http') {
         frameElement.src = src
       } else {
-        frameElement.srcdoc = await fetchResource(item)
+        const result = await fetchResource(item)
+        if (result instanceof Response) {
+          frameElement.srcdoc = await result.text()
+        } else {
+          frameElement.srcdoc = result
+        }
       }
 
       return new Promise(async (resolve) => {

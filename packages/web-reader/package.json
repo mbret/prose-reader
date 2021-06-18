@@ -17,7 +17,7 @@
     "@oboku/reader-react": "^0.0.9",
     "@oboku/reader-streamer": "^0.0.11",
     "@types/hammerjs": "^2.0.39",
-    "@types/react": "*",
+    "@types/react": "^17.0.11",
     "@types/react-dom": "*",
     "@types/react-router-dom": "^5.1.7",
     "copy-webpack-plugin": "^9.0.0",
@@ -34,7 +34,7 @@
     "rxjs": "*",
     "style-loader": "2.0.0",
     "ts-loader": "^9.2.2",
-    "typescript": "^4.3.2",
+    "typescript": "^4.3.4",
     "webpack": "^5.26",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"

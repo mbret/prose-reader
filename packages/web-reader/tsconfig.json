@@ -9,12 +9,24 @@
       "dom.iterable",
       "esnext"
     ],
+    "paths": {
+      "rxjs": [
+        "../../node_modules/rxjs"
+      ],
+      "rxjs/*": [
+        "../../node_modules/rxjs/*"
+      ]
+    },
     "strict": true,
     "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist"
+  ],
 }
