@@ -14,7 +14,6 @@ export type Reader = ReturnType<typeof createReader>
 
 const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
 const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
-const READING_ITEM_ON_LAYOUT_HOOK = 'readingItem.onLayout'
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
 type ReadingOrderViewHook = Parameters<ReadingOrderView['registerHook']>[0]
@@ -23,7 +22,6 @@ type ManipulateReadingItemsCallback = Parameters<ReadingOrderView['manipulateRea
 type Hooks = {
   [READING_ITEM_ON_LOAD_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onLoad' }>
   [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onCreated' }>
-  [READING_ITEM_ON_LAYOUT_HOOK]: Extract<ReadingOrderViewHook, { name: 'readingItem.onLayout' }>
 }
 
 type Event =
@@ -44,7 +42,7 @@ export const createReader = ({ containerElement, ...settings }: {
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
-  let containerManipulationCbList: (() => void)[] = []
+  let containerManipulationOnDestroyCbList: (() => void)[] = []
   const readingOrderView = createReadingOrderView({
     containerElement: element,
     iframeEventBridgeElement,
@@ -120,9 +118,8 @@ export const createReader = ({ containerElement, ...settings }: {
 
   function registerHook(name: typeof READING_ITEM_ON_LOAD_HOOK, fn: Hooks[typeof READING_ITEM_ON_LOAD_HOOK]['fn']): void
   function registerHook(name: typeof READING_ITEM_ON_CREATED_HOOK, fn: Hooks[typeof READING_ITEM_ON_CREATED_HOOK]['fn']): void
-  function registerHook(name: typeof READING_ITEM_ON_LAYOUT_HOOK, fn: Hooks[typeof READING_ITEM_ON_LAYOUT_HOOK]['fn']): void
   function registerHook(name: string, fn: any) {
-    const validHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK, READING_ITEM_ON_LAYOUT_HOOK] as const
+    const validHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK] as const
     if (validHooks.includes(name as typeof validHooks[number])) {
       readingOrderView.registerHook({ name: name as typeof validHooks[number] , fn })
     }
@@ -132,11 +129,13 @@ export const createReader = ({ containerElement, ...settings }: {
     readingOrderView.manipulateReadingItems(cb)
   }
 
-  const manipulateContainer = (cb: (container: HTMLElement) => (() => void) | void) => {
-    const returnCb = cb(element)
-    if (returnCb) {
-      containerManipulationCbList.push(returnCb)
+  const manipulateContainer = (cb: (container: HTMLElement, onDestroy: (onDestroyCb: () => void) => void) => boolean) => {
+    const onDestroy = (onDestroyCb: () => void) => {
+      containerManipulationOnDestroyCbList.push(onDestroyCb)
     }
+
+    // @todo re-layout based on return
+    cb(element, onDestroy)
   }
 
   const readingOrderViewSubscription = readingOrderView.$
@@ -157,8 +156,8 @@ export const createReader = ({ containerElement, ...settings }: {
   const destroy = () => {
     destroy$.next()
     destroy$.complete()
-    containerManipulationCbList.forEach(cb => cb())
-    containerManipulationCbList = []
+    containerManipulationOnDestroyCbList.forEach(cb => cb())
+    containerManipulationOnDestroyCbList = []
     readingOrderView?.destroy()
     readingOrderViewSubscription?.unsubscribe()
     paginationSubscription?.unsubscribe()

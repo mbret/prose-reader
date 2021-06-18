@@ -48,7 +48,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const onPaginationChange: ComponentProps<typeof ReactReader>['onPaginationChange'] = (info) => {
     localStorage.setItem(`cfi`, info?.begin.cfi || ``)
     setPaginationState(info)
-    console.warn(`foo.pagination.change`, info?.begin.readingItemIndex)
   }
 
   const onReady = useCallback(() => {

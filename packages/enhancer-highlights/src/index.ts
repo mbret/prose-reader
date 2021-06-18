@@ -112,7 +112,6 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
 
       if (newHighlight.readingItemIndex !== undefined) {
         reader.manipulateReadingItems(({ index, overlayElement }) => {
-          console.log(index, newHighlight.readingItemIndex)
           if (index !== newHighlight.readingItemIndex) return SHOULD_NOT_LAYOUT
 
           drawHighlight(overlayElement, newHighlight)
@@ -150,10 +149,6 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       return false
     }
 
-    reader.registerHook(`readingItem.onLayout`, ({ overlayElement, index }) => {
-      drawHighlightsForItem(overlayElement, index)
-    })
-
     const initialHighlights$ = reader.$
       .pipe(
         filter(event => event.type === `ready`),
@@ -166,7 +161,19 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         })
       )
 
-    merge(initialHighlights$)
+    const refreshHighlights$ = reader.$
+      .pipe(
+        filter(event => event.type === `layoutUpdate`),
+        tap(() => {
+          reader.manipulateReadingItems(({ overlayElement, index }) => {
+            drawHighlightsForItem(overlayElement, index)
+
+            return SHOULD_NOT_LAYOUT
+          })
+        })
+      )
+
+    merge(initialHighlights$, refreshHighlights$)
       .pipe(takeUntil(reader.destroy$))
       .subscribe()
 

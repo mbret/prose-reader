@@ -223,7 +223,7 @@ const buildStyleWithMultiColumn = ({ columnHeight, columnWidth, horizontalMargin
       max-width: 100%;
       max-width: ${columnWidth}px !important;
       max-height: ${columnHeight}px !important;
-      pointer-events: none;
+      -pointer-events: none;
       -webkit-column-break-inside: avoid;
       page-break-inside: avoid;
       break-inside: avoid;

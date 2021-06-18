@@ -6,6 +6,7 @@ import { getIcon } from './icon'
 const PACKAGE_NAME = `@oboku/reader-enhancer-bookmarks`
 const ELEMENT_ID = PACKAGE_NAME
 const logger = Report.namespace(PACKAGE_NAME)
+const SHOULD_NOT_LAYOUT = false
 
 type Bookmark = {
   cfi: string,
@@ -77,7 +78,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const createBookmarkElement = () => {
       reader.manipulateContainer(container => {
-        if (container.ownerDocument.getElementById(ELEMENT_ID)) return
+        if (container.ownerDocument.getElementById(ELEMENT_ID)) return SHOULD_NOT_LAYOUT
         const element = container.ownerDocument.createElement(`div`)
         element.id = ELEMENT_ID
         element.style.cssText = `
@@ -100,6 +101,8 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
         // @todo should we remove listener even if we remove the dom element ? gc is fine ?
         element.addEventListener(`click`, removeBookmarksOnCurrentPage)
+
+        return SHOULD_NOT_LAYOUT
       })
     }
 
@@ -116,6 +119,8 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     const destroyBookmarkElement = () => {
       reader.manipulateContainer(container => {
         container.ownerDocument.getElementById(ELEMENT_ID)?.remove()
+
+        return SHOULD_NOT_LAYOUT
       })
     }
 
@@ -174,12 +179,14 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     // Register hook to trigger bookmark when user click on iframe.
     // By design clicking on bookmark is possible only once the frame
     // is loaded.
-    reader.manipulateContainer(container => {
+    reader.manipulateContainer((container, onDestroy) => {
       container.addEventListener('click', onDocumentClick, { capture: true })
 
-      return () => {
+      onDestroy(() => {
         container.removeEventListener(`click`, onDocumentClick)
-      }
+      })
+
+      return SHOULD_NOT_LAYOUT
     })
 
     reader.registerHook(`readingItem.onLoad`, ({ frame }) => {

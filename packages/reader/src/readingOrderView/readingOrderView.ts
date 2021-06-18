@@ -28,10 +28,6 @@ type Hook =
     fn: Extract<ReadingItemHook, { name: 'onLoad' }>['fn']
   }
   | {
-    name: `readingItem.onLayout`,
-    fn: (params: Parameters<Extract<ReadingItemHook, { name: 'onLayout' }>['fn']>[0] & { index: number }) => ReturnType<Extract<ReadingItemHook, { name: 'onLayout' }>['fn']>
-  }
-  | {
     name: `readingItem.onCreated`,
     fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
   }
@@ -76,9 +72,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         if (hook.name === `readingItem.onLoad`) {
           readingItem.registerHook({ name: `onLoad`, fn: hook.fn })
         }
-        if (hook.name === `readingItem.onLayout`) {
-          readingItem.registerHook({ name: `onLayout`, fn: (params) => hook.fn({ ...params, index }) })
-        }
       })
       readingItemManager.add(readingItem)
     })
@@ -106,9 +99,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     readingItemManager.getAll().forEach((item, index) => {
       if (hook.name === `readingItem.onLoad`) {
         item.registerHook({ name: `onLoad`, fn: hook.fn })
-      }
-      if (hook.name === `readingItem.onLayout`) {
-        item.registerHook({ name: `onLayout`, fn: (params) => hook.fn({ ...params, index }) })
       }
     })
   }
