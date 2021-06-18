@@ -15,6 +15,9 @@
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "declaration": true,
+    "removeComments": true,
+    "pretty": false,
+    "stripInternal": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist"],

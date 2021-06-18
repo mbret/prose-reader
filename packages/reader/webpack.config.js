@@ -7,7 +7,9 @@ module.exports = {
     'index': './src/index.ts',
   },
   mode: IS_PROD ? 'production' : 'development',
-  devtool: 'source-map',
+  ...!IS_PROD && {
+    devtool: 'source-map',
+  },
   externals: [
     'rxjs',
     'rxjs/operators',

@@ -2,6 +2,8 @@ import { merge } from "rxjs";
 import { filter, takeUntil, tap } from "rxjs/operators";
 import { Enhancer } from "../createReader";
 
+const SHOULD_NOT_LAYOUT = false
+
 /**
  * All fixes relative to chromes
  */
@@ -34,7 +36,7 @@ export const chromeEnhancer: Enhancer<{
    */
   // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
 
-  reader.manipulateContainer(container => {
+  reader.manipulateContainer((container, onDestroy) => {
     const onScroll = () => {
       container.scrollTo(0, 0)
     }
@@ -58,9 +60,11 @@ export const chromeEnhancer: Enhancer<{
 
     // container.appendChild(screenForceRefreshElt)
 
-    return () => {
+    onDestroy(() => {
       container.removeEventListener('scroll', onScroll)
-    }
+    })
+
+    return SHOULD_NOT_LAYOUT
   })
 
   reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
