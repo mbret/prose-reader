@@ -1,5 +1,5 @@
 {
-  "name": "@oboku/reader-enhancer-highlights",
+  "name": "@oboku/reader-enhancer-search",
   "version": "0.0.2",
   "main": "dist/index.js",
   "license": "MIT",

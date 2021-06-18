@@ -5,7 +5,9 @@ const IS_PROD = process.env.NODE_ENV !== 'development'
 module.exports = {
   entry: './src/index.ts',
   mode: IS_PROD ? 'production' : 'development',
-  devtool: 'source-map',
+  ...!IS_PROD && {
+    devtool: 'source-map',
+  },
   externals: [
     '@oboku/reader',
     'rxjs',
