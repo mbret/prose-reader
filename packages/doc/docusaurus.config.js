@@ -24,9 +24,9 @@ module.exports = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/facebook/docusaurus',
-          label: 'GitHub',
-          position: 'right',
+          href: 'https://oboku-reader.vercel.app/',
+          label: 'Demo',
+          position: 'left',
         },
       ],
     },
