@@ -25,6 +25,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const verticalMargin = 20
   const marginTop = 0
   const marginBottom = 0
+  const destroy$ = new Subject<void>()
 
   /**
    * Global spread behavior
@@ -57,9 +58,15 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     settings = { ...settings, ...newSettings }
   }
 
+  const destroy = () => {
+    destroy$.next()
+    destroy$.complete()
+  }
+
   return {
     load,
     isRTL,
+    destroy,
     getLoadOptions: () => loadOptions,
     setSettings,
     getCalculatedInnerMargin: () => 0,
@@ -93,6 +100,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
       }
     },
     $: subject.asObservable(),
+    destroy$: destroy$.asObservable(),
     emit: (data: ContextObservableEvents) => {
       subject.next(data)
     },

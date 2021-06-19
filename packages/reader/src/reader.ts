@@ -5,7 +5,7 @@ import { createPagination } from "./pagination";
 import { createReadingOrderView } from "./readingOrderView/readingOrderView";
 import { LoadOptions, Manifest } from "./types";
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
-import { tap } from "rxjs/operators";
+import { takeUntil, tap } from "rxjs/operators";
 import { createSelection } from "./selection";
 
 type ReadingOrderView = ReturnType<typeof createReadingOrderView>
@@ -138,9 +138,10 @@ export const createReader = ({ containerElement, ...settings }: {
     cb(element, onDestroy)
   }
 
-  const readingOrderViewSubscription = readingOrderView.$
+  readingOrderView.$
     .pipe(
-      tap(event => subject.next(event))
+      tap(event => subject.next(event)),
+      takeUntil(destroy$)
     )
     .subscribe()
 
@@ -154,15 +155,15 @@ export const createReader = ({ containerElement, ...settings }: {
    * instead of destroying it.
    */
   const destroy = () => {
-    destroy$.next()
-    destroy$.complete()
     containerManipulationOnDestroyCbList.forEach(cb => cb())
     containerManipulationOnDestroyCbList = []
-    readingOrderView?.destroy()
-    readingOrderViewSubscription?.unsubscribe()
     paginationSubscription?.unsubscribe()
+    context.destroy()
+    readingOrderView?.destroy()
     element.remove()
     iframeEventBridgeElement.remove()
+    destroy$.next()
+    destroy$.complete()
   }
 
   const reader = {

@@ -90,7 +90,7 @@ const reader = createReader({
 
   /**
    * Load the book by providing its manifest.
-   * We are bypassing the default behavior of the reader for fetching resouces.
+   * We are bypassing the default behavior of the reader for fetching resources.
    * Because we do not have a streamer, we just serve directly from the archive from
    * our script.
    *

@@ -368,7 +368,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     },
     isSelecting: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.isSelecting(),
     getSelection: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.getSelection(),
-    $: subject,
+    $: subject.asObservable(),
   }
 }
 
