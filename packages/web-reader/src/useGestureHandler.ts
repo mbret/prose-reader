@@ -1,5 +1,5 @@
 import * as Hammer from 'hammerjs'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from './ReaderProvider'
 import { hasCurrentHighlightState, isMenuOpenState } from './state'
@@ -7,6 +7,7 @@ import { hasCurrentHighlightState, isMenuOpenState } from './state'
 export const useGestureHandler = (container: HTMLElement | undefined) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
+  const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
 
   const handleSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
     /**
@@ -67,42 +68,47 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     }
   }, [setMenuOpenState, reader])
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setHasPreviouslyHighlight(hasCurrentHighlight)
-  //   }, 5)
-  // }, [hasCurrentHighlight, setHasPreviouslyHighlight])
+  useEffect(() => {
+    if (container) {
+      const newHammerManager = new Hammer.Manager(container || document.body, {
+        recognizers: [
+          [Hammer.Pan, { direction: Hammer.DIRECTION_ALL }],
+          [Hammer.Pinch, { enable: true }]
+        ]
+      })
+  
+      newHammerManager.add(new Hammer.Tap({
+        event: 'doubletap',
+        taps: 2
+      }))
+  
+      newHammerManager.add(new Hammer.Tap({
+        event: 'singletap',
+        interval: 100
+      }))
+  
+      // hammerManager.get('pan').set({ direction: Hammer.DIRECTION_ALL })
+      // hammerManager.get('pinch').set({ enable: true })
+      // hammerManager.get('press').set({ time: 500 })
+  
+      // we want to recognize this simultaneous, so a quadrupletap will be detected even while a tap has been recognized.
+      newHammerManager.get('doubletap').recognizeWith('singletap');
+      // we only want to trigger a tap, when we don't have detected a doubletap
+      newHammerManager.get('singletap').requireFailure('doubletap');
+
+      setHammerManager(newHammerManager)
+
+      return () => {
+        newHammerManager.destroy()
+        setHammerManager(undefined)
+      }
+    }
+  }, [container, setHammerManager])
 
   useEffect(() => {
-    const hammerManager = new Hammer.Manager(container || document.body, {
-      recognizers: [
-        [Hammer.Pan, { direction: Hammer.DIRECTION_ALL }],
-        [Hammer.Pinch, { enable: true }]
-      ]
-    })
+    hammerManager?.on('singletap', handleSingleTap)
 
-    hammerManager.add(new Hammer.Tap({
-      event: 'doubletap',
-      taps: 2
-    }))
-
-    hammerManager.add(new Hammer.Tap({
-      event: 'singletap',
-      interval: 100
-    }))
-
-    // hammerManager.get('pan').set({ direction: Hammer.DIRECTION_ALL })
-    // hammerManager.get('pinch').set({ enable: true })
-    // hammerManager.get('press').set({ time: 500 })
-
-    // we want to recognize this simultaneous, so a quadrupletap will be detected even while a tap has been recognized.
-    hammerManager.get('doubletap').recognizeWith('singletap');
-    // we only want to trigger a tap, when we don't have detected a doubletap
-    hammerManager.get('singletap').requireFailure('doubletap');
-
-    hammerManager.on('singletap', handleSingleTap)
-
-    hammerManager.on(`doubletap`, ({ srcEvent }) => {
+    hammerManager?.on(`doubletap`, ({ srcEvent }) => {
       const normalizedEvent = reader?.normalizeEvent(srcEvent)
       const target = normalizedEvent?.target as null | undefined | HTMLElement
 
@@ -113,7 +119,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       }
     })
 
-    hammerManager.on(`pinch`, (ev) => {
+    hammerManager?.on(`pinch`, (ev) => {
       if (reader?.zoom.isEnabled()) {
         reader?.zoom.scale(ev.scale)
       }
@@ -206,9 +212,5 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         }
       }
     }
-
-    return () => {
-      hammerManager.destroy()
-    }
-  }, [reader, container, setMenuOpenState, handleSingleTap])
+  }, [reader, setMenuOpenState, handleSingleTap, hammerManager])
 }
