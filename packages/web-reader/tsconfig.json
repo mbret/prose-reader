@@ -15,13 +15,14 @@
       ],
       "rxjs/*": [
         "../../node_modules/rxjs/*"
-      ]
+      ],
     },
     "strict": true,
     "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
   },
   "include": [
     "src/**/*"

@@ -84,7 +84,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 2 : 0
+        numberOfAdjacentSpineItemToPreLoad: 2
       })
     }
   }, [manifest, setReaderLoadOptions])
