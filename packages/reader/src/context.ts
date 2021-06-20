@@ -5,13 +5,19 @@ export type Context = ReturnType<typeof createContext>
 
 export type ContextObservableEvents = {}
 
-type Settings = { forceSinglePageMode: boolean }
+type Settings = {
+  forceSinglePageMode: boolean,
+  pageTurnAnimation: `none` | `fade` | `slide`,
+  pageTurnAnimationDuration: undefined | number
+}
 
 export const createContext = (initialSettings: Partial<Settings>) => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
   let settings: Settings = {
     forceSinglePageMode: false,
+    pageTurnAnimation: `none`,
+    pageTurnAnimationDuration: undefined,
     ...initialSettings
   }
   const subject = new Subject<ContextObservableEvents>()
@@ -37,7 +43,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     const isLandscape = width > height
 
     if (settings.forceSinglePageMode) return false
-    
+
     // portrait only
     if (!isLandscape && manifest?.renditionSpread === `portrait`) {
       return true
@@ -71,6 +77,11 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     setSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
+    getPageTurnAnimation: () => settings.pageTurnAnimation,
+    getPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration,
+    getComputedPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration !== undefined
+      ? settings.pageTurnAnimationDuration
+      : 300,
     shouldDisplaySpread,
     setVisibleAreaRect: (
       x: number,

@@ -35,7 +35,7 @@ type Hook =
 type Event =
   { type: `layoutUpdate` }
   | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
-  | { type: `onNavigationChange` }
+  // | { type: `onNavigationChange` }
 
 export const createReadingOrderView = ({ containerElement, context, pagination, iframeEventBridgeElement }: {
   containerElement: HTMLElement,
@@ -130,10 +130,10 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
             if (focusedReadingItemIndex === undefined) return
 
-            const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentPosition()) || {}
+            const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentNavigationPosition()) || {}
 
             if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
-              console.warn(`detected viewport items are not valid, waiting for adjustment`)
+              console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
               readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
             } else {
               readingItemManager.loadContents([begin, end])
@@ -237,14 +237,14 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   const navigatorSubscription = viewportNavigator.$
     .pipe(
       tap((data) => {
-        if (data.event === 'navigation') {
+        if (data.type === 'navigation') {
           const currentReadingItem = readingItemManager.getFocusedReadingItem()
-          const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.data)
+          const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
           const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
           const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
           // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
           // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
-          const readingItemToFocus = data.data.readingItem || beginReadingItem
+          const readingItemToFocus = data.position.readingItem || beginReadingItem
 
           if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
             if (readingItemToFocus !== currentReadingItem) {
@@ -276,11 +276,11 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             Report.log(NAMESPACE, `navigateTo`, `navigate success`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, readingItemToFocus, offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation })
           }
 
-          subject.next({ type: `onNavigationChange` })
+          // subject.next({ type: `onNavigationChange` })
         }
 
-        if (data.event === 'adjust') {
-          const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.data)
+        if (data.type === 'adjustEnd') {
+          const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
           const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
           const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
           const beginLastCfi = pagination.getBeginInfo().cfi
@@ -319,7 +319,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             })
           }
 
-          subject.next({ type: `onNavigationChange` })
+          // subject.next({ type: `onNavigationChange` })
         }
       })
     )
@@ -336,7 +336,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     registerHook,
     normalizeEvent: eventsHelper.normalizeEvent,
     manipulateReadingItems,
-    getCurrentPosition: viewportNavigator.getCurrentPosition,
+    getCurrentViewportPosition: viewportNavigator.getCurrentViewportPosition,
+    getCurrentNavigationPosition: viewportNavigator.getCurrentNavigationPosition,
     goToNextSpineItem: () => {
       const currentSpineIndex = readingItemManager.getFocusedReadingItemIndex() || 0
       const numberOfSpineItems = context?.getManifest()?.readingOrder.length || 1

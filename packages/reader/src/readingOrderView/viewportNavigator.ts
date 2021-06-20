@@ -4,10 +4,16 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { Subject } from "rxjs"
+import { EMPTY, merge, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
+import { delay, delayWhen, filter, switchMap, take, takeUntil, tap } from "rxjs/operators"
 
 const NAMESPACE = `viewportNavigator`
+
+type SubjectEvent =
+  | { type: 'navigation', position: { x: number, y: number, readingItem?: ReadingItem } }
+  | { type: 'adjustStart', position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }
+  | { type: 'adjustEnd', position: { x: number, y: number, readingItem?: ReadingItem } }
 
 export const createViewportNavigator = ({ readingItemManager, context, pagination, element }: {
   readingItemManager: ReadingItemManager,
@@ -17,8 +23,16 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 }) => {
   const navigator = createNavigator({ context, readingItemManager })
   const locator = createLocator({ context, readingItemManager })
-  let isFirstNavigation = true
-  const subject = new Subject<{ event: 'navigation', data: { x: number, y: number, readingItem?: ReadingItem } } | { event: 'adjust', data: { x: number, y: number } }>()
+  let isNavigationHappening = false
+  /**
+   * This position correspond to the current navigation position.
+   * This is always sync with navigation and adjustment but IS NOT necessarily
+   * synced with current viewport. This is because viewport can be animated.
+   * This value may be used to adjust / get current valid info about what should be visible.
+   * This DOES NOT reflect necessarily what is visible for the user at instant T.
+   */
+  let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
+  const subject = new Subject<SubjectEvent>()
   let lastUserExpectedNavigation:
     | undefined
     // always adjust at the first page
@@ -45,7 +59,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   const areNavigationDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
-  const getCurrentPosition = () => ({
+  /**
+   * Keep in mind that the viewport position IS NOT necessarily the current navigation position.
+   * Because there could be an animation running the viewport may be late. To retrieve the current position
+   * use the dedicated property.
+   */
+  const getCurrentViewportPosition = () => ({
     // we want to round to first decimal because it's possible to have half pixel
     // however browser engine can also gives back x.yyyy based on their precision
     x: Math.round(Math.abs(element.getBoundingClientRect().x) * 10) / 10,
@@ -77,15 +96,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   })
 
   const turnLeft = Report.measurePerformance(`${NAMESPACE} turnLeft`, 10, ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentPosition = getCurrentPosition()
-    const navigation = navigator.getNavigationForLeftPage(currentPosition)
+    const navigation = navigator.getNavigationForLeftPage(currentNavigationPosition)
 
     turnTo(navigation, { allowReadingItemChange })
   })
 
   const turnRight = Report.measurePerformance(`${NAMESPACE} turnRight`, 10, ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentPosition = getCurrentPosition()
-    const navigation = navigator.getNavigationForRightPage(currentPosition)
+    const navigation = navigator.getNavigationForRightPage(currentNavigationPosition)
 
     turnTo(navigation, { allowReadingItemChange })
   })
@@ -140,7 +157,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   const moveTo = ({ offset, startOffset }: { startOffset: number, offset: number }, { final }: { final?: boolean } = {}) => {
     if (moveToInitialViewportOffset === undefined) {
-      moveToInitialViewportOffset = getCurrentPosition().x
+      moveToInitialViewportOffset = getCurrentViewportPosition().x
     }
 
     let navigation = { x: (offset - startOffset) + moveToInitialViewportOffset, y: 0 }
@@ -167,26 +184,16 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       }
     }
 
-    adjustReadingOffset(navigation)
+    // adjustReadingOffset(navigation)
   }
 
   /**
    * @todo optimize this function to not being called several times
    */
   const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }) => {
-    if (!isFirstNavigation && !areNavigationDifferent(navigation, getCurrentPosition())) {
-      Report.warn(NAMESPACE, `prevent useless navigation`)
+    currentNavigationPosition = navigation
 
-      subject.next({ event: 'navigation', data: navigation })
-
-      return
-    }
-
-    isFirstNavigation = false
-
-    adjustReadingOffset(navigation)
-
-    subject.next({ event: 'navigation', data: navigation })
+    subject.next({ type: 'navigation', position: navigation })
   })
 
   /**
@@ -201,9 +208,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @todo this is being called a lot, try to optimize
    */
   const adjustReadingOffsetPosition = (readingItem: ReadingItem, { shouldAdjustCfi }: { shouldAdjustCfi: boolean }) => {
-    const currentViewportPosition = getCurrentPosition()
     const lastCfi = pagination.getBeginInfo().cfi
-    let expectedReadingOrderViewPosition = currentViewportPosition
+    let adjustedReadingOrderViewPosition = currentNavigationPosition
     let offsetInReadingItem = 0
 
     /**
@@ -211,21 +217,21 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
      * to there
      */
     if (lastUserExpectedNavigation?.type === 'navigate-from-cfi') {
-      expectedReadingOrderViewPosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
       Report.log(NAMESPACE, `navigate-from-cfi`, `use last cfi`)
     } else if (lastUserExpectedNavigation?.type === 'navigate-from-next-item') {
       /**
        * When `navigate-from-next-item` we always try to get the offset of the last page, that way
        * we ensure reader is always redirected to last page
        */
-      expectedReadingOrderViewPosition = navigator.getNavigationForLastPage(readingItem)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForLastPage(readingItem)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `navigate-from-next-item`, {})
     } else if (lastUserExpectedNavigation?.type === 'navigate-from-previous-item') {
       /**
        * When `navigate-from-previous-item'` 
        * we always try stay on the first page of the item
        */
-      expectedReadingOrderViewPosition = navigator.getNavigationForPage(0, readingItem)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForPage(0, readingItem)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `navigate-from-previous-item`, {})
     } else if (lastUserExpectedNavigation?.type === 'navigate-from-anchor') {
       /**
@@ -233,14 +239,14 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
        * the offset of that anchor.
        */
       const anchor = lastUserExpectedNavigation.data
-      expectedReadingOrderViewPosition = navigator.getNavigationForAnchor(anchor, readingItem)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForAnchor(anchor, readingItem)
     } else if (lastCfi) {
       /**
        * When there is no last navigation then we first look for any existing CFI. If there is a cfi we try to retrieve
        * the offset and navigate the user to it
        * @todo handle vertical writing, we are always redirected to page 1 currently
        */
-      expectedReadingOrderViewPosition = navigator.getNavigationForCfi(lastCfi)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastCfi)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `use last cfi`)
     } else {
       /**
@@ -249,22 +255,99 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
       const currentPageIndex = pagination.getBeginInfo().pageIndex || 0
-      expectedReadingOrderViewPosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
+      adjustedReadingOrderViewPosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `use guess strategy`, {})
     }
 
-    Report.log(NAMESPACE, `adjustReadingOffsetPosition`, { offsetInReadingItem, expectedReadingOrderViewOffset: expectedReadingOrderViewPosition, lastUserExpectedNavigation })
+    Report.log(NAMESPACE, `adjustReadingOffsetPosition`, { offsetInReadingItem, expectedReadingOrderViewOffset: adjustedReadingOrderViewPosition, lastUserExpectedNavigation })
 
-    if (areNavigationDifferent(expectedReadingOrderViewPosition, currentViewportPosition)) {
-      adjustReadingOffset(expectedReadingOrderViewPosition)
-    }
+    currentNavigationPosition = adjustedReadingOrderViewPosition
 
-    subject.next({ event: 'adjust', data: expectedReadingOrderViewPosition })
+    subject.next({ type: `adjustStart`, position: adjustedReadingOrderViewPosition, animation: `auto` })
   }
 
+  const adjustEnd$ = subject.pipe(filter(event => event.type === `adjustEnd`))
+
+  const navigation$ = subject
+    .pipe(
+      filter(event => event.type === `navigation`),
+      switchMap((event) => {
+        isNavigationHappening = true
+
+        subject.next({ type: `adjustStart`, position: event.position, animation: `auto` })
+
+        return adjustEnd$.pipe(take(1))
+      }),
+      tap(() => {
+        isNavigationHappening = false
+      })
+    )
+
+  const adjust$ = subject
+    .pipe(
+      filter(event => event.type === `adjustStart`),
+      switchMap((event) => {
+        const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
+        const animationDuration = context.getComputedPageTurnAnimationDuration()
+        const shouldAnimate = (event.type === `adjustStart` && event.animation === `none`)
+          ? false
+          : isNavigationHappening
+            ? context.getPageTurnAnimation() !== `none`
+            : false
+
+        if (shouldAnimate && !noAdjustmentNeeded) {
+          if (context.getPageTurnAnimation() === `fade`) {
+            element.style.setProperty('transition', `opacity ${animationDuration}ms`)
+            element.style.setProperty('opacity', '0')
+          } else if (context.getPageTurnAnimation() === `slide`) {
+            element.style.setProperty('transition', `transform ${animationDuration}ms`)
+            element.style.setProperty('opacity', '1')
+          }
+        } else {
+          element.style.setProperty('transition', `none`)
+          element.style.setProperty('opacity', `1`)
+        }
+
+        if (noAdjustmentNeeded) {
+          return of(event)
+            .pipe(
+              tap(() => {
+                subject.next({ type: `adjustEnd`, position: event.position })
+              }),
+              delay(animationDuration),
+            )
+        }
+
+        return of(event)
+          .pipe(
+            tap(() => {
+              if (context.getPageTurnAnimation() !== `fade`) {
+                adjustReadingOffset(event.position)
+              }
+            }),
+            delayWhen(() => shouldAnimate ? timer(animationDuration) : EMPTY),
+            tap(() => {
+              if (context.getPageTurnAnimation() === `fade`) {
+                adjustReadingOffset(event.position)
+              }
+              subject.next({ type: `adjustEnd`, position: event.position })
+            })
+          )
+      }),
+      tap(() => {
+        element.style.setProperty('opacity', '1')
+      })
+    )
+
+  merge(navigation$, adjust$)
+    .pipe(
+      takeUntil(context.destroy$)
+    )
+    .subscribe()
+
   return {
-    adjustOffset: adjustReadingOffset,
-    getCurrentPosition,
+    getCurrentViewportPosition,
+    getCurrentNavigationPosition: () => currentNavigationPosition,
     turnLeft,
     turnRight,
     goTo,

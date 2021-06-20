@@ -8,7 +8,7 @@ export const navigationEnhancer: Enhancer<{
 
   const goToNextSpineItem = () => {
     const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
-    const { end = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentPosition()) || {}
+    const { end = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
     const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length ?? 0
     let nextItem = end + 1
     if (nextItem < numberOfSpineItems) {
@@ -18,7 +18,7 @@ export const navigationEnhancer: Enhancer<{
 
   const goToPreviousSpineItem = () => {
     const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
-    const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentPosition()) || {}
+    const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
     let nextItem = begin - 1
     if (nextItem >= 0) {
       reader.goTo(nextItem)

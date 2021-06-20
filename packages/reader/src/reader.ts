@@ -29,12 +29,14 @@ type Event =
   | { type: 'ready' }
   | { type: `layoutUpdate` }
   | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
-  | { type: `onNavigationChange` }
+// | { type: `onNavigationChange` }
+
+type Context = ReturnType<typeof createBookContext>
+type ContextSettings = Parameters<Context['setSettings']>[0]
 
 export const createReader = ({ containerElement, ...settings }: {
   containerElement: HTMLElement,
-  forceSinglePageMode?: boolean
-}) => {
+} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation`>) => {
   const subject = new Subject<Event>()
   const destroy$ = new Subject<void>()
   const paginationSubject = new Subject<{ event: 'change' }>()
@@ -121,7 +123,7 @@ export const createReader = ({ containerElement, ...settings }: {
   function registerHook(name: string, fn: any) {
     const validHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK] as const
     if (validHooks.includes(name as typeof validHooks[number])) {
-      readingOrderView.registerHook({ name: name as typeof validHooks[number] , fn })
+      readingOrderView.registerHook({ name: name as typeof validHooks[number], fn })
     }
   }
 
@@ -187,7 +189,9 @@ export const createReader = ({ containerElement, ...settings }: {
     getCfiMetaInformation: readingOrderView.getCfiMetaInformation,
     resolveCfi: readingOrderView.resolveCfi,
     locator: readingOrderView.locator,
-    getCurrentPosition: readingOrderView.getCurrentPosition,
+    getCurrentViewportPosition: readingOrderView.getCurrentViewportPosition,
+    getCurrentNavigationPosition: readingOrderView.getCurrentNavigationPosition,
+    setPageTurnAnimation: (pageTurnAnimation: ContextSettings['pageTurnAnimation']) => context.setSettings({ pageTurnAnimation }),
     layout,
     load,
     destroy,
