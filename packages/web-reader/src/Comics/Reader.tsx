@@ -1,22 +1,22 @@
-import React, { ComponentProps, useCallback, useMemo, useState } from 'react';
+import React, { ComponentProps, useCallback, useState } from 'react';
 import { useEffect } from "react"
-import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { useGestureHandler } from "./useGestureHandler";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { useGestureHandler } from "../useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
-import { QuickMenu } from './QuickMenu';
-import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from './state';
-import { FontsSettings, fontsSettingsState } from './FontsSettings'
-import { Loading } from './Loading';
-import { ReaderInstance } from './types';
-import { useBookmarks } from './useBookmarks';
-import { useReader } from './ReaderProvider';
-import { useManifest } from './useManifest';
+import { QuickMenu } from '../QuickMenu';
+import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
+import { FontsSettings, fontsSettingsState } from '../FontsSettings'
+import { Loading } from '../Loading';
+import { ReaderInstance } from '../types';
+import { useBookmarks } from '../useBookmarks';
+import { useReader } from '../ReaderProvider';
+import { useManifest } from '../useManifest';
 import { useParams } from 'react-router';
-import { BookError } from './BookError';
-import { getEpubUrlFromLocation } from './serviceWorker/utils';
-import { HighlightMenu } from './HighlightMenu';
-import { useHighlights } from './useHighlights';
+import { BookError } from '../BookError';
+import { getEpubUrlFromLocation } from '../serviceWorker/utils';
+import { HighlightMenu } from '../HighlightMenu';
+import { useHighlights } from '../useHighlights';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -31,11 +31,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const bookmarksEnhancer = useBookmarks(reader)
   const highlightsEnhancer = useHighlights(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
-  const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
-  const [readerOptions] = useState({
-    fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
-    lineHeight: storedLineHeight || undefined,
-    theme: undefined,
+  const [readerOptions] = useState<ReactReaderProps['options']>({
+    pageTurnAnimation: `slide`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)

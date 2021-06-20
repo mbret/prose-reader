@@ -9,7 +9,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
 
-  const handleSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
+  const onSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
     /**
      * @important
      * On touch device `selectionchange` is being triggered after the onclick event, meaning
@@ -106,18 +106,21 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
   }, [container, setHammerManager])
 
   useEffect(() => {
-    hammerManager?.on('singletap', handleSingleTap)
-
-    hammerManager?.on(`doubletap`, ({ srcEvent }) => {
+    const onDoubleTap: HammerListener = ({ srcEvent }) => {
       const normalizedEvent = reader?.normalizeEvent(srcEvent)
       const target = normalizedEvent?.target as null | undefined | HTMLElement
 
       reader?.zoom.exit()
 
-      if (target?.nodeName === `img`) {
+      console.log(target?.nodeName)
+
+      if (target?.nodeName.toLowerCase() === `img`) {
         reader?.zoom.enter(target as HTMLImageElement)
       }
-    })
+    }
+
+    hammerManager?.on('singletap', onSingleTap)
+    hammerManager?.on(`doubletap`, onDoubleTap)
 
     hammerManager?.on(`pinch`, (ev) => {
       if (reader?.zoom.isEnabled()) {
@@ -212,5 +215,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         }
       }
     }
-  }, [reader, setMenuOpenState, handleSingleTap, hammerManager])
+
+    return () => {
+      hammerManager?.off(`doubletap`, onDoubleTap)
+      hammerManager?.off(`singletap`, onSingleTap)
+    }
+  }, [reader, setMenuOpenState, onSingleTap, hammerManager])
 }
