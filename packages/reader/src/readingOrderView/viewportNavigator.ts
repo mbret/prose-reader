@@ -4,14 +4,14 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { EMPTY, merge, of, Subject, timer } from "rxjs"
+import { EMPTY, merge, Observable, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
 import { delay, delayWhen, filter, switchMap, take, takeUntil, tap } from "rxjs/operators"
 
 const NAMESPACE = `viewportNavigator`
 
 type SubjectEvent =
-  | { type: 'navigation', position: { x: number, y: number, readingItem?: ReadingItem } }
+  | { type: 'navigation', position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }
   | { type: 'adjustStart', position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }
   | { type: 'adjustEnd', position: { x: number, y: number, readingItem?: ReadingItem } }
 
@@ -23,7 +23,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 }) => {
   const navigator = createNavigator({ context, readingItemManager })
   const locator = createLocator({ context, readingItemManager })
-  let isNavigationHappening = false
+  let ongoingNavigation: undefined | { animate: boolean } = undefined
   /**
    * This position correspond to the current navigation position.
    * This is always sync with navigation and adjustment but IS NOT necessarily
@@ -118,19 +118,19 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     }
   }
 
-  const goToCfi = (cfi: string) => {
+  const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) => {
     const navigation = navigator.getNavigationForCfi(cfi)
     Report.log(NAMESPACE, `goToCfi`, { cfi, navigation })
     lastUserExpectedNavigation = { type: 'navigate-from-cfi', data: cfi }
-    navigateTo(navigation)
+    navigateTo(navigation, options)
   }
 
-  const goToSpineItem = (indexOrId: number | string) => {
+  const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) => {
     const navigation = navigator.getNavigationForSpineIndexOrId(indexOrId)
     // always want to be at the beginning of the item
     lastUserExpectedNavigation = { type: 'navigate-from-previous-item' }
 
-    navigateTo(navigation)
+    navigateTo(navigation, options)
   }
 
   const goTo = (spineIndexOrSpineItemIdOrCfi: number | string) => {
@@ -190,10 +190,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   /**
    * @todo optimize this function to not being called several times
    */
-  const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }) => {
+  const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }, { animate }: { animate: boolean } = { animate: true }) => {
     currentNavigationPosition = navigation
 
-    subject.next({ type: 'navigation', position: navigation })
+    subject.next({ type: 'navigation', position: navigation, animate })
   })
 
   /**
@@ -272,14 +272,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     .pipe(
       filter(event => event.type === `navigation`),
       switchMap((event) => {
-        isNavigationHappening = true
+        const navigationEvent = event as Extract<SubjectEvent, { type: `navigation` }>
+        ongoingNavigation = { animate: navigationEvent.animate }
 
-        subject.next({ type: `adjustStart`, position: event.position, animation: `auto` })
+        subject.next({ type: `adjustStart`, position: event.position, animation: navigationEvent.animate ? `auto` : `none` })
 
         return adjustEnd$.pipe(take(1))
       }),
       tap(() => {
-        isNavigationHappening = false
+        ongoingNavigation = undefined
       })
     )
 
@@ -289,11 +290,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       switchMap((event) => {
         const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
         const animationDuration = context.getComputedPageTurnAnimationDuration()
-        const shouldAnimate = (event.type === `adjustStart` && event.animation === `none`)
-          ? false
-          : isNavigationHappening
-            ? context.getPageTurnAnimation() !== `none`
-            : false
+        const shouldAnimate =
+          (event.type === `adjustStart` && event.animation === `none`)
+            || ongoingNavigation?.animate === false
+            || !ongoingNavigation
+            || context.getPageTurnAnimation() === `none`
+            ? false
+            : true
 
         if (shouldAnimate && !noAdjustmentNeeded) {
           if (context.getPageTurnAnimation() === `fade`) {

@@ -107,9 +107,9 @@ export const createReader = ({ containerElement, ...settings }: {
     layout()
 
     if (!loadOptions.cfi) {
-      readingOrderView.goToSpineItem(0)
+      readingOrderView.goToSpineItem(0, { animate: false })
     } else {
-      readingOrderView.goToCfi(loadOptions.cfi)
+      readingOrderView.goToCfi(loadOptions.cfi, { animate: false })
     }
 
     paginationSubscription?.unsubscribe()
