@@ -38,6 +38,9 @@ export const zoomEnhancer: Enhancer<{
       clonedImgElement.style.setProperty(`height`, `100%`)
       clonedImgElement.style.setProperty(`width`, `100%`)
       clonedImgElement.style.setProperty(`object-fit`, `contain`)
+      // convenient so that user does not trigger zoom again if for example he is listening to press
+      // on img element. Any press event on the zoom container will not have the img as target.
+      clonedImgElement.style.setProperty(`pointer-events`, `none`)
 
       imageMagnifierContainer.appendChild(clonedImgElement)
       container.appendChild(imageMagnifierContainer)
