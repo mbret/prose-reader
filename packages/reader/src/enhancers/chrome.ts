@@ -78,7 +78,7 @@ export const chromeEnhancer: Enhancer<{
 
   const forceScreenRefresh$ = reader.$
     .pipe(
-      filter(event => event.type === `onNavigationChange`),
+      // filter(event => event.type === `onNavigationChange`),
       tap(() => {
         // screenForceRefreshElt?.style.setProperty(`top`, `0px`)
         // requestAnimationFrame(() => {
