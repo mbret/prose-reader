@@ -211,6 +211,8 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
       background-color: transparent;
       border: 0px none transparent;
       padding: 0px;
+      transition: opacity 300ms;
+      opacity: 0;
     `
 
     resolve(frame)

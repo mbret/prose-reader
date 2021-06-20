@@ -40,6 +40,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
       let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
       frameElement?.style.setProperty(`visibility`, `visible`)
+      frameElement?.style.setProperty(`opacity`, `1`)
 
       if (viewportDimensions) {
         const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)

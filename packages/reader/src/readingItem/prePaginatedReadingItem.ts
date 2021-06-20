@@ -34,7 +34,8 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       const cssLink = buildDefaultStyle(getDimensions())
 
       frameElement?.style.setProperty(`visibility`, `visible`)
-
+      frameElement?.style.setProperty(`opacity`, `1`)
+      
       if (viewportDimensions) {
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
         readingItemFrame.staticLayout({
