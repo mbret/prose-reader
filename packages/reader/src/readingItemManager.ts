@@ -90,7 +90,12 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     subject.next({ event: 'focus', data: readingItemToFocus })
   }
 
-  // @todo analyze poor performances
+  /**
+   * @todo
+   * optimize useless calls to it, such as when the layout has not changed and the focus is still the same
+   * @todo 
+   * analyze poor performances
+   */
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
@@ -100,7 +105,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       if (isBeforeFocusedWithPreload || isAfterTailWithPreload) {
         orderedReadingItem.unloadContent()
       } else {
-        if (!orderedReadingItem.isFrameReady()) {
+        if (!orderedReadingItem.isFrameReady() && !orderedReadingItem.isFrameLoading()) {
           orderedReadingItem.loadContent()
         }
       }

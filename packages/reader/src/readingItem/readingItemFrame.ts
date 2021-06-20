@@ -94,6 +94,7 @@ export const createReadingItemFrame = (
   return {
     getIsReady: () => isReady,
     getIsLoaded: () => isLoaded,
+    getIsLoading: () => loading,
     getViewportDimensions,
     getFrameElement: () => frameElement,
     load: Report.measurePerformance(`ReadingItemFrame load`, Infinity, async () => {
@@ -121,9 +122,9 @@ export const createReadingItemFrame = (
       return new Promise(async (resolve) => {
         if (frameElement && !isCancelled()) {
           frameElement.setAttribute('sandbox', 'allow-same-origin allow-scripts')
-          frameElement.onload = (e) => {
+          frameElement.onload = () => {
             const t1 = performance.now();
-            Report.metric({ name: `ReadingItemFrame load:3`, duration: t1 - t0 });
+            Report.metric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
 
             if (frameElement && !isCancelled()) {
               frameElement.onload = null

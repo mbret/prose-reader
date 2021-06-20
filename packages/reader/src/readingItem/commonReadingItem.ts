@@ -283,6 +283,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       return readingItemFrame.getReadingDirection() || context.getReadingDirection()
     },
     isFrameReady: () => readingItemFrame.getIsReady(),
+    isFrameLoading: () => readingItemFrame.getIsLoading(),
     manipulateReadingItem: (
       cb: (options: {
         container: HTMLElement,
