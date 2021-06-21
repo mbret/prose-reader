@@ -150,30 +150,41 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     }
   }
 
-  let moveToInitialViewportOffset: number | undefined = undefined
+  // let moveToInitialViewportOffset: number | undefined = undefined
+  let movingLastDelta: { x: number, y: number } | undefined = undefined
 
   /**
    * @prototype
    */
-  const moveTo = ({ offset, startOffset }: { startOffset: number, offset: number }, { final }: { final?: boolean } = {}) => {
-    if (moveToInitialViewportOffset === undefined) {
-      moveToInitialViewportOffset = getCurrentViewportPosition().x
+  // const moveTo = ({ offset, startOffset }: { startOffset: number, offset: number }, { final }: { final?: boolean } = {}) => {
+  const moveTo = (delta: { x: number, y: number }, { final }: { final?: boolean } = {}) => {
+    if (movingLastDelta === undefined) {
+      // movingLastDelta = getCurrentViewportPosition().x
+      movingLastDelta = { x: 0, y: 0 }
     }
 
-    let navigation = { x: (offset - startOffset) + moveToInitialViewportOffset, y: 0 }
+    // let navigation = { x: (offset - startOffset) + movingLastDelta, y: 0 }
+    // let navigation = navigator.wrapPositionWithSafeEdge({ x: (startOffset - offset) + movingLastDelta, y: 0 })
+    // let navigation = navigator.wrapPositionWithSafeEdge({ x: (startOffset - offset) + movingLastDelta, y: 0 })
+
+    const correctedX = delta.x - (movingLastDelta?.x || 0)
+    // const correctedY = delta.y - (movingLastDelta?.y || 0)
+
+    let navigation = navigator.wrapPositionWithSafeEdge({
+      x: getCurrentViewportPosition().x - correctedX,
+      y: 0
+    })
+
+    movingLastDelta = delta
 
     if (final) {
-      moveToInitialViewportOffset = undefined
+      movingLastDelta = undefined
     }
-
-    // console.log(moveToInitialViewportOffset, (offset - startOffset) + moveToInitialViewportOffset)
 
     if (final) {
       const { x: offsetAtMidScreen } = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
       const readingItem = locator.getReadingItemFromOffset(offsetAtMidScreen) || readingItemManager.getFocusedReadingItem()
       const index = readingItemManager.getReadingItemIndex(readingItem)
-
-      // console.log(`moveTo`, { offsetAtMidScreen, index, navigation })
 
       if (index !== undefined) {
         navigation = navigator.getNavigationForSpineIndexOrId(index)
@@ -184,7 +195,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       }
     }
 
-    // adjustReadingOffset(navigation)
+    subject.next({ type: `adjustStart`, position: navigation, animation: `none` })
   }
 
   /**
