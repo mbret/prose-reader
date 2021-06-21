@@ -1,7 +1,9 @@
 import React from 'react'
 import { useHistory } from 'react-router'
 import { useRecoilValue } from 'recoil'
-import { Button } from './common/Button'
+import { Button } from "./common/Button"
+import { IconButton } from "@chakra-ui/react"
+import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons"
 import { useToggleFontsSettings } from './FontsSettings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
@@ -91,8 +93,11 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             {(
               (manifest?.readingDirection === 'ltr' && currentReadingItemIndex > 0)
               || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
-            ) && (
-                <Button onClick={_ => reader?.goToLeftSpineItem()}>{`<<`}</Button>
+            ) ? (
+              <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={_ => reader?.goToLeftSpineItem()} />
+            )
+              : (
+                <IconButton icon={<ArrowBackIcon />} aria-label="back" disabled />
               )}
           </div>
           <div style={{
@@ -146,9 +151,11 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             {(
               (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
               || (manifest?.readingDirection !== 'ltr' && currentReadingItemIndex > 0)
-            ) && (
-                <Button onClick={_ => reader?.goToRightSpineItem()}>{`>>`}</Button>
-              )}
+            ) ? (
+              <IconButton icon={<ArrowForwardIcon />} onClick={_ => reader?.goToRightSpineItem()} aria-label="forward" />
+            ) : (
+              <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled />
+            )}
           </div>
         </div>
       )}
