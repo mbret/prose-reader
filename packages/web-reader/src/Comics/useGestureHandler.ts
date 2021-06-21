@@ -88,9 +88,6 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
   }, [container, setHammerManager])
 
   useEffect(() => {
-
-
-
     let movingStarted = false
     let movingStartOffset = 0
     let hasHadPanStart = false
@@ -127,8 +124,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         }
       }
 
-      if (ev.type === `panmove`) {
-        if (hasHadPanStart && reader?.zoom.isEnabled()) {
+      if (ev.type === `panmove` && hasHadPanStart) {
+        if (reader?.zoom.isEnabled()) {
           reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
         } else {
           reader?.moveTo({ x: deltaX, y: ev.deltaY })
@@ -138,11 +135,11 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panend`) {
         hasHadPanStart = false
+        movingStarted = false
 
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
-          movingStarted = false
           return reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
         }
       }

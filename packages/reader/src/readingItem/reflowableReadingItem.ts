@@ -143,11 +143,13 @@ const buildStyleForFakePrePaginated = () => {
       height: 100%;
       margin: 0;
     }
-    ${/*
-      needed for hammer to work with things like velocity
-    */``}
+    ${
+    /*
+     * @see https://hammerjs.github.io/touch-action/
+     */
+    ``}
     html, body {
-      touch-action: pan-y;
+      touch-action: none;
     }
     img {
       display: flex;
@@ -202,11 +204,13 @@ const buildStyleWithMultiColumn = ({ columnHeight, columnWidth, horizontalMargin
     body {
       margin: 0;
     }
-    ${/*
-      needed for hammer to work with things like velocity
-    */``}
+    ${
+      /*
+       * @see https://hammerjs.github.io/touch-action/
+       */
+    ``}
     html, body {
-      touch-action: pan-y;
+      touch-action: none;
     }
     ${/*
       this messes up hard, be careful with this

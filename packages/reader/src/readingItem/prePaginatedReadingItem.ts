@@ -114,11 +114,13 @@ const buildDefaultStyle = ({ columnHeight, columnWidth, horizontalMargin }: {
     html, body {
       -max-width: ${columnWidth}px !important;
     }
-    ${/*
-      needed for hammer to work with things like velocity
-    */``}
+    ${
+      /*
+       * @see https://hammerjs.github.io/touch-action/
+       */
+    ``}
     html, body {
-      touch-action: pan-y;
+      touch-action: none;
     }
     ${/*
       prevent drag of image instead of touch on firefox
