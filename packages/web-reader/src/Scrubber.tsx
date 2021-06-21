@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { useRecoilValue } from 'recoil';
@@ -18,33 +18,36 @@ export const Scrubber = () => {
 
   useEffect(() => {
     setValue(currentPage || 0)
-  }, [currentPage, isComic])
+  }, [currentPage])
+
+  const reverse = manifest?.readingDirection === 'rtl'
+
+  const onAfterChange = useCallback((value: number) => {
+    const pageIndex = Math.floor(value)
+    if (isComic) {
+      reader?.goTo(pageIndex)
+    } else {
+      reader?.goToPageOfCurrentChapter(pageIndex)
+    }
+  }, [reader, isComic])
+
+  const onChange = useCallback((value: number) => {
+    setValue(value)
+  }, [setValue])
 
   if (totalApproximatePages === 1) {
     return null
   }
-
-  const reverse = manifest?.readingDirection === 'rtl'
 
   return (
     <RcSlider
       value={value}
       max={max}
       min={0}
-      onChange={value => {
-        console.log(value)
-        setValue(value)
-      }}
+      onChange={onChange}
       reverse={reverse}
       step={step}
-      onAfterChange={(value) => {
-        const pageIndex = Math.floor(value)
-        if (isComic) {
-          reader?.goTo(pageIndex)
-        } else {
-          reader?.goToPageOfCurrentChapter(pageIndex)
-        }
-      }}
+      onAfterChange={onAfterChange}
     />
   );
 }
