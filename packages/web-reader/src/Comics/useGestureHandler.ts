@@ -1,8 +1,8 @@
 import * as Hammer from 'hammerjs'
 import { useEffect, useState } from 'react'
 import { useRecoilCallback, useSetRecoilState } from 'recoil'
-import { useReader } from './ReaderProvider'
-import { hasCurrentHighlightState, isMenuOpenState } from './state'
+import { useReader } from '../ReaderProvider'
+import { hasCurrentHighlightState, isMenuOpenState } from '../state'
 
 export const useGestureHandler = (container: HTMLElement | undefined) => {
   const reader = useReader()
@@ -28,7 +28,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     const height = window.innerHeight
     const pageTurnMargin = 0.15
 
-    const normalizedEvent = reader.normalizeEvent(srcEvent)
+    const normalizedEvent = reader?.normalizeEvent(srcEvent) || {}
     console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
     // if (reader?.getSelection()) return
@@ -73,28 +73,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       const newHammerManager = new Hammer.Manager(container || document.body, {
         recognizers: [
           [Hammer.Pan, { direction: Hammer.DIRECTION_ALL }],
-          [Hammer.Pinch, { enable: true }]
+          [Hammer.Pinch, { enable: true }],
+          [Hammer.Tap, {}]
         ]
       })
-  
-      newHammerManager.add(new Hammer.Tap({
-        event: 'doubletap',
-        taps: 2
-      }))
-  
-      newHammerManager.add(new Hammer.Tap({
-        event: 'singletap',
-        interval: 100
-      }))
-  
-      // hammerManager.get('pan').set({ direction: Hammer.DIRECTION_ALL })
-      // hammerManager.get('pinch').set({ enable: true })
-      // hammerManager.get('press').set({ time: 500 })
-  
-      // we want to recognize this simultaneous, so a quadrupletap will be detected even while a tap has been recognized.
-      newHammerManager.get('doubletap').recognizeWith('singletap');
-      // we only want to trigger a tap, when we don't have detected a doubletap
-      newHammerManager.get('singletap').requireFailure('doubletap');
 
       setHammerManager(newHammerManager)
 
@@ -106,29 +88,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
   }, [container, setHammerManager])
 
   useEffect(() => {
-    const onDoubleTap: HammerListener = ({ srcEvent }) => {
-      const normalizedEvent = reader?.normalizeEvent(srcEvent)
-      const target = normalizedEvent?.target as null | undefined | HTMLElement
 
-      reader?.zoom.exit()
 
-      console.log(target?.nodeName)
-
-      if (target?.nodeName.toLowerCase() === `img`) {
-        reader?.zoom.enter(target as HTMLImageElement)
-      }
-    }
-
-    hammerManager?.on('singletap', onSingleTap)
-    hammerManager?.on(`doubletap`, onDoubleTap)
-
-    hammerManager?.on(`pinch`, (ev) => {
-      if (reader?.zoom.isEnabled()) {
-        reader?.zoom.scale(ev.scale)
-      }
-    })
-
-    hammerManager?.on('panmove panstart panend', onPanMove)
 
     let movingStarted = false
     let movingStartOffset = 0
@@ -148,38 +109,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     function onPanMove(ev: HammerInput) {
       const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
 
-      // console.log(`hammer.onPanMove`, ev.type, ev.eventType, (normalizedEvent as any)?.x)
-
-      // if (ev.type === `panstart`) {
-      //   if (normalizedEvent && `x` in normalizedEvent) {
-      //     movingStarted = true
-      //     movingStartOffset = normalizedEvent?.x
-      //     reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x })
-      //   }
-      // }
-
-      // if (ev.type === `panmove`) {
-      //   if (normalizedEvent && `x` in normalizedEvent) {
-      //     reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x })
-      //   }
-      // }
-
-      // if (ev.type === `panend` && movingStarted) {
-      //   if (normalizedEvent && `x` in normalizedEvent) {
-      //     movingStarted = false
-      //     return reader?.moveTo({ startOffset: movingStartOffset, offset: normalizedEvent?.x }, { final: true })
-      //   }
-      // }
-
-      // if (reader?.zoom.isEnabled()) {
-      //   console.log(ev)
-
-
-      //   // @ts-ignore
-      //   reader.moveZoom({ deltaX: ev.deltaX, deltaY: ev.deltaY })
-
-      //   return
-      // }
+      // because of iframe moving we have to calculate the delta ourselves with normalized value
+      const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffset : ev.deltaX
 
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panstart`) {
@@ -187,22 +118,20 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(ev.center, { isFirst: true, isLast: false })
+        } else {
+          if (normalizedEvent && `x` in normalizedEvent) {
+            movingStarted = true
+            movingStartOffset = normalizedEvent?.x
+            reader?.moveTo({ x: 0, y: 0 })
+          }
         }
       }
 
-      if (hasHadPanStart && reader?.zoom.isEnabled()) {
-        reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
-      }
-
-      // if (!movingStarted && ev.isFinal && !reader?.isSelecting()) {
-      if (hasHadPanStart && ev.isFinal && !reader?.isSelecting() && !reader?.zoom.isEnabled()) {
-        const velocity = ev.velocityX
-        console.log(`hammer.onPanMove.velocity`, velocity)
-        if (velocity < -0.5) {
-          reader?.turnRight()
-        }
-        if (velocity > 0.5) {
-          reader?.turnLeft()
+      if (ev.type === `panmove`) {
+        if (hasHadPanStart && reader?.zoom.isEnabled()) {
+          reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
+        } else {
+          reader?.moveTo({ x: deltaX, y: ev.deltaY })
         }
       }
 
@@ -212,13 +141,27 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
+        } else {
+          movingStarted = false
+          return reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
         }
       }
     }
 
+    const onPinch = (ev: HammerInput) => {
+      if (reader?.zoom.isEnabled()) {
+        reader?.zoom.scale(ev.scale)
+      }
+    }
+
+    hammerManager?.on(`tap`, onSingleTap)
+    hammerManager?.on(`pinch`, onPinch)
+    hammerManager?.on('panmove panstart panend', onPanMove)
+
     return () => {
-      hammerManager?.off(`doubletap`, onDoubleTap)
-      hammerManager?.off(`singletap`, onSingleTap)
+      hammerManager?.off(`tap`, onSingleTap)
+      hammerManager?.off(`panmove panstart panend`, onPanMove)
+      hammerManager?.off(`pinch`, onPinch)
     }
   }, [reader, setMenuOpenState, onSingleTap, hammerManager])
 }

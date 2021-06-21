@@ -1,7 +1,7 @@
 import React, { ComponentProps, useCallback, useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { useGestureHandler } from "../useGestureHandler";
+import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from '../QuickMenu';
