@@ -55,7 +55,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     } else {
       element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
     }
-  })
+  }, { disable: true })
 
   const areNavigationDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
@@ -311,16 +311,25 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           element.style.setProperty('opacity', `1`)
         }
 
-        if (noAdjustmentNeeded) {
-          return of(event)
-            .pipe(
-              tap(() => {
-                subject.next({ type: `adjustEnd`, position: event.position })
-              }),
-              delay(animationDuration),
-            )
-        }
+        // if (noAdjustmentNeeded) {
+        //   return of(event)
+        //     .pipe(
+        //       tap(() => {
+        //         adjustReadingOffset(event.position)
+        //         subject.next({ type: `adjustEnd`, position: event.position })
+        //       }),
+        //       delay(animationDuration),
+        //     )
+        // }
 
+        /**
+         * @important
+         * We always need to adjust the reading offset. Even if the current viewport value
+         * is the same as the payload position. This is because an already running animation could
+         * be active, meaning the viewport is still adjusting itself (after animation duration). So we
+         * need to adjust to anchor to the payload position. This is because we use viewport computed position, 
+         * not the value set by `setProperty`
+         */
         return of(event)
           .pipe(
             tap(() => {
