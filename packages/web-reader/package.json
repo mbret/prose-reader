@@ -1,6 +1,6 @@
 {
   "name": "@oboku/web-reader",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
@@ -15,7 +15,7 @@
     "@chakra-ui/react": "^1.6.3",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@oboku/reader": "^0.0.18",
+    "@oboku/reader": "^0.0.19",
     "@oboku/reader-enhancer-bookmarks": "^0.0.7",
     "@oboku/reader-enhancer-highlights": "^0.0.4",
     "@oboku/reader-react": "^0.0.10",
