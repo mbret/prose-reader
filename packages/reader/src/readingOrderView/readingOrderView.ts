@@ -326,7 +326,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     .subscribe()
 
   return {
-    ...viewportNavigator,
+    viewportNavigator,
     element,
     locator,
     getCfiMetaInformation: cfiHelper.getCfiMetaInformation,
@@ -336,7 +336,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     registerHook,
     normalizeEvent: eventsHelper.normalizeEvent,
     manipulateReadingItems,
-    getCurrentViewportPosition: viewportNavigator.getCurrentViewportPosition,
     getCurrentNavigationPosition: viewportNavigator.getCurrentNavigationPosition,
     goToNextSpineItem: () => {
       const currentSpineIndex = readingItemManager.getFocusedReadingItemIndex() || 0
@@ -359,6 +358,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       return item && manifest && buildChapterInfoFromReadingItem(manifest, item)
     },
     destroy: () => {
+      viewportNavigator.destroy()
       readingItemManager.destroy()
       readingItemManagerSubscription?.unsubscribe()
       selectionSubscription?.unsubscribe()

@@ -1,6 +1,7 @@
 import { chromeEnhancer } from './enhancers/chrome'
 import { fontsEnhancer, FONT_JUSTIFICATION, FONT_WEIGHT } from './enhancers/fonts'
 import { hotkeysEnhancer } from './enhancers/hotkeys'
+import { layoutEnhancer } from './enhancers/layout'
 import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
 import { paginationEnhancer } from './enhancers/pagination'
@@ -51,7 +52,6 @@ const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
     manipulateContainer,
     manipulateReadingItems,
     getFocusedReadingItemIndex,
-    getCurrentViewportPosition,
     getCurrentNavigationPosition,
     getReadingItem,
     locator,
@@ -74,6 +74,7 @@ const internalEnhancer = composeEnhancer(
   hotkeysEnhancer,
   chromeEnhancer,
   zoomEnhancer,
+  layoutEnhancer,
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>

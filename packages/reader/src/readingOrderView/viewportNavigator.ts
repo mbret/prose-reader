@@ -4,9 +4,9 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { EMPTY, merge, Observable, of, Subject, timer } from "rxjs"
+import { animationFrameScheduler, EMPTY, merge, Observable, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { delay, delayWhen, filter, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { delay, delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -14,6 +14,12 @@ type SubjectEvent =
   | { type: 'navigation', position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }
   | { type: 'adjustStart', position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }
   | { type: 'adjustEnd', position: { x: number, y: number, readingItem?: ReadingItem } }
+
+type Hook =
+  | {
+    name: `onViewportAdjust`,
+    fn: () => void
+  }
 
 export const createViewportNavigator = ({ readingItemManager, context, pagination, element }: {
   readingItemManager: ReadingItemManager,
@@ -23,6 +29,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 }) => {
   const navigator = createNavigator({ context, readingItemManager })
   const locator = createLocator({ context, readingItemManager })
+  let hooks: Hook[] = []
   let ongoingNavigation: undefined | { animate: boolean } = undefined
   /**
    * This position correspond to the current navigation position.
@@ -55,6 +62,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     } else {
       element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
     }
+
+    hooks.forEach(hook => {
+      if (hook.name === `onViewportAdjust`) {
+        hook.fn()
+      }
+    })
   }, { disable: true })
 
   const areNavigationDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
@@ -277,6 +290,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     subject.next({ type: `adjustStart`, position: adjustedReadingOrderViewPosition, animation: `auto` })
   }
 
+  const registerHook = (hook: Hook) => {
+    hooks.push(hook)
+  }
+
   const adjustEnd$ = subject.pipe(filter(event => event.type === `adjustEnd`))
 
   const navigation$ = subject
@@ -368,8 +385,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     )
     .subscribe()
 
+  const destroy = () => {
+    hooks = []
+  }
+
   return {
-    getCurrentViewportPosition,
+    destroy,
+    registerHook,
     getCurrentNavigationPosition: () => currentNavigationPosition,
     turnLeft,
     turnRight,
