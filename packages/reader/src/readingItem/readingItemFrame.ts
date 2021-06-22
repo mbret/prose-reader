@@ -215,10 +215,9 @@ const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, In
       transition: opacity 300ms;
       opacity: 0;
     `
+    container.appendChild(frame)
 
     resolve(frame)
-
-    container.appendChild(frame)
   })
 })
 
