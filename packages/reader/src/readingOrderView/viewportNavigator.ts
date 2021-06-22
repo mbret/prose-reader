@@ -7,6 +7,7 @@ import { createNavigator } from "./navigator"
 import { animationFrameScheduler, EMPTY, merge, Observable, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
 import { delay, delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
+import { VIEWPORT_ADJUSTMENT_THROTTLE } from "../constants"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -165,6 +166,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   // let moveToInitialViewportOffset: number | undefined = undefined
   let movingLastDelta: { x: number, y: number } | undefined = undefined
+  let movingLastPosition = { x: 0, y: 0 }
 
   /**
    * @prototype
@@ -174,6 +176,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     if (movingLastDelta === undefined) {
       // movingLastDelta = getCurrentViewportPosition().x
       movingLastDelta = { x: 0, y: 0 }
+      movingLastPosition = getCurrentViewportPosition()
     }
 
     // let navigation = { x: (offset - startOffset) + movingLastDelta, y: 0 }
@@ -184,11 +187,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     // const correctedY = delta.y - (movingLastDelta?.y || 0)
 
     let navigation = navigator.wrapPositionWithSafeEdge({
-      x: getCurrentViewportPosition().x - correctedX,
+      // x: getCurrentViewportPosition().x - correctedX,
+      x: movingLastPosition.x - correctedX,
       y: 0
     })
 
     movingLastDelta = delta
+    movingLastPosition = navigation
+
+    // console.warn(`pos`, delta.x, navigation.x)
 
     if (final) {
       movingLastDelta = undefined
@@ -315,6 +322,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   const adjust$ = subject
     .pipe(
       filter(event => event.type === `adjustStart`),
+      throttleTime(VIEWPORT_ADJUSTMENT_THROTTLE, animationFrameScheduler, { leading: true, trailing: true }),
       switchMap((event) => {
         const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
         const animationDuration = context.getComputedPageTurnAnimationDuration()
