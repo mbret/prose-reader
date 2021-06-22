@@ -132,8 +132,6 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panend`) {
-        hasHadPanStart = false
-
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
@@ -141,6 +139,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
             return reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
           }
         }
+
+        hasHadPanStart = false
       }
     }
 
