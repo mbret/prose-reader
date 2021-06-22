@@ -136,7 +136,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
           if (hasHadPanStart) {
-            return reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
+            reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
           }
         }
 
