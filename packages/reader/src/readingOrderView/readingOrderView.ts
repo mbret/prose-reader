@@ -288,7 +288,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       filter(data => data.type === 'adjustEnd'),
       debounceTime(PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE, undefined),
       tap((data) => {
-        const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
         const currentPosition = viewportNavigator.getCurrentNavigationPosition()
         const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(currentPosition)
         const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined

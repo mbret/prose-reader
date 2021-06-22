@@ -40,9 +40,9 @@ import { Report } from "../report";
  *
  * isHtmlElement(element) -> true
  */
-export const isHtmlElement = (element?: Element | Node | null): element is HTMLElement => {
+export const isHtmlElement = (element?: Element | Node | null | EventTarget): element is HTMLElement => {
   return (
-    typeof element === `object` && element?.nodeType === Node.ELEMENT_NODE && `innerText` in (element as HTMLElement)
+    typeof element === `object` && !!element && `nodeType` in element && element?.nodeType === Node.ELEMENT_NODE && `innerText` in (element as HTMLElement)
   );
 };
 

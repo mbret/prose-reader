@@ -34,10 +34,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     // if (reader?.getSelection()) return
 
     if (normalizedEvent?.target) {
-      const target = normalizedEvent.target as HTMLElement
-
       // don't do anything if it was clicked on link
-      if (target.nodeName === `a` || target.closest('a')) return
+      if (reader.utils.isOrIsWithinValidLink(normalizedEvent.target)) {
+        return
+      }
     }
 
     if (`x` in normalizedEvent) {

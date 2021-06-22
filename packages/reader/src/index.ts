@@ -15,4 +15,4 @@ export type ReaderSelection = ReturnType<typeof createSelection>
 
 export { Report } from './report'
 
-export { composeEnhancer } from './enhancers/utils'
+export { composeEnhancer } from './utils/composeEnhancer'
