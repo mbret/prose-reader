@@ -3,13 +3,12 @@ import { Context } from "../context";
 import { getNumberOfPages } from "../pagination";
 import { createLocator } from "./locator";
 
-type NavigationEntry = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number }
 
 export const createNavigator = ({ context }: { context: Context }) => {
   const readingItemLocator = createLocator({ context })
 
-  const getNavigationForLeftPage = (position: ReadingItemPosition, readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForLeftPage = (position: ReadingItemPosition, readingItem: ReadingItem): ReadingItemPosition => {
     let nextPotentialPosition = {
       x: position.x - context.getPageSize().width,
       y: position.y
@@ -25,7 +24,7 @@ export const createNavigator = ({ context }: { context: Context }) => {
     return readingItemLocator.getReadingItemClosestPositionFromUnsafePosition(nextPotentialPosition, readingItem)
   }
 
-  const getNavigationForRightPage = (position: ReadingItemPosition, readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForRightPage = (position: ReadingItemPosition, readingItem: ReadingItem): ReadingItemPosition => {
     let nextPotentialPosition = {
       x: position.x + context.getPageSize().width,
       y: position.y
@@ -41,7 +40,7 @@ export const createNavigator = ({ context }: { context: Context }) => {
     return readingItemLocator.getReadingItemClosestPositionFromUnsafePosition(nextPotentialPosition, readingItem)
   }
 
-  const getNavigationForLastPage = (readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForLastPage = (readingItem: ReadingItem): ReadingItemPosition => {
     if (readingItem.isUsingVerticalWriting()) {
       const pageHeight = context.getPageSize().height
       const numberOfPages = getNumberOfPages(readingItem.getElementDimensions().height, pageHeight)
@@ -53,7 +52,7 @@ export const createNavigator = ({ context }: { context: Context }) => {
     }
   }
 
-  const getNavigationForPage = (pageIndex: number, readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForPage = (pageIndex: number, readingItem: ReadingItem): ReadingItemPosition => {
     const currentViewport = readingItemLocator.getReadingItemPositionFromPageIndex(pageIndex, readingItem)
 
     return currentViewport
@@ -65,11 +64,18 @@ export const createNavigator = ({ context }: { context: Context }) => {
     return position || { x: 0, y: 0 }
   }
 
+  const getNavigationForPosition = (readingItem: ReadingItem, position: ReadingItemPosition) => {
+    const potentiallyCorrectedPosition = readingItemLocator.getReadingItemClosestPositionFromUnsafePosition(position, readingItem)
+
+    return potentiallyCorrectedPosition
+  }
+
   return {
     getNavigationForLeftPage,
     getNavigationForRightPage,
     getNavigationForLastPage,
     getNavigationForPage,
     getNavigationForCfi,
+    getNavigationForPosition,
   }
 }

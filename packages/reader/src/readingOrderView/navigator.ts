@@ -7,6 +7,7 @@ import { createLocator } from "./locator"
 import { createCfiHelper } from "./cfiHelper"
 
 type NavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
+type ViewportPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number }
 
 const NAMESPACE = `readingOrderViewNavigator`
@@ -20,7 +21,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   const locator = createLocator({ context, readingItemManager })
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
-  
+
   const wrapPositionWithSafeEdge = (position: ReadingItemPosition) => {
     // @todo use container width instead to increase performances
     const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
@@ -72,7 +73,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   const getNavigationForSpineIndexOrId = (indexOrId: number | string): NavigationEntry => {
     const readingItem = readingItemManager.get(indexOrId)
     if (readingItem) {
-      const position = locator.getReadingOrderViewOffsetFromReadingItem(readingItem)
+      const position = locator.getReadingOrderViewPositionFromReadingItem(readingItem)
 
       return { ...getAdjustedPositionForSpread(position), readingItem }
     }
@@ -81,7 +82,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItem = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
+    const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
     if (!readingItem) {
@@ -109,7 +110,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItem = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
+    const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
     if (!readingItem) {
@@ -142,7 +143,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * Special case for vertical content, read content
    */
   const getNavigationForRightPage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
+    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForRightSinglePage(position)
 
@@ -180,7 +181,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * Special case for vertical content, read content
    */
   const getNavigationForLeftPage = (position: ReadingItemPosition): NavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromOffset(position.x) || readingItemManager.getFocusedReadingItem()
+    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForLeftSinglePage(position)
 
@@ -234,9 +235,23 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForAnchor = (anchor: string, readingItem: ReadingItem) => {
-    const position = locator.getReadingOrderViewPositionFromReadingOrderAnchor(anchor, readingItem)
+    const position = locator.getReadingOrderViewPositionFromReadingItemAnchor(anchor, readingItem)
 
     return getAdjustedPositionForSpread(position)
+  }
+
+  const getNavigationForPosition = (viewportPosition: ViewportPosition) => {
+    const readingItem = locator.getReadingItemFromPosition(viewportPosition)
+
+    if (readingItem) {
+      const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(viewportPosition, readingItem)
+      const readingItemValidPosition = readingItemNavigator.getNavigationForPosition(readingItem, readingItemPosition)
+      const viewportNavigation = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemValidPosition, readingItem)
+
+      return viewportNavigation
+    }
+
+    return { x: 0, y: 0 }
   }
 
   return {
@@ -248,6 +263,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     getNavigationForLeftPage,
     getNavigationForUrl,
     getNavigationForAnchor,
+    getNavigationForPosition,
     wrapPositionWithSafeEdge,
   }
 }

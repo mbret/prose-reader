@@ -98,7 +98,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     if (!currentReadingItem) return
 
-    const newReadingItem = locator.getReadingItemFromOffset(navigation.x) || currentReadingItem
+    const newReadingItem = locator.getReadingItemFromPosition(navigation) || currentReadingItem
     const readingItemHasChanged = newReadingItem !== currentReadingItem
 
     if (readingItemHasChanged) {
