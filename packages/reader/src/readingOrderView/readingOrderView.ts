@@ -275,7 +275,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
               }
             })
 
-            Report.log(NAMESPACE, `navigateTo`, `navigate success`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, readingItemToFocus, offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation })
+            Report.log(NAMESPACE, `navigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, index: readingItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
           }
 
           // subject.next({ type: `onNavigationChange` })
@@ -289,6 +289,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       debounceTime(PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE, undefined),
       tap((data) => {
         const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
+        const currentPosition = viewportNavigator.getCurrentNavigationPosition()
+        const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(currentPosition)
         const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
         const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
         const beginLastCfi = pagination.getBeginInfo().cfi
