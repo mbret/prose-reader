@@ -172,55 +172,43 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     }
   }
 
-  // let moveToInitialViewportOffset: number | undefined = undefined
-  let movingLastDelta: { x: number, y: number } | undefined = undefined
+  let movingLastDelta = { x: 0, y: 0 }
   let movingLastPosition = { x: 0, y: 0 }
 
   /**
    * @prototype
    */
-  // const moveTo = ({ offset, startOffset }: { startOffset: number, offset: number }, { final }: { final?: boolean } = {}) => {
-  const moveTo = (delta: { x: number, y: number }, { final }: { final?: boolean } = {}) => {
-    if (movingLastDelta === undefined) {
-      // movingLastDelta = getCurrentViewportPosition().x
+  const moveTo = (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
+    if (start) {
       movingLastDelta = { x: 0, y: 0 }
       movingLastPosition = getCurrentViewportPosition()
     }
 
-    // let navigation = { x: (offset - startOffset) + movingLastDelta, y: 0 }
-    // let navigation = navigator.wrapPositionWithSafeEdge({ x: (startOffset - offset) + movingLastDelta, y: 0 })
-    // let navigation = navigator.wrapPositionWithSafeEdge({ x: (startOffset - offset) + movingLastDelta, y: 0 })
+    let navigation = currentNavigationPosition
 
-    const correctedX = delta.x - (movingLastDelta?.x || 0)
-    // const correctedY = delta.y - (movingLastDelta?.y || 0)
+    if (delta) {
+      const correctedX = delta.x - (movingLastDelta?.x || 0)
 
-    let navigation = navigator.wrapPositionWithSafeEdge({
-      // x: getCurrentViewportPosition().x - correctedX,
-      x: movingLastPosition.x - correctedX,
-      y: 0
-    })
+      navigation = navigator.wrapPositionWithSafeEdge({
+        x: movingLastPosition.x - correctedX,
+        y: 0
+      })
 
-    movingLastDelta = delta
-    movingLastPosition = navigation
-
-    // console.warn(`pos`, delta.x, navigation.x)
-
-    if (final) {
-      movingLastDelta = undefined
+      movingLastDelta = delta
+    } else {
+      navigation = getCurrentViewportPosition()
     }
 
+    movingLastPosition = navigation
+
     if (final) {
-      const { x: offsetAtMidScreen } = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
-      const readingItem = locator.getReadingItemFromOffset(offsetAtMidScreen) || readingItemManager.getFocusedReadingItem()
-      const index = readingItemManager.getReadingItemIndex(readingItem)
+      movingLastDelta = { x: 0, y: 0 }
+      const midScreenPosition = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
+      const finalNavigation = navigator.getNavigationForPosition(midScreenPosition)
 
-      if (index !== undefined) {
-        navigation = navigator.getNavigationForSpineIndexOrId(index)
+      lastUserExpectedNavigation = undefined
 
-        lastUserExpectedNavigation = undefined
-
-        return navigateTo(navigation)
-      }
+      return turnTo(finalNavigation)
     }
 
     subject.next({ type: `adjustStart`, position: navigation, animation: `none` })
