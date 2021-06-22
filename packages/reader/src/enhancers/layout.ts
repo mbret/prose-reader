@@ -1,9 +1,23 @@
+import { Subject } from "rxjs";
+import { filter, switchMap, takeUntil, tap } from "rxjs/operators";
 import { Enhancer } from "../createReader";
 
 const SHOULD_NOT_LAYOUT = false
 
 export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
   const reader = next(options)
+  /**
+   * For some reason (bug / expected / engine layout optimization) when the viewport is being animated clicking inside iframe
+   * sometimes returns invalid clientX value. This means that when rapidly (or not) clicking during animation on iframe will often
+   * time returns invalid value. In order to reduce potential unwanted behavior on consumer side, we temporarily hide the iframe behind
+   * an overlay. That way the overlay take over for the pointer event and we all good.
+   * 
+   * @important
+   * This obviously block any interaction with iframe but there should not be such interaction with iframe in theory.
+   * Theoretically if user decide to interact during the animation that's either to stop it or swipe the pages.
+   */
+  let iframeOverlayForAnimationsElement: HTMLDivElement | undefined = undefined
+  const subject$ = new Subject<`start` | `end`>()
 
   reader.registerHook(`onViewportOffsetAdjust`, () => {
     let hasRedrawn = false
@@ -39,6 +53,53 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
       return SHOULD_NOT_LAYOUT
     })
   })
+
+  reader.registerHook(`onViewportAdjustStart`, ({ animate }) => {
+    if (animate) {
+      subject$.next(`start`)
+    }
+  })
+
+  reader.registerHook(`onViewportAdjustEnd`, () => {
+    subject$.next(`end`)
+  })
+
+  reader.manipulateContainer((container, onDestroy) => {
+    iframeOverlayForAnimationsElement = container.ownerDocument.createElement(`div`)
+    iframeOverlayForAnimationsElement.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      visibility: hidden;
+    `
+    container.appendChild(iframeOverlayForAnimationsElement)
+
+    onDestroy(() => {
+      iframeOverlayForAnimationsElement?.remove()
+    })
+
+    return SHOULD_NOT_LAYOUT
+  })
+
+  subject$
+    .pipe(
+      filter(name => name === `start`),
+      switchMap(() => {
+        iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
+
+        return subject$
+          .pipe(
+            filter(name => name === `end`),
+            tap(() => {
+              iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
+            }),
+          )
+      }),
+      takeUntil(reader.destroy$),
+    )
+    .subscribe()
 
   return reader
 }
