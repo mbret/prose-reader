@@ -17,7 +17,11 @@
     "declaration": true,
     "removeComments": true,
     "pretty": false,
-    "stripInternal": true
+    "stripInternal": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist"],

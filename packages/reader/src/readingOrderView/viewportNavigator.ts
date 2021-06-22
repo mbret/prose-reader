@@ -4,9 +4,9 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, EMPTY, merge, Observable, of, Subject, timer } from "rxjs"
+import { animationFrameScheduler, EMPTY, merge, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { delay, delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
+import { delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
 import { VIEWPORT_ADJUSTMENT_THROTTLE } from "../constants"
 
 const NAMESPACE = `viewportNavigator`

@@ -63,7 +63,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   }
 
   const load = () => {
-    context.getManifest()?.readingOrder.map(async (resource, index) => {
+    context.getManifest()?.readingOrder.map(async (resource) => {
       const readingItem = createReadingItem({
         item: resource,
         containerElement: element,
@@ -98,7 +98,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   function registerHook(hook: Hook) {
     hooks.push(hook)
 
-    readingItemManager.getAll().forEach((item, index) => {
+    readingItemManager.getAll().forEach((item) => {
       if (hook.name === `readingItem.onLoad`) {
         item.registerHook({ name: `onLoad`, fn: hook.fn })
       }
