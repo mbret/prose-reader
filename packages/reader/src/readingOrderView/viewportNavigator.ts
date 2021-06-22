@@ -18,7 +18,15 @@ type SubjectEvent =
 
 type Hook =
   | {
-    name: `onViewportAdjust`,
+    name: `onViewportOffsetAdjust`,
+    fn: () => void
+  }
+  | {
+    name: `onViewportAdjustStart`,
+    fn: (params: { animate: boolean }) => void
+  }
+  | {
+    name: `onViewportAdjustEnd`,
     fn: () => void
   }
 
@@ -65,7 +73,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     }
 
     hooks.forEach(hook => {
-      if (hook.name === `onViewportAdjust`) {
+      if (hook.name === `onViewportOffsetAdjust`) {
         hook.fn()
       }
     })
@@ -334,6 +342,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
             ? false
             : true
 
+        hooks.forEach(hook => {
+          if (hook.name === `onViewportAdjustStart`) {
+            hook.fn({ animate: shouldAnimate })
+          }
+        })
+
         if (shouldAnimate && !noAdjustmentNeeded) {
           if (context.getPageTurnAnimation() === `fade`) {
             element.style.setProperty('transition', `opacity ${animationDuration}ms`)
@@ -379,6 +393,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
                 adjustReadingOffset(event.position)
               }
               subject.next({ type: `adjustEnd`, position: event.position })
+              hooks.forEach(hook => {
+                if (hook.name === `onViewportAdjustEnd`) {
+                  hook.fn()
+                }
+              })
             })
           )
       }),

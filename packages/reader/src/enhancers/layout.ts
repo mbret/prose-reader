@@ -5,7 +5,7 @@ const SHOULD_NOT_LAYOUT = false
 export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
   const reader = next(options)
 
-  reader.registerHook(`onViewportAdjust`, () => {
+  reader.registerHook(`onViewportOffsetAdjust`, () => {
     let hasRedrawn = false
 
     /**
