@@ -4,7 +4,7 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, EMPTY, merge, of, Subject, timer } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, merge, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
 import { delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
 import { VIEWPORT_ADJUSTMENT_THROTTLE } from "../constants"
@@ -49,6 +49,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
   const subject = new Subject<SubjectEvent>()
+  let isAdjusting = false
+  let isMovingPan = false
+  const pan$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
+  const adjust$ = new BehaviorSubject<`started` | `end`>(`end`)
+  const state$ = new BehaviorSubject<`free` | `busy`>(`free`)
+
   let lastUserExpectedNavigation:
     | undefined
     // always adjust at the first page
@@ -179,7 +185,9 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @prototype
    */
   const moveTo = (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
+    isMovingPan = true
     if (start) {
+      pan$.next(`start`)
       movingLastDelta = { x: 0, y: 0 }
       movingLastPosition = getCurrentViewportPosition()
     }
@@ -202,16 +210,22 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     movingLastPosition = navigation
 
     if (final) {
+      isMovingPan = false
       movingLastDelta = { x: 0, y: 0 }
       const midScreenPosition = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
       const finalNavigation = navigator.getNavigationForPosition(midScreenPosition)
 
       lastUserExpectedNavigation = undefined
 
-      return turnTo(finalNavigation)
+      turnTo(finalNavigation)
+      // console.warn(`pan$ end`)
+      pan$.next(`end`)
+
+      return
     }
 
     subject.next({ type: `adjustStart`, position: navigation, animation: `none` })
+    pan$.next(`moving`)
   }
 
   /**
@@ -234,7 +248,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * the wrong offset
    * @todo this is being called a lot, try to optimize
    */
-  const adjustReadingOffsetPosition = (readingItem: ReadingItem, { shouldAdjustCfi }: { shouldAdjustCfi: boolean }) => {
+  const adjustReadingOffsetPosition = (readingItem: ReadingItem, { }: {}) => {
+    // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
     let adjustedReadingOrderViewPosition = currentNavigationPosition
     let offsetInReadingItem = 0
@@ -268,6 +283,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       const anchor = lastUserExpectedNavigation.data
       adjustedReadingOrderViewPosition = navigator.getNavigationForAnchor(anchor, readingItem)
     } else if (lastCfi) {
+      // @todo, ignore cfi if the current focus item
       /**
        * When there is no last navigation then we first look for any existing CFI. If there is a cfi we try to retrieve
        * the offset and navigate the user to it
@@ -276,6 +292,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastCfi)
       Report.log(NAMESPACE, `adjustReadingOffsetPosition`, `use last cfi`)
     } else {
+      // @todo we should get the page index of the focused item, if focus item is not inside pagination then go to spine index
       /**
        * Last resort case, there is no CFI so we check the current page and try to navigate to the closest one
        */
@@ -315,11 +332,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       })
     )
 
-  const adjust$ = subject
+  subject
     .pipe(
       filter(event => event.type === `adjustStart`),
       throttleTime(VIEWPORT_ADJUSTMENT_THROTTLE, animationFrameScheduler, { leading: true, trailing: true }),
       switchMap((event) => {
+        isAdjusting = true
+        adjust$.next(`started`)
         const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
         const animationDuration = context.getComputedPageTurnAnimationDuration()
         const shouldAnimate =
@@ -380,34 +399,51 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
               if (context.getPageTurnAnimation() === `fade`) {
                 adjustReadingOffset(event.position)
               }
-              subject.next({ type: `adjustEnd`, position: event.position })
               hooks.forEach(hook => {
                 if (hook.name === `onViewportAdjustEnd`) {
                   hook.fn()
                 }
               })
+              isAdjusting = false
+              // console.warn(`adjustEnd`)
+              subject.next({ type: `adjustEnd`, position: event.position })
+              adjust$.next(`end`)
             })
           )
       }),
       tap(() => {
         element.style.setProperty('opacity', '1')
-      })
+      }),
+      takeUntil(context.destroy$)
     )
+    .subscribe()
 
-  merge(navigation$, adjust$)
+  merge(navigation$)
     .pipe(
       takeUntil(context.destroy$)
     )
     .subscribe()
 
+  combineLatest(pan$, adjust$).pipe(
+    tap(([pan, adjust]) => {
+      // console.warn(`state$`, pan, adjust)
+      state$.next(pan === `end` && adjust === `end` ? `free` : `busy`)
+    }),
+    takeUntil(context.destroy$)
+  ).subscribe()
+
   const destroy = () => {
     hooks = []
+    subject.complete()
+    pan$.complete()
+    state$.complete()
   }
 
   return {
     destroy,
     registerHook,
     getCurrentNavigationPosition: () => currentNavigationPosition,
+    isAdjusting: () => isAdjusting,
     turnLeft,
     turnRight,
     goTo,
@@ -418,6 +454,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     adjustReadingOffsetPosition,
     moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
-    $: subject.asObservable(),
+    $: {
+      $: subject.asObservable(),
+      pan$: pan$.asObservable(),
+      state$: state$.asObservable(),
+    },
   }
 }

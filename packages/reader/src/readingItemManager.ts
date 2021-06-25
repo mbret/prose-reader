@@ -8,7 +8,9 @@ export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
 const NAMESPACE = `readingItemManager`
 
 export const createReadingItemManager = ({ context }: { context: Context }) => {
-  const subject = new Subject<{ event: 'focus', data: ReadingItem } | { event: 'layout' }>()
+  const focus$ = new Subject<{ data: ReadingItem }>()
+  const layout$ = new Subject()
+
   let orderedReadingItems: ReadingItem[] = []
   /**
    * focused item represent the current item that the user navigated to.
@@ -73,7 +75,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       return width + edgeOffset
     }, 0)
 
-    subject.next({ event: 'layout' })
+    layout$.next()
   }
 
   const focus = (indexOrReadingItem: number | ReadingItem) => {
@@ -87,7 +89,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
     focusedReadingItemIndex = newActiveReadingItemIndex
 
-    subject.next({ event: 'focus', data: readingItemToFocus })
+    focus$.next({ data: readingItemToFocus })
   }
 
   /**
@@ -210,6 +212,8 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     orderedReadingItems.forEach(item => item.destroy())
     readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
     readingItemSubscriptions = []
+    focus$.complete()
+    layout$.complete()
   }
 
   return {
@@ -227,7 +231,10 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     getFocusedReadingItemIndex,
     getReadingItemIndex,
     destroy,
-    $: subject.asObservable()
+    $: {
+      focus$: focus$.asObservable(),
+      layout$: layout$.asObservable(),
+    }
   }
 }
 
