@@ -24,6 +24,5 @@ export const useManifest = (epubUrl: string) => {
       })()
   }, [epubUrl])
 
-
   return { manifest, error }
 }

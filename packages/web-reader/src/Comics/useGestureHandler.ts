@@ -1,5 +1,5 @@
 import * as Hammer from 'hammerjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
 import { hasCurrentHighlightState, isMenuOpenState } from '../state'
@@ -7,6 +7,7 @@ import { hasCurrentHighlightState, isMenuOpenState } from '../state'
 export const useGestureHandler = (container: HTMLElement | undefined) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
+  const movingHasStarted = useRef(false)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
 
   const onSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
@@ -43,7 +44,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     if (`x` in normalizedEvent) {
       const { x = 0 } = normalizedEvent
 
-      console.log(srcEvent)
+      // console.log(srcEvent)
 
       if (
         reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)
@@ -52,10 +53,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         return
       }
 
-      console.log('hammer.tap', x, width * pageTurnMargin)
+      // console.log('hammer.tap', x, width * pageTurnMargin)
       if (x < width * pageTurnMargin) {
         reader.turnLeft()
-        console.log('hammer.tap.left')
+        // console.log('hammer.tap.left')
       } else if (x > width * (1 - pageTurnMargin)) {
         reader.turnRight()
       } else {
@@ -74,7 +75,9 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         recognizers: [
           [Hammer.Pan, { direction: Hammer.DIRECTION_ALL }],
           [Hammer.Pinch, { enable: true }],
-          [Hammer.Tap, {}]
+          [Hammer.Tap, {}],
+          [Hammer.Press, {}],
+          // [Hammer.Tap, { event: `pressdown`, taps: 1, time: 0 }]
         ]
       })
 
@@ -89,7 +92,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
   useEffect(() => {
     let movingStartOffset = 0
-    let hasHadPanStart = false
+    // let hasHadPanStart = false
 
     /**
      * @important
@@ -108,21 +111,25 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       // because of iframe moving we have to calculate the delta ourselves with normalized value
       const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffset : ev.deltaX
 
+      // console.warn(ev.type)
+
+      // console.warn(ev.type)
+      
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panstart`) {
-        hasHadPanStart = true
+        movingHasStarted.current = true
 
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(ev.center, { isFirst: true, isLast: false })
         } else {
           if (normalizedEvent && `x` in normalizedEvent) {
             movingStartOffset = normalizedEvent?.x
-            reader?.moveTo({ x: 0, y: 0 })
+            reader?.moveTo({ x: 0, y: 0 }, { start: true })
           }
         }
       }
 
-      if (ev.type === `panmove` && hasHadPanStart) {
+      if (ev.type === `panmove` && movingHasStarted.current) {
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
         } else {
@@ -135,12 +142,12 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
-          if (hasHadPanStart) {
+          if (movingHasStarted.current) {
             reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
           }
         }
 
-        hasHadPanStart = false
+        movingHasStarted.current = false
       }
     }
 
@@ -150,14 +157,43 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       }
     }
 
+    const onPress = (ev: HammerInput) => {
+      // console.warn(ev.type)
+      // if (ev.type === `press`) {
+      //   reader?.moveTo({ x: 0, y: 0 }, { start: true })
+      //   movingHasStarted.current = true
+        // if (movingHasStarted.current) {
+        //   console.warn(`press`)
+        //   // reader?.moveTo({ x: 0, y: 0 }, { start: true })
+        //   movingHasStarted.current = true
+        // } else {
+        //   reader?.moveTo(undefined, { final: true })
+        // }
+      // }
+      // if (ev.srcEvent.type === `pointerdown`) {
+      // console.warn(ev.type)
+      // reader?.moveTo(undefined, { final: true })
+      // reader?.moveTo({ x: 0, y: 0 }, { start: true })
+      // }
+
+      // if (ev.type === `pressup`) {
+      //   if (movingHasStarted.current) {
+      //     reader?.moveTo(undefined, { final: true })
+      //     movingHasStarted.current = false
+      //   }
+      // }
+    }
+
+    hammerManager?.on(`press pressup`, onPress)
     hammerManager?.on(`tap`, onSingleTap)
     hammerManager?.on(`pinch`, onPinch)
     hammerManager?.on('panmove panstart panend', onPanMove)
 
     return () => {
+      hammerManager?.off(`press pressup`, onPress)
       hammerManager?.off(`tap`, onSingleTap)
       hammerManager?.off(`panmove panstart panend`, onPanMove)
       hammerManager?.off(`pinch`, onPinch)
     }
-  }, [reader, setMenuOpenState, onSingleTap, hammerManager])
+  }, [reader, setMenuOpenState, onSingleTap, hammerManager, movingHasStarted])
 }

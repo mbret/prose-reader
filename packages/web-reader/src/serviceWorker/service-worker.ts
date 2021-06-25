@@ -28,7 +28,6 @@ worker.addEventListener('activate', function (event: any) {
   event.waitUntil((worker as any).clients.claim()); // Become available to all pages
 })
 
-
 /**
  * Spin up the oboku reader streamer.
  * We need to provide our custom function to retrieve the archive.
@@ -46,12 +45,30 @@ worker.addEventListener('fetch', (event: any) => {
     event.respondWith((async () => {
       try {
         const archive = await loadEpub(epubUrl)
+        // const archive = await createArchiveFromUrls([
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/w397eahqqllui7krx3fky3tl1620298360788.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/lczidu4d5xn4ownxcbbw9m9u1620298362587.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/m9web1lw9axaja37t17xp1241620298363649.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/92xzqad66246tkr0h35n7ubl1620298364651.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/zq3gww3zd077y04ds79bpo371620298366071.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/u5eate6i0nmrwne9xrk71u4r1620298366914.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/z0zsriyaudfcw6v3bqjcf0ex1620298368258.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ofx8h8hyf0yony29yerzy6721620298369130.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ijl7d3gzlpnuos9pw7f5lchu1620298370476.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/wx9k3n90cs9yivqlx02rbgkb1620298372762.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/uo6dqk07egw1bkf6e7dgwx6q1620298373585.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ymy04ggror4t4b0eja0k9zmu1620298374865.jpg`,
+        //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ylqdentbi6qk6vt6sql1bidb1620298375961.jpg`,
+        // ])
+        const baseUrl = `${url.origin}/${STREAMER_URL_PREFIX}/${epubFileName}`
+        // const baseUrl = ``
+        // console.log(archive)
 
         /**
          * Hit to manifest
          */
         if (url.pathname.endsWith(`/manifest`)) {
-          return await getManifestFromArchive(archive, { baseUrl: `${url.origin}/${STREAMER_URL_PREFIX}/${epubFileName}` })
+          return await getManifestFromArchive(archive, { baseUrl })
         }
 
         /**

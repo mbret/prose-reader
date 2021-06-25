@@ -32,7 +32,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const highlightsEnhancer = useHighlights(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
-  const [readerOptions] = useState({
+  const [readerOptions] = useState<ReactReaderProps['options']>({
     fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
     lineHeight: storedLineHeight || undefined,
     theme: undefined,

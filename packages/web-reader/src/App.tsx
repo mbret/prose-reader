@@ -10,10 +10,10 @@ import {
 } from 'recoil'
 import { ReaderContext } from './ReaderProvider'
 import { ReaderInstance } from './types'
-import { Home as ClassicHome } from './Classic/Home'
-import { Home as ComicsHome } from './Comics/Home'
-import { Reader as ClassicReader } from './Classic/Reader'
-import { Reader as ComicsReader } from './Comics/Reader'
+import { Home as ClassicHome } from './classic/Home'
+import { Home as ComicsHome } from './comics/Home'
+import { Reader as ClassicReader } from './classic/Reader'
+import { Reader as ComicsReader } from './comics/Reader'
 import { Home } from './Home'
 import { ChakraProvider } from "@chakra-ui/react"
 
