@@ -1,23 +1,26 @@
 export type Archive = {
   filename: string,
   files: {
-    dir: boolean
-    name: string
-    blob: () => Promise<Blob>
-    string: () => Promise<string>
-    base64: () => Promise<string>
+    dir: boolean,
+    basename: string,
+    uri: string,
+    blob: () => Promise<Blob>,
+    string: () => Promise<string>,
+    base64: () => Promise<string>,
     size: number,
-    encodingFormat?: undefined | `text/plain`
+    encodingFormat?: undefined | `text/plain`,
   }[]
 }
 
+const getBasename = (uri: string) => uri.substring(uri.lastIndexOf('/') + 1) || uri
+
 export const getArchiveOpfInfo = (archive: Archive) => {
   const filesAsArray = Object.values(archive.files).filter(file => !file.dir)
-  const file = filesAsArray.find(file => file.name.endsWith(`.opf`))
+  const file = filesAsArray.find(file => file.uri.endsWith(`.opf`))
 
   return {
     data: file,
-    basePath: file?.name.substring(0, file.name.lastIndexOf(`/`)) || ''
+    basePath: file?.uri.substring(0, file.uri.lastIndexOf(`/`)) || ''
   }
 }
 
@@ -49,7 +52,8 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
     filename: `content.txt`,
     files: [{
       dir: false,
-      name: `generated.opf`,
+      basename: getBasename(`generated.opf`),
+      uri: `generated.opf`,
       blob: async () => new Blob([txtOpfContent]),
       string: async () => txtOpfContent,
       base64: async () => btoa(txtOpfContent),
@@ -57,7 +61,8 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
     },
     {
       dir: false,
-      name: `p01.xhtml`,
+      basename: getBasename(`p01.opf`),
+      uri: `p01.xhtml`,
       blob: async () => {
         if (typeof content === `string`) return new Blob([content])
         return content
@@ -76,6 +81,71 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
   }
 
   return archive
+}
+
+/**
+ * @important
+ * Make sure the urls are on the same origin or the cors header is set otherwise
+ * the resource cannot be consumed as it is on the web.
+ */
+export const createArchiveFromUrls = async (urls: string[]): Promise<Archive> => {
+  return {
+    filename: ``,
+    files: urls.map(url => ({
+      dir: false,
+      basename: getBasename(url),
+      uri: url,
+      size: 100 / urls.length,
+      base64: async () => ``,
+      blob: async () => new Blob(),
+      string: async () => ``,
+    })),
+  }
+}
+
+interface OutputByType {
+  base64: string;
+  string: string;
+  text: string;
+  binarystring: string;
+  array: number[];
+  uint8array: Uint8Array;
+  arraybuffer: ArrayBuffer;
+  blob: Blob;
+  nodebuffer: Buffer;
+}
+
+type OutputType = keyof OutputByType;
+interface JSZipObject {
+  name: string;
+  dir: boolean;
+  date: Date;
+  comment: string;
+  unixPermissions: number | string | null;
+  dosPermissions: number | null;
+  async<T extends OutputType>(type: T): Promise<OutputByType[T]>;
+  nodeStream(type?: 'nodebuffer'): NodeJS.ReadableStream;
+}
+
+interface JSZip {
+  files: {[key: string]: JSZipObject};
+}
+
+export const createArchiveFromJszip = async (jszip: JSZip, name: string = ''): Promise<Archive> => {
+  return {
+    filename: name,
+    files: Object.values(jszip.files).map(file => ({
+      dir: file.dir,
+      basename: getBasename(file.name),
+      uri: file.name,
+      blob: () => file.async('blob'),
+      string: () => file.async('string'),
+      base64: () => file.async('base64'),
+      // this is private API
+      // @ts-ignore
+      size: file._data.uncompressedSize
+    }))
+  }
 }
 
 const blobToBase64 = async (blob: Blob | File) => new Promise<string>(resolve => {

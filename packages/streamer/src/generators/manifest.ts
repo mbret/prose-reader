@@ -40,8 +40,8 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const manifestItemsFromSpine = manifestElm?.childrenNamed(`item`).filter((item) => spineItemIds.includes(item.attr['id'] || ``)) || []
   const archiveSpineItems = archive.files.filter(file => {
     return manifestItemsFromSpine.find(item => {
-      if (!opfBasePath) return `${item.attr['href']}` === file.name
-      return `${opfBasePath}/${item.attr['href']}` === file.name
+      if (!opfBasePath) return `${item.attr['href']}` === file.uri
+      return `${opfBasePath}/${item.attr['href']}` === file.uri
     })
   })
 
@@ -60,11 +60,12 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
       const manifestItem = manifestElm?.childrenNamed(`item`).find((item) => item.attr['id'] === itemrefElm?.attr['idref'])
       const href = manifestItem?.attr['href'] || ``
       const properties = (itemrefElm?.attr['properties']?.split(` `) || []) as SpineItemProperties[]
-      const itemSize = archive.files.find(file => file.name.endsWith(href))?.size || 0
+      const itemSize = archive.files.find(file => file.uri.endsWith(href))?.size || 0
 
       return {
         id: manifestItem?.attr['id'] || ``,
         path: opfBasePath ? `${opfBasePath}/${manifestItem?.attr['href']}` : `${manifestItem?.attr['href']}`,
+        // href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
         href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
         renditionLayout: defaultRenditionLayout || `reflowable`,
         ...properties.find(property => property === 'rendition:layout-reflowable') && {
@@ -79,6 +80,10 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   }
 }
 
+/**
+ * Create a manifest from a generic archive.
+ * Will use direct
+ */
 const generateManifestFromArchive = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
   const files = Object.values(archive.files).filter(file => !file.dir)
 
@@ -91,28 +96,20 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
     renditionLayout: `pre-paginated`,
     renditionSpread: `auto`,
     readingDirection: 'ltr',
-    readingOrder: files.map((file) => {
-      // const filenameWithoutExtension = file.name.substring(0, file.name.lastIndexOf(`.`))
-
-      return {
-        id: file.name,
-        // path: `${file.name}.xhtml`,
-        path: `${file.name}`,
-        // href: `${baseUrl}/${file.name}.xhtml`,
-        href: `${baseUrl}/${file.name}`,
-        renditionLayout: `pre-paginated`,
-        progressionWeight: (1 / files.length),
-        pageSpreadLeft: undefined,
-        pageSpreadRight: undefined,
-      }
-    })
+    readingOrder: files.map((file) => ({
+      id: file.basename,
+      path: `${file.uri}`,
+      href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri,
+      renditionLayout: `pre-paginated`,
+      progressionWeight: (1 / files.length),
+      pageSpreadLeft: undefined,
+      pageSpreadRight: undefined,
+    }))
   }
 }
 
-export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: {
-  baseUrl?: string
-} = {}) => {
-  const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
+export const getManifestFromArchive = async (archive: Archive, { baseUrl = '' }: { baseUrl?: string } = {}) => {
+  const { data: opsFile } = getArchiveOpfInfo(archive)
 
   if (!!opsFile) {
     const manifest = await generateManifestFromEpub(archive, baseUrl)

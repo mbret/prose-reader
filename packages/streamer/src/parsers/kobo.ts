@@ -11,7 +11,7 @@ export const extractKoboInformationFromArchive = async (archive: Archive) => {
   }
 
   await Promise.all(archive.files.map(async file => {
-    if (file.name.endsWith(`com.kobobooks.display-options.xml`)) {
+    if (file.uri.endsWith(`com.kobobooks.display-options.xml`)) {
       const opfXmlDoc = new xmldoc.XmlDocument(await file.string())
       const optionElement = opfXmlDoc.childNamed(`platform`)?.childNamed(`option`)
       if (optionElement?.attr?.name === `fixed-layout` && optionElement.val === `true`) {
