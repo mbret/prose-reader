@@ -109,14 +109,18 @@ export const createReadingItemFrame = (
 
       const fetchResource = context.getLoadOptions()?.fetchResource
       if (!fetchResource || fetchResource === 'http') {
-        frameElement.src = src
-      } else {
-        const result = await fetchResource(item)
-        if (result instanceof Response) {
-          frameElement.srcdoc = await result.text()
+        // same domain url, we can serve it directly
+        if (src.startsWith(window.location.origin)) {
+          frameElement?.setAttribute(`src`, src)
         } else {
-          frameElement.srcdoc = result
+          // creating data url should circumvent cors
+          const response = await fetch(src)
+          frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
         }
+      } else {
+        const response = await fetchResource(item)
+        // @todo set base URI for xhtml/html content type
+        frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
       }
 
       return new Promise(async (resolve) => {
@@ -200,7 +204,9 @@ export const createReadingItemFrame = (
 }
 
 const createFrame = Report.measurePerformance(`ReadingItemFrame createFrame`, Infinity, async (container: HTMLElement) => {
-  return new Promise<HTMLIFrameElement>((resolve) => {
+  // we force undefined because otherwise the load method will believe it's defined after this call but the code is async and
+  // the iframe could be undefined later
+  return new Promise<HTMLIFrameElement | undefined>((resolve) => {
     const frame = document.createElement('iframe')
     frame.frameBorder = 'no'
     frame.tabIndex = 0
@@ -226,3 +232,41 @@ export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   removeStyle: createRemoveStyleHelper(frameElement),
   addStyle: createAddStyleHelper(frameElement)
 })
+
+const createHtmlPageFromResource = async (resource: Response | string) => {
+
+  if (typeof resource === `string`) return resource
+
+  const contentType = resource.headers.get('Content-Type')
+
+  if ([`image/jpg`, `image/jpeg`].some(mime => mime === contentType)) {
+    const data = await getBase64FromBlob(await resource.blob())
+    return `
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, minimum-scale=0.1">
+        </head>
+        <body style="margin: 0px;" tabindex="-1">
+          <img 
+            src="${data}"
+            style="width: 100%;height:100%;object-fit:contain;"
+          >
+        </body>
+      </html>
+        `
+  }
+
+  return await resource.text()
+}
+
+const getBase64FromBlob = (data: Blob) => {
+  const reader = new FileReader();
+
+  return new Promise<string>(resolve => {
+    reader.addEventListener("load", function () {
+      resolve(reader.result as string)
+    }, false);
+
+    reader.readAsDataURL(data)
+  })
+}
