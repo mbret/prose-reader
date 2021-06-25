@@ -83,6 +83,15 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
     return SHOULD_NOT_LAYOUT
   })
 
+  // @todo fix the panstart issue
+  // @todo maybe increasing the hammer distance before triggering pan as well
+  // reader.registerHook(`readingItem.onLoad`, ({frame}) => {
+  //   frame.contentDocument?.body.addEventListener(`contextmenu`, e => {
+  //     console.log(`ad`)
+  //     e.preventDefault()
+  //   })
+  // })
+
   subject$
     .pipe(
       filter(name => name === `start`),

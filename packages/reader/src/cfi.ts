@@ -246,6 +246,7 @@ class CFI {
   }
 
   static generatePart(node: Element | Node, offset?: number, extra?: {}) {
+    void (extra)
     var cfi = '';
     var o;
     while (node.parentNode) {

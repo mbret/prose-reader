@@ -4,6 +4,8 @@ import { ReadingItem } from "./readingItem"
 import { Report } from "./report"
 import { createLocator } from "./readingItem/locator"
 
+const NAMESPACE = 'pagination'
+
 export type Pagination = ReturnType<typeof createPagination>
 
 export const createPagination = ({ context }: { context: Context }) => {
@@ -122,6 +124,8 @@ export const createPagination = ({ context }: { context: Context }) => {
       endNumberOfPages = endInfo.numberOfPages
       endCfi = endInfo.cfi
       endReadingItemIndex = end.readingItemIndex
+
+      // Report.log(NAMESPACE, `updateBeginAndEnd`, { beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
 
       subject.next({ event: 'change' })
     },
