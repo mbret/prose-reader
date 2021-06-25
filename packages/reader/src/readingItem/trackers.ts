@@ -16,7 +16,7 @@ export const createFingerTracker = () => {
       subject.next({ event: 'fingermove', data: { x: e.x, y: e.y } })
     })
 
-    frame.contentDocument?.addEventListener('mouseup', (e) => {
+    frame.contentDocument?.addEventListener('mouseup', () => {
       isMouseDown = false
       fingerPositionInIframe.x = undefined
       fingerPositionInIframe.y = undefined
@@ -59,18 +59,18 @@ export const createSelectionTracker = () => {
     frame = frameToTrack
 
     mouseUpEvents.forEach(eventName => {
-      frameToTrack.contentWindow?.addEventListener(eventName, (e) => {
+      frameToTrack.contentWindow?.addEventListener(eventName, () => {
         isSelecting = false
         // console.log(`${eventName} selectend`, frame?.contentWindow?.getSelection(), frame?.contentWindow?.getSelection()?.toString())
         // subject.next({ event: 'selectend', data: frame?.contentWindow?.getSelection() || null })
       })
     })
 
-    frameToTrack.contentDocument?.addEventListener('selectionchange', e => {
+    frameToTrack.contentDocument?.addEventListener('selectionchange', () => {
       subject.next({ event: 'selectionchange', data: frame?.contentWindow?.getSelection() || null })
     })
 
-    frameToTrack.contentWindow?.addEventListener('selectstart', e => {
+    frameToTrack.contentWindow?.addEventListener('selectstart', () => {
       isSelecting = true
       // console.log(`selectstart`, e)
       // subject.next({ event: 'selectstart', data: frame?.contentWindow?.getSelection() || null })
