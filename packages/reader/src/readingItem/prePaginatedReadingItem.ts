@@ -31,11 +31,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       let contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
-      const cssLink = buildDefaultStyle(getDimensions())
+      const cssLink = buildDocumentStyle(getDimensions(), viewportDimensions)
 
       frameElement?.style.setProperty(`visibility`, `visible`)
       frameElement?.style.setProperty(`opacity`, `1`)
-      
+
       if (viewportDimensions) {
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
         readingItemFrame.staticLayout({
@@ -87,11 +87,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   }
 }
 
-const buildDefaultStyle = ({ columnHeight, columnWidth, horizontalMargin }: {
+const buildDocumentStyle = ({ columnWidth }: {
   columnWidth: number,
   columnHeight: number,
   horizontalMargin: number
-}) => {
+}, viewportDimensions: { height: number, width: number } | undefined) => {
   return `
     body {
       
@@ -115,9 +115,9 @@ const buildDefaultStyle = ({ columnHeight, columnWidth, horizontalMargin }: {
       -max-width: ${columnWidth}px !important;
     }
     ${
-      /*
-       * @see https://hammerjs.github.io/touch-action/
-       */
+    /*
+     * @see https://hammerjs.github.io/touch-action/
+     */
     ``}
     html, body {
       touch-action: none;
@@ -131,6 +131,17 @@ const buildDefaultStyle = ({ columnHeight, columnWidth, horizontalMargin }: {
         prevent weird overflow or margin. Try `block` if `flex` has weird behavior
       */``}
       display: flex;
+      ${/*
+        If the document does not have viewport, we cannot scale anything inside.
+        This should never happens with a valid epub document however it will happens if
+        we load .jpg, .png, etc directly in the iframe. This is expected, in this case we force
+        the inner content to display correctly.
+      */``}
+      ${!viewportDimensions ? `
+        width: 100%;
+        height:100%;
+        object-fit:contain;
+      ` : ``}
     }
   `
 }
