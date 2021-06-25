@@ -1,5 +1,5 @@
 import { EMPTY, interval, merge, Subject, Subscription, timer } from "rxjs"
-import { catchError, debounce, debounceTime, filter, switchMap, takeUntil, tap } from "rxjs/operators"
+import { catchError, debounce, debounceTime, filter, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { buildChapterInfoFromReadingItem } from "../navigation"
@@ -36,7 +36,6 @@ type Hook =
 type Event =
   { type: `layoutUpdate` }
   | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
-// | { type: `onNavigationChange` }
 
 export const createReadingOrderView = ({ containerElement, context, pagination, iframeEventBridgeElement }: {
   containerElement: HTMLElement,
@@ -55,7 +54,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   const locator = createLocator({ context, readingItemManager })
   const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement })
   let selectionSubscription: Subscription | undefined
-  let focusedReadingItemSubscription: Subscription | undefined
   let hooks: Hook[] = []
 
   const layout = () => {
@@ -120,113 +118,104 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     }
   }
 
+  readingItemManager.$.layout$
+    .pipe(
+      tap(() => {
+        subject.next({ type: `layoutUpdate` })
+        pagination.updateTotalNumberOfPages(readingItemManager.getAll())
+      }),
+      switchMap(() => {
+        const wait$ = viewportNavigator.$.state$.pipe(filter(d => d === `free`), take(1))
+
+        return wait$
+          .pipe(
+            tap(() => {
+              const focusedReadingItem = readingItemManager.getFocusedReadingItem()
+              if (focusedReadingItem) {
+
+                // console.warn(`layoutUpdate adjust`, readingItemManager.getReadingItemIndex(focusedReadingItem))
+
+                viewportNavigator.adjustReadingOffsetPosition(focusedReadingItem, {})
+              }
+            })
+          )
+      }),
+      takeUntil(destroy$)
+    ).subscribe()
+
+  merge(readingItemManager.$.focus$, readingItemManager.$.layout$)
+    .pipe(
+      // we use a timeout because we don't want to trigger new reflow while a current one happens
+      // due to focus being changed. loadContents itself is not always async.
+      switchMap(() => timer(1).pipe(
+        tap(() => {
+          const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
+
+          if (focusedReadingItemIndex === undefined) return
+
+          const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentNavigationPosition()) || {}
+
+          if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
+            console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
+            readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
+          } else {
+            readingItemManager.loadContents([begin, end])
+          }
+        })
+      )),
+      takeUntil(destroy$)
+    ).subscribe()
+
   const readingItemManager$ = merge(
-    readingItemManager.$
-      .pipe(
-        filter(event => event.event === `focus` || event.event === `layout`),
-        // we use a timeout because we don't want to trigger new reflow while a current one happens
-        // due to focus being changed. loadContents itself is not always async.
-        switchMap(() => timer(1).pipe(
-          tap(() => {
-            const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
-
-            if (focusedReadingItemIndex === undefined) return
-
-            const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentNavigationPosition()) || {}
-
-            if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
-              console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
-              readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
-            } else {
-              readingItemManager.loadContents([begin, end])
-            }
-          })
-        )),
-      ),
-    readingItemManager.$
+    readingItemManager.$.focus$
       .pipe(
         tap((event) => {
-          if (event.event === 'layout') {
-            subject.next({ type: `layoutUpdate` })
-
-            pagination.updateTotalNumberOfPages(readingItemManager.getAll())
-
-            const focusedReadingItem = readingItemManager.getFocusedReadingItem()
-
-            if (focusedReadingItem) {
-              viewportNavigator.adjustReadingOffsetPosition(focusedReadingItem, { shouldAdjustCfi: false })
-            }
-          }
-
           // @todo track tail as well (selection, finger etc)
 
-          if (event.event === `focus`) {
-            const readingItem = event.data
-            const fingerTracker$ = readingItem.fingerTracker.$
-            const selectionTracker$ = readingItem.selectionTracker.$
+          const readingItem = event.data
+          const fingerTracker$ = readingItem.fingerTracker.$
+          const selectionTracker$ = readingItem.selectionTracker.$
 
-            if (readingItem.isFrameReady()) {
-              // @todo maybe we need to adjust cfi here ? it should be fine since if it's already
-              // ready then the navigation should have caught the right cfi, if not the observable
-              // will catch it
-            }
+          selectionSubscription?.unsubscribe()
+          selectionSubscription = merge(
+            selectionTracker$
+              .pipe(
+                filter(event => event.event === 'selectionchange'),
+                tap(event => {
+                  subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, readingItem.item) : null })
+                })
+              ),
+            selectionTracker$
+              .pipe(
+                filter(({ event }) => event === 'selectstart'),
+                switchMap(_ => fingerTracker$
+                  .pipe(
+                    filter(({ event }) => event === 'fingermove'),
+                    debounce(() => interval(1000)),
+                    takeUntil(fingerTracker$
+                      .pipe(
+                        filter(({ event }) => event === 'fingerout'),
+                        tap(() => {
 
-            focusedReadingItemSubscription?.unsubscribe()
-            focusedReadingItemSubscription = readingItem.$.pipe(
-              tap(event => {
-                // @todo merge this behavior with global readingItemManager layout
-                if (event.event === 'contentLayoutChange' && event.data.isFirstLayout && event.data.isReady) {
-                  viewportNavigator.adjustReadingOffsetPosition(readingItem, { shouldAdjustCfi: true })
-                }
-              }),
-              catchError(e => {
-                Report.error(e)
-
-                return EMPTY
-              }),
-            ).subscribe()
-
-            selectionSubscription?.unsubscribe()
-            selectionSubscription = merge(
-              selectionTracker$
-                .pipe(
-                  filter(event => event.event === 'selectionchange'),
-                  tap(event => {
-                    subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, readingItem.item) : null })
-                  })
-                ),
-              selectionTracker$
-                .pipe(
-                  filter(({ event }) => event === 'selectstart'),
-                  switchMap(_ => fingerTracker$
-                    .pipe(
-                      filter(({ event }) => event === 'fingermove'),
-                      debounce(() => interval(1000)),
-                      takeUntil(fingerTracker$
-                        .pipe(
-                          filter(({ event }) => event === 'fingerout'),
-                          tap(() => {
-
-                          })
-                        )
-                      ),
-                      tap(({ data }) => {
-                        console.log(data)
-                        if (data) {
-                          // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
-                          // if (fingerPosition.x >= context.getPageSize().width) {
-                          //   viewportNavigator.turnRight({ allowReadingItemChange: false })
-                          // } else if (fingerPosition.x <= context.getPageSize().width) {
-                          //   viewportNavigator.turnLeft({ allowReadingItemChange: false })
-                          // }
-                        }
-                      })
-                    )
+                        })
+                      )
+                    ),
+                    tap(({ data }) => {
+                      // console.log(data)
+                      if (data) {
+                        // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, readingItem)
+                        // if (fingerPosition.x >= context.getPageSize().width) {
+                        //   viewportNavigator.turnRight({ allowReadingItemChange: false })
+                        // } else if (fingerPosition.x <= context.getPageSize().width) {
+                        //   viewportNavigator.turnLeft({ allowReadingItemChange: false })
+                        // }
+                      }
+                    })
                   )
                 )
-            )
-              .subscribe()
-          }
+              )
+          )
+            .subscribe()
         }),
         catchError(e => {
           Report.error(e)
@@ -236,7 +225,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       )
   )
 
-  const navigation$ = viewportNavigator.$
+  const navigation$ = viewportNavigator.$.$
     .pipe(
       tap((data) => {
         if (data.type === 'navigation') {
@@ -277,18 +266,18 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
             Report.log(NAMESPACE, `navigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, index: readingItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
           }
-
-          // subject.next({ type: `onNavigationChange` })
         }
       })
     )
 
-  const viewportAdjust$ = viewportNavigator.$
+  const viewportAdjust$ = viewportNavigator.$.$
     .pipe(
       filter(data => data.type === 'adjustEnd'),
       debounceTime(PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE, undefined),
-      tap((data) => {
+      tap(() => {
+        // console.warn(`adjustEnd`, viewportNavigator.getCurrentNavigationPosition())
         const currentPosition = viewportNavigator.getCurrentNavigationPosition()
+        // const currentPosition = data.position
         const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(currentPosition)
         const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
         const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
@@ -327,8 +316,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             }
           })
         }
-
-        // subject.next({ type: `onNavigationChange` })
       })
     )
 
@@ -376,7 +363,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       viewportNavigator.destroy()
       readingItemManager.destroy()
       selectionSubscription?.unsubscribe()
-      focusedReadingItemSubscription?.unsubscribe()
+      // focusedReadingItemSubscription?.unsubscribe()
       element.remove()
       hooks = []
     },
