@@ -23,12 +23,12 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
     if (!readingItem) return event
 
     if (isPointerEvent(event)) {
-      const { x, y } = readingItem.translateFramePositionIntoPage({ x: event.clientX, y: event.clientY })
+      const { clientX, clientY } = readingItem.translateFramePositionIntoPage(event)
 
       const newEvent = new PointerEvent(event.type, {
         ...event,
-        clientX: x,
-        clientY: y,
+        clientX,
+        clientY,
       }) as E;
 
       Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true });
@@ -37,12 +37,12 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
     }
 
     if (isMouseEvent(event)) {
-      const { x, y } = readingItem.translateFramePositionIntoPage({ x: event.clientX, y: event.clientY })
+      const { clientX, clientY } = readingItem.translateFramePositionIntoPage(event)
 
       const newEvent = new MouseEvent(event.type, {
         ...event,
-        clientX: x,
-        clientY: y,
+        clientX,
+        clientY,
       }) as E;
 
       Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true });
@@ -53,13 +53,13 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
     if (isTouchEvent(event)) {
       const touches = Array.from(event.touches).map(
         (touch) => {
-          const { x, y } = readingItem.translateFramePositionIntoPage({ x: touch.clientX, y: touch.clientY })
+          const { clientX, clientY } = readingItem.translateFramePositionIntoPage(touch)
 
           return new Touch({
             identifier: touch.identifier,
             target: touch.target,
-            clientX: x,
-            clientY: y,
+            clientX,
+            clientY,
           })
         },
       )

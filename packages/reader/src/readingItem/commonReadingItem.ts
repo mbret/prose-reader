@@ -182,18 +182,18 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     })
   }
 
-  const translateFramePositionIntoPage = (position: { x: number, y: number }) => {
+  const translateFramePositionIntoPage = (position: { clientX: number, clientY: number }) => {
     // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
     const { left = 0, top = 0 } = readingItemFrame.getFrameElement()?.getBoundingClientRect() || {}
     const { computedScale = 1 } = getViewPortInformation() || {}
-    const adjustedX = position.x * computedScale + left
-    const adjustedY = position.y * computedScale + top
+    const adjustedX = position.clientX * computedScale + left
+    const adjustedY = position.clientY * computedScale + top
 
     return {
-      x: adjustedX,
-      y: adjustedY,
+      clientX: adjustedX,
+      clientY: adjustedY,
     }
   }
 
