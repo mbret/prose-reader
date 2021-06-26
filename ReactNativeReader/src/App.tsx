@@ -9,8 +9,7 @@
  */
 
 import React from 'react';
-import { Server } from './src/Server'
-import { ReaderWebView } from './src/ReaderWebView'
+import { Reader } from './Reader'
 import {
   RecoilRoot,
 } from 'recoil';
@@ -18,8 +17,7 @@ import {
 const App = () => {
   return (
     <RecoilRoot>
-      <ReaderWebView />
-      <Server />
+      <Reader />
     </RecoilRoot>
   );
 };
