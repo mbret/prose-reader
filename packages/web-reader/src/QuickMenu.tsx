@@ -1,9 +1,8 @@
 import React from 'react'
 import { useHistory } from 'react-router'
 import { useRecoilValue } from 'recoil'
-import { Button } from "./common/Button"
 import { IconButton } from "@chakra-ui/react"
-import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons"
+import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon } from "@chakra-ui/icons"
 import { useToggleFontsSettings } from './FontsSettings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
@@ -48,18 +47,18 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-around',
+          justifyContent: 'space-between',
+          paddingLeft: 10,
+          paddingRight: 10,
         }}>
-          <div style={{
-            color: 'white',
-          }}>
-            <Button onClick={() => {
+          <div style={{}}>
+            <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={() => {
               if (window.history.state === null && history.location.pathname !== `/`) {
                 history.replace(`/`)
               } else {
                 history.goBack()
               }
-            }}>{`<`}</Button>
+            }} />
           </div>
           <div style={{
             color: 'white',
@@ -70,7 +69,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           <div style={{
 
           }}>
-            <Button onClick={toggleFontsSettings}>aA</Button>
+            <IconButton icon={<SettingsIcon />} onClick={toggleFontsSettings} aria-label="settings" />
           </div>
         </div>
       )}
