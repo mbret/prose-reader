@@ -23,14 +23,16 @@ export const createNavigator = ({ context, readingItemManager }: {
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
   const wrapPositionWithSafeEdge = (position: ReadingItemPosition) => {
+    // console.warn(position)
     // @todo use container width instead to increase performances
     const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
     const distanceOfLastReadingItem = readingItemManager.getAbsolutePositionOf(lastReadingItem || 0)
-    const maximumOffset = distanceOfLastReadingItem.end - context.getPageSize().width
+    const maximumXOffset = distanceOfLastReadingItem.leftEnd - context.getPageSize().width
+    const maximumYOffset = distanceOfLastReadingItem.topEnd - context.getPageSize().height
 
     return {
-      x: Math.min(Math.max(0, position.x), maximumOffset),
-      y: Math.max(0, position.y)
+      x: Math.min(Math.max(0, position.x), maximumXOffset),
+      y: Math.min(Math.max(0, position.y), maximumYOffset),
     }
   }
 
@@ -60,6 +62,8 @@ export const createNavigator = ({ context, readingItemManager }: {
     const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
     const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
+    // console.warn({ readingItemNavigation, readingOffset })
+    
     return getAdjustedPositionForSpread(readingOffset)
   }
 
@@ -82,6 +86,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
+    const pageTurnDirection = context.getPageTurnDirection()
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
@@ -96,11 +101,16 @@ export const createNavigator = ({ context, readingItemManager }: {
     // check both position to see if we moved out of it
     const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigationForRightPage, readingItemPosition)
 
+    // console.warn({ readingItemPosition, readingItemNavigationForRightPage, isNewNavigationInCurrentItem })
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
         context.isRTL()
-          ? { x: position.x - context.getPageSize().width, y: 0 }
-          : { x: position.x + context.getPageSize().width, y: 0 }
+          ? pageTurnDirection === `horizontal`
+            ? { x: position.x - context.getPageSize().width, y: 0 }
+            : { y: position.y + context.getPageSize().height, x: 0 }
+          : pageTurnDirection === `horizontal`
+            ? { x: position.x + context.getPageSize().width, y: 0 }
+            : { y: position.y + context.getPageSize().height, x: 0 }
       )
     } else {
       const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigationForRightPage, readingItem)
@@ -110,6 +120,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
+    const pageTurnDirection = context.getPageTurnDirection()
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
@@ -125,8 +136,12 @@ export const createNavigator = ({ context, readingItemManager }: {
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
         context.isRTL()
-          ? { x: position.x + context.getPageSize().width, y: 0 }
-          : { x: position.x - context.getPageSize().width, y: 0 }
+          ? pageTurnDirection === `horizontal`
+            ? { x: position.x + context.getPageSize().width, y: 0 }
+            : { y: position.y - context.getPageSize().height, x: 0 }
+          : pageTurnDirection === `horizontal`
+            ? { x: position.x - context.getPageSize().width, y: 0 }
+            : { y: position.y - context.getPageSize().height, x: 0 }
       )
     } else {
       const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
@@ -161,8 +176,14 @@ export const createNavigator = ({ context, readingItemManager }: {
         return getAdjustedPositionForSpread(
           wrapPositionWithSafeEdge(
             context.isRTL()
-              ? { ...navigation, x: navigation.x - context.getPageSize().width }
-              : { ...navigation, x: navigation.x + context.getPageSize().width }
+              ? {
+                ...navigation,
+                x: navigation.x - context.getPageSize().width
+              }
+              : {
+                ...navigation,
+                x: navigation.x + context.getPageSize().width
+              }
           )
         )
       }
@@ -254,6 +275,16 @@ export const createNavigator = ({ context, readingItemManager }: {
     return { x: 0, y: 0 }
   }
 
+  const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
+    const pageTurnDirection = context.getPageTurnDirection()
+
+    if (pageTurnDirection === `vertical`) {
+      return to.y > from.y
+    }
+
+    return to.x > from.x
+  }
+
   return {
     getNavigationForCfi,
     getNavigationForPage,
@@ -265,5 +296,6 @@ export const createNavigator = ({ context, readingItemManager }: {
     getNavigationForAnchor,
     getNavigationForPosition,
     wrapPositionWithSafeEdge,
+    isNavigationGoingForwardFrom,
   }
 }

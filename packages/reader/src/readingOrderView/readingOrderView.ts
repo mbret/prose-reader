@@ -231,20 +231,31 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         if (data.type === 'navigation') {
           const currentReadingItem = readingItemManager.getFocusedReadingItem()
           const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
-          const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
-          const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+          let beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
+          let endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+          beginReadingItem = beginReadingItem || currentReadingItem
+          endReadingItem = endReadingItem || currentReadingItem
+
           // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
           // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
+          // In case of no item to focus is detected we will just fallback to 0
           const readingItemToFocus = data.position.readingItem || beginReadingItem
 
-          if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
-            if (readingItemToFocus !== currentReadingItem) {
-              readingItemManager.focus(readingItemToFocus)
-            }
+          if (readingItemToFocus && readingItemToFocus !== currentReadingItem) {
+            readingItemManager.focus(readingItemToFocus)
+          } else if (!readingItemToFocus) {
+            // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
+            readingItemManager.focus(0)
+          }
 
+          // console.warn({ beginReadingItem, endReadingItem, readingItemsFromPosition, currentReadingItem, readingItemToFocus, data })
+
+          if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
             const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
 
             const preparedInfo = preparePaginationUpdateInfo(beginReadingItem, endReadingItem, readingItemsFromPosition.beginPosition, readingItemsFromPosition.endPosition)
+
+            // console.warn(preparedInfo, data.position)
 
             pagination.updateBeginAndEnd({
               ...preparedInfo.begin,

@@ -148,7 +148,9 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) => {
     const navigation = navigator.getNavigationForCfi(cfi)
-    Report.log(NAMESPACE, `goToCfi`, { cfi, navigation })
+
+    Report.log(NAMESPACE, `goToCfi`, { cfi, options })
+
     lastUserExpectedNavigation = { type: 'navigate-from-cfi', data: cfi }
     navigateTo(navigation, options)
   }
@@ -157,6 +159,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     const navigation = navigator.getNavigationForSpineIndexOrId(indexOrId)
     // always want to be at the beginning of the item
     lastUserExpectedNavigation = { type: 'navigate-from-previous-item' }
+
+    Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, options, navigation })
 
     navigateTo(navigation, options)
   }
@@ -185,6 +189,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @prototype
    */
   const moveTo = (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
+    const pageTurnDirection = context.getPageTurnDirection()
     isMovingPan = true
     if (start) {
       pan$.next(`start`)
@@ -196,10 +201,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     if (delta) {
       const correctedX = delta.x - (movingLastDelta?.x || 0)
+      const correctedY = delta.y - (movingLastDelta?.y || 0)
 
       navigation = navigator.wrapPositionWithSafeEdge({
-        x: movingLastPosition.x - correctedX,
-        y: 0
+        x: pageTurnDirection === `horizontal`
+          ? context.isRTL()
+            ? movingLastPosition.x + correctedX
+            : movingLastPosition.x - correctedX
+          : 0,
+        y: pageTurnDirection === `horizontal` ? 0 : movingLastPosition.y - correctedY
       })
 
       movingLastDelta = delta
@@ -210,15 +220,24 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     movingLastPosition = navigation
 
     if (final) {
+      const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
+      const triggerPercentage = movingForward ? 0.7 : 0.3
       isMovingPan = false
       movingLastDelta = { x: 0, y: 0 }
-      const midScreenPosition = navigator.wrapPositionWithSafeEdge({ x: navigation.x + context.getPageSize().width / 2, y: 0 })
-      const finalNavigation = navigator.getNavigationForPosition(midScreenPosition)
+      const triggerXPosition = pageTurnDirection === `horizontal`
+        ? navigation.x + (context.getVisibleAreaRect().width * triggerPercentage)
+        : 0
+      const triggerYPosition = pageTurnDirection === `horizontal`
+        ? 0
+        : navigation.y + (context.getVisibleAreaRect().height * triggerPercentage)
+      const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
+      const finalNavigation = navigator.getNavigationForPosition(midScreenPositionSafePosition)
+
+      // console.warn({ navigation, triggerXPosition, triggerYPosition, finalNavigation, movingForward, triggerPercentage })
 
       lastUserExpectedNavigation = undefined
 
       turnTo(finalNavigation)
-      // console.warn(`pan$ end`)
       pan$.next(`end`)
 
       return
@@ -329,7 +348,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       }),
       tap(() => {
         ongoingNavigation = undefined
-      })
+      }),
     )
 
   subject
@@ -368,6 +387,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           element.style.setProperty('opacity', `1`)
         }
 
+        // console.warn({shouldAnimate, noAdjustmentNeeded, event})
         // if (noAdjustmentNeeded) {
         //   return of(event)
         //     .pipe(
@@ -414,7 +434,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       tap(() => {
         element.style.setProperty('opacity', '1')
       }),
-      takeUntil(context.destroy$)
+      takeUntil(context.destroy$),
     )
     .subscribe()
 

@@ -104,15 +104,15 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     readingItemFrame.getManipulableFrame()?.addStyle('oboku-reader-css', cssText)
   }
 
-  const adjustPositionOfElement = (edgeOffset: number | undefined) => {
-    if (edgeOffset === undefined) return
-    if (context.isRTL()) {
-      // could also be negative left but I am not in the mood
-      // will push items on the left
-      element.style.right = `${edgeOffset}px`
-    } else {
-      // will push items on the right
-      element.style.left = `${edgeOffset}px`
+  const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
+    if (right !== undefined) {
+      element.style.right = `${right}px`
+    }
+    if (left !== undefined) {
+      element.style.left = `${left}px`
+    }
+    if (top !== undefined) {
+      element.style.top = `${top}px`
     }
   }
 

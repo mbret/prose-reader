@@ -4,6 +4,7 @@ import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
 
 export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
+export type ViewportPosition = { x: number, y: number }
 
 const NAMESPACE = `readingItemManager`
 
@@ -69,8 +70,22 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         }
       }
 
-      const { width } = item.layout({ minimumWidth, blankPagePosition })
-      item.adjustPositionOfElement(edgeOffset)
+      const { width, height } = item.layout({ minimumWidth, blankPagePosition })
+
+      if (context.getPageTurnDirection() === `vertical`) {
+        item.adjustPositionOfElement({ top: edgeOffset })
+      } else if (context.isRTL()) {
+        // could also be negative left but I am not in the mood
+        // will push items on the left
+        item.adjustPositionOfElement({ right: edgeOffset })
+      } else {
+        // will push items on the right
+        item.adjustPositionOfElement({ left: edgeOffset })
+      }
+
+      if (context.getPageTurnDirection() === `vertical`) {
+        return height + edgeOffset
+      }
 
       return width + edgeOffset
     }, 0)
@@ -125,30 +140,25 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * current window (viewport).
    */
   const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
+    const pageTurnDirection = context.getPageTurnDirection()
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
-    const distance = orderedReadingItems.slice(0, indexOfItem + 1).reduce((acc, readingItem) => {
-      const width = readingItem.getElementDimensions().width
+    const distance = orderedReadingItems
+      .slice(0, indexOfItem + 1)
+      .reduce((acc, readingItem) => {
+        const { width, height } = readingItem.getElementDimensions()
 
-      return {
-        start: acc.end,
-        end: acc.end + width,
-        width
-      }
-    }, { start: 0, end: 0 })
+        return {
+          leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
+          leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
+          topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
+          topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
+          width,
+          height
+        }
+      }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
 
-    if (typeof readingItemOrIndex === 'number') {
-      return {
-        width: 0,
-        ...get(readingItemOrIndex)?.getElementDimensions(),
-        ...distance
-      }
-    }
-
-    return {
-      ...readingItemOrIndex.getElementDimensions(),
-      ...distance
-    }
+    return distance
   }, { disable: true })
 
   const getFocusedReadingItem = () => focusedReadingItemIndex !== undefined ? orderedReadingItems[focusedReadingItemIndex] : undefined
@@ -197,13 +207,19 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return item && getReadingItemIndex(item)
   }
 
-  const getReadingItemAtOffset = Report.measurePerformance(`getReadingItemAtOffset`, 10, (offset: number) => {
+  const getReadingItemAtPosition = Report.measurePerformance(`getReadingItemAtPosition`, 10, (position: ViewportPosition) => {
     const detectedItem = orderedReadingItems.find(item => {
-      const { start, end } = getAbsolutePositionOf(item)
-      return offset >= start && offset < end
+      const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
+
+      // console.warn({ leftStart, leftEnd, topEnd, topStart }, position)
+      if (context.getPageTurnDirection() === `horizontal`) {
+        return position.x >= leftStart && position.x < leftEnd
+      } else {
+        return position.y >= topStart && position.y < topEnd
+      }
     })
 
-    if (offset === 0 && !detectedItem) return orderedReadingItems[0]
+    if (position.x === 0 && !detectedItem) return orderedReadingItems[0]
 
     return detectedItem
   }, { disable: true })
@@ -226,7 +242,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     loadContents,
     comparePositionOf,
     getAbsolutePositionOf,
-    getReadingItemAtOffset,
+    getReadingItemAtPosition,
     getFocusedReadingItem,
     getFocusedReadingItemIndex,
     getReadingItemIndex,

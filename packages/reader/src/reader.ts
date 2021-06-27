@@ -43,7 +43,7 @@ type ContextSettings = Parameters<Context['setSettings']>[0]
 
 export const createReader = ({ containerElement, ...settings }: {
   containerElement: HTMLElement,
-} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation`>) => {
+} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection`>) => {
   const subject = new Subject<Event>()
   const destroy$ = new Subject<void>()
   const paginationSubject = new Subject<{ event: 'change' }>()

@@ -9,6 +9,7 @@ type Settings = {
   forceSinglePageMode: boolean,
   pageTurnAnimation: `none` | `fade` | `slide`,
   pageTurnAnimationDuration: undefined | number
+  pageTurnDirection: `vertical` | `horizontal`
 }
 
 export const createContext = (initialSettings: Partial<Settings>) => {
@@ -17,6 +18,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   let settings: Settings = {
     forceSinglePageMode: false,
     pageTurnAnimation: `none`,
+    pageTurnDirection: `horizontal`,
     pageTurnAnimationDuration: undefined,
     ...initialSettings
   }
@@ -58,7 +60,13 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     loadOptions = newLoadOptions
   }
 
-  const isRTL = () => manifest?.readingDirection === 'rtl'
+  /**
+   * RTL only makes sense for horizontal scrolling
+   */
+  const isRTL = () => {
+    return  manifest?.readingDirection === 'rtl'
+    // return true
+  }
 
   const setSettings = (newSettings: Partial<typeof settings>) => {
     settings = { ...settings, ...newSettings }
@@ -77,6 +85,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     setSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
+    getPageTurnDirection: () => settings.pageTurnDirection,
     getPageTurnAnimation: () => settings.pageTurnAnimation,
     getPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration,
     getComputedPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration !== undefined

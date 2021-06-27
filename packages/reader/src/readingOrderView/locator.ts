@@ -14,7 +14,7 @@ export const createLocator = ({ readingItemManager, context }: {
   const readingItemLocator = createReadingItemLocator({ context })
 
   const getReadingItemRelativePositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
-    const { end, start, width } = readingItemManager.getAbsolutePositionOf(readingItem)
+    const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -30,11 +30,13 @@ export const createLocator = ({ readingItemManager, context }: {
     // }
 
     if (context.isRTL()) {
-      return { x: (end - position.x) - context.getPageSize().width, y: position.y }
+      return {
+        x: (leftEnd - position.x) - context.getPageSize().width,
+        y: (topEnd - position.y) - context.getPageSize().height,
+      }
     }
 
     return {
-
       /**
        * when using spread the item could be on the right and therefore will be negative
        * @example 
@@ -42,8 +44,8 @@ export const createLocator = ({ readingItemManager, context }: {
        * 400 - 600 = -200.
        * However we can assume we are at 0, because we in fact can see the beginning of the item
        */
-      x: Math.max(0, position.x - start),
-      y: position.y
+      x: Math.max(0, position.x - leftStart),
+      y: Math.max(0, position.y - topStart),
     }
   }, { disable: true })
 
@@ -58,7 +60,7 @@ export const createLocator = ({ readingItemManager, context }: {
    * will return 200, which probably needs to be adjusted as 0
    */
   const getReadingOrderViewPositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): ReadingOrderViewPosition => {
-    const { end, start } = readingItemManager.getAbsolutePositionOf(readingItem)
+    const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -75,19 +77,20 @@ export const createLocator = ({ readingItemManager, context }: {
 
     if (context.isRTL()) {
       return {
-        x: (end - readingItemPosition.x) - context.getPageSize().width,
-        y: readingItemPosition.y
+        x: (leftEnd - readingItemPosition.x) - context.getPageSize().width,
+        y: (topEnd - readingItemPosition.y) - context.getPageSize().height,
       }
     }
 
+    // console.warn({ leftEnd, leftStart, topStart, topEnd })
     return {
-      x: start + readingItemPosition.x,
-      y: readingItemPosition.y
+      x: leftStart + readingItemPosition.x,
+      y: topStart + readingItemPosition.y
     }
   }
 
   const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: ReadingOrderViewPosition) => {
-    const readingItem = readingItemManager.getReadingItemAtOffset(position.x)
+    const readingItem = readingItemManager.getReadingItemAtPosition(position)
 
     return readingItem
   }, { disable: true })
@@ -112,10 +115,8 @@ export const createLocator = ({ readingItemManager, context }: {
     end: number
     endPosition: ReadingOrderViewPosition
   } | undefined => {
-    // @todo
-    const beginItemIndex = readingItemManager.getReadingItemIndex(
-      getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
-    )
+    const beginItem = getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
+    const beginItemIndex = readingItemManager.getReadingItemIndex(beginItem)
 
     if (beginItemIndex === undefined) return undefined
 
