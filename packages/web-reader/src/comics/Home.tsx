@@ -16,25 +16,25 @@ export const Home = () => {
       reviewCount: 34,
       rating: 4,
     },
-    // {
-    //   imageUrl: `${window.location.origin}/haruko-cover.jpg`,
-    //   imageAlt: "Rear view of modern home with pool",
-    //   link: `/comics/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}`,
-    //   beds: 3,
-    //   baths: 2,
-    //   title: "Modern home in city center in the heart of historic Los Angeles",
-    //   formattedPrice: "$1,900.00",
-    //   reviewCount: 34,
-    //   rating: 4,
-    // }
+    {
+      imageUrl: `${window.location.origin}/haruko-cover.jpg`,
+      imageAlt: "",
+      link: `/comics/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?vertical`,
+      beds: 3,
+      baths: 2,
+      title: "Manga, vertical scrolling",
+      formattedPrice: "$1,900.00",
+      reviewCount: 34,
+      rating: 4,
+    }
   ]
 
   return (
-    <Flex flexDirection="column" alignItems="center">
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 20 }}>
       {property.map((item, i) => (
         <MangaCard {...item} key={i} />
       ))}
-    </Flex>
+    </div>
   )
 }
 
@@ -50,9 +50,9 @@ const MangaCard = (props: {
   rating: number,
 }) => {
   return (
-    <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden" margin={5}>
+    <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden" margin={2} width="100%">
       <Link to={props.link}>
-        <Image src={props.imageUrl} alt={props.imageAlt} height={200} width="100%" objectFit="cover"/>
+        <Image src={props.imageUrl} alt={props.imageAlt} height={200} width="100%" objectFit="cover" />
         <Box p="6">
           <Box d="flex" alignItems="baseline">
             <Badge borderRadius="full" px="2" colorScheme="teal">

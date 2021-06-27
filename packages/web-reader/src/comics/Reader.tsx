@@ -22,6 +22,8 @@ type ReactReaderProps = ComponentProps<typeof ReactReader>
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
   const { url } = useParams<{ url: string }>();
+  const query = new URLSearchParams(window.location.search)
+  const isUsingVerticalScrolling = query.has('vertical')
   const fontsSettings = useRecoilValue(fontsSettingsState)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
@@ -32,7 +34,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const highlightsEnhancer = useHighlights(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
-    pageTurnAnimation: `slide`
+    pageTurnAnimation: `slide`,
+    pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)

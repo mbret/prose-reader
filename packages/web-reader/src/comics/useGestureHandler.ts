@@ -91,7 +91,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
   }, [container, setHammerManager])
 
   useEffect(() => {
-    let movingStartOffset = 0
+    let movingStartOffsets = { x: 0, y: 0 }
     // let hasHadPanStart = false
 
     /**
@@ -109,12 +109,13 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
 
       // because of iframe moving we have to calculate the delta ourselves with normalized value
-      const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffset : ev.deltaX
+      const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX
+      const deltaY = normalizedEvent && `y` in normalizedEvent ? normalizedEvent?.y - movingStartOffsets.y : ev.deltaY
 
       // console.warn(ev.type)
 
       // console.warn(ev.type)
-      
+
       // used to ensure we ignore false positive on firefox
       if (ev.type === `panstart`) {
         movingHasStarted.current = true
@@ -123,7 +124,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
           reader.zoom.move(ev.center, { isFirst: true, isLast: false })
         } else {
           if (normalizedEvent && `x` in normalizedEvent) {
-            movingStartOffset = normalizedEvent?.x
+            movingStartOffsets = { x: normalizedEvent.x, y: normalizedEvent.y }
             reader?.moveTo({ x: 0, y: 0 }, { start: true })
           }
         }
@@ -133,7 +134,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         if (reader?.zoom.isEnabled()) {
           reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
         } else {
-          reader?.moveTo({ x: deltaX, y: ev.deltaY })
+          reader?.moveTo({ x: deltaX, y: deltaY })
         }
       }
 
@@ -143,7 +144,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
           if (movingHasStarted.current) {
-            reader?.moveTo({ x: deltaX, y: ev.deltaY }, { final: true })
+            reader?.moveTo({ x: deltaX, y: deltaY }, { final: true })
           }
         }
 
@@ -162,13 +163,13 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       // if (ev.type === `press`) {
       //   reader?.moveTo({ x: 0, y: 0 }, { start: true })
       //   movingHasStarted.current = true
-        // if (movingHasStarted.current) {
-        //   console.warn(`press`)
-        //   // reader?.moveTo({ x: 0, y: 0 }, { start: true })
-        //   movingHasStarted.current = true
-        // } else {
-        //   reader?.moveTo(undefined, { final: true })
-        // }
+      // if (movingHasStarted.current) {
+      //   console.warn(`press`)
+      //   // reader?.moveTo({ x: 0, y: 0 }, { start: true })
+      //   movingHasStarted.current = true
+      // } else {
+      //   reader?.moveTo(undefined, { final: true })
+      // }
       // }
       // if (ev.srcEvent.type === `pointerdown`) {
       // console.warn(ev.type)
