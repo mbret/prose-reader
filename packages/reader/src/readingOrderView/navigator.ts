@@ -248,7 +248,7 @@ export const createNavigator = ({ context, readingItemManager }: {
       const readingItemValidPosition = readingItemNavigator.getNavigationForPosition(readingItem, readingItemPosition)
       const viewportNavigation = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemValidPosition, readingItem)
 
-      return viewportNavigation
+      return getAdjustedPositionForSpread(viewportNavigation)
     }
 
     return { x: 0, y: 0 }
