@@ -116,6 +116,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       if (context.isRTL()) {
         // could also be negative left but I am not in the mood
         // will push items on the left
+        item.adjustPositionOfElement({ right: edgeOffset.edgeX })
       } else {
         // will push items on the right
         item.adjustPositionOfElement({ left: edgeOffset.edgeX })
