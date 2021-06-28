@@ -1,5 +1,5 @@
-import { EMPTY, interval, merge, Subject, Subscription, timer } from "rxjs"
-import { catchError, debounce, debounceTime, filter, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { EMPTY, interval, merge, of, Subject, Subscription, timer } from "rxjs"
+import { catchError, debounce, debounceTime, delay, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { buildChapterInfoFromReadingItem } from "../navigation"
@@ -147,21 +147,44 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     .pipe(
       // we use a timeout because we don't want to trigger new reflow while a current one happens
       // due to focus being changed. loadContents itself is not always async.
-      switchMap(() => timer(1).pipe(
-        tap(() => {
-          const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
+      delay(1),
+      switchMap(() => merge(
+        /**
+         * Loading and unloading content has two important issues that need to be considered
+         * - For reflow book it will un-sync the viewport
+         * - Loading / unload is CPU intensive.
+         *
+         * Because of theses two reason we only load/unload when the adjustment is done. This ensure a smooth transition for the second point.
+         * For the first point it avoid having content being un-sync while the transition is happening. That way we avoid a new chapter
+         * to suddenly being displayed under the transition. The first issue is only a problem for reflow book as paginated will not
+         * un-sync the viewport.
+         * The flow for the first point is as follow:
+         * [navigate] -> [transition] -> [new position] -> [iframe unload/load] -> (eventual adjustment).
+         * 
+         * It would ne nice to be able to load/unload without having to worry about viewport mis-adjustment but due to the current iframe and viewport
+         * layout method we have to take it into consideration.
+         */
+        viewportNavigator.$.adjust$
+          .pipe(
+            filter(value => value === `end`),
+            map(() => {
+              const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
 
-          if (focusedReadingItemIndex === undefined) return
+              if (focusedReadingItemIndex === undefined) return
 
-          const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentNavigationPosition()) || {}
+              const { begin = focusedReadingItemIndex, end = focusedReadingItemIndex } = locator.getReadingItemsFromReadingOrderPosition(viewportNavigator.getCurrentNavigationPosition()) || {}
 
-          if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
-            console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
-            readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
-          } else {
-            readingItemManager.loadContents([begin, end])
-          }
-        })
+              if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
+                console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
+                readingItemManager.unloadContents([focusedReadingItemIndex, focusedReadingItemIndex])
+                readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
+              } else {
+                readingItemManager.unloadContents([begin, end])
+                readingItemManager.loadContents([begin, end])
+              }
+            }),
+            take(1)
+          ),
       )),
       takeUntil(destroy$)
     ).subscribe()
