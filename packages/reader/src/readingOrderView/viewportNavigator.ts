@@ -49,7 +49,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
   const subject = new Subject<SubjectEvent>()
-  let isAdjusting = false
   let isMovingPan = false
   const pan$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
   const adjust$ = new BehaviorSubject<`started` | `end`>(`end`)
@@ -217,6 +216,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       navigation = getCurrentViewportPosition()
     }
 
+    // console.log(navigation)
+
     movingLastPosition = navigation
 
     if (final) {
@@ -356,7 +357,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       filter(event => event.type === `adjustStart`),
       throttleTime(VIEWPORT_ADJUSTMENT_THROTTLE, animationFrameScheduler, { leading: true, trailing: true }),
       switchMap((event) => {
-        isAdjusting = true
         adjust$.next(`started`)
         const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
         const animationDuration = context.getComputedPageTurnAnimationDuration()
@@ -376,7 +376,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
         if (shouldAnimate && !noAdjustmentNeeded) {
           if (context.getPageTurnAnimation() === `fade`) {
-            element.style.setProperty('transition', `opacity ${animationDuration}ms`)
+            element.style.setProperty('transition', `opacity ${animationDuration / 2}ms`)
             element.style.setProperty('opacity', '0')
           } else if (context.getPageTurnAnimation() === `slide`) {
             element.style.setProperty('transition', `transform ${animationDuration}ms`)
@@ -387,7 +387,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           element.style.setProperty('opacity', `1`)
         }
 
-        // console.warn({shouldAnimate, noAdjustmentNeeded, event})
+        // console.warn({ shouldAnimate, noAdjustmentNeeded, event })
         // if (noAdjustmentNeeded) {
         //   return of(event)
         //     .pipe(
@@ -398,6 +398,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
         //       delay(animationDuration),
         //     )
         // }
+
+        // console.log({ shouldAnimate, anim: context.getPageTurnAnimation(), duration: context.getComputedPageTurnAnimationDuration(), noAdjustmentNeeded })
 
         /**
          * @important
@@ -414,7 +416,14 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
                 adjustReadingOffset(event.position)
               }
             }),
-            delayWhen(() => shouldAnimate ? timer(animationDuration) : EMPTY),
+            delayWhen(() => shouldAnimate ? timer(animationDuration / 2) : EMPTY),
+            tap(() => {
+              if (context.getPageTurnAnimation() === `fade`) {
+                adjustReadingOffset(event.position)
+                element.style.setProperty('opacity', '1')
+              }
+            }),
+            delayWhen(() => shouldAnimate ? timer(animationDuration / 2) : EMPTY),
             tap(() => {
               if (context.getPageTurnAnimation() === `fade`) {
                 adjustReadingOffset(event.position)
@@ -424,15 +433,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
                   hook.fn()
                 }
               })
-              isAdjusting = false
-              // console.warn(`adjustEnd`)
               subject.next({ type: `adjustEnd`, position: event.position })
               adjust$.next(`end`)
             })
           )
       }),
       tap(() => {
-        element.style.setProperty('opacity', '1')
+        // element.style.setProperty('opacity', '1')
       }),
       takeUntil(context.destroy$),
     )
@@ -463,7 +470,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     destroy,
     registerHook,
     getCurrentNavigationPosition: () => currentNavigationPosition,
-    isAdjusting: () => isAdjusting,
     turnLeft,
     turnRight,
     goTo,
@@ -478,6 +484,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       $: subject.asObservable(),
       pan$: pan$.asObservable(),
       state$: state$.asObservable(),
+      adjust$: adjust$.asObservable(),
     },
   }
 }

@@ -168,12 +168,20 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     orderedReadingItems.forEach((orderedReadingItem, index) => {
       const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
       const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
+      if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload && !orderedReadingItem.isFrameReady() && !orderedReadingItem.isFrameLoading()) {
+        orderedReadingItem.loadContent()
+      }
+    })
+  })
+
+  const unloadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
+    const [leftIndex, rightIndex] = rangeOfIndex
+    const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
+    orderedReadingItems.forEach((orderedReadingItem, index) => {
+      const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
+      const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
       if (isBeforeFocusedWithPreload || isAfterTailWithPreload) {
         orderedReadingItem.unloadContent()
-      } else {
-        if (!orderedReadingItem.isFrameReady() && !orderedReadingItem.isFrameLoading()) {
-          orderedReadingItem.loadContent()
-        }
       }
     })
   })
@@ -301,6 +309,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     layout,
     focus,
     loadContents,
+    unloadContents,
     comparePositionOf,
     getAbsolutePositionOf,
     getReadingItemAtPosition,
