@@ -1,5 +1,5 @@
 import { merge, Observable, Subject } from "rxjs"
-import { Enhancer } from "@oboku/reader"
+import { Enhancer, Report } from "@oboku/reader"
 import { filter, takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
@@ -45,8 +45,12 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
 
     const getRangeForHighlight = (overlayElement: HTMLElement, anchor: { node: Node, offset?: number }, focus: { node: Node, offset?: number }) => {
       const range = overlayElement.ownerDocument.createRange()
-      range.setStart(anchor.node, anchor.offset || 0)
-      range.setEnd(focus.node, focus.offset || 0)
+      try {
+        range.setStart(anchor.node, anchor.offset || 0)
+        range.setEnd(focus.node, focus.offset || 0)
+      } catch (e) {
+        Report.error(e)
+      }
 
       return range
     }
