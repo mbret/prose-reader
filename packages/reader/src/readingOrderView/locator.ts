@@ -32,7 +32,8 @@ export const createLocator = ({ readingItemManager, context }: {
     if (context.isRTL()) {
       return {
         x: (leftEnd - position.x) - context.getPageSize().width,
-        y: (topEnd - position.y) - context.getPageSize().height,
+        // y: (topEnd - position.y) - context.getPageSize().height,
+        y: Math.max(0, position.y - topStart),
       }
     }
 
@@ -78,7 +79,8 @@ export const createLocator = ({ readingItemManager, context }: {
     if (context.isRTL()) {
       return {
         x: (leftEnd - readingItemPosition.x) - context.getPageSize().width,
-        y: (topEnd - readingItemPosition.y) - context.getPageSize().height,
+        // y: (topEnd - readingItemPosition.y) - context.getPageSize().height,
+        y: topStart + readingItemPosition.y,
       }
     }
 
