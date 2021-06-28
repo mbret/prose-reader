@@ -188,6 +188,14 @@ export const createNavigator = ({ context, readingItemManager }: {
         )
       }
 
+      /**
+       * In vase we move vertically and the y is already different, we don't need a second navigation
+       * since we already jumped to a new screen
+       */
+      if (context.getPageTurnDirection() === `vertical` && position.y !== navigation.y) {
+        return getAdjustedPositionForSpread(navigation)
+      }
+
       navigation = getNavigationForRightSinglePage(navigation)
     }
 
@@ -224,6 +232,14 @@ export const createNavigator = ({ context, readingItemManager }: {
               : { ...navigation, x: navigation.x - context.getPageSize().width }
           )
         )
+      }
+
+      /**
+       * In vase we move vertically and the y is already different, we don't need a second navigation
+       * since we already jumped to a new screen
+       */
+       if (context.getPageTurnDirection() === `vertical` && position.y !== navigation.y) {
+        return getAdjustedPositionForSpread(navigation)
       }
 
       navigation = getNavigationForLeftSinglePage(navigation)

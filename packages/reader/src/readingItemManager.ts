@@ -11,7 +11,13 @@ const NAMESPACE = `readingItemManager`
 export const createReadingItemManager = ({ context }: { context: Context }) => {
   const focus$ = new Subject<{ data: ReadingItem }>()
   const layout$ = new Subject()
-
+  /**
+   * This contains every item dimension / position on the viewport.
+   * This is only used to avoid intensively request bounding of each items later.
+   * This is always in sync with every layout since it is being updated for every layout
+   * done with the manager.
+   */
+  let itemLayoutInformation: { leftStart: number, leftEnd: number, topStart: number, topEnd: number, width: number, height: number }[] = []
   let orderedReadingItems: ReadingItem[] = []
   /**
    * focused item represent the current item that the user navigated to.
@@ -31,10 +37,12 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * make sure to check how many times it is being called and try to reduce number of layouts
    */
   const layout = () => {
+    itemLayoutInformation = []
+
     orderedReadingItems.reduce((edgeOffset, item, index) => {
       let minimumWidth = context.getPageSize().width
       let blankPagePosition: `none` | `before` | `after` = `none`
-      const itemStartOnNewScreen = edgeOffset % context.getVisibleAreaRect().width === 0
+      const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
 
       if (context.shouldDisplaySpread()) {
         /**
@@ -73,22 +81,62 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       const { width, height } = item.layout({ minimumWidth, blankPagePosition })
 
       if (context.getPageTurnDirection() === `vertical`) {
-        item.adjustPositionOfElement({ top: edgeOffset })
-      } else if (context.isRTL()) {
+        const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen ? edgeOffset.edgeY : edgeOffset.edgeY - context.getVisibleAreaRect().height
+        const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
+
+        // console.log({ edgeOffset, currentValidEdgeYForVerticalPositioning, currentValidEdgeXForVerticalPositioning, itemStartOnNewScreen })
+
+        if (context.isRTL()) {
+          item.adjustPositionOfElement({ top: edgeOffset.edgeY })
+        } else {
+          item.adjustPositionOfElement({
+            top: currentValidEdgeYForVerticalPositioning,
+            left: currentValidEdgeXForVerticalPositioning,
+          })
+        }
+
+        const newEdgeX = width + currentValidEdgeXForVerticalPositioning
+        const newEdgeY = height + currentValidEdgeYForVerticalPositioning
+
+        itemLayoutInformation.push({
+          leftStart: currentValidEdgeXForVerticalPositioning,
+          leftEnd: newEdgeX,
+          topStart: currentValidEdgeYForVerticalPositioning,
+          topEnd: newEdgeY,
+          height,
+          width,
+        })
+
+        return {
+          edgeX: newEdgeX,
+          edgeY: newEdgeY
+        }
+      }
+
+      if (context.isRTL()) {
         // could also be negative left but I am not in the mood
         // will push items on the left
-        item.adjustPositionOfElement({ right: edgeOffset })
       } else {
         // will push items on the right
-        item.adjustPositionOfElement({ left: edgeOffset })
+        item.adjustPositionOfElement({ left: edgeOffset.edgeX })
       }
 
-      if (context.getPageTurnDirection() === `vertical`) {
-        return height + edgeOffset
-      }
+      const newEdgeX = width + edgeOffset.edgeX
 
-      return width + edgeOffset
-    }, 0)
+      itemLayoutInformation.push({
+        leftStart: edgeOffset.edgeX,
+        leftEnd: newEdgeX,
+        topStart: edgeOffset.edgeY,
+        topEnd: height,
+        height,
+        width,
+      })
+
+      return {
+        edgeX: newEdgeX,
+        edgeY: 0
+      }
+    }, { edgeX: 0, edgeY: 0 })
 
     layout$.next()
   }
@@ -143,22 +191,32 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const pageTurnDirection = context.getPageTurnDirection()
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
-    const distance = orderedReadingItems
-      .slice(0, indexOfItem + 1)
-      .reduce((acc, readingItem) => {
-        const { width, height } = readingItem.getElementDimensions()
+    const layoutInformation = itemLayoutInformation[indexOfItem]
 
-        return {
-          leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
-          leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
-          topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
-          topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
-          width,
-          height
-        }
-      }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
+    if (!layoutInformation) {
+      return { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+    }
 
-    return distance
+    // const distance = orderedReadingItems
+    //   .slice(0, indexOfItem + 1)
+    //   .reduce((acc, readingItem) => {
+    //     const { width, height } = readingItem.getElementDimensions()
+
+    //     return {
+    //       leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
+    //       leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
+    //       topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
+    //       topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
+    //       width,
+    //       height
+    //     }
+    //   }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
+
+    // console.log(distance, itemLayoutInformation[indexOfItem])
+    // return distance
+
+    return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+
   }, { disable: true })
 
   const getFocusedReadingItem = () => focusedReadingItemIndex !== undefined ? orderedReadingItems[focusedReadingItemIndex] : undefined
@@ -212,10 +270,12 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
 
       // console.warn({ leftStart, leftEnd, topEnd, topStart }, position)
+      const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
+
       if (context.getPageTurnDirection() === `horizontal`) {
-        return position.x >= leftStart && position.x < leftEnd
+        return isWithinXAxis
       } else {
-        return position.y >= topStart && position.y < topEnd
+        return isWithinXAxis && position.y >= topStart && position.y < topEnd
       }
     })
 
