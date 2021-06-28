@@ -103,6 +103,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             width: `100%`,
             paddingLeft: 20,
             paddingRight: 20,
+            overflow: 'hidden',
           }}>
             <div style={{
               color: 'white'
@@ -110,7 +111,10 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
               {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
             </div>
             <div style={{
-              color: 'white'
+              color: 'white',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              overflow:'hidden',
             }}>
               {`Chapter ${buildTitleChain(pagination?.begin.chapterInfo)}`}
             </div>
