@@ -3,6 +3,7 @@ import { Report } from "../report"
 import { Manifest } from "../types"
 import { Context } from "../context"
 import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
+import { getUrlExtension } from "../utils/url"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -110,7 +111,8 @@ export const createReadingItemFrame = (
       const fetchResource = context.getLoadOptions()?.fetchResource
       if (!fetchResource || fetchResource === 'http') {
         // same domain url, we can serve it directly
-        if (src.startsWith(window.location.origin)) {
+        const extension = getUrlExtension(src)
+        if (src.startsWith(window.location.origin) && [`xhtml`, `html`].includes(extension)) {
           frameElement?.setAttribute(`src`, src)
         } else {
           // creating data url should circumvent cors
