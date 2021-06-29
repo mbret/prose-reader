@@ -34,7 +34,7 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
      * [pointer event] -> clientX = ~50, left = -100, translated clientX = ~-50 (INCORRECT)
      * [pointer event] -> clientX = 150, left = -100, translated clientX = 50 (CORRECT)
      * 
-     * For some reason the engine must be doing some optimization and unfortunately the first pointer even gets the clientX wrong.
+     * For some reason the engine must be doing some optimization and unfortunately the first pointer event gets the clientX wrong.
      * 
      * The bug can be observed by commenting this code, using CPU slowdown and increasing the throttle on the adjustment stream.
      * The bug seems to affect only chrome / firefox. Nor safari.
