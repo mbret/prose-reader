@@ -86,7 +86,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const pageTurnDirection = context.getPageTurnDirection()
+    const pageTurnDirection = context.getSettings().pageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
@@ -120,7 +120,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
-    const pageTurnDirection = context.getPageTurnDirection()
+    const pageTurnDirection = context.getSettings().pageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
@@ -192,7 +192,7 @@ export const createNavigator = ({ context, readingItemManager }: {
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (context.getPageTurnDirection() === `vertical` && position.y !== navigation.y) {
+      if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -238,7 +238,7 @@ export const createNavigator = ({ context, readingItemManager }: {
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-       if (context.getPageTurnDirection() === `vertical` && position.y !== navigation.y) {
+       if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -292,7 +292,7 @@ export const createNavigator = ({ context, readingItemManager }: {
   }
 
   const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
-    const pageTurnDirection = context.getPageTurnDirection()
+    const pageTurnDirection = context.getSettings().pageTurnDirection
 
     if (pageTurnDirection === `vertical`) {
       return to.y > from.y

@@ -1,5 +1,5 @@
 import { EMPTY, interval, merge, of, Subject, Subscription, timer } from "rxjs"
-import { catchError, debounce, debounceTime, delay, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { catchError, debounce, debounceTime, delay, distinctUntilChanged, filter, map, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { buildChapterInfoFromReadingItem } from "../navigation"
@@ -55,6 +55,13 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement })
   let selectionSubscription: Subscription | undefined
   let hooks: Hook[] = []
+
+  const pageTurnDirection$ = context.$.settings$
+    .pipe(
+      map(settings => settings.pageTurnDirection),
+      distinctUntilChanged(),
+      skip(1)
+    )
 
   const layout = () => {
     readingItemManager.layout()
@@ -352,6 +359,15 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         }
       })
     )
+
+  pageTurnDirection$
+    .pipe(
+      tap(() => {
+        readingItemManager.layout()
+      }),
+      takeUntil(destroy$)
+    )
+    .subscribe()
 
   merge(readingItemManager$, navigation$, viewportAdjust$)
     .pipe(

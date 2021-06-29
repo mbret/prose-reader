@@ -1,4 +1,4 @@
-import { Subject } from "rxjs"
+import { BehaviorSubject, Subject } from "rxjs"
 import { LoadOptions, Manifest } from "./types"
 
 export type Context = ReturnType<typeof createContext>
@@ -22,6 +22,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     pageTurnAnimationDuration: undefined,
     ...initialSettings
   }
+  const settings$ = new BehaviorSubject(settings)
   const subject = new Subject<ContextObservableEvents>()
   const visibleAreaRect = {
     width: 0,
@@ -70,9 +71,16 @@ export const createContext = (initialSettings: Partial<Settings>) => {
 
   const setSettings = (newSettings: Partial<typeof settings>) => {
     settings = { ...settings, ...newSettings }
+    settings$.next(settings)
   }
 
+  const getSettings = () => settings
+
+  settings$.next(settings)
+  
   const destroy = () => {
+    subject.complete()
+    settings$.complete()
     destroy$.next()
     destroy$.complete()
   }
@@ -83,11 +91,9 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     destroy,
     getLoadOptions: () => loadOptions,
     setSettings,
+    getSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
-    getPageTurnDirection: () => settings.pageTurnDirection,
-    getPageTurnAnimation: () => settings.pageTurnAnimation,
-    getPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration,
     getComputedPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration !== undefined
       ? settings.pageTurnAnimationDuration
       : 300,
@@ -119,10 +125,10 @@ export const createContext = (initialSettings: Partial<Settings>) => {
         height: visibleAreaRect.height,
       }
     },
-    $: subject.asObservable(),
-    destroy$: destroy$.asObservable(),
-    emit: (data: ContextObservableEvents) => {
-      subject.next(data)
+    $: {
+      $: subject.asObservable(),
+      destroy$: destroy$.asObservable(),
+      settings$: settings$.asObservable()
     },
     getManifest: () => manifest,
     getReadingDirection: () => manifest?.readingDirection

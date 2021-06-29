@@ -85,14 +85,14 @@ export const createReader = ({ containerElement, ...settings }: {
     }
     const elementRect = element.getBoundingClientRect()
 
-    context?.setVisibleAreaRect(
+    context.setVisibleAreaRect(
       elementRect.x,
       elementRect.y,
       containerElementEvenWidth,
       dimensions.height
     )
 
-    readingOrderView?.layout()
+    readingOrderView.layout()
   }
 
   const load = (
@@ -206,6 +206,7 @@ export const createReader = ({ containerElement, ...settings }: {
     locator: readingOrderView.locator,
     getCurrentNavigationPosition: readingOrderView.getCurrentNavigationPosition,
     setPageTurnAnimation: (pageTurnAnimation: ContextSettings['pageTurnAnimation']) => context.setSettings({ pageTurnAnimation }),
+    setPageTurnDirection: (pageTurnDirection: ContextSettings['pageTurnDirection']) => context.setSettings({ pageTurnDirection }),
     layout,
     load,
     destroy,

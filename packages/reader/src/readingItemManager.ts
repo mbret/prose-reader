@@ -80,7 +80,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
       const { width, height } = item.layout({ minimumWidth, blankPagePosition })
 
-      if (context.getPageTurnDirection() === `vertical`) {
+      if (context.getSettings().pageTurnDirection === `vertical`) {
         const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen ? edgeOffset.edgeY : edgeOffset.edgeY - context.getVisibleAreaRect().height
         const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
 
@@ -116,10 +116,10 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       if (context.isRTL()) {
         // could also be negative left but I am not in the mood
         // will push items on the left
-        item.adjustPositionOfElement({ right: edgeOffset.edgeX })
+        item.adjustPositionOfElement({ right: edgeOffset.edgeX, top: 0 })
       } else {
         // will push items on the right
-        item.adjustPositionOfElement({ left: edgeOffset.edgeX })
+        item.adjustPositionOfElement({ left: edgeOffset.edgeX, top: 0 })
       }
 
       const newEdgeX = width + edgeOffset.edgeX
@@ -197,7 +197,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * current window (viewport).
    */
   const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
-    const pageTurnDirection = context.getPageTurnDirection()
+    const pageTurnDirection = context.getSettings().pageTurnDirection
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const layoutInformation = itemLayoutInformation[indexOfItem]
@@ -281,7 +281,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       // console.warn({ leftStart, leftEnd, topEnd, topStart }, position)
       const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
 
-      if (context.getPageTurnDirection() === `horizontal`) {
+      if (context.getSettings().pageTurnDirection === `horizontal`) {
         return isWithinXAxis
       } else {
         return isWithinXAxis && position.y >= topStart && position.y < topEnd
