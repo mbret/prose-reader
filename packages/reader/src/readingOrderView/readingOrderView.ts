@@ -138,6 +138,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
           .pipe(
             tap(() => {
               const focusedReadingItem = readingItemManager.getFocusedReadingItem()
+
               if (focusedReadingItem) {
 
                 // console.warn(`layoutUpdate adjust`, readingItemManager.getReadingItemIndex(focusedReadingItem))

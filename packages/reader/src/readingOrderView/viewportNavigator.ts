@@ -4,9 +4,9 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, merge, of, Subject, timer } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, of, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
+import { catchError, delay, delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
 import { VIEWPORT_ADJUSTMENT_THROTTLE } from "../constants"
 
 const NAMESPACE = `viewportNavigator`
@@ -409,21 +409,21 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
          * need to adjust to anchor to the payload position. This is because we use viewport computed position, 
          * not the value set by `setProperty`
          */
-        return of(event)
+        return of(EMPTY)
           .pipe(
             tap(() => {
               if (context.getSettings().pageTurnAnimation !== `fade`) {
                 adjustReadingOffset(event.position)
               }
             }),
-            delayWhen(() => shouldAnimate ? timer(animationDuration / 2) : EMPTY),
+            shouldAnimate ? delay(animationDuration / 2) : identity,
             tap(() => {
               if (context.getSettings().pageTurnAnimation === `fade`) {
                 adjustReadingOffset(event.position)
                 element.style.setProperty('opacity', '1')
               }
             }),
-            delayWhen(() => shouldAnimate ? timer(animationDuration / 2) : EMPTY),
+            shouldAnimate ? delay(animationDuration / 2) : identity,
             tap(() => {
               if (context.getSettings().pageTurnAnimation === `fade`) {
                 adjustReadingOffset(event.position)
@@ -453,7 +453,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   combineLatest(pan$, adjust$).pipe(
     tap(([pan, adjust]) => {
-      // console.warn(`state$`, pan, adjust)
       state$.next(pan === `end` && adjust === `end` ? `free` : `busy`)
     }),
     takeUntil(context.$.destroy$)
