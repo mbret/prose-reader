@@ -200,7 +200,7 @@ export const createReader = ({ containerElement, ...settings }: {
     getReadingItem: readingOrderView.getReadingItem,
     getSelection: readingOrderView.getSelection,
     isSelecting: readingOrderView.isSelecting,
-    normalizeEvent: readingOrderView.normalizeEvent,
+    normalizeEventForViewport: readingOrderView.normalizeEventForViewport,
     getCfiMetaInformation: readingOrderView.getCfiMetaInformation,
     resolveCfi: readingOrderView.resolveCfi,
     locator: readingOrderView.locator,
@@ -239,6 +239,9 @@ const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
     position: absolute;
     height: 100%;
     width: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
   `
 
   return iframeEventBridgeElement

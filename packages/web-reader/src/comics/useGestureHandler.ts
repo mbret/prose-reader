@@ -29,7 +29,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     const height = window.innerHeight
     const pageTurnMargin = 0.15
 
-    const normalizedEvent = reader?.normalizeEvent(srcEvent) || {}
+    const normalizedEvent = reader?.normalizeEventForViewport(srcEvent) || {}
     console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
     // if (reader?.getSelection()) return
@@ -105,7 +105,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * Understand the above behavior, try to fix it or come up with solid workaround.
      */
     function onPanMove(ev: HammerInput) {
-      const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
+      const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
 
       // because of iframe moving we have to calculate the delta ourselves with normalized value
       const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX

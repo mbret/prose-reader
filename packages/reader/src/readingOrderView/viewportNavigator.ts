@@ -98,7 +98,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     y: Math.round(Math.abs(element.getBoundingClientRect().y) * 10) / 10,
   })
 
-  const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: { x: number, y: number }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
+  const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
     const currentReadingItem = readingItemManager.getFocusedReadingItem()
 
     if (!currentReadingItem) return

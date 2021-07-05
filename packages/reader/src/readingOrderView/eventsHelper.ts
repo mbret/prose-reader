@@ -11,7 +11,7 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
 }) => {
   const locator = createLocator({ readingItemManager, context })
 
-  const normalizeEvent = <E extends (MouseEvent | TouchEvent | PointerEvent)>(event: E) => {
+  const normalizeEventForViewport = <E extends (MouseEvent | TouchEvent | PointerEvent)>(event: E) => {
     const eventIsComingFromBridge = event.target === iframeEventBridgeElement
     const iframeOriginalEvent = getOriginalFrameEventFromDocumentEvent(event)
     const originalFrame = iframeOriginalEvent?.view?.frameElement
@@ -79,6 +79,6 @@ export const createEventsHelper = ({ iframeEventBridgeElement, context, readingI
   }
 
   return {
-    normalizeEvent
+    normalizeEventForViewport
   }
 }

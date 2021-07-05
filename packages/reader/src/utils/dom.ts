@@ -56,6 +56,9 @@ function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: numb
 
 type ViewPort = { left: number, right: number, top: number, bottom: number }
 
+/**
+ * @todo optimize
+ */
 export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirstVisibleNodeForViewport`, 1, (documentOrElement: Document | Element, viewport: ViewPort) => {
   const element = (`body` in documentOrElement)
     ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)

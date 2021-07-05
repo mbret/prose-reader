@@ -385,7 +385,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     getFocusedReadingItemIndex: () => readingItemManager.getFocusedReadingItemIndex(),
     getReadingItem: readingItemManager.get,
     registerHook,
-    normalizeEvent: eventsHelper.normalizeEvent,
+    normalizeEventForViewport: eventsHelper.normalizeEventForViewport,
     manipulateReadingItems,
     getCurrentNavigationPosition: viewportNavigator.getCurrentNavigationPosition,
     goToNextSpineItem: () => {

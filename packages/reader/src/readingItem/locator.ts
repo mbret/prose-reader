@@ -143,6 +143,9 @@ export const createLocator = ({ context }: {
     return undefined
   }
 
+  /**
+   * @todo optimize
+   */
   const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, readingItem: ReadingItem) => {
     const nodeOrRange = getFirstNodeOrRangeAtPage(pageIndex, readingItem)
     const doc = readingItem.readingItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
@@ -200,11 +203,11 @@ export const createLocator = ({ context }: {
 
   const getPageFromOffset = (offset: number, pageWidth: number, numberOfPages: number) => {
     const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
-  
+
     if (offset <= 0) return 0
-  
+
     if (offset >= (numberOfPages * pageWidth)) return numberOfPages - 1
-  
+
     return Math.max(0, offsetValues.findIndex(offsetRange => offset < (offsetRange + pageWidth)))
   }
 

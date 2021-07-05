@@ -91,6 +91,9 @@ export const createLocator = ({ readingItemManager, context }: {
     }
   }
 
+  /**
+   * This will retrieve the closest item to the x / y position edge relative to the reading direction.
+   */
   const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: ReadingOrderViewPosition) => {
     const readingItem = readingItemManager.getReadingItemAtPosition(position)
 

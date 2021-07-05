@@ -28,7 +28,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     const height = window.innerHeight
     const pageTurnMargin = 0.15
 
-    const normalizedEvent = reader?.normalizeEvent(srcEvent)
+    const normalizedEvent = reader?.normalizeEventForViewport(srcEvent)
     console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
     // if (reader?.getSelection()) return
@@ -104,7 +104,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
   useEffect(() => {
     const onDoubleTap: HammerListener = ({ srcEvent }) => {
-      const normalizedEvent = reader?.normalizeEvent(srcEvent)
+      const normalizedEvent = reader?.normalizeEventForViewport(srcEvent)
       const target = normalizedEvent?.target as null | undefined | HTMLElement
 
       reader?.zoom.exit()
@@ -143,7 +143,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * Understand the above behavior, try to fix it or come up with solid workaround.
      */
     function onPanMove(ev: HammerInput) {
-      const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
+      const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
 
       // console.log(`hammer.onPanMove`, ev.type, ev.eventType, (normalizedEvent as any)?.x)
 

@@ -2,6 +2,7 @@ import { Subject, Subscription } from "rxjs"
 import { Report } from "./report"
 import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
+import { isShallowEqual } from "./utils/objects"
 
 export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
 export type ViewportPosition = { x: number, y: number }
@@ -10,7 +11,7 @@ const NAMESPACE = `readingItemManager`
 
 export const createReadingItemManager = ({ context }: { context: Context }) => {
   const focus$ = new Subject<{ data: ReadingItem }>()
-  const layout$ = new Subject()
+  const layout$ = new Subject<boolean>()
   /**
    * This contains every item dimension / position on the viewport.
    * This is only used to avoid intensively request bounding of each items later.
@@ -37,7 +38,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * make sure to check how many times it is being called and try to reduce number of layouts
    */
   const layout = () => {
-    itemLayoutInformation = []
+    let newItemLayoutInformation: typeof itemLayoutInformation = []
 
     orderedReadingItems.reduce((edgeOffset, item, index) => {
       let minimumWidth = context.getPageSize().width
@@ -98,7 +99,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         const newEdgeX = width + currentValidEdgeXForVerticalPositioning
         const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
-        itemLayoutInformation.push({
+        newItemLayoutInformation.push({
           leftStart: currentValidEdgeXForVerticalPositioning,
           leftEnd: newEdgeX,
           topStart: currentValidEdgeYForVerticalPositioning,
@@ -124,7 +125,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
       const newEdgeX = width + edgeOffset.edgeX
 
-      itemLayoutInformation.push({
+      newItemLayoutInformation.push({
         leftStart: edgeOffset.edgeX,
         leftEnd: newEdgeX,
         topStart: edgeOffset.edgeY,
@@ -139,7 +140,11 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       }
     }, { edgeX: 0, edgeY: 0 })
 
-    layout$.next()
+    const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
+
+    itemLayoutInformation = newItemLayoutInformation
+
+    layout$.next(hasLayoutChanges)
   }
 
   const focus = (indexOrReadingItem: number | ReadingItem) => {
@@ -278,7 +283,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const detectedItem = orderedReadingItems.find(item => {
       const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
 
-      // console.warn({ leftStart, leftEnd, topEnd, topStart }, position)
       const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
 
       if (context.getSettings().pageTurnDirection === `horizontal`) {
