@@ -16,7 +16,7 @@ export const createGestureHandler = (reader: Reader) => {
     const width = window.innerWidth
     const pageTurnMargin = 0.15
 
-    const normalizedEvent = reader?.normalizeEvent(srcEvent) || {}
+    const normalizedEvent = reader?.normalizeEventForViewport(srcEvent) || {}
 
     if ('x' in normalizedEvent) {
       const { x = 0 } = normalizedEvent
@@ -35,7 +35,7 @@ export const createGestureHandler = (reader: Reader) => {
   let movingHasStarted = false
 
   hammerManager.on('panmove panstart panend', (ev: HammerInput) => {
-    const normalizedEvent = reader?.normalizeEvent(ev.srcEvent)
+    const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
 
     // because of iframe moving we have to calculate the delta ourselves with normalized value
     const deltaX = normalizedEvent && 'x' in normalizedEvent ? normalizedEvent?.x - movingStartOffset : ev.deltaX
