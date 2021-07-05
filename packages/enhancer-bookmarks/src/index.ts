@@ -136,7 +136,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
      * Bookmark area is top right corner
      */
     const isClickEventInsideBookmarkArea = (e: MouseEvent | PointerEvent) => {
-      const event = reader.normalizeEvent(e)
+      const event = reader.normalizeEventForViewport(e)
 
       const { width } = reader.context.getVisibleAreaRect()
 
