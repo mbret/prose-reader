@@ -133,7 +133,7 @@ interface JSZip {
   files: { [key: string]: JSZipObject };
 }
 
-export const createArchiveFromJszip = async (jszip: JSZip, name: string = '', { orderByAlpha }: { orderByAlpha?: boolean }): Promise<Archive> => {
+export const createArchiveFromJszip = async (jszip: JSZip, { orderByAlpha, name }: { orderByAlpha?: boolean, name?: string } = {}): Promise<Archive> => {
   let files = Object.values(jszip.files)
 
   if (orderByAlpha) {
@@ -141,7 +141,7 @@ export const createArchiveFromJszip = async (jszip: JSZip, name: string = '', { 
   }
 
   return {
-    filename: name,
+    filename: name || ``,
     files: files.map(file => ({
       dir: file.dir,
       basename: getBasename(file.name),
@@ -157,13 +157,13 @@ export const createArchiveFromJszip = async (jszip: JSZip, name: string = '', { 
 }
 
 export const createArchiveFromArrayBufferList = async (
-  list: [{
+  list: {
     isDir: boolean,
     name: string,
     size: number,
     data: () => Promise<ArrayBuffer>
-  }],
-  { orderByAlpha, name }: { orderByAlpha?: boolean, name?: string }
+  }[],
+  { orderByAlpha, name }: { orderByAlpha?: boolean, name?: string } = {}
 ): Promise<Archive> => {
   let files = list
 
