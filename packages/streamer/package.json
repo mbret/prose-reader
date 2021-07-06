@@ -1,6 +1,6 @@
 {
   "name": "@oboku/reader-streamer",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
