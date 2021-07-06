@@ -6,7 +6,7 @@ export const createResourcesManager = (context: Context) => {
   const cache$ = new Subject<number>()
 
   const get = (itemIndexOrId: number): Observable<Response | undefined> => {
-    const item = context.getManifest()?.readingOrder.find((item, index) => index === itemIndexOrId)
+    const item = context.getManifest()?.readingOrder.find((_, index) => index === itemIndexOrId)
 
     if (!item) return defer(() => undefined)
 
@@ -20,9 +20,9 @@ export const createResourcesManager = (context: Context) => {
   cache$.asObservable()
     .pipe(
       mergeMap((itemIndexOrId) => {
-        const item = context.getManifest()?.readingOrder.find((item, index) => index === itemIndexOrId)
+        const item = context.getManifest()?.readingOrder.find((_, index) => index === itemIndexOrId)
 
-        console.log('cache', itemIndexOrId)
+        // console.log('cache', itemIndexOrId)
         return EMPTY
       }),
       takeUntil(context.$.destroy$)
