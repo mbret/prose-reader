@@ -16,3 +16,5 @@ export type ReaderSelection = ReturnType<typeof createSelection>
 export { Report } from './report'
 
 export { composeEnhancer } from './utils/composeEnhancer'
+
+export { groupBy } from './utils/objects'
