@@ -4,6 +4,7 @@ import { Manifest } from "../types"
 import { Context } from "../context"
 import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
 import { getUrlExtension } from "../utils/url"
+import { detectContentType } from "../utils/contentType"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -235,14 +236,14 @@ export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   addStyle: createAddStyleHelper(frameElement)
 })
 
-const createHtmlPageFromResource = async (resource: Response | string) => {
+const createHtmlPageFromResource = async (resourceResponse: Response | string) => {
 
-  if (typeof resource === `string`) return resource
+  if (typeof resourceResponse === `string`) return resourceResponse
 
-  const contentType = resource.headers.get('Content-Type')
-
-  if ([`image/jpg`, `image/jpeg`].some(mime => mime === contentType)) {
-    const data = await getBase64FromBlob(await resource.blob())
+  const contentType = resourceResponse.headers.get('Content-Type') || detectContentType(resourceResponse.url)
+  
+  if ([`image/jpg`, `image/jpeg`, `image/png`].some(mime => mime === contentType)) {
+    const data = await getBase64FromBlob(await resourceResponse.blob())
     return `
       <html>
         <head>
@@ -258,7 +259,7 @@ const createHtmlPageFromResource = async (resource: Response | string) => {
         `
   }
 
-  return await resource.text()
+  return await resourceResponse.text()
 }
 
 const getBase64FromBlob = (data: Blob) => {
