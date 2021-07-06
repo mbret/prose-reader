@@ -1,6 +1,6 @@
 {
   "name": "@oboku/web-reader",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
@@ -19,7 +19,7 @@
     "@oboku/reader-enhancer-bookmarks": "^0.0.8",
     "@oboku/reader-enhancer-highlights": "^0.0.6",
     "@oboku/reader-react": "^0.0.10",
-    "@oboku/reader-streamer": "^0.0.15",
+    "@oboku/reader-streamer": "^0.0.16",
     "@types/hammerjs": "^2.0.39",
     "@types/react": "^17.0.11",
     "@types/react-dom": "*",
