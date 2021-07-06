@@ -1,3 +1,5 @@
+import { sortByTitleComparator } from "./utils"
+
 export type Archive = {
   filename: string,
   files: {
@@ -128,13 +130,19 @@ interface JSZipObject {
 }
 
 interface JSZip {
-  files: {[key: string]: JSZipObject};
+  files: { [key: string]: JSZipObject };
 }
 
-export const createArchiveFromJszip = async (jszip: JSZip, name: string = ''): Promise<Archive> => {
+export const createArchiveFromJszip = async (jszip: JSZip, name: string = '', { orderByAlpha }: { orderByAlpha?: boolean }): Promise<Archive> => {
+  let files = Object.values(jszip.files)
+
+  if (orderByAlpha) {
+    files = files.sort((a, b) => sortByTitleComparator(a.name, b.name))
+  }
+
   return {
     filename: name,
-    files: Object.values(jszip.files).map(file => ({
+    files: files.map(file => ({
       dir: file.dir,
       basename: getBasename(file.name),
       uri: file.name,
@@ -144,6 +152,41 @@ export const createArchiveFromJszip = async (jszip: JSZip, name: string = ''): P
       // this is private API
       // @ts-ignore
       size: file._data.uncompressedSize
+    }))
+  }
+}
+
+export const createArchiveFromArrayBufferList = async (
+  list: [{
+    isDir: boolean,
+    name: string,
+    size: number,
+    data: () => Promise<ArrayBuffer>
+  }],
+  { orderByAlpha, name }: { orderByAlpha?: boolean, name?: string }
+): Promise<Archive> => {
+  let files = list
+
+  if (orderByAlpha) {
+    files = files.sort((a, b) => sortByTitleComparator(a.name, b.name))
+  }
+
+  return {
+    filename: name || ``,
+    files: files.map(file => ({
+      dir: file.isDir,
+      basename: getBasename(file.name),
+      uri: file.name,
+      blob: async () => new Blob([await file.data()]),
+      string: async () => {
+          const data = await file.data()
+          return String.fromCharCode.apply(null, Array.from(new Uint16Array(data)))
+      },
+      base64: async () => {
+        // @todo not used for now, lets implement it later if needed
+        return ``
+      },        
+      size: file.size
     }))
   }
 }
