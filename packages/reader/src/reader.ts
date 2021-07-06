@@ -7,6 +7,7 @@ import { LoadOptions, Manifest } from "./types";
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
 import { takeUntil, tap } from "rxjs/operators";
 import { createSelection } from "./selection";
+import { createResourcesManager } from "./resourcesManager";
 
 type ReadingOrderView = ReturnType<typeof createReadingOrderView>
 
@@ -51,6 +52,7 @@ export const createReader = ({ containerElement, ...settings }: {
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
+  const resourcesManager = createResourcesManager(context)
   let containerManipulationOnDestroyCbList: (() => void)[] = []
   const readingOrderView = createReadingOrderView({
     containerElement: element,
@@ -186,6 +188,7 @@ export const createReader = ({ containerElement, ...settings }: {
   const reader = {
     pagination,
     context,
+    resourcesManager,
     registerHook,
     manipulateReadingItems,
     manipulateContainer,
