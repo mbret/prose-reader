@@ -114,7 +114,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
               color: 'white',
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
-              overflow:'hidden',
+              overflow: 'hidden',
             }}>
               {`Chapter ${buildTitleChain(pagination?.begin.chapterInfo)}`}
             </div>
