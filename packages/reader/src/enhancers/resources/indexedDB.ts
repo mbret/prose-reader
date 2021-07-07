@@ -26,7 +26,7 @@ const createDatabase = (db: IDBDatabase) => {
   }
 
   const get = (key: IDBValidKey) => {
-    return new Promise<Blob>((resolve, reject) => {
+    return new Promise<Blob | null>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readwrite`)
       const objectStore = transaction.objectStore(`store`)
       const request = objectStore.get(key)
