@@ -20,8 +20,14 @@ export const resourcesEnhancer: Enhancer<{
     })
   }
 
+  const destroy = () => {
+    resourceManager.destroy()
+    reader.destroy()
+  }
+
   return {
     ...reader,
+    destroy,
     load
   }
 }

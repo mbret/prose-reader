@@ -32,7 +32,7 @@ export const createResourcesManager = (context: Context) => {
     if (cacheData) {
       return new Response(cacheData, { status: 200 })
     }
-    
+
     const data = (fetchResource && await fetchResource(item)) || await fetch(item.href)
 
     cache(item, data.clone())
@@ -111,7 +111,12 @@ export const createResourcesManager = (context: Context) => {
     )
     .subscribe()
 
+  const destroy = () => {
+    cache$.complete()
+  }
+  
   return {
     get,
+    destroy
   }
 }
