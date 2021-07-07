@@ -10,6 +10,7 @@ import { composeEnhancer } from './utils/composeEnhancer'
 import { zoomEnhancer } from './enhancers/zoom'
 import { createReader as createInternalReader } from './reader'
 import { utilsEnhancer } from './enhancers/utils'
+import { resourcesEnhancer } from './enhancers/resources'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
@@ -78,6 +79,7 @@ const internalEnhancer = composeEnhancer(
   zoomEnhancer,
   layoutEnhancer,
   utilsEnhancer,
+  resourcesEnhancer,
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>

@@ -24,6 +24,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   }
   const settings$ = new BehaviorSubject(settings)
   const subject = new Subject<ContextObservableEvents>()
+  const loadSubject$ = new Subject()
   const visibleAreaRect = {
     width: 0,
     height: 0,
@@ -59,6 +60,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
     manifest = newManifest
     loadOptions = newLoadOptions
+    loadSubject$.next()
   }
 
   /**
@@ -81,6 +83,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const destroy = () => {
     subject.complete()
     settings$.complete()
+    loadSubject$.complete()
     destroy$.next()
     destroy$.complete()
   }
@@ -128,7 +131,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     $: {
       $: subject.asObservable(),
       destroy$: destroy$.asObservable(),
-      settings$: settings$.asObservable()
+      settings$: settings$.asObservable(),
+      load$: loadSubject$.asObservable()
     },
     getManifest: () => manifest,
     getReadingDirection: () => manifest?.readingDirection
