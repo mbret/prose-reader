@@ -49,3 +49,15 @@ export const groupBy = <T, K extends keyof any>(list: T[], getKey: (item: T) => 
     previous[group].push(currentItem);
     return previous;
   }, {} as Record<K, T[]>)
+
+export const getBase64FromBlob = (data: Blob) => {
+  const reader = new FileReader();
+
+  return new Promise<string>(resolve => {
+    reader.addEventListener("load", function () {
+      resolve(reader.result as string)
+    }, false);
+
+    reader.readAsDataURL(data)
+  })
+}

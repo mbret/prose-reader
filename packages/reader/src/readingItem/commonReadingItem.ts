@@ -65,7 +65,14 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item, context)
   const overlayElement = createOverlayElement(containerElement, item)
-  const readingItemFrame = createReadingItemFrame(element, item, context)
+  const fetchResource = () => {
+    const loadOptions = context.getLoadOptions()
+    if (loadOptions?.fetchResource) {
+      return loadOptions.fetchResource(item)
+    }
+    return fetch(item.href)
+  }
+  const readingItemFrame = createReadingItemFrame({ parent: element, item, context, fetchResource })
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
   let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
@@ -97,7 +104,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
     return memoizedElementDimensions
   }
-
 
   const injectStyle = (readingItemFrame: ReadingItemFrame, cssText: string) => {
     readingItemFrame.getManipulableFrame()?.removeStyle('oboku-reader-css')
@@ -268,6 +274,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
+    fetchResource,
     destroy: () => {
       loadingElement.onload = () => { }
       loadingElement.remove()

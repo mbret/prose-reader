@@ -17,7 +17,7 @@ export type LoadOptions = {
    * - Web app without backend and no service worker
    * - Providing custom font, img, etc with direct import
    */
-  fetchResource?: `http` | ((item: Manifest['readingOrder'][number]) => Promise<string | Response>),
+  fetchResource?: ((item: Manifest['readingOrder'][number]) => Promise<Response>),
   /**
    * Specify how many spine items you want to preload.
    * Useful for pre-paginated where you want the user to have a smooth transition between items.

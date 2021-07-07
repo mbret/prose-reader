@@ -82,7 +82,7 @@ export const searchEnhancer: Enhancer<{
         return
       }
 
-      reader.resourcesManager.get(index)
+      from(item.fetchResource())
         .pipe(
           switchMap((response) => {
             const data$ = response ? from(response.text()) : of(undefined)

@@ -3,8 +3,8 @@ import { Report } from "../report"
 import { Manifest } from "../types"
 import { Context } from "../context"
 import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
-import { getUrlExtension } from "../utils/url"
 import { detectContentType } from "../utils/contentType"
+import { getBase64FromBlob } from "../utils/objects"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -22,11 +22,12 @@ type SubjectEvent =
    */
   | { event: 'contentLayoutChange', data: { isFirstLayout: boolean, isReady: boolean } }
 
-export const createReadingItemFrame = (
+export const createReadingItemFrame = ({ item, parent, fetchResource }: {
   parent: HTMLElement,
   item: Manifest['readingOrder'][number],
   context: Context,
-) => {
+  fetchResource: () => Promise<Response>
+}) => {
   const subject = new Subject<SubjectEvent>()
   let isLoaded = false
   let currentLoadingId = 0
@@ -109,22 +110,9 @@ export const createReadingItemFrame = (
 
       const t0 = performance.now();
 
-      const fetchResource = context.getLoadOptions()?.fetchResource
-      if (!fetchResource || fetchResource === 'http') {
-        // same domain url, we can serve it directly
-        const extension = getUrlExtension(src)
-        if (src.startsWith(window.location.origin) && [`xhtml`, `html`].includes(extension)) {
-          frameElement?.setAttribute(`src`, src)
-        } else {
-          // creating data url should circumvent cors
-          const response = await fetch(src)
-          frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
-        }
-      } else {
-        const response = await fetchResource(item)
-        // @todo set base URI for xhtml/html content type
-        frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
-      }
+      const response = await fetchResource()
+      // @todo set base URI for xhtml/html content type
+      frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
 
       return new Promise(async (resolve) => {
         if (frameElement && !isCancelled()) {
@@ -241,7 +229,7 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string) =
   if (typeof resourceResponse === `string`) return resourceResponse
 
   const contentType = resourceResponse.headers.get('Content-Type') || detectContentType(resourceResponse.url)
-  
+
   if ([`image/jpg`, `image/jpeg`, `image/png`].some(mime => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
     return `
@@ -260,16 +248,4 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string) =
   }
 
   return await resourceResponse.text()
-}
-
-const getBase64FromBlob = (data: Blob) => {
-  const reader = new FileReader();
-
-  return new Promise<string>(resolve => {
-    reader.addEventListener("load", function () {
-      resolve(reader.result as string)
-    }, false);
-
-    reader.readAsDataURL(data)
-  })
 }
