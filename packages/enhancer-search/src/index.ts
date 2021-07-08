@@ -1,6 +1,6 @@
 import { Enhancer } from "@oboku/reader"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
-import { delay, map, switchMap, takeUntil } from "rxjs/operators"
+import { delay, filter, map, switchMap, takeUntil } from "rxjs/operators"
 
 type ResultItem = {
   spineItemIndex: number,
@@ -8,6 +8,8 @@ type ResultItem = {
   endCfi: string,
   pageIndex?: number,
   contextText: string
+  startOffset: number,
+  endOffset: number,
 }
 
 const supportedContentType = ["application/xhtml+xml" as const, "application/xml" as const, "image/svg+xml" as const, "text/html" as const, "text/xml" as const]
@@ -30,6 +32,8 @@ export const searchEnhancer: Enhancer<{
   const searchNodeContainingText = (node: Node, text: string) => {
     const nodeList = node.childNodes
 
+    if (node.nodeName === `head`) return []
+
     const rangeList: { startNode: Node, start: number, endNode: Node, end: number }[] = []
     for (let i = 0; i < nodeList.length; i++) {
       const subNode = nodeList[i]
@@ -37,7 +41,6 @@ export const searchEnhancer: Enhancer<{
       if (!subNode) {
         continue
       }
-      // console.log(subNode)
 
       if (subNode?.hasChildNodes()) {
         rangeList.push(...searchNodeContainingText(subNode, text))
@@ -50,7 +53,6 @@ export const searchEnhancer: Enhancer<{
           const regexp = RegExp(`(${text})`, 'g')
 
           while ((match = regexp.exec(content)) !== null) {
-            // console.log(match)
             if (match.index >= 0 && subNode.ownerDocument) {
               const range = subNode.ownerDocument.createRange()
               range.setStart(subNode, match.index)
@@ -71,60 +73,56 @@ export const searchEnhancer: Enhancer<{
   }
 
   const searchForItem = (index: number, text: string) => {
-    return new Observable<SearchResult>((subscriber) => {
+    const item = reader.getReadingItem(index)
 
-      const item = reader.getReadingItem(index)
+    if (!item) {
+      return of([])
+    }
 
-      if (!item) {
-        subscriber.next([])
-        subscriber.complete()
+    return from(item.getResource())
+      .pipe(
+        switchMap(response => {
+          // small optimization since we already know DOMParser only accept some documents only
+          // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
+          // however we can still avoid doing unnecessary HTML generation for images resources, etc.
+          if (!supportedContentType.includes(response?.headers.get('Content-Type') || `` as any)) return of([])
 
-        return
-      }
+          return from(item.getHtmlFromResource(response))
+            .pipe(
+              map(html => {
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(html, `application/xhtml+xml`)
 
-      from(item.fetchResource())
-        .pipe(
-          switchMap((response) => {
-            const data$ = response ? from(response.text()) : of(undefined)
-
-            return forkJoin([of(response), data$])
-          }),
-          map(([response, data]) => {
-            if (!data || !response) return []
-
-            if (data) {
-              const parser = new DOMParser()
-              const contentType = response?.headers.get('Content-Type') || ``
-              if (supportedContentType.includes(contentType as any)) {
-                const doc = parser.parseFromString(data, contentType as typeof supportedContentType[number])
-  
                 const ranges = searchNodeContainingText(doc, text)
                 const newResults = ranges.map(range => {
                   const { end, start } = reader.generateCfi(range, item.item)
                   const { pageIndex } = reader.resolveCfi(start) || {}
-  
+
                   return {
                     spineItemIndex: index,
                     startCfi: start,
                     endCfi: end,
                     pageIndex,
                     contextText: range.startNode.parentElement?.textContent || '',
+                    startOffset: range.start,
+                    endOffset: range.end,
                   }
                 })
-  
+
                 return newResults
-              }
-            }
-          })
-        )
-        .subscribe(subscriber)
-    })
+              })
+            )
+        }),
+      )
   }
 
   const search = (text: string) => {
     searchSubject$.next(text)
   }
 
+  /**
+   * Main search process stream
+   */
   searchSubject$.asObservable()
     .pipe(
       switchMap((text) => {
@@ -136,7 +134,9 @@ export const searchEnhancer: Enhancer<{
 
         return forkJoin(searches$)
           .pipe(
-            map(results => results.reduce((acc, value) => [...acc, ...value], [])),
+            map(results => {
+              return results.reduce((acc, value) => [...acc, ...value], [])
+            }),
           )
       }),
       delay(0), // make sure subjects are in order
@@ -144,6 +144,9 @@ export const searchEnhancer: Enhancer<{
     )
     .subscribe(searchResultsSubject$)
 
+  /**
+   * Convenient observable to be used by consumer
+   */
   const search$ = merge(
     searchSubject$
       .pipe(map(() => ({ type: `start` as const }))),
