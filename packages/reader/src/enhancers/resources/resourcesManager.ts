@@ -61,9 +61,6 @@ export const createResourcesManager = (context: Context) => {
 
               return EMPTY
             }),
-            tap(db => {
-              console.warn(id, db)
-            })
           )
       }),
       takeUntil(context.$.destroy$)
