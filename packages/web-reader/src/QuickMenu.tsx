@@ -1,12 +1,12 @@
 import React from 'react'
 import { useHistory } from 'react-router'
-import { useRecoilValue } from 'recoil'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { IconButton } from "@chakra-ui/react"
-import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon } from "@chakra-ui/icons"
+import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon } from "@chakra-ui/icons"
 import { useToggleFontsSettings } from './FontsSettings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
-import { bookTitleState, isComicState, manifestState, paginationState } from './state'
+import { bookTitleState, isComicState, isSearchOpenState, manifestState, paginationState } from './state'
 
 export const QuickMenu = ({ open, onReadingItemChange }: {
   open: boolean,
@@ -16,6 +16,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
   const reader = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
+  const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
   const numberOfSpineItems = manifest?.readingOrder.length ?? 0
   const pagination = useRecoilValue(paginationState)
   const [pageIndex, endPageIndex] = [(pagination?.begin.pageIndexInChapter || 0) + 1, (pagination?.end.pageIndexInChapter || 0) + 1].sort()
@@ -32,6 +33,10 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
       return `${chapterInfo.title} / ${buildTitleChain(chapterInfo.subChapter)}`
     }
     return chapterInfo?.title || ''
+  }
+
+  const onSearchClick = () => {
+    setIsSearchOpen(true)
   }
 
   return (
@@ -69,6 +74,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           <div style={{
 
           }}>
+            <IconButton icon={<SearchIcon />} aria-label="back" onClick={onSearchClick} />
             <IconButton icon={<SettingsIcon />} onClick={toggleFontsSettings} aria-label="settings" />
           </div>
         </div>

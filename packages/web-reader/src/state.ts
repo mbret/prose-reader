@@ -2,6 +2,11 @@ import { atom, selector, useRecoilCallback } from "recoil";
 import { Reader, Manifest } from "@oboku/reader";
 import { useEffect } from "react";
 
+export const isSearchOpenState = atom({
+  key: `isSearchOpenState`,
+  default: false
+})
+
 export const bookTitleState = selector({
   key: `bookTitleState`,
   get: ({ get }) => {
