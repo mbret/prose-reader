@@ -16,6 +16,12 @@ export type LoadOptions = {
    * @example
    * - Web app without backend and no service worker
    * - Providing custom font, img, etc with direct import
+   * 
+   * @important
+   * Due to a bug in chrome/firefox https://bugs.chromium.org/p/chromium/issues/detail?id=880768 you should avoid
+   * having a custom fetch method if you serve your content from service worker. This is because when you set fetchResource
+   * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
+   * not pass through the service worker.
    */
   fetchResource?: ((item: Manifest['readingOrder'][number]) => Promise<Response>),
   /**

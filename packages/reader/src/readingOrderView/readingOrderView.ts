@@ -32,6 +32,10 @@ type Hook =
     name: `readingItem.onCreated`,
     fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
   }
+  | {
+    name: `readingItem.onGetResource`,
+    fn: Extract<ReadingItemHook, { name: 'onGetResource' }>['fn']
+  }
 
 type Event =
   { type: `layoutUpdate` }
@@ -79,6 +83,9 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         if (hook.name === `readingItem.onLoad`) {
           readingItem.registerHook({ name: `onLoad`, fn: hook.fn })
         }
+        if (hook.name === `readingItem.onGetResource`) {
+          readingItem.registerHook({ name: `onGetResource`, fn: hook.fn })
+        }
       })
       readingItemManager.add(readingItem)
     })
@@ -106,6 +113,9 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     readingItemManager.getAll().forEach((item) => {
       if (hook.name === `readingItem.onLoad`) {
         item.registerHook({ name: `onLoad`, fn: hook.fn })
+      }
+      if (hook.name === `readingItem.onGetResource`) {
+        item.registerHook({ name: `onGetResource`, fn: hook.fn })
       }
     })
   }

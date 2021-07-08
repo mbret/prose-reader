@@ -14,11 +14,12 @@ export const resourcesEnhancer: Enhancer<{
   const load: typeof reader.load = (manifest, loadOptions) => {
     reader.load(manifest, {
       ...loadOptions,
-      fetchResource: async (item) => {
-        return resourceManager.get(item, loadOptions?.fetchResource)
-      }
     })
   }
+
+  reader.registerHook('readingItem.onGetResource', (fetcher) => async (item) => {
+    return resourceManager.get(item, fetcher)
+  })
 
   const destroy = () => {
     resourceManager.destroy()

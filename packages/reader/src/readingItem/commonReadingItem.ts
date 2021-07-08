@@ -28,6 +28,10 @@ type Hook =
       overlayElement: HTMLDivElement
     }) => void
   }
+  | {
+    name: `onGetResource`,
+    fn: (fetchResource: (item: Manifest['readingOrder'][number]) => Promise<Response>) => (item: Manifest['readingOrder'][number]) => Promise<Response>
+  }
 
 const pointerEvents = [
   "pointercancel" as const,
@@ -65,14 +69,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item, context)
   const overlayElement = createOverlayElement(containerElement, item)
-  const fetchResource = () => {
-    const loadOptions = context.getLoadOptions()
-    if (loadOptions?.fetchResource) {
-      return loadOptions.fetchResource(item)
-    }
-    return fetch(item.href)
-  }
-  const readingItemFrame = createReadingItemFrame({ parent: element, item, context, fetchResource })
+  const readingItemFrame = createReadingItemFrame({ parent: element, item, context, fetchResource: context.getLoadOptions()?.fetchResource })
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
   let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
@@ -203,6 +200,27 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
   }
 
+  const getResource = async () => {
+    const loadOptions = context.getLoadOptions()
+    const lastFetch = (_: Manifest['readingOrder'][number]) => {
+      if (loadOptions?.fetchResource) {
+        return loadOptions.fetchResource(item)
+      }
+
+      return fetch(item.href)
+    }
+
+    const finalFetch = hooks.reduce((acc, hook) => {
+      if (hook.name === 'onGetResource') {
+        return hook.fn(acc)
+      }
+
+      return acc
+    }, lastFetch)
+
+    return await finalFetch(item)
+  }
+
   readingItemFrame.registerHook({
     name: `onLoad`,
     fn: ({ frame }) => {
@@ -264,6 +282,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     createLoadingElement,
     getElementDimensions,
     getHtmlFromResource: readingItemFrame.getHtmlFromResource,
+    getResource,
     translateFramePositionIntoPage,
     setLayoutDirty,
     injectStyle,
@@ -275,7 +294,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
-    fetchResource,
     destroy: () => {
       loadingElement.onload = () => { }
       loadingElement.remove()

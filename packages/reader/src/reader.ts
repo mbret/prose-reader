@@ -14,6 +14,7 @@ export type Reader = ReturnType<typeof createReader>
 
 const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
 const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
+const READING_ITEM_ON_GET_RESOURCE = 'readingItem.onGetResource'
 const ON_VIEWPORT_OFFSET_ADJUST_HOOK = 'onViewportOffsetAdjust'
 const ON_VIEWPORT_ADJUST_START_HOOK = 'onViewportAdjustStart'
 const ON_VIEWPORT_ADJUST_END_HOOK = 'onViewportAdjustEnd'
@@ -26,6 +27,7 @@ type ManipulateReadingItemsCallback = Parameters<ReadingOrderView['manipulateRea
 type Hooks = {
   [READING_ITEM_ON_LOAD_HOOK]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_LOAD_HOOK }>
   [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_CREATED_HOOK }>
+  [READING_ITEM_ON_GET_RESOURCE]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_GET_RESOURCE }>
   [ON_VIEWPORT_OFFSET_ADJUST_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK }>
   [ON_VIEWPORT_ADJUST_START_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_ADJUST_START_HOOK }>
   [ON_VIEWPORT_ADJUST_END_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_ADJUST_END_HOOK }>
@@ -107,6 +109,9 @@ export const createReader = ({ containerElement, ...settings }: {
     Report.log(`load`, { manifest, loadOptions })
 
     context.load(manifest, loadOptions)
+
+    // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
+
     readingOrderView.load()
 
     layout()
@@ -125,11 +130,12 @@ export const createReader = ({ containerElement, ...settings }: {
 
   function registerHook(name: typeof READING_ITEM_ON_LOAD_HOOK, fn: Hooks[typeof READING_ITEM_ON_LOAD_HOOK]['fn']): void
   function registerHook(name: typeof READING_ITEM_ON_CREATED_HOOK, fn: Hooks[typeof READING_ITEM_ON_CREATED_HOOK]['fn']): void
+  function registerHook(name: typeof READING_ITEM_ON_GET_RESOURCE, fn: Hooks[typeof READING_ITEM_ON_GET_RESOURCE]['fn']): void
   function registerHook(name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK, fn: Hooks[typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK]['fn']): void
   function registerHook(name: typeof ON_VIEWPORT_ADJUST_START_HOOK, fn: Hooks[typeof ON_VIEWPORT_ADJUST_START_HOOK]['fn']): void
   function registerHook(name: typeof ON_VIEWPORT_ADJUST_END_HOOK, fn: Hooks[typeof ON_VIEWPORT_ADJUST_END_HOOK]['fn']): void
   function registerHook(name: string, fn: any) {
-    const readingOrderViewHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK] as const
+    const readingOrderViewHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK, READING_ITEM_ON_GET_RESOURCE] as const
     if (readingOrderViewHooks.includes(name as typeof readingOrderViewHooks[number])) {
       readingOrderView.registerHook({ name: name as typeof readingOrderViewHooks[number], fn })
     }
@@ -193,6 +199,7 @@ export const createReader = ({ containerElement, ...settings }: {
     goToPageOfCurrentChapter: readingOrderView.viewportNavigator.goToPageOfCurrentChapter,
     goTo: readingOrderView.viewportNavigator.goTo,
     goToUrl: readingOrderView.viewportNavigator.goToUrl,
+    goToCfi: readingOrderView.viewportNavigator.goToCfi,
     getChapterInfo: readingOrderView.getChapterInfo,
     getFocusedReadingItemIndex: readingOrderView.getFocusedReadingItemIndex,
     getReadingItem: readingOrderView.getReadingItem,

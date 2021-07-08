@@ -30,7 +30,7 @@ export const createResourcesManager = (context: Context) => {
     const cacheData = await db.get(`${uniqueID}_${item.id}`)
 
     if (cacheData) {
-      return new Response(cacheData, { status: 200 })
+      return new Response(cacheData, { status: 200})
     }
 
     const data = (fetchResource && await fetchResource(item)) || await fetch(item.href)

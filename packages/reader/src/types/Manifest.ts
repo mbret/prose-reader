@@ -22,5 +22,6 @@ export type Manifest = {
     progressionWeight: number,
     pageSpreadLeft: true | undefined,
     pageSpreadRight: true | undefined,
+    encodingFormat?: string,
   }[]
 }

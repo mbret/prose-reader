@@ -26,7 +26,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
   parent: HTMLElement,
   item: Manifest['readingOrder'][number],
   context: Context,
-  fetchResource: () => Promise<Response>
+  fetchResource?: (item: Manifest['readingOrder'][number]) => Promise<Response>
 }) => {
   const subject = new Subject<SubjectEvent>()
   let isLoaded = false
@@ -34,7 +34,6 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
   let loading = false
   let frameElement: HTMLIFrameElement | undefined
   let isReady = false
-  const src = item.href
   let hooks: Hook[] = []
   let hookDestroyFunctions: ReturnType<Hook['fn']>[] = []
 
@@ -95,7 +94,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
   }
 
   const getHtmlFromResource = (response: Response) => {
-    return createHtmlPageFromResource(response)
+    return createHtmlPageFromResource(response, item)
   }
 
   return {
@@ -115,13 +114,35 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
 
       const t0 = performance.now();
 
-      const response = await fetchResource()
-      // @todo set base URI for xhtml/html content type
-      frameElement?.setAttribute(`srcdoc`, await getHtmlFromResource(response))
+      /**
+       * Because of the bug with iframe and sw, we should not use srcdoc and sw together for
+       * html document. This is because resources will not pass through SW. IF `fetchResource` is being
+       * used the user should be aware of the limitation. We use srcdoc for everything except if we detect 
+       * an html document and same origin. Hopefully that bug gets fixed one day.
+       * @see https://bugs.chromium.org/p/chromium/issues/detail?id=880768
+       */
+      if (
+        !fetchResource
+        && item.href.startsWith(window.location.origin)
+        && (
+          // we have an encoding and it's a valid html
+          (item.encodingFormat && ["application/xhtml+xml", "application/xml", "text/html", "text/xml"].includes(item.encodingFormat))
+          // no encoding ? then try to detect html
+          || (!item.encodingFormat && (item.href.endsWith(`.xhtml`) || item.href.endsWith(`.html`)))
+        )
+      ) {
+        frameElement?.setAttribute(`src`, item.href)
+      } else {
+        const fetchFn = fetchResource || (() => fetch(item.href))
+        const response = await fetchFn(item)
+        const htmlDoc = await getHtmlFromResource(response)
+        frameElement?.setAttribute(`srcdoc`, htmlDoc)
+      }
 
       return new Promise(async (resolve) => {
         if (frameElement && !isCancelled()) {
           frameElement.setAttribute('sandbox', 'allow-same-origin allow-scripts')
+          // frameElement.setAttribute('sandbox', 'allow-scripts')
           frameElement.onload = () => {
             const t1 = performance.now();
             Report.metric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
@@ -232,11 +253,11 @@ export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
 /**
  * Document is application/xhtml+xml
  */
-const createHtmlPageFromResource = async (resourceResponse: Response | string) => {
+const createHtmlPageFromResource = async (resourceResponse: Response | string, item: Manifest['readingOrder'][number]) => {
 
   if (typeof resourceResponse === `string`) return resourceResponse
 
-  const contentType = resourceResponse.headers.get('Content-Type') || detectContentType(resourceResponse.url)
+  const contentType = resourceResponse.headers.get('Content-Type') || detectContentType(item.href)
 
   if ([`image/jpg`, `image/jpeg`, `image/png`].some(mime => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
@@ -255,5 +276,9 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string) =
         `
   }
 
-  return await resourceResponse.text()
+  const content = await resourceResponse.text()
+
+  // return content.replace(`<head>`, `<head><base xmlns href="${item.href}" />`)
+
+  return content
 }
