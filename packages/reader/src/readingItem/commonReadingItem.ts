@@ -263,6 +263,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     createWrapperElement,
     createLoadingElement,
     getElementDimensions,
+    getHtmlFromResource: readingItemFrame.getHtmlFromResource,
     translateFramePositionIntoPage,
     setLayoutDirty,
     injectStyle,

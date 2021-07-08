@@ -94,12 +94,17 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
     hooks.push(hook)
   }
 
+  const getHtmlFromResource = (response: Response) => {
+    return createHtmlPageFromResource(response)
+  }
+
   return {
     getIsReady: () => isReady,
     getIsLoaded: () => isLoaded,
     getIsLoading: () => loading,
     getViewportDimensions,
     getFrameElement: () => frameElement,
+    getHtmlFromResource,
     load: Report.measurePerformance(`ReadingItemFrame load`, Infinity, async () => {
       if (loading || isReady) return
       loading = true
@@ -112,7 +117,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
 
       const response = await fetchResource()
       // @todo set base URI for xhtml/html content type
-      frameElement?.setAttribute(`srcdoc`, await createHtmlPageFromResource(response))
+      frameElement?.setAttribute(`srcdoc`, await getHtmlFromResource(response))
 
       return new Promise(async (resolve) => {
         if (frameElement && !isCancelled()) {
@@ -224,6 +229,9 @@ export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   addStyle: createAddStyleHelper(frameElement)
 })
 
+/**
+ * Document is application/xhtml+xml
+ */
 const createHtmlPageFromResource = async (resourceResponse: Response | string) => {
 
   if (typeof resourceResponse === `string`) return resourceResponse
