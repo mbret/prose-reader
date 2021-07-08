@@ -16,16 +16,18 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     const horizontalMargin = context.getHorizontalMargin()
     let columnWidth = pageSize.width - (horizontalMargin * 2)
     const columnHeight = pageSize.height - (horizontalMargin * 2)
+    let width = pageSize.width - (horizontalMargin * 2)
 
     if (isUsingVerticalWriting) {
-      columnWidth = minimumWidth - (horizontalMargin * 2)
+      width = minimumWidth - (horizontalMargin * 2)
+      columnWidth = columnHeight
     }
 
     return {
       columnHeight,
       columnWidth,
       horizontalMargin,
-      // verticalMargin: context.getVerticalMargin()
+      width,
     }
   }
 
@@ -160,7 +162,8 @@ const buildStyleForFakePrePaginated = () => {
   `
 }
 
-const buildStyleWithMultiColumn = ({ columnHeight, columnWidth, horizontalMargin }: {
+const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin }: {
+  width: number,
   columnWidth: number,
   columnHeight: number,
   horizontalMargin: number
@@ -187,7 +190,7 @@ const buildStyleWithMultiColumn = ({ columnHeight, columnWidth, horizontalMargin
     */``}
     body {
       padding: 0 !important;
-      width: ${columnWidth}px !important;
+      width: ${width}px !important;
       height: ${columnHeight}px !important;
       -margin-left: ${horizontalMargin}px !important;
       -margin-right: ${horizontalMargin}px !important;

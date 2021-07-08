@@ -28,6 +28,7 @@ export const getArchiveOpfInfo = (archive: Archive) => {
 
 /**
  * Useful to create archive from txt content
+ * @todo archive should not use `.html` but `.txt` so we do create the proper document on reader side
  */
 export const createArchiveFromText = async (content: string | Blob | File, options?: {
   direction: 'ltr' | 'rtl'

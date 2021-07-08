@@ -9,6 +9,9 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
     throw new Error('no file found')
   }
 
+  /**
+   * @todo remove and do it on reader side
+   */
   if (file.encodingFormat === 'text/plain') {
     const content = await file.string()
     const htmlFile = `
