@@ -6,7 +6,7 @@ import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isMenuOpenState, isSearchOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
-import { FontsSettings, fontsSettingsState } from '../FontsSettings'
+import { Settings, settingsState } from '../Settings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from './types';
 import { useBookmarks } from '../useBookmarks';
@@ -25,7 +25,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const { url } = useParams<{ url: string }>();
   const query = new URLSearchParams(window.location.search)
   const isUsingVerticalScrolling = query.has('vertical')
-  const fontsSettings = useRecoilValue(fontsSettingsState)
+  const settings = useRecoilValue(settingsState)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
@@ -141,7 +141,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           reader?.goTo(index)
         }}
       />
-      {fontsSettings && reader && <FontsSettings reader={reader} />}
+      {settings && reader && <Settings reader={reader} />}
       {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
     </>
   )

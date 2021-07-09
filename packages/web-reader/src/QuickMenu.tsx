@@ -3,7 +3,7 @@ import { useHistory } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { IconButton, Text } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon } from "@chakra-ui/icons"
-import { useToggleFontsSettings } from './FontsSettings'
+import { useToggleSettings } from './Settings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, isSearchOpenState, manifestState, paginationState } from './state'
@@ -26,7 +26,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
   const isComic = useRecoilValue(isComicState)
   const currentReadingItemIndex = pagination?.begin.readingItemIndex || 0
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [pagination?.begin.absolutePageIndex, pagination?.end.absolutePageIndex].sort()
-  const toggleFontsSettings = useToggleFontsSettings()
+  const toggleSettings = useToggleSettings()
 
   const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>['begin']['chapterInfo']): string => {
     if (chapterInfo?.subChapter) {
@@ -78,7 +78,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
             display: 'flex'
           }}>
             <IconButton icon={<SearchIcon />} aria-label="back" onClick={onSearchClick} />
-            <IconButton icon={<SettingsIcon />} onClick={toggleFontsSettings} aria-label="settings" />
+            <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
           </div>
         </div>
       )}

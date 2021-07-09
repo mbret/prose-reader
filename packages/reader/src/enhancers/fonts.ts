@@ -32,7 +32,12 @@ export const fontsEnhancer: Enhancer<{
    * @description
    * Set font weight of text
    */
-  setFontWeight: (value: typeof FONT_WEIGHT[number] | `default`) => void,
+  setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => void,
+
+  /**
+   * @returns {(number|undefined)} value or publisher default when undefined
+   */
+  getFontWeight: () => number | undefined,
 
   /**
    * @description
@@ -100,10 +105,11 @@ export const fontsEnhancer: Enhancer<{
       currentLineHeight = value === `default` ? undefined : value
       applyChangeToReadingItem(true)
     },
-    setFontWeight: (value: typeof FONT_WEIGHT[number] | `default`) => {
-      currentFontWeight = value === `default` ? undefined : value
+    setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => {
+      currentFontWeight = value
       applyChangeToReadingItem(false)
     },
+    getFontWeight: () => currentFontWeight,
     setFontJustification: (value: typeof FONT_JUSTIFICATION[number] | `default`) => {
       currentJustification = value === `default` ? undefined : value
       applyChangeToReadingItem(false)

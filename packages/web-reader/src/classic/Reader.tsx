@@ -6,7 +6,7 @@ import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isMenuOpenState, isSearchOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
-import { FontsSettings, fontsSettingsState } from '../FontsSettings'
+import { Settings, settingsState } from '../Settings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from '../types';
 import { useBookmarks } from '../useBookmarks';
@@ -24,7 +24,7 @@ type ReactReaderProps = ComponentProps<typeof ReactReader>
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
   const { url } = useParams<{ url: string }>();
-  const fontsSettings = useRecoilValue(fontsSettingsState)
+  const settings = useRecoilValue(settingsState)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
@@ -92,7 +92,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 2 : 0
+        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 2 : 2
       })
     }
   }, [manifest, setReaderLoadOptions])
@@ -144,7 +144,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
           reader?.goTo(index)
         }}
       />
-      {fontsSettings && reader && <FontsSettings reader={reader} />}
+      {settings && reader && <Settings reader={reader} />}
       {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
     </>
   )
