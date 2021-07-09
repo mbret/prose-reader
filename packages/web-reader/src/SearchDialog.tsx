@@ -23,7 +23,7 @@ export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
   }, [reader])
 
   useEffect(() => {
-    const $ = reader?.search.search$
+    const $ = reader?.search.$.search$
       .pipe(
         tap((event) => {
           if (event.type === 'start') {
