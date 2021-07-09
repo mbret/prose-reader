@@ -1,6 +1,6 @@
 import { Enhancer } from "@oboku/reader"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
-import { delay, filter, map, switchMap, takeUntil } from "rxjs/operators"
+import { map, share, switchMap, takeUntil } from "rxjs/operators"
 
 type ResultItem = {
   spineItemIndex: number,
@@ -22,12 +22,13 @@ export type SearchResult = ResultItem[]
 export const searchEnhancer: Enhancer<{
   search: {
     search: (text: string) => void
-    search$: Observable<{ type: 'start' } | { type: 'end', data: SearchResult }>
+    $: {
+      search$: Observable<{ type: 'start' } | { type: 'end', data: SearchResult }>
+    }
   }
 }> = (next) => (options) => {
   const reader = next(options)
   const searchSubject$ = new Subject<string>()
-  const searchResultsSubject$ = new Subject<SearchResult>()
 
   const searchNodeContainingText = (node: Node, text: string) => {
     const nodeList = node.childNodes
@@ -123,40 +124,37 @@ export const searchEnhancer: Enhancer<{
   /**
    * Main search process stream
    */
-  searchSubject$.asObservable()
+  const search$ = merge(
+    searchSubject$.asObservable()
+      .pipe(
+        map(() => ({ type: `start` as const }))
+      ),
+    searchSubject$.asObservable()
+      .pipe(
+        switchMap((text) => {
+          if (text === '') {
+            return of([])
+          }
+
+          const searches$ = reader.context.getManifest()?.readingOrder.map((_, index) => searchForItem(index, text)) || []
+
+          return forkJoin(searches$)
+            .pipe(
+              map(results => {
+                return results.reduce((acc, value) => [...acc, ...value], [])
+              }),
+            )
+        }),
+        map((data) => ({ type: `end` as const, data })),
+      )
+  )
     .pipe(
-      switchMap((text) => {
-        if (text === '') {
-          return of([])
-        }
-
-        const searches$ = reader.context.getManifest()?.readingOrder.map((_, index) => searchForItem(index, text)) || []
-
-        return forkJoin(searches$)
-          .pipe(
-            map(results => {
-              return results.reduce((acc, value) => [...acc, ...value], [])
-            }),
-          )
-      }),
-      delay(0), // make sure subjects are in order
+      share(),
       takeUntil(reader.destroy$),
     )
-    .subscribe(searchResultsSubject$)
-
-  /**
-   * Convenient observable to be used by consumer
-   */
-  const search$ = merge(
-    searchSubject$
-      .pipe(map(() => ({ type: `start` as const }))),
-    searchResultsSubject$
-      .pipe(map((data) => ({ type: `end` as const, data })))
-  )
 
   const destroy = () => {
     searchSubject$.complete()
-    searchResultsSubject$.complete()
     reader.destroy()
   }
 
@@ -165,7 +163,9 @@ export const searchEnhancer: Enhancer<{
     destroy,
     search: {
       search,
-      search$
+      $: {
+        search$
+      }
     }
   }
 }
