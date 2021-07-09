@@ -1,5 +1,12 @@
 import { sortByTitleComparator } from "./utils"
 
+interface StreamResult {
+  on(e: `data`, cb: (data: Uint8Array) => void): void
+  on(e: `error`, cb: (error: Error) => void): void
+  on(e: `end`, cb: () => void): void
+  resume(): void
+}
+
 export type Archive = {
   filename: string,
   files: {
@@ -9,6 +16,7 @@ export type Archive = {
     blob: () => Promise<Blob>,
     string: () => Promise<string>,
     base64: () => Promise<string>,
+    stream?: () => StreamResult
     size: number,
     encodingFormat?: undefined | `text/plain`,
   }[]
@@ -127,6 +135,7 @@ interface JSZipObject {
   dosPermissions: number | null;
   async<T extends OutputType>(type: T): Promise<OutputByType[T]>;
   nodeStream(type?: 'nodebuffer'): NodeJS.ReadableStream;
+  internalStream?: (type?: 'uint8array') => StreamResult
 }
 
 interface JSZip {
@@ -149,6 +158,9 @@ export const createArchiveFromJszip = async (jszip: JSZip, { orderByAlpha, name 
       blob: () => file.async('blob'),
       string: () => file.async('string'),
       base64: () => file.async('base64'),
+      ...file.internalStream && {
+        stream: file.internalStream,
+      },
       // this is private API
       // @ts-ignore
       size: file._data.uncompressedSize
@@ -179,13 +191,13 @@ export const createArchiveFromArrayBufferList = async (
       uri: file.name,
       blob: async () => new Blob([await file.data()]),
       string: async () => {
-          const data = await file.data()
-          return String.fromCharCode.apply(null, Array.from(new Uint16Array(data)))
+        const data = await file.data()
+        return String.fromCharCode.apply(null, Array.from(new Uint16Array(data)))
       },
       base64: async () => {
         // @todo not used for now, lets implement it later if needed
         return ``
-      },        
+      },
       size: file.size
     }))
   }
