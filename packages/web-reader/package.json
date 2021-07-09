@@ -18,6 +18,7 @@
     "@oboku/reader": "^0.0.26",
     "@oboku/reader-enhancer-bookmarks": "^0.0.8",
     "@oboku/reader-enhancer-highlights": "^0.0.6",
+    "@oboku/reader-enhancer-search": "^0.0.5",
     "@oboku/reader-react": "^0.0.11",
     "@oboku/reader-streamer": "^0.0.16",
     "@types/hammerjs": "^2.0.39",
