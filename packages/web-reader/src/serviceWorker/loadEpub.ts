@@ -5,16 +5,21 @@ import { createArchiveFromText, Archive, createArchiveFromJszip } from '@oboku/r
 let loading = false
 let archive: Archive | undefined = undefined
 let lastUrl: string | undefined
+let cleanupInterval: NodeJS.Timeout | number
 
-setInterval(() => {
-  if (!loading && archive) {
-    Report.log(`serviceWorker`, `cleaning up unused epub archive reference (after 5mn)`)
-    archive = undefined
-    lastUrl = undefined
-  }
-}, 5 * 60 * 1000)
+const cleanup = () => {
+  clearInterval(cleanupInterval as NodeJS.Timeout)
+  cleanupInterval = setInterval(() => {
+    if (!loading && archive) {
+      Report.log(`serviceWorker`, `cleaning up unused epub archive reference (after 5mn)`)
+      archive = undefined
+      lastUrl = undefined
+    }
+  }, 5 * 60 * 1000)
+}
 
 export const loadEpub = async (url: string) => {
+  cleanup()
   if (url !== lastUrl) {
     archive = undefined
     loading = false
