@@ -7,6 +7,7 @@ export const detectContentType = (name: string) => {
     case 'png': return `image/png`
     case 'jpg': return `image/jpg`
     case 'jpeg': return `image/jpeg`
+    case 'txt': return `text/plain`
   }
 
   return undefined

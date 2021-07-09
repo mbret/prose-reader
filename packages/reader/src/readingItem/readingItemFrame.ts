@@ -276,6 +276,28 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string, i
         `
   }
 
+  if ([`text/plain`].some(mime => mime === contentType)) {
+    const data = await resourceResponse.text()
+
+    return `
+      <!DOCTYPE html>
+      <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
+        <head>
+          <style>
+            pre {
+              white-space: pre;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+            }
+          </style>
+        </head>
+        <body>
+          <pre>${data}</pre>
+        </body>
+      </html>
+    `
+  }
+
   const content = await resourceResponse.text()
 
   // return content.replace(`<head>`, `<head><base xmlns href="${item.href}" />`)

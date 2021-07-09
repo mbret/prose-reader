@@ -28,7 +28,6 @@ export const getArchiveOpfInfo = (archive: Archive) => {
 
 /**
  * Useful to create archive from txt content
- * @todo archive should not use `.html` but `.txt` so we do create the proper document on reader side
  */
 export const createArchiveFromText = async (content: string | Blob | File, options?: {
   direction: 'ltr' | 'rtl'
@@ -43,7 +42,7 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
             <meta property="rendition:layout">reflowable</meta>
       </metadata>
       <manifest>
-          <item id="p01" href="p01.xhtml" media-type="application/xhtml+xml"/>
+          <item id="p01" href="p01.txt" media-type="text/plain"/>
       </manifest>
       <spine page-progression-direction="${options?.direction || 'ltr'}">
         <itemref idref="p01" />
@@ -64,8 +63,8 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
     },
     {
       dir: false,
-      basename: getBasename(`p01.opf`),
-      uri: `p01.xhtml`,
+      basename: getBasename(`p01.txt`),
+      uri: `p01.txt`,
       blob: async () => {
         if (typeof content === `string`) return new Blob([content])
         return content

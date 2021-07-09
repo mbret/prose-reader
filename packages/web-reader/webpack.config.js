@@ -41,6 +41,7 @@ module.exports = {
   devServer: {
     contentBase: path.join(__dirname, 'dist'),
     historyApiFallback: true,
+    port: 9000,
   },
   plugins: [
     new CopyWebpackPlugin({
