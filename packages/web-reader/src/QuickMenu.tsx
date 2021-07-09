@@ -1,7 +1,7 @@
 import React from 'react'
 import { useHistory } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import { IconButton } from "@chakra-ui/react"
+import { IconButton, Text } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon } from "@chakra-ui/icons"
 import { useToggleFontsSettings } from './FontsSettings'
 import { useReader } from './ReaderProvider'
@@ -67,12 +67,15 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           </div>
           <div style={{
             color: 'white',
+            overflow: 'hidden',
+            paddingLeft: 10,
+            paddingRight: 10,
             // flex: 1
           }}>
-            {bookTitle}
+            <Text isTruncated={true}>{bookTitle}</Text>
           </div>
           <div style={{
-
+            display: 'flex'
           }}>
             <IconButton icon={<SearchIcon />} aria-label="back" onClick={onSearchClick} />
             <IconButton icon={<SettingsIcon />} onClick={toggleFontsSettings} aria-label="settings" />
