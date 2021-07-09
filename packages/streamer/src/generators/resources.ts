@@ -7,8 +7,49 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
     throw new Error('no file found')
   }
 
-  const response = new Response(await file.blob(), {
-    status: 200,
+  const blob = await file.blob()
+
+  // if (file.stream) {
+  //   const stream = file.stream()
+
+  //   console.log(file, stream)
+  //   stream.on(`data`, data => {
+  //     console.log(`data`, data)
+  //   })
+  //   stream.on(`error`, data => {
+  //     console.error(`error`, data)
+  //   })
+  //   stream.on(`end`, () => {
+  //     console.log(`end`)
+  //   })
+
+    
+  // }
+
+  // const stream = file.stream!()
+
+  // const readableStream = new ReadableStream({
+  //   start(controller) {
+  //     function push() {
+  //       stream.on(`data`, data => {
+  //         controller.enqueue(data)
+  //       })
+  //       stream.on(`error`, data => {
+  //         console.error(`error`, data)
+  //       })
+  //       stream.on(`end`, () => {
+  //         controller.close()
+  //       })
+
+  //       stream.resume()
+  //     }
+
+  //     push();
+  //   }
+  // })
+
+  const response = new Response(blob, {
+    // status: 206,
     headers: {
       ...file.uri.endsWith(`.css`) && {
         'Content-Type': `text/css; charset=UTF-8`
@@ -19,9 +60,15 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
       ...file.uri.endsWith(`.xhtml`) && {
         'Content-Type': `application/xhtml+xml`
       },
+      ...file.uri.endsWith(`.mp4`) && {
+        'Content-Type': `video/mp4`
+      },
+      ...blob.type && {
+        'Content-Type': blob.type,
+      },
       ...file.encodingFormat && {
         'Content-Type': file.encodingFormat
-      }
+      },
       // 'Cache-Control': `no-cache, no-store, no-transform`
     }
   })
