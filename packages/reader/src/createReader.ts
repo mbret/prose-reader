@@ -11,6 +11,7 @@ import { zoomEnhancer } from './enhancers/zoom'
 import { createReader as createInternalReader } from './reader'
 import { utilsEnhancer } from './enhancers/utils'
 import { resourcesEnhancer } from './enhancers/resources'
+import { mediaEnhancer } from './enhancers/media'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
@@ -75,6 +76,7 @@ const internalEnhancer = composeEnhancer(
   themeEnhancer,
   hotkeysEnhancer,
   chromeEnhancer,
+  mediaEnhancer,
   zoomEnhancer,
   layoutEnhancer,
   utilsEnhancer,
