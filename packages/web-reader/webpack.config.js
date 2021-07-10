@@ -1,13 +1,22 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require("terser-webpack-plugin");
+
+const IS_PROD = process.env.NODE_ENV !== 'development'
 
 module.exports = {
   entry: {
     'bundle': './src/index.tsx',
     'service-worker': './src/serviceWorker/service-worker.ts',
   },
-  mode: 'development',
+  mode: IS_PROD ? 'production' : 'development',
   devtool: 'source-map',
+  ...IS_PROD && {
+    optimization: {
+      minimize: true,
+      minimizer: [new TerserPlugin()],
+    },
+  },
   module: {
     rules: [
       {
