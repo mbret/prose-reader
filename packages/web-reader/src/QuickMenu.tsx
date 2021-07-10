@@ -2,11 +2,11 @@ import React from 'react'
 import { useHistory } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { IconButton, Text } from "@chakra-ui/react"
-import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon } from "@chakra-ui/icons"
+import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon } from "@chakra-ui/icons"
 import { useToggleSettings } from './Settings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
-import { bookTitleState, isComicState, isSearchOpenState, manifestState, paginationState } from './state'
+import { bookTitleState, isComicState, isSearchOpenState, isTocOpenState, manifestState, paginationState } from './state'
 
 export const QuickMenu = ({ open, onReadingItemChange }: {
   open: boolean,
@@ -17,6 +17,7 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
   const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
+  const setIsTocOpenState = useSetRecoilState(isTocOpenState)
   const numberOfSpineItems = manifest?.readingOrder.length ?? 0
   const pagination = useRecoilValue(paginationState)
   const [pageIndex, endPageIndex] = [(pagination?.begin.pageIndexInChapter || 0) + 1, (pagination?.end.pageIndexInChapter || 0) + 1].sort()
@@ -37,6 +38,10 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
 
   const onSearchClick = () => {
     setIsSearchOpen(true)
+  }
+
+  const onTocClick = () => {
+    setIsTocOpenState(true)
   }
 
   return (
@@ -77,7 +82,8 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           <div style={{
             display: 'flex'
           }}>
-            <IconButton icon={<SearchIcon />} aria-label="back" onClick={onSearchClick} />
+            <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} />
+            <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} />
             <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
           </div>
         </div>
