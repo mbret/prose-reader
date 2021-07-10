@@ -142,9 +142,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       <HighlightMenu />
       <QuickMenu
         open={isMenuOpen}
-        onReadingItemChange={index => {
-          reader?.goTo(index)
-        }}
+        isComics={false}
       />
       {settings && reader && <Settings reader={reader} />}
       {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}

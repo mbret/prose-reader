@@ -135,9 +135,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       <HighlightMenu />
       <QuickMenu
         open={isMenuOpen}
-        onReadingItemChange={index => {
-          reader?.goTo(index)
-        }}
+        isComics
       />
       {settings && reader && <Settings reader={reader} />}
     </>

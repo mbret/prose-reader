@@ -8,9 +8,9 @@ import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, isSearchOpenState, isTocOpenState, manifestState, paginationState } from './state'
 
-export const QuickMenu = ({ open, onReadingItemChange }: {
+export const QuickMenu = ({ open, isComics }: {
   open: boolean,
-  onReadingItemChange: (index: number) => void,
+  isComics: boolean,
 }) => {
   const history = useHistory()
   const reader = useReader()
@@ -82,8 +82,8 @@ export const QuickMenu = ({ open, onReadingItemChange }: {
           <div style={{
             display: 'flex'
           }}>
-            <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} />
-            <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} />
+            {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} />}
+            {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} />}
             <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
           </div>
         </div>
