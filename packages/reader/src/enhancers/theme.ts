@@ -14,13 +14,14 @@ const defaultThemes = [
   },
   {
     name: `night` as const,
-    backgroundColor: 'black',
-    foregroundColor: 'white',
+    backgroundColor: '#191717',
+    foregroundColor: '#f1ebeb',
   },
 ]
 
 export const themeEnhancer: Enhancer<{
-  setTheme: (theme: Theme) => void,
+  setTheme: (theme: Theme | undefined) => void,
+  getTheme: () => Theme | undefined,
 }> = (next) => (options) => {
   const { theme } = options
   const reader = next(options)
@@ -83,9 +84,10 @@ export const themeEnhancer: Enhancer<{
 
   return {
     ...reader,
-    setTheme: (theme: Theme) => {
+    setTheme: (theme: Theme | undefined) => {
       currentTheme = theme
       applyChangeToReadingItem()
     },
+    getTheme: () => currentTheme
   }
 }

@@ -26,7 +26,12 @@ export const fontsEnhancer: Enhancer<{
    * @description
    * Set the line height of the text. The default value is 1
    */
-  setLineHeight: (value: number | `default`) => void,
+  setLineHeight: (value: number | undefined) => void,
+
+  /**
+   * @returns {(number|undefined)} value or publisher default when undefined
+   */
+  getLineHeight: () => number | undefined,
 
   /**
    * @description
@@ -101,10 +106,11 @@ export const fontsEnhancer: Enhancer<{
       currentFontScale = scale
       applyChangeToReadingItem(true)
     },
-    setLineHeight: (value: number | `default`) => {
-      currentLineHeight = value === `default` ? undefined : value
+    setLineHeight: (value: number | undefined) => {
+      currentLineHeight = value
       applyChangeToReadingItem(true)
     },
+    getLineHeight: () => currentLineHeight,
     setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => {
       currentFontWeight = value
       applyChangeToReadingItem(false)
