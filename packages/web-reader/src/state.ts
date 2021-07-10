@@ -7,6 +7,11 @@ export const isSearchOpenState = atom({
   default: false
 })
 
+export const isTocOpenState = atom({
+  key: `isTocOpenState`,
+  default: false
+})
+
 export const bookTitleState = selector({
   key: `bookTitleState`,
   get: ({ get }) => {
@@ -52,6 +57,17 @@ export const hasCurrentHighlightState = selector({
   key: `hasCurrentHighlightState`,
   get: ({ get }) => {
     return !!get(currentHighlight)
+  }
+})
+
+export const currentPageState = selector({
+  key: `currentPageState`,
+  get: ({ get }) => {
+    const { renditionLayout } = get(manifestState) || {}
+    const { begin } = get(paginationState) || {}
+
+    if (renditionLayout === 'reflowable') return begin?.pageIndexInChapter
+    return begin?.readingItemIndex
   }
 })
 
