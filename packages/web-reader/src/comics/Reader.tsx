@@ -5,7 +5,7 @@ import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from '../QuickMenu';
-import { bookReadyState, isMenuOpenState, isSearchOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
+import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
 import { Settings, settingsState } from '../Settings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from './types';
@@ -17,7 +17,6 @@ import { BookError } from '../BookError';
 import { getEpubUrlFromLocation } from '../serviceWorker/utils';
 import { HighlightMenu } from '../HighlightMenu';
 import { useSearch } from '../useSearch';
-import { SearchDialog } from '../SearchDialog';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -34,7 +33,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const bookmarksEnhancer = useBookmarks(reader)
   const searchEnhancer = useSearch(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
-  const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
     pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
@@ -142,7 +140,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
         }}
       />
       {settings && reader && <Settings reader={reader} />}
-      {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
     </>
   )
 }
