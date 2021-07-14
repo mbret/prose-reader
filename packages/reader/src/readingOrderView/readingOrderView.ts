@@ -1,4 +1,4 @@
-import { EMPTY, interval, merge, of, Subject, Subscription, timer } from "rxjs"
+import { animationFrameScheduler, EMPTY, interval, merge, of, scheduled, Subject, Subscription } from "rxjs"
 import { catchError, debounce, debounceTime, delay, distinctUntilChanged, filter, map, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
@@ -68,6 +68,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     )
 
   const layout = () => {
+    viewportNavigator.layout()
     readingItemManager.layout()
   }
 
@@ -135,29 +136,26 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     }
   }
 
+  const waitForViewportFree$ = viewportNavigator.$.state$.pipe(filter(v => v === `free`), take(1))
+
   readingItemManager.$.layout$
     .pipe(
       tap(() => {
         subject.next({ type: `layoutUpdate` })
         pagination.updateTotalNumberOfPages(readingItemManager.getAll())
       }),
-      switchMap(() => {
-        const wait$ = viewportNavigator.$.state$.pipe(filter(d => d === `free`), take(1))
-
-        return wait$
+      switchMap(() =>
+        waitForViewportFree$
           .pipe(
             tap(() => {
               const focusedReadingItem = readingItemManager.getFocusedReadingItem()
 
               if (focusedReadingItem) {
-
-                // console.warn(`layoutUpdate adjust`, readingItemManager.getReadingItemIndex(focusedReadingItem))
-
                 viewportNavigator.adjustReadingOffsetPosition(focusedReadingItem, {})
               }
             })
           )
-      }),
+      ),
       takeUntil(destroy$)
     ).subscribe()
 
@@ -166,7 +164,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       // we use a timeout because we don't want to trigger new reflow while a current one happens
       // due to focus being changed. loadContents itself is not always async.
       delay(1),
-      switchMap(() => merge(
+      switchMap(() => {
         /**
          * Loading and unloading content has two important issues that need to be considered
          * - For reflow book it will un-sync the viewport
@@ -182,9 +180,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
          * It would ne nice to be able to load/unload without having to worry about viewport mis-adjustment but due to the current iframe and viewport
          * layout method we have to take it into consideration.
          */
-        viewportNavigator.$.adjust$
+        return waitForViewportFree$
           .pipe(
-            filter(value => value === `end`),
             map(() => {
               const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
 
@@ -202,8 +199,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
               }
             }),
             take(1)
-          ),
-      )),
+          )
+      }),
       takeUntil(destroy$)
     ).subscribe()
 
@@ -266,110 +263,121 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       )
   )
 
-  const navigation$ = viewportNavigator.$.$
+  const navigation$ = viewportNavigator.$.navigation$
     .pipe(
+      filter(({ type }) => type === `start`),
       tap((data) => {
-        if (data.type === 'navigation') {
-          const currentReadingItem = readingItemManager.getFocusedReadingItem()
-          const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
-          let beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
-          let endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
-          beginReadingItem = beginReadingItem || currentReadingItem
-          endReadingItem = endReadingItem || currentReadingItem
+        const currentReadingItem = readingItemManager.getFocusedReadingItem()
+        const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
+        let beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
+        let endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+        beginReadingItem = beginReadingItem || currentReadingItem
+        endReadingItem = endReadingItem || currentReadingItem
 
-          // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
-          // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
-          // In case of no item to focus is detected we will just fallback to 0
-          const readingItemToFocus = data.position.readingItem || beginReadingItem
+        // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
+        // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
+        // In case of no item to focus is detected we will just fallback to 0
+        const readingItemToFocus = data.position.readingItem || beginReadingItem
 
-          if (readingItemToFocus && readingItemToFocus !== currentReadingItem) {
-            readingItemManager.focus(readingItemToFocus)
-          } else if (!readingItemToFocus) {
-            // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
-            readingItemManager.focus(0)
-          }
-
-          // console.warn({ beginReadingItem, endReadingItem, readingItemsFromPosition, currentReadingItem, readingItemToFocus, data })
-
-          if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
-            const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
-
-            const preparedInfo = preparePaginationUpdateInfo(beginReadingItem, endReadingItem, readingItemsFromPosition.beginPosition, readingItemsFromPosition.endPosition)
-
-            // console.warn(preparedInfo, data.position)
-
-            pagination.updateBeginAndEnd({
-              ...preparedInfo.begin,
-              options: {
-                isAtEndOfChapter: false,
-                cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === beginReadingItem
-                  ? lastExpectedNavigation.data
-                  : undefined
-              }
-            }, {
-              ...preparedInfo.end,
-              options: {
-                isAtEndOfChapter: false,
-                cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === endReadingItem
-                  ? lastExpectedNavigation.data
-                  : undefined
-              }
-            })
-
-            Report.log(NAMESPACE, `navigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, index: readingItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
-          }
+        if (readingItemToFocus && readingItemToFocus !== currentReadingItem) {
+          readingItemManager.focus(readingItemToFocus)
+        } else if (!readingItemToFocus) {
+          // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
+          readingItemManager.focus(0)
         }
-      })
-    )
 
-  const viewportAdjust$ = viewportNavigator.$.$
-    .pipe(
-      filter(data => data.type === 'adjustEnd'),
-      debounceTime(PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE, undefined),
-      tap(() => {
-        // console.warn(`adjustEnd`, viewportNavigator.getCurrentNavigationPosition())
-        const currentPosition = viewportNavigator.getCurrentNavigationPosition()
-        // const currentPosition = data.position
-        const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(currentPosition)
-        const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
-        const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
-        const beginLastCfi = pagination.getBeginInfo().cfi
-        const endLastCfi = pagination.getEndInfo().cfi
+        // console.warn({ beginReadingItem, endReadingItem, readingItemsFromPosition, currentReadingItem, readingItemToFocus, data })
 
-        // @todo if focused is not on either do not do anything
+        if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
+          const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
 
-        // because we adjusted the position, the offset may have changed and with it current page, etc
-        // because this is an adjustment we do not want to update the cfi (anchor)
-        // unless it has not been set yet or it is a basic /0 node
-        const shouldUpdateBeginCfi =
-          pagination.getBeginInfo().readingItemIndex !== readingItemsFromPosition?.begin
-          || beginLastCfi === undefined
-          || beginLastCfi?.startsWith(`epubcfi(/0`)
-
-        const shouldUpdateEndCfi =
-          pagination.getEndInfo().readingItemIndex !== readingItemsFromPosition?.end
-          || endLastCfi === undefined
-          || endLastCfi?.startsWith(`epubcfi(/0`)
-
-        if (beginReadingItem && endReadingItem && readingItemsFromPosition) {
           const preparedInfo = preparePaginationUpdateInfo(beginReadingItem, endReadingItem, readingItemsFromPosition.beginPosition, readingItemsFromPosition.endPosition)
+
+          // console.warn(preparedInfo, data.position)
 
           pagination.updateBeginAndEnd({
             ...preparedInfo.begin,
             options: {
-              cfi: shouldUpdateBeginCfi ? undefined : beginLastCfi,
-              isAtEndOfChapter: false
+              isAtEndOfChapter: false,
+              cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === beginReadingItem
+                ? lastExpectedNavigation.data
+                : undefined
             }
           }, {
             ...preparedInfo.end,
             options: {
-              cfi: shouldUpdateEndCfi ? undefined : endLastCfi,
-              isAtEndOfChapter: false
+              isAtEndOfChapter: false,
+              cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === endReadingItem
+                ? lastExpectedNavigation.data
+                : undefined
             }
           })
+
+          Report.log(NAMESPACE, `navigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, readingItemToFocus, index: readingItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
         }
       })
     )
+
+  viewportNavigator.$.adjust$
+    .pipe(
+      filter(({ type }) => type === `end`),
+      debounceTime(PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE, undefined),
+      switchMap((data) => {
+        return scheduled(of(data), animationFrameScheduler)
+          .pipe(
+            tap(() => {
+              // console.warn(`viewportAdjust`, viewportNavigator.getCurrentNavigationPosition())
+              const currentPosition = viewportNavigator.getCurrentNavigationPosition()
+              // const currentPosition = data.position
+              const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(currentPosition)
+              const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
+              const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+              const beginLastCfi = pagination.getBeginInfo().cfi
+              const endLastCfi = pagination.getEndInfo().cfi
+
+              // @todo if focused is not on either do not do anything
+
+              // because we adjusted the position, the offset may have changed and with it current page, etc
+              // because this is an adjustment we do not want to update the cfi (anchor)
+              // unless it has not been set yet or it is a basic /0 node
+              const shouldUpdateBeginCfi =
+                pagination.getBeginInfo().readingItemIndex !== readingItemsFromPosition?.begin
+                || beginLastCfi === undefined
+                || beginLastCfi?.startsWith(`epubcfi(/0`)
+
+              const shouldUpdateEndCfi =
+                pagination.getEndInfo().readingItemIndex !== readingItemsFromPosition?.end
+                || endLastCfi === undefined
+                || endLastCfi?.startsWith(`epubcfi(/0`)
+
+              if (beginReadingItem && endReadingItem && readingItemsFromPosition) {
+                const preparedInfo = preparePaginationUpdateInfo(beginReadingItem, endReadingItem, readingItemsFromPosition.beginPosition, readingItemsFromPosition.endPosition)
+
+                pagination.updateBeginAndEnd({
+                  ...preparedInfo.begin,
+                  options: {
+                    cfi: shouldUpdateBeginCfi ? undefined : beginLastCfi,
+                    isAtEndOfChapter: false
+                  }
+                }, {
+                  ...preparedInfo.end,
+                  options: {
+                    cfi: shouldUpdateEndCfi ? undefined : endLastCfi,
+                    isAtEndOfChapter: false
+                  }
+                })
+              }
+            })
+          )
+      }),
+      catchError((e) => {
+        Report.error(e)
+
+        return EMPTY
+      }),
+      takeUntil(context.$.destroy$),
+    )
+    .subscribe()
 
   pageTurnDirection$
     .pipe(
@@ -380,7 +388,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     )
     .subscribe()
 
-  merge(readingItemManager$, navigation$, viewportAdjust$)
+  merge(readingItemManager$, navigation$)
     .pipe(
       takeUntil(destroy$)
     )
@@ -429,7 +437,11 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     },
     isSelecting: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.isSelecting(),
     getSelection: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.getSelection(),
-    $: subject.asObservable(),
+    $: {
+      $: subject.asObservable(),
+      viewportAdjust$: viewportNavigator.$.adjust$,
+      viewportState$: viewportNavigator.$.state$,
+    },
   }
 }
 

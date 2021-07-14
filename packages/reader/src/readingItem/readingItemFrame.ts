@@ -145,7 +145,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
           // frameElement.setAttribute('sandbox', 'allow-scripts')
           frameElement.onload = () => {
             const t1 = performance.now();
-            Report.metric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
+            Report.logMetric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
 
             if (frameElement && !isCancelled()) {
               frameElement.onload = null

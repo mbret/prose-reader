@@ -36,7 +36,7 @@ const createReport = (namespace?: string) => ({
       console.timeEnd(`[oboku-reader] [metric] ${label}`);
     }
   },
-  metric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = Infinity) => {
+  logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
     const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
     if (window.__OBOKU_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
@@ -63,13 +63,13 @@ const createReport = (namespace?: string) => ({
       if (response && response.then) {
         return response.then((res: any) => {
           const t1 = performance.now();
-          Report.metric({ name, duration: t1 - t0 }, targetDuration);
+          Report.logMetric({ name, duration: t1 - t0 }, targetDuration);
           return res;
         });
       }
 
       const t1 = performance.now();
-      Report.metric({ name, duration: t1 - t0 }, targetDuration);
+      Report.logMetric({ name, duration: t1 - t0 }, targetDuration);
 
       return response;
     };

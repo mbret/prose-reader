@@ -4,29 +4,15 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, of, Subject, timer } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, of, scheduled, Subject, timer } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { catchError, delay, delayWhen, filter, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
-import { VIEWPORT_ADJUSTMENT_THROTTLE } from "../constants"
+import { debounce, delay, distinctUntilChanged, filter, map, share, shareReplay, skip, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators"
 
 const NAMESPACE = `viewportNavigator`
-
-type SubjectEvent =
-  | { type: 'navigation', position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }
-  | { type: 'adjustStart', position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }
-  | { type: 'adjustEnd', position: { x: number, y: number, readingItem?: ReadingItem } }
 
 type Hook =
   | {
     name: `onViewportOffsetAdjust`,
-    fn: () => void
-  }
-  | {
-    name: `onViewportAdjustStart`,
-    fn: (params: { animate: boolean }) => void
-  }
-  | {
-    name: `onViewportAdjustEnd`,
     fn: () => void
   }
 
@@ -40,6 +26,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   const locator = createLocator({ context, readingItemManager })
   let hooks: Hook[] = []
   let ongoingNavigation: undefined | { animate: boolean } = undefined
+  let currentViewportPositionMemo: { x: number, y: number } | undefined
   /**
    * This position correspond to the current navigation position.
    * This is always sync with navigation and adjustment but IS NOT necessarily
@@ -48,11 +35,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * This DOES NOT reflect necessarily what is visible for the user at instant T.
    */
   let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
-  const subject = new Subject<SubjectEvent>()
+  const adjustCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }>()
+  const navigateCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }>()
   let isMovingPan = false
   const pan$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
-  const adjust$ = new BehaviorSubject<`started` | `end`>(`end`)
-  const state$ = new BehaviorSubject<`free` | `busy`>(`free`)
 
   let lastUserExpectedNavigation:
     | undefined
@@ -77,6 +63,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
     }
 
+    currentViewportPositionMemo = undefined
+
     hooks.forEach(hook => {
       if (hook.name === `onViewportOffsetAdjust`) {
         hook.fn()
@@ -91,11 +79,21 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * Because there could be an animation running the viewport may be late. To retrieve the current position
    * use the dedicated property.
    */
-  const getCurrentViewportPosition = () => ({
-    // we want to round to first decimal because it's possible to have half pixel
-    // however browser engine can also gives back x.yyyy based on their precision
-    x: Math.round(Math.abs(element.getBoundingClientRect().x) * 10) / 10,
-    y: Math.round(Math.abs(element.getBoundingClientRect().y) * 10) / 10,
+  const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
+    if (currentViewportPositionMemo) return currentViewportPositionMemo
+
+    const { x, y } = element.getBoundingClientRect()
+
+    const newValue = {
+      // we want to round to first decimal because it's possible to have half pixel
+      // however browser engine can also gives back x.yyyy based on their precision
+      // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
+      x: ~~(Math.abs(x) * 10) / 10,
+      y: ~~(Math.abs(y) * 10) / 10,
+    }
+    currentViewportPositionMemo = newValue
+
+    return currentViewportPositionMemo
   })
 
   const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
@@ -187,7 +185,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   /**
    * @prototype
    */
-  const moveTo = (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
+  const moveTo = Report.measurePerformance(`${NAMESPACE} moveTo`, 5, (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
     const pageTurnDirection = context.getSettings().pageTurnDirection
     isMovingPan = true
     if (start) {
@@ -216,8 +214,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       navigation = getCurrentViewportPosition()
     }
 
-    // console.log(navigation)
-
     movingLastPosition = navigation
 
     if (final) {
@@ -244,17 +240,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       return
     }
 
-    subject.next({ type: `adjustStart`, position: navigation, animation: `none` })
+    adjustCommandSubject.next({ position: navigation, animation: `none` })
     pan$.next(`moving`)
-  }
+  }, { disable: false })
 
   /**
    * @todo optimize this function to not being called several times
    */
   const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }, { animate }: { animate: boolean } = { animate: true }) => {
-    currentNavigationPosition = navigation
-
-    subject.next({ type: 'navigation', position: navigation, animate })
+    navigateCommandSubject.next({ position: navigation, animate })
   })
 
   /**
@@ -327,54 +321,44 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     currentNavigationPosition = adjustedReadingOrderViewPosition
 
-    subject.next({ type: `adjustStart`, position: adjustedReadingOrderViewPosition, animation: `auto` })
+    adjustCommandSubject.next({ position: adjustedReadingOrderViewPosition, animation: `auto` })
   }
 
   const registerHook = (hook: Hook) => {
     hooks.push(hook)
   }
 
-  const adjustEnd$ = subject.pipe(filter(event => event.type === `adjustEnd`))
+  const layout = () => {
+    currentViewportPositionMemo = undefined
+  }
 
-  const navigation$ = subject
+  const adjustStart$ = adjustCommandSubject.asObservable()
     .pipe(
-      filter(event => event.type === `navigation`),
-      switchMap((event) => {
-        const navigationEvent = event as Extract<SubjectEvent, { type: `navigation` }>
-        ongoingNavigation = { animate: navigationEvent.animate }
-
-        subject.next({ type: `adjustStart`, position: event.position, animation: navigationEvent.animate ? `auto` : `none` })
-
-        return adjustEnd$.pipe(take(1))
-      }),
-      tap(() => {
-        ongoingNavigation = undefined
-      }),
-    )
-
-  subject
-    .pipe(
-      filter(event => event.type === `adjustStart`),
-      throttleTime(VIEWPORT_ADJUSTMENT_THROTTLE, animationFrameScheduler, { leading: true, trailing: true }),
-      switchMap((event) => {
-        adjust$.next(`started`)
-        const noAdjustmentNeeded = !areNavigationDifferent(event.position, getCurrentViewportPosition())
-        const animationDuration = context.getComputedPageTurnAnimationDuration()
+      map(({ animation, position }) => {
         const shouldAnimate =
-          (event.type === `adjustStart` && event.animation === `none`)
+          (animation === `none`)
             || ongoingNavigation?.animate === false
             || !ongoingNavigation
             || context.getSettings().pageTurnAnimation === `none`
             ? false
             : true
 
-        hooks.forEach(hook => {
-          if (hook.name === `onViewportAdjustStart`) {
-            hook.fn({ animate: shouldAnimate })
-          }
-        })
+        return {
+          type: `start` as const,
+          animate: shouldAnimate,
+          position,
+        }
+      }),
+    )
 
-        if (shouldAnimate && !noAdjustmentNeeded) {
+  const adjustEnd$ = adjustStart$
+    .pipe(
+      switchMap(event => scheduled(of(event), animationFrameScheduler)),
+      switchMap((data) => {
+        const noAdjustmentNeeded = !areNavigationDifferent(data.position, getCurrentViewportPosition())
+        const animationDuration = context.getComputedPageTurnAnimationDuration()
+
+        if (data.animate && !noAdjustmentNeeded) {
           if (context.getSettings().pageTurnAnimation === `fade`) {
             element.style.setProperty('transition', `opacity ${animationDuration / 2}ms`)
             element.style.setProperty('opacity', '0')
@@ -386,20 +370,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           element.style.setProperty('transition', `none`)
           element.style.setProperty('opacity', `1`)
         }
-
-        // console.warn({ shouldAnimate, noAdjustmentNeeded, event })
-        // if (noAdjustmentNeeded) {
-        //   return of(event)
-        //     .pipe(
-        //       tap(() => {
-        //         adjustReadingOffset(event.position)
-        //         subject.next({ type: `adjustEnd`, position: event.position })
-        //       }),
-        //       delay(animationDuration),
-        //     )
-        // }
-
-        // console.log({ shouldAnimate, anim: context.getSettings().pageTurnAnimation, duration: context.getComputedPageTurnAnimationDuration(), noAdjustmentNeeded })
 
         /**
          * @important
@@ -413,60 +383,95 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           .pipe(
             tap(() => {
               if (context.getSettings().pageTurnAnimation !== `fade`) {
-                adjustReadingOffset(event.position)
+                adjustReadingOffset(data.position)
               }
             }),
-            shouldAnimate ? delay(animationDuration / 2) : identity,
+            data.animate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
             tap(() => {
               if (context.getSettings().pageTurnAnimation === `fade`) {
-                adjustReadingOffset(event.position)
+                adjustReadingOffset(data.position)
                 element.style.setProperty('opacity', '1')
               }
             }),
-            shouldAnimate ? delay(animationDuration / 2) : identity,
+            data.animate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
             tap(() => {
               if (context.getSettings().pageTurnAnimation === `fade`) {
-                adjustReadingOffset(event.position)
+                adjustReadingOffset(data.position)
               }
-              hooks.forEach(hook => {
-                if (hook.name === `onViewportAdjustEnd`) {
-                  hook.fn()
-                }
-              })
-              subject.next({ type: `adjustEnd`, position: event.position })
-              adjust$.next(`end`)
             })
           )
       }),
-      tap(() => {
-        // element.style.setProperty('opacity', '1')
-      }),
-      takeUntil(context.$.destroy$),
+      map(() => ({ type: `end` as const })),
+      share()
     )
-    .subscribe()
 
-  merge(navigation$)
+  adjustEnd$.pipe(takeUntil(context.$.destroy$)).subscribe()
+
+  const navigation$ = navigateCommandSubject
     .pipe(
-      takeUntil(context.$.destroy$)
+      tap((event) => {
+        ongoingNavigation = { animate: event.animate }
+        currentNavigationPosition = event.position
+      }),
+      switchMap((event) => {
+        return merge(
+          of({ type: `start` as const, ...event }),
+          of(event).pipe(
+            switchMap(() => {
+              adjustCommandSubject.next({ position: event.position, animation: event.animate ? `auto` : `none` })
+
+              const waitForNextAdjustEnd$ = adjustEnd$.pipe(take(1))
+
+              return waitForNextAdjustEnd$.pipe(
+                tap(() => {
+                  ongoingNavigation = undefined
+                }),
+                map(() => ({ type: `end` as const, ...event }))
+              )
+            })
+          )
+        )
+      }),
+      share()
     )
-    .subscribe()
 
-  combineLatest(pan$, adjust$).pipe(
-    tap(([pan, adjust]) => {
-      state$.next(pan === `end` && adjust === `end` ? `free` : `busy`)
-    }),
-    takeUntil(context.$.destroy$)
-  ).subscribe()
+  navigation$.pipe(takeUntil(context.$.destroy$)).subscribe()
 
+  const adjust$ = merge(
+    adjustStart$,
+    adjustEnd$
+  )
+
+  /**
+   * Observable of the viewport state.
+   * 
+   * @returns
+   * free means the viewport is not moving so it's safe to do computation
+   * busy means the viewport is either controlled or animated, etc. 
+   * We should avoid doing any heavy computation at that state
+   */
+  const state$ = combineLatest([
+    pan$.asObservable(),
+    adjust$.pipe(startWith({ type: `end` as const })),
+  ])
+    .pipe(
+      map(([pan, adjust]) => pan === `end` && adjust.type === `end` ? `free` : `busy`),
+      distinctUntilChanged(),
+      shareReplay(1),
+    )
+
+  state$.subscribe(v => console.warn(`STATE$`, v))
+    
   const destroy = () => {
     hooks = []
-    subject.complete()
+    navigateCommandSubject.complete()
+    adjustCommandSubject.complete()
     pan$.complete()
-    state$.complete()
   }
 
   return {
     destroy,
+    layout,
     registerHook,
     getCurrentNavigationPosition: () => currentNavigationPosition,
     turnLeft,
@@ -480,10 +485,9 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: {
-      $: subject.asObservable(),
-      pan$: pan$.asObservable(),
-      state$: state$.asObservable(),
-      adjust$: adjust$.asObservable(),
+      state$,
+      adjust$,
+      navigation$,
     },
   }
 }
