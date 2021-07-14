@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Button as ChakraButton } from "@chakra-ui/react"
+import { Button as ChakraButton, Text } from "@chakra-ui/react"
 import { ExternalLinkIcon } from "@chakra-ui/icons"
 
 export const Home = () => {
@@ -15,6 +15,7 @@ export const Home = () => {
       alignItems: `center`,
       justifyContent: 'center'
     }}>
+      <Text marginBottom="10">This demo is designed for mobile. It is still fully functional on desktop but might end up looking weird at some places.</Text>
       <Link to={`/classic`} style={{ marginBottom: 20 }}>
         <ChakraButton rightIcon={<ExternalLinkIcon />}>Visit the classic reader</ChakraButton>
       </Link>
