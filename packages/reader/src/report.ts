@@ -53,11 +53,11 @@ const createReport = (namespace?: string) => ({
   // },
   time,
   logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
-    const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
+    // const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
     if (window.__OBOKU_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
+        // console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
       } else {
         // eslint-disable-next-line no-console
         console.warn(

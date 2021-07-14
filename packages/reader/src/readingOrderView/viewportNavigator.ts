@@ -349,11 +349,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           position,
         }
       }),
+      share()
     )
 
   const adjustEnd$ = adjustStart$
     .pipe(
-      switchMap(event => scheduled(of(event), animationFrameScheduler)),
+      switchMap(data => of(data).pipe(delay(1, animationFrameScheduler))),
       switchMap((data) => {
         const noAdjustmentNeeded = !areNavigationDifferent(data.position, getCurrentViewportPosition())
         const animationDuration = context.getComputedPageTurnAnimationDuration()
