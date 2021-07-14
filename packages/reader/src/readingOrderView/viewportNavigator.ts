@@ -460,8 +460,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       shareReplay(1),
     )
 
-  state$.subscribe(v => console.warn(`STATE$`, v))
-    
   const destroy = () => {
     hooks = []
     navigateCommandSubject.complete()
