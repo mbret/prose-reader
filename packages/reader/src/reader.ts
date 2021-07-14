@@ -16,8 +16,6 @@ const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
 const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
 const READING_ITEM_ON_GET_RESOURCE = 'readingItem.onGetResource'
 const ON_VIEWPORT_OFFSET_ADJUST_HOOK = 'onViewportOffsetAdjust'
-const ON_VIEWPORT_ADJUST_START_HOOK = 'onViewportAdjustStart'
-const ON_VIEWPORT_ADJUST_END_HOOK = 'onViewportAdjustEnd'
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
 type ReadingOrderViewHook = Parameters<ReadingOrderView['registerHook']>[0]
@@ -29,8 +27,6 @@ type Hooks = {
   [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_CREATED_HOOK }>
   [READING_ITEM_ON_GET_RESOURCE]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_GET_RESOURCE }>
   [ON_VIEWPORT_OFFSET_ADJUST_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK }>
-  [ON_VIEWPORT_ADJUST_START_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_ADJUST_START_HOOK }>
-  [ON_VIEWPORT_ADJUST_END_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_ADJUST_END_HOOK }>
 }
 
 type Event =
@@ -132,15 +128,13 @@ export const createReader = ({ containerElement, ...settings }: {
   function registerHook(name: typeof READING_ITEM_ON_CREATED_HOOK, fn: Hooks[typeof READING_ITEM_ON_CREATED_HOOK]['fn']): void
   function registerHook(name: typeof READING_ITEM_ON_GET_RESOURCE, fn: Hooks[typeof READING_ITEM_ON_GET_RESOURCE]['fn']): void
   function registerHook(name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK, fn: Hooks[typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK]['fn']): void
-  function registerHook(name: typeof ON_VIEWPORT_ADJUST_START_HOOK, fn: Hooks[typeof ON_VIEWPORT_ADJUST_START_HOOK]['fn']): void
-  function registerHook(name: typeof ON_VIEWPORT_ADJUST_END_HOOK, fn: Hooks[typeof ON_VIEWPORT_ADJUST_END_HOOK]['fn']): void
   function registerHook(name: string, fn: any) {
     const readingOrderViewHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK, READING_ITEM_ON_GET_RESOURCE] as const
     if (readingOrderViewHooks.includes(name as typeof readingOrderViewHooks[number])) {
       readingOrderView.registerHook({ name: name as typeof readingOrderViewHooks[number], fn })
     }
 
-    const viewportNavigatorHooks = [ON_VIEWPORT_OFFSET_ADJUST_HOOK, ON_VIEWPORT_ADJUST_START_HOOK, ON_VIEWPORT_ADJUST_END_HOOK] as const
+    const viewportNavigatorHooks = [ON_VIEWPORT_OFFSET_ADJUST_HOOK] as const
     if (viewportNavigatorHooks.includes(name as typeof viewportNavigatorHooks[number])) {
       readingOrderView.viewportNavigator.registerHook({ name: name as typeof viewportNavigatorHooks[number], fn })
     }
@@ -159,7 +153,7 @@ export const createReader = ({ containerElement, ...settings }: {
     cb(element, onDestroy)
   }
 
-  readingOrderView.$
+  readingOrderView.$.$
     .pipe(
       tap(event => subject.next(event)),
       takeUntil(destroy$)
@@ -217,7 +211,11 @@ export const createReader = ({ containerElement, ...settings }: {
     load,
     destroy,
     pagination$: paginationSubject.asObservable(),
-    $: subject.asObservable(),
+    $: {
+      $: subject.asObservable(),
+      viewportAdjust$: readingOrderView.$.viewportAdjust$,
+      viewportState$: readingOrderView.$.viewportState$,
+    },
     destroy$,
     __debug: {
       pagination,
