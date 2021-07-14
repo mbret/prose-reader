@@ -2,6 +2,21 @@ const ROOT_NAMESPACE = `@oboku/reader`
 
 const wrap = (str: string) => `[${str}]`
 
+const time = (name: string) => {
+  let tick = 0
+  // const t0 = performance.now();
+  const t0 = Date.now()
+  // console.time(name)
+
+  return () => {
+    tick++
+    // const t1 = performance.now();
+    const t1 = Date.now()
+    // console.timeEnd(name)
+    Report.logMetric({ name: `${name} - tick ${tick}`, duration: t1 - t0 });
+  }
+}
+
 const createReport = (namespace?: string) => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
@@ -24,18 +39,19 @@ const createReport = (namespace?: string) => ({
     // eslint-disable-next-line no-console
     console.error(...data);
   },
-  time: (label?: string | undefined) => {
-    if (window.__OBOKU_READER_DEBUG) {
-      // eslint-disable-next-line no-console
-      console.time(`[oboku-reader] [metric] ${label}`);
-    }
-  },
-  timeEnd: (label?: string | undefined) => {
-    if (window.__OBOKU_READER_DEBUG) {
-      // eslint-disable-next-line no-console
-      console.timeEnd(`[oboku-reader] [metric] ${label}`);
-    }
-  },
+  // time: (label?: string | undefined) => {
+  //   if (window.__OBOKU_READER_DEBUG) {
+  //     // eslint-disable-next-line no-console
+  //     console.time(`[oboku-reader] [metric] ${label}`);
+  //   }
+  // },
+  // timeEnd: (label?: string | undefined) => {
+  //   if (window.__OBOKU_READER_DEBUG) {
+  //     // eslint-disable-next-line no-console
+  //     console.timeEnd(`[oboku-reader] [metric] ${label}`);
+  //   }
+  // },
+  time,
   logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
     const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
     if (window.__OBOKU_READER_DEBUG) {

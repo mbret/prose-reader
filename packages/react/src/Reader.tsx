@@ -27,7 +27,7 @@ export function Reader<Ext = {}, >({ manifest, onReady, onReader, loadOptions, o
   }, [setReader, onReader, reader, options])
 
   useEffect(() => {
-    const readerSubscription$ = reader?.$.subscribe((data) => {
+    const readerSubscription$ = reader?.$.$.subscribe((data) => {
       if (data.type === 'ready') {
         onReady && onReady()
       }

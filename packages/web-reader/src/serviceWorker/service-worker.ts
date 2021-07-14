@@ -1,5 +1,5 @@
 import { loadEpub } from './loadEpub';
-import { getResourceFromArchive, getManifestFromArchive } from '@oboku/reader-streamer'
+import { getResourceFromArchive, getManifestFromArchive, createArchiveFromUrls } from '@oboku/reader-streamer'
 import { STREAMER_URL_PREFIX } from './constants';
 import { extractInfoFromEvent, getResourcePath } from './utils';
 
@@ -59,6 +59,9 @@ worker.addEventListener('fetch', (event: any) => {
         //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/uo6dqk07egw1bkf6e7dgwx6q1620298373585.jpg`,
         //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ymy04ggror4t4b0eja0k9zmu1620298374865.jpg`,
         //   `https://cdn.epico.ink/public/VD23LA/en/ZUWT2D/ylqdentbi6qk6vt6sql1bidb1620298375961.jpg`,
+        // ])
+        // const archive = await createArchiveFromUrls([
+        //   'https://cdn.epico.ink/public/H2QLL0/en/AFFL2T/hsci3yij10bg3bi6qy1s6grk1625665869337.png'
         // ])
         const baseUrl = `${url.origin}/${STREAMER_URL_PREFIX}/${epubFileName}`
         // const baseUrl = ``
