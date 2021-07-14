@@ -11,7 +11,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
   const setCurrentSelection = useSetRecoilState(currentHighlight)
 
   useEffect(() => {
-    const readerSubscription = reader?.$
+    const readerSubscription = reader?.$.$
       .pipe(
         tap(event => {
           if (event.type === `onSelectionChange`) {

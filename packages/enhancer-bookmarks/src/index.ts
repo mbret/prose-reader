@@ -205,7 +205,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     // We make sure to update location of bookmarks on every layout
     // update since the bookmark could be on a different page, etc
-    const readerSubscription = reader.$
+    const readerSubscription = reader.$.$
       .pipe(
         filter(event => event.type === `layoutUpdate`),
         tap(updateBookmarkLocations)

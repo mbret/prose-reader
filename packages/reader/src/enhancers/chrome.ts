@@ -76,7 +76,7 @@ export const chromeEnhancer: Enhancer<{
     frame.contentDocument?.body.setAttribute(`tabindex`, `-1`)
   })
 
-  const forceScreenRefresh$ = reader.$
+  const forceScreenRefresh$ = reader.$.$
     .pipe(
       // filter(event => event.type === `onNavigationChange`),
       tap(() => {

@@ -153,7 +153,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       return false
     }
 
-    const initialHighlights$ = reader.$
+    const initialHighlights$ = reader.$.$
       .pipe(
         filter(event => event.type === `ready`),
         tap(() => {
@@ -165,7 +165,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         })
       )
 
-    const refreshHighlights$ = reader.$
+    const refreshHighlights$ = reader.$.$
       .pipe(
         filter(event => event.type === `layoutUpdate`),
         tap(() => {
