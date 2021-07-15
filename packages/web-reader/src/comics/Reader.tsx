@@ -24,6 +24,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const { url } = useParams<{ url: string }>();
   const query = new URLSearchParams(window.location.search)
   const isUsingVerticalScrolling = query.has('vertical')
+  const isUsingFreeScroll = query.has('free')
   const settings = useRecoilValue(settingsState)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
@@ -36,11 +37,12 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
     pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
+    pageTurnMode: isUsingFreeScroll ? `free` : `controlled`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)
 
-  useGestureHandler(container)
+  useGestureHandler(container, isUsingFreeScroll)
 
   // compose final enhancer
   const readerEnhancer = bookmarksEnhancer && searchEnhancer ? composeEnhancer(bookmarksEnhancer, searchEnhancer) : undefined

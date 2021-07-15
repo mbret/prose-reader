@@ -1,4 +1,5 @@
 import { BehaviorSubject, Subject } from "rxjs"
+import { Report } from "./report"
 import { LoadOptions, Manifest } from "./types"
 
 export type Context = ReturnType<typeof createContext>
@@ -9,7 +10,8 @@ type Settings = {
   forceSinglePageMode: boolean,
   pageTurnAnimation: `none` | `fade` | `slide`,
   pageTurnAnimationDuration: undefined | number
-  pageTurnDirection: `vertical` | `horizontal`
+  pageTurnDirection: `vertical` | `horizontal`,
+  pageTurnMode: `controlled` | `free`,
 }
 
 export const createContext = (initialSettings: Partial<Settings>) => {
@@ -20,8 +22,11 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     pageTurnAnimation: `none`,
     pageTurnDirection: `horizontal`,
     pageTurnAnimationDuration: undefined,
+    pageTurnMode: `controlled`,
     ...initialSettings
   }
+  let computedPageTurnMode = settings.pageTurnMode
+  let computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration || 0
   const settings$ = new BehaviorSubject(settings)
   const subject = new Subject<ContextObservableEvents>()
   const loadSubject$ = new Subject()
@@ -36,6 +41,17 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
+
+  const updateComputedSettings = (newManifest: Manifest | undefined, newSettings: Settings) => {
+    if (computedPageTurnMode === `free` && newManifest?.renditionLayout !== `pre-paginated`) {
+      Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
+      computedPageTurnMode = `controlled`
+    }
+
+    computedPageTurnAnimationDuration = newSettings.pageTurnAnimationDuration !== undefined
+      ? newSettings.pageTurnAnimationDuration
+      : 300
+  }
 
   /**
    * Global spread behavior
@@ -60,6 +76,9 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
     manifest = newManifest
     loadOptions = newLoadOptions
+
+    updateComputedSettings(newManifest, settings)
+
     loadSubject$.next()
   }
 
@@ -67,19 +86,22 @@ export const createContext = (initialSettings: Partial<Settings>) => {
    * RTL only makes sense for horizontal scrolling
    */
   const isRTL = () => {
-    return  manifest?.readingDirection === 'rtl'
+    return manifest?.readingDirection === 'rtl'
     // return true
   }
 
   const setSettings = (newSettings: Partial<typeof settings>) => {
     settings = { ...settings, ...newSettings }
+
+    updateComputedSettings(manifest, settings)
+
     settings$.next(settings)
   }
 
   const getSettings = () => settings
 
   settings$.next(settings)
-  
+
   const destroy = () => {
     subject.complete()
     settings$.complete()
@@ -97,9 +119,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     getSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
-    getComputedPageTurnAnimationDuration: () => settings.pageTurnAnimationDuration !== undefined
-      ? settings.pageTurnAnimationDuration
-      : 300,
+    getComputedPageTurnMode: () => computedPageTurnMode,
+    getComputedPageTurnAnimationDuration: () => computedPageTurnAnimationDuration,
     shouldDisplaySpread,
     setVisibleAreaRect: (
       x: number,

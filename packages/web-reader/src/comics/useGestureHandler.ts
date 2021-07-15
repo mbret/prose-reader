@@ -4,7 +4,7 @@ import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
 import { hasCurrentHighlightState, isMenuOpenState } from '../state'
 
-export const useGestureHandler = (container: HTMLElement | undefined) => {
+export const useGestureHandler = (container: HTMLElement | undefined, isUsingFreeMode: boolean = false) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const movingHasStarted = useRef(false)
@@ -105,6 +105,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
      * Understand the above behavior, try to fix it or come up with solid workaround.
      */
     function onPanMove(ev: HammerInput) {
+      if (isUsingFreeMode) {
+        return
+      }
+
       const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
 
       // because of iframe moving we have to calculate the delta ourselves with normalized value
@@ -195,5 +199,5 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       hammerManager?.off(`panmove panstart panend`, onPanMove)
       hammerManager?.off(`pinch`, onPinch)
     }
-  }, [reader, setMenuOpenState, onSingleTap, hammerManager, movingHasStarted])
+  }, [reader, setMenuOpenState, onSingleTap, hammerManager, movingHasStarted, isUsingFreeMode])
 }

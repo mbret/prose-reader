@@ -26,6 +26,17 @@ export const Home = () => {
       formattedPrice: "$1,900.00",
       reviewCount: 34,
       rating: 4,
+    },
+    {
+      imageUrl: `${window.location.origin}/haruko-cover.jpg`,
+      imageAlt: "",
+      link: `/comics/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?free&vertical`,
+      beds: 3,
+      baths: 2,
+      title: "Manga, vertical free scrolling",
+      formattedPrice: "$1,900.00",
+      reviewCount: 34,
+      rating: 4,
     }
   ]
 

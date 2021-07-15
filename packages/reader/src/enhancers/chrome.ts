@@ -1,5 +1,5 @@
 import { merge } from "rxjs";
-import { filter, takeUntil, tap } from "rxjs/operators";
+import { takeUntil, tap } from "rxjs/operators";
 import { Enhancer } from "../createReader";
 
 const SHOULD_NOT_LAYOUT = false
@@ -38,7 +38,9 @@ export const chromeEnhancer: Enhancer<{
 
   reader.manipulateContainer((container, onDestroy) => {
     const onScroll = () => {
-      container.scrollTo(0, 0)
+      if (reader.context.getComputedPageTurnMode() === `controlled`) {
+        container.scrollTo(0, 0)
+      }
     }
 
     /**
