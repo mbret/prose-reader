@@ -4,21 +4,21 @@ import { ReadingItemManager } from "../readingItemManager"
 import { ReadingItem } from "../readingItem"
 import { createNavigator as createReadingItemNavigator } from "../readingItem/navigator"
 import { createLocator } from "./locator"
-import { createCfiHelper } from "./cfiHelper"
+import { createCfiLocator } from "./cfiLocator"
 
-type NavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
+export type ViewportNavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
 type ViewportPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number }
 
 const NAMESPACE = `readingOrderViewNavigator`
 
-export const createNavigator = ({ context, readingItemManager }: {
+export const createNavigator = ({ context, readingItemManager, cfiLocator, locator }: {
   context: Context,
-  readingItemManager: ReadingItemManager
+  readingItemManager: ReadingItemManager,
+  cfiLocator: ReturnType<typeof createCfiLocator>,
+  locator: ReturnType<typeof createLocator>
 }) => {
   const readingItemNavigator = createReadingItemNavigator({ context })
-  const cfiHelper = createCfiHelper({ readingItemManager, context })
-  const locator = createLocator({ context, readingItemManager })
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
@@ -43,12 +43,14 @@ export const createNavigator = ({ context, readingItemManager }: {
     return { x: correctedX, y }
   }
 
-  const getNavigationForCfi = (cfi: string): NavigationEntry => {
-    const readingItem = cfiHelper.getReadingItemFromCfi(cfi)
+  const getNavigationForCfi = (cfi: string): ViewportNavigationEntry => {
+    const readingItem = cfiLocator.getReadingItemFromCfi(cfi)
+    const { node, offset = 0 } = cfiLocator.resolveCfi(cfi) || {}
+    
     if (!readingItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {
-      const readingItemNavigation = readingItemNavigator.getNavigationForCfi(cfi, readingItem)
+      const readingItemNavigation = node ? readingItemNavigator.getNavigationFromNode(readingItem, node, offset) : { x: 0, y: 0 }
       const readingPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
       // very important to always return a reading item since we want to focus on that particular one
@@ -58,23 +60,23 @@ export const createNavigator = ({ context, readingItemManager }: {
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForPage = (pageIndex: number, readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForPage = (pageIndex: number, readingItem: ReadingItem): ViewportNavigationEntry => {
     const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
     const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
     // console.warn({ readingItemNavigation, readingOffset })
-    
+
     return getAdjustedPositionForSpread(readingOffset)
   }
 
-  const getNavigationForLastPage = (readingItem: ReadingItem): NavigationEntry => {
+  const getNavigationForLastPage = (readingItem: ReadingItem): ViewportNavigationEntry => {
     const readingItemNavigation = readingItemNavigator.getNavigationForLastPage(readingItem)
     const position = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
     return getAdjustedPositionForSpread(position)
   }
 
-  const getNavigationForSpineIndexOrId = (indexOrId: number | string): NavigationEntry => {
+  const getNavigationForSpineIndexOrId = (indexOrId: number | string): ViewportNavigationEntry => {
     const readingItem = readingItemManager.get(indexOrId)
     if (readingItem) {
       const position = locator.getReadingOrderViewPositionFromReadingItem(readingItem)
@@ -85,7 +87,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForRightSinglePage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForRightSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().pageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
@@ -95,7 +97,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     }
 
     // translate viewport position into reading item local position
-    const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(position, readingItem)
+    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
     // get reading item local position for right page
     const readingItemNavigationForRightPage = readingItemNavigator.getNavigationForRightPage(readingItemPosition, readingItem)
     // check both position to see if we moved out of it
@@ -119,7 +121,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     }
   }
 
-  const getNavigationForLeftSinglePage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForLeftSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().pageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
@@ -128,8 +130,7 @@ export const createNavigator = ({ context, readingItemManager }: {
       return defaultNavigation
     }
 
-    const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(position, readingItem)
-    readingItemNavigator.getNavigationForCfi
+    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
     const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
     const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigation, readingItemPosition)
 
@@ -157,7 +158,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForRightPage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForRightPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForRightSinglePage(position)
@@ -209,7 +210,7 @@ export const createNavigator = ({ context, readingItemManager }: {
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForLeftPage = (position: ReadingItemPosition): NavigationEntry => {
+  const getNavigationForLeftPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForLeftSinglePage(position)
@@ -238,7 +239,7 @@ export const createNavigator = ({ context, readingItemManager }: {
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-       if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -248,7 +249,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     return getAdjustedPositionForSpread(navigation)
   }
 
-  const getNavigationForUrl = (url: string | URL): NavigationEntry & { url: URL } | undefined => {
+  const getNavigationForUrl = (url: string | URL): ViewportNavigationEntry & { url: URL } | undefined => {
     let validUrl: URL | undefined
     try {
       validUrl = url instanceof URL ? url : new URL(url)
@@ -281,7 +282,7 @@ export const createNavigator = ({ context, readingItemManager }: {
     const readingItem = locator.getReadingItemFromPosition(viewportPosition)
 
     if (readingItem) {
-      const readingItemPosition = locator.getReadingItemRelativePositionFromReadingOrderViewPosition(viewportPosition, readingItem)
+      const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(viewportPosition, readingItem)
       const readingItemValidPosition = readingItemNavigator.getNavigationForPosition(readingItem, readingItemPosition)
       const viewportNavigation = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemValidPosition, readingItem)
 

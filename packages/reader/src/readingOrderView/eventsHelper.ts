@@ -4,13 +4,12 @@ import { ReadingItemManager } from "../readingItemManager"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
 import { createLocator } from "./locator"
 
-export const createEventsHelper = ({ iframeEventBridgeElement, context, readingItemManager }: {
+export const createEventsHelper = ({ iframeEventBridgeElement, context, readingItemManager, locator }: {
   iframeEventBridgeElement: HTMLElement,
   readingItemManager: ReadingItemManager,
   context: Context,
+  locator: ReturnType<typeof createLocator>
 }) => {
-  const locator = createLocator({ readingItemManager, context })
-
   const normalizeEventForViewport = <E extends (MouseEvent | TouchEvent | PointerEvent)>(event: E) => {
     const eventIsComingFromBridge = event.target === iframeEventBridgeElement
     const iframeOriginalEvent = getOriginalFrameEventFromDocumentEvent(event)

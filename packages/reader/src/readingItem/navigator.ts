@@ -58,8 +58,8 @@ export const createNavigator = ({ context }: { context: Context }) => {
     return currentViewport
   }
 
-  const getNavigationForCfi = (cfi: string, readingItem: ReadingItem) => {
-    const position = readingItemLocator.getReadingItemPositionFromCfi(cfi, readingItem)
+  const getNavigationFromNode = (readingItem: ReadingItem, node: Node, offset: number) => {
+    const position = readingItemLocator.getReadingItemPositionFromNode(node, offset, readingItem)
 
     return position || { x: 0, y: 0 }
   }
@@ -75,7 +75,7 @@ export const createNavigator = ({ context }: { context: Context }) => {
     getNavigationForRightPage,
     getNavigationForLastPage,
     getNavigationForPage,
-    getNavigationForCfi,
     getNavigationForPosition,
+    getNavigationFromNode,
   }
 }

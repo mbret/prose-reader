@@ -7,13 +7,12 @@ import { Report } from "../report"
 type ReadingOrderViewPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
 
-export const createLocator = ({ readingItemManager, context }: {
+export const createLocator = ({ readingItemManager, context, readingItemLocator }: {
   readingItemManager: ReadingItemManager,
   context: Context,
+  readingItemLocator: ReturnType<typeof createReadingItemLocator> 
 }) => {
-  const readingItemLocator = createReadingItemLocator({ context })
-
-  const getReadingItemRelativePositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
+  const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
     const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
 
     /**
@@ -151,13 +150,23 @@ export const createLocator = ({ readingItemManager, context }: {
     return readingItemManager.getAll().find(item => item.readingItemFrame.getFrameElement() === iframe)
   }
 
+  const getReadingItemPageIndexFromNode = (node: Node, offset: number | undefined, readingItemOrIndex: ReadingItem | number) => {
+    if (typeof readingItemOrIndex === `number`) {
+      const readingItem = readingItemManager.get(readingItemOrIndex)
+      return readingItem ? readingItemLocator.getReadingItemPageIndexFromNode(node, offset || 0, readingItem) : undefined
+    }
+
+    return readingItemLocator.getReadingItemPageIndexFromNode(node, offset || 0, readingItemOrIndex)
+  }
+
   return {
     getReadingOrderViewPositionFromReadingItemPosition,
     getReadingOrderViewPositionFromReadingItem,
     getReadingOrderViewPositionFromReadingItemAnchor,
-    getReadingItemRelativePositionFromReadingOrderViewPosition,
+    getReadingItemPositionFromReadingOrderViewPosition,
     getReadingItemFromPosition,
     getReadingItemFromIframe,
+    getReadingItemPageIndexFromNode,
     getReadingItemsFromReadingOrderPosition,
   }
 }

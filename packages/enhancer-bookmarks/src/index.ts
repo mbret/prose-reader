@@ -33,13 +33,23 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       areaHeight: 30,
     }
 
+    const getCfiInformation = (cfi: string) => {
+      const { node, offset = 0, readingItemIndex } = reader.resolveCfi(cfi) || {}
+
+      if (node && readingItemIndex !== undefined) {
+        const pageIndex = reader.locator.getReadingItemPageIndexFromNode(node, offset, readingItemIndex)
+        
+        return { cfi, pageIndex, readingItemIndex }
+      }
+
+      return { cfi, pageIndex: undefined, readingItemIndex }
+    }
+
     const createBookmarkFromCurrentPagination = () => {
       const cfi = reader.pagination.getBeginInfo().cfi
 
       if (cfi) {
-        const { pageIndex, readingItemIndex } = reader.resolveCfi(cfi) || {}
-
-        return { cfi, pageIndex, readingItemIndex }
+        return getCfiInformation(cfi)
       }
 
       return undefined
@@ -126,7 +136,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const updateBookmarkLocations = () => {
       bookmarks.forEach(bookmark => {
-        const { pageIndex, readingItemIndex } = reader.resolveCfi(bookmark.cfi) || {}
+        const { pageIndex, readingItemIndex } = getCfiInformation(bookmark.cfi)
         bookmark.pageIndex = pageIndex
         bookmark.readingItemIndex = readingItemIndex
       })

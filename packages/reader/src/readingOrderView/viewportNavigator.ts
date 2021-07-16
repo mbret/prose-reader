@@ -4,9 +4,10 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, of, scheduled, Subject, timer } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, fromEvent, identity, merge, of, Subject } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { debounce, delay, distinctUntilChanged, filter, map, share, shareReplay, skip, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { delay, distinctUntilChanged, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { createCfiLocator } from "./cfiLocator"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -16,14 +17,15 @@ type Hook =
     fn: () => void
   }
 
-export const createViewportNavigator = ({ readingItemManager, context, pagination, element }: {
+export const createViewportNavigator = ({ readingItemManager, context, pagination, element, cfiLocator, locator }: {
   readingItemManager: ReadingItemManager,
   pagination: Pagination,
   context: Context,
-  element: HTMLElement
+  element: HTMLElement,
+  cfiLocator: ReturnType<typeof createCfiLocator>
+  locator: ReturnType<typeof createLocator>
 }) => {
-  const navigator = createNavigator({ context, readingItemManager })
-  const locator = createLocator({ context, readingItemManager })
+  const navigator = createNavigator({ context, readingItemManager, cfiLocator, locator })
   let hooks: Hook[] = []
   let ongoingNavigation: undefined | { animate: boolean } = undefined
   let currentViewportPositionMemo: { x: number, y: number } | undefined
@@ -36,9 +38,9 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
   const adjustCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }>()
-  const navigateCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }>()
-  let isMovingPan = false
+  const navigateCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean, triggeredBy: `adjust` | `other` }>()
   const pan$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
+  let isMovingPan = false
 
   let lastUserExpectedNavigation:
     | undefined
@@ -146,7 +148,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) => {
     const navigation = navigator.getNavigationForCfi(cfi)
 
-    Report.log(NAMESPACE, `goToCfi`, { cfi, options })
+    Report.log(NAMESPACE, `goToCfi`, { cfi, options, navigation })
 
     lastUserExpectedNavigation = { type: 'navigate-from-cfi', data: cfi }
     navigateTo(navigation, options)
@@ -248,7 +250,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @todo optimize this function to not being called several times
    */
   const navigateTo = Report.measurePerformance(`navigateTo`, 10, (navigation: { x: number, y: number, readingItem?: ReadingItem }, { animate }: { animate: boolean } = { animate: true }) => {
-    navigateCommandSubject.next({ position: navigation, animate })
+    navigateCommandSubject.next({ position: navigation, animate, triggeredBy: `other` })
   })
 
   /**
@@ -262,7 +264,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * the wrong offset
    * @todo this is being called a lot, try to optimize
    */
-  const adjustReadingOffsetPosition = (readingItem: ReadingItem, { }: {}) => {
+  const adjustNavigation$ = (readingItem: ReadingItem, { }: {}) => {
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
     let adjustedReadingOrderViewPosition = currentNavigationPosition
@@ -319,9 +321,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     Report.log(NAMESPACE, `adjustReadingOffsetPosition`, { offsetInReadingItem, expectedReadingOrderViewOffset: adjustedReadingOrderViewPosition, lastUserExpectedNavigation })
 
-    currentNavigationPosition = adjustedReadingOrderViewPosition
+    const areDifferent = areNavigationDifferent(adjustedReadingOrderViewPosition, currentNavigationPosition)
 
-    adjustCommandSubject.next({ position: adjustedReadingOrderViewPosition, animation: `auto` })
+    if (areDifferent) {
+      navigateCommandSubject.next({ position: adjustedReadingOrderViewPosition, animate: false, triggeredBy: `adjust` })
+    }
+
+    return of({ previousNavigationPosition: currentNavigationPosition, adjustedReadingOrderViewPosition, areDifferent })
   }
 
   const registerHook = (hook: Hook) => {
@@ -480,12 +486,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     goToUrl,
     goToCfi,
     goToPageOfCurrentChapter,
-    adjustReadingOffsetPosition,
+    adjustNavigation$,
     moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: {
       state$,
-      adjust$,
       navigation$,
     },
   }

@@ -1,5 +1,3 @@
-import { Report } from "../report"
-import { CFI, extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
 import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getNumberOfPages } from "../pagination"
 import { ReadingItem } from "."
@@ -78,16 +76,6 @@ export const createLocator = ({ context }: {
     return getClosestValidOffsetFromApproximateOffsetInPages(offsetOfAnchor, pageWidth, itemWidth)
   }
 
-  const getReadingItemPositionFromCfi = (cfi: string, readingItem: ReadingItem) => {
-    const { node, offset = 0 } = resolveCfi(cfi, readingItem) || {}
-
-    if (node) {
-      return getReadingItemPositionFromNode(node, offset, readingItem)
-    }
-
-    return undefined
-  }
-
   const getReadingItemPositionFromNode = (node: Node, offset: number, readingItem: ReadingItem) => {
     let offsetOfNodeInReadingItem: number | undefined = undefined
 
@@ -143,53 +131,6 @@ export const createLocator = ({ context }: {
     return undefined
   }
 
-  /**
-   * @todo optimize
-   */
-  const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, readingItem: ReadingItem) => {
-    const nodeOrRange = getFirstNodeOrRangeAtPage(pageIndex, readingItem)
-    const doc = readingItem.readingItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
-
-    const itemAnchor = `|[oboku~anchor~${encodeURIComponent(readingItem.item.id)}]`
-    // because the current cfi library does not works well with offset we are just using custom
-    // format and do it manually after resolving the node
-    // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
-    const offset = `|[oboku~offset~${nodeOrRange?.offset || 0}]`
-
-    if (nodeOrRange && doc) {
-      const cfiString = CFI.generate(nodeOrRange.node, 0, `${itemAnchor}${offset}`)
-
-      return cfiString
-    }
-
-    return `epubcfi(/0${itemAnchor}) `
-  })
-
-  /**
-   * Returns the node and offset for the given cfi.
-   */
-  const resolveCfi = (cfiString: string | undefined, readingItem: ReadingItem) => {
-    if (!cfiString) return undefined
-
-    const { cleanedCfi, offset } = extractObokuMetadataFromCfi(cfiString)
-    const cfi = new CFI(cleanedCfi, {})
-
-    const doc = readingItem.readingItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
-
-    if (doc) {
-      try {
-        const { node, offset: resolvedOffset } = cfi.resolve(doc, {})
-
-        return { node, offset: offset ?? resolvedOffset }
-      } catch (e) {
-        Report.error(e)
-        return undefined
-      }
-    }
-
-    return undefined
-  }
-
   const getReadingItemClosestPositionFromUnsafePosition = (unsafePosition: ReadingItemPosition, readingItem: ReadingItem) => {
     const { width, height } = readingItem.getElementDimensions()
 
@@ -199,6 +140,12 @@ export const createLocator = ({ context }: {
     }
 
     return adjustedPosition
+  }
+
+  const getReadingItemPageIndexFromNode = (node: Node, offset: number, readingItem: ReadingItem) => {
+    const position = getReadingItemPositionFromNode(node, offset, readingItem)
+
+    return position ? getReadingItemPageIndexFromPosition(position, readingItem) : undefined
   }
 
   const getPageFromOffset = (offset: number, pageWidth: number, numberOfPages: number) => {
@@ -212,13 +159,12 @@ export const createLocator = ({ context }: {
   }
 
   return {
-    getReadingItemPositionFromCfi,
     getReadingItemPositionFromNode,
     getReadingItemPositionFromPageIndex,
     getReadingItemOffsetFromAnchor,
     getReadingItemPageIndexFromPosition,
+    getReadingItemPageIndexFromNode,
     getReadingItemClosestPositionFromUnsafePosition,
-    getCfi,
-    resolveCfi
+    getFirstNodeOrRangeAtPage,
   }
 }

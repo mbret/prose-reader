@@ -37,14 +37,16 @@ export const createPagination = ({ context }: { context: Context }) => {
 
   const getInfoForUpdate = (info: {
     readingItem: ReadingItem,
-    readingItemPosition: { x: number, y: number },
+    // readingItemPosition: { x: number, y: number },
+    pageIndex: number,
+    cfi: string | undefined,
     options: {
       isAtEndOfChapter?: boolean,
-      cfi?: string
+      // cfi?: string
     }
   }) => {
     const numberOfPages = getReadingItemNumberOfPages(info.readingItem)
-    const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
+    // const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
     let cfi: string | undefined = undefined
 
     // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
@@ -54,17 +56,20 @@ export const createPagination = ({ context }: { context: Context }) => {
     // - resize
     // future changes would potentially only be resize (easy to track) and font size family change.
     // to track that we can have a hidden text element and track it and send event back
-    if (info.options.cfi === undefined) {
-      cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
-      Report.log(`pagination`, `cfi`, pageIndex, cfi)
-    } else {
-      cfi = info.options.cfi
-    }
+    // console.warn(typeof info.options.cfi)
+    // if (info.options.cfi === undefined) {
+    //   cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
+    //   Report.log(`pagination`, `cfi`, pageIndex, cfi)
+    // } else {
+    //   cfi = info.options.cfi
+    // }
+
+    // cfi = info.options.cfi
 
     return {
       numberOfPages,
-      pageIndex,
-      cfi
+      pageIndex: info.pageIndex,
+      cfi: info.cfi,
     }
   }
 
@@ -104,7 +109,7 @@ export const createPagination = ({ context }: { context: Context }) => {
 
       subject.next({ event: 'change' })
     },
-    updateBeginAndEnd: (
+    updateBeginAndEnd: Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
       begin: Parameters<typeof getInfoForUpdate>[0] & {
         readingItemIndex: number,
       },
@@ -125,10 +130,10 @@ export const createPagination = ({ context }: { context: Context }) => {
       endCfi = endInfo.cfi
       endReadingItemIndex = end.readingItemIndex
 
-      // Report.log(NAMESPACE, `updateBeginAndEnd`, { beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
+      Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
 
       subject.next({ event: 'change' })
-    },
+    }),
     $: subject.asObservable()
   }
 }

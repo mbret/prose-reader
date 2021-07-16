@@ -97,7 +97,8 @@ export const searchEnhancer: Enhancer<{
                 const ranges = searchNodeContainingText(doc, text)
                 const newResults = ranges.map(range => {
                   const { end, start } = reader.generateCfi(range, item.item)
-                  const { pageIndex } = reader.resolveCfi(start) || {}
+                  const { node, offset, readingItemIndex } = reader.resolveCfi(start) || {}
+                  const pageIndex = node && readingItemIndex !== undefined ? reader.locator.getReadingItemPageIndexFromNode(node, offset, readingItemIndex) : undefined
 
                   return {
                     spineItemIndex: index,

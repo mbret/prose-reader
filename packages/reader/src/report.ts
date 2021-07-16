@@ -2,18 +2,18 @@ const ROOT_NAMESPACE = `@oboku/reader`
 
 const wrap = (str: string) => `[${str}]`
 
-const time = (name: string) => {
+const time = (name: string, targetDuration = 0) => {
   let tick = 0
-  // const t0 = performance.now();
-  const t0 = Date.now()
+  const t0 = performance.now();
+  // const t0 = Date.now()
   // console.time(name)
 
   return () => {
     tick++
-    // const t1 = performance.now();
-    const t1 = Date.now()
+    const t1 = performance.now();
+    // const t1 = Date.now()
     // console.timeEnd(name)
-    Report.logMetric({ name: `${name} - tick ${tick}`, duration: t1 - t0 });
+    Report.logMetric({ name: `${name} - tick ${tick}`, duration: t1 - t0 }, targetDuration);
   }
 }
 
