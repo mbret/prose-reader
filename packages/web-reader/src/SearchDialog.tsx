@@ -7,7 +7,7 @@ import { useReader } from './ReaderProvider'
 import { groupBy } from '@oboku/reader'
 
 export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
-  const [text, setText] = useState('te')
+  const [text, setText] = useState('')
   const [results, setResults] = useState<SearchResult>([])
   const [searching, setSearching] = useState(false)
   const reader = useReader()
