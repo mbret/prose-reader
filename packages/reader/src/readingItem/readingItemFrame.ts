@@ -3,7 +3,7 @@ import { Report } from "../report"
 import { Manifest } from "../types"
 import { Context } from "../context"
 import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
-import { detectContentType } from "../utils/contentType"
+import { detectContentType, parseContentType } from "../utils/contentType"
 import { getBase64FromBlob } from "../utils/objects"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
@@ -257,10 +257,11 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string, i
 
   if (typeof resourceResponse === `string`) return resourceResponse
 
-  const contentType = resourceResponse.headers.get('Content-Type') || detectContentType(item.href)
+  const contentType = parseContentType(resourceResponse.headers.get('Content-Type') || ``) || detectContentType(item.href)
 
-  if ([`image/jpg`, `image/jpeg`, `image/png`].some(mime => mime === contentType)) {
+  if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some(mime => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
+    
     return `
       <html>
         <head>
