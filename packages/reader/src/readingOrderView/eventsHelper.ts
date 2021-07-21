@@ -4,7 +4,7 @@ import { ReadingItemManager } from "../readingItemManager"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
 import { createLocator } from "./locator"
 
-export const createEventsHelper = ({ iframeEventBridgeElement, context, readingItemManager, locator }: {
+export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
   iframeEventBridgeElement: HTMLElement,
   readingItemManager: ReadingItemManager,
   context: Context,
