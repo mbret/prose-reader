@@ -5,6 +5,7 @@ import { Context } from "../context"
 import { createAddStyleHelper, createRemoveStyleHelper, getAttributeValueFromString } from "../frames"
 import { detectContentType, parseContentType } from "../utils/contentType"
 import { getBase64FromBlob } from "../utils/objects"
+import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../constants"
 
 export type ReadingItemFrame = ReturnType<typeof createReadingItemFrame>
 type ManipulatableFrame = {
@@ -128,7 +129,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
           // we have an encoding and it's a valid html
           (item.encodingFormat && ["application/xhtml+xml", "application/xml", "text/html", "text/xml"].includes(item.encodingFormat))
           // no encoding ? then try to detect html
-          || (!item.encodingFormat && (item.href.endsWith(`.xhtml`) || item.href.endsWith(`.html`)))
+          || (!item.encodingFormat && (ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some(extension => item.href.endsWith(extension))))
         )
       ) {
         frameElement?.setAttribute(`src`, item.href)
