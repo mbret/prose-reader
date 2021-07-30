@@ -22,8 +22,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
 
   const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
 
-  const wrapPositionWithSafeEdge = (position: ReadingItemPosition) => {
-    // console.warn(position)
+  const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: ReadingItemPosition) => {
     // @todo use container width instead to increase performances
     const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
     const distanceOfLastReadingItem = readingItemManager.getAbsolutePositionOf(lastReadingItem || 0)
@@ -34,7 +33,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
       x: Math.min(Math.max(0, position.x), maximumXOffset),
       y: Math.min(Math.max(0, position.y), maximumYOffset),
     }
-  }
+  }, { disable: true })
 
   const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
     const isOffsetNotAtEdge = (x % context.getVisibleAreaRect().width) !== 0
@@ -46,7 +45,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
   const getNavigationForCfi = (cfi: string): ViewportNavigationEntry => {
     const readingItem = cfiLocator.getReadingItemFromCfi(cfi)
     const { node, offset = 0 } = cfiLocator.resolveCfi(cfi) || {}
-    
+
     if (!readingItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {

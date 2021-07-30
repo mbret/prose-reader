@@ -76,8 +76,10 @@ export const createReader = ({ containerElement, ...settings }: {
         ? containerElementWidth
         : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
 
-    element.style.width = `${containerElementEvenWidth - 2 * margin}px`
+    element.style.setProperty(`overflow`, `hidden`)
     element.style.height = `${dimensions.height - marginTop - marginBottom}px`
+    element.style.width = `${containerElementEvenWidth - 2 * margin}px`
+
     if (margin > 0 || marginTop > 0 || marginBottom > 0) {
       element.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
     }
@@ -207,6 +209,7 @@ export const createReader = ({ containerElement, ...settings }: {
     getCurrentNavigationPosition: readingOrderView.getCurrentNavigationPosition,
     setPageTurnAnimation: (pageTurnAnimation: ContextSettings['pageTurnAnimation']) => context.setSettings({ pageTurnAnimation }),
     setPageTurnDirection: (pageTurnDirection: ContextSettings['pageTurnDirection']) => context.setSettings({ pageTurnDirection }),
+    setPageTurnMode: (pageTurnMode: ContextSettings['pageTurnMode']) => context.setSettings({ pageTurnMode }),
     layout,
     load,
     destroy,
@@ -229,7 +232,6 @@ export const createReader = ({ containerElement, ...settings }: {
 const createWrapperElement = (containerElement: HTMLElement) => {
   const element = containerElement.ownerDocument.createElement('div')
   element.id = 'BookView'
-  element.style.setProperty(`overflow`, `hidden`)
   element.style.setProperty(`position`, `relative`)
 
   return element
