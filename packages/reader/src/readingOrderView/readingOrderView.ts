@@ -14,6 +14,7 @@ import { createEventsHelper } from "./eventsHelper"
 import { createSelection } from "../selection"
 import { PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE } from "../constants"
 import { ViewportNavigationEntry } from "./navigator"
+import { isShallowEqual } from "../utils/objects"
 
 const NAMESPACE = 'readingOrderView'
 
@@ -63,6 +64,12 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   let hooks: Hook[] = []
 
   const layout = () => {
+    if (context.getComputedPageTurnMode() === `free`) {
+      element.style.overflow = `scroll`
+    } else {
+      element.style.removeProperty(`overflow`)
+    }
+
     viewportNavigator.layout()
     readingItemManager.layout()
   }
@@ -122,12 +129,13 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    */
   context.$.settings$
     .pipe(
-      map(settings => settings.pageTurnDirection),
-      distinctUntilChanged(),
+      map(settings => ({
+        pageTurnDirection: settings.pageTurnDirection,
+        pageTurnMode: context.getComputedPageTurnMode()
+      })),
+      distinctUntilChanged(isShallowEqual),
       skip(1),
-      tap(() => {
-        readingItemManager.layout()
-      }),
+      tap(layout),
       takeUntil(context.$.destroy$)
     )
     .subscribe()
@@ -406,7 +414,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         }
 
         time()
-        
+
         return adjustPagination$(data.position)
           .pipe(
             takeUntil(readingItemManager.$.layout$)
