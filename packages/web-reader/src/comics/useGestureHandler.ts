@@ -1,8 +1,8 @@
 import * as Hammer from 'hammerjs'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
-import { hasCurrentHighlightState, isMenuOpenState } from '../state'
+import { isMenuOpenState } from '../state'
 
 export const useGestureHandler = (container: HTMLElement | undefined, isUsingFreeMode: boolean = false) => {
   const reader = useReader()
@@ -10,41 +10,18 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
   const movingHasStarted = useRef(false)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
 
-  const onSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
-    /**
-     * @important
-     * On touch device `selectionchange` is being triggered after the onclick event, meaning
-     * we can detect that there is still a current highlight and therefore hide the menu or not open it.
-     * However on desktop (mouse) `selectionchange` is being triggered before the click, meaning we detect
-     * no highlight too soon and therefore can show the menu right after a click of the use to deselect text.
-     * 
-     * @todo
-     * Investigate a proper way to not show the menu right after a deselect for mouse devices.
-     */
-    const hasCurrentHighlight = await snapshot.getPromise(hasCurrentHighlightState)
-
+  const onSingleTap = useCallback(({ srcEvent, target, center }: HammerInput) => {
     if (!reader) return
 
     const width = window.innerWidth
-    const height = window.innerHeight
     const pageTurnMargin = 0.15
 
-    const normalizedEvent = reader?.normalizeEventForViewport(srcEvent) || {}
+    const normalizedEvent = reader.normalizeEventForViewport(srcEvent) || {}
+
     console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
-
-    // if (reader?.getSelection()) return
-
-    if (normalizedEvent?.target) {
-      const target = normalizedEvent.target as HTMLElement
-
-      // don't do anything if it was clicked on link
-      if (target.nodeName === `a` || target.closest('a')) return
-    }
 
     if (`x` in normalizedEvent) {
       const { x = 0 } = normalizedEvent
-
-      // console.log(srcEvent)
 
       if (
         reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)
@@ -52,18 +29,12 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         return
       }
 
-      // console.log('hammer.tap', x, width * pageTurnMargin)
       if (x < width * pageTurnMargin) {
         reader.turnLeft()
-        // console.log('hammer.tap.left')
       } else if (x > width * (1 - pageTurnMargin)) {
         reader.turnRight()
       } else {
-        if (hasCurrentHighlight) {
-          setMenuOpenState(false)
-        } else {
-          setMenuOpenState(val => !val)
-        }
+        setMenuOpenState(val => !val)
       }
     }
   }, [setMenuOpenState, reader])
