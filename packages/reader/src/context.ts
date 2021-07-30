@@ -46,6 +46,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     if (computedPageTurnMode === `free` && newManifest?.renditionLayout !== `pre-paginated`) {
       Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
       computedPageTurnMode = `controlled`
+    } else {
+      computedPageTurnMode = newSettings.pageTurnMode
     }
 
     computedPageTurnAnimationDuration = newSettings.pageTurnAnimationDuration !== undefined
@@ -152,6 +154,9 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     $: {
       $: subject.asObservable(),
       destroy$: destroy$.asObservable(),
+      /**
+       * Will emit once on start
+       */
       settings$: settings$.asObservable(),
       load$: loadSubject$.asObservable()
     },
