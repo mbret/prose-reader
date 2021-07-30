@@ -36,7 +36,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
     }
   }
 
-  const getAdjustedPositionForSpread = ({ x, y }: { x: number, y: number }) => {
+  const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
     const isOffsetNotAtEdge = (x % context.getVisibleAreaRect().width) !== 0
     const correctedX = isOffsetNotAtEdge ? x - context.getPageSize().width : x
 
