@@ -1,5 +1,5 @@
-import { animationFrameScheduler, combineLatest, of, scheduled } from "rxjs";
-import { filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import { animationFrameScheduler, combineLatest, Observable, of, scheduled } from "rxjs";
+import { distinctUntilChanged, filter, map, repeatWhen, switchMap, take, takeUntil, tap } from "rxjs/operators";
 import { Enhancer } from "../createReader";
 import { Reader } from "../reader";
 
@@ -91,40 +91,45 @@ const createMovingSafePan$ = (reader: Reader) => {
     return SHOULD_NOT_LAYOUT
   })
 
-  const viewportFree$ = reader.$.viewportState$.pipe(filter(data => data === `free`))
-  const viewportBusy$ = reader.$.viewportState$.pipe(filter(data => data === `busy`))
-
-  const viewportStateAfterFrames$ = combineLatest([
-    scheduled(of(null), animationFrameScheduler),
-    reader.$.viewportState$,
-  ]).pipe(take(1))
-
-  const lockAfterViewportBusy$ = viewportStateAfterFrames$
-    .pipe(
-      filter(([, state]) => state === `busy`),
-      map(() => {
-        iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
-
-        return `locked`
-      }),
-    )
-
-  const viewportLocked$ = viewportBusy$
-    .pipe(
-      switchMap(() => lockAfterViewportBusy$),
-    )
-
-  const resetAfterViewportFree$ = scheduled(viewportFree$, animationFrameScheduler)
+  const createResetLock$ = <T>(source: Observable<T>) => scheduled(source, animationFrameScheduler)
     .pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
       }),
+    )
+
+  const viewportFree$ = reader.$.viewportState$.pipe(filter(data => data === `free`))
+  const viewportBusy$ = reader.$.viewportState$.pipe(filter(data => data === `busy`))
+
+  const lockAfterViewportBusy$ = scheduled(viewportBusy$, animationFrameScheduler)
+    .pipe(
+      tap(() => {
+        iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
+      }),
+    )
+
+  const resetLockViewportFree$ = createResetLock$(viewportFree$)
+    .pipe(
       take(1)
     )
 
-  return viewportLocked$
+  const pageTurnMode$ = reader.context.$.settings$
     .pipe(
-      switchMap(() => resetAfterViewportFree$),
+      map(() => reader.context.getComputedPageTurnMode()),
+      distinctUntilChanged(),
+    )
+
+  const handleViewportLock$ = pageTurnMode$
+    .pipe(
+      switchMap((mode) => mode === `controlled`
+        ? lockAfterViewportBusy$
+          .pipe(
+            switchMap(() => resetLockViewportFree$),
+          )
+        : createResetLock$(of(undefined))
+      ),
       takeUntil(reader.destroy$)
     )
+
+  return handleViewportLock$
 }
