@@ -1,4 +1,4 @@
-import { EMPTY, interval, merge, Subject, Subscription } from "rxjs"
+import { EMPTY, interval, merge, of, Subject, Subscription } from "rxjs"
 import { catchError, debounce, delay, distinctUntilChanged, filter, map, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
@@ -12,7 +12,6 @@ import { createLocator } from "./locator"
 import { createCfiLocator } from "./cfiLocator"
 import { createEventsHelper } from "./eventsHelper"
 import { createSelection } from "../selection"
-import { PAGINATION_UPDATE_AFTER_VIEWPORT_ADJUSTMENT_DEBOUNCE } from "../constants"
 import { ViewportNavigationEntry } from "./navigator"
 import { isShallowEqual } from "../utils/objects"
 
@@ -141,7 +140,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     .subscribe()
 
   const waitForViewportFree$ = viewportNavigator.$.state$.pipe(filter(v => v === `free`), take(1))
-  const navigationState$ = viewportNavigator.$.navigation$.pipe(filter(({ type }) => type === `start`))
 
   /**
    * This adjustment is used to update the pagination with the most up to date values we can.
@@ -214,7 +212,11 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
               if (!focusedReadingItem) return EMPTY
 
-              return viewportNavigator.adjustNavigation$(focusedReadingItem, {})
+              const adjustNavigation$ = context.getComputedPageTurnMode() === `controlled`
+                ? viewportNavigator.adjustNavigation(focusedReadingItem, {})
+                : of({ adjustedReadingOrderViewPosition: viewportNavigator.getCurrentNavigationPosition() })
+
+              return adjustNavigation$
                 .pipe(
                   /**
                    * We may not have a navigation but because of the layout update we may
@@ -226,7 +228,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
                   })
                 )
             }),
-            takeUntil(navigationState$)
+            takeUntil(viewportNavigator.$.navigation$)
           )
       ),
       takeUntil(context.$.destroy$)
@@ -339,7 +341,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   )
     .subscribe()
 
-  navigationState$
+  viewportNavigator.$.navigation$
     .pipe(
       switchMap((data) => {
         const time = Report.time(`${NAMESPACE} navigation`)
