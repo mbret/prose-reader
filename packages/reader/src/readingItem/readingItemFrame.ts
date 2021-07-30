@@ -23,7 +23,7 @@ type SubjectEvent =
    */
   | { event: 'contentLayoutChange', data: { isFirstLayout: boolean, isReady: boolean } }
 
-export const createReadingItemFrame = ({ item, parent, fetchResource }: {
+export const createReadingItemFrame = ({ item, parent, fetchResource, context }: {
   parent: HTMLElement,
   item: Manifest['readingOrder'][number],
   context: Context,
@@ -151,7 +151,11 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
             if (frameElement && !isCancelled()) {
               frameElement.onload = null
               frameElement.setAttribute('role', 'main')
-              frameElement.setAttribute('tab-index', '0')
+
+              if (context.getComputedPageTurnMode() !== `free`) {
+                // @todo see what's the impact
+                frameElement.setAttribute('tab-index', '0')
+              }
 
               isLoaded = true
 
@@ -194,6 +198,11 @@ export const createReadingItemFrame = ({ item, parent, fetchResource }: {
       if (frameElement) {
         frameElement.style.width = `${size.width}px`
         frameElement.style.height = `${size.height}px`
+
+        if (context.getComputedPageTurnMode() !== `free`) {
+          // @todo see what's the impact
+          frameElement.setAttribute('tab-index', '0')
+        }
       }
     },
     // @todo block access, only public API to manipulate / get information (in order to memo / optimize)
@@ -262,7 +271,7 @@ const createHtmlPageFromResource = async (resourceResponse: Response | string, i
 
   if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some(mime => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
-    
+
     return `
       <html>
         <head>

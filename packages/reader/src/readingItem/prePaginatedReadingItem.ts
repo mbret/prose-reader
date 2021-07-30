@@ -31,7 +31,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       let contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
-      const cssLink = buildDocumentStyle(getDimensions(), viewportDimensions)
+      const cssLink = buildDocumentStyle({ ...getDimensions(), enableTouch: context.getComputedPageTurnMode() !== `free` }, viewportDimensions)
 
       frameElement?.style.setProperty(`visibility`, `visible`)
       frameElement?.style.setProperty(`opacity`, `1`)
@@ -87,10 +87,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   }
 }
 
-const buildDocumentStyle = ({ columnWidth }: {
+const buildDocumentStyle = ({ columnWidth, enableTouch }: {
   columnWidth: number,
   columnHeight: number,
-  horizontalMargin: number
+  horizontalMargin: number,
+  enableTouch: boolean,
 }, viewportDimensions: { height: number, width: number } | undefined) => {
   return `
     body {
@@ -117,10 +118,13 @@ const buildDocumentStyle = ({ columnWidth }: {
     ${
     /*
      * @see https://hammerjs.github.io/touch-action/
+     * It needs to be disabled when using free scroll
      */
     ``}
     html, body {
-      touch-action: none;
+      ${enableTouch ? `
+        touch-action: none
+      ` : ``}
     }
     ${/*
       prevent drag of image instead of touch on firefox
