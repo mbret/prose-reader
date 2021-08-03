@@ -22,18 +22,17 @@ export const Scrubber = () => {
 
   const reverse = manifest?.readingDirection === 'rtl'
 
-  const onAfterChange = useCallback((value: number) => {
+  const onChange = useCallback((value: number) => {
+    setValue(value)
+
     const pageIndex = Math.floor(value)
+
     if (isComic) {
       reader?.goTo(pageIndex)
     } else {
       reader?.goToPageOfCurrentChapter(pageIndex)
     }
-  }, [reader, isComic])
-
-  const onChange = useCallback((value: number) => {
-    setValue(value)
-  }, [setValue])
+  }, [setValue, isComic, reader])
 
   if (totalApproximatePages === 1) {
     return null
@@ -47,7 +46,6 @@ export const Scrubber = () => {
       onChange={onChange}
       reverse={reverse}
       step={step}
-      onAfterChange={onAfterChange}
     />
   );
 }
