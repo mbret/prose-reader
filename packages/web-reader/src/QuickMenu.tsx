@@ -82,8 +82,8 @@ export const QuickMenu = ({ open, isComics }: {
           <div style={{
             display: 'flex'
           }}>
-            {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} />}
-            {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} />}
+            {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />}
+            {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
             <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
           </div>
         </div>
