@@ -4,9 +4,9 @@ import { Pagination } from "../pagination"
 import { ReadingItemManager } from "../readingItemManager"
 import { createLocator } from "./locator"
 import { createNavigator } from "./navigator"
-import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, fromEvent, identity, merge, of, Subject } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, fromEvent, identity, iif, merge, Observable, of, scheduled, Subject } from "rxjs"
 import { ReadingItem } from "../readingItem"
-import { delay, distinctUntilChanged, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { debounceTime, delay, distinctUntilChanged, filter, map, pairwise, share, shareReplay, startWith, switchMap, take, takeUntil, tap, throttleTime } from "rxjs/operators"
 import { createCfiLocator } from "./cfiLocator"
 
 const NAMESPACE = `viewportNavigator`
@@ -27,8 +27,8 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 }) => {
   const navigator = createNavigator({ context, readingItemManager, cfiLocator, locator })
   let hooks: Hook[] = []
-  let ongoingNavigation: undefined | { animate: boolean } = undefined
   let currentViewportPositionMemo: { x: number, y: number } | undefined
+  let lastScrollWasProgrammaticallyTriggered = false
   /**
    * This position correspond to the current navigation position.
    * This is always sync with navigation and adjustment but IS NOT necessarily
@@ -37,10 +37,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * This DOES NOT reflect necessarily what is visible for the user at instant T.
    */
   let currentNavigationPosition: { x: number, y: number, readingItem?: ReadingItem } = { x: 0, y: 0 }
-  const adjustCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }>()
-  const navigateCommandSubject = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean, triggeredBy: `adjust` | `other` }>()
-  const pan$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
-  let isMovingPan = false
+  const moveToSubject$ = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animation: `auto` | `none` }>()
+  const navigateToSubject$ = new Subject<{ x: number, y: number, readingItem?: ReadingItem, animate?: boolean }>()
+  const adjustNavigationSubject$ = new Subject<{ position: { x: number, y: number, readingItem?: ReadingItem }, animate: boolean }>()
+  const panSubject$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
 
   let lastUserExpectedNavigation:
     | undefined
@@ -58,11 +58,16 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  const adjustReadingOffset = Report.measurePerformance(`adjustReadingOffset`, 10, ({ x, y }: { x: number, y: number }) => {
-    if (context.isRTL()) {
-      element.style.transform = `translate3d(${x}px, -${y}px, 0)`
+  const adjustReadingOffset = Report.measurePerformance(`adjustReadingOffset`, 2, ({ x, y }: { x: number, y: number }) => {
+    if (context.getComputedPageTurnMode() === `controlled`) {
+      if (context.isRTL()) {
+        element.style.transform = `translate3d(${x}px, -${y}px, 0)`
+      } else {
+        element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
+      }
     } else {
-      element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
+      lastScrollWasProgrammaticallyTriggered = true
+      element.scrollTo({ left: x, top: y })
     }
 
     currentViewportPositionMemo = undefined
@@ -83,6 +88,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
     if (currentViewportPositionMemo) return currentViewportPositionMemo
+
+    if (context.getComputedPageTurnMode() === `free`) {
+      const newValue = { x: element.scrollLeft, y: element.scrollTop }
+      currentViewportPositionMemo = newValue
+
+      return currentViewportPositionMemo
+    }
 
     const { x, y } = element.getBoundingClientRect()
 
@@ -110,15 +122,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       if (allowReadingItemChange) {
         if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === 'before') {
           lastUserExpectedNavigation = { type: 'navigate-from-next-item' }
-          navigateTo(navigation)
+          navigateToSubject$.next(navigation)
         } else {
           lastUserExpectedNavigation = { type: 'navigate-from-previous-item' }
-          navigateTo(navigation)
+          navigateToSubject$.next(navigation)
         }
       }
     } else {
       lastUserExpectedNavigation = undefined
-      navigateTo(navigation)
+      navigateToSubject$.next(navigation)
     }
   })
 
@@ -141,7 +153,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     if (readingItem) {
       const navigation = navigator.getNavigationForPage(pageIndex, readingItem)
       lastUserExpectedNavigation = undefined
-      navigateTo(navigation)
+      navigateToSubject$.next(navigation)
     }
   }
 
@@ -151,7 +163,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     Report.log(NAMESPACE, `goToCfi`, { cfi, options, navigation })
 
     lastUserExpectedNavigation = { type: 'navigate-from-cfi', data: cfi }
-    navigateTo(navigation, options)
+    navigateToSubject$.next({ ...navigation, ...options })
   }
 
   const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) => {
@@ -161,7 +173,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, options, navigation })
 
-    navigateTo(navigation, options)
+    navigateToSubject$.next({ ...navigation, ...options })
   }
 
   const goTo = (spineIndexOrSpineItemIdOrCfi: number | string) => {
@@ -177,7 +189,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     if (navigation) {
       lastUserExpectedNavigation = { type: 'navigate-from-anchor', data: navigation.url.hash }
-      navigateTo(navigation)
+      navigateToSubject$.next(navigation)
     }
   }
 
@@ -188,6 +200,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * @prototype
    */
   const moveTo = Report.measurePerformance(`${NAMESPACE} moveTo`, 5, (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
+    if (context.getComputedPageTurnMode() === `free`) {
+      Report.warn(`pan control is not available on free page turn mode`)
+      return
+    }
+
     const pageTurnDirection = context.getSettings().pageTurnDirection
     isMovingPan = true
     if (start) {
@@ -469,9 +486,10 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
   const destroy = () => {
     hooks = []
-    navigateCommandSubject.complete()
-    adjustCommandSubject.complete()
-    pan$.complete()
+    adjustNavigationSubject$.complete()
+    navigateToSubject$.complete()
+    moveToSubject$.complete()
+    panSubject$.complete()
   }
 
   return {
@@ -486,7 +504,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     goToUrl,
     goToCfi,
     goToPageOfCurrentChapter,
-    adjustNavigation$,
+    adjustNavigation,
     moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: {

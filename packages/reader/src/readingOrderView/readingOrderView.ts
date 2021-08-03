@@ -198,6 +198,26 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       )
   }
 
+  /**
+   * Use cases covered by this observer
+   * - Layout changed for items
+   *  - viewport is free
+   *    - we adjust the navigation
+   *    - we update the pagination
+   *  - viewport is busy (ongoing navigation, animation, etc)
+   *    - we wait for viewport free
+   *    - we adjust pagination
+   *    - we update pagination
+   * 
+   * Once navigation is adjusted we update the pagination regardless if the
+   * adjustment was needed or not. This is because the layout may have change. In some case, the content
+   * may have changed but by change the viewport position is still the same. It does not mean the actual content
+   * is the same.
+   * 
+   * @important
+   * Adjustment and pagination update are cancelled as soon as another navigation happens. (it will already be handled there).
+   * adjustNavigation$ can trigger a navigation if adjustment is needed which will in term cancel the inner stream.
+   */
   readingItemManager.$.layout$
     .pipe(
       tap(() => {
