@@ -145,6 +145,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    * This adjustment is used to update the pagination with the most up to date values we can.
    * It needs to be ran only when viewport is free because some operation such as looking up cfi can
    * be really heavy.
+   * 
    * The cfi will only be updated if it needs to be:
    * - cfi is a root target
    * - cfi is undefined
@@ -238,11 +239,6 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
               return adjustNavigation$
                 .pipe(
-                  /**
-                   * We may not have a navigation but because of the layout update we may
-                   * have different content displayed so we need to update pagination accordingly.
-                   * If a navigation occurred due to the adjustment then this stream was cancelled.
-                   */
                   switchMap(({ adjustedReadingOrderViewPosition }) => {
                     return adjustPagination$(adjustedReadingOrderViewPosition)
                   })
