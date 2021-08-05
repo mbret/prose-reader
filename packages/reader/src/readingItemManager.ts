@@ -36,6 +36,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   /**
    * @todo
    * make sure to check how many times it is being called and try to reduce number of layouts
+   * it is called eery time an item is being unload (which can adds up quickly for big books)
    */
   const layout = () => {
     let newItemLayoutInformation: typeof itemLayoutInformation = []
@@ -173,19 +174,9 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     orderedReadingItems.forEach((orderedReadingItem, index) => {
       const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
       const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
-      if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload && !orderedReadingItem.isFrameReady() && !orderedReadingItem.isFrameLoading()) {
+      if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedReadingItem.loadContent()
-      }
-    })
-  })
-
-  const unloadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
-    const [leftIndex, rightIndex] = rangeOfIndex
-    const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
-    orderedReadingItems.forEach((orderedReadingItem, index) => {
-      const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
-      const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
-      if (isBeforeFocusedWithPreload || isAfterTailWithPreload) {
+      } else {
         orderedReadingItem.unloadContent()
       }
     })
@@ -313,7 +304,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     layout,
     focus,
     loadContents,
-    unloadContents,
     comparePositionOf,
     getAbsolutePositionOf,
     getReadingItemAtPosition,

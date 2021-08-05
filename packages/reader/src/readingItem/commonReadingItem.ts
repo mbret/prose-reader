@@ -133,7 +133,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   }
 
   const loadContent = () => {
-    readingItemFrame.load().catch(Report.error)
+    if (!readingItemFrame.isLoadingOrLoaded()) {
+      readingItemFrame.load().catch(Report.error)
+    }
   }
 
   const unloadContent = async () => {
@@ -308,8 +310,6 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     getReadingDirection: () => {
       return readingItemFrame.getReadingDirection() || context.getReadingDirection()
     },
-    isFrameReady: () => readingItemFrame.getIsReady(),
-    isFrameLoading: () => readingItemFrame.getIsLoading(),
     manipulateReadingItem: (
       cb: (options: {
         container: HTMLElement,

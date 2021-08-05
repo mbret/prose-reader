@@ -69,7 +69,7 @@ const createReport = (namespace?: string) => ({
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   measurePerformance: <F extends (...args: any[]) => any>(name: string, targetDuration = 10, functionToMeasure: F, { disable }: { disable?: boolean } = {}) => {
-    if (disable) return functionToMeasure
+    if (disable || !window.__OBOKU_READER_DEBUG) return functionToMeasure
     
     return (...args: Parameters<F>): ReturnType<F> => {
       const t0 = performance.now();

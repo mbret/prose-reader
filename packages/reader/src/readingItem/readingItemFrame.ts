@@ -99,9 +99,8 @@ export const createReadingItemFrame = ({ item, parent, fetchResource, context }:
   }
 
   return {
-    getIsReady: () => isReady,
     getIsLoaded: () => isLoaded,
-    getIsLoading: () => loading,
+    isLoadingOrLoaded: () => loading || isReady || isLoaded,
     getViewportDimensions,
     getFrameElement: () => frameElement,
     getHtmlFromResource,
@@ -113,7 +112,7 @@ export const createReadingItemFrame = ({ item, parent, fetchResource, context }:
 
       frameElement = await createFrame(parent)
 
-      const t0 = performance.now();
+      // const t0 = performance.now();
 
       /**
        * Because of the bug with iframe and sw, we should not use srcdoc and sw together for
@@ -145,8 +144,8 @@ export const createReadingItemFrame = ({ item, parent, fetchResource, context }:
           frameElement.setAttribute('sandbox', 'allow-same-origin allow-scripts')
           // frameElement.setAttribute('sandbox', 'allow-scripts')
           frameElement.onload = () => {
-            const t1 = performance.now();
-            Report.logMetric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
+            // const t1 = performance.now();
+            // Report.logMetric({ name: `ReadingItemFrame load:onload`, duration: t1 - t0 });
 
             if (frameElement && !isCancelled()) {
               frameElement.onload = null
