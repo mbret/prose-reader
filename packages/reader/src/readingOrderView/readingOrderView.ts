@@ -283,10 +283,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
               if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
                 console.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
-                readingItemManager.unloadContents([focusedReadingItemIndex, focusedReadingItemIndex])
                 readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
               } else {
-                readingItemManager.unloadContents([begin, end])
                 readingItemManager.loadContents([begin, end])
               }
             }),
@@ -360,7 +358,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   viewportNavigator.$.navigation$
     .pipe(
       switchMap((data) => {
-        const time = Report.time(`${NAMESPACE} navigation`)
+        const time = Report.time(`${NAMESPACE} navigation`, 1)
         const currentReadingItem = readingItemManager.getFocusedReadingItem()
         const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
         let beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined

@@ -133,7 +133,7 @@ export const createPagination = ({ context }: { context: Context }) => {
       Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
 
       subject.next({ event: 'change' })
-    }),
+    }, { disable: true }),
     $: subject.asObservable()
   }
 }

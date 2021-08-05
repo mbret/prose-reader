@@ -82,7 +82,7 @@ export const createResourcesManager = (context: Context) => {
   merge(onLoad$)
     .pipe(
       switchMap(() => {
-        Report.warn(`Cleanup up old cache...`)
+        Report.log(`Cleanup up old cache...`)
 
         return from(openDatabase(`oboku-reader`))
           .pipe(
