@@ -20,7 +20,9 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
 }) => {
   const readingItemNavigator = createReadingItemNavigator({ context })
 
-  const arePositionsDifferent = (a: { x: number, y: number }, b: { x: number, y: number }) => a.x !== b.x || a.y !== b.y
+  const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
+
+  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || a.readingItem !== b.readingItem
 
   const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: ReadingItemPosition) => {
     // @todo use container width instead to increase performances
@@ -313,5 +315,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
     getNavigationForPosition,
     wrapPositionWithSafeEdge,
     isNavigationGoingForwardFrom,
+    areNavigationDifferent,
+    arePositionsDifferent,
   }
 }
