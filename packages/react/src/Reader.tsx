@@ -3,7 +3,7 @@ import { createReader, Enhancer, Manifest, ReaderWithEnhancer } from '@oboku/rea
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
-type Pagination = ReturnType<ReturnType<typeof createReader>['getPaginationInfo']>
+type Pagination = ReturnType<ReturnType<typeof createReader>['pagination']['getInfo']>
 
 type Props<Ext = {}> = {
   manifest?: Manifest,
@@ -15,7 +15,7 @@ type Props<Ext = {}> = {
   enhancer?: Enhancer<Ext>
 }
 
-export function Reader<Ext = {}, >({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
+export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
   const [reader, setReader] = useState<ReaderWithEnhancer<Enhancer<Ext>> | undefined>(undefined)
 
   const onRef = useCallback(ref => {
@@ -33,10 +33,8 @@ export function Reader<Ext = {}, >({ manifest, onReady, onReader, loadOptions, o
       }
     })
 
-    const paginationSubscription = reader?.pagination$.subscribe(data => {
-      if (data.event === 'change') {
-        onPaginationChange && onPaginationChange(reader.getPaginationInfo())
-      }
+    const paginationSubscription = reader?.pagination.$.subscribe(data => {
+      onPaginationChange && onPaginationChange(data)
     })
 
     return () => {

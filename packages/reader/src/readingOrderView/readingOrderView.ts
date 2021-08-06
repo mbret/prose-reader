@@ -1,9 +1,9 @@
-import { EMPTY, interval, merge, of, Subject, Subscription } from "rxjs"
-import { catchError, debounce, delay, distinctUntilChanged, filter, map, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { animationFrameScheduler, EMPTY, interval, merge, of, Subject, Subscription } from "rxjs"
+import { catchError, debounce, debounceTime, delay, distinctUntilChanged, filter, map, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { buildChapterInfoFromReadingItem } from "../navigation"
-import { createViewportNavigator } from "./viewportNavigator"
+import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
 import { Pagination } from "../pagination"
 import { createReadingItem } from "../readingItem"
 import { createLocator as createReadingItemLocator } from "../readingItem/locator"
@@ -195,9 +195,18 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
               }
             })
           }
-        }))
+        }, { disable: true }))
       )
   }
+
+  readingItemManager.$.layout$
+    .pipe(
+      tap(() => {
+        subject.next({ type: `layoutUpdate` })
+      }),
+      takeUntil(context.$.destroy$)
+    )
+    .subscribe()
 
   /**
    * Use cases covered by this observer
@@ -218,11 +227,15 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    * @important
    * Adjustment and pagination update are cancelled as soon as another navigation happens. (it will already be handled there).
    * adjustNavigation$ can trigger a navigation if adjustment is needed which will in term cancel the inner stream.
+   * 
+   * @todo
+   * Right now we react to literally every layout and some time we might not need to update pagination (ex pre-paginated element got unload).
+   * Maybe we should only listen to current items visible only ?
    */
   readingItemManager.$.layout$
     .pipe(
+      debounceTime(10, animationFrameScheduler),
       tap(() => {
-        subject.next({ type: `layoutUpdate` })
         pagination.updateTotalNumberOfPages(readingItemManager.getAll())
       }),
       switchMap(() =>
@@ -251,11 +264,15 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     )
     .subscribe()
 
-  merge(readingItemManager.$.focus$, readingItemManager.$.layout$)
+  merge(
+    readingItemManager.$.focus$,
+    readingItemManager.$.layout$
+  )
     .pipe(
       // we use a timeout because we don't want to trigger new reflow while a current one happens
       // due to focus being changed. loadContents itself is not always async.
-      delay(1),
+      // we can also have fast repeated focus or layout
+      debounceTime(10, animationFrameScheduler),
       switchMap(() => {
         /**
          * Loading and unloading content has two important issues that need to be considered

@@ -1,4 +1,4 @@
-import { Subject, Subscription } from "rxjs";
+import { Subject } from "rxjs";
 import { Report } from "./report";
 import { createContext as createBookContext } from "./context";
 import { createPagination } from "./pagination";
@@ -44,7 +44,6 @@ export const createReader = ({ containerElement, ...settings }: {
 } & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>) => {
   const subject = new Subject<Event>()
   const destroy$ = new Subject<void>()
-  const paginationSubject = new Subject<{ event: 'change' }>()
   const context = createBookContext(settings)
   const pagination = createPagination({ context })
   const element = createWrapperElement(containerElement)
@@ -56,7 +55,6 @@ export const createReader = ({ containerElement, ...settings }: {
     context,
     pagination,
   })
-  let paginationSubscription: Subscription | undefined
 
   containerElement.appendChild(element)
   element.appendChild(iframeEventBridgeElement)
@@ -120,9 +118,6 @@ export const createReader = ({ containerElement, ...settings }: {
       readingOrderView.viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
     }
 
-    paginationSubscription?.unsubscribe()
-    paginationSubscription = pagination.$.subscribe(paginationSubject)
-
     subject.next({ type: 'ready' })
   }
 
@@ -174,7 +169,6 @@ export const createReader = ({ containerElement, ...settings }: {
   const destroy = () => {
     containerManipulationOnDestroyCbList.forEach(cb => cb())
     containerManipulationOnDestroyCbList = []
-    paginationSubscription?.unsubscribe()
     context.destroy()
     readingOrderView?.destroy()
     element.remove()
@@ -184,7 +178,7 @@ export const createReader = ({ containerElement, ...settings }: {
   }
 
   const reader = {
-    pagination,
+    innerPagination: pagination,
     context,
     registerHook,
     manipulateReadingItems,
@@ -213,7 +207,6 @@ export const createReader = ({ containerElement, ...settings }: {
     layout,
     load,
     destroy,
-    pagination$: paginationSubject.asObservable(),
     $: {
       $: subject.asObservable(),
       viewportState$: readingOrderView.$.viewportState$,

@@ -46,7 +46,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     }
 
     const createBookmarkFromCurrentPagination = () => {
-      const cfi = reader.pagination.getBeginInfo().cfi
+      const cfi = reader.innerPagination.getBeginInfo().cfi
 
       if (cfi) {
         return getCfiInformation(cfi)
@@ -58,7 +58,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     const exportBookmark = (bookmark: Bookmark) => ({ cfi: bookmark.cfi })
 
     const redrawBookmarks = () => {
-      const { cfi: currentCfi, pageIndex: currentPageIndex, readingItemIndex: currentReadingItemIndex } = reader.pagination.getBeginInfo()
+      const { cfi: currentCfi, pageIndex: currentPageIndex, readingItemIndex: currentReadingItemIndex } = reader.innerPagination.getBeginInfo()
 
       if (currentPageIndex === undefined || currentReadingItemIndex === undefined) {
         destroyBookmarkElement()
@@ -118,7 +118,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const removeBookmarksOnCurrentPage = () => {
       // @todo handle spread
-      const beginReadingItem = reader.pagination.getBeginInfo().readingItemIndex
+      const beginReadingItem = reader.innerPagination.getBeginInfo().readingItemIndex
       if (beginReadingItem !== undefined) {
         bookmarks = bookmarks.filter(bookmark => bookmark.readingItemIndex !== beginReadingItem)
       }
@@ -206,7 +206,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     // We only need to redraw bookmarks when the pagination
     // change in theory. Any time the layout change, the pagination
     // will be updated as well and therefore trigger this redraw
-    const paginationSubscription = reader.pagination$
+    const paginationSubscription = reader.innerPagination.$
       .pipe(
         filter(event => event.event === `change`),
         tap(redrawBookmarks)

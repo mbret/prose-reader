@@ -51,7 +51,7 @@ function createReader<Ext>(
 const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
   const {
     context,
-    pagination,
+    innerPagination,
     manipulateContainer,
     manipulateReadingItems,
     getFocusedReadingItemIndex,
