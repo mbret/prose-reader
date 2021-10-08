@@ -17,7 +17,7 @@ export const useManifest = (epubUrl: string) => {
           })
           const bookManifest: Manifest = await response.json()
           setManifest(bookManifest)
-        } catch (e) {
+        } catch (e: any) {
           setManifest(undefined)
           setError(e as any)
         }

@@ -40,8 +40,8 @@ worker.addEventListener('fetch', (event: any) => {
 
     const { epubUrl, epubFileName } = extractInfoFromEvent(event)
 
-    console.warn(epubUrl, epubFileName)
-    
+    // console.warn(epubUrl, epubFileName)
+
     event.respondWith((async () => {
       try {
         const archive = await loadEpub(epubUrl)
@@ -80,7 +80,7 @@ worker.addEventListener('fetch', (event: any) => {
         const resourcePath = getResourcePath(event)
 
         return await getResourceFromArchive(archive, resourcePath)
-      } catch (e) {
+      } catch (e: any) {
         console.error(e)
 
         return new Response((e as any).message, { status: 500 })
