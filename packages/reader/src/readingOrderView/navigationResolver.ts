@@ -2,8 +2,8 @@ import { Report } from "../report"
 import { Context } from "../context"
 import { ReadingItemManager } from "../readingItemManager"
 import { ReadingItem } from "../readingItem"
-import { createNavigator as createReadingItemNavigator } from "../readingItem/navigator"
-import { createLocator } from "./locator"
+import { createNavigationResolver as createReadingItemNavigator } from "../readingItem/navigationResolver"
+import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 
 export type ViewportNavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
@@ -12,17 +12,17 @@ type ReadingItemPosition = { x: number, y: number }
 
 const NAMESPACE = `readingOrderViewNavigator`
 
-export const createNavigator = ({ context, readingItemManager, cfiLocator, locator }: {
+export const createNavigationResolver = ({ context, readingItemManager, cfiLocator, locator }: {
   context: Context,
   readingItemManager: ReadingItemManager,
   cfiLocator: ReturnType<typeof createCfiLocator>,
-  locator: ReturnType<typeof createLocator>
+  locator: ReturnType<typeof createLocationResolver>
 }) => {
   const readingItemNavigator = createReadingItemNavigator({ context })
 
   const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
 
-  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || a.readingItem !== b.readingItem
+  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || ((!!a.readingItem && !!b.readingItem) && (a.readingItem !== b.readingItem))
 
   const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: ReadingItemPosition) => {
     // @todo use container width instead to increase performances
@@ -61,11 +61,16 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForPage = (pageIndex: number, readingItem: ReadingItem): ViewportNavigationEntry => {
+  const getNavigationForPage = (pageIndex: number, readingItem?: ReadingItem): ViewportNavigationEntry => {
+    // lookup for entire book
+    // This is reliable for pre-paginated, do not use it for reflowable book
+    if (!readingItem) {
+      const xPositionForPageIndex = pageIndex * context.getPageSize().width
+      return getNavigationForPosition({ x: xPositionForPageIndex, y: 0 })
+    }
+
     const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
     const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
-
-    // console.warn({ readingItemNavigation, readingOffset })
 
     return getAdjustedPositionForSpread(readingOffset)
   }
@@ -89,7 +94,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
   }
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const pageTurnDirection = context.getSettings().pageTurnDirection
+    const pageTurnDirection = context.getSettings().computedPageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
@@ -123,7 +128,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
   }
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const pageTurnDirection = context.getSettings().pageTurnDirection
+    const pageTurnDirection = context.getSettings().computedPageTurnDirection
     const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
@@ -194,7 +199,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (context.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -240,7 +245,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (context.getSettings().pageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (context.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -293,8 +298,28 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
     return { x: 0, y: 0 }
   }
 
+  /**
+   * Useful when you want to get a navigation from a scroll position. It uses trigger points so it will
+   * try to get the most visible / relevant element as navigation reference
+   */
+  const getMostPredominantNavigationForPosition = (viewportPosition: ViewportPosition) => {
+    const pageTurnDirection = context.getSettings().computedPageTurnDirection
+    // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
+    // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
+    // const triggerPercentage = movingForward ? 0.7 : 0.3
+    const triggerPercentage = 0.5
+    const triggerXPosition = pageTurnDirection === `horizontal`
+      ? viewportPosition.x + (context.getVisibleAreaRect().width * triggerPercentage)
+      : 0
+    const triggerYPosition = pageTurnDirection === `horizontal`
+      ? 0
+      : viewportPosition.y + (context.getVisibleAreaRect().height * triggerPercentage)
+    const midScreenPositionSafePosition = wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
+    return getNavigationForPosition(midScreenPositionSafePosition)
+  }
+
   const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
-    const pageTurnDirection = context.getSettings().pageTurnDirection
+    const pageTurnDirection = context.getSettings().computedPageTurnDirection
 
     if (pageTurnDirection === `vertical`) {
       return to.y > from.y
@@ -313,6 +338,7 @@ export const createNavigator = ({ context, readingItemManager, cfiLocator, locat
     getNavigationForUrl,
     getNavigationForAnchor,
     getNavigationForPosition,
+    getMostPredominantNavigationForPosition,
     wrapPositionWithSafeEdge,
     isNavigationGoingForwardFrom,
     areNavigationDifferent,

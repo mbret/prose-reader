@@ -1,12 +1,12 @@
 import { ReadingItem } from ".";
 import { Context } from "../context";
 import { getNumberOfPages } from "../pagination";
-import { createLocator } from "./locator";
+import { createLocationResolver } from "./locationResolver";
 
 type ReadingItemPosition = { x: number, y: number }
 
-export const createNavigator = ({ context }: { context: Context }) => {
-  const readingItemLocator = createLocator({ context })
+export const createNavigationResolver = ({ context }: { context: Context }) => {
+  const readingItemLocator = createLocationResolver({ context })
 
   const getNavigationForLeftPage = (position: ReadingItemPosition, readingItem: ReadingItem): ReadingItemPosition => {
     let nextPotentialPosition = {

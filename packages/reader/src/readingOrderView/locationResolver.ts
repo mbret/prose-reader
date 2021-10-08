@@ -1,16 +1,16 @@
 import { Context } from "../context"
 import { ReadingItem } from "../readingItem"
-import { createLocator as createReadingItemLocator } from "../readingItem/locator"
+import { createLocationResolver as createReadingItemLocator } from "../readingItem/locationResolver"
 import { ReadingItemManager } from "../readingItemManager"
 import { Report } from "../report"
 
 type ReadingOrderViewPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
 
-export const createLocator = ({ readingItemManager, context, readingItemLocator }: {
+export const createLocationResolver = ({ readingItemManager, context, readingItemLocator }: {
   readingItemManager: ReadingItemManager,
   context: Context,
-  readingItemLocator: ReturnType<typeof createReadingItemLocator> 
+  readingItemLocator: ReturnType<typeof createReadingItemLocator>
 }) => {
   const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
     const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
@@ -134,7 +134,8 @@ export const createLocator = ({ readingItemManager, context, readingItemLocator 
       getReadingItemFromPosition(endPosition) || readingItemManager.getFocusedReadingItem()
     ) ?? beginItemIndex
 
-    const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort()
+    const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort((a, b) => a - b)
+    // const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort()
 
     return {
       begin: beginItemIndex,

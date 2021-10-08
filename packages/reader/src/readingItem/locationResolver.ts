@@ -5,7 +5,7 @@ import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 
 type ReadingItemPosition = { x: number, y: number }
 
-export const createLocator = ({ context }: {
+export const createLocationResolver = ({ context }: {
   context: Context,
 }) => {
   const getReadingItemPositionFromPageIndex = (pageIndex: number, readingItem: ReadingItem): ReadingItemPosition => {
