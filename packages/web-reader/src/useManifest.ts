@@ -19,7 +19,7 @@ export const useManifest = (epubUrl: string) => {
           setManifest(bookManifest)
         } catch (e) {
           setManifest(undefined)
-          setError(e)
+          setError(e as any)
         }
       })()
   }, [epubUrl])

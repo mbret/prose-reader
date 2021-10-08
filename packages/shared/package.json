@@ -4,10 +4,11 @@
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
-    "lint": "echo"
+    "lint": "echo",
+    "start": "echo"
   },
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^4.3.4"
+    "typescript": "^4.4.3"
   }
 }

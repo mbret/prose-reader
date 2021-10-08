@@ -83,7 +83,7 @@ worker.addEventListener('fetch', (event: any) => {
       } catch (e) {
         console.error(e)
 
-        return new Response(e.message, { status: 500 })
+        return new Response((e as any).message, { status: 500 })
       }
     })())
   }
