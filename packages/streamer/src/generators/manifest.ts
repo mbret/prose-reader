@@ -1,7 +1,7 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
 import { getArchiveOpfInfo, Archive } from '../archives'
-import type { Manifest } from '@oboku/shared'
+import type { Manifest } from '@oboku/reader/src/types/Manifest'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
 
@@ -26,12 +26,15 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const metadataElm = opfXmlDoc.childNamed(`metadata`)
   const manifestElm = opfXmlDoc.childNamed(`manifest`)
   const spineElm = opfXmlDoc.childNamed(`spine`)
+  const guideElm = opfXmlDoc.childNamed(`guide`)
   const titleElm = metadataElm?.childNamed(`dc:title`)
   const metaElmChildren = metadataElm?.childrenNamed(`meta`) || []
   const metaElmWithRendition = metaElmChildren.find(meta => meta.attr.property === `rendition:layout`)
+  const metaElmWithRenditionFlow = metaElmChildren.find(meta => meta.attr.property === `rendition:flow`)
   const metaElmWithRenditionSpread = metaElmChildren.find(meta => meta.attr.property === `rendition:spread`)
 
-  const defaultRenditionLayout = metaElmWithRendition?.val as `reflowable` | `pre-paginated` | undefined
+  const publisherRenditionLayout = metaElmWithRendition?.val as `reflowable` | `pre-paginated` | undefined
+  const publisherRenditionFlow = metaElmWithRenditionFlow?.val as `scrolled-continuous` | `scrolled-doc` | `paginated` | `auto` | undefined
   const renditionSpread = metaElmWithRenditionSpread?.val as `auto` | undefined
   const title = titleElm?.val || ``
   const pageProgressionDirection = spineElm?.attr[`page-progression-direction`] as `ltr` | `rtl` | undefined
@@ -52,7 +55,8 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
     nav: {
       toc
     },
-    renditionLayout: defaultRenditionLayout || koboInformation.renditionLayout || `reflowable`,
+    renditionLayout: publisherRenditionLayout || koboInformation.renditionLayout || `reflowable`,
+    renditionFlow: publisherRenditionFlow || `auto`,
     renditionSpread,
     title,
     readingDirection: pageProgressionDirection || `ltr`,
@@ -67,16 +71,24 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
         path: opfBasePath ? `${opfBasePath}/${manifestItem?.attr.href}` : `${manifestItem?.attr.href}`,
         // href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
         href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr.href}` : `${baseUrl}/${manifestItem?.attr.href}`,
-        renditionLayout: defaultRenditionLayout || `reflowable`,
+        renditionLayout: publisherRenditionLayout || `reflowable`,
         ...properties.find(property => property === `rendition:layout-reflowable`) && {
           renditionLayout: `reflowable`
         },
         progressionWeight: itemSize / totalSize,
         pageSpreadLeft: properties.some(property => property === `page-spread-left`) || undefined,
         pageSpreadRight: properties.some(property => property === `page-spread-right`) || undefined,
-        size: itemSize
+        // size: itemSize
+        mediaType: manifestItem?.attr[`media-type`]
       }
-    }) || []
+    }) || [],
+    guide: guideElm?.childrenNamed(`reference`).map(elm => {
+      return {
+        href: elm.attr.href || ``,
+        title: elm.attr.title || ``,
+        type: elm.attr.type as NonNullable<Manifest[`guide`]>[number][`type`]
+      }
+    })
   }
 }
 

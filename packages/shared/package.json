@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "lint": "echo",
-    "start": "echo"
+    "start": "echo",
+    "test": "echo"
   },
   "devDependencies": {
     "typescript": "^4.4.3"
