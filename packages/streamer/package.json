@@ -14,13 +14,13 @@
     "test": "jest"
   },
   "dependencies": {
+    "@oboku/shared": "^0.0.2",
     "@types/xmldoc": "^1.1.5",
     "buffer": "6.0.3",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.15.0",
-    "@oboku/shared": "^0.0.2",
     "@types/jest": "^27.0.2",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
