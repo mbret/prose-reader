@@ -20,12 +20,19 @@ export const QuickMenu = ({ open, isComics }: {
   const setIsTocOpenState = useSetRecoilState(isTocOpenState)
   const numberOfSpineItems = manifest?.readingOrder.length ?? 0
   const pagination = useRecoilValue(paginationState)
-  const [pageIndex, endPageIndex] = [(pagination?.begin.pageIndexInChapter || 0) + 1, (pagination?.end.pageIndexInChapter || 0) + 1].sort()
+  const [pageIndex, endPageIndex] = [
+    (pagination?.begin.pageIndexInChapter || 0) + 1,
+    (pagination?.end.pageIndexInChapter || 0) + 1
+  ].sort((a, b) => a - b)
   const beginAndEndAreDifferent =
     (pagination?.begin.pageIndexInChapter !== pagination?.end.pageIndexInChapter)
     || (pagination?.begin.readingItemIndex !== pagination?.end.readingItemIndex)
+  const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
   const isComic = useRecoilValue(isComicState)
-  const currentReadingItemIndex = pagination?.begin.readingItemIndex || 0
+  // theses are mostly webtoon so we don't need pages, it would be weird
+  // const shouldHidePages = manifest?.renditionLayout === `reflowable` && manifest.renditionFlow === `scrolled-continuous`
+  const shouldHidePages = false
+  const currentBeginReadingItemIndex = pagination?.begin.readingItemIndex || 0
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [pagination?.begin.absolutePageIndex, pagination?.end.absolutePageIndex].sort()
   const toggleSettings = useToggleSettings()
 
@@ -35,6 +42,8 @@ export const QuickMenu = ({ open, isComics }: {
     }
     return chapterInfo?.title || ''
   }
+
+  const chapterTitle = buildTitleChain(pagination?.begin.chapterInfo)
 
   const onSearchClick = () => {
     setIsSearchOpen(true)
@@ -105,13 +114,17 @@ export const QuickMenu = ({ open, isComics }: {
             paddingLeft: 10
           }}>
             {(
-              (manifest?.readingDirection === 'ltr' && currentReadingItemIndex > 0)
+              (manifest?.readingDirection === 'ltr' && currentBeginReadingItemIndex > 0)
               || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
             ) ? (
               <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={_ => reader?.goToLeftSpineItem()} />
             )
               : (
-                <IconButton icon={<ArrowBackIcon />} aria-label="back" disabled />
+                <IconButton icon={<ArrowBackIcon />} aria-label="back" disabled style={{
+                  ...hasOnlyOnePage && {
+                    opacity: 1
+                  }
+                }}/>
               )}
           </div>
           <div style={{
@@ -131,9 +144,9 @@ export const QuickMenu = ({ open, isComics }: {
               textOverflow: 'ellipsis',
               overflow: 'hidden',
             }}>
-              {`Chapter ${buildTitleChain(pagination?.begin.chapterInfo)}`}
+              {chapterTitle ? `Chapter ${chapterTitle}` : ``}
             </div>
-            {!isComic && (
+            {!isComic && !hasOnlyOnePage && (
               <div style={{
                 color: 'white'
               }}>
@@ -145,7 +158,7 @@ export const QuickMenu = ({ open, isComics }: {
                 )}
               </div>
             )}
-            {isComic && (
+            {isComic && !hasOnlyOnePage && (
               <div style={{
                 color: 'white'
               }}>
@@ -167,12 +180,16 @@ export const QuickMenu = ({ open, isComics }: {
             paddingRight: 10
           }}>
             {(
-              (manifest?.readingDirection === 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
-              || (manifest?.readingDirection !== 'ltr' && currentReadingItemIndex > 0)
+              (manifest?.readingDirection === 'ltr' && (pagination?.end.readingItemIndex || 0) < numberOfSpineItems - 1)
+              || (manifest?.readingDirection !== 'ltr' && currentBeginReadingItemIndex > 0)
             ) ? (
               <IconButton icon={<ArrowForwardIcon />} onClick={_ => reader?.goToRightSpineItem()} aria-label="forward" />
             ) : (
-              <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled />
+              <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled style={{
+                ...hasOnlyOnePage && {
+                  opacity: 1
+                }
+              }}/>
             )}
           </div>
         </div>

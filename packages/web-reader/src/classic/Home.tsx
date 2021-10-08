@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useHistory } from 'react-router'
 import { Link } from 'react-router-dom'
+import { Button as ChakraButton, Text } from "@chakra-ui/react"
+import { ArrowBackIcon } from '@chakra-ui/icons'
 
 export const Home = () => {
   const [customUrl, setCustomUrl] = useState('')
@@ -11,6 +13,13 @@ export const Home = () => {
       height: `100%`,
       overflow: `scroll`
     }}>
+      <div style={{
+        padding: 10
+      }}>
+        <Link to={`/`} style={{ marginBottom: 20 }}>
+          <ChakraButton leftIcon={<ArrowBackIcon />}>Back to home</ChakraButton>
+        </Link>
+      </div>
       <div style={{
         width: `100%`,
         margin: `auto`,

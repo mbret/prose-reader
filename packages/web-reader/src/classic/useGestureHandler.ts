@@ -29,7 +29,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     const pageTurnMargin = 0.15
 
     const normalizedEvent = reader?.normalizeEventForViewport(srcEvent)
-    console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
+    // console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
     // if (reader?.getSelection()) return
 
@@ -43,7 +43,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     if (`x` in normalizedEvent) {
       const { x = 0 } = normalizedEvent
 
-      console.log(srcEvent)
+      // console.log(srcEvent)
 
       if (
         reader.bookmarks.isClickEventInsideBookmarkArea(normalizedEvent)
@@ -52,10 +52,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         return
       }
 
-      console.log('hammer.tap', x, width * pageTurnMargin)
+      // console.log('hammer.tap', x, width * pageTurnMargin)
       if (x < width * pageTurnMargin) {
         reader.turnLeft()
-        console.log('hammer.tap.left')
+        // console.log('hammer.tap.left')
       } else if (x > width * (1 - pageTurnMargin)) {
         reader.turnRight()
       } else {
@@ -109,7 +109,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
       reader?.zoom.exit()
 
-      console.log(target?.nodeName)
+      // console.log(target?.nodeName)
 
       if (target?.nodeName.toLowerCase() === `img`) {
         reader?.zoom.enter(target as HTMLImageElement)
@@ -194,7 +194,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       // if (!movingStarted && ev.isFinal && !reader?.isSelecting()) {
       if (hasHadPanStart && ev.isFinal && !reader?.isSelecting() && !reader?.zoom.isEnabled()) {
         const velocity = ev.velocityX
-        console.log(`hammer.onPanMove.velocity`, velocity)
+        // console.log(`hammer.onPanMove.velocity`, velocity)
         if (velocity < -0.5) {
           reader?.turnRight()
         }

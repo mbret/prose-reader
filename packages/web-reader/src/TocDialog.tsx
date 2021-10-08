@@ -18,8 +18,6 @@ export const TocDialog = ({ onExit }: { onExit: () => void }) => {
     currentSubChapter = currentSubChapter?.subChapter
   }
 
-  console.log(toc, pagination, currentSubChapter)
-
   const buildTocForItem = (tocItem: typeof toc[number], index: number, lvl: number) => (
     <React.Fragment key={index}>
       <ListItem

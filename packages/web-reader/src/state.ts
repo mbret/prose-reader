@@ -39,7 +39,16 @@ export const isComicState = selector({
   get: ({ get }) => {
     const manifest = get(manifestState)
 
-    return manifest?.renditionLayout === 'pre-paginated' || manifest?.readingOrder.every(item => item.renditionLayout === 'pre-paginated')
+    return (
+      manifest?.renditionLayout === 'pre-paginated'
+      || manifest?.readingOrder.every(item => item.renditionLayout === 'pre-paginated')
+      // webtoon
+      || (
+        manifest?.renditionFlow === `scrolled-continuous`
+        && manifest.renditionLayout === `reflowable`
+        && manifest?.readingOrder.every(item => item.mediaType?.startsWith(`image/`))
+      )
+    )
   }
 })
 

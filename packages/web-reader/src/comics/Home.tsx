@@ -2,6 +2,8 @@ import { Box, Image, Badge, Flex, Spacer } from '@chakra-ui/react'
 import { StarIcon } from '@chakra-ui/icons'
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { Button as ChakraButton, Text } from "@chakra-ui/react"
+import { ArrowBackIcon } from '@chakra-ui/icons'
 
 export const Home = () => {
   const property = [
@@ -37,14 +39,46 @@ export const Home = () => {
       formattedPrice: "$1,900.00",
       reviewCount: 34,
       rating: 4,
+    },
+    {
+      imageUrl: `${window.location.origin}/haruko-cover.jpg`,
+      imageAlt: "",
+      link: `/comics/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon-one-page.epub`)}?free&vertical`,
+      beds: 3,
+      baths: 2,
+      title: "Webtoon (one big image), vertical free scrolling",
+      formattedPrice: "$1,900.00",
+      reviewCount: 34,
+      rating: 4,
+    },
+    {
+      imageUrl: `${window.location.origin}/haruko-cover.jpg`,
+      imageAlt: "",
+      link: `/comics/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon.epub`)}?free&vertical`,
+      beds: 3,
+      baths: 2,
+      title: "Webtoon, vertical free scrolling",
+      formattedPrice: "$1,900.00",
+      reviewCount: 34,
+      rating: 4,
     }
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 20 }}>
-      {property.map((item, i) => (
-        <MangaCard {...item} key={i} />
-      ))}
+    <div>
+      <div style={{
+        padding: 10
+      }}>
+        <Link to={`/`} style={{ marginBottom: 20 }}>
+          <ChakraButton leftIcon={<ArrowBackIcon />}>Back to home</ChakraButton>
+        </Link>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 20 }}>
+
+        {property.map((item, i) => (
+          <MangaCard {...item} key={i} />
+        ))}
+      </div>
     </div>
   )
 }

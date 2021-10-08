@@ -11,22 +11,20 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
   const setCurrentSelection = useSetRecoilState(currentHighlight)
 
   useEffect(() => {
-    const readerSubscription = reader?.$.$
+    const readerSubscription = reader?.$.selection$
       .pipe(
-        tap(event => {
-          if (event.type === `onSelectionChange`) {
-            if (event.data?.toString() !== ``) {
-              const anchorCfi = event.data?.getAnchorCfi()
-              const focusCfi = event.data?.getFocusCfi()
+        tap(data => {
+          if (data?.toString() !== ``) {
+            const anchorCfi = data?.getAnchorCfi()
+            const focusCfi = data?.getFocusCfi()
 
-              if (anchorCfi && focusCfi) {
-                const highlight = { anchorCfi, focusCfi, text: event.data?.toString() }
-                setCurrentSelection(highlight)
-                setMenuOpenState(false)
-              }
-            } else {
-              setCurrentSelection(undefined)
+            if (anchorCfi && focusCfi) {
+              const highlight = { anchorCfi, focusCfi, text: data?.toString() }
+              setCurrentSelection(highlight)
+              setMenuOpenState(false)
             }
+          } else {
+            setCurrentSelection(undefined)
           }
         })
       )
@@ -38,7 +36,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
   }, [reader, setMenuOpenState])
 
   useEffect(() => {
-    const subscription = reader?.highlights$.pipe(
+    const subscription = reader?.highlights.$.pipe(
       tap(event => {
         if (event.type === `onHighlightClick`) {
           setCurrentSelection(event.data)

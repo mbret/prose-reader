@@ -10,10 +10,12 @@ export const Scrubber = () => {
   const isComic = useRecoilValue(isComicState)
   const pagination = useRecoilValue(paginationState)
   const manifest = useRecoilValue(manifestState)
-  const currentPage = isComic ? pagination?.end.absolutePageIndex : pagination?.end.pageIndexInChapter
-  const totalApproximatePages = isComic ? pagination?.numberOfTotalPages : (pagination?.begin.numberOfPagesInChapter || 1)
+  const isUsingSpread = pagination?.isUsingSpread
+  const currentRealPage = isComic ? pagination?.end.absolutePageIndex : pagination?.end.pageIndexInChapter
+  const currentPage = isUsingSpread ? Math.floor((currentRealPage || 0) / 2) : currentRealPage
+  const totalApproximatePages = (isComic ? pagination?.numberOfTotalPages : (pagination?.begin.numberOfPagesInChapter || 1)) || 0
   const [value, setValue] = useState(currentPage || 0)
-  const max = (totalApproximatePages || 0) - 1
+  const max = (isUsingSpread ? (totalApproximatePages) / 2 : (totalApproximatePages)) - 1
   const step = 1
 
   useEffect(() => {
@@ -25,16 +27,16 @@ export const Scrubber = () => {
   const onChange = useCallback((value: number) => {
     setValue(value)
 
-    const pageIndex = Math.floor(value)
+    const pageIndex = isUsingSpread ? Math.floor(value) * 2 : Math.floor(value)
 
     if (isComic) {
-      reader?.goTo(pageIndex)
+      reader?.goToSpineItem(pageIndex)
     } else {
       reader?.goToPageOfCurrentChapter(pageIndex)
     }
-  }, [setValue, isComic, reader])
+  }, [setValue, reader, isUsingSpread])
 
-  if (totalApproximatePages === 1) {
+  if (totalApproximatePages === 1 || (isUsingSpread && totalApproximatePages === 2)) {
     return null
   }
 

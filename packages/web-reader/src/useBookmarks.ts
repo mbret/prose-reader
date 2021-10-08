@@ -8,7 +8,7 @@ export const useBookmarks = (reader: ReaderInstance | undefined) => {
 
   // synchronize the bookmarks with the local storage
   useEffect(() => {
-    const bookmarksSubscription = reader?.bookmarks$
+    const bookmarksSubscription = reader?.bookmarks.$
       .pipe(
         filter(event => event.type === `update`),
         tap(event => {

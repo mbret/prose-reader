@@ -23,7 +23,7 @@ import { TocDialog } from '../TocDialog';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
-export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
+export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
   const { url } = useParams<{ url: string }>();
   const settings = useRecoilValue(settingsState)
   const reader = useReader()
@@ -66,7 +66,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       reader?.layout()
     })
 
-    const linksSubscription = reader?.links$.subscribe((data) => {
+    const linksSubscription = reader?.$.links$.subscribe((data) => {
       if (data.event === 'linkClicked') {
         if (!data.data.href) return
         const url = new URL(data.data.href)
@@ -94,14 +94,19 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: manifest.renditionLayout === 'pre-paginated' ? 2 : 0
+        numberOfAdjacentSpineItemToPreLoad: 0
       })
     }
   }, [manifest, setReaderLoadOptions])
 
   useEffect(() => {
-    return () => reader?.destroy()
-  }, [reader])
+    return () => {
+      reader?.destroy()
+      if (reader) {
+        onReader(undefined)
+      }
+    }
+  }, [reader, onReader])
 
   useResetStateOnUnMount()
 

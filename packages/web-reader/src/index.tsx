@@ -1,4 +1,6 @@
-window.__OBOKU_READER_DEBUG = true
+if (process.env.NODE_ENV === `development`) {
+  window.__OBOKU_READER_DEBUG = true
+}
 
 import ReactDOM from "react-dom";
 import React from 'react';

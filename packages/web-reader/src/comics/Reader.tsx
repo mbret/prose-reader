@@ -16,11 +16,10 @@ import { useParams } from 'react-router';
 import { BookError } from '../BookError';
 import { getEpubUrlFromLocation } from '../serviceWorker/utils';
 import { HighlightMenu } from '../HighlightMenu';
-import { useSearch } from '../useSearch';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
-export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => void }) => {
+export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
   const { url } = useParams<{ url: string }>();
   const query = new URLSearchParams(window.location.search)
   const isUsingVerticalScrolling = query.has('vertical')
@@ -32,7 +31,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
-  const searchEnhancer = useSearch(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
@@ -45,7 +43,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
   useGestureHandler(container, isUsingFreeScroll)
 
   // compose final enhancer
-  const readerEnhancer = bookmarksEnhancer && searchEnhancer ? composeEnhancer(bookmarksEnhancer, searchEnhancer) : undefined
+  const readerEnhancer = bookmarksEnhancer ? composeEnhancer(bookmarksEnhancer) : undefined
 
   const onPaginationChange: ComponentProps<typeof ReactReader>['onPaginationChange'] = (info) => {
     localStorage.setItem(`cfi`, info?.begin.cfi || ``)
@@ -61,7 +59,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
       reader?.layout()
     })
 
-    const linksSubscription = reader?.links$.subscribe((data) => {
+    const linksSubscription = reader?.$.links$.subscribe((data) => {
       if (data.event === 'linkClicked') {
         if (!data.data.href) return
         const url = new URL(data.data.href)
@@ -89,14 +87,14 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance) => v
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: 2
+        numberOfAdjacentSpineItemToPreLoad: 0
       })
     }
   }, [manifest, setReaderLoadOptions])
 
-  useEffect(() => {
-    return () => reader?.destroy()
-  }, [reader])
+  useEffect(() => () => {
+    onReader(undefined)
+  }, [onReader])
 
   useResetStateOnUnMount()
 
