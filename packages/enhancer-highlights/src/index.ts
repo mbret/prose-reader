@@ -35,8 +35,8 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
     add: (highlight: UserHighlight) => void,
     remove: (id: number) => void,
     isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean,
+    $: Observable<SubjectType>
   },
-  highlights$: Observable<SubjectType>
 }> =>
   (next) => (options) => {
     const reader = next(options)
@@ -153,9 +153,8 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       return false
     }
 
-    const initialHighlights$ = reader.$.$
+    const initialHighlights$ = reader.$.ready$
       .pipe(
-        filter(event => event.type === `ready`),
         tap(() => {
           initialHighlights.forEach(_add)
 
@@ -165,9 +164,8 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         })
       )
 
-    const refreshHighlights$ = reader.$.$
+    const refreshHighlights$ = reader.$.layout$
       .pipe(
-        filter(event => event.type === `layoutUpdate`),
         tap(() => {
           reader.manipulateReadingItems(({ overlayElement, index }) => {
             drawHighlightsForItem(overlayElement, index)
@@ -178,7 +176,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       )
 
     merge(initialHighlights$, refreshHighlights$)
-      .pipe(takeUntil(reader.destroy$))
+      .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
     return {
@@ -187,7 +185,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         add,
         remove,
         isHighlightClicked,
+        $: highlights$.asObservable(),
       },
-      highlights$: highlights$.asObservable(),
     }
   }

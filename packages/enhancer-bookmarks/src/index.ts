@@ -20,9 +20,9 @@ type SubjectType = { type: `update`, data: ExportableBookmark[] }
 
 export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookmarks: ExportableBookmark[] }): Enhancer<{
   bookmarks: {
-    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
+    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean,
+    $: Observable<SubjectType>
   },
-  bookmarks$: Observable<SubjectType>
 }> =>
   next => options => {
     const reader = next(options)
@@ -38,7 +38,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
       if (node && readingItemIndex !== undefined) {
         const pageIndex = reader.locator.getReadingItemPageIndexFromNode(node, offset, readingItemIndex)
-        
+
         return { cfi, pageIndex, readingItemIndex }
       }
 
@@ -199,7 +199,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       return SHOULD_NOT_LAYOUT
     })
 
-    reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
+    reader.registerHook(`item.onLoad`, ({ frame }) => {
       frame.contentWindow?.addEventListener(`click`, onDocumentClick, { capture: true })
     })
 
@@ -215,9 +215,8 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     // We make sure to update location of bookmarks on every layout
     // update since the bookmark could be on a different page, etc
-    const readerSubscription = reader.$.$
+    const readerSubscription = reader.$.layout$
       .pipe(
-        filter(event => event.type === `layoutUpdate`),
         tap(updateBookmarkLocations)
       )
       .subscribe()
@@ -233,8 +232,8 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       destroy,
       bookmarks: {
         isClickEventInsideBookmarkArea,
+        $: subject.asObservable(),
         __debug: () => bookmarks
       },
-      bookmarks$: subject.asObservable(),
     }
   }

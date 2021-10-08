@@ -10,17 +10,17 @@
     "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
     "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
     "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo"
+    "lint": "echo",
+    "test": "echo"
   },
   "peerDependencies": {
     "@oboku/reader": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "ts-loader": "^9.2.2",
+    "ts-loader": "^9.2.6",
     "typescript": "^4.4.3",
     "webpack": "^5.26",
-    "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.1"
+    "webpack-cli": "^4.5.0"
   }
 }

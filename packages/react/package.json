@@ -10,7 +10,8 @@
     "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
     "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
     "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo"
+    "lint": "echo",
+    "test": "echo"
   },
   "peerDependencies": {
     "@oboku/reader": "*",

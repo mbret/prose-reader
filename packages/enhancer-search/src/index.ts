@@ -28,6 +28,7 @@ export const searchEnhancer: Enhancer<{
   }
 }> = (next) => (options) => {
   const reader = next(options)
+
   const searchSubject$ = new Subject<string>()
 
   const searchNodeContainingText = (node: Node, text: string) => {
@@ -151,7 +152,7 @@ export const searchEnhancer: Enhancer<{
   )
     .pipe(
       share(),
-      takeUntil(reader.destroy$),
+      takeUntil(reader.$.destroy$),
     )
 
   const destroy = () => {

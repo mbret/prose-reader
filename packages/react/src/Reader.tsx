@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { createReader, Enhancer, Manifest, ReaderWithEnhancer } from '@oboku/reader'
+import { createReader, Enhancer, Manifest, ReaderWithEnhancer, Reader } from '@oboku/reader'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
@@ -7,12 +7,12 @@ type Pagination = ReturnType<ReturnType<typeof createReader>['pagination']['getI
 
 type Props<Ext = {}> = {
   manifest?: Manifest,
-  onReady?: () => void,
-  onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
-  onPaginationChange?: (pagination: Pagination) => void,
   options?: Omit<Options, 'containerElement'>,
   loadOptions?: LoadOptions,
-  enhancer?: Enhancer<Ext>
+  enhancer?: Enhancer<Ext>,
+  onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
+  onReady?: () => void,
+  onPaginationChange?: (pagination: Pagination) => void,
 }
 
 export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
@@ -27,21 +27,24 @@ export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, op
   }, [setReader, onReader, reader, options])
 
   useEffect(() => {
-    const readerSubscription$ = reader?.$.$.subscribe((data) => {
-      if (data.type === 'ready') {
-        onReady && onReady()
-      }
+    const readerSubscription$ = reader?.$.ready$.subscribe(() => {
+      onReady && onReady()
     })
 
+    return () => {
+      readerSubscription$?.unsubscribe()
+    }
+  }, [reader, onReady])
+
+  useEffect(() => {
     const paginationSubscription = reader?.pagination.$.subscribe(data => {
       onPaginationChange && onPaginationChange(data)
     })
 
     return () => {
-      readerSubscription$?.unsubscribe()
       paginationSubscription?.unsubscribe()
     }
-  }, [reader, onReady])
+  }, [onPaginationChange, reader])
 
   useEffect(() => {
     if (manifest && reader) {
