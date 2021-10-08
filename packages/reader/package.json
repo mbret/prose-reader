@@ -12,9 +12,6 @@
     "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
     "lint": "echo"
   },
-  "dependencies": {
-    "@types/css-font-loading-module": "*"
-  },
   "peerDependencies": {
     "rxjs": "*"
   },
