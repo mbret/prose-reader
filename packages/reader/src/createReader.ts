@@ -12,12 +12,13 @@ import { createReader as createInternalReader } from './reader'
 import { utilsEnhancer } from './enhancers/utils'
 import { resourcesEnhancer } from './enhancers/resources'
 import { mediaEnhancer } from './enhancers/media'
+import { accessibilityEnhancer } from './enhancers/accessibility'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
 type InternalReaderCreateParameter = Parameters<typeof createInternalReader>[0]
 
-export type Enhancer<Ext = {}> = (next: EnhancerCreator<Ext>) => EnhancerCreator<Ext>
+export type Enhancer<Ext = {}, Deps = {}> = (next: EnhancerCreator<Deps>) => EnhancerCreator<Ext>
 
 type Options = InternalReaderCreateParameter & {
   containerElement: HTMLElement,
@@ -64,9 +65,9 @@ const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
   return exposedReader
 }
 
-type ExposedReader = ReturnType<typeof exposeReader>
+type ReaderPublicApiWithSafeExposedKeys = ReturnType<typeof exposeReader>
 
-type RemovedKeys = Omit<ReaderPublicApi, keyof ExposedReader>
+type RemovedKeysOnly = Omit<ReaderPublicApi, keyof ReaderPublicApiWithSafeExposedKeys>
 
 const internalEnhancer = composeEnhancer(
   paginationEnhancer,
@@ -81,12 +82,23 @@ const internalEnhancer = composeEnhancer(
   layoutEnhancer,
   utilsEnhancer,
   resourcesEnhancer,
+  accessibilityEnhancer,
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>
 
-export function createReaderWithEnhancers(options: Options): Omit<ReturnType<InternalEnhancer>, keyof RemovedKeys>
-export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>): Omit<ReturnType<InternalEnhancer> & Ext, keyof RemovedKeys>
+/**
+ * Here we can remove internal enhancer API from use on
+ * `reader.`.
+ * Use this in order to prevent enhancer to be leaked for general basic API uses. This will not
+ * remove the enhancer from being used within other enhancer. This is useful if the enhancer augment the reader
+ * with not basic API and want to protect the user.
+ * It can also be used to protect experimental or private API meant to be shared between internal enhancers.
+ */
+type InternalEnhancerApi = Omit<ReturnType<InternalEnhancer>, `progression`>
+
+export function createReaderWithEnhancers(options: Options): Omit<InternalEnhancerApi, keyof RemovedKeysOnly>
+export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>): Omit<InternalEnhancerApi & Ext, keyof RemovedKeysOnly>
 export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>) {
   if (enhancer) {
     return exposeReader(createReader(options, composeEnhancer(
@@ -103,5 +115,5 @@ export type ReaderWithEnhancer<E extends Enhancer<any>> =
   Omit<
     ReturnType<typeof createReaderWithEnhancers>
     & ReturnType<ReturnType<E>>,
-    keyof RemovedKeys
+    keyof RemovedKeysOnly
   >
