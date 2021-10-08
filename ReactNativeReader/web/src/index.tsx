@@ -5,7 +5,7 @@ import { createGestureHandler } from './gestures'
 import { messagesDown$ } from './messages'
 import { MessageDown } from './types/shared'
 
-window.__OBOKU_READER_DEBUG = true
+window.__OBOKU_READER_DEBUG = false
 
 window.postDownMessage = (message: MessageDown) => {
   messagesDown$.next(message)
