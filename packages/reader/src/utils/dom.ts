@@ -47,8 +47,11 @@ export const isHtmlElement = (element?: Element | Node | null | EventTarget): el
 };
 
 function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: number) {
-  if (typeof (doc as any).caretPositionFromPoint != "undefined") {
-    return (doc as any).caretPositionFromPoint(startX, startY);
+  // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
+  if (`caretPositionFromPoint` in doc) {
+    // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
+    // @ts-expect-error
+    return doc.caretPositionFromPoint(startX, startY) as { offsetNode: Node, offset: number };
   } else if (typeof doc.caretRangeFromPoint != "undefined") {
     return doc.caretRangeFromPoint(startX, startY);
   }
@@ -91,7 +94,7 @@ export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirs
          * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
          */
         const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, Math.ceil(visibleRect.left), Math.ceil(visibleRect.top))
-        
+
         // good news we found something with same node so we can assume the offset is already better than nothing
         if (rangeOrCaret && `startContainer` in rangeOrCaret && rangeOrCaret.startContainer === lastValidRange.startContainer) {
           lastValidOffset = rangeOrCaret.startOffset
@@ -201,7 +204,7 @@ export const isPointerEvent = (event: Event): event is PointerEvent => {
 
 export const isMouseEvent = (event: Event): event is MouseEvent => {
   if (isPointerEvent(event)) return false
-  
+
   if ((event as MouseEvent)?.target && (event?.target as Element)?.ownerDocument?.defaultView) {
     const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis;
 

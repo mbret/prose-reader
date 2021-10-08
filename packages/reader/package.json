@@ -10,17 +10,20 @@
     "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
     "build": "NODE_ENV=production webpack build --config ./webpack.config.js",
     "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo"
+    "lint": "echo",
+    "test": "echo"
+  },
+  "dependencies": {
+    "@oboku/shared": "^0.0.2"
   },
   "peerDependencies": {
     "rxjs": "*"
   },
   "devDependencies": {
-    "ts-loader": "^9.2.2",
+    "ts-loader": "^9.2.6",
     "typescript": "^4.4.3",
     "webpack": "^5.26",
-    "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.1"
+    "webpack-cli": "^4.5.0"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }
