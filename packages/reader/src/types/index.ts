@@ -1,4 +1,4 @@
-import { Manifest } from './Manifest'
+import { Manifest } from "@oboku/shared";
 
 export type LoadOptions = {
   cfi?: string,

@@ -3,6 +3,7 @@ import { Report } from "./report"
 import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
 import { isShallowEqual } from "./utils/objects"
+import { getCoverItem } from "./utils/manifest"
 
 export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
 export type ViewportPosition = { x: number, y: number }
@@ -40,8 +41,10 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    */
   const layout = () => {
     let newItemLayoutInformation: typeof itemLayoutInformation = []
+    const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
     orderedReadingItems.reduce((edgeOffset, item, index) => {
+      const isPageCover = coverItemIndex === index
       let minimumWidth = context.getPageSize().width
       let blankPagePosition: `none` | `before` | `after` = `none`
       const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
@@ -74,8 +77,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
           minimumWidth = context.getPageSize().width * 2
         }
 
-        if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
-          blankPagePosition = `before`
+        if (isGloballyPrePaginated && isPageCover) {
           minimumWidth = context.getPageSize().width * 2
         }
       }
