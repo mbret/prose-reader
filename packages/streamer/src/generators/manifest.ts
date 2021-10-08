@@ -1,18 +1,18 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
 import { getArchiveOpfInfo, Archive } from '../archives'
-import type { Manifest } from '@oboku/reader/src/types/Manifest'
+import type { Manifest } from '@oboku/shared'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
 
-type SpineItemProperties = 'rendition:layout-reflowable' | 'page-spread-left' | 'page-spread-right'
+type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
 const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
   const koboInformation = await extractKoboInformationFromArchive(archive)
 
   if (!opsFile) {
-    throw new Error('No opf content')
+    throw new Error(`No opf content`)
   }
 
   const data = await opsFile.string()
@@ -23,25 +23,25 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
 
   const toc = (await parseToc(opfXmlDoc, archive, { opfBasePath, baseUrl })) || []
 
-  const metadataElm = opfXmlDoc.childNamed('metadata')
-  const manifestElm = opfXmlDoc.childNamed('manifest')
-  const spineElm = opfXmlDoc.childNamed('spine')
+  const metadataElm = opfXmlDoc.childNamed(`metadata`)
+  const manifestElm = opfXmlDoc.childNamed(`manifest`)
+  const spineElm = opfXmlDoc.childNamed(`spine`)
   const titleElm = metadataElm?.childNamed(`dc:title`)
   const metaElmChildren = metadataElm?.childrenNamed(`meta`) || []
-  const metaElmWithRendition = metaElmChildren.find(meta => meta.attr['property'] === `rendition:layout`)
-  const metaElmWithRenditionSpread = metaElmChildren.find(meta => meta.attr['property'] === `rendition:spread`)
+  const metaElmWithRendition = metaElmChildren.find(meta => meta.attr.property === `rendition:layout`)
+  const metaElmWithRenditionSpread = metaElmChildren.find(meta => meta.attr.property === `rendition:spread`)
 
-  const defaultRenditionLayout = metaElmWithRendition?.val as 'reflowable' | 'pre-paginated' | undefined
+  const defaultRenditionLayout = metaElmWithRendition?.val as `reflowable` | `pre-paginated` | undefined
   const renditionSpread = metaElmWithRenditionSpread?.val as `auto` | undefined
-  const title = titleElm?.val || ''
-  const pageProgressionDirection = spineElm?.attr['page-progression-direction'] as `ltr` | `rtl` | undefined
+  const title = titleElm?.val || ``
+  const pageProgressionDirection = spineElm?.attr[`page-progression-direction`] as `ltr` | `rtl` | undefined
 
-  const spineItemIds = spineElm?.childrenNamed(`itemref`).map((item) => item.attr['idref']) as string[]
-  const manifestItemsFromSpine = manifestElm?.childrenNamed(`item`).filter((item) => spineItemIds.includes(item.attr['id'] || ``)) || []
+  const spineItemIds = spineElm?.childrenNamed(`itemref`).map((item) => item.attr.idref) as string[]
+  const manifestItemsFromSpine = manifestElm?.childrenNamed(`item`).filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
   const archiveSpineItems = archive.files.filter(file => {
     return manifestItemsFromSpine.find(item => {
-      if (!opfBasePath) return `${item.attr['href']}` === file.uri
-      return `${opfBasePath}/${item.attr['href']}` === file.uri
+      if (!opfBasePath) return `${item.attr.href}` === file.uri
+      return `${opfBasePath}/${item.attr.href}` === file.uri
     })
   })
 
@@ -50,30 +50,30 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   return {
     filename: archive.filename,
     nav: {
-      toc,
+      toc
     },
-    renditionLayout: defaultRenditionLayout || koboInformation.renditionLayout || 'reflowable',
+    renditionLayout: defaultRenditionLayout || koboInformation.renditionLayout || `reflowable`,
     renditionSpread,
     title,
-    readingDirection: pageProgressionDirection || 'ltr',
+    readingDirection: pageProgressionDirection || `ltr`,
     readingOrder: spineElm?.childrenNamed(`itemref`).map((itemrefElm) => {
-      const manifestItem = manifestElm?.childrenNamed(`item`).find((item) => item.attr['id'] === itemrefElm?.attr['idref'])
-      const href = manifestItem?.attr['href'] || ``
-      const properties = (itemrefElm?.attr['properties']?.split(` `) || []) as SpineItemProperties[]
+      const manifestItem = manifestElm?.childrenNamed(`item`).find((item) => item.attr.id === itemrefElm?.attr.idref)
+      const href = manifestItem?.attr.href || ``
+      const properties = (itemrefElm?.attr.properties?.split(` `) || []) as SpineItemProperties[]
       const itemSize = archive.files.find(file => file.uri.endsWith(href))?.size || 0
 
       return {
-        id: manifestItem?.attr['id'] || ``,
-        path: opfBasePath ? `${opfBasePath}/${manifestItem?.attr['href']}` : `${manifestItem?.attr['href']}`,
+        id: manifestItem?.attr.id || ``,
+        path: opfBasePath ? `${opfBasePath}/${manifestItem?.attr.href}` : `${manifestItem?.attr.href}`,
         // href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
-        href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
+        href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr.href}` : `${baseUrl}/${manifestItem?.attr.href}`,
         renditionLayout: defaultRenditionLayout || `reflowable`,
-        ...properties.find(property => property === 'rendition:layout-reflowable') && {
-          renditionLayout: `reflowable`,
+        ...properties.find(property => property === `rendition:layout-reflowable`) && {
+          renditionLayout: `reflowable`
         },
         progressionWeight: itemSize / totalSize,
-        pageSpreadLeft: properties.some(property => property === 'page-spread-left') || undefined,
-        pageSpreadRight: properties.some(property => property === 'page-spread-right') || undefined,
+        pageSpreadLeft: properties.some(property => property === `page-spread-left`) || undefined,
+        pageSpreadRight: properties.some(property => property === `page-spread-right`) || undefined,
         size: itemSize
       }
     }) || []
@@ -95,7 +95,7 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
     title: ``,
     renditionLayout: `pre-paginated`,
     renditionSpread: `auto`,
-    readingDirection: 'ltr',
+    readingDirection: `ltr`,
     readingOrder: files.map((file) => ({
       id: file.basename,
       path: `${file.uri}`,
@@ -103,15 +103,15 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
       renditionLayout: `pre-paginated`,
       progressionWeight: (1 / files.length),
       pageSpreadLeft: undefined,
-      pageSpreadRight: undefined,
+      pageSpreadRight: undefined
     }))
   }
 }
 
-export const getManifestFromArchive = async (archive: Archive, { baseUrl = '' }: { baseUrl?: string } = {}) => {
+export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
   const { data: opsFile } = getArchiveOpfInfo(archive)
 
-  if (!!opsFile) {
+  if (opsFile) {
     const manifest = await generateManifestFromEpub(archive, baseUrl)
     const data = JSON.stringify(manifest)
 

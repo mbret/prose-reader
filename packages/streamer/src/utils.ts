@@ -1,21 +1,19 @@
 export const sortByTitleComparator = (a: string, b: string) => {
-  var alist = a.split(/(\d+)/),
-    blist = b.split(/(\d+)/);
+  const alist = a.split(/(\d+)/)
+  const blist = b.split(/(\d+)/)
 
-  // @ts-ignore
-  alist.slice(-1) == '' && alist.pop()
-  // @ts-ignore
-  blist.slice(-1) == '' && blist.pop()
+  alist.slice(-1) === [``] && alist.pop()
+  blist.slice(-1) === [``] && blist.pop()
 
-  for (var i = 0, len = alist.length; i < len; i++) {
+  for (let i = 0, len = alist.length; i < len; i++) {
     if (alist[i] !== blist[i]) {
       if (alist[i]?.match(/\d/)) {
-        return +(alist[i] || '') - +(blist[i] || '');
+        return +(alist[i] || ``) - +(blist[i] || ``)
       } else {
-        return (alist[i] || '').localeCompare((blist[i] || ''));
+        return (alist[i] || ``).localeCompare((blist[i] || ``))
       }
     }
   }
 
-  return 1;
+  return 1
 }

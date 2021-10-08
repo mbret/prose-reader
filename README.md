@@ -21,4 +21,17 @@
   </p>
 </p>
 
+### Tests
+You can run all the tests by using:
 
+```
+yarn test
+```
+
+You can also use `--watch` when you want to develop on tests
+
+```
+yarn test --watch
+```
+
+see https://jestjs.io/docs/cli.

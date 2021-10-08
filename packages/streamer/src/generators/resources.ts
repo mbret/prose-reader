@@ -4,7 +4,7 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
   const file = Object.values(archive.files).find(file => file.uri === resourcePath)
 
   if (!file) {
-    throw new Error('no file found')
+    throw new Error(`no file found`)
   }
 
   const blob = await file.blob()
@@ -23,7 +23,6 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
   //     console.log(`end`)
   //   })
 
-    
   // }
 
   // const stream = file.stream!()
@@ -64,11 +63,11 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
         'Content-Type': `video/mp4`
       },
       ...blob.type && {
-        'Content-Type': blob.type,
+        'Content-Type': blob.type
       },
       ...file.encodingFormat && {
         'Content-Type': file.encodingFormat
-      },
+      }
       // 'Cache-Control': `no-cache, no-store, no-transform`
     }
   })

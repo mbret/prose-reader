@@ -1,4 +1,4 @@
-import { Archive } from "../archives";
+import { Archive } from "../archives"
 import xmldoc from 'xmldoc'
 
 type KoboInformation = {
@@ -6,7 +6,7 @@ type KoboInformation = {
 }
 
 export const extractKoboInformationFromArchive = async (archive: Archive) => {
-  let koboInformation: KoboInformation = {
+  const koboInformation: KoboInformation = {
     renditionLayout: undefined
   }
 

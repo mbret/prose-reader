@@ -22,7 +22,7 @@ export type Archive = {
   }[]
 }
 
-const getBasename = (uri: string) => uri.substring(uri.lastIndexOf('/') + 1) || uri
+const getBasename = (uri: string) => uri.substring(uri.lastIndexOf(`/`) + 1) || uri
 
 export const getArchiveOpfInfo = (archive: Archive) => {
   const filesAsArray = Object.values(archive.files).filter(file => !file.dir)
@@ -30,7 +30,7 @@ export const getArchiveOpfInfo = (archive: Archive) => {
 
   return {
     data: file,
-    basePath: file?.uri.substring(0, file.uri.lastIndexOf(`/`)) || ''
+    basePath: file?.uri.substring(0, file.uri.lastIndexOf(`/`)) || ``
   }
 }
 
@@ -38,9 +38,8 @@ export const getArchiveOpfInfo = (archive: Archive) => {
  * Useful to create archive from txt content
  */
 export const createArchiveFromText = async (content: string | Blob | File, options?: {
-  direction: 'ltr' | 'rtl'
+  direction: `ltr` | `rtl`
 }) => {
-
   const txtOpfContent = `
     <?xml version="1.0" encoding="UTF-8"?>
     <package xmlns="http://www.idpf.org/2007/opf" version="3.0" xml:lang="ja" prefix="rendition: http://www.idpf.org/vocab/rendition/#"
@@ -52,7 +51,7 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
       <manifest>
           <item id="p01" href="p01.txt" media-type="text/plain"/>
       </manifest>
-      <spine page-progression-direction="${options?.direction || 'ltr'}">
+      <spine page-progression-direction="${options?.direction || `ltr`}">
         <itemref idref="p01" />
       </spine>
     </package>
@@ -86,7 +85,7 @@ export const createArchiveFromText = async (content: string | Blob | File, optio
         return blobToBase64(content)
       },
       size: typeof content === `string` ? content.length : content.size,
-      encodingFormat: 'text/plain'
+      encodingFormat: `text/plain`
     }]
   }
 
@@ -108,8 +107,8 @@ export const createArchiveFromUrls = async (urls: string[]): Promise<Archive> =>
       size: 100 / urls.length,
       base64: async () => ``,
       blob: async () => new Blob(),
-      string: async () => ``,
-    })),
+      string: async () => ``
+    }))
   }
 }
 
@@ -134,8 +133,8 @@ interface JSZipObject {
   unixPermissions: number | string | null;
   dosPermissions: number | null;
   async<T extends OutputType>(type: T): Promise<OutputByType[T]>;
-  nodeStream(type?: 'nodebuffer'): NodeJS.ReadableStream;
-  internalStream?: (type?: 'uint8array') => StreamResult
+  // nodeStream(type?: `nodebuffer`): NodeJS.ReadableStream;
+  internalStream?: (type?: `uint8array`) => StreamResult
 }
 
 interface JSZip {
@@ -155,11 +154,11 @@ export const createArchiveFromJszip = async (jszip: JSZip, { orderByAlpha, name 
       dir: file.dir,
       basename: getBasename(file.name),
       uri: file.name,
-      blob: () => file.async('blob'),
-      string: () => file.async('string'),
-      base64: () => file.async('base64'),
+      blob: () => file.async(`blob`),
+      string: () => file.async(`string`),
+      base64: () => file.async(`base64`),
       ...file.internalStream && {
-        stream: file.internalStream,
+        stream: file.internalStream
       },
       // this is private API
       // @ts-ignore
@@ -204,10 +203,10 @@ export const createArchiveFromArrayBufferList = async (
 }
 
 const blobToBase64 = async (blob: Blob | File) => new Promise<string>(resolve => {
-  var reader = new FileReader();
-  reader.readAsDataURL(blob);
+  const reader = new FileReader()
+  reader.readAsDataURL(blob)
   reader.onloadend = function () {
-    var base64data = reader.result as string;
+    const base64data = reader.result as string
     resolve(base64data)
   }
 })
