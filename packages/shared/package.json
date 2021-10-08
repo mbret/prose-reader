@@ -1,13 +1,12 @@
 {
   "name": "@oboku/shared",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
     "lint": "echo",
     "start": "echo"
   },
-  "dependencies": {},
   "devDependencies": {
     "typescript": "^4.4.3"
   }

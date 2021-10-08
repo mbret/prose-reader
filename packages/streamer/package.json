@@ -1,6 +1,6 @@
 {
   "name": "@oboku/reader-streamer",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.15.0",
-    "@oboku/shared": "*",
+    "@oboku/shared": "^0.0.2",
     "@types/jest": "^27.0.2",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
