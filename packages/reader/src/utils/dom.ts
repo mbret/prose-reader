@@ -47,8 +47,8 @@ export const isHtmlElement = (element?: Element | Node | null | EventTarget): el
 };
 
 function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: number) {
-  if (typeof doc.caretPositionFromPoint != "undefined") {
-    return doc.caretPositionFromPoint(startX, startY);
+  if (typeof (doc as any).caretPositionFromPoint != "undefined") {
+    return (doc as any).caretPositionFromPoint(startX, startY);
   } else if (typeof doc.caretRangeFromPoint != "undefined") {
     return doc.caretRangeFromPoint(startX, startY);
   }
