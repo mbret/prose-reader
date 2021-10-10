@@ -1,6 +1,6 @@
 import { merge, Observable, Subject } from "rxjs"
 import { Enhancer, Report } from "@oboku/reader"
-import { filter, takeUntil, tap } from "rxjs/operators"
+import { takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
   anchorCfi: string,
