@@ -5,25 +5,25 @@ import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
 export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
-  item: Manifest['readingOrder'][number],
+  item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$ })
-  let readingItemFrame = commonReadingItem.readingItemFrame
+  const readingItemFrame = commonReadingItem.readingItemFrame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
-   * the content has been loaded. 
+   * the content has been loaded.
    * This means when previous content get unload, the user does not end up farther than he should be due to previous content
    * shrinking.
-   * 
+   *
    * @important
    * For now it's only used for continuous-scroll as experimental test. This could potentially solve the sliding
    * issue with reflow content as wel.
    */
-  let latestContentHeightWhenLoaded: number | undefined = undefined
+  let latestContentHeightWhenLoaded: number | undefined
   const isImageType = () => item.mediaType?.startsWith(`image/`)
 
   const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
@@ -42,7 +42,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
       columnHeight,
       columnWidth,
       horizontalMargin,
-      width,
+      width
     }
   }
 
@@ -65,10 +65,10 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         commonReadingItem.injectStyle(readingItemFrame, buildStyleForFakePrePaginated())
         readingItemFrame.staticLayout({
           width: viewportDimensions.width,
-          height: viewportDimensions.height,
+          height: viewportDimensions.height
         })
-        frameElement?.style.setProperty('--scale', `${computedScale}`)
-        frameElement?.style.setProperty('position', `absolute`)
+        frameElement?.style.setProperty(`--scale`, `${computedScale}`)
+        frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
         frameElement?.style.setProperty(`left`,
           blankPagePosition === `before`
@@ -97,7 +97,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
           readingItemFrame.staticLayout({
             width: minimumWidth,
-            height: contentHeight,
+            height: contentHeight
           })
         } else if (context.getManifest()?.renditionFlow === `scrolled-continuous`) {
           contentHeight = frameElement.contentDocument.documentElement.scrollHeight
@@ -105,7 +105,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
           readingItemFrame.staticLayout({
             width: minimumWidth,
-            height: contentHeight,
+            height: contentHeight
           })
         } else {
           const pages = Math.ceil(
@@ -127,7 +127,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
           readingItemFrame.staticLayout({
             width: contentWidth,
-            height: contentHeight,
+            height: contentHeight
           })
         }
       }
@@ -169,14 +169,14 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   return {
     ...commonReadingItem,
     isReflowable: true,
-    layout,
+    layout
   }
 }
 
 /**
  * Item is:
  * - anything that contains a defined width/height viewport
- * 
+ *
  * In this case we respect the viewport, scale it and act as pre-paginated
  */
 const buildStyleForFakePrePaginated = () => {
@@ -211,7 +211,7 @@ const buildStyleForFakePrePaginated = () => {
  * Item is:
  * - not pre-paginated (we would not be in this item otherwise)
  * - jpg, png, etc
- * 
+ *
  * It does not means it has to be pre-paginated (scrollable for example)
  */
 const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean, isScrollable: boolean }) => {
@@ -229,9 +229,11 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
       width: 100%;
       margin: 0;
       padding: 0;
-      ${enableTouch ? `
+      ${enableTouch
+? `
         touch-action: none
-      ` : ``}
+      `
+: ``}
     }
     ${isScrollable ? `
       img {
@@ -255,7 +257,7 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
  * Item is:
  * - regular html document
  * - does not contain defined width/height viewport
- * 
+ *
  * We use css multi column to paginate it
  */
 const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin }: {

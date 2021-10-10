@@ -1,6 +1,6 @@
-import { Context } from "../context";
-import { Enhancer } from "../createReader";
-import { ReadingItem } from "../readingItem";
+import { Context } from "../context"
+import { Enhancer } from "../createReader"
+import { ReadingItem } from "../readingItem"
 
 /**
  * Help dealing with progression through the book
@@ -66,7 +66,7 @@ export const progressionEnhancer: Enhancer<{
     return totalProgress
   }
 
-  const getTotalProgressFromPercentages =  (estimateBeforeThisItem: number, currentItemWeight: number, progressWithinThisItem: number) => {
+  const getTotalProgressFromPercentages = (estimateBeforeThisItem: number, currentItemWeight: number, progressWithinThisItem: number) => {
     return estimateBeforeThisItem + (currentItemWeight * progressWithinThisItem)
   }
 
@@ -86,7 +86,7 @@ export const progressionEnhancer: Enhancer<{
     ...reader,
     progression: {
       getPercentageEstimate,
-      getScrollPercentageWithinItem,
+      getScrollPercentageWithinItem
     }
   }
 }

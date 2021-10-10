@@ -12,14 +12,14 @@ import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
 export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks$, context }: {
-  item: Manifest['readingOrder'][number],
+  item: Manifest[`readingOrder`][number],
   stateSubject$: BehaviorSubject<{
     isReady: boolean,
     isLoading: boolean,
     frameLoaded: boolean
   }>,
   parent: HTMLElement,
-  fetchResource?: (item: Manifest['readingOrder'][number]) => Promise<Response>,
+  fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
   context: Context,
 }) => {
@@ -27,8 +27,8 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
   const loadSubject$ = new Subject<void>()
   const unloadSubject$ = new Subject<void>()
   const frameElementSubject$ = new BehaviorSubject<HTMLIFrameElement | undefined>(undefined)
-  let hookDestroyFunctions: ReturnType<Extract<Hook, { name: `item.onLoad` }>['fn']>[] = []
-  let computedStyleAfterLoad: CSSStyleDeclaration | undefined = undefined
+  let hookDestroyFunctions: ReturnType<Extract<Hook, { name: `item.onLoad` }>[`fn`]>[] = []
+  let computedStyleAfterLoad: CSSStyleDeclaration | undefined
 
   const getHtmlFromResource = (response: Response) => {
     return createHtmlPageFromResource(response, item)
@@ -45,11 +45,11 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
     .pipe(
       // let's ignore later load as long as the first one still runs
       exhaustMap(() => {
-        console.log('FOOOO LOAD exec', item.id)
+        console.log(`FOOOO LOAD exec`, item.id)
         stateSubject$.next({
           isLoading: true,
           isReady: false,
-          frameLoaded: false,
+          frameLoaded: false
         })
 
         return createFrame$(parent)
@@ -60,18 +60,18 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
               /**
                * Because of the bug with iframe and sw, we should not use srcdoc and sw together for
                * html document. This is because resources will not pass through SW. IF `fetchResource` is being
-               * used the user should be aware of the limitation. We use srcdoc for everything except if we detect 
+               * used the user should be aware of the limitation. We use srcdoc for everything except if we detect
                * an html document and same origin. Hopefully that bug gets fixed one day.
                * @see https://bugs.chromium.org/p/chromium/issues/detail?id=880768
                */
               if (
-                !fetchResource
-                && item.href.startsWith(window.location.origin)
-                && (
+                !fetchResource &&
+                item.href.startsWith(window.location.origin) &&
+                (
                   // we have an encoding and it's a valid html
-                  (item.mediaType && ["application/xhtml+xml", "application/xml", "text/html", "text/xml"].includes(item.mediaType))
+                  (item.mediaType && [`application/xhtml+xml`, `application/xml`, `text/html`, `text/xml`].includes(item.mediaType)) ||
                   // no encoding ? then try to detect html
-                  || (!item.mediaType && (ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some(extension => item.href.endsWith(extension))))
+                  (!item.mediaType && (ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some(extension => item.href.endsWith(extension))))
                 )
               ) {
                 frame?.setAttribute(`src`, item.href)
@@ -93,7 +93,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
             mergeMap((frame) => {
               if (!frame) return EMPTY
 
-              frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
+              frame.setAttribute(`sandbox`, `allow-same-origin allow-scripts`)
 
               // fromEvent(frame, `DOMFrameContentLoaded`)
               //   .pipe(
@@ -116,7 +116,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                     // console.log(frame.contentDocument?.head.childNodes)
                     // console.log(frame.contentDocument?.body.childNodes)
 
-                    const script = frame.contentDocument?.createElement('script')
+                    const script = frame.contentDocument?.createElement(`script`)
                     // script?.setAttribute(`src`, `https://fred-wang.github.io/mathml.css/mspace.js`)
                     // script?.setAttribute(`src`, `https://fred-wang.github.io/mathjax.js/mpadded-min.js`)
                     // script?.setAttribute(`src`, `https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js`)
@@ -127,7 +127,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                       // frame.contentDocument?.head.appendChild(script)
                     }
 
-                    frame.setAttribute('role', 'main')
+                    frame.setAttribute(`role`, `main`)
 
                     if (frame?.contentDocument && body) {
                       computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
@@ -135,12 +135,12 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
 
                     if (context.getSettings().computedPageTurnMode !== `free`) {
                       // @todo see what's the impact
-                      frame.setAttribute('tab-index', '0')
+                      frame.setAttribute(`tab-index`, `0`)
                     }
 
                     stateSubject$.next({
                       ...stateSubject$.getValue(),
-                      frameLoaded: true,
+                      frameLoaded: true
                     })
 
                     const manipulableFrame = getManipulableFrame()
@@ -173,7 +173,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
           )
       }),
       share(),
-      takeUntil(destroySubject$),
+      takeUntil(destroySubject$)
     )
 
   load$.subscribe()
@@ -183,11 +183,11 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
       withLatestFrom(frameElementSubject$),
       filter(([_, frame]) => !!frame),
       exhaustMap(() => {
-        console.log('FOOOO UNLOAD exec', item.id)
+        console.log(`FOOOO UNLOAD exec`, item.id)
         stateSubject$.next({
           isLoading: false,
           isReady: false,
-          frameLoaded: false,
+          frameLoaded: false
         })
         hookDestroyFunctions.forEach(fn => fn && fn())
         frameElementSubject$.getValue()?.remove()
@@ -220,6 +220,6 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
     unload$: unloadSubject$.asObservable(),
     loaded$: load$,
     unloaded$: unload$,
-    frameElement$: frameElementSubject$,
+    frameElement$: frameElementSubject$
   }
 }

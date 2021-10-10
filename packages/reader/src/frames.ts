@@ -19,7 +19,7 @@ export const createAddStyleHelper = (frameElement: HTMLIFrameElement | undefined
     frameElement.contentDocument &&
     frameElement.contentDocument.head
   ) {
-    const userStyle = document.createElement('style')
+    const userStyle = document.createElement(`style`)
     userStyle.id = id
     userStyle.innerHTML = style
     if (prepend) {
@@ -31,7 +31,7 @@ export const createAddStyleHelper = (frameElement: HTMLIFrameElement | undefined
 }
 
 export const getAttributeValueFromString = (string: string, key: string) => {
-  const regExp = new RegExp(key + '\\s*=\\s*([0-9.]+)', 'i')
+  const regExp = new RegExp(key + `\\s*=\\s*([0-9.]+)`, `i`)
   const match = string.match(regExp) || []
   const firstMatch = match[1] || `0`
 
@@ -44,5 +44,5 @@ export const getOriginalFrameEventFromDocumentEvent = <E extends Event>(event: E
 }
 
 export const attachOriginalFrameEventToDocumentEvent = <E extends Event>(event: E, frameEvent: E) => {
-  Object.defineProperty(event, __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY, { value: frameEvent, enumerable: true });
+  Object.defineProperty(event, __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY, { value: frameEvent, enumerable: true })
 }

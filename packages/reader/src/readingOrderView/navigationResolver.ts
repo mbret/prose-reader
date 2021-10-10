@@ -33,7 +33,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
 
     return {
       x: Math.min(Math.max(0, position.x), maximumXOffset),
-      y: Math.min(Math.max(0, position.y), maximumYOffset),
+      y: Math.min(Math.max(0, position.y), maximumYOffset)
     }
   }, { disable: true })
 
@@ -160,7 +160,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
   /**
    * Very naive approach for spread. It could be optimized but by using this approach
    * we do not add complexity to the code and use the current logic to handle it correctly.
-   * 
+   *
    * @important
    * Special case for vertical content, read content
    */
@@ -184,13 +184,13 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
           wrapPositionWithSafeEdge(
             context.isRTL()
               ? {
-                ...navigation,
-                x: navigation.x - context.getPageSize().width
-              }
+                  ...navigation,
+                  x: navigation.x - context.getPageSize().width
+                }
               : {
-                ...navigation,
-                x: navigation.x + context.getPageSize().width
-              }
+                  ...navigation,
+                  x: navigation.x + context.getPageSize().width
+                }
           )
         )
       }
@@ -212,7 +212,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
   /**
    * Very naive approach for spread. It could be optimized but by using this approach
    * we do not add complexity to the code and use the current logic to handle it correctly.
-   * 
+   *
    * @important
    * Special case for vertical content, read content
    */
@@ -342,6 +342,6 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
     wrapPositionWithSafeEdge,
     isNavigationGoingForwardFrom,
     areNavigationDifferent,
-    arePositionsDifferent,
+    arePositionsDifferent
   }
 }

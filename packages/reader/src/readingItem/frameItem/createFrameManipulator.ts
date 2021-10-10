@@ -1,4 +1,4 @@
-import { createAddStyleHelper, createRemoveStyleHelper } from "../../frames";
+import { createAddStyleHelper, createRemoveStyleHelper } from "../../frames"
 
 export const createFrameManipulator = (frameElement: HTMLIFrameElement) => ({
   frame: frameElement,

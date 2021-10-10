@@ -1,7 +1,7 @@
-export { Manifest } from './types'
-
 import { createReaderWithEnhancers as createReader, Enhancer, ReaderWithEnhancer } from './createReader'
 import { createSelection } from './selection'
+
+export { Manifest } from './types'
 
 export type Reader = ReturnType<typeof createReader>
 

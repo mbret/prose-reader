@@ -1,5 +1,5 @@
-import { Enhancer } from "../../createReader";
-import { createResourcesManager } from "./resourcesManager";
+import { Enhancer } from "../../createReader"
+import { createResourcesManager } from "./resourcesManager"
 
 export const resourcesEnhancer: Enhancer<{
 
@@ -13,11 +13,11 @@ export const resourcesEnhancer: Enhancer<{
    */
   const load: typeof reader.load = (manifest, loadOptions) => {
     reader.load(manifest, {
-      ...loadOptions,
+      ...loadOptions
     })
   }
 
-  reader.registerHook('item.onGetResource', (fetcher) => async (item) => {
+  reader.registerHook(`item.onGetResource`, (fetcher) => async (item) => {
     return resourceManager.get(item, fetcher)
   })
 

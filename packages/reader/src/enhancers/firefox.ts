@@ -1,4 +1,4 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 export const firefoxEnhancer: Enhancer<{
 

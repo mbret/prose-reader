@@ -4,20 +4,20 @@ import { ReadingItem } from "./readingItem"
 import { ReadingItemManager } from "./readingItemManager"
 import { Report } from "./report"
 
-const NAMESPACE = 'pagination'
+const NAMESPACE = `pagination`
 
 export type Pagination = ReturnType<typeof createPagination>
 
 export const createPagination = ({ context }: { context: Context, readingItemManager: ReadingItemManager }) => {
-  const subject = new Subject<{ event: 'change' }>()
+  const subject = new Subject<{ event: `change` }>()
   let beginPageIndex: number | undefined
   let beginNumberOfPages = 0
-  let beginCfi: string | undefined = undefined
-  let beginReadingItemIndex: number | undefined = undefined
+  let beginCfi: string | undefined
+  let beginReadingItemIndex: number | undefined
   let endPageIndex: number | undefined
   let endNumberOfPages = 0
-  let endCfi: string | undefined = undefined
-  let endReadingItemIndex: number | undefined = undefined
+  let endCfi: string | undefined
+  let endReadingItemIndex: number | undefined
   let numberOfPagesPerItems: number[] = []
 
   const getReadingItemNumberOfPages = (readingItem: ReadingItem) => {
@@ -27,7 +27,7 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
     const writingMode = readingItem.readingItemFrame.getWritingMode()
     const { width, height } = readingItem.getElementDimensions()
 
-    if (writingMode === 'vertical-rl') {
+    if (writingMode === `vertical-rl`) {
       return getNumberOfPages(height, context.getPageSize().height)
     }
 
@@ -46,7 +46,7 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
   }) => {
     const numberOfPages = getReadingItemNumberOfPages(info.readingItem)
     // const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
-    let cfi: string | undefined = undefined
+    const cfi: string | undefined = undefined
 
     // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
     // @todo update cfi also whenever a resize occurs in the iframe
@@ -68,12 +68,12 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
     return {
       numberOfPages,
       pageIndex: info.pageIndex,
-      cfi: info.cfi,
+      cfi: info.cfi
     }
   }
 
   return {
-    getBeginInfo() {
+    getBeginInfo () {
       return {
         pageIndex: beginPageIndex,
         absolutePageIndex: numberOfPagesPerItems
@@ -81,10 +81,10 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
         cfi: beginCfi,
         numberOfPages: beginNumberOfPages,
-        readingItemIndex: beginReadingItemIndex,
+        readingItemIndex: beginReadingItemIndex
       }
     },
-    getEndInfo() {
+    getEndInfo () {
       return {
         pageIndex: endPageIndex,
         absolutePageIndex: numberOfPagesPerItems
@@ -92,7 +92,7 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
         cfi: endCfi,
         numberOfPages: endNumberOfPages,
-        readingItemIndex: endReadingItemIndex,
+        readingItemIndex: endReadingItemIndex
       }
     },
     getTotalNumberOfPages: () => {
@@ -103,7 +103,7 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
         return getReadingItemNumberOfPages(item)
       }, 0)
 
-      subject.next({ event: 'change' })
+      subject.next({ event: `change` })
     },
     updateBeginAndEnd: Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
       begin: Parameters<typeof getInfoForUpdate>[0] & {
@@ -128,7 +128,7 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
 
       Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
 
-      subject.next({ event: 'change' })
+      subject.next({ event: `change` })
     }, { disable: true }),
     $: subject.asObservable()
   }

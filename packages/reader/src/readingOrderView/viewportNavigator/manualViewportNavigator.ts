@@ -67,10 +67,10 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
 
     if (readingItemHasChanged) {
       if (allowReadingItemChange) {
-        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === 'before') {
-          return { ...navigation, lastUserExpectedNavigation: { type: 'navigate-from-next-item' as const }, animate: true }
+        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+          return { ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true }
         } else {
-          return { ...navigation, lastUserExpectedNavigation: { type: 'navigate-from-previous-item' as const }, animate: true }
+          return { ...navigation, lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const }, animate: true }
         }
       }
     } else {
@@ -91,7 +91,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
         const navigation = navigator.getNavigationForUrl(data)
 
         if (navigation) {
-          return of({ ...navigation, animate: true, lastUserExpectedNavigation: { type: 'navigate-from-anchor' as const, data: navigation.url.hash } })
+          return of({ ...navigation, animate: true, lastUserExpectedNavigation: { type: `navigate-from-anchor` as const, data: navigation.url.hash } })
         }
 
         return EMPTY
@@ -105,7 +105,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
         const navigation = navigator.getNavigationForSpineIndexOrId(indexOrId)
 
         // always want to be at the beginning of the item
-        const lastUserExpectedNavigation = { type: 'navigate-from-previous-item' as const }
+        const lastUserExpectedNavigation = { type: `navigate-from-previous-item` as const }
 
         Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, animate, navigation })
 
@@ -122,7 +122,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
         Report.log(NAMESPACE, `goToCfi`, { cfi, animate, navigation })
 
         return ({
-          ...navigation, animate, lastUserExpectedNavigation: { type: 'navigate-from-cfi' as const, data: cfi }
+          ...navigation, animate, lastUserExpectedNavigation: { type: `navigate-from-cfi` as const, data: cfi }
         })
       })
     )
@@ -162,7 +162,6 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
         })
       })
     )
-
 
   const leftPageNavigation$ = navigationTriggerSubject$
     .pipe(
@@ -205,7 +204,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
         // for some reason after too much item ts complains
         merge(
           cfiNavigation$,
-          pageNavigation$,
+          pageNavigation$
         )
       )
         .pipe(

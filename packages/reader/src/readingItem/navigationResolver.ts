@@ -1,7 +1,7 @@
-import { ReadingItem } from ".";
-import { Context } from "../context";
-import { getNumberOfPages } from "../pagination";
-import { createLocationResolver } from "./locationResolver";
+import { ReadingItem } from "."
+import { Context } from "../context"
+import { getNumberOfPages } from "../pagination"
+import { createLocationResolver } from "./locationResolver"
 
 type ReadingItemPosition = { x: number, y: number }
 
@@ -76,6 +76,6 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
     getNavigationForLastPage,
     getNavigationForPage,
     getNavigationForPosition,
-    getNavigationFromNode,
+    getNavigationFromNode
   }
 }

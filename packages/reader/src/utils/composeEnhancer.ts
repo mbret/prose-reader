@@ -1,5 +1,5 @@
-import { Enhancer } from "../createReader";
-import compose from "../utils/compose";
+import { Enhancer } from "../createReader"
+import compose from "../utils/compose"
 
 export type ComposeEnhancer<
   A extends Enhancer<any, any> = Enhancer<{}>,
@@ -48,6 +48,6 @@ export function composeEnhancer<A extends Enhancer<any, any>, B extends Enhancer
 export function composeEnhancer<A extends Enhancer<any, any>, B extends Enhancer<any, any>, C extends Enhancer<any, any>, D extends Enhancer<any, any>, E extends Enhancer<any, any>, F extends Enhancer<any, any>, G extends Enhancer<any, any>, H extends Enhancer<any, any>, I extends Enhancer<any, any>, J extends Enhancer<any, any>, K extends Enhancer<any, any>, L extends Enhancer<any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L>
 export function composeEnhancer<A extends Enhancer<any, any>, B extends Enhancer<any, any>, C extends Enhancer<any, any>, D extends Enhancer<any, any>, E extends Enhancer<any, any>, F extends Enhancer<any, any>, G extends Enhancer<any, any>, H extends Enhancer<any, any>, I extends Enhancer<any, any>, J extends Enhancer<any, any>, K extends Enhancer<any, any>, L extends Enhancer<any, any>, M extends Enhancer<any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M>
 export function composeEnhancer<A extends Enhancer<any, any>, B extends Enhancer<any, any>, C extends Enhancer<any, any>, D extends Enhancer<any, any>, E extends Enhancer<any, any>, F extends Enhancer<any, any>, G extends Enhancer<any, any>, H extends Enhancer<any, any>, I extends Enhancer<any, any>, J extends Enhancer<any, any>, K extends Enhancer<any, any>, L extends Enhancer<any, any>, M extends Enhancer<any, any>, N extends Enhancer<any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N>
-export function composeEnhancer(...funcs: any[]) {
+export function composeEnhancer (...funcs: any[]) {
   return compose(...funcs)
 }

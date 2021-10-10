@@ -5,14 +5,14 @@ import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
 export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
-  item: Manifest['readingOrder'][number],
+  item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$ })
-  let readingItemFrame = commonReadingItem.readingItemFrame
+  const readingItemFrame = commonReadingItem.readingItemFrame
 
   const getDimensions = () => {
     const pageSize = context.getPageSize()
@@ -31,13 +31,13 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
 
     if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
-      let contentWidth = pageWidth
+      const contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
       const cssLink = buildDocumentStyle({
         ...getDimensions(),
         enableTouch: context.getSettings().computedPageTurnMode !== `free`,
-        spreadPosition,
+        spreadPosition
       }, viewportDimensions)
 
       frameElement?.style.setProperty(`visibility`, `visible`)
@@ -47,10 +47,10 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
         readingItemFrame.staticLayout({
           width: viewportDimensions.width,
-          height: viewportDimensions.height,
+          height: viewportDimensions.height
         })
-        frameElement?.style.setProperty('--scale', `${computedScale}`)
-        frameElement?.style.setProperty('position', `absolute`)
+        frameElement?.style.setProperty(`--scale`, `${computedScale}`)
+        frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
         if (spreadPosition === `left`) {
           frameElement?.style.setProperty(`right`, `0`)
@@ -79,15 +79,15 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
           (spreadPosition === `right` && blankPagePosition !== `before`)
             ? `left`
             : (spreadPosition === `left` || (blankPagePosition === `before` && context.isRTL()))
-              ? `right`
-              : `center`
+                ? `right`
+                : `center`
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
       } else {
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
         readingItemFrame.staticLayout({
           width: contentWidth,
-          height: contentHeight,
+          height: contentHeight
         })
         if (blankPagePosition === `before`) {
           if (context.isRTL()) {
@@ -124,7 +124,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   return {
     ...commonReadingItem,
     layout,
-    destroy,
+    destroy
   }
 }
 
@@ -141,10 +141,12 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
     }
     body {
       margin: 0;
-      ${!viewportDimensions ? `
+      ${!viewportDimensions
+? `
         display: flex;
         justify-content: ${spreadPosition === `left` ? `flex-end` : spreadPosition === `right` ? `flex-start` : `center`};
-      ` : ``}
+      `
+: ``}
     }
     ${/*
       might be html * but it does mess up things like figure if so.
@@ -168,9 +170,11 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
      */
     ``}
     html, body {
-      ${enableTouch ? `
+      ${enableTouch
+? `
         touch-action: none
-      ` : ``}
+      `
+: ``}
     }
     ${/*
       prevent drag of image instead of touch on firefox
@@ -192,12 +196,14 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
         we load .jpg, .png, etc directly in the iframe. This is expected, in this case we force
         the inner content to display correctly.
       */``}
-      ${!viewportDimensions ? `
+      ${!viewportDimensions
+? `
         -width: 100%;
         max-width: 100%;
         height:100%;
         object-fit:contain;
-      ` : ``}
+      `
+: ``}
     }
   `
 }

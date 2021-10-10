@@ -11,13 +11,12 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
   context: Context,
   readingItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
-
   const getItemAnchor = (readingItem: ReadingItem) => `|[oboku~anchor~${encodeURIComponent(readingItem.item.id)}]`
 
   /**
    * Heavy cfi hookup. Use it to have a refined, precise cfi anchor. It requires the content to be loaded otherwise
    * it will return a root cfi.
-   * 
+   *
    * @todo optimize
    */
   const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, readingItem: ReadingItem) => {
@@ -68,7 +67,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
 
     if (readingItem) {
       return {
-        readingItemIndex: readingItemManager.getReadingItemIndex(readingItem),
+        readingItemIndex: readingItemManager.getReadingItemIndex(readingItem)
       }
     }
 
@@ -132,7 +131,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
    * @todo the package does not support creating for range at the moment @see https://github.com/fread-ink/epub-cfi-resolver/issues/3
    * so we use two cfi for start and end.
    */
-  const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest['readingOrder'][number]) => {
+  const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest[`readingOrder`][number]) => {
     const startCFI = CFI.generate(startNode, start, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
     const endCFI = CFI.generate(endNode, end, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
 
@@ -145,6 +144,6 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
     getCfi,
     getRootCfi,
     resolveCfi,
-    generateFromRange,
+    generateFromRange
   }
 }

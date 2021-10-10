@@ -1,6 +1,6 @@
-import { merge } from "rxjs";
-import { takeUntil, tap } from "rxjs/operators";
-import { Enhancer } from "../createReader";
+import { merge } from "rxjs"
+import { takeUntil, tap } from "rxjs/operators"
+import { Enhancer } from "../createReader"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -20,17 +20,17 @@ export const chromeEnhancer: Enhancer<{
    * the old screen, as if it was frozen. Generally any interaction with the page will unfreeze
    * the screen and the new iframe will be displayed. It also happens within the same iframe.
    * So far it seems to be due to scaling and x-axis moving.
-   * To ensure the screen does not freeze we are moving a 1:1 square in & out of the screen. 
+   * To ensure the screen does not freeze we are moving a 1:1 square in & out of the screen.
    * That way chrome is "forced" to refresh the screen.
-   * 
-   * @todo 
+   *
+   * @todo
    * check https://developer.mozilla.org/en-US/docs/Web/CSS/will-change with will-change: transform
    * to see if it does refresh all the time itself.
-   * 
+   *
    * @todo
    * use transform and translate rather than changing top so it only affect composite layer rather than paint
    * @see https://www.algolia.com/blog/engineering/performant-web-animations/
-   * 
+   *
    * @important
    * This is disabled for now as removing will-change on container seems to fix the issue
    */
@@ -48,7 +48,7 @@ export const chromeEnhancer: Enhancer<{
      * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
      * but a scroll on the container itself..
      */
-    container.addEventListener('scroll', onScroll)
+    container.addEventListener(`scroll`, onScroll)
 
     // screenForceRefreshElt = container.ownerDocument.createElement('div')
     // screenForceRefreshElt.style.cssText = `
@@ -63,7 +63,7 @@ export const chromeEnhancer: Enhancer<{
     // container.appendChild(screenForceRefreshElt)
 
     onDestroy(() => {
-      container.removeEventListener('scroll', onScroll)
+      container.removeEventListener(`scroll`, onScroll)
     })
 
     return SHOULD_NOT_LAYOUT

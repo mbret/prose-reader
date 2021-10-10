@@ -20,18 +20,18 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * done with the manager.
    */
   let itemLayoutInformation: { leftStart: number, leftEnd: number, topStart: number, topEnd: number, width: number, height: number }[] = []
-  let orderedReadingItems: ReadingItem[] = []
+  const orderedReadingItems: ReadingItem[] = []
   /**
    * focused item represent the current item that the user navigated to.
    * It can be either the left or right page for a spread, not necessarily the begin item
    * either. This focused item is very important for everything that is related to navigation
    * and adjustment of viewport.
-   * 
+   *
    * @important
    * The focused item can sometime not be visible on the screen, in case of a viewport misalignment.
    * However it means the next adjustment will use the focused item to detect when to move the viewport.
    */
-  let focusedReadingItemIndex: number | undefined = undefined
+  let focusedReadingItemIndex: number | undefined
   let readingItemSubscriptions: Subscription[] = []
 
   /**
@@ -41,7 +41,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    */
   const layout = () => {
     const manifest = context.getManifest()
-    let newItemLayoutInformation: typeof itemLayoutInformation = []
+    const newItemLayoutInformation: typeof itemLayoutInformation = []
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
     const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
@@ -57,7 +57,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
          * for now every reflowable content that has reflow siblings takes the entire screen by default
          * this simplify many things and I am not sure the specs allow one reflow
          * to end and an other one to start on the same screen anyway
-         * 
+         *
          * @important
          * For now this is impossible to have reflow not taking all screen. This is because
          * when an element is unloaded, the next element will move back its x, then an adjustment
@@ -65,7 +65,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
          * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
          * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
          * book with spread on to make it work.
-         * 
+         *
          * @important
          * When the book is globally pre-paginated we will not apply any of this even if each item is
          * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
@@ -123,7 +123,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         } else {
           item.adjustPositionOfElement({
             top: currentValidEdgeYForVerticalPositioning,
-            left: currentValidEdgeXForVerticalPositioning,
+            left: currentValidEdgeXForVerticalPositioning
           })
         }
 
@@ -136,7 +136,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
           topStart: currentValidEdgeYForVerticalPositioning,
           topEnd: newEdgeY,
           height,
-          width,
+          width
         })
 
         return {
@@ -162,7 +162,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         topStart: edgeOffset.edgeY,
         topEnd: height,
         height,
-        width,
+        width
       })
 
       return {
@@ -197,7 +197,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   /**
    * @todo
    * optimize useless calls to it, such as when the layout has not changed and the focus is still the same
-   * @todo 
+   * @todo
    * analyze poor performances
    */
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
@@ -233,7 +233,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    */
   const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
+    const indexOfItem = typeof readingItemOrIndex === `number` ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const layoutInformation = itemLayoutInformation[indexOfItem]
 
@@ -260,7 +260,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     // return distance
 
     return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
-
   }, { disable: true })
 
   const getFocusedReadingItem = () => focusedReadingItemIndex !== undefined ? orderedReadingItems[focusedReadingItemIndex] : undefined
@@ -269,13 +268,13 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const isAfter = orderedReadingItems.indexOf(toCompare) > orderedReadingItems.indexOf(withItem)
 
     if (isAfter) {
-      return 'after'
+      return `after`
     }
 
-    return 'before'
+    return `before`
   }
 
-  function getReadingItemIndex(readingItem: ReadingItem | undefined) {
+  function getReadingItemIndex (readingItem: ReadingItem | undefined) {
     if (!readingItem) return undefined
     const index = orderedReadingItems.indexOf(readingItem)
 
@@ -350,8 +349,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     destroy,
     $: {
       focus$: focus$.asObservable(),
-      layout$: layout$.asObservable(),
+      layout$: layout$.asObservable()
     }
   }
 }
-

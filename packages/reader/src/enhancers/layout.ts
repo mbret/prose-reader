@@ -1,7 +1,7 @@
-import { animationFrameScheduler, Observable, of, scheduled } from "rxjs";
-import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators";
-import { Enhancer } from "../createReader";
-import { Reader } from "../reader";
+import { animationFrameScheduler, Observable, of, scheduled } from "rxjs"
+import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { Enhancer } from "../createReader"
+import { Reader } from "../reader"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -16,20 +16,20 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
      * have a wrong `clientX` / `pageX` etc. This is because even if the iframe left value (once requested) is correct,
      * it does not seem to have been correctly taken by the browser when creating the event.
      * What we do here is that after a viewport adjustment we immediately force a reflow on the engine.
-     * 
+     *
      * @example
      * [pointer event] -> clientX = 50, left = 0, translated clientX = 50 (CORRECT)
      * [translate viewport] -> left = +100px
      * [pointer event] -> clientX = ~50, left = -100, translated clientX = ~-50 (INCORRECT)
      * [pointer event] -> clientX = 150, left = -100, translated clientX = 50 (CORRECT)
-     * 
+     *
      * For some reason the engine must be doing some optimization and unfortunately the first pointer event gets the clientX wrong.
-     * 
+     *
      * The bug can be observed by commenting this code, using CPU slowdown and increasing the throttle on the adjustment stream.
      * The bug seems to affect only chrome / firefox. Nor safari.
-     * 
+     *
      * Also we only need to use `getBoundingClientRect` once.
-     * 
+     *
      * @todo
      * Consider creating a bug ticket on both chromium and gecko projects.
      */
@@ -64,13 +64,13 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
  * sometimes returns invalid clientX value. This means that when rapidly (or not) clicking during animation on iframe will often
  * time returns invalid value. In order to reduce potential unwanted behavior on consumer side, we temporarily hide the iframe behind
  * an overlay. That way the overlay take over for the pointer event and we all good.
- * 
+ *
  * @important
  * This obviously block any interaction with iframe but there should not be such interaction with iframe in theory.
  * Theoretically if user decide to interact during the animation that's either to stop it or swipe the pages.
  */
 const createMovingSafePan$ = (reader: Reader) => {
-  let iframeOverlayForAnimationsElement: HTMLDivElement | undefined = undefined
+  let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
   reader.manipulateContainer((container, onDestroy) => {
     iframeOverlayForAnimationsElement = container.ownerDocument.createElement(`div`)
@@ -95,7 +95,7 @@ const createMovingSafePan$ = (reader: Reader) => {
     .pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
-      }),
+      })
     )
 
   const viewportFree$ = reader.$.viewportState$.pipe(filter(data => data === `free`))
@@ -105,7 +105,7 @@ const createMovingSafePan$ = (reader: Reader) => {
     .pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
-      }),
+      })
     )
 
   const resetLockViewportFree$ = createResetLock$(viewportFree$)
@@ -116,7 +116,7 @@ const createMovingSafePan$ = (reader: Reader) => {
   const pageTurnMode$ = reader.context.$.settings$
     .pipe(
       map(() => reader.context.getSettings().computedPageTurnMode),
-      distinctUntilChanged(),
+      distinctUntilChanged()
     )
 
   const handleViewportLock$ = pageTurnMode$
@@ -124,7 +124,7 @@ const createMovingSafePan$ = (reader: Reader) => {
       switchMap((mode) => mode === `controlled`
         ? lockAfterViewportBusy$
           .pipe(
-            switchMap(() => resetLockViewportFree$),
+            switchMap(() => resetLockViewportFree$)
           )
         : createResetLock$(of(undefined))
       ),

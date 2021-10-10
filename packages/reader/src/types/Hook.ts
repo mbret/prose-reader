@@ -1,6 +1,6 @@
-import { Manifest } from "@oboku/shared";
+import { Manifest } from "@oboku/shared"
 
-const ITEM_ONLOAD = 'item.onLoad'
+const ITEM_ONLOAD = `item.onLoad`
 
 export type Hook =
   {
@@ -8,8 +8,8 @@ export type Hook =
     fn: (manipulableFrame: {
       frame: HTMLIFrameElement,
       removeStyle: (id: string) => void,
-      item: Manifest['readingOrder'][number],
-      addStyle: (id: string, style: CSSStyleDeclaration['cssText']) => void,
+      item: Manifest[`readingOrder`][number],
+      addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void,
     }) => (() => void) | void
   }
   | {
@@ -22,13 +22,13 @@ export type Hook =
       frame: HTMLIFrameElement | undefined,
       container: HTMLElement,
       loadingElement: HTMLElement,
-      item: Manifest['readingOrder'][number],
+      item: Manifest[`readingOrder`][number],
       overlayElement: HTMLDivElement
     }) => void
   }
   | {
     name: `item.onGetResource`,
-    fn: (fetchResource: (item: Manifest['readingOrder'][number]) => Promise<Response>) => (item: Manifest['readingOrder'][number]) => Promise<Response>
+    fn: (fetchResource: (item: Manifest[`readingOrder`][number]) => Promise<Response>) => (item: Manifest[`readingOrder`][number]) => Promise<Response>
   }
   | {
     name: `onViewportOffsetAdjust`,
@@ -36,10 +36,10 @@ export type Hook =
   }
 
 export interface RegisterHook {
-  (name: `item.onLoad`, fn: Extract<Hook, { name: `item.onLoad` }>['fn']): void
-  (name: `item.onCreated`, fn: Extract<Hook, { name: `item.onCreated` }>['fn']): void
-  (name: `item.onGetResource`, fn: Extract<Hook, { name: `item.onGetResource` }>['fn']): void
-  (name: `onViewportOffsetAdjust`, fn: Extract<Hook, { name: `onViewportOffsetAdjust` }>['fn']): void
+  (name: `item.onLoad`, fn: Extract<Hook, { name: `item.onLoad` }>[`fn`]): void
+  (name: `item.onCreated`, fn: Extract<Hook, { name: `item.onCreated` }>[`fn`]): void
+  (name: `item.onGetResource`, fn: Extract<Hook, { name: `item.onGetResource` }>[`fn`]): void
+  (name: `onViewportOffsetAdjust`, fn: Extract<Hook, { name: `onViewportOffsetAdjust` }>[`fn`]): void
 }
 
 const s: RegisterHook = () => { }

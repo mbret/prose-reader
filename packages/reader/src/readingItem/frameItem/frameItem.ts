@@ -12,9 +12,9 @@ export type ReadingItemFrame = ReturnType<typeof createFrameItem>
 
 export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }: {
   parent: HTMLElement,
-  item: Manifest['readingOrder'][number],
+  item: Manifest[`readingOrder`][number],
   context: Context,
-  fetchResource?: (item: Manifest['readingOrder'][number]) => Promise<Response>,
+  fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>
 }) => {
   const destroySubject$ = new Subject<void>()
@@ -33,7 +33,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }
     destroy: loaderDestroy,
     getComputedStyleAfterLoad,
     frameElement$
-  } = createLoader({ context, hooks$, item, parent, stateSubject$, fetchResource, })
+  } = createLoader({ context, hooks$, item, parent, stateSubject$, fetchResource })
 
   const getManipulableFrame = () => {
     const frame = frameElement$.getValue()
@@ -47,16 +47,16 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }
 
     if (frame && frame?.contentDocument) {
       const doc = frame.contentDocument
-      const viewPortMeta = doc.querySelector("meta[name='viewport']")
+      const viewPortMeta = doc.querySelector(`meta[name='viewport']`)
       if (viewPortMeta) {
-        const viewPortMetaInfos = viewPortMeta.getAttribute('content')
+        const viewPortMetaInfos = viewPortMeta.getAttribute(`content`)
         if (viewPortMetaInfos) {
-          const width = getAttributeValueFromString(viewPortMetaInfos, 'width')
-          const height = getAttributeValueFromString(viewPortMetaInfos, 'height')
+          const width = getAttributeValueFromString(viewPortMetaInfos, `width`)
+          const height = getAttributeValueFromString(viewPortMetaInfos, `height`)
           if (width > 0 && height > 0) {
             return {
               width: width,
-              height: height,
+              height: height
             }
           } else {
             return undefined
@@ -69,7 +69,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }
   }
 
   const getWritingMode = () => {
-    return getComputedStyleAfterLoad()?.writingMode as 'vertical-rl' | 'horizontal-tb' | undefined
+    return getComputedStyleAfterLoad()?.writingMode as `vertical-rl` | `horizontal-tb` | undefined
   }
 
   const isUsingVerticalWriting = () => {
@@ -113,21 +113,21 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }
 
         if (context.getSettings().computedPageTurnMode !== `free`) {
           // @todo see what's the impact
-          frame.setAttribute('tab-index', '0')
+          frame.setAttribute(`tab-index`, `0`)
         }
       }
     },
     // @todo block access, only public API to manipulate / get information (in order to memo / optimize)
     // manipulate() with cb and return boolean whether re-layout or not
     getManipulableFrame,
-    getReadingDirection: (): 'ltr' | 'rtl' | undefined => {
+    getReadingDirection: (): `ltr` | `rtl` | undefined => {
       const writingMode = getWritingMode()
       if (writingMode === `vertical-rl`) {
-        return 'rtl'
+        return `rtl`
       }
 
       const direction = getComputedStyleAfterLoad()?.direction
-      if (['ltr', 'rtl'].includes(direction || ``)) return direction as ('ltr' | 'rtl')
+      if ([`ltr`, `rtl`].includes(direction || ``)) return direction as (`ltr` | `rtl`)
 
       return undefined
     },
@@ -158,6 +158,6 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$ }
        * in order to layout again and adjust every element based on the new content.
        */
       contentLayoutChange$
-    },
+    }
   }
 }

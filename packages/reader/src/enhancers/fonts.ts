@@ -1,7 +1,7 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 export const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
-export const FONT_JUSTIFICATION = ['center', 'left', 'right', 'justify'] as const
+export const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
 
 /**
  * @important
@@ -9,8 +9,8 @@ export const FONT_JUSTIFICATION = ['center', 'left', 'right', 'justify'] as cons
  * break publisher scaling. Since it's specifically made for the given fixed layout
  * we should trust the publisher and not break its rendering.
  * @see 9781250213662
- * 
- * Setting the font scale on body still has a chance to break publisher potential 
+ *
+ * Setting the font scale on body still has a chance to break publisher potential
  * font size on body if they already use something.
  * @see 9782714493743
  */
@@ -84,9 +84,9 @@ export const fontsEnhancer: Enhancer<{
 
   const applyChangeToReadingItem = (requireLayout: boolean) => {
     reader.manipulateReadingItems(({ removeStyle, addStyle, item }) => {
-      if (item.renditionLayout !== 'pre-paginated') {
-        removeStyle('oboku-reader-fonts')
-        addStyle('oboku-reader-fonts', getStyle())
+      if (item.renditionLayout !== `pre-paginated`) {
+        removeStyle(`oboku-reader-fonts`)
+        addStyle(`oboku-reader-fonts`, getStyle())
       }
 
       return requireLayout
@@ -94,9 +94,9 @@ export const fontsEnhancer: Enhancer<{
   }
 
   reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
-    if (item.renditionLayout !== 'pre-paginated') {
-      removeStyle('oboku-reader-fonts')
-      addStyle('oboku-reader-fonts', getStyle())
+    if (item.renditionLayout !== `pre-paginated`) {
+      removeStyle(`oboku-reader-fonts`)
+      addStyle(`oboku-reader-fonts`, getStyle())
     }
   })
 

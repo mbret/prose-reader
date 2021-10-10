@@ -38,7 +38,7 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
         return true
       }),
       share(),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.$.destroy$)
     )
 
   const navigationOnScroll$ = userScroll$
@@ -54,7 +54,7 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
          */
         return of({ position: navigation, animate: false, lastUserExpectedNavigation: undefined })
       }),
-      share(),
+      share()
     )
 
   return {

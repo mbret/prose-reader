@@ -1,22 +1,22 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
-export type Theme = (typeof defaultThemes[number])['name']
+export type Theme = (typeof defaultThemes[number])[`name`]
 
 const defaultThemes = [
   {
-    name: 'bright' as const,
-    backgroundColor: 'white',
+    name: `bright` as const,
+    backgroundColor: `white`
   },
   {
     name: `sepia` as const,
-    backgroundColor: '#eaddc7',
-    foregroundColor: 'black',
+    backgroundColor: `#eaddc7`,
+    foregroundColor: `black`
   },
   {
     name: `night` as const,
-    backgroundColor: '#191717',
-    foregroundColor: '#f1ebeb',
-  },
+    backgroundColor: `#191717`,
+    foregroundColor: `#f1ebeb`
+  }
 ]
 
 export const themeEnhancer: Enhancer<{
@@ -60,8 +60,8 @@ export const themeEnhancer: Enhancer<{
 
   const applyChangeToReadingItem = () => {
     reader.manipulateReadingItems(({ removeStyle, addStyle, container, loadingElement }) => {
-      removeStyle('oboku-reader-theme')
-      addStyle('oboku-reader-theme', getStyle())
+      removeStyle(`oboku-reader-theme`)
+      addStyle(`oboku-reader-theme`, getStyle())
       applyChangeToReadingItemElement({ container, loadingElement })
 
       return false
@@ -72,8 +72,8 @@ export const themeEnhancer: Enhancer<{
    * Make sure to apply theme on item load
    */
   reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
-    removeStyle('oboku-reader-theme')
-    addStyle('oboku-reader-theme', getStyle())
+    removeStyle(`oboku-reader-theme`)
+    addStyle(`oboku-reader-theme`, getStyle())
   })
 
   /**

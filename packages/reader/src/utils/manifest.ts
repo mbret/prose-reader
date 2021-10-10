@@ -1,4 +1,4 @@
-import { Manifest } from "@oboku/shared";
+import { Manifest } from "@oboku/shared"
 
 /**
  * @todo strip out param url so that equality works better

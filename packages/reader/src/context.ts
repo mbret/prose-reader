@@ -1,7 +1,7 @@
 import { BehaviorSubject, Subject } from "rxjs"
 import { Report } from "./report"
 import { LoadOptions } from "./types"
-import { Manifest } from "@oboku/shared";
+import { Manifest } from "@oboku/shared"
 
 export type Context = ReturnType<typeof createContext>
 
@@ -40,7 +40,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     computedPageTurnMode: `controlled`,
     computedPageTurnDirection: `horizontal`,
     computedPageTurnAnimationDuration: 0,
-    ...initialSettings,
+    ...initialSettings
   }
 
   updateComputedSettings(manifest, settings)
@@ -73,7 +73,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
 
     /**
      * For now we don't support spread for reflowable & scrollable content since
-     * two items could have different height, resulting in weird stuff. 
+     * two items could have different height, resulting in weird stuff.
      */
     if (manifest?.renditionFlow === `scrolled-continuous`) return false
 
@@ -84,12 +84,12 @@ export const createContext = (initialSettings: Partial<Settings>) => {
 
     // default auto behavior
     return (
-      isLandscape
-      && (
-        manifest?.renditionSpread === undefined
-        || manifest?.renditionSpread === `auto`
-        || manifest?.renditionSpread === `landscape`
-        || manifest?.renditionSpread === `both`
+      isLandscape &&
+      (
+        manifest?.renditionSpread === undefined ||
+        manifest?.renditionSpread === `auto` ||
+        manifest?.renditionSpread === `landscape` ||
+        manifest?.renditionSpread === `both`
       )
     )
   }
@@ -109,7 +109,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
    * RTL only makes sense for horizontal scrolling
    */
   const isRTL = () => {
-    return manifest?.readingDirection === 'rtl'
+    return manifest?.readingDirection === `rtl`
   }
 
   const setSettings = (newSettings: Partial<typeof settings>) => {
@@ -166,7 +166,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
         width: shouldDisplaySpread()
           ? visibleAreaRect.width / 2
           : visibleAreaRect.width,
-        height: visibleAreaRect.height,
+        height: visibleAreaRect.height
       }
     },
     $: {

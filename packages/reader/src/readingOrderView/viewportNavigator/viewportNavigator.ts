@@ -44,14 +44,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   let lastUserExpectedNavigation:
     | undefined
     // always adjust at the first page
-    | { type: 'navigate-from-previous-item' }
+    | { type: `navigate-from-previous-item` }
     // always adjust at the last page
-    | { type: 'navigate-from-next-item' }
+    | { type: `navigate-from-next-item` }
     // always adjust using this cfi
-    | { type: 'navigate-from-cfi', data: string }
+    | { type: `navigate-from-cfi`, data: string }
     // always adjust using this anchor
-    | { type: 'navigate-from-anchor', data: string }
-    = undefined
+    | { type: `navigate-from-anchor`, data: string }
 
   /**
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
@@ -102,7 +101,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       // however browser engine can also gives back x.yyyy based on their precision
       // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
       x: ~~(Math.abs(x) * 10) / 10,
-      y: ~~(Math.abs(y) * 10) / 10,
+      y: ~~(Math.abs(y) * 10) / 10
     }
     currentViewportPositionMemo = newValue
 
@@ -184,7 +183,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   }, { disable: false })
 
   /**
-   * Verify that current offset is within the current reading item and is at 
+   * Verify that current offset is within the current reading item and is at
    * desired pagination.
    * If it is not, then we adjust the offset.
    * The offset could be wrong in the case of there has been re-layout.
@@ -198,7 +197,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
     let adjustedReadingOrderViewPosition = currentNavigationPosition
-    let offsetInReadingItem = 0
+    const offsetInReadingItem = 0
 
     if (context.getSettings().computedPageTurnMode === `free`) {
       adjustedReadingOrderViewPosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
@@ -207,24 +206,24 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
      * When `navigate-from-cfi` we always try to retrieve offset from cfi node and navigate
      * to there
      */
-    else if (lastUserExpectedNavigation?.type === 'navigate-from-cfi') {
+    else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
       adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-cfi`, `use last cfi`)
-    } else if (lastUserExpectedNavigation?.type === 'navigate-from-next-item') {
+    } else if (lastUserExpectedNavigation?.type === `navigate-from-next-item`) {
       /**
        * When `navigate-from-next-item` we always try to get the offset of the last page, that way
        * we ensure reader is always redirected to last page
        */
       adjustedReadingOrderViewPosition = navigator.getNavigationForLastPage(readingItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-next-item`, {})
-    } else if (lastUserExpectedNavigation?.type === 'navigate-from-previous-item') {
+    } else if (lastUserExpectedNavigation?.type === `navigate-from-previous-item`) {
       /**
-       * When `navigate-from-previous-item'` 
+       * When `navigate-from-previous-item'`
        * we always try stay on the first page of the item
        */
       adjustedReadingOrderViewPosition = navigator.getNavigationForPage(0, readingItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-previous-item`, {})
-    } else if (lastUserExpectedNavigation?.type === 'navigate-from-anchor') {
+    } else if (lastUserExpectedNavigation?.type === `navigate-from-anchor`) {
       /**
        * When `navigate-from-anchor` we just stay on the current reading item and try to get
        * the offset of that anchor.
@@ -278,16 +277,16 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
           ...event,
           position: { x: event.x, y: event.y, readingItem: event.readingItem },
           animate: event.animate ?? true,
-          triggeredBy: `manual` as const,
+          triggeredBy: `manual` as const
         }))
       ),
     adjustNavigationSubject$
       .pipe(
-        map((event) => ({ ...event, triggeredBy: `adjust` as const })),
+        map((event) => ({ ...event, triggeredBy: `adjust` as const }))
       ),
     scrollViewportNavigator.$.navigationOnScroll$
       .pipe(
-        map((event) => ({ ...event, triggeredBy: `scroll` as const })),
+        map((event) => ({ ...event, triggeredBy: `scroll` as const }))
       )
   )
     .pipe(
@@ -308,14 +307,14 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     .pipe(
       filter(({ triggeredBy }) => {
         if (
-          triggeredBy === `scroll`
-          || (context.getSettings().computedPageTurnMode === `free` && triggeredBy === `adjust`)
+          triggeredBy === `scroll` ||
+          (context.getSettings().computedPageTurnMode === `free` && triggeredBy === `adjust`)
         ) {
           return false
         } else {
           return true
         }
-      }),
+      })
     )
 
   const manualAdjust$ = merge(
@@ -329,20 +328,18 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       map(({ animation, position }) => {
         // console.log(`manualAdjust$`, { animation })
         const shouldAnimate =
-          (animation === `none`)
+          !((animation === `none`) ||
             // || ongoingNavigation?.animate === false
             // || !ongoingNavigation
-            || context.getSettings().pageTurnAnimation === `none`
-            ? false
-            : true
+            context.getSettings().pageTurnAnimation === `none`)
 
         return {
           type: `manualAdjust` as const,
           animate: shouldAnimate,
-          position,
+          position
         }
       }),
-      share(),
+      share()
     )
 
   const processUserScrollAdjust$ = scrollViewportNavigator.$.userScroll$
@@ -361,7 +358,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     manualAdjust$,
     scrollViewportNavigator.$.userScroll$
       .pipe(
-        map(() => ({ type: `scroll` as const })),
+        map(() => ({ type: `scroll` as const }))
       )
   )
     .pipe(
@@ -370,12 +367,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       tap(([prevEvent, currentEvent]) => {
         // cleanup potential previous manual adjust
         if (prevEvent?.type === `manualAdjust` && currentEvent?.type !== `manualAdjust`) {
-          element.style.setProperty('transition', `none`)
-          element.style.setProperty('opacity', `1`)
+          element.style.setProperty(`transition`, `none`)
+          element.style.setProperty(`opacity`, `1`)
         }
       }),
       switchMap(([, currentEvent]) => {
-
         if (currentEvent?.type !== `manualAdjust`) return EMPTY
 
         // console.log('processAdjust$', currentEvent)
@@ -399,15 +395,15 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
               if (data.animate && !noAdjustmentNeeded) {
                 if (context.getSettings().pageTurnAnimation === `fade`) {
-                  element.style.setProperty('transition', `opacity ${animationDuration / 2}ms`)
-                  element.style.setProperty('opacity', '0')
+                  element.style.setProperty(`transition`, `opacity ${animationDuration / 2}ms`)
+                  element.style.setProperty(`opacity`, `0`)
                 } else if (context.getSettings().pageTurnAnimation === `slide`) {
-                  element.style.setProperty('transition', `transform ${animationDuration}ms`)
-                  element.style.setProperty('opacity', '1')
+                  element.style.setProperty(`transition`, `transform ${animationDuration}ms`)
+                  element.style.setProperty(`opacity`, `1`)
                 }
               } else {
-                element.style.setProperty('transition', `none`)
-                element.style.setProperty('opacity', `1`)
+                element.style.setProperty(`transition`, `none`)
+                element.style.setProperty(`opacity`, `1`)
               }
             }),
             /**
@@ -415,7 +411,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
              * We always need to adjust the reading offset. Even if the current viewport value
              * is the same as the payload position. This is because an already running animation could
              * be active, meaning the viewport is still adjusting itself (after animation duration). So we
-             * need to adjust to anchor to the payload position. This is because we use viewport computed position, 
+             * need to adjust to anchor to the payload position. This is because we use viewport computed position,
              * not the value set by `setProperty`
              */
             withLatestFrom(hooks$),
@@ -428,7 +424,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
             tap(([data, hooks]) => {
               if (context.getSettings().pageTurnAnimation === `fade`) {
                 adjustReadingOffset(data.position, hooks)
-                element.style.setProperty('opacity', '1')
+                element.style.setProperty(`opacity`, `1`)
               }
             }),
             currentEvent.animate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
@@ -460,7 +456,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       processManualAdjust$.pipe(delay(0)) // make sure it happens after manual adjust
     )
       .pipe(
-        map(() => ({ type: `end` as const })),
+        map(() => ({ type: `end` as const }))
       )
   )
 
@@ -469,20 +465,20 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * Some actions such as adjustment, user pan moving, etc set the viewport as busy because they require
    * high responsiveness in order to avoid stuttering or fps drop. This observable let you know when is
    * a good time to perform heavy operation.
-   * 
+   *
    * @returns
    * free means the viewport is not moving so it's safe to do computation
-   * busy means the viewport is either controlled or animated, etc. 
+   * busy means the viewport is either controlled or animated, etc.
    */
   const state$ = combineLatest([
     panSubject$.asObservable(),
-    adjustmentState$.pipe(startWith({ type: `end` as const })),
+    adjustmentState$.pipe(startWith({ type: `end` as const }))
   ])
     .pipe(
       // tap((e) => console.log(`state$`, e)),
       map(([pan, adjust]) => pan === `end` && adjust.type === `end` ? `free` : `busy`),
       distinctUntilChanged(),
-      shareReplay(1),
+      shareReplay(1)
     )
 
   // adjustmentState$.subscribe(e => console.log(`adjustmentState$`, e))
@@ -512,7 +508,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: {
       state$,
-      navigation$,
-    },
+      navigation$
+    }
   }
 }

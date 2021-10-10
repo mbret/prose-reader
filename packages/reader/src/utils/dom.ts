@@ -28,7 +28,7 @@
 //   }
 // }
 
-import { Report } from "../report";
+import { Report } from "../report"
 
 /**
  * Global env agnostic method to detect if an element is HtmlElement.
@@ -43,17 +43,17 @@ import { Report } from "../report";
 export const isHtmlElement = (element?: Element | Node | null | EventTarget): element is HTMLElement => {
   return (
     typeof element === `object` && !!element && `nodeType` in element && element?.nodeType === Node.ELEMENT_NODE && `innerText` in (element as HTMLElement)
-  );
-};
+  )
+}
 
-function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: number) {
+function createRangeOrCaretFromPoint (doc: Document, startX: number, startY: number) {
   // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   if (`caretPositionFromPoint` in doc) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
     // @ts-expect-error
-    return doc.caretPositionFromPoint(startX, startY) as { offsetNode: Node, offset: number };
-  } else if (typeof doc.caretRangeFromPoint != "undefined") {
-    return doc.caretRangeFromPoint(startX, startY);
+    return doc.caretPositionFromPoint(startX, startY) as { offsetNode: Node, offset: number }
+  } else if (typeof doc.caretRangeFromPoint !== `undefined`) {
+    return doc.caretRangeFromPoint(startX, startY)
   }
 }
 
@@ -80,14 +80,14 @@ export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirs
       const visibleRect = getFirstVisibleDOMRect(rects, viewport)
 
       // At this point we know the range is valid and contains visible rect.
-      // This means we have a valid Node. We still need to know the visible offset to be 100% accurate 
+      // This means we have a valid Node. We still need to know the visible offset to be 100% accurate
       if (visibleRect) {
         lastValidRange = range.cloneRange()
 
         /**
-         * Now we will try to refine the search to get the offset 
-         * this is an incredibly expensive operation so we will try to 
-         * use native functions to get something 
+         * Now we will try to refine the search to get the offset
+         * this is an incredibly expensive operation so we will try to
+         * use native functions to get something
          * @important
          * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
          * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
@@ -118,10 +118,10 @@ export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirs
 })
 
 const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort) => {
-  let lastValidElement: Element | undefined = undefined
+  let lastValidElement: Element | undefined
   const positionFromViewport = getElementOrNodePositionFromViewPort(element.getBoundingClientRect(), viewport)
 
-  if (positionFromViewport !== 'before' && positionFromViewport !== 'after') {
+  if (positionFromViewport !== `before` && positionFromViewport !== `after`) {
     lastValidElement = element
   }
 
@@ -139,24 +139,24 @@ const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort)
   return lastValidElement
 }
 
-function getElementOrNodePositionFromViewPort(domRect: DOMRect, { left, right }: ViewPort) {
+function getElementOrNodePositionFromViewPort (domRect: DOMRect, { left, right }: ViewPort) {
   // horizontal + ltr
-  if (domRect.left <= left && domRect.right <= left) return 'before';
-  if (domRect.left <= left && domRect.right > left && domRect.right <= right) return 'partially-before';
-  if (domRect.left <= right && domRect.right > right) return 'partially-after';
-  if (domRect.left > right) return 'after';
-  return 'within';
+  if (domRect.left <= left && domRect.right <= left) return `before`
+  if (domRect.left <= left && domRect.right > left && domRect.right <= right) return `partially-before`
+  if (domRect.left <= right && domRect.right > right) return `partially-after`
+  if (domRect.left > right) return `after`
+  return `within`
 
   // @todo rtl
   // @todo vertical-lrt
   // @todo vertical-rtl
 }
 
-function getFirstVisibleDOMRect(domRect: DOMRectList, viewport: ViewPort) {
+function getFirstVisibleDOMRect (domRect: DOMRectList, viewport: ViewPort) {
   return Array.from(domRect).find(domRect => {
     const position = getElementOrNodePositionFromViewPort(domRect, viewport)
 
-    if (position !== 'before' && position !== 'after') {
+    if (position !== `before` && position !== `after`) {
       return true
     }
     return false
@@ -184,62 +184,62 @@ export const getRangeFromNode = (node: Node, offset: number) => {
 
 export const isPointerEvent = (event: Event): event is PointerEvent => {
   if ((event as PointerEvent)?.target && (event?.target as Element)?.ownerDocument?.defaultView) {
-    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis;
+    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis
 
     if (eventView.PointerEvent) {
-      return event instanceof eventView.PointerEvent;
+      return event instanceof eventView.PointerEvent
     }
   }
 
   if ((event as PointerEvent)?.view && (event as PointerEvent)?.view?.window) {
-    const eventView = (event as PointerEvent)?.view as Window & typeof globalThis;
+    const eventView = (event as PointerEvent)?.view as Window & typeof globalThis
 
     if (eventView.PointerEvent) {
-      return event instanceof eventView.PointerEvent;
+      return event instanceof eventView.PointerEvent
     }
   }
 
-  return false;
-};
+  return false
+}
 
 export const isMouseEvent = (event: Event): event is MouseEvent => {
   if (isPointerEvent(event)) return false
 
   if ((event as MouseEvent)?.target && (event?.target as Element)?.ownerDocument?.defaultView) {
-    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis;
+    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis
 
     if (eventView.MouseEvent) {
-      return event instanceof eventView.MouseEvent;
+      return event instanceof eventView.MouseEvent
     }
   }
 
   if ((event as MouseEvent)?.view && (event as MouseEvent)?.view?.window) {
-    const eventView = (event as MouseEvent)?.view as Window & typeof globalThis;
+    const eventView = (event as MouseEvent)?.view as Window & typeof globalThis
 
     if (eventView.MouseEvent) {
-      return event instanceof eventView.MouseEvent;
+      return event instanceof eventView.MouseEvent
     }
   }
 
-  return false;
-};
+  return false
+}
 
 export const isTouchEvent = (event: Event): event is TouchEvent => {
   if ((event as TouchEvent)?.target && (event?.target as Element)?.ownerDocument?.defaultView) {
-    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis;
+    const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis
 
     if (eventView.TouchEvent) {
-      return event instanceof eventView.TouchEvent;
+      return event instanceof eventView.TouchEvent
     }
   }
 
   if ((event as TouchEvent)?.view && (event as TouchEvent)?.view?.window) {
-    const eventView = (event as TouchEvent)?.view as Window & typeof globalThis;
+    const eventView = (event as TouchEvent)?.view as Window & typeof globalThis
 
     if (eventView.TouchEvent) {
-      return event instanceof eventView.TouchEvent;
+      return event instanceof eventView.TouchEvent
     }
   }
 
-  return false;
-};
+  return false
+}

@@ -1,7 +1,7 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 /**
- * 
+ *
  */
 export const accessibilityEnhancer: Enhancer<{
 
@@ -23,7 +23,7 @@ export const accessibilityEnhancer: Enhancer<{
   reader.registerHook(`item.onLoad`, ({ addStyle, frame }) => {
     addStyle(`oboku-reader-accessibility`, `
       :focus-visible {
-        ${/* 
+        ${/*
           Some epubs remove the outline, this is not good practice since it reduce accessibility.
           We will try to restore it by force.
         */``}
@@ -45,6 +45,6 @@ export const accessibilityEnhancer: Enhancer<{
   })
 
   return {
-    ...reader,
+    ...reader
   }
 }

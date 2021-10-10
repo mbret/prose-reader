@@ -34,7 +34,7 @@ type EnhancerCreator<Ext = {}> = (
   options: Options,
 ) => ReaderPublicApi & Ext
 
-function createReader<Ext>(
+function createReader<Ext> (
   options: InternalReaderCreateParameter,
   enhancer?: Enhancer<Ext>
 ): ReaderPublicApi & Ext {
@@ -90,7 +90,7 @@ const internalEnhancer = composeEnhancer(
   layoutEnhancer,
   utilsEnhancer,
   resourcesEnhancer,
-  accessibilityEnhancer,
+  accessibilityEnhancer
 )
 
 type InternalEnhancer = ReturnType<typeof internalEnhancer>
@@ -107,11 +107,11 @@ type InternalEnhancerApi = Omit<ReturnType<InternalEnhancer>, `progression`>
 
 export function createReaderWithEnhancers(options: Options): Omit<InternalEnhancerApi, keyof RemovedKeysOnly>
 export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>): Omit<InternalEnhancerApi & Ext, keyof RemovedKeysOnly>
-export function createReaderWithEnhancers<Ext = {}>(options: Options, enhancer?: Enhancer<Ext>) {
+export function createReaderWithEnhancers<Ext = {}> (options: Options, enhancer?: Enhancer<Ext>) {
   if (enhancer) {
     return exposeReader(createReader(options, composeEnhancer(
       enhancer,
-      internalEnhancer,
+      internalEnhancer
     )))
   } else {
     return exposeReader(createReader(options, internalEnhancer))

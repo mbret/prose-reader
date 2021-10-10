@@ -1,4 +1,4 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -15,7 +15,7 @@ export const zoomEnhancer: Enhancer<{
   }
 }> = (next) => (options) => {
   const reader = next(options)
-  let imageMagnifierContainer: HTMLDivElement | undefined = undefined
+  let imageMagnifierContainer: HTMLDivElement | undefined
   let imgLastPosition: { x: number, y: number } = { x: 0, y: 0 }
   let movingLastDelta: { x: number, y: number } | undefined = { x: 0, y: 0 }
   let lastScale = 1
@@ -114,7 +114,7 @@ export const zoomEnhancer: Enhancer<{
       exit,
       move,
       isEnabled,
-      scale,
+      scale
     }
   }
 }

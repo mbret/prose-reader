@@ -1,8 +1,8 @@
-import { Observable, Subject } from "rxjs";
-import { Report } from "../report";
-import { Enhancer } from "../createReader";
+import { Observable, Subject } from "rxjs"
+import { Report } from "../report"
+import { Enhancer } from "../createReader"
 
-type SubjectData = { event: 'linkClicked', data: HTMLAnchorElement }
+type SubjectData = { event: `linkClicked`, data: HTMLAnchorElement }
 
 export const linksEnhancer: Enhancer<{
   $: {
@@ -14,7 +14,7 @@ export const linksEnhancer: Enhancer<{
 
   const handleNavigationForClick = (element: HTMLAnchorElement) => {
     if (!element.href) return
-    
+
     const hrefUrl = new URL(element.href)
     const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
     // internal link, we can handle
@@ -26,12 +26,12 @@ export const linksEnhancer: Enhancer<{
 
   reader.registerHook(`item.onLoad`, ({ frame }) => {
     if (frame.contentDocument) {
-      Array.from(frame.contentDocument.querySelectorAll('a')).forEach(element => element.addEventListener('click', (e) => {
+      Array.from(frame.contentDocument.querySelectorAll(`a`)).forEach(element => element.addEventListener(`click`, (e) => {
         if (e.target && `style` in e.target && `ELEMENT_NODE` in e.target) {
           Report.warn(`prevented click on`, element, e)
           e.preventDefault()
           handleNavigationForClick(element)
-          subject.next({ event: 'linkClicked', data: element })
+          subject.next({ event: `linkClicked`, data: element })
         }
       }))
     }
@@ -41,7 +41,7 @@ export const linksEnhancer: Enhancer<{
     ...reader,
     $: {
       ...reader.$,
-      links$: subject.asObservable(),
+      links$: subject.asObservable()
     }
   }
 }

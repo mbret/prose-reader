@@ -23,7 +23,7 @@ export const createLocationResolver = ({ context }: {
 
     const ltrRelativeOffset = getItemOffsetFromPageIndex(context.getPageSize().width, pageIndex, itemWidth)
 
-    if (itemReadingDirection === 'rtl') {
+    if (itemReadingDirection === `rtl`) {
       return {
         x: (itemWidth - ltrRelativeOffset) - context.getPageSize().width,
         y: 0
@@ -49,10 +49,9 @@ export const createLocationResolver = ({ context }: {
 
     let offsetNormalizedForLtr = Math.min(itemWidth, Math.max(0, position.x))
 
-    if (itemReadingDirection === 'rtl') {
+    if (itemReadingDirection === `rtl`) {
       offsetNormalizedForLtr = (itemWidth - offsetNormalizedForLtr) - context.getPageSize().width
     }
-
 
     if (readingItem.isUsingVerticalWriting()) {
       const numberOfPages = getNumberOfPages(itemHeight, pageHeight)
@@ -77,7 +76,7 @@ export const createLocationResolver = ({ context }: {
   }
 
   const getReadingItemPositionFromNode = (node: Node, offset: number, readingItem: ReadingItem) => {
-    let offsetOfNodeInReadingItem: number | undefined = undefined
+    let offsetOfNodeInReadingItem: number | undefined
 
     // for some reason `img` does not work with range (x always = 0)
     if (node?.nodeName === `img` || node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE) {
@@ -108,11 +107,10 @@ export const createLocationResolver = ({ context }: {
     const frame = readingItem.readingItemFrame?.getManipulableFrame()?.frame
 
     if (
-      frame?.contentWindow?.document
+      frame?.contentWindow?.document &&
       // very important because it is being used by next functions
-      && frame.contentWindow.document.body !== null
+      frame.contentWindow.document.body !== null
     ) {
-
       // @todo handle vertical jp
       // top seems ok but left is not, it should probably not be 0 or something
       const { x: left, y: top } = getReadingItemPositionFromPageIndex(pageIndex, readingItem)
@@ -136,7 +134,7 @@ export const createLocationResolver = ({ context }: {
 
     const adjustedPosition = {
       x: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.x, context.getPageSize().width, width),
-      y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height),
+      y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height)
     }
 
     return adjustedPosition
@@ -165,6 +163,6 @@ export const createLocationResolver = ({ context }: {
     getReadingItemPageIndexFromPosition,
     getReadingItemPageIndexFromNode,
     getReadingItemClosestPositionFromUnsafePosition,
-    getFirstNodeOrRangeAtPage,
+    getFirstNodeOrRangeAtPage
   }
 }

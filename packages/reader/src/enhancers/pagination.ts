@@ -1,9 +1,9 @@
-import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
-import { Enhancer } from "../createReader";
-import { ReadingItem } from "../readingItem";
-import { Manifest } from "../types";
-import { progressionEnhancer } from "./progression";
+import { Observable } from "rxjs"
+import { map } from "rxjs/operators"
+import { Enhancer } from "../createReader"
+import { ReadingItem } from "../readingItem"
+import { Manifest } from "../types"
+import { progressionEnhancer } from "./progression"
 
 type Deps = ReturnType<ReturnType<typeof progressionEnhancer>>
 
@@ -63,7 +63,7 @@ type PaginationInfo = undefined | {
    * This value is only correct for pre-paginated books and or
    * if you preload the entire book in case of reflow. This is because
    * items get loaded unloaded when navigating through the book, meaning
-   * we cannot measure the number of pages accurately. 
+   * we cannot measure the number of pages accurately.
    */
   numberOfTotalPages: number | undefined,
   isUsingSpread: boolean,
@@ -114,7 +114,7 @@ export const paginationEnhancer: Enhancer<{
         spineItemPath: beginItem?.item.path,
         spineItemId: beginItem?.item.id,
         cfi: paginationBegin.cfi,
-        spineItemReadingDirection: beginItem?.getReadingDirection(),
+        spineItemReadingDirection: beginItem?.getReadingDirection()
       },
       end: {
         chapterInfo: getChapterInfo(),
@@ -125,7 +125,7 @@ export const paginationEnhancer: Enhancer<{
         spineItemPath: endItem?.item.path,
         spineItemId: endItem?.item.id,
         spineItemReadingDirection: endItem?.getReadingDirection(),
-        cfi: paginationEnd.cfi,
+        cfi: paginationEnd.cfi
       },
       // end: ReadingLocation;
       // spineItemReadingDirection: focusedReadingItem?.getReadingDirection(),
@@ -133,7 +133,7 @@ export const paginationEnhancer: Enhancer<{
        * This percentage is based of the weight (kb) of every items and the number of pages.
        * It is not accurate but gives a general good idea of the overall progress.
        * It is recommended to use this progress only for reflow books. For pre-paginated books
-       * the number of pages and current index can be used instead since 1 page = 1 chapter. 
+       * the number of pages and current index can be used instead since 1 page = 1 chapter.
        */
       percentageEstimateOfBook: endItem
         ? reader.progression.getPercentageEstimate(
@@ -142,14 +142,14 @@ export const paginationEnhancer: Enhancer<{
           paginationEnd.numberOfPages,
           paginationEnd.pageIndex || 0,
           reader.getCurrentViewportPosition(),
-          endItem,
+          endItem
         )
         : 0,
       /**
        * This may be not accurate for reflowable due to dynamic load / unload.
        */
       numberOfTotalPages: pagination.getTotalNumberOfPages(),
-      isUsingSpread: context.shouldDisplaySpread(),
+      isUsingSpread: context.shouldDisplaySpread()
       // chaptersOfBook: number;
       // chapter: string;
       // hasNextChapter: (reader.readingOrderView.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
@@ -176,9 +176,9 @@ export const buildChapterInfoFromReadingItem = (manifest: Manifest, readingItem:
   return getChapterInfo(path, manifest.nav.toc)
 }
 
-const getChapterInfo = (path: string, tocItems: Manifest['nav']['toc']): ChapterInfo | undefined => {
+const getChapterInfo = (path: string, tocItems: Manifest[`nav`][`toc`]): ChapterInfo | undefined => {
   return tocItems.reduce((acc: ChapterInfo | undefined, tocItem) => {
-    const indexOfHash = tocItem.path.indexOf('#')
+    const indexOfHash = tocItem.path.indexOf(`#`)
     const tocItemPathWithoutAnchor = indexOfHash > 0 ? tocItem.path.substr(0, indexOfHash) : tocItem.path
     if (path.endsWith(tocItemPathWithoutAnchor)) {
       return {

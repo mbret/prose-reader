@@ -32,20 +32,20 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
       return {
         x: (leftEnd - position.x) - context.getPageSize().width,
         // y: (topEnd - position.y) - context.getPageSize().height,
-        y: Math.max(0, position.y - topStart),
+        y: Math.max(0, position.y - topStart)
       }
     }
 
     return {
       /**
        * when using spread the item could be on the right and therefore will be negative
-       * @example 
+       * @example
        * 400 (position = viewport), page of 200
        * 400 - 600 = -200.
        * However we can assume we are at 0, because we in fact can see the beginning of the item
        */
       x: Math.max(0, position.x - leftStart),
-      y: Math.max(0, position.y - topStart),
+      y: Math.max(0, position.y - topStart)
     }
   }, { disable: true })
 
@@ -53,7 +53,7 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
    * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when
    * an item is not taking the entire spread. That way we always have a valid position for the given item. However you need to adjust it
    * when on spread mode to be sure to position the viewport on the edge.
-   * 
+   *
    * @example
    * [    item-a   |   item-a   ]
    * 400          200           0
@@ -79,7 +79,7 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
       return {
         x: (leftEnd - readingItemPosition.x) - context.getPageSize().width,
         // y: (topEnd - readingItemPosition.y) - context.getPageSize().height,
-        y: topStart + readingItemPosition.y,
+        y: topStart + readingItemPosition.y
       }
     }
 
@@ -168,6 +168,6 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
     getReadingItemFromPosition,
     getReadingItemFromIframe,
     getReadingItemPageIndexFromNode,
-    getReadingItemsFromReadingOrderPosition,
+    getReadingItemsFromReadingOrderPosition
   }
 }

@@ -1,4 +1,4 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 export const mediaEnhancer: Enhancer<{
 
@@ -74,6 +74,6 @@ export const mediaEnhancer: Enhancer<{
 
   return {
     ...reader,
-    destroy,
+    destroy
   }
 }

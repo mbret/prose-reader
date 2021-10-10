@@ -1,4 +1,4 @@
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 export const hotkeysEnhancer: Enhancer<{}> = (next) => (options) => {
   const reader = next(options)
@@ -30,6 +30,6 @@ export const hotkeysEnhancer: Enhancer<{}> = (next) => (options) => {
 
   return {
     ...reader,
-    destroy,
+    destroy
   }
 }

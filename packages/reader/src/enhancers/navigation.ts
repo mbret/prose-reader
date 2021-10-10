@@ -1,7 +1,7 @@
 /**
  * Offer extra convenient methods for navigation.
  */
-import { Enhancer } from "../createReader";
+import { Enhancer } from "../createReader"
 
 export const navigationEnhancer: Enhancer<{
   goToLeftSpineItem: () => void,
@@ -13,7 +13,7 @@ export const navigationEnhancer: Enhancer<{
     const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
     const { end = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
     const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length ?? 0
-    let nextItem = end + 1
+    const nextItem = end + 1
     if (nextItem < numberOfSpineItems) {
       reader.goToSpineItem(nextItem)
     }
@@ -22,7 +22,7 @@ export const navigationEnhancer: Enhancer<{
   const goToPreviousSpineItem = () => {
     const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
     const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
-    let nextItem = begin - 1
+    const nextItem = begin - 1
     if (nextItem >= 0) {
       reader.goToSpineItem(nextItem)
     }
@@ -43,6 +43,6 @@ export const navigationEnhancer: Enhancer<{
       }
 
       return goToNextSpineItem()
-    },
+    }
   }
 }

@@ -15,13 +15,13 @@ import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Hook, RegisterHook } from "../types/Hook"
 
-const NAMESPACE = 'readingOrderView'
+const NAMESPACE = `readingOrderView`
 
 export type ReadingOrderView = ReturnType<typeof createReadingOrderView>
 
 type ReadingItem = ReturnType<typeof createReadingItem>
 type RequireLayout = boolean
-type ManipulableReadingItemCallback = Parameters<ReadingItem['manipulateReadingItem']>[0]
+type ManipulableReadingItemCallback = Parameters<ReadingItem[`manipulateReadingItem`]>[0]
 type ManipulableReadingItemCallbackPayload = Parameters<ManipulableReadingItemCallback>[0]
 
 type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
@@ -81,7 +81,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   /**
    * Watch for settings update that require changes
    * on this layer.
-   * 
+   *
    * @important
    * Try not to have duplicate with other lower components that also listen to settings change and re-layout
    * on the same settings.
@@ -93,7 +93,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         computedPageTurnMode
       })),
       distinctUntilChanged(isShallowEqual),
-      skip(1),
+      skip(1)
     )
 
   const waitForViewportFree$ = viewportNavigator.$.state$.pipe(filter(v => v === `free`), take(1))
@@ -112,7 +112,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         readingItemManager.layout()
         viewportNavigator.layout()
       }),
-      share(),
+      share()
     )
 
   layout$
@@ -125,7 +125,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    * This adjustment is used to update the pagination with the most up to date values we can.
    * It needs to be ran only when viewport is free because some operation such as looking up cfi can
    * be really heavy.
-   * 
+   *
    * The cfi will only be updated if it needs to be:
    * - cfi is a root target
    * - cfi is undefined
@@ -142,14 +142,14 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
           const endLastCfi = pagination.getEndInfo().cfi
 
           const shouldUpdateBeginCfi =
-            pagination.getBeginInfo().readingItemIndex !== readingItemsFromPosition?.begin
-            || beginLastCfi === undefined
-            || beginLastCfi?.startsWith(`epubcfi(/0`)
+            pagination.getBeginInfo().readingItemIndex !== readingItemsFromPosition?.begin ||
+            beginLastCfi === undefined ||
+            beginLastCfi?.startsWith(`epubcfi(/0`)
 
           const shouldUpdateEndCfi =
-            pagination.getEndInfo().readingItemIndex !== readingItemsFromPosition?.end
-            || endLastCfi === undefined
-            || endLastCfi?.startsWith(`epubcfi(/0`)
+            pagination.getEndInfo().readingItemIndex !== readingItemsFromPosition?.end ||
+            endLastCfi === undefined ||
+            endLastCfi?.startsWith(`epubcfi(/0`)
 
           if (beginReadingItem && endReadingItem && readingItemsFromPosition) {
             const beginPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.beginPosition, beginReadingItem)
@@ -191,16 +191,16 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    *    - we wait for viewport free
    *    - we adjust pagination
    *    - we update pagination
-   * 
+   *
    * Once navigation is adjusted we update the pagination regardless if the
    * adjustment was needed or not. This is because the layout may have change. In some case, the content
    * may have changed but by change the viewport position is still the same. It does not mean the actual content
    * is the same.
-   * 
+   *
    * @important
    * Adjustment and pagination update are cancelled as soon as another navigation happens. (it will already be handled there).
    * adjustNavigation$ can trigger a navigation if adjustment is needed which will in term cancel the inner stream.
-   * 
+   *
    * @todo
    * Right now we react to literally every layout and some time we might not need to update pagination (ex pre-paginated element got unload).
    * Maybe we should only listen to current items visible only ?
@@ -219,7 +219,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
        * - layout triggered
        * - viewport is now on an item far after item 2 because item 1 shrink (PROBLEM)
        * - sometime after viewport is adjusted back to item 2.
-       * 
+       *
        * Two solution to fix this issue:
        * - maybe later try to implement a different strategy and never shrink back item unless they are loaded
        * - do not use debounce / throttle and navigate back to the item right on the same tick
@@ -238,7 +238,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             takeUntil(viewportNavigator.$.navigation$)
           )
       ),
-      share(),
+      share()
     )
 
   merge(
@@ -249,14 +249,14 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
             .pipe(
               takeUntil(viewportNavigator.$.navigation$)
             )
-        }),
+        })
       ),
     readingItemManager.$.layout$
       .pipe(
         debounceTime(10, animationFrameScheduler),
         tap(() => {
           pagination.updateTotalNumberOfPages(readingItemManager.getAll())
-        }),
+        })
       )
   )
     .pipe(
@@ -278,21 +278,21 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
           selectionSubscription = merge(
             selectionTracker$
               .pipe(
-                filter(event => event.event === 'selectionchange'),
+                filter(event => event.event === `selectionchange`),
                 tap(event => {
                   subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, readingItem.item) : null })
                 })
               ),
             selectionTracker$
               .pipe(
-                filter(({ event }) => event === 'selectstart'),
+                filter(({ event }) => event === `selectstart`),
                 switchMap(_ => fingerTracker$
                   .pipe(
-                    filter(({ event }) => event === 'fingermove'),
+                    filter(({ event }) => event === `fingermove`),
                     debounce(() => interval(1000)),
                     takeUntil(fingerTracker$
                       .pipe(
-                        filter(({ event }) => event === 'fingerout'),
+                        filter(({ event }) => event === `fingerout`),
                         tap(() => {
 
                         })
@@ -321,7 +321,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
           return EMPTY
         }),
         takeUntil(context.$.destroy$)
-      ),
+      )
   )
     .subscribe()
 
@@ -370,10 +370,10 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
              * - navigation comes from adjustment with controlled mode, we don't update the cfi, just pass the previous one
              * - navigation comes from adjustment with free mode, we will update with root cfi if needed because we could be on new page
              * - navigation is not from adjustment, this means we are on either new page or new reading item, we use light cfi with root (no dom lookup)
-             * 
+             *
              * The cfi is later adjusted with heavy dom lookup once the viewport is free.
              */
-            cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === beginReadingItem
+            cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && readingItemToFocus === beginReadingItem
               ? lastExpectedNavigation.data
               : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
                 ? pagination.getBeginInfo().cfi
@@ -381,13 +381,13 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
                   ? cfiLocator.getRootCfi(beginReadingItem)
                   : undefined,
             options: {
-              isAtEndOfChapter: false,
+              isAtEndOfChapter: false
             }
           }, {
             readingItem: endReadingItem,
             readingItemIndex: endItemIndex,
             pageIndex: endPageIndex,
-            cfi: lastExpectedNavigation?.type === 'navigate-from-cfi' && readingItemToFocus === endReadingItem
+            cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && readingItemToFocus === endReadingItem
               ? lastExpectedNavigation.data
               : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
                 ? pagination.getEndInfo().cfi
@@ -395,7 +395,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
                   ? cfiLocator.getRootCfi(endReadingItem)
                   : undefined,
             options: {
-              isAtEndOfChapter: false,
+              isAtEndOfChapter: false
             }
           })
 
@@ -436,7 +436,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
    * un-sync the viewport.
    * The flow for the first point is as follow:
    * [navigate] -> [transition] -> [new position] -> [iframe unload/load] -> (eventual adjustment).
-   * 
+   *
    * It would ne nice to be able to load/unload without having to worry about viewport mis-adjustment but due to the current iframe and viewport
    * layout method we have to take it into consideration.
    */
@@ -501,20 +501,20 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       $: subject.asObservable(),
       viewportState$: viewportNavigator.$.state$,
       layout$: readingItemManager.$.layout$
-    },
+    }
   }
 }
 
 const createElement = (doc: Document) => {
-  const element = doc.createElement('div')
-  element.id = 'ReadingOrderView'
-  element.className = 'ReadingOrderView'
+  const element = doc.createElement(`div`)
+  element.id = `ReadingOrderView`
+  element.className = `ReadingOrderView`
   element.style.height = `100%`
   /**
    * Beware of this property, do not try to change anything else or remove it.
    * This is early forced optimization and is used for this specific context.
    * @see https://developer.mozilla.org/en-US/docs/Web/CSS/will-change
-   * 
+   *
    * @important
    * This seems to be responsible for the screen freeze issue
    */

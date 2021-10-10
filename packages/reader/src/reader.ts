@@ -1,18 +1,18 @@
-import { BehaviorSubject, Subject } from "rxjs";
-import { Report } from "./report";
-import { createContext as createBookContext } from "./context";
-import { createPagination } from "./pagination";
-import { createReadingOrderView } from "./readingOrderView/readingOrderView";
-import { LoadOptions, Manifest } from "./types";
-import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
-import { takeUntil, tap } from "rxjs/operators";
-import { createSelection } from "./selection";
-import { createReadingItemManager } from "./readingItemManager";
-import { Hook, RegisterHook } from "./types/Hook";
+import { BehaviorSubject, Subject } from "rxjs"
+import { Report } from "./report"
+import { createContext as createBookContext } from "./context"
+import { createPagination } from "./pagination"
+import { createReadingOrderView } from "./readingOrderView/readingOrderView"
+import { LoadOptions, Manifest } from "./types"
+import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
+import { takeUntil, tap } from "rxjs/operators"
+import { createSelection } from "./selection"
+import { createReadingItemManager } from "./readingItemManager"
+import { Hook, RegisterHook } from "./types/Hook"
 
 export type Reader = ReturnType<typeof createReader>
 type Context = ReturnType<typeof createBookContext>
-type ContextSettings = Parameters<Context['setSettings']>[0]
+type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
@@ -44,12 +44,12 @@ export const createReader = ({ containerElement, ...settings }: {
   const layout = () => {
     const dimensions = {
       width: containerElement.offsetWidth,
-      height: containerElement.offsetHeight,
+      height: containerElement.offsetHeight
     }
-    let margin = 0
-    let marginTop = 0
-    let marginBottom = 0
-    let isReflow = true // @todo
+    const margin = 0
+    const marginTop = 0
+    const marginBottom = 0
+    const isReflow = true // @todo
     const containerElementWidth = dimensions.width
     const containerElementEvenWidth =
       containerElementWidth % 2 === 0 || isReflow
@@ -77,7 +77,7 @@ export const createReader = ({ containerElement, ...settings }: {
 
   const load = (
     manifest: Manifest,
-    loadOptions: LoadOptions = {},
+    loadOptions: LoadOptions = {}
   ) => {
     if (context.getManifest()) {
       Report.warn(`loading a new book is not supported yet`)
@@ -130,7 +130,7 @@ export const createReader = ({ containerElement, ...settings }: {
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
-   * 
+   *
    * This is not possible to use any of the reader features once it
    * has been destroyed. If you need to open a new book you need to
    * either create a new reader or call `load` with a different manifest
@@ -177,9 +177,9 @@ export const createReader = ({ containerElement, ...settings }: {
     locator: readingOrderView.locator,
     getCurrentNavigationPosition: readingOrderView.viewportNavigator.getCurrentNavigationPosition,
     getCurrentViewportPosition: readingOrderView.viewportNavigator.getCurrentViewportPosition,
-    setPageTurnAnimation: (pageTurnAnimation: ContextSettings['pageTurnAnimation']) => context.setSettings({ pageTurnAnimation }),
-    setPageTurnDirection: (pageTurnDirection: ContextSettings['pageTurnDirection']) => context.setSettings({ pageTurnDirection }),
-    setPageTurnMode: (pageTurnMode: ContextSettings['pageTurnMode']) => context.setSettings({ pageTurnMode }),
+    setPageTurnAnimation: (pageTurnAnimation: ContextSettings[`pageTurnAnimation`]) => context.setSettings({ pageTurnAnimation }),
+    setPageTurnDirection: (pageTurnDirection: ContextSettings[`pageTurnDirection`]) => context.setSettings({ pageTurnDirection }),
+    setPageTurnMode: (pageTurnMode: ContextSettings[`pageTurnMode`]) => context.setSettings({ pageTurnMode }),
     layout,
     load,
     destroy,
@@ -197,13 +197,13 @@ export const createReader = ({ containerElement, ...settings }: {
       selection$: selectionSubject$.asObservable(),
       viewportState$: readingOrderView.$.viewportState$,
       layout$: readingOrderView.$.layout$,
-      destroy$,
+      destroy$
     },
     __debug: {
       pagination,
       context,
       readingOrderView,
-      readingItemManager,
+      readingItemManager
     } as any // using any because otherwise ts breaks due to too many types to infer
   }
 
@@ -211,15 +211,15 @@ export const createReader = ({ containerElement, ...settings }: {
 }
 
 const createWrapperElement = (containerElement: HTMLElement) => {
-  const element = containerElement.ownerDocument.createElement('div')
-  element.id = 'BookView'
+  const element = containerElement.ownerDocument.createElement(`div`)
+  element.id = `BookView`
   element.style.setProperty(`position`, `relative`)
 
   return element
 }
 
 const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
-  const iframeEventBridgeElement = containerElement.ownerDocument.createElement('div')
+  const iframeEventBridgeElement = containerElement.ownerDocument.createElement(`div`)
   iframeEventBridgeElement.id = IFRAME_EVENT_BRIDGE_ELEMENT_ID
   iframeEventBridgeElement.style.cssText = `
     position: absolute;

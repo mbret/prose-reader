@@ -11,30 +11,30 @@ import { map, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 
 const pointerEvents = [
-  "pointercancel" as const,
-  "pointerdown" as const,
-  "pointerenter" as const,
-  "pointerleave" as const,
-  "pointermove" as const,
-  "pointerout" as const,
-  "pointerover" as const,
-  "pointerup" as const
+  `pointercancel` as const,
+  `pointerdown` as const,
+  `pointerenter` as const,
+  `pointerleave` as const,
+  `pointermove` as const,
+  `pointerout` as const,
+  `pointerover` as const,
+  `pointerup` as const
 ]
 
 const mouseEvents = [
-  'mousedown' as const,
-  'mouseup' as const,
-  'mouseenter' as const,
-  'mouseleave' as const,
-  'mousemove' as const,
-  'mouseout' as const,
-  'mouseover' as const,
+  `mousedown` as const,
+  `mouseup` as const,
+  `mouseenter` as const,
+  `mouseleave` as const,
+  `mousemove` as const,
+  `mouseout` as const,
+  `mouseover` as const
 ]
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
 export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
-  item: Manifest['readingOrder'][number],
+  item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
@@ -66,7 +66,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   containerElement.appendChild(element)
 
   // Do not memoize x,y,top,left as they change relatively to the viewport all the time
-  let memoizedElementDimensions: { width: number, height: number } | undefined = undefined
+  let memoizedElementDimensions: { width: number, height: number } | undefined
 
   const getElementDimensions = () => {
     if (memoizedElementDimensions) {
@@ -79,7 +79,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       // we want to round to first decimal because it's possible to have half pixel
       // however browser engine can also gives back x.yyyy based on their precision
       width: Math.round(rect.width * 10) / 10,
-      height: Math.round(rect.height * 10) / 10,
+      height: Math.round(rect.height * 10) / 10
     }
 
     memoizedElementDimensions = normalizedValues
@@ -88,8 +88,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   }
 
   const injectStyle = (readingItemFrame: ReadingItemFrame, cssText: string) => {
-    readingItemFrame.getManipulableFrame()?.removeStyle('oboku-reader-css')
-    readingItemFrame.getManipulableFrame()?.addStyle('oboku-reader-css', cssText)
+    readingItemFrame.getManipulableFrame()?.removeStyle(`oboku-reader-css`)
+    readingItemFrame.getManipulableFrame()?.addStyle(`oboku-reader-css`, cssText)
   }
 
   const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
@@ -165,13 +165,13 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
     return {
       clientX: adjustedX,
-      clientY: adjustedY,
+      clientY: adjustedY
     }
   }
 
   const getResource = async () => {
     const loadOptions = context.getLoadOptions()
-    const lastFetch = (_: Manifest['readingOrder'][number]) => {
+    const lastFetch = (_: Manifest[`readingOrder`][number]) => {
       if (loadOptions?.fetchResource) {
         return loadOptions.fetchResource(item)
       }
@@ -180,7 +180,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
 
     const finalFetch = hooks$.getValue().reduce((acc, hook) => {
-      if (hook.name === 'item.onGetResource') {
+      if (hook.name === `item.onGetResource`) {
         return hook.fn(acc)
       }
 
@@ -194,7 +194,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     cb: (options: {
       container: HTMLElement,
       loadingElement: HTMLElement,
-      item: Manifest['readingOrder'][number],
+      item: Manifest[`readingOrder`][number],
       overlayElement: HTMLDivElement,
     } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
   ) => {
@@ -212,7 +212,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     )
     .subscribe(([data, isReady]) => {
       if (data.isFirstLayout && isReady) {
-        loadingElement.style.visibility = 'hidden'
+        loadingElement.style.visibility = `hidden`
       }
       contentLayoutChangeSubject$.next({ isFirstLayout: data.isFirstLayout, isReady })
     })
@@ -221,7 +221,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     .pipe(
       tap(() => {
         if (loadingElement && loadingElement.style.visibility !== `visible`) {
-          loadingElement.style.visibility = 'visible'
+          loadingElement.style.visibility = `visible`
         }
       }),
       takeUntil(destroySubject$)
@@ -275,13 +275,13 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     fingerTracker,
     $: {
       contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable()
-    },
+    }
   }
 }
 
-const createWrapperElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number]) => {
-  const element = containerElement.ownerDocument.createElement('div')
-  element.classList.add('readingItem')
+const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number]) => {
+  const element = containerElement.ownerDocument.createElement(`div`)
+  element.classList.add(`readingItem`)
   element.classList.add(`readingItem-${item.renditionLayout}`)
   element.style.cssText = `
     position: absolute;
@@ -295,8 +295,8 @@ const createWrapperElement = (containerElement: HTMLElement, item: Manifest['rea
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
-const createLoadingElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number], context: Context) => {
-  const loadingElement = containerElement.ownerDocument.createElement('div')
+const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number], context: Context) => {
+  const loadingElement = containerElement.ownerDocument.createElement(`div`)
   loadingElement.classList.add(`loading`)
   loadingElement.style.cssText = `
     height: 100%;
@@ -313,13 +313,13 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
     background-color: white;
   `
 
-  const logoElement = containerElement.ownerDocument.createElement('div')
+  const logoElement = containerElement.ownerDocument.createElement(`div`)
   logoElement.innerText = `oboku`
   logoElement.style.cssText = `
     font-size: 4em;
     color: #cacaca;
   `
-  const detailsElement = containerElement.ownerDocument.createElement('div')
+  const detailsElement = containerElement.ownerDocument.createElement(`div`)
   detailsElement.innerText = `loading ${item.id}`
   detailsElement.style.cssText = `
     font-size: 1.2em;
@@ -336,9 +336,9 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest['rea
   return loadingElement
 }
 
-const createOverlayElement = (containerElement: HTMLElement, item: Manifest['readingOrder'][number]) => {
-  const element = containerElement.ownerDocument.createElement('div')
-  element.classList.add('readingItemOverlay')
+const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number]) => {
+  const element = containerElement.ownerDocument.createElement(`div`)
+  element.classList.add(`readingItemOverlay`)
   element.classList.add(`readingItemOverlay-${item.renditionLayout}`)
   element.style.cssText = `
     position: absolute;
@@ -369,7 +369,7 @@ const createFrameHooks = (iframeEventBridgeElement: HTMLElement, fingerTracker: 
             }
 
             if (isMouseEvent(e)) {
-              convertedEvent = new MouseEvent(e.type, e);
+              convertedEvent = new MouseEvent(e.type, e)
             }
 
             if (convertedEvent !== e) {

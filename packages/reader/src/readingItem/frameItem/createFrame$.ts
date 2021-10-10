@@ -5,11 +5,11 @@ export const createFrame$ = Report.measurePerformance(`ReadingItemFrame createFr
   // we force undefined because otherwise the load method will believe it's defined after this call but the code is async and
   // the iframe could be undefined later
   const promise = new Promise<HTMLIFrameElement | undefined>((resolve) => {
-    const frame = document.createElement('iframe')
-    frame.frameBorder = 'no'
+    const frame = document.createElement(`iframe`)
+    frame.frameBorder = `no`
     frame.tabIndex = 0
-    frame.setAttribute('sandbox', 'allow-same-origin allow-scripts')
-    frame.scrolling = 'no'
+    frame.setAttribute(`sandbox`, `allow-same-origin allow-scripts`)
+    frame.scrolling = `no`
     frame.style.cssText = `
       visibility: hidden;
       overflow: hidden;
@@ -20,7 +20,7 @@ export const createFrame$ = Report.measurePerformance(`ReadingItemFrame createFr
       opacity: 0;
     `
     container.appendChild(frame)
-    
+
     resolve(frame)
   })
 
