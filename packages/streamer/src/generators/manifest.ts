@@ -1,17 +1,17 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
 import { getArchiveOpfInfo, Archive } from '../archives'
-import type { Manifest } from '@oboku/reader/src/types/Manifest'
+import type { Manifest } from '@oboku/shared'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
 const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
-  const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive)
+  const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
   const koboInformation = await extractKoboInformationFromArchive(archive)
 
-  if (!opsFile) {
+  if (!opsFile || !opfBasePath) {
     throw new Error(`No opf content`)
   }
 
@@ -82,6 +82,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
         mediaType: manifestItem?.attr[`media-type`]
       }
     }) || [],
+    items: getItemsFromDoc(opfXmlDoc),
     guide: guideElm?.childrenNamed(`reference`).map(elm => {
       return {
         href: elm.attr.href || ``,
@@ -116,12 +117,16 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
       progressionWeight: (1 / files.length),
       pageSpreadLeft: undefined,
       pageSpreadRight: undefined
+    })),
+    items: files.map((file) => ({
+      id: file.basename,
+      href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri
     }))
   }
 }
 
 export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
-  const { data: opsFile } = getArchiveOpfInfo(archive)
+  const { data: opsFile } = getArchiveOpfInfo(archive) || {}
 
   if (opsFile) {
     const manifest = await generateManifestFromEpub(archive, baseUrl)
@@ -134,4 +139,14 @@ export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }:
   const data = JSON.stringify(manifest)
 
   return new Response(data, { status: 200 })
+}
+
+export const getItemsFromDoc = (doc: xmldoc.XmlDocument) => {
+  const manifestElm = doc.childNamed(`manifest`)
+
+  return manifestElm?.childrenNamed(`item`)?.map((el) => ({
+    href: el.attr.href || ``,
+    id: el.attr.id || ``,
+    mediaType: el.attr[`media-type`]
+  })) || []
 }

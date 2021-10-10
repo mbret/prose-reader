@@ -34,5 +34,10 @@ export type Manifest = {
     pageSpreadRight: true | undefined,
     // encodingFormat?: string,
     mediaType?: string
+  }[],
+  items: {
+    id: string,
+    href: string,
+    mediaType?: string
   }[]
 }
