@@ -15,7 +15,7 @@ export const hotkeysEnhancer: Enhancer<{}> = (next) => (options) => {
 
   document.addEventListener(`keyup`, onKeyPress)
 
-  reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
+  reader.registerHook(`item.onLoad`, ({ frame }) => {
     frame.contentDocument?.addEventListener(`keyup`, onKeyPress)
 
     return () => {

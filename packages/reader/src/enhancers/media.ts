@@ -49,7 +49,7 @@ export const mediaEnhancer: Enhancer<{
     threshold: 0.5
   })
 
-  reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
+  reader.registerHook(`item.onLoad`, ({ frame }) => {
     frameObserver.observe(frame)
 
     const videos = frame.contentDocument?.body.getElementsByTagName(`video`)

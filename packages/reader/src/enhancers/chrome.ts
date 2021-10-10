@@ -38,7 +38,7 @@ export const chromeEnhancer: Enhancer<{
 
   reader.manipulateContainer((container, onDestroy) => {
     const onScroll = () => {
-      if (reader.context.getComputedPageTurnMode() === `controlled`) {
+      if (reader.context.getSettings().computedPageTurnMode === `controlled`) {
         container.scrollTo(0, 0)
       }
     }
@@ -69,7 +69,7 @@ export const chromeEnhancer: Enhancer<{
     return SHOULD_NOT_LAYOUT
   })
 
-  reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
+  reader.registerHook(`item.onLoad`, ({ frame }) => {
     /**
      * Disable touch to search on first text touch / click. This does not prevent
      * it when selecting text. It needs to be turned off by the user.
@@ -78,20 +78,20 @@ export const chromeEnhancer: Enhancer<{
     frame.contentDocument?.body.setAttribute(`tabindex`, `-1`)
   })
 
-  const forceScreenRefresh$ = reader.$.$
-    .pipe(
-      // filter(event => event.type === `onNavigationChange`),
-      tap(() => {
-        // screenForceRefreshElt?.style.setProperty(`top`, `0px`)
-        // requestAnimationFrame(() => {
-        //   screenForceRefreshElt?.style.setProperty(`top`, `-1px`)
-        // })
-      })
-    )
+  // const forceScreenRefresh$ = reader.$.$
+  //   .pipe(
+  //     // filter(event => event.type === `onNavigationChange`),
+  //     tap(() => {
+  //       // screenForceRefreshElt?.style.setProperty(`top`, `0px`)
+  //       // requestAnimationFrame(() => {
+  //       //   screenForceRefreshElt?.style.setProperty(`top`, `-1px`)
+  //       // })
+  //     })
+  //   )
 
-  merge(forceScreenRefresh$)
-    .pipe(takeUntil(reader.destroy$))
-    .subscribe()
+  // merge(forceScreenRefresh$)
+  //   .pipe(takeUntil(reader.$.destroy$))
+  //   .subscribe()
 
   return reader
 }

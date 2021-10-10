@@ -71,7 +71,7 @@ export const themeEnhancer: Enhancer<{
   /**
    * Make sure to apply theme on item load
    */
-  reader.registerHook(`readingItem.onLoad`, ({ removeStyle, addStyle }) => {
+  reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
     removeStyle('oboku-reader-theme')
     addStyle('oboku-reader-theme', getStyle())
   })
@@ -80,7 +80,7 @@ export const themeEnhancer: Enhancer<{
    * Make sure to apply theme on item container (fixed layout)
    * & loading element
    */
-  reader.registerHook(`readingItem.onCreated`, applyChangeToReadingItemElement)
+  reader.registerHook(`item.onCreated`, applyChangeToReadingItemElement)
 
   return {
     ...reader,

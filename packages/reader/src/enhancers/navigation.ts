@@ -1,3 +1,6 @@
+/**
+ * Offer extra convenient methods for navigation.
+ */
 import { Enhancer } from "../createReader";
 
 export const navigationEnhancer: Enhancer<{
@@ -12,7 +15,7 @@ export const navigationEnhancer: Enhancer<{
     const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length ?? 0
     let nextItem = end + 1
     if (nextItem < numberOfSpineItems) {
-      reader.goTo(nextItem)
+      reader.goToSpineItem(nextItem)
     }
   }
 
@@ -21,7 +24,7 @@ export const navigationEnhancer: Enhancer<{
     const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
     let nextItem = begin - 1
     if (nextItem >= 0) {
-      reader.goTo(nextItem)
+      reader.goToSpineItem(nextItem)
     }
   }
 
@@ -41,12 +44,5 @@ export const navigationEnhancer: Enhancer<{
 
       return goToNextSpineItem()
     },
-    // goToPath: (path: string) => {
-    //   const manifest = reader.context.manifest
-    //   const foundItem = manifest?.readingOrder.find(item => item.path === path)
-    //   if (foundItem) {
-    //     reader.readingOrderView.goTo(foundItem.id)
-    //   }
-    // },
   }
 }

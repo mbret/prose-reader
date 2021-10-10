@@ -93,7 +93,7 @@ export const fontsEnhancer: Enhancer<{
     })
   }
 
-  reader.registerHook(`readingItem.onLoad`, ({ removeStyle, addStyle, item }) => {
+  reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
     if (item.renditionLayout !== 'pre-paginated') {
       removeStyle('oboku-reader-fonts')
       addStyle('oboku-reader-fonts', getStyle())

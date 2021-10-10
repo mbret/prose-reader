@@ -1,5 +1,5 @@
-import { animationFrameScheduler, combineLatest, Observable, of, scheduled } from "rxjs";
-import { distinctUntilChanged, filter, map, repeatWhen, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import { animationFrameScheduler, Observable, of, scheduled } from "rxjs";
+import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators";
 import { Enhancer } from "../createReader";
 import { Reader } from "../reader";
 
@@ -45,7 +45,7 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
 
   // @todo fix the panstart issue
   // @todo maybe increasing the hammer distance before triggering pan as well
-  // reader.registerHook(`readingItem.onLoad`, ({frame}) => {
+  // reader.registerHook(`item.onLoad`, ({frame}) => {
   //   frame.contentDocument?.body.addEventListener(`contextmenu`, e => {
   //     console.log(`ad`)
   //     e.preventDefault()
@@ -101,7 +101,7 @@ const createMovingSafePan$ = (reader: Reader) => {
   const viewportFree$ = reader.$.viewportState$.pipe(filter(data => data === `free`))
   const viewportBusy$ = reader.$.viewportState$.pipe(filter(data => data === `busy`))
 
-  const lockAfterViewportBusy$ = scheduled(viewportBusy$, animationFrameScheduler)
+  const lockAfterViewportBusy$ = viewportBusy$
     .pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
@@ -115,7 +115,7 @@ const createMovingSafePan$ = (reader: Reader) => {
 
   const pageTurnMode$ = reader.context.$.settings$
     .pipe(
-      map(() => reader.context.getComputedPageTurnMode()),
+      map(() => reader.context.getSettings().computedPageTurnMode),
       distinctUntilChanged(),
     )
 
@@ -128,7 +128,7 @@ const createMovingSafePan$ = (reader: Reader) => {
           )
         : createResetLock$(of(undefined))
       ),
-      takeUntil(reader.destroy$)
+      takeUntil(reader.$.destroy$)
     )
 
   return handleViewportLock$

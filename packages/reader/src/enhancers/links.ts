@@ -5,7 +5,9 @@ import { Enhancer } from "../createReader";
 type SubjectData = { event: 'linkClicked', data: HTMLAnchorElement }
 
 export const linksEnhancer: Enhancer<{
-  links$: Observable<SubjectData>
+  $: {
+    links$: Observable<SubjectData>
+  }
 }> = (next) => (options) => {
   const reader = next(options)
   const subject = new Subject<SubjectData>()
@@ -22,7 +24,7 @@ export const linksEnhancer: Enhancer<{
     }
   }
 
-  reader.registerHook(`readingItem.onLoad`, ({ frame }) => {
+  reader.registerHook(`item.onLoad`, ({ frame }) => {
     if (frame.contentDocument) {
       Array.from(frame.contentDocument.querySelectorAll('a')).forEach(element => element.addEventListener('click', (e) => {
         if (e.target && `style` in e.target && `ELEMENT_NODE` in e.target) {
@@ -37,6 +39,9 @@ export const linksEnhancer: Enhancer<{
 
   return {
     ...reader,
-    links$: subject.asObservable(),
+    $: {
+      ...reader.$,
+      links$: subject.asObservable(),
+    }
   }
 }

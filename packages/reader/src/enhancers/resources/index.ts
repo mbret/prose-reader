@@ -17,7 +17,7 @@ export const resourcesEnhancer: Enhancer<{
     })
   }
 
-  reader.registerHook('readingItem.onGetResource', (fetcher) => async (item) => {
+  reader.registerHook('item.onGetResource', (fetcher) => async (item) => {
     return resourceManager.get(item, fetcher)
   })
 
