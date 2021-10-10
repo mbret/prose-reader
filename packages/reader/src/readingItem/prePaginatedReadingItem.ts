@@ -1,14 +1,17 @@
+import { BehaviorSubject } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
+import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
-export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
+export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
+  hooks$: BehaviorSubject<Hook[]>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
+  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$ })
   let readingItemFrame = commonReadingItem.readingItemFrame
 
   const getDimensions = () => {
@@ -21,7 +24,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
     return { columnHeight, columnWidth, horizontalMargin }
   }
 
-  const applySize = ({ blankPagePosition, minimumWidth }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
+  const applySize = ({ blankPagePosition, minimumWidth, spreadPosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number, spreadPosition: `none` | `left` | `right` }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation()
     const visibleArea = context.getVisibleAreaRect()
@@ -31,7 +34,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       let contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
-      const cssLink = buildDocumentStyle({ ...getDimensions(), enableTouch: context.getComputedPageTurnMode() !== `free` }, viewportDimensions)
+      const cssLink = buildDocumentStyle({
+        ...getDimensions(),
+        enableTouch: context.getSettings().computedPageTurnMode !== `free`,
+        spreadPosition,
+      }, viewportDimensions)
 
       frameElement?.style.setProperty(`visibility`, `visible`)
       frameElement?.style.setProperty(`opacity`, `1`)
@@ -45,34 +52,68 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         frameElement?.style.setProperty('--scale', `${computedScale}`)
         frameElement?.style.setProperty('position', `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
-        frameElement?.style.setProperty(`left`,
-          blankPagePosition === `before`
-            ? context.isRTL() ? `25%` : `75%`
-            : blankPagePosition === `after`
-              ? context.isRTL() ? `75%` : `25%`
-              : `50%`
-        )
-        frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
-        frameElement?.style.setProperty(`transform-origin`, `center center`)
+        if (spreadPosition === `left`) {
+          frameElement?.style.setProperty(`right`, `0`)
+          frameElement?.style.removeProperty(`left`)
+        } else if (blankPagePosition === `before` && context.isRTL()) {
+          frameElement?.style.setProperty(`right`, `50%`)
+          frameElement?.style.removeProperty(`left`)
+        } else if (spreadPosition === `right`) {
+          frameElement?.style.setProperty(`left`, `0`)
+          frameElement?.style.removeProperty(`right`)
+        } else {
+          frameElement?.style.setProperty(`left`,
+            blankPagePosition === `before`
+              ? context.isRTL() ? `25%` : `75%`
+              : blankPagePosition === `after`
+                ? context.isRTL() ? `75%` : `25%`
+                : `50%`
+          )
+          frameElement?.style.removeProperty(`right`)
+        }
+        const transformTranslateX =
+          spreadPosition !== `none`
+            ? `0`
+            : `-50%`
+        const transformOriginX =
+          (spreadPosition === `right` && blankPagePosition !== `before`)
+            ? `left`
+            : (spreadPosition === `left` || (blankPagePosition === `before` && context.isRTL()))
+              ? `right`
+              : `center`
+        frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
+        frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
       } else {
         commonReadingItem.injectStyle(readingItemFrame, cssLink)
         readingItemFrame.staticLayout({
           width: contentWidth,
           height: contentHeight,
         })
+        if (blankPagePosition === `before`) {
+          if (context.isRTL()) {
+            frameElement?.style.setProperty(`margin-right`, `${pageWidth}px`)
+          } else {
+            frameElement?.style.setProperty(`margin-left`, `${pageWidth}px`)
+          }
+        } else {
+          frameElement?.style.removeProperty(`margin-left`)
+          frameElement?.style.removeProperty(`margin-right`)
+        }
       }
 
-      commonReadingItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
+      // commonReadingItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
+      commonReadingItem.layout({ width: minimumWidth, height: contentHeight })
 
       return { width: minimumWidth, height: contentHeight }
     } else {
-      commonReadingItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
+      // commonReadingItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
+      commonReadingItem.layout({ width: minimumWidth, height: pageHeight })
     }
 
     return { width: minimumWidth, height: pageHeight }
   }
 
-  const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
+  const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number, spreadPosition: `none` | `left` | `right` }) => {
     return applySize(layoutInformation)
   }
 
@@ -87,11 +128,12 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   }
 }
 
-const buildDocumentStyle = ({ columnWidth, enableTouch }: {
+const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
   columnWidth: number,
   columnHeight: number,
   horizontalMargin: number,
   enableTouch: boolean,
+  spreadPosition: `none` | `left` | `right`
 }, viewportDimensions: { height: number, width: number } | undefined) => {
   return `
     body {
@@ -99,6 +141,10 @@ const buildDocumentStyle = ({ columnWidth, enableTouch }: {
     }
     body {
       margin: 0;
+      ${!viewportDimensions ? `
+        display: flex;
+        justify-content: ${spreadPosition === `left` ? `flex-end` : spreadPosition === `right` ? `flex-start` : `center`};
+      ` : ``}
     }
     ${/*
       might be html * but it does mess up things like figure if so.
@@ -131,6 +177,11 @@ const buildDocumentStyle = ({ columnWidth, enableTouch }: {
     */``}
     img {
       user-select: none;
+      -webkit-user-drag: none;
+      -khtml-user-drag: none;
+      -moz-user-drag: none;
+      -o-user-drag: none;
+      user-drag: none;
       ${/*
         prevent weird overflow or margin. Try `block` if `flex` has weird behavior
       */``}
@@ -142,7 +193,8 @@ const buildDocumentStyle = ({ columnWidth, enableTouch }: {
         the inner content to display correctly.
       */``}
       ${!viewportDimensions ? `
-        width: 100%;
+        -width: 100%;
+        max-width: 100%;
         height:100%;
         object-fit:contain;
       ` : ``}

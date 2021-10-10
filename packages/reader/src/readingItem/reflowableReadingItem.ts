@@ -1,15 +1,30 @@
+import { BehaviorSubject } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
+import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
-export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
+export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
+  hooks$: BehaviorSubject<Hook[]>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement })
+  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$ })
   let readingItemFrame = commonReadingItem.readingItemFrame
+  /**
+   * This value is being used to avoid item to shrink back to smaller size when getting a layout after
+   * the content has been loaded. 
+   * This means when previous content get unload, the user does not end up farther than he should be due to previous content
+   * shrinking.
+   * 
+   * @important
+   * For now it's only used for continuous-scroll as experimental test. This could potentially solve the sliding
+   * issue with reflow content as wel.
+   */
+  let latestContentHeightWhenLoaded: number | undefined = undefined
+  const isImageType = () => item.mediaType?.startsWith(`image/`)
 
   const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
     const pageSize = context.getPageSize()
@@ -36,6 +51,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     const viewportDimensions = readingItemFrame.getViewportDimensions()
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
+    const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
 
     if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
@@ -54,11 +70,23 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         frameElement?.style.setProperty('--scale', `${computedScale}`)
         frameElement?.style.setProperty('position', `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
-        frameElement?.style.setProperty(`left`, `50%`)
+        frameElement?.style.setProperty(`left`,
+          blankPagePosition === `before`
+            ? context.isRTL() ? `25%` : `75%`
+            : blankPagePosition === `after`
+              ? context.isRTL() ? `75%` : `25%`
+              : `50%`
+        )
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
-        const frameStyle = buildStyleWithMultiColumn(getDimensions(readingItemFrame.isUsingVerticalWriting(), minimumWidth))
+        const frameStyle = isImageType()
+          ? buildStyleForReflowableImageOnly({
+            isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
+            enableTouch: context.getSettings().computedPageTurnMode !== `free`
+          })
+          : buildStyleWithMultiColumn(getDimensions(readingItemFrame.isUsingVerticalWriting(), minimumWidth))
+
         commonReadingItem.injectStyle(readingItemFrame, frameStyle)
 
         if (readingItemFrame.isUsingVerticalWriting()) {
@@ -71,11 +99,31 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
             width: minimumWidth,
             height: contentHeight,
           })
+        } else if (context.getManifest()?.renditionFlow === `scrolled-continuous`) {
+          contentHeight = frameElement.contentDocument.documentElement.scrollHeight
+          latestContentHeightWhenLoaded = contentHeight
+
+          readingItemFrame.staticLayout({
+            width: minimumWidth,
+            height: contentHeight,
+          })
         } else {
           const pages = Math.ceil(
             frameElement.contentDocument.documentElement.scrollWidth / pageWidth
           )
-          contentWidth = pages * pageWidth
+          /**
+           * It is possible that a pre-paginated epub has reflowable item inside it. This is weird because
+           * the spec says that we should use pre-paginated for each spine item. Could be a publisher mistake, in
+           * any case we follow the spec and enforce the iframe to be contained within page width.
+           * If we don't respect the spec we end up with dynamic pagination for a fixed document, which can update
+           * the correct number of pages when item is loaded/unload. Bringing weird user experience.
+           * The publisher should use global reflowable with pre-paginated content instead.
+           */
+          if (isGloballyPrePaginated) {
+            contentWidth = pageWidth
+          } else {
+            contentWidth = pages * pageWidth
+          }
 
           readingItemFrame.staticLayout({
             width: contentWidth,
@@ -97,14 +145,16 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         frameElement?.style.setProperty(`margin-left`, `0px`)
       }
 
-      commonReadingItem.layout({ width: contentWidth, height: contentHeight, blankPagePosition, minimumWidth })
+      commonReadingItem.layout({ width: contentWidth, height: contentHeight })
 
       return { width: contentWidth, height: contentHeight }
-    } else {
-      commonReadingItem.layout({ width: minimumWidth, height: pageHeight, blankPagePosition, minimumWidth })
     }
 
-    return { width: minimumWidth, height: pageHeight }
+    const height = latestContentHeightWhenLoaded || pageHeight
+
+    commonReadingItem.layout({ width: minimumWidth, height })
+
+    return { width: minimumWidth, height }
   }
 
   const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
@@ -116,30 +166,25 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
     return applySize(layoutInformation)
   }
 
-  const unloadContent = () => {
-    commonReadingItem.unloadContent()
-  }
-
-  const destroy = () => {
-    commonReadingItem.destroy()
-  }
-
   return {
     ...commonReadingItem,
     isReflowable: true,
-    unloadContent,
     layout,
-    destroy,
   }
 }
 
+/**
+ * Item is:
+ * - anything that contains a defined width/height viewport
+ * 
+ * In this case we respect the viewport, scale it and act as pre-paginated
+ */
 const buildStyleForFakePrePaginated = () => {
   return `
     html {
       width: 100%;
       height: 100%;
     }
-
     body {
       width: 100%;
       height: 100%;
@@ -162,11 +207,62 @@ const buildStyleForFakePrePaginated = () => {
   `
 }
 
+/**
+ * Item is:
+ * - not pre-paginated (we would not be in this item otherwise)
+ * - jpg, png, etc
+ * 
+ * It does not means it has to be pre-paginated (scrollable for example)
+ */
+const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean, isScrollable: boolean }) => {
+  return `
+    html {
+    }
+    body {
+    }
+    ${
+    /*
+     * @see https://hammerjs.github.io/touch-action/
+     */
+    ``}
+    html, body {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      ${enableTouch ? `
+        touch-action: none
+      ` : ``}
+    }
+    ${isScrollable ? `
+      img {
+        height: auto !important;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        ${
+      /**
+       * line break issue
+       * @see https://stackoverflow.com/questions/37869020/image-not-taking-up-the-full-height-of-container
+       */
+      ``}
+        display: block;
+      }
+    ` : ``}
+  `
+}
+
+/**
+ * Item is:
+ * - regular html document
+ * - does not contain defined width/height viewport
+ * 
+ * We use css multi column to paginate it
+ */
 const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin }: {
   width: number,
   columnWidth: number,
   columnHeight: number,
-  horizontalMargin: number
+  horizontalMargin: number,
   // verticalMargin: number
 }) => {
   return `
@@ -207,10 +303,16 @@ const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizonta
     body {
       margin: 0;
     }
+    body:focus-visible {
+      ${/*
+        we make sure that there are no outline when we focus something inside the iframe
+      */``}
+      outline: none;
+    }
     ${
-      /*
-       * @see https://hammerjs.github.io/touch-action/
-       */
+    /*
+     * @see https://hammerjs.github.io/touch-action/
+     */
     ``}
     html, body {
       touch-action: none;

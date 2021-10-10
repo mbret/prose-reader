@@ -1,37 +1,14 @@
 import { Context } from "../context"
-import { createFrameManipulator, createReadingItemFrame, ReadingItemFrame } from "./readingItemFrame"
+import { createFrameItem, ReadingItemFrame } from "./frameItem/frameItem"
 import { Manifest } from "../types"
-import { Subject, Subscription } from "rxjs"
-import { Report } from "../report"
+import { BehaviorSubject, Subject } from "rxjs"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "../constants"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { isMouseEvent, isPointerEvent } from "../utils/dom"
 import { attachOriginalFrameEventToDocumentEvent } from "../frames"
-
-type Hook =
-  | {
-    name: `onLoad`,
-    fn: (manipulableFrame: ReturnType<typeof createFrameManipulator> & {
-      container: HTMLElement,
-      loadingElement: HTMLElement,
-      item: Manifest['readingOrder'][number],
-      overlayElement: HTMLDivElement
-    }) => void
-  }
-  | {
-    name: `onLayout`,
-    fn: (payload: {
-      frame: HTMLIFrameElement | undefined,
-      container: HTMLElement,
-      loadingElement: HTMLElement,
-      item: Manifest['readingOrder'][number],
-      overlayElement: HTMLDivElement
-    }) => void
-  }
-  | {
-    name: `onGetResource`,
-    fn: (fetchResource: (item: Manifest['readingOrder'][number]) => Promise<Response>) => (item: Manifest['readingOrder'][number]) => Promise<Response>
-  }
+import { Hook } from "../types/Hook"
+import { map, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 
 const pointerEvents = [
   "pointercancel" as const,
@@ -56,30 +33,38 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
-type SubjectEvent = { event: 'contentLayoutChange', data: { isFirstLayout: boolean, isReady: boolean } }
-
-export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement }: {
+export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
   item: Manifest['readingOrder'][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
+  hooks$: BehaviorSubject<Hook[]>
 }) => {
+  const destroySubject$ = new Subject<void>()
   const isReflowable = false
-  const subject = new Subject<SubjectEvent>()
+  const contentLayoutChangeSubject$ = new Subject<{ isFirstLayout: boolean, isReady: boolean }>()
   const element = createWrapperElement(containerElement, item)
   const loadingElement = createLoadingElement(containerElement, item, context)
   const overlayElement = createOverlayElement(containerElement, item)
-  const readingItemFrame = createReadingItemFrame({ parent: element, item, context, fetchResource: context.getLoadOptions()?.fetchResource })
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
+  const frameHooks = createFrameHooks(iframeEventBridgeElement, fingerTracker, selectionTracker)
+  const readingItemFrame = createFrameItem({
+    parent: element,
+    item,
+    context,
+    fetchResource: context.getLoadOptions()?.fetchResource,
+    hooks$: hooks$.asObservable()
+      .pipe(
+        map(hooks => [...hooks, ...frameHooks])
+      )
+  })
+  // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
   element.appendChild(loadingElement)
   element.appendChild(overlayElement)
   containerElement.appendChild(element)
 
-  let hooks: Hook[] = []
-  let readingItemFrame$: Subscription | undefined
   // Do not memoize x,y,top,left as they change relatively to the viewport all the time
   let memoizedElementDimensions: { width: number, height: number } | undefined = undefined
 
@@ -124,27 +109,18 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     const viewportDimensions = readingItemFrame.getViewportDimensions()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
     if (element && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
-      const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
+      const computedWidthScale = pageWidth / viewportDimensions.width
+      const computedScale = Math.min(computedWidthScale, pageHeight / viewportDimensions.height)
 
-      return { computedScale, viewportDimensions }
+      return { computedScale, computedWidthScale, viewportDimensions }
     }
 
-    return { computedScale: 1, ...viewportDimensions }
+    return { computedScale: 1, computedWidthScale: 1, ...viewportDimensions }
   }
 
-  const loadContent = () => {
-    if (!readingItemFrame.isLoadingOrLoaded()) {
-      readingItemFrame.load().catch(Report.error)
-    }
-  }
+  const loadContent = () => readingItemFrame.load()
 
-  const unloadContent = async () => {
-    readingItemFrame.unload()
-
-    if (loadingElement && loadingElement.style.visibility !== `visible`) {
-      loadingElement.style.visibility = 'visible'
-    }
-  }
+  const unloadContent = () => readingItemFrame.unload()
 
   const getBoundingRectOfElementFromSelector = (selector: string) => {
     const frame = readingItemFrame.getManipulableFrame()?.frame
@@ -156,32 +132,23 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     }
   }
 
-  function registerHook(hook: Hook) {
-    hooks.push(hook)
-    if (hook.name === `onLoad`) {
-      readingItemFrame.registerHook({
-        name: `onLoad`,
-        fn: (iframeData) => hook.fn({ ...iframeData, container: element, loadingElement, item, overlayElement })
-      })
-    }
-  }
-
   const setLayoutDirty = () => {
     memoizedElementDimensions = undefined
   }
 
-  const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
+  // const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
+  const layout = ({ height, width }: { height: number, width: number }) => {
     element.style.width = `${width}px`
     element.style.height = `${height}px`
 
     loadingElement.style.setProperty(`max-width`, `${context.getVisibleAreaRect().width}px`)
 
-    layoutInformation = newLayoutInformation
+    // layoutInformation = newLayoutInformation
 
     setLayoutDirty()
 
-    hooks.forEach(hook => {
-      if (hook.name === `onLayout`) {
+    hooks$.getValue().forEach(hook => {
+      if (hook.name === `item.onLayout`) {
         hook.fn({ frame: readingItemFrame.getFrameElement(), container: element, loadingElement, item, overlayElement })
       }
     })
@@ -212,8 +179,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       return fetch(item.href)
     }
 
-    const finalFetch = hooks.reduce((acc, hook) => {
-      if (hook.name === 'onGetResource') {
+    const finalFetch = hooks$.getValue().reduce((acc, hook) => {
+      if (hook.name === 'item.onGetResource') {
         return hook.fn(acc)
       }
 
@@ -223,62 +190,54 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     return await finalFetch(item)
   }
 
-  readingItemFrame.registerHook({
-    name: `onLoad`,
-    fn: ({ frame }) => {
-      /**
-       * Register event listener for all mouse/pointer event in order to
-       * passthrough events to main document
-       */
-      const unregister = passthroughEvents.map(event => {
-        const listener = (e: MouseEvent | PointerEvent) => {
-          let convertedEvent = e
+  const manipulateReadingItem = (
+    cb: (options: {
+      container: HTMLElement,
+      loadingElement: HTMLElement,
+      item: Manifest['readingOrder'][number],
+      overlayElement: HTMLDivElement,
+    } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
+  ) => {
+    const manipulableFrame = readingItemFrame.getManipulableFrame()
 
-          if (isPointerEvent(e)) {
-            convertedEvent = new PointerEvent(e.type, e)
-          }
+    if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement, item, overlayElement })
 
-          if (isMouseEvent(e)) {
-            convertedEvent = new MouseEvent(e.type, e);
-          }
+    return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
+  }
 
-          if (convertedEvent !== e) {
-            attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
-            iframeEventBridgeElement.dispatchEvent(convertedEvent)
-          }
-        }
-
-        frame.contentDocument?.addEventListener(event, listener)
-
-        return () => {
-          frame.contentDocument?.removeEventListener(event, listener)
-        }
-      })
-
-      selectionTracker.track(frame)
-      fingerTracker.track(frame)
-
-      return () => {
-        unregister.forEach(cb => cb())
-      }
-    }
-  })
-
-  readingItemFrame$ = readingItemFrame.$.subscribe((event) => {
-    if (event.event === 'contentLayoutChange') {
-      if (event.data.isFirstLayout && event.data.isReady) {
+  readingItemFrame.$.contentLayoutChange$
+    .pipe(
+      withLatestFrom(readingItemFrame.$.isReady$),
+      takeUntil(destroySubject$)
+    )
+    .subscribe(([data, isReady]) => {
+      if (data.isFirstLayout && isReady) {
         loadingElement.style.visibility = 'hidden'
       }
-      subject.next(event)
-    }
-  })
+      contentLayoutChangeSubject$.next({ isFirstLayout: data.isFirstLayout, isReady })
+    })
+
+  readingItemFrame.$.unload$
+    .pipe(
+      tap(() => {
+        if (loadingElement && loadingElement.style.visibility !== `visible`) {
+          loadingElement.style.visibility = 'visible'
+        }
+      }),
+      takeUntil(destroySubject$)
+    )
+    .subscribe()
+
+  // readingItemFrame.$.domReady$.subscribe((v) => console.log(`FOOOO domReady`, item.id))
+  readingItemFrame.$.isLoading$.subscribe((v) => console.log(`FOOOO isLoading`, v, item.id))
+  readingItemFrame.$.isReady$.subscribe((v) => console.log(`FOOOO isReady`, v, item.id))
+  readingItemFrame.$.unloaded$.subscribe(() => console.log(`FOOOO unloaded`, item.id))
 
   return {
     load: () => {
       setLayoutDirty()
     },
     layout,
-    registerHook,
     adjustPositionOfElement,
     createWrapperElement,
     createLoadingElement,
@@ -296,37 +255,27 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
+    isReady: readingItemFrame.getIsReady,
     destroy: () => {
+      destroySubject$.next()
       loadingElement.onload = () => { }
       loadingElement.remove()
       element.remove()
       readingItemFrame?.destroy()
-      readingItemFrame$?.unsubscribe()
       fingerTracker.destroy()
       selectionTracker.destroy()
-      hooks = []
+      destroySubject$.complete()
     },
     isUsingVerticalWriting: () => readingItemFrame.getWritingMode()?.startsWith(`vertical`),
     getReadingDirection: () => {
       return readingItemFrame.getReadingDirection() || context.getReadingDirection()
     },
-    manipulateReadingItem: (
-      cb: (options: {
-        container: HTMLElement,
-        loadingElement: HTMLElement,
-        item: Manifest['readingOrder'][number],
-        overlayElement: HTMLDivElement,
-      } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
-    ) => {
-      const manipulableFrame = readingItemFrame.getManipulableFrame()
-
-      if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement, item, overlayElement })
-
-      return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
-    },
+    manipulateReadingItem,
     selectionTracker,
     fingerTracker,
-    $: subject,
+    $: {
+      contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable()
+    },
   }
 }
 
@@ -400,4 +349,49 @@ const createOverlayElement = (containerElement: HTMLElement, item: Manifest['rea
   `
 
   return element
+}
+
+const createFrameHooks = (iframeEventBridgeElement: HTMLElement, fingerTracker: ReturnType<typeof createFingerTracker>, selectionTracker: ReturnType<typeof createSelectionTracker>): Hook[] => {
+  return [
+    {
+      name: `item.onLoad`,
+      fn: ({ frame }) => {
+        /**
+         * Register event listener for all mouse/pointer event in order to
+         * passthrough events to main document
+         */
+        const unregister = passthroughEvents.map(event => {
+          const listener = (e: MouseEvent | PointerEvent) => {
+            let convertedEvent = e
+
+            if (isPointerEvent(e)) {
+              convertedEvent = new PointerEvent(e.type, e)
+            }
+
+            if (isMouseEvent(e)) {
+              convertedEvent = new MouseEvent(e.type, e);
+            }
+
+            if (convertedEvent !== e) {
+              attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
+              iframeEventBridgeElement.dispatchEvent(convertedEvent)
+            }
+          }
+
+          frame.contentDocument?.addEventListener(event, listener)
+
+          return () => {
+            frame.contentDocument?.removeEventListener(event, listener)
+          }
+        })
+
+        selectionTracker.track(frame)
+        fingerTracker.track(frame)
+
+        return () => {
+          unregister.forEach(cb => cb())
+        }
+      }
+    }
+  ]
 }
