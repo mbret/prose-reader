@@ -5,7 +5,7 @@ import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@oboku/reader-react";
 import { composeEnhancer } from "@oboku/reader";
 import { QuickMenu } from '../QuickMenu';
-import { bookReadyState, isMenuOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
+import { bookReadyState, isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
 import { Settings, settingsState } from '../Settings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from '../types';
@@ -20,6 +20,7 @@ import { useHighlights } from '../useHighlights';
 import { useSearch } from '../useSearch';
 import { SearchDialog } from '../SearchDialog';
 import { TocDialog } from '../TocDialog';
+import { HelpDialog } from '../HelpDialog';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -38,6 +39,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [isTocOpen, setIsTocOpen] = useRecoilState(isTocOpenState)
+  const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
     fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
     lineHeight: storedLineHeight || undefined,
@@ -152,6 +154,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
       {settings && reader && <Settings reader={reader} />}
       {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
       {isTocOpen && <TocDialog onExit={() => setIsTocOpen(false)} />}
+      {isHelpOpen && <HelpDialog onExit={() => setIsHelpOpen(false)} />}
     </>
   )
 }
