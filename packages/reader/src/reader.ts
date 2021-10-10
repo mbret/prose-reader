@@ -8,7 +8,6 @@ import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
 import { takeUntil, tap } from "rxjs/operators";
 import { createSelection } from "./selection";
 import { createReadingItemManager } from "./readingItemManager";
-import { createReadingLayout } from "./readingLayout";
 import { Hook, RegisterHook } from "./types/Hook";
 
 export type Reader = ReturnType<typeof createReader>
@@ -26,8 +25,7 @@ export const createReader = ({ containerElement, ...settings }: {
   const hooksSubject$ = new BehaviorSubject<Hook[]>([])
   const context = createBookContext(settings)
   const readingItemManager = createReadingItemManager({ context })
-  const readingLayout = createReadingLayout({ context, readingItemManager })
-  const pagination = createPagination({ context, readingItemManager, readingLayout })
+  const pagination = createPagination({ context, readingItemManager })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   let containerManipulationOnDestroyCbList: (() => void)[] = []

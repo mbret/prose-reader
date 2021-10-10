@@ -1,7 +1,7 @@
 import { CFI, extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
 import { ReadingItem } from "../readingItem"
-import { createLocator } from "../readingItem/locator"
+import { createLocationResolver } from "../readingItem/locationResolver"
 import { ReadingItemManager } from "../readingItemManager"
 import { Report } from "../report"
 import { Manifest } from "../types"
@@ -9,12 +9,15 @@ import { Manifest } from "../types"
 export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
   readingItemManager: ReadingItemManager,
   context: Context,
-  readingItemLocator: ReturnType<typeof createLocator>
+  readingItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
 
   const getItemAnchor = (readingItem: ReadingItem) => `|[oboku~anchor~${encodeURIComponent(readingItem.item.id)}]`
 
   /**
+   * Heavy cfi hookup. Use it to have a refined, precise cfi anchor. It requires the content to be loaded otherwise
+   * it will return a root cfi.
+   * 
    * @todo optimize
    */
   const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, readingItem: ReadingItem) => {
@@ -33,9 +36,14 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
       return cfiString
     }
 
-    return `epubcfi(/0${itemAnchor}) `
+    return getRootCfi(readingItem)
   })
 
+  /**
+   * Very light cfi lookup. Use it when you need to anchor user to correct item
+   * but do not want to have heavy dom lookup. This is useful as pre-cfi before the content
+   * is loaded for example.
+   */
   const getRootCfi = (readingItem: ReadingItem) => {
     const itemAnchor = getItemAnchor(readingItem)
 

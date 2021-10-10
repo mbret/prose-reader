@@ -1,10 +1,10 @@
 import { BehaviorSubject, EMPTY, merge, of, Subject } from "rxjs"
-import { filter, map, switchMap, withLatestFrom } from "rxjs/operators"
+import { filter, map, switchMap, tap, withLatestFrom } from "rxjs/operators"
 import { Context } from "../../context"
 import { ReadingItemManager } from "../../readingItemManager"
 import { Report } from "../../report"
-import { createNavigator, ViewportNavigationEntry } from "../navigator"
-import { createLocator } from "../locator"
+import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
+import { createLocationResolver } from "../locationResolver"
 
 const NAMESPACE = `manualViewportNavigator`
 
@@ -12,22 +12,24 @@ type UrlNavigation = { type: `url`, data: string | URL }
 type SpineItemNavigation = { type: `spineItem`, data: { indexOrId: number | string, animate: boolean } }
 type CfiNavigation = { type: `cfi`, data: { cfi: string, animate: boolean } }
 type ChapterPageNavigation = { type: `chapterPage`, data: { pageIndex: number } }
+type PageNavigation = { type: `page`, data: { pageIndex: number } }
 type LeftPageNavigation = { type: `leftPage`, data: { allowReadingItemChange: boolean } }
 type RightPageNavigation = { type: `rightPage`, data: { allowReadingItemChange: boolean } }
 
-export const createManualViewportNavigator = ({ navigator, readingItemManager, currentNavigationSubject$, locator }: {
+export const createManualViewportNavigator = ({ navigator, readingItemManager, currentNavigationSubject$, locator, context }: {
   context: Context,
   element: HTMLElement,
-  navigator: ReturnType<typeof createNavigator>,
+  navigator: ReturnType<typeof createNavigationResolver>,
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>,
   readingItemManager: ReadingItemManager,
-  locator: ReturnType<typeof createLocator>
+  locator: ReturnType<typeof createLocationResolver>,
 }) => {
   const navigationTriggerSubject$ = new Subject<
     | UrlNavigation
     | SpineItemNavigation
     | CfiNavigation
     | ChapterPageNavigation
+    | PageNavigation
     | LeftPageNavigation
     | RightPageNavigation
   >()
@@ -42,6 +44,9 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
   const goToPageOfCurrentChapter = (pageIndex: number) =>
     navigationTriggerSubject$.next({ type: `chapterPage`, data: { pageIndex } })
 
+  const goToPage = (pageIndex: number) =>
+    navigationTriggerSubject$.next({ type: `page`, data: { pageIndex } })
+
   const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) =>
     navigationTriggerSubject$.next({ type: `cfi`, data: { cfi, ...options } })
 
@@ -50,14 +55,6 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
 
   const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) =>
     navigationTriggerSubject$.next({ type: `spineItem`, data: { indexOrId, ...options } })
-
-  const goTo = (spineIndexOrSpineItemIdOrCfi: number | string) => {
-    if (typeof spineIndexOrSpineItemIdOrCfi === `string` && spineIndexOrSpineItemIdOrCfi.startsWith(`epubcfi`)) {
-      goToCfi(spineIndexOrSpineItemIdOrCfi)
-    } else {
-      goToSpineItem(spineIndexOrSpineItemIdOrCfi)
-    }
-  }
 
   // @todo turn into turnTo$
   const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
@@ -112,7 +109,6 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
 
         Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, animate, navigation })
 
-
         return of({ ...navigation, animate, lastUserExpectedNavigation })
       })
     )
@@ -147,6 +143,27 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
       })
     )
 
+  const pageNavigation$ = navigationTriggerSubject$
+    .pipe(
+      filter((e): e is PageNavigation => e.type === `page`),
+      filter(_ => {
+        if (context.getManifest()?.renditionLayout === `reflowable`) {
+          Report.warn(`This method only works for pre-paginated content`)
+          return false
+        }
+
+        return true
+      }),
+      switchMap(({ data: { pageIndex } }) => {
+        return of({
+          ...navigator.getNavigationForPage(pageIndex),
+          lastUserExpectedNavigation: undefined,
+          animate: true
+        })
+      })
+    )
+
+
   const leftPageNavigation$ = navigationTriggerSubject$
     .pipe(
       filter((e): e is LeftPageNavigation => e.type === `leftPage`),
@@ -177,9 +194,30 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     goToSpineItem,
     goToUrl,
     turnTo,
-    goTo,
+    goToPage,
     $: {
-      navigation$: merge(urlNavigation$, spineItemNavigation$, cfiNavigation$, chapterPageNavigation$, leftPageNavigation$, rightPageNavigation$)
+      navigation$: merge(
+        urlNavigation$,
+        spineItemNavigation$,
+        chapterPageNavigation$,
+        leftPageNavigation$,
+        rightPageNavigation$,
+        // for some reason after too much item ts complains
+        merge(
+          cfiNavigation$,
+          pageNavigation$,
+        )
+      )
+        .pipe(
+          /**
+           * Ideally when manually navigating we expect the navigation to be different from the previous one.
+           * This is because manual navigation is not used with scroll where you can move within the same item. A manual
+           * navigation would theoretically always move to different items.
+           */
+          withLatestFrom(currentNavigationSubject$),
+          filter(([navigation, currentNavigation]) => navigator.areNavigationDifferent(navigation, currentNavigation)),
+          map(([navigation]) => navigation)
+        )
     }
   }
 }

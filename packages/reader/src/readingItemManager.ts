@@ -40,7 +40,9 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * it is called eery time an item is being unload (which can adds up quickly for big books)
    */
   const layout = () => {
+    const manifest = context.getManifest()
     let newItemLayoutInformation: typeof itemLayoutInformation = []
+    const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
     const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
     orderedReadingItems.reduce((edgeOffset, item, index) => {
@@ -48,6 +50,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
       let minimumWidth = context.getPageSize().width
       let blankPagePosition: `none` | `before` | `after` = `none`
       const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
+      const isLastItem = index === orderedReadingItems.length - 1
 
       if (context.shouldDisplaySpread()) {
         /**
@@ -62,18 +65,35 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
          * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
          * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
          * book with spread on to make it work.
+         * 
+         * @important
+         * When the book is globally pre-paginated we will not apply any of this even if each item is
+         * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
+         * we ignore it
          */
-        if (item.isReflowable && index !== orderedReadingItems.length - 1) {
+        if (!isGloballyPrePaginated && item.isReflowable && index !== orderedReadingItems.length - 1) {
           minimumWidth = context.getPageSize().width * 2
         }
 
         // mainly to make loading screen looks good
-        if (item.isReflowable && index === orderedReadingItems.length - 1 && itemStartOnNewScreen) {
+        if (!isGloballyPrePaginated && item.isReflowable && index === orderedReadingItems.length - 1 && itemStartOnNewScreen) {
           minimumWidth = context.getPageSize().width * 2
         }
 
+        const lastItemStartOnNewScreenInAPrepaginatedBook = itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
+
         if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
           blankPagePosition = `before`
+          minimumWidth = context.getPageSize().width * 2
+        } else if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
+          blankPagePosition = `before`
+          minimumWidth = context.getPageSize().width * 2
+        } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
+          if (context.isRTL()) {
+            blankPagePosition = `before`
+          } else {
+            blankPagePosition = `after`
+          }
           minimumWidth = context.getPageSize().width * 2
         }
 
@@ -82,9 +102,17 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         }
       }
 
-      const { width, height } = item.layout({ minimumWidth, blankPagePosition })
+      const { width, height } = item.layout({
+        minimumWidth,
+        blankPagePosition,
+        spreadPosition: context.shouldDisplaySpread()
+          ? itemStartOnNewScreen
+            ? context.isRTL() ? `right` : `left`
+            : context.isRTL() ? `left` : `right`
+          : `none`
+      })
 
-      if (context.getSettings().pageTurnDirection === `vertical`) {
+      if (context.getSettings().computedPageTurnDirection === `vertical`) {
         const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen ? edgeOffset.edgeY : edgeOffset.edgeY - context.getVisibleAreaRect().height
         const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
 
@@ -147,6 +175,8 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
     itemLayoutInformation = newItemLayoutInformation
 
+    Report.log(NAMESPACE, `layout`, { hasLayoutChanges, itemLayoutInformation })
+
     layout$.next(hasLayoutChanges)
   }
 
@@ -173,8 +203,15 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
+    const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
+    const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `free`
+
     orderedReadingItems.forEach((orderedReadingItem, index) => {
-      const isBeforeFocusedWithPreload = index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
+      const isBeforeFocusedWithPreload =
+        // we never want to preload anything before on free scroll on flow because it could offset the cursor
+        (index < leftIndex && !isPrePaginated && isUsingFreeScroll)
+          ? true
+          : index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
       const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedReadingItem.loadContent()
@@ -195,7 +232,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * current window (viewport).
    */
   const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
-    const pageTurnDirection = context.getSettings().pageTurnDirection
+    const pageTurnDirection = context.getSettings().computedPageTurnDirection
     const indexOfItem = typeof readingItemOrIndex === 'number' ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
 
     const layoutInformation = itemLayoutInformation[indexOfItem]
@@ -248,12 +285,10 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   const add = (readingItem: ReadingItem) => {
     orderedReadingItems.push(readingItem)
 
-    const readingItemSubscription = readingItem.$.subscribe((event) => {
-      if (event.event === 'contentLayoutChange') {
-        // upstream change, meaning we need to layout again to both resize correctly each item but also to
-        // adjust positions, etc
-        layout()
-      }
+    const readingItemSubscription = readingItem.$.contentLayoutChangeSubject$.subscribe(() => {
+      // upstream change, meaning we need to layout again to both resize correctly each item but also to
+      // adjust positions, etc
+      layout()
     })
 
     readingItemSubscriptions.push(readingItemSubscription)
@@ -278,7 +313,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
       const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
 
-      if (context.getSettings().pageTurnDirection === `horizontal`) {
+      if (context.getSettings().computedPageTurnDirection === `horizontal`) {
         return isWithinXAxis
       } else {
         return isWithinXAxis && position.y >= topStart && position.y < topEnd

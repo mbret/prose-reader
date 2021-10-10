@@ -1,16 +1,15 @@
 import { Subject } from "rxjs"
 import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
+import { ReadingItemManager } from "./readingItemManager"
 import { Report } from "./report"
-import { createLocator } from "./readingItem/locator"
 
 const NAMESPACE = 'pagination'
 
 export type Pagination = ReturnType<typeof createPagination>
 
-export const createPagination = ({ context }: { context: Context }) => {
+export const createPagination = ({ context }: { context: Context, readingItemManager: ReadingItemManager }) => {
   const subject = new Subject<{ event: 'change' }>()
-  const readingItemLocator = createLocator({ context })
   let beginPageIndex: number | undefined
   let beginNumberOfPages = 0
   let beginCfi: string | undefined = undefined
@@ -96,14 +95,11 @@ export const createPagination = ({ context }: { context: Context }) => {
         readingItemIndex: endReadingItemIndex,
       }
     },
-    getTotalNumberOfPages: () => numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0),
+    getTotalNumberOfPages: () => {
+      return numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
+    },
     updateTotalNumberOfPages: (readingItems: ReadingItem[]) => {
       numberOfPagesPerItems = readingItems.map((item) => {
-        // Some pre-paginated first page can have blank page to push them on right/left to make
-        // it looks more like a real book
-        // if (index === 0 && !item.isReflowable) {
-        //   return acc + 1
-        // }
         return getReadingItemNumberOfPages(item)
       }, 0)
 

@@ -1,15 +1,14 @@
 import { animationFrameScheduler, BehaviorSubject, EMPTY, fromEvent, iif, Observable, of } from "rxjs"
 import { debounceTime, distinctUntilChanged, filter, map, share, switchMap, takeUntil, withLatestFrom } from "rxjs/operators"
 import { Context } from "../../context"
-import { Report } from "../../report"
-import { createNavigator, ViewportNavigationEntry } from "../navigator"
+import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 
 export const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
 export const createScrollViewportNavigator = ({ context, element, navigator, currentNavigationSubject$ }: {
   context: Context,
   element: HTMLElement,
-  navigator: ReturnType<typeof createNavigator>,
+  navigator: ReturnType<typeof createNavigationResolver>,
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
 }) => {
   let lastScrollWasProgrammaticallyTriggered = false
@@ -21,7 +20,7 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
 
   const runOnFreePageTurnModeOnly$ = <T>(source: Observable<T>) => context.$.settings$
     .pipe(
-      map(() => context.getComputedPageTurnMode()),
+      map(() => context.getSettings().computedPageTurnMode),
       distinctUntilChanged(),
       switchMap((mode) =>
         iif(() => mode === `controlled`, EMPTY, source)
@@ -46,30 +45,16 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
     .pipe(
       debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
       withLatestFrom(currentNavigationSubject$),
-      switchMap(([, currentNavigation]) => {
-        const navigation = { x: element.scrollLeft, y: element.scrollTop }
-        const pageTurnDirection = context.getSettings().pageTurnDirection
-        // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
-        // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
-        // const triggerPercentage = movingForward ? 0.7 : 0.3
-        const triggerPercentage = 0.5
-        const triggerXPosition = pageTurnDirection === `horizontal`
-          ? navigation.x + (context.getVisibleAreaRect().width * triggerPercentage)
-          : 0
-        const triggerYPosition = pageTurnDirection === `horizontal`
-          ? 0
-          : navigation.y + (context.getVisibleAreaRect().height * triggerPercentage)
-        const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
-        const finalNavigation = navigator.getNavigationForPosition(midScreenPositionSafePosition)
-
-        if (navigator.areNavigationDifferent(finalNavigation, currentNavigation)) {
-          return of({ position: finalNavigation, animate: false, lastUserExpectedNavigation: undefined })
-        }
-
-        return EMPTY
+      switchMap(() => {
+        const navigation = navigator.getMostPredominantNavigationForPosition({ x: element.scrollLeft, y: element.scrollTop })
+        /**
+         * Because scroll navigation is always different: we can scroll through the same item but at different progress
+         * we always return something from the observable. So for example if we have only one long height item (webtoon)
+         * we are able to update the general progress
+         */
+        return of({ position: navigation, animate: false, lastUserExpectedNavigation: undefined })
       }),
       share(),
-      takeUntil(context.$.destroy$),
     )
 
   return {

@@ -1,6 +1,7 @@
 import { BehaviorSubject, Subject } from "rxjs"
 import { Report } from "./report"
-import { LoadOptions, Manifest } from "./types"
+import { LoadOptions } from "./types"
+import { Manifest } from "@oboku/shared";
 
 export type Context = ReturnType<typeof createContext>
 
@@ -14,22 +15,39 @@ type Settings = {
   pageTurnMode: `controlled` | `free`,
 }
 
+/**
+ * Represent the settings that are derived from user settings.
+ * Because some of the user settings can sometime be invalid based on some
+ * context we need to use the computed one internally.
+ * For example if the user decide to use horizontal page turn direction with scrolled content
+ * we will overwrite it and force it to vertical (granted we only support vertical).
+ */
+type InnerSettings = Settings & {
+  computedPageTurnMode: Settings[`pageTurnMode`],
+  computedPageTurnDirection: Settings[`pageTurnDirection`],
+  computedPageTurnAnimationDuration: number,
+}
+
 export const createContext = (initialSettings: Partial<Settings>) => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
-  let settings: Settings = {
+  let settings: InnerSettings = {
     forceSinglePageMode: false,
     pageTurnAnimation: `none`,
     pageTurnDirection: `horizontal`,
     pageTurnAnimationDuration: undefined,
     pageTurnMode: `controlled`,
-    ...initialSettings
+    computedPageTurnMode: `controlled`,
+    computedPageTurnDirection: `horizontal`,
+    computedPageTurnAnimationDuration: 0,
+    ...initialSettings,
   }
-  let computedPageTurnMode = settings.pageTurnMode
-  let computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration || 0
+
+  updateComputedSettings(manifest, settings)
+
   const settings$ = new BehaviorSubject(settings)
   const subject = new Subject<ContextObservableEvents>()
-  const loadSubject$ = new Subject()
+  const loadSubject$ = new Subject<void>()
   const visibleAreaRect = {
     width: 0,
     height: 0,
@@ -42,19 +60,6 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const marginBottom = 0
   const destroy$ = new Subject<void>()
 
-  const updateComputedSettings = (newManifest: Manifest | undefined, newSettings: Settings) => {
-    if (computedPageTurnMode === `free` && newManifest?.renditionLayout !== `pre-paginated`) {
-      Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
-      computedPageTurnMode = `controlled`
-    } else {
-      computedPageTurnMode = newSettings.pageTurnMode
-    }
-
-    computedPageTurnAnimationDuration = newSettings.pageTurnAnimationDuration !== undefined
-      ? newSettings.pageTurnAnimationDuration
-      : 300
-  }
-
   /**
    * Global spread behavior
    * @see http://idpf.org/epub/fxl/#property-spread
@@ -66,13 +71,27 @@ export const createContext = (initialSettings: Partial<Settings>) => {
 
     if (settings.forceSinglePageMode) return false
 
+    /**
+     * For now we don't support spread for reflowable & scrollable content since
+     * two items could have different height, resulting in weird stuff. 
+     */
+    if (manifest?.renditionFlow === `scrolled-continuous`) return false
+
     // portrait only
     if (!isLandscape && manifest?.renditionSpread === `portrait`) {
       return true
     }
 
     // default auto behavior
-    return (isLandscape && (manifest?.renditionSpread === undefined || manifest?.renditionSpread === `auto` || manifest?.renditionSpread === `landscape` || manifest?.renditionSpread === `both`))
+    return (
+      isLandscape
+      && (
+        manifest?.renditionSpread === undefined
+        || manifest?.renditionSpread === `auto`
+        || manifest?.renditionSpread === `landscape`
+        || manifest?.renditionSpread === `both`
+      )
+    )
   }
 
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
@@ -80,6 +99,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     loadOptions = newLoadOptions
 
     updateComputedSettings(newManifest, settings)
+
+    settings$.next(settings)
 
     loadSubject$.next()
   }
@@ -89,7 +110,6 @@ export const createContext = (initialSettings: Partial<Settings>) => {
    */
   const isRTL = () => {
     return manifest?.readingDirection === 'rtl'
-    // return true
   }
 
   const setSettings = (newSettings: Partial<typeof settings>) => {
@@ -121,8 +141,6 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     getSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
-    getComputedPageTurnMode: () => computedPageTurnMode,
-    getComputedPageTurnAnimationDuration: () => computedPageTurnAnimationDuration,
     shouldDisplaySpread,
     setVisibleAreaRect: (
       x: number,
@@ -163,4 +181,22 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     getManifest: () => manifest,
     getReadingDirection: () => manifest?.readingDirection
   }
+}
+
+const updateComputedSettings = (newManifest: Manifest | undefined, settings: InnerSettings) => {
+  settings.computedPageTurnDirection = settings.pageTurnDirection
+
+  if (newManifest?.renditionFlow === `scrolled-continuous`) {
+    settings.computedPageTurnMode = `free`
+    settings.computedPageTurnDirection = `vertical`
+  } else if (newManifest && settings.pageTurnMode === `free` && newManifest.renditionLayout !== `pre-paginated`) {
+    Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
+    settings.computedPageTurnMode = `controlled`
+  } else {
+    settings.computedPageTurnMode = settings.pageTurnMode
+  }
+
+  settings.computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration !== undefined
+    ? settings.pageTurnAnimationDuration
+    : 300
 }

@@ -12,6 +12,7 @@ import { createReader as createInternalReader } from './reader'
 import { utilsEnhancer } from './enhancers/utils'
 import { resourcesEnhancer } from './enhancers/resources'
 import { mediaEnhancer } from './enhancers/media'
+import { progressionEnhancer } from './enhancers/progression'
 import { accessibilityEnhancer } from './enhancers/accessibility'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
@@ -51,6 +52,7 @@ function createReader<Ext>(
  */
 const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
   const {
+    // __debug,
     context,
     innerPagination,
     manipulateContainer,
@@ -59,6 +61,10 @@ const exposeReader = <Api extends ReaderPublicApi>(reader: Api) => {
     getCurrentNavigationPosition,
     getReadingItem,
     locator,
+    getAbsolutePositionOf,
+    generateCfi,
+    resolveCfi,
+    getCfiMetaInformation,
     ...exposedReader
   } = reader
 
@@ -70,7 +76,9 @@ type ReaderPublicApiWithSafeExposedKeys = ReturnType<typeof exposeReader>
 type RemovedKeysOnly = Omit<ReaderPublicApi, keyof ReaderPublicApiWithSafeExposedKeys>
 
 const internalEnhancer = composeEnhancer(
+  // @requires progressionEnhancer
   paginationEnhancer,
+  progressionEnhancer,
   navigationEnhancer,
   linksEnhancer,
   fontsEnhancer,
