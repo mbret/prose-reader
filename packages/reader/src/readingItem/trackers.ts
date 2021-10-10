@@ -1,7 +1,7 @@
 import { Subject } from "rxjs"
 
 export const createFingerTracker = () => {
-  const fingerPositionInIframe: { x: number, y: number } | { x: undefined, y: undefined } = { x: undefined, y: undefined }
+  const fingerPositionInIframe: { x: number | undefined, y: number | undefined } = { x: undefined, y: undefined }
   const subject = new Subject<{ event: `fingermove`, data: { x: number, y: number } } | { event: `fingerout`, data: undefined }>()
   let isMouseDown = false
 
