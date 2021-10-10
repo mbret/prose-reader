@@ -1,12 +1,12 @@
 import { loadEpub } from './loadEpub';
-import { getResourceFromArchive, getManifestFromArchive, createArchiveFromUrls } from '@oboku/reader-streamer'
+import { getResourceFromArchive, getManifestFromArchive, Report } from '@oboku/reader-streamer'
 import { STREAMER_URL_PREFIX } from './constants';
 import { extractInfoFromEvent, getResourcePath } from './utils';
 
 // @todo typing
 const worker: any = self as any;
 
-self.__OBOKU_READER_DEBUG = true
+Report.enable(process.env.NODE_ENV === `development`)
 
 worker.addEventListener('install', function (e: any) {
   console.log('service worker install')

@@ -12,6 +12,11 @@ export const isTocOpenState = atom({
   default: false
 })
 
+export const isHelpOpenState = atom({
+  key: `isHelpOpenState`,
+  default: false
+})
+
 export const bookTitleState = selector({
   key: `bookTitleState`,
   get: ({ get }) => {

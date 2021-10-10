@@ -18,7 +18,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
 
     const normalizedEvent = reader.normalizeEventForViewport(srcEvent) || {}
 
-    console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
+    // console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
     if (`x` in normalizedEvent) {
       const { x = 0 } = normalizedEvent

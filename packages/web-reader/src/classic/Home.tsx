@@ -78,6 +78,10 @@ export const Home = () => {
           url={`${window.location.origin}/epubs/cc-shared-culture.epub`}
           name="cc-shared-culture.epub"
           details="EN - LTR - MEDIA" />
+        <Row
+          url={`${window.location.origin}/epubs/Advanced-Accessibility-Tests-Mathematics-v1.1.0.epub`}
+          name="Accessibility-Tests-Mathematics.epub"
+          details="EN - RTL - RFL" />
       </div>
     </div>
   )
