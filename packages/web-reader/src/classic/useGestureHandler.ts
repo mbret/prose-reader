@@ -83,8 +83,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       }))
       newHammerManager.add(new Hammer.Tap({
         event: 'singletap',
-        interval: 100
+        // interval: 100
       }))
+
+      hammerManager?.get('singletap').requireFailure('doubletap')
 
       // hammerManager.get('press').set({ time: 500 })
 
