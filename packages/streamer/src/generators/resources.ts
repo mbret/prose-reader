@@ -71,9 +71,9 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
 
 const getMetadata = async (archive: Archive, resourcePath: string) => {
   const opfInfo = getArchiveOpfInfo(archive)
+  const data = await opfInfo.data?.string()
 
-  if (opfInfo) {
-    const data = await opfInfo.data.string()
+  if (data) {
     const opfXmlDoc = new xmldoc.XmlDocument(data)
     const items = getItemsFromDoc(opfXmlDoc)
 
