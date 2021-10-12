@@ -8,8 +8,7 @@ export const accessibilityEnhancer: Enhancer<{
 }> = (next) => (options) => {
   const reader = next(options)
 
-  const observer = new IntersectionObserver((entries, observer) => {
-    // console.log(entries, observer)
+  const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.removeAttribute(`tab-index`)
