@@ -87,7 +87,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
     if (manifest) {
       setReaderLoadOptions({
         cfi: localStorage.getItem(`cfi`) || undefined,
-        numberOfAdjacentSpineItemToPreLoad: 0
+        numberOfAdjacentSpineItemToPreLoad: 1
       })
     }
   }, [manifest, setReaderLoadOptions])
