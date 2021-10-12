@@ -88,8 +88,6 @@ export const Home = () => {
 }
 
 const Row = ({ name, details, url, style = {} }: { url: string, name: string, details: string, style?: React.CSSProperties }) => {
-  const history = useHistory()
-
   const rowStyle: React.CSSProperties = {
     borderLeft: `1px solid black`,
     borderRight: `1px solid black`,

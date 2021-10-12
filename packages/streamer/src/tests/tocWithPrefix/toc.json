@@ -1,0 +1,1605 @@
+[
+  {
+    "title": "AUTOTOOLS",
+    "path": "OEBPS/index.html",
+    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/index.html",
+    "contents": [
+      {
+        "title": "FOREWORD",
+        "path": "OEBPS/pr01.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr01.html",
+        "contents": []
+      },
+      {
+        "title": "PREFACE",
+        "path": "OEBPS/pr02.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr02.html",
+        "contents": [
+          {
+            "title": "Why Use the Autotools?",
+            "path": "OEBPS/pr02.html#why_use_the_autotools_question",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr02.html#why_use_the_autotools_question",
+            "contents": []
+          },
+          {
+            "title": "Acknowledgments",
+            "path": "OEBPS/pr02s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr02s02.html",
+            "contents": []
+          },
+          {
+            "title": "I Wish You the Very Best",
+            "path": "OEBPS/pr02s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr02s03.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "INTRODUCTION",
+        "path": "OEBPS/pr03.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr03.html",
+        "contents": [
+          {
+            "title": "Who Should Read This Book",
+            "path": "OEBPS/pr03.html#who_should_read_this_book",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr03.html#who_should_read_this_book",
+            "contents": []
+          },
+          {
+            "title": "How This Book Is Organized",
+            "path": "OEBPS/pr03s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr03s02.html",
+            "contents": []
+          },
+          {
+            "title": "Conventions Used in This Book",
+            "path": "OEBPS/pr03s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr03s03.html",
+            "contents": []
+          },
+          {
+            "title": "Autotools Versions Used in This Book",
+            "path": "OEBPS/pr03s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/pr03s04.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "1. A BRIEF INTRODUCTION TO THE GNU AUTOTOOLS",
+        "path": "OEBPS/ch01.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01.html",
+        "contents": [
+          {
+            "title": "Who Should Use the Autotools?",
+            "path": "OEBPS/ch01.html#who_should_use_the_autotools_question",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01.html#who_should_use_the_autotools_question",
+            "contents": []
+          },
+          {
+            "title": "When Should You Not Use the Autotools?",
+            "path": "OEBPS/ch01s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s02.html",
+            "contents": []
+          },
+          {
+            "title": "Apple Platforms and Mac OS X",
+            "path": "OEBPS/ch01s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s03.html",
+            "contents": []
+          },
+          {
+            "title": "The Choice of Language",
+            "path": "OEBPS/ch01s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s04.html",
+            "contents": []
+          },
+          {
+            "title": "Generating Your Package Build System",
+            "path": "OEBPS/ch01s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s05.html",
+            "contents": []
+          },
+          {
+            "title": "Autoconf",
+            "path": "OEBPS/ch01s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html",
+            "contents": [
+              {
+                "title": "autoconf",
+                "path": "OEBPS/ch01s06.html#autoconf-id1",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autoconf-id1",
+                "contents": []
+              },
+              {
+                "title": "autoreconf",
+                "path": "OEBPS/ch01s06.html#autoreconf",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autoreconf",
+                "contents": []
+              },
+              {
+                "title": "autoheader",
+                "path": "OEBPS/ch01s06.html#autoheader",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autoheader",
+                "contents": []
+              },
+              {
+                "title": "autoscan",
+                "path": "OEBPS/ch01s06.html#autoscan",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autoscan",
+                "contents": []
+              },
+              {
+                "title": "autoupdate",
+                "path": "OEBPS/ch01s06.html#autoupdate",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autoupdate",
+                "contents": []
+              },
+              {
+                "title": "ifnames",
+                "path": "OEBPS/ch01s06.html#ifnames",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#ifnames",
+                "contents": []
+              },
+              {
+                "title": "autom4te",
+                "path": "OEBPS/ch01s06.html#autom4te",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#autom4te",
+                "contents": []
+              },
+              {
+                "title": "Working Together",
+                "path": "OEBPS/ch01s06.html#working_together",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s06.html#working_together",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Automake",
+            "path": "OEBPS/ch01s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s07.html",
+            "contents": [
+              {
+                "title": "automake",
+                "path": "OEBPS/ch01s07.html#automake-id1",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s07.html#automake-id1",
+                "contents": []
+              },
+              {
+                "title": "aclocal",
+                "path": "OEBPS/ch01s07.html#aclocal",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s07.html#aclocal",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Libtool",
+            "path": "OEBPS/ch01s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s08.html",
+            "contents": [
+              {
+                "title": "libtool",
+                "path": "OEBPS/ch01s08.html#libtool-id1",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s08.html#libtool-id1",
+                "contents": []
+              },
+              {
+                "title": "libtoolize",
+                "path": "OEBPS/ch01s08.html#libtoolize",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s08.html#libtoolize",
+                "contents": []
+              },
+              {
+                "title": "ltdl, the Libtool C API",
+                "path": "OEBPS/ch01s08.html#ltdl_comma_the_libtool_c_api",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s08.html#ltdl_comma_the_libtool_c_api",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Building Your Package",
+            "path": "OEBPS/ch01s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s09.html",
+            "contents": [
+              {
+                "title": "Running configure",
+                "path": "OEBPS/ch01s09.html#running_configure",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s09.html#running_configure",
+                "contents": [
+                  {
+                    "title": "Building Outside the Source Directory",
+                    "path": "OEBPS/ch01s09.html#building_outside_the_source_directory",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s09.html#building_outside_the_source_directory",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "Running make",
+                "path": "OEBPS/ch01s09.html#running_make",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s09.html#running_make",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Installing the Most Up-to-Date Autotools",
+            "path": "OEBPS/ch01s10.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s10.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch01s11.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch01s11.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "2. UNDERSTANDING THE GNU CODING STANDARDS",
+        "path": "OEBPS/ch02.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02.html",
+        "contents": [
+          {
+            "title": "Creating a New Project Directory Structure",
+            "path": "OEBPS/ch02.html#creating_a_new_project_directory_structu",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02.html#creating_a_new_project_directory_structu",
+            "contents": []
+          },
+          {
+            "title": "Project Structure",
+            "path": "OEBPS/ch02s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s02.html",
+            "contents": []
+          },
+          {
+            "title": "Makefile Basics",
+            "path": "OEBPS/ch02s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html",
+            "contents": [
+              {
+                "title": "Commands and Rules",
+                "path": "OEBPS/ch02s03.html#commands_and_rules",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#commands_and_rules",
+                "contents": []
+              },
+              {
+                "title": "Variables",
+                "path": "OEBPS/ch02s03.html#variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#variables",
+                "contents": []
+              },
+              {
+                "title": "A Separate Shell for Each Command",
+                "path": "OEBPS/ch02s03.html#a_separate_shell_for_each_command",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#a_separate_shell_for_each_command",
+                "contents": []
+              },
+              {
+                "title": "Variable Binding",
+                "path": "OEBPS/ch02s03.html#variable_binding",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#variable_binding",
+                "contents": []
+              },
+              {
+                "title": "Rules in Detail",
+                "path": "OEBPS/ch02s03.html#rules_in_detail",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#rules_in_detail",
+                "contents": [
+                  {
+                    "title": "Automatic Variables",
+                    "path": "OEBPS/ch02s03.html#automatic_variables",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#automatic_variables",
+                    "contents": []
+                  },
+                  {
+                    "title": "Dependency Rules",
+                    "path": "OEBPS/ch02s03.html#dependency_rules",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#dependency_rules",
+                    "contents": []
+                  },
+                  {
+                    "title": "Implicit Rules",
+                    "path": "OEBPS/ch02s03.html#implicit_rules",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#implicit_rules",
+                    "contents": []
+                  },
+                  {
+                    "title": "Phony Targets",
+                    "path": "OEBPS/ch02s03.html#phony_targets",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#phony_targets",
+                    "contents": []
+                  },
+                  {
+                    "title": "Multiple Targets",
+                    "path": "OEBPS/ch02s03.html#multiple_targets",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#multiple_targets",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "Resources for Makefile Authors",
+                "path": "OEBPS/ch02s03.html#resources_for_makefile_authors",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s03.html#resources_for_makefile_authors",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Creating a Source Distribution Archive",
+            "path": "OEBPS/ch02s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s04.html",
+            "contents": [
+              {
+                "title": "Forcing a Rule to Run",
+                "path": "OEBPS/ch02s04.html#forcing_a_rule_to_run",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s04.html#forcing_a_rule_to_run",
+                "contents": []
+              },
+              {
+                "title": "Leading Control Characters",
+                "path": "OEBPS/ch02s04.html#leading_control_characters",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s04.html#leading_control_characters",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Automatically Testing a Distribution",
+            "path": "OEBPS/ch02s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s05.html",
+            "contents": []
+          },
+          {
+            "title": "Unit Testing, Anyone?",
+            "path": "OEBPS/ch02s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s06.html",
+            "contents": []
+          },
+          {
+            "title": "Installing Products",
+            "path": "OEBPS/ch02s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s07.html",
+            "contents": [
+              {
+                "title": "Installation Choices",
+                "path": "OEBPS/ch02s07.html#installation_choices",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s07.html#installation_choices",
+                "contents": []
+              },
+              {
+                "title": "Uninstalling a Package",
+                "path": "OEBPS/ch02s07.html#uninstalling_a_package",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s07.html#uninstalling_a_package",
+                "contents": []
+              },
+              {
+                "title": "Testing Install and Uninstall",
+                "path": "OEBPS/ch02s07.html#testing_install_and_uninstall",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s07.html#testing_install_and_uninstall",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "The Filesystem Hierarchy Standard",
+            "path": "OEBPS/ch02s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s08.html",
+            "contents": []
+          },
+          {
+            "title": "Supporting Standard Targets and Variables",
+            "path": "OEBPS/ch02s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s09.html",
+            "contents": [
+              {
+                "title": "Standard Targets",
+                "path": "OEBPS/ch02s09.html#standard_targets",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s09.html#standard_targets",
+                "contents": []
+              },
+              {
+                "title": "Standard Variables",
+                "path": "OEBPS/ch02s09.html#standard_variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s09.html#standard_variables",
+                "contents": []
+              },
+              {
+                "title": "Adding Location Variables to Jupiter",
+                "path": "OEBPS/ch02s09.html#adding_location_variables_to_jupiter",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s09.html#adding_location_variables_to_jupiter",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Getting Your Project into a Linux Distro",
+            "path": "OEBPS/ch02s10.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s10.html",
+            "contents": []
+          },
+          {
+            "title": "Build vs. Installation Prefix Overrides",
+            "path": "OEBPS/ch02s11.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s11.html",
+            "contents": []
+          },
+          {
+            "title": "User Variables",
+            "path": "OEBPS/ch02s12.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s12.html",
+            "contents": []
+          },
+          {
+            "title": "Configuring Your Package",
+            "path": "OEBPS/ch02s13.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s13.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch02s14.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch02s14.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "3. CONFIGURING YOUR PROJECT WITH AUTOCONF",
+        "path": "OEBPS/ch03.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03.html",
+        "contents": [
+          {
+            "title": "Autoconf Configuration Scripts",
+            "path": "OEBPS/ch03.html#autoconf_configuration_scripts",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03.html#autoconf_configuration_scripts",
+            "contents": []
+          },
+          {
+            "title": "The Shortest configure.ac File",
+            "path": "OEBPS/ch03s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s02.html",
+            "contents": []
+          },
+          {
+            "title": "Comparing M4 to the C Preprocessor",
+            "path": "OEBPS/ch03s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s03.html",
+            "contents": []
+          },
+          {
+            "title": "The Nature of M4 Macros",
+            "path": "OEBPS/ch03s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s04.html",
+            "contents": []
+          },
+          {
+            "title": "Executing autoconf",
+            "path": "OEBPS/ch03s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s05.html",
+            "contents": []
+          },
+          {
+            "title": "Executing configure",
+            "path": "OEBPS/ch03s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s06.html",
+            "contents": []
+          },
+          {
+            "title": "Executing config.status",
+            "path": "OEBPS/ch03s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s07.html",
+            "contents": []
+          },
+          {
+            "title": "Adding Some Real Functionality",
+            "path": "OEBPS/ch03s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s08.html",
+            "contents": []
+          },
+          {
+            "title": "Generating Files from Templates",
+            "path": "OEBPS/ch03s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s09.html",
+            "contents": []
+          },
+          {
+            "title": "Adding VPATH Build Functionality",
+            "path": "OEBPS/ch03s10.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s10.html",
+            "contents": []
+          },
+          {
+            "title": "Let's Take a Breather",
+            "path": "OEBPS/ch03s11.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s11.html",
+            "contents": []
+          },
+          {
+            "title": "An Even Quicker Start with autoscan",
+            "path": "OEBPS/ch03s12.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s12.html",
+            "contents": [
+              {
+                "title": "The Proverbial autogen.sh Script",
+                "path": "OEBPS/ch03s12.html#the_proverbial_autogen.sh_script",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s12.html#the_proverbial_autogen.sh_script",
+                "contents": []
+              },
+              {
+                "title": "Updating Makefile.in",
+                "path": "OEBPS/ch03s12.html#updating_makefile.in",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s12.html#updating_makefile.in",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Initialization and Package Information",
+            "path": "OEBPS/ch03s13.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s13.html",
+            "contents": [
+              {
+                "title": "AC_PREREQ",
+                "path": "OEBPS/ch03s13.html#ac_underscore_prereq",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s13.html#ac_underscore_prereq",
+                "contents": []
+              },
+              {
+                "title": "AC_INIT",
+                "path": "OEBPS/ch03s13.html#ac_underscore_init",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s13.html#ac_underscore_init",
+                "contents": []
+              },
+              {
+                "title": "AC_CONFIG_SRCDIR",
+                "path": "OEBPS/ch03s13.html#ac_underscore_config_underscore_srcdir",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s13.html#ac_underscore_config_underscore_srcdir",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "The Instantiating Macros",
+            "path": "OEBPS/ch03s14.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s14.html",
+            "contents": [
+              {
+                "title": "AC_CONFIG_HEADERS",
+                "path": "OEBPS/ch03s14.html#ac_underscore_config_underscore_headers",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s14.html#ac_underscore_config_underscore_headers",
+                "contents": []
+              },
+              {
+                "title": "Using autoheader to Generate an Include File Template",
+                "path": "OEBPS/ch03s14.html#using_autoheader_to_generate_an_include",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s14.html#using_autoheader_to_generate_an_include",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Back to Remote Builds for a Moment",
+            "path": "OEBPS/ch03s15.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s15.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch03s16.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch03s16.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "4. MORE FUN WITH AUTOCONF: CONFIGURING USER OPTIONS",
+        "path": "OEBPS/ch04.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04.html",
+        "contents": [
+          {
+            "title": "Substitutions and Definitions",
+            "path": "OEBPS/ch04.html#substitutions_and_definitions",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04.html#substitutions_and_definitions",
+            "contents": [
+              {
+                "title": "AC_SUBST",
+                "path": "OEBPS/ch04.html#ac_underscore_subst",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04.html#ac_underscore_subst",
+                "contents": []
+              },
+              {
+                "title": "AC_DEFINE",
+                "path": "OEBPS/ch04.html#ac_underscore_define",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04.html#ac_underscore_define",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Checking for Compilers",
+            "path": "OEBPS/ch04s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s02.html",
+            "contents": []
+          },
+          {
+            "title": "Checking for Other Programs",
+            "path": "OEBPS/ch04s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s03.html",
+            "contents": []
+          },
+          {
+            "title": "A Common Problem with Autoconf",
+            "path": "OEBPS/ch04s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s04.html",
+            "contents": []
+          },
+          {
+            "title": "Checks for Libraries and Header Files",
+            "path": "OEBPS/ch04s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s05.html",
+            "contents": [
+              {
+                "title": "Is It Right or Just Good Enough?",
+                "path": "OEBPS/ch04s05.html#is_it_right_or_just_good_enough_question",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s05.html#is_it_right_or_just_good_enough_question",
+                "contents": []
+              },
+              {
+                "title": "Printing Messages",
+                "path": "OEBPS/ch04s05.html#printing_messages",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s05.html#printing_messages",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Supporting Optional Features and Packages",
+            "path": "OEBPS/ch04s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s06.html",
+            "contents": [
+              {
+                "title": "Coding Up the Feature Option",
+                "path": "OEBPS/ch04s06.html#coding_up_the_feature_option",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s06.html#coding_up_the_feature_option",
+                "contents": []
+              },
+              {
+                "title": "Formatting Help Strings",
+                "path": "OEBPS/ch04s06.html#formatting_help_strings",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s06.html#formatting_help_strings",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Checks for Type and Structure Definitions",
+            "path": "OEBPS/ch04s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s07.html",
+            "contents": []
+          },
+          {
+            "title": "The AC_OUTPUT Macro",
+            "path": "OEBPS/ch04s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s08.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch04s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch04s09.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "5. AUTOMATIC MAKEFILES WITH AUTOMAKE",
+        "path": "OEBPS/ch05.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05.html",
+        "contents": [
+          {
+            "title": "Getting Down to Business",
+            "path": "OEBPS/ch05.html#getting_down_to_business",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05.html#getting_down_to_business",
+            "contents": [
+              {
+                "title": "Enabling Automake in configure.ac",
+                "path": "OEBPS/ch05.html#enabling_automake_in_configure.ac",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05.html#enabling_automake_in_configure.ac",
+                "contents": []
+              },
+              {
+                "title": "A Hidden Benefit: Automatic Dependency Tracking",
+                "path": "OEBPS/ch05.html#a_hidden_benefit_colon_automatic_depende",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05.html#a_hidden_benefit_colon_automatic_depende",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "What's in a Makefile.am File?",
+            "path": "OEBPS/ch05s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s02.html",
+            "contents": []
+          },
+          {
+            "title": "Analyzing Our New Build System",
+            "path": "OEBPS/ch05s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html",
+            "contents": [
+              {
+                "title": "Product List Variables",
+                "path": "OEBPS/ch05s03.html#product_list_variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#product_list_variables",
+                "contents": [
+                  {
+                    "title": "Installation Location Prefixes",
+                    "path": "OEBPS/ch05s03.html#installation_location_prefixes",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#installation_location_prefixes",
+                    "contents": []
+                  },
+                  {
+                    "title": "Prefixes Not Associated with Installation",
+                    "path": "OEBPS/ch05s03.html#prefixes_not_associated_with_installatio",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#prefixes_not_associated_with_installatio",
+                    "contents": []
+                  },
+                  {
+                    "title": "Primaries",
+                    "path": "OEBPS/ch05s03.html#primaries",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#primaries",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "Product Source Variables",
+                "path": "OEBPS/ch05s03.html#product_source_variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#product_source_variables",
+                "contents": []
+              },
+              {
+                "title": "PLV and PSV Modifiers",
+                "path": "OEBPS/ch05s03.html#plv_and_psv_modifiers",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s03.html#plv_and_psv_modifiers",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Unit Tests: Supporting make check",
+            "path": "OEBPS/ch05s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s04.html",
+            "contents": []
+          },
+          {
+            "title": "Reducing Complexity with Convenience Libraries",
+            "path": "OEBPS/ch05s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s05.html",
+            "contents": [
+              {
+                "title": "Product Option Variables",
+                "path": "OEBPS/ch05s05.html#product_option_variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s05.html#product_option_variables",
+                "contents": []
+              },
+              {
+                "title": "Per-Makefile Option Variables",
+                "path": "OEBPS/ch05s05.html#per-makefile_option_variables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s05.html#per-makefile_option_variables",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Building the New Library",
+            "path": "OEBPS/ch05s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s06.html",
+            "contents": []
+          },
+          {
+            "title": "What Goes into a Distribution?",
+            "path": "OEBPS/ch05s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s07.html",
+            "contents": []
+          },
+          {
+            "title": "Maintainer Mode",
+            "path": "OEBPS/ch05s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s08.html",
+            "contents": []
+          },
+          {
+            "title": "Cutting Through the Noise",
+            "path": "OEBPS/ch05s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s09.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch05s10.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch05s10.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "6. BUILDING LIBRARIES WITH LIBTOOL",
+        "path": "OEBPS/ch06.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06.html",
+        "contents": [
+          {
+            "title": "The Benefits of Shared Libraries",
+            "path": "OEBPS/ch06.html#the_benefits_of_shared_libraries",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06.html#the_benefits_of_shared_libraries",
+            "contents": []
+          },
+          {
+            "title": "How Shared Libraries Work",
+            "path": "OEBPS/ch06s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s02.html",
+            "contents": [
+              {
+                "title": "Dynamic Linking at Load Time",
+                "path": "OEBPS/ch06s02.html#dynamic_linking_at_load_time",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s02.html#dynamic_linking_at_load_time",
+                "contents": []
+              },
+              {
+                "title": "Automatic Dynamic Linking at Runtime",
+                "path": "OEBPS/ch06s02.html#automatic_dynamic_linking_at_runtime",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s02.html#automatic_dynamic_linking_at_runtime",
+                "contents": []
+              },
+              {
+                "title": "Manual Dynamic Linking at Runtime",
+                "path": "OEBPS/ch06s02.html#manual_dynamic_linking_at_runtime",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s02.html#manual_dynamic_linking_at_runtime",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Using Libtool",
+            "path": "OEBPS/ch06s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s03.html",
+            "contents": [
+              {
+                "title": "Abstracting the Build Process",
+                "path": "OEBPS/ch06s03.html#abstracting_the_build_process",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s03.html#abstracting_the_build_process",
+                "contents": []
+              },
+              {
+                "title": "Abstraction at Runtime",
+                "path": "OEBPS/ch06s03.html#abstraction_at_runtime",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s03.html#abstraction_at_runtime",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Installing Libtool",
+            "path": "OEBPS/ch06s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s04.html",
+            "contents": []
+          },
+          {
+            "title": "Adding Shared Libraries to Jupiter",
+            "path": "OEBPS/ch06s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html",
+            "contents": [
+              {
+                "title": "Using the LTLIBRARIES Primary",
+                "path": "OEBPS/ch06s05.html#using_the_ltlibraries_primary",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#using_the_ltlibraries_primary",
+                "contents": []
+              },
+              {
+                "title": "Public Include Directories",
+                "path": "OEBPS/ch06s05.html#public_include_directories",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#public_include_directories",
+                "contents": []
+              },
+              {
+                "title": "Customizing Libtool with LT_INIT Options",
+                "path": "OEBPS/ch06s05.html#customizing_libtool_with_lt_underscore_i",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#customizing_libtool_with_lt_underscore_i",
+                "contents": []
+              },
+              {
+                "title": "Reconfigure and Build",
+                "path": "OEBPS/ch06s05.html#reconfigure_and_build",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#reconfigure_and_build",
+                "contents": []
+              },
+              {
+                "title": "So What Is PIC, Anyway?",
+                "path": "OEBPS/ch06s05.html#so_what_is_pic_comma_anyway_question",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#so_what_is_pic_comma_anyway_question",
+                "contents": []
+              },
+              {
+                "title": "Fixing the Jupiter PIC Problem",
+                "path": "OEBPS/ch06s05.html#fixing_the_jupiter_pic_problem",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s05.html#fixing_the_jupiter_pic_problem",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch06s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch06s06.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "7. LIBRARY INTERFACE VERSIONING AND RUNTIME DYNAMIC LINKING",
+        "path": "OEBPS/ch07.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07.html",
+        "contents": [
+          {
+            "title": "System-Specific Versioning",
+            "path": "OEBPS/ch07.html#system-specific_versioning",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07.html#system-specific_versioning",
+            "contents": [
+              {
+                "title": "Linux and Solaris Library Versioning",
+                "path": "OEBPS/ch07.html#linux_and_solaris_library_versioning",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07.html#linux_and_solaris_library_versioning",
+                "contents": []
+              },
+              {
+                "title": "IBM AIX Library Versioning",
+                "path": "OEBPS/ch07.html#ibm_aix_library_versioning",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07.html#ibm_aix_library_versioning",
+                "contents": []
+              },
+              {
+                "title": "HP-UX/AT&T SVR4 Library Versioning",
+                "path": "OEBPS/ch07.html#hp-ux_solidus_atat_svr4_library_versioni",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07.html#hp-ux_solidus_atat_svr4_library_versioni",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "The Libtool Library Versioning Scheme",
+            "path": "OEBPS/ch07s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s02.html",
+            "contents": [
+              {
+                "title": "Library Versioning Is Interface Versioning",
+                "path": "OEBPS/ch07s02.html#library_versioning_is_interface_versioni",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s02.html#library_versioning_is_interface_versioni",
+                "contents": []
+              },
+              {
+                "title": "When Library Versioning Just Isn't Enough",
+                "path": "OEBPS/ch07s02.html#when_library_versioning_just_isn_apostro",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s02.html#when_library_versioning_just_isn_apostro",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Using libltdl",
+            "path": "OEBPS/ch07s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html",
+            "contents": [
+              {
+                "title": "Necessary Infrastructure",
+                "path": "OEBPS/ch07s03.html#necessary_infrastructure",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#necessary_infrastructure",
+                "contents": []
+              },
+              {
+                "title": "Adding a Plug-In Interface",
+                "path": "OEBPS/ch07s03.html#adding_a_plug-in_interface",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#adding_a_plug-in_interface",
+                "contents": []
+              },
+              {
+                "title": "Doing It the Old-Fashioned Way",
+                "path": "OEBPS/ch07s03.html#doing_it_the_old-fashioned_way",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#doing_it_the_old-fashioned_way",
+                "contents": []
+              },
+              {
+                "title": "Converting to Libtool's ltdl Library",
+                "path": "OEBPS/ch07s03.html#converting_to_libtool_apostrophy_s_ltdl",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#converting_to_libtool_apostrophy_s_ltdl",
+                "contents": []
+              },
+              {
+                "title": "Preloading Multiple Modules",
+                "path": "OEBPS/ch07s03.html#preloading_multiple_modules",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#preloading_multiple_modules",
+                "contents": []
+              },
+              {
+                "title": "Checking It All Out",
+                "path": "OEBPS/ch07s03.html#checking_it_all_out",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s03.html#checking_it_all_out",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch07s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch07s04.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "8. FLAIM: AN AUTOTOOLS EXAMPLE",
+        "path": "OEBPS/ch08.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08.html",
+        "contents": [
+          {
+            "title": "What Is FLAIM?",
+            "path": "OEBPS/ch08.html#what_is_flaim_question",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08.html#what_is_flaim_question",
+            "contents": []
+          },
+          {
+            "title": "Why FLAIM?",
+            "path": "OEBPS/ch08s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s02.html",
+            "contents": []
+          },
+          {
+            "title": "An Initial Look",
+            "path": "OEBPS/ch08s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s03.html",
+            "contents": []
+          },
+          {
+            "title": "Getting Started",
+            "path": "OEBPS/ch08s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html",
+            "contents": [
+              {
+                "title": "Adding the configure.ac Files",
+                "path": "OEBPS/ch08s04.html#adding_the_configure.ac_files",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html#adding_the_configure.ac_files",
+                "contents": [
+                  {
+                    "title": "Automake in the Umbrella Project",
+                    "path": "OEBPS/ch08s04.html#automake_in_the_umbrella_project",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html#automake_in_the_umbrella_project",
+                    "contents": []
+                  },
+                  {
+                    "title": "Why Add the Libtool Macros?",
+                    "path": "OEBPS/ch08s04.html#why_add_the_libtool_macros_question",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html#why_add_the_libtool_macros_question",
+                    "contents": []
+                  },
+                  {
+                    "title": "Adding a Macro Subdirectory",
+                    "path": "OEBPS/ch08s04.html#adding_a_macro_subdirectory",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html#adding_a_macro_subdirectory",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "The Top-Level Makefile.am File",
+                "path": "OEBPS/ch08s04.html#the_top-level_makefile.am_file",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s04.html#the_top-level_makefile.am_file",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "The FLAIM Subprojects",
+            "path": "OEBPS/ch08s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html",
+            "contents": [
+              {
+                "title": "The FLAIM Toolkit configure.ac File",
+                "path": "OEBPS/ch08s05.html#the_flaim_toolkit_configure.ac_file",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#the_flaim_toolkit_configure.ac_file",
+                "contents": [
+                  {
+                    "title": "Automake Configuration Features",
+                    "path": "OEBPS/ch08s05.html#automake_configuration_features",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#automake_configuration_features",
+                    "contents": []
+                  },
+                  {
+                    "title": "Doing Threads the Right Way",
+                    "path": "OEBPS/ch08s05.html#doing_threads_the_right_way",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#doing_threads_the_right_way",
+                    "contents": []
+                  },
+                  {
+                    "title": "Getting Just the Right Libraries",
+                    "path": "OEBPS/ch08s05.html#getting_just_the_right_libraries",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#getting_just_the_right_libraries",
+                    "contents": []
+                  },
+                  {
+                    "title": "Maintainer-Defined Command-Line Options",
+                    "path": "OEBPS/ch08s05.html#maintainer-defined_command-line_options",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#maintainer-defined_command-line_options",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "The FLAIM Toolkit Makefile.am File",
+                "path": "OEBPS/ch08s05.html#the_flaim_toolkit_makefile.am_file",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#the_flaim_toolkit_makefile.am_file",
+                "contents": [
+                  {
+                    "title": "Automake -hook and -local Rules",
+                    "path": "OEBPS/ch08s05.html#automake_-hook_and_-local_rules",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#automake_-hook_and_-local_rules",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "Designing the ftk/src/Makefile.am File",
+                "path": "OEBPS/ch08s05.html#designing_the_ftk_solidus_src_solidus_ma",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#designing_the_ftk_solidus_src_solidus_ma",
+                "contents": []
+              },
+              {
+                "title": "Moving On to the ftk/util Directory",
+                "path": "OEBPS/ch08s05.html#moving_on_to_the_ftk_solidus_util_direct",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s05.html#moving_on_to_the_ftk_solidus_util_direct",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Designing the XFLAIM Build System",
+            "path": "OEBPS/ch08s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html",
+            "contents": [
+              {
+                "title": "The XFLAIM configure.ac File",
+                "path": "OEBPS/ch08s06.html#the_xflaim_configure.ac_file",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html#the_xflaim_configure.ac_file",
+                "contents": []
+              },
+              {
+                "title": "Creating the xflaim/src/Makefile.am File",
+                "path": "OEBPS/ch08s06.html#creating_the_xflaim_solidus_src_solidus",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html#creating_the_xflaim_solidus_src_solidus",
+                "contents": []
+              },
+              {
+                "title": "Turning to the xflaim/util Directory",
+                "path": "OEBPS/ch08s06.html#turning_to_the_xflaim_solidus_util_direc",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html#turning_to_the_xflaim_solidus_util_direc",
+                "contents": [
+                  {
+                    "title": "Stamp Targets",
+                    "path": "OEBPS/ch08s06.html#stamp_targets",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html#stamp_targets",
+                    "contents": []
+                  },
+                  {
+                    "title": "Cleaning Your Room",
+                    "path": "OEBPS/ch08s06.html#cleaning_your_room",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s06.html#cleaning_your_room",
+                    "contents": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch08s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch08s07.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "9. FLAIM PART II: PUSHING THE ENVELOPE",
+        "path": "OEBPS/ch09.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html",
+        "contents": [
+          {
+            "title": "Building Java Sources Using the Autotools",
+            "path": "OEBPS/ch09.html#building_java_sources_using_the_autotool",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#building_java_sources_using_the_autotool",
+            "contents": [
+              {
+                "title": "Autotools Java Support",
+                "path": "OEBPS/ch09.html#autotools_java_support",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#autotools_java_support",
+                "contents": []
+              },
+              {
+                "title": "Using ac-archive Macros",
+                "path": "OEBPS/ch09.html#using_ac-archive_macros",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#using_ac-archive_macros",
+                "contents": []
+              },
+              {
+                "title": "Canonical System Information",
+                "path": "OEBPS/ch09.html#canonical_system_information",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#canonical_system_information",
+                "contents": []
+              },
+              {
+                "title": "The xflaim/java Directory Structure",
+                "path": "OEBPS/ch09.html#the_xflaim_solidus_java_directory_struct",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#the_xflaim_solidus_java_directory_struct",
+                "contents": []
+              },
+              {
+                "title": "The xflaim/src/Makefile.am File",
+                "path": "OEBPS/ch09.html#the_xflaim_solidus_src_solidus_makefile",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#the_xflaim_solidus_src_solidus_makefile",
+                "contents": []
+              },
+              {
+                "title": "Building the JNI C++ Sources",
+                "path": "OEBPS/ch09.html#building_the_jni_c_plus_plus_sources",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#building_the_jni_c_plus_plus_sources",
+                "contents": []
+              },
+              {
+                "title": "The Java Wrapper Classes and JNI Headers",
+                "path": "OEBPS/ch09.html#the_java_wrapper_classes_and_jni_headers",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#the_java_wrapper_classes_and_jni_headers",
+                "contents": []
+              },
+              {
+                "title": "A Caveat About Using the JAVA Primary",
+                "path": "OEBPS/ch09.html#a_caveat_about_using_the_java_primary",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09.html#a_caveat_about_using_the_java_primary",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Building the C# Sources",
+            "path": "OEBPS/ch09s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s02.html",
+            "contents": [
+              {
+                "title": "Manual Installation",
+                "path": "OEBPS/ch09s02.html#manual_installation",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s02.html#manual_installation",
+                "contents": []
+              },
+              {
+                "title": "Cleaning Up Again",
+                "path": "OEBPS/ch09s02.html#cleaning_up_again",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s02.html#cleaning_up_again",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Configuring Compiler Options",
+            "path": "OEBPS/ch09s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s03.html",
+            "contents": []
+          },
+          {
+            "title": "Hooking Doxygen into the Build Process",
+            "path": "OEBPS/ch09s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s04.html",
+            "contents": []
+          },
+          {
+            "title": "Adding Nonstandard Targets",
+            "path": "OEBPS/ch09s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s05.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch09s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch09s06.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "10. USING THE M4 MACRO PROCESSOR WITH AUTOCONF",
+        "path": "OEBPS/ch10.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10.html",
+        "contents": [
+          {
+            "title": "M4 Text Processing",
+            "path": "OEBPS/ch10.html#m4_text_processing",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10.html#m4_text_processing",
+            "contents": [
+              {
+                "title": "Defining Macros",
+                "path": "OEBPS/ch10.html#defining_macros",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10.html#defining_macros",
+                "contents": []
+              },
+              {
+                "title": "Macros with Arguments",
+                "path": "OEBPS/ch10.html#macros_with_arguments",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10.html#macros_with_arguments",
+                "contents": [
+                  {
+                    "title": "Whitespace Around Arguments",
+                    "path": "OEBPS/ch10.html#whitespace_around_arguments",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10.html#whitespace_around_arguments",
+                    "contents": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "The Recursive Nature of M4",
+            "path": "OEBPS/ch10s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s02.html",
+            "contents": [
+              {
+                "title": "Quoting Rules",
+                "path": "OEBPS/ch10s02.html#quoting_rules",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s02.html#quoting_rules",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Autoconf and M4",
+            "path": "OEBPS/ch10s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s03.html",
+            "contents": [
+              {
+                "title": "The Autoconf M4 Environment",
+                "path": "OEBPS/ch10s03.html#the_autoconf_m4_environment",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s03.html#the_autoconf_m4_environment",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Writing Autoconf Macros",
+            "path": "OEBPS/ch10s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s04.html",
+            "contents": [
+              {
+                "title": "Simple Text Replacement",
+                "path": "OEBPS/ch10s04.html#simple_text_replacement",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s04.html#simple_text_replacement",
+                "contents": []
+              },
+              {
+                "title": "Documenting Your Macros",
+                "path": "OEBPS/ch10s04.html#documenting_your_macros",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s04.html#documenting_your_macros",
+                "contents": []
+              },
+              {
+                "title": "M4 Conditionals",
+                "path": "OEBPS/ch10s04.html#m4_conditionals",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s04.html#m4_conditionals",
+                "contents": [
+                  {
+                    "title": "Adding Precision",
+                    "path": "OEBPS/ch10s04.html#adding_precision",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s04.html#adding_precision",
+                    "contents": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Diagnosing Problems",
+            "path": "OEBPS/ch10s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s05.html",
+            "contents": []
+          },
+          {
+            "title": "Summary",
+            "path": "OEBPS/ch10s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch10s06.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "11. A CATALOG OF TIPS AND REUSABLE SOLUTIONS FOR CREATING GREAT PROJECTS",
+        "path": "OEBPS/ch11.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html",
+        "contents": [
+          {
+            "title": "Item 1: Keeping Private Details out of Public Interfaces",
+            "path": "OEBPS/ch11.html#item_1_colon_keeping_private_details_out",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html#item_1_colon_keeping_private_details_out",
+            "contents": [
+              {
+                "title": "Solutions in C",
+                "path": "OEBPS/ch11.html#solutions_in_c",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html#solutions_in_c",
+                "contents": []
+              },
+              {
+                "title": "Solutions in C++",
+                "path": "OEBPS/ch11.html#solutions_in_c_plus_plus",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html#solutions_in_c_plus_plus",
+                "contents": [
+                  {
+                    "title": "The PIMPL Pattern",
+                    "path": "OEBPS/ch11.html#the_pimpl_pattern",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html#the_pimpl_pattern",
+                    "contents": []
+                  },
+                  {
+                    "title": "C++ Virtual Interfaces",
+                    "path": "OEBPS/ch11.html#c_plus_plus_virtual_interfaces",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11.html#c_plus_plus_virtual_interfaces",
+                    "contents": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Item 2: Implementing Recursive Extension Targets",
+            "path": "OEBPS/ch11s02.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s02.html",
+            "contents": []
+          },
+          {
+            "title": "Item 3: Using a Repository Revision Number in a Package Version",
+            "path": "OEBPS/ch11s03.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s03.html",
+            "contents": []
+          },
+          {
+            "title": "Item 4: Ensuring Your Distribution Packages Are Clean",
+            "path": "OEBPS/ch11s04.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s04.html",
+            "contents": []
+          },
+          {
+            "title": "Item 5: Hacking Autoconf Macros",
+            "path": "OEBPS/ch11s05.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s05.html",
+            "contents": [
+              {
+                "title": "Providing Library-Specific Autoconf Macros",
+                "path": "OEBPS/ch11s05.html#providing_library-specific_autoconf_macr",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s05.html#providing_library-specific_autoconf_macr",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Item 6: Cross-Compiling",
+            "path": "OEBPS/ch11s06.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s06.html",
+            "contents": []
+          },
+          {
+            "title": "Item 7: Emulating Autoconf Text Replacement Techniques",
+            "path": "OEBPS/ch11s07.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s07.html",
+            "contents": []
+          },
+          {
+            "title": "Item 8: Using the ac-archive Project",
+            "path": "OEBPS/ch11s08.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s08.html",
+            "contents": []
+          },
+          {
+            "title": "Item 9: Using pkg-config with Autotools",
+            "path": "OEBPS/ch11s09.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s09.html",
+            "contents": [
+              {
+                "title": "Providing pkg-config Files for Your Library Projects",
+                "path": "OEBPS/ch11s09.html#providing_pkg-config_files_for_your_libr",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s09.html#providing_pkg-config_files_for_your_libr",
+                "contents": []
+              },
+              {
+                "title": "Using pkg-config Files in configure.ac",
+                "path": "OEBPS/ch11s09.html#using_pkg-config_files_in_configure.ac",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s09.html#using_pkg-config_files_in_configure.ac",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Item 10: Using Incremental Installation Techniques",
+            "path": "OEBPS/ch11s10.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s10.html",
+            "contents": []
+          },
+          {
+            "title": "Item 11: Using Generated Source Code",
+            "path": "OEBPS/ch11s11.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html",
+            "contents": [
+              {
+                "title": "Using the BUILT_SOURCES Variable",
+                "path": "OEBPS/ch11s11.html#using_the_built_underscore_sources_varia",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html#using_the_built_underscore_sources_varia",
+                "contents": []
+              },
+              {
+                "title": "Dependency Management",
+                "path": "OEBPS/ch11s11.html#dependency_management",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html#dependency_management",
+                "contents": [
+                  {
+                    "title": "A Two-Pass System",
+                    "path": "OEBPS/ch11s11.html#a_two-pass_system",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html#a_two-pass_system",
+                    "contents": []
+                  },
+                  {
+                    "title": "Doing It in One Pass",
+                    "path": "OEBPS/ch11s11.html#doing_it_in_one_pass",
+                    "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html#doing_it_in_one_pass",
+                    "contents": []
+                  }
+                ]
+              },
+              {
+                "title": "Built Sources Done Right",
+                "path": "OEBPS/ch11s11.html#built_sources_done_right",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s11.html#built_sources_done_right",
+                "contents": []
+              }
+            ]
+          },
+          {
+            "title": "Item 12: Disabling Undesirable Targets",
+            "path": "OEBPS/ch11s12.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s12.html",
+            "contents": []
+          },
+          {
+            "title": "Item 13: Watch Those Tab Characters!",
+            "path": "OEBPS/ch11s13.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s13.html",
+            "contents": []
+          },
+          {
+            "title": "Item 14: Packaging Choices",
+            "path": "OEBPS/ch11s14.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s14.html",
+            "contents": []
+          },
+          {
+            "title": "Wrapping Up",
+            "path": "OEBPS/ch11s15.html",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/ch11s15.html",
+            "contents": []
+          }
+        ]
+      },
+      {
+        "title": "UPDATES",
+        "path": "OEBPS/co01.html",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi/OEBPS/co01.html",
+        "contents": []
+      }
+    ]
+  }
+]
