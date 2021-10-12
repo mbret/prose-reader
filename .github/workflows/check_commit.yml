@@ -10,7 +10,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.1.4
         with:
-          node-version: '12'
+          node-version: "12"
       - uses: actions/checkout@v2
 
       - name: Checkout release branch
@@ -23,7 +23,11 @@ jobs:
       - name: Lint
         run: |
           yarn lint
-    
+
+      - name: Build
+        run: |
+          yarn build
+
       - name: Test
         run: |
           yarn test
