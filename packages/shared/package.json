@@ -4,6 +4,7 @@
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
+    "build:prod": "echo",
     "lint": "echo",
     "start": "echo",
     "test": "echo"
