@@ -1,6 +1,6 @@
 {
   "name": "@oboku/reader-streamer",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@oboku/shared": "^0.0.2",
+    "@oboku/shared": "^0.0.3",
     "@types/xmldoc": "^1.1.5",
     "buffer": "6.0.3",
     "xmldoc": "^1.1.2"
