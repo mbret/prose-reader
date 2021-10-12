@@ -45,7 +45,6 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
     .pipe(
       // let's ignore later load as long as the first one still runs
       exhaustMap(() => {
-        // console.log(`FOOOO LOAD exec`, item.id)
         stateSubject$.next({
           isLoading: true,
           isReady: false,
@@ -183,7 +182,6 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
       withLatestFrom(frameElementSubject$),
       filter(([_, frame]) => !!frame),
       exhaustMap(() => {
-        // console.log(`FOOOO UNLOAD exec`, item.id)
         stateSubject$.next({
           isLoading: false,
           isReady: false,

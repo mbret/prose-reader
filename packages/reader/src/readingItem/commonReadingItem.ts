@@ -228,9 +228,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     .subscribe()
 
   // readingItemFrame.$.domReady$.subscribe((v) => console.log(`FOOOO domReady`, item.id))
-  readingItemFrame.$.isLoading$.subscribe((v) => console.log(`FOOOO isLoading`, v, item.id))
-  readingItemFrame.$.isReady$.subscribe((v) => console.log(`FOOOO isReady`, v, item.id))
-  readingItemFrame.$.unloaded$.subscribe(() => console.log(`FOOOO unloaded`, item.id))
+  // readingItemFrame.$.isLoading$.subscribe((v) => console.log(`FOOOO isLoading`, v, item.id))
+  // readingItemFrame.$.isReady$.subscribe((v) => console.log(`FOOOO isReady`, v, item.id))
+  // readingItemFrame.$.unloaded$.subscribe(() => console.log(`FOOOO unloaded`, item.id))
 
   return {
     load: () => {
