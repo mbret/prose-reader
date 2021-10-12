@@ -11,7 +11,7 @@ export const Home = () => {
   return (
     <div style={{
       height: `100%`,
-      overflow: `scroll`
+      overflow: `auto`
     }}>
       <div style={{
         padding: 10
