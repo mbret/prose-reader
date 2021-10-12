@@ -54,7 +54,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
           frameLoaded: false
         })
 
-        return createFrame$(parent)
+        return createFrame$()
           .pipe(
             mergeMap((frame) => waitForViewportFree$.pipe(mapTo(frame))),
             mergeMap((frame) => {
