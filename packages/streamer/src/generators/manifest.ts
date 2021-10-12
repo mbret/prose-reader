@@ -11,7 +11,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
   const koboInformation = await extractKoboInformationFromArchive(archive)
 
-  if (!opsFile || !opfBasePath) {
+  if (!opsFile) {
     throw new Error(`No opf content`)
   }
 
@@ -128,17 +128,22 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
 export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
   const { data: opsFile } = getArchiveOpfInfo(archive) || {}
 
-  if (opsFile) {
-    const manifest = await generateManifestFromEpub(archive, baseUrl)
+  try {
+    if (opsFile) {
+      const manifest = await generateManifestFromEpub(archive, baseUrl)
+      const data = JSON.stringify(manifest)
+
+      return new Response(data, { status: 200 })
+    }
+
+    const manifest = await generateManifestFromArchive(archive, baseUrl)
     const data = JSON.stringify(manifest)
 
     return new Response(data, { status: 200 })
+  } catch (e) {
+    Report.error(e)
+    return new Response((e as any)?.message, { status: 500 })
   }
-
-  const manifest = await generateManifestFromArchive(archive, baseUrl)
-  const data = JSON.stringify(manifest)
-
-  return new Response(data, { status: 200 })
 }
 
 export const getItemsFromDoc = (doc: xmldoc.XmlDocument) => {

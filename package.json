@@ -10,7 +10,7 @@
   "license": "MIT",
   "scripts": {
     "start": "lerna exec --parallel -- yarn start",
-    "publish-packages": "yarn tsc && lerna publish",
+    "publish-packages": "yarn tsc && yarn test && lerna publish",
     "build-core": "cd packages/reader && yarn build && cd ../streamer && yarn build && cd ../react && yarn build && cd ../enhancer-bookmarks && yarn build && cd ../enhancer-highlights && yarn build && cd ../enhancer-search && yarn build",
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna exec --parallel -- yarn lint",
