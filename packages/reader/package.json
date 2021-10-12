@@ -1,6 +1,6 @@
 {
   "name": "@oboku/reader",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,7 +14,7 @@
     "test": "echo"
   },
   "dependencies": {
-    "@oboku/shared": "^0.0.3"
+    "@oboku/shared": "^0.0.4"
   },
   "peerDependencies": {
     "rxjs": "*"
