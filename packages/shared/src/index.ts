@@ -1,1 +1,1 @@
-export { Manifest, TocItem } from './Manifest'
+export type { Manifest, TocItem } from './Manifest'
