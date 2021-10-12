@@ -115,16 +115,16 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                     // console.log(frame.contentDocument?.head.childNodes)
                     // console.log(frame.contentDocument?.body.childNodes)
 
-                    const script = frame.contentDocument?.createElement(`script`)
-                    // script?.setAttribute(`src`, `https://fred-wang.github.io/mathml.css/mspace.js`)
-                    // script?.setAttribute(`src`, `https://fred-wang.github.io/mathjax.js/mpadded-min.js`)
-                    // script?.setAttribute(`src`, `https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js`)
-                    // script?.setAttribute(`src`, `https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_CHTML`)
-                    if (script) {
-                      console.log(frame.contentDocument?.head.childNodes)
-                      console.log(frame.contentDocument?.body.childNodes)
-                      // frame.contentDocument?.head.appendChild(script)
-                    }
+                    // const script = frame.contentDocument?.createElement(`script`)
+                    // // script?.setAttribute(`src`, `https://fred-wang.github.io/mathml.css/mspace.js`)
+                    // // script?.setAttribute(`src`, `https://fred-wang.github.io/mathjax.js/mpadded-min.js`)
+                    // // script?.setAttribute(`src`, `https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js`)
+                    // // script?.setAttribute(`src`, `https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_CHTML`)
+                    // if (script) {
+                    //   // console.log(frame.contentDocument?.head.childNodes)
+                    //   // console.log(frame.contentDocument?.body.childNodes)
+                    //   // frame.contentDocument?.head.appendChild(script)
+                    // }
 
                     frame.setAttribute(`role`, `main`)
 
