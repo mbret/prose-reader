@@ -1,7 +1,7 @@
 import { Context } from "../context"
 import { createFrameItem, ReadingItemFrame } from "./frameItem/frameItem"
 import { Manifest } from "../types"
-import { BehaviorSubject, Subject } from "rxjs"
+import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { isMouseEvent, isPointerEvent } from "../utils/dom"
 import { attachOriginalFrameEventToDocumentEvent } from "../frames"
@@ -32,12 +32,13 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
-export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
+export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
-  hooks$: BehaviorSubject<Hook[]>
+  hooks$: BehaviorSubject<Hook[]>,
+  viewportState$: Observable<"free" | "busy">
 }) => {
   const destroySubject$ = new Subject<void>()
   const isReflowable = false
@@ -56,7 +57,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     hooks$: hooks$.asObservable()
       .pipe(
         map(hooks => [...hooks, ...frameHooks])
-      )
+      ),
+    viewportState$
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 

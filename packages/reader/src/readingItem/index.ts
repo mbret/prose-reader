@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs"
+import { BehaviorSubject, Observable } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
@@ -9,19 +9,20 @@ export type ReadingItem = {
   item: Manifest[`readingOrder`][number],
 } & (ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>)
 
-export const createReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
+export const createReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
-  hooks$: BehaviorSubject<Hook[]>
+  hooks$: BehaviorSubject<Hook[]>,
+  viewportState$: Observable<"free" | "busy">
  }) => {
   let readingItem: ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>
 
   if (item.renditionLayout === `pre-paginated`) {
-    readingItem = createPrePaginatedReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$ })
+    readingItem = createPrePaginatedReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   } else {
-    readingItem = createReflowableReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$ })
+    readingItem = createReflowableReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   }
 
   return {

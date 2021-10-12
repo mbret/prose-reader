@@ -1,5 +1,5 @@
 import { BehaviorSubject, EMPTY, from, fromEvent, Observable, of, Subject } from "rxjs"
-import { exhaustMap, filter, map, mergeMap, share, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { exhaustMap, filter, map, mapTo, mergeMap, share, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
 import { Context } from "../../context"
@@ -11,7 +11,7 @@ import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
-export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks$, context }: {
+export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks$, context, viewportState$ }: {
   item: Manifest[`readingOrder`][number],
   stateSubject$: BehaviorSubject<{
     isReady: boolean,
@@ -22,6 +22,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
   fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
   context: Context,
+  viewportState$: Observable<"free" | "busy">
 }) => {
   const destroySubject$ = new Subject<void>()
   const loadSubject$ = new Subject<void>()
@@ -41,6 +42,8 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
     }
   }
 
+  const waitForViewportFree$ = viewportState$.pipe(filter(v => v === `free`), take(1))
+
   const load$ = loadSubject$.asObservable()
     .pipe(
       // let's ignore later load as long as the first one still runs
@@ -53,7 +56,10 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
 
         return createFrame$(parent)
           .pipe(
+            mergeMap((frame) => waitForViewportFree$.pipe(mapTo(frame))),
             mergeMap((frame) => {
+              parent.appendChild(frame)
+
               frameElementSubject$.next(frame)
 
               /**

@@ -1,17 +1,18 @@
-import { BehaviorSubject } from "rxjs"
+import { BehaviorSubject, Observable } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
-export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$ }: {
+export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`readingOrder`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
-  hooks$: BehaviorSubject<Hook[]>
+  hooks$: BehaviorSubject<Hook[]>,
+  viewportState$: Observable<"free" | "busy">
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$ })
+  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   const readingItemFrame = commonReadingItem.readingItemFrame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after

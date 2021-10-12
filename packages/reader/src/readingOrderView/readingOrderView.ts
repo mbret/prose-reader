@@ -53,7 +53,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
         containerElement: element,
         iframeEventBridgeElement,
         context,
-        hooks$
+        hooks$,
+        viewportState$: viewportNavigator.$.state$
       })
       readingItemManager.add(readingItem)
     })
@@ -65,7 +66,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   }
 
   const manipulateReadingItems = (cb: (payload: ManipulableReadingItemCallbackPayload & { index: number }) => RequireLayout) => {
-    const a = performance.now()
+    // const a = performance.now()
     let shouldLayout = false
     readingItemManager.getAll().forEach((item, index) => {
       shouldLayout = item.manipulateReadingItem((opts) => cb({ index, ...opts })) || shouldLayout
@@ -74,7 +75,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     if (shouldLayout) {
       readingItemManager.layout()
     }
-    const b = performance.now()
+    // const b = performance.now()
     // console.log(`manipulateReadingItems`, `${b - a}ms`)
   }
 
