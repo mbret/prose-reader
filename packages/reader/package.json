@@ -10,8 +10,8 @@
     "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
     "build": "NODE_ENV=production webpack build --config ./webpack.config.js",
     "build:prod:1": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo",
-    "test": "echo"
+    "lint": "eslint '**/*.{js,ts,tsx}'",
+    "test": "jest"
   },
   "dependencies": {
     "@oboku/shared": "^0.0.4"
@@ -22,8 +22,14 @@
   "devDependencies": {
     "ts-loader": "^9.2.6",
     "typescript": "^4.4.3",
-    "webpack": "^5.26",
-    "webpack-cli": "^4.5.0"
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.24.2",
+    "webpack": "^5.58.1",
+    "webpack-cli": "^4.5.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint-plugin-jest": "^25.0.5"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }

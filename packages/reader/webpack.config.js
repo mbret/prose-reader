@@ -1,37 +1,37 @@
-const path = require('path');
+const path = require(`path`)
 
-const IS_PROD = process.env.NODE_ENV !== 'development'
+const IS_PROD = process.env.NODE_ENV !== `development`
 
 module.exports = {
   entry: {
-    'index': './src/index.ts',
+    index: `./src/index.ts`
   },
-  mode: IS_PROD ? 'production' : 'development',
+  mode: IS_PROD ? `production` : `development`,
   ...!IS_PROD && {
-    devtool: 'source-map',
+    devtool: `source-map`
   },
   externals: [
-    'rxjs',
-    'rxjs/operators',
+    `rxjs`,
+    `rxjs/operators`
   ],
   module: {
     rules: [
       {
         test: /\.tsx?$/,
         use: [{
-          loader: 'ts-loader',
-        }],
-      },
-    ],
+          loader: `ts-loader`
+        }]
+      }
+    ]
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: [`.tsx`, `.ts`, `.js`]
   },
   output: {
-    filename: '[name].js',
-    path: path.resolve(__dirname, 'dist'),
+    filename: `[name].js`,
+    path: path.resolve(__dirname, `dist`),
     library: {
-      type: 'commonjs'
+      type: `commonjs`
     }
-  },
-};
+  }
+}
