@@ -5,6 +5,7 @@ module.exports = {
     "jest/globals": true
   },
   extends: [
+    `plugin:jest/recommended`,
     `standard`
   ],
   parser: `@typescript-eslint/parser`,
@@ -13,10 +14,13 @@ module.exports = {
     sourceType: `module`
   },
   plugins: [
-    `@typescript-eslint`,
-    `jest`
+    `jest`,
+    `@typescript-eslint`
   ],
   rules: {
+    "node/no-callback-literal": `off`, // huh, 1990 coding
+    "no-unused-vars": `off`, // use ts
+    "no-redeclare": `off`, // use ts
     quotes: [`error`, `backtick`]
   }
 }
