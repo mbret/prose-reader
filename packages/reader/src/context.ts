@@ -3,8 +3,6 @@ import { Report } from "./report"
 import { LoadOptions } from "./types"
 import { Manifest } from "@oboku/shared"
 
-export type Context = ReturnType<typeof createContext>
-
 export type ContextObservableEvents = {}
 
 type Settings = {
@@ -182,6 +180,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     getReadingDirection: () => manifest?.readingDirection
   }
 }
+
+export type Context = ReturnType<typeof createContext>
 
 const updateComputedSettings = (newManifest: Manifest | undefined, settings: InnerSettings) => {
   settings.computedPageTurnDirection = settings.pageTurnDirection

@@ -5,7 +5,6 @@ import { ReadingItem } from "./readingItem"
 import { isShallowEqual } from "./utils/objects"
 import { getCoverItem } from "./utils/manifest"
 
-export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
 export type ViewportPosition = { x: number, y: number }
 
 const NAMESPACE = `readingItemManager`
@@ -353,3 +352,5 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     }
   }
 }
+
+export type ReadingItemManager = ReturnType<typeof createReadingItemManager>

@@ -22,7 +22,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
   fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
   context: Context,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
   const loadSubject$ = new Subject<void>()

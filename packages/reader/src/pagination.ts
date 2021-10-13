@@ -6,8 +6,6 @@ import { Report } from "./report"
 
 const NAMESPACE = `pagination`
 
-export type Pagination = ReturnType<typeof createPagination>
-
 export const createPagination = ({ context }: { context: Context, readingItemManager: ReadingItemManager }) => {
   const subject = new Subject<{ event: `change` }>()
   let beginPageIndex: number | undefined
@@ -133,6 +131,8 @@ export const createPagination = ({ context }: { context: Context, readingItemMan
     $: subject.asObservable()
   }
 }
+
+export type Pagination = ReturnType<typeof createPagination>
 
 export const getItemOffsetFromPageIndex = (pageWidth: number, pageIndex: number, itemWidth: number) => {
   const lastPageOffset = itemWidth - pageWidth

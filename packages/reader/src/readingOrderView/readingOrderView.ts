@@ -17,8 +17,6 @@ import { Hook, RegisterHook } from "../types/Hook"
 
 const NAMESPACE = `readingOrderView`
 
-export type ReadingOrderView = ReturnType<typeof createReadingOrderView>
-
 type ReadingItem = ReturnType<typeof createReadingItem>
 type RequireLayout = boolean
 type ManipulableReadingItemCallback = Parameters<ReadingItem[`manipulateReadingItem`]>[0]
@@ -234,7 +232,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
               if (!focusedReadingItem) return EMPTY
 
-              return viewportNavigator.adjustNavigation(focusedReadingItem, {})
+              return viewportNavigator.adjustNavigation(focusedReadingItem)
             }),
             takeUntil(viewportNavigator.$.navigation$)
           )
@@ -524,3 +522,5 @@ const createElement = (doc: Document) => {
 
   return element
 }
+
+export type ReadingOrderView = ReturnType<typeof createReadingOrderView>

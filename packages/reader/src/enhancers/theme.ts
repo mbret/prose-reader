@@ -1,7 +1,5 @@
 import { Enhancer } from "../createReader"
 
-export type Theme = (typeof defaultThemes[number])[`name`]
-
 const defaultThemes = [
   {
     name: `bright` as const,
@@ -18,6 +16,8 @@ const defaultThemes = [
     foregroundColor: `#f1ebeb`
   }
 ]
+
+export type Theme = (typeof defaultThemes[number])[`name`]
 
 export const themeEnhancer: Enhancer<{
   setTheme: (theme: Theme | undefined) => void,

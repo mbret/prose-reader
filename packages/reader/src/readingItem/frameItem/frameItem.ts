@@ -8,15 +8,13 @@ import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
-export type ReadingItemFrame = ReturnType<typeof createFrameItem>
-
 export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, viewportState$ }: {
   parent: HTMLElement,
   item: Manifest[`readingOrder`][number],
   context: Context,
   fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
   const stateSubject$ = new BehaviorSubject({
@@ -162,3 +160,5 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
     }
   }
 }
+
+export type ReadingItemFrame = ReturnType<typeof createFrameItem>

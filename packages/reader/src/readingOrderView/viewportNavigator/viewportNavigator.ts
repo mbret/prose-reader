@@ -193,7 +193,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * the wrong offset
    * @todo this is being called a lot, try to optimize
    */
-  const adjustNavigation = (readingItem: ReadingItem, { }: {}) => {
+  const adjustNavigation = (readingItem: ReadingItem) => {
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
     let adjustedReadingOrderViewPosition = currentNavigationPosition
@@ -201,12 +201,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
 
     if (context.getSettings().computedPageTurnMode === `free`) {
       adjustedReadingOrderViewPosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
-    }
-    /**
+    } else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
+      /**
      * When `navigate-from-cfi` we always try to retrieve offset from cfi node and navigate
      * to there
      */
-    else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
       adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-cfi`, `use last cfi`)
     } else if (lastUserExpectedNavigation?.type === `navigate-from-next-item`) {

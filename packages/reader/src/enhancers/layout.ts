@@ -35,6 +35,7 @@ export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
      */
     reader.manipulateReadingItems(({ frame }) => {
       if (!hasRedrawn && frame) {
+        /* eslint-disable-next-line no-void */
         void (frame.getBoundingClientRect().left)
         hasRedrawn = true
       }

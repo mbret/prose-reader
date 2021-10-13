@@ -15,7 +15,7 @@ export const createReadingItem = ({ item, context, containerElement, iframeEvent
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
  }) => {
   let readingItem: ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>
 

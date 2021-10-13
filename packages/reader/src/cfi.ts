@@ -1,3 +1,4 @@
+/* eslint no-useless-escape: "off" */
 /**
  * @see https://github.com/fread-ink/epub-cfi-resolver
  * @latest a0d7e4e39d5b4adc9150e006e0b6d7af9513ae27
@@ -53,7 +54,7 @@ function closest (a: any[], n: number) {
 // calculate the count/index of the node
 // according to the CFI spec.
 // Also re-calculate offset if supplied and relevant
-function calcSiblingCount (nodes: NodeListOf<ChildNode>, n: number, offset: number) {
+function calcSiblingCount (nodes: globalThis.NodeListOf<globalThis.ChildNode>, n: number, offset: number) {
   let count = 0
   let lastWasElement
   let prevOffset = 0
@@ -145,7 +146,7 @@ class CFI {
 
     this.cfi = str
     this.parts = []
-    const isCFI = new RegExp(/^epubcfi\((.*)\)$/)
+    const isCFI = /^epubcfi\((.*)\)$/
 
     str = str.trim()
     const m = str.match(isCFI)
@@ -246,6 +247,7 @@ class CFI {
   }
 
   static generatePart (node: Element | Node, offset?: number, extra?: {}) {
+    /* eslint-disable-next-line no-void */
     void (extra)
     let cfi = ``
     let o
@@ -283,8 +285,9 @@ class CFI {
   }
 
   static toParsed (cfi: any) {
-    // @ts-ignore
-    if (typeof cfi === `string`) cif = new this(cfi)
+    if (typeof cfi === `string`) {
+      // cif = new this(cfi)
+    }
     if (cfi.isRange) {
       return cfi.getFrom()
     } else {
@@ -466,7 +469,7 @@ class CFI {
 
   parse (cfi: any) {
     const o = {}
-    const isNumber = new RegExp(/[\d]/)
+    const isNumber = /[\d]/
     let f
     let state
     let prevState
@@ -813,13 +816,14 @@ class CFI {
   // Use a Text Location Assertion to correct and offset
   correctOffset (dom: Document, node: Element, offset: number, assertion: any) {
     let curNode = node
+    let matchStr: string | undefined
 
     if (typeof assertion === `string`) {
-      var matchStr = this.decodeEntities(dom, assertion)
+      matchStr = this.decodeEntities(dom, assertion)
     } else {
       assertion.pre = this.decodeEntities(dom, assertion.pre)
       assertion.post = this.decodeEntities(dom, assertion.post)
-      var matchStr = assertion.pre + `.` + assertion.post
+      matchStr = assertion.pre + `.` + assertion.post
     }
 
     if (!(this.isTextNode(node))) {
@@ -869,7 +873,8 @@ class CFI {
       newOffset -= nodeLengths[i]
       if (newOffset < 0) return { node, offset }
 
-      // @ts-ignore
+      const nodeOffsets = [] // added because original code has nodeOffsets undefined. @see https://github.com/fread-ink/epub-cfi-resolver/blob/master/index.js#L826
+
       if (!curNode.nextSibling || i + 1 >= nodeOffsets.length) return { node, offset }
       i++
       // @ts-ignore

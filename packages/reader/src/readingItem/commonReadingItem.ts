@@ -38,7 +38,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
   const isReflowable = false

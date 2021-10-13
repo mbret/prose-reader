@@ -10,7 +10,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   const readingItemFrame = commonReadingItem.readingItemFrame
@@ -231,12 +231,13 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
       margin: 0;
       padding: 0;
       ${enableTouch
-? `
+      ? `
         touch-action: none
       `
-: ``}
+      : ``}
     }
-    ${isScrollable ? `
+    ${isScrollable
+      ? `
       img {
         height: auto !important;
         margin: 0;
@@ -250,7 +251,8 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
       ``}
         display: block;
       }
-    ` : ``}
+    `
+      : ``}
   `
 }
 

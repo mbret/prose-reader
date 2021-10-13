@@ -79,7 +79,7 @@ export const createLocationResolver = ({ context }: {
     let offsetOfNodeInReadingItem: number | undefined
 
     // for some reason `img` does not work with range (x always = 0)
-    if (node?.nodeName === `img` || node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE) {
+    if (node?.nodeName === `img` || (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE)) {
       offsetOfNodeInReadingItem = (node as HTMLElement).getBoundingClientRect().x
     } else if (node) {
       const range = node ? getRangeFromNode(node, offset) : undefined

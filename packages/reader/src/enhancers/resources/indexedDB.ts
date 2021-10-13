@@ -1,4 +1,4 @@
-const createDatabase = (db: IDBDatabase) => {
+const createDatabase = (db: globalThis.IDBDatabase) => {
   const put = (key: string, data: Blob) => {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readwrite`)
@@ -24,7 +24,7 @@ const createDatabase = (db: IDBDatabase) => {
     })
   }
 
-  const get = (key: IDBValidKey) => {
+  const get = (key: string) => {
     return new Promise<Blob | null>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readwrite`)
       const objectStore = transaction.objectStore(`store`)
@@ -44,7 +44,7 @@ const createDatabase = (db: IDBDatabase) => {
     })
   }
 
-  const remove = (key: IDBValidKey) => {
+  const remove = (key: globalThis.IDBValidKey) => {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readwrite`)
 
@@ -71,7 +71,7 @@ const createDatabase = (db: IDBDatabase) => {
   }
 
   const keys = () => {
-    return new Promise<IDBValidKey[]>((resolve, reject) => {
+    return new Promise<globalThis.IDBValidKey[]>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readonly`)
 
       transaction.onerror = function (event) {
@@ -84,7 +84,7 @@ const createDatabase = (db: IDBDatabase) => {
 
       const objectStore = transaction.objectStore(`store`)
       const request = objectStore.openKeyCursor()
-      const keys: IDBValidKey[] = []
+      const keys: globalThis.IDBValidKey[] = []
 
       request.onsuccess = () => {
         const cursor = request.result

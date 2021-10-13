@@ -10,7 +10,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>,
-  viewportState$: Observable<"free" | "busy">
+  viewportState$: Observable<`free` | `busy`>
 }) => {
   const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   const readingItemFrame = commonReadingItem.readingItemFrame

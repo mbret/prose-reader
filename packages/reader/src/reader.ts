@@ -10,7 +10,6 @@ import { createSelection } from "./selection"
 import { createReadingItemManager } from "./readingItemManager"
 import { Hook, RegisterHook } from "./types/Hook"
 
-export type Reader = ReturnType<typeof createReader>
 type Context = ReturnType<typeof createBookContext>
 type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
@@ -209,6 +208,8 @@ export const createReader = ({ containerElement, ...settings }: {
 
   return reader
 }
+
+export type Reader = ReturnType<typeof createReader>
 
 const createWrapperElement = (containerElement: HTMLElement) => {
   const element = containerElement.ownerDocument.createElement(`div`)

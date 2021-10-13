@@ -19,8 +19,6 @@ type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
 type InternalReaderCreateParameter = Parameters<typeof createInternalReader>[0]
 
-export type Enhancer<Ext = {}, Deps = {}> = (next: EnhancerCreator<Deps>) => EnhancerCreator<Ext>
-
 type Options = InternalReaderCreateParameter & {
   containerElement: HTMLElement,
   fontScale?: number,
@@ -33,6 +31,8 @@ type Options = InternalReaderCreateParameter & {
 type EnhancerCreator<Ext = {}> = (
   options: Options,
 ) => ReaderPublicApi & Ext
+
+export type Enhancer<Ext = {}, Deps = {}> = (next: EnhancerCreator<Deps>) => EnhancerCreator<Ext>
 
 function createReader<Ext> (
   options: InternalReaderCreateParameter,
