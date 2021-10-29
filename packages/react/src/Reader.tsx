@@ -1,26 +1,28 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { createReader, Enhancer, Manifest, ReaderWithEnhancer, Reader } from '@oboku/reader'
+import { createReader, Enhancer, Manifest, Reader } from '@oboku/reader'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
 type Pagination = ReturnType<ReturnType<typeof createReader>['pagination']['getInfo']>
+type EnhancerOptions<E extends Enhancer | void> = E extends Enhancer ? Parameters<ReturnType<E>>[0] & Options : Options 
 
-type Props<Ext = {}> = {
+type Props<UserEnhancer extends Enhancer | void> = {
   manifest?: Manifest,
-  options?: Omit<Options, 'containerElement'>,
+  options?: Omit<EnhancerOptions<UserEnhancer>, 'containerElement'>,
   loadOptions?: LoadOptions,
-  enhancer?: Enhancer<Ext>,
-  onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
+  enhancer?: UserEnhancer,
+  onReader?: (reader: Reader<UserEnhancer>) => void,
   onReady?: () => void,
   onPaginationChange?: (pagination: Pagination) => void,
 }
 
-export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
-  const [reader, setReader] = useState<ReaderWithEnhancer<Enhancer<Ext>> | undefined>(undefined)
+export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) {
+  const [reader, setReader] = useState<Reader<UserEnhancer> | undefined>(undefined)
 
   const onRef = useCallback(ref => {
     if (ref && !reader) {
-      const reader = createReader({ containerElement: ref, ...options }, enhancer)
+      const readerOptions = { containerElement: ref, ...options }
+      const reader: any = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
       setReader(reader)
       onReader && onReader(reader)
     }
