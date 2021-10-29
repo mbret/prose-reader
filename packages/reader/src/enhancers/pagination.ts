@@ -1,11 +1,9 @@
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 import { ReadingItem } from "../readingItem"
 import { Manifest } from "../types"
 import { progressionEnhancer } from "./progression"
-
-type Deps = ReturnType<ReturnType<typeof progressionEnhancer>>
 
 /**
  * @todo
@@ -70,12 +68,12 @@ type PaginationInfo = undefined | {
   // numberOfSpineItems: number | undefined
 }
 
-export const paginationEnhancer: Enhancer<{
+export const paginationEnhancer: Enhancer<{}, {
   pagination: {
     $: Observable<PaginationInfo>,
     getInfo: () => PaginationInfo
   }
-}, Deps> = (next) => (options) => {
+}, typeof progressionEnhancer> = (next) => (options) => {
   const reader = next(options)
 
   const getChapterInfo = () => {

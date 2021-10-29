@@ -1,7 +1,7 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 import { isHtmlElement } from "../utils/dom"
 
-export const utilsEnhancer: Enhancer<{
+export const utilsEnhancer: Enhancer<{}, {
   utils: {
     isOrIsWithinValidLink: (target: Event[`target`]) => boolean
   }

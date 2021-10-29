@@ -14,7 +14,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
     "pretty": false,
     "stripInternal": true,
@@ -22,7 +22,9 @@
     "strictBindCallApply": true,
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": true,
+    "sourceMap": true,
+    "noEmit": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist"],
+  "exclude": ["dist", "**/*.spec.ts"],
 }

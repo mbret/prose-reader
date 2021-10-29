@@ -1,7 +1,14 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
-export const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
-export const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
+const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
+const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
+
+type Options = {
+  fontScale?: number,
+  lineHeight?: number,
+  fontWeight?: typeof FONT_WEIGHT[number],
+  fontJustification?: typeof FONT_JUSTIFICATION[number],
+}
 
 /**
  * @important
@@ -14,7 +21,7 @@ export const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as cons
  * font size on body if they already use something.
  * @see 9782714493743
  */
-export const fontsEnhancer: Enhancer<{
+export const fontsEnhancer: Enhancer<Options, {
   /**
    * @description
    * Scale the font size. 1 means use default publisher/browser font size, 2 means 200%

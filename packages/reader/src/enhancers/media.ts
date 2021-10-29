@@ -1,6 +1,6 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
-export const mediaEnhancer: Enhancer<{
+export const mediaEnhancer: Enhancer<{}, {
 
 }> = (next) => (options) => {
   const reader = next(options)

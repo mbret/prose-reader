@@ -1,10 +1,10 @@
 import { Observable, Subject } from "rxjs"
 import { Report } from "../report"
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
 type SubjectData = { event: `linkClicked`, data: HTMLAnchorElement }
 
-export const linksEnhancer: Enhancer<{
+export const linksEnhancer: Enhancer<{}, {
   $: {
     links$: Observable<SubjectData>
   }

@@ -1,11 +1,11 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
 const SHOULD_NOT_LAYOUT = false
 
 /**
  * All fixes relative to chromes
  */
-export const chromeEnhancer: Enhancer<{
+export const chromeEnhancer: Enhancer<{}, {
 
 }> = (next) => (options) => {
   const reader = next(options)

@@ -1,11 +1,11 @@
 import { Context } from "../context"
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 import { ReadingItem } from "../readingItem"
 
 /**
  * Help dealing with progression through the book
  */
-export const progressionEnhancer: Enhancer<{
+export const progressionEnhancer: Enhancer<{}, {
   progression: {
     getPercentageEstimate: (
       context: Context,

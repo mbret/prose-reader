@@ -1,9 +1,9 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
 /**
  *
  */
-export const accessibilityEnhancer: Enhancer<{
+export const accessibilityEnhancer: Enhancer<{}, {
 
 }> = (next) => (options) => {
   const reader = next(options)

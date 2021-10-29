@@ -1,11 +1,11 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
 const SHOULD_NOT_LAYOUT = false
 
 /**
  *
  */
-export const zoomEnhancer: Enhancer<{
+export const zoomEnhancer: Enhancer<{}, {
   zoom: {
     enter: (imgElement: HTMLImageElement) => void
     exit: () => void,

@@ -1,4 +1,4 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
 const defaultThemes = [
   {
@@ -20,6 +20,8 @@ const defaultThemes = [
 export type Theme = (typeof defaultThemes[number])[`name`]
 
 export const themeEnhancer: Enhancer<{
+  theme?: Theme,
+}, {
   setTheme: (theme: Theme | undefined) => void,
   getTheme: () => Theme | undefined,
 }> = (next) => (options) => {

@@ -1,11 +1,11 @@
 import { animationFrameScheduler, Observable, of, scheduled } from "rxjs"
 import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 import { Reader } from "../reader"
 
 const SHOULD_NOT_LAYOUT = false
 
-export const layoutEnhancer: Enhancer<{}> = (next) => (options) => {
+export const layoutEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   const reader = next(options)
 
   reader.registerHook(`onViewportOffsetAdjust`, () => {

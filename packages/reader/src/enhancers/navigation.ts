@@ -1,9 +1,9 @@
 /**
  * Offer extra convenient methods for navigation.
  */
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
-export const navigationEnhancer: Enhancer<{
+export const navigationEnhancer: Enhancer<{}, {
   goToLeftSpineItem: () => void,
   goToRightSpineItem: () => void,
 }> = (next) => (options) => {

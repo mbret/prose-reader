@@ -1,6 +1,6 @@
-import { Enhancer } from "../createReader"
+import { Enhancer } from "./types"
 
-export const hotkeysEnhancer: Enhancer<{}> = (next) => (options) => {
+export const hotkeysEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   const reader = next(options)
 
   const onKeyPress = (e: KeyboardEvent) => {
