@@ -30,7 +30,7 @@ let uniqueId = 0
  * @todo
  * Optimize refresh of elements
  */
-export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { highlights: UserHighlight[] }): Enhancer<{
+export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { highlights: UserHighlight[] }): Enhancer<{}, {
   highlights: {
     add: (highlight: UserHighlight) => void,
     remove: (id: number) => void,

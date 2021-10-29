@@ -12,10 +12,11 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
+    "noEmit": true,
     "pretty": false,
-    "stripInternal": true
+    "stripInternal": true,
   },
   // important to avoid infinite build from resolved path
   "exclude": ["**/dist"]

@@ -19,7 +19,7 @@ export type SearchResult = ResultItem[]
 /**
  *
  */
-export const searchEnhancer: Enhancer<{
+export const searchEnhancer: Enhancer<{}, {
   search: {
     search: (text: string) => void
     $: {

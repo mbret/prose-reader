@@ -18,7 +18,7 @@ type ExportableBookmark = Pick<Bookmark, 'cfi'>
 
 type SubjectType = { type: `update`, data: ExportableBookmark[] }
 
-export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookmarks: ExportableBookmark[] }): Enhancer<{
+export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookmarks: ExportableBookmark[] }): Enhancer<{}, {
   bookmarks: {
     isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean,
     $: Observable<SubjectType>

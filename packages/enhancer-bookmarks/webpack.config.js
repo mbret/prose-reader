@@ -19,6 +19,12 @@ module.exports = {
         test: /\.tsx?$/,
         use: [{
           loader: 'ts-loader',
+          options: {
+            compilerOptions: {
+              noEmit: false,
+              declaration: true,
+            }
+          }
         }],
       },
     ],
