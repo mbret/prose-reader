@@ -16,6 +16,7 @@ import { useParams } from 'react-router';
 import { BookError } from '../BookError';
 import { getEpubUrlFromLocation } from '../serviceWorker/utils';
 import { HighlightMenu } from '../HighlightMenu';
+import { useResizeReaderLayout } from '../layout';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -54,28 +55,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
     setBookReady(true)
   }, [setBookReady])
 
-  useEffect(() => {
-    window.addEventListener(`resize`, () => {
-      reader?.layout()
-    })
-
-    const linksSubscription = reader?.$.links$.subscribe((data) => {
-      if (data.event === 'linkClicked') {
-        if (!data.data.href) return
-        const url = new URL(data.data.href)
-        if (window.location.host !== url.host) {
-          const response = confirm(`You are going to be redirected to external link`)
-          if (response) {
-            window.open(data.data.href, '__blank')
-          }
-        }
-      }
-    })
-
-    return () => {
-      linksSubscription?.unsubscribe()
-    }
-  }, [reader, setBookReady, setPaginationState])
+  useResizeReaderLayout(reader)
 
   useEffect(() => {
     if (!reader || !manifest) return

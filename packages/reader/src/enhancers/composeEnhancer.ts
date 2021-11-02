@@ -2,8 +2,8 @@ import { Enhancer, ReaderInternalApi } from "./types"
 import { compose } from "../utils/compose"
 
 // @important to not nuke the performances
-type KeyOfReaderInternalApi = keyof ReaderInternalApi
-type EnhancerExtraMethods<E extends Enhancer> = Omit<ReturnType<ReturnType<E>>, KeyOfReaderInternalApi>
+type KeyOfReaderInternalApi = Exclude<keyof ReaderInternalApi, `$`>
+export type EnhancerExtraMethods<E extends Enhancer> = Omit<ReturnType<ReturnType<E>>, KeyOfReaderInternalApi>
 
 type EnhancerExtraOptions<E extends Enhancer> = Parameters<ReturnType<E>>[0]
 

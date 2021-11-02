@@ -21,6 +21,7 @@ import { useSearch } from '../useSearch';
 import { SearchDialog } from '../SearchDialog';
 import { TocDialog } from '../TocDialog';
 import { HelpDialog } from '../HelpDialog';
+import { useResizeReaderLayout } from '../layout';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
@@ -63,11 +64,9 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
     setBookReady(true)
   }, [setBookReady])
 
-  useEffect(() => {
-    window.addEventListener(`resize`, () => {
-      reader?.layout()
-    })
+  useResizeReaderLayout(reader)
 
+  useEffect(() => {
     const linksSubscription = reader?.$.links$.subscribe((data) => {
       if (data.event === 'linkClicked') {
         if (!data.data.href) return
@@ -84,7 +83,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
     return () => {
       linksSubscription?.unsubscribe()
     }
-  }, [reader, setBookReady, setPaginationState])
+  }, [reader])
 
   useEffect(() => {
     if (!reader || !manifest) return
