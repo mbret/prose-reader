@@ -10,7 +10,8 @@
     "start": "concurrently -n src,types \"yarn start-src\" \"yarn start-types\"",
     "start-src": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
     "start-types": "yarn tsc -w --declaration --noEmit false --emitDeclarationOnly",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
+    "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
+    "build": "yarn build-types && NODE_ENV=development webpack build --config ./webpack.config.js",
     "build:prod": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
     "lint": "echo",
     "test": "echo"
