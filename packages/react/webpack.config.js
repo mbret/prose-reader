@@ -22,9 +22,6 @@ module.exports = {
           options: {
             compilerOptions: {
               noEmit: false,
-              ...IS_PROD && {
-                declaration: true
-              }
             }
           }
         }],
