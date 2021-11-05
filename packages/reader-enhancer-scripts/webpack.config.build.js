@@ -1,11 +1,11 @@
 const path = require('path');
 
-const IS_PROD = process.env.NODE_ENV !== 'development'
+const modulePath = process.cwd()
 
-module.exports = {
-  entry: './src/index.ts',
-  mode: IS_PROD ? 'production' : 'development',
-  ...!IS_PROD && {
+module.exports = (production) => ({
+  entry: path.resolve(modulePath, `src/index.ts`),
+  mode: production ? 'production' : 'development',
+  ...!production && {
     devtool: 'source-map',
   },
   externals: [
@@ -22,7 +22,7 @@ module.exports = {
           options: {
             compilerOptions: {
               noEmit: false,
-              declaration: true,
+              declaration: false,
             }
           }
         }],
@@ -34,9 +34,10 @@ module.exports = {
   },
   output: {
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(modulePath, 'dist'),
     library: {
       type: 'commonjs'
-    }
+    },
+    clean: true
   },
-};
+});
