@@ -23,5 +23,8 @@
     "react": "*",
     "react-dom": "*"
   },
+  "devDependencies": {
+    "@oboku/reader": "*"
+  },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }
