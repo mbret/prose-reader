@@ -7,21 +7,20 @@
     "/dist"
   ],
   "scripts": {
-    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "build:prod": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo",
+    "start": "oboku-reader-enhancer-scripts start",
+    "build": "NODE_ENV=development oboku-reader-enhancer-scripts build",
+    "build:prod": "NODE_ENV=production oboku-reader-enhancer-scripts build",
+    "lint": "oboku-reader-enhancer-scripts lint",
     "test": "echo"
+  },
+  "dependencies": {
+    "@oboku/reader-enhancer-scripts": "*"
   },
   "peerDependencies": {
     "@oboku/reader": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@oboku/reader": "*",
-    "ts-loader": "^9.2.6",
-    "typescript": "^4.4.4",
-    "webpack": "^5.58.1",
-    "webpack-cli": "^4.5.0"
+    "@oboku/reader": "*"
   }
 }

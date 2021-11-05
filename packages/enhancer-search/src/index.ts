@@ -12,7 +12,7 @@ type ResultItem = {
   endOffset: number,
 }
 
-const supportedContentType = ["application/xhtml+xml" as const, "application/xml" as const, "image/svg+xml" as const, "text/html" as const, "text/xml" as const]
+const supportedContentType = [`application/xhtml+xml` as const, `application/xml` as const, `image/svg+xml` as const, `text/html` as const, `text/xml` as const]
 
 export type SearchResult = ResultItem[]
 
@@ -23,7 +23,7 @@ export const searchEnhancer: Enhancer<{}, {
   search: {
     search: (text: string) => void
     $: {
-      search$: Observable<{ type: 'start' } | { type: 'end', data: SearchResult }>
+      search$: Observable<{ type: `start` } | { type: `end`, data: SearchResult }>
     }
   }
 }> = (next) => (options) => {
@@ -48,11 +48,11 @@ export const searchEnhancer: Enhancer<{}, {
         rangeList.push(...searchNodeContainingText(subNode, text))
       }
 
-      if (subNode.nodeType == 3) {
+      if (subNode.nodeType === 3) {
         const content = (subNode as Text).data.toLowerCase()
         if (content) {
           let match
-          const regexp = RegExp(`(${text})`, 'g')
+          const regexp = RegExp(`(${text})`, `g`)
 
           while ((match = regexp.exec(content)) !== null) {
             if (match.index >= 0 && subNode.ownerDocument) {
@@ -63,7 +63,7 @@ export const searchEnhancer: Enhancer<{}, {
                 startNode: subNode,
                 start: match.index,
                 endNode: subNode,
-                end: match.index + text.length,
+                end: match.index + text.length
               })
             }
           }
@@ -87,7 +87,7 @@ export const searchEnhancer: Enhancer<{}, {
           // small optimization since we already know DOMParser only accept some documents only
           // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
           // however we can still avoid doing unnecessary HTML generation for images resources, etc.
-          if (!supportedContentType.includes(response?.headers.get('Content-Type') || `` as any)) return of([])
+          if (!supportedContentType.includes(response?.headers.get(`Content-Type`) || `` as any)) return of([])
 
           return from(item.getHtmlFromResource(response))
             .pipe(
@@ -106,16 +106,16 @@ export const searchEnhancer: Enhancer<{}, {
                     startCfi: start,
                     endCfi: end,
                     pageIndex,
-                    contextText: range.startNode.parentElement?.textContent || '',
+                    contextText: range.startNode.parentElement?.textContent || ``,
                     startOffset: range.start,
-                    endOffset: range.end,
+                    endOffset: range.end
                   }
                 })
 
                 return newResults
               })
             )
-        }),
+        })
       )
   }
 
@@ -134,7 +134,7 @@ export const searchEnhancer: Enhancer<{}, {
     searchSubject$.asObservable()
       .pipe(
         switchMap((text) => {
-          if (text === '') {
+          if (text === ``) {
             return of([])
           }
 
@@ -144,15 +144,15 @@ export const searchEnhancer: Enhancer<{}, {
             .pipe(
               map(results => {
                 return results.reduce((acc, value) => [...acc, ...value], [])
-              }),
+              })
             )
         }),
-        map((data) => ({ type: `end` as const, data })),
+        map((data) => ({ type: `end` as const, data }))
       )
   )
     .pipe(
       share(),
-      takeUntil(reader.$.destroy$),
+      takeUntil(reader.$.destroy$)
     )
 
   const destroy = () => {
