@@ -11,8 +11,8 @@
   "scripts": {
     "start": "lerna exec --parallel -- yarn start",
     "publish-packages": "yarn test && yarn build:prod && yarn tsc && lerna publish",
-    "build": "lerna run build:1 && lerna run --parallel build && lerna run build:2",
-    "build:prod": "lerna run build:prod:1 && lerna run --parallel build:prod && lerna run build:prod:2",
+    "build": "lerna run build",
+    "build:prod": "lerna run build:prod",
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna exec --parallel -- yarn lint",
     "test": "lerna exec --parallel -- yarn test",
