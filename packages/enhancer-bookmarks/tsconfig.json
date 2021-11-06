@@ -1,6 +1,3 @@
 {
-  "extends": "../../tsconfig.common.json",
-  "compilerOptions": {
-    "outDir": "dist",
-  },
+  "extends": "@oboku/reader-enhancer-scripts/tsconfig.json",
 }

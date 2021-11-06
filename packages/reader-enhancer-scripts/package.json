@@ -9,7 +9,7 @@
   "scripts": {
     "start": "echo",
     "build": "echo",
-    "lint": "echo",
+    "lint": "eslint '**/*.{js,ts,tsx}'",
     "test": "echo"
   },
   "dependencies": {

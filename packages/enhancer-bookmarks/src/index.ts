@@ -14,7 +14,7 @@ type Bookmark = {
   readingItemIndex: number | undefined
 }
 
-type ExportableBookmark = Pick<Bookmark, 'cfi'>
+type ExportableBookmark = Pick<Bookmark, `cfi`>
 
 type SubjectType = { type: `update`, data: ExportableBookmark[] }
 
@@ -30,7 +30,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     const subject = new Subject<SubjectType>()
     const settings = {
       areaWidth: 50,
-      areaHeight: 30,
+      areaHeight: 30
     }
 
     const getCfiInformation = (cfi: string) => {
@@ -68,15 +68,15 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
       const bookmarkOnPage = bookmarks.find(bookmark =>
         (
-          bookmark.pageIndex === currentPageIndex
-          && bookmark.readingItemIndex === currentReadingItemIndex
-        )
+          bookmark.pageIndex === currentPageIndex &&
+          bookmark.readingItemIndex === currentReadingItemIndex
+        ) ||
         // sometime the next page contains part of the previous page and the cfi is actually
         // the same for the page too. This special case can happens for
         // cover pages that are not well paginated for example.
         // It's better to duplicate the bookmark on the next page rather than having the user
         // wonder why he cannot interact with the bookmark area.
-        || bookmark.cfi === currentCfi
+        bookmark.cfi === currentCfi
       )
 
       if (bookmarkOnPage) {
@@ -151,8 +151,8 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       const { width } = reader.context.getVisibleAreaRect()
 
       if (
-        ((event.x || 0) >= (width - settings.areaWidth))
-        && ((event.y || 0) <= settings.areaHeight)
+        ((event.x || 0) >= (width - settings.areaWidth)) &&
+        ((event.y || 0) <= settings.areaHeight)
       ) {
         return true
       }
@@ -190,7 +190,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     // By design clicking on bookmark is possible only once the frame
     // is loaded.
     reader.manipulateContainer((container, onDestroy) => {
-      container.addEventListener('click', onDocumentClick, { capture: true })
+      container.addEventListener(`click`, onDocumentClick, { capture: true })
 
       onDestroy(() => {
         container.removeEventListener(`click`, onDocumentClick)
@@ -234,6 +234,6 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
         isClickEventInsideBookmarkArea,
         $: subject.asObservable(),
         __debug: () => bookmarks
-      },
+      }
     }
   }

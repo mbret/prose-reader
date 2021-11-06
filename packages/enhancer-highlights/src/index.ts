@@ -15,7 +15,7 @@ type Highlight = {
   element?: HTMLElement
 }
 
-type UserHighlight = Pick<Highlight, 'anchorCfi' | 'focusCfi'>
+type UserHighlight = Pick<Highlight, `anchorCfi` | `focusCfi`>
 
 type SubjectType =
   | { type: `onHighlightClick`, data: Highlight }
@@ -60,7 +60,6 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       const { node: focusNode, offset: focusOffset } = reader.resolveCfi(highlight.focusCfi) || {}
 
       if (anchorNode && focusNode) {
-
         // remove old previous highlight
         highlight.element?.remove()
 
@@ -69,7 +68,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         highlight.text = range.toString()
 
         const rectElements = Array.from(range.getClientRects()).map((domRect) => {
-          const rectElt = overlayElement.ownerDocument.createElement('div')
+          const rectElt = overlayElement.ownerDocument.createElement(`div`)
           rectElt.style.cssText = `
             position: absolute;
             width: ${domRect.width}px;
@@ -84,7 +83,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
           return rectElt
         })
 
-        const containerElement = overlayElement.ownerDocument.createElement('div')
+        const containerElement = overlayElement.ownerDocument.createElement(`div`)
         containerElement.style.cssText = `
           pointer-events: auto;
         `
@@ -185,7 +184,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
         add,
         remove,
         isHighlightClicked,
-        $: highlights$.asObservable(),
-      },
+        $: highlights$.asObservable()
+      }
     }
   }
