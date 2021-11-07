@@ -1,9 +1,9 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
-import { getArchiveOpfInfo, Archive } from '../archives'
 import type { Manifest } from '@oboku/shared'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
+import { Archive, getArchiveOpfInfo } from '..'
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 

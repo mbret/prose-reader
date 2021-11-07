@@ -1,4 +1,4 @@
-import { sortByTitleComparator } from "./utils"
+import { sortByTitleComparator } from "./sortByTitleComparator"
 
 it(`should sort correctly`, () => {
   expect([`a`, `b`].sort(sortByTitleComparator)).toEqual([`a`, `b`])

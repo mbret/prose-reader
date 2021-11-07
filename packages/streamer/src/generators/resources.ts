@@ -1,5 +1,5 @@
-import { Archive, getArchiveOpfInfo } from "../archives"
 import xmldoc from 'xmldoc'
+import { Archive, getArchiveOpfInfo } from '..'
 import { getItemsFromDoc } from "./manifest"
 
 export const getResourceFromArchive = async (archive: Archive, resourcePath: string) => {

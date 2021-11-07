@@ -1,6 +1,6 @@
 import xmldoc, { XmlElement } from 'xmldoc'
-import { Archive, getArchiveOpfInfo } from '../archives'
 import type { Manifest } from '@oboku/shared'
+import { Archive, getArchiveOpfInfo } from '..'
 
 type Toc = Manifest[`nav`][`toc`]
 type TocItem = Manifest[`nav`][`toc`][number]

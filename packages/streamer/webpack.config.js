@@ -30,7 +30,7 @@ module.exports = {
     extensions: [`.tsx`, `.ts`, `.js`],
     fallback: {
       // https://github.com/lddubeau/saxes
-      stream: path.resolve(__dirname, `src/streamShim.js`)
+      stream: path.resolve(__dirname, `src/shims/streamShim.js`)
     }
   },
   output: {
