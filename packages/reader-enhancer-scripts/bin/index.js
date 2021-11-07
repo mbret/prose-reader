@@ -8,10 +8,8 @@ const { build } = require(`./build`)
 const { start } = require(`./start`)
 const { lint } = require(`./lint`)
 
-const argv = yargs(hideBin(process.argv))
+yargs(hideBin(process.argv))
   .command(`build`, ``, build)
   .command(`start`, ``, start)
   .command(`lint`, ``, lint)
   .parse()
-
-console.log(argv.build)
