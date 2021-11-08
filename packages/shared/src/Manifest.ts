@@ -24,7 +24,7 @@ export type Manifest = {
     title: string
     href: string
   }[],
-  readingOrder: {
+  spineItems: {
     id: string,
     href: string,
     path: string,

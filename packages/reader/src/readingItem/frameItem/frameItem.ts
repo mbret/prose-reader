@@ -10,9 +10,9 @@ import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
 export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, viewportState$ }: {
   parent: HTMLElement,
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
   context: Context,
-  fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
+  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
 }) => {

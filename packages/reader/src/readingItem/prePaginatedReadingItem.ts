@@ -5,7 +5,7 @@ import { Hook } from "../types/Hook"
 import { createCommonReadingItem } from "./commonReadingItem"
 
 export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,

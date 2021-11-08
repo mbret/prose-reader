@@ -131,7 +131,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
    * @todo the package does not support creating for range at the moment @see https://github.com/fread-ink/epub-cfi-resolver/issues/3
    * so we use two cfi for start and end.
    */
-  const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest[`readingOrder`][number]) => {
+  const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest[`spineItems`][number]) => {
     const startCFI = CFI.generate(startNode, start, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
     const endCFI = CFI.generate(endNode, end, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
 

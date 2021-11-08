@@ -12,14 +12,14 @@ import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
 export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks$, context, viewportState$ }: {
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
   stateSubject$: BehaviorSubject<{
     isReady: boolean,
     isLoading: boolean,
     frameLoaded: boolean
   }>,
   parent: HTMLElement,
-  fetchResource?: (item: Manifest[`readingOrder`][number]) => Promise<Response>,
+  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
   context: Context,
   viewportState$: Observable<`free` | `busy`>

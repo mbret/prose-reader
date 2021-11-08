@@ -8,7 +8,7 @@ export type Hook =
     fn: (manipulableFrame: {
       frame: HTMLIFrameElement,
       removeStyle: (id: string) => void,
-      item: Manifest[`readingOrder`][number],
+      item: Manifest[`spineItems`][number],
       addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void,
     }) => (() => void) | void
   }
@@ -22,13 +22,13 @@ export type Hook =
       frame: HTMLIFrameElement | undefined,
       container: HTMLElement,
       loadingElement: HTMLElement,
-      item: Manifest[`readingOrder`][number],
+      item: Manifest[`spineItems`][number],
       overlayElement: HTMLDivElement
     }) => void
   }
   | {
     name: `item.onGetResource`,
-    fn: (fetchResource: (item: Manifest[`readingOrder`][number]) => Promise<Response>) => (item: Manifest[`readingOrder`][number]) => Promise<Response>
+    fn: (fetchResource: (item: Manifest[`spineItems`][number]) => Promise<Response>) => (item: Manifest[`spineItems`][number]) => Promise<Response>
   }
   | {
     name: `onViewportOffsetAdjust`,

@@ -33,7 +33,7 @@ const mouseEvents = [
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
 export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
@@ -172,7 +172,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
   const getResource = async () => {
     const loadOptions = context.getLoadOptions()
-    const lastFetch = (_: Manifest[`readingOrder`][number]) => {
+    const lastFetch = (_: Manifest[`spineItems`][number]) => {
       if (loadOptions?.fetchResource) {
         return loadOptions.fetchResource(item)
       }
@@ -195,7 +195,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     cb: (options: {
       container: HTMLElement,
       loadingElement: HTMLElement,
-      item: Manifest[`readingOrder`][number],
+      item: Manifest[`spineItems`][number],
       overlayElement: HTMLDivElement,
     } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
   ) => {
@@ -280,7 +280,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   }
 }
 
-const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number]) => {
+const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {
   const element = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`readingItem`)
   element.classList.add(`readingItem-${item.renditionLayout}`)
@@ -296,7 +296,7 @@ const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`rea
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
-const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number], context: Context) => {
+const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], context: Context) => {
   const loadingElement = containerElement.ownerDocument.createElement(`div`)
   loadingElement.classList.add(`loading`)
   loadingElement.style.cssText = `
@@ -337,7 +337,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`rea
   return loadingElement
 }
 
-const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`readingOrder`][number]) => {
+const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {
   const element = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`readingItemOverlay`)
   element.classList.add(`readingItemOverlay-${item.renditionLayout}`)

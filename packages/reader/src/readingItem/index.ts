@@ -6,11 +6,11 @@ import { createPrePaginatedReadingItem } from "./prePaginatedReadingItem"
 import { createReflowableReadingItem } from "./reflowableReadingItem"
 
 export type ReadingItem = {
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
 } & (ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>)
 
 export const createReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
-  item: Manifest[`readingOrder`][number],
+  item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,

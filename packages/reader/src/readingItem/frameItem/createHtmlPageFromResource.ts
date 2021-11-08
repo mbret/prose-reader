@@ -5,7 +5,7 @@ import { getBase64FromBlob } from "../../utils/objects"
 /**
  * Document is application/xhtml+xml
  */
-export const createHtmlPageFromResource = async (resourceResponse: Response | string, item: Manifest[`readingOrder`][number]) => {
+export const createHtmlPageFromResource = async (resourceResponse: Response | string, item: Manifest[`spineItems`][number]) => {
   if (typeof resourceResponse === `string`) return resourceResponse
 
   const contentType = parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectContentType(item.href)

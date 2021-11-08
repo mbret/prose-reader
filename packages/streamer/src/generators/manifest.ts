@@ -60,7 +60,7 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
     renditionSpread,
     title,
     readingDirection: pageProgressionDirection || `ltr`,
-    readingOrder: spineElm?.childrenNamed(`itemref`).map((itemrefElm) => {
+    spineItems: spineElm?.childrenNamed(`itemref`).map((itemrefElm) => {
       const manifestItem = manifestElm?.childrenNamed(`item`).find((item) => item.attr.id === itemrefElm?.attr.idref)
       const href = manifestItem?.attr.href || ``
       const properties = (itemrefElm?.attr.properties?.split(` `) || []) as SpineItemProperties[]
@@ -109,7 +109,7 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
     renditionLayout: `pre-paginated`,
     renditionSpread: `auto`,
     readingDirection: `ltr`,
-    readingOrder: files.map((file) => ({
+    spineItems: files.map((file) => ({
       id: file.basename,
       path: `${file.uri}`,
       href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri,

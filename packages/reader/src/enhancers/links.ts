@@ -18,7 +18,7 @@ export const linksEnhancer: Enhancer<{}, {
     const hrefUrl = new URL(element.href)
     const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
     // internal link, we can handle
-    const hasExistingSpineItem = reader.context.getManifest()?.readingOrder.some(item => item.href === hrefWithoutAnchor)
+    const hasExistingSpineItem = reader.context.getManifest()?.spineItems.some(item => item.href === hrefWithoutAnchor)
     if (hasExistingSpineItem) {
       reader.goToUrl(hrefUrl)
     }

@@ -6,5 +6,5 @@ import { Manifest } from "@oboku/shared"
 export const getCoverItem = (manifest: Manifest) => {
   const coverItem = manifest.guide?.find(item => item.type === `cover`)
 
-  return manifest.readingOrder.findIndex(item => coverItem?.href.endsWith(item.path))
+  return manifest.spineItems.findIndex(item => coverItem?.href.endsWith(item.path))
 }

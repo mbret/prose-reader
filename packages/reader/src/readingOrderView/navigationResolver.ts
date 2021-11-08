@@ -264,7 +264,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
     }
     if (validUrl) {
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
-      const existingSpineItem = context.getManifest()?.readingOrder.find(item => item.href === urlWithoutAnchor)
+      const existingSpineItem = context.getManifest()?.spineItems.find(item => item.href === urlWithoutAnchor)
       if (existingSpineItem) {
         const readingItem = readingItemManager.get(existingSpineItem.id)
         if (readingItem) {

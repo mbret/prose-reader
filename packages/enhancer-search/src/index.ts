@@ -138,7 +138,7 @@ export const searchEnhancer: Enhancer<{}, {
             return of([])
           }
 
-          const searches$ = reader.context.getManifest()?.readingOrder.map((_, index) => searchForItem(index, text)) || []
+          const searches$ = reader.context.getManifest()?.spineItems.map((_, index) => searchForItem(index, text)) || []
 
           return forkJoin(searches$)
             .pipe(

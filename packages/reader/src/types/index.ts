@@ -23,7 +23,7 @@ export type LoadOptions = {
    * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
    * not pass through the service worker.
    */
-  fetchResource?: ((item: Manifest[`readingOrder`][number]) => Promise<Response>),
+  fetchResource?: ((item: Manifest[`spineItems`][number]) => Promise<Response>),
   /**
    * Specify how many spine items you want to preload.
    * Useful for pre-paginated where you want the user to have a smooth transition between items.

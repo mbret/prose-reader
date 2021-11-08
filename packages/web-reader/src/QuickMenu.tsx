@@ -19,7 +19,7 @@ export const QuickMenu = ({ open, isComics }: {
   const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
   const setIsTocOpenState = useSetRecoilState(isTocOpenState)
   const setIsHelpOpenState = useSetRecoilState(isHelpOpenState)
-  const numberOfSpineItems = manifest?.readingOrder.length ?? 0
+  const numberOfSpineItems = manifest?.spineItems.length ?? 0
   const pagination = useRecoilValue(paginationState)
   const [pageIndex, endPageIndex] = [
     (pagination?.begin.pageIndexInChapter || 0) + 1,

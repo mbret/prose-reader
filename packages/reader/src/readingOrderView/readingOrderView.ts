@@ -45,7 +45,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   let selectionSubscription: Subscription | undefined
 
   const load = () => {
-    context.getManifest()?.readingOrder.map(async (resource) => {
+    context.getManifest()?.spineItems.map(async (resource) => {
       const readingItem = createReadingItem({
         item: resource,
         containerElement: element,

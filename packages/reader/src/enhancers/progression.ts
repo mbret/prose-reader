@@ -29,11 +29,11 @@ export const progressionEnhancer: Enhancer<{}, {
     currentItem: ReadingItem
   ) => {
     const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
-    const readingOrderLength = context.getManifest()?.readingOrder.length || 0
-    const estimateBeforeThisItem = context.getManifest()?.readingOrder
+    const readingOrderLength = context.getManifest()?.spineItems.length || 0
+    const estimateBeforeThisItem = context.getManifest()?.spineItems
       .slice(0, currentSpineIndex)
       .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
-    const currentItemWeight = context.getManifest()?.readingOrder[currentSpineIndex]?.progressionWeight || 0
+    const currentItemWeight = context.getManifest()?.spineItems[currentSpineIndex]?.progressionWeight || 0
     // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
     // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
     // const progressWeightGap = (currentItemWeight + estimateBeforeThisItem) - estimateBeforeThisItem
