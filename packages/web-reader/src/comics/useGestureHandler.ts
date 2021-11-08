@@ -3,12 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRecoilCallback, useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
 import { isMenuOpenState } from '../state'
+import { useHasTouch } from '../useHasTouch'
 
 export const useGestureHandler = (container: HTMLElement | undefined, isUsingFreeMode: boolean = false) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const movingHasStarted = useRef(false)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
+  const hasTouch = useHasTouch()
 
   const onSingleTap = useCallback(({ srcEvent, target, center }: HammerInput) => {
     if (!reader) return

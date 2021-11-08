@@ -2,6 +2,12 @@ import { loadEpub } from './loadEpub';
 import { getResourceFromArchive, getManifestFromArchive, Report } from '@oboku/reader-streamer'
 import { STREAMER_URL_PREFIX } from './constants';
 import { extractInfoFromEvent, getResourcePath } from './utils';
+import { clientsClaim } from 'workbox-core';
+
+// This clientsClaim() should be at the top level
+// of your service worker, not inside of, e.g.,
+// an event handler.
+clientsClaim();
 
 // @todo typing
 const worker: any = self as any;
@@ -24,9 +30,10 @@ worker.addEventListener('install', function (e: any) {
   })
 })
 
-worker.addEventListener('activate', function (event: any) {
-  event.waitUntil((worker as any).clients.claim()); // Become available to all pages
-})
+// worker.addEventListener('activate', function (event: any) {
+//   console.log(`sw: activate`)
+//   event.waitUntil((worker as any).clients.claim()); // Become available to all pages
+// })
 
 /**
  * Spin up the oboku reader streamer.

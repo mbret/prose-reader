@@ -36,6 +36,7 @@ export const Home = () => {
           <br /><b>RFL(P)</b> = partially reflowable
           <br /><b>FXL</b> = fully pre-paginated (fixed layout)
           <br /><b>FXL(P)</b> = partially pre-paginated (fixed layout)
+          <br /><b>FLOW</b> = <a href="http://shorturl.at/dlG07">flow rendition (click me)</a>
           <br /><b>TXT</b> = .txt file (RFL)
           <br /><b>MEDIA</b> = contains media (audio, video)
         </p>
@@ -82,6 +83,10 @@ export const Home = () => {
           url={`${window.location.origin}/epubs/Advanced-Accessibility-Tests-Mathematics-v1.1.0.epub`}
           name="Accessibility-Tests-Mathematics.epub"
           details="EN - RTL - RFL" />
+        <Row
+          url={`${window.location.origin}/epubs/rendition-flow.epub`}
+          name="rendition-flow.epub"
+          details="JP - LTR - FLOW" />
       </div>
     </div>
   )

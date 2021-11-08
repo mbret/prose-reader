@@ -46,6 +46,8 @@
     "typescript": "^4.4.3",
     "webpack": "^5.58.1",
     "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^4.3.0"
+    "webpack-dev-server": "^4.3.0",
+    "workbox-core": "^6.3.0",
+    "workbox-window": "^6.3.0"
   }
 }
