@@ -1,4 +1,4 @@
-import { animationFrameScheduler, BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, EMPTY, interval, merge, Subject, Subscription } from "rxjs"
 import { catchError, debounce, debounceTime, distinctUntilChanged, filter, map, share, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
@@ -13,7 +13,7 @@ import { createEventsHelper } from "./eventsHelper"
 import { createSelection } from "../selection"
 import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
-import { Hook, RegisterHook } from "../types/Hook"
+import { Hook } from "../types/Hook"
 
 const NAMESPACE = `readingOrderView`
 
