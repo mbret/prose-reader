@@ -22,7 +22,7 @@
     "@prose-reader/enhancer-bookmarks": "^0.0.14",
     "@prose-reader/enhancer-highlights": "^0.0.10",
     "@prose-reader/enhancer-search": "^0.0.10",
-    "@prose-reader/core-react": "^0.0.16",
+    "@prose-reader/react": "^0.0.16",
     "@prose-reader/core-streamer": "^0.0.22",
     "@types/hammerjs": "^2.0.39",
     "@types/react": "^17.0.34",
