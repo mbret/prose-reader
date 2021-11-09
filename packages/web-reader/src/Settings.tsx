@@ -29,7 +29,7 @@ export const Settings = ({ reader }: { reader: Reader }) => {
       height: `100%`,
       width: `100%`,
       position: 'absolute',
-      backgroundColor: `rgb(0 0 0 / 50%)`,
+      backgroundColor: `rgb(0, 0, 0, 0.5)`,
       left: 0,
       top: 0,
       overflow: 'hidden'
@@ -46,8 +46,8 @@ export const Settings = ({ reader }: { reader: Reader }) => {
         width: `100%`,
         position: 'absolute',
         bottom: 0,
-        backgroundColor: 'white',
-        overflow: 'scroll',
+        backgroundColor: 'chocolate',
+        overflow: 'auto',
         padding: 10
       }}>
         <FormControl as="fieldset">
