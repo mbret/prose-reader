@@ -7,6 +7,7 @@ const IS_PROD = process.env.NODE_ENV !== 'development'
 module.exports = {
   entry: {
     'bundle': './src/index.tsx',
+    'bundle-raw': './src/index-raw.ts',
     'service-worker': './src/serviceWorker/service-worker.ts',
   },
   mode: IS_PROD ? 'production' : 'development',
