@@ -22,7 +22,6 @@
     "packages/*"
   ],
   "resolutions": {
-    "@types/react": "17.0.34",
-    "webpack": "5.58.1"
+    "@types/react": "17.0.34"
   }
 }
