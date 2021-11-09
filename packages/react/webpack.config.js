@@ -36,6 +36,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     library: {
       type: 'commonjs'
-    }
+    },
+    clean: IS_PROD
   },
 };
