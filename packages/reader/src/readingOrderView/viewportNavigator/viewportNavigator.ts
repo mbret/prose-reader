@@ -52,6 +52,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     // always adjust using this anchor
     | { type: `navigate-from-anchor`, data: string }
 
+  const makeHot = <T>(source$: Observable<T>) => {
+    source$.pipe(takeUntil(context.$.destroy$)).subscribe()
+
+    return source$
+  }
+
   /**
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
@@ -477,7 +483,14 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       // tap((e) => console.log(`state$`, e)),
       map(([pan, adjust]) => pan === `end` && adjust.type === `end` ? `free` : `busy`),
       distinctUntilChanged(),
-      shareReplay(1)
+      shareReplay(1),
+      /**
+       * @important
+       * Since state$ is being updated from navigation$ and other exported streams we need it to be
+       * hot so it always have the correct value no matter when someone subscribe later.
+       * We cannot wait for the cold stream to start after a navigation already happened for example.
+       */
+      makeHot
     )
 
   // adjustmentState$.subscribe(e => console.log(`adjustmentState$`, e))
