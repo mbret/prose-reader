@@ -2,8 +2,9 @@ import React, { ComponentProps, useCallback, useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
-import { Reader as ReactReader } from "@oboku/reader-react";
-import { composeEnhancer } from "@oboku/reader";
+import { Reader as ReactReader } from "@prose-reader/core-react";
+import { composeEnhancer } from "@prose-reader/core";
+import { useWindowSize } from "react-use";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
 import { Settings, settingsState } from '../Settings'
@@ -16,12 +17,11 @@ import { useParams } from 'react-router';
 import { BookError } from '../BookError';
 import { getEpubUrlFromLocation } from '../serviceWorker/utils';
 import { HighlightMenu } from '../HighlightMenu';
-import { useResizeReaderLayout } from '../layout';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
-  const { url } = useParams<{ url: string }>();
+  const { url = `` } = useParams<`url`>();
   const query = new URLSearchParams(window.location.search)
   const isUsingVerticalScrolling = query.has('vertical')
   const isUsingFreeScroll = query.has('free')
@@ -54,8 +54,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const onReady = useCallback(() => {
     setBookReady(true)
   }, [setBookReady])
-
-  useResizeReaderLayout(reader)
 
   useEffect(() => {
     if (!reader || !manifest) return
@@ -103,6 +101,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
             onPaginationChange={onPaginationChange}
             options={readerOptions}
             enhancer={readerEnhancer}
+            layout="cover"
           />
         )}
         {manifestError && (

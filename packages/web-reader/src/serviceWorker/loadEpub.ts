@@ -1,6 +1,6 @@
 import { loadAsync } from 'jszip'
 import { Report } from '../report'
-import { createArchiveFromText, Archive, createArchiveFromJszip } from '@oboku/reader-streamer'
+import { createArchiveFromText, Archive, createArchiveFromJszip } from '@prose-reader/core-streamer'
 
 let loading = false
 let archive: Archive | undefined = undefined

@@ -1,5 +1,5 @@
 import { merge, Observable, Subject } from "rxjs"
-import { Enhancer, Report } from "@oboku/reader"
+import { Enhancer, Report } from "@prose-reader/core"
 import { takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {

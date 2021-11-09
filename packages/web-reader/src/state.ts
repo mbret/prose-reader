@@ -1,5 +1,5 @@
 import { atom, selector, useRecoilCallback } from "recoil";
-import { Reader, Manifest } from "@oboku/reader";
+import { Reader, Manifest } from "@prose-reader/core";
 import { useEffect } from "react";
 
 export const isSearchOpenState = atom({

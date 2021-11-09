@@ -1,7 +1,7 @@
-import { Reader, ComposeEnhancer } from "@oboku/reader";
-import { createBookmarksEnhancer } from "@oboku/reader-enhancer-bookmarks";
-import { searchEnhancer } from "@oboku/reader-enhancer-search";
-import { createHighlightsEnhancer } from "@oboku/reader-enhancer-highlights";
+import { Reader, ComposeEnhancer } from "@prose-reader/core";
+import { createBookmarksEnhancer } from "@prose-reader/enhancer-bookmarks";
+import { searchEnhancer } from "@prose-reader/enhancer-search";
+import { createHighlightsEnhancer } from "@prose-reader/enhancer-highlights";
 
 type AppEnhancer = ComposeEnhancer<typeof searchEnhancer, ReturnType<typeof createBookmarksEnhancer>, ReturnType<typeof createHighlightsEnhancer>>
 

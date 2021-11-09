@@ -1,3 +1,3 @@
 {
-  "extends": "@oboku/reader-enhancer-scripts/tsconfig.json",
+  "extends": "@prose-reader/enhancer-scripts/tsconfig.json",
 }

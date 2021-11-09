@@ -2,9 +2,9 @@ import { ArrowBackIcon } from '@chakra-ui/icons'
 import { Heading, IconButton, Input, Text } from '@chakra-ui/react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { tap } from 'rxjs/operators'
-import { SearchResult } from '@oboku/reader-enhancer-search'
+import { SearchResult } from '@prose-reader/enhancer-search'
 import { useReader } from './ReaderProvider'
-import { groupBy } from '@oboku/reader'
+import { groupBy } from '@prose-reader/core'
 
 export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
   const [text, setText] = useState('')

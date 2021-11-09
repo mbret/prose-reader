@@ -2,8 +2,8 @@ import React, { ComponentProps, useCallback, useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
-import { Reader as ReactReader } from "@oboku/reader-react";
-import { composeEnhancer } from "@oboku/reader";
+import { Reader as ReactReader } from "@prose-reader/core-react";
+import { composeEnhancer } from "@prose-reader/core";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
 import { Settings, settingsState } from '../Settings'
@@ -21,12 +21,11 @@ import { useSearch } from '../useSearch';
 import { SearchDialog } from '../SearchDialog';
 import { TocDialog } from '../TocDialog';
 import { HelpDialog } from '../HelpDialog';
-import { useResizeReaderLayout } from '../layout';
 
 type ReactReaderProps = ComponentProps<typeof ReactReader>
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
-  const { url } = useParams<{ url: string }>();
+  const { url = `` } = useParams<`url`>();
   const settings = useRecoilValue(settingsState)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
@@ -63,8 +62,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const onReady = useCallback(() => {
     setBookReady(true)
   }, [setBookReady])
-
-  useResizeReaderLayout(reader)
 
   useEffect(() => {
     const linksSubscription = reader?.$.links$.subscribe((data) => {

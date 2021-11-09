@@ -1,1 +1,1 @@
-module.exports = require(`@oboku/reader-enhancer-scripts/.eslintrc.js`)
+module.exports = require(`@prose-reader/enhancer-scripts/.eslintrc.js`)

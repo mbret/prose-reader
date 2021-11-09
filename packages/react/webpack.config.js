@@ -11,7 +11,7 @@ module.exports = {
   externals: [
     'react',
     'react-dom',
-    '@oboku/reader',
+    '@prose-reader/core',
   ],
   module: {
     rules: [

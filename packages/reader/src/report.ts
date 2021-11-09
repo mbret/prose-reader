@@ -1,4 +1,4 @@
-const ROOT_NAMESPACE = `@oboku/reader`
+const ROOT_NAMESPACE = `@prose-reader/core`
 
 const wrap = (str: string) => `[${str}]`
 

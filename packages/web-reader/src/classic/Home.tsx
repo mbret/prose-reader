@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { useHistory } from 'react-router'
+import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { Button as ChakraButton, Text } from "@chakra-ui/react"
 import { ArrowBackIcon } from '@chakra-ui/icons'
 
 export const Home = () => {
   const [customUrl, setCustomUrl] = useState('')
-  const history = useHistory()
+  const navigate = useNavigate()
 
   return (
     <div style={{
@@ -42,7 +42,7 @@ export const Home = () => {
         <p style={{ width: `100%`, display: `flex` }}>
           <input type="text" placeholder="Paste your link to epub,cbz,txt,..." style={{ flex: 1, marginRight: 10, padding: 5 }} onChange={e => setCustomUrl(e.target.value)} />
           <button onClick={() => {
-            customUrl.length > 0 && history.push(`/classic/reader/${btoa(customUrl)}`)
+            customUrl.length > 0 && navigate(`/classic/reader/${btoa(customUrl)}`)
           }}>open</button>
         </p>
         <Row

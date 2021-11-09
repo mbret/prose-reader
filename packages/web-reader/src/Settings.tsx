@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { atom, useRecoilCallback } from 'recoil';
-import { Reader } from "@oboku/reader";
+import { Reader } from "@prose-reader/core";
 import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup } from '@chakra-ui/react';
 
 export const settingsState = atom({

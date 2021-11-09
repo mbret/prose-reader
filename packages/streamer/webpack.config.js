@@ -9,7 +9,7 @@ module.exports = {
     devtool: `source-map`
   },
   externals: [
-    `@oboku/reader`
+    `@prose-reader/core`
   ],
   module: {
     rules: [

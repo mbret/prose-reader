@@ -1,5 +1,5 @@
 import { loadEpub } from './loadEpub';
-import { getResourceFromArchive, getManifestFromArchive, Report } from '@oboku/reader-streamer'
+import { getResourceFromArchive, getManifestFromArchive, Report } from '@prose-reader/core-streamer'
 import { STREAMER_URL_PREFIX } from './constants';
 import { extractInfoFromEvent, getResourcePath } from './utils';
 

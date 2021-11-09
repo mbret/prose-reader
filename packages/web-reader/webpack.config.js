@@ -51,7 +51,13 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'dist')
     },
-    historyApiFallback: true,
+    historyApiFallback: {
+      rewrites: [
+        { from: /^\/$/, to: '/index.html' },
+        { from: /^\/raw/, to: '/index-raw.html' },
+        { from: /./, to: 'index.html' },
+      ],
+    },
     port: 9000,
   },
   plugins: [

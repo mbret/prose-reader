@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ReaderInstance } from "./types";
-import { createHighlightsEnhancer } from "@oboku/reader-enhancer-highlights";
+import { createHighlightsEnhancer } from "@prose-reader/enhancer-highlights";
 import { tap } from "rxjs/operators";
 import { useSetRecoilState } from "recoil";
 import { currentHighlight, isMenuOpenState } from "./state";

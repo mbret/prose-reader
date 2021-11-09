@@ -1,4 +1,4 @@
-import { Enhancer } from "@oboku/reader"
+import { Enhancer } from "@prose-reader/core"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
 import { map, share, switchMap, takeUntil } from "rxjs/operators"
 

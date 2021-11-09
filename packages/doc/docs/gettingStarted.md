@@ -7,10 +7,10 @@ sidebar_position: 3
 ## Getting Started
 
 ```shell
-npm install @oboku/reader @oboku/reader-streamer rxjs
+npm install @prose-reader/core @prose-reader/core-streamer rxjs
 ```
 
-You don't absolutely need to have `@oboku/reader-streamer` installed to run the reader but the utilities provided are very useful to start quickly.
+You don't absolutely need to have `@prose-reader/core-streamer` installed to run the reader but the utilities provided are very useful to start quickly.
  `rxjs` it a peer-dependency of oboku-reader and needs to be installed alongside.
 
 ## Create your reader
@@ -39,7 +39,7 @@ On your html file you need to define a container for the reader. We will be usin
 
 `index.js`
 ```javascript
-import { createReader } from '@oboku/reader'
+import { createReader } from '@prose-reader/core'
 
 const reader = createReader({ containerElement: document.getElementById('reader') })
 ```
@@ -51,12 +51,12 @@ going to render simple text content. We will see later how to stream `.epub` and
 
 `index.js`
 ```javascript
-import { createReader } from "@oboku/reader";
+import { createReader } from "@prose-reader/core";
 import {
   createArchiveFromText,
   getManifestFromArchive,
   getResourceFromArchive
-} from "@oboku/reader-streamer";
+} from "@prose-reader/core-streamer";
 
 const reader = createReader({
   containerElement: document.getElementById("reader")

@@ -1,4 +1,4 @@
-import { Manifest } from "@oboku/reader"
+import { Manifest } from "@prose-reader/core"
 import { useEffect, useState } from "react"
 import { STREAMER_URL_PREFIX } from "./serviceWorker/constants"
 

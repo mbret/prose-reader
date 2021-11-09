@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { createReader, Enhancer, Manifest, Reader } from '@oboku/reader'
+import { createReader, Enhancer, Manifest, Reader } from '@prose-reader/core'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]

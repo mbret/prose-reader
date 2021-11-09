@@ -1,5 +1,5 @@
-import type { createBookmarksEnhancer } from "@oboku/reader-enhancer-bookmarks";
-import { Reader } from "@oboku/reader";
+import type { createBookmarksEnhancer } from "@prose-reader/enhancer-bookmarks";
+import { Reader } from "@prose-reader/core";
 
 type Enhancer = ReturnType<typeof createBookmarksEnhancer>
 

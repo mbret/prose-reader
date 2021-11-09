@@ -9,7 +9,7 @@ module.exports = (production) => ({
     devtool: `source-map`
   },
   externals: [
-    `@oboku/reader`,
+    `@prose-reader/core`,
     `rxjs`,
     `rxjs/operators`
   ],

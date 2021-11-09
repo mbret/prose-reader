@@ -1,6 +1,6 @@
+import { createBookmarksEnhancer } from "@prose-reader/enhancer-bookmarks";
 import { useEffect, useState } from "react";
 import { filter, tap } from "rxjs/operators";
-import { createBookmarksEnhancer } from "@oboku/reader-enhancer-bookmarks";
 import { ReaderInstance } from "./types";
 
 export const useBookmarks = (reader: ReaderInstance | undefined) => {

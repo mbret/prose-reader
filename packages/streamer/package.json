@@ -1,5 +1,5 @@
 {
-  "name": "@oboku/reader-streamer",
+  "name": "@prose-reader/core-streamer",
   "version": "0.0.22",
   "main": "dist/index.js",
   "license": "MIT",

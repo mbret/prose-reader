@@ -1,5 +1,5 @@
 {
-  "name": "@oboku/reader",
+  "name": "@prose-reader/core",
   "version": "0.0.36",
   "main": "dist/index.js",
   "license": "MIT",

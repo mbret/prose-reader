@@ -23,7 +23,7 @@ export const Home = () => {
       }}>
         <div style={{
           border: `2px solid red`,
-          backgroundColor: `#f7e5e5`,
+          // backgroundColor: `#f7e5e5`,
           padding: 10,
           borderRadius: 10,
           marginBottom: 10,

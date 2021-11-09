@@ -1,9 +1,9 @@
-import { Enhancer, Report } from '@oboku/reader'
+import { Enhancer, Report } from '@prose-reader/core'
 import { Observable, Subject } from 'rxjs'
 import { filter, tap } from 'rxjs/operators'
 import { getIcon } from './icon'
 
-const PACKAGE_NAME = `@oboku/reader-enhancer-bookmarks`
+const PACKAGE_NAME = `@prose-reader/enhancer-bookmarks`
 const ELEMENT_ID = PACKAGE_NAME
 const logger = Report.namespace(PACKAGE_NAME)
 const SHOULD_NOT_LAYOUT = false

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useHistory } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { IconButton, Text } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
@@ -12,7 +12,7 @@ export const QuickMenu = ({ open, isComics }: {
   open: boolean,
   isComics: boolean,
 }) => {
-  const history = useHistory()
+  const navigate = useNavigate()
   const reader = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
@@ -77,10 +77,10 @@ export const QuickMenu = ({ open, isComics }: {
         }}>
           <div style={{}}>
             <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={() => {
-              if (window.history.state === null && history.location.pathname !== `/`) {
-                history.replace(`/`)
+              if (window.history.state === null && window.location.pathname !== `/`) {
+                navigate(`/`)
               } else {
-                history.goBack()
+                navigate(-1)
               }
             }} />
           </div>

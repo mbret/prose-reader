@@ -1,5 +1,5 @@
 {
-  "name": "@oboku/reader-enhancer-search",
+  "name": "@prose-reader/enhancer-search",
   "version": "0.0.10",
   "main": "dist/index.js",
   "license": "MIT",
@@ -14,13 +14,13 @@
     "test": "echo"
   },
   "dependencies": {
-    "@oboku/reader-enhancer-scripts": "*"
+    "@prose-reader/enhancer-scripts": "*"
   },
   "peerDependencies": {
-    "@oboku/reader": "*",
+    "@prose-reader/core": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@oboku/reader": "*"
+    "@prose-reader/core": "*"
   }
 }
