@@ -2,7 +2,7 @@ import React, { ComponentProps, useCallback, useState } from 'react';
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
-import { Reader as ReactReader } from "@prose-reader/core-react";
+import { Reader as ReactReader } from "@prose-reader/react";
 import { composeEnhancer } from "@prose-reader/core";
 import { useWindowSize } from "react-use";
 import { QuickMenu } from '../QuickMenu';
