@@ -24,8 +24,8 @@ type ManipulableReadingItemCallbackPayload = Parameters<ManipulableReadingItemCa
 
 type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
 
-export const createReadingOrderView = ({ containerElement, context, pagination, iframeEventBridgeElement, readingItemManager, hooks$ }: {
-  containerElement: HTMLElement,
+export const createReadingOrderView = ({ parentElement, context, pagination, iframeEventBridgeElement, readingItemManager, hooks$ }: {
+  parentElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   pagination: Pagination,
@@ -34,13 +34,13 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 }) => {
   const layoutSubject$ = new Subject<void>()
   const subject = new Subject<Event>()
-  const doc = containerElement.ownerDocument
-  const element = createElement(doc)
-  containerElement.appendChild(element)
+  const doc = parentElement.ownerDocument
+  const containerElement = createContainerElement(doc, hooks$)
+  parentElement.appendChild(containerElement)
   const readingItemLocator = createReadingItemLocator({ context })
   const locator = createLocationResolver({ context, readingItemManager, readingItemLocator })
   const cfiLocator = createCfiLocator({ readingItemManager, context, readingItemLocator })
-  const viewportNavigator = createViewportNavigator({ context, pagination, readingItemManager, element, cfiLocator, locator, hooks$ })
+  const viewportNavigator = createViewportNavigator({ context, pagination, readingItemManager, element: containerElement, cfiLocator, locator, hooks$ })
   const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement, locator })
   let selectionSubscription: Subscription | undefined
 
@@ -48,7 +48,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     context.getManifest()?.spineItems.map(async (resource) => {
       const readingItem = createReadingItem({
         item: resource,
-        containerElement: element,
+        containerElement: containerElement,
         iframeEventBridgeElement,
         context,
         hooks$,
@@ -101,11 +101,11 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
     .pipe(
       tap(() => {
         if (context.getSettings().computedPageTurnMode === `free`) {
-          element.style.overflow = `hidden`
-          element.style.overflowY = `scroll`
+          containerElement.style.overflow = `hidden`
+          containerElement.style.overflowY = `scroll`
         } else {
-          element.style.removeProperty(`overflow`)
-          element.style.removeProperty(`overflowY`)
+          containerElement.style.removeProperty(`overflow`)
+          containerElement.style.removeProperty(`overflowY`)
         }
 
         readingItemManager.layout()
@@ -480,7 +480,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
 
   return {
     viewportNavigator,
-    element,
+    element: containerElement,
     locator,
     readingItemLocator,
     cfiLocator,
@@ -492,7 +492,7 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
       viewportNavigator.destroy()
       readingItemManager.destroy()
       selectionSubscription?.unsubscribe()
-      element.remove()
+      containerElement.remove()
     },
     isSelecting: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.isSelecting(),
     getSelection: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.getSelection(),
@@ -504,8 +504,8 @@ export const createReadingOrderView = ({ containerElement, context, pagination, 
   }
 }
 
-const createElement = (doc: Document) => {
-  const element = doc.createElement(`div`)
+const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
+  const element: HTMLElement = doc.createElement(`div`)
   element.id = `ReadingOrderView`
   element.className = `ReadingOrderView`
   element.style.height = `100%`
@@ -520,7 +520,13 @@ const createElement = (doc: Document) => {
   // element.style.willChange = `transform`
   element.style.transformOrigin = `0 0`
 
-  return element
+  return hooks$.getValue().reduce((element, hook) => {
+    if (hook.name === `readingOrderView.onBeforeContainerCreated`) {
+      return hook.fn(element)
+    }
+
+    return element
+  }, element)
 }
 
 export type ReadingOrderView = ReturnType<typeof createReadingOrderView>

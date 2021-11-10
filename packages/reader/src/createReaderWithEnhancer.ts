@@ -15,6 +15,7 @@ import { resourcesEnhancer } from './enhancers/resources'
 import { mediaEnhancer } from './enhancers/media'
 import { progressionEnhancer } from './enhancers/progression'
 import { accessibilityEnhancer } from './enhancers/accessibility'
+import { webkitEnhancer } from './enhancers/webkit'
 
 type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
@@ -61,7 +62,8 @@ const internalEnhancer = composeEnhancer(
   layoutEnhancer,
   utilsEnhancer,
   resourcesEnhancer,
-  accessibilityEnhancer
+  accessibilityEnhancer,
+  webkitEnhancer
 )
 
 type WithoutPrivateApi<E> = Omit<E, RemovedKeysOnly | `__debug`>

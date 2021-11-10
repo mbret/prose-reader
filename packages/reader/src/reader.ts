@@ -15,13 +15,16 @@ type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
 
-export const createReader = ({ containerElement, ...settings }: {
+type CreateReaderOptions = {
+  hooks?: Hook[]
   containerElement: HTMLElement,
-} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>) => {
+} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>
+
+export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
   const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
   const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
-  const hooksSubject$ = new BehaviorSubject<Hook[]>([])
+  const hooksSubject$ = new BehaviorSubject<Hook[]>(initialHooks || [])
   const context = createBookContext(settings)
   const readingItemManager = createReadingItemManager({ context })
   const pagination = createPagination({ context, readingItemManager })
@@ -29,7 +32,7 @@ export const createReader = ({ containerElement, ...settings }: {
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   let containerManipulationOnDestroyCbList: (() => void)[] = []
   const readingOrderView = createReadingOrderView({
-    containerElement: element,
+    parentElement: element,
     iframeEventBridgeElement,
     context,
     pagination,

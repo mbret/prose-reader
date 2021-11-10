@@ -32,6 +32,13 @@ export type Hook =
     name: `item.onGetResource`,
     fn: (fetchResource: (item: Manifest[`spineItems`][number]) => Promise<Response>) => (item: Manifest[`spineItems`][number]) => Promise<Response>
   }
+  /**
+   * Only available during reader creation
+   */
+  | {
+    name: `readingOrderView.onBeforeContainerCreated`,
+    fn: (payload: HTMLElement) => HTMLElement
+  }
   | {
     name: `onViewportOffsetAdjust`,
     fn: () => void
