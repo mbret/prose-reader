@@ -214,7 +214,10 @@ export type Reader = ReturnType<typeof createReader>
 const createWrapperElement = (containerElement: HTMLElement) => {
   const element = containerElement.ownerDocument.createElement(`div`)
   element.id = `BookView`
-  element.style.setProperty(`position`, `relative`)
+  element.style.cssText = `
+    background-color: white;
+    position: relative;
+  `
 
   return element
 }
