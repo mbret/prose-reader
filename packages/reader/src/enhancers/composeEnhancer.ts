@@ -22,6 +22,7 @@ export type ComposeEnhancer<
   L extends Enhancer<any, any, any> = Enhancer,
   M extends Enhancer<any, any, any> = Enhancer,
   N extends Enhancer<any, any, any> = Enhancer,
+  O extends Enhancer<any, any, any> = Enhancer,
   > =
   Enhancer<
     & EnhancerExtraOptions<A>
@@ -37,7 +38,8 @@ export type ComposeEnhancer<
     & EnhancerExtraOptions<K>
     & EnhancerExtraOptions<L>
     & EnhancerExtraOptions<M>
-    & EnhancerExtraOptions<N>,
+    & EnhancerExtraOptions<N>
+    & EnhancerExtraOptions<O>,
     & EnhancerExtraMethods<A>
     & EnhancerExtraMethods<B>
     & EnhancerExtraMethods<C>
@@ -52,6 +54,7 @@ export type ComposeEnhancer<
     & EnhancerExtraMethods<L>
     & EnhancerExtraMethods<M>
     & EnhancerExtraMethods<N>
+    & EnhancerExtraMethods<O>
   >
 
 export function composeEnhancer<A extends Enhancer<any, any, any>>(a: A): ComposeEnhancer<A>
@@ -68,6 +71,7 @@ export function composeEnhancer<A extends Enhancer<any, any, any>, B extends Enh
 export function composeEnhancer<A extends Enhancer<any, any, any>, B extends Enhancer<any, any, any>, C extends Enhancer<any, any, any>, D extends Enhancer<any, any, any>, E extends Enhancer<any, any, any>, F extends Enhancer<any, any, any>, G extends Enhancer<any, any, any>, H extends Enhancer<any, any, any>, I extends Enhancer<any, any, any>, J extends Enhancer<any, any, any>, K extends Enhancer<any, any, any>, L extends Enhancer<any, any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L>
 export function composeEnhancer<A extends Enhancer<any, any, any>, B extends Enhancer<any, any, any>, C extends Enhancer<any, any, any>, D extends Enhancer<any, any, any>, E extends Enhancer<any, any, any>, F extends Enhancer<any, any, any>, G extends Enhancer<any, any, any>, H extends Enhancer<any, any, any>, I extends Enhancer<any, any, any>, J extends Enhancer<any, any, any>, K extends Enhancer<any, any, any>, L extends Enhancer<any, any, any>, M extends Enhancer<any, any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M>
 export function composeEnhancer<A extends Enhancer<any, any, any>, B extends Enhancer<any, any, any>, C extends Enhancer<any, any, any>, D extends Enhancer<any, any, any>, E extends Enhancer<any, any, any>, F extends Enhancer<any, any, any>, G extends Enhancer<any, any, any>, H extends Enhancer<any, any, any>, I extends Enhancer<any, any, any>, J extends Enhancer<any, any, any>, K extends Enhancer<any, any, any>, L extends Enhancer<any, any, any>, M extends Enhancer<any, any, any>, N extends Enhancer<any, any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N>
+export function composeEnhancer<A extends Enhancer<any, any, any>, B extends Enhancer<any, any, any>, C extends Enhancer<any, any, any>, D extends Enhancer<any, any, any>, E extends Enhancer<any, any, any>, F extends Enhancer<any, any, any>, G extends Enhancer<any, any, any>, H extends Enhancer<any, any, any>, I extends Enhancer<any, any, any>, J extends Enhancer<any, any, any>, K extends Enhancer<any, any, any>, L extends Enhancer<any, any, any>, M extends Enhancer<any, any, any>, N extends Enhancer<any, any, any>, O extends Enhancer<any, any, any>>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>
 export function composeEnhancer (...funcs: any[]) {
   return compose(...funcs)
 }
