@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import { IconButton, Text } from "@chakra-ui/react"
+import { IconButton, Text, Box } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
 import { useToggleSettings } from './Settings'
 import { useReader } from './ReaderProvider'
@@ -61,13 +61,12 @@ export const QuickMenu = ({ open, isComics }: {
   return (
     <>
       {open && (
-        <div style={{
+        <Box bg="gray.800" style={{
           position: `absolute`,
           left: 0,
           top: 0,
           width: `100%`,
           height: 70,
-          backgroundColor: 'chocolate',
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
@@ -89,7 +88,6 @@ export const QuickMenu = ({ open, isComics }: {
             overflow: 'hidden',
             paddingLeft: 10,
             paddingRight: 10,
-            // flex: 1
           }}>
             <Text isTruncated={true}>{bookTitle}</Text>
           </div>
@@ -101,16 +99,15 @@ export const QuickMenu = ({ open, isComics }: {
             {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
             <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
           </div>
-        </div>
+        </Box>
       )}
       {open && (
-        <div style={{
+        <Box bg="gray.800"  style={{
           position: `absolute`,
           left: 0,
           bottom: 0,
           width: `100%`,
           height: 100,
-          backgroundColor: 'chocolate',
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
@@ -130,7 +127,7 @@ export const QuickMenu = ({ open, isComics }: {
                   ...hasOnlyOnePage && {
                     opacity: 1
                   }
-                }}/>
+                }} />
               )}
           </div>
           <div style={{
@@ -189,16 +186,18 @@ export const QuickMenu = ({ open, isComics }: {
               (manifest?.readingDirection === 'ltr' && (pagination?.end.readingItemIndex || 0) < numberOfSpineItems - 1)
               || (manifest?.readingDirection !== 'ltr' && currentBeginReadingItemIndex > 0)
             ) ? (
-              <IconButton icon={<ArrowForwardIcon />} onClick={_ => reader?.goToRightSpineItem()} aria-label="forward" />
+              <IconButton icon={<ArrowForwardIcon />} onClick={_ => {
+                reader?.goToRightSpineItem()
+              }} aria-label="forward" />
             ) : (
               <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled style={{
                 ...hasOnlyOnePage && {
                   opacity: 1
                 }
-              }}/>
+              }} />
             )}
           </div>
-        </div>
+        </Box>
       )}
     </>
   )
