@@ -12,7 +12,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   hooks$: BehaviorSubject<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+  const commonReadingItem = createCommonReadingItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   const readingItemFrame = commonReadingItem.readingItemFrame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after

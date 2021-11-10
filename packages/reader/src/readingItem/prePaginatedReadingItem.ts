@@ -12,7 +12,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   hooks$: BehaviorSubject<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+  const commonReadingItem = createCommonReadingItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   const readingItemFrame = commonReadingItem.readingItemFrame
 
   const getDimensions = () => {
