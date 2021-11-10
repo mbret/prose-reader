@@ -149,7 +149,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
       />
       {settings && reader && <Settings reader={reader} />}
       {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
-      {isTocOpen && <TocDialog onExit={() => setIsTocOpen(false)} />}
+      <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
       {isHelpOpen && <HelpDialog onExit={() => setIsHelpOpen(false)} />}
     </>
   )

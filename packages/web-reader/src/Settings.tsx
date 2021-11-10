@@ -3,7 +3,7 @@ import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { atom, useRecoilCallback } from 'recoil';
 import { Reader } from "@prose-reader/core";
-import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup } from '@chakra-ui/react';
+import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup, Box } from '@chakra-ui/react';
 
 export const settingsState = atom({
   key: `SettingsState`,
@@ -25,7 +25,7 @@ export const Settings = ({ reader }: { reader: Reader }) => {
   const step = 0.1
 
   return (
-    <div style={{
+    <Box style={{
       height: `100%`,
       width: `100%`,
       position: 'absolute',
@@ -34,21 +34,19 @@ export const Settings = ({ reader }: { reader: Reader }) => {
       top: 0,
       overflow: 'hidden'
     }} >
-      <div style={{
+      <Box style={{
         position: 'absolute',
         height: `100%`,
         width: `100%`,
         left: 0,
         top: 0,
       }} onClick={toggleSettings} />
-      <div style={{
+      <Box bg="gray.800" padding={4} style={{
         height: `40%`,
         width: `100%`,
         position: 'absolute',
         bottom: 0,
-        backgroundColor: 'chocolate',
         overflow: 'auto',
-        padding: 10
       }}>
         <FormControl as="fieldset">
           <FormLabel as="legend">Font scale (current: {value})</FormLabel>
@@ -118,7 +116,7 @@ export const Settings = ({ reader }: { reader: Reader }) => {
             </HStack>
           </RadioGroup>
         </FormControl>
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
