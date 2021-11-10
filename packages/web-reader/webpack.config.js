@@ -49,6 +49,10 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
+    // to remote test on ios, you can use `https` to force service worker when accessing this computer ip
+    // on chrome on macOS it will not let you unless you manually add the self signed certificate, you can also
+    // just use `http` since chrome will let you use service worker on localhost.
+    server: 'http',
     static: {
       directory: path.join(__dirname, 'dist')
     },
