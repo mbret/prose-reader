@@ -46,7 +46,7 @@ const items = [
 export const Home = () => {
   const [customUrl, setCustomUrl] = useState('')
   const navigate = useNavigate()
-  const tableSize = useBreakpointValue({ base: `sm`, sm: `sm` })
+  const tableSize = useBreakpointValue({ base: `md`, sm: `md` })
 
   return (
     <div style={{
@@ -81,7 +81,6 @@ export const Home = () => {
             <Tr>
               <Th>Name</Th>
               <Th>Type</Th>
-              <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -89,7 +88,6 @@ export const Home = () => {
               <Tr key={name}>
                 <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
                 <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{type}</Link></Td>
-                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}><LinkIcon /></Link></Td>
               </Tr>
             ))}
           </Tbody>
