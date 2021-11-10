@@ -14,7 +14,7 @@ import { Home as ComicsHome } from './comics/Home'
 import { Reader as ClassicReader } from './classic/Reader'
 import { Reader as ComicsReader } from './comics/Reader'
 import { Home } from './Home'
-import { ChakraProvider } from "@chakra-ui/react"
+import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react"
 import { theme } from './theme'
 
 export const App = () => {
@@ -23,19 +23,21 @@ export const App = () => {
   return (
     <RecoilRoot>
       <ChakraProvider theme={theme}>
-        <ReaderContext.Provider value={reader}>
-          <Router>
-            <Routes>
-              <Route path="/classic/reader/:url" element={<ClassicReader onReader={setReader} />} />
-              <Route path="/classic" element={<ClassicHome />} />
-              <Route path="/comics/reader/:url" element={<ComicsReader onReader={setReader} />} />
-              <Route path="/comics" element={<ComicsHome />} />
-              <Route path="/" element={<Home />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Router>
-        </ReaderContext.Provider>
+        <ColorModeProvider value="dark" options={{ initialColorMode: `dark`, useSystemColorMode: false }} >
+          <ReaderContext.Provider value={reader}>
+            <Router>
+              <Routes>
+                <Route path="/classic/reader/:url" element={<ClassicReader onReader={setReader} />} />
+                <Route path="/classic" element={<ClassicHome />} />
+                <Route path="/comics/reader/:url" element={<ComicsReader onReader={setReader} />} />
+                <Route path="/comics" element={<ComicsHome />} />
+                <Route path="/" element={<Home />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Router>
+          </ReaderContext.Provider>
+        </ColorModeProvider>
       </ChakraProvider>
-    </RecoilRoot>
+    </RecoilRoot >
   )
 }

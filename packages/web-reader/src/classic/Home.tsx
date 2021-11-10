@@ -1,36 +1,65 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
-import { Button as ChakraButton, Text } from "@chakra-ui/react"
-import { ArrowBackIcon } from '@chakra-ui/icons'
+import { Link as RouterLink } from 'react-router-dom'
+import { Button as ChakraButton, useBreakpointValue, Table, Tr, Th, Thead, Tbody, Link, Td, Tfoot, Box, TableContainer } from "@chakra-ui/react"
+import { ArrowBackIcon, LinkIcon } from '@chakra-ui/icons'
+
+const items = [
+  {
+    name: `accessible_epub_3.epub`,
+    type: `EN - LTR - RFL`
+  },
+  {
+    name: `sous-le-vent.epub`,
+    type: `EN - LTR - FXL`
+  },
+  {
+    name: `moby-dick_txt.txt`,
+    type: `EN - LTR - TXT`
+  },
+  {
+    name: `mymedia_lite.epub`,
+    type: `JP - RTL - RFL`
+  },
+  {
+    name: `haruko-html-jpeg.epub`,
+    type: `JP - RTL - FXL(P)`
+  },
+  {
+    name: `regime-anticancer-arabic.epub`,
+    type: `AR - RTL - RFL`
+  },
+  {
+    name: `sample.cbz`,
+    type: `EN - LTR - FXL`
+  },
+  {
+    name: `cc-shared-culture.epub`,
+    type: `EN - LTR - MEDIA`
+  },
+  {
+    name: `Accessibility-Tests-Mathematics.epub`,
+    type: `EN - RTL - RFL`
+  }
+]
 
 export const Home = () => {
   const [customUrl, setCustomUrl] = useState('')
   const navigate = useNavigate()
+  const tableSize = useBreakpointValue({ base: `sm`, sm: `sm` })
 
   return (
     <div style={{
       height: `100%`,
       overflow: `auto`
     }}>
-      <div style={{
-        padding: 10
-      }}>
-        <Link to={`/`} style={{ marginBottom: 20 }}>
+      <Box padding={[4]}>
+        <RouterLink to="/">
           <ChakraButton leftIcon={<ArrowBackIcon />}>Back to home</ChakraButton>
-        </Link>
-      </div>
-      <div style={{
-        width: `100%`,
-        margin: `auto`,
-        maxWidth: 320,
-        display: `flex`,
-        flexDirection: `column`,
-        alignItems: `center`,
-        marginTop: 20,
-        marginBottom: 20,
-      }}>
-        <p style={{ alignSelf: 'flex-start' }}>
+        </RouterLink>
+      </Box>
+      <Box maxW={[`auto`, `md`, `lg`]} paddingX={[4, 0]} marginX={[`auto`]} mb={[4]}>
+        <Box as="p" style={{ alignSelf: 'flex-start' }}>
           <b>LTR</b> = left to right, <b>RTL</b> = right to left
           <br /><b>RFL</b> = fully reflowable
           <br /><b>RFL(P)</b> = partially reflowable
@@ -38,79 +67,34 @@ export const Home = () => {
           <br /><b>FXL(P)</b> = partially pre-paginated (fixed layout)
           <br /><b>TXT</b> = .txt file (RFL)
           <br /><b>MEDIA</b> = contains media (audio, video)
-        </p>
-        <p style={{ width: `100%`, display: `flex` }}>
+        </Box>
+        <Box as="p" paddingY={[2]} style={{ width: `100%`, display: `flex` }}>
           <input type="text" placeholder="Paste your link to epub,cbz,txt,..." style={{ flex: 1, marginRight: 10, padding: 5 }} onChange={e => setCustomUrl(e.target.value)} />
           <button onClick={() => {
             customUrl.length > 0 && navigate(`/classic/reader/${btoa(customUrl)}`)
           }}>open</button>
-        </p>
-        <Row
-          style={{ borderTop: `1px solid black`, }}
-          url={`${window.location.origin}/epubs/accessible_epub_3.epub`}
-          name="accessible_epub_3.epub"
-          details="EN - LTR - RFL" />
-        <Row
-          url={`${window.location.origin}/epubs/sous-le-vent.epub`}
-          name="sous-le-vent.epub"
-          details="EN - LTR - FXL" />
-        <Row
-          url={`${window.location.origin}/epubs/moby-dick_txt.txt`}
-          name="moby-dick_txt.txt"
-          details="EN - LTR - TXT" />
-        <Row
-          url={`${window.location.origin}/epubs/mymedia_lite.epub`}
-          name="mymedia_lite.epub"
-          details="JP - RTL - RFL" />
-        <Row
-          url={`${window.location.origin}/epubs/haruko-html-jpeg.epub`}
-          name="haruko-html-jpeg.epub"
-          details="JP - RTL - FXL(P)" />
-        <Row
-          url={`${window.location.origin}/epubs/regime-anticancer-arabic.epub`}
-          name="regime-anticancer-arabic.epub"
-          details="AR - RTL - RFL" />
-        <Row
-          url={`${window.location.origin}/epubs/sample.cbz`}
-          name="sample.cbz"
-          details="EN - LTR - FXL" />
-        <Row
-          url={`${window.location.origin}/epubs/cc-shared-culture.epub`}
-          name="cc-shared-culture.epub"
-          details="EN - LTR - MEDIA" />
-        <Row
-          url={`${window.location.origin}/epubs/Advanced-Accessibility-Tests-Mathematics-v1.1.0.epub`}
-          name="Accessibility-Tests-Mathematics.epub"
-          details="EN - RTL - RFL" />
-      </div>
+        </Box>
+      </Box>
+      <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginBottom={[8]}>
+        <Table variant="simple" size={tableSize}>
+          <Thead>
+            <Tr>
+              <Th>Name</Th>
+              <Th>Type</Th>
+              <Th></Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {items.map(({ name, type }) => (
+              <Tr key={name}>
+                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
+                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{type}</Link></Td>
+                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}><LinkIcon /></Link></Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Box>
     </div>
-  )
-}
-
-const Row = ({ name, details, url, style = {} }: { url: string, name: string, details: string, style?: React.CSSProperties }) => {
-  const rowStyle: React.CSSProperties = {
-    borderLeft: `1px solid black`,
-    borderRight: `1px solid black`,
-    borderBottom: `1px solid black`,
-    padding: 10,
-    width: `100%`,
-    display: `flex`,
-    justifyContent: `space-between`
-  }
-
-  const detailsStyle: React.CSSProperties = {
-    fontSize: `80%`,
-    fontWeight: `bold`
-  }
-
-  const itemStyle: React.CSSProperties = {
-    width: `50%`
-  }
-
-  return (
-    <Link style={{ ...style, ...rowStyle }} to={`/classic/reader/${btoa(url)}`}>
-      <div style={itemStyle}>{name}</div>
-      <div style={detailsStyle}>{details}</div>
-    </Link>
   )
 }
