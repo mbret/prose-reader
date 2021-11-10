@@ -8,7 +8,7 @@
     "start": "NODE_ENV=development webpack serve --config ./webpack.config.js",
     "build": "webpack build --config ./webpack.config.js",
     "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js",
-    "build-vercel": "yarn tsc && yarn build:prod:2",
+    "build-vercel": "yarn tsc && yarn build:prod",
     "watch": "nodemon",
     "lint": "echo",
     "test": "echo"
