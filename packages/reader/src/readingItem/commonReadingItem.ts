@@ -32,9 +32,9 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
-export const createCommonReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
+export const createCommonReadingItem = ({ item, context, parentElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`spineItems`][number],
-  containerElement: HTMLElement,
+  parentElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   hooks$: BehaviorSubject<Hook[]>,
@@ -43,14 +43,14 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   const destroySubject$ = new Subject<void>()
   const isReflowable = false
   const contentLayoutChangeSubject$ = new Subject<{ isFirstLayout: boolean, isReady: boolean }>()
-  const element = createWrapperElement(containerElement, item)
-  const loadingElement = createLoadingElement(containerElement, item, context)
-  const overlayElement = createOverlayElement(containerElement, item)
+  const containerElement = createContainerElement(parentElement, item, hooks$)
+  const loadingElement = createLoadingElement(parentElement, item, context)
+  const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
   const frameHooks = createFrameHooks(iframeEventBridgeElement, fingerTracker, selectionTracker)
   const readingItemFrame = createFrameItem({
-    parent: element,
+    parent: containerElement,
     item,
     context,
     fetchResource: context.getLoadOptions()?.fetchResource,
@@ -62,9 +62,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
-  element.appendChild(loadingElement)
-  element.appendChild(overlayElement)
-  containerElement.appendChild(element)
+  containerElement.appendChild(loadingElement)
+  containerElement.appendChild(overlayElement)
+  parentElement.appendChild(containerElement)
 
   // Do not memoize x,y,top,left as they change relatively to the viewport all the time
   let memoizedElementDimensions: { width: number, height: number } | undefined
@@ -74,7 +74,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       return memoizedElementDimensions
     }
 
-    const rect = element.getBoundingClientRect()
+    const rect = containerElement.getBoundingClientRect()
     const normalizedValues = {
       ...rect,
       // we want to round to first decimal because it's possible to have half pixel
@@ -95,13 +95,13 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
   const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
     if (right !== undefined) {
-      element.style.right = `${right}px`
+      containerElement.style.right = `${right}px`
     }
     if (left !== undefined) {
-      element.style.left = `${left}px`
+      containerElement.style.left = `${left}px`
     }
     if (top !== undefined) {
-      element.style.top = `${top}px`
+      containerElement.style.top = `${top}px`
     }
   }
 
@@ -109,7 +109,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     const viewportDimensions = readingItemFrame.getViewportDimensions()
     const frameElement = readingItemFrame.getManipulableFrame()?.frame
-    if (element && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
+    if (containerElement && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
       const computedWidthScale = pageWidth / viewportDimensions.width
       const computedScale = Math.min(computedWidthScale, pageHeight / viewportDimensions.height)
 
@@ -139,8 +139,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
   // const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
   const layout = ({ height, width }: { height: number, width: number }) => {
-    element.style.width = `${width}px`
-    element.style.height = `${height}px`
+    containerElement.style.width = `${width}px`
+    containerElement.style.height = `${height}px`
 
     loadingElement.style.setProperty(`max-width`, `${context.getVisibleAreaRect().width}px`)
 
@@ -150,7 +150,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
 
     hooks$.getValue().forEach(hook => {
       if (hook.name === `item.onLayout`) {
-        hook.fn({ frame: readingItemFrame.getFrameElement(), container: element, loadingElement, item, overlayElement })
+        hook.fn({ frame: readingItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
       }
     })
   }
@@ -201,9 +201,9 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   ) => {
     const manipulableFrame = readingItemFrame.getManipulableFrame()
 
-    if (manipulableFrame) return cb({ ...manipulableFrame, container: element, loadingElement, item, overlayElement })
+    if (manipulableFrame) return cb({ ...manipulableFrame, container: containerElement, loadingElement, item, overlayElement })
 
-    return cb({ container: element, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
+    return cb({ container: containerElement, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
   }
 
   readingItemFrame.$.contentLayoutChange$
@@ -229,18 +229,12 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     )
     .subscribe()
 
-  // readingItemFrame.$.domReady$.subscribe((v) => console.log(`FOOOO domReady`, item.id))
-  // readingItemFrame.$.isLoading$.subscribe((v) => console.log(`FOOOO isLoading`, v, item.id))
-  // readingItemFrame.$.isReady$.subscribe((v) => console.log(`FOOOO isReady`, v, item.id))
-  // readingItemFrame.$.unloaded$.subscribe(() => console.log(`FOOOO unloaded`, item.id))
-
   return {
     load: () => {
       setLayoutDirty()
     },
     layout,
     adjustPositionOfElement,
-    createWrapperElement,
     createLoadingElement,
     getElementDimensions,
     getHtmlFromResource: readingItemFrame.getHtmlFromResource,
@@ -251,7 +245,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
     loadContent,
     unloadContent,
     readingItemFrame,
-    element,
+    element: containerElement,
     loadingElement,
     isReflowable,
     getBoundingRectOfElementFromSelector,
@@ -261,7 +255,7 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
       destroySubject$.next()
       loadingElement.onload = () => { }
       loadingElement.remove()
-      element.remove()
+      containerElement.remove()
       readingItemFrame?.destroy()
       fingerTracker.destroy()
       selectionTracker.destroy()
@@ -280,8 +274,8 @@ export const createCommonReadingItem = ({ item, context, containerElement, ifram
   }
 }
 
-const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {
-  const element = containerElement.ownerDocument.createElement(`div`)
+const createContainerElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], hooks$: BehaviorSubject<Hook[]>) => {
+  const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`readingItem`)
   element.classList.add(`readingItem-${item.renditionLayout}`)
   element.style.cssText = `
@@ -289,7 +283,13 @@ const createWrapperElement = (containerElement: HTMLElement, item: Manifest[`spi
     overflow: hidden;
   `
 
-  return element
+  return hooks$.getValue().reduce((element, hook) => {
+    if (hook.name === `item.onBeforeContainerCreated`) {
+      return hook.fn(element)
+    }
+
+    return element
+  }, element)
 }
 
 /**
