@@ -1,10 +1,10 @@
+import { PROJECT_NAME } from "./constants.shared";
+
 export const Report = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    if (self.__OBOKU_READER_DEBUG) {
-      // eslint-disable-next-line no-console
-      console.log(`[oboku-reader]`, ...data);
-    }
+    // eslint-disable-next-line no-console
+    console.log(`[${PROJECT_NAME}]`, ...data);
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
