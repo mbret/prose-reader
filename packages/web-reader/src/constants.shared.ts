@@ -1,0 +1,1 @@
+export const PROJECT_NAME = `@oboku/web-reader`
