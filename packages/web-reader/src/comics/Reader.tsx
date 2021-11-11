@@ -4,7 +4,6 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@prose-reader/react";
 import { composeEnhancer } from "@prose-reader/core";
-import { useWindowSize } from "react-use";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
 import { Settings, settingsState } from '../Settings'
@@ -116,7 +115,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
         open={isMenuOpen}
         isComics
       />
-      {settings && reader && <Settings reader={reader} />}
+      {/* {settings && reader && <Settings reader={reader} />} */}
     </>
   )
 }

@@ -74,7 +74,6 @@ export const Home = () => {
         </Link>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 20 }}>
-
         {property.map((item, i) => (
           <MangaCard {...item} key={i} />
         ))}
@@ -114,7 +113,6 @@ const MangaCard = (props: {
               {props.beds} readers &bull; {props.baths} tags
             </Box>
           </Box>
-
           <Box
             mt="1"
             fontWeight="semibold"
@@ -124,14 +122,6 @@ const MangaCard = (props: {
           >
             {props.title}
           </Box>
-
-          {/* <Box>
-            {props.formattedPrice}
-            <Box as="span" color="gray.600" fontSize="sm">
-              / wk
-            </Box>
-          </Box> */}
-
           <Box d="flex" mt="2" alignItems="center">
             {Array(5)
               .fill("")
