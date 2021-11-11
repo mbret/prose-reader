@@ -1,5 +1,6 @@
 import { Manifest } from "@prose-reader/core"
 import { useEffect, useState } from "react"
+import { Report } from "./report"
 import { STREAMER_URL_PREFIX } from "./serviceWorker/constants"
 
 export const useManifest = (epubUrl: string) => {
@@ -17,6 +18,8 @@ export const useManifest = (epubUrl: string) => {
           })
           const bookManifest: Manifest = await response.json()
           setManifest(bookManifest)
+
+          Report.log(`manifest`, bookManifest)
         } catch (e: any) {
           setManifest(undefined)
           setError(e as any)
