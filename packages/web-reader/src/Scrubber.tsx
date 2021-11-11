@@ -24,6 +24,8 @@ export const Scrubber = () => {
 
   const reverse = manifest?.readingDirection === 'rtl'
 
+  // @todo check bug when several pages are turned after resize
+  
   const onChange = useCallback((value: number) => {
     setValue(value)
 
