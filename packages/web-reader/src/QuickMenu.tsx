@@ -7,6 +7,7 @@ import { useToggleSettings } from './Settings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState } from './state'
+import { AppBar } from './common/AppBar'
 
 export const QuickMenu = ({ open, isComics }: {
   open: boolean,
@@ -61,20 +62,11 @@ export const QuickMenu = ({ open, isComics }: {
   return (
     <>
       {open && (
-        <Box bg="gray.800" style={{
-          position: `absolute`,
-          left: 0,
-          top: 0,
-          width: `100%`,
-          height: 70,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingLeft: 10,
-          paddingRight: 10,
-        }}>
-          <div style={{}}>
+        <AppBar
+          position="absolute"
+          left={0}
+          top={0}
+          leftElement={
             <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={() => {
               if (window.history.state === null && window.location.pathname !== `/`) {
                 navigate(`/`)
@@ -82,122 +74,120 @@ export const QuickMenu = ({ open, isComics }: {
                 navigate(-1)
               }
             }} />
-          </div>
-          <div style={{
-            color: 'white',
-            overflow: 'hidden',
-            paddingLeft: 10,
-            paddingRight: 10,
-          }}>
-            <Text isTruncated={true}>{bookTitle}</Text>
-          </div>
-          <div style={{
-            display: 'flex'
-          }}>
-            {!isComics && <IconButton icon={<QuestionOutlineIcon />} aria-label="help" onClick={onHelpClick} marginRight={1} />}
-            {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />}
-            {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
-            <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
-          </div>
-        </Box>
+          }
+          rightElement={(
+            <div style={{
+              display: 'flex'
+            }}>
+              {!isComics && <IconButton icon={<QuestionOutlineIcon />} aria-label="help" onClick={onHelpClick} marginRight={1} />}
+              {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />}
+              {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
+              <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
+            </div>
+          )}
+          middleElement={bookTitle}
+        />
       )}
       {open && (
-        <Box bg="gray.800"  style={{
-          position: `absolute`,
-          left: 0,
-          bottom: 0,
-          width: `100%`,
-          height: 100,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div style={{
-            paddingLeft: 10
-          }}>
-            {(
-              (manifest?.readingDirection === 'ltr' && currentBeginReadingItemIndex > 0)
-              || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
-            ) ? (
-              <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={_ => reader?.goToLeftSpineItem()} />
-            )
-              : (
-                <IconButton icon={<ArrowBackIcon />} aria-label="back" disabled style={{
+        <AppBar
+          position="absolute"
+          left={0}
+          bottom={0}
+          height="auto"
+          minHeight={140}
+          leftElement={(
+            <div style={{
+              paddingLeft: 10
+            }}>
+              {(
+                (manifest?.readingDirection === 'ltr' && currentBeginReadingItemIndex > 0)
+                || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
+              ) ? (
+                <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={_ => reader?.goToLeftSpineItem()} />
+              )
+                : (
+                  <IconButton icon={<ArrowBackIcon />} aria-label="back" disabled style={{
+                    ...hasOnlyOnePage && {
+                      opacity: 1
+                    }
+                  }} />
+                )}
+            </div>
+          )}
+          rightElement={(
+            <div style={{
+              paddingRight: 10
+            }}>
+              {(
+                (manifest?.readingDirection === 'ltr' && (pagination?.end.readingItemIndex || 0) < numberOfSpineItems - 1)
+                || (manifest?.readingDirection !== 'ltr' && currentBeginReadingItemIndex > 0)
+              ) ? (
+                <IconButton icon={<ArrowForwardIcon />} onClick={_ => {
+                  reader?.goToRightSpineItem()
+                }} aria-label="forward" />
+              ) : (
+                <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled style={{
                   ...hasOnlyOnePage && {
                     opacity: 1
                   }
                 }} />
               )}
-          </div>
-          <div style={{
-            width: `100%`,
-            paddingLeft: 20,
-            paddingRight: 20,
-            overflow: 'hidden',
-          }}>
-            <div style={{
-              color: 'white'
-            }}>
-              {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
             </div>
+          )}
+          middleElement={(
             <div style={{
-              color: 'white',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
+              width: `100%`,
+              paddingLeft: 20,
+              paddingRight: 20,
               overflow: 'hidden',
             }}>
-              {chapterTitle ? `Chapter ${chapterTitle}` : ``}
+              <div style={{
+                color: 'white'
+              }}>
+                {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
+              </div>
+              <div style={{
+                color: 'white',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}>
+                {chapterTitle ? `Chapter ${chapterTitle}` : ``}
+              </div>
+              {!isComic && !hasOnlyOnePage && (
+                <div style={{
+                  color: 'white'
+                }}>
+                  {beginAndEndAreDifferent && (
+                    <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
+                  )}
+                  {!beginAndEndAreDifferent && (
+                    <>{`page ${pageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
+                  )}
+                </div>
+              )}
+              {isComic && !hasOnlyOnePage && (
+                <div style={{
+                  color: 'white'
+                }}>
+                  {beginAndEndAreDifferent && (
+                    <>
+                      {`page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
+                    </>
+                  )}
+                  {!beginAndEndAreDifferent && (
+                    <>
+                      {`page ${absoluteBeginPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
+                    </>
+                  )}
+                </div>
+              )}
+              <Box mt={2}>
+                <Scrubber />
+              </Box>
             </div>
-            {!isComic && !hasOnlyOnePage && (
-              <div style={{
-                color: 'white'
-              }}>
-                {beginAndEndAreDifferent && (
-                  <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
-                )}
-                {!beginAndEndAreDifferent && (
-                  <>{`page ${pageIndex} of ${pagination?.begin.numberOfPagesInChapter}`}</>
-                )}
-              </div>
-            )}
-            {isComic && !hasOnlyOnePage && (
-              <div style={{
-                color: 'white'
-              }}>
-                {beginAndEndAreDifferent && (
-                  <>
-                    {`page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
-                  </>
-                )}
-                {!beginAndEndAreDifferent && (
-                  <>
-                    {`page ${absoluteBeginPageIndex + 1} of ${pagination?.numberOfTotalPages}`}
-                  </>
-                )}
-              </div>
-            )}
-            <Scrubber />
-          </div>
-          <div style={{
-            paddingRight: 10
-          }}>
-            {(
-              (manifest?.readingDirection === 'ltr' && (pagination?.end.readingItemIndex || 0) < numberOfSpineItems - 1)
-              || (manifest?.readingDirection !== 'ltr' && currentBeginReadingItemIndex > 0)
-            ) ? (
-              <IconButton icon={<ArrowForwardIcon />} onClick={_ => {
-                reader?.goToRightSpineItem()
-              }} aria-label="forward" />
-            ) : (
-              <IconButton icon={<ArrowForwardIcon />} aria-label="forward" disabled style={{
-                ...hasOnlyOnePage && {
-                  opacity: 1
-                }
-              }} />
-            )}
-          </div>
-        </Box>
+          )}
+        />
       )}
     </>
   )

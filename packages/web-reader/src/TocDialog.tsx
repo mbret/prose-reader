@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useReader } from './ReaderProvider'
 import { useRecoilValue } from 'recoil'
 import { currentPageState, manifestState, paginationState } from './state'
+import { AppBar } from './common/AppBar'
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: boolean }) => {
   const reader = useReader()
@@ -62,41 +63,17 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: bool
   return (
     <Modal isOpen={isOpen} size="full" autoFocus={false} onClose={onExit}>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent height="100%">
         <Box style={{
-          // position: 'absolute',
-          // left: 0,
-          // top: 0,
-          // height: '100%',
-          // width: '100%',
-          // backgroundColor: 'white',
+          height: '100%',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <Box bg="gray.800" style={{
-            width: `100%`,
-            height: 60,
-            // backgroundColor: 'chocolate',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingLeft: 10,
-            flex: '0 0 auto'
-          }}>
-            <div style={{
-              // justifySelf: 'flex-start'
-            }}>
-              <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={onExit} />
-            </div>
-            <div>
-              <h1 style={{ color: 'white' }}>Table Of Content</h1>
-            </div>
-            <div>
-              &nbsp;
-            </div>
-          </Box>
+          <AppBar
+            leftElement={<IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={onExit} />}
+            middleElement="Table Of Content"
+          />
           <List spacing={3} style={{ paddingTop: 10, paddingBottom: 10 }} overflowY="scroll" height="100%">
             {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
           </List>
