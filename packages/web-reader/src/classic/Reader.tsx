@@ -148,9 +148,9 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
         isComics={false}
       />
       {settings && reader && <Settings reader={reader} />}
-      {isSearchOpen && <SearchDialog onExit={() => setIsSearchOpen(false)} />}
+      <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
       <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
-      {isHelpOpen && <HelpDialog onExit={() => setIsHelpOpen(false)} />}
+      <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />
     </>
   )
 }

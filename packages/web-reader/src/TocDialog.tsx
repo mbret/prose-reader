@@ -1,10 +1,10 @@
-import { ArrowBackIcon, CheckCircleIcon } from '@chakra-ui/icons'
-import { IconButton, List, ListIcon, ListItem, Text, Box, Modal, ModalContent, ModalOverlay } from '@chakra-ui/react'
+import { CheckCircleIcon } from '@chakra-ui/icons'
+import { List, ListIcon, ListItem, Text } from '@chakra-ui/react'
 import React, { useEffect, useState } from 'react'
 import { useReader } from './ReaderProvider'
 import { useRecoilValue } from 'recoil'
 import { currentPageState, manifestState, paginationState } from './state'
-import { AppBar } from './common/AppBar'
+import { FullScreenModal } from './common/FullScreenModal'
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: boolean }) => {
   const reader = useReader()
@@ -61,24 +61,10 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: bool
   }, [isOpen])
 
   return (
-    <Modal isOpen={isOpen} size="full" autoFocus={false} onClose={onExit}>
-      <ModalOverlay />
-      <ModalContent height="100%">
-        <Box style={{
-          height: '100%',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <AppBar
-            leftElement={<IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={onExit} />}
-            middleElement="Table Of Content"
-          />
-          <List spacing={3} style={{ paddingTop: 10, paddingBottom: 10 }} overflowY="scroll" height="100%">
-            {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
-          </List>
-        </Box>
-      </ModalContent>
-    </Modal>
+    <FullScreenModal isOpen={isOpen} onClose={onExit} title="Table Of Content">
+      <List spacing={3} style={{ paddingTop: 10, paddingBottom: 10 }} overflowY="scroll" height="100%">
+        {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
+      </List>
+    </FullScreenModal>
   )
 }

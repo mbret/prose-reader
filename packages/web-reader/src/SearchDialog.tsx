@@ -5,8 +5,9 @@ import { tap } from 'rxjs/operators'
 import { SearchResult } from '@prose-reader/enhancer-search'
 import { useReader } from './ReaderProvider'
 import { groupBy } from '@prose-reader/core'
+import { FullScreenModal } from './common/FullScreenModal'
 
-export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
+export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: boolean }) => {
   const [text, setText] = useState('')
   const [results, setResults] = useState<SearchResult>([])
   const [searching, setSearching] = useState(false)
@@ -48,40 +49,7 @@ export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
   // console.log(results)
 
   return (
-    <div style={{
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      height: '100%',
-      width: '100%',
-      backgroundColor: 'white',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <div style={{
-        width: `100%`,
-        height: 60,
-        backgroundColor: 'chocolate',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: 10,
-        flex: '0 0 auto'
-      }}>
-        <div style={{
-          // justifySelf: 'flex-start'
-        }}>
-          <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={onExit} />
-        </div>
-        <div>
-          <h1 style={{ color: 'white' }}>Search</h1>
-        </div>
-        <div>
-          &nbsp;
-        </div>
-      </div>
+    <FullScreenModal isOpen={isOpen} onClose={onExit} title="Search">
       <div style={{
         flex: '0 0 auto'
       }}>
@@ -121,7 +89,7 @@ export const SearchDialog = ({ onExit }: { onExit: () => void }) => {
           </>
         )}
       </div>
-    </div>
+    </FullScreenModal>
   )
 }
 
