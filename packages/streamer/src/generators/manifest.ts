@@ -36,7 +36,8 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
   const publisherRenditionLayout = metaElmWithRendition?.val as `reflowable` | `pre-paginated` | undefined
   const publisherRenditionFlow = metaElmWithRenditionFlow?.val as `scrolled-continuous` | `scrolled-doc` | `paginated` | `auto` | undefined
   const renditionSpread = metaElmWithRenditionSpread?.val as `auto` | undefined
-  const title = titleElm?.val || ``
+
+  const title = titleElm?.val || archive.files.find(({ dir }) => dir)?.basename || ``
   const pageProgressionDirection = spineElm?.attr[`page-progression-direction`] as `ltr` | `rtl` | undefined
 
   const spineItemIds = spineElm?.childrenNamed(`itemref`).map((item) => item.attr.idref) as string[]
@@ -105,7 +106,7 @@ const generateManifestFromArchive = async (archive: Archive, baseUrl: string): P
     nav: {
       toc: []
     },
-    title: ``,
+    title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
     renditionLayout: `pre-paginated`,
     renditionSpread: `auto`,
     readingDirection: `ltr`,
