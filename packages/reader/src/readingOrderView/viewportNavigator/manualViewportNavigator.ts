@@ -12,7 +12,7 @@ type UrlNavigation = { type: `url`, data: string | URL }
 type SpineItemNavigation = { type: `spineItem`, data: { indexOrId: number | string, animate: boolean } }
 type CfiNavigation = { type: `cfi`, data: { cfi: string, animate: boolean } }
 type ChapterPageNavigation = { type: `chapterPage`, data: { pageIndex: number } }
-type PageNavigation = { type: `page`, data: { pageIndex: number } }
+type PageIndexNavigation = { type: `pageIndex`, data: { pageIndex: number } }
 type LeftPageNavigation = { type: `leftPage`, data: { allowReadingItemChange: boolean } }
 type RightPageNavigation = { type: `rightPage`, data: { allowReadingItemChange: boolean } }
 
@@ -29,7 +29,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     | SpineItemNavigation
     | CfiNavigation
     | ChapterPageNavigation
-    | PageNavigation
+    | PageIndexNavigation
     | LeftPageNavigation
     | RightPageNavigation
   >()
@@ -37,15 +37,16 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
   const turnLeft = ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) =>
     navigationTriggerSubject$.next({ type: `leftPage`, data: { allowReadingItemChange } })
 
-  const turnRight = ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) =>
+  const turnRight = ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
     navigationTriggerSubject$.next({ type: `rightPage`, data: { allowReadingItemChange } })
+  }
 
   // @todo it's wrong because we can be in two different chapter on same page for spread
   const goToPageOfCurrentChapter = (pageIndex: number) =>
     navigationTriggerSubject$.next({ type: `chapterPage`, data: { pageIndex } })
 
   const goToPage = (pageIndex: number) =>
-    navigationTriggerSubject$.next({ type: `page`, data: { pageIndex } })
+    navigationTriggerSubject$.next({ type: `pageIndex`, data: { pageIndex } })
 
   const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) =>
     navigationTriggerSubject$.next({ type: `cfi`, data: { cfi, ...options } })
@@ -53,36 +54,10 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
   const goToUrl = (url: string | URL) =>
     navigationTriggerSubject$.next({ type: `url`, data: url })
 
-  const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) =>
+  const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) => {
+    console.log(`goToSpineItem`, indexOrId)
     navigationTriggerSubject$.next({ type: `spineItem`, data: { indexOrId, ...options } })
-
-  // @todo turn into turnTo$
-  const turnTo = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentReadingItem = readingItemManager.getFocusedReadingItem()
-
-    if (!currentReadingItem) return
-
-    const newReadingItem = locator.getReadingItemFromPosition(navigation) || currentReadingItem
-    const readingItemHasChanged = newReadingItem !== currentReadingItem
-
-    if (readingItemHasChanged) {
-      if (allowReadingItemChange) {
-        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
-          return { ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true }
-        } else {
-          return { ...navigation, lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const }, animate: true }
-        }
-      }
-    } else {
-      return { ...navigation, lastUserExpectedNavigation: undefined, animate: true }
-    }
-  })
-
-  const turnTo$ = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const finalNavigation = turnTo(navigation, { allowReadingItemChange })
-
-    return finalNavigation ? of(finalNavigation) : EMPTY
-  })
+  }
 
   const urlNavigation$ = navigationTriggerSubject$
     .pipe(
@@ -145,7 +120,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
 
   const pageNavigation$ = navigationTriggerSubject$
     .pipe(
-      filter((e): e is PageNavigation => e.type === `page`),
+      filter((e): e is PageIndexNavigation => e.type === `pageIndex`),
       filter(_ => {
         if (context.getManifest()?.renditionLayout === `reflowable`) {
           Report.warn(`This method only works for pre-paginated content`)
@@ -163,6 +138,29 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
       })
     )
 
+  const turnPageTo$ = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
+    const currentReadingItem = readingItemManager.getFocusedReadingItem()
+
+    if (!currentReadingItem) return EMPTY
+
+    const newReadingItem = locator.getReadingItemFromPosition(navigation) || currentReadingItem
+    const readingItemHasChanged = newReadingItem !== currentReadingItem
+
+    if (readingItemHasChanged) {
+      if (allowReadingItemChange) {
+        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+          return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true })
+        } else {
+          return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const }, animate: true })
+        }
+      }
+    } else {
+      return of({ ...navigation, lastUserExpectedNavigation: undefined, animate: true })
+    }
+
+    return EMPTY
+  })
+
   const leftPageNavigation$ = navigationTriggerSubject$
     .pipe(
       filter((e): e is LeftPageNavigation => e.type === `leftPage`),
@@ -170,7 +168,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
       switchMap(([{ data: { allowReadingItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
-        return turnTo$(navigation, { allowReadingItemChange })
+        return turnPageTo$(navigation, { allowReadingItemChange })
       })
     )
 
@@ -181,7 +179,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
       switchMap(([{ data: { allowReadingItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForRightPage(currentNavigation)
 
-        return turnTo$(navigation, { allowReadingItemChange })
+        return turnPageTo$(navigation, { allowReadingItemChange })
       })
     )
 
@@ -192,7 +190,6 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     goToPageOfCurrentChapter,
     goToSpineItem,
     goToUrl,
-    turnTo,
     goToPage,
     $: {
       navigation$: merge(
