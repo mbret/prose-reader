@@ -35,7 +35,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
     pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
-    pageTurnMode: isUsingFreeScroll ? `free` : `controlled`
+    pageTurnMode: isUsingFreeScroll ? `free` : `controlled`,
+    layoutAutoResize: `container`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)
@@ -100,7 +101,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
             onPaginationChange={onPaginationChange}
             options={readerOptions}
             enhancer={readerEnhancer}
-            layout="cover"
           />
         )}
         {manifestError && (

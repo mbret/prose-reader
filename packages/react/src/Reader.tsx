@@ -14,12 +14,11 @@ type Props<UserEnhancer extends Enhancer | void> = {
   onReader?: (reader: Reader<UserEnhancer>) => void,
   onReady?: () => void,
   onPaginationChange?: (pagination: Pagination) => void,
-  layout?: { height: number, width: number } | `cover`
 }
 
-export function Reader<UserEnhancer extends Enhancer | void>({ layout = `cover`, manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) {
+export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) {
   const [reader, setReader] = useState<Reader<UserEnhancer> | undefined>(undefined)
-  const { width, height } = layout === `cover` ? { width: `100%`, height: `100%` } : layout
+  const { width, height } = { width: `100%`, height: `100%` }
   const ref = useRef<HTMLElement>()
 
   useEffect(() => {
@@ -57,8 +56,6 @@ export function Reader<UserEnhancer extends Enhancer | void>({ layout = `cover`,
     }
   }, [manifest, reader, loadOptions])
 
-  useReaderReLayout(reader, ref.current, height, width)
-
   useEffect(() => {
     return () => reader?.destroy()
   }, [reader])
@@ -74,22 +71,4 @@ export function Reader<UserEnhancer extends Enhancer | void>({ layout = `cover`,
       ref={ref as any}
     />
   )
-}
-
-const useReaderReLayout = (reader: Reader | undefined, container: HTMLElement | undefined, height: number | string, width: number | string) => {
-  useEffect(() => {
-    if (typeof width === `number` && typeof height === `number`) {
-      reader?.layout()
-    } else if (container) {
-      const observer = new ResizeObserver(() => {
-        reader?.layout()
-      })
-
-      observer.observe(container)
-
-      return () => {
-        observer.disconnect()
-      }
-    }
-  }, [height, width, container])
 }

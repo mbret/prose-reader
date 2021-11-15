@@ -5,7 +5,14 @@ import { Reader } from "../reader"
 
 const SHOULD_NOT_LAYOUT = false
 
-export const layoutEnhancer: Enhancer<{}, {}> = (next) => (options) => {
+export const layoutEnhancer: Enhancer<{
+  /**
+   * Can be used to let the reader automatically resize.
+   * `container`: observe and resize the reader whenever the container resize.
+   * `false`: do not automatically resize.
+   */
+  layoutAutoResize?: `container` | false
+}, {}> = (next) => (options) => {
   const reader = next(options)
 
   reader.registerHook(`onViewportOffsetAdjust`, () => {
@@ -57,7 +64,22 @@ export const layoutEnhancer: Enhancer<{}, {}> = (next) => (options) => {
 
   movingSafePan$.subscribe()
 
-  return reader
+  let observer: ResizeObserver | undefined
+
+  if (options.layoutAutoResize === `container`) {
+    observer = new ResizeObserver(() => {
+      reader?.layout()
+    })
+    observer.observe(options.containerElement)
+  }
+
+  return {
+    ...reader,
+    destroy: () => {
+      reader.destroy()
+      observer?.disconnect()
+    }
+  }
 }
 
 /**

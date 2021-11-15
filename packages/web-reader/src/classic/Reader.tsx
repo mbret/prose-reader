@@ -44,7 +44,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
     fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
     lineHeight: storedLineHeight || undefined,
     theme: undefined,
-    pageTurnAnimation: `fade`
+    pageTurnAnimation: `fade`,
+    layoutAutoResize: `container`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
   const { manifest, error: manifestError } = useManifest(url)
