@@ -20,20 +20,23 @@ export const getEpubUrlFromLocation = (epubLocation: string) =>{
   }
 }
 
+export const getEpubFilenameFromUrl = (url: string) => {
+  return url.substring(url.lastIndexOf('/') + 1)
+}
+
 export const extractInfoFromEvent = (event: any) => {
   const epubLocation = extractEpubLocationFromUrl(event.request.url)
-  const epubFileName = epubLocation
   const epubUrl = getEpubUrlFromLocation(epubLocation)
 
   return {
     epubUrl,
-    epubFileName
+    epubLocation,
   }
 }
 
 export const getResourcePath = (event: any) => {
   const url = new URL(event.request.url)
-  const { epubFileName } = extractInfoFromEvent(event)
+  const { epubLocation } = extractInfoFromEvent(event)
 
-  return decodeURIComponent(url.pathname.replace(`/${STREAMER_URL_PREFIX}/${epubFileName}/`, ``))
+  return decodeURIComponent(url.pathname.replace(`/${STREAMER_URL_PREFIX}/${epubLocation}/`, ``))
 }

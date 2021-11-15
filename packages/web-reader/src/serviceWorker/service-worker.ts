@@ -38,9 +38,7 @@ worker.addEventListener('fetch', (event: any) => {
 
   if (url.pathname.startsWith(`/${STREAMER_URL_PREFIX}`)) {
 
-    const { epubUrl, epubFileName } = extractInfoFromEvent(event)
-
-    // console.warn(epubUrl, epubFileName)
+    const { epubUrl, epubLocation } = extractInfoFromEvent(event)
 
     event.respondWith((async () => {
       try {
@@ -63,7 +61,7 @@ worker.addEventListener('fetch', (event: any) => {
         // const archive = await createArchiveFromUrls([
         //   'https://cdn.epico.ink/public/H2QLL0/en/AFFL2T/hsci3yij10bg3bi6qy1s6grk1625665869337.png'
         // ])
-        const baseUrl = `${url.origin}/${STREAMER_URL_PREFIX}/${epubFileName}`
+        const baseUrl = `${url.origin}/${STREAMER_URL_PREFIX}/${epubLocation}`
         // const baseUrl = ``
         // console.log(archive)
 

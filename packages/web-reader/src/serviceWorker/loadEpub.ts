@@ -1,6 +1,8 @@
 import { loadAsync } from 'jszip'
 import { Report } from '../report'
 import { createArchiveFromText, Archive, createArchiveFromJszip } from '@prose-reader/core-streamer'
+import localforage from 'localforage'
+import { getEpubFilenameFromUrl } from './utils'
 
 let loading = false
 let archive: Archive | undefined = undefined
@@ -36,13 +38,19 @@ export const loadEpub = async (url: string) => {
   }
   loading = true
   archive = undefined
-  const response = await fetch(url)
+  const responseOrFile = url.startsWith(`file://`)
+    ? (await localforage.getItem<File>(getEpubFilenameFromUrl(url)))
+    : await fetch(url)
+
+  if (!responseOrFile) {
+    throw new Error(`Unable to retrieve ${url}`)
+  }
 
   if (url.endsWith(`.txt`)) {
-    const content = await response.text()
+    const content = await responseOrFile.text()
     archive = await createArchiveFromText(content)
   } else {
-    const epubData = await response.blob()
+    const epubData = `blob` in responseOrFile ? await responseOrFile.blob() : responseOrFile
     const jszip = await loadAsync(epubData)
     archive = await createArchiveFromJszip(jszip, { orderByAlpha: true })
   }

@@ -140,6 +140,7 @@ export const QuickMenu = ({ open, isComics }: {
               paddingLeft: 20,
               paddingRight: 20,
               overflow: 'hidden',
+              textAlign: `center`,
             }}>
               <div style={{
                 color: 'white'
