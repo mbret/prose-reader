@@ -61,7 +61,7 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
     adjustReadingOffset,
     $: {
       userScroll$,
-      navigationOnScroll$
+      navigation$: navigationOnScroll$
     }
   }
 }
