@@ -127,6 +127,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     }
 
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
+
     if (start) {
       panSubject$.next(`start`)
       movingLastDelta = { x: 0, y: 0 }
