@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject } from "rxjs"
+import { BehaviorSubject, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
 import { createPagination } from "./pagination"
@@ -21,6 +21,11 @@ type CreateReaderOptions = {
 } & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
+  const stateSubject$ = new BehaviorSubject<{
+    supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
+  }>({
+    supportedPageTurnAnimation: [`fade`, `none`, `scroll`, `slide`]
+  })
   const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
   const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
@@ -129,6 +134,25 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     )
     .subscribe()
 
+  context.$.load$
+    .pipe(
+      tap((manifest) => {
+        let supportedPageTurnAnimation: ObservedValueOf<typeof stateSubject$>[`supportedPageTurnAnimation`] = []
+        if (manifest.renditionFlow === `scrolled-continuous`) {
+          supportedPageTurnAnimation.push(`scroll`)
+        } else {
+          supportedPageTurnAnimation = stateSubject$.value.supportedPageTurnAnimation
+        }
+
+        stateSubject$.next({
+          ...stateSubject$.value,
+          supportedPageTurnAnimation
+        })
+      }),
+      takeUntil(destroy$)
+    )
+    .subscribe()
+
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
@@ -179,13 +203,13 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     locator: readingOrderView.locator,
     getCurrentNavigationPosition: readingOrderView.viewportNavigator.getCurrentNavigationPosition,
     getCurrentViewportPosition: readingOrderView.viewportNavigator.getCurrentViewportPosition,
-    setPageTurnAnimation: (pageTurnAnimation: ContextSettings[`pageTurnAnimation`]) => context.setSettings({ pageTurnAnimation }),
-    setPageTurnDirection: (pageTurnDirection: ContextSettings[`pageTurnDirection`]) => context.setSettings({ pageTurnDirection }),
-    setPageTurnMode: (pageTurnMode: ContextSettings[`pageTurnMode`]) => context.setSettings({ pageTurnMode }),
     layout,
     load,
     destroy,
+    setSettings: context.setSettings,
     $: {
+      settings$: context.$.settings$,
+      state$: stateSubject$.asObservable(),
       /**
        * Dispatched when the reader has loaded a book and is displayed a book.
        * Using navigation API and getting information about current content will

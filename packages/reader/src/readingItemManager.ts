@@ -4,8 +4,7 @@ import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
 import { isShallowEqual } from "./utils/objects"
 import { getCoverItem } from "./utils/manifest"
-
-export type ViewportPosition = { x: number, y: number }
+import { ViewportPosition } from "./types"
 
 const NAMESPACE = `readingItemManager`
 

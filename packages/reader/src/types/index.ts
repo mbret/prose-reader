@@ -1,5 +1,7 @@
 import { Manifest } from "@oboku/shared"
 
+export type ViewportPosition = { x: number, y: number }
+
 export type LoadOptions = {
   cfi?: string,
   /**
