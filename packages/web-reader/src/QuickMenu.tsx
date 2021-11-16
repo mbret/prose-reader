@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import { IconButton, Text, Box } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
-import { useToggleSettings } from './Settings'
+import { useToggleSettings } from './classic/Settings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState } from './state'
 import { AppBar } from './common/AppBar'
 
-export const QuickMenu = ({ open, isComics }: {
+export const QuickMenu = ({ open, isComics, onSettingsClick }: {
   open: boolean,
   isComics: boolean,
+  onSettingsClick?: () => void
 }) => {
   const navigate = useNavigate()
   const reader = useReader()
@@ -36,7 +37,6 @@ export const QuickMenu = ({ open, isComics }: {
   const shouldHidePages = false
   const currentBeginReadingItemIndex = pagination?.begin.readingItemIndex || 0
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [pagination?.begin.absolutePageIndex, pagination?.end.absolutePageIndex].sort()
-  const toggleSettings = useToggleSettings()
 
   const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>['begin']['chapterInfo']): string => {
     if (chapterInfo?.subChapter) {
@@ -82,7 +82,7 @@ export const QuickMenu = ({ open, isComics }: {
               {!isComics && <IconButton icon={<QuestionOutlineIcon />} aria-label="help" onClick={onHelpClick} marginRight={1} />}
               {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />}
               {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
-              <IconButton icon={<SettingsIcon />} onClick={toggleSettings} aria-label="settings" />
+              <IconButton icon={<SettingsIcon />} onClick={onSettingsClick} aria-label="settings" />
             </div>
           )}
           middleElement={bookTitle}

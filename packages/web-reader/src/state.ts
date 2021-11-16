@@ -1,6 +1,8 @@
 import { atom, selector, useRecoilCallback } from "recoil";
 import { Reader, Manifest } from "@prose-reader/core";
 import { useEffect } from "react";
+import { ReaderInstance } from "./types";
+import { ObservedValueOf } from "rxjs";
 
 export const isSearchOpenState = atom({
   key: `isSearchOpenState`,
@@ -36,6 +38,16 @@ export const manifestState = atom<Manifest | undefined>({
 
 export const paginationState = atom<ReturnType<Reader['pagination']['getInfo']> | undefined>({
   key: `paginationState`,
+  default: undefined
+})
+
+export const readerSettingsState = atom<ObservedValueOf<ReaderInstance['$']['settings$']> | undefined>({
+  key: `readerSettingsState`,
+  default: undefined
+})
+
+export const readerStateState = atom<ObservedValueOf<ReaderInstance['$']['state$']> | undefined>({
+  key: `readerStateState`,
   default: undefined
 })
 

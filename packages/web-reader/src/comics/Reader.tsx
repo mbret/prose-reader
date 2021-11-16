@@ -5,8 +5,8 @@ import { useGestureHandler } from "./useGestureHandler";
 import { Reader as ReactReader } from "@prose-reader/react";
 import { composeEnhancer } from "@prose-reader/core";
 import { QuickMenu } from '../QuickMenu';
-import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
-import { Settings, settingsState } from '../Settings'
+import { bookReadyState, isMenuOpenState, manifestState, paginationState, readerSettingsState, useResetStateOnUnMount } from '../state';
+import { ComicsSettings } from './ComicsSettings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from './types';
 import { useBookmarks } from '../useBookmarks';
@@ -22,9 +22,10 @@ type ReactReaderProps = ComponentProps<typeof ReactReader>
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
   const { url = `` } = useParams<`url`>();
   const query = new URLSearchParams(window.location.search)
+  const { computedPageTurnMode } = useRecoilValue(readerSettingsState) || {}
   const isUsingVerticalScrolling = query.has('vertical')
-  const isUsingFreeScroll = query.has('free')
-  const settings = useRecoilValue(settingsState)
+  const isUsingFreeScroll = query.has('free') || computedPageTurnMode === `scrollable`
+  const [isSettingsOpen, setIsSettingsOpen] = useState(true)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
@@ -35,7 +36,6 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
     pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
-    pageTurnMode: isUsingFreeScroll ? `free` : `controlled`,
     layoutAutoResize: `container`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)
@@ -113,9 +113,10 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
       <HighlightMenu />
       <QuickMenu
         open={isMenuOpen}
+        onSettingsClick={() => setIsSettingsOpen(true)}
         isComics
       />
-      {/* {settings && reader && <Settings reader={reader} />} */}
+      {reader && <ComicsSettings reader={reader} open={isSettingsOpen} onExit={() => setIsSettingsOpen(false)} />}
     </>
   )
 }

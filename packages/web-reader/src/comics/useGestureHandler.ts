@@ -1,6 +1,6 @@
 import * as Hammer from 'hammerjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useRecoilCallback, useSetRecoilState } from 'recoil'
+import { useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
 import { isMenuOpenState } from '../state'
 

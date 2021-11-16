@@ -9,7 +9,6 @@ export const createApp = async () => {
     const reader = createReader({
         containerElement: container,
         pageTurnAnimation: `slide`
-        // pageTurnAnimation: `fade`
     })
 
     createHammerInteraction(container, reader)

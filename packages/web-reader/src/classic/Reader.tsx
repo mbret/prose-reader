@@ -6,7 +6,7 @@ import { Reader as ReactReader } from "@prose-reader/react";
 import { composeEnhancer } from "@prose-reader/core";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
-import { Settings, settingsState } from '../Settings'
+import { Settings, settingsState, useToggleSettings } from './Settings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from '../types';
 import { useBookmarks } from '../useBookmarks';
@@ -28,6 +28,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const { url = `` } = useParams<`url`>();
   const settings = useRecoilValue(settingsState)
   const reader = useReader()
+  const toggleSettings = useToggleSettings()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const setPaginationState = useSetRecoilState(paginationState)
@@ -147,6 +148,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
       <QuickMenu
         open={isMenuOpen}
         isComics={false}
+        onSettingsClick={toggleSettings}
       />
       {settings && reader && <Settings reader={reader} />}
       <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
