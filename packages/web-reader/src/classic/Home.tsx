@@ -41,7 +41,7 @@ const items = [
   },
   {
     name: `Accessibility-Tests-Mathematics.epub`,
-    type: `EN - RTL - RFL`
+    type: `EN - LTR - RFL`
   }
 ]
 
@@ -154,8 +154,8 @@ export const Home = () => {
               <Tr key={name}>
                 <Td ><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
                 <Td >
-                  {type.split(` - `).map(e => (
-                    <Text as="span" mr={2} whiteSpace="nowrap">{e}</Text>
+                  {type.split(` - `).map((e, i) => (
+                    <Text key={i} as="span" mr={2} whiteSpace="nowrap">{e}</Text>
                   ))}
                 </Td>
               </Tr>
