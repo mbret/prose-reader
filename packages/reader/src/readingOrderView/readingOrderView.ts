@@ -503,8 +503,6 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
 
 const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
   const element: HTMLElement = doc.createElement(`div`)
-  element.id = `ReadingOrderView`
-  element.className = `ReadingOrderView`
   element.style.cssText = `
     height: 100%;
     position: relative;
