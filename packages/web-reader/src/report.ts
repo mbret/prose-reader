@@ -1,10 +1,14 @@
 import { PROJECT_NAME } from "./constants.shared";
 
+const IS_DEVELOPMENT = process.env.NODE_ENV === `development`
+
 export const Report = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    // eslint-disable-next-line no-console
-    console.log(`[${PROJECT_NAME}]`, ...data);
+    if (IS_DEVELOPMENT) {
+      // eslint-disable-next-line no-console
+      console.log(`[${PROJECT_NAME}]`, ...data);
+    }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
