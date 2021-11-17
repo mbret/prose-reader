@@ -64,7 +64,6 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
   }
 
   const manipulateReadingItems = (cb: (payload: ManipulableReadingItemCallbackPayload & { index: number }) => RequireLayout) => {
-    // const a = performance.now()
     let shouldLayout = false
     readingItemManager.getAll().forEach((item, index) => {
       shouldLayout = item.manipulateReadingItem((opts) => cb({ index, ...opts })) || shouldLayout
@@ -73,8 +72,6 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
     if (shouldLayout) {
       readingItemManager.layout()
     }
-    // const b = performance.now()
-    // console.log(`manipulateReadingItems`, `${b - a}ms`)
   }
 
   /**
@@ -100,7 +97,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
   const layout$ = merge(layoutSubject$, layoutOnSettingChanges$)
     .pipe(
       tap(() => {
-        if (context.getSettings().computedPageTurnMode === `free`) {
+        if (context.getSettings().computedPageTurnMode === `scrollable`) {
           containerElement.style.overflow = `hidden`
           containerElement.style.overflowY = `scroll`
         } else {
@@ -108,8 +105,8 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
           containerElement.style.removeProperty(`overflowY`)
         }
 
-        readingItemManager.layout()
         viewportNavigator.layout()
+        readingItemManager.layout()
       }),
       share()
     )

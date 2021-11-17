@@ -1,5 +1,5 @@
-import { BehaviorSubject, EMPTY, from, fromEvent, Observable, of, Subject } from "rxjs"
-import { exhaustMap, filter, map, mapTo, mergeMap, share, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { BehaviorSubject, EMPTY, from, fromEvent, merge, Observable, of, Subject } from "rxjs"
+import { exhaustMap, filter, map, mapTo, mergeMap, share, take, takeUntil, delay, tap, withLatestFrom, switchMap, distinctUntilChanged } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
 import { Context } from "../../context"
@@ -11,13 +11,8 @@ import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
-export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks$, context, viewportState$ }: {
+export const createLoader = ({ item, parent, fetchResource, hooks$, context, viewportState$ }: {
   item: Manifest[`spineItems`][number],
-  stateSubject$: BehaviorSubject<{
-    isReady: boolean,
-    isLoading: boolean,
-    frameLoaded: boolean
-  }>,
   parent: HTMLElement,
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>,
   hooks$: Observable<Hook[]>,
@@ -28,32 +23,32 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
   const loadSubject$ = new Subject<void>()
   const unloadSubject$ = new Subject<void>()
   const frameElementSubject$ = new BehaviorSubject<HTMLIFrameElement | undefined>(undefined)
+  const isLoadedSubject$ = new BehaviorSubject(false)
+  const isReadySubject$ = new BehaviorSubject(false)
   let hookDestroyFunctions: ReturnType<Extract<Hook, { name: `item.onLoad` }>[`fn`]>[] = []
   let computedStyleAfterLoad: CSSStyleDeclaration | undefined
+
+  const makeItHot = <T>(source$: Observable<T>) => {
+    source$.pipe(takeUntil(context.$.destroy$)).subscribe()
+
+    return source$
+  }
 
   const getHtmlFromResource = (response: Response) => {
     return createHtmlPageFromResource(response, item)
   }
 
-  const getManipulableFrame = () => {
-    const frame = frameElementSubject$.getValue()
-    if (stateSubject$.getValue().frameLoaded && frame) {
-      return createFrameManipulator(frame)
-    }
-  }
-
   const waitForViewportFree$ = viewportState$.pipe(filter(v => v === `free`), take(1))
 
+  /**
+   * Observable for loading the frame
+   */
   const load$ = loadSubject$.asObservable()
     .pipe(
+      withLatestFrom(isLoadedSubject$),
+      filter(([_, isLoaded]) => !isLoaded),
       // let's ignore later load as long as the first one still runs
       exhaustMap(() => {
-        stateSubject$.next({
-          isLoading: true,
-          isReady: false,
-          frameLoaded: false
-        })
-
         return createFrame$()
           .pipe(
             mergeMap((frame) => waitForViewportFree$.pipe(mapTo(frame))),
@@ -100,15 +95,9 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
 
               frame.setAttribute(`sandbox`, `allow-same-origin allow-scripts`)
 
-              // fromEvent(frame, `DOMFrameContentLoaded`)
-              //   .pipe(
-              //     tap(() => {
-              //       debugger
-              //     })
-              //   ).subscribe()
-
               return fromEvent(frame, `load`)
                 .pipe(
+                  take(1),
                   withLatestFrom(hooks$),
                   mergeMap(([_, hooks]) => {
                     const body: HTMLElement | undefined | null = frame.contentDocument?.body
@@ -116,7 +105,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                     if (!body) {
                       Report.error(`Something went wrong on iframe load ${item.id}`)
 
-                      return of(undefined)
+                      return EMPTY
                     }
                     // console.log(frame.contentDocument?.head.childNodes)
                     // console.log(frame.contentDocument?.body.childNodes)
@@ -138,17 +127,12 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                       computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
                     }
 
-                    if (context.getSettings().computedPageTurnMode !== `free`) {
+                    if (context.getSettings().computedPageTurnMode !== `scrollable`) {
                       // @todo see what's the impact
                       frame.setAttribute(`tab-index`, `0`)
                     }
 
-                    stateSubject$.next({
-                      ...stateSubject$.getValue(),
-                      frameLoaded: true
-                    })
-
-                    const manipulableFrame = getManipulableFrame()
+                    const manipulableFrame = createFrameManipulator(frame)
 
                     hookDestroyFunctions = hooks
                       .filter(isOnLoadHook)
@@ -158,18 +142,7 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
                     // in addition to be ready.
                     // domReadySubject$.next(frame)
 
-                    return from(frame.contentDocument?.fonts.ready || of(undefined))
-                      .pipe(
-                        tap(() => {
-                          // @todo hook onContentReady, dom is ready + first fonts are ready. we can assume is kind of already good enough
-
-                          stateSubject$.next({
-                            ...stateSubject$.getValue(),
-                            isLoading: false,
-                            isReady: true
-                          })
-                        })
-                      )
+                    return of(frame)
                   })
                 )
             }),
@@ -178,21 +151,33 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
           )
       }),
       share(),
+      makeItHot,
       takeUntil(destroySubject$)
     )
 
-  load$.subscribe()
+  /**
+   * Observable for when the frame is:
+   * - loaded
+   * - ready
+   */
+  const ready$ = load$
+    .pipe(
+      switchMap((frame) =>
+        from(frame?.contentDocument?.fonts.ready || of(undefined))
+          .pipe(
+            takeUntil(unloadSubject$)
+          )
+      ),
+      share(),
+      makeItHot,
+      takeUntil(destroySubject$)
+    )
 
   const unload$ = unloadSubject$.asObservable()
     .pipe(
       withLatestFrom(frameElementSubject$),
       filter(([_, frame]) => !!frame),
       exhaustMap(() => {
-        stateSubject$.next({
-          isLoading: false,
-          isReady: false,
-          frameLoaded: false
-        })
         hookDestroyFunctions.forEach(fn => fn && fn())
         frameElementSubject$.getValue()?.remove()
         frameElementSubject$.next(undefined)
@@ -207,6 +192,20 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
       takeUntil(destroySubject$)
     )
 
+  merge(load$.pipe(mapTo(true)), unloadSubject$.pipe(mapTo(false)))
+    .pipe(
+      distinctUntilChanged(),
+      takeUntil(destroySubject$)
+    )
+    .subscribe(isLoadedSubject$)
+
+  merge(ready$.pipe(mapTo(true)), unloadSubject$.pipe(mapTo(false)))
+    .pipe(
+      distinctUntilChanged(),
+      takeUntil(destroySubject$)
+    )
+    .subscribe(isReadySubject$)
+
   unload$.subscribe()
 
   return {
@@ -218,12 +217,19 @@ export const createLoader = ({ item, stateSubject$, parent, fetchResource, hooks
       frameElementSubject$.complete()
       destroySubject$.next()
       destroySubject$.complete()
+      isReadySubject$.complete()
+      isLoadedSubject$.complete()
     },
     getComputedStyleAfterLoad: () => computedStyleAfterLoad,
-    load$: loadSubject$.asObservable(),
-    unload$: unloadSubject$.asObservable(),
-    loaded$: load$,
-    unloaded$: unload$,
-    frameElement$: frameElementSubject$
+    $: {
+      load$: loadSubject$.asObservable(),
+      unload$: unloadSubject$.asObservable(),
+      loaded$: load$,
+      isLoaded$: isLoadedSubject$.asObservable(),
+      isReady$: isReadySubject$.asObservable(),
+      ready$: ready$,
+      unloaded$: unload$,
+      frameElement$: frameElementSubject$
+    }
   }
 }

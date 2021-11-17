@@ -6,11 +6,12 @@ import { createLocationResolver } from "../locationResolver"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, Observable, of, Subject } from "rxjs"
 import { ReadingItem } from "../../readingItem"
-import { debounceTime, delay, distinctUntilChanged, filter, map, pairwise, share, shareReplay, startWith, switchMap, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { delay, distinctUntilChanged, filter, map, pairwise, share, shareReplay, startWith, switchMap, takeUntil, tap, withLatestFrom, skip } from "rxjs/operators"
 import { createCfiLocator } from "../cfiLocator"
-import { createScrollViewportNavigator, SCROLL_FINISHED_DEBOUNCE_TIMEOUT } from "./scrollViewportNavigator"
+import { createScrollViewportNavigator } from "./scrollViewportNavigator"
 import { createManualViewportNavigator } from "./manualViewportNavigator"
 import { Hook } from "../../types/Hook"
+import { createPanViewportNavigator } from "./panViewportNavigator"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -23,7 +24,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   locator: ReturnType<typeof createLocationResolver>,
   hooks$: Observable<Hook[]>
 }) => {
-  let currentViewportPositionMemo: { x: number, y: number } | undefined
+  let currentViewportPositionMemoUnused: { x: number, y: number } | undefined
   /**
    * This position correspond to the current navigation position.
    * This is always sync with navigation and adjustment but IS NOT necessarily
@@ -34,12 +35,54 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   let currentNavigationPosition: ViewportNavigationEntry = { x: -1, y: 0 }
   const currentNavigationSubject$ = new BehaviorSubject(currentNavigationPosition)
   const navigator = createNavigationResolver({ context, readingItemManager, cfiLocator, locator })
+  const adjustNavigationSubject$ = new Subject<{ position: ViewportNavigationEntry, animate: boolean }>()
+
+  /**
+   * Keep in mind that the viewport position IS NOT necessarily the current navigation position.
+   * Because there could be an animation running the viewport may be late. To retrieve the current position
+   * use the dedicated property.
+   */
+  const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
+    if (currentViewportPositionMemoUnused && currentViewportPositionMemoUnused?.x !== (~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10)) {
+      // console.error(`FOOOOO`, currentViewportPositionMemo?.x, ~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10)
+    }
+    // if (currentViewportPositionMemo) return currentViewportPositionMemo
+
+    if (context.getSettings().computedPageTurnMode === `scrollable`) {
+      const newValue = { x: element.scrollLeft, y: element.scrollTop }
+      currentViewportPositionMemoUnused = newValue
+
+      return currentViewportPositionMemoUnused
+    }
+
+    const { x, y } = element.getBoundingClientRect()
+
+    const newValue = {
+      // we want to round to first decimal because it's possible to have half pixel
+      // however browser engine can also gives back x.yyyy based on their precision
+      // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
+      x: ~~(Math.abs(x) * 10) / 10,
+      y: ~~(Math.abs(y) * 10) / 10
+    }
+    currentViewportPositionMemoUnused = newValue
+
+    return currentViewportPositionMemoUnused
+  })
+
+  const panViewportNavigator = createPanViewportNavigator({
+    context,
+    element,
+    navigator,
+    readingItemManager,
+    locator,
+    getCurrentViewportPosition,
+    currentNavigationSubject$
+  })
   const scrollViewportNavigator = createScrollViewportNavigator({ context, element, navigator, currentNavigationSubject$ })
   const manualViewportNavigator = createManualViewportNavigator({ context, element, navigator, currentNavigationSubject$, readingItemManager, locator })
-  const moveToSubject$ = new Subject<{ position: ViewportNavigationEntry, animation: `auto` | `none` }>()
-  const navigateToSubject$ = new Subject<{ x: number, y: number, readingItem?: ReadingItem, animate?: boolean }>()
-  const adjustNavigationSubject$ = new Subject<{ position: ViewportNavigationEntry, animate: boolean }>()
-  const panSubject$ = new BehaviorSubject<`moving` | `end` | `start`>(`end`)
+
+  const viewportNavigators = [scrollViewportNavigator, panViewportNavigator, manualViewportNavigator]
+  const viewportNavigatorsSharedState$ = merge(...viewportNavigators.map(({ $: { state$ } }) => state$))
 
   let lastUserExpectedNavigation:
     | undefined
@@ -52,7 +95,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     // always adjust using this anchor
     | { type: `navigate-from-anchor`, data: string }
 
-  const makeHot = <T>(source$: Observable<T>) => {
+  const makeItHot = <T>(source$: Observable<T>) => {
     source$.pipe(takeUntil(context.$.destroy$)).subscribe()
 
     return source$
@@ -63,16 +106,18 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * for remark about flicker / fonts smoothing
    */
   const adjustReadingOffset = Report.measurePerformance(`adjustReadingOffset`, 2, ({ x, y }: { x: number, y: number }, hooks: Hook[]) => {
-    currentViewportPositionMemo = undefined
+    currentViewportPositionMemoUnused = undefined
 
-    if (context.getSettings().computedPageTurnMode === `controlled`) {
+    const isAdjusted = viewportNavigators.reduce((isAdjusted, navigator) => {
+      return navigator.adjustReadingOffset({ x, y }) || isAdjusted
+    }, false)
+
+    if (!isAdjusted) {
       if (context.isRTL()) {
         element.style.transform = `translate3d(${x}px, -${y}px, 0)`
       } else {
         element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
       }
-    } else {
-      scrollViewportNavigator.adjustReadingOffset({ x, y })
     }
 
     hooks.forEach(hook => {
@@ -81,113 +126,6 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       }
     })
   }, { disable: true })
-
-  /**
-   * Keep in mind that the viewport position IS NOT necessarily the current navigation position.
-   * Because there could be an animation running the viewport may be late. To retrieve the current position
-   * use the dedicated property.
-   */
-  const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
-    if (currentViewportPositionMemo && currentViewportPositionMemo?.x !== (~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10)) {
-      // console.error(`FOOOOO`, currentViewportPositionMemo?.x, ~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10)
-    }
-    // if (currentViewportPositionMemo) return currentViewportPositionMemo
-
-    if (context.getSettings().computedPageTurnMode === `free`) {
-      const newValue = { x: element.scrollLeft, y: element.scrollTop }
-      currentViewportPositionMemo = newValue
-
-      return currentViewportPositionMemo
-    }
-
-    const { x, y } = element.getBoundingClientRect()
-
-    const newValue = {
-      // we want to round to first decimal because it's possible to have half pixel
-      // however browser engine can also gives back x.yyyy based on their precision
-      // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
-      x: ~~(Math.abs(x) * 10) / 10,
-      y: ~~(Math.abs(y) * 10) / 10
-    }
-    currentViewportPositionMemo = newValue
-
-    return currentViewportPositionMemo
-  })
-
-  let movingLastDelta = { x: 0, y: 0 }
-  let movingLastPosition = { x: 0, y: 0 }
-
-  /**
-   * @prototype
-   */
-  const moveTo = Report.measurePerformance(`${NAMESPACE} moveTo`, 5, (delta: { x: number, y: number } | undefined, { final, start }: { start?: boolean, final?: boolean } = {}) => {
-    if (context.getSettings().computedPageTurnMode === `free`) {
-      Report.warn(`pan control is not available on free page turn mode`)
-      return
-    }
-
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
-
-    if (start) {
-      panSubject$.next(`start`)
-      movingLastDelta = { x: 0, y: 0 }
-      movingLastPosition = getCurrentViewportPosition()
-    }
-
-    // console.log(`FOOOO`, { delta: delta?.x, final, start, movingLastPosition: movingLastPosition.x, nav: currentNavigationPosition.x })
-
-    let navigation = currentNavigationPosition
-
-    if (delta) {
-      const correctedX = delta.x - (movingLastDelta?.x || 0)
-      const correctedY = delta.y - (movingLastDelta?.y || 0)
-
-      navigation = navigator.wrapPositionWithSafeEdge({
-        x: pageTurnDirection === `horizontal`
-          ? context.isRTL()
-            ? movingLastPosition.x + correctedX
-            : movingLastPosition.x - correctedX
-          : 0,
-        y: pageTurnDirection === `horizontal` ? 0 : movingLastPosition.y - correctedY
-      })
-
-      movingLastDelta = delta
-    } else {
-      navigation = getCurrentViewportPosition()
-    }
-
-    movingLastPosition = navigation
-
-    if (final) {
-      const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
-      const triggerPercentage = movingForward ? 0.7 : 0.3
-      movingLastDelta = { x: 0, y: 0 }
-      const triggerXPosition = pageTurnDirection === `horizontal`
-        ? navigation.x + (context.getVisibleAreaRect().width * triggerPercentage)
-        : 0
-      const triggerYPosition = pageTurnDirection === `horizontal`
-        ? 0
-        : navigation.y + (context.getVisibleAreaRect().height * triggerPercentage)
-      const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
-      const finalNavigation = navigator.getNavigationForPosition(midScreenPositionSafePosition)
-
-      // console.warn({ navigation, triggerXPosition, triggerYPosition, finalNavigation, movingForward, triggerPercentage })
-
-      lastUserExpectedNavigation = undefined
-
-      // console.warn('MOVE TO END')
-      const turnValue = manualViewportNavigator.turnTo(finalNavigation)
-      if (turnValue) {
-        navigateToSubject$.next(turnValue)
-      }
-      panSubject$.next(`end`)
-
-      return
-    }
-
-    moveToSubject$.next({ position: navigation, animation: `none` })
-    panSubject$.next(`moving`)
-  }, { disable: false })
 
   /**
    * Verify that current offset is within the current reading item and is at
@@ -206,7 +144,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     let adjustedReadingOrderViewPosition = currentNavigationPosition
     const offsetInReadingItem = 0
 
-    if (context.getSettings().computedPageTurnMode === `free`) {
+    if (context.getSettings().computedPageTurnMode === `scrollable`) {
       adjustedReadingOrderViewPosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
     } else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
       /**
@@ -269,30 +207,52 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
   }
 
   const layout = () => {
-    currentViewportPositionMemo = undefined
+    currentViewportPositionMemoUnused = undefined
 
-    if (context.getSettings().computedPageTurnMode === `free`) {
-      element.style.transform = `translate3d(0px, 0px, 0)`
+    if (context.getSettings().computedPageTurnMode === `scrollable`) {
+      element.style.removeProperty(`transform`)
+      element.style.removeProperty(`transition`)
     }
   }
 
-  const navigation$ = merge(
-    merge(navigateToSubject$, manualViewportNavigator.$.navigation$)
+  const navigation$: Observable<{
+    position: { x: number, y: number, readingItem?: ReadingItem },
+    triggeredBy: `manual` | `adjust` | `scroll`,
+    animation: false | `turn` | `snap`
+  }> = merge(
+    panViewportNavigator.$.navigation$
       .pipe(
         map((event) => ({
           ...event,
           position: { x: event.x, y: event.y, readingItem: event.readingItem },
-          animate: event.animate ?? true,
+          animation: `snap` as const,
+          triggeredBy: `manual` as const
+        }))
+      ),
+    manualViewportNavigator.$.navigation$
+      .pipe(
+        map((event) => ({
+          ...event,
+          position: { x: event.x, y: event.y, readingItem: event.readingItem },
+          animation: event.animate ? `turn` as const : false as false,
           triggeredBy: `manual` as const
         }))
       ),
     adjustNavigationSubject$
       .pipe(
-        map((event) => ({ ...event, triggeredBy: `adjust` as const }))
+        map((event) => ({
+          ...event,
+          triggeredBy: `adjust` as const,
+          animation: event.animate ? `turn` as const : false as false
+        }))
       ),
-    scrollViewportNavigator.$.navigationOnScroll$
+    scrollViewportNavigator.$.navigation$
       .pipe(
-        map((event) => ({ ...event, triggeredBy: `scroll` as const }))
+        map((event) => ({
+          ...event,
+          triggeredBy: `scroll` as const,
+          animation: event.animate ? `turn` as const : false as false
+        }))
       )
   )
     .pipe(
@@ -307,14 +267,18 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       takeUntil(context.$.destroy$)
     )
 
-  navigation$.subscribe()
-
+  /**
+   * Typically all manual navigation (user turn, user end of pan, etc).
+   * We try to filter out all navigation that are asynchrone such as scrolling.
+   * This is because we do not want to trigger adjust for them since they already adjust
+   * the viewport on their own.
+   */
   const navigationWhichRequireManualAdjust$ = navigation$
     .pipe(
       filter(({ triggeredBy }) => {
         if (
           triggeredBy === `scroll` ||
-          (context.getSettings().computedPageTurnMode === `free` && triggeredBy === `adjust`)
+          (context.getSettings().computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)
         ) {
           return false
         } else {
@@ -324,48 +288,32 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     )
 
   const manualAdjust$ = merge(
-    moveToSubject$.asObservable(),
-    navigationWhichRequireManualAdjust$
+    panViewportNavigator.$.moveToSubject$.asObservable()
       .pipe(
-        map((event) => ({ position: event.position, animation: event.animate ? `auto` : `none` }))
-      )
+        map(event => ({ ...event, animation: false as false }))
+      ),
+    navigationWhichRequireManualAdjust$
   )
     .pipe(
       map(({ animation, position }) => {
-        // console.log(`manualAdjust$`, { animation })
         const shouldAnimate =
-          !((animation === `none`) ||
-            // || ongoingNavigation?.animate === false
-            // || !ongoingNavigation
-            context.getSettings().pageTurnAnimation === `none`)
+          !(
+            !animation ||
+            (animation === `turn` && context.getSettings().computedPageTurnAnimation === `none`)
+          )
 
         return {
           type: `manualAdjust` as const,
-          animate: shouldAnimate,
+          shouldAnimate,
+          animation,
           position
         }
       }),
       share()
     )
 
-  const processUserScrollAdjust$ = scrollViewportNavigator.$.userScroll$
-    .pipe(
-      tap(() => {
-        currentViewportPositionMemo = undefined
-      }),
-      debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
-      share(),
-      takeUntil(context.$.destroy$)
-    )
-
-  processUserScrollAdjust$.subscribe()
-
   const processManualAdjust$ = merge(
-    manualAdjust$,
-    scrollViewportNavigator.$.userScroll$
-      .pipe(
-        map(() => ({ type: `scroll` as const }))
-      )
+    manualAdjust$
   )
     .pipe(
       startWith(undefined),
@@ -380,8 +328,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
       switchMap(([, currentEvent]) => {
         if (currentEvent?.type !== `manualAdjust`) return EMPTY
 
-        // console.log('processAdjust$', currentEvent)
-        const animationDuration = context.getSettings().computedPageTurnAnimationDuration
+        const animationDuration = currentEvent.animation === `snap`
+          ? context.getSettings().computedSnapAnimationDuration
+          : context.getSettings().computedPageTurnAnimationDuration
+        const pageTurnAnimation = currentEvent.animation === `snap`
+          ? `slide` as const
+          : context.getSettings().computedPageTurnAnimation
 
         return of(currentEvent)
           .pipe(
@@ -393,17 +345,16 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
              * anything for x ms while we effectively adjust. We want it to be immediate.
              * However when user is repeatedly turning page, we can improve smoothness by delaying a bit the adjustment
              */
-            currentEvent.animate ? delay(1, animationFrameScheduler) : identity,
+            currentEvent.shouldAnimate ? delay(1, animationFrameScheduler) : identity,
             tap((data) => {
               // const noAdjustmentNeeded = !areNavigationDifferent(data.position, getCurrentViewportPosition())
               const noAdjustmentNeeded = false
-              // console.log(data.animate, noAdjustmentNeeded)
 
-              if (data.animate && !noAdjustmentNeeded) {
-                if (context.getSettings().pageTurnAnimation === `fade`) {
+              if (data.shouldAnimate && !noAdjustmentNeeded) {
+                if (pageTurnAnimation === `fade`) {
                   element.style.setProperty(`transition`, `opacity ${animationDuration / 2}ms`)
                   element.style.setProperty(`opacity`, `0`)
-                } else if (context.getSettings().pageTurnAnimation === `slide`) {
+                } else if (currentEvent.animation === `snap` || pageTurnAnimation === `slide`) {
                   element.style.setProperty(`transition`, `transform ${animationDuration}ms`)
                   element.style.setProperty(`opacity`, `1`)
                 }
@@ -422,47 +373,49 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
              */
             withLatestFrom(hooks$),
             tap(([data, hooks]) => {
-              if (context.getSettings().pageTurnAnimation !== `fade`) {
+              if (pageTurnAnimation !== `fade`) {
                 adjustReadingOffset(data.position, hooks)
               }
             }),
-            currentEvent.animate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
+            currentEvent.shouldAnimate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
             tap(([data, hooks]) => {
-              if (context.getSettings().pageTurnAnimation === `fade`) {
+              if (pageTurnAnimation === `fade`) {
                 adjustReadingOffset(data.position, hooks)
                 element.style.setProperty(`opacity`, `1`)
               }
             }),
-            currentEvent.animate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
+            currentEvent.shouldAnimate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
             tap(([data, hooks]) => {
-              if (context.getSettings().pageTurnAnimation === `fade`) {
+              if (pageTurnAnimation === `fade`) {
                 adjustReadingOffset(data.position, hooks)
               }
             }),
-            takeUntil(scrollViewportNavigator.$.userScroll$)
+            takeUntil(
+              viewportNavigatorsSharedState$.pipe(
+                filter(state => state === `start`),
+                skip(1)
+              )
+            )
           )
       }),
       share(),
       takeUntil(context.$.destroy$)
     )
 
-  processManualAdjust$.subscribe()
-
   /**
    * Observe the state of adjustment.
    * This is used to know whether the viewport is being adjusted by whatever means.
    */
   const adjustmentState$ = merge(
-    merge(scrollViewportNavigator.$.userScroll$, manualAdjust$)
+    merge(manualAdjust$)
       .pipe(
-        map(() => ({ type: `start` as const }))
+        map(() => `start` as const)
       ),
     merge(
-      processUserScrollAdjust$,
-      processManualAdjust$.pipe(delay(0)) // make sure it happens after manual adjust
+      processManualAdjust$
     )
       .pipe(
-        map(() => ({ type: `end` as const }))
+        map(() => `end` as const)
       )
   )
 
@@ -477,12 +430,11 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    * busy means the viewport is either controlled or animated, etc.
    */
   const state$ = combineLatest([
-    panSubject$.asObservable(),
-    adjustmentState$.pipe(startWith({ type: `end` as const }))
+    ...viewportNavigators.map(({ $: { state$ } }) => state$),
+    adjustmentState$
   ])
     .pipe(
-      // tap((e) => console.log(`state$`, e)),
-      map(([pan, adjust]) => pan === `end` && adjust.type === `end` ? `free` : `busy`),
+      map((states) => states.every(state => state === `end`) ? `free` : `busy`),
       distinctUntilChanged(),
       shareReplay(1),
       /**
@@ -491,17 +443,12 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
        * hot so it always have the correct value no matter when someone subscribe later.
        * We cannot wait for the cold stream to start after a navigation already happened for example.
        */
-      makeHot
+      makeItHot
     )
-
-  // adjustmentState$.subscribe(e => console.log(`adjustmentState$`, e))
-  // state$.subscribe(e => console.log(`state$`, e))
 
   const destroy = () => {
     adjustNavigationSubject$.complete()
-    navigateToSubject$.complete()
-    moveToSubject$.complete()
-    panSubject$.complete()
+    viewportNavigators.forEach(navigator => navigator.destroy())
   }
 
   return {
@@ -517,7 +464,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     goToCfi: manualViewportNavigator.goToCfi,
     goToPageOfCurrentChapter: manualViewportNavigator.goToPageOfCurrentChapter,
     adjustNavigation,
-    moveTo,
+    moveTo: panViewportNavigator.moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     $: {
       state$,

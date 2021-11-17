@@ -3,7 +3,7 @@ import { Manifest } from "../../types"
 import { Context } from "../../context"
 import { getAttributeValueFromString } from "../../frames"
 import { Hook } from "../../types/Hook"
-import { distinctUntilChanged, map } from "rxjs/operators"
+import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
@@ -17,26 +17,32 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
-  const stateSubject$ = new BehaviorSubject({
-    isReady: false,
-    isLoading: false,
-    frameLoaded: false
-  })
 
   const {
-    unload$,
-    loaded$,
-    unloaded$,
+    $: {
+      unload$,
+      loaded$,
+      isLoaded$,
+      isReady$,
+      unloaded$,
+      frameElement$,
+      ready$
+    },
     load,
     unload,
     destroy: loaderDestroy,
-    getComputedStyleAfterLoad,
-    frameElement$
-  } = createLoader({ context, hooks$, item, parent, stateSubject$, fetchResource, viewportState$ })
+    getComputedStyleAfterLoad
+  } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$ })
+
+  const isLoadedSubject$ = new BehaviorSubject(false)
+  const isReadySubject$ = new BehaviorSubject(false)
+
+  isLoaded$.subscribe(isLoadedSubject$)
+  isReady$.subscribe(isReadySubject$)
 
   const getManipulableFrame = () => {
     const frame = frameElement$.getValue()
-    if (stateSubject$.getValue().frameLoaded && frame) {
+    if (isLoadedSubject$.value && frame) {
       return createFrameManipulator(frame)
     }
   }
@@ -84,15 +90,22 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
       .pipe(
         map(() => ({ isFirstLayout: false }))
       ),
-    loaded$
+    ready$
       .pipe(
         map(() => ({ isFirstLayout: true }))
       )
   )
 
+  const destroy = () => {
+    unload()
+    loaderDestroy()
+    destroySubject$.next()
+    destroySubject$.complete()
+  }
+
   return {
-    getIsLoaded: () => stateSubject$.getValue().frameLoaded,
-    getIsReady: () => stateSubject$.getValue().isReady,
+    getIsLoaded: () => isLoadedSubject$.value,
+    getIsReady: () => isReadySubject$.value,
     getViewportDimensions,
     getFrameElement: () => frameElement$.getValue(),
     getHtmlFromResource,
@@ -110,7 +123,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
         frame.style.width = `${size.width}px`
         frame.style.height = `${size.height}px`
 
-        if (context.getSettings().computedPageTurnMode !== `free`) {
+        if (context.getSettings().computedPageTurnMode !== `scrollable`) {
           // @todo see what's the impact
           frame.setAttribute(`tab-index`, `0`)
         }
@@ -132,26 +145,13 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
     },
     isUsingVerticalWriting,
     getWritingMode,
-    destroy: () => {
-      unload()
-      loaderDestroy()
-      stateSubject$.complete()
-      destroySubject$.next()
-      destroySubject$.complete()
-    },
+    destroy,
     $: {
       unload$: unload$,
       unloaded$: unloaded$,
-      isLoading$: stateSubject$.asObservable()
-        .pipe(
-          map(({ isLoading }) => isLoading),
-          distinctUntilChanged()
-        ),
-      isReady$: stateSubject$.asObservable()
-        .pipe(
-          map(({ isReady }) => isReady),
-          distinctUntilChanged()
-        ),
+      loaded$,
+      ready$,
+      isReady$: isReadySubject$.asObservable(),
       /**
        * This is used as upstream layout change. This event is being listened to by upper app
        * in order to layout again and adjust every element based on the new content.

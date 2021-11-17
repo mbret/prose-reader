@@ -24,6 +24,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
   readingItemManager: ReadingItemManager,
   locator: ReturnType<typeof createLocationResolver>,
 }) => {
+  const stateSubject$ = (new BehaviorSubject<`start` | `end`>(`end`))
   const navigationTriggerSubject$ = new Subject<
     | UrlNavigation
     | SpineItemNavigation
@@ -183,7 +184,34 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
       })
     )
 
+  const navigation$ = merge(
+    urlNavigation$,
+    spineItemNavigation$,
+    chapterPageNavigation$,
+    leftPageNavigation$,
+    rightPageNavigation$,
+    // for some reason after too much item ts complains
+    merge(
+      cfiNavigation$,
+      pageNavigation$
+    )
+  )
+    .pipe(
+      /**
+       * Ideally when manually navigating we expect the navigation to be different from the previous one.
+       * This is because manual navigation is not used with scroll where you can move within the same item. A manual
+       * navigation would theoretically always move to different items.
+       */
+      withLatestFrom(currentNavigationSubject$),
+      filter(([navigation, currentNavigation]) => navigator.areNavigationDifferent(navigation, currentNavigation)),
+      map(([navigation]) => navigation)
+    )
+
   return {
+    destroy: () => { },
+    adjustReadingOffset: (_: { x: number, y: number }) => {
+      return false
+    },
     turnLeft,
     turnRight,
     goToCfi,
@@ -192,28 +220,8 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     goToUrl,
     goToPage,
     $: {
-      navigation$: merge(
-        urlNavigation$,
-        spineItemNavigation$,
-        chapterPageNavigation$,
-        leftPageNavigation$,
-        rightPageNavigation$,
-        // for some reason after too much item ts complains
-        merge(
-          cfiNavigation$,
-          pageNavigation$
-        )
-      )
-        .pipe(
-          /**
-           * Ideally when manually navigating we expect the navigation to be different from the previous one.
-           * This is because manual navigation is not used with scroll where you can move within the same item. A manual
-           * navigation would theoretically always move to different items.
-           */
-          withLatestFrom(currentNavigationSubject$),
-          filter(([navigation, currentNavigation]) => navigator.areNavigationDifferent(navigation, currentNavigation)),
-          map(([navigation]) => navigation)
-        )
+      state$: stateSubject$.asObservable(),
+      navigation$
     }
   }
 }

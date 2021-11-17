@@ -96,12 +96,18 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
   const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
     if (right !== undefined) {
       containerElement.style.right = `${right}px`
+    } else {
+      containerElement.style.removeProperty(`right`)
     }
     if (left !== undefined) {
       containerElement.style.left = `${left}px`
+    } else {
+      containerElement.style.removeProperty(`left`)
     }
     if (top !== undefined) {
       containerElement.style.top = `${top}px`
+    } else {
+      containerElement.style.removeProperty(`top`)
     }
   }
 
@@ -269,7 +275,8 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     selectionTracker,
     fingerTracker,
     $: {
-      contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable()
+      contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable(),
+      loaded$: readingItemFrame.$.loaded$
     }
   }
 }

@@ -1,14 +1,15 @@
-import { BehaviorSubject, ObservedValueOf, Subject } from "rxjs"
+import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
 import { createPagination } from "./pagination"
 import { createReadingOrderView } from "./readingOrderView/readingOrderView"
 import { LoadOptions, Manifest } from "./types"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
-import { takeUntil, tap } from "rxjs/operators"
+import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
 import { createSelection } from "./selection"
 import { createReadingItemManager } from "./readingItemManager"
 import { Hook, RegisterHook } from "./types/Hook"
+import { isShallowEqual } from "./utils/objects"
 
 type Context = ReturnType<typeof createBookContext>
 type ContextSettings = Parameters<Context[`setSettings`]>[0]
@@ -23,8 +24,14 @@ type CreateReaderOptions = {
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
   const stateSubject$ = new BehaviorSubject<{
     supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
+    supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
+    supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+    supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
   }>({
-    supportedPageTurnAnimation: [`fade`, `none`, `scroll`, `slide`]
+    supportedPageTurnAnimation: [`fade`, `none`, `slide`],
+    supportedPageTurnMode: [`controlled`, `scrollable`],
+    supportedPageTurnDirection: [`horizontal`, `vertical`],
+    supportedComputedPageTurnDirection: [`horizontal`, `vertical`]
   })
   const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
@@ -134,24 +141,48 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     )
     .subscribe()
 
-  context.$.load$
+  merge(
+    context.$.load$,
+    context.$.settings$,
+    context.$.hasVerticalWriting$
+  )
     .pipe(
-      tap((manifest) => {
-        let supportedPageTurnAnimation: ObservedValueOf<typeof stateSubject$>[`supportedPageTurnAnimation`] = []
-        if (manifest.renditionFlow === `scrolled-continuous`) {
-          supportedPageTurnAnimation.push(`scroll`)
-        } else {
-          supportedPageTurnAnimation = stateSubject$.value.supportedPageTurnAnimation
-        }
+      mapTo(undefined),
+      withLatestFrom(context.$.hasVerticalWriting$),
+      map(([, hasVerticalWriting]) => {
+        const settings = context.getSettings()
+        const manifest = context.getManifest()
 
-        stateSubject$.next({
-          ...stateSubject$.value,
-          supportedPageTurnAnimation
-        })
+        return {
+          hasVerticalWriting,
+          renditionFlow: manifest?.renditionFlow,
+          renditionLayout: manifest?.renditionLayout,
+          computedPageTurnMode: settings.computedPageTurnMode
+        }
       }),
+      distinctUntilChanged(isShallowEqual),
+      map(({ hasVerticalWriting, renditionFlow, renditionLayout, computedPageTurnMode }): ObservedValueOf<typeof stateSubject$> => ({
+        ...stateSubject$.value,
+        supportedPageTurnMode:
+          renditionFlow === `scrolled-continuous`
+            ? [`scrollable`]
+            : !context.areAllItemsPrePaginated() ? [`controlled`] : [`controlled`, `scrollable`],
+        supportedPageTurnAnimation:
+          renditionFlow === `scrolled-continuous`
+            ? [`none`]
+            : hasVerticalWriting
+              ? [`fade`, `none`]
+              : [`fade`, `none`, `slide`],
+        supportedPageTurnDirection:
+          computedPageTurnMode === `scrollable`
+            ? [`vertical`]
+            : renditionLayout === `reflowable`
+              ? [`horizontal`]
+              : [`horizontal`, `vertical`]
+      })),
       takeUntil(destroy$)
     )
-    .subscribe()
+    .subscribe(stateSubject$)
 
   /**
    * Free up resources, and dispose the whole reader.
@@ -172,6 +203,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     element.remove()
     iframeEventBridgeElement.remove()
     readySubject$.complete()
+    stateSubject$.complete()
     selectionSubject$.complete()
     destroy$.next()
     destroy$.complete()

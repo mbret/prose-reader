@@ -84,7 +84,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
         const frameStyle = isImageType()
           ? buildStyleForReflowableImageOnly({
             isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
-            enableTouch: context.getSettings().computedPageTurnMode !== `free`
+            enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
           })
           : buildStyleWithMultiColumn(getDimensions(readingItemFrame.isUsingVerticalWriting(), minimumWidth))
 

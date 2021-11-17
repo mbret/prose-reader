@@ -1,16 +1,18 @@
 import { BehaviorSubject, Subject } from "rxjs"
+import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
 import { Report } from "./report"
 import { LoadOptions } from "./types"
 import { Manifest } from "@oboku/shared"
+import { isShallowEqual } from "./utils/objects"
 
 export type ContextObservableEvents = {}
 
-type Settings = {
+type PublicSettings = {
   forceSinglePageMode: boolean,
   pageTurnAnimation: `none` | `fade` | `slide`,
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`,
-  pageTurnMode: `controlled` | `free`,
+  pageTurnMode: `controlled` | `scrollable`
 }
 
 /**
@@ -20,32 +22,19 @@ type Settings = {
  * For example if the user decide to use horizontal page turn direction with scrolled content
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
-type InnerSettings = Settings & {
-  computedPageTurnMode: Settings[`pageTurnMode`],
-  computedPageTurnDirection: Settings[`pageTurnDirection`],
+type InnerSettings = PublicSettings & {
+  computedPageTurnMode: PublicSettings[`pageTurnMode`],
+  computedPageTurnDirection: PublicSettings[`pageTurnDirection`],
+  computedPageTurnAnimation: PublicSettings[`pageTurnAnimation`],
   computedPageTurnAnimationDuration: number,
+  computedSnapAnimationDuration: number,
 }
 
-export const createContext = (initialSettings: Partial<Settings>) => {
+export const createContext = (initialSettings: Partial<PublicSettings>) => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
-  let settings: InnerSettings = {
-    forceSinglePageMode: false,
-    pageTurnAnimation: `none`,
-    pageTurnDirection: `horizontal`,
-    pageTurnAnimationDuration: undefined,
-    pageTurnMode: `controlled`,
-    computedPageTurnMode: `controlled`,
-    computedPageTurnDirection: `horizontal`,
-    computedPageTurnAnimationDuration: 0,
-    ...initialSettings
-  }
-
-  updateComputedSettings(manifest, settings)
-
-  const settings$ = new BehaviorSubject(settings)
-  const subject = new Subject<ContextObservableEvents>()
-  const loadSubject$ = new Subject<void>()
+  const hasVerticalWritingSubject$ = new BehaviorSubject(false)
+  const loadSubject$ = new Subject<Manifest>()
   const visibleAreaRect = {
     width: 0,
     height: 0,
@@ -57,6 +46,21 @@ export const createContext = (initialSettings: Partial<Settings>) => {
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
+  const mergedSettings: InnerSettings = {
+    forceSinglePageMode: false,
+    pageTurnAnimation: `none`,
+    computedPageTurnAnimation: `none`,
+    pageTurnDirection: `horizontal`,
+    computedPageTurnDirection: `horizontal`,
+    pageTurnAnimationDuration: undefined,
+    computedPageTurnAnimationDuration: 0,
+    pageTurnMode: `controlled`,
+    computedPageTurnMode: `controlled`,
+    computedSnapAnimationDuration: 300,
+    ...initialSettings
+  }
+  updateComputedSettings(undefined, mergedSettings, hasVerticalWritingSubject$.value)
+  const settingsSubject$ = new BehaviorSubject(mergedSettings)
 
   /**
    * Global spread behavior
@@ -67,7 +71,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     const { height, width } = visibleAreaRect
     const isLandscape = width > height
 
-    if (settings.forceSinglePageMode) return false
+    if (settingsSubject$.value.forceSinglePageMode) return false
 
     /**
      * For now we don't support spread for reflowable & scrollable content since
@@ -96,11 +100,9 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     manifest = newManifest
     loadOptions = newLoadOptions
 
-    updateComputedSettings(newManifest, settings)
+    setSettings({})
 
-    settings$.next(settings)
-
-    loadSubject$.next()
+    loadSubject$.next(newManifest)
   }
 
   /**
@@ -110,29 +112,44 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     return manifest?.readingDirection === `rtl`
   }
 
-  const setSettings = (newSettings: Partial<typeof settings>) => {
-    settings = { ...settings, ...newSettings }
+  const setSettings = (newSettings: Partial<PublicSettings>) => {
+    const mergedSettings = { ...settingsSubject$.value, ...newSettings }
 
-    updateComputedSettings(manifest, settings)
+    updateComputedSettings(manifest, mergedSettings, hasVerticalWritingSubject$.value)
 
-    settings$.next(settings)
+    settingsSubject$.next(mergedSettings)
   }
 
-  const getSettings = () => settings
+  const getSettings = () => settingsSubject$.value
 
-  settings$.next(settings)
+  const setHasVerticalWriting = () => hasVerticalWritingSubject$.next(true)
+
+  /**
+   * Some behavior may trigger settings to change
+   */
+  hasVerticalWritingSubject$
+    .pipe(
+      skip(1),
+      distinctUntilChanged(),
+      tap(() => {
+        setSettings({})
+      }),
+      takeUntil(destroy$)
+    )
+    .subscribe()
 
   const destroy = () => {
-    subject.complete()
-    settings$.complete()
+    settingsSubject$.complete()
     loadSubject$.complete()
     destroy$.next()
     destroy$.complete()
+    hasVerticalWritingSubject$.complete()
   }
 
   return {
     load,
     isRTL,
+    areAllItemsPrePaginated: () => areAllItemsPrePaginated(manifest),
     destroy,
     getLoadOptions: () => loadOptions,
     setSettings,
@@ -140,6 +157,7 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
     shouldDisplaySpread,
+    setHasVerticalWriting,
     setVisibleAreaRect: (
       x: number,
       y: number,
@@ -159,6 +177,8 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     },
     getHorizontalMargin: () => horizontalMargin,
     getVerticalMargin: () => verticalMargin,
+    getManifest: () => manifest,
+    getReadingDirection: () => manifest?.readingDirection,
     getPageSize: () => {
       return {
         width: shouldDisplaySpread()
@@ -168,35 +188,53 @@ export const createContext = (initialSettings: Partial<Settings>) => {
       }
     },
     $: {
-      $: subject.asObservable(),
-      destroy$: destroy$.asObservable(),
-      /**
-       * Will emit once on start
-       */
-      settings$: settings$.asObservable(),
-      load$: loadSubject$.asObservable()
-    },
-    getManifest: () => manifest,
-    getReadingDirection: () => manifest?.readingDirection
+      hasVerticalWriting$: hasVerticalWritingSubject$
+        .asObservable()
+        .pipe(distinctUntilChanged()),
+      destroy$: destroy$
+        .asObservable(),
+      settings$: settingsSubject$
+        .asObservable()
+        .pipe(distinctUntilChanged(isShallowEqual)),
+      load$: loadSubject$
+        .asObservable()
+    }
   }
 }
 
 export type Context = ReturnType<typeof createContext>
 
-const updateComputedSettings = (newManifest: Manifest | undefined, settings: InnerSettings) => {
-  settings.computedPageTurnDirection = settings.pageTurnDirection
+const areAllItemsPrePaginated = (manifest: Manifest | undefined) => !manifest?.spineItems.some(item => item.renditionLayout === `reflowable`)
 
+const updateComputedSettings = (newManifest: Manifest | undefined, settings: InnerSettings, hasVerticalWriting: boolean) => {
+  settings.computedPageTurnDirection = settings.pageTurnDirection
+  settings.computedPageTurnAnimation = settings.pageTurnAnimation
+  settings.computedPageTurnMode = `controlled`
+
+  // We force scroll mode for some books
   if (newManifest?.renditionFlow === `scrolled-continuous`) {
-    settings.computedPageTurnMode = `free`
+    settings.computedPageTurnMode = `scrollable`
     settings.computedPageTurnDirection = `vertical`
-  } else if (newManifest && settings.pageTurnMode === `free` && newManifest.renditionLayout !== `pre-paginated`) {
-    Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
+  } else if (newManifest && settings.pageTurnMode === `scrollable` && (newManifest.renditionLayout !== `pre-paginated` || !areAllItemsPrePaginated(newManifest))) {
+    Report.warn(`pageTurnMode ${settings.pageTurnMode} incompatible with current book, switching back to default`)
+    settings.computedPageTurnAnimation = `none`
     settings.computedPageTurnMode = `controlled`
-  } else {
-    settings.computedPageTurnMode = settings.pageTurnMode
+  } else if (settings.pageTurnMode === `scrollable`) {
+    settings.computedPageTurnMode = `scrollable`
+    settings.computedPageTurnDirection = `vertical`
   }
 
-  settings.computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration !== undefined
-    ? settings.pageTurnAnimationDuration
-    : 300
+  // some settings are not available for vertical writing
+  if (hasVerticalWriting && settings.computedPageTurnAnimation === `slide`) {
+    Report.warn(`pageTurnAnimation ${settings.computedPageTurnAnimation} incompatible with current book, switching back to default`)
+    settings.computedPageTurnAnimation = `none`
+  }
+
+  if (settings.computedPageTurnMode === `scrollable`) {
+    settings.computedPageTurnAnimationDuration = 0
+  } else {
+    settings.computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration !== undefined
+      ? settings.pageTurnAnimationDuration
+      : 300
+  }
 }

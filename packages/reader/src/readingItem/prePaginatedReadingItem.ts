@@ -37,7 +37,7 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
 
       const cssLink = buildDocumentStyle({
         ...getDimensions(),
-        enableTouch: context.getSettings().computedPageTurnMode !== `free`,
+        enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
         spreadPosition
       }, viewportDimensions)
 

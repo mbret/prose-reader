@@ -1,9 +1,9 @@
-import { animationFrameScheduler, BehaviorSubject, EMPTY, fromEvent, iif, Observable, of } from "rxjs"
-import { debounceTime, distinctUntilChanged, filter, map, share, switchMap, takeUntil, withLatestFrom } from "rxjs/operators"
+import { animationFrameScheduler, BehaviorSubject, EMPTY, fromEvent, iif, merge, MonoTypeOperatorFunction, Observable, of } from "rxjs"
+import { debounceTime, distinctUntilChanged, filter, map, share, switchMap, takeUntil, withLatestFrom, startWith, tap } from "rxjs/operators"
 import { Context } from "../../context"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 
-export const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
+const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
 export const createScrollViewportNavigator = ({ context, element, navigator, currentNavigationSubject$ }: {
   context: Context,
@@ -13,9 +13,25 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
 }) => {
   let lastScrollWasProgrammaticallyTriggered = false
 
+  const onlyUserScrollFilter = <T>(source: Observable<T>): Observable<T> =>
+    source.pipe(filter(() => {
+      if (lastScrollWasProgrammaticallyTriggered) {
+        lastScrollWasProgrammaticallyTriggered = false
+        return false
+      }
+
+      return true
+    }))
+
   const adjustReadingOffset = ({ x, y }: { x: number, y: number }) => {
-    lastScrollWasProgrammaticallyTriggered = true
-    element.scrollTo({ left: x, top: y })
+    if (context.getSettings().computedPageTurnMode === `scrollable`) {
+      lastScrollWasProgrammaticallyTriggered = true
+      element.scrollTo({ left: x, top: y })
+
+      return true
+    }
+
+    return false
   }
 
   const runOnFreePageTurnModeOnly$ = <T>(source: Observable<T>) => context.$.settings$
@@ -29,14 +45,7 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
 
   const userScroll$ = runOnFreePageTurnModeOnly$(fromEvent(element, `scroll`))
     .pipe(
-      filter(() => {
-        if (lastScrollWasProgrammaticallyTriggered) {
-          lastScrollWasProgrammaticallyTriggered = false
-          return false
-        }
-
-        return true
-      }),
+      onlyUserScrollFilter,
       share(),
       takeUntil(context.$.destroy$)
     )
@@ -57,10 +66,33 @@ export const createScrollViewportNavigator = ({ context, element, navigator, cur
       share()
     )
 
+  const userScrollEnd$ = userScroll$
+    .pipe(
+      debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
+      share(),
+      takeUntil(context.$.destroy$)
+    )
+
+  const state$ = merge(
+    userScroll$
+      .pipe(
+        map(() => `start` as const),
+        distinctUntilChanged()
+      ),
+    userScrollEnd$
+      .pipe(
+        map(() => `end` as const)
+      )
+  )
+    .pipe(
+      startWith(`end`)
+    )
+
   return {
+    destroy: () => { },
     adjustReadingOffset,
     $: {
-      userScroll$,
+      state$,
       navigation$: navigationOnScroll$
     }
   }

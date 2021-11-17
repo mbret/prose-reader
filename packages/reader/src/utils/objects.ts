@@ -1,9 +1,10 @@
 // MIT © 2017 azu
 const hasOwn = Object.prototype.hasOwnProperty
-// Object.is ponyfill
+
+// Object.is polyfill
 export const is = (x: any, y: any): boolean => {
   if (x === y) {
-    return x !== 0 || y !== 0 || 1 / x === 1 / y
+    return (x !== 0) || (y !== 0) || (1 / x === 1 / y)
   } else {
     return false
   }
@@ -19,13 +20,14 @@ export const is = (x: any, y: any): boolean => {
  * - `customEqual`: function should return true if the `a` value is equal to `b` value.
  * - `debug`: enable debug info to console log. This log will be disable in production build
  */
-export const isShallowEqual = (
-  objectA: any,
-  objectB: any,
+export const isShallowEqual = <T = any, R = any>(
+  objectA: T,
+  objectB: R,
   options?: {
     customEqual?: <T>(a: T, b: T) => boolean;
   }
 ): boolean => {
+  // @ts-ignore
   if (objectA === objectB) {
     return true
   }
@@ -47,6 +49,7 @@ export const isShallowEqual = (
 
   for (let i = 0; i < keysA.length; i++) {
     const key = keysA[i] || ``
+    // @ts-ignore
     if (!hasOwn.call(objectB, key) || !isEqual(objectA[key], objectB[key])) {
       return false
     }

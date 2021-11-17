@@ -1,4 +1,5 @@
-import { Subject, Subscription } from "rxjs"
+import { Subject } from "rxjs"
+import { tap, takeUntil } from "rxjs/operators"
 import { Report } from "./report"
 import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
@@ -30,7 +31,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
    * However it means the next adjustment will use the focused item to detect when to move the viewport.
    */
   let focusedReadingItemIndex: number | undefined
-  let readingItemSubscriptions: Subscription[] = []
 
   /**
    * @todo
@@ -114,10 +114,11 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
         const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen ? edgeOffset.edgeY : edgeOffset.edgeY - context.getVisibleAreaRect().height
         const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
 
-        // console.log({ edgeOffset, currentValidEdgeYForVerticalPositioning, currentValidEdgeXForVerticalPositioning, itemStartOnNewScreen })
-
         if (context.isRTL()) {
-          item.adjustPositionOfElement({ top: edgeOffset.edgeY })
+          item.adjustPositionOfElement({
+            top: currentValidEdgeYForVerticalPositioning,
+            left: currentValidEdgeXForVerticalPositioning
+          })
         } else {
           item.adjustPositionOfElement({
             top: currentValidEdgeYForVerticalPositioning,
@@ -202,7 +203,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     const [leftIndex, rightIndex] = rangeOfIndex
     const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
     const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
-    const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `free`
+    const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `scrollable`
 
     orderedReadingItems.forEach((orderedReadingItem, index) => {
       const isBeforeFocusedWithPreload =
@@ -272,7 +273,7 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
     return `before`
   }
 
-  function getReadingItemIndex (readingItem: ReadingItem | undefined) {
+  const getReadingItemIndex = (readingItem: ReadingItem | undefined) => {
     if (!readingItem) return undefined
     const index = orderedReadingItems.indexOf(readingItem)
 
@@ -282,13 +283,24 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   const add = (readingItem: ReadingItem) => {
     orderedReadingItems.push(readingItem)
 
-    const readingItemSubscription = readingItem.$.contentLayoutChangeSubject$.subscribe(() => {
-      // upstream change, meaning we need to layout again to both resize correctly each item but also to
-      // adjust positions, etc
-      layout()
-    })
+    readingItem.$.contentLayoutChangeSubject$
+      .pipe(takeUntil(context.$.destroy$))
+      .subscribe(() => {
+        // upstream change, meaning we need to layout again to both resize correctly each item but also to
+        // adjust positions, etc
+        layout()
+      })
 
-    readingItemSubscriptions.push(readingItemSubscription)
+    readingItem.$.loaded$
+      .pipe(
+        tap(() => {
+          if (readingItem.isUsingVerticalWriting()) {
+            context.setHasVerticalWriting()
+          }
+        }),
+        takeUntil(context.$.destroy$)
+      )
+      .subscribe()
 
     readingItem.load()
   }
@@ -324,8 +336,6 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
 
   const destroy = () => {
     orderedReadingItems.forEach(item => item.destroy())
-    readingItemSubscriptions.forEach(subscription => subscription.unsubscribe())
-    readingItemSubscriptions = []
     focus$.complete()
     layout$.complete()
   }
