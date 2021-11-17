@@ -1,13 +1,14 @@
 import * as Hammer from 'hammerjs'
 import { useEffect, useState } from 'react'
-import { useRecoilCallback, useSetRecoilState } from 'recoil'
+import { useRecoilCallback, useRecoilValue, useSetRecoilState } from 'recoil'
 import { useReader } from '../ReaderProvider'
-import { hasCurrentHighlightState, isMenuOpenState } from '../state'
+import { hasCurrentHighlightState, isMenuOpenState, readerSettingsState } from '../state'
 
 export const useGestureHandler = (container: HTMLElement | undefined) => {
   const reader = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
+  const { computedPageTurnDirection } = useRecoilValue(readerSettingsState) || {}
 
   const onSingleTap = useRecoilCallback(({ snapshot }) => async ({ srcEvent, target, center }: HammerInput) => {
     /**
@@ -195,7 +196,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
       // if (!movingStarted && ev.isFinal && !reader?.isSelecting()) {
       if (hasHadPanStart && ev.isFinal && !reader?.isSelecting() && !reader?.zoom.isEnabled()) {
-        const velocity = ev.velocityX
+        const velocity = computedPageTurnDirection === `horizontal` ? ev.velocityX : ev.velocityY
         // console.log(`hammer.onPanMove.velocity`, velocity)
         if (velocity < -0.5) {
           reader?.turnRight()
@@ -219,6 +220,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       hammerManager?.off(`doubletap`, onDoubleTap)
       hammerManager?.off(`singletap`, onSingleTap)
       hammerManager?.off(`tap`, onSingleTap)
+      hammerManager?.off('panmove panstart panend', onPanMove)
     }
-  }, [reader, setMenuOpenState, onSingleTap, hammerManager])
+  }, [reader, setMenuOpenState, onSingleTap, hammerManager, computedPageTurnDirection])
 }

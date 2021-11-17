@@ -19,6 +19,7 @@ import { theme } from './theme'
 import { ReaderInstance } from './types'
 import { takeUntil } from 'rxjs'
 import { readerSettingsState, readerStateState } from './state'
+import { Report } from './report'
 
 export const App = () => {
   const [reader, setReader] = useState<any | undefined>(undefined)
@@ -54,12 +55,14 @@ const Effects: FC<{ reader: ReaderInstance | undefined }> = ({ reader }) => {
     reader?.$.settings$
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe(settings => {
+        Report.log(`reader.$.settings$`, settings)
         setReaderSettingsState(settings)
       })
 
     reader?.$.state$
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe(state => {
+        Report.log(`reader.$.state$`, state)
         setReaderStateState(state)
       })
   }, [reader])

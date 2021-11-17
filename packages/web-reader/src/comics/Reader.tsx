@@ -25,7 +25,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const { computedPageTurnMode } = useRecoilValue(readerSettingsState) || {}
   const isUsingVerticalScrolling = query.has('vertical')
   const isUsingFreeScroll = query.has('free') || computedPageTurnMode === `scrollable`
-  const [isSettingsOpen, setIsSettingsOpen] = useState(true)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)

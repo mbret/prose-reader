@@ -6,7 +6,7 @@ import { Reader as ReactReader } from "@prose-reader/react";
 import { composeEnhancer } from "@prose-reader/core";
 import { QuickMenu } from '../QuickMenu';
 import { bookReadyState, isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState, useResetStateOnUnMount } from '../state';
-import { Settings, settingsState, useToggleSettings } from './Settings'
+import { ClassicSettings } from './ClassicSettings'
 import { Loading } from '../Loading';
 import { ReaderInstance } from '../types';
 import { useBookmarks } from '../useBookmarks';
@@ -26,14 +26,13 @@ type ReactReaderProps = ComponentProps<typeof ReactReader>
 
 export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | undefined) => void }) => {
   const { url = `` } = useParams<`url`>();
-  const settings = useRecoilValue(settingsState)
   const reader = useReader()
-  const toggleSettings = useToggleSettings()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const highlightsEnhancer = useHighlights(reader)
   const searchEnhancer = useSearch(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
@@ -148,9 +147,9 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
       <QuickMenu
         open={isMenuOpen}
         isComics={false}
-        onSettingsClick={toggleSettings}
+        onSettingsClick={() => setIsSettingsOpen(true)}
       />
-      {settings && reader && <Settings reader={reader} />}
+      {reader && <ClassicSettings reader={reader} open={isSettingsOpen} onExit={() => setIsSettingsOpen(false)} />}
       <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
       <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
       <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />

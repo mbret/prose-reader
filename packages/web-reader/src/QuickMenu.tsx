@@ -1,9 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
-import { IconButton, Text, Box } from "@chakra-ui/react"
+import { IconButton, Box } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
-import { useToggleSettings } from './classic/Settings'
 import { useReader } from './ReaderProvider'
 import { Scrubber } from './Scrubber'
 import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState, manifestState, paginationState } from './state'
