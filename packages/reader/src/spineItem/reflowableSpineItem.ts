@@ -2,9 +2,9 @@ import { BehaviorSubject, Observable } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
-import { createCommonReadingItem } from "./commonReadingItem"
+import { createCommonSpineItem } from "./commonSpineItem"
 
-export const createReflowableReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
+export const createReflowableSpineItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
@@ -12,8 +12,8 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   hooks$: BehaviorSubject<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
-  const readingItemFrame = commonReadingItem.readingItemFrame
+  const commonSpineItem = createCommonSpineItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+  const spineItemFrame = commonSpineItem.spineItemFrame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
    * the content has been loaded.
@@ -49,12 +49,12 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
   const applySize = ({ minimumWidth, blankPagePosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const viewportDimensions = readingItemFrame.getViewportDimensions()
+    const viewportDimensions = spineItemFrame.getViewportDimensions()
     const visibleArea = context.getVisibleAreaRect()
-    const frameElement = readingItemFrame.getManipulableFrame()?.frame
+    const frameElement = spineItemFrame.getManipulableFrame()?.frame
     const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
 
-    if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
+    if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
@@ -63,8 +63,8 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
 
       if (viewportDimensions) {
         const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
-        commonReadingItem.injectStyle(readingItemFrame, buildStyleForFakePrePaginated())
-        readingItemFrame.staticLayout({
+        commonSpineItem.injectStyle(spineItemFrame, buildStyleForFakePrePaginated())
+        spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
         })
@@ -86,17 +86,17 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
             isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
             enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
           })
-          : buildStyleWithMultiColumn(getDimensions(readingItemFrame.isUsingVerticalWriting(), minimumWidth))
+          : buildStyleWithMultiColumn(getDimensions(spineItemFrame.isUsingVerticalWriting(), minimumWidth))
 
-        commonReadingItem.injectStyle(readingItemFrame, frameStyle)
+        commonSpineItem.injectStyle(spineItemFrame, frameStyle)
 
-        if (readingItemFrame.isUsingVerticalWriting()) {
+        if (spineItemFrame.isUsingVerticalWriting()) {
           const pages = Math.ceil(
             frameElement.contentDocument.documentElement.scrollHeight / pageHeight
           )
           contentHeight = pages * pageHeight
 
-          readingItemFrame.staticLayout({
+          spineItemFrame.staticLayout({
             width: minimumWidth,
             height: contentHeight
           })
@@ -104,7 +104,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
           contentHeight = frameElement.contentDocument.documentElement.scrollHeight
           latestContentHeightWhenLoaded = contentHeight
 
-          readingItemFrame.staticLayout({
+          spineItemFrame.staticLayout({
             width: minimumWidth,
             height: contentHeight
           })
@@ -126,7 +126,7 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
             contentWidth = pages * pageWidth
           }
 
-          readingItemFrame.staticLayout({
+          spineItemFrame.staticLayout({
             width: contentWidth,
             height: contentHeight
           })
@@ -139,21 +139,21 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
       // enlarge the container to make sure no other reflow item starts on the same screen
       if (!isFillingAllScreen) {
         contentWidth = contentWidth + pageWidth
-        if (context.isRTL() && !commonReadingItem.isUsingVerticalWriting()) {
+        if (context.isRTL() && !commonSpineItem.isUsingVerticalWriting()) {
           frameElement?.style.setProperty(`margin-left`, `${pageWidth}px`)
         }
       } else {
         frameElement?.style.setProperty(`margin-left`, `0px`)
       }
 
-      commonReadingItem.layout({ width: contentWidth, height: contentHeight })
+      commonSpineItem.layout({ width: contentWidth, height: contentHeight })
 
       return { width: contentWidth, height: contentHeight }
     }
 
     const height = latestContentHeightWhenLoaded || pageHeight
 
-    commonReadingItem.layout({ width: minimumWidth, height })
+    commonSpineItem.layout({ width: minimumWidth, height })
 
     return { width: minimumWidth, height }
   }
@@ -161,14 +161,14 @@ export const createReflowableReadingItem = ({ item, context, containerElement, i
   const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     // reset width of iframe to be able to retrieve real size later
-    readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
-    readingItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
+    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
+    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
     return applySize(layoutInformation)
   }
 
   return {
-    ...commonReadingItem,
+    ...commonSpineItem,
     isReflowable: true,
     layout
   }

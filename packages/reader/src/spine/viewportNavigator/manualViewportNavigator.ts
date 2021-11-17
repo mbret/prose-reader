@@ -13,8 +13,8 @@ type SpineItemNavigation = { type: `spineItem`, data: { indexOrId: number | stri
 type CfiNavigation = { type: `cfi`, data: { cfi: string, animate: boolean } }
 type ChapterPageNavigation = { type: `chapterPage`, data: { pageIndex: number } }
 type PageIndexNavigation = { type: `pageIndex`, data: { pageIndex: number } }
-type LeftPageNavigation = { type: `leftPage`, data: { allowReadingItemChange: boolean } }
-type RightPageNavigation = { type: `rightPage`, data: { allowReadingItemChange: boolean } }
+type LeftPageNavigation = { type: `leftPage`, data: { allowSpineItemChange: boolean } }
+type RightPageNavigation = { type: `rightPage`, data: { allowSpineItemChange: boolean } }
 
 export const createManualViewportNavigator = ({ navigator, spineItemManager, currentNavigationSubject$, locator, context }: {
   context: Context,
@@ -35,11 +35,11 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
     | RightPageNavigation
   >()
 
-  const turnLeft = ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) =>
-    navigationTriggerSubject$.next({ type: `leftPage`, data: { allowReadingItemChange } })
+  const turnLeft = ({ allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) =>
+    navigationTriggerSubject$.next({ type: `leftPage`, data: { allowSpineItemChange } })
 
-  const turnRight = ({ allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    navigationTriggerSubject$.next({ type: `rightPage`, data: { allowReadingItemChange } })
+  const turnRight = ({ allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) => {
+    navigationTriggerSubject$.next({ type: `rightPage`, data: { allowSpineItemChange } })
   }
 
   // @todo it's wrong because we can be in two different chapter on same page for spread
@@ -106,10 +106,10 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
     .pipe(
       filter((e): e is ChapterPageNavigation => e.type === `chapterPage`),
       switchMap(({ data: { pageIndex } }) => {
-        const readingItem = spineItemManager.getFocusedReadingItem()
+        const spineItem = spineItemManager.getFocusedSpineItem()
 
-        if (readingItem) {
-          const navigation = navigator.getNavigationForPage(pageIndex, readingItem)
+        if (spineItem) {
+          const navigation = navigator.getNavigationForPage(pageIndex, spineItem)
 
           return of({ ...navigation, lastUserExpectedNavigation: undefined, animate: true })
         }
@@ -138,17 +138,17 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
       })
     )
 
-  const turnPageTo$ = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentReadingItem = spineItemManager.getFocusedReadingItem()
+  const turnPageTo$ = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) => {
+    const currentSpineItem = spineItemManager.getFocusedSpineItem()
 
-    if (!currentReadingItem) return EMPTY
+    if (!currentSpineItem) return EMPTY
 
-    const newReadingItem = locator.getReadingItemFromPosition(navigation) || currentReadingItem
-    const readingItemHasChanged = newReadingItem !== currentReadingItem
+    const newSpineItem = locator.getSpineItemFromPosition(navigation) || currentSpineItem
+    const spineItemHasChanged = newSpineItem !== currentSpineItem
 
-    if (readingItemHasChanged) {
-      if (allowReadingItemChange) {
-        if (spineItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+    if (spineItemHasChanged) {
+      if (allowSpineItemChange) {
+        if (spineItemManager.comparePositionOf(newSpineItem, currentSpineItem) === `before`) {
           return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true })
         } else {
           return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const }, animate: true })
@@ -165,10 +165,10 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
     .pipe(
       filter((e): e is LeftPageNavigation => e.type === `leftPage`),
       withLatestFrom(currentNavigationSubject$),
-      switchMap(([{ data: { allowReadingItemChange } }, currentNavigation]) => {
+      switchMap(([{ data: { allowSpineItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
-        return turnPageTo$(navigation, { allowReadingItemChange })
+        return turnPageTo$(navigation, { allowSpineItemChange })
       })
     )
 
@@ -176,10 +176,10 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
     .pipe(
       filter((e): e is RightPageNavigation => e.type === `rightPage`),
       withLatestFrom(currentNavigationSubject$),
-      switchMap(([{ data: { allowReadingItemChange } }, currentNavigation]) => {
+      switchMap(([{ data: { allowSpineItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForRightPage(currentNavigation)
 
-        return turnPageTo$(navigation, { allowReadingItemChange })
+        return turnPageTo$(navigation, { allowSpineItemChange })
       })
     )
 

@@ -1,19 +1,19 @@
 import { Context } from "../context"
-import { ReadingItem } from "../spineItem"
-import { createLocationResolver as createReadingItemLocator } from "../spineItem/locationResolver"
+import { SpineItem } from "../spineItem"
+import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 
 type SpinePosition = { x: number, y: number }
-type ReadingItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
+type SpineItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
 
-export const createLocationResolver = ({ spineItemManager, context, readingItemLocator }: {
+export const createLocationResolver = ({ spineItemManager, context, spineItemLocator }: {
   spineItemManager: SpineItemManager,
   context: Context,
-  readingItemLocator: ReturnType<typeof createReadingItemLocator>
+  spineItemLocator: ReturnType<typeof createSpineItemLocator>
 }) => {
-  const getReadingItemPositionFromSpinePosition = Report.measurePerformance(`getReadingItemPositionFromSpinePosition`, 10, (position: SpinePosition, readingItem: ReadingItem): ReadingItemPosition => {
-    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
+  const getSpineItemPositionFromSpinePosition = Report.measurePerformance(`getSpineItemPositionFromSpinePosition`, 10, (position: SpinePosition, spineItem: SpineItem): SpineItemPosition => {
+    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -59,8 +59,8 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
    * 400          200           0
    * will return 200, which probably needs to be adjusted as 0
    */
-  const getSpinePositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): SpinePosition => {
-    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
+  const getSpinePositionFromSpineItemPosition = (spineItemPosition: SpineItemPosition, spineItem: SpineItem): SpinePosition => {
+    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -72,46 +72,46 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
      * [item2 (page0 - page1 - page2)] [item1 (page1 - page0)] [item0 (page0)]
      */
     // if (context.isRTL() && itemReadingDirection === 'ltr') {
-    //   return (end - readingItemOffset) - context.getPageSize().width
+    //   return (end - spineItemOffset) - context.getPageSize().width
     // }
 
     if (context.isRTL()) {
       return {
-        x: (leftEnd - readingItemPosition.x) - context.getPageSize().width,
-        // y: (topEnd - readingItemPosition.y) - context.getPageSize().height,
-        y: topStart + readingItemPosition.y
+        x: (leftEnd - spineItemPosition.x) - context.getPageSize().width,
+        // y: (topEnd - spineItemPosition.y) - context.getPageSize().height,
+        y: topStart + spineItemPosition.y
       }
     }
 
     // console.warn({ leftEnd, leftStart, topStart, topEnd })
     return {
-      x: leftStart + readingItemPosition.x,
-      y: topStart + readingItemPosition.y
+      x: leftStart + spineItemPosition.x,
+      y: topStart + spineItemPosition.y
     }
   }
 
   /**
    * This will retrieve the closest item to the x / y position edge relative to the reading direction.
    */
-  const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: SpinePosition) => {
-    const readingItem = spineItemManager.getReadingItemAtPosition(position)
+  const getSpineItemFromPosition = Report.measurePerformance(`getSpineItemFromOffset`, 10, (position: SpinePosition) => {
+    const spineItem = spineItemManager.getSpineItemAtPosition(position)
 
-    return readingItem
+    return spineItem
   }, { disable: true })
 
-  const getSpinePositionFromReadingItem = (readingItem: ReadingItem) => {
-    return getSpinePositionFromReadingItemPosition({ x: 0, y: 0 }, readingItem)
+  const getSpinePositionFromSpineItem = (spineItem: SpineItem) => {
+    return getSpinePositionFromSpineItemPosition({ x: 0, y: 0 }, spineItem)
   }
 
-  const getSpinePositionFromReadingItemAnchor = (anchor: string, readingItem: ReadingItem) => {
-    const readingItemOffset = readingItemLocator.getReadingItemOffsetFromAnchor(anchor, readingItem)
+  const getSpinePositionFromSpineItemAnchor = (anchor: string, spineItem: SpineItem) => {
+    const spineItemOffset = spineItemLocator.getSpineItemOffsetFromAnchor(anchor, spineItem)
 
-    const position = getSpinePositionFromReadingItemPosition({ x: readingItemOffset, y: 0 }, readingItem)
+    const position = getSpinePositionFromSpineItemPosition({ x: spineItemOffset, y: 0 }, spineItem)
 
     return position
   }
 
-  const getReadingItemsFromReadingOrderPosition = (position: SpinePosition): {
+  const getSpineItemsFromReadingOrderPosition = (position: SpinePosition): {
     left: number,
     right: number,
     begin: number,
@@ -119,8 +119,8 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
     end: number
     endPosition: SpinePosition
   } | undefined => {
-    const beginItem = getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
-    const beginItemIndex = spineItemManager.getReadingItemIndex(beginItem)
+    const beginItem = getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+    const beginItemIndex = spineItemManager.getSpineItemIndex(beginItem)
 
     if (beginItemIndex === undefined) return undefined
 
@@ -130,8 +130,8 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
       endPosition = { x: position.x + context.getPageSize().width, y: position.y }
     }
 
-    const endItemIndex = spineItemManager.getReadingItemIndex(
-      getReadingItemFromPosition(endPosition) || spineItemManager.getFocusedReadingItem()
+    const endItemIndex = spineItemManager.getSpineItemIndex(
+      getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()
     ) ?? beginItemIndex
 
     const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort((a, b) => a - b)
@@ -147,27 +147,27 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
     }
   }
 
-  const getReadingItemFromIframe = (iframe: Element) => {
-    return spineItemManager.getAll().find(item => item.readingItemFrame.getFrameElement() === iframe)
+  const getSpineItemFromIframe = (iframe: Element) => {
+    return spineItemManager.getAll().find(item => item.spineItemFrame.getFrameElement() === iframe)
   }
 
-  const getReadingItemPageIndexFromNode = (node: Node, offset: number | undefined, readingItemOrIndex: ReadingItem | number) => {
-    if (typeof readingItemOrIndex === `number`) {
-      const readingItem = spineItemManager.get(readingItemOrIndex)
-      return readingItem ? readingItemLocator.getReadingItemPageIndexFromNode(node, offset || 0, readingItem) : undefined
+  const getSpineItemPageIndexFromNode = (node: Node, offset: number | undefined, spineItemOrIndex: SpineItem | number) => {
+    if (typeof spineItemOrIndex === `number`) {
+      const spineItem = spineItemManager.get(spineItemOrIndex)
+      return spineItem ? spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItem) : undefined
     }
 
-    return readingItemLocator.getReadingItemPageIndexFromNode(node, offset || 0, readingItemOrIndex)
+    return spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItemOrIndex)
   }
 
   return {
-    getSpinePositionFromReadingItemPosition,
-    getSpinePositionFromReadingItem,
-    getSpinePositionFromReadingItemAnchor,
-    getReadingItemPositionFromSpinePosition,
-    getReadingItemFromPosition,
-    getReadingItemFromIframe,
-    getReadingItemPageIndexFromNode,
-    getReadingItemsFromReadingOrderPosition
+    getSpinePositionFromSpineItemPosition,
+    getSpinePositionFromSpineItem,
+    getSpinePositionFromSpineItemAnchor,
+    getSpineItemPositionFromSpinePosition,
+    getSpineItemFromPosition,
+    getSpineItemFromIframe,
+    getSpineItemPageIndexFromNode,
+    getSpineItemsFromReadingOrderPosition
   }
 }

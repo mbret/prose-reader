@@ -2,14 +2,14 @@ import { BehaviorSubject, Observable } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
-import { createPrePaginatedReadingItem } from "./prePaginatedReadingItem"
-import { createReflowableReadingItem } from "./reflowableReadingItem"
+import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
+import { createReflowableSpineItem } from "./reflowableSpineItem"
 
-export type ReadingItem = {
+export type SpineItem = {
   item: Manifest[`spineItems`][number],
-} & (ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>)
+} & (ReturnType<typeof createPrePaginatedSpineItem> | ReturnType<typeof createReflowableSpineItem>)
 
-export const createReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
+export const createSpineItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
@@ -17,16 +17,16 @@ export const createReadingItem = ({ item, context, containerElement, iframeEvent
   hooks$: BehaviorSubject<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
  }) => {
-  let readingItem: ReturnType<typeof createPrePaginatedReadingItem> | ReturnType<typeof createReflowableReadingItem>
+  let spineItem: ReturnType<typeof createPrePaginatedSpineItem> | ReturnType<typeof createReflowableSpineItem>
 
   if (item.renditionLayout === `pre-paginated`) {
-    readingItem = createPrePaginatedReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+    spineItem = createPrePaginatedSpineItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   } else {
-    readingItem = createReflowableReadingItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+    spineItem = createReflowableSpineItem({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
   }
 
   return {
     item,
-    ...readingItem
+    ...spineItem
   }
 }

@@ -1,6 +1,6 @@
 import { Subject } from "rxjs"
 import { Context } from "./context"
-import { ReadingItem } from "./spineItem"
+import { SpineItem } from "./spineItem"
 import { SpineItemManager } from "./spineItemManager"
 import { Report } from "./report"
 
@@ -11,19 +11,19 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
   let beginPageIndex: number | undefined
   let beginNumberOfPages = 0
   let beginCfi: string | undefined
-  let beginReadingItemIndex: number | undefined
+  let beginSpineItemIndex: number | undefined
   let endPageIndex: number | undefined
   let endNumberOfPages = 0
   let endCfi: string | undefined
-  let endReadingItemIndex: number | undefined
+  let endSpineItemIndex: number | undefined
   let numberOfPagesPerItems: number[] = []
 
-  const getReadingItemNumberOfPages = (readingItem: ReadingItem) => {
+  const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
     // pre-paginated always are only one page
-    // if (!readingItem.isReflowable) return 1
+    // if (!spineItem.isReflowable) return 1
 
-    const writingMode = readingItem.readingItemFrame.getWritingMode()
-    const { width, height } = readingItem.getElementDimensions()
+    const writingMode = spineItem.spineItemFrame.getWritingMode()
+    const { width, height } = spineItem.getElementDimensions()
 
     if (writingMode === `vertical-rl`) {
       return getNumberOfPages(height, context.getPageSize().height)
@@ -33,8 +33,8 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
   }
 
   const getInfoForUpdate = (info: {
-    readingItem: ReadingItem,
-    // readingItemPosition: { x: number, y: number },
+    spineItem: SpineItem,
+    // spineItemPosition: { x: number, y: number },
     pageIndex: number,
     cfi: string | undefined,
     options: {
@@ -42,8 +42,8 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
       // cfi?: string
     }
   }) => {
-    const numberOfPages = getReadingItemNumberOfPages(info.readingItem)
-    // const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
+    const numberOfPages = getSpineItemNumberOfPages(info.spineItem)
+    // const pageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(info.spineItemPosition, info.spineItem)
     const cfi: string | undefined = undefined
 
     // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
@@ -55,7 +55,7 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
     // to track that we can have a hidden text element and track it and send event back
     // console.warn(typeof info.options.cfi)
     // if (info.options.cfi === undefined) {
-    //   cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
+    //   cfi = spineItemLocator.getCfi(pageIndex, info.spineItem)
     //   Report.log(`pagination`, `cfi`, pageIndex, cfi)
     // } else {
     //   cfi = info.options.cfi
@@ -75,40 +75,40 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
       return {
         pageIndex: beginPageIndex,
         absolutePageIndex: numberOfPagesPerItems
-          .slice(0, beginReadingItemIndex)
+          .slice(0, beginSpineItemIndex)
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
         cfi: beginCfi,
         numberOfPages: beginNumberOfPages,
-        readingItemIndex: beginReadingItemIndex
+        spineItemIndex: beginSpineItemIndex
       }
     },
     getEndInfo () {
       return {
         pageIndex: endPageIndex,
         absolutePageIndex: numberOfPagesPerItems
-          .slice(0, endReadingItemIndex)
+          .slice(0, endSpineItemIndex)
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
         cfi: endCfi,
         numberOfPages: endNumberOfPages,
-        readingItemIndex: endReadingItemIndex
+        spineItemIndex: endSpineItemIndex
       }
     },
     getTotalNumberOfPages: () => {
       return numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
     },
-    updateTotalNumberOfPages: (readingItems: ReadingItem[]) => {
-      numberOfPagesPerItems = readingItems.map((item) => {
-        return getReadingItemNumberOfPages(item)
+    updateTotalNumberOfPages: (spineItems: SpineItem[]) => {
+      numberOfPagesPerItems = spineItems.map((item) => {
+        return getSpineItemNumberOfPages(item)
       }, 0)
 
       subject.next({ event: `change` })
     },
     updateBeginAndEnd: Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
       begin: Parameters<typeof getInfoForUpdate>[0] & {
-        readingItemIndex: number,
+        spineItemIndex: number,
       },
       end: Parameters<typeof getInfoForUpdate>[0] & {
-        readingItemIndex: number,
+        spineItemIndex: number,
       }
     ) => {
       const beginInfo = getInfoForUpdate(begin)
@@ -117,14 +117,14 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
       beginPageIndex = beginInfo.pageIndex
       beginNumberOfPages = beginInfo.numberOfPages
       beginCfi = beginInfo.cfi
-      beginReadingItemIndex = begin.readingItemIndex
+      beginSpineItemIndex = begin.spineItemIndex
 
       endPageIndex = endInfo.pageIndex
       endNumberOfPages = endInfo.numberOfPages
       endCfi = endInfo.cfi
-      endReadingItemIndex = end.readingItemIndex
+      endSpineItemIndex = end.spineItemIndex
 
-      Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
+      Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginSpineItemIndex, endCfi, endSpineItemIndex })
 
       subject.next({ event: `change` })
     }, { disable: true }),

@@ -75,7 +75,7 @@ export const searchEnhancer: Enhancer<{}, {
   }
 
   const searchForItem = (index: number, text: string) => {
-    const item = reader.getReadingItem(index)
+    const item = reader.getSpineItem(index)
 
     if (!item) {
       return of([])
@@ -98,8 +98,8 @@ export const searchEnhancer: Enhancer<{}, {
                 const ranges = searchNodeContainingText(doc, text)
                 const newResults = ranges.map(range => {
                   const { end, start } = reader.generateCfi(range, item.item)
-                  const { node, offset, readingItemIndex } = reader.resolveCfi(start) || {}
-                  const pageIndex = node && readingItemIndex !== undefined ? reader.locator.getReadingItemPageIndexFromNode(node, offset, readingItemIndex) : undefined
+                  const { node, offset, spineItemIndex } = reader.resolveCfi(start) || {}
+                  const pageIndex = node && spineItemIndex !== undefined ? reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex) : undefined
 
                   return {
                     spineItemIndex: index,

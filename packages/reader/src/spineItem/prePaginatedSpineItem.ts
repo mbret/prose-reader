@@ -2,9 +2,9 @@ import { BehaviorSubject, Observable } from "rxjs"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
-import { createCommonReadingItem } from "./commonReadingItem"
+import { createCommonSpineItem } from "./commonSpineItem"
 
-export const createPrePaginatedReadingItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
+export const createPrePaginatedSpineItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`spineItems`][number],
   containerElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
@@ -12,8 +12,8 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   hooks$: BehaviorSubject<Hook[]>,
   viewportState$: Observable<`free` | `busy`>
 }) => {
-  const commonReadingItem = createCommonReadingItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
-  const readingItemFrame = commonReadingItem.readingItemFrame
+  const commonSpineItem = createCommonSpineItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+  const spineItemFrame = commonSpineItem.spineItemFrame
 
   const getDimensions = () => {
     const pageSize = context.getPageSize()
@@ -27,11 +27,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
 
   const applySize = ({ blankPagePosition, minimumWidth, spreadPosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number, spreadPosition: `none` | `left` | `right` }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const { viewportDimensions, computedScale } = commonReadingItem.getViewPortInformation()
+    const { viewportDimensions, computedScale } = commonSpineItem.getViewPortInformation()
     const visibleArea = context.getVisibleAreaRect()
-    const frameElement = readingItemFrame.getManipulableFrame()?.frame
+    const frameElement = spineItemFrame.getManipulableFrame()?.frame
 
-    if (readingItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
+    if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       const contentWidth = pageWidth
       const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
 
@@ -45,8 +45,8 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
       frameElement?.style.setProperty(`opacity`, `1`)
 
       if (viewportDimensions) {
-        commonReadingItem.injectStyle(readingItemFrame, cssLink)
-        readingItemFrame.staticLayout({
+        commonSpineItem.injectStyle(spineItemFrame, cssLink)
+        spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
         })
@@ -85,8 +85,8 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
       } else {
-        commonReadingItem.injectStyle(readingItemFrame, cssLink)
-        readingItemFrame.staticLayout({
+        commonSpineItem.injectStyle(spineItemFrame, cssLink)
+        spineItemFrame.staticLayout({
           width: contentWidth,
           height: contentHeight
         })
@@ -102,13 +102,13 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
         }
       }
 
-      // commonReadingItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
-      commonReadingItem.layout({ width: minimumWidth, height: contentHeight })
+      // commonSpineItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
+      commonSpineItem.layout({ width: minimumWidth, height: contentHeight })
 
       return { width: minimumWidth, height: contentHeight }
     } else {
-      // commonReadingItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
-      commonReadingItem.layout({ width: minimumWidth, height: pageHeight })
+      // commonSpineItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
+      commonSpineItem.layout({ width: minimumWidth, height: pageHeight })
     }
 
     return { width: minimumWidth, height: pageHeight }
@@ -119,11 +119,11 @@ export const createPrePaginatedReadingItem = ({ item, context, containerElement,
   }
 
   const destroy = () => {
-    commonReadingItem.destroy()
+    commonSpineItem.destroy()
   }
 
   return {
-    ...commonReadingItem,
+    ...commonSpineItem,
     layout,
     destroy
   }

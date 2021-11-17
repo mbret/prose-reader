@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 import { Enhancer } from "./types"
-import { ReadingItem } from "../spineItem"
+import { SpineItem } from "../spineItem"
 import { Manifest } from "../types"
 import { progressionEnhancer } from "./progression"
 
@@ -38,7 +38,7 @@ type PaginationInfo = undefined | {
     pageIndexInChapter: number | undefined,
     absolutePageIndex: number | undefined,
     numberOfPagesInChapter: number | undefined,
-    readingItemIndex: number | undefined,
+    spineItemIndex: number | undefined,
     cfi: string | undefined,
     spineItemReadingDirection: `rtl` | `ltr` | undefined,
   },
@@ -51,7 +51,7 @@ type PaginationInfo = undefined | {
     pageIndexInChapter: number | undefined,
     absolutePageIndex: number | undefined,
     numberOfPagesInChapter: number | undefined,
-    readingItemIndex: number | undefined,
+    spineItemIndex: number | undefined,
     cfi: string | undefined,
     spineItemReadingDirection: `rtl` | `ltr` | undefined,
   },
@@ -77,9 +77,9 @@ export const paginationEnhancer: Enhancer<{}, {
   const reader = next(options)
 
   const getChapterInfo = () => {
-    const item = reader.getReadingItem(reader.getFocusedReadingItemIndex() || 0)
+    const item = reader.getSpineItem(reader.getFocusedSpineItemIndex() || 0)
     const manifest = reader.context.getManifest()
-    return item && manifest && buildChapterInfoFromReadingItem(manifest, item)
+    return item && manifest && buildChapterInfoFromSpineItem(manifest, item)
   }
 
   const getPaginationInfo = () => {
@@ -87,8 +87,8 @@ export const paginationEnhancer: Enhancer<{}, {
     const context = reader.context
     const paginationBegin = reader.innerPagination.getBeginInfo()
     const paginationEnd = reader.innerPagination.getEndInfo()
-    const beginItem = paginationBegin.readingItemIndex !== undefined ? reader.getReadingItem(paginationBegin.readingItemIndex) : undefined
-    const endItem = paginationEnd.readingItemIndex !== undefined ? reader.getReadingItem(paginationEnd.readingItemIndex) : undefined
+    const beginItem = paginationBegin.spineItemIndex !== undefined ? reader.getSpineItem(paginationBegin.spineItemIndex) : undefined
+    const endItem = paginationEnd.spineItemIndex !== undefined ? reader.getSpineItem(paginationEnd.spineItemIndex) : undefined
 
     if (!pagination || !context) return undefined
 
@@ -108,7 +108,7 @@ export const paginationEnhancer: Enhancer<{}, {
         // domIndex: number;
         // charOffset: number;
         // serializeString?: string;
-        readingItemIndex: paginationBegin.readingItemIndex,
+        spineItemIndex: paginationBegin.spineItemIndex,
         spineItemPath: beginItem?.item.path,
         spineItemId: beginItem?.item.id,
         cfi: paginationBegin.cfi,
@@ -119,14 +119,14 @@ export const paginationEnhancer: Enhancer<{}, {
         pageIndexInChapter: paginationEnd.pageIndex,
         absolutePageIndex: paginationEnd.absolutePageIndex,
         numberOfPagesInChapter: paginationEnd.numberOfPages,
-        readingItemIndex: paginationEnd.readingItemIndex,
+        spineItemIndex: paginationEnd.spineItemIndex,
         spineItemPath: endItem?.item.path,
         spineItemId: endItem?.item.id,
         spineItemReadingDirection: endItem?.getReadingDirection(),
         cfi: paginationEnd.cfi
       },
       // end: ReadingLocation;
-      // spineItemReadingDirection: focusedReadingItem?.getReadingDirection(),
+      // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
       /**
        * This percentage is based of the weight (kb) of every items and the number of pages.
        * It is not accurate but gives a general good idea of the overall progress.
@@ -136,7 +136,7 @@ export const paginationEnhancer: Enhancer<{}, {
       percentageEstimateOfBook: endItem
         ? reader.progression.getPercentageEstimate(
           context,
-          paginationEnd.readingItemIndex ?? 0,
+          paginationEnd.spineItemIndex ?? 0,
           paginationEnd.numberOfPages,
           paginationEnd.pageIndex || 0,
           reader.getCurrentViewportPosition(),
@@ -150,8 +150,8 @@ export const paginationEnhancer: Enhancer<{}, {
       isUsingSpread: context.shouldDisplaySpread()
       // chaptersOfBook: number;
       // chapter: string;
-      // hasNextChapter: (reader.spine.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
-      // hasPreviousChapter: (reader.spine.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
+      // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
+      // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
       // numberOfSpineItems: context.getManifest()?.readingOrder.length,
     }
   }
@@ -168,8 +168,8 @@ export const paginationEnhancer: Enhancer<{}, {
   }
 }
 
-export const buildChapterInfoFromReadingItem = (manifest: Manifest, readingItem: ReadingItem) => {
-  const { path } = readingItem.item
+export const buildChapterInfoFromSpineItem = (manifest: Manifest, spineItem: SpineItem) => {
+  const { path } = spineItem.item
 
   return getChapterInfo(path, manifest.nav.toc)
 }

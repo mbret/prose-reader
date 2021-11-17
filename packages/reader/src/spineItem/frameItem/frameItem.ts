@@ -161,4 +161,4 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
   }
 }
 
-export type ReadingItemFrame = ReturnType<typeof createFrameItem>
+export type SpineItemFrame = ReturnType<typeof createFrameItem>

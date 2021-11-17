@@ -17,12 +17,12 @@ export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
 
     if (!eventIsComingFromBridge || !iframeOriginalEvent || !originalFrame) return event
 
-    const readingItem = locator.getReadingItemFromIframe(originalFrame)
+    const spineItem = locator.getSpineItemFromIframe(originalFrame)
 
-    if (!readingItem) return event
+    if (!spineItem) return event
 
     if (isPointerEvent(event)) {
-      const { clientX, clientY } = readingItem.translateFramePositionIntoPage(event)
+      const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
 
       const newEvent = new PointerEvent(event.type, {
         ...event,
@@ -36,7 +36,7 @@ export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
     }
 
     if (isMouseEvent(event)) {
-      const { clientX, clientY } = readingItem.translateFramePositionIntoPage(event)
+      const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
 
       const newEvent = new MouseEvent(event.type, {
         ...event,
@@ -52,7 +52,7 @@ export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
     if (isTouchEvent(event)) {
       const touches = Array.from(event.touches).map(
         (touch) => {
-          const { clientX, clientY } = readingItem.translateFramePositionIntoPage(touch)
+          const { clientX, clientY } = spineItem.translateFramePositionIntoPage(touch)
 
           return new Touch({
             identifier: touch.identifier,

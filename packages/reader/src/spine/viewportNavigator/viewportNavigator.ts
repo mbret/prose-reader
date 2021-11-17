@@ -5,7 +5,7 @@ import { SpineItemManager } from "../../spineItemManager"
 import { createLocationResolver } from "../locationResolver"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, Observable, of, Subject } from "rxjs"
-import { ReadingItem } from "../../spineItem"
+import { SpineItem } from "../../spineItem"
 import { delay, distinctUntilChanged, filter, map, pairwise, share, shareReplay, startWith, switchMap, takeUntil, tap, withLatestFrom, skip } from "rxjs/operators"
 import { createCfiLocator } from "../cfiLocator"
 import { createScrollViewportNavigator } from "./scrollViewportNavigator"
@@ -138,11 +138,11 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
    * the wrong offset
    * @todo this is being called a lot, try to optimize
    */
-  const adjustNavigation = (readingItem: ReadingItem) => {
+  const adjustNavigation = (spineItem: SpineItem) => {
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
     let adjustedSpinePosition = currentNavigationPosition
-    const offsetInReadingItem = 0
+    const offsetInSpineItem = 0
 
     if (context.getSettings().computedPageTurnMode === `scrollable`) {
       adjustedSpinePosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
@@ -158,14 +158,14 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
        * When `navigate-from-next-item` we always try to get the offset of the last page, that way
        * we ensure reader is always redirected to last page
        */
-      adjustedSpinePosition = navigator.getNavigationForLastPage(readingItem)
+      adjustedSpinePosition = navigator.getNavigationForLastPage(spineItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-next-item`, {})
     } else if (lastUserExpectedNavigation?.type === `navigate-from-previous-item`) {
       /**
        * When `navigate-from-previous-item'`
        * we always try stay on the first page of the item
        */
-      adjustedSpinePosition = navigator.getNavigationForPage(0, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForPage(0, spineItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-previous-item`, {})
     } else if (lastUserExpectedNavigation?.type === `navigate-from-anchor`) {
       /**
@@ -173,7 +173,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
        * the offset of that anchor.
        */
       const anchor = lastUserExpectedNavigation.data
-      adjustedSpinePosition = navigator.getNavigationForAnchor(anchor, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForAnchor(anchor, spineItem)
     } else if (lastCfi) {
       // @todo, ignore cfi if the current focus item
       /**
@@ -191,13 +191,13 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
       const currentPageIndex = pagination.getBeginInfo().pageIndex || 0
-      adjustedSpinePosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForPage(currentPageIndex, spineItem)
       Report.log(NAMESPACE, `adjustNavigation`, `use guess strategy`, {})
     }
 
     const areDifferent = navigator.arePositionsDifferent(adjustedSpinePosition, currentNavigationPosition)
 
-    Report.log(NAMESPACE, `adjustNavigation`, { areDifferent, offsetInReadingItem, expectedSpineOffset: adjustedSpinePosition, currentNavigationPosition, lastUserExpectedNavigation })
+    Report.log(NAMESPACE, `adjustNavigation`, { areDifferent, offsetInSpineItem, expectedSpineOffset: adjustedSpinePosition, currentNavigationPosition, lastUserExpectedNavigation })
 
     if (areDifferent) {
       adjustNavigationSubject$.next({ position: adjustedSpinePosition, animate: false })
@@ -216,7 +216,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
   }
 
   const navigation$: Observable<{
-    position: { x: number, y: number, readingItem?: ReadingItem },
+    position: { x: number, y: number, spineItem?: SpineItem },
     triggeredBy: `manual` | `adjust` | `scroll`,
     animation: false | `turn` | `snap`
   }> = merge(
@@ -224,7 +224,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
       .pipe(
         map((event) => ({
           ...event,
-          position: { x: event.x, y: event.y, readingItem: event.readingItem },
+          position: { x: event.x, y: event.y, spineItem: event.spineItem },
           animation: `snap` as const,
           triggeredBy: `manual` as const
         }))
@@ -233,7 +233,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
       .pipe(
         map((event) => ({
           ...event,
-          position: { x: event.x, y: event.y, readingItem: event.readingItem },
+          position: { x: event.x, y: event.y, spineItem: event.spineItem },
           animation: event.animate ? `turn` as const : false as false,
           triggeredBy: `manual` as const
         }))

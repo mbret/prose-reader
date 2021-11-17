@@ -1,17 +1,17 @@
 import { CFI, extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
-import { ReadingItem } from "../spineItem"
+import { SpineItem } from "../spineItem"
 import { createLocationResolver } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { Manifest } from "../types"
 
-export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
+export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
   spineItemManager: SpineItemManager,
   context: Context,
-  readingItemLocator: ReturnType<typeof createLocationResolver>
+  spineItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
-  const getItemAnchor = (readingItem: ReadingItem) => `|[oboku~anchor~${encodeURIComponent(readingItem.item.id)}]`
+  const getItemAnchor = (spineItem: SpineItem) => `|[oboku~anchor~${encodeURIComponent(spineItem.item.id)}]`
 
   /**
    * Heavy cfi hookup. Use it to have a refined, precise cfi anchor. It requires the content to be loaded otherwise
@@ -19,11 +19,11 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
    *
    * @todo optimize
    */
-  const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, readingItem: ReadingItem) => {
-    const nodeOrRange = readingItemLocator.getFirstNodeOrRangeAtPage(pageIndex, readingItem)
-    const doc = readingItem.readingItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
+  const getCfi = Report.measurePerformance(`getCfi`, 10, (pageIndex: number, spineItem: SpineItem) => {
+    const nodeOrRange = spineItemLocator.getFirstNodeOrRangeAtPage(pageIndex, spineItem)
+    const doc = spineItem.spineItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
 
-    const itemAnchor = getItemAnchor(readingItem)
+    const itemAnchor = getItemAnchor(spineItem)
     // because the current cfi library does not works well with offset we are just using custom
     // format and do it manually after resolving the node
     // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
@@ -35,7 +35,7 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
       return cfiString
     }
 
-    return getRootCfi(readingItem)
+    return getRootCfi(spineItem)
   })
 
   /**
@@ -43,31 +43,31 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
    * but do not want to have heavy dom lookup. This is useful as pre-cfi before the content
    * is loaded for example.
    */
-  const getRootCfi = (readingItem: ReadingItem) => {
-    const itemAnchor = getItemAnchor(readingItem)
+  const getRootCfi = (spineItem: SpineItem) => {
+    const itemAnchor = getItemAnchor(spineItem)
 
     return `epubcfi(/0${itemAnchor}) `
   }
 
-  const getReadingItemFromCfi = (cfi: string) => {
+  const getSpineItemFromCfi = (cfi: string) => {
     const { itemId } = extractObokuMetadataFromCfi(cfi)
 
     if (itemId) {
       const { itemId } = extractObokuMetadataFromCfi(cfi)
-      const readingItem = (itemId ? spineItemManager.get(itemId) : undefined) || spineItemManager.get(0)
+      const spineItem = (itemId ? spineItemManager.get(itemId) : undefined) || spineItemManager.get(0)
 
-      return readingItem
+      return spineItem
     }
 
     return undefined
   }
 
   const getCfiMetaInformation = (cfi: string) => {
-    const readingItem = getReadingItemFromCfi(cfi)
+    const spineItem = getSpineItemFromCfi(cfi)
 
-    if (readingItem) {
+    if (spineItem) {
       return {
-        readingItemIndex: spineItemManager.getReadingItemIndex(readingItem)
+        spineItemIndex: spineItemManager.getSpineItemIndex(spineItem)
       }
     }
 
@@ -80,21 +80,21 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
   const resolveCfi = (cfiString: string) => {
     if (!cfiString) return undefined
 
-    const readingItem = getReadingItemFromCfi(cfiString)
-    const readingItemIndex = spineItemManager.getReadingItemIndex(readingItem) || 0
+    const spineItem = getSpineItemFromCfi(cfiString)
+    const spineItemIndex = spineItemManager.getSpineItemIndex(spineItem) || 0
 
-    if (!readingItem) return undefined
+    if (!spineItem) return undefined
 
     const { cleanedCfi, offset } = extractObokuMetadataFromCfi(cfiString)
     const cfi = new CFI(cleanedCfi, {})
 
-    const doc = readingItem.readingItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
+    const doc = spineItem.spineItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
 
     if (doc) {
       try {
         const { node, offset: resolvedOffset } = cfi.resolve(doc, {})
 
-        return { node, offset: offset ?? resolvedOffset, readingItemIndex }
+        return { node, offset: offset ?? resolvedOffset, spineItemIndex }
       } catch (e) {
         Report.error(e)
         return undefined
@@ -105,19 +105,19 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
   }
 
   // const resolveCfi = (cfi: string) => {
-  //   const { readingItemIndex = -1 } = getCfiMetaInformation(cfi) || {}
-  //   const readingItem = spineItemManager.get(readingItemIndex)
+  //   const { spineItemIndex = -1 } = getCfiMetaInformation(cfi) || {}
+  //   const spineItem = spineItemManager.get(spineItemIndex)
 
-  //   if (readingItem) {
+  //   if (spineItem) {
   //     let position: { x: number, y: number } | undefined = undefined
-  //     const { node, offset = 0 } = readingItemLocator.resolveCfi(cfi, readingItem) || {}
+  //     const { node, offset = 0 } = spineItemLocator.resolveCfi(cfi, spineItem) || {}
   //     if (node) {
-  //       position = readingItemLocator.getReadingItemPositionFromNode(node, offset, readingItem)
+  //       position = spineItemLocator.getSpineItemPositionFromNode(node, offset, spineItem)
   //     }
-  //     const pageIndex = position ? readingItemLocator.getReadingItemPageIndexFromPosition(position, readingItem) : undefined
+  //     const pageIndex = position ? spineItemLocator.getSpineItemPageIndexFromPosition(position, spineItem) : undefined
 
   //     return {
-  //       readingItemIndex,
+  //       spineItemIndex,
   //       pageIndex,
   //       node,
   //       offset,
@@ -139,7 +139,7 @@ export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
   }
 
   return {
-    getReadingItemFromCfi,
+    getSpineItemFromCfi,
     getCfiMetaInformation,
     getCfi,
     getRootCfi,

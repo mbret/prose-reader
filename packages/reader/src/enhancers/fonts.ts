@@ -89,8 +89,8 @@ export const fontsEnhancer: Enhancer<Options, {
     }
   `
 
-  const applyChangeToReadingItem = (requireLayout: boolean) => {
-    reader.manipulateReadingItems(({ removeStyle, addStyle, item }) => {
+  const applyChangeToSpineItem = (requireLayout: boolean) => {
+    reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
       if (item.renditionLayout !== `pre-paginated`) {
         removeStyle(`oboku-reader-fonts`)
         addStyle(`oboku-reader-fonts`, getStyle())
@@ -111,21 +111,21 @@ export const fontsEnhancer: Enhancer<Options, {
     ...reader,
     setFontScale: (scale: number) => {
       currentFontScale = scale
-      applyChangeToReadingItem(true)
+      applyChangeToSpineItem(true)
     },
     setLineHeight: (value: number | undefined) => {
       currentLineHeight = value
-      applyChangeToReadingItem(true)
+      applyChangeToSpineItem(true)
     },
     getLineHeight: () => currentLineHeight,
     setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => {
       currentFontWeight = value
-      applyChangeToReadingItem(false)
+      applyChangeToSpineItem(false)
     },
     getFontWeight: () => currentFontWeight,
     setFontJustification: (value: typeof FONT_JUSTIFICATION[number] | `default`) => {
       currentJustification = value === `default` ? undefined : value
-      applyChangeToReadingItem(false)
+      applyChangeToSpineItem(false)
     }
   }
 }

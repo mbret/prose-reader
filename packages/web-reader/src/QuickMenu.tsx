@@ -28,13 +28,13 @@ export const QuickMenu = ({ open, isComics, onSettingsClick }: {
   ].sort((a, b) => a - b)
   const beginAndEndAreDifferent =
     (pagination?.begin.pageIndexInChapter !== pagination?.end.pageIndexInChapter)
-    || (pagination?.begin.readingItemIndex !== pagination?.end.readingItemIndex)
+    || (pagination?.begin.spineItemIndex !== pagination?.end.spineItemIndex)
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
   const isComic = useRecoilValue(isComicState)
   // theses are mostly webtoon so we don't need pages, it would be weird
   // const shouldHidePages = manifest?.renditionLayout === `reflowable` && manifest.renditionFlow === `scrolled-continuous`
   const shouldHidePages = false
-  const currentBeginReadingItemIndex = pagination?.begin.readingItemIndex || 0
+  const currentBeginSpineItemIndex = pagination?.begin.spineItemIndex || 0
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [pagination?.begin.absolutePageIndex, pagination?.end.absolutePageIndex].sort()
 
   const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>['begin']['chapterInfo']): string => {
@@ -99,8 +99,8 @@ export const QuickMenu = ({ open, isComics, onSettingsClick }: {
               paddingLeft: 10
             }}>
               {(
-                (manifest?.readingDirection === 'ltr' && currentBeginReadingItemIndex > 0)
-                || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.readingItemIndex || 0) < numberOfSpineItems - 1)
+                (manifest?.readingDirection === 'ltr' && currentBeginSpineItemIndex > 0)
+                || (manifest?.readingDirection !== 'ltr' && (pagination?.begin.spineItemIndex || 0) < numberOfSpineItems - 1)
               ) ? (
                 <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={_ => reader?.goToLeftSpineItem()} />
               )
@@ -118,8 +118,8 @@ export const QuickMenu = ({ open, isComics, onSettingsClick }: {
               paddingRight: 10
             }}>
               {(
-                (manifest?.readingDirection === 'ltr' && (pagination?.end.readingItemIndex || 0) < numberOfSpineItems - 1)
-                || (manifest?.readingDirection !== 'ltr' && currentBeginReadingItemIndex > 0)
+                (manifest?.readingDirection === 'ltr' && (pagination?.end.spineItemIndex || 0) < numberOfSpineItems - 1)
+                || (manifest?.readingDirection !== 'ltr' && currentBeginSpineItemIndex > 0)
               ) ? (
                 <IconButton icon={<ArrowForwardIcon />} onClick={_ => {
                   reader?.goToRightSpineItem()

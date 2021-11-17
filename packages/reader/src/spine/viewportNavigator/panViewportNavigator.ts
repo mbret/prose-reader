@@ -87,17 +87,17 @@ export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigat
     navigationTriggerSubject$.next({ type: `snap`, data })
   }
 
-  const getLastUserExpectedNavigation = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentReadingItem = spineItemManager.getFocusedReadingItem()
+  const getLastUserExpectedNavigation = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) => {
+    const currentSpineItem = spineItemManager.getFocusedSpineItem()
 
-    if (!currentReadingItem) return undefined
+    if (!currentSpineItem) return undefined
 
-    const newReadingItem = locator.getReadingItemFromPosition(navigation) || currentReadingItem
-    const readingItemHasChanged = newReadingItem !== currentReadingItem
+    const newSpineItem = locator.getSpineItemFromPosition(navigation) || currentSpineItem
+    const spineItemHasChanged = newSpineItem !== currentSpineItem
 
-    if (readingItemHasChanged) {
-      if (allowReadingItemChange) {
-        if (spineItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+    if (spineItemHasChanged) {
+      if (allowSpineItemChange) {
+        if (spineItemManager.comparePositionOf(newSpineItem, currentSpineItem) === `before`) {
           return { type: `navigate-from-next-item` as const }
         } else {
           return { type: `navigate-from-previous-item` as const }

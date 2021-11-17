@@ -1,7 +1,7 @@
 import { of } from "rxjs"
 import { Report } from "../../report"
 
-export const createFrame$ = Report.measurePerformance(`ReadingItemFrame createFrame`, Infinity, () => {
+export const createFrame$ = Report.measurePerformance(`SpineItemFrame createFrame`, Infinity, () => {
   // we force undefined because otherwise the load method will believe it's defined after this call but the code is async and
   // the iframe could be undefined later
   const frame = document.createElement(`iframe`)

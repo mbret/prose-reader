@@ -11,7 +11,7 @@ const SHOULD_NOT_LAYOUT = false
 type Bookmark = {
   cfi: string,
   pageIndex: number | undefined,
-  readingItemIndex: number | undefined
+  spineItemIndex: number | undefined
 }
 
 type ExportableBookmark = Pick<Bookmark, `cfi`>
@@ -26,7 +26,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 }> =>
   next => options => {
     const reader = next(options)
-    let bookmarks: Bookmark[] = initialBookmarks.map(incompleteBookmark => ({ ...incompleteBookmark, pageIndex: undefined, readingItemIndex: undefined }))
+    let bookmarks: Bookmark[] = initialBookmarks.map(incompleteBookmark => ({ ...incompleteBookmark, pageIndex: undefined, spineItemIndex: undefined }))
     const subject = new Subject<SubjectType>()
     const settings = {
       areaWidth: 50,
@@ -34,15 +34,15 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     }
 
     const getCfiInformation = (cfi: string) => {
-      const { node, offset = 0, readingItemIndex } = reader.resolveCfi(cfi) || {}
+      const { node, offset = 0, spineItemIndex } = reader.resolveCfi(cfi) || {}
 
-      if (node && readingItemIndex !== undefined) {
-        const pageIndex = reader.locator.getReadingItemPageIndexFromNode(node, offset, readingItemIndex)
+      if (node && spineItemIndex !== undefined) {
+        const pageIndex = reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
 
-        return { cfi, pageIndex, readingItemIndex }
+        return { cfi, pageIndex, spineItemIndex }
       }
 
-      return { cfi, pageIndex: undefined, readingItemIndex }
+      return { cfi, pageIndex: undefined, spineItemIndex }
     }
 
     const createBookmarkFromCurrentPagination = () => {
@@ -58,9 +58,9 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
     const exportBookmark = (bookmark: Bookmark) => ({ cfi: bookmark.cfi })
 
     const redrawBookmarks = () => {
-      const { cfi: currentCfi, pageIndex: currentPageIndex, readingItemIndex: currentReadingItemIndex } = reader.innerPagination.getBeginInfo()
+      const { cfi: currentCfi, pageIndex: currentPageIndex, spineItemIndex: currentSpineItemIndex } = reader.innerPagination.getBeginInfo()
 
-      if (currentPageIndex === undefined || currentReadingItemIndex === undefined) {
+      if (currentPageIndex === undefined || currentSpineItemIndex === undefined) {
         destroyBookmarkElement()
 
         return
@@ -69,7 +69,7 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
       const bookmarkOnPage = bookmarks.find(bookmark =>
         (
           bookmark.pageIndex === currentPageIndex &&
-          bookmark.readingItemIndex === currentReadingItemIndex
+          bookmark.spineItemIndex === currentSpineItemIndex
         ) ||
         // sometime the next page contains part of the previous page and the cfi is actually
         // the same for the page too. This special case can happens for
@@ -118,9 +118,9 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const removeBookmarksOnCurrentPage = () => {
       // @todo handle spread
-      const beginReadingItem = reader.innerPagination.getBeginInfo().readingItemIndex
-      if (beginReadingItem !== undefined) {
-        bookmarks = bookmarks.filter(bookmark => bookmark.readingItemIndex !== beginReadingItem)
+      const beginSpineItem = reader.innerPagination.getBeginInfo().spineItemIndex
+      if (beginSpineItem !== undefined) {
+        bookmarks = bookmarks.filter(bookmark => bookmark.spineItemIndex !== beginSpineItem)
       }
       redrawBookmarks()
       subject.next({ type: `update`, data: bookmarks.map(exportBookmark) })
@@ -136,9 +136,9 @@ export const createBookmarksEnhancer = ({ bookmarks: initialBookmarks }: { bookm
 
     const updateBookmarkLocations = () => {
       bookmarks.forEach(bookmark => {
-        const { pageIndex, readingItemIndex } = getCfiInformation(bookmark.cfi)
+        const { pageIndex, spineItemIndex } = getCfiInformation(bookmark.cfi)
         bookmark.pageIndex = pageIndex
-        bookmark.readingItemIndex = readingItemIndex
+        bookmark.spineItemIndex = spineItemIndex
       })
     }
 

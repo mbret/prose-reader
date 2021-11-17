@@ -40,7 +40,7 @@ export const layoutEnhancer: Enhancer<{
      * @todo
      * Consider creating a bug ticket on both chromium and gecko projects.
      */
-    reader.manipulateReadingItems(({ frame }) => {
+    reader.manipulateSpineItems(({ frame }) => {
       if (!hasRedrawn && frame) {
         /* eslint-disable-next-line no-void */
         void (frame.getBoundingClientRect().left)

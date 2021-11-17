@@ -7,7 +7,7 @@ type Highlight = {
   focusCfi: string,
   id: number,
   text?: string,
-  readingItemIndex?: number | undefined,
+  spineItemIndex?: number | undefined,
   anchorNode?: Node,
   anchorOffset?: number,
   focusNode?: Node,
@@ -101,7 +101,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
 
     const drawHighlightsForItem = (overlayElement: HTMLElement, itemIndex: number) => {
       highlights.forEach((highlight) => {
-        if (highlight.readingItemIndex === itemIndex) {
+        if (highlight.spineItemIndex === itemIndex) {
           drawHighlight(overlayElement, highlight)
         }
       })
@@ -109,13 +109,13 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
 
     const _add = (highlight: UserHighlight) => {
       const cfiMetaInfo = reader.getCfiMetaInformation(highlight.anchorCfi)
-      const newHighlight = { ...highlight, readingItemIndex: cfiMetaInfo?.readingItemIndex, id: uniqueId++ }
+      const newHighlight = { ...highlight, spineItemIndex: cfiMetaInfo?.spineItemIndex, id: uniqueId++ }
 
       highlights.push(newHighlight)
 
-      if (newHighlight.readingItemIndex !== undefined) {
-        reader.manipulateReadingItems(({ index, overlayElement }) => {
-          if (index !== newHighlight.readingItemIndex) return SHOULD_NOT_LAYOUT
+      if (newHighlight.spineItemIndex !== undefined) {
+        reader.manipulateSpineItems(({ index, overlayElement }) => {
+          if (index !== newHighlight.spineItemIndex) return SHOULD_NOT_LAYOUT
 
           drawHighlight(overlayElement, newHighlight)
 
@@ -166,7 +166,7 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
     const refreshHighlights$ = reader.$.layout$
       .pipe(
         tap(() => {
-          reader.manipulateReadingItems(({ overlayElement, index }) => {
+          reader.manipulateSpineItems(({ overlayElement, index }) => {
             drawHighlightsForItem(overlayElement, index)
 
             return SHOULD_NOT_LAYOUT

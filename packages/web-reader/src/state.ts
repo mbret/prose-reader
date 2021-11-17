@@ -93,7 +93,7 @@ export const currentPageState = selector({
     const { begin } = get(paginationState) || {}
 
     if (renditionLayout === 'reflowable') return begin?.pageIndexInChapter
-    return begin?.readingItemIndex
+    return begin?.spineItemIndex
   }
 })
 

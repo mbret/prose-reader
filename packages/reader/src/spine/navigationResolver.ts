@@ -1,14 +1,14 @@
 import { Report } from "../report"
 import { Context } from "../context"
 import { SpineItemManager } from "../spineItemManager"
-import { ReadingItem } from "../spineItem"
-import { createNavigationResolver as createReadingItemNavigator } from "../spineItem/navigationResolver"
+import { SpineItem } from "../spineItem"
+import { createNavigationResolver as createSpineItemNavigator } from "../spineItem/navigationResolver"
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 
-export type ViewportNavigationEntry = { x: number, y: number, readingItem?: ReadingItem }
+export type ViewportNavigationEntry = { x: number, y: number, spineItem?: SpineItem }
 type ViewportPosition = { x: number, y: number }
-type ReadingItemPosition = { x: number, y: number }
+type SpineItemPosition = { x: number, y: number }
 
 const NAMESPACE = `spineNavigator`
 
@@ -18,18 +18,18 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
   cfiLocator: ReturnType<typeof createCfiLocator>,
   locator: ReturnType<typeof createLocationResolver>
 }) => {
-  const readingItemNavigator = createReadingItemNavigator({ context })
+  const spineItemNavigator = createSpineItemNavigator({ context })
 
   const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
 
-  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || ((!!a.readingItem && !!b.readingItem) && (a.readingItem !== b.readingItem))
+  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || ((!!a.spineItem && !!b.spineItem) && (a.spineItem !== b.spineItem))
 
-  const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: ReadingItemPosition) => {
+  const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: SpineItemPosition) => {
     // @todo use container width instead to increase performances
-    const lastReadingItem = spineItemManager.get(spineItemManager.getLength() - 1)
-    const distanceOfLastReadingItem = spineItemManager.getAbsolutePositionOf(lastReadingItem || 0)
-    const maximumXOffset = distanceOfLastReadingItem.leftEnd - context.getPageSize().width
-    const maximumYOffset = distanceOfLastReadingItem.topEnd - context.getPageSize().height
+    const lastSpineItem = spineItemManager.get(spineItemManager.getLength() - 1)
+    const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(lastSpineItem || 0)
+    const maximumXOffset = distanceOfLastSpineItem.leftEnd - context.getPageSize().width
+    const maximumYOffset = distanceOfLastSpineItem.topEnd - context.getPageSize().height
 
     return {
       x: Math.min(Math.max(0, position.x), maximumXOffset),
@@ -45,71 +45,71 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
   }
 
   const getNavigationForCfi = (cfi: string): ViewportNavigationEntry => {
-    const readingItem = cfiLocator.getReadingItemFromCfi(cfi)
+    const spineItem = cfiLocator.getSpineItemFromCfi(cfi)
     const { node, offset = 0 } = cfiLocator.resolveCfi(cfi) || {}
 
-    if (!readingItem) {
+    if (!spineItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {
-      const readingItemNavigation = node ? readingItemNavigator.getNavigationFromNode(readingItem, node, offset) : { x: 0, y: 0 }
-      const readingPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
+      const spineItemNavigation = node ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset) : { x: 0, y: 0 }
+      const readingPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
 
       // very important to always return a reading item since we want to focus on that particular one
-      return { ...getAdjustedPositionForSpread(readingPosition), readingItem }
+      return { ...getAdjustedPositionForSpread(readingPosition), spineItem }
     }
 
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForPage = (pageIndex: number, readingItem?: ReadingItem): ViewportNavigationEntry => {
+  const getNavigationForPage = (pageIndex: number, spineItem?: SpineItem): ViewportNavigationEntry => {
     // lookup for entire book
     // This is reliable for pre-paginated, do not use it for reflowable book
-    if (!readingItem) {
+    if (!spineItem) {
       const xPositionForPageIndex = pageIndex * context.getPageSize().width
       return getNavigationForPosition({ x: xPositionForPageIndex, y: 0 })
     }
 
-    const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
-    const readingOffset = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
+    const spineItemNavigation = spineItemNavigator.getNavigationForPage(pageIndex, spineItem)
+    const readingOffset = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
 
     return getAdjustedPositionForSpread(readingOffset)
   }
 
-  const getNavigationForLastPage = (readingItem: ReadingItem): ViewportNavigationEntry => {
-    const readingItemNavigation = readingItemNavigator.getNavigationForLastPage(readingItem)
-    const position = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
+  const getNavigationForLastPage = (spineItem: SpineItem): ViewportNavigationEntry => {
+    const spineItemNavigation = spineItemNavigator.getNavigationForLastPage(spineItem)
+    const position = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
 
     return getAdjustedPositionForSpread(position)
   }
 
   const getNavigationForSpineIndexOrId = (indexOrId: number | string): ViewportNavigationEntry => {
-    const readingItem = spineItemManager.get(indexOrId)
-    if (readingItem) {
-      const position = locator.getSpinePositionFromReadingItem(readingItem)
+    const spineItem = spineItemManager.get(indexOrId)
+    if (spineItem) {
+      const position = locator.getSpinePositionFromSpineItem(spineItem)
 
-      return { ...getAdjustedPositionForSpread(position), readingItem }
+      return { ...getAdjustedPositionForSpread(position), spineItem }
     }
 
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForRightSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
+  const getNavigationForRightSinglePage = (position: SpineItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const readingItem = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
+    const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = position
 
-    if (!readingItem) {
+    if (!spineItem) {
       return defaultNavigation
     }
 
     // translate viewport position into reading item local position
-    const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(position, readingItem)
+    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(position, spineItem)
     // get reading item local position for right page
-    const readingItemNavigationForRightPage = readingItemNavigator.getNavigationForRightPage(readingItemPosition, readingItem)
+    const spineItemNavigationForRightPage = spineItemNavigator.getNavigationForRightPage(spineItemPosition, spineItem)
     // check both position to see if we moved out of it
-    const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigationForRightPage, readingItemPosition)
+    const isNewNavigationInCurrentItem = !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigationForRightPage, spineItemPosition)
 
-    // console.warn({ readingItemPosition, readingItemNavigationForRightPage, isNewNavigationInCurrentItem })
+    // console.warn({ spineItemPosition, spineItemNavigationForRightPage, isNewNavigationInCurrentItem })
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
         context.isRTL()
@@ -121,24 +121,24 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
             : { y: position.y + context.getPageSize().height, x: 0 }
       )
     } else {
-      const readingOrderPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigationForRightPage, readingItem)
+      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigationForRightPage, spineItem)
 
       return readingOrderPosition
     }
   }
 
-  const getNavigationForLeftSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
+  const getNavigationForLeftSinglePage = (position: SpineItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const readingItem = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
-    const defaultNavigation = { ...position, readingItem }
+    const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+    const defaultNavigation = { ...position, spineItem }
 
-    if (!readingItem) {
+    if (!spineItem) {
       return defaultNavigation
     }
 
-    const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(position, readingItem)
-    const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
-    const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigation, readingItemPosition)
+    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(position, spineItem)
+    const spineItemNavigation = spineItemNavigator.getNavigationForLeftPage(spineItemPosition, spineItem)
+    const isNewNavigationInCurrentItem = !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigation, spineItemPosition)
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
@@ -151,7 +151,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
             : { y: position.y - context.getPageSize().height, x: 0 }
       )
     } else {
-      const readingOrderPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
+      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
 
       return readingOrderPosition
     }
@@ -164,13 +164,13 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForRightPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
+  const getNavigationForRightPage = (position: SpineItemPosition): ViewportNavigationEntry => {
+    const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
 
     let navigation = getNavigationForRightSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
-    if (readingItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+    if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
       return getAdjustedPositionForSpread(navigation)
     }
 
@@ -179,7 +179,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
-      if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+      if (spineItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
         return getAdjustedPositionForSpread(
           wrapPositionWithSafeEdge(
             context.isRTL()
@@ -216,13 +216,13 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForLeftPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
+  const getNavigationForLeftPage = (position: SpineItemPosition): ViewportNavigationEntry => {
+    const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
 
     let navigation = getNavigationForLeftSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
-    if (readingItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+    if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
       return getAdjustedPositionForSpread(navigation)
     }
 
@@ -231,7 +231,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
-      if (readingItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+      if (spineItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
         return getAdjustedPositionForSpread(
           wrapPositionWithSafeEdge(
             context.isRTL()
@@ -266,9 +266,9 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
       const existingSpineItem = context.getManifest()?.spineItems.find(item => item.href === urlWithoutAnchor)
       if (existingSpineItem) {
-        const readingItem = spineItemManager.get(existingSpineItem.id)
-        if (readingItem) {
-          const position = getNavigationForAnchor(validUrl.hash, readingItem)
+        const spineItem = spineItemManager.get(existingSpineItem.id)
+        if (spineItem) {
+          const position = getNavigationForAnchor(validUrl.hash, spineItem)
 
           return { ...getAdjustedPositionForSpread(position), url: validUrl }
         }
@@ -278,19 +278,19 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     return undefined
   }
 
-  const getNavigationForAnchor = (anchor: string, readingItem: ReadingItem) => {
-    const position = locator.getSpinePositionFromReadingItemAnchor(anchor, readingItem)
+  const getNavigationForAnchor = (anchor: string, spineItem: SpineItem) => {
+    const position = locator.getSpinePositionFromSpineItemAnchor(anchor, spineItem)
 
     return getAdjustedPositionForSpread(position)
   }
 
   const getNavigationForPosition = (viewportPosition: ViewportPosition) => {
-    const readingItem = locator.getReadingItemFromPosition(viewportPosition)
+    const spineItem = locator.getSpineItemFromPosition(viewportPosition)
 
-    if (readingItem) {
-      const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(viewportPosition, readingItem)
-      const readingItemValidPosition = readingItemNavigator.getNavigationForPosition(readingItem, readingItemPosition)
-      const viewportNavigation = locator.getSpinePositionFromReadingItemPosition(readingItemValidPosition, readingItem)
+    if (spineItem) {
+      const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(viewportPosition, spineItem)
+      const spineItemValidPosition = spineItemNavigator.getNavigationForPosition(spineItem, spineItemPosition)
+      const viewportNavigation = locator.getSpinePositionFromSpineItemPosition(spineItemValidPosition, spineItem)
 
       return getAdjustedPositionForSpread(viewportNavigation)
     }

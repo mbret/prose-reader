@@ -2,7 +2,7 @@ import { Subject } from "rxjs"
 import { tap, takeUntil } from "rxjs/operators"
 import { Report } from "./report"
 import { Context } from "./context"
-import { ReadingItem } from "./spineItem"
+import { SpineItem } from "./spineItem"
 import { isShallowEqual } from "./utils/objects"
 import { getCoverItem } from "./utils/manifest"
 import { ViewportPosition } from "./types"
@@ -10,7 +10,7 @@ import { ViewportPosition } from "./types"
 const NAMESPACE = `spineItemManager`
 
 export const createSpineItemManager = ({ context }: { context: Context }) => {
-  const focus$ = new Subject<{ data: ReadingItem }>()
+  const focus$ = new Subject<{ data: SpineItem }>()
   const layout$ = new Subject<boolean>()
   /**
    * This contains every item dimension / position on the viewport.
@@ -19,7 +19,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * done with the manager.
    */
   let itemLayoutInformation: { leftStart: number, leftEnd: number, topStart: number, topEnd: number, width: number, height: number }[] = []
-  const orderedReadingItems: ReadingItem[] = []
+  const orderedSpineItems: SpineItem[] = []
   /**
    * focused item represent the current item that the user navigated to.
    * It can be either the left or right page for a spread, not necessarily the begin item
@@ -30,7 +30,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * The focused item can sometime not be visible on the screen, in case of a viewport misalignment.
    * However it means the next adjustment will use the focused item to detect when to move the viewport.
    */
-  let focusedReadingItemIndex: number | undefined
+  let focusedSpineItemIndex: number | undefined
 
   /**
    * @todo
@@ -43,12 +43,12 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
     const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
-    orderedReadingItems.reduce((edgeOffset, item, index) => {
+    orderedSpineItems.reduce((edgeOffset, item, index) => {
       const isPageCover = coverItemIndex === index
       let minimumWidth = context.getPageSize().width
       let blankPagePosition: `none` | `before` | `after` = `none`
       const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
-      const isLastItem = index === orderedReadingItems.length - 1
+      const isLastItem = index === orderedSpineItems.length - 1
 
       if (context.shouldDisplaySpread()) {
         /**
@@ -69,12 +69,12 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
          * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
          * we ignore it
          */
-        if (!isGloballyPrePaginated && item.isReflowable && index !== orderedReadingItems.length - 1) {
+        if (!isGloballyPrePaginated && item.isReflowable && index !== orderedSpineItems.length - 1) {
           minimumWidth = context.getPageSize().width * 2
         }
 
         // mainly to make loading screen looks good
-        if (!isGloballyPrePaginated && item.isReflowable && index === orderedReadingItems.length - 1 && itemStartOnNewScreen) {
+        if (!isGloballyPrePaginated && item.isReflowable && index === orderedSpineItems.length - 1 && itemStartOnNewScreen) {
           minimumWidth = context.getPageSize().width * 2
         }
 
@@ -179,18 +179,18 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     layout$.next(hasLayoutChanges)
   }
 
-  const focus = (indexOrReadingItem: number | ReadingItem) => {
-    const readingItemToFocus = typeof indexOrReadingItem === `number` ? get(indexOrReadingItem) : indexOrReadingItem
+  const focus = (indexOrSpineItem: number | SpineItem) => {
+    const spineItemToFocus = typeof indexOrSpineItem === `number` ? get(indexOrSpineItem) : indexOrSpineItem
 
-    if (!readingItemToFocus) return
+    if (!spineItemToFocus) return
 
-    const newActiveReadingItemIndex = orderedReadingItems.indexOf(readingItemToFocus)
+    const newActiveSpineItemIndex = orderedSpineItems.indexOf(spineItemToFocus)
 
-    if (newActiveReadingItemIndex === focusedReadingItemIndex) return
+    if (newActiveSpineItemIndex === focusedSpineItemIndex) return
 
-    focusedReadingItemIndex = newActiveReadingItemIndex
+    focusedSpineItemIndex = newActiveSpineItemIndex
 
-    focus$.next({ data: readingItemToFocus })
+    focus$.next({ data: spineItemToFocus })
   }
 
   /**
@@ -205,7 +205,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
     const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `scrollable`
 
-    orderedReadingItems.forEach((orderedReadingItem, index) => {
+    orderedSpineItems.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
         (index < leftIndex && !isPrePaginated && isUsingFreeScroll)
@@ -213,26 +213,26 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           : index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
       const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
-        orderedReadingItem.loadContent()
+        orderedSpineItem.loadContent()
       } else {
-        orderedReadingItem.unloadContent()
+        orderedSpineItem.unloadContent()
       }
     })
   })
 
   const get = (indexOrId: number | string) => {
-    if (typeof indexOrId === `number`) return orderedReadingItems[indexOrId]
+    if (typeof indexOrId === `number`) return orderedSpineItems[indexOrId]
 
-    return orderedReadingItems.find(({ item }) => item.id === indexOrId)
+    return orderedSpineItems.find(({ item }) => item.id === indexOrId)
   }
 
   /**
    * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
    * current window (viewport).
    */
-  const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (readingItemOrIndex: ReadingItem | number) => {
+  const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (spineItemOrIndex: SpineItem | number) => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const indexOfItem = typeof readingItemOrIndex === `number` ? readingItemOrIndex : orderedReadingItems.indexOf(readingItemOrIndex)
+    const indexOfItem = typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItems.indexOf(spineItemOrIndex)
 
     const layoutInformation = itemLayoutInformation[indexOfItem]
 
@@ -240,10 +240,10 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       return { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
     }
 
-    // const distance = orderedReadingItems
+    // const distance = orderedSpineItems
     //   .slice(0, indexOfItem + 1)
-    //   .reduce((acc, readingItem) => {
-    //     const { width, height } = readingItem.getElementDimensions()
+    //   .reduce((acc, spineItem) => {
+    //     const { width, height } = spineItem.getElementDimensions()
 
     //     return {
     //       leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
@@ -261,10 +261,10 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
   }, { disable: true })
 
-  const getFocusedReadingItem = () => focusedReadingItemIndex !== undefined ? orderedReadingItems[focusedReadingItemIndex] : undefined
+  const getFocusedSpineItem = () => focusedSpineItemIndex !== undefined ? orderedSpineItems[focusedSpineItemIndex] : undefined
 
-  const comparePositionOf = (toCompare: ReadingItem, withItem: ReadingItem) => {
-    const isAfter = orderedReadingItems.indexOf(toCompare) > orderedReadingItems.indexOf(withItem)
+  const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
+    const isAfter = orderedSpineItems.indexOf(toCompare) > orderedSpineItems.indexOf(withItem)
 
     if (isAfter) {
       return `after`
@@ -273,17 +273,17 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     return `before`
   }
 
-  const getReadingItemIndex = (readingItem: ReadingItem | undefined) => {
-    if (!readingItem) return undefined
-    const index = orderedReadingItems.indexOf(readingItem)
+  const getSpineItemIndex = (spineItem: SpineItem | undefined) => {
+    if (!spineItem) return undefined
+    const index = orderedSpineItems.indexOf(spineItem)
 
     return index < 0 ? undefined : index
   }
 
-  const add = (readingItem: ReadingItem) => {
-    orderedReadingItems.push(readingItem)
+  const add = (spineItem: SpineItem) => {
+    orderedSpineItems.push(spineItem)
 
-    readingItem.$.contentLayoutChangeSubject$
+    spineItem.$.contentLayoutChangeSubject$
       .pipe(takeUntil(context.$.destroy$))
       .subscribe(() => {
         // upstream change, meaning we need to layout again to both resize correctly each item but also to
@@ -291,10 +291,10 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
         layout()
       })
 
-    readingItem.$.loaded$
+    spineItem.$.loaded$
       .pipe(
         tap(() => {
-          if (readingItem.isUsingVerticalWriting()) {
+          if (spineItem.isUsingVerticalWriting()) {
             context.setHasVerticalWriting()
           }
         }),
@@ -302,22 +302,22 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       )
       .subscribe()
 
-    readingItem.load()
+    spineItem.load()
   }
 
-  const getAll = () => orderedReadingItems
+  const getAll = () => orderedSpineItems
 
   const getLength = () => {
-    return orderedReadingItems.length
+    return orderedSpineItems.length
   }
 
-  const getFocusedReadingItemIndex = () => {
-    const item = getFocusedReadingItem()
-    return item && getReadingItemIndex(item)
+  const getFocusedSpineItemIndex = () => {
+    const item = getFocusedSpineItem()
+    return item && getSpineItemIndex(item)
   }
 
-  const getReadingItemAtPosition = Report.measurePerformance(`getReadingItemAtPosition`, 10, (position: ViewportPosition) => {
-    const detectedItem = orderedReadingItems.find(item => {
+  const getSpineItemAtPosition = Report.measurePerformance(`getSpineItemAtPosition`, 10, (position: ViewportPosition) => {
+    const detectedItem = orderedSpineItems.find(item => {
       const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
 
       const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
@@ -329,13 +329,13 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       }
     })
 
-    if (position.x === 0 && !detectedItem) return orderedReadingItems[0]
+    if (position.x === 0 && !detectedItem) return orderedSpineItems[0]
 
     return detectedItem
   }, { disable: true })
 
   const destroy = () => {
-    orderedReadingItems.forEach(item => item.destroy())
+    orderedSpineItems.forEach(item => item.destroy())
     focus$.complete()
     layout$.complete()
   }
@@ -350,10 +350,10 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     loadContents,
     comparePositionOf,
     getAbsolutePositionOf,
-    getReadingItemAtPosition,
-    getFocusedReadingItem,
-    getFocusedReadingItemIndex,
-    getReadingItemIndex,
+    getSpineItemAtPosition,
+    getFocusedSpineItem,
+    getFocusedSpineItemIndex,
+    getSpineItemIndex,
     destroy,
     $: {
       focus$: focus$.asObservable(),

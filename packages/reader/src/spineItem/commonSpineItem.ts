@@ -1,5 +1,5 @@
 import { Context } from "../context"
-import { createFrameItem, ReadingItemFrame } from "./frameItem/frameItem"
+import { createFrameItem, SpineItemFrame } from "./frameItem/frameItem"
 import { Manifest } from "../types"
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
@@ -32,7 +32,7 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
-export const createCommonReadingItem = ({ item, context, parentElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
+export const createCommonSpineItem = ({ item, context, parentElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
   item: Manifest[`spineItems`][number],
   parentElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
@@ -49,7 +49,7 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
   const frameHooks = createFrameHooks(iframeEventBridgeElement, fingerTracker, selectionTracker)
-  const readingItemFrame = createFrameItem({
+  const spineItemFrame = createFrameItem({
     parent: containerElement,
     item,
     context,
@@ -88,9 +88,9 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     return memoizedElementDimensions
   }
 
-  const injectStyle = (readingItemFrame: ReadingItemFrame, cssText: string) => {
-    readingItemFrame.getManipulableFrame()?.removeStyle(`oboku-reader-css`)
-    readingItemFrame.getManipulableFrame()?.addStyle(`oboku-reader-css`, cssText)
+  const injectStyle = (spineItemFrame: SpineItemFrame, cssText: string) => {
+    spineItemFrame.getManipulableFrame()?.removeStyle(`oboku-reader-css`)
+    spineItemFrame.getManipulableFrame()?.addStyle(`oboku-reader-css`, cssText)
   }
 
   const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
@@ -113,8 +113,8 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
 
   const getViewPortInformation = () => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const viewportDimensions = readingItemFrame.getViewportDimensions()
-    const frameElement = readingItemFrame.getManipulableFrame()?.frame
+    const viewportDimensions = spineItemFrame.getViewportDimensions()
+    const frameElement = spineItemFrame.getManipulableFrame()?.frame
     if (containerElement && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
       const computedWidthScale = pageWidth / viewportDimensions.width
       const computedScale = Math.min(computedWidthScale, pageHeight / viewportDimensions.height)
@@ -125,12 +125,12 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     return { computedScale: 1, computedWidthScale: 1, ...viewportDimensions }
   }
 
-  const loadContent = () => readingItemFrame.load()
+  const loadContent = () => spineItemFrame.load()
 
-  const unloadContent = () => readingItemFrame.unload()
+  const unloadContent = () => spineItemFrame.unload()
 
   const getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frame = readingItemFrame.getManipulableFrame()?.frame
+    const frame = spineItemFrame.getManipulableFrame()?.frame
     if (frame && selector) {
       if (selector.startsWith(`#`)) {
         return frame.contentDocument?.getElementById(selector.replace(`#`, ``))?.getBoundingClientRect()
@@ -156,7 +156,7 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
 
     hooks$.getValue().forEach(hook => {
       if (hook.name === `item.onLayout`) {
-        hook.fn({ frame: readingItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
+        hook.fn({ frame: spineItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
       }
     })
   }
@@ -165,7 +165,7 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
-    const { left = 0, top = 0 } = readingItemFrame.getFrameElement()?.getBoundingClientRect() || {}
+    const { left = 0, top = 0 } = spineItemFrame.getFrameElement()?.getBoundingClientRect() || {}
     const { computedScale = 1 } = getViewPortInformation() || {}
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
@@ -197,7 +197,7 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     return await finalFetch(item)
   }
 
-  const manipulateReadingItem = (
+  const manipulateSpineItem = (
     cb: (options: {
       container: HTMLElement,
       loadingElement: HTMLElement,
@@ -205,16 +205,16 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
       overlayElement: HTMLDivElement,
     } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
   ) => {
-    const manipulableFrame = readingItemFrame.getManipulableFrame()
+    const manipulableFrame = spineItemFrame.getManipulableFrame()
 
     if (manipulableFrame) return cb({ ...manipulableFrame, container: containerElement, loadingElement, item, overlayElement })
 
     return cb({ container: containerElement, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
   }
 
-  readingItemFrame.$.contentLayoutChange$
+  spineItemFrame.$.contentLayoutChange$
     .pipe(
-      withLatestFrom(readingItemFrame.$.isReady$),
+      withLatestFrom(spineItemFrame.$.isReady$),
       takeUntil(destroySubject$)
     )
     .subscribe(([data, isReady]) => {
@@ -224,7 +224,7 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
       contentLayoutChangeSubject$.next({ isFirstLayout: data.isFirstLayout, isReady })
     })
 
-  readingItemFrame.$.unload$
+  spineItemFrame.$.unload$
     .pipe(
       tap(() => {
         if (loadingElement && loadingElement.style.visibility !== `visible`) {
@@ -243,48 +243,48 @@ export const createCommonReadingItem = ({ item, context, parentElement, iframeEv
     adjustPositionOfElement,
     createLoadingElement,
     getElementDimensions,
-    getHtmlFromResource: readingItemFrame.getHtmlFromResource,
+    getHtmlFromResource: spineItemFrame.getHtmlFromResource,
     getResource,
     translateFramePositionIntoPage,
     setLayoutDirty,
     injectStyle,
     loadContent,
     unloadContent,
-    readingItemFrame,
+    spineItemFrame,
     element: containerElement,
     loadingElement,
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
-    isReady: readingItemFrame.getIsReady,
+    isReady: spineItemFrame.getIsReady,
     destroy: () => {
       destroySubject$.next()
       loadingElement.onload = () => { }
       loadingElement.remove()
       containerElement.remove()
-      readingItemFrame?.destroy()
+      spineItemFrame?.destroy()
       fingerTracker.destroy()
       selectionTracker.destroy()
       destroySubject$.complete()
     },
-    isUsingVerticalWriting: () => readingItemFrame.getWritingMode()?.startsWith(`vertical`),
+    isUsingVerticalWriting: () => spineItemFrame.getWritingMode()?.startsWith(`vertical`),
     getReadingDirection: () => {
-      return readingItemFrame.getReadingDirection() || context.getReadingDirection()
+      return spineItemFrame.getReadingDirection() || context.getReadingDirection()
     },
-    manipulateReadingItem,
+    manipulateSpineItem,
     selectionTracker,
     fingerTracker,
     $: {
       contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable(),
-      loaded$: readingItemFrame.$.loaded$
+      loaded$: spineItemFrame.$.loaded$
     }
   }
 }
 
 const createContainerElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], hooks$: BehaviorSubject<Hook[]>) => {
   const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
-  element.classList.add(`readingItem`)
-  element.classList.add(`readingItem-${item.renditionLayout}`)
+  element.classList.add(`spineItem`)
+  element.classList.add(`spineItem-${item.renditionLayout}`)
   element.style.cssText = `
     position: absolute;
     overflow: hidden;
@@ -346,8 +346,8 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spi
 
 const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {
   const element = containerElement.ownerDocument.createElement(`div`)
-  element.classList.add(`readingItemOverlay`)
-  element.classList.add(`readingItemOverlay-${item.renditionLayout}`)
+  element.classList.add(`spineItemOverlay`)
+  element.classList.add(`spineItemOverlay-${item.renditionLayout}`)
   element.style.cssText = `
     position: absolute;
     width: 100%;

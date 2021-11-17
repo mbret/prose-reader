@@ -1,6 +1,6 @@
 import { Context } from "../context"
 import { Enhancer } from "./types"
-import { ReadingItem } from "../spineItem"
+import { SpineItem } from "../spineItem"
 
 /**
  * Help dealing with progression through the book
@@ -13,9 +13,9 @@ export const progressionEnhancer: Enhancer<{}, {
       numberOfPages: number,
       pageIndex: number,
       currentPosition: { x: number, y: number },
-      currentItem: ReadingItem
+      currentItem: SpineItem
     ) => number,
-    getScrollPercentageWithinItem: (context: Context, currentPosition: { x: number, y: number }, currentItem: ReadingItem) => number
+    getScrollPercentageWithinItem: (context: Context, currentPosition: { x: number, y: number }, currentItem: SpineItem) => number
   }
 }> = (next) => (options) => {
   const reader = next(options)
@@ -26,7 +26,7 @@ export const progressionEnhancer: Enhancer<{}, {
     numberOfPages: number,
     pageIndex: number,
     currentPosition: { x: number, y: number },
-    currentItem: ReadingItem
+    currentItem: SpineItem
   ) => {
     const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
     const readingOrderLength = context.getManifest()?.spineItems.length || 0
@@ -70,7 +70,7 @@ export const progressionEnhancer: Enhancer<{}, {
     return estimateBeforeThisItem + (currentItemWeight * progressWithinThisItem)
   }
 
-  const getScrollPercentageWithinItem = (context: Context, currentPosition: { x: number, y: number }, currentItem: ReadingItem) => {
+  const getScrollPercentageWithinItem = (context: Context, currentPosition: { x: number, y: number }, currentItem: SpineItem) => {
     const { height, width } = currentItem.getElementDimensions()
 
     const { topStart, leftStart } = reader.getAbsolutePositionOf(currentItem)
