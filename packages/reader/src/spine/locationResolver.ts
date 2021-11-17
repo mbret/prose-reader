@@ -4,7 +4,7 @@ import { createLocationResolver as createReadingItemLocator } from "../spineItem
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 
-type ReadingOrderViewPosition = { x: number, y: number }
+type SpinePosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
 
 export const createLocationResolver = ({ spineItemManager, context, readingItemLocator }: {
@@ -12,7 +12,7 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
   context: Context,
   readingItemLocator: ReturnType<typeof createReadingItemLocator>
 }) => {
-  const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
+  const getReadingItemPositionFromSpinePosition = Report.measurePerformance(`getReadingItemPositionFromSpinePosition`, 10, (position: SpinePosition, readingItem: ReadingItem): ReadingItemPosition => {
     const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
 
     /**
@@ -59,7 +59,7 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
    * 400          200           0
    * will return 200, which probably needs to be adjusted as 0
    */
-  const getReadingOrderViewPositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): ReadingOrderViewPosition => {
+  const getSpinePositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): SpinePosition => {
     const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
 
     /**
@@ -93,31 +93,31 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
   /**
    * This will retrieve the closest item to the x / y position edge relative to the reading direction.
    */
-  const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: ReadingOrderViewPosition) => {
+  const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: SpinePosition) => {
     const readingItem = spineItemManager.getReadingItemAtPosition(position)
 
     return readingItem
   }, { disable: true })
 
-  const getReadingOrderViewPositionFromReadingItem = (readingItem: ReadingItem) => {
-    return getReadingOrderViewPositionFromReadingItemPosition({ x: 0, y: 0 }, readingItem)
+  const getSpinePositionFromReadingItem = (readingItem: ReadingItem) => {
+    return getSpinePositionFromReadingItemPosition({ x: 0, y: 0 }, readingItem)
   }
 
-  const getReadingOrderViewPositionFromReadingItemAnchor = (anchor: string, readingItem: ReadingItem) => {
+  const getSpinePositionFromReadingItemAnchor = (anchor: string, readingItem: ReadingItem) => {
     const readingItemOffset = readingItemLocator.getReadingItemOffsetFromAnchor(anchor, readingItem)
 
-    const position = getReadingOrderViewPositionFromReadingItemPosition({ x: readingItemOffset, y: 0 }, readingItem)
+    const position = getSpinePositionFromReadingItemPosition({ x: readingItemOffset, y: 0 }, readingItem)
 
     return position
   }
 
-  const getReadingItemsFromReadingOrderPosition = (position: ReadingOrderViewPosition): {
+  const getReadingItemsFromReadingOrderPosition = (position: SpinePosition): {
     left: number,
     right: number,
     begin: number,
-    beginPosition: ReadingOrderViewPosition
+    beginPosition: SpinePosition
     end: number
-    endPosition: ReadingOrderViewPosition
+    endPosition: SpinePosition
   } | undefined => {
     const beginItem = getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
     const beginItemIndex = spineItemManager.getReadingItemIndex(beginItem)
@@ -161,10 +161,10 @@ export const createLocationResolver = ({ spineItemManager, context, readingItemL
   }
 
   return {
-    getReadingOrderViewPositionFromReadingItemPosition,
-    getReadingOrderViewPositionFromReadingItem,
-    getReadingOrderViewPositionFromReadingItemAnchor,
-    getReadingItemPositionFromReadingOrderViewPosition,
+    getSpinePositionFromReadingItemPosition,
+    getSpinePositionFromReadingItem,
+    getSpinePositionFromReadingItemAnchor,
+    getReadingItemPositionFromSpinePosition,
     getReadingItemFromPosition,
     getReadingItemFromIframe,
     getReadingItemPageIndexFromNode,

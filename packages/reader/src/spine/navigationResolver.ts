@@ -10,7 +10,7 @@ export type ViewportNavigationEntry = { x: number, y: number, readingItem?: Read
 type ViewportPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number }
 
-const NAMESPACE = `readingOrderViewNavigator`
+const NAMESPACE = `spineNavigator`
 
 export const createNavigationResolver = ({ context, spineItemManager, cfiLocator, locator }: {
   context: Context,
@@ -52,7 +52,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {
       const readingItemNavigation = node ? readingItemNavigator.getNavigationFromNode(readingItem, node, offset) : { x: 0, y: 0 }
-      const readingPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+      const readingPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
       // very important to always return a reading item since we want to focus on that particular one
       return { ...getAdjustedPositionForSpread(readingPosition), readingItem }
@@ -70,14 +70,14 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     }
 
     const readingItemNavigation = readingItemNavigator.getNavigationForPage(pageIndex, readingItem)
-    const readingOffset = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+    const readingOffset = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
     return getAdjustedPositionForSpread(readingOffset)
   }
 
   const getNavigationForLastPage = (readingItem: ReadingItem): ViewportNavigationEntry => {
     const readingItemNavigation = readingItemNavigator.getNavigationForLastPage(readingItem)
-    const position = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+    const position = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
     return getAdjustedPositionForSpread(position)
   }
@@ -85,7 +85,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
   const getNavigationForSpineIndexOrId = (indexOrId: number | string): ViewportNavigationEntry => {
     const readingItem = spineItemManager.get(indexOrId)
     if (readingItem) {
-      const position = locator.getReadingOrderViewPositionFromReadingItem(readingItem)
+      const position = locator.getSpinePositionFromReadingItem(readingItem)
 
       return { ...getAdjustedPositionForSpread(position), readingItem }
     }
@@ -103,7 +103,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     }
 
     // translate viewport position into reading item local position
-    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
+    const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(position, readingItem)
     // get reading item local position for right page
     const readingItemNavigationForRightPage = readingItemNavigator.getNavigationForRightPage(readingItemPosition, readingItem)
     // check both position to see if we moved out of it
@@ -121,7 +121,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
             : { y: position.y + context.getPageSize().height, x: 0 }
       )
     } else {
-      const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigationForRightPage, readingItem)
+      const readingOrderPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigationForRightPage, readingItem)
 
       return readingOrderPosition
     }
@@ -136,7 +136,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
       return defaultNavigation
     }
 
-    const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(position, readingItem)
+    const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(position, readingItem)
     const readingItemNavigation = readingItemNavigator.getNavigationForLeftPage(readingItemPosition, readingItem)
     const isNewNavigationInCurrentItem = !readingItemPosition.outsideOfBoundaries && arePositionsDifferent(readingItemNavigation, readingItemPosition)
 
@@ -151,7 +151,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
             : { y: position.y - context.getPageSize().height, x: 0 }
       )
     } else {
-      const readingOrderPosition = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemNavigation, readingItem)
+      const readingOrderPosition = locator.getSpinePositionFromReadingItemPosition(readingItemNavigation, readingItem)
 
       return readingOrderPosition
     }
@@ -279,7 +279,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
   }
 
   const getNavigationForAnchor = (anchor: string, readingItem: ReadingItem) => {
-    const position = locator.getReadingOrderViewPositionFromReadingItemAnchor(anchor, readingItem)
+    const position = locator.getSpinePositionFromReadingItemAnchor(anchor, readingItem)
 
     return getAdjustedPositionForSpread(position)
   }
@@ -288,9 +288,9 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     const readingItem = locator.getReadingItemFromPosition(viewportPosition)
 
     if (readingItem) {
-      const readingItemPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(viewportPosition, readingItem)
+      const readingItemPosition = locator.getReadingItemPositionFromSpinePosition(viewportPosition, readingItem)
       const readingItemValidPosition = readingItemNavigator.getNavigationForPosition(readingItem, readingItemPosition)
-      const viewportNavigation = locator.getReadingOrderViewPositionFromReadingItemPosition(readingItemValidPosition, readingItem)
+      const viewportNavigation = locator.getSpinePositionFromReadingItemPosition(readingItemValidPosition, readingItem)
 
       return getAdjustedPositionForSpread(viewportNavigation)
     }

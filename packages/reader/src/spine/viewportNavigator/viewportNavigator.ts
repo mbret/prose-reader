@@ -141,31 +141,31 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
   const adjustNavigation = (readingItem: ReadingItem) => {
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
     const lastCfi = pagination.getBeginInfo().cfi
-    let adjustedReadingOrderViewPosition = currentNavigationPosition
+    let adjustedSpinePosition = currentNavigationPosition
     const offsetInReadingItem = 0
 
     if (context.getSettings().computedPageTurnMode === `scrollable`) {
-      adjustedReadingOrderViewPosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
+      adjustedSpinePosition = navigator.getMostPredominantNavigationForPosition(getCurrentViewportPosition())
     } else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
       /**
      * When `navigate-from-cfi` we always try to retrieve offset from cfi node and navigate
      * to there
      */
-      adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
+      adjustedSpinePosition = navigator.getNavigationForCfi(lastUserExpectedNavigation.data)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-cfi`, `use last cfi`)
     } else if (lastUserExpectedNavigation?.type === `navigate-from-next-item`) {
       /**
        * When `navigate-from-next-item` we always try to get the offset of the last page, that way
        * we ensure reader is always redirected to last page
        */
-      adjustedReadingOrderViewPosition = navigator.getNavigationForLastPage(readingItem)
+      adjustedSpinePosition = navigator.getNavigationForLastPage(readingItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-next-item`, {})
     } else if (lastUserExpectedNavigation?.type === `navigate-from-previous-item`) {
       /**
        * When `navigate-from-previous-item'`
        * we always try stay on the first page of the item
        */
-      adjustedReadingOrderViewPosition = navigator.getNavigationForPage(0, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForPage(0, readingItem)
       Report.log(NAMESPACE, `adjustNavigation`, `navigate-from-previous-item`, {})
     } else if (lastUserExpectedNavigation?.type === `navigate-from-anchor`) {
       /**
@@ -173,7 +173,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
        * the offset of that anchor.
        */
       const anchor = lastUserExpectedNavigation.data
-      adjustedReadingOrderViewPosition = navigator.getNavigationForAnchor(anchor, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForAnchor(anchor, readingItem)
     } else if (lastCfi) {
       // @todo, ignore cfi if the current focus item
       /**
@@ -181,7 +181,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
        * the offset and navigate the user to it
        * @todo handle vertical writing, we are always redirected to page 1 currently
        */
-      adjustedReadingOrderViewPosition = navigator.getNavigationForCfi(lastCfi)
+      adjustedSpinePosition = navigator.getNavigationForCfi(lastCfi)
       Report.log(NAMESPACE, `adjustNavigation`, `use last cfi`)
     } else {
       // @todo we should get the page index of the focused item, if focus item is not inside pagination then go to spine index
@@ -191,19 +191,19 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
       const currentPageIndex = pagination.getBeginInfo().pageIndex || 0
-      adjustedReadingOrderViewPosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
+      adjustedSpinePosition = navigator.getNavigationForPage(currentPageIndex, readingItem)
       Report.log(NAMESPACE, `adjustNavigation`, `use guess strategy`, {})
     }
 
-    const areDifferent = navigator.arePositionsDifferent(adjustedReadingOrderViewPosition, currentNavigationPosition)
+    const areDifferent = navigator.arePositionsDifferent(adjustedSpinePosition, currentNavigationPosition)
 
-    Report.log(NAMESPACE, `adjustNavigation`, { areDifferent, offsetInReadingItem, expectedReadingOrderViewOffset: adjustedReadingOrderViewPosition, currentNavigationPosition, lastUserExpectedNavigation })
+    Report.log(NAMESPACE, `adjustNavigation`, { areDifferent, offsetInReadingItem, expectedSpineOffset: adjustedSpinePosition, currentNavigationPosition, lastUserExpectedNavigation })
 
     if (areDifferent) {
-      adjustNavigationSubject$.next({ position: adjustedReadingOrderViewPosition, animate: false })
+      adjustNavigationSubject$.next({ position: adjustedSpinePosition, animate: false })
     }
 
-    return of({ previousNavigationPosition: currentNavigationPosition, adjustedReadingOrderViewPosition, areDifferent })
+    return of({ previousNavigationPosition: currentNavigationPosition, adjustedSpinePosition, areDifferent })
   }
 
   const layout = () => {

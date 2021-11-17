@@ -150,8 +150,8 @@ export const paginationEnhancer: Enhancer<{}, {
       isUsingSpread: context.shouldDisplaySpread()
       // chaptersOfBook: number;
       // chapter: string;
-      // hasNextChapter: (reader.readingOrderView.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
-      // hasPreviousChapter: (reader.readingOrderView.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
+      // hasNextChapter: (reader.spine.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
+      // hasPreviousChapter: (reader.spine.readingItemIndex || 0) < (manifest.readingOrder.length - 1),
       // numberOfSpineItems: context.getManifest()?.readingOrder.length,
     }
   }

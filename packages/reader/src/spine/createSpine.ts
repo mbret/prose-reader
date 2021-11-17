@@ -15,7 +15,7 @@ import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Hook } from "../types/Hook"
 
-const NAMESPACE = `readingOrderView`
+const NAMESPACE = `spine`
 
 type ReadingItem = ReturnType<typeof createReadingItem>
 type RequireLayout = boolean
@@ -24,7 +24,7 @@ type ManipulableReadingItemCallbackPayload = Parameters<ManipulableReadingItemCa
 
 type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
 
-export const createReadingOrderView = ({ parentElement, context, pagination, iframeEventBridgeElement, spineItemManager, hooks$ }: {
+export const createSpine = ({ parentElement, context, pagination, iframeEventBridgeElement, spineItemManager, hooks$ }: {
   parentElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
@@ -148,9 +148,9 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
             endLastCfi?.startsWith(`epubcfi(/0`)
 
           if (beginReadingItem && endReadingItem && readingItemsFromPosition) {
-            const beginPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.beginPosition, beginReadingItem)
+            const beginPosition = locator.getReadingItemPositionFromSpinePosition(readingItemsFromPosition.beginPosition, beginReadingItem)
             const beginPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(beginPosition, beginReadingItem)
-            const endPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.endPosition, endReadingItem)
+            const endPosition = locator.getReadingItemPositionFromSpinePosition(readingItemsFromPosition.endPosition, endReadingItem)
             const endPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(endPosition, endReadingItem)
 
             pagination.updateBeginAndEnd({
@@ -240,8 +240,8 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
   merge(
     adjustNavigationAfterLayout$
       .pipe(
-        switchMap(({ adjustedReadingOrderViewPosition }) => {
-          return adjustPagination$(adjustedReadingOrderViewPosition)
+        switchMap(({ adjustedSpinePosition }) => {
+          return adjustPagination$(adjustedSpinePosition)
             .pipe(
               takeUntil(viewportNavigator.$.navigation$)
             )
@@ -347,9 +347,9 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
           const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
           const beginItemIndex = spineItemManager.getReadingItemIndex(beginReadingItem) ?? 0
-          const beginPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.beginPosition, beginReadingItem)
+          const beginPosition = locator.getReadingItemPositionFromSpinePosition(readingItemsFromPosition.beginPosition, beginReadingItem)
           const beginPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(beginPosition, beginReadingItem)
-          const endPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.endPosition, endReadingItem)
+          const endPosition = locator.getReadingItemPositionFromSpinePosition(readingItemsFromPosition.endPosition, endReadingItem)
           const endPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(endPosition, endReadingItem)
           const endItemIndex = spineItemManager.getReadingItemIndex(endReadingItem) ?? 0
 
@@ -519,7 +519,7 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   element.style.transformOrigin = `0 0`
 
   return hooks$.getValue().reduce((element, hook) => {
-    if (hook.name === `readingOrderView.onBeforeContainerCreated`) {
+    if (hook.name === `spine.onBeforeContainerCreated`) {
       return hook.fn(element)
     }
 
@@ -527,4 +527,4 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   }, element)
 }
 
-export type ReadingOrderView = ReturnType<typeof createReadingOrderView>
+export type Spine = ReturnType<typeof createSpine>

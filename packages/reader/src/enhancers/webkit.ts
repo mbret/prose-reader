@@ -19,7 +19,7 @@ export const webkitEnhancer: Enhancer<{}, {
    */
   const transformFlickerFixHooks: typeof options[`hooks`] = [
     {
-      name: `readingOrderView.onBeforeContainerCreated`,
+      name: `spine.onBeforeContainerCreated`,
       fn: element => {
         element.style.cssText = `
           ${element.style.cssText}

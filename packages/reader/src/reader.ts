@@ -2,7 +2,7 @@ import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
 import { createPagination } from "./pagination"
-import { createReadingOrderView } from "./spine/readingOrderView"
+import { createSpine } from "./spine/createSpine"
 import { LoadOptions, Manifest } from "./types"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
@@ -43,7 +43,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   let containerManipulationOnDestroyCbList: (() => void)[] = []
-  const readingOrderView = createReadingOrderView({
+  const spine = createSpine({
     parentElement: element,
     iframeEventBridgeElement,
     context,
@@ -86,7 +86,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       dimensions.height
     )
 
-    readingOrderView.layout()
+    spine.layout()
   }
 
   const load = (
@@ -104,14 +104,14 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
 
     // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
 
-    readingOrderView.load()
+    spine.load()
 
     layout()
 
     if (!loadOptions.cfi) {
-      readingOrderView.viewportNavigator.goToSpineItem(0, { animate: false })
+      spine.viewportNavigator.goToSpineItem(0, { animate: false })
     } else {
-      readingOrderView.viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
+      spine.viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
     }
 
     readySubject$.next()
@@ -130,7 +130,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     cb(element, onDestroy)
   }
 
-  readingOrderView.$.$
+  spine.$.$
     .pipe(
       tap(event => {
         if (event.type === `onSelectionChange`) {
@@ -199,7 +199,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     hooksSubject$.next([])
     hooksSubject$.complete()
     context.destroy()
-    readingOrderView?.destroy()
+    spine?.destroy()
     element.remove()
     iframeEventBridgeElement.remove()
     readySubject$.complete()
@@ -213,28 +213,28 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     innerPagination: pagination,
     context,
     registerHook,
-    manipulateReadingItems: readingOrderView.manipulateReadingItems,
+    manipulateReadingItems: spine.manipulateReadingItems,
     manipulateContainer,
-    moveTo: readingOrderView.viewportNavigator.moveTo,
-    turnLeft: readingOrderView.viewportNavigator.turnLeft,
-    turnRight: readingOrderView.viewportNavigator.turnRight,
-    goToPageOfCurrentChapter: readingOrderView.viewportNavigator.goToPageOfCurrentChapter,
-    goToPage: readingOrderView.viewportNavigator.goToPage,
-    goToUrl: readingOrderView.viewportNavigator.goToUrl,
-    goToCfi: readingOrderView.viewportNavigator.goToCfi,
-    goToSpineItem: readingOrderView.viewportNavigator.goToSpineItem,
+    moveTo: spine.viewportNavigator.moveTo,
+    turnLeft: spine.viewportNavigator.turnLeft,
+    turnRight: spine.viewportNavigator.turnRight,
+    goToPageOfCurrentChapter: spine.viewportNavigator.goToPageOfCurrentChapter,
+    goToPage: spine.viewportNavigator.goToPage,
+    goToUrl: spine.viewportNavigator.goToUrl,
+    goToCfi: spine.viewportNavigator.goToCfi,
+    goToSpineItem: spine.viewportNavigator.goToSpineItem,
     getFocusedReadingItemIndex: spineItemManager.getFocusedReadingItemIndex,
     getReadingItem: spineItemManager.get,
     getAbsolutePositionOf: spineItemManager.getAbsolutePositionOf,
-    getSelection: readingOrderView.getSelection,
-    isSelecting: readingOrderView.isSelecting,
-    normalizeEventForViewport: readingOrderView.normalizeEventForViewport,
-    getCfiMetaInformation: readingOrderView.cfiLocator.getCfiMetaInformation,
-    resolveCfi: readingOrderView.cfiLocator.resolveCfi,
-    generateCfi: readingOrderView.cfiLocator.generateFromRange,
-    locator: readingOrderView.locator,
-    getCurrentNavigationPosition: readingOrderView.viewportNavigator.getCurrentNavigationPosition,
-    getCurrentViewportPosition: readingOrderView.viewportNavigator.getCurrentViewportPosition,
+    getSelection: spine.getSelection,
+    isSelecting: spine.isSelecting,
+    normalizeEventForViewport: spine.normalizeEventForViewport,
+    getCfiMetaInformation: spine.cfiLocator.getCfiMetaInformation,
+    resolveCfi: spine.cfiLocator.resolveCfi,
+    generateCfi: spine.cfiLocator.generateFromRange,
+    locator: spine.locator,
+    getCurrentNavigationPosition: spine.viewportNavigator.getCurrentNavigationPosition,
+    getCurrentViewportPosition: spine.viewportNavigator.getCurrentViewportPosition,
     layout,
     load,
     destroy,
@@ -253,14 +253,14 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
        * Dispatched when a change in selection happens
        */
       selection$: selectionSubject$.asObservable(),
-      viewportState$: readingOrderView.$.viewportState$,
-      layout$: readingOrderView.$.layout$,
+      viewportState$: spine.$.viewportState$,
+      layout$: spine.$.layout$,
       destroy$
     },
     __debug: {
       pagination,
       context,
-      readingOrderView,
+      spine,
       spineItemManager
     } as any // using any because otherwise ts breaks due to too many types to infer
   }

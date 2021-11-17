@@ -36,7 +36,7 @@ export type Hook =
    * Only available during reader creation
    */
   | {
-    name: `readingOrderView.onBeforeContainerCreated`,
+    name: `spine.onBeforeContainerCreated`,
     fn: (payload: HTMLElement) => HTMLElement
   }
   | {
