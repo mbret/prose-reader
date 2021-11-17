@@ -505,7 +505,10 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   const element: HTMLElement = doc.createElement(`div`)
   element.id = `ReadingOrderView`
   element.className = `ReadingOrderView`
-  element.style.height = `100%`
+  element.style.cssText = `
+    height: 100%;
+    position: relative;
+  `
   /**
    * Beware of this property, do not try to change anything else or remove it.
    * This is early forced optimization and is used for this specific context.
