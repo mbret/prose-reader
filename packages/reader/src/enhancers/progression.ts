@@ -1,6 +1,6 @@
 import { Context } from "../context"
 import { Enhancer } from "./types"
-import { ReadingItem } from "../readingItem"
+import { ReadingItem } from "../spineItem"
 
 /**
  * Help dealing with progression through the book

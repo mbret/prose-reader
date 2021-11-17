@@ -1,6 +1,6 @@
 import { Context } from "../context"
-import { ReadingItem } from "../readingItem"
-import { createLocationResolver as createReadingItemLocator } from "../readingItem/locationResolver"
+import { ReadingItem } from "../spineItem"
+import { createLocationResolver as createReadingItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 

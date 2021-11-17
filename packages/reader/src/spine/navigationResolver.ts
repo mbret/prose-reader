@@ -1,8 +1,8 @@
 import { Report } from "../report"
 import { Context } from "../context"
 import { SpineItemManager } from "../spineItemManager"
-import { ReadingItem } from "../readingItem"
-import { createNavigationResolver as createReadingItemNavigator } from "../readingItem/navigationResolver"
+import { ReadingItem } from "../spineItem"
+import { createNavigationResolver as createReadingItemNavigator } from "../spineItem/navigationResolver"
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 

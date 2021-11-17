@@ -1,6 +1,6 @@
 import { Subject } from "rxjs"
 import { Context } from "./context"
-import { ReadingItem } from "./readingItem"
+import { ReadingItem } from "./spineItem"
 import { SpineItemManager } from "./spineItemManager"
 import { Report } from "./report"
 

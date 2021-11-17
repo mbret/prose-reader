@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 import { Enhancer } from "./types"
-import { ReadingItem } from "../readingItem"
+import { ReadingItem } from "../spineItem"
 import { Manifest } from "../types"
 import { progressionEnhancer } from "./progression"
 
