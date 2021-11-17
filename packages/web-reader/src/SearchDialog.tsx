@@ -54,8 +54,9 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
         value={text}
         onChange={onValueChange}
         borderRadius={0}
+        size="lg"
       />
-      <Box padding={2} pt={0} style={{ marginTop: 10, overflow: 'hidden', overflowY: 'scroll' }}>
+      <Box padding={2} pt={2} flex={1} style={{ overflow: 'hidden', overflowY: 'scroll' }}>
         {searching && (
           <Text>Searching ...</Text>
         )}
@@ -80,8 +81,7 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
                   />
                 ))}
               </Box>
-            )
-            )}
+            ))}
           </>
         )}
       </Box>
