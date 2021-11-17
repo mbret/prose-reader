@@ -115,18 +115,18 @@ export const Home = () => {
         </Box> */}
       </Box>
       <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginBottom={[8]}>
-        <Table variant="simple" size={tableSize}>
+        <Table variant="simple" size={tableSize} style={{ tableLayout: `fixed` }}>
           <Thead>
             <Tr>
-              <Th>My uploaded books</Th>
+              <Th width="70%">My uploaded books</Th>
               <Th>Actions</Th>
             </Tr>
           </Thead>
           <Tbody>
             {uploadedBooks.map(({ name }) => (
               <Tr key={name}>
-                <Td><Link to={`/classic/reader/${btoa(`file://epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
-                <Td>
+                <Td ><Link to={`/classic/reader/${btoa(`file://epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
+                <Td >
                   <IconButton
                     aria-label="Search database"
                     icon={<DeleteIcon />}
@@ -142,18 +142,22 @@ export const Home = () => {
         </Table>
       </Box>
       <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginBottom={[8]}>
-        <Table variant="simple" size={tableSize}>
+        <Table variant="simple" size={tableSize} style={{ tableLayout: `fixed` }}>
           <Thead>
             <Tr>
-              <Th>Name</Th>
+              <Th width="70%">Name</Th>
               <Th>Type</Th>
             </Tr>
           </Thead>
           <Tbody>
             {items.map(({ name, type }) => (
               <Tr key={name}>
-                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
-                <Td><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{type}</Link></Td>
+                <Td ><Link to={`/classic/reader/${btoa(`${window.location.origin}/epubs/${name}`)}`} as={RouterLink}>{name}</Link></Td>
+                <Td >
+                  {type.split(` - `).map(e => (
+                    <Text as="span" mr={2} whiteSpace="nowrap">{e}</Text>
+                  ))}
+                </Td>
               </Tr>
             ))}
           </Tbody>
