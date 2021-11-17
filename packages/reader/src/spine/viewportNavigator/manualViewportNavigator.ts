@@ -56,7 +56,6 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
     navigationTriggerSubject$.next({ type: `url`, data: url })
 
   const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) => {
-    console.log(`goToSpineItem`, indexOrId)
     navigationTriggerSubject$.next({ type: `spineItem`, data: { indexOrId, ...options } })
   }
 
