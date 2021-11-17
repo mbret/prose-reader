@@ -6,7 +6,7 @@ import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
 import { Pagination } from "../pagination"
 import { createReadingItem } from "../readingItem"
 import { createLocationResolver as createReadingItemLocator } from "../readingItem/locationResolver"
-import { ReadingItemManager } from "../readingItemManager"
+import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 import { createEventsHelper } from "./eventsHelper"
@@ -24,12 +24,12 @@ type ManipulableReadingItemCallbackPayload = Parameters<ManipulableReadingItemCa
 
 type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
 
-export const createReadingOrderView = ({ parentElement, context, pagination, iframeEventBridgeElement, readingItemManager, hooks$ }: {
+export const createReadingOrderView = ({ parentElement, context, pagination, iframeEventBridgeElement, spineItemManager, hooks$ }: {
   parentElement: HTMLElement,
   iframeEventBridgeElement: HTMLElement,
   context: Context,
   pagination: Pagination,
-  readingItemManager: ReadingItemManager,
+  spineItemManager: SpineItemManager,
   hooks$: BehaviorSubject<Hook[]>
 }) => {
   const layoutSubject$ = new Subject<void>()
@@ -38,10 +38,10 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
   const containerElement = createContainerElement(doc, hooks$)
   parentElement.appendChild(containerElement)
   const readingItemLocator = createReadingItemLocator({ context })
-  const locator = createLocationResolver({ context, readingItemManager, readingItemLocator })
-  const cfiLocator = createCfiLocator({ readingItemManager, context, readingItemLocator })
-  const viewportNavigator = createViewportNavigator({ context, pagination, readingItemManager, element: containerElement, cfiLocator, locator, hooks$ })
-  const eventsHelper = createEventsHelper({ context, readingItemManager, iframeEventBridgeElement, locator })
+  const locator = createLocationResolver({ context, spineItemManager, readingItemLocator })
+  const cfiLocator = createCfiLocator({ spineItemManager, context, readingItemLocator })
+  const viewportNavigator = createViewportNavigator({ context, pagination, spineItemManager, element: containerElement, cfiLocator, locator, hooks$ })
+  const eventsHelper = createEventsHelper({ context, spineItemManager, iframeEventBridgeElement, locator })
   let selectionSubscription: Subscription | undefined
 
   const load = () => {
@@ -54,23 +54,23 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         hooks$,
         viewportState$: viewportNavigator.$.state$
       })
-      readingItemManager.add(readingItem)
+      spineItemManager.add(readingItem)
     })
     hooks$.getValue().forEach(hook => {
       if (hook.name === `item.onCreated`) {
-        readingItemManager.getAll().forEach(item => hook.fn({ container: item.element, loadingElement: item.loadingElement }))
+        spineItemManager.getAll().forEach(item => hook.fn({ container: item.element, loadingElement: item.loadingElement }))
       }
     })
   }
 
   const manipulateReadingItems = (cb: (payload: ManipulableReadingItemCallbackPayload & { index: number }) => RequireLayout) => {
     let shouldLayout = false
-    readingItemManager.getAll().forEach((item, index) => {
+    spineItemManager.getAll().forEach((item, index) => {
       shouldLayout = item.manipulateReadingItem((opts) => cb({ index, ...opts })) || shouldLayout
     })
 
     if (shouldLayout) {
-      readingItemManager.layout()
+      spineItemManager.layout()
     }
   }
 
@@ -106,7 +106,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         }
 
         viewportNavigator.layout()
-        readingItemManager.layout()
+        spineItemManager.layout()
       }),
       share()
     )
@@ -132,8 +132,8 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
       .pipe(
         tap(Report.measurePerformance(`${NAMESPACE} adjustPagination`, 1, () => {
           const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(position)
-          const beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
-          const endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+          const beginReadingItem = readingItemsFromPosition ? spineItemManager.get(readingItemsFromPosition.begin) : undefined
+          const endReadingItem = readingItemsFromPosition ? spineItemManager.get(readingItemsFromPosition.end) : undefined
           const beginLastCfi = pagination.getBeginInfo().cfi
           const endLastCfi = pagination.getEndInfo().cfi
 
@@ -155,7 +155,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
 
             pagination.updateBeginAndEnd({
               readingItem: beginReadingItem,
-              readingItemIndex: readingItemManager.getReadingItemIndex(beginReadingItem) ?? 0,
+              readingItemIndex: spineItemManager.getReadingItemIndex(beginReadingItem) ?? 0,
               pageIndex: readingItemLocator.getReadingItemPageIndexFromPosition(beginPosition, beginReadingItem),
               cfi: shouldUpdateBeginCfi ? cfiLocator.getCfi(beginPageIndex, beginReadingItem) : beginLastCfi,
               options: {
@@ -163,7 +163,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
               }
             }, {
               readingItem: endReadingItem,
-              readingItemIndex: readingItemManager.getReadingItemIndex(endReadingItem) ?? 0,
+              readingItemIndex: spineItemManager.getReadingItemIndex(endReadingItem) ?? 0,
               pageIndex: readingItemLocator.getReadingItemPageIndexFromPosition(endPosition, endReadingItem),
               cfi: shouldUpdateEndCfi ? cfiLocator.getCfi(endPageIndex, endReadingItem) : endLastCfi,
               options: {
@@ -201,7 +201,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
    * Right now we react to literally every layout and some time we might not need to update pagination (ex pre-paginated element got unload).
    * Maybe we should only listen to current items visible only ?
    */
-  const adjustNavigationAfterLayout$ = readingItemManager.$.layout$
+  const adjustNavigationAfterLayout$ = spineItemManager.$.layout$
     .pipe(
       /**
        * @important
@@ -225,7 +225,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         waitForViewportFree$
           .pipe(
             switchMap(() => {
-              const focusedReadingItem = readingItemManager.getFocusedReadingItem()
+              const focusedReadingItem = spineItemManager.getFocusedReadingItem()
 
               if (!focusedReadingItem) return EMPTY
 
@@ -247,11 +247,11 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
             )
         })
       ),
-    readingItemManager.$.layout$
+    spineItemManager.$.layout$
       .pipe(
         debounceTime(10, animationFrameScheduler),
         tap(() => {
-          pagination.updateTotalNumberOfPages(readingItemManager.getAll())
+          pagination.updateTotalNumberOfPages(spineItemManager.getAll())
         })
       )
   )
@@ -261,7 +261,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
     .subscribe()
 
   merge(
-    readingItemManager.$.focus$
+    spineItemManager.$.focus$
       .pipe(
         tap((event) => {
           // @todo track tail as well (selection, finger etc)
@@ -325,10 +325,10 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
     .pipe(
       tap((data) => {
         const time = Report.time(`${NAMESPACE} navigation`, 1)
-        const currentReadingItem = readingItemManager.getFocusedReadingItem()
+        const currentReadingItem = spineItemManager.getFocusedReadingItem()
         const readingItemsFromPosition = locator.getReadingItemsFromReadingOrderPosition(data.position)
-        let beginReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.begin) : undefined
-        let endReadingItem = readingItemsFromPosition ? readingItemManager.get(readingItemsFromPosition.end) : undefined
+        let beginReadingItem = readingItemsFromPosition ? spineItemManager.get(readingItemsFromPosition.begin) : undefined
+        let endReadingItem = readingItemsFromPosition ? spineItemManager.get(readingItemsFromPosition.end) : undefined
         beginReadingItem = beginReadingItem || currentReadingItem
         endReadingItem = endReadingItem || currentReadingItem
 
@@ -338,20 +338,20 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         const readingItemToFocus = data.position.readingItem || beginReadingItem
 
         if (readingItemToFocus && readingItemToFocus !== currentReadingItem) {
-          readingItemManager.focus(readingItemToFocus)
+          spineItemManager.focus(readingItemToFocus)
         } else if (!readingItemToFocus) {
           // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
-          readingItemManager.focus(0)
+          spineItemManager.focus(0)
         }
 
         if (readingItemToFocus && beginReadingItem && endReadingItem && readingItemsFromPosition) {
           const lastExpectedNavigation = viewportNavigator.getLastUserExpectedNavigation()
-          const beginItemIndex = readingItemManager.getReadingItemIndex(beginReadingItem) ?? 0
+          const beginItemIndex = spineItemManager.getReadingItemIndex(beginReadingItem) ?? 0
           const beginPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.beginPosition, beginReadingItem)
           const beginPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(beginPosition, beginReadingItem)
           const endPosition = locator.getReadingItemPositionFromReadingOrderViewPosition(readingItemsFromPosition.endPosition, endReadingItem)
           const endPageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(endPosition, endReadingItem)
-          const endItemIndex = readingItemManager.getReadingItemIndex(endReadingItem) ?? 0
+          const endItemIndex = spineItemManager.getReadingItemIndex(endReadingItem) ?? 0
 
           pagination.updateBeginAndEnd({
             readingItem: beginReadingItem,
@@ -395,7 +395,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
             }
           })
 
-          Report.log(NAMESPACE, `itemUpdateOnNavigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, readingItemToFocus, index: readingItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
+          Report.log(NAMESPACE, `itemUpdateOnNavigation$`, { readingItemHasChanged: readingItemToFocus !== currentReadingItem, item: readingItemToFocus, readingItemToFocus, index: spineItemManager.getReadingItemIndex(readingItemToFocus), offset: data, endReadingItem, beginReadingItem, lastExpectedNavigation, readingItemsFromPosition })
         }
 
         time()
@@ -414,7 +414,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
       switchMap((data) => {
         return adjustPagination$(data.position)
           .pipe(
-            takeUntil(readingItemManager.$.layout$)
+            takeUntil(spineItemManager.$.layout$)
           )
       }),
       takeUntil(context.$.destroy$)
@@ -454,7 +454,7 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
         return waitForViewportFree$
           .pipe(
             map(() => {
-              const focusedReadingItemIndex = readingItemManager.getFocusedReadingItemIndex()
+              const focusedReadingItemIndex = spineItemManager.getFocusedReadingItemIndex()
 
               Report.log(NAMESPACE, `update contents`, { focusedReadingItemIndex })
 
@@ -464,9 +464,9 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
 
               if (begin !== focusedReadingItemIndex && end !== focusedReadingItemIndex) {
                 Report.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
-                readingItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
+                spineItemManager.loadContents([focusedReadingItemIndex, focusedReadingItemIndex])
               } else {
-                readingItemManager.loadContents([begin, end])
+                spineItemManager.loadContents([begin, end])
               }
             }),
             take(1)
@@ -487,16 +487,16 @@ export const createReadingOrderView = ({ parentElement, context, pagination, ifr
     layout: () => layoutSubject$.next(),
     destroy: () => {
       viewportNavigator.destroy()
-      readingItemManager.destroy()
+      spineItemManager.destroy()
       selectionSubscription?.unsubscribe()
       containerElement.remove()
     },
-    isSelecting: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.isSelecting(),
-    getSelection: () => readingItemManager.getFocusedReadingItem()?.selectionTracker.getSelection(),
+    isSelecting: () => spineItemManager.getFocusedReadingItem()?.selectionTracker.isSelecting(),
+    getSelection: () => spineItemManager.getFocusedReadingItem()?.selectionTracker.getSelection(),
     $: {
       $: subject.asObservable(),
       viewportState$: viewportNavigator.$.state$,
-      layout$: readingItemManager.$.layout$
+      layout$: spineItemManager.$.layout$
     }
   }
 }

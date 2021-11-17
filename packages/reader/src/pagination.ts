@@ -1,12 +1,12 @@
 import { Subject } from "rxjs"
 import { Context } from "./context"
 import { ReadingItem } from "./readingItem"
-import { ReadingItemManager } from "./readingItemManager"
+import { SpineItemManager } from "./spineItemManager"
 import { Report } from "./report"
 
 const NAMESPACE = `pagination`
 
-export const createPagination = ({ context }: { context: Context, readingItemManager: ReadingItemManager }) => {
+export const createPagination = ({ context }: { context: Context, spineItemManager: SpineItemManager }) => {
   const subject = new Subject<{ event: `change` }>()
   let beginPageIndex: number | undefined
   let beginNumberOfPages = 0

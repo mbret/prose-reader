@@ -7,7 +7,7 @@ import { LoadOptions, Manifest } from "./types"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
 import { createSelection } from "./selection"
-import { createReadingItemManager } from "./readingItemManager"
+import { createSpineItemManager } from "./spineItemManager"
 import { Hook, RegisterHook } from "./types/Hook"
 import { isShallowEqual } from "./utils/objects"
 
@@ -38,8 +38,8 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
   const hooksSubject$ = new BehaviorSubject<Hook[]>(initialHooks || [])
   const context = createBookContext(settings)
-  const readingItemManager = createReadingItemManager({ context })
-  const pagination = createPagination({ context, readingItemManager })
+  const spineItemManager = createSpineItemManager({ context })
+  const pagination = createPagination({ context, spineItemManager })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   let containerManipulationOnDestroyCbList: (() => void)[] = []
@@ -48,7 +48,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     iframeEventBridgeElement,
     context,
     pagination,
-    readingItemManager,
+    spineItemManager,
     hooks$: hooksSubject$
   })
 
@@ -223,9 +223,9 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     goToUrl: readingOrderView.viewportNavigator.goToUrl,
     goToCfi: readingOrderView.viewportNavigator.goToCfi,
     goToSpineItem: readingOrderView.viewportNavigator.goToSpineItem,
-    getFocusedReadingItemIndex: readingItemManager.getFocusedReadingItemIndex,
-    getReadingItem: readingItemManager.get,
-    getAbsolutePositionOf: readingItemManager.getAbsolutePositionOf,
+    getFocusedReadingItemIndex: spineItemManager.getFocusedReadingItemIndex,
+    getReadingItem: spineItemManager.get,
+    getAbsolutePositionOf: spineItemManager.getAbsolutePositionOf,
     getSelection: readingOrderView.getSelection,
     isSelecting: readingOrderView.isSelecting,
     normalizeEventForViewport: readingOrderView.normalizeEventForViewport,
@@ -261,7 +261,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       pagination,
       context,
       readingOrderView,
-      readingItemManager
+      spineItemManager
     } as any // using any because otherwise ts breaks due to too many types to infer
   }
 

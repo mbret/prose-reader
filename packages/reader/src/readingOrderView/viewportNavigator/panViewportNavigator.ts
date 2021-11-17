@@ -1,7 +1,7 @@
 import { BehaviorSubject, merge, of, Subject } from "rxjs"
 import { filter, switchMap } from "rxjs/operators"
 import { Context } from "../../context"
-import { ReadingItemManager } from "../../readingItemManager"
+import { SpineItemManager } from "../../spineItemManager"
 import { Report } from "../../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { createLocationResolver } from "../locationResolver"
@@ -11,12 +11,12 @@ const NAMESPACE = `panViewportNavigator`
 
 type SnapNavigation = { type: `snap`, data: { from: ViewportNavigationEntry, to: ViewportNavigationEntry, pan: { x: number, y: number } } }
 
-export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigator, readingItemManager, locator, context, currentNavigationSubject$ }: {
+export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigator, spineItemManager, locator, context, currentNavigationSubject$ }: {
   context: Context,
   element: HTMLElement,
   navigator: ReturnType<typeof createNavigationResolver>,
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>,
-  readingItemManager: ReadingItemManager,
+  spineItemManager: SpineItemManager,
   locator: ReturnType<typeof createLocationResolver>,
   getCurrentViewportPosition: () => ViewportPosition
 }) => {
@@ -88,7 +88,7 @@ export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigat
   }
 
   const getLastUserExpectedNavigation = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentReadingItem = readingItemManager.getFocusedReadingItem()
+    const currentReadingItem = spineItemManager.getFocusedReadingItem()
 
     if (!currentReadingItem) return undefined
 
@@ -97,7 +97,7 @@ export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigat
 
     if (readingItemHasChanged) {
       if (allowReadingItemChange) {
-        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+        if (spineItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
           return { type: `navigate-from-next-item` as const }
         } else {
           return { type: `navigate-from-previous-item` as const }

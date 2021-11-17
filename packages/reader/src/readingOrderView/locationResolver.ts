@@ -1,19 +1,19 @@
 import { Context } from "../context"
 import { ReadingItem } from "../readingItem"
 import { createLocationResolver as createReadingItemLocator } from "../readingItem/locationResolver"
-import { ReadingItemManager } from "../readingItemManager"
+import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 
 type ReadingOrderViewPosition = { x: number, y: number }
 type ReadingItemPosition = { x: number, y: number, outsideOfBoundaries?: boolean }
 
-export const createLocationResolver = ({ readingItemManager, context, readingItemLocator }: {
-  readingItemManager: ReadingItemManager,
+export const createLocationResolver = ({ spineItemManager, context, readingItemLocator }: {
+  spineItemManager: SpineItemManager,
   context: Context,
   readingItemLocator: ReturnType<typeof createReadingItemLocator>
 }) => {
   const getReadingItemPositionFromReadingOrderViewPosition = Report.measurePerformance(`getReadingItemPositionFromReadingOrderViewPosition`, 10, (position: ReadingOrderViewPosition, readingItem: ReadingItem): ReadingItemPosition => {
-    const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
+    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -60,7 +60,7 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
    * will return 200, which probably needs to be adjusted as 0
    */
   const getReadingOrderViewPositionFromReadingItemPosition = (readingItemPosition: ReadingItemPosition, readingItem: ReadingItem): ReadingOrderViewPosition => {
-    const { leftEnd, leftStart, topStart, topEnd } = readingItemManager.getAbsolutePositionOf(readingItem)
+    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(readingItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -94,7 +94,7 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
    * This will retrieve the closest item to the x / y position edge relative to the reading direction.
    */
   const getReadingItemFromPosition = Report.measurePerformance(`getReadingItemFromOffset`, 10, (position: ReadingOrderViewPosition) => {
-    const readingItem = readingItemManager.getReadingItemAtPosition(position)
+    const readingItem = spineItemManager.getReadingItemAtPosition(position)
 
     return readingItem
   }, { disable: true })
@@ -119,8 +119,8 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
     end: number
     endPosition: ReadingOrderViewPosition
   } | undefined => {
-    const beginItem = getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
-    const beginItemIndex = readingItemManager.getReadingItemIndex(beginItem)
+    const beginItem = getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
+    const beginItemIndex = spineItemManager.getReadingItemIndex(beginItem)
 
     if (beginItemIndex === undefined) return undefined
 
@@ -130,8 +130,8 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
       endPosition = { x: position.x + context.getPageSize().width, y: position.y }
     }
 
-    const endItemIndex = readingItemManager.getReadingItemIndex(
-      getReadingItemFromPosition(endPosition) || readingItemManager.getFocusedReadingItem()
+    const endItemIndex = spineItemManager.getReadingItemIndex(
+      getReadingItemFromPosition(endPosition) || spineItemManager.getFocusedReadingItem()
     ) ?? beginItemIndex
 
     const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort((a, b) => a - b)
@@ -148,12 +148,12 @@ export const createLocationResolver = ({ readingItemManager, context, readingIte
   }
 
   const getReadingItemFromIframe = (iframe: Element) => {
-    return readingItemManager.getAll().find(item => item.readingItemFrame.getFrameElement() === iframe)
+    return spineItemManager.getAll().find(item => item.readingItemFrame.getFrameElement() === iframe)
   }
 
   const getReadingItemPageIndexFromNode = (node: Node, offset: number | undefined, readingItemOrIndex: ReadingItem | number) => {
     if (typeof readingItemOrIndex === `number`) {
-      const readingItem = readingItemManager.get(readingItemOrIndex)
+      const readingItem = spineItemManager.get(readingItemOrIndex)
       return readingItem ? readingItemLocator.getReadingItemPageIndexFromNode(node, offset || 0, readingItem) : undefined
     }
 

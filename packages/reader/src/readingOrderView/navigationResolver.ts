@@ -1,6 +1,6 @@
 import { Report } from "../report"
 import { Context } from "../context"
-import { ReadingItemManager } from "../readingItemManager"
+import { SpineItemManager } from "../spineItemManager"
 import { ReadingItem } from "../readingItem"
 import { createNavigationResolver as createReadingItemNavigator } from "../readingItem/navigationResolver"
 import { createLocationResolver } from "./locationResolver"
@@ -12,9 +12,9 @@ type ReadingItemPosition = { x: number, y: number }
 
 const NAMESPACE = `readingOrderViewNavigator`
 
-export const createNavigationResolver = ({ context, readingItemManager, cfiLocator, locator }: {
+export const createNavigationResolver = ({ context, spineItemManager, cfiLocator, locator }: {
   context: Context,
-  readingItemManager: ReadingItemManager,
+  spineItemManager: SpineItemManager,
   cfiLocator: ReturnType<typeof createCfiLocator>,
   locator: ReturnType<typeof createLocationResolver>
 }) => {
@@ -26,8 +26,8 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
 
   const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: ReadingItemPosition) => {
     // @todo use container width instead to increase performances
-    const lastReadingItem = readingItemManager.get(readingItemManager.getLength() - 1)
-    const distanceOfLastReadingItem = readingItemManager.getAbsolutePositionOf(lastReadingItem || 0)
+    const lastReadingItem = spineItemManager.get(spineItemManager.getLength() - 1)
+    const distanceOfLastReadingItem = spineItemManager.getAbsolutePositionOf(lastReadingItem || 0)
     const maximumXOffset = distanceOfLastReadingItem.leftEnd - context.getPageSize().width
     const maximumYOffset = distanceOfLastReadingItem.topEnd - context.getPageSize().height
 
@@ -83,7 +83,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
   }
 
   const getNavigationForSpineIndexOrId = (indexOrId: number | string): ViewportNavigationEntry => {
-    const readingItem = readingItemManager.get(indexOrId)
+    const readingItem = spineItemManager.get(indexOrId)
     if (readingItem) {
       const position = locator.getReadingOrderViewPositionFromReadingItem(readingItem)
 
@@ -95,7 +95,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
 
   const getNavigationForRightSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
+    const readingItem = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
     const defaultNavigation = position
 
     if (!readingItem) {
@@ -129,7 +129,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
 
   const getNavigationForLeftSinglePage = (position: ReadingItemPosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const readingItem = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
+    const readingItem = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
     const defaultNavigation = { ...position, readingItem }
 
     if (!readingItem) {
@@ -165,7 +165,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
    * Special case for vertical content, read content
    */
   const getNavigationForRightPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
+    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForRightSinglePage(position)
 
@@ -217,7 +217,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
    * Special case for vertical content, read content
    */
   const getNavigationForLeftPage = (position: ReadingItemPosition): ViewportNavigationEntry => {
-    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || readingItemManager.getFocusedReadingItem()
+    const readingItemOnPosition = locator.getReadingItemFromPosition(position) || spineItemManager.getFocusedReadingItem()
 
     let navigation = getNavigationForLeftSinglePage(position)
 
@@ -266,7 +266,7 @@ export const createNavigationResolver = ({ context, readingItemManager, cfiLocat
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
       const existingSpineItem = context.getManifest()?.spineItems.find(item => item.href === urlWithoutAnchor)
       if (existingSpineItem) {
-        const readingItem = readingItemManager.get(existingSpineItem.id)
+        const readingItem = spineItemManager.get(existingSpineItem.id)
         if (readingItem) {
           const position = getNavigationForAnchor(validUrl.hash, readingItem)
 

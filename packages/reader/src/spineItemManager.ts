@@ -7,9 +7,9 @@ import { isShallowEqual } from "./utils/objects"
 import { getCoverItem } from "./utils/manifest"
 import { ViewportPosition } from "./types"
 
-const NAMESPACE = `readingItemManager`
+const NAMESPACE = `spineItemManager`
 
-export const createReadingItemManager = ({ context }: { context: Context }) => {
+export const createSpineItemManager = ({ context }: { context: Context }) => {
   const focus$ = new Subject<{ data: ReadingItem }>()
   const layout$ = new Subject<boolean>()
   /**
@@ -362,4 +362,4 @@ export const createReadingItemManager = ({ context }: { context: Context }) => {
   }
 }
 
-export type ReadingItemManager = ReturnType<typeof createReadingItemManager>
+export type SpineItemManager = ReturnType<typeof createSpineItemManager>

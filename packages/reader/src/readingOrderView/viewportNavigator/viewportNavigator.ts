@@ -1,7 +1,7 @@
 import { Report } from "../../report"
 import { Context } from "../../context"
 import { Pagination } from "../../pagination"
-import { ReadingItemManager } from "../../readingItemManager"
+import { SpineItemManager } from "../../spineItemManager"
 import { createLocationResolver } from "../locationResolver"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, Observable, of, Subject } from "rxjs"
@@ -15,8 +15,8 @@ import { createPanViewportNavigator } from "./panViewportNavigator"
 
 const NAMESPACE = `viewportNavigator`
 
-export const createViewportNavigator = ({ readingItemManager, context, pagination, element, cfiLocator, locator, hooks$ }: {
-  readingItemManager: ReadingItemManager,
+export const createViewportNavigator = ({ spineItemManager, context, pagination, element, cfiLocator, locator, hooks$ }: {
+  spineItemManager: SpineItemManager,
   pagination: Pagination,
   context: Context,
   element: HTMLElement,
@@ -34,7 +34,7 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
    */
   let currentNavigationPosition: ViewportNavigationEntry = { x: -1, y: 0 }
   const currentNavigationSubject$ = new BehaviorSubject(currentNavigationPosition)
-  const navigator = createNavigationResolver({ context, readingItemManager, cfiLocator, locator })
+  const navigator = createNavigationResolver({ context, spineItemManager, cfiLocator, locator })
   const adjustNavigationSubject$ = new Subject<{ position: ViewportNavigationEntry, animate: boolean }>()
 
   /**
@@ -73,13 +73,13 @@ export const createViewportNavigator = ({ readingItemManager, context, paginatio
     context,
     element,
     navigator,
-    readingItemManager,
+    spineItemManager,
     locator,
     getCurrentViewportPosition,
     currentNavigationSubject$
   })
   const scrollViewportNavigator = createScrollViewportNavigator({ context, element, navigator, currentNavigationSubject$ })
-  const manualViewportNavigator = createManualViewportNavigator({ context, element, navigator, currentNavigationSubject$, readingItemManager, locator })
+  const manualViewportNavigator = createManualViewportNavigator({ context, element, navigator, currentNavigationSubject$, spineItemManager, locator })
 
   const viewportNavigators = [scrollViewportNavigator, panViewportNavigator, manualViewportNavigator]
   const viewportNavigatorsSharedState$ = merge(...viewportNavigators.map(({ $: { state$ } }) => state$))

@@ -1,7 +1,7 @@
 import { BehaviorSubject, EMPTY, merge, of, Subject } from "rxjs"
 import { filter, map, switchMap, tap, withLatestFrom } from "rxjs/operators"
 import { Context } from "../../context"
-import { ReadingItemManager } from "../../readingItemManager"
+import { SpineItemManager } from "../../spineItemManager"
 import { Report } from "../../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { createLocationResolver } from "../locationResolver"
@@ -16,12 +16,12 @@ type PageIndexNavigation = { type: `pageIndex`, data: { pageIndex: number } }
 type LeftPageNavigation = { type: `leftPage`, data: { allowReadingItemChange: boolean } }
 type RightPageNavigation = { type: `rightPage`, data: { allowReadingItemChange: boolean } }
 
-export const createManualViewportNavigator = ({ navigator, readingItemManager, currentNavigationSubject$, locator, context }: {
+export const createManualViewportNavigator = ({ navigator, spineItemManager, currentNavigationSubject$, locator, context }: {
   context: Context,
   element: HTMLElement,
   navigator: ReturnType<typeof createNavigationResolver>,
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>,
-  readingItemManager: ReadingItemManager,
+  spineItemManager: SpineItemManager,
   locator: ReturnType<typeof createLocationResolver>,
 }) => {
   const stateSubject$ = (new BehaviorSubject<`start` | `end`>(`end`))
@@ -107,7 +107,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     .pipe(
       filter((e): e is ChapterPageNavigation => e.type === `chapterPage`),
       switchMap(({ data: { pageIndex } }) => {
-        const readingItem = readingItemManager.getFocusedReadingItem()
+        const readingItem = spineItemManager.getFocusedReadingItem()
 
         if (readingItem) {
           const navigation = navigator.getNavigationForPage(pageIndex, readingItem)
@@ -140,7 +140,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
     )
 
   const turnPageTo$ = Report.measurePerformance(`turnTo`, 10, (navigation: ViewportNavigationEntry, { allowReadingItemChange = true }: { allowReadingItemChange?: boolean } = {}) => {
-    const currentReadingItem = readingItemManager.getFocusedReadingItem()
+    const currentReadingItem = spineItemManager.getFocusedReadingItem()
 
     if (!currentReadingItem) return EMPTY
 
@@ -149,7 +149,7 @@ export const createManualViewportNavigator = ({ navigator, readingItemManager, c
 
     if (readingItemHasChanged) {
       if (allowReadingItemChange) {
-        if (readingItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
+        if (spineItemManager.comparePositionOf(newReadingItem, currentReadingItem) === `before`) {
           return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true })
         } else {
           return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const }, animate: true })

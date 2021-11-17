@@ -2,12 +2,12 @@ import { CFI, extractObokuMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
 import { ReadingItem } from "../readingItem"
 import { createLocationResolver } from "../readingItem/locationResolver"
-import { ReadingItemManager } from "../readingItemManager"
+import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { Manifest } from "../types"
 
-export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
-  readingItemManager: ReadingItemManager,
+export const createCfiLocator = ({ spineItemManager, readingItemLocator }: {
+  spineItemManager: SpineItemManager,
   context: Context,
   readingItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
@@ -54,7 +54,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
 
     if (itemId) {
       const { itemId } = extractObokuMetadataFromCfi(cfi)
-      const readingItem = (itemId ? readingItemManager.get(itemId) : undefined) || readingItemManager.get(0)
+      const readingItem = (itemId ? spineItemManager.get(itemId) : undefined) || spineItemManager.get(0)
 
       return readingItem
     }
@@ -67,7 +67,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
 
     if (readingItem) {
       return {
-        readingItemIndex: readingItemManager.getReadingItemIndex(readingItem)
+        readingItemIndex: spineItemManager.getReadingItemIndex(readingItem)
       }
     }
 
@@ -81,7 +81,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
     if (!cfiString) return undefined
 
     const readingItem = getReadingItemFromCfi(cfiString)
-    const readingItemIndex = readingItemManager.getReadingItemIndex(readingItem) || 0
+    const readingItemIndex = spineItemManager.getReadingItemIndex(readingItem) || 0
 
     if (!readingItem) return undefined
 
@@ -106,7 +106,7 @@ export const createCfiLocator = ({ readingItemManager, readingItemLocator }: {
 
   // const resolveCfi = (cfi: string) => {
   //   const { readingItemIndex = -1 } = getCfiMetaInformation(cfi) || {}
-  //   const readingItem = readingItemManager.get(readingItemIndex)
+  //   const readingItem = spineItemManager.get(readingItemIndex)
 
   //   if (readingItem) {
   //     let position: { x: number, y: number } | undefined = undefined

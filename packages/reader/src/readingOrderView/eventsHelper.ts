@@ -1,12 +1,12 @@
 import { Context } from "../context"
 import { getOriginalFrameEventFromDocumentEvent } from "../frames"
-import { ReadingItemManager } from "../readingItemManager"
+import { SpineItemManager } from "../spineItemManager"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
 import { createLocationResolver } from "./locationResolver"
 
 export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
   iframeEventBridgeElement: HTMLElement,
-  readingItemManager: ReadingItemManager,
+  spineItemManager: SpineItemManager,
   context: Context,
   locator: ReturnType<typeof createLocationResolver>
 }) => {
