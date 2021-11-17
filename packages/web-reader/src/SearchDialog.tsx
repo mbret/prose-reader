@@ -1,5 +1,4 @@
-import { ArrowBackIcon } from '@chakra-ui/icons'
-import { Heading, IconButton, Input, Text } from '@chakra-ui/react'
+import { Heading, Input, Text, Box } from '@chakra-ui/react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { tap } from 'rxjs/operators'
 import { SearchResult } from '@prose-reader/enhancer-search'
@@ -50,12 +49,13 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
 
   return (
     <FullScreenModal isOpen={isOpen} onClose={onExit} title="Search">
-      <div style={{
-        flex: '0 0 auto'
-      }}>
-        <Input placeholder="Basic usage" value={text} onChange={onValueChange} />
-      </div>
-      <div style={{ marginTop: 10, paddingLeft: 5, paddingRight: 5, overflow: 'hidden', overflowY: 'scroll' }}>
+      <Input
+        placeholder="Type something..."
+        value={text}
+        onChange={onValueChange}
+        borderRadius={0}
+      />
+      <Box padding={2} pt={0} style={{ marginTop: 10, overflow: 'hidden', overflowY: 'scroll' }}>
         {searching && (
           <Text>Searching ...</Text>
         )}
@@ -65,13 +65,9 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
         {!searching && results.length >= 0 && (
           <>
             {Object.values(groupedResults).map((itemResults, i) => (
-              <React.Fragment key={i}>
-                <div style={{
-                  backgroundColor: 'antiquewhite'
-                }}>
-                  <Heading as="h2" size="sm">Chapter {(itemResults[0]?.spineItemIndex || 0) + 1}</Heading>
-                </div>
-                <Text fontSize="md">{itemResults.length} result(s)</Text>
+              <Box key={i} pt={2}>
+                <Heading as="h2" size="sm">Chapter {(itemResults[0]?.spineItemIndex || 0) + 1}</Heading>
+                <Text fontSize="md" color="gray.500">{itemResults.length} result(s)</Text>
                 {itemResults.map((result, j) => (
                   <Item
                     key={j}
@@ -83,18 +79,17 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
                     onClick={onClick}
                   />
                 ))}
-              </React.Fragment>
+              </Box>
             )
             )}
           </>
         )}
-      </div>
+      </Box>
     </FullScreenModal>
   )
 }
 
 const Item = ({ pageIndex, contextText, startOffset, text, cfi, onClick }: { pageIndex: number | undefined, contextText: string, startOffset: number, text: string, cfi: string, onClick: (cfi: string) => void }) => {
-  const reader = useReader()
   const charsAroundText = 15
   const before = contextText.substring(Math.max(startOffset - charsAroundText, 0), Math.max(startOffset, 0))
   const after = contextText.substring(
@@ -110,12 +105,12 @@ const Item = ({ pageIndex, contextText, startOffset, text, cfi, onClick }: { pag
 
   return (
     <div style={{ margin: 5, overflow: 'hidden' }} onClick={() => onClick(cfi)}>
-      <Text color="gray.500" isTruncated as="cite" style={{ display: 'block' }}>"{before}<b>{text}</b>{after}"</Text>
+      <Text  isTruncated as="cite" style={{ display: 'block' }}>"{before}<b>{text}</b>{after}"</Text>
       {pageIndex !== undefined && (
-        <Text>Page: {(pageIndex || 0) + 1}</Text>
+        <Text color="gray.500">Page: {(pageIndex || 0) + 1}</Text>
       )}
       {pageIndex === undefined && (
-        <Text size="xs">Chapter not loaded, click to navigate</Text>
+        <Text size="xs" color="gray.500">Chapter not loaded, click to navigate</Text>
       )}
     </div>
   )
