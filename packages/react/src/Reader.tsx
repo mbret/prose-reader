@@ -3,7 +3,7 @@ import { createReader, Enhancer, Manifest, Reader } from '@prose-reader/core'
 
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
-type Pagination = ReturnType<ReturnType<typeof createReader>['pagination']['getInfo']>
+type Pagination = ReturnType<Reader['pagination']['getInfo']>
 type EnhancerOptions<E extends Enhancer | void> = E extends Enhancer ? Parameters<ReturnType<E>>[0] & Options : Options
 
 type Props<UserEnhancer extends Enhancer | void> = {
