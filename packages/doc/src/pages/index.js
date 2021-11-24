@@ -21,7 +21,7 @@ function HomepageHeader() {
           </Link>
           <Link
             className={`button button--info button--lg ${styles.button}`}
-            to="http://oboku-reader.vercel.app/" target="__blank">
+            to="http://prose-reader.vercel.app/" target="__blank">
             Try the Demo
           </Link>
         </div>

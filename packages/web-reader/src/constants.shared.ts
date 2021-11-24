@@ -1,1 +1,1 @@
-export const PROJECT_NAME = `@oboku/web-reader`
+export const PROJECT_NAME = `@prose/web-reader`

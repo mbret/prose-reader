@@ -1,17 +1,17 @@
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'oboku-reader',
+  title: 'prose-reader',
   tagline: 'Digital reader on the web',
-  url: 'https://oboku-reader.vercel.app/',
+  url: 'https://prose-reader.vercel.app/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'oboku', // Usually your GitHub org/user name.
-  projectName: 'oboku-reader', // Usually your repo name.
+  organizationName: 'prose', // Usually your GitHub org/user name.
+  projectName: 'prose-reader', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'oboku-reader',
+      title: 'prose-reader',
       logo: {
         alt: 'My Site Logo',
         src: 'img/icon-512x512.png',
@@ -24,7 +24,7 @@ module.exports = {
           label: 'Docs',
         },
         {
-          href: 'https://oboku-reader.vercel.app/',
+          href: 'https://prose-reader.vercel.app/',
           label: 'Demo',
           position: 'left',
         },
@@ -60,7 +60,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} oboku-reader, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} prose-reader, Inc. Built with Docusaurus.`,
     },
   },
   presets: [

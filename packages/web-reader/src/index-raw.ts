@@ -1,7 +1,7 @@
 import { createApp } from "./raw/createApp";
 
 if (process.env.NODE_ENV === `development`) {
-  window.__OBOKU_READER_DEBUG = false
+  window.__PROSE_READER_DEBUG = false
 }
 
 if ('serviceWorker' in navigator) {

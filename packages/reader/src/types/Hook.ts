@@ -1,4 +1,4 @@
-import { Manifest } from "@oboku/shared"
+import { Manifest } from "@prose-reader/shared"
 
 export type Hook =
   {

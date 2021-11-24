@@ -29,7 +29,7 @@ worker.addEventListener('activate', function (event: any) {
 })
 
 /**
- * Spin up the oboku reader streamer.
+ * Spin up the prose reader streamer.
  * We need to provide our custom function to retrieve the archive.
  * This getter can fetch the epub from internet, indexedDB, etc
  */

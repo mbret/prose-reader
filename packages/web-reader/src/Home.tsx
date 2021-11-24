@@ -22,8 +22,8 @@ export const Home = () => {
       }}>
         <Box padding={2} textAlign="justify" maxWidth={[`auto`]} marginX={[4]} mb={4}>
           <Text>
-            This reader is a demo made with React and use <b>oboku-reader</b> to render its content.
-            It provides a simple/generic user interface to showcase what <b>oboku-reader</b> can do.
+            This reader is a demo made with React and use <b>prose</b> to render its content.
+            It provides a simple/generic user interface to showcase what <b>prose</b> can do.
             It is optimized to be viewed on mobile.
           </Text>
         </Box>

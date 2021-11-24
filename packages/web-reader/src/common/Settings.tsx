@@ -1,14 +1,30 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { atom, useRecoilCallback } from 'recoil';
 import { Reader } from "@prose-reader/core";
-import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup, Box } from '@chakra-ui/react';
+import { FormControl, FormHelperText, FormLabel, HStack, Radio, Stack, Checkbox, Box } from '@chakra-ui/react';
+import screenfull from 'screenfull'
 
 export const Settings: FC<{ open: boolean, onExit: () => void }> = ({ open, children, onExit }) => {
+  const [isFullscreen, setIsFullScreen] = useState(screenfull.isFullscreen)
+
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      const cb = () => {
+        setIsFullScreen(screenfull.isFullscreen)
+      }
+
+      screenfull.on('change', cb);
+
+      return () => {
+        screenfull.off(`change`, cb)
+      }
+    }
+  }, [])
 
   if (!open) return null
-  
+
   return (
     <Box style={{
       height: `100%`,

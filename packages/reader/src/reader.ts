@@ -14,7 +14,7 @@ import { isShallowEqual } from "./utils/objects"
 type Context = ReturnType<typeof createBookContext>
 type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
-const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
+const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
 type CreateReaderOptions = {
   hooks?: Hook[]

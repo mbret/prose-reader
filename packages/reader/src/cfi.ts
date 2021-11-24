@@ -1097,20 +1097,20 @@ export {
   CFI
 }
 
-export const extractObokuMetadataFromCfi = (cfi: string): {
+export const extractProseMetadataFromCfi = (cfi: string): {
   cleanedCfi: string,
   itemId?: string
   offset?: number
 } => {
   const [itemId] = cfi
-    .match(/\|(\[oboku\~anchor[^\]]*\])+/ig)
-    ?.map(s => s.replace(/\|\[oboku\~anchor\~/, ``)
+    .match(/\|(\[prose\~anchor[^\]]*\])+/ig)
+    ?.map(s => s.replace(/\|\[prose\~anchor\~/, ``)
       .replace(/\]/, ``)) || []
   const [offset] = cfi
-    .match(/\|(\[oboku\~offset[^\]]*\])+/ig)
-    ?.map(s => s.replace(/\|\[oboku\~offset\~/, ``)
+    .match(/\|(\[prose\~offset[^\]]*\])+/ig)
+    ?.map(s => s.replace(/\|\[prose\~offset\~/, ``)
       .replace(/\]/, ``)) || []
-  const cleanedCfi = cfi.replace(/\|(\[oboku\~[^\]]*\~[^\]]*\])+/ig, ``)
+  const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/ig, ``)
   const foundOffset = parseInt(offset || ``)
 
   return {

@@ -14,26 +14,26 @@
     "test": "jest"
   },
   "dependencies": {
-    "@oboku/shared": "^0.0.4",
+    "@prose-reader/shared": "^0.0.4",
     "@types/xmldoc": "^1.1.5",
     "buffer": "6.0.3",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.16.0",
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^27.0.3",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-jest": "^25.2.2",
+    "eslint-plugin-jest": "^25.3.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.1",
     "jest": "^27.3.1",
     "ts-loader": "^9.2.6",
-    "typescript": "^4.4.4",
-    "webpack": "^5.58.1",
+    "typescript": "*",
+    "webpack": "^5.64.3",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.4.0"
   },

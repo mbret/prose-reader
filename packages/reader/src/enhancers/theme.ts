@@ -62,8 +62,8 @@ export const themeEnhancer: Enhancer<{
 
   const applyChangeToSpineItem = () => {
     reader.manipulateSpineItems(({ removeStyle, addStyle, container, loadingElement }) => {
-      removeStyle(`oboku-reader-theme`)
-      addStyle(`oboku-reader-theme`, getStyle())
+      removeStyle(`prose-reader-theme`)
+      addStyle(`prose-reader-theme`, getStyle())
       applyChangeToSpineItemElement({ container, loadingElement })
 
       return false
@@ -74,8 +74,8 @@ export const themeEnhancer: Enhancer<{
    * Make sure to apply theme on item load
    */
   reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
-    removeStyle(`oboku-reader-theme`)
-    addStyle(`oboku-reader-theme`, getStyle())
+    removeStyle(`prose-reader-theme`)
+    addStyle(`prose-reader-theme`, getStyle())
   })
 
   /**

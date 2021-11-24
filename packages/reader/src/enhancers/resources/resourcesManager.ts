@@ -26,7 +26,7 @@ export const createResourcesManager = (context: Context) => {
 
     if (!item) return new Response(`Item not found`, { status: 404 })
 
-    const db = await openDatabase(`oboku-reader`)
+    const db = await openDatabase(`prose-reader`)
     const cacheData = await db.get(`${uniqueID}_${item.id}`)
 
     if (cacheData) {
@@ -51,7 +51,7 @@ export const createResourcesManager = (context: Context) => {
 
         if (!item) return EMPTY
 
-        return from(forkJoin([openDatabase(`oboku-reader`), from(data.blob())]))
+        return from(forkJoin([openDatabase(`prose-reader`), from(data.blob())]))
           .pipe(
             switchMap(([db, blob]) => {
               return from(db.put(`${uniqueID}_${item.id}`, blob))
@@ -84,7 +84,7 @@ export const createResourcesManager = (context: Context) => {
       switchMap(() => {
         Report.log(`Cleanup up old cache...`)
 
-        return from(openDatabase(`oboku-reader`))
+        return from(openDatabase(`prose-reader`))
           .pipe(
             switchMap(db =>
               from(db.keys())

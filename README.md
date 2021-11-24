@@ -9,15 +9,15 @@
   <p align="center">
     Official reader used by <a href="https://oboku.me">oboku</a>
     <br>
-    <a href="https://github.com/mbret/oboku-reader/issues/new">Report bug</a>
+    <a href="https://github.com/mbret/prose-reader/issues/new">Report bug</a>
     ·
-    <a href="https://github.com/mbret/oboku-reader/issues/new">Request feature</a>
+    <a href="https://github.com/mbret/prose-reader/issues/new">Request feature</a>
   </p>
 
   <p align="center">
     Web reader for digital content.
     <br>
-    Visit the <a href="https://oboku-reader-doc.vercel.app/">project</a> website
+    Visit the <a href="https://prose-reader-doc.vercel.app/">project</a> website
   </p>
 </p>
 

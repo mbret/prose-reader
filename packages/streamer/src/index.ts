@@ -1,6 +1,6 @@
 export { getResourceFromArchive } from './generators/resources'
 export { getManifestFromArchive } from './generators/manifest'
-export type { Manifest } from '@oboku/shared'
+export type { Manifest } from '@prose-reader/shared'
 export { Report } from './report'
 export { Archive } from './archives/types'
 export { getArchiveOpfInfo } from './archives/getArchiveOpfInfo'

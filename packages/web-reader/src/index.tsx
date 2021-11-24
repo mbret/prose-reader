@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV === `development`) {
-  window.__OBOKU_READER_DEBUG = true
+  window.__PROSE_READER_DEBUG = true
 }
 
 import ReactDOM from "react-dom";

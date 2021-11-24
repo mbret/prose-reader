@@ -22,7 +22,7 @@ type SubjectType =
   | { type: `onUpdate`, data: Highlight[] }
 
 const SHOULD_NOT_LAYOUT = false
-const HIGHLIGHT_ID_PREFIX = `oboku-reader-enhancer-highlights`
+const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
 
 let uniqueId = 0
 

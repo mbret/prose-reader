@@ -8,14 +8,14 @@ export const Report = {
   log: (...data: any[]) => {
     if (enabled) {
       // eslint-disable-next-line no-console
-      console.log(`[oboku-reader-streamer]`, ...data)
+      console.log(`[prose-reader-streamer]`, ...data)
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
     if (enabled) {
       // eslint-disable-next-line no-console
-      console.warn(`[oboku-reader-streamer]`, ...data)
+      console.warn(`[prose-reader-streamer]`, ...data)
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,13 +26,13 @@ export const Report = {
   time: (label?: string | undefined) => {
     if (enabled) {
       // eslint-disable-next-line no-console
-      console.time(`[oboku-reader-streamer] [metric] ${label}`)
+      console.time(`[prose-reader-streamer] [metric] ${label}`)
     }
   },
   timeEnd: (label?: string | undefined) => {
     if (enabled) {
       // eslint-disable-next-line no-console
-      console.timeEnd(`[oboku-reader-streamer] [metric] ${label}`)
+      console.timeEnd(`[prose-reader-streamer] [metric] ${label}`)
     }
   },
   metric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = Infinity) => {
@@ -40,11 +40,11 @@ export const Report = {
     if (enabled) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        console.log(`[oboku-reader-streamer] [metric] `, `${performanceEntry.name} took ${duration}ms`)
+        console.log(`[prose-reader-streamer] [metric] `, `${performanceEntry.name} took ${duration}ms`)
       } else {
         // eslint-disable-next-line no-console
         console.warn(
-          `[oboku-reader-streamer] [metric] `,
+          `[prose-reader-streamer] [metric] `,
           `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`
         )
       }

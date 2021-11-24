@@ -1,4 +1,4 @@
-import { Manifest } from "@oboku/shared"
+import { Manifest } from "@prose-reader/shared"
 
 export type ViewportPosition = { x: number, y: number }
 
@@ -40,7 +40,7 @@ export type LoadOptions = {
 
 declare global {
   interface Window {
-    __OBOKU_READER_DEBUG?: boolean
+    __PROSE_READER_DEBUG?: boolean
   }
 }
 

@@ -13,6 +13,6 @@ export type ReaderInstance = Reader<AppEnhancer>
 
 declare global {
   interface Window {
-    __OBOKU_READER_DEBUG?: boolean
+    __PROSE_READER_DEBUG?: boolean
   }
 }

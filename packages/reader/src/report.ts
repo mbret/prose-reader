@@ -20,7 +20,7 @@ const time = (name: string, targetDuration = 0) => {
 const createReport = (namespace?: string) => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    if (window.__OBOKU_READER_DEBUG) {
+    if (window.__PROSE_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.log(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
       else console.log(wrap(ROOT_NAMESPACE), ...data)
@@ -28,7 +28,7 @@ const createReport = (namespace?: string) => ({
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
-    if (window.__OBOKU_READER_DEBUG) {
+    if (window.__PROSE_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
       else console.warn(wrap(ROOT_NAMESPACE), ...data)
@@ -40,28 +40,28 @@ const createReport = (namespace?: string) => ({
     console.error(...data)
   },
   // time: (label?: string | undefined) => {
-  //   if (window.__OBOKU_READER_DEBUG) {
+  //   if (window.__PROSE_READER_DEBUG) {
   //     // eslint-disable-next-line no-console
-  //     console.time(`[oboku-reader] [metric] ${label}`);
+  //     console.time(`[prose-reader] [metric] ${label}`);
   //   }
   // },
   // timeEnd: (label?: string | undefined) => {
-  //   if (window.__OBOKU_READER_DEBUG) {
+  //   if (window.__PROSE_READER_DEBUG) {
   //     // eslint-disable-next-line no-console
-  //     console.timeEnd(`[oboku-reader] [metric] ${label}`);
+  //     console.timeEnd(`[prose-reader] [metric] ${label}`);
   //   }
   // },
   time,
   logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
     // const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
-    if (window.__OBOKU_READER_DEBUG) {
+    if (window.__PROSE_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        // console.log(`[oboku-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
+        // console.log(`[prose-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
       } else {
         // eslint-disable-next-line no-console
         console.warn(
-          `[oboku-reader] [metric] `,
+          `[prose-reader] [metric] `,
           `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`
         )
       }
@@ -69,7 +69,7 @@ const createReport = (namespace?: string) => ({
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   measurePerformance: <F extends (...args: any[]) => any>(name: string, targetDuration = 10, functionToMeasure: F, { disable }: { disable?: boolean } = {}) => {
-    if (disable || !window.__OBOKU_READER_DEBUG) return functionToMeasure
+    if (disable || !window.__PROSE_READER_DEBUG) return functionToMeasure
 
     return (...args: Parameters<F>): ReturnType<F> => {
       const t0 = performance.now()

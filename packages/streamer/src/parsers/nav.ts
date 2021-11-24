@@ -1,5 +1,5 @@
 import xmldoc, { XmlElement } from 'xmldoc'
-import type { Manifest } from '@oboku/shared'
+import type { Manifest } from '@prose-reader/shared'
 import { Archive, getArchiveOpfInfo } from '..'
 
 type Toc = Manifest[`nav`][`toc`]

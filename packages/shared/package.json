@@ -1,5 +1,5 @@
 {
-  "name": "@oboku/shared",
+  "name": "@prose-reader/shared",
   "version": "0.0.4",
   "main": "src/index.js",
   "license": "MIT",
@@ -10,6 +10,6 @@
     "test": "echo"
   },
   "devDependencies": {
-    "typescript": "^4.4.4"
+    "typescript": "*"
   }
 }

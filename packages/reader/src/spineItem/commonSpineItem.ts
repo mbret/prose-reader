@@ -89,8 +89,8 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   }
 
   const injectStyle = (spineItemFrame: SpineItemFrame, cssText: string) => {
-    spineItemFrame.getManipulableFrame()?.removeStyle(`oboku-reader-css`)
-    spineItemFrame.getManipulableFrame()?.addStyle(`oboku-reader-css`, cssText)
+    spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)
+    spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
   }
 
   const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
@@ -322,7 +322,7 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spi
   `
 
   const logoElement = containerElement.ownerDocument.createElement(`div`)
-  logoElement.innerText = `oboku`
+  logoElement.innerText = `prose`
   logoElement.style.cssText = `
     font-size: 4em;
     color: #cacaca;

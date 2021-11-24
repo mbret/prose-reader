@@ -1,4 +1,4 @@
-import { CFI, extractObokuMetadataFromCfi } from "../cfi"
+import { CFI, extractProseMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
 import { SpineItem } from "../spineItem"
 import { createLocationResolver } from "../spineItem/locationResolver"
@@ -11,7 +11,7 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
   context: Context,
   spineItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
-  const getItemAnchor = (spineItem: SpineItem) => `|[oboku~anchor~${encodeURIComponent(spineItem.item.id)}]`
+  const getItemAnchor = (spineItem: SpineItem) => `|[prose~anchor~${encodeURIComponent(spineItem.item.id)}]`
 
   /**
    * Heavy cfi hookup. Use it to have a refined, precise cfi anchor. It requires the content to be loaded otherwise
@@ -27,7 +27,7 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
     // because the current cfi library does not works well with offset we are just using custom
     // format and do it manually after resolving the node
     // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
-    const offset = `|[oboku~offset~${nodeOrRange?.offset || 0}]`
+    const offset = `|[prose~offset~${nodeOrRange?.offset || 0}]`
 
     if (nodeOrRange && doc) {
       const cfiString = CFI.generate(nodeOrRange.node, 0, `${itemAnchor}${offset}`)
@@ -50,10 +50,10 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
   }
 
   const getSpineItemFromCfi = (cfi: string) => {
-    const { itemId } = extractObokuMetadataFromCfi(cfi)
+    const { itemId } = extractProseMetadataFromCfi(cfi)
 
     if (itemId) {
-      const { itemId } = extractObokuMetadataFromCfi(cfi)
+      const { itemId } = extractProseMetadataFromCfi(cfi)
       const spineItem = (itemId ? spineItemManager.get(itemId) : undefined) || spineItemManager.get(0)
 
       return spineItem
@@ -85,7 +85,7 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
 
     if (!spineItem) return undefined
 
-    const { cleanedCfi, offset } = extractObokuMetadataFromCfi(cfiString)
+    const { cleanedCfi, offset } = extractProseMetadataFromCfi(cfiString)
     const cfi = new CFI(cleanedCfi, {})
 
     const doc = spineItem.spineItemFrame.getManipulableFrame()?.frame?.contentWindow?.document
@@ -132,8 +132,8 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
    * so we use two cfi for start and end.
    */
   const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest[`spineItems`][number]) => {
-    const startCFI = CFI.generate(startNode, start, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
-    const endCFI = CFI.generate(endNode, end, `|[oboku~anchor~${encodeURIComponent(item.id)}]`)
+    const startCFI = CFI.generate(startNode, start, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
+    const endCFI = CFI.generate(endNode, end, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
 
     return { start: startCFI, end: endCFI }
   }

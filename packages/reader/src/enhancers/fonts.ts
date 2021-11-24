@@ -88,8 +88,8 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> = (nex
   const applyChangeToSpineItem = (requireLayout: boolean) => {
     reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
       if (item.renditionLayout !== `pre-paginated`) {
-        removeStyle(`oboku-reader-fonts`)
-        addStyle(`oboku-reader-fonts`, getStyle())
+        removeStyle(`prose-reader-fonts`)
+        addStyle(`prose-reader-fonts`, getStyle())
       }
 
       return requireLayout
@@ -101,8 +101,8 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> = (nex
    */
   reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
     if (item.renditionLayout !== `pre-paginated`) {
-      removeStyle(`oboku-reader-fonts`)
-      addStyle(`oboku-reader-fonts`, getStyle())
+      removeStyle(`prose-reader-fonts`)
+      addStyle(`prose-reader-fonts`, getStyle())
     }
   })
 

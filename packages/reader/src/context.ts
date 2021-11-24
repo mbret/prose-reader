@@ -1,7 +1,7 @@
 import { BehaviorSubject, Subject } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
 import { LoadOptions } from "./types"
-import { Manifest } from "@oboku/shared"
+import { Manifest } from "@prose-reader/shared"
 import { createSettings } from "./settings"
 
 export type ContextObservableEvents = {}

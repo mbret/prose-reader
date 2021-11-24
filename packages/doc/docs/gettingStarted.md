@@ -11,7 +11,7 @@ npm install @prose-reader/core @prose-reader/core-streamer rxjs
 ```
 
 You don't absolutely need to have `@prose-reader/core-streamer` installed to run the reader but the utilities provided are very useful to start quickly.
- `rxjs` it a peer-dependency of oboku-reader and needs to be installed alongside.
+ `rxjs` it a peer-dependency of prose-reader and needs to be installed alongside.
 
 ## Create your reader
 

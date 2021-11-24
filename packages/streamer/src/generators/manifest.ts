@@ -1,6 +1,6 @@
 import xmldoc from 'xmldoc'
 import { parseToc } from '../parsers/nav'
-import type { Manifest } from '@oboku/shared'
+import type { Manifest } from '@prose-reader/shared'
 import { extractKoboInformationFromArchive } from '../parsers/kobo'
 import { Report } from '../report'
 import { Archive, getArchiveOpfInfo } from '..'

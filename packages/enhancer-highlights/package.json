@@ -7,10 +7,10 @@
     "/dist"
   ],
   "scripts": {
-    "start": "oboku-reader-enhancer-scripts start",
-    "build": "NODE_ENV=development oboku-reader-enhancer-scripts build",
-    "build:prod": "NODE_ENV=production oboku-reader-enhancer-scripts build",
-    "lint": "oboku-reader-enhancer-scripts lint",
+    "start": "prose-reader-enhancer-scripts start",
+    "build": "NODE_ENV=development prose-reader-enhancer-scripts build",
+    "build:prod": "NODE_ENV=production prose-reader-enhancer-scripts build",
+    "lint": "prose-reader-enhancer-scripts lint",
     "test": "echo"
   },
   "dependencies": {
