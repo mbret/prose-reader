@@ -53,7 +53,11 @@ function compose (...funcs: Function[]) {
     return funcs[0]
   }
 
-  return funcs.reduce((a, b) => (...args: any) => a(b(...args)))
+  // return funcs.reduce((a, b) => (...args: any) => a(b(...args)))
+
+  // compose from left-to-right instead of right-to-left. That way end user always
+  // has sub enhancer as dependency
+  return funcs.reduce((a, b) => (...args: any) => b(a(...args)))
 }
 
 export {

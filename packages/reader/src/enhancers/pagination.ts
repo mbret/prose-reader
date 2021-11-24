@@ -73,7 +73,7 @@ export const paginationEnhancer: Enhancer<{}, {
     $: Observable<PaginationInfo>,
     getInfo: () => PaginationInfo
   }
-}, typeof progressionEnhancer> = (next) => (options) => {
+}, {}, {}, typeof progressionEnhancer> = (next) => (options) => {
   const reader = next(options)
 
   const getChapterInfo = () => {
@@ -82,7 +82,7 @@ export const paginationEnhancer: Enhancer<{}, {
     return item && manifest && buildChapterInfoFromSpineItem(manifest, item)
   }
 
-  const getPaginationInfo = () => {
+  const getPaginationInfo = (): PaginationInfo => {
     const pagination = reader.innerPagination
     const context = reader.context
     const paginationBegin = reader.innerPagination.getBeginInfo()
@@ -109,8 +109,8 @@ export const paginationEnhancer: Enhancer<{}, {
         // charOffset: number;
         // serializeString?: string;
         spineItemIndex: paginationBegin.spineItemIndex,
-        spineItemPath: beginItem?.item.path,
-        spineItemId: beginItem?.item.id,
+        // spineItemPath: beginItem?.item.path,
+        // spineItemId: beginItem?.item.id,
         cfi: paginationBegin.cfi,
         spineItemReadingDirection: beginItem?.getReadingDirection()
       },
@@ -120,8 +120,8 @@ export const paginationEnhancer: Enhancer<{}, {
         absolutePageIndex: paginationEnd.absolutePageIndex,
         numberOfPagesInChapter: paginationEnd.numberOfPages,
         spineItemIndex: paginationEnd.spineItemIndex,
-        spineItemPath: endItem?.item.path,
-        spineItemId: endItem?.item.id,
+        // spineItemPath: endItem?.item.path,
+        // spineItemId: endItem?.item.id,
         spineItemReadingDirection: endItem?.getReadingDirection(),
         cfi: paginationEnd.cfi
       },

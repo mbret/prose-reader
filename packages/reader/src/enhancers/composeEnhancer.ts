@@ -1,11 +1,5 @@
-import { Enhancer, ReaderInternalApi } from "./types"
+import { Enhancer, ExtractApi, ExtractHiddenApi, ExtractOptions } from "./types"
 import { compose } from "../utils/compose"
-
-// @important to not nuke the performances
-type KeyOfReaderInternalApi = Exclude<keyof ReaderInternalApi, `$`>
-export type EnhancerExtraMethods<E extends Enhancer> = Omit<ReturnType<ReturnType<E>>, KeyOfReaderInternalApi>
-
-type EnhancerExtraOptions<E extends Enhancer> = Parameters<ReturnType<E>>[0]
 
 export type ComposeEnhancer<
   A extends Enhancer<any, any, any> = Enhancer,
@@ -25,36 +19,66 @@ export type ComposeEnhancer<
   O extends Enhancer<any, any, any> = Enhancer,
   > =
   Enhancer<
-    & EnhancerExtraOptions<A>
-    & EnhancerExtraOptions<B>
-    & EnhancerExtraOptions<C>
-    & EnhancerExtraOptions<D>
-    & EnhancerExtraOptions<E>
-    & EnhancerExtraOptions<F>
-    & EnhancerExtraOptions<G>
-    & EnhancerExtraOptions<H>
-    & EnhancerExtraOptions<I>
-    & EnhancerExtraOptions<J>
-    & EnhancerExtraOptions<K>
-    & EnhancerExtraOptions<L>
-    & EnhancerExtraOptions<M>
-    & EnhancerExtraOptions<N>
-    & EnhancerExtraOptions<O>,
-    & EnhancerExtraMethods<A>
-    & EnhancerExtraMethods<B>
-    & EnhancerExtraMethods<C>
-    & EnhancerExtraMethods<D>
-    & EnhancerExtraMethods<E>
-    & EnhancerExtraMethods<F>
-    & EnhancerExtraMethods<G>
-    & EnhancerExtraMethods<H>
-    & EnhancerExtraMethods<I>
-    & EnhancerExtraMethods<J>
-    & EnhancerExtraMethods<K>
-    & EnhancerExtraMethods<L>
-    & EnhancerExtraMethods<M>
-    & EnhancerExtraMethods<N>
-    & EnhancerExtraMethods<O>
+    & ExtractOptions<A>
+    & ExtractOptions<B>
+    & ExtractOptions<C>
+    & ExtractOptions<D>
+    & ExtractOptions<E>
+    & ExtractOptions<F>
+    & ExtractOptions<G>
+    & ExtractOptions<H>
+    & ExtractOptions<I>
+    & ExtractOptions<J>
+    & ExtractOptions<K>
+    & ExtractOptions<L>
+    & ExtractOptions<M>
+    & ExtractOptions<N>
+    & ExtractOptions<O>,
+    & ExtractHiddenApi<A>
+    & ExtractHiddenApi<B>
+    & ExtractHiddenApi<C>
+    & ExtractHiddenApi<D>
+    & ExtractHiddenApi<E>
+    & ExtractHiddenApi<F>
+    & ExtractHiddenApi<G>
+    & ExtractHiddenApi<H>
+    & ExtractHiddenApi<I>
+    & ExtractHiddenApi<J>
+    & ExtractHiddenApi<K>
+    & ExtractHiddenApi<L>
+    & ExtractHiddenApi<M>
+    & ExtractHiddenApi<N>
+    & ExtractHiddenApi<O>,
+    & Parameters<ExtractApi<A>[`setSettings`]>[0]
+    & Parameters<ExtractApi<B>[`setSettings`]>[0]
+    & Parameters<ExtractApi<C>[`setSettings`]>[0]
+    & Parameters<ExtractApi<D>[`setSettings`]>[0]
+    & Parameters<ExtractApi<E>[`setSettings`]>[0]
+    & Parameters<ExtractApi<F>[`setSettings`]>[0]
+    & Parameters<ExtractApi<G>[`setSettings`]>[0]
+    & Parameters<ExtractApi<H>[`setSettings`]>[0]
+    & Parameters<ExtractApi<I>[`setSettings`]>[0]
+    & Parameters<ExtractApi<J>[`setSettings`]>[0]
+    & Parameters<ExtractApi<K>[`setSettings`]>[0]
+    & Parameters<ExtractApi<L>[`setSettings`]>[0]
+    & Parameters<ExtractApi<M>[`setSettings`]>[0]
+    & Parameters<ExtractApi<N>[`setSettings`]>[0]
+    & Parameters<ExtractApi<O>[`setSettings`]>[0],
+    & ExtractApi<A>[`__OutputSettings`]
+    & ExtractApi<B>[`__OutputSettings`]
+    & ExtractApi<C>[`__OutputSettings`]
+    & ExtractApi<D>[`__OutputSettings`]
+    & ExtractApi<E>[`__OutputSettings`]
+    & ExtractApi<F>[`__OutputSettings`]
+    & ExtractApi<G>[`__OutputSettings`]
+    & ExtractApi<H>[`__OutputSettings`]
+    & ExtractApi<I>[`__OutputSettings`]
+    & ExtractApi<J>[`__OutputSettings`]
+    & ExtractApi<K>[`__OutputSettings`]
+    & ExtractApi<L>[`__OutputSettings`]
+    & ExtractApi<M>[`__OutputSettings`]
+    & ExtractApi<N>[`__OutputSettings`]
+    & ExtractApi<O>[`__OutputSettings`]
   >
 
 export function composeEnhancer<A extends Enhancer<any, any, any>>(a: A): ComposeEnhancer<A>

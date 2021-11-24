@@ -1,14 +1,35 @@
+import { BehaviorSubject, combineLatest, map, Observable, ObservedValueOf, takeUntil } from "rxjs"
+import { tap, pairwise } from "rxjs/operators"
 import { Enhancer } from "./types"
 
 const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
 const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
 
 type Options = {
+  /**
+   * @description
+   * Scale the font size. 1 means use default publisher/browser font size, 2 means 200%
+   * 0.5 50%, etc
+   */
   fontScale?: number,
-  lineHeight?: number,
-  fontWeight?: typeof FONT_WEIGHT[number],
-  fontJustification?: typeof FONT_JUSTIFICATION[number],
+  /**
+   * @description
+   * Set the line height of the text. The default value is 1
+   */
+  lineHeight?: number | `publisher`,
+  /**
+   * @description
+   * Set font weight of text
+   */
+  fontWeight?: typeof FONT_WEIGHT[number] | `publisher`,
+  /**
+   * @description
+   * Set text align justification
+   */
+  fontJustification?: typeof FONT_JUSTIFICATION[number] | `publisher`,
 }
+
+type OutputOptions = Required<Options>
 
 /**
  * @important
@@ -21,48 +42,20 @@ type Options = {
  * font size on body if they already use something.
  * @see 9782714493743
  */
-export const fontsEnhancer: Enhancer<Options, {
-  /**
-   * @description
-   * Scale the font size. 1 means use default publisher/browser font size, 2 means 200%
-   * 0.5 50%, etc
-   */
-  setFontScale: (scale: number) => void,
-
-  /**
-   * @description
-   * Set the line height of the text. The default value is 1
-   */
-  setLineHeight: (value: number | undefined) => void,
-
-  /**
-   * @returns {(number|undefined)} value or publisher default when undefined
-   */
-  getLineHeight: () => number | undefined,
-
-  /**
-   * @description
-   * Set font weight of text
-   */
-  setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => void,
-
-  /**
-   * @returns {(number|undefined)} value or publisher default when undefined
-   */
-  getFontWeight: () => number | undefined,
-
-  /**
-   * @description
-   * Set text align justification
-   */
-  setFontJustification: (value: typeof FONT_JUSTIFICATION[number] | `default`) => void,
-}> = (next) => (options) => {
-  const { fontScale = 1, lineHeight, fontWeight, fontJustification } = options
+export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> = (next) => ({
+  fontScale = 1,
+  lineHeight = `publisher`,
+  fontWeight = `publisher`,
+  fontJustification = `publisher`,
+  ...options
+}) => {
+  const settingsSubject$ = new BehaviorSubject<OutputOptions>({
+    fontScale,
+    lineHeight,
+    fontWeight,
+    fontJustification
+  })
   const reader = next(options)
-  let currentFontScale = fontScale
-  let currentLineHeight = lineHeight
-  let currentFontWeight = fontWeight
-  let currentJustification = fontJustification
 
   const getStyle = () => `
     ${/*
@@ -74,21 +67,24 @@ export const fontsEnhancer: Enhancer<Options, {
       body *:not([class^="mjx-"]) {
     */``}
     body {
-      ${currentFontScale !== 1
-      ? `font-size: ${currentFontScale}em !important;`
+      ${settingsSubject$.value.fontScale !== 1
+      ? `font-size: ${settingsSubject$.value.fontScale}em !important;`
       : ``}
-      ${currentLineHeight !== undefined
-      ? `line-height: ${currentLineHeight} !important;`
+      ${settingsSubject$.value.lineHeight !== `publisher`
+      ? `line-height: ${settingsSubject$.value.lineHeight} !important;`
       : ``}
-      ${currentFontWeight !== undefined
-      ? `font-weight: ${currentFontWeight} !important;`
+      ${settingsSubject$.value.fontWeight !== `publisher`
+      ? `font-weight: ${settingsSubject$.value.fontWeight} !important;`
       : ``}
-      ${currentJustification !== undefined
-      ? `text-align: ${currentJustification} !important;`
+      ${settingsSubject$.value.fontJustification !== `publisher`
+      ? `text-align: ${settingsSubject$.value.fontJustification} !important;`
       : ``}
     }
   `
 
+  /**
+   * Programmatically update every loaded items
+   */
   const applyChangeToSpineItem = (requireLayout: boolean) => {
     reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
       if (item.renditionLayout !== `pre-paginated`) {
@@ -100,6 +96,9 @@ export const fontsEnhancer: Enhancer<Options, {
     })
   }
 
+  /**
+   * Make sure we apply the style to any new item loaded.
+   */
   reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
     if (item.renditionLayout !== `pre-paginated`) {
       removeStyle(`oboku-reader-fonts`)
@@ -107,25 +106,58 @@ export const fontsEnhancer: Enhancer<Options, {
     }
   })
 
+  const shouldRequireLayout = <T extends ObservedValueOf<typeof settingsSubject$>>(source: Observable<T>) => source
+    .pipe(
+      pairwise(),
+      map(([old, latest]) => {
+        if (latest.fontScale !== old.fontScale) return true
+        if (latest.lineHeight !== old.lineHeight) return true
+
+        return false
+      })
+    )
+
+  settingsSubject$.asObservable()
+    .pipe(
+      shouldRequireLayout,
+      tap(applyChangeToSpineItem),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
+
   return {
     ...reader,
-    setFontScale: (scale: number) => {
-      currentFontScale = scale
-      applyChangeToSpineItem(true)
+    /**
+     * Absorb current enhancer settings and passthrough the rest to reader
+     */
+    setSettings: (settings) => {
+      const {
+        fontJustification = settingsSubject$.value.fontJustification,
+        fontScale = settingsSubject$.value.fontScale,
+        fontWeight = settingsSubject$.value.fontWeight,
+        lineHeight = settingsSubject$.value.lineHeight,
+        ...passthroughSettings
+      } = settings
+
+      if (hasOneKey(settings, [`fontJustification`, `fontScale`, `fontWeight`, `lineHeight`])) {
+        settingsSubject$.next({ fontJustification, fontScale, fontWeight, lineHeight })
+      }
+      reader.setSettings(passthroughSettings)
     },
-    setLineHeight: (value: number | undefined) => {
-      currentLineHeight = value
-      applyChangeToSpineItem(true)
-    },
-    getLineHeight: () => currentLineHeight,
-    setFontWeight: (value: typeof FONT_WEIGHT[number] | undefined) => {
-      currentFontWeight = value
-      applyChangeToSpineItem(false)
-    },
-    getFontWeight: () => currentFontWeight,
-    setFontJustification: (value: typeof FONT_JUSTIFICATION[number] | `default`) => {
-      currentJustification = value === `default` ? undefined : value
-      applyChangeToSpineItem(false)
+    $: {
+      ...reader.$,
+      /**
+       * Combine reader settings with enhancer settings
+       */
+      settings$: combineLatest([reader.$.settings$, settingsSubject$])
+        .pipe(
+          map(([innerSettings, settings]) => ({
+            ...innerSettings,
+            ...settings
+          }))
+        )
     }
   }
 }
+
+const hasOneKey = <Obj, Key extends keyof Obj>(obj: Obj, keys: Key[]) => keys.some(key => key in obj)
