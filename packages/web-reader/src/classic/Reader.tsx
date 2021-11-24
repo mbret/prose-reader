@@ -32,17 +32,16 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const bookmarksEnhancer = useBookmarks(reader)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(true)
   const highlightsEnhancer = useHighlights(reader)
   const searchEnhancer = useSearch(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
-  const storedLineHeight = parseFloat(localStorage.getItem(`lineHeight`) || ``)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [isTocOpen, setIsTocOpen] = useRecoilState(isTocOpenState)
   const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
-    fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
-    lineHeight: storedLineHeight || undefined,
+    // fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
+    // lineHeight: parseFloat(localStorage.getItem(`lineHeight`) || ``) || undefined,
     theme: undefined,
     pageTurnAnimation: `fade`,
     layoutAutoResize: `container`
@@ -63,6 +62,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const onReady = useCallback(() => {
     setBookReady(true)
   }, [setBookReady])
+
+  const onClassicSettingsExit = useCallback(() => setIsSettingsOpen(false), [])
 
   useEffect(() => {
     const linksSubscription = reader?.$.links$.subscribe((data) => {
@@ -149,7 +150,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
         isComics={false}
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
-      {reader && <ClassicSettings reader={reader} open={isSettingsOpen} onExit={() => setIsSettingsOpen(false)} />}
+      {reader && <ClassicSettings reader={reader} open={isSettingsOpen} onExit={onClassicSettingsExit} />}
       <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
       <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
       <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />

@@ -1,75 +1,86 @@
-import React, { useState } from 'react'
+import React, { memo, useEffect, useState } from 'react'
 import RcSlider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { Reader } from "@prose-reader/core";
-import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup, Box } from '@chakra-ui/react';
+import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup, Text, Box } from '@chakra-ui/react';
 import { NavigationSettings } from '../common/NavigationSettings';
 import { Settings } from '../common/Settings';
+import { useRecoilValue } from 'recoil';
+import { readerSettingsState } from '../state';
 
-export const ClassicSettings = ({ reader, open, onExit }: { reader: Reader, open: boolean, onExit: () => void }) => {
-  const [fontWeight, setFontWeight] = useState<string>(reader.getFontWeight()?.toString() || `default`)
-  const [lineHeight, setLineHeight] = useState<string>(reader.getLineHeight()?.toString() || `default`)
+export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader, open: boolean, onExit: () => void }) => {
   const [theme, setTheme] = useState<string>(reader.getTheme() || `default`)
-  const [value, setValue] = useState(parseFloat(localStorage.getItem(`fontScale`) || `1`) || 1)
+  const readerSettings = useRecoilValue(readerSettingsState)
+  const [fontScaleSliderValue, setFontScaleSliderValue] = useState(1)
   const max = 5
-  const min = 0.1
-  const step = 0.1
+  const min = 0.2
+  const step = 0.2
+
+  // async update from reader to slider
+  useEffect(() => {
+    if (readerSettings?.fontScale) {
+      setFontScaleSliderValue(old => old !== readerSettings.fontScale ? readerSettings.fontScale : old)
+    }
+  }, [readerSettings?.fontScale])
 
   if (!open) return null
 
   return (
     <Settings onExit={onExit} open>
       <FormControl as="fieldset">
-        <FormLabel as="legend">Font scale (current: {value})</FormLabel>
-        <RcSlider
-          value={value}
-          max={max}
-          min={min}
-          onChange={value => {
-            reader.setFontScale(value)
-            localStorage.setItem(`fontScale`, value.toString())
-            setValue(value)
-          }}
-          step={step}
-        />
+        <FormLabel as="legend">Font size (%)</FormLabel>
+        <Box display="flex" alignItems="center">
+          <RcSlider
+            style={{
+              width: `auto`,
+              flex: 1
+            }}
+            value={fontScaleSliderValue}
+            max={max}
+            min={min}
+            onChange={value => {
+              console.warn(`FOOO slider change`, readerSettings?.fontScale)
+              reader.setSettings({
+                fontScale: value
+              })
+              setFontScaleSliderValue(value)
+            }}
+            step={step}
+          />
+          <Text flex={0.3} textAlign="center" whiteSpace="nowrap">{((readerSettings?.fontScale || 1) * 100).toFixed(0)} %</Text>
+        </Box>
       </FormControl>
-      <FormControl as="fieldset" style={{ marginTop: 10 }}>
+      <FormControl as="fieldset" mt={4}>
         <FormLabel as="legend">Line height</FormLabel>
-        <RadioGroup defaultValue="default" onChange={value => {
-          setLineHeight(value)
-          if (value === `default`) {
-            reader.setLineHeight(undefined)
-          } else {
-            reader.setLineHeight(parseInt(value))
-          }
-        }} value={lineHeight}>
+        <RadioGroup defaultValue="publisher" onChange={value => {
+          reader.setSettings({
+            lineHeight: value === `publisher` ? `publisher` : parseInt(value)
+          })
+        }} value={readerSettings?.lineHeight.toString()}>
           <HStack spacing="24px">
             <Radio value="1">small</Radio>
-            <Radio value="default">default (publisher)</Radio>
+            <Radio value="publisher">default (publisher)</Radio>
             <Radio value="2">big</Radio>
           </HStack>
         </RadioGroup>
         <FormHelperText>Change the space between lines</FormHelperText>
       </FormControl>
-      <FormControl as="fieldset" style={{ marginTop: 10 }}>
+      <FormControl as="fieldset" mt={4}>
         <FormLabel as="legend">Font weight</FormLabel>
-        <RadioGroup defaultValue="default" onChange={value => {
-          setFontWeight(value)
-          if (value === `default`) {
-            reader.setFontWeight(undefined)
-          } else {
-            reader.setFontWeight(parseInt(value) as 100)
-          }
-        }} value={fontWeight}>
+        <RadioGroup defaultValue="publisher" onChange={value => {
+          reader.setSettings({
+            fontWeight: value === `publisher` ? `publisher` : parseInt(value) as 100
+          })
+        }} value={readerSettings?.fontWeight.toString()}>
           <HStack spacing="24px">
             <Radio value="100">small</Radio>
-            <Radio value="default">default (publisher)</Radio>
+            <Radio value="publisher">default (publisher)</Radio>
             <Radio value="900">big</Radio>
           </HStack>
         </RadioGroup>
-        <FormHelperText>Change the weight of the text in the entire book</FormHelperText>
+        <FormHelperText>Change the weight of the text in the entire book (if supported by current font)</FormHelperText>
       </FormControl>
-      <FormControl as="fieldset" style={{ marginTop: 10 }}>
+      <FormControl as="fieldset" mt={4}>
         <FormLabel as="legend">Theme</FormLabel>
         <RadioGroup defaultValue="default" onChange={value => {
           setTheme(value)
@@ -90,4 +101,4 @@ export const ClassicSettings = ({ reader, open, onExit }: { reader: Reader, open
       <NavigationSettings reader={reader} />
     </Settings>
   )
-}
+})
