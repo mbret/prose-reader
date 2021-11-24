@@ -23,6 +23,13 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void, isOpen: b
   }, [reader])
 
   useEffect(() => {
+    if (!isOpen) {
+      setResults([])
+      setText(``)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     const $ = reader?.search.$.search$
       .pipe(
         tap((event) => {
