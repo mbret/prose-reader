@@ -49,6 +49,27 @@ export const Settings: FC<{ open: boolean, onExit: () => void }> = ({ open, chil
         bottom: 0,
         overflow: 'auto',
       }}>
+        <FormControl as="fieldset" mb={4}>
+          <Box padding={2} borderWidth={1} borderRadius={10} display="flex" flexDirection="row" alignItems="center">
+            <Stack>
+              <Checkbox
+                isChecked={isFullscreen}
+                defaultIsChecked={false}
+                onChange={async (e) => {
+                  if (screenfull.isEnabled) {
+                    if (e.target.checked) {
+                      await screenfull.request()
+                    } else {
+                      await screenfull.exit()
+                    }
+                  }
+                }}
+              >
+                Use full screen
+              </Checkbox>
+            </Stack>
+          </Box>
+        </FormControl>
         {children}
       </Box>
     </Box>
