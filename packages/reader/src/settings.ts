@@ -49,15 +49,19 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
   const setSettings = (newSettings: Partial<PublicSettings>, options: { hasVerticalWritingSubject: boolean, manifest: Manifest | undefined }) => {
     if (Object.keys(newSettings).length === 0) return
 
-    const mergedSettings = { ...settingsSubject$.value, ...newSettings }
+    const newMergedSettings = { ...settingsSubject$.value, ...newSettings }
 
-    updateComputedSettings(options.manifest, mergedSettings, options.hasVerticalWritingSubject)
+    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWritingSubject)
 
-    settingsSubject$.next(mergedSettings)
+    settingsSubject$.next(newMergedSettings)
   }
 
   const recompute = (options: { hasVerticalWritingSubject: boolean, manifest: Manifest | undefined }) => {
-    setSettings({}, options)
+    const newMergedSettings = { ...settingsSubject$.value }
+
+    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWritingSubject)
+
+    settingsSubject$.next(newMergedSettings)
   }
 
   const destroy = () => {
@@ -103,8 +107,10 @@ const updateComputedSettings = (newManifest: Manifest | undefined, settings: Inn
     settings.computedPageTurnAnimation = `none`
   }
 
+  // for now we only support animation none for scrollable
   if (settings.computedPageTurnMode === `scrollable`) {
     settings.computedPageTurnAnimationDuration = 0
+    settings.computedPageTurnAnimation = `none`
   } else {
     settings.computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration !== undefined
       ? settings.pageTurnAnimationDuration

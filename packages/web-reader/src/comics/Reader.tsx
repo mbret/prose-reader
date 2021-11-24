@@ -23,8 +23,7 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const { url = `` } = useParams<`url`>();
   const query = new URLSearchParams(window.location.search)
   const { computedPageTurnMode } = useRecoilValue(readerSettingsState) || {}
-  const isUsingVerticalScrolling = query.has('vertical')
-  const isUsingFreeScroll = query.has('free') || computedPageTurnMode === `scrollable`
+  const isUsingFreeScroll = computedPageTurnMode === `scrollable`
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const reader = useReader()
   const setManifestState = useSetRecoilState(manifestState)
@@ -35,7 +34,8 @@ export const Reader = ({ onReader }: { onReader: (instance: ReaderInstance | und
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [readerOptions] = useState<ReactReaderProps['options']>({
     pageTurnAnimation: `slide`,
-    pageTurnDirection: isUsingVerticalScrolling ? `vertical` : `horizontal`,
+    pageTurnDirection: query.has('vertical') ? `vertical` : `horizontal`,
+    pageTurnMode: query.has('free') ? `scrollable` : `controlled`,
     layoutAutoResize: `container`
   })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps['loadOptions']>(undefined)

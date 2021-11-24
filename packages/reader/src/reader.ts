@@ -168,7 +168,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
             ? [`scrollable`]
             : !context.areAllItemsPrePaginated() ? [`controlled`] : [`controlled`, `scrollable`],
         supportedPageTurnAnimation:
-          renditionFlow === `scrolled-continuous`
+          renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
             ? [`none`]
             : hasVerticalWriting
               ? [`fade`, `none`]
