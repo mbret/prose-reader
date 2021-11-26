@@ -309,6 +309,7 @@ const buildStyleWithMultiColumn = ({
       width: ${width}px !important;
       height: ${columnHeight}px !important;
       overflow-y: hidden;
+      column-gap: 0px !important;
       column-width: ${columnWidth}px !important;
       column-fill: auto !important;
       word-wrap: break-word;
