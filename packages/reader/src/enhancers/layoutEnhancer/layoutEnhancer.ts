@@ -66,6 +66,7 @@ export const layoutEnhancer: Enhancer<SettingsInput & {
 
   /**
    * Apply margins to frame item
+   * @todo memoize
    */
   reader.registerHook(`item.onLayoutBeforeMeasurment`, ({ frame, minimumWidth, item, isImageType }) => {
     const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
@@ -73,6 +74,7 @@ export const layoutEnhancer: Enhancer<SettingsInput & {
 
     if (
       item.renditionLayout === `reflowable` &&
+      frame.getIsReady() &&
       !isImageType() &&
       !frame.getViewportDimensions()
     ) {

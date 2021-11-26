@@ -1,6 +1,11 @@
 import { Manifest } from "@prose-reader/shared"
 
 export type Hook =
+  /**
+   * Ideal when your logic only needs to apply something to the item when it's loaded.
+   * You can manipulate your item later if you need to update it and trigger a layout.
+   * This logic will not run everytime there is a layout.
+   */
   {
     name: `item.onLoad`,
     fn: (manipulableFrame: {
@@ -18,6 +23,11 @@ export type Hook =
     name: `item.onBeforeContainerCreated`,
     fn: (payload: HTMLElement) => HTMLElement
   }
+  /**
+   * Ideal when your logic needs to apply something to the item chich requires
+   * current layout information or is heavily sensitive to context changes.
+   * Your logic will run everytime there is a layout triggered.
+   */
   | {
     name: `item.onLayoutBeforeMeasurment`,
     fn: (payload: {
@@ -30,7 +40,8 @@ export type Hook =
           width: number;
           height: number;
         } | undefined,
-        isUsingVerticalWriting: () => boolean
+        isUsingVerticalWriting: () => boolean,
+        getIsReady: () => boolean
       },
       container: HTMLElement,
       item: Manifest[`spineItems`][number],
