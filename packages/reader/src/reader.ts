@@ -19,7 +19,15 @@ const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 type CreateReaderOptions = {
   hooks?: Hook[]
   containerElement: HTMLElement,
-} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>
+} & Pick<
+  ContextSettings,
+  | `forceSinglePageMode`
+  | `pageTurnAnimation`
+  | `pageTurnDirection`
+  | `pageTurnMode`
+  | `pageHorizontalMargin`
+  | `pageVerticalMargin`
+>
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
   const stateSubject$ = new BehaviorSubject<{

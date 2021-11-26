@@ -125,8 +125,6 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
       //     this.visibleAreaRect.height - this.getCalculatedInnerMargin()
       // }
     },
-    getHorizontalMargin: () => horizontalMargin,
-    getVerticalMargin: () => verticalMargin,
     getManifest: () => manifest,
     getReadingDirection: () => manifest?.readingDirection,
     getPageSize: () => {

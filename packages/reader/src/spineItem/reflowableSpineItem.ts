@@ -29,9 +29,10 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
 
   const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
     const pageSize = context.getPageSize()
-    const horizontalMargin = context.getHorizontalMargin()
+    const horizontalMargin = context.getSettings().pageHorizontalMargin
+    const verticalMargin = context.getSettings().pageVerticalMargin
     let columnWidth = pageSize.width - (horizontalMargin * 2)
-    const columnHeight = pageSize.height - (horizontalMargin * 2)
+    const columnHeight = pageSize.height - (verticalMargin * 2)
     let width = pageSize.width - (horizontalMargin * 2)
 
     if (isUsingVerticalWriting) {
@@ -43,6 +44,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
       columnHeight,
       columnWidth,
       horizontalMargin,
+      verticalMargin,
       width
     }
   }
@@ -263,12 +265,12 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
  *
  * We use css multi column to paginate it
  */
-const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin }: {
+const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin, verticalMargin }: {
   width: number,
   columnWidth: number,
   columnHeight: number,
   horizontalMargin: number,
-  // verticalMargin: number
+  verticalMargin: number
 }) => {
   return `
     parsererror {
@@ -295,7 +297,7 @@ const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizonta
       height: ${columnHeight}px !important;
       -margin-left: ${horizontalMargin}px !important;
       -margin-right: ${horizontalMargin}px !important;
-      margin: ${horizontalMargin}px ${horizontalMargin}px !important;
+      margin: ${verticalMargin}px ${horizontalMargin}px !important;
       -padding-top: ${horizontalMargin}px !important;
       -padding-bottom: ${horizontalMargin}px !important;
       overflow-y: hidden;

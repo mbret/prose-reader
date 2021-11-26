@@ -7,21 +7,34 @@ import { NavigationSettings } from '../common/NavigationSettings';
 import { Settings } from '../common/Settings';
 import { useRecoilValue } from 'recoil';
 import { readerSettingsState } from '../state';
+import { ArrowDownIcon, ArrowUpIcon, ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
+
 
 export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader, open: boolean, onExit: () => void }) => {
   const [theme, setTheme] = useState<string>(reader.getTheme() || `default`)
   const readerSettings = useRecoilValue(readerSettingsState)
   const [fontScaleSliderValue, setFontScaleSliderValue] = useState(1)
-  const max = 5
-  const min = 0.2
-  const step = 0.2
+  const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
+  const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] = useState(0)
 
   // async update from reader to slider
   useEffect(() => {
-    if (readerSettings?.fontScale) {
+    if (readerSettings?.fontScale !== undefined) {
       setFontScaleSliderValue(old => old !== readerSettings.fontScale ? readerSettings.fontScale : old)
     }
   }, [readerSettings?.fontScale])
+
+  useEffect(() => {
+    if (readerSettings?.pageVerticalMargin !== undefined) {
+      setVerticalMarginSliderValue(old => old !== readerSettings.pageVerticalMargin ? readerSettings.pageVerticalMargin : old)
+    }
+  }, [readerSettings?.pageVerticalMargin])
+
+  useEffect(() => {
+    if (readerSettings?.pageHorizontalMargin !== undefined) {
+      setHorizontalMarginSliderValue(old => old !== readerSettings.pageHorizontalMargin ? readerSettings.pageHorizontalMargin : old)
+    }
+  }, [readerSettings?.pageHorizontalMargin])
 
   if (!open) return null
 
@@ -36,16 +49,15 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader,
               flex: 1
             }}
             value={fontScaleSliderValue}
-            max={max}
-            min={min}
+            max={5}
+            min={0.2}
+            step={0.2}
             onChange={value => {
-              console.warn(`FOOO slider change`, readerSettings?.fontScale)
               reader.setSettings({
                 fontScale: value
               })
               setFontScaleSliderValue(value)
             }}
-            step={step}
           />
           <Text flex={0.3} textAlign="center" whiteSpace="nowrap">{((readerSettings?.fontScale || 1) * 100).toFixed(0)} %</Text>
         </Box>
@@ -97,6 +109,55 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader,
             <Radio value="night">night</Radio>
           </HStack>
         </RadioGroup>
+      </FormControl>
+      <FormControl as="fieldset" mt={4}>
+        <FormLabel as="legend">Margins</FormLabel>
+        <Box display="flex" alignItems="center">
+          <Box display="flex" flexDirection="column" flex={0.2} alignItems="center">
+            <ArrowDownIcon />
+            <ArrowUpIcon />
+          </Box>
+          <RcSlider
+            style={{
+              width: `auto`,
+              flex: 1
+            }}
+            value={verticalMarginSliderValue}
+            max={60}
+            min={0}
+            step={4}
+            onChange={value => {
+              reader.setSettings({
+                pageVerticalMargin: value
+              })
+              setVerticalMarginSliderValue(value)
+            }}
+          />
+          <Text flex={0.4} textAlign="center" whiteSpace="nowrap">{readerSettings?.pageVerticalMargin}px</Text>
+        </Box>
+        <Box display="flex" alignItems="center">
+          <Box display="flex" flexDirection="row" flex={0.2} justifyContent="center">
+            <ArrowForwardIcon />
+            <ArrowBackIcon />
+          </Box>
+          <RcSlider
+            style={{
+              width: `auto`,
+              flex: 1
+            }}
+            value={horizontalMarginSliderValue}
+            max={60}
+            min={0}
+            step={4}
+            onChange={value => {
+              reader.setSettings({
+                pageHorizontalMargin: value
+              })
+              setHorizontalMarginSliderValue(value)
+            }}
+          />
+          <Text flex={0.4} textAlign="center" whiteSpace="nowrap">{readerSettings?.pageHorizontalMargin}px</Text>
+        </Box>
       </FormControl>
       <NavigationSettings reader={reader} />
     </Settings>

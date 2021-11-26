@@ -14,6 +14,7 @@ import { createSelection } from "../selection"
 import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Hook } from "../types/Hook"
+import { mapKeysTo } from "../utils/rxjs"
 
 const NAMESPACE = `spine`
 
@@ -84,10 +85,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
    */
   const layoutOnSettingChanges$ = context.$.settings$
     .pipe(
-      map(({ computedPageTurnDirection, computedPageTurnMode }) => ({
-        computedPageTurnDirection,
-        computedPageTurnMode
-      })),
+      mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`, `pageHorizontalMargin`, `pageVerticalMargin`]),
       distinctUntilChanged(isShallowEqual),
       skip(1)
     )
