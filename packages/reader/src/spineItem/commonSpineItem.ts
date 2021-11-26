@@ -88,7 +88,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     return memoizedElementDimensions
   }
 
-  const injectStyle = (spineItemFrame: SpineItemFrame, cssText: string) => {
+  const injectStyle = (cssText: string) => {
     spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)
     spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
   }

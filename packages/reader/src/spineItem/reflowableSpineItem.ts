@@ -65,7 +65,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
 
       if (viewportDimensions) {
         const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
-        commonSpineItem.injectStyle(spineItemFrame, buildStyleForFakePrePaginated())
+        commonSpineItem.injectStyle(buildStyleForFakePrePaginated())
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
@@ -90,7 +90,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
           })
           : buildStyleWithMultiColumn(getDimensions(spineItemFrame.isUsingVerticalWriting(), minimumWidth))
 
-        commonSpineItem.injectStyle(spineItemFrame, frameStyle)
+        commonSpineItem.injectStyle(frameStyle)
 
         if (spineItemFrame.isUsingVerticalWriting()) {
           const pages = Math.ceil(

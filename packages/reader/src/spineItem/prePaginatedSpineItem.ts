@@ -45,7 +45,7 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
       frameElement?.style.setProperty(`opacity`, `1`)
 
       if (viewportDimensions) {
-        commonSpineItem.injectStyle(spineItemFrame, cssLink)
+        commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
@@ -85,7 +85,7 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
       } else {
-        commonSpineItem.injectStyle(spineItemFrame, cssLink)
+        commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
           width: contentWidth,
           height: contentHeight
