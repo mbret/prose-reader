@@ -88,6 +88,13 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     return memoizedElementDimensions
   }
 
+  /**
+   * Detect the type of resource (independently of rendition flow).
+   * If an image is detected for reflowable for example we may want to display
+   * things accordingly.
+   */
+  const isImageType = () => item.mediaType?.startsWith(`image/`)
+
   const injectStyle = (cssText: string) => {
     spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)
     spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
@@ -218,6 +225,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
         frame: spineItemFrame,
         container: containerElement,
         item,
+        isImageType,
         ...options
       })
     }
@@ -267,6 +275,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
+    isImageType,
     isReady: spineItemFrame.getIsReady,
     destroy: () => {
       destroySubject$.next()

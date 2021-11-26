@@ -67,11 +67,15 @@ export const layoutEnhancer: Enhancer<SettingsInput & {
   /**
    * Apply margins to frame item
    */
-  reader.registerHook(`item.onLayoutBeforeMeasurment`, ({ frame, minimumWidth }) => {
+  reader.registerHook(`item.onLayoutBeforeMeasurment`, ({ frame, minimumWidth, item, isImageType }) => {
     const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
     const pageSize = reader.context.getPageSize()
 
-    if (!frame.getViewportDimensions()) {
+    if (
+      item.renditionLayout === `reflowable` &&
+      !isImageType() &&
+      !frame.getViewportDimensions()
+    ) {
       let columnWidth = pageSize.width - (pageHorizontalMargin * 2)
       const columnHeight = pageSize.height - (pageVerticalMargin * 2)
       let width = pageSize.width - (pageHorizontalMargin * 2)

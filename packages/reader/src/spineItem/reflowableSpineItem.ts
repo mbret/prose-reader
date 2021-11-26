@@ -25,7 +25,6 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
    * issue with reflow content as wel.
    */
   let latestContentHeightWhenLoaded: number | undefined
-  const isImageType = () => item.mediaType?.startsWith(`image/`)
 
   const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
     const pageSize = context.getPageSize()
@@ -90,7 +89,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
-        const frameStyle = isImageType()
+        const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
             isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
             enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`

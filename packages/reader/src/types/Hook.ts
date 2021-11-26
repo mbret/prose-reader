@@ -34,7 +34,8 @@ export type Hook =
       },
       container: HTMLElement,
       item: Manifest[`spineItems`][number],
-      minimumWidth: number
+      minimumWidth: number,
+      isImageType: () => boolean | undefined,
     }) => void
   }
   // | {
