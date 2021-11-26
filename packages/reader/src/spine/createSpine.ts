@@ -85,7 +85,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
    */
   const layoutOnSettingChanges$ = context.$.settings$
     .pipe(
-      mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`, `pageHorizontalMargin`, `pageVerticalMargin`]),
+      mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`]),
       distinctUntilChanged(isShallowEqual),
       skip(1)
     )

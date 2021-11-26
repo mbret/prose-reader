@@ -9,7 +9,6 @@ import { useRecoilValue } from 'recoil';
 import { readerSettingsState } from '../state';
 import { ArrowDownIcon, ArrowUpIcon, ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
-
 export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader, open: boolean, onExit: () => void }) => {
   const [theme, setTheme] = useState<string>(reader.getTheme() || `default`)
   const readerSettings = useRecoilValue(readerSettingsState)

@@ -19,10 +19,9 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
     const pageSize = context.getPageSize()
     const pageWidth = pageSize.width
     const columnHeight = pageSize.height
-    const horizontalMargin = 0
     const columnWidth = pageWidth
 
-    return { columnHeight, columnWidth, horizontalMargin }
+    return { columnHeight, columnWidth }
   }
 
   const applySize = ({ blankPagePosition, minimumWidth, spreadPosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number, spreadPosition: `none` | `left` | `right` }) => {
@@ -84,6 +83,8 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
                 : `center`
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
+
+        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
       } else {
         commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
@@ -102,11 +103,14 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
         }
       }
 
+      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+
       // commonSpineItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
       commonSpineItem.layout({ width: minimumWidth, height: contentHeight })
 
       return { width: minimumWidth, height: contentHeight }
     } else {
+      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
       // commonSpineItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
       commonSpineItem.layout({ width: minimumWidth, height: pageHeight })
     }
@@ -132,7 +136,6 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
 const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
   columnWidth: number,
   columnHeight: number,
-  horizontalMargin: number,
   enableTouch: boolean,
   spreadPosition: `none` | `left` | `right`
 }, viewportDimensions: { height: number, width: number } | undefined) => {
@@ -143,11 +146,11 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
     body {
       margin: 0;
       ${!viewportDimensions
-? `
+      ? `
         display: flex;
         justify-content: ${spreadPosition === `left` ? `flex-end` : spreadPosition === `right` ? `flex-start` : `center`};
       `
-: ``}
+      : ``}
     }
     ${/*
       might be html * but it does mess up things like figure if so.
@@ -172,10 +175,10 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
     ``}
     html, body {
       ${enableTouch
-? `
+      ? `
         touch-action: none
       `
-: ``}
+      : ``}
     }
     ${/*
       prevent drag of image instead of touch on firefox
@@ -198,13 +201,13 @@ const buildDocumentStyle = ({ columnWidth, enableTouch, spreadPosition }: {
         the inner content to display correctly.
       */``}
       ${!viewportDimensions
-? `
+      ? `
         -width: 100%;
         max-width: 100%;
         height:100%;
         object-fit:contain;
       `
-: ``}
+      : ``}
     }
   `
 }

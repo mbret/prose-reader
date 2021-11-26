@@ -1,5 +1,5 @@
 import { Observable, ObservedValueOf } from "rxjs"
-import { createReader } from "../reader"
+import { Reader, createReader } from "../reader"
 
 // type AnyObject = Record<string, any>
 type AnyObject = Record<string, any>
@@ -22,7 +22,6 @@ type ModifyDeep<A extends AnyObject, B extends DeepPartialAny<A>> = {
   : B[K] extends Primitive ? B[K] : A[K]
 } & (A extends AnyObject ? Omit<B, keyof A> : A)
 
-type Reader = ReturnType<typeof createReader>
 type ReaderOptions = Parameters<typeof createReader>[0]
 
 type CreateReader = (options: ReaderOptions) => Reader

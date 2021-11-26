@@ -154,11 +154,11 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
 
     setLayoutDirty()
 
-    hooks$.getValue().forEach(hook => {
-      if (hook.name === `item.onLayout`) {
-        hook.fn({ frame: spineItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
-      }
-    })
+    // hooks$.getValue().forEach(hook => {
+    //   if (hook.name === `item.onLayout`) {
+    //     hook.fn({ frame: spineItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
+    //   }
+    // })
   }
 
   const translateFramePositionIntoPage = (position: { clientX: number, clientY: number }) => {
@@ -211,6 +211,17 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
 
     return cb({ container: containerElement, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
   }
+
+  const executeOnLayoutBeforeMeasurmentHook = (options: { minimumWidth: number }) => hooks$.getValue().forEach(hook => {
+    if (hook.name === `item.onLayoutBeforeMeasurment`) {
+      hook.fn({
+        frame: spineItemFrame,
+        container: containerElement,
+        item,
+        ...options
+      })
+    }
+  })
 
   spineItemFrame.$.contentLayoutChange$
     .pipe(
@@ -272,6 +283,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
       return spineItemFrame.getReadingDirection() || context.getReadingDirection()
     },
     manipulateSpineItem,
+    executeOnLayoutBeforeMeasurmentHook,
     selectionTracker,
     fingerTracker,
     $: {

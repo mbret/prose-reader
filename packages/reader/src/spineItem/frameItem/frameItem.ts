@@ -47,6 +47,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
     }
   }
 
+  // @todo memoize
   const getViewportDimensions = () => {
     const frame = frameElement$.getValue()
 

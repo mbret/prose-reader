@@ -29,8 +29,8 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
 
   const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
     const pageSize = context.getPageSize()
-    const horizontalMargin = context.getSettings().pageHorizontalMargin
-    const verticalMargin = context.getSettings().pageVerticalMargin
+    const horizontalMargin = 0
+    const verticalMargin = 0
     let columnWidth = pageSize.width - (horizontalMargin * 2)
     const columnHeight = pageSize.height - (verticalMargin * 2)
     let width = pageSize.width - (horizontalMargin * 2)
@@ -43,14 +43,18 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
     return {
       columnHeight,
       columnWidth,
-      horizontalMargin,
-      verticalMargin,
+      // horizontalMargin,
+      // verticalMargin,
       width
     }
   }
 
-  const applySize = ({ minimumWidth, blankPagePosition }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
+  const layout = ({ blankPagePosition, minimumWidth }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
+    // reset width of iframe to be able to retrieve real size later
+    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
+    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
+
     const viewportDimensions = spineItemFrame.getViewportDimensions()
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
@@ -66,6 +70,9 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
       if (viewportDimensions) {
         const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
         commonSpineItem.injectStyle(buildStyleForFakePrePaginated())
+
+        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
@@ -91,6 +98,8 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
           : buildStyleWithMultiColumn(getDimensions(spineItemFrame.isUsingVerticalWriting(), minimumWidth))
 
         commonSpineItem.injectStyle(frameStyle)
+
+        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
 
         if (spineItemFrame.isUsingVerticalWriting()) {
           const pages = Math.ceil(
@@ -151,6 +160,8 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
       commonSpineItem.layout({ width: contentWidth, height: contentHeight })
 
       return { width: contentWidth, height: contentHeight }
+    } else {
+      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
     }
 
     const height = latestContentHeightWhenLoaded || pageHeight
@@ -158,15 +169,6 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
     commonSpineItem.layout({ width: minimumWidth, height })
 
     return { width: minimumWidth, height }
-  }
-
-  const layout = (layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
-    const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    // reset width of iframe to be able to retrieve real size later
-    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
-    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
-
-    return applySize(layoutInformation)
   }
 
   return {
@@ -264,13 +266,19 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
  * - does not contain defined width/height viewport
  *
  * We use css multi column to paginate it
+ *
+ * @important
+ * The style here does not takes margin into account, we assume everything is 0.
+ * It is being handled by enhancer.
  */
-const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizontalMargin, verticalMargin }: {
+const buildStyleWithMultiColumn = ({
+  width,
+  columnHeight,
+  columnWidth
+}: {
   width: number,
   columnWidth: number,
   columnHeight: number,
-  horizontalMargin: number,
-  verticalMargin: number
 }) => {
   return `
     parsererror {
@@ -289,20 +297,19 @@ const buildStyleWithMultiColumn = ({ width, columnHeight, columnWidth, horizonta
       body {
         height: ${columnHeight}px !important;
         width: ${columnWidth}px !important;
+        -margin-left: ${horizontalMargin}px !important;
+        -margin-right: ${horizontalMargin}px !important;
+        -margin: ${verticalMargin}px ${horizontalMargin}px !important;
+        -padding-top: ${horizontalMargin}px !important;
+        -padding-bottom: ${horizontalMargin}px !important;
       }
     */``}
     body {
       padding: 0 !important;
       width: ${width}px !important;
       height: ${columnHeight}px !important;
-      -margin-left: ${horizontalMargin}px !important;
-      -margin-right: ${horizontalMargin}px !important;
-      margin: ${verticalMargin}px ${horizontalMargin}px !important;
-      -padding-top: ${horizontalMargin}px !important;
-      -padding-bottom: ${horizontalMargin}px !important;
       overflow-y: hidden;
       column-width: ${columnWidth}px !important;
-      column-gap: ${horizontalMargin * 2}px !important;
       column-fill: auto !important;
       word-wrap: break-word;
       box-sizing: border-box;

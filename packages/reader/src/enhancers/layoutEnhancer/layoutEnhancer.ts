@@ -1,20 +1,32 @@
-import { animationFrameScheduler, Observable, of, scheduled } from "rxjs"
-import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { BehaviorSubject, combineLatest } from "rxjs"
+import { distinctUntilChanged, map, takeUntil, tap, skip } from "rxjs/operators"
 import { Enhancer } from "../types"
-import { Reader } from "../../reader"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
+import { mapKeysTo } from "../../utils/rxjs"
+import { isShallowEqual } from "../../utils/objects"
 
 const SHOULD_NOT_LAYOUT = false
 
-export const layoutEnhancer: Enhancer<{
+type SettingsInput = {
+  pageHorizontalMargin?: number,
+  pageVerticalMargin?: number,
+}
+
+type SettingsOutput = Required<SettingsInput>
+
+export const layoutEnhancer: Enhancer<SettingsInput & {
   /**
    * Can be used to let the reader automatically resize.
    * `container`: observe and resize the reader whenever the container resize.
    * `false`: do not automatically resize.
    */
   layoutAutoResize?: `container` | false
-}, {}> = (next) => (options) => {
+}, {}, SettingsInput, SettingsOutput> = (next) => ({ pageHorizontalMargin = 24, pageVerticalMargin = 24, ...options }) => {
   const reader = next(options)
+  const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
+    pageHorizontalMargin,
+    pageVerticalMargin
+  })
 
   reader.registerHook(`onViewportOffsetAdjust`, () => {
     let hasRedrawn = false
@@ -52,7 +64,45 @@ export const layoutEnhancer: Enhancer<{
     })
   })
 
-  // reader.registerHook(``)
+  /**
+   * Apply margins to frame item
+   */
+  reader.registerHook(`item.onLayoutBeforeMeasurment`, ({ frame, minimumWidth }) => {
+    const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
+    const pageSize = reader.context.getPageSize()
+
+    if (!frame.getViewportDimensions()) {
+      let columnWidth = pageSize.width - (pageHorizontalMargin * 2)
+      const columnHeight = pageSize.height - (pageVerticalMargin * 2)
+      let width = pageSize.width - (pageHorizontalMargin * 2)
+
+      if (frame.isUsingVerticalWriting()) {
+        width = minimumWidth - (pageHorizontalMargin * 2)
+        columnWidth = columnHeight
+      }
+
+      frame.getManipulableFrame()?.removeStyle(`prose-layout-enhancer-css`)
+      frame.getManipulableFrame()?.addStyle(`prose-layout-enhancer-css`, `
+        body {
+          width: ${width}px !important;
+          margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
+          column-gap: ${pageHorizontalMargin * 2}px !important;
+          column-width: ${columnWidth}px !important;
+          height: ${columnHeight}px !important;
+        }
+        img, video, audio, object, svg {
+          max-width: ${columnWidth}px !important;
+          max-height: ${columnHeight}px !important;
+        }
+        table {
+          max-width: ${columnWidth}px !important;
+        }
+        td {
+          max-width: ${columnWidth}px;
+        }
+      `)
+    }
+  })
 
   // @todo fix the panstart issue
   // @todo maybe increasing the hammer distance before triggering pan as well
@@ -76,11 +126,43 @@ export const layoutEnhancer: Enhancer<{
 
   movingSafePan$.subscribe()
 
+  settingsSubject$
+    .pipe(
+      mapKeysTo([`pageHorizontalMargin`, `pageVerticalMargin`]),
+      distinctUntilChanged(isShallowEqual),
+      skip(1),
+      tap(() => {
+        reader.spine.layout()
+      }),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
+
   return {
     ...reader,
     destroy: () => {
       reader.destroy()
       observer?.disconnect()
+    },
+    setSettings: ({ pageVerticalMargin, pageHorizontalMargin, ...rest }) => {
+      if (pageHorizontalMargin !== undefined || pageVerticalMargin !== undefined) {
+        settingsSubject$.next({
+          pageHorizontalMargin: pageHorizontalMargin ?? settingsSubject$.value.pageHorizontalMargin,
+          pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin
+        })
+      }
+
+      reader.setSettings(rest)
+    },
+    $: {
+      ...reader.$,
+      settings$: combineLatest([reader.$.settings$, settingsSubject$.asObservable()])
+        .pipe(
+          map(([innerSettings, settings]) => ({
+            ...innerSettings,
+            ...settings
+          }))
+        )
     }
   }
 }

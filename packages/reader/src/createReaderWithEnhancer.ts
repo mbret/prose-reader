@@ -1,7 +1,7 @@
 import { chromeEnhancer } from './enhancers/chrome'
 import { fontsEnhancer } from './enhancers/fonts'
 import { hotkeysEnhancer } from './enhancers/hotkeys'
-import { layoutEnhancer } from './enhancers/layout'
+import { layoutEnhancer } from './enhancers/layoutEnhancer/layoutEnhancer'
 import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
 import { paginationEnhancer } from './enhancers/pagination'
@@ -9,15 +9,13 @@ import { themeEnhancer } from './enhancers/theme'
 import { ComposeEnhancer, composeEnhancer } from './enhancers/composeEnhancer'
 import { Enhancer } from './enhancers/types'
 import { zoomEnhancer } from './enhancers/zoom'
-import { createReader as createInternalReader } from './reader'
+import { createReader as createInternalReader, Reader as ReaderPublicApi } from './reader'
 import { utilsEnhancer } from './enhancers/utils'
 import { resourcesEnhancer } from './enhancers/resources'
 import { mediaEnhancer } from './enhancers/media'
 import { progressionEnhancer } from './enhancers/progression'
 import { accessibilityEnhancer } from './enhancers/accessibility'
 import { webkitEnhancer } from './enhancers/webkit'
-
-type ReaderPublicApi = ReturnType<typeof createInternalReader>
 
 /**
  * Only expose a subset of reader API in order to protect against
@@ -38,6 +36,7 @@ const withPublicApiOnly = <Api extends { [key in keyof ReaderPublicApi]: any }>(
     generateCfi,
     resolveCfi,
     getCfiMetaInformation,
+    spine,
     ...exposedReader
   } = reader
 

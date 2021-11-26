@@ -35,7 +35,7 @@
     "typescript": "*",
     "webpack": "^5.64.3",
     "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.4.0"
+    "webpack-dev-server": "^4.6.0"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }
