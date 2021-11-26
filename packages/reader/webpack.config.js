@@ -8,7 +8,7 @@ module.exports = {
   },
   mode: IS_PROD ? `production` : `development`,
   ...!IS_PROD && {
-    devtool: `source-map`
+    devtool: `eval-source-map`
   },
   externals: [
     `rxjs`,
