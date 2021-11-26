@@ -79,10 +79,12 @@ export const layoutEnhancer: Enhancer<SettingsInput & {
       let columnWidth = pageSize.width - (pageHorizontalMargin * 2)
       const columnHeight = pageSize.height - (pageVerticalMargin * 2)
       let width = pageSize.width - (pageHorizontalMargin * 2)
+      let columnGap = pageHorizontalMargin * 2
 
       if (frame.isUsingVerticalWriting()) {
         width = minimumWidth - (pageHorizontalMargin * 2)
         columnWidth = columnHeight
+        columnGap = pageVerticalMargin * 2
       }
 
       frame.getManipulableFrame()?.removeStyle(`prose-layout-enhancer-css`)
@@ -90,7 +92,7 @@ export const layoutEnhancer: Enhancer<SettingsInput & {
         body {
           width: ${width}px !important;
           margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
-          column-gap: ${pageHorizontalMargin * 2}px !important;
+          column-gap: ${columnGap}px !important;
           column-width: ${columnWidth}px !important;
           height: ${columnHeight}px !important;
         }
