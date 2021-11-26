@@ -1,13 +1,13 @@
-import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
+import { BehaviorSubject, merge, Observable, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
-import { createPagination } from "./pagination"
-import { createSpine } from "./spine/createSpine"
+import { createPagination, Pagination } from "./pagination"
+import { createSpine, Spine } from "./spine/createSpine"
 import { LoadOptions, Manifest } from "./types"
 import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
 import { createSelection } from "./selection"
-import { createSpineItemManager } from "./spineItemManager"
+import { createSpineItemManager, SpineItemManager } from "./spineItemManager"
 import { Hook, RegisterHook } from "./types/Hook"
 import { isShallowEqual } from "./utils/objects"
 
@@ -25,9 +25,63 @@ type CreateReaderOptions = {
   | `pageTurnAnimation`
   | `pageTurnDirection`
   | `pageTurnMode`
-  | `pageHorizontalMargin`
-  | `pageVerticalMargin`
 >
+
+export type Reader = {
+  innerPagination: Pagination,
+  context: Context,
+  registerHook: RegisterHook,
+  spine: Spine,
+  manipulateSpineItems: Spine[`manipulateSpineItems`],
+  manipulateContainer: (cb: (container: HTMLElement, onDestroy: (onDestroyCb: () => void) => void) => boolean) => void,
+  moveTo: Spine[`viewportNavigator`][`moveTo`],
+  turnLeft: Spine[`viewportNavigator`][`turnLeft`],
+  turnRight: Spine[`viewportNavigator`][`turnRight`],
+  goToPageOfCurrentChapter: Spine[`viewportNavigator`][`goToPageOfCurrentChapter`],
+  goToPage: Spine[`viewportNavigator`][`goToPage`],
+  goToUrl: Spine[`viewportNavigator`][`goToUrl`],
+  goToCfi: Spine[`viewportNavigator`][`goToCfi`],
+  goToSpineItem: Spine[`viewportNavigator`][`goToSpineItem`],
+  getFocusedSpineItemIndex: SpineItemManager[`getFocusedSpineItemIndex`],
+  getSpineItem: SpineItemManager[`get`],
+  getAbsolutePositionOf: SpineItemManager[`getAbsolutePositionOf`],
+  getSelection: Spine[`getSelection`],
+  isSelecting: Spine[`isSelecting`],
+  normalizeEventForViewport: Spine[`normalizeEventForViewport`],
+  getCfiMetaInformation: Spine[`cfiLocator`][`getCfiMetaInformation`],
+  resolveCfi: Spine[`cfiLocator`][`resolveCfi`],
+  generateCfi: Spine[`cfiLocator`][`generateFromRange`],
+  locator: Spine[`locator`],
+  getCurrentNavigationPosition: Spine[`viewportNavigator`][`getCurrentNavigationPosition`],
+  getCurrentViewportPosition: Spine[`viewportNavigator`][`getCurrentViewportPosition`],
+  layout: () => void,
+  load: (manifest: Manifest, loadOptions?: LoadOptions) => void,
+  destroy: () => void,
+  setSettings: Context[`setSettings`],
+  $: {
+    settings$: Context[`$`][`settings$`],
+    state$: Observable<{
+      supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
+      supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
+      supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+      supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+    }>,
+    /**
+     * Dispatched when the reader has loaded a book and is displayed a book.
+     * Using navigation API and getting information about current content will
+     * have an effect.
+     * It can typically be used to hide a loading indicator.
+     */
+    ready$: Observable<void>,
+    /**
+     * Dispatched when a change in selection happens
+     */
+    selection$: Observable<ReturnType<typeof createSelection> | null>,
+    viewportState$: Spine[`$`][`viewportState$`],
+    layout$: Spine[`$`][`layout$`],
+    destroy$: Observable<void>,
+  },
+}
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
   const stateSubject$ = new BehaviorSubject<{
@@ -221,6 +275,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     innerPagination: pagination,
     context,
     registerHook,
+    spine,
     manipulateSpineItems: spine.manipulateSpineItems,
     manipulateContainer,
     moveTo: spine.viewportNavigator.moveTo,
@@ -268,15 +323,12 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     __debug: {
       pagination,
       context,
-      spine,
       spineItemManager
     } as any // using any because otherwise ts breaks due to too many types to infer
   }
 
   return reader
 }
-
-export type Reader = ReturnType<typeof createReader>
 
 const createWrapperElement = (containerElement: HTMLElement) => {
   const element = containerElement.ownerDocument.createElement(`div`)
