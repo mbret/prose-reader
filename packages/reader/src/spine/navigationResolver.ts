@@ -1,7 +1,7 @@
 import { Report } from "../report"
 import { Context } from "../context"
 import { SpineItemManager } from "../spineItemManager"
-import { SpineItem } from "../spineItem"
+import { SpineItem } from "../spineItem/createSpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../spineItem/navigationResolver"
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"

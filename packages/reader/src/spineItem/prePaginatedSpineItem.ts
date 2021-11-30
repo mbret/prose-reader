@@ -122,14 +122,9 @@ export const createPrePaginatedSpineItem = ({ item, context, containerElement, i
     return applySize(layoutInformation)
   }
 
-  const destroy = () => {
-    commonSpineItem.destroy()
-  }
-
   return {
     ...commonSpineItem,
-    layout,
-    destroy
+    layout
   }
 }
 

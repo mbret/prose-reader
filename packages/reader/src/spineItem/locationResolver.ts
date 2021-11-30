@@ -1,6 +1,6 @@
 import { Context } from "../context"
 import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getNumberOfPages } from "../pagination"
-import { SpineItem } from "."
+import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 
 type SpineItemPosition = { x: number, y: number }

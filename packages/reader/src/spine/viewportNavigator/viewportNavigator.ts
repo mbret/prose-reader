@@ -5,7 +5,7 @@ import { SpineItemManager } from "../../spineItemManager"
 import { createLocationResolver } from "../locationResolver"
 import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
 import { animationFrameScheduler, BehaviorSubject, combineLatest, EMPTY, identity, merge, Observable, of, Subject } from "rxjs"
-import { SpineItem } from "../../spineItem"
+import { SpineItem } from "../../spineItem/createSpineItem"
 import { delay, distinctUntilChanged, filter, map, pairwise, share, shareReplay, startWith, switchMap, takeUntil, tap, withLatestFrom, skip } from "rxjs/operators"
 import { createCfiLocator } from "../cfiLocator"
 import { createScrollViewportNavigator } from "./scrollViewportNavigator"
@@ -140,7 +140,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
    */
   const adjustNavigation = (spineItem: SpineItem) => {
     // @todo we should get the cfi of focused item, if focused item is not inside pagination then go to spine index
-    const lastCfi = pagination.getBeginInfo().cfi
+    const lastCfi = pagination.getInfo().beginCfi
     let adjustedSpinePosition = currentNavigationPosition
     const offsetInSpineItem = 0
 
@@ -190,7 +190,7 @@ export const createViewportNavigator = ({ spineItemManager, context, pagination,
        */
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
-      const currentPageIndex = pagination.getBeginInfo().pageIndex || 0
+      const currentPageIndex = pagination.getInfo().beginPageIndex || 0
       adjustedSpinePosition = navigator.getNavigationForPage(currentPageIndex, spineItem)
       Report.log(NAMESPACE, `adjustNavigation`, `use guess strategy`, {})
     }

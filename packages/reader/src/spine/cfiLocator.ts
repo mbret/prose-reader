@@ -1,6 +1,6 @@
 import { CFI, extractProseMetadataFromCfi } from "../cfi"
 import { Context } from "../context"
-import { SpineItem } from "../spineItem"
+import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"

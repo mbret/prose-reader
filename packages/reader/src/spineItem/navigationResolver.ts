@@ -1,4 +1,4 @@
-import { SpineItem } from "."
+import { SpineItem } from "./createSpineItem"
 import { Context } from "../context"
 import { getNumberOfPages } from "../pagination"
 import { createLocationResolver } from "./locationResolver"

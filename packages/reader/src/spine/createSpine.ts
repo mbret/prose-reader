@@ -1,10 +1,10 @@
-import { animationFrameScheduler, BehaviorSubject, EMPTY, interval, merge, Subject, Subscription } from "rxjs"
-import { catchError, debounce, debounceTime, distinctUntilChanged, filter, map, share, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import { BehaviorSubject, EMPTY, interval, merge, Subject, Subscription } from "rxjs"
+import { catchError, debounce, distinctUntilChanged, filter, map, share, skip, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
 import { Pagination } from "../pagination"
-import { createSpineItem } from "../spineItem"
+import { createSpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver } from "./locationResolver"
@@ -44,8 +44,12 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   const viewportNavigator = createViewportNavigator({ context, pagination, spineItemManager, element: containerElement, cfiLocator, locator, hooks$ })
   const eventsHelper = createEventsHelper({ context, spineItemManager, iframeEventBridgeElement, locator })
   let selectionSubscription: Subscription | undefined
+  let hookDestroyItemOnCreateFunctions: ReturnType<Extract<Hook, { name: `item.onCreated` }>[`fn`]>[] = []
 
-  const load = () => {
+  /**
+   * @todo handle reload
+   */
+  const reload = () => {
     context.getManifest()?.spineItems.map(async (resource) => {
       const spineItem = createSpineItem({
         item: resource,
@@ -59,7 +63,14 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     })
     hooks$.getValue().forEach(hook => {
       if (hook.name === `item.onCreated`) {
-        spineItemManager.getAll().forEach(item => hook.fn({ container: item.element, loadingElement: item.loadingElement }))
+        spineItemManager.getAll().forEach(item => {
+          const destroyFn = hook.fn({
+            container: item.element,
+            loadingElement: item.loadingElement,
+            item: item.item
+          })
+          hookDestroyItemOnCreateFunctions.push(destroyFn)
+        })
       }
     })
   }
@@ -74,6 +85,13 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
       spineItemManager.layout()
     }
   }
+
+  context.$.load$
+    .pipe(
+      tap(reload),
+      takeUntil(context.$.destroy$)
+    )
+    .subscribe()
 
   /**
    * Watch for settings update that require changes
@@ -132,16 +150,16 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
           const spineItemsFromPosition = locator.getSpineItemsFromReadingOrderPosition(position)
           const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
           const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
-          const beginLastCfi = pagination.getBeginInfo().cfi
-          const endLastCfi = pagination.getEndInfo().cfi
+          const beginLastCfi = pagination.getInfo().beginCfi
+          const endLastCfi = pagination.getInfo().endCfi
 
           const shouldUpdateBeginCfi =
-            pagination.getBeginInfo().spineItemIndex !== spineItemsFromPosition?.begin ||
+            pagination.getInfo().beginSpineItemIndex !== spineItemsFromPosition?.begin ||
             beginLastCfi === undefined ||
             beginLastCfi?.startsWith(`epubcfi(/0`)
 
           const shouldUpdateEndCfi =
-            pagination.getEndInfo().spineItemIndex !== spineItemsFromPosition?.end ||
+            pagination.getInfo().endSpineItemIndex !== spineItemsFromPosition?.end ||
             endLastCfi === undefined ||
             endLastCfi?.startsWith(`epubcfi(/0`)
 
@@ -235,25 +253,14 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
       share()
     )
 
-  merge(
-    adjustNavigationAfterLayout$
-      .pipe(
-        switchMap(({ adjustedSpinePosition }) => {
-          return adjustPagination$(adjustedSpinePosition)
-            .pipe(
-              takeUntil(viewportNavigator.$.navigation$)
-            )
-        })
-      ),
-    spineItemManager.$.layout$
-      .pipe(
-        debounceTime(10, animationFrameScheduler),
-        tap(() => {
-          pagination.updateTotalNumberOfPages(spineItemManager.getAll())
-        })
-      )
-  )
+  adjustNavigationAfterLayout$
     .pipe(
+      switchMap(({ adjustedSpinePosition }) => {
+        return adjustPagination$(adjustedSpinePosition)
+          .pipe(
+            takeUntil(viewportNavigator.$.navigation$)
+          )
+      }),
       takeUntil(context.$.destroy$)
     )
     .subscribe()
@@ -370,8 +377,8 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
             cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
               ? lastExpectedNavigation.data
               : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getBeginInfo().cfi
-                : beginItemIndex !== pagination.getBeginInfo().spineItemIndex
+                ? pagination.getInfo().beginCfi
+                : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
                   ? cfiLocator.getRootCfi(beginSpineItem)
                   : undefined,
             options: {
@@ -384,8 +391,8 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
             cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
               ? lastExpectedNavigation.data
               : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getEndInfo().cfi
-                : endItemIndex !== pagination.getEndInfo().spineItemIndex
+                ? pagination.getInfo().endCfi
+                : endItemIndex !== pagination.getInfo().endSpineItemIndex
                   ? cfiLocator.getRootCfi(endSpineItem)
                   : undefined,
             options: {
@@ -481,10 +488,13 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     cfiLocator,
     normalizeEventForViewport: eventsHelper.normalizeEventForViewport,
     manipulateSpineItems,
-    load,
     layout: () => layoutSubject$.next(),
     destroy: () => {
       viewportNavigator.destroy()
+      hookDestroyItemOnCreateFunctions.forEach((fn) => {
+        fn()
+      })
+      hookDestroyItemOnCreateFunctions = []
       spineItemManager.destroy()
       selectionSubscription?.unsubscribe()
       containerElement.remove()
