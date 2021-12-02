@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { createReader, Manifest, Reader } from '@prose-reader/core'
+import { createReader, Manifest, Reader as CoreReader } from '@prose-reader/core'
 import { ObservedValueOf } from "rxjs"
 
 type Enhancer<Api = {}> = (createReader: any) => (options: any) => Api
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
-type Pagination = ObservedValueOf<Reader['$']['pagination$']>
+type Pagination = ObservedValueOf<CoreReader['$']['pagination$']>
 type EnhancerOptions<E extends Enhancer | void> = E extends Enhancer ? Parameters<ReturnType<E>>[0] & Options : Options
 
 type Props<UserEnhancer extends Enhancer | void> = {
@@ -13,13 +13,13 @@ type Props<UserEnhancer extends Enhancer | void> = {
   options?: Omit<EnhancerOptions<UserEnhancer>, 'containerElement'>,
   loadOptions?: LoadOptions,
   enhancer?: UserEnhancer,
-  onReader?: (reader: Reader<UserEnhancer>) => void,
+  onReader?: (reader: CoreReader<UserEnhancer>) => void,
   onReady?: () => void,
   onPaginationChange?: (pagination: Pagination) => void,
 }
 
-export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) {
-  const [reader, setReader] = useState<Reader<UserEnhancer> | undefined | Reader>(undefined)
+export const Reader = <UserEnhancer extends Enhancer | void>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) => {
+  const [reader, setReader] = useState<CoreReader<UserEnhancer> | undefined | CoreReader>(undefined)
   const { width, height } = { width: `100%`, height: `100%` }
   const ref = useRef<HTMLElement>()
 
