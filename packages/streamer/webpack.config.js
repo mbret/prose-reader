@@ -26,6 +26,7 @@ module.exports = {
           loader: `ts-loader`,
           options: {
             compilerOptions: {
+              noEmit: false,
               declaration: true
             }
           }
