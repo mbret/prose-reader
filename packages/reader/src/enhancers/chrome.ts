@@ -60,10 +60,6 @@ export const chromeEnhancer: Enhancer<{}, {
 
     // container.appendChild(screenForceRefreshElt)
 
-    onDestroy(() => {
-      container.removeEventListener(`scroll`, onScroll)
-    })
-
     return SHOULD_NOT_LAYOUT
   })
 

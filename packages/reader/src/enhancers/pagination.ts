@@ -1,9 +1,16 @@
-import { Observable } from "rxjs"
-import { map } from "rxjs/operators"
+import { animationFrameScheduler, combineLatest, Observable, ObservedValueOf } from "rxjs"
+import { map, debounceTime, tap, startWith, shareReplay, distinctUntilChanged, withLatestFrom } from "rxjs/operators"
 import { Enhancer } from "./types"
-import { SpineItem } from "../spineItem"
+import { SpineItem } from "../spineItem/createSpineItem"
 import { Manifest } from "../types"
 import { progressionEnhancer } from "./progression"
+import { getNumberOfPages } from "../pagination"
+import { Report } from "../report"
+import { isShallowEqual } from "../utils/objects"
+
+const NAMESPACE = `paginationEnhancer`
+
+const report = Report.namespace(NAMESPACE)
 
 /**
  * @todo
@@ -28,33 +35,21 @@ type ChapterInfo = {
   path: string
 }
 
-type PaginationInfo = undefined | {
-  begin: {
-    chapterInfo: undefined | {
-      title: string
-      subChapter?: ChapterInfo,
-      path: string
-    },
-    pageIndexInChapter: number | undefined,
-    absolutePageIndex: number | undefined,
-    numberOfPagesInChapter: number | undefined,
-    spineItemIndex: number | undefined,
-    cfi: string | undefined,
-    spineItemReadingDirection: `rtl` | `ltr` | undefined,
-  },
-  end: {
-    chapterInfo: undefined | {
-      title: string
-      subChapter?: ChapterInfo,
-      path: string
-    },
-    pageIndexInChapter: number | undefined,
-    absolutePageIndex: number | undefined,
-    numberOfPagesInChapter: number | undefined,
-    spineItemIndex: number | undefined,
-    cfi: string | undefined,
-    spineItemReadingDirection: `rtl` | `ltr` | undefined,
-  },
+type PaginationInfo = {
+  beginChapterInfo: ChapterInfo | undefined
+  beginPageIndexInChapter: number | undefined,
+  beginNumberOfPagesInChapter: number | undefined,
+  beginSpineItemIndex: number | undefined,
+  beginCfi: string | undefined,
+  beginSpineItemReadingDirection: `rtl` | `ltr` | undefined,
+  beginAbsolutePageIndex: number | undefined,
+  endChapterInfo: ChapterInfo | undefined
+  endPageIndexInChapter: number | undefined,
+  endNumberOfPagesInChapter: number | undefined,
+  endSpineItemIndex: number | undefined,
+  endCfi: string | undefined,
+  endSpineItemReadingDirection: `rtl` | `ltr` | undefined,
+  endAbsolutePageIndex: number | undefined,
   percentageEstimateOfBook: number | undefined,
   /**
    * @warning
@@ -69,62 +64,54 @@ type PaginationInfo = undefined | {
 }
 
 export const paginationEnhancer: Enhancer<{}, {
-  pagination: {
-    $: Observable<PaginationInfo>,
-    getInfo: () => PaginationInfo
+  $: {
+    pagination$: Observable<PaginationInfo>
   }
 }, {}, {}, typeof progressionEnhancer> = (next) => (options) => {
   const reader = next(options)
+  const chaptersInfo: { [key: string]: ChapterInfo | undefined } = {}
 
-  const getChapterInfo = () => {
-    const item = reader.getSpineItem(reader.getFocusedSpineItemIndex() || 0)
+  const getChapterInfo = (item: Manifest[`spineItems`][number]) => {
     const manifest = reader.context.getManifest()
     return item && manifest && buildChapterInfoFromSpineItem(manifest, item)
   }
 
-  const getPaginationInfo = (): PaginationInfo => {
-    const pagination = reader.innerPagination
+  const mapPaginationInfoToExtendedInfo = (paginationInfo: ObservedValueOf<typeof reader[`$`][`pagination$`]>) => {
     const context = reader.context
-    const paginationBegin = reader.innerPagination.getBeginInfo()
-    const paginationEnd = reader.innerPagination.getEndInfo()
-    const beginItem = paginationBegin.spineItemIndex !== undefined ? reader.getSpineItem(paginationBegin.spineItemIndex) : undefined
-    const endItem = paginationEnd.spineItemIndex !== undefined ? reader.getSpineItem(paginationEnd.spineItemIndex) : undefined
-
-    if (!pagination || !context) return undefined
+    const beginItem = paginationInfo.beginSpineItemIndex !== undefined
+      ? reader.getSpineItem(paginationInfo.beginSpineItemIndex)
+      : undefined
+    const endItem = paginationInfo.endSpineItemIndex !== undefined
+      ? reader.getSpineItem(paginationInfo.endSpineItemIndex)
+      : undefined
 
     return {
-      begin: {
-        chapterInfo: getChapterInfo(),
-        pageIndexInChapter: paginationBegin.pageIndex,
-        absolutePageIndex: paginationBegin.absolutePageIndex,
-        numberOfPagesInChapter: paginationBegin.numberOfPages,
-        // chapterIndex: number;
-        // pages: number;
-        // pageIndexInBook: number;
-        // pageIndexInChapter: number;
-        // pagesOfChapter: number;
-        // pagePercentageInChapter: number;
-        // offsetPercentageInChapter: number;
-        // domIndex: number;
-        // charOffset: number;
-        // serializeString?: string;
-        spineItemIndex: paginationBegin.spineItemIndex,
-        // spineItemPath: beginItem?.item.path,
-        // spineItemId: beginItem?.item.id,
-        cfi: paginationBegin.cfi,
-        spineItemReadingDirection: beginItem?.getReadingDirection()
-      },
-      end: {
-        chapterInfo: getChapterInfo(),
-        pageIndexInChapter: paginationEnd.pageIndex,
-        absolutePageIndex: paginationEnd.absolutePageIndex,
-        numberOfPagesInChapter: paginationEnd.numberOfPages,
-        spineItemIndex: paginationEnd.spineItemIndex,
-        // spineItemPath: endItem?.item.path,
-        // spineItemId: endItem?.item.id,
-        spineItemReadingDirection: endItem?.getReadingDirection(),
-        cfi: paginationEnd.cfi
-      },
+      beginPageIndexInChapter: paginationInfo.beginPageIndex,
+      beginNumberOfPagesInChapter: paginationInfo.beginNumberOfPages,
+      beginChapterInfo: beginItem ? chaptersInfo[beginItem.item.id] : undefined,
+      // chapterIndex: number;
+      // pages: number;
+      // pageIndexInBook: number;
+      // pageIndexInChapter: number;
+      // pagesOfChapter: number;
+      // pagePercentageInChapter: number;
+      // offsetPercentageInChapter: number;
+      // domIndex: number;
+      // charOffset: number;
+      // serializeString?: string;
+      beginSpineItemIndex: paginationInfo.beginSpineItemIndex,
+      // spineItemPath: beginItem?.item.path,
+      // spineItemId: beginItem?.item.id,
+      beginCfi: paginationInfo.beginCfi,
+      beginSpineItemReadingDirection: beginItem?.getReadingDirection(),
+      endChapterInfo: endItem ? chaptersInfo[endItem.item.id] : undefined,
+      endPageIndexInChapter: paginationInfo.endPageIndex,
+      endNumberOfPagesInChapter: paginationInfo.endNumberOfPages,
+      endSpineItemIndex: paginationInfo.endSpineItemIndex,
+      // spineItemPath: endItem?.item.path,
+      // spineItemId: endItem?.item.id,
+      endSpineItemReadingDirection: endItem?.getReadingDirection(),
+      endCfi: paginationInfo.endCfi,
       // end: ReadingLocation;
       // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
       /**
@@ -136,17 +123,13 @@ export const paginationEnhancer: Enhancer<{}, {
       percentageEstimateOfBook: endItem
         ? reader.progression.getPercentageEstimate(
           context,
-          paginationEnd.spineItemIndex ?? 0,
-          paginationEnd.numberOfPages,
-          paginationEnd.pageIndex || 0,
+          paginationInfo.endSpineItemIndex ?? 0,
+          paginationInfo.endNumberOfPages,
+          paginationInfo.endPageIndex || 0,
           reader.getCurrentViewportPosition(),
           endItem
         )
         : 0,
-      /**
-       * This may be not accurate for reflowable due to dynamic load / unload.
-       */
-      numberOfTotalPages: pagination.getTotalNumberOfPages(),
       isUsingSpread: context.shouldDisplaySpread()
       // chaptersOfBook: number;
       // chapter: string;
@@ -156,20 +139,95 @@ export const paginationEnhancer: Enhancer<{}, {
     }
   }
 
+  const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
+    // pre-paginated always are only one page
+    // if (!spineItem.isReflowable) return 1
+
+    const writingMode = spineItem.spineItemFrame.getWritingMode()
+    const { width, height } = spineItem.getElementDimensions()
+
+    if (writingMode === `vertical-rl`) {
+      return getNumberOfPages(height, reader.context.getPageSize().height)
+    }
+
+    return getNumberOfPages(width, reader.context.getPageSize().width)
+  }
+
+  const getTotalNumberOfPages = () => {
+    const numberOfPagesPerItems = reader.getSpineItems().map((item) => {
+      return getSpineItemNumberOfPages(item)
+    }, 0)
+
+    const totalNumberOfPages = numberOfPagesPerItems
+      .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
+
+    return {
+      numberOfPagesPerItems,
+      totalNumberOfPages
+    }
+    // @todo trigger change to pagination info (+ memo if number is same)
+  }
+
+  const mapPaginationInfoToTotalPagesInfo = ({ endSpineItemIndex, endPageIndex, beginSpineItemIndex, beginPageIndex }: ObservedValueOf<typeof reader[`$`][`pagination$`]>) => {
+    const { totalNumberOfPages, numberOfPagesPerItems } = getTotalNumberOfPages()
+
+    return {
+      beginAbsolutePageIndex: numberOfPagesPerItems
+        .slice(0, beginSpineItemIndex)
+        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
+      endAbsolutePageIndex: numberOfPagesPerItems
+        .slice(0, endSpineItemIndex)
+        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
+      /**
+       * This may be not accurate for reflowable due to dynamic load / unload.
+       */
+      numberOfTotalPages: totalNumberOfPages
+    }
+  }
+
+  reader.registerHook(`item.onCreated`, ({ item }) => {
+    chaptersInfo[item.id] = getChapterInfo(item)
+
+    return () => { }
+  })
+
+  const paginationExtendedInfo = reader.$.pagination$
+    .pipe(
+      map(mapPaginationInfoToExtendedInfo),
+      distinctUntilChanged(isShallowEqual)
+    )
+
+  const totalPages$ = reader.$.layout$
+    .pipe(
+      debounceTime(10, animationFrameScheduler),
+      withLatestFrom(reader.$.pagination$),
+      map(([, paginationInfo]) => mapPaginationInfoToTotalPagesInfo(paginationInfo)),
+      distinctUntilChanged(isShallowEqual),
+      startWith({
+        beginAbsolutePageIndex: 0,
+        endAbsolutePageIndex: 0,
+        numberOfTotalPages: 0
+      })
+    )
+
   return {
     ...reader,
-    pagination: {
-      $: reader.innerPagination.$
+    $: {
+      ...reader.$,
+      pagination$: combineLatest([paginationExtendedInfo, totalPages$])
         .pipe(
-          map(() => getPaginationInfo())
-        ),
-      getInfo: getPaginationInfo
+          map(([a, b]) => ({ ...a, ...b })),
+          tap((data) => {
+            report.log(`pagination`, data)
+          }),
+          shareReplay(1)
+        )
     }
   }
 }
 
-export const buildChapterInfoFromSpineItem = (manifest: Manifest, spineItem: SpineItem) => {
-  const { path } = spineItem.item
+export const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
+  const { path } = item
 
   return getChapterInfo(path, manifest.nav.toc)
 }

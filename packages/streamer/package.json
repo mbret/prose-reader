@@ -1,5 +1,5 @@
 {
-  "name": "@prose-reader/core-streamer",
+  "name": "@prose-reader/streamer",
   "version": "0.0.22",
   "main": "dist/index.js",
   "license": "MIT",

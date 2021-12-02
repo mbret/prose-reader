@@ -17,7 +17,7 @@ const SHOULD_NOT_LAYOUT = false
 export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
-  reader.manipulateContainer((container, onDestroy) => {
+  reader.manipulateContainer((container) => {
     iframeOverlayForAnimationsElement = container.ownerDocument.createElement(`div`)
     iframeOverlayForAnimationsElement.style.cssText = `
       position: absolute;
@@ -28,10 +28,6 @@ export const createMovingSafePan$ = (reader: Reader) => {
       visibility: hidden;
     `
     container.appendChild(iframeOverlayForAnimationsElement)
-
-    onDestroy(() => {
-      iframeOverlayForAnimationsElement?.remove()
-    })
 
     return SHOULD_NOT_LAYOUT
   })

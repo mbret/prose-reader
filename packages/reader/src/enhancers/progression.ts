@@ -1,6 +1,6 @@
 import { Context } from "../context"
 import { Enhancer } from "./types"
-import { SpineItem } from "../spineItem"
+import { SpineItem } from "../spineItem/createSpineItem"
 
 /**
  * Help dealing with progression through the book

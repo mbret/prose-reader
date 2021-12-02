@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { createReader, Enhancer, Manifest, Reader } from '@prose-reader/core'
+import { createReader, Manifest, Reader } from '@prose-reader/core'
+import { ObservedValueOf } from "rxjs"
 
+type Enhancer<Api = {}> = (createReader: any) => (options: any) => Api
 type Options = Parameters<typeof createReader>[0]
 type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
-type Pagination = ReturnType<Reader['pagination']['getInfo']>
+type Pagination = ObservedValueOf<Reader['$']['pagination$']>
 type EnhancerOptions<E extends Enhancer | void> = E extends Enhancer ? Parameters<ReturnType<E>>[0] & Options : Options
 
 type Props<UserEnhancer extends Enhancer | void> = {
@@ -17,16 +19,16 @@ type Props<UserEnhancer extends Enhancer | void> = {
 }
 
 export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<UserEnhancer>) {
-  const [reader, setReader] = useState<Reader<UserEnhancer> | undefined>(undefined)
+  const [reader, setReader] = useState<Reader<UserEnhancer> | undefined | Reader>(undefined)
   const { width, height } = { width: `100%`, height: `100%` }
   const ref = useRef<HTMLElement>()
 
   useEffect(() => {
     if (ref.current && !reader) {
       const readerOptions = { containerElement: ref.current, ...options }
-      const reader: any = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
+      const reader = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
       setReader(reader)
-      onReader && onReader(reader)
+      onReader && onReader(reader as any)
     }
   }, [ref.current, setReader, onReader, reader, options])
 
@@ -41,7 +43,7 @@ export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady
   }, [reader, onReady])
 
   useEffect(() => {
-    const paginationSubscription = reader?.pagination.$.subscribe(data => {
+    const paginationSubscription = reader?.$.pagination$.subscribe(data => {
       onPaginationChange && onPaginationChange(data)
     })
 
@@ -52,7 +54,7 @@ export function Reader<UserEnhancer extends Enhancer | void>({ manifest, onReady
 
   useEffect(() => {
     if (manifest && reader) {
-      reader.load(manifest, loadOptions)
+      reader.load(manifest, loadOptions as any)
     }
   }, [manifest, reader, loadOptions])
 

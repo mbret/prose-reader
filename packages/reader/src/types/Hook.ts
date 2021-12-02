@@ -17,7 +17,7 @@ export type Hook =
   }
   | {
     name: `item.onCreated`,
-    fn: (payload: { container: HTMLElement, loadingElement: HTMLElement }) => void
+    fn: (payload: { container: HTMLElement, loadingElement: HTMLElement, item: Manifest[`spineItems`][number] }) => () => void
   }
   | {
     name: `item.onBeforeContainerCreated`,
