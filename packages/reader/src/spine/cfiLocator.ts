@@ -97,11 +97,16 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
         return { node, offset: offset ?? resolvedOffset, spineItemIndex }
       } catch (e) {
         Report.error(e)
-        return undefined
+
+        return {
+          spineItemIndex
+        }
       }
     }
 
-    return undefined
+    return {
+      spineItemIndex
+    }
   }
 
   // const resolveCfi = (cfi: string) => {

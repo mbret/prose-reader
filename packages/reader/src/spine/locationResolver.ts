@@ -83,7 +83,6 @@ export const createLocationResolver = ({ spineItemManager, context, spineItemLoc
       }
     }
 
-    // console.warn({ leftEnd, leftStart, topStart, topEnd })
     return {
       x: leftStart + spineItemPosition.x,
       y: topStart + spineItemPosition.y

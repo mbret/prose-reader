@@ -44,7 +44,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   const viewportNavigator = createViewportNavigator({ context, pagination, spineItemManager, element: containerElement, cfiLocator, locator, hooks$ })
   const eventsHelper = createEventsHelper({ context, spineItemManager, iframeEventBridgeElement, locator })
   let selectionSubscription: Subscription | undefined
-  let hookDestroyItemOnCreateFunctions: ReturnType<Extract<Hook, { name: `item.onCreated` }>[`fn`]>[] = []
+  let hookDestroyItemOnCreateFunctions: ((() => void) | Subscription)[] = []
 
   /**
    * @todo handle reload
@@ -64,12 +64,18 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     hooks$.getValue().forEach(hook => {
       if (hook.name === `item.onCreated`) {
         spineItemManager.getAll().forEach(item => {
-          const destroyFn = hook.fn({
+          const destroyFnOrStream = hook.fn({
             container: item.element,
             loadingElement: item.loadingElement,
             item: item.item
           })
-          hookDestroyItemOnCreateFunctions.push(destroyFn)
+          if (destroyFnOrStream) {
+            if (`subscribe` in destroyFnOrStream) {
+              hookDestroyItemOnCreateFunctions.push(destroyFnOrStream.subscribe())
+            } else {
+              hookDestroyItemOnCreateFunctions.push(destroyFnOrStream)
+            }
+          }
         })
       }
     })
@@ -374,13 +380,15 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
              *
              * The cfi is later adjusted with heavy dom lookup once the viewport is free.
              */
-            cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
-              ? lastExpectedNavigation.data
-              : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getInfo().beginCfi
-                : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
-                  ? cfiLocator.getRootCfi(beginSpineItem)
-                  : undefined,
+            cfi:
+              lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
+                ? lastExpectedNavigation.data
+                : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
+                  ? pagination.getInfo().beginCfi
+                  : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
+                    ? cfiLocator.getRootCfi(beginSpineItem)
+                    // @todo check ?
+                    : cfiLocator.getRootCfi(beginSpineItem),
             options: {
               isAtEndOfChapter: false
             }
@@ -394,7 +402,8 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
                 ? pagination.getInfo().endCfi
                 : endItemIndex !== pagination.getInfo().endSpineItemIndex
                   ? cfiLocator.getRootCfi(endSpineItem)
-                  : undefined,
+                  // @todo check ?
+                  : cfiLocator.getRootCfi(endSpineItem),
             options: {
               isAtEndOfChapter: false
             }
@@ -492,7 +501,11 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     destroy: () => {
       viewportNavigator.destroy()
       hookDestroyItemOnCreateFunctions.forEach((fn) => {
-        fn()
+        if (`unsubscribe` in fn) {
+          fn.unsubscribe()
+        } else {
+          fn()
+        }
       })
       hookDestroyItemOnCreateFunctions = []
       spineItemManager.destroy()

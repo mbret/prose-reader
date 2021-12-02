@@ -1,4 +1,5 @@
 import { Manifest } from "@prose-reader/shared"
+import { Observable } from "rxjs"
 
 export type Hook =
   /**
@@ -13,11 +14,15 @@ export type Hook =
       removeStyle: (id: string) => void,
       item: Manifest[`spineItems`][number],
       addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void,
-    }) => (() => void) | void
+    }) => (() => void) | Observable<any> | void
   }
   | {
     name: `item.onCreated`,
-    fn: (payload: { container: HTMLElement, loadingElement: HTMLElement, item: Manifest[`spineItems`][number] }) => () => void
+    fn: (payload: {
+      container: HTMLElement,
+      loadingElement: HTMLElement,
+      item: Manifest[`spineItems`][number]
+    }) => (() => void) | Observable<any> | void
   }
   | {
     name: `item.onBeforeContainerCreated`,

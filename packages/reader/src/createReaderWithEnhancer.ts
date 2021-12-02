@@ -6,7 +6,7 @@ import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
 import { paginationEnhancer } from './enhancers/pagination'
 import { themeEnhancer } from './enhancers/theme'
-import { ComposeEnhancer, composeEnhancer } from './enhancers/composeEnhancer'
+import { ComposableEnhancer, ComposeEnhancer, composeEnhancer } from './enhancers/composeEnhancer'
 import { Enhancer } from './enhancers/types'
 import { zoomEnhancer } from './enhancers/zoom'
 import { createReader as createInternalReader, Reader as ReaderPublicApi } from './reader'
@@ -25,7 +25,6 @@ import { webkitEnhancer } from './enhancers/webkit'
 const withPublicApiOnly = <Api extends { [key in keyof ReaderPublicApi]: any }>(reader: Api) => {
   const {
     context,
-    innerPagination,
     manipulateContainer,
     manipulateSpineItems,
     getFocusedSpineItemIndex,
@@ -69,9 +68,37 @@ type WithoutPrivateApi<E> = Omit<E, RemovedKeysOnly | `__debug` | `__API` | `__O
 type EnhancerOptions<E extends (...args: any) => any> = Parameters<ReturnType<E>>[0]
 type EnhancerExposedApi<E extends (...args: any) => any> = ReturnType<ReturnType<E>>
 
-export function createReaderWithEnhancer(options: EnhancerOptions<typeof internalEnhancer>): WithoutPrivateApi<EnhancerExposedApi<typeof internalEnhancer>>
-export function createReaderWithEnhancer<UserEnhancer extends Enhancer>(options: EnhancerOptions<UserEnhancer> & EnhancerOptions<typeof internalEnhancer>, enhancer: UserEnhancer): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<typeof internalEnhancer, UserEnhancer>>>
-export function createReaderWithEnhancer<UserEnhancer extends Enhancer> (options: EnhancerOptions<UserEnhancer> & EnhancerOptions<typeof internalEnhancer>, enhancer?: UserEnhancer) {
+type CoreEnhancer = typeof internalEnhancer
+
+export type CoreEnhancerDependsOn = (createReader: Parameters<CoreEnhancer>[0]) => (options: EnhancerOptions<CoreEnhancer>) => EnhancerExposedApi<CoreEnhancer>
+
+export type ExternalEnhancer<
+  Options = {},
+  Api = {},
+  Settings = {},
+  OutputSettings = Settings,
+  DependsOn extends (createReader: any) => (options: any) => any = CoreEnhancerDependsOn
+  > = Enhancer<
+    Options,
+    Api,
+    Settings,
+    OutputSettings,
+    DependsOn
+  >
+
+export function createReaderWithEnhancer(
+  options: EnhancerOptions<CoreEnhancer>
+): WithoutPrivateApi<EnhancerExposedApi<CoreEnhancer>>
+
+export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer>(
+  options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
+  enhancer: UserEnhancer
+): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<typeof internalEnhancer, UserEnhancer>>>
+
+export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer> (
+  options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
+  enhancer?: UserEnhancer
+) {
   if (!enhancer) {
     const enhancedCreateReader = internalEnhancer(createInternalReader)
 
@@ -81,9 +108,9 @@ export function createReaderWithEnhancer<UserEnhancer extends Enhancer> (options
   const finalEnhancer = composeEnhancer(internalEnhancer, enhancer)
   const enhancedCreateReader = finalEnhancer(createInternalReader)
 
-  return withPublicApiOnly(enhancedCreateReader(options) as any)
+  return withPublicApiOnly(enhancedCreateReader(options))
 }
 
-export type Reader<E extends Enhancer | void = void> = E extends Enhancer
-  ? WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<typeof internalEnhancer, E>>>
-  : WithoutPrivateApi<EnhancerExposedApi<typeof internalEnhancer>>
+export type Reader<E extends ComposableEnhancer | void = void> = E extends ComposableEnhancer
+  ? WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<CoreEnhancer, E>>>
+  : WithoutPrivateApi<EnhancerExposedApi<CoreEnhancer>>

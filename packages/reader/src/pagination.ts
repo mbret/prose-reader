@@ -1,22 +1,34 @@
-import { Subject } from "rxjs"
+import { BehaviorSubject, distinctUntilChanged } from "rxjs"
 import { Context } from "./context"
-import { SpineItem } from "./spineItem"
+import { SpineItem } from "./spineItem/createSpineItem"
 import { SpineItemManager } from "./spineItemManager"
 import { Report } from "./report"
+import { isShallowEqual } from "./utils/objects"
 
 const NAMESPACE = `pagination`
 
+type PaginationInfo = {
+  beginPageIndex: number | undefined
+  beginNumberOfPages: number
+  beginCfi: string | undefined
+  beginSpineItemIndex: number | undefined
+  endPageIndex: number | undefined
+  endNumberOfPages: number
+  endCfi: string | undefined
+  endSpineItemIndex: number | undefined
+}
+
 export const createPagination = ({ context }: { context: Context, spineItemManager: SpineItemManager }) => {
-  const subject = new Subject<{ event: `change` }>()
-  let beginPageIndex: number | undefined
-  let beginNumberOfPages = 0
-  let beginCfi: string | undefined
-  let beginSpineItemIndex: number | undefined
-  let endPageIndex: number | undefined
-  let endNumberOfPages = 0
-  let endCfi: string | undefined
-  let endSpineItemIndex: number | undefined
-  let numberOfPagesPerItems: number[] = []
+  const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
+    beginPageIndex: undefined,
+    beginNumberOfPages: 0,
+    beginCfi: undefined,
+    beginSpineItemIndex: undefined,
+    endPageIndex: undefined,
+    endNumberOfPages: 0,
+    endCfi: undefined,
+    endSpineItemIndex: undefined
+  })
 
   const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
     // pre-paginated always are only one page
@@ -53,7 +65,6 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
     // - resize
     // future changes would potentially only be resize (easy to track) and font size family change.
     // to track that we can have a hidden text element and track it and send event back
-    // console.warn(typeof info.options.cfi)
     // if (info.options.cfi === undefined) {
     //   cfi = spineItemLocator.getCfi(pageIndex, info.spineItem)
     //   Report.log(`pagination`, `cfi`, pageIndex, cfi)
@@ -70,65 +81,53 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
     }
   }
 
+  const updateBeginAndEnd = Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
+    begin: Parameters<typeof getInfoForUpdate>[0] & {
+      spineItemIndex: number,
+    },
+    end: Parameters<typeof getInfoForUpdate>[0] & {
+      spineItemIndex: number,
+    }
+  ) => {
+    const beginInfo = getInfoForUpdate(begin)
+    const endInfo = getInfoForUpdate(end)
+
+    const newValues = {
+      beginPageIndex: beginInfo.pageIndex,
+      beginNumberOfPages: beginInfo.numberOfPages,
+      beginCfi: beginInfo.cfi,
+      beginSpineItemIndex: begin.spineItemIndex,
+      endPageIndex: endInfo.pageIndex,
+      endNumberOfPages: endInfo.numberOfPages,
+      endCfi: endInfo.cfi,
+      endSpineItemIndex: end.spineItemIndex
+    }
+
+    paginationSubject$.next({
+      ...paginationSubject$.value,
+      ...newValues
+    })
+  }, { disable: true })
+
+  const getInfo = () => paginationSubject$.value
+
+  const info$ = paginationSubject$
+    .asObservable()
+    .pipe(
+      distinctUntilChanged(isShallowEqual)
+    )
+
+  const destroy = () => {
+    paginationSubject$.complete()
+  }
+
   return {
-    getBeginInfo () {
-      return {
-        pageIndex: beginPageIndex,
-        absolutePageIndex: numberOfPagesPerItems
-          .slice(0, beginSpineItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
-        cfi: beginCfi,
-        numberOfPages: beginNumberOfPages,
-        spineItemIndex: beginSpineItemIndex
-      }
-    },
-    getEndInfo () {
-      return {
-        pageIndex: endPageIndex,
-        absolutePageIndex: numberOfPagesPerItems
-          .slice(0, endSpineItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
-        cfi: endCfi,
-        numberOfPages: endNumberOfPages,
-        spineItemIndex: endSpineItemIndex
-      }
-    },
-    getTotalNumberOfPages: () => {
-      return numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
-    },
-    updateTotalNumberOfPages: (spineItems: SpineItem[]) => {
-      numberOfPagesPerItems = spineItems.map((item) => {
-        return getSpineItemNumberOfPages(item)
-      }, 0)
-
-      subject.next({ event: `change` })
-    },
-    updateBeginAndEnd: Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
-      begin: Parameters<typeof getInfoForUpdate>[0] & {
-        spineItemIndex: number,
-      },
-      end: Parameters<typeof getInfoForUpdate>[0] & {
-        spineItemIndex: number,
-      }
-    ) => {
-      const beginInfo = getInfoForUpdate(begin)
-      const endInfo = getInfoForUpdate(end)
-
-      beginPageIndex = beginInfo.pageIndex
-      beginNumberOfPages = beginInfo.numberOfPages
-      beginCfi = beginInfo.cfi
-      beginSpineItemIndex = begin.spineItemIndex
-
-      endPageIndex = endInfo.pageIndex
-      endNumberOfPages = endInfo.numberOfPages
-      endCfi = endInfo.cfi
-      endSpineItemIndex = end.spineItemIndex
-
-      Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginSpineItemIndex, endCfi, endSpineItemIndex })
-
-      subject.next({ event: `change` })
-    }, { disable: true }),
-    $: subject.asObservable()
+    destroy,
+    updateBeginAndEnd,
+    getInfo,
+    $: {
+      info$
+    }
   }
 }
 

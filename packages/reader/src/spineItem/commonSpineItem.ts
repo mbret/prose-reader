@@ -69,6 +69,8 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   // Do not memoize x,y,top,left as they change relatively to the viewport all the time
   let memoizedElementDimensions: { width: number, height: number } | undefined
 
+  // @todo use spine item manager global layout reference if possible
+  // @todo getAbsolutePositionOf (for width and height)
   const getElementDimensions = () => {
     if (memoizedElementDimensions) {
       return memoizedElementDimensions

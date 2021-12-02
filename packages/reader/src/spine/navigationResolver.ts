@@ -109,7 +109,6 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     // check both position to see if we moved out of it
     const isNewNavigationInCurrentItem = !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigationForRightPage, spineItemPosition)
 
-    // console.warn({ spineItemPosition, spineItemNavigationForRightPage, isNewNavigationInCurrentItem })
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
         context.isRTL()

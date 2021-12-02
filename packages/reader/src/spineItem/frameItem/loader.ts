@@ -1,4 +1,4 @@
-import { BehaviorSubject, EMPTY, from, fromEvent, merge, Observable, of, Subject } from "rxjs"
+import { BehaviorSubject, EMPTY, from, fromEvent, isObservable, merge, Observable, of, Subject, Subscription } from "rxjs"
 import { exhaustMap, filter, map, mapTo, mergeMap, share, take, takeUntil, delay, tap, withLatestFrom, switchMap, distinctUntilChanged } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
@@ -25,7 +25,7 @@ export const createLoader = ({ item, parent, fetchResource, hooks$, context, vie
   const frameElementSubject$ = new BehaviorSubject<HTMLIFrameElement | undefined>(undefined)
   const isLoadedSubject$ = new BehaviorSubject(false)
   const isReadySubject$ = new BehaviorSubject(false)
-  let hookDestroyFunctions: ReturnType<Extract<Hook, { name: `item.onLoad` }>[`fn`]>[] = []
+  let onLoadHookReturns: ((() => void) | Subscription | void)[] = []
   let computedStyleAfterLoad: CSSStyleDeclaration | undefined
 
   const makeItHot = <T>(source$: Observable<T>) => {
@@ -39,6 +39,28 @@ export const createLoader = ({ item, parent, fetchResource, hooks$, context, vie
   }
 
   const waitForViewportFree$ = viewportState$.pipe(filter(v => v === `free`), take(1))
+
+  const unload$ = unloadSubject$.asObservable()
+    .pipe(
+      // @todo remove iframe when viewport is free
+      // @todo use takeUntil(load$) when it's the case to cancel
+      withLatestFrom(frameElementSubject$),
+      filter(([_, frame]) => !!frame),
+      map(([, frame]) => {
+        onLoadHookReturns.forEach(fn => {
+          if (fn && `unsubscribe` in fn) {
+            fn.unsubscribe()
+          } else if (fn) {
+            fn()
+          }
+        })
+        onLoadHookReturns = []
+        frame?.remove()
+        frameElementSubject$.next(undefined)
+      }),
+      share(),
+      takeUntil(destroySubject$)
+    )
 
   /**
    * Observable for loading the frame
@@ -134,9 +156,20 @@ export const createLoader = ({ item, parent, fetchResource, hooks$, context, vie
 
                     const manipulableFrame = createFrameManipulator(frame)
 
-                    hookDestroyFunctions = hooks
+                    onLoadHookReturns = hooks
                       .filter(isOnLoadHook)
-                      .map(hook => manipulableFrame && hook.fn({ ...manipulableFrame, item }))
+                      .map(hook => {
+                        const hookReturn = hook.fn({
+                          ...manipulableFrame,
+                          item
+                        })
+
+                        if (hookReturn && `subscribe` in hookReturn) {
+                          return hookReturn.subscribe()
+                        }
+
+                        return hookReturn
+                      })
 
                     // we conveniently wait for all the hooks so that the dom is correctly prepared
                     // in addition to be ready.
@@ -170,25 +203,6 @@ export const createLoader = ({ item, parent, fetchResource, hooks$, context, vie
       ),
       share(),
       makeItHot,
-      takeUntil(destroySubject$)
-    )
-
-  const unload$ = unloadSubject$.asObservable()
-    .pipe(
-      withLatestFrom(frameElementSubject$),
-      filter(([_, frame]) => !!frame),
-      exhaustMap(() => {
-        hookDestroyFunctions.forEach(fn => fn && fn())
-        frameElementSubject$.getValue()?.remove()
-        frameElementSubject$.next(undefined)
-
-        // @todo remove iframe when viewport is free
-
-        return of(undefined).pipe(
-          takeUntil(load$)
-        )
-      }),
-      share(),
       takeUntil(destroySubject$)
     )
 
