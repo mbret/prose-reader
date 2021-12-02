@@ -34,7 +34,7 @@ export const chromeEnhancer: Enhancer<{}, {
    */
   // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
 
-  reader.manipulateContainer((container, onDestroy) => {
+  reader.manipulateContainer((container) => {
     const onScroll = () => {
       if (reader.context.getSettings().computedPageTurnMode === `controlled`) {
         container.scrollTo(0, 0)

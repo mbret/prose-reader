@@ -58,6 +58,8 @@ export const themeEnhancer: Enhancer<{
       container.style.setProperty(`background-color`, foundTheme.backgroundColor)
       loadingElement.style.setProperty(`background-color`, foundTheme.backgroundColor)
     }
+
+    return () => {}
   }
 
   const applyChangeToSpineItem = () => {
