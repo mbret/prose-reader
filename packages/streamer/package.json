@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@prose-reader/shared": "^0.0.4",
+    "@prose-reader/shared": "^0.0.5",
     "@types/xmldoc": "^1.1.5",
     "buffer": "6.0.3",
     "xmldoc": "^1.1.2"

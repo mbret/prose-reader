@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-scripts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "dist/index.js",
   "license": "MIT",
   "bin": {
@@ -13,7 +13,6 @@
     "test": "echo"
   },
   "dependencies": {
-    "yargs": "^17.2.1",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.2",
@@ -23,6 +22,7 @@
     "ts-loader": "^9.2.6",
     "typescript": "*",
     "webpack": "^5.64.3",
-    "webpack-cli": "^4.9.1"
+    "webpack-cli": "^4.9.1",
+    "yargs": "^17.2.1"
   }
 }

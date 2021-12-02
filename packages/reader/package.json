@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -17,14 +17,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/shared": "^0.0.4"
+    "@prose-reader/shared": "^0.0.5"
   },
   "peerDependencies": {
     "rxjs": "*"
   },
   "devDependencies": {
-    "terser-webpack-plugin": "^5.2.5",
-    "webpack-bundle-analyzer": "^4.5.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^6.3.0",
@@ -33,9 +31,11 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-jest": "^25.3.0",
     "html-webpack-plugin": "^5.5.0",
+    "terser-webpack-plugin": "^5.2.5",
     "ts-loader": "^9.2.6",
     "typescript": "*",
     "webpack": "^5.64.3",
+    "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.1"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
