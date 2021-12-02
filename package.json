@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@prose-reader/root",
   "private": true,
   "version": "1.0.0",
   "main": "index.js",
@@ -13,7 +13,8 @@
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna exec --parallel -- yarn lint",
     "test": "lerna exec --parallel -- yarn test",
-    "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"
+    "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
+    "dev:link-all": "./scripts/link-all.sh"
   },
   "workspaces": [
     "packages/*"
