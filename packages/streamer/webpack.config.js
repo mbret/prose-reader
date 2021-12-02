@@ -13,6 +13,11 @@ module.exports = {
   externals: [
     `@prose-reader/core`
   ],
+  ...IS_PROD && {
+    optimization: {
+      minimize: true
+    }
+  },
   module: {
     rules: [
       {
