@@ -23,6 +23,8 @@
     "rxjs": "*"
   },
   "devDependencies": {
+    "terser-webpack-plugin": "^5.2.5",
+    "webpack-bundle-analyzer": "^4.5.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^6.3.0",

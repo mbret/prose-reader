@@ -1,4 +1,6 @@
 const path = require(`path`)
+const TerserPlugin = require(`terser-webpack-plugin`)
+const BundleAnalyzerPlugin = require(`webpack-bundle-analyzer`).BundleAnalyzerPlugin
 
 const IS_PROD = process.env.NODE_ENV !== `development`
 
@@ -9,6 +11,12 @@ module.exports = {
   mode: IS_PROD ? `production` : `development`,
   ...!IS_PROD && {
     devtool: `eval-source-map`
+  },
+  ...IS_PROD && {
+    optimization: {
+      minimize: true,
+      minimizer: [new TerserPlugin()]
+    }
   },
   externals: [
     `rxjs`,
@@ -41,5 +49,8 @@ module.exports = {
     library: {
       type: `commonjs`
     }
-  }
+  },
+  plugins: [
+    // new BundleAnalyzerPlugin()
+  ]
 }
