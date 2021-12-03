@@ -42,9 +42,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
 }) => {
   const destroySubject$ = new Subject<void>()
   const isReflowable = false
-  const contentLayoutChangeSubject$ = new Subject<{ isFirstLayout: boolean, isReady: boolean }>()
   const containerElement = createContainerElement(parentElement, item, hooks$)
-  const loadingElement = createLoadingElement(parentElement, item, context)
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
@@ -62,7 +60,6 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
-  containerElement.appendChild(loadingElement)
   containerElement.appendChild(overlayElement)
   parentElement.appendChild(containerElement)
 
@@ -157,8 +154,6 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     containerElement.style.width = `${width}px`
     containerElement.style.height = `${height}px`
 
-    loadingElement.style.setProperty(`max-width`, `${context.getVisibleAreaRect().width}px`)
-
     // layoutInformation = newLayoutInformation
 
     setLayoutDirty()
@@ -209,16 +204,29 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   const manipulateSpineItem = (
     cb: (options: {
       container: HTMLElement,
-      loadingElement: HTMLElement,
       item: Manifest[`spineItems`][number],
       overlayElement: HTMLDivElement,
     } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
   ) => {
     const manipulableFrame = spineItemFrame.getManipulableFrame()
 
-    if (manipulableFrame) return cb({ ...manipulableFrame, container: containerElement, loadingElement, item, overlayElement })
+    if (manipulableFrame) {
+      return cb({
+        ...manipulableFrame,
+        container: containerElement,
+        item,
+        overlayElement
+      })
+    }
 
-    return cb({ container: containerElement, loadingElement, item, frame: undefined, removeStyle: () => { }, addStyle: () => { }, overlayElement })
+    return cb({
+      container: containerElement,
+      item,
+      frame: undefined,
+      removeStyle: () => { },
+      addStyle: () => { },
+      overlayElement
+    })
   }
 
   const executeOnLayoutBeforeMeasurmentHook = (options: { minimumWidth: number }) => hooks$.getValue().forEach(hook => {
@@ -233,28 +241,14 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     }
   })
 
-  spineItemFrame.$.contentLayoutChange$
+  const contentLayout$ = spineItemFrame.$.contentLayoutChange$
     .pipe(
       withLatestFrom(spineItemFrame.$.isReady$),
-      takeUntil(destroySubject$)
+      map(([data, isReady]) => ({
+        isFirstLayout: data.isFirstLayout,
+        isReady
+      }))
     )
-    .subscribe(([data, isReady]) => {
-      if (data.isFirstLayout && isReady) {
-        loadingElement.style.visibility = `hidden`
-      }
-      contentLayoutChangeSubject$.next({ isFirstLayout: data.isFirstLayout, isReady })
-    })
-
-  spineItemFrame.$.unload$
-    .pipe(
-      tap(() => {
-        if (loadingElement && loadingElement.style.visibility !== `visible`) {
-          loadingElement.style.visibility = `visible`
-        }
-      }),
-      takeUntil(destroySubject$)
-    )
-    .subscribe()
 
   return {
     load: () => {
@@ -262,7 +256,6 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     },
     layout,
     adjustPositionOfElement,
-    createLoadingElement,
     getElementDimensions,
     getHtmlFromResource: spineItemFrame.getHtmlFromResource,
     getResource,
@@ -273,7 +266,6 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     unloadContent,
     spineItemFrame,
     element: containerElement,
-    loadingElement,
     isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
@@ -281,8 +273,6 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     isReady: spineItemFrame.getIsReady,
     destroy: () => {
       destroySubject$.next()
-      loadingElement.onload = () => { }
-      loadingElement.remove()
       containerElement.remove()
       spineItemFrame?.destroy()
       fingerTracker.destroy()
@@ -298,8 +288,9 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     selectionTracker,
     fingerTracker,
     $: {
-      contentLayoutChangeSubject$: contentLayoutChangeSubject$.asObservable(),
-      loaded$: spineItemFrame.$.loaded$
+      contentLayout$,
+      loaded$: spineItemFrame.$.loaded$,
+      isReady$: spineItemFrame.$.isReady$
     }
   }
 }
@@ -320,51 +311,6 @@ const createContainerElement = (containerElement: HTMLElement, item: Manifest[`s
 
     return element
   }, element)
-}
-
-/**
- * We use iframe for loading element mainly to be able to use share hooks / manipulation
- * with iframe. That way the loading element always match whatever style is applied to iframe.
- */
-const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], context: Context) => {
-  const loadingElement = containerElement.ownerDocument.createElement(`div`)
-  loadingElement.classList.add(`loading`)
-  loadingElement.style.cssText = `
-    height: 100%;
-    width: 100%;
-    max-width: ${context.getVisibleAreaRect().width}px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    position: absolute;
-    left: 0;
-    top: 0;
-    background-color: white;
-  `
-
-  const logoElement = containerElement.ownerDocument.createElement(`div`)
-  logoElement.innerText = `prose`
-  logoElement.style.cssText = `
-    font-size: 4em;
-    color: #cacaca;
-  `
-  const detailsElement = containerElement.ownerDocument.createElement(`div`)
-  detailsElement.innerText = `loading ${item.id}`
-  detailsElement.style.cssText = `
-    font-size: 1.2em;
-    color: rgb(202, 202, 202);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    max-width: 300px;
-    width: 80%;
-  `
-  loadingElement.appendChild(logoElement)
-  loadingElement.appendChild(detailsElement)
-
-  return loadingElement
 }
 
 const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {

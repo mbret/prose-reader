@@ -15,6 +15,7 @@ import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Hook } from "../types/Hook"
 import { mapKeysTo } from "../utils/rxjs"
+import { Manifest } from ".."
 
 const NAMESPACE = `spine`
 
@@ -34,6 +35,8 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   hooks$: BehaviorSubject<Hook[]>
 }) => {
   const layoutSubject$ = new Subject<void>()
+  const itemsCreatedSubject$ = new Subject<Pick<SpineItem, `item` | `element`>[]>()
+  const itemsBeforeDestroySubject$ = new Subject<void>()
   const subject = new Subject<Event>()
   const doc = parentElement.ownerDocument
   const containerElement = createContainerElement(doc, hooks$)
@@ -44,12 +47,13 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   const viewportNavigator = createViewportNavigator({ context, pagination, spineItemManager, element: containerElement, cfiLocator, locator, hooks$ })
   const eventsHelper = createEventsHelper({ context, spineItemManager, iframeEventBridgeElement, locator })
   let selectionSubscription: Subscription | undefined
-  let hookDestroyItemOnCreateFunctions: ((() => void) | Subscription)[] = []
 
   /**
    * @todo handle reload
    */
   const reload = () => {
+    itemsBeforeDestroySubject$.next()
+    spineItemManager.destroyItems()
     context.getManifest()?.spineItems.map(async (resource) => {
       const spineItem = createSpineItem({
         item: resource,
@@ -61,24 +65,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
       })
       spineItemManager.add(spineItem)
     })
-    hooks$.getValue().forEach(hook => {
-      if (hook.name === `item.onCreated`) {
-        spineItemManager.getAll().forEach(item => {
-          const destroyFnOrStream = hook.fn({
-            container: item.element,
-            loadingElement: item.loadingElement,
-            item: item.item
-          })
-          if (destroyFnOrStream) {
-            if (`subscribe` in destroyFnOrStream) {
-              hookDestroyItemOnCreateFunctions.push(destroyFnOrStream.subscribe())
-            } else {
-              hookDestroyItemOnCreateFunctions.push(destroyFnOrStream)
-            }
-          }
-        })
-      }
-    })
+    itemsCreatedSubject$.next(spineItemManager.getAll())
   }
 
   const manipulateSpineItems = (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => {
@@ -90,6 +77,10 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     if (shouldLayout) {
       spineItemManager.layout()
     }
+  }
+
+  const manipulateSpineItem = (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => {
+    spineItemManager.get(id)?.manipulateSpineItem(cb)
   }
 
   context.$.load$
@@ -497,17 +488,14 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     cfiLocator,
     normalizeEventForViewport: eventsHelper.normalizeEventForViewport,
     manipulateSpineItems,
+    manipulateSpineItem,
     layout: () => layoutSubject$.next(),
     destroy: () => {
+      itemsCreatedSubject$.complete()
+      layoutSubject$.complete()
       viewportNavigator.destroy()
-      hookDestroyItemOnCreateFunctions.forEach((fn) => {
-        if (`unsubscribe` in fn) {
-          fn.unsubscribe()
-        } else {
-          fn()
-        }
-      })
-      hookDestroyItemOnCreateFunctions = []
+      itemsBeforeDestroySubject$.next()
+      itemsBeforeDestroySubject$.complete()
       spineItemManager.destroy()
       selectionSubscription?.unsubscribe()
       containerElement.remove()
@@ -517,7 +505,9 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
     $: {
       $: subject.asObservable(),
       viewportState$: viewportNavigator.$.state$,
-      layout$: spineItemManager.$.layout$
+      layout$: spineItemManager.$.layout$,
+      itemsCreated$: itemsCreatedSubject$.asObservable(),
+      itemsBeforeDestroy$: itemsBeforeDestroySubject$.asObservable()
     }
   }
 }

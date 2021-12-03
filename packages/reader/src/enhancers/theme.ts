@@ -1,3 +1,5 @@
+import { BehaviorSubject, Observable } from "rxjs"
+import { takeUntil, tap } from "rxjs/operators"
 import { Enhancer } from "./types"
 
 const defaultThemes = [
@@ -17,20 +19,25 @@ const defaultThemes = [
   }
 ]
 
-export type Theme = (typeof defaultThemes[number])[`name`]
+export type Theme = (typeof defaultThemes[number])[`name`] | `publisher`
 
 export const themeEnhancer: Enhancer<{
   theme?: Theme,
 }, {
-  setTheme: (theme: Theme | undefined) => void,
-  getTheme: () => Theme | undefined,
+  theme: {
+    set: (theme: Theme) => void,
+    get: () => Theme,
+    $: {
+      theme$: Observable<Theme>
+    }
+  }
 }> = (next) => (options) => {
   const { theme } = options
   const reader = next(options)
-  let currentTheme = theme
+  const currentThemeSubject$ = new BehaviorSubject<Theme>(options.theme ?? `bright`)
 
   const getStyle = () => {
-    const foundTheme = defaultThemes.find(entry => entry.name === currentTheme)
+    const foundTheme = defaultThemes.find(entry => entry.name === currentThemeSubject$.value)
 
     return `
       body {
@@ -52,21 +59,20 @@ export const themeEnhancer: Enhancer<{
     `
   }
 
-  const applyChangeToSpineItemElement = ({ container, loadingElement }: { container: HTMLElement, loadingElement: HTMLElement }) => {
-    const foundTheme = defaultThemes.find(entry => entry.name === currentTheme)
+  const applyChangeToSpineItemElement = ({ container }: { container: HTMLElement }) => {
+    const foundTheme = defaultThemes.find(entry => entry.name === currentThemeSubject$.value)
     if (foundTheme) {
       container.style.setProperty(`background-color`, foundTheme.backgroundColor)
-      loadingElement.style.setProperty(`background-color`, foundTheme.backgroundColor)
     }
 
-    return () => {}
+    return () => { }
   }
 
   const applyChangeToSpineItem = () => {
-    reader.manipulateSpineItems(({ removeStyle, addStyle, container, loadingElement }) => {
+    reader.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
       removeStyle(`prose-reader-theme`)
       addStyle(`prose-reader-theme`, getStyle())
-      applyChangeToSpineItemElement({ container, loadingElement })
+      applyChangeToSpineItemElement({ container })
 
       return false
     })
@@ -84,14 +90,35 @@ export const themeEnhancer: Enhancer<{
    * Make sure to apply theme on item container (fixed layout)
    * & loading element
    */
-  reader.registerHook(`item.onCreated`, applyChangeToSpineItemElement)
+  reader.$.itemsCreated$
+    .pipe(
+      tap(items => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
+
+  currentThemeSubject$
+    .pipe(
+      tap(() => {
+        applyChangeToSpineItem()
+      }),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
 
   return {
     ...reader,
-    setTheme: (theme: Theme | undefined) => {
-      currentTheme = theme
-      applyChangeToSpineItem()
-    },
-    getTheme: () => currentTheme
+    theme: {
+      set: (theme: Theme) => {
+        if (theme !== currentThemeSubject$.value) {
+          currentThemeSubject$.next(theme)
+        }
+      },
+      get: () => currentThemeSubject$.value,
+      $: {
+        theme$: currentThemeSubject$
+          .asObservable()
+      }
+    }
   }
 }

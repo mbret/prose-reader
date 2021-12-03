@@ -19,6 +19,7 @@ export type ComposeEnhancer<
   M extends ComposableEnhancer = Enhancer,
   N extends ComposableEnhancer = Enhancer,
   O extends ComposableEnhancer = Enhancer,
+  P extends ComposableEnhancer = Enhancer,
   > =
   Enhancer<
     & ExtractOptions<A>
@@ -35,7 +36,8 @@ export type ComposeEnhancer<
     & ExtractOptions<L>
     & ExtractOptions<M>
     & ExtractOptions<N>
-    & ExtractOptions<O>,
+    & ExtractOptions<O>
+    & ExtractOptions<P>,
     // ModifyDeep<
     //   ModifyDeep<
     //     ExtractHiddenApi<A>,
@@ -57,7 +59,8 @@ export type ComposeEnhancer<
     & ExtractHiddenApi<L>
     & ExtractHiddenApi<M>
     & ExtractHiddenApi<N>
-    & ExtractHiddenApi<O>,
+    & ExtractHiddenApi<O>
+    & ExtractHiddenApi<P>,
     & Parameters<ExtractApi<A>[`setSettings`]>[0]
     & Parameters<ExtractApi<B>[`setSettings`]>[0]
     & Parameters<ExtractApi<C>[`setSettings`]>[0]
@@ -72,7 +75,8 @@ export type ComposeEnhancer<
     & Parameters<ExtractApi<L>[`setSettings`]>[0]
     & Parameters<ExtractApi<M>[`setSettings`]>[0]
     & Parameters<ExtractApi<N>[`setSettings`]>[0]
-    & Parameters<ExtractApi<O>[`setSettings`]>[0],
+    & Parameters<ExtractApi<O>[`setSettings`]>[0]
+    & Parameters<ExtractApi<P>[`setSettings`]>[0],
     & ExtractApi<A>[`__OutputSettings`]
     & ExtractApi<B>[`__OutputSettings`]
     & ExtractApi<C>[`__OutputSettings`]
@@ -88,6 +92,7 @@ export type ComposeEnhancer<
     & ExtractApi<M>[`__OutputSettings`]
     & ExtractApi<N>[`__OutputSettings`]
     & ExtractApi<O>[`__OutputSettings`]
+    & ExtractApi<P>[`__OutputSettings`]
   >
 
 export function composeEnhancer<A extends ComposableEnhancer>(a: A): ComposeEnhancer<A>
@@ -105,6 +110,7 @@ export function composeEnhancer<A extends ComposableEnhancer, B extends Composab
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer, F extends ComposableEnhancer, G extends ComposableEnhancer, H extends ComposableEnhancer, I extends ComposableEnhancer, J extends ComposableEnhancer, K extends ComposableEnhancer, L extends ComposableEnhancer, M extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer, F extends ComposableEnhancer, G extends ComposableEnhancer, H extends ComposableEnhancer, I extends ComposableEnhancer, J extends ComposableEnhancer, K extends ComposableEnhancer, L extends ComposableEnhancer, M extends ComposableEnhancer, N extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer, F extends ComposableEnhancer, G extends ComposableEnhancer, H extends ComposableEnhancer, I extends ComposableEnhancer, J extends ComposableEnhancer, K extends ComposableEnhancer, L extends ComposableEnhancer, M extends ComposableEnhancer, N extends ComposableEnhancer, O extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>
-export function composeEnhancer(...funcs: any[]) {
+export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer, F extends ComposableEnhancer, G extends ComposableEnhancer, H extends ComposableEnhancer, I extends ComposableEnhancer, J extends ComposableEnhancer, K extends ComposableEnhancer, L extends ComposableEnhancer, M extends ComposableEnhancer, N extends ComposableEnhancer, O extends ComposableEnhancer, P extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P>
+export function composeEnhancer (...funcs: any[]) {
   return compose(...funcs)
 }

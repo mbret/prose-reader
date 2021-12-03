@@ -240,7 +240,7 @@ export const createLoader = ({ item, parent, fetchResource, hooks$, context, vie
       unload$: unloadSubject$.asObservable(),
       loaded$: load$,
       isLoaded$: isLoadedSubject$.asObservable(),
-      isReady$: isReadySubject$.asObservable(),
+      isReady$: isReadySubject$.asObservable().pipe(distinctUntilChanged()),
       ready$: ready$,
       unloaded$: unload$,
       frameElement$: frameElementSubject$

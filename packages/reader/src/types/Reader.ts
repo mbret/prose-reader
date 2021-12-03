@@ -50,6 +50,7 @@ export type Reader = {
   registerHook: RegisterHook,
   spine: Spine,
   manipulateSpineItems: Spine[`manipulateSpineItems`],
+  manipulateSpineItem: Spine[`manipulateSpineItem`],
   manipulateContainer: (cb: (container: HTMLElement) => boolean) => void,
   moveTo: Spine[`viewportNavigator`][`moveTo`],
   turnLeft: Spine[`viewportNavigator`][`turnLeft`],
@@ -98,6 +99,9 @@ export type Reader = {
     selection$: Observable<ReturnType<typeof createSelection> | null>,
     viewportState$: Spine[`$`][`viewportState$`],
     layout$: Spine[`$`][`layout$`],
+    itemsCreated$: Spine[`$`][`itemsCreated$`],
+    itemsBeforeDestroy$: Spine[`$`][`itemsBeforeDestroy$`],
+    itemIsReady$: SpineItemManager[`$`][`itemIsReady$`],
     destroy$: Observable<void>,
   },
 }

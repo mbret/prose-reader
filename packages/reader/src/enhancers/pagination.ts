@@ -1,5 +1,5 @@
 import { animationFrameScheduler, combineLatest, Observable, ObservedValueOf } from "rxjs"
-import { map, debounceTime, tap, startWith, shareReplay, distinctUntilChanged, withLatestFrom } from "rxjs/operators"
+import { map, debounceTime, startWith, shareReplay, distinctUntilChanged, withLatestFrom, takeUntil, tap } from "rxjs/operators"
 import { Enhancer } from "./types"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { Manifest } from "../types"
@@ -185,11 +185,14 @@ export const paginationEnhancer: Enhancer<{}, {
     }
   }
 
-  reader.registerHook(`item.onCreated`, ({ item }) => {
-    chaptersInfo[item.id] = getChapterInfo(item)
-
-    return () => { }
-  })
+  reader.$.itemsCreated$
+    .pipe(
+      tap(items => items.forEach(({ item }) => {
+        chaptersInfo[item.id] = getChapterInfo(item)
+      })),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
 
   const paginationExtendedInfo = reader.$.pagination$
     .pipe(

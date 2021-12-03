@@ -133,7 +133,14 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
    * This way it works even if the item is not loaded. It will be relative to first page
    * anyway.
    */
-  reader.registerHook(`item.onCreated`, ({ container }) => createClickListener$(container))
+  reader.$.itemsCreated$
+    .pipe(
+      switchMap(items =>
+        merge(items.map(({ element }) => createClickListener$(element)))
+      ),
+      takeUntil(reader.$.destroy$)
+    )
+    .subscribe()
 
   /**
    * For each item frame we register even on click to be able to click within

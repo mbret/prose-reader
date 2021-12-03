@@ -16,6 +16,7 @@ import { mediaEnhancer } from './enhancers/media'
 import { progressionEnhancer } from './enhancers/progression'
 import { accessibilityEnhancer } from './enhancers/accessibility'
 import { webkitEnhancer } from './enhancers/webkit'
+import { loadingEnhancer } from './enhancers/loadingEnhancer'
 
 /**
  * Only expose a subset of reader API in order to protect against
@@ -62,6 +63,7 @@ const internalEnhancer = composeEnhancer(
   , linksEnhancer
   , fontsEnhancer
   , webkitEnhancer
+  , loadingEnhancer
 )
 
 type WithoutPrivateApi<E> = Omit<E, RemovedKeysOnly | `__debug` | `__API` | `__OutputSettings`>
@@ -95,7 +97,7 @@ export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer
   enhancer: UserEnhancer
 ): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<typeof internalEnhancer, UserEnhancer>>>
 
-export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer> (
+export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer>(
   options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
   enhancer?: UserEnhancer
 ) {

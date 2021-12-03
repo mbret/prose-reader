@@ -213,6 +213,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     registerHook,
     spine,
     manipulateSpineItems: spine.manipulateSpineItems,
+    manipulateSpineItem: spine.manipulateSpineItem,
     manipulateContainer,
     moveTo: spine.viewportNavigator.moveTo,
     turnLeft: spine.viewportNavigator.turnLeft,
@@ -256,6 +257,9 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       selection$: selectionSubject$.asObservable(),
       viewportState$: spine.$.viewportState$,
       layout$: spine.$.layout$,
+      itemsCreated$: spine.$.itemsCreated$,
+      itemsBeforeDestroy$: spine.$.itemsBeforeDestroy$,
+      itemIsReady$: spineItemManager.$.itemIsReady$,
       destroy$
     },
     __debug: {

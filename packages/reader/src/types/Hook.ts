@@ -17,14 +17,6 @@ export type Hook =
     }) => (() => void) | Observable<any> | void
   }
   | {
-    name: `item.onCreated`,
-    fn: (payload: {
-      container: HTMLElement,
-      loadingElement: HTMLElement,
-      item: Manifest[`spineItems`][number]
-    }) => (() => void) | Observable<any> | void
-  }
-  | {
     name: `item.onBeforeContainerCreated`,
     fn: (payload: HTMLElement) => HTMLElement
   }
@@ -59,7 +51,6 @@ export type Hook =
   //   fn: (payload: {
   //     frame: HTMLIFrameElement | undefined,
   //     container: HTMLElement,
-  //     loadingElement: HTMLElement,
   //     item: Manifest[`spineItems`][number],
   //     overlayElement: HTMLDivElement
   //   }) => void
@@ -83,7 +74,6 @@ export type Hook =
 export interface RegisterHook {
   (name: `item.onLoad`, fn: Extract<Hook, { name: `item.onLoad` }>[`fn`]): void
   (name: `item.onBeforeContainerCreated`, fn: Extract<Hook, { name: `item.onBeforeContainerCreated` }>[`fn`]): void
-  (name: `item.onCreated`, fn: Extract<Hook, { name: `item.onCreated` }>[`fn`]): void
   (name: `item.onGetResource`, fn: Extract<Hook, { name: `item.onGetResource` }>[`fn`]): void
   (name: `item.onLayoutBeforeMeasurment`, fn: Extract<Hook, { name: `item.onLayoutBeforeMeasurment` }>[`fn`]): void
   (name: `onViewportOffsetAdjust`, fn: Extract<Hook, { name: `onViewportOffsetAdjust` }>[`fn`]): void
