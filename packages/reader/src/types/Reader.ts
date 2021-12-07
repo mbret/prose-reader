@@ -1,5 +1,5 @@
 import { Context } from "../context"
-import { Spine } from "../spine/createSpine"
+import { Spine } from "./Spine"
 import { SpineItemManager } from "../spineItemManager"
 import { RegisterHook } from "./Hook"
 import { Manifest } from "@prose-reader/shared"

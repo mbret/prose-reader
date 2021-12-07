@@ -15,9 +15,9 @@ import { ViewportNavigationEntry } from "./navigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Hook } from "../types/Hook"
 import { mapKeysTo } from "../utils/rxjs"
-import { Manifest } from ".."
+import { Spine } from "../types/Spine"
 
-const NAMESPACE = `spine`
+const report = Report.namespace(`spine`)
 
 type SpineItem = ReturnType<typeof createSpineItem>
 type RequireLayout = boolean
@@ -33,7 +33,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   pagination: Pagination,
   spineItemManager: SpineItemManager,
   hooks$: BehaviorSubject<Hook[]>
-}) => {
+}): Spine => {
   const layoutSubject$ = new Subject<void>()
   const itemsCreatedSubject$ = new Subject<Pick<SpineItem, `item` | `element`>[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
@@ -143,7 +143,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   const adjustPagination$ = (position: ViewportNavigationEntry) => {
     return waitForViewportFree$
       .pipe(
-        tap(Report.measurePerformance(`${NAMESPACE} adjustPagination`, 1, () => {
+        tap(report.measurePerformance(`adjustPagination`, 1, () => {
           const spineItemsFromPosition = locator.getSpineItemsFromReadingOrderPosition(position)
           const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
           const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
@@ -184,8 +184,6 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
               }
             })
           }
-
-          Report.log(NAMESPACE, `adjustPagination$`)
         }, { disable: true }))
       )
   }
@@ -326,7 +324,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
   const itemUpdateOnNavigation$ = viewportNavigator.$.navigation$
     .pipe(
       tap((data) => {
-        const time = Report.time(`${NAMESPACE} navigation`, 1)
+        const time = report.time(`navigation`, 1)
         const currentSpineItem = spineItemManager.getFocusedSpineItem()
         const spineItemsFromPosition = locator.getSpineItemsFromReadingOrderPosition(data.position)
         let beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
@@ -400,7 +398,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
             }
           })
 
-          Report.log(NAMESPACE, `itemUpdateOnNavigation$`, { spineItemHasChanged: spineItemToFocus !== currentSpineItem, item: spineItemToFocus, spineItemToFocus, index: spineItemManager.getSpineItemIndex(spineItemToFocus), offset: data, endSpineItem, beginSpineItem, lastExpectedNavigation, spineItemsFromPosition })
+          report.log(`navigation$`, { spineItemHasChanged: spineItemToFocus !== currentSpineItem, item: spineItemToFocus, spineItemToFocus, index: spineItemManager.getSpineItemIndex(spineItemToFocus), offset: data, endSpineItem, beginSpineItem, lastExpectedNavigation, spineItemsFromPosition })
         }
 
         time()
@@ -461,7 +459,7 @@ export const createSpine = ({ parentElement, context, pagination, iframeEventBri
             map(() => {
               const focusedSpineItemIndex = spineItemManager.getFocusedSpineItemIndex()
 
-              Report.log(NAMESPACE, `update contents`, { focusedSpineItemIndex })
+              report.log(`update contents`, { focusedSpineItemIndex })
 
               if (focusedSpineItemIndex === undefined) return
 
@@ -538,4 +536,6 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   }, element)
 }
 
-export type Spine = ReturnType<typeof createSpine>
+export {
+  Spine
+}
