@@ -8,6 +8,11 @@ it(`Test shallow comparision`, () => {
   expect(isShallowEqual(base, { a: 1, b: 3 })).toBe(false)
   expect(isShallowEqual(base, { a: 1, b: 2, c: 3 })).toBe(false)
   expect(isShallowEqual(base, { a: 1 })).toBe(false)
+  expect(isShallowEqual([], [])).toBe(true)
+  expect(isShallowEqual([0], [0])).toBe(true)
+  expect(isShallowEqual([0, 1, 2], [0, 1, 2])).toBe(true)
+  expect(isShallowEqual([0, 1, 2], [0, 2, 1])).toBe(false)
+  expect(isShallowEqual([0], [1])).toBe(false)
 })
 
 it(`not support deep comparision`, () => {
