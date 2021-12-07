@@ -14,6 +14,7 @@ export const is = (x: any, y: any): boolean => {
  * Return true, if `objectA` is shallow equal to `objectB`.
  * Pass Custom equality function to `customEqual`.
  * Default equality is `Object.is`
+ * Support Array
  *
  * Options:
  *
