@@ -153,37 +153,9 @@ export const paginationEnhancer: Enhancer<{}, {
     return getNumberOfPages(width, reader.context.getPageSize().width)
   }
 
-  const getTotalNumberOfPages = () => {
-    const numberOfPagesPerItems = reader.getSpineItems().map((item) => {
-      return getSpineItemNumberOfPages(item)
-    }, 0)
-
-    const totalNumberOfPages = numberOfPagesPerItems
-      .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
-
-    return {
-      numberOfPagesPerItems,
-      totalNumberOfPages
-    }
-    // @todo trigger change to pagination info (+ memo if number is same)
-  }
-
-  const mapPaginationInfoToTotalPagesInfo = ({ endSpineItemIndex, endPageIndex, beginSpineItemIndex, beginPageIndex }: ObservedValueOf<typeof reader[`$`][`pagination$`]>) => {
-    const { totalNumberOfPages, numberOfPagesPerItems } = getTotalNumberOfPages()
-
-    return {
-      beginAbsolutePageIndex: numberOfPagesPerItems
-        .slice(0, beginSpineItemIndex)
-        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
-      endAbsolutePageIndex: numberOfPagesPerItems
-        .slice(0, endSpineItemIndex)
-        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
-      /**
-       * This may be not accurate for reflowable due to dynamic load / unload.
-       */
-      numberOfTotalPages: totalNumberOfPages
-    }
-  }
+  const getNumberOfPagesPerItems = () => reader.getSpineItems().map((item) => {
+    return getSpineItemNumberOfPages(item)
+  }, 0)
 
   reader.$.itemsCreated$
     .pipe(
@@ -194,7 +166,7 @@ export const paginationEnhancer: Enhancer<{}, {
     )
     .subscribe()
 
-  const paginationExtendedInfo = reader.$.pagination$
+  const innerPaginationExtendedInfo$ = reader.$.pagination$
     .pipe(
       map(mapPaginationInfoToExtendedInfo),
       distinctUntilChanged(isShallowEqual)
@@ -204,27 +176,50 @@ export const paginationEnhancer: Enhancer<{}, {
     .pipe(
       debounceTime(10, animationFrameScheduler),
       withLatestFrom(reader.$.pagination$),
-      map(([, paginationInfo]) => mapPaginationInfoToTotalPagesInfo(paginationInfo)),
+      map(() => {
+        // @todo trigger change to pagination info (+ memo if number is same)
+        const numberOfPagesPerItems = getNumberOfPagesPerItems()
+
+        return {
+          numberOfPagesPerItems,
+          /**
+           * This may be not accurate for reflowable due to dynamic load / unload.
+           */
+          numberOfTotalPages: numberOfPagesPerItems
+            .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
+        }
+      }),
       distinctUntilChanged(isShallowEqual),
       startWith({
-        beginAbsolutePageIndex: 0,
-        endAbsolutePageIndex: 0,
+        numberOfPagesPerItems: [] as number[],
         numberOfTotalPages: 0
       })
+    )
+
+  const pagination$ = combineLatest([innerPaginationExtendedInfo$, totalPages$])
+    .pipe(
+      map(([pageInfo, totalPageInfo]) => ({
+        ...pageInfo,
+        ...totalPageInfo,
+        beginAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
+          .slice(0, pageInfo.beginSpineItemIndex)
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.beginPageIndexInChapter ?? 0),
+        endAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
+          .slice(0, pageInfo.endSpineItemIndex)
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0)
+      })),
+      tap((data) => {
+        report.log(`pagination`, data)
+      }),
+      shareReplay(1),
+      takeUntil(reader.$.destroy$)
     )
 
   return {
     ...reader,
     $: {
       ...reader.$,
-      pagination$: combineLatest([paginationExtendedInfo, totalPages$])
-        .pipe(
-          map(([a, b]) => ({ ...a, ...b })),
-          tap((data) => {
-            report.log(`pagination`, data)
-          }),
-          shareReplay(1)
-        )
+      pagination$
     }
   }
 }
