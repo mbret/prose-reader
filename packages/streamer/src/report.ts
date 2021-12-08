@@ -35,7 +35,7 @@ export const Report = {
       console.timeEnd(`[prose-reader-streamer] [metric] ${label}`)
     }
   },
-  metric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = Infinity) => {
+  metric: (performanceEntry: { name: string; duration: number }, targetDuration = Infinity) => {
     const duration = typeof performanceEntry === `number` ? performanceEntry : performanceEntry.duration
     if (enabled) {
       if (performanceEntry.duration <= targetDuration) {
