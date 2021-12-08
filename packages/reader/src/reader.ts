@@ -16,7 +16,7 @@ type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
-type CreateReaderOptions = {
+export type CreateReaderOptions = {
   hooks?: Hook[]
   containerElement: HTMLElement,
 } & Pick<

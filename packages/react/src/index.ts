@@ -1,1 +1,1 @@
-export { Reader } from './Reader'
+export { Reader, Props } from './Reader'

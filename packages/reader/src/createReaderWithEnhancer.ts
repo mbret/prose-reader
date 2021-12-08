@@ -113,6 +113,10 @@ export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer
   return withPublicApiOnly(enhancedCreateReader(options))
 }
 
+export type ReaderOptions<E extends ComposableEnhancer | void = void> = E extends ComposableEnhancer
+  ? EnhancerOptions<E> & EnhancerOptions<CoreEnhancer>
+  : EnhancerOptions<CoreEnhancer>
+
 export type Reader<E extends ComposableEnhancer | void = void> = E extends ComposableEnhancer
   ? WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<CoreEnhancer, E>>>
   : WithoutPrivateApi<EnhancerExposedApi<CoreEnhancer>>

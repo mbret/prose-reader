@@ -1,26 +1,49 @@
-import { combineLatest, merge, ObservedValueOf, of } from "rxjs"
-import { takeUntil, switchMap, tap, map, distinctUntilChanged } from "rxjs/operators"
+import { combineLatest, merge, Observable, ObservedValueOf, of } from "rxjs"
+import { takeUntil, switchMap, tap, map, distinctUntilChanged, shareReplay } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
 import { Context } from "../context"
 import { Manifest } from "../types"
 import { themeEnhancer } from "./theme"
 import { Enhancer } from "./types"
+import { HTML_PREFIX as HTML_PREFIX_CORE } from "../constants"
 
 type Entries = { [key: string]: HTMLElement }
+type Item = Manifest[`spineItems`][number]
 
-export const loadingEnhancer: Enhancer<{}, {}, {}, {}, typeof themeEnhancer> = (next) => (options) => {
+const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
+const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
+
+export const loadingEnhancer: Enhancer<{
+  /**
+   * Only called once for every items. It is being used to construct the loading element.
+   * You can use it to customize your element.
+   */
+  loadingElementCreate?: (options: { container: HTMLElement, item: Item }) => HTMLElement
+}, {
+  loading: {
+    $: {
+      items$: Observable<Entries>
+    }
+  }
+}, {}, {}, typeof themeEnhancer> = (next) => ({
+  loadingElementCreate = defaultLoadingElementCreate,
+  ...options
+}) => {
   const reader = next(options)
 
   const createEntries$ = (items: ObservedValueOf<typeof reader.$.itemsCreated$>) =>
     of(
       items.reduce((acc, { item, element }) => {
-        const loadingElement = createLoadingElement(element, item, reader.context)
+        const loadingElementContainer = loadingElementCreate({
+          container: createLoadingElementContainer(element, reader.context),
+          item
+        })
 
-        element.appendChild(loadingElement)
+        element.appendChild(loadingElementContainer)
 
         return {
           ...acc,
-          [item.id]: loadingElement
+          [item.id]: loadingElementContainer
         }
       }, {} as Entries)
     )
@@ -59,9 +82,15 @@ export const loadingEnhancer: Enhancer<{}, {}, {}, {}, typeof themeEnhancer> = (
         })
       )
 
-  reader.$.itemsCreated$
+  const items$ = reader.$.itemsCreated$
     .pipe(
       switchMap(items => createEntries$(items)),
+      shareReplay(1),
+      takeUntil(reader.context.$.destroy$)
+    )
+
+  items$
+    .pipe(
       switchMap(entries => merge(
         of(entries),
         destroyEntries$(entries)
@@ -73,16 +102,23 @@ export const loadingEnhancer: Enhancer<{}, {}, {}, {}, typeof themeEnhancer> = (
       takeUntil(reader.$.destroy$)
     ).subscribe()
 
-  return reader
+  return {
+    ...reader,
+    loading: {
+      $: {
+        items$
+      }
+    }
+  }
 }
 
 /**
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
-const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], context: Context) => {
+const createLoadingElementContainer = (containerElement: HTMLElement, context: Context) => {
   const loadingElement = containerElement.ownerDocument.createElement(`div`)
-  loadingElement.classList.add(`loading`)
+  loadingElement.classList.add(CONTAINER_HTML_PREFIX)
   loadingElement.style.cssText = `
     height: 100%;
     width: 100%;
@@ -99,12 +135,16 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spi
     -background-color: white;
   `
 
-  const logoElement = containerElement.ownerDocument.createElement(`div`)
+  return loadingElement
+}
+
+const defaultLoadingElementCreate = ({ container, item }: { container: HTMLElement, item: Manifest[`spineItems`][number] }) => {
+  const logoElement = container.ownerDocument.createElement(`div`)
   logoElement.innerText = `prose`
   logoElement.style.cssText = `
     font-size: 4em;
   `
-  const detailsElement = containerElement.ownerDocument.createElement(`div`)
+  const detailsElement = container.ownerDocument.createElement(`div`)
   detailsElement.innerText = `loading ${item.id}`
   detailsElement.style.cssText = `
     font-size: 1.2em;
@@ -114,8 +154,8 @@ const createLoadingElement = (containerElement: HTMLElement, item: Manifest[`spi
     max-width: 300px;
     width: 80%;
   `
-  loadingElement.appendChild(logoElement)
-  loadingElement.appendChild(detailsElement)
+  container.appendChild(logoElement)
+  container.appendChild(detailsElement)
 
-  return loadingElement
+  return container
 }

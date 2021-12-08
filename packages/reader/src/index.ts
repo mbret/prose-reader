@@ -1,8 +1,10 @@
 import {
   createReaderWithEnhancer as createReader,
   Reader,
-  ExternalEnhancer as Enhancer
+  ExternalEnhancer as Enhancer,
+  ReaderOptions
 } from './createReaderWithEnhancer'
+import { paginationEnhancer } from './enhancers/pagination'
 import { createSelection } from './selection'
 export { compose } from './utils/compose'
 export { ComposeEnhancer } from './enhancers/composeEnhancer'
@@ -12,7 +14,8 @@ export { Manifest } from './types'
 export {
   createReader,
   Reader,
-  Enhancer
+  Enhancer,
+  ReaderOptions
 }
 
 export type ReaderSelection = ReturnType<typeof createSelection>
