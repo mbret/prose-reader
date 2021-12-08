@@ -5,7 +5,7 @@ import { Archive } from "./types"
 /**
  * Useful to create archive from txt content
  */
-export const createArchiveFromText = async (content: string | Blob | File, options?: {
+export const createArchiveFromText = async (content: string | Blob, options?: {
     direction: `ltr` | `rtl`
   }) => {
   const txtOpfContent = `

@@ -10,7 +10,6 @@
       "esnext"
     ],
     "strict": true,
-    "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
