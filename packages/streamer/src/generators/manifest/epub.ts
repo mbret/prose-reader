@@ -1,18 +1,28 @@
 import xmldoc from 'xmldoc'
-import { parseToc } from '../parsers/nav'
+import { parseToc } from '../../parsers/nav'
 import type { Manifest } from '@prose-reader/shared'
-import { extractKoboInformationFromArchive } from '../parsers/kobo'
-import { Report } from '../report'
-import { Archive, getArchiveOpfInfo } from '..'
+import { extractKoboInformationFromArchive } from '../../parsers/kobo'
+import { Report } from '../../report'
+import { Archive, getArchiveOpfInfo } from '../..'
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
-const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
+export const getItemsFromDoc = (doc: xmldoc.XmlDocument) => {
+  const manifestElm = doc.childNamed(`manifest`)
+
+  return manifestElm?.childrenNamed(`item`)?.map((el) => ({
+    href: el.attr.href || ``,
+    id: el.attr.id || ``,
+    mediaType: el.attr[`media-type`]
+  })) || []
+}
+
+export const epubGenerator = ({ archive, baseUrl }: { archive: Archive, baseUrl: string }) => async (manifest: Manifest): Promise<Manifest> => {
   const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
   const koboInformation = await extractKoboInformationFromArchive(archive)
 
   if (!opsFile) {
-    throw new Error(`No opf content`)
+    return manifest
   }
 
   const data = await opsFile.string()
@@ -92,67 +102,4 @@ const generateManifestFromEpub = async (archive: Archive, baseUrl: string): Prom
       }
     })
   }
-}
-
-/**
- * Create a manifest from a generic archive.
- * Will use direct
- */
-const generateManifestFromArchive = async (archive: Archive, baseUrl: string): Promise<Manifest> => {
-  const files = Object.values(archive.files).filter(file => !file.dir)
-
-  return {
-    filename: archive.filename,
-    nav: {
-      toc: []
-    },
-    title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
-    renditionLayout: `pre-paginated`,
-    renditionSpread: `auto`,
-    readingDirection: `ltr`,
-    spineItems: files.map((file) => ({
-      id: file.basename,
-      path: `${file.uri}`,
-      href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri,
-      renditionLayout: `pre-paginated`,
-      progressionWeight: (1 / files.length),
-      pageSpreadLeft: undefined,
-      pageSpreadRight: undefined
-    })),
-    items: files.map((file) => ({
-      id: file.basename,
-      href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri
-    }))
-  }
-}
-
-export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
-  const { data: opsFile } = getArchiveOpfInfo(archive) || {}
-
-  try {
-    if (opsFile) {
-      const manifest = await generateManifestFromEpub(archive, baseUrl)
-      const data = JSON.stringify(manifest)
-
-      return new Response(data, { status: 200 })
-    }
-
-    const manifest = await generateManifestFromArchive(archive, baseUrl)
-    const data = JSON.stringify(manifest)
-
-    return new Response(data, { status: 200 })
-  } catch (e) {
-    Report.error(e)
-    return new Response((e as any)?.message, { status: 500 })
-  }
-}
-
-export const getItemsFromDoc = (doc: xmldoc.XmlDocument) => {
-  const manifestElm = doc.childNamed(`manifest`)
-
-  return manifestElm?.childrenNamed(`item`)?.map((el) => ({
-    href: el.attr.href || ``,
-    id: el.attr.id || ``,
-    mediaType: el.attr[`media-type`]
-  })) || []
 }

@@ -1,6 +1,6 @@
 import xmldoc from 'xmldoc'
 import { Archive, getArchiveOpfInfo } from '..'
-import { getItemsFromDoc } from "./manifest"
+import { getItemsFromDoc } from './manifest/epub'
 
 export const getResourceFromArchive = async (archive: Archive, resourcePath: string) => {
   const file = Object.values(archive.files).find(file => file.uri === resourcePath)
