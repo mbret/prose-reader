@@ -11,8 +11,11 @@ export type Props<UserEnhancer extends Enhancer = Enhancer> = {
   manifest?: Manifest,
   options?: Omit<ReaderOptions<UserEnhancer>, 'containerElement'>,
   loadOptions?: LoadOptions,
-  enhancer?: UserEnhancer,
-  onReader?: (reader: CoreReader<UserEnhancer>) => void,
+  enhancer?: any,
+  onReader?: (reader: any) => void,
+  // @todo uncomment and fix. It nukes the performances
+  // enhancer?: UserEnhancer,
+  // onReader?: (reader: CoreReader<UserEnhancer>) => void,
   onReady?: () => void,
   onPaginationChange?: (pagination: Pagination) => void,
   LoadingElement?: ReactElement
