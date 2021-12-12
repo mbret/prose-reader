@@ -1,6 +1,6 @@
 import { animationFrameScheduler, Observable, of, scheduled } from "rxjs"
 import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
-import { Reader } from "../../reader"
+import { ReaderInstance } from "./types"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -14,7 +14,7 @@ const SHOULD_NOT_LAYOUT = false
  * This obviously block any interaction with iframe but there should not be such interaction with iframe in theory.
  * Theoretically if user decide to interact during the animation that's either to stop it or swipe the pages.
  */
-export const createMovingSafePan$ = (reader: Reader) => {
+export const createMovingSafePan$ = (reader: ReaderInstance) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
   reader.manipulateContainer((container) => {

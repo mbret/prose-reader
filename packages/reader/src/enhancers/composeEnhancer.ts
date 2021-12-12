@@ -1,7 +1,42 @@
 import { Enhancer, ExtractApi, ExtractHiddenApi, ExtractOptions } from "./types"
 import { compose } from "../utils/compose"
 
-export type ComposableEnhancer = (createReader: any) => (options: any) => {setSettings?: any, __OutputSettings?: any}
+export type ComposableEnhancer = (createReader: any) => (options: any) => { setSettings?: any, __OutputSettings?: any }
+
+export type ComposeEnhancer2<
+  A extends ComposableEnhancer,
+  B extends ComposableEnhancer
+  > =
+  Enhancer<
+    & ExtractOptions<A>
+    & ExtractOptions<B>,
+    ExtractHiddenApi<A>
+    & ExtractHiddenApi<B>,
+    & Parameters<ExtractApi<A>[`setSettings`]>[0]
+    & Parameters<ExtractApi<B>[`setSettings`]>[0],
+    & ExtractApi<A>[`__OutputSettings`]
+    & ExtractApi<B>[`__OutputSettings`]
+  >
+
+export type ComposeEnhancer3<
+  A extends ComposableEnhancer,
+  B extends ComposableEnhancer,
+  C extends ComposableEnhancer,
+  > =
+  Enhancer<
+    & ExtractOptions<A>
+    & ExtractOptions<B>
+    & ExtractOptions<C>,
+    ExtractHiddenApi<A>
+    & ExtractHiddenApi<B>
+    & ExtractHiddenApi<C>,
+    & Parameters<ExtractApi<A>[`setSettings`]>[0]
+    & Parameters<ExtractApi<B>[`setSettings`]>[0]
+    & Parameters<ExtractApi<C>[`setSettings`]>[0],
+    & ExtractApi<A>[`__OutputSettings`]
+    & ExtractApi<B>[`__OutputSettings`]
+    & ExtractApi<C>[`__OutputSettings`]
+  >
 
 export type ComposeEnhancer<
   A extends ComposableEnhancer = Enhancer,
@@ -97,7 +132,7 @@ export type ComposeEnhancer<
 
 export function composeEnhancer<A extends ComposableEnhancer>(a: A): ComposeEnhancer<A>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer>(a: A, b: B): ComposeEnhancer<A, B>
-export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer>(a: A, b: B, c: C): ComposeEnhancer<A, B, C>
+export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer>(a: A, b: B, c: C): ComposeEnhancer3<A, B, C>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer>(a: A, b: B, c: C, d: D): ComposeEnhancer<A, B, C, D>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E): ComposeEnhancer<A, B, C, D, E>
 export function composeEnhancer<A extends ComposableEnhancer, B extends ComposableEnhancer, C extends ComposableEnhancer, D extends ComposableEnhancer, E extends ComposableEnhancer, F extends ComposableEnhancer>(a: A, b: B, c: C, d: D, e: E, f: F): ComposeEnhancer<A, B, C, D, E, F>

@@ -1,12 +1,43 @@
-import { BehaviorSubject, Subject } from "rxjs"
+import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
 import { LoadOptions } from "./types"
 import { Manifest } from "@prose-reader/shared"
-import { createSettings } from "./settings"
+import { createSettings, PublicSettings } from "./settings"
+
+type SettingsManager = ReturnType<typeof createSettings>
+
+export type Context = {
+  load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void,
+  setSettings: (data: Partial<PublicSettings>) => void,
+  getSettings: () => ReturnType<SettingsManager[`getSettings`]>,
+  getManifest: () => Manifest | undefined,
+  areAllItemsPrePaginated: () => boolean,
+  getLoadOptions: () => LoadOptions | undefined,
+  getCalculatedInnerMargin: () => number,
+  getVisibleAreaRect: () => { width: number, height: number, x: number, y: number },
+  shouldDisplaySpread: () => boolean
+  setHasVerticalWriting: () => void,
+  getReadingDirection: () => Manifest[`readingDirection`] | undefined
+  getPageSize: () => { height: number, width: number }
+  setVisibleAreaRect: (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => void,
+  isRTL: () => boolean,
+  destroy: () => void,
+  $: {
+    hasVerticalWriting$: Observable<boolean>
+    settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
+    destroy$: Observable<void>
+    load$: Observable<Manifest>
+  }
+}
 
 export type ContextObservableEvents = {}
 
-export const createContext = (initialSettings: Parameters<typeof createSettings>[0]) => {
+export const createContext = (initialSettings: Parameters<typeof createSettings>[0]): Context => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
   const hasVerticalWritingSubject$ = new BehaviorSubject(false)
@@ -152,7 +183,5 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     }
   }
 }
-
-export type Context = ReturnType<typeof createContext>
 
 const areAllItemsPrePaginated = (manifest: Manifest | undefined) => !manifest?.spineItems.some(item => item.renditionLayout === `reflowable`)

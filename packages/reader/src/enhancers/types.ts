@@ -9,18 +9,16 @@ type DeepPartialAny<T> = {
 }
 
 // @todo add observable ? right now they get merged
-type Primitive = number | string | ((...args: any) => any)
+type Primitive = number | string | ((...args: any) => any) | HTMLElement | Observable<any> | Function
 
 export type ModifyDeep<A extends AnyObject, B extends DeepPartialAny<A>> = {
   [K in keyof A]-?: B[K] extends never
   ? A[K]
-  : B[K] extends Function
-  ? B[K]
-  : B[K] extends Observable<any>
+  : B[K] extends Primitive
   ? B[K]
   : B[K] extends AnyObject
   ? ModifyDeep<A[K], B[K]>
-  : B[K] extends Primitive ? B[K] : A[K]
+  : A[K]
 } & (A extends AnyObject ? Omit<B, keyof A> : A)
 
 type CreateReader<Options = CreateReaderOptions, Api = Reader> = (options: Options) => Api
@@ -39,7 +37,7 @@ export type Enhancer<
   Settings = {},
   OutputSettings = Settings,
   DependsOn extends (createReader: any) => (options: any) => any = RawEnhancer,
-  Foo extends ExtractApi<DependsOn> = ExtractApi<DependsOn>
+  DependsOnApi extends ExtractApi<DependsOn> = ExtractApi<DependsOn>
   > =
   (
     createReader: (options: ExtractOptions<DependsOn>) =>
@@ -47,14 +45,14 @@ export type Enhancer<
   ) =>
     (options: ExtractOptions<DependsOn> & Options) =>
       ModifyDeep<
-        Omit<Foo, `__API` | `__OutputSettings` | `$`> & {
-          $: Omit<Foo[`$`], `settings$`> & {
+        Omit<DependsOnApi, `__API` | `__OutputSettings` | `$`> & {
+          $: Omit<DependsOnApi[`$`], `settings$`> & {
             /**
              * special case for prose and to automatically merge settings output stream.
              * - add correct type for enhancer dependances
              * - add correct type for the combined final enhancer API
              */
-            settings$: Observable<OutputSettings & ObservedValueOf<Foo[`$`][`settings$`]>>
+            settings$: Observable<OutputSettings & ObservedValueOf<DependsOnApi[`$`][`settings$`]>>
           }
         }, {
           /**
@@ -62,6 +60,6 @@ export type Enhancer<
            * - add correct type for enhancer inside setSettings parameter
            * - add correct type for end user using the enhancer
            */
-          setSettings: (settings: Parameters<Foo[`setSettings`]>[0] & Settings) => void
+          setSettings: (settings: Parameters<DependsOnApi[`setSettings`]>[0] & Settings) => void
         } & Api>
       & { __API?: Api, __OutputSettings?: OutputSettings }

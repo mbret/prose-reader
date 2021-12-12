@@ -4,10 +4,9 @@ import {
   ExternalEnhancer as Enhancer,
   ReaderOptions
 } from './createReaderWithEnhancer'
-import { paginationEnhancer } from './enhancers/pagination'
 import { createSelection } from './selection'
 export { compose } from './utils/compose'
-export { ComposeEnhancer } from './enhancers/composeEnhancer'
+export { ComposeEnhancer2, ComposeEnhancer3, ComposeEnhancer } from './enhancers/composeEnhancer'
 
 export { Manifest } from './types'
 

@@ -1,27 +1,13 @@
 import { BehaviorSubject, combineLatest } from "rxjs"
 import { distinctUntilChanged, map, takeUntil, tap, skip } from "rxjs/operators"
-import { Enhancer } from "../types"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
 import { isShallowEqual } from "../../utils/objects"
+import { LayoutEnhancer, SettingsOutput } from "./types"
 
 const SHOULD_NOT_LAYOUT = false
 
-type SettingsInput = {
-  pageHorizontalMargin?: number,
-  pageVerticalMargin?: number,
-}
-
-type SettingsOutput = Required<SettingsInput>
-
-export const layoutEnhancer: Enhancer<SettingsInput & {
-  /**
-   * Can be used to let the reader automatically resize.
-   * `container`: observe and resize the reader whenever the container resize.
-   * `false`: do not automatically resize.
-   */
-  layoutAutoResize?: `container` | false
-}, {}, SettingsInput, SettingsOutput> = (next) => ({ pageHorizontalMargin = 24, pageVerticalMargin = 24, ...options }) => {
+export const layoutEnhancer: LayoutEnhancer = (next) => ({ pageHorizontalMargin = 24, pageVerticalMargin = 24, ...options }) => {
   const reader = next(options)
   const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
     pageHorizontalMargin,
