@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-search",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,13 +14,13 @@
     "test": "echo"
   },
   "dependencies": {
-    "@prose-reader/enhancer-scripts": "^0.0.2"
+    "@prose-reader/enhancer-scripts": "^0.0.3"
   },
   "peerDependencies": {
     "@prose-reader/core": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.39"
+    "@prose-reader/core": "^0.0.40"
   }
 }

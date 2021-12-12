@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -24,7 +24,7 @@
     "react-dom": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.39"
+    "@prose-reader/core": "^0.0.40"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }
