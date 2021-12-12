@@ -2,11 +2,11 @@ import { BehaviorSubject, EMPTY, of, withLatestFrom } from "rxjs"
 import { switchMap, filter, take, tap, mergeMap } from "rxjs/operators"
 import { PACKAGE_NAME, SHOULD_NOT_LAYOUT } from "./constants"
 import { getIcon } from "./icon"
-import { Bookmark, EnhancerReader } from "./types"
+import { Bookmark, ReaderInstance } from "./types"
 
 const ELEMENT_ID = PACKAGE_NAME
 
-export const createRenderer = (reader: EnhancerReader, options: {
+export const createRenderer = (reader: ReaderInstance, options: {
   areaWidth: number,
   areaHeight: number
 }) => {

@@ -22,4 +22,4 @@ export type BookmarkEnhancer = Enhancer<{}, {
   },
 }, {}, {}>
 
-export type EnhancerReader = ReturnType<Parameters<BookmarkEnhancer>[0]>
+export type ReaderInstance = ReturnType<Parameters<BookmarkEnhancer>[0]>
