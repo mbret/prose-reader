@@ -6,7 +6,7 @@ import { linksEnhancer } from './enhancers/links'
 import { navigationEnhancer } from './enhancers/navigation'
 import { paginationEnhancer } from './enhancers/pagination'
 import { themeEnhancer } from './enhancers/theme'
-import { ComposableEnhancer, ComposeEnhancer, composeEnhancer } from './enhancers/composeEnhancer'
+import { ComposableEnhancer, composeEnhancer, ComposeEnhancer2 } from './enhancers/composeEnhancer'
 import { Enhancer } from './enhancers/types'
 import { zoomEnhancer } from './enhancers/zoom'
 import { createReader as createInternalReader, Reader as ReaderPublicApi } from './reader'
@@ -71,8 +71,9 @@ type EnhancerOptions<E extends (...args: any) => any> = Parameters<ReturnType<E>
 type EnhancerExposedApi<E extends (...args: any) => any> = ReturnType<ReturnType<E>>
 
 type CoreEnhancer = typeof internalEnhancer
+type CoreEnhancerApi = EnhancerExposedApi<CoreEnhancer>
 
-export type CoreEnhancerDependsOn = (createReader: Parameters<CoreEnhancer>[0]) => (options: EnhancerOptions<CoreEnhancer>) => EnhancerExposedApi<CoreEnhancer>
+export type CoreEnhancerDependsOn = (createReader: Parameters<CoreEnhancer>[0]) => (options: EnhancerOptions<CoreEnhancer>) => CoreEnhancerApi
 
 export type ExternalEnhancer<
   Options = {},
@@ -90,12 +91,12 @@ export type ExternalEnhancer<
 
 export function createReaderWithEnhancer(
   options: EnhancerOptions<CoreEnhancer>
-): WithoutPrivateApi<EnhancerExposedApi<CoreEnhancer>>
+): WithoutPrivateApi<CoreEnhancerApi>
 
 export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer>(
   options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
   enhancer: UserEnhancer
-): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<typeof internalEnhancer, UserEnhancer>>>
+): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer2<typeof internalEnhancer, UserEnhancer>>>
 
 export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer> (
   options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
@@ -118,5 +119,5 @@ export type ReaderOptions<E extends ComposableEnhancer | void = void> = E extend
   : EnhancerOptions<CoreEnhancer>
 
 export type Reader<E extends ComposableEnhancer | void = void> = E extends ComposableEnhancer
-  ? WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer<CoreEnhancer, E>>>
-  : WithoutPrivateApi<EnhancerExposedApi<CoreEnhancer>>
+  ? WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer2<CoreEnhancer, E>>>
+  : WithoutPrivateApi<CoreEnhancerApi>
