@@ -247,6 +247,10 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
         padding: 0;
         box-sizing: border-box;
         ${
+        // we make sure img spread on entire screen
+        ``}
+        width: 100%;
+        ${
       /**
        * line break issue
        * @see https://stackoverflow.com/questions/37869020/image-not-taking-up-the-full-height-of-container
