@@ -1,4 +1,4 @@
-import { Manifest } from '@oboku/reader';
+import { Manifest } from '@prose-reader/core';
 import { useOrigin } from './Server';
 
 export const useInjectableScript = (manifest: Manifest | undefined) => {

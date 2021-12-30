@@ -1,11 +1,11 @@
-import { createReader } from '@oboku/reader'
+import { createReader } from '@prose-reader/core'
 import { tap } from 'rxjs/operators'
 import { NUMBER_OF_ADJACENT_SPINE_ITEM_TO_PRELOAD } from './constants'
 import { createGestureHandler } from './gestures'
 import { messagesDown$ } from './messages'
 import { MessageDown } from './types/shared'
 
-window.__OBOKU_READER_DEBUG = false
+window.__PROSE_READER_DEBUG = false
 
 window.postDownMessage = (message: MessageDown) => {
   messagesDown$.next(message)

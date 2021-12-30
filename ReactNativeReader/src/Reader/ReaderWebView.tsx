@@ -3,7 +3,7 @@ import { WebView } from 'react-native-webview';
 import { StyleSheet } from 'react-native';
 import { useJsAssets } from './useJsAssets';
 import { useInjectableScript } from './useInjectableScript';
-import { Manifest } from '@oboku/reader';
+import { Manifest } from '@prose-reader/core';
 
 type Props = {
   onMenuToggle: () => void,

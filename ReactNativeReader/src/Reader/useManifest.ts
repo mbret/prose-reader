@@ -1,5 +1,5 @@
-import { Manifest } from '@oboku/reader';
-import { createArchiveFromUrls, getManifestFromArchive } from '@oboku/reader-streamer';
+import { Manifest } from '@prose-reader/core';
+import { createArchiveFromUrls, getManifestFromArchive } from '@prose-reader/core-streamer';
 import { useEffect, useState } from 'react'
 import RNFS from 'react-native-fs';
 import { useOrigin } from './Server';

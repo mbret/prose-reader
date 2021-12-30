@@ -1,4 +1,4 @@
-import { Reader } from "@oboku/reader"
+import { Reader } from "@prose-reader/core"
 import * as Hammer from 'hammerjs'
 import { postMessage } from "./messages"
 

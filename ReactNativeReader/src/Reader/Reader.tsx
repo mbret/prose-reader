@@ -40,7 +40,7 @@ export const Reader = () => {
             <Slider
               style={styles.slider}
               minimumValue={0}
-              maximumValue={(manifest?.readingOrder.length || 0) - 1}
+              maximumValue={(manifest?.spineItems.length || 0) - 1}
               step={1}
               onValueChange={index => {
                 postMessageDown({ event: 'goTo', data: index })
