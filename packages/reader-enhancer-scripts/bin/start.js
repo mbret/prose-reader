@@ -15,7 +15,7 @@ exports.start = async () => {
 
       if (firstBuild) {
         firstBuild = false
-        const { stdout, stderr } = await exec(`tsc -w --declaration --noEmit false --emitDeclarationOnly --outDir ${path.resolve(modulePath, `dist`)}`)
+        const { stdout, stderr } = await exec(`tsc -w --preserveWatchOutput  --declaration --noEmit false --emitDeclarationOnly --outDir ${path.resolve(modulePath, `dist`)}`)
         console.log(stdout)
         console.log(stderr)
       }
