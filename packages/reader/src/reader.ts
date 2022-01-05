@@ -25,6 +25,7 @@ export type CreateReaderOptions = {
   | `pageTurnAnimation`
   | `pageTurnDirection`
   | `pageTurnMode`
+  | `navigationSnapThreshold`
 >
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): Reader => {

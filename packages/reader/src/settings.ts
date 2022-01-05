@@ -10,6 +10,7 @@ export type PublicSettings = {
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`,
   pageTurnMode: `controlled` | `scrollable`,
+  navigationSnapThreshold: number
 }
 
 /**
@@ -39,6 +40,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     pageTurnMode: `controlled`,
     computedPageTurnMode: `controlled`,
     computedSnapAnimationDuration: 300,
+    navigationSnapThreshold: 0.3,
     ...initialSettings
   }
 

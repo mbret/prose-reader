@@ -1,4 +1,4 @@
-import { BehaviorSubject, merge, of, Subject } from "rxjs"
+import { BehaviorSubject, merge, of, Subject, withLatestFrom } from "rxjs"
 import { filter, switchMap } from "rxjs/operators"
 import { Context } from "../../context"
 import { SpineItemManager } from "../../spineItemManager"
@@ -111,10 +111,11 @@ export const createPanViewportNavigator = ({ getCurrentViewportPosition, navigat
   const snapNavigation$ = navigationTriggerSubject$
     .pipe(
       filter((e): e is SnapNavigation => e.type === `snap`),
-      switchMap(({ data: { from, to } }) => {
+      withLatestFrom(context.$.settings$),
+      switchMap(([{ data: { from, to } }, { navigationSnapThreshold }]) => {
         const pageTurnDirection = context.getSettings().computedPageTurnDirection
         const movingForward = navigator.isNavigationGoingForwardFrom(to, from)
-        const triggerPercentage = movingForward ? 0.7 : 0.3
+        const triggerPercentage = movingForward ? 1 - navigationSnapThreshold : navigationSnapThreshold
         const triggerXPosition = pageTurnDirection === `horizontal`
           ? to.x + (context.getVisibleAreaRect().width * triggerPercentage)
           : 0
