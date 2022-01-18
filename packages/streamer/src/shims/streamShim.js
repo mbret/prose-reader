@@ -1,1 +1,1 @@
-export const Stream = function () { }
+export const Stream = function () {}
