@@ -4,12 +4,12 @@ import { Archive } from "./types"
 
 export const createArchiveFromArrayBufferList = async (
   list: {
-      isDir: boolean,
-      name: string,
-      size: number,
-      data: () => Promise<ArrayBuffer>
-    }[],
-  { orderByAlpha, name }: { orderByAlpha?: boolean, name?: string } = {}
+    isDir: boolean
+    name: string
+    size: number
+    data: () => Promise<ArrayBuffer>
+  }[],
+  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {}
 ): Promise<Archive> => {
   let files = list
 
@@ -19,7 +19,7 @@ export const createArchiveFromArrayBufferList = async (
 
   return {
     filename: name || ``,
-    files: files.map(file => ({
+    files: files.map((file) => ({
       dir: file.isDir,
       basename: getUriBasename(file.name),
       uri: file.name,

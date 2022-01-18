@@ -1,8 +1,8 @@
-import xmldoc from 'xmldoc'
-import fs from 'fs'
-import path from 'path'
-import { parseToc } from './nav'
-import { Archive } from '..'
+import xmldoc from "xmldoc"
+import fs from "fs"
+import path from "path"
+import { parseToc } from "./nav"
+import { Archive } from ".."
 
 describe(`Given ncx toc with prefix`, () => {
   it(`should generate toc correctly`, async () => {
@@ -23,7 +23,8 @@ describe(`Given ncx toc with prefix`, () => {
           string: async () => ``,
           base64: async () => ``,
           size: 0
-        }, {
+        },
+        {
           dir: false,
           basename: `toc.ncx`,
           uri: `OEBPS/toc.ncx`,
@@ -31,10 +32,13 @@ describe(`Given ncx toc with prefix`, () => {
           string: async () => toc,
           base64: async () => btoa(toc),
           size: 0
-        }]
+        }
+      ]
     }
 
-    const result = await parseToc(opfXmlDoc, archive, { baseUrl: `http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi` })
+    const result = await parseToc(opfXmlDoc, archive, {
+      baseUrl: `http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi`
+    })
 
     expect(result).toEqual(JSON.parse(tocResult))
   })

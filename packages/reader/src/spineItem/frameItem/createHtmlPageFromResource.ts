@@ -1,5 +1,5 @@
 import { Manifest } from "../../types"
-import { detectContentType, parseContentType } from "../../utils/contentType"
+import { detectContentType, parseContentType } from "@prose-reader/shared"
 import { getBase64FromBlob } from "../../utils/objects"
 
 /**
@@ -16,7 +16,7 @@ export const createHtmlPageFromResource = async (resourceResponse: Response | st
     return `
       <html>
         <head>
-          <meta name="viewport" content="width=device-width, minimum-scale=0.1">
+          ${item.renditionLayout !== `reflowable` ? `<meta name="viewport" content="width=device-width, minimum-scale=0.1">` : ``}
         </head>
         <body style="margin: 0px;" tab-index="-1;">
           <img

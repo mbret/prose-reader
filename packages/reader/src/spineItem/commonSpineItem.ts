@@ -1,12 +1,12 @@
 import { Context } from "../context"
-import { createFrameItem, SpineItemFrame } from "./frameItem/frameItem"
+import { createFrameItem } from "./frameItem/frameItem"
 import { Manifest } from "../types"
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { isMouseEvent, isPointerEvent } from "../utils/dom"
 import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 import { Hook } from "../types/Hook"
-import { map, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 
 const pointerEvents = [
@@ -92,7 +92,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
    * If an image is detected for reflowable for example we may want to display
    * things accordingly.
    */
-  const isImageType = () => item.mediaType?.startsWith(`image/`)
+  const isImageType = () => !!item.mediaType?.startsWith(`image/`)
 
   const injectStyle = (cssText: string) => {
     spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)

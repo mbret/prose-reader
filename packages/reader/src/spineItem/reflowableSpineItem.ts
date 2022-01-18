@@ -220,10 +220,6 @@ const buildStyleForFakePrePaginated = () => {
  */
 const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean, isScrollable: boolean }) => {
   return `
-    html {
-    }
-    body {
-    }
     ${
     /*
      * @see https://hammerjs.github.io/touch-action/

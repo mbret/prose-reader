@@ -1,12 +1,16 @@
 {
   "name": "@prose-reader/shared",
   "version": "0.0.5",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "license": "MIT",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "build:prod": "echo",
     "lint": "echo",
-    "start": "echo",
+    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
+    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js",
     "test": "echo"
   },
   "devDependencies": {

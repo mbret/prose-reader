@@ -6,16 +6,16 @@ export interface StreamResult {
 }
 
 export type Archive = {
-  filename: string,
+  filename: string
   files: {
-    dir: boolean,
-    basename: string,
-    uri: string,
-    blob: () => Promise<Blob>,
-    string: () => Promise<string>,
-    base64: () => Promise<string>,
+    dir: boolean
+    basename: string
+    uri: string
+    blob: () => Promise<Blob>
+    string: () => Promise<string>
+    base64: () => Promise<string>
     stream?: () => StreamResult
-    size: number,
-    encodingFormat?: undefined | `text/plain`,
+    size: number
+    encodingFormat?: undefined | `text/plain` | `image/png` | `image/jpg` | `image/jpeg` | `image/webp`
   }[]
 }
