@@ -20,8 +20,6 @@ export const useManifest = () => {
 
         const createdManifest: Manifest = await response.json();
 
-        // console.log(createdManifest)
-
         setManifest(createdManifest)
       })();
     }
