@@ -7,30 +7,29 @@ module.exports = {
     index: `./src/index.ts`
   },
   mode: IS_PROD ? `production` : `development`,
-  ...!IS_PROD && {
+  ...(!IS_PROD && {
     devtool: `source-map`
-  },
-  externals: [
-    `@prose-reader/core`
-  ],
-  ...IS_PROD && {
+  }),
+  externals: [`@prose-reader/core`],
+  ...(IS_PROD && {
     optimization: {
       minimize: true
     }
-  },
+  }),
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: [{
-          loader: `ts-loader`,
-          options: {
-            compilerOptions: {
-              noEmit: false,
-              declaration: true
+        use: [
+          {
+            loader: `ts-loader`,
+            options: {
+              compilerOptions: {
+                noEmit: false,
+              }
             }
           }
-        }]
+        ]
       }
     ]
   },

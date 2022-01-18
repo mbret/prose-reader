@@ -4,17 +4,14 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
-    "lib": [
-      "DOM",
-      "esnext"
-    ],
+    "lib": ["DOM", "esnext"],
     "strict": true,
     "allowJs": false,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
-    "noEmit": true
+    "noEmit": true,
+    "declaration": false
   },
   "exclude": ["webpack.config.js", "**/dist", "**/*.test.ts"]
 }

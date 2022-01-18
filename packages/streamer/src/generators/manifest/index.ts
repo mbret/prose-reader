@@ -1,9 +1,9 @@
-import type { Manifest } from '@prose-reader/shared'
-import { Report } from '../../report'
-import { Archive } from '../..'
-import { epubGenerator } from './epub'
-import { comicInfoGenerator } from './comicInfo'
-import { defaultGenerator } from './default'
+import type { Manifest } from "@prose-reader/shared"
+import { Report } from "../../report"
+import { Archive } from "../.."
+import { epubGenerator } from "./epub"
+import { comicInfoGenerator } from "./comicInfo"
+import { defaultGenerator } from "./default"
 
 const baseManifest: Manifest = {
   filename: ``,
