@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-bookmarks",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -21,6 +21,6 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.42"
+    "@prose-reader/core": "^0.0.43"
   }
 }
