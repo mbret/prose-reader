@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { Report } from "../../report"
-import { Archive } from "../.."
+import { Archive } from "../../archives/types"
 import { epubGenerator } from "./epub"
 import { comicInfoGenerator } from "./comicInfo"
 import { defaultGenerator } from "./default"

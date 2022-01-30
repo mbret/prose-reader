@@ -3,7 +3,8 @@ import { parseToc } from "../../parsers/nav"
 import type { Manifest } from "@prose-reader/shared"
 import { extractKoboInformationFromArchive } from "../../parsers/kobo"
 import { Report } from "../../report"
-import { Archive, getArchiveOpfInfo } from "../.."
+import { Archive } from "../../archives/types"
+import { getArchiveOpfInfo } from "../../archives/getArchiveOpfInfo"
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
