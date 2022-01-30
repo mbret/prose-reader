@@ -3,10 +3,12 @@ import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 
 describe(`Given a list of urls archive`, () => {
   it(`should return a valid pre-paginated manifest`, async () => {
-    const archive = await createArchiveFromUrls([`https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`])
-  
+    const archive = await createArchiveFromUrls([
+      `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`
+    ])
+
     const manifest = await getManifestFromArchive(archive)
-  
+
     expect(await manifest.json()).toEqual({
       filename: ``,
       items: [
@@ -39,12 +41,15 @@ describe(`Given a list of urls archive`, () => {
 
 describe(`Given a list of urls with rendition flow archive`, () => {
   it(`should return a valid reflowable manifest`, async () => {
-    const archive = await createArchiveFromUrls([`https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`], {
-      useRenditionFlow: true
-    })
-  
+    const archive = await createArchiveFromUrls(
+      [`https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`],
+      {
+        useRenditionFlow: true
+      }
+    )
+
     const manifest = await getManifestFromArchive(archive)
-  
+
     expect(await manifest.json()).toEqual({
       filename: ``,
       items: [

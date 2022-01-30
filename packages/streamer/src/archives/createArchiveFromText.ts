@@ -8,7 +8,6 @@ import { Archive } from "./types"
 export const createArchiveFromText = async (
   content: string | Blob,
   options?: {
-    
     direction: `ltr` | `rtl`
   }
 ) => {
