@@ -1,11 +1,11 @@
 import { BehaviorSubject, merge, of, Subject, withLatestFrom } from "rxjs"
 import { filter, switchMap } from "rxjs/operators"
-import { Context } from "../../context"
-import { SpineItemManager } from "../../spineItemManager"
-import { Report } from "../../report"
-import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
-import { createLocationResolver } from "../locationResolver"
-import { ViewportPosition } from "../../types"
+import { Context } from "../context"
+import { SpineItemManager } from "../spineItemManager"
+import { Report } from "../report"
+import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
+import { createLocationResolver } from "../spine/locationResolver"
+import { ViewportPosition } from "../types"
 
 const NAMESPACE = `panViewportNavigator`
 

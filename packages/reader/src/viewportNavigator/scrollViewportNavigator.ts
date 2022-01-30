@@ -1,7 +1,7 @@
 import { animationFrameScheduler, BehaviorSubject, EMPTY, fromEvent, iif, merge, MonoTypeOperatorFunction, Observable, of } from "rxjs"
 import { debounceTime, distinctUntilChanged, filter, map, share, switchMap, takeUntil, withLatestFrom, startWith, tap } from "rxjs/operators"
-import { Context } from "../../context"
-import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
+import { Context } from "../context"
+import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 

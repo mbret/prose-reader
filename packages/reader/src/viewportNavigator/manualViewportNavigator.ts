@@ -1,10 +1,10 @@
 import { BehaviorSubject, EMPTY, merge, of, Subject } from "rxjs"
 import { filter, map, switchMap, tap, withLatestFrom } from "rxjs/operators"
-import { Context } from "../../context"
-import { SpineItemManager } from "../../spineItemManager"
-import { Report } from "../../report"
-import { createNavigationResolver, ViewportNavigationEntry } from "../navigationResolver"
-import { createLocationResolver } from "../locationResolver"
+import { Context } from "../context"
+import { SpineItemManager } from "../spineItemManager"
+import { Report } from "../report"
+import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
+import { createLocationResolver } from "../spine/locationResolver"
 
 const NAMESPACE = `manualViewportNavigator`
 
