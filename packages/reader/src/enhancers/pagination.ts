@@ -147,7 +147,11 @@ export const paginationEnhancer: Enhancer<{}, {
     const { width, height } = spineItem.getElementDimensions()
     const settings = reader.context.getSettings()
 
-    if ((writingMode === `vertical-rl`) || (settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`)) {
+    if ((settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`)) {
+      return 1
+    }
+
+    if ((writingMode === `vertical-rl`)) {
       return getNumberOfPages(height, reader.context.getPageSize().height)
     }
 
