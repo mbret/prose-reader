@@ -73,6 +73,8 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
       return memoizedElementDimensions
     }
 
+    // Keep in mind that getBoundingClientRect takes scale transform into consideration
+    // It's better to not use this is the viewport / spine is being scaled
     const rect = containerElement.getBoundingClientRect()
     const normalizedValues = {
       ...rect,
@@ -121,6 +123,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     const viewportDimensions = spineItemFrame.getViewportDimensions()
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
+
     if (containerElement && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
       const computedWidthScale = pageWidth / viewportDimensions.width
       const computedScale = Math.min(computedWidthScale, pageHeight / viewportDimensions.height)
