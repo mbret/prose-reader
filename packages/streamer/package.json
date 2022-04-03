@@ -38,7 +38,7 @@
     "isomorphic-fetch": "^3.0.0",
     "jest": "^27.4.5",
     "prettier": "^2.5.1",
-    "ts-loader": "^9.2.6",
+    "ts-loader": "^9.2.8",
     "ts-node": "^10.4.0",
     "typescript": "*",
     "webpack": "^5.65.0",
