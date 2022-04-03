@@ -1,0 +1,30 @@
+{
+  "name": "@prose-reader/enhancer-hammer-gesture",
+  "version": "0.0.19",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "start": "prose-reader-enhancer-scripts start",
+    "build": "NODE_ENV=development prose-reader-enhancer-scripts build",
+    "build:prod": "NODE_ENV=production prose-reader-enhancer-scripts build",
+    "lint": "prose-reader-enhancer-scripts lint",
+    "test": "echo"
+  },
+  "dependencies": {
+    "@prose-reader/enhancer-scripts": "^0.0.5"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "*",
+    "rxjs": "*",
+    "@types/hammerjs": "*",
+    "hammerjs": "*"
+  },
+  "devDependencies": {
+    "@prose-reader/core": "*",
+    "@types/hammerjs": "*",
+    "hammerjs": "*"
+  }
+}

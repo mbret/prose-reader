@@ -1,0 +1,3 @@
+{
+  "extends": "@prose-reader/enhancer-scripts/tsconfig.json",
+}
