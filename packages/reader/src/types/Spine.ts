@@ -1,16 +1,16 @@
 import { Observable } from "rxjs"
 import { Manifest } from "@prose-reader/shared"
-import { createViewportNavigator } from "../spine/viewportNavigator/viewportNavigator"
+import { createViewportNavigator } from "../viewportNavigator/viewportNavigator"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createSelection } from "../selection"
 import { createCfiLocator } from "../spine/cfiLocator"
 import { createLocationResolver } from "../spine/locationResolver"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
+import { ViewportNavigationEntry } from "../spine/navigationResolver"
 
 type RequireLayout = boolean
 type ManipulableSpineItemCallback = Parameters<SpineItem[`manipulateSpineItem`]>[0]
 type ManipulableSpineItemCallbackPayload = Parameters<ManipulableSpineItemCallback>[0]
-
 type ViewportNavigator = ReturnType<typeof createViewportNavigator>
 type CfiLocator = ReturnType<typeof createCfiLocator>
 type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
@@ -19,7 +19,6 @@ type Locator = ReturnType<typeof createLocationResolver>
 type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
 
 export type Spine = {
-  viewportNavigator: ViewportNavigator
   element: HTMLElement,
   locator: Locator
   spineItemLocator: SpineItemLocator
@@ -31,9 +30,9 @@ export type Spine = {
   destroy: () => void,
   isSelecting: () => boolean | undefined,
   getSelection: () => Selection | undefined,
+  adjustPagination: (position: ViewportNavigationEntry) => Observable<`free` | `busy`>
   $: {
     $: Observable<Event>,
-    viewportState$: Observable<`free` | `busy`>,
     layout$: Observable<boolean>,
     itemsCreated$: Observable<{ item: Manifest[`spineItems`][number], element: HTMLElement }[]>,
     itemsBeforeDestroy$: Observable<void>,

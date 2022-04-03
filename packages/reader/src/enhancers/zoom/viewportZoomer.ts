@@ -19,9 +19,11 @@ export const createViewportZoomer = (reader: ReaderInstance) => {
   const enter = () => {
     reset()
 
+    reader.spine.element.style.transformOrigin = `0 0`
+
     isZooming$.next(true)
 
-    scale(3)
+    scale(1)
     setCurrentScaleAsBase()
   }
 

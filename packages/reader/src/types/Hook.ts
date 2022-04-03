@@ -67,6 +67,10 @@ export type Hook =
     fn: (payload: HTMLElement) => HTMLElement
   }
   | {
+    name: `viewportNavigator.onBeforeContainerCreated`,
+    fn: (payload: HTMLElement) => HTMLElement
+  }
+  | {
     name: `onViewportOffsetAdjust`,
     fn: () => void
   }

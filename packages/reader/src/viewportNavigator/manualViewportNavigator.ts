@@ -168,6 +168,8 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
       switchMap(([{ data: { allowSpineItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
+        Report.log(NAMESPACE, `turnLeft`)
+
         return turnPageTo$(navigation, { allowSpineItemChange })
       })
     )
@@ -178,6 +180,8 @@ export const createManualViewportNavigator = ({ navigator, spineItemManager, cur
       withLatestFrom(currentNavigationSubject$),
       switchMap(([{ data: { allowSpineItemChange } }, currentNavigation]) => {
         const navigation = navigator.getNavigationForRightPage(currentNavigation)
+
+        Report.log(NAMESPACE, `turnRight`)
 
         return turnPageTo$(navigation, { allowSpineItemChange })
       })

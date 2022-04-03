@@ -8,7 +8,7 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
   const reader = next(options)
   const elementZoomer = createElementZoomer(reader)
   const viewportZoomer = createViewportZoomer(reader)
-  const currentZoomer = new BehaviorSubject<typeof elementZoomer | undefined>(
+  const currentZoomerSubject$ = new BehaviorSubject<typeof elementZoomer | undefined>(
     undefined
   )
 
@@ -16,11 +16,11 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
     reader.context.getSettings().computedPageTurnMode === `scrollable`
 
   const enter = (imgElement?: HTMLImageElement) => {
-    currentZoomer?.value?.exit()
+    currentZoomerSubject$?.value?.exit()
 
     if (isUsingScrollableViewport()) {
       viewportZoomer.enter()
-      currentZoomer?.next(viewportZoomer)
+      currentZoomerSubject$?.next(viewportZoomer)
 
       return
     }
@@ -31,37 +31,37 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
     }
 
     elementZoomer.enter(imgElement)
-    currentZoomer?.next(elementZoomer)
+    currentZoomerSubject$?.next(elementZoomer)
   }
 
   const setCurrentScaleAsBase = () => {
-    currentZoomer.value?.setCurrentScaleAsBase()
+    currentZoomerSubject$.value?.setCurrentScaleAsBase()
   }
 
   const scale = (userScale: number) => {
-    if (!currentZoomer.value?.isZooming()) {
+    if (!currentZoomerSubject$.value?.isZooming()) {
       Report.warn(`You need to start zoom before being able to call this fn`)
       return
     }
 
-    currentZoomer.value.scale(userScale)
+    currentZoomerSubject$.value.scale(userScale)
   }
 
   const move = (
     delta: { x: number; y: number } | undefined,
     options: { isFirst: boolean; isLast: boolean }
   ) => {
-    currentZoomer.value?.move(delta, options)
+    currentZoomerSubject$.value?.move(delta, options)
   }
 
   const exit = () => {
-    currentZoomer.value?.exit()
+    currentZoomerSubject$.value?.exit()
   }
 
   const destroy = () => {
     elementZoomer.destroy()
     viewportZoomer.destroy()
-    currentZoomer.complete()
+    currentZoomerSubject$.complete()
     reader.destroy()
   }
 
@@ -72,13 +72,13 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
       enter,
       exit,
       move,
-      isZooming: () => currentZoomer.value?.isZooming() || false,
-      getScaleValue: () => currentZoomer.value?.getScaleValue() || 1,
+      isZooming: () => currentZoomerSubject$.value?.isZooming() || false,
+      getScaleValue: () => currentZoomerSubject$.value?.getScaleValue() || 1,
       scale,
       isUsingScrollableZoom: isUsingScrollableViewport,
       setCurrentScaleAsBase,
       $: {
-        isZooming$: currentZoomer.pipe(
+        isZooming$: currentZoomerSubject$.pipe(
           switchMap((zoomer) => zoomer?.isZooming$ || of(false))
         )
       }

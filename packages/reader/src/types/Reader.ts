@@ -6,8 +6,10 @@ import { Manifest } from "@prose-reader/shared"
 import { Pagination } from "../pagination"
 import { Observable } from "rxjs"
 import { createSelection } from "../selection"
+import { createViewportNavigator } from "../viewportNavigator/viewportNavigator"
 
 type ContextSettings = Parameters<Context[`setSettings`]>[0]
+type ViewportNavigator = ReturnType<typeof createViewportNavigator>
 
 export type LoadOptions = {
   cfi?: string,
@@ -49,17 +51,18 @@ export type Reader = {
   context: Context,
   registerHook: RegisterHook,
   spine: Spine,
+  viewportNavigator: ViewportNavigator
   manipulateSpineItems: Spine[`manipulateSpineItems`],
   manipulateSpineItem: Spine[`manipulateSpineItem`],
   manipulateContainer: (cb: (container: HTMLElement) => boolean) => void,
-  moveTo: Spine[`viewportNavigator`][`moveTo`],
-  turnLeft: Spine[`viewportNavigator`][`turnLeft`],
-  turnRight: Spine[`viewportNavigator`][`turnRight`],
-  goToPageOfCurrentChapter: Spine[`viewportNavigator`][`goToPageOfCurrentChapter`],
-  goToPage: Spine[`viewportNavigator`][`goToPage`],
-  goToUrl: Spine[`viewportNavigator`][`goToUrl`],
-  goToCfi: Spine[`viewportNavigator`][`goToCfi`],
-  goToSpineItem: Spine[`viewportNavigator`][`goToSpineItem`],
+  moveTo: ViewportNavigator[`moveTo`],
+  turnLeft: ViewportNavigator[`turnLeft`],
+  turnRight: ViewportNavigator[`turnRight`],
+  goToPageOfCurrentChapter: ViewportNavigator[`goToPageOfCurrentChapter`],
+  goToPage: ViewportNavigator[`goToPage`],
+  goToUrl: ViewportNavigator[`goToUrl`],
+  goToCfi: ViewportNavigator[`goToCfi`],
+  goToSpineItem: ViewportNavigator[`goToSpineItem`],
   getFocusedSpineItemIndex: SpineItemManager[`getFocusedSpineItemIndex`],
   getSpineItem: SpineItemManager[`get`],
   getSpineItems: SpineItemManager[`getAll`],
@@ -71,8 +74,8 @@ export type Reader = {
   resolveCfi: Spine[`cfiLocator`][`resolveCfi`],
   generateCfi: Spine[`cfiLocator`][`generateFromRange`],
   locator: Spine[`locator`],
-  getCurrentNavigationPosition: Spine[`viewportNavigator`][`getCurrentNavigationPosition`],
-  getCurrentViewportPosition: Spine[`viewportNavigator`][`getCurrentViewportPosition`],
+  getCurrentNavigationPosition: ViewportNavigator[`getCurrentNavigationPosition`],
+  getCurrentViewportPosition: ViewportNavigator[`getCurrentViewportPosition`],
   layout: () => void,
   load: (manifest: Manifest, loadOptions?: LoadOptions) => void,
   destroy: () => void,
@@ -97,7 +100,7 @@ export type Reader = {
      * Dispatched when a change in selection happens
      */
     selection$: Observable<ReturnType<typeof createSelection> | null>,
-    viewportState$: Spine[`$`][`viewportState$`],
+    viewportState$: ViewportNavigator[`$`][`state$`],
     layout$: Spine[`$`][`layout$`],
     itemsCreated$: Spine[`$`][`itemsCreated$`],
     itemsBeforeDestroy$: Spine[`$`][`itemsBeforeDestroy$`],
