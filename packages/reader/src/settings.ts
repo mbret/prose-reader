@@ -21,6 +21,10 @@ export type PublicSettings = {
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
 type InnerSettings = PublicSettings & {
+  /**
+   * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
+   * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content
+   */
   computedPageTurnMode: PublicSettings[`pageTurnMode`],
   computedPageTurnDirection: PublicSettings[`pageTurnDirection`],
   computedPageTurnAnimation: PublicSettings[`pageTurnAnimation`],
