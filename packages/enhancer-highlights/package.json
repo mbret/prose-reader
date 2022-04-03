@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-highlights",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -21,6 +21,6 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.45"
+    "@prose-reader/core": "^0.0.46"
   }
 }
