@@ -1,6 +1,8 @@
 import { sortByTitleComparator } from "./sortByTitleComparator"
 
 it(`should sort correctly`, () => {
+  expect([].sort(sortByTitleComparator)).toEqual([])
+  expect([`a`].sort(sortByTitleComparator)).toEqual([`a`])
   expect([`a`, `b`].sort(sortByTitleComparator)).toEqual([`a`, `b`])
   expect([`b`, `a`].sort(sortByTitleComparator)).toEqual([`a`, `b`])
   expect([`1`, `2`].sort(sortByTitleComparator)).toEqual([`1`, `2`])
