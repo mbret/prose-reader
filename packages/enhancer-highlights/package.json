@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-highlights",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,14 +14,14 @@
     "test": "echo"
   },
   "dependencies": {
-    "@prose-reader/enhancer-scripts": "^0.0.6"
+    "@prose-reader/enhancer-scripts": "^0.0.7"
   },
   "peerDependencies": {
     "@prose-reader/core": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.47"
+    "@prose-reader/core": "^0.0.48"
   },
   "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }

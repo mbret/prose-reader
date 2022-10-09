@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "0.0.47",
+  "version": "0.0.48",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -18,7 +18,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/shared": "^0.0.6"
+    "@prose-reader/shared": "^0.0.7"
   },
   "peerDependencies": {
     "rxjs": "*"
