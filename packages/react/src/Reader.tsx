@@ -1,11 +1,13 @@
 import React, { memo, ReactElement, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom"
-import { createReader, Manifest, Reader as CoreReader, ReaderOptions } from "@prose-reader/core"
+import { createReader, Manifest, Reader as CoreReader, ReaderOptions, Report } from "@prose-reader/core"
 import { ObservedValueOf } from "rxjs"
 
 type Enhancer<Api = {}> = (createReader: any) => (options: any) => Api
 type LoadOptions = Parameters<ReturnType<typeof createReader>["load"]>[1]
 type Pagination = ObservedValueOf<CoreReader["$"]["pagination$"]>
+
+const report = Report.namespace("@prose-reader/react")
 
 export type Props<UserEnhancer extends Enhancer = Enhancer> = {
   manifest?: Manifest
@@ -36,10 +38,21 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
   const { width, height } = { width: `100%`, height: `100%` }
   const hasLoadingElement = !!LoadingElement
   const ref = useRef<HTMLElement>()
+  const readerInitialized = useRef(false)
 
   useEffect(() => {
+    if (!ref.current || !!reader) return
+
+    if (readerInitialized.current) {
+      report.warn(
+        "One of the props relative to the reader creation has changed but the reader is already initialized. Please make sure to memoize or delay the render!"
+      )
+
+      return
+    }
+
     if (ref.current && !reader) {
-      const {} = options || {}
+      readerInitialized.current = true
       const readerOptions = {
         containerElement: ref.current,
         ...(hasLoadingElement && {
@@ -48,11 +61,11 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
         }),
         ...options
       }
-      const reader = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
-      setReader(reader as any)
-      onReader && onReader(reader as any)
+      const newReader = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
+      setReader(newReader as any)
+      onReader && onReader(newReader as any)
     }
-  }, [ref.current, setReader, onReader, reader, options, hasLoadingElement])
+  }, [setReader, onReader, reader, options, hasLoadingElement])
 
   useEffect(() => {
     const readerSubscription$ = reader?.$.ready$.subscribe(() => {
