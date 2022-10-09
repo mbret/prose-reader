@@ -36,7 +36,10 @@ type RequireLayout = boolean
 type ManipulableSpineItemCallback = Parameters<SpineItem[`manipulateSpineItem`]>[0]
 type ManipulableSpineItemCallbackPayload = Parameters<ManipulableSpineItemCallback>[0]
 
-type Event = { type: `onSelectionChange`; data: ReturnType<typeof createSelection> | null }
+type Event = {
+  type: `onSelectionChange`
+  data: ReturnType<typeof createSelection> | null
+}
 
 export const createSpine = ({
   ownerDocument,
@@ -70,12 +73,16 @@ export const createSpine = ({
   }>
   viewportState$: Observable<`free` | `busy`>
 }): Spine => {
-  const layoutSubject$ = new Subject<void>()
   const itemsCreatedSubject$ = new Subject<Pick<SpineItem, `item` | `element`>[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
   const subject = new Subject<Event>()
   const containerElement = createContainerElement(ownerDocument, hooks$)
-  const eventsHelper = createEventsHelper({ context, spineItemManager, iframeEventBridgeElement, locator: spineLocator })
+  const eventsHelper = createEventsHelper({
+    context,
+    spineItemManager,
+    iframeEventBridgeElement,
+    locator: spineLocator
+  })
   let selectionSubscription: Subscription | undefined
 
   /**
@@ -207,7 +214,10 @@ export const createSpine = ({
           selectionTracker$.pipe(
             filter((event) => event.event === `selectionchange`),
             tap((event) => {
-              subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, spineItem.item) : null })
+              subject.next({
+                type: `onSelectionChange`,
+                data: event.data ? createSelection(event.data, spineItem.item) : null
+              })
             })
           ),
           selectionTracker$.pipe(
@@ -424,9 +434,7 @@ export const createSpine = ({
     normalizeEventForViewport: eventsHelper.normalizeEventForViewport,
     manipulateSpineItems,
     manipulateSpineItem,
-    layout: () => layoutSubject$.next(),
     destroy: () => {
-      layoutSubject$.complete()
       itemsCreatedSubject$.complete()
       itemsBeforeDestroySubject$.next()
       itemsBeforeDestroySubject$.complete()

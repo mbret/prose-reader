@@ -41,6 +41,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
 
   /**
    * @todo
+   * move this logic to the spine
+   *
+   * @todo
    * make sure to check how many times it is being called and try to reduce number of layouts
    * it is called eery time an item is being unload (which can adds up quickly for big books)
    */
@@ -222,7 +225,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    */
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
-    const numberOfAdjacentSpineItemToPreLoad = context.getLoadOptions()?.numberOfAdjacentSpineItemToPreLoad || 0
+    const numberOfAdjacentSpineItemToPreLoad = context.getSettings().numberOfAdjacentSpineItemToPreLoad
     const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
     const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `scrollable`
 
@@ -240,7 +243,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
   })
 
   const get = (indexOrId: number | string) => {
-    if (typeof indexOrId === `number`) return orderedSpineItemsSubject$.value[indexOrId]
+    if (typeof indexOrId === `number`) {
+      return orderedSpineItemsSubject$.value[indexOrId]
+    }
 
     return orderedSpineItemsSubject$.value.find(({ item }) => item.id === indexOrId)
   }
@@ -260,7 +265,14 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       const layoutInformation = itemLayoutInformation[indexOfItem]
 
       if (!layoutInformation) {
-        return { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+        return {
+          leftStart: 0,
+          leftEnd: 0,
+          topStart: 0,
+          topEnd: 0,
+          width: 0,
+          height: 0
+        }
       }
 
       // const distance = orderedSpineItems.value
@@ -281,7 +293,16 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       // console.log(distance, itemLayoutInformation[indexOfItem])
       // return distance
 
-      return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+      return (
+        itemLayoutInformation[indexOfItem] || {
+          leftStart: 0,
+          leftEnd: 0,
+          topStart: 0,
+          topEnd: 0,
+          width: 0,
+          height: 0
+        }
+      )
     },
     { disable: true }
   )
@@ -356,7 +377,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
         }
       })
 
-      if (position.x === 0 && !detectedItem) return orderedSpineItemsSubject$.value[0]
+      if (position.x === 0 && !detectedItem) {
+        return orderedSpineItemsSubject$.value[0]
+      }
 
       return detectedItem
     },
