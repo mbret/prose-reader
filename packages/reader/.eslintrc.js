@@ -4,19 +4,13 @@ module.exports = {
     es2021: true,
     "jest/globals": true
   },
-  extends: [
-    `plugin:jest/recommended`,
-    `standard`
-  ],
+  extends: [`plugin:jest/recommended`, `standard`],
   parser: `@typescript-eslint/parser`,
   parserOptions: {
     ecmaVersion: 12,
     sourceType: `module`
   },
-  plugins: [
-    `@typescript-eslint`,
-    `jest`
-  ],
+  plugins: [`@typescript-eslint`, `jest`],
   rules: {
     "node/no-callback-literal": `off`, // huh, 1990 coding
     "no-unused-vars": `off`, // use ts

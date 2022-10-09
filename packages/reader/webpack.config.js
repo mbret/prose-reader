@@ -9,34 +9,33 @@ module.exports = {
     index: `./src/index.ts`
   },
   mode: IS_PROD ? `production` : `development`,
-  ...!IS_PROD && {
+  ...(!IS_PROD && {
     devtool: `eval-source-map`
-  },
-  ...IS_PROD && {
+  }),
+  ...(IS_PROD && {
     optimization: {
       minimize: true,
       minimizer: [new TerserPlugin()]
     }
-  },
-  externals: [
-    `rxjs`,
-    `rxjs/operators`
-  ],
+  }),
+  externals: [`rxjs`, `rxjs/operators`],
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: [{
-          loader: `ts-loader`,
-          options: {
-            compilerOptions: {
-              noEmit: false,
-              ...IS_PROD && {
-                declaration: true
+        use: [
+          {
+            loader: `ts-loader`,
+            options: {
+              compilerOptions: {
+                noEmit: false,
+                ...(IS_PROD && {
+                  declaration: true
+                })
               }
             }
           }
-        }]
+        ]
       }
     ]
   },

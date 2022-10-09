@@ -13,7 +13,7 @@
     "build": "NODE_ENV=development webpack build --config ./webpack.config.js && yarn build-types",
     "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
     "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "eslint '**/*.{js,ts,tsx}'",
+    "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
     "test": "jest",
     "tsc": "tsc"
   },
