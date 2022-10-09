@@ -14,7 +14,7 @@
     "lint": "lerna exec --parallel -- yarn lint",
     "test": "lerna exec --parallel -- yarn test",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
-    "dev:link-all": "./scripts/link-all.sh"
+    "link-all": "lerna exec --parallel -- yarn link"
   },
   "workspaces": [
     "packages/*"
