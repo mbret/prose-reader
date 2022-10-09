@@ -11,6 +11,16 @@ export type PublicSettings = {
   pageTurnDirection: `vertical` | `horizontal`
   pageTurnMode: `controlled` | `scrollable`
   navigationSnapThreshold: number
+  /**
+   * Specify how many spine items you want to preload.
+   * Useful for pre-paginated where you want the user to have a smooth transition between items.
+   *
+   * @important
+   * Be careful when using this option with reflowable books since it can potentially add some
+   * heavy work on the CPU. One reflowable book with several big chapter may slow down your app
+   * significantly.
+   */
+  numberOfAdjacentSpineItemToPreLoad: number
 }
 
 /**
@@ -45,6 +55,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     computedPageTurnMode: `controlled`,
     computedSnapAnimationDuration: 300,
     navigationSnapThreshold: 0.3,
+    numberOfAdjacentSpineItemToPreLoad: 0,
     ...initialSettings
   }
 
@@ -54,7 +65,10 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
 
   const setSettings = (
     newSettings: Partial<PublicSettings>,
-    options: { hasVerticalWritingSubject: boolean; manifest: Manifest | undefined }
+    options: {
+      hasVerticalWritingSubject: boolean
+      manifest: Manifest | undefined
+    }
   ) => {
     if (Object.keys(newSettings).length === 0) return
 

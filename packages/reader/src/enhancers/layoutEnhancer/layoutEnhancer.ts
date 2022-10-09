@@ -126,7 +126,7 @@ export const layoutEnhancer: LayoutEnhancer =
           distinctUntilChanged(isShallowEqual),
           skip(1),
           tap(() => {
-            reader.spine.layout()
+            reader.layout()
           }),
           takeUntil(reader.$.destroy$)
         )

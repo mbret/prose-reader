@@ -294,13 +294,13 @@ export const createViewportNavigator = ({
    * Try not to have duplicate with other lower components that also listen to settings change and re-layout
    * on the same settings.
    */
-  const layoutOnSettingChanges$ = context.$.settings$.pipe(
-    mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`]),
+  const layoutChangeSettings$ = context.$.settings$.pipe(
+    mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`, `numberOfAdjacentSpineItemToPreLoad`]),
     distinctUntilChanged(isShallowEqual),
     skip(1)
   )
 
-  const layout$ = merge(layoutSubject$, layoutOnSettingChanges$).pipe(
+  const layout$ = merge(layoutSubject$, layoutChangeSettings$).pipe(
     tap(() => {
       if (context.getSettings().computedPageTurnMode === `scrollable`) {
         element.style.removeProperty(`transform`)
@@ -542,7 +542,7 @@ export const createViewportNavigator = ({
    * Right now we react to literally every layout and some time we might not need to update pagination (ex pre-paginated element got unload).
    * Maybe we should only listen to current items visible only ?
    */
-  const navigationAdjustedAfterLayout$ = spineItemManager.$.layout$.pipe(
+  const navigationAdjustedAfterLayout$ = spine.$.layout$.pipe(
     /**
      * @important
      * Careful with using debounce / throttle here since it can decrease user experience

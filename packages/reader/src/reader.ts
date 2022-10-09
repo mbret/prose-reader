@@ -26,7 +26,12 @@ export type CreateReaderOptions = {
   containerElement: HTMLElement
 } & Pick<
   ContextSettings,
-  `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode` | `navigationSnapThreshold`
+  | `forceSinglePageMode`
+  | `pageTurnAnimation`
+  | `pageTurnDirection`
+  | `pageTurnMode`
+  | `navigationSnapThreshold`
+  | `numberOfAdjacentSpineItemToPreLoad`
 >
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): Reader => {
@@ -55,8 +60,16 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
   const spineItemLocator = createSpineItemLocator({ context })
-  const spineLocator = createSpineLocator({ context, spineItemManager, spineItemLocator })
-  const cfiLocator = createCfiLocator({ spineItemManager, context, spineItemLocator })
+  const spineLocator = createSpineLocator({
+    context,
+    spineItemManager,
+    spineItemLocator
+  })
+  const cfiLocator = createCfiLocator({
+    spineItemManager,
+    context,
+    spineItemLocator
+  })
 
   const navigation$ = navigationSubject.asObservable()
 
@@ -121,7 +134,6 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     context.setVisibleAreaRect(elementRect.x, elementRect.y, containerElementEvenWidth, dimensions.height)
 
     viewportNavigator.layout()
-    spine.layout()
   }
 
   const load = (manifest: Manifest, loadOptions: LoadOptions = {}) => {

@@ -35,16 +35,6 @@ export type LoadOptions = {
    * not pass through the service worker.
    */
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
-  /**
-   * Specify how many spine items you want to preload.
-   * Useful for pre-paginated where you want the user to have a smooth transition between items.
-   *
-   * @important
-   * Be careful when using this option with reflowable books since it can potentially add some
-   * heavy work on the CPU. One reflowable book with several big chapter may slow down your app
-   * significantly.
-   */
-  numberOfAdjacentSpineItemToPreLoad?: number
 }
 
 export type Reader = {
