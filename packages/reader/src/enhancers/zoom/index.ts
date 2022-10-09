@@ -8,12 +8,9 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
   const reader = next(options)
   const elementZoomer = createElementZoomer(reader)
   const viewportZoomer = createViewportZoomer(reader)
-  const currentZoomerSubject$ = new BehaviorSubject<typeof elementZoomer | undefined>(
-    undefined
-  )
+  const currentZoomerSubject$ = new BehaviorSubject<typeof elementZoomer | undefined>(undefined)
 
-  const isUsingScrollableViewport = () =>
-    reader.context.getSettings().computedPageTurnMode === `scrollable`
+  const isUsingScrollableViewport = () => reader.context.getSettings().computedPageTurnMode === `scrollable`
 
   const enter = (imgElement?: HTMLImageElement) => {
     currentZoomerSubject$?.value?.exit()
@@ -47,10 +44,7 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
     currentZoomerSubject$.value.scale(userScale)
   }
 
-  const move = (
-    delta: { x: number; y: number } | undefined,
-    options: { isFirst: boolean; isLast: boolean }
-  ) => {
+  const move = (delta: { x: number; y: number } | undefined, options: { isFirst: boolean; isLast: boolean }) => {
     currentZoomerSubject$.value?.move(delta, options)
   }
 
@@ -78,9 +72,7 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
       isUsingScrollableZoom: isUsingScrollableViewport,
       setCurrentScaleAsBase,
       $: {
-        isZooming$: currentZoomerSubject$.pipe(
-          switchMap((zoomer) => zoomer?.isZooming$ || of(false))
-        )
+        isZooming$: currentZoomerSubject$.pipe(switchMap((zoomer) => zoomer?.isZooming$ || of(false)))
       }
     }
   }

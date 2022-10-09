@@ -32,12 +32,19 @@ const mouseEvents = [
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
-export const createCommonSpineItem = ({ item, context, parentElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
-  item: Manifest[`spineItems`][number],
-  parentElement: HTMLElement,
-  iframeEventBridgeElement: HTMLElement,
-  context: Context,
-  hooks$: BehaviorSubject<Hook[]>,
+export const createCommonSpineItem = ({
+  item,
+  context,
+  parentElement,
+  iframeEventBridgeElement,
+  hooks$,
+  viewportState$
+}: {
+  item: Manifest[`spineItems`][number]
+  parentElement: HTMLElement
+  iframeEventBridgeElement: HTMLElement
+  context: Context
+  hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
@@ -52,10 +59,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     item,
     context,
     fetchResource: context.getLoadOptions()?.fetchResource,
-    hooks$: hooks$.asObservable()
-      .pipe(
-        map(hooks => [...hooks, ...frameHooks])
-      ),
+    hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
     viewportState$
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
@@ -64,7 +68,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   parentElement.appendChild(containerElement)
 
   // Do not memoize x,y,top,left as they change relatively to the viewport all the time
-  let memoizedElementDimensions: { width: number, height: number } | undefined
+  let memoizedElementDimensions: { width: number; height: number } | undefined
 
   // @todo use spine item manager global layout reference if possible
   // @todo getAbsolutePositionOf (for width and height)
@@ -101,7 +105,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
   }
 
-  const adjustPositionOfElement = ({ right, left, top }: { right?: number, left?: number, top?: number }) => {
+  const adjustPositionOfElement = ({ right, left, top }: { right?: number; left?: number; top?: number }) => {
     if (right !== undefined) {
       containerElement.style.right = `${right}px`
     } else {
@@ -153,7 +157,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   }
 
   // const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
-  const layout = ({ height, width }: { height: number, width: number }) => {
+  const layout = ({ height, width }: { height: number; width: number }) => {
     containerElement.style.width = `${width}px`
     containerElement.style.height = `${height}px`
 
@@ -168,7 +172,7 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
     // })
   }
 
-  const translateFramePositionIntoPage = (position: { clientX: number, clientY: number }) => {
+  const translateFramePositionIntoPage = (position: { clientX: number; clientY: number }) => {
     // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
@@ -205,11 +209,16 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   }
 
   const manipulateSpineItem = (
-    cb: (options: {
-      container: HTMLElement,
-      item: Manifest[`spineItems`][number],
-      overlayElement: HTMLDivElement,
-    } & (ReturnType<typeof createFrameManipulator> | { frame: undefined, removeStyle: (id: string) => void, addStyle: (id: string, style: string) => void })) => boolean
+    cb: (
+      options: {
+        container: HTMLElement
+        item: Manifest[`spineItems`][number]
+        overlayElement: HTMLDivElement
+      } & (
+        | ReturnType<typeof createFrameManipulator>
+        | { frame: undefined; removeStyle: (id: string) => void; addStyle: (id: string, style: string) => void }
+      )
+    ) => boolean
   ) => {
     const manipulableFrame = spineItemFrame.getManipulableFrame()
 
@@ -226,32 +235,32 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
       container: containerElement,
       item,
       frame: undefined,
-      removeStyle: () => { },
-      addStyle: () => { },
+      removeStyle: () => {},
+      addStyle: () => {},
       overlayElement
     })
   }
 
-  const executeOnLayoutBeforeMeasurmentHook = (options: { minimumWidth: number }) => hooks$.getValue().forEach(hook => {
-    if (hook.name === `item.onLayoutBeforeMeasurment`) {
-      hook.fn({
-        frame: spineItemFrame,
-        container: containerElement,
-        item,
-        isImageType,
-        ...options
-      })
-    }
-  })
+  const executeOnLayoutBeforeMeasurmentHook = (options: { minimumWidth: number }) =>
+    hooks$.getValue().forEach((hook) => {
+      if (hook.name === `item.onLayoutBeforeMeasurment`) {
+        hook.fn({
+          frame: spineItemFrame,
+          container: containerElement,
+          item,
+          isImageType,
+          ...options
+        })
+      }
+    })
 
-  const contentLayout$ = spineItemFrame.$.contentLayoutChange$
-    .pipe(
-      withLatestFrom(spineItemFrame.$.isReady$),
-      map(([data, isReady]) => ({
-        isFirstLayout: data.isFirstLayout,
-        isReady
-      }))
-    )
+  const contentLayout$ = spineItemFrame.$.contentLayoutChange$.pipe(
+    withLatestFrom(spineItemFrame.$.isReady$),
+    map(([data, isReady]) => ({
+      isFirstLayout: data.isFirstLayout,
+      isReady
+    }))
+  )
 
   return {
     load: () => {
@@ -298,7 +307,11 @@ export const createCommonSpineItem = ({ item, context, parentElement, iframeEven
   }
 }
 
-const createContainerElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number], hooks$: BehaviorSubject<Hook[]>) => {
+const createContainerElement = (
+  containerElement: HTMLElement,
+  item: Manifest[`spineItems`][number],
+  hooks$: BehaviorSubject<Hook[]>
+) => {
   const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItem`)
   element.classList.add(`spineItem-${item.renditionLayout}`)
@@ -331,7 +344,11 @@ const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spi
   return element
 }
 
-const createFrameHooks = (iframeEventBridgeElement: HTMLElement, fingerTracker: ReturnType<typeof createFingerTracker>, selectionTracker: ReturnType<typeof createSelectionTracker>): Hook[] => {
+const createFrameHooks = (
+  iframeEventBridgeElement: HTMLElement,
+  fingerTracker: ReturnType<typeof createFingerTracker>,
+  selectionTracker: ReturnType<typeof createSelectionTracker>
+): Hook[] => {
   return [
     {
       name: `item.onLoad`,
@@ -340,7 +357,7 @@ const createFrameHooks = (iframeEventBridgeElement: HTMLElement, fingerTracker: 
          * Register event listener for all mouse/pointer event in order to
          * passthrough events to main document
          */
-        const unregister = passthroughEvents.map(event => {
+        const unregister = passthroughEvents.map((event) => {
           const listener = (e: MouseEvent | PointerEvent) => {
             let convertedEvent = e
 
@@ -369,7 +386,7 @@ const createFrameHooks = (iframeEventBridgeElement: HTMLElement, fingerTracker: 
         fingerTracker.track(frame)
 
         return () => {
-          unregister.forEach(cb => cb())
+          unregister.forEach((cb) => cb())
         }
       }
     }

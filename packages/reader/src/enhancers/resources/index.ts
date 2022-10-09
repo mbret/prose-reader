@@ -1,9 +1,7 @@
 import { Enhancer } from "../types"
 import { createResourcesManager } from "./resourcesManager"
 
-export const resourcesEnhancer: Enhancer<{}, {
-
-}> = (next) => (options) => {
+export const resourcesEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   const reader = next(options)
   const resourceManager = createResourcesManager(reader.context)
 

@@ -4,13 +4,16 @@ import { SpineItemManager } from "../spineItemManager"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
 import { createLocationResolver } from "./locationResolver"
 
-export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
-  iframeEventBridgeElement: HTMLElement,
-  spineItemManager: SpineItemManager,
-  context: Context,
+export const createEventsHelper = ({
+  iframeEventBridgeElement,
+  locator
+}: {
+  iframeEventBridgeElement: HTMLElement
+  spineItemManager: SpineItemManager
+  context: Context
   locator: ReturnType<typeof createLocationResolver>
 }) => {
-  const normalizeEventForViewport = <E extends (MouseEvent | TouchEvent | PointerEvent)>(event: E) => {
+  const normalizeEventForViewport = <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => {
     const eventIsComingFromBridge = event.target === iframeEventBridgeElement
     const iframeOriginalEvent = getOriginalFrameEventFromDocumentEvent(event)
     const originalFrame = iframeOriginalEvent?.view?.frameElement
@@ -50,18 +53,16 @@ export const createEventsHelper = ({ iframeEventBridgeElement, locator }: {
     }
 
     if (isTouchEvent(event)) {
-      const touches = Array.from(event.touches).map(
-        (touch) => {
-          const { clientX, clientY } = spineItem.translateFramePositionIntoPage(touch)
+      const touches = Array.from(event.touches).map((touch) => {
+        const { clientX, clientY } = spineItem.translateFramePositionIntoPage(touch)
 
-          return new Touch({
-            identifier: touch.identifier,
-            target: touch.target,
-            clientX,
-            clientY
-          })
-        }
-      )
+        return new Touch({
+          identifier: touch.identifier,
+          target: touch.target,
+          clientX,
+          clientY
+        })
+      })
 
       const newEvent = new TouchEvent(event.type, {
         touches,

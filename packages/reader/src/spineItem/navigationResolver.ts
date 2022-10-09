@@ -3,7 +3,7 @@ import { Context } from "../context"
 import { getNumberOfPages } from "../pagination"
 import { createLocationResolver } from "./locationResolver"
 
-type SpineItemPosition = { x: number, y: number }
+type SpineItemPosition = { x: number; y: number }
 
 export const createNavigationResolver = ({ context }: { context: Context }) => {
   const spineItemLocator = createLocationResolver({ context })

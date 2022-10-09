@@ -6,39 +6,50 @@ import { createNavigationResolver as createSpineItemNavigator } from "../spineIt
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 
-export type ViewportNavigationEntry = { x: number, y: number, spineItem?: SpineItem }
-type ViewportPosition = { x: number, y: number }
-type SpineItemPosition = { x: number, y: number }
+export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
+type ViewportPosition = { x: number; y: number }
+type SpineItemPosition = { x: number; y: number }
 
 const NAMESPACE = `spineNavigator`
 
-export const createNavigationResolver = ({ context, spineItemManager, cfiLocator, locator }: {
-  context: Context,
-  spineItemManager: SpineItemManager,
-  cfiLocator: ReturnType<typeof createCfiLocator>,
+export const createNavigationResolver = ({
+  context,
+  spineItemManager,
+  cfiLocator,
+  locator
+}: {
+  context: Context
+  spineItemManager: SpineItemManager
+  cfiLocator: ReturnType<typeof createCfiLocator>
   locator: ReturnType<typeof createLocationResolver>
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context })
 
   const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
 
-  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => arePositionsDifferent(a, b) || ((!!a.spineItem && !!b.spineItem) && (a.spineItem !== b.spineItem))
+  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) =>
+    arePositionsDifferent(a, b) || (!!a.spineItem && !!b.spineItem && a.spineItem !== b.spineItem)
 
-  const wrapPositionWithSafeEdge = Report.measurePerformance(`${NAMESPACE} wrapPositionWithSafeEdge`, 1, (position: SpineItemPosition) => {
-    // @todo use container width instead to increase performances
-    const lastSpineItem = spineItemManager.get(spineItemManager.getLength() - 1)
-    const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(lastSpineItem || 0)
-    const maximumXOffset = distanceOfLastSpineItem.leftEnd - context.getPageSize().width
-    const maximumYOffset = distanceOfLastSpineItem.topEnd - context.getPageSize().height
+  const wrapPositionWithSafeEdge = Report.measurePerformance(
+    `${NAMESPACE} wrapPositionWithSafeEdge`,
+    1,
+    (position: SpineItemPosition) => {
+      // @todo use container width instead to increase performances
+      const lastSpineItem = spineItemManager.get(spineItemManager.getLength() - 1)
+      const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(lastSpineItem || 0)
+      const maximumXOffset = distanceOfLastSpineItem.leftEnd - context.getPageSize().width
+      const maximumYOffset = distanceOfLastSpineItem.topEnd - context.getPageSize().height
 
-    return {
-      x: Math.min(Math.max(0, position.x), maximumXOffset),
-      y: Math.min(Math.max(0, position.y), maximumYOffset)
-    }
-  }, { disable: true })
+      return {
+        x: Math.min(Math.max(0, position.x), maximumXOffset),
+        y: Math.min(Math.max(0, position.y), maximumYOffset)
+      }
+    },
+    { disable: true }
+  )
 
   const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
-    const isOffsetNotAtEdge = (x % context.getVisibleAreaRect().width) !== 0
+    const isOffsetNotAtEdge = x % context.getVisibleAreaRect().width !== 0
     const correctedX = isOffsetNotAtEdge ? x - context.getPageSize().width : x
 
     return { x: correctedX, y }
@@ -107,7 +118,8 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     // get reading item local position for right page
     const spineItemNavigationForRightPage = spineItemNavigator.getNavigationForRightPage(spineItemPosition, spineItem)
     // check both position to see if we moved out of it
-    const isNewNavigationInCurrentItem = !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigationForRightPage, spineItemPosition)
+    const isNewNavigationInCurrentItem =
+      !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigationForRightPage, spineItemPosition)
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
@@ -137,7 +149,8 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
 
     const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(position, spineItem)
     const spineItemNavigation = spineItemNavigator.getNavigationForLeftPage(spineItemPosition, spineItem)
-    const isNewNavigationInCurrentItem = !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigation, spineItemPosition)
+    const isNewNavigationInCurrentItem =
+      !spineItemPosition.outsideOfBoundaries && arePositionsDifferent(spineItemNavigation, spineItemPosition)
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
@@ -254,7 +267,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     return getAdjustedPositionForSpread(navigation)
   }
 
-  const getNavigationForUrl = (url: string | URL): ViewportNavigationEntry & { url: URL } | undefined => {
+  const getNavigationForUrl = (url: string | URL): (ViewportNavigationEntry & { url: URL }) | undefined => {
     let validUrl: URL | undefined
     try {
       validUrl = url instanceof URL ? url : new URL(url)
@@ -263,7 +276,7 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     }
     if (validUrl) {
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
-      const existingSpineItem = context.getManifest()?.spineItems.find(item => item.href === urlWithoutAnchor)
+      const existingSpineItem = context.getManifest()?.spineItems.find((item) => item.href === urlWithoutAnchor)
       if (existingSpineItem) {
         const spineItem = spineItemManager.get(existingSpineItem.id)
         if (spineItem) {
@@ -307,12 +320,10 @@ export const createNavigationResolver = ({ context, spineItemManager, cfiLocator
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
     // const triggerPercentage = movingForward ? 0.7 : 0.3
     const triggerPercentage = 0.5
-    const triggerXPosition = pageTurnDirection === `horizontal`
-      ? viewportPosition.x + (context.getVisibleAreaRect().width * triggerPercentage)
-      : 0
-    const triggerYPosition = pageTurnDirection === `horizontal`
-      ? 0
-      : viewportPosition.y + (context.getVisibleAreaRect().height * triggerPercentage)
+    const triggerXPosition =
+      pageTurnDirection === `horizontal` ? viewportPosition.x + context.getVisibleAreaRect().width * triggerPercentage : 0
+    const triggerYPosition =
+      pageTurnDirection === `horizontal` ? 0 : viewportPosition.y + context.getVisibleAreaRect().height * triggerPercentage
     const midScreenPositionSafePosition = wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
     return getNavigationForPosition(midScreenPositionSafePosition)
   }

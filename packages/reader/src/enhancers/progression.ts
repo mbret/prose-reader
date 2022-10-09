@@ -5,19 +5,26 @@ import { SpineItem } from "../spineItem/createSpineItem"
 /**
  * Help dealing with progression through the book
  */
-export const progressionEnhancer: Enhancer<{}, {
-  progression: {
-    getPercentageEstimate: (
-      context: Context,
-      currentSpineIndex: number,
-      numberOfPages: number,
-      pageIndex: number,
-      currentPosition: { x: number, y: number },
-      currentItem: SpineItem
-    ) => number,
-    getScrollPercentageWithinItem: (context: Context, currentPosition: { x: number, y: number }, currentItem: SpineItem) => number
+export const progressionEnhancer: Enhancer<
+  {},
+  {
+    progression: {
+      getPercentageEstimate: (
+        context: Context,
+        currentSpineIndex: number,
+        numberOfPages: number,
+        pageIndex: number,
+        currentPosition: { x: number; y: number },
+        currentItem: SpineItem
+      ) => number
+      getScrollPercentageWithinItem: (
+        context: Context,
+        currentPosition: { x: number; y: number },
+        currentItem: SpineItem
+      ) => number
+    }
   }
-}> = (next) => (options) => {
+> = (next) => (options) => {
   const reader = next(options)
 
   const getPercentageEstimate = (
@@ -25,14 +32,16 @@ export const progressionEnhancer: Enhancer<{}, {
     currentSpineIndex: number,
     numberOfPages: number,
     pageIndex: number,
-    currentPosition: { x: number, y: number },
+    currentPosition: { x: number; y: number },
     currentItem: SpineItem
   ) => {
     const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
     const readingOrderLength = context.getManifest()?.spineItems.length || 0
-    const estimateBeforeThisItem = context.getManifest()?.spineItems
-      .slice(0, currentSpineIndex)
-      .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
+    const estimateBeforeThisItem =
+      context
+        .getManifest()
+        ?.spineItems.slice(0, currentSpineIndex)
+        .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
     const currentItemWeight = context.getManifest()?.spineItems[currentSpineIndex]?.progressionWeight || 0
     // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
     // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
@@ -59,26 +68,30 @@ export const progressionEnhancer: Enhancer<{}, {
 
     // because the rounding of weight use a lot of decimals we will end up with
     // something like 0.999878 for the last page
-    if ((currentSpineIndex === readingOrderLength - 1) && (pageIndex === numberOfPages - 1) && totalProgress > 0.99) {
+    if (currentSpineIndex === readingOrderLength - 1 && pageIndex === numberOfPages - 1 && totalProgress > 0.99) {
       return 1
     }
 
     return totalProgress
   }
 
-  const getTotalProgressFromPercentages = (estimateBeforeThisItem: number, currentItemWeight: number, progressWithinThisItem: number) => {
-    return estimateBeforeThisItem + (currentItemWeight * progressWithinThisItem)
+  const getTotalProgressFromPercentages = (
+    estimateBeforeThisItem: number,
+    currentItemWeight: number,
+    progressWithinThisItem: number
+  ) => {
+    return estimateBeforeThisItem + currentItemWeight * progressWithinThisItem
   }
 
-  const getScrollPercentageWithinItem = (context: Context, currentPosition: { x: number, y: number }, currentItem: SpineItem) => {
+  const getScrollPercentageWithinItem = (context: Context, currentPosition: { x: number; y: number }, currentItem: SpineItem) => {
     const { height, width } = currentItem.getElementDimensions()
 
     const { topStart, leftStart } = reader.getAbsolutePositionOf(currentItem)
 
     if (context.getSettings().computedPageTurnDirection === `vertical`) {
-      return Math.max(0, Math.min(1, ((currentPosition.y - topStart) + context.getVisibleAreaRect().height) / height))
+      return Math.max(0, Math.min(1, (currentPosition.y - topStart + context.getVisibleAreaRect().height) / height))
     } else {
-      return Math.max(0, Math.min(1, ((currentPosition.x - leftStart) + context.getVisibleAreaRect().width) / width))
+      return Math.max(0, Math.min(1, (currentPosition.x - leftStart + context.getVisibleAreaRect().width) / width))
     }
   }
 

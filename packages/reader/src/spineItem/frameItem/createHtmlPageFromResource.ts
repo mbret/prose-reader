@@ -10,7 +10,7 @@ export const createHtmlPageFromResource = async (resourceResponse: Response | st
 
   const contentType = parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectContentType(item.href)
 
-  if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some(mime => mime === contentType)) {
+  if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some((mime) => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
 
     return `
@@ -28,7 +28,7 @@ export const createHtmlPageFromResource = async (resourceResponse: Response | st
         `
   }
 
-  if ([`text/plain`].some(mime => mime === contentType)) {
+  if ([`text/plain`].some((mime) => mime === contentType)) {
     const data = await resourceResponse.text()
 
     return `

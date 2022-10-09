@@ -9,9 +9,7 @@ const IS_SAFARI = navigator.userAgent.indexOf(``) > -1 && navigator.userAgent.in
 /**
  * All fixes relative to webkit
  */
-export const webkitEnhancer: Enhancer<{}, {
-
-}> = (next) => (options) => {
+export const webkitEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   /**
    * These hooks are used to fix the flickering on safari that occurs when using transform
    * and more generally GPU transformation. I am not sure what is the impact on performance so
@@ -20,7 +18,7 @@ export const webkitEnhancer: Enhancer<{}, {
   const transformFlickerFixHooks: typeof options[`hooks`] = [
     {
       name: `viewportNavigator.onBeforeContainerCreated`,
-      fn: element => {
+      fn: (element) => {
         element.style.cssText = `
           ${element.style.cssText}
           -webkit-transform-style: preserve-3d;
@@ -31,7 +29,7 @@ export const webkitEnhancer: Enhancer<{}, {
     },
     {
       name: `item.onBeforeContainerCreated`,
-      fn: element => {
+      fn: (element) => {
         element.style.cssText = `
           ${element.style.cssText}
           -webkit-transform-style: preserve-3d;
@@ -45,9 +43,9 @@ export const webkitEnhancer: Enhancer<{}, {
 
   const reader = next({
     ...options,
-    ...IS_SAFARI && {
-      hooks: [...options.hooks || [], ...transformFlickerFixHooks]
-    }
+    ...(IS_SAFARI && {
+      hooks: [...(options.hooks || []), ...transformFlickerFixHooks]
+    })
   })
 
   return reader

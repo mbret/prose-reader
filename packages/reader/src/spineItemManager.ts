@@ -18,7 +18,14 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * This is always in sync with every layout since it is being updated for every layout
    * done with the manager.
    */
-  let itemLayoutInformation: { leftStart: number, leftEnd: number, topStart: number, topEnd: number, width: number, height: number }[] = []
+  let itemLayoutInformation: {
+    leftStart: number
+    leftEnd: number
+    topStart: number
+    topEnd: number
+    width: number
+    height: number
+  }[] = []
   const orderedSpineItemsSubject$ = new BehaviorSubject<SpineItem[]>([])
   /**
    * focused item represent the current item that the user navigated to.
@@ -43,132 +50,146 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
     const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
-    orderedSpineItemsSubject$.value.reduce((edgeOffset, item, index) => {
-      const isPageCover = coverItemIndex === index
-      let minimumWidth = context.getPageSize().width
-      let blankPagePosition: `none` | `before` | `after` = `none`
-      const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
-      const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
+    orderedSpineItemsSubject$.value.reduce(
+      (edgeOffset, item, index) => {
+        const isPageCover = coverItemIndex === index
+        let minimumWidth = context.getPageSize().width
+        let blankPagePosition: `none` | `before` | `after` = `none`
+        const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
+        const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
 
-      if (context.shouldDisplaySpread()) {
-        /**
-         * for now every reflowable content that has reflow siblings takes the entire screen by default
-         * this simplify many things and I am not sure the specs allow one reflow
-         * to end and an other one to start on the same screen anyway
-         *
-         * @important
-         * For now this is impossible to have reflow not taking all screen. This is because
-         * when an element is unloaded, the next element will move back its x, then an adjustment
-         *  will occurs and the previous element will become visible again, meaning it will be loaded,
-         * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
-         * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
-         * book with spread on to make it work.
-         *
-         * @important
-         * When the book is globally pre-paginated we will not apply any of this even if each item is
-         * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
-         * we ignore it
-         */
-        if (!isGloballyPrePaginated && item.isReflowable && index !== orderedSpineItemsSubject$.value.length - 1) {
-          minimumWidth = context.getPageSize().width * 2
-        }
-
-        // mainly to make loading screen looks good
-        if (!isGloballyPrePaginated && item.isReflowable && index === orderedSpineItemsSubject$.value.length - 1 && itemStartOnNewScreen) {
-          minimumWidth = context.getPageSize().width * 2
-        }
-
-        const lastItemStartOnNewScreenInAPrepaginatedBook = itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
-
-        if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
-          blankPagePosition = `before`
-          minimumWidth = context.getPageSize().width * 2
-        } else if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
-          blankPagePosition = `before`
-          minimumWidth = context.getPageSize().width * 2
-        } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
-          if (context.isRTL()) {
-            blankPagePosition = `before`
-          } else {
-            blankPagePosition = `after`
+        if (context.shouldDisplaySpread()) {
+          /**
+           * for now every reflowable content that has reflow siblings takes the entire screen by default
+           * this simplify many things and I am not sure the specs allow one reflow
+           * to end and an other one to start on the same screen anyway
+           *
+           * @important
+           * For now this is impossible to have reflow not taking all screen. This is because
+           * when an element is unloaded, the next element will move back its x, then an adjustment
+           *  will occurs and the previous element will become visible again, meaning it will be loaded,
+           * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
+           * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
+           * book with spread on to make it work.
+           *
+           * @important
+           * When the book is globally pre-paginated we will not apply any of this even if each item is
+           * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
+           * we ignore it
+           */
+          if (!isGloballyPrePaginated && item.isReflowable && index !== orderedSpineItemsSubject$.value.length - 1) {
+            minimumWidth = context.getPageSize().width * 2
           }
-          minimumWidth = context.getPageSize().width * 2
+
+          // mainly to make loading screen looks good
+          if (
+            !isGloballyPrePaginated &&
+            item.isReflowable &&
+            index === orderedSpineItemsSubject$.value.length - 1 &&
+            itemStartOnNewScreen
+          ) {
+            minimumWidth = context.getPageSize().width * 2
+          }
+
+          const lastItemStartOnNewScreenInAPrepaginatedBook = itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
+
+          if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
+            blankPagePosition = `before`
+            minimumWidth = context.getPageSize().width * 2
+          } else if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
+            blankPagePosition = `before`
+            minimumWidth = context.getPageSize().width * 2
+          } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
+            if (context.isRTL()) {
+              blankPagePosition = `before`
+            } else {
+              blankPagePosition = `after`
+            }
+            minimumWidth = context.getPageSize().width * 2
+          }
+
+          if (isGloballyPrePaginated && isPageCover) {
+            minimumWidth = context.getPageSize().width * 2
+          }
         }
 
-        if (isGloballyPrePaginated && isPageCover) {
-          minimumWidth = context.getPageSize().width * 2
+        const { width, height } = item.layout({
+          minimumWidth,
+          blankPagePosition,
+          spreadPosition: context.shouldDisplaySpread()
+            ? itemStartOnNewScreen
+              ? context.isRTL()
+                ? `right`
+                : `left`
+              : context.isRTL()
+                ? `left`
+                : `right`
+            : `none`
+        })
+
+        if (context.getSettings().computedPageTurnDirection === `vertical`) {
+          const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
+            ? edgeOffset.edgeY
+            : edgeOffset.edgeY - context.getVisibleAreaRect().height
+          const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
+
+          if (context.isRTL()) {
+            item.adjustPositionOfElement({
+              top: currentValidEdgeYForVerticalPositioning,
+              left: currentValidEdgeXForVerticalPositioning
+            })
+          } else {
+            item.adjustPositionOfElement({
+              top: currentValidEdgeYForVerticalPositioning,
+              left: currentValidEdgeXForVerticalPositioning
+            })
+          }
+
+          const newEdgeX = width + currentValidEdgeXForVerticalPositioning
+          const newEdgeY = height + currentValidEdgeYForVerticalPositioning
+
+          newItemLayoutInformation.push({
+            leftStart: currentValidEdgeXForVerticalPositioning,
+            leftEnd: newEdgeX,
+            topStart: currentValidEdgeYForVerticalPositioning,
+            topEnd: newEdgeY,
+            height,
+            width
+          })
+
+          return {
+            edgeX: newEdgeX,
+            edgeY: newEdgeY
+          }
         }
-      }
-
-      const { width, height } = item.layout({
-        minimumWidth,
-        blankPagePosition,
-        spreadPosition: context.shouldDisplaySpread()
-          ? itemStartOnNewScreen
-            ? context.isRTL() ? `right` : `left`
-            : context.isRTL() ? `left` : `right`
-          : `none`
-      })
-
-      if (context.getSettings().computedPageTurnDirection === `vertical`) {
-        const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen ? edgeOffset.edgeY : edgeOffset.edgeY - context.getVisibleAreaRect().height
-        const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
 
         if (context.isRTL()) {
-          item.adjustPositionOfElement({
-            top: currentValidEdgeYForVerticalPositioning,
-            left: currentValidEdgeXForVerticalPositioning
-          })
+          // could also be negative left but I am not in the mood
+          // will push items on the left
+          item.adjustPositionOfElement({ right: edgeOffset.edgeX, top: 0 })
         } else {
-          item.adjustPositionOfElement({
-            top: currentValidEdgeYForVerticalPositioning,
-            left: currentValidEdgeXForVerticalPositioning
-          })
+          // will push items on the right
+          item.adjustPositionOfElement({ left: edgeOffset.edgeX, top: 0 })
         }
 
-        const newEdgeX = width + currentValidEdgeXForVerticalPositioning
-        const newEdgeY = height + currentValidEdgeYForVerticalPositioning
+        const newEdgeX = width + edgeOffset.edgeX
 
         newItemLayoutInformation.push({
-          leftStart: currentValidEdgeXForVerticalPositioning,
+          leftStart: edgeOffset.edgeX,
           leftEnd: newEdgeX,
-          topStart: currentValidEdgeYForVerticalPositioning,
-          topEnd: newEdgeY,
+          topStart: edgeOffset.edgeY,
+          topEnd: height,
           height,
           width
         })
 
         return {
           edgeX: newEdgeX,
-          edgeY: newEdgeY
+          edgeY: 0
         }
-      }
-
-      if (context.isRTL()) {
-        // could also be negative left but I am not in the mood
-        // will push items on the left
-        item.adjustPositionOfElement({ right: edgeOffset.edgeX, top: 0 })
-      } else {
-        // will push items on the right
-        item.adjustPositionOfElement({ left: edgeOffset.edgeX, top: 0 })
-      }
-
-      const newEdgeX = width + edgeOffset.edgeX
-
-      newItemLayoutInformation.push({
-        leftStart: edgeOffset.edgeX,
-        leftEnd: newEdgeX,
-        topStart: edgeOffset.edgeY,
-        topEnd: height,
-        height,
-        width
-      })
-
-      return {
-        edgeX: newEdgeX,
-        edgeY: 0
-      }
-    }, { edgeX: 0, edgeY: 0 })
+      },
+      { edgeX: 0, edgeY: 0 }
+    )
 
     const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
 
@@ -208,10 +229,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
-        (index < leftIndex && !isPrePaginated && isUsingFreeScroll)
-          ? true
-          : index < (leftIndex - numberOfAdjacentSpineItemToPreLoad)
-      const isAfterTailWithPreload = index > (rightIndex + numberOfAdjacentSpineItemToPreLoad)
+        index < leftIndex && !isPrePaginated && isUsingFreeScroll ? true : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
+      const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedSpineItem.loadContent()
       } else {
@@ -230,38 +249,45 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
    * current window (viewport).
    */
-  const getAbsolutePositionOf = Report.measurePerformance(`getAbsolutePositionOf`, 10, (spineItemOrIndex: SpineItem | number) => {
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
-    const indexOfItem = typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
+  const getAbsolutePositionOf = Report.measurePerformance(
+    `getAbsolutePositionOf`,
+    10,
+    (spineItemOrIndex: SpineItem | number) => {
+      const pageTurnDirection = context.getSettings().computedPageTurnDirection
+      const indexOfItem =
+        typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
 
-    const layoutInformation = itemLayoutInformation[indexOfItem]
+      const layoutInformation = itemLayoutInformation[indexOfItem]
 
-    if (!layoutInformation) {
-      return { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
-    }
+      if (!layoutInformation) {
+        return { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+      }
 
-    // const distance = orderedSpineItems.value
-    //   .slice(0, indexOfItem + 1)
-    //   .reduce((acc, spineItem) => {
-    //     const { width, height } = spineItem.getElementDimensions()
+      // const distance = orderedSpineItems.value
+      //   .slice(0, indexOfItem + 1)
+      //   .reduce((acc, spineItem) => {
+      //     const { width, height } = spineItem.getElementDimensions()
 
-    //     return {
-    //       leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
-    //       leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
-    //       topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
-    //       topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
-    //       width,
-    //       height
-    //     }
-    //   }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
+      //     return {
+      //       leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
+      //       leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
+      //       topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
+      //       topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
+      //       width,
+      //       height
+      //     }
+      //   }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
 
-    // console.log(distance, itemLayoutInformation[indexOfItem])
-    // return distance
+      // console.log(distance, itemLayoutInformation[indexOfItem])
+      // return distance
 
-    return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
-  }, { disable: true })
+      return itemLayoutInformation[indexOfItem] || { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 }
+    },
+    { disable: true }
+  )
 
-  const getFocusedSpineItem = () => focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
+  const getFocusedSpineItem = () =>
+    focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
 
   const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
     const isAfter = orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
@@ -283,13 +309,11 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
   const add = (spineItem: SpineItem) => {
     orderedSpineItemsSubject$.value.push(spineItem)
 
-    spineItem.$.contentLayout$
-      .pipe(takeUntil(context.$.destroy$))
-      .subscribe(() => {
-        // upstream change, meaning we need to layout again to both resize correctly each item but also to
-        // adjust positions, etc
-        layout()
-      })
+    spineItem.$.contentLayout$.pipe(takeUntil(context.$.destroy$)).subscribe(() => {
+      // upstream change, meaning we need to layout again to both resize correctly each item but also to
+      // adjust positions, etc
+      layout()
+    })
 
     spineItem.$.loaded$
       .pipe(
@@ -316,29 +340,34 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     return item && getSpineItemIndex(item)
   }
 
-  const getSpineItemAtPosition = Report.measurePerformance(`getSpineItemAtPosition`, 10, (position: ViewportPosition) => {
-    const detectedItem = orderedSpineItemsSubject$.value.find(item => {
-      const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
+  const getSpineItemAtPosition = Report.measurePerformance(
+    `getSpineItemAtPosition`,
+    10,
+    (position: ViewportPosition) => {
+      const detectedItem = orderedSpineItemsSubject$.value.find((item) => {
+        const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
 
-      const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
+        const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
 
-      if (context.getSettings().computedPageTurnDirection === `horizontal`) {
-        return isWithinXAxis
-      } else {
-        return isWithinXAxis && position.y >= topStart && position.y < topEnd
-      }
-    })
+        if (context.getSettings().computedPageTurnDirection === `horizontal`) {
+          return isWithinXAxis
+        } else {
+          return isWithinXAxis && position.y >= topStart && position.y < topEnd
+        }
+      })
 
-    if (position.x === 0 && !detectedItem) return orderedSpineItemsSubject$.value[0]
+      if (position.x === 0 && !detectedItem) return orderedSpineItemsSubject$.value[0]
 
-    return detectedItem
-  }, { disable: true })
+      return detectedItem
+    },
+    { disable: true }
+  )
 
   /**
    * @todo handle reload, remove subscription to each items etc. See add()
    */
   const destroyItems = () => {
-    orderedSpineItemsSubject$.value.forEach(item => item.destroy())
+    orderedSpineItemsSubject$.value.forEach((item) => item.destroy())
   }
 
   const destroy = () => {
@@ -366,16 +395,13 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     $: {
       focus$: focus$.asObservable(),
       layout$: layout$.asObservable(),
-      itemIsReady$: orderedSpineItemsSubject$
-        .asObservable()
-        .pipe(
-          switchMap(items => {
-            const itemsIsReady$ = items
-              .map(item => item.$.isReady$.pipe(map(isReady => ({ item: item.item, isReady }))))
+      itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
+        switchMap((items) => {
+          const itemsIsReady$ = items.map((item) => item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))))
 
-            return merge(...itemsIsReady$)
-          })
-        )
+          return merge(...itemsIsReady$)
+        })
+      )
     }
   }
 }

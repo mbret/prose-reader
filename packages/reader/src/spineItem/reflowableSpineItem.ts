@@ -4,15 +4,29 @@ import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 
-export const createReflowableSpineItem = ({ item, context, containerElement, iframeEventBridgeElement, hooks$, viewportState$ }: {
-  item: Manifest[`spineItems`][number],
-  containerElement: HTMLElement,
-  iframeEventBridgeElement: HTMLElement,
-  context: Context,
-  hooks$: BehaviorSubject<Hook[]>,
+export const createReflowableSpineItem = ({
+  item,
+  context,
+  containerElement,
+  iframeEventBridgeElement,
+  hooks$,
+  viewportState$
+}: {
+  item: Manifest[`spineItems`][number]
+  containerElement: HTMLElement
+  iframeEventBridgeElement: HTMLElement
+  context: Context
+  hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
 }) => {
-  const commonSpineItem = createCommonSpineItem({ context, item, parentElement: containerElement, iframeEventBridgeElement, hooks$, viewportState$ })
+  const commonSpineItem = createCommonSpineItem({
+    context,
+    item,
+    parentElement: containerElement,
+    iframeEventBridgeElement,
+    hooks$,
+    viewportState$
+  })
   const spineItemFrame = commonSpineItem.spineItemFrame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
@@ -30,12 +44,12 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
     const pageSize = context.getPageSize()
     const horizontalMargin = 0
     const verticalMargin = 0
-    let columnWidth = pageSize.width - (horizontalMargin * 2)
-    const columnHeight = pageSize.height - (verticalMargin * 2)
-    let width = pageSize.width - (horizontalMargin * 2)
+    let columnWidth = pageSize.width - horizontalMargin * 2
+    const columnHeight = pageSize.height - verticalMargin * 2
+    let width = pageSize.width - horizontalMargin * 2
 
     if (isUsingVerticalWriting) {
-      width = minimumWidth - (horizontalMargin * 2)
+      width = minimumWidth - horizontalMargin * 2
       columnWidth = columnHeight
     }
 
@@ -48,7 +62,13 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
     }
   }
 
-  const layout = ({ blankPagePosition, minimumWidth }: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number }) => {
+  const layout = ({
+    blankPagePosition,
+    minimumWidth
+  }: {
+    blankPagePosition: `before` | `after` | `none`
+    minimumWidth: number
+  }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     // reset width of iframe to be able to retrieve real size later
     spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
@@ -79,11 +99,16 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
         frameElement?.style.setProperty(`--scale`, `${computedScale}`)
         frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
-        frameElement?.style.setProperty(`left`,
+        frameElement?.style.setProperty(
+          `left`,
           blankPagePosition === `before`
-            ? context.isRTL() ? `25%` : `75%`
+            ? context.isRTL()
+              ? `25%`
+              : `75%`
             : blankPagePosition === `after`
-              ? context.isRTL() ? `75%` : `25%`
+              ? context.isRTL()
+                ? `75%`
+                : `25%`
               : `50%`
         )
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
@@ -101,9 +126,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
         commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
 
         if (spineItemFrame.isUsingVerticalWriting()) {
-          const pages = Math.ceil(
-            frameElement.contentDocument.documentElement.scrollHeight / pageHeight
-          )
+          const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollHeight / pageHeight)
           contentHeight = pages * pageHeight
 
           spineItemFrame.staticLayout({
@@ -119,9 +142,7 @@ export const createReflowableSpineItem = ({ item, context, containerElement, ifr
             height: contentHeight
           })
         } else {
-          const pages = Math.ceil(
-            frameElement.contentDocument.documentElement.scrollWidth / pageWidth
-          )
+          const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollWidth / pageWidth)
           /**
            * It is possible that a pre-paginated epub has reflowable item inside it. This is weird because
            * the spec says that we should use pre-paginated for each spine item. Could be a publisher mistake, in
@@ -195,10 +216,11 @@ const buildStyleForFakePrePaginated = () => {
       margin: 0;
     }
     ${
-    /*
-     * @see https://hammerjs.github.io/touch-action/
-     */
-    ``}
+      /*
+       * @see https://hammerjs.github.io/touch-action/
+       */
+      ``
+    }
     html, body {
       touch-action: none;
     }
@@ -218,44 +240,51 @@ const buildStyleForFakePrePaginated = () => {
  *
  * It does not means it has to be pre-paginated (scrollable for example)
  */
-const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean, isScrollable: boolean }) => {
+const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean; isScrollable: boolean }) => {
   return `
     ${
-    /*
-     * @see https://hammerjs.github.io/touch-action/
-     */
-    ``}
+      /*
+       * @see https://hammerjs.github.io/touch-action/
+       */
+      ``
+    }
     html, body {
       width: 100%;
       margin: 0;
       padding: 0;
-      ${enableTouch
-      ? `
+      ${
+        enableTouch
+          ? `
         touch-action: none
       `
-      : ``}
+          : ``
+      }
     }
-    ${isScrollable
-      ? `
+    ${
+      isScrollable
+        ? `
       img {
         height: auto !important;
         margin: 0;
         padding: 0;
         box-sizing: border-box;
         ${
-        // we make sure img spread on entire screen
-        ``}
+          // we make sure img spread on entire screen
+          ``
+        }
         width: 100%;
         ${
-      /**
-       * line break issue
-       * @see https://stackoverflow.com/questions/37869020/image-not-taking-up-the-full-height-of-container
-       */
-      ``}
+          /**
+           * line break issue
+           * @see https://stackoverflow.com/questions/37869020/image-not-taking-up-the-full-height-of-container
+           */
+          ``
+        }
         display: block;
       }
     `
-      : ``}
+        : ``
+    }
   `
 }
 
@@ -275,24 +304,27 @@ const buildStyleWithMultiColumn = ({
   columnHeight,
   columnWidth
 }: {
-  width: number,
-  columnWidth: number,
-  columnHeight: number,
+  width: number
+  columnWidth: number
+  columnHeight: number
 }) => {
   return `
     parsererror {
       display: none !important;
     }
-    ${/*
+    ${
+  /*
       might be html * but it does mess up things like figure if so.
       check accessible_epub_3
-    */``}
+    */ ``
+    }
     html, body {
       margin: 0;
       padding: 0 !important;
       -max-width: ${columnWidth}px !important;
     }
-    ${/*
+    ${
+  /*
       body {
         height: ${columnHeight}px !important;
         width: ${columnWidth}px !important;
@@ -302,7 +334,8 @@ const buildStyleWithMultiColumn = ({
         -padding-top: ${horizontalMargin}px !important;
         -padding-bottom: ${horizontalMargin}px !important;
       }
-    */``}
+    */ ``
+    }
     body {
       padding: 0 !important;
       width: ${width}px !important;
@@ -318,31 +351,38 @@ const buildStyleWithMultiColumn = ({
       margin: 0;
     }
     body:focus-visible {
-      ${/*
+      ${
+  /*
         we make sure that there are no outline when we focus something inside the iframe
-      */``}
+      */ ``
+      }
       outline: none;
     }
     ${
-    /*
-     * @see https://hammerjs.github.io/touch-action/
-     */
-    ``}
+      /*
+       * @see https://hammerjs.github.io/touch-action/
+       */
+      ``
+    }
     html, body {
       touch-action: none;
     }
-    ${/*
+    ${
+  /*
       this messes up hard, be careful with this
-    */``}
+    */ ``
+    }
     * {
       -max-width: ${columnWidth}px !important;
     }
-    ${/*
+    ${
+  /*
       this is necessary to have a proper calculation when determining size
       of iframe content. If an img is using something like width:100% it would expand to
       the size of the original image and potentially gives back a wrong size (much larger)
       @see https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Columns/Handling_Overflow_in_Multicol
-    */``}
+    */ ``
+    }
     img, video, audio, object, svg {
       max-width: 100%;
       max-width: ${columnWidth}px !important;
@@ -361,7 +401,8 @@ const buildStyleWithMultiColumn = ({
       box-sizing: border-box;
       d-max-width: ${columnWidth}px !important;
     }
-    ${/*
+    ${
+  /*
       img, video, audio, object, svg {
         max-height: ${columnHeight}px !important;
         box-sizing: border-box;
@@ -370,7 +411,8 @@ const buildStyleWithMultiColumn = ({
         page-break-inside: avoid;
         break-inside: avoid;
       }
-    */``}
+    */ ``
+    }
     table {
       max-width: ${columnWidth}px !important;
       table-layout: fixed;

@@ -15,31 +15,16 @@ type Func<T extends any[], R> = (...a: T) => R
 function compose<F extends Function>(f: F): F
 
 /* two functions */
-function compose<A, T extends any[], R>(
-  f1: (a: A) => R,
-  f2: Func<T, A>
-): Func<T, R>
+function compose<A, T extends any[], R>(f1: (a: A) => R, f2: Func<T, A>): Func<T, R>
 
 /* three functions */
-function compose<A, B, T extends any[], R>(
-  f1: (b: B) => R,
-  f2: (a: A) => B,
-  f3: Func<T, A>
-): Func<T, R>
+function compose<A, B, T extends any[], R>(f1: (b: B) => R, f2: (a: A) => B, f3: Func<T, A>): Func<T, R>
 
 /* four functions */
-function compose<A, B, C, T extends any[], R>(
-  f1: (c: C) => R,
-  f2: (b: B) => C,
-  f3: (a: A) => B,
-  f4: Func<T, A>
-): Func<T, R>
+function compose<A, B, C, T extends any[], R>(f1: (c: C) => R, f2: (b: B) => C, f3: (a: A) => B, f4: Func<T, A>): Func<T, R>
 
 /* rest */
-function compose<R>(
-  f1: (a: any) => R,
-  ...funcs: Function[]
-): (...args: any[]) => R
+function compose<R>(f1: (a: any) => R, ...funcs: Function[]): (...args: any[]) => R
 
 function compose<R>(...funcs: Function[]): (...args: any[]) => R
 
@@ -57,9 +42,11 @@ function compose (...funcs: Function[]) {
 
   // compose from left-to-right instead of right-to-left. That way end user always
   // has sub enhancer as dependency
-  return funcs.reduce((a, b) => (...args: any) => b(a(...args)))
+  return funcs.reduce(
+    (a, b) =>
+      (...args: any) =>
+        b(a(...args))
+  )
 }
 
-export {
-  compose
-}
+export { compose }

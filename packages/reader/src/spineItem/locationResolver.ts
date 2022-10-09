@@ -3,11 +3,9 @@ import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetI
 import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 
-type SpineItemPosition = { x: number, y: number }
+type SpineItemPosition = { x: number; y: number }
 
-export const createLocationResolver = ({ context }: {
-  context: Context,
-}) => {
+export const createLocationResolver = ({ context }: { context: Context }) => {
   const getSpineItemPositionFromPageIndex = (pageIndex: number, spineItem: SpineItem): SpineItemPosition => {
     const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
     const itemReadingDirection = spineItem.getReadingDirection()
@@ -25,7 +23,7 @@ export const createLocationResolver = ({ context }: {
 
     if (itemReadingDirection === `rtl`) {
       return {
-        x: (itemWidth - ltrRelativeOffset) - context.getPageSize().width,
+        x: itemWidth - ltrRelativeOffset - context.getPageSize().width,
         y: 0
       }
     }
@@ -50,7 +48,7 @@ export const createLocationResolver = ({ context }: {
     let offsetNormalizedForLtr = Math.min(itemWidth, Math.max(0, position.x))
 
     if (itemReadingDirection === `rtl`) {
-      offsetNormalizedForLtr = (itemWidth - offsetNormalizedForLtr) - context.getPageSize().width
+      offsetNormalizedForLtr = itemWidth - offsetNormalizedForLtr - context.getPageSize().width
     }
 
     if (spineItem.isUsingVerticalWriting()) {
@@ -66,7 +64,7 @@ export const createLocationResolver = ({ context }: {
   }
 
   const getSpineItemOffsetFromAnchor = (anchor: string, spineItem: SpineItem) => {
-    const itemWidth = (spineItem.getElementDimensions()?.width || 0)
+    const itemWidth = spineItem.getElementDimensions()?.width || 0
     const pageWidth = context.getPageSize().width
     const anchorElementBoundingRect = spineItem.getBoundingRectOfElementFromSelector(anchor)
 
@@ -151,9 +149,12 @@ export const createLocationResolver = ({ context }: {
 
     if (offset <= 0) return 0
 
-    if (offset >= (numberOfPages * pageWidth)) return numberOfPages - 1
+    if (offset >= numberOfPages * pageWidth) return numberOfPages - 1
 
-    return Math.max(0, offsetValues.findIndex(offsetRange => offset < (offsetRange + pageWidth)))
+    return Math.max(
+      0,
+      offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth)
+    )
   }
 
   return {

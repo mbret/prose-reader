@@ -32,12 +32,7 @@ export const createViewportZoomer = (reader: ReaderInstance) => {
   }
 
   const scale = (userScale: number) => {
-    const roundedScale =
-      Math.ceil(
-        (userScale < 1
-          ? baseScale - (1 - userScale)
-          : baseScale + (userScale - 1)) * 100
-      ) / 100
+    const roundedScale = Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
     const newScale = Math.max(roundedScale, 1)
 
     // GET CURRENT SCALE
@@ -68,10 +63,7 @@ export const createViewportZoomer = (reader: ReaderInstance) => {
     lastUserScale = newScale
   }
 
-  const move = (
-    _: { x: number; y: number } | undefined,
-    __: { isFirst: boolean; isLast: boolean }
-  ) => { }
+  const move = (_: { x: number; y: number } | undefined, __: { isFirst: boolean; isLast: boolean }) => {}
 
   const exit = () => {
     reset()

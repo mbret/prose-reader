@@ -10,7 +10,7 @@ import { openDatabase } from "./indexedDB"
 
 export const createResourcesManager = (context: Context) => {
   let uniqueID = Date.now().toString()
-  const cache$ = new Subject<{ id: number | Pick<Manifest[`spineItems`][number], `id`>, data: Response }>()
+  const cache$ = new Subject<{ id: number | Pick<Manifest[`spineItems`][number], `id`>; data: Response }>()
 
   const retrieveItem = (itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>) => {
     if (typeof itemIndexOrId === `string` || typeof itemIndexOrId === `object`) {
@@ -21,7 +21,10 @@ export const createResourcesManager = (context: Context) => {
     }
   }
 
-  const get = async (itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>, fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>) => {
+  const get = async (
+    itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>,
+    fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+  ) => {
     const item = retrieveItem(itemIndexOrId)
 
     if (!item) return new Response(`Item not found`, { status: 404 })
@@ -33,7 +36,7 @@ export const createResourcesManager = (context: Context) => {
       return new Response(cacheData, { status: 200 })
     }
 
-    const data = (fetchResource && await fetchResource(item)) || await fetch(item.href)
+    const data = (fetchResource && (await fetchResource(item))) || (await fetch(item.href))
 
     cache(item, data.clone())
 
@@ -44,35 +47,34 @@ export const createResourcesManager = (context: Context) => {
     cache$.next({ id: itemIndexOrId, data })
   }
 
-  cache$.asObservable()
+  cache$
+    .asObservable()
     .pipe(
       mergeMap(({ id, data }) => {
         const item = retrieveItem(id)
 
         if (!item) return EMPTY
 
-        return from(forkJoin([openDatabase(`prose-reader`), from(data.blob())]))
-          .pipe(
-            switchMap(([db, blob]) => {
-              return from(db.put(`${uniqueID}_${item.id}`, blob))
-            }),
-            catchError(error => {
-              Report.error(error)
+        return from(forkJoin([openDatabase(`prose-reader`), from(data.blob())])).pipe(
+          switchMap(([db, blob]) => {
+            return from(db.put(`${uniqueID}_${item.id}`, blob))
+          }),
+          catchError((error) => {
+            Report.error(error)
 
-              return EMPTY
-            })
-          )
+            return EMPTY
+          })
+        )
       }),
       takeUntil(context.$.destroy$)
     )
     .subscribe()
 
-  const onLoad$ = context.$.load$
-    .pipe(
-      tap(() => {
-        uniqueID = Date.now().toString()
-      })
-    )
+  const onLoad$ = context.$.load$.pipe(
+    tap(() => {
+      uniqueID = Date.now().toString()
+    })
+  )
 
   /**
    * Cleanup old cache on startup if needed
@@ -84,25 +86,23 @@ export const createResourcesManager = (context: Context) => {
       switchMap(() => {
         Report.log(`Cleanup up old cache...`)
 
-        return from(openDatabase(`prose-reader`))
-          .pipe(
-            switchMap(db =>
-              from(db.keys())
-                .pipe(
-                  map(keys => keys.filter(key => !key.toString().startsWith(uniqueID))),
-                  switchMap((keysToRemove) => {
-                    const promises = keysToRemove.map(key => db.remove(key))
+        return from(openDatabase(`prose-reader`)).pipe(
+          switchMap((db) =>
+            from(db.keys()).pipe(
+              map((keys) => keys.filter((key) => !key.toString().startsWith(uniqueID))),
+              switchMap((keysToRemove) => {
+                const promises = keysToRemove.map((key) => db.remove(key))
 
-                    return from(Promise.all(promises))
-                  })
-                )
-            ),
-            catchError(error => {
-              Report.error(error)
+                return from(Promise.all(promises))
+              })
+            )
+          ),
+          catchError((error) => {
+            Report.error(error)
 
-              return EMPTY
-            })
-          )
+            return EMPTY
+          })
+        )
       }),
       takeUntil(context.$.destroy$)
     )

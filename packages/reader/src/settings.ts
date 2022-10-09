@@ -5,11 +5,11 @@ import { Report } from "./report"
 import { isShallowEqual } from "./utils/objects"
 
 export type PublicSettings = {
-  forceSinglePageMode: boolean,
-  pageTurnAnimation: `none` | `fade` | `slide`,
+  forceSinglePageMode: boolean
+  pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
-  pageTurnDirection: `vertical` | `horizontal`,
-  pageTurnMode: `controlled` | `scrollable`,
+  pageTurnDirection: `vertical` | `horizontal`
+  pageTurnMode: `controlled` | `scrollable`
   navigationSnapThreshold: number
 }
 
@@ -25,11 +25,11 @@ type InnerSettings = PublicSettings & {
    * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
    * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content
    */
-  computedPageTurnMode: PublicSettings[`pageTurnMode`],
-  computedPageTurnDirection: PublicSettings[`pageTurnDirection`],
-  computedPageTurnAnimation: PublicSettings[`pageTurnAnimation`],
-  computedPageTurnAnimationDuration: number,
-  computedSnapAnimationDuration: number,
+  computedPageTurnMode: PublicSettings[`pageTurnMode`]
+  computedPageTurnDirection: PublicSettings[`pageTurnDirection`]
+  computedPageTurnAnimation: PublicSettings[`pageTurnAnimation`]
+  computedPageTurnAnimationDuration: number
+  computedSnapAnimationDuration: number
 }
 
 export const createSettings = (initialSettings: Partial<PublicSettings>) => {
@@ -52,7 +52,10 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
 
   const settingsSubject$ = new BehaviorSubject(mergedSettings)
 
-  const setSettings = (newSettings: Partial<PublicSettings>, options: { hasVerticalWritingSubject: boolean, manifest: Manifest | undefined }) => {
+  const setSettings = (
+    newSettings: Partial<PublicSettings>,
+    options: { hasVerticalWritingSubject: boolean; manifest: Manifest | undefined }
+  ) => {
     if (Object.keys(newSettings).length === 0) return
 
     const newMergedSettings = { ...settingsSubject$.value, ...newSettings }
@@ -62,7 +65,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     settingsSubject$.next(newMergedSettings)
   }
 
-  const recompute = (options: { hasVerticalWritingSubject: boolean, manifest: Manifest | undefined }) => {
+  const recompute = (options: { hasVerticalWritingSubject: boolean; manifest: Manifest | undefined }) => {
     const newMergedSettings = { ...settingsSubject$.value }
 
     updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWritingSubject)
@@ -80,14 +83,13 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     recompute,
     destroy,
     $: {
-      settings$: settingsSubject$
-        .asObservable()
-        .pipe(distinctUntilChanged(isShallowEqual))
+      settings$: settingsSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual))
     }
   }
 }
 
-const areAllItemsPrePaginated = (manifest: Manifest | undefined) => !manifest?.spineItems.some(item => item.renditionLayout === `reflowable`)
+const areAllItemsPrePaginated = (manifest: Manifest | undefined) =>
+  !manifest?.spineItems.some((item) => item.renditionLayout === `reflowable`)
 
 const updateComputedSettings = (newManifest: Manifest | undefined, settings: InnerSettings, hasVerticalWriting: boolean) => {
   settings.computedPageTurnDirection = settings.pageTurnDirection
@@ -98,7 +100,11 @@ const updateComputedSettings = (newManifest: Manifest | undefined, settings: Inn
   if (newManifest?.renditionFlow === `scrolled-continuous`) {
     settings.computedPageTurnMode = `scrollable`
     settings.computedPageTurnDirection = `vertical`
-  } else if (newManifest && settings.pageTurnMode === `scrollable` && (newManifest.renditionLayout !== `pre-paginated` || !areAllItemsPrePaginated(newManifest))) {
+  } else if (
+    newManifest &&
+    settings.pageTurnMode === `scrollable` &&
+    (newManifest.renditionLayout !== `pre-paginated` || !areAllItemsPrePaginated(newManifest))
+  ) {
     Report.warn(`pageTurnMode ${settings.pageTurnMode} incompatible with current book, switching back to default`)
     settings.computedPageTurnAnimation = `none`
     settings.computedPageTurnMode = `controlled`
@@ -109,7 +115,9 @@ const updateComputedSettings = (newManifest: Manifest | undefined, settings: Inn
 
   // some settings are not available for vertical writing
   if (hasVerticalWriting && settings.computedPageTurnAnimation === `slide`) {
-    Report.warn(`pageTurnAnimation ${settings.computedPageTurnAnimation} incompatible with current book, switching back to default`)
+    Report.warn(
+      `pageTurnAnimation ${settings.computedPageTurnAnimation} incompatible with current book, switching back to default`
+    )
     settings.computedPageTurnAnimation = `none`
   }
 
@@ -118,8 +126,7 @@ const updateComputedSettings = (newManifest: Manifest | undefined, settings: Inn
     settings.computedPageTurnAnimationDuration = 0
     settings.computedPageTurnAnimation = `none`
   } else {
-    settings.computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration !== undefined
-      ? settings.pageTurnAnimationDuration
-      : 300
+    settings.computedPageTurnAnimationDuration =
+      settings.pageTurnAnimationDuration !== undefined ? settings.pageTurnAnimationDuration : 300
   }
 }

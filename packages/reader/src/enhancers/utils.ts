@@ -1,11 +1,14 @@
 import { Enhancer } from "./types"
 import { isHtmlElement } from "../utils/dom"
 
-export const utilsEnhancer: Enhancer<{}, {
-  utils: {
-    isOrIsWithinValidLink: (target: Event[`target`]) => boolean
+export const utilsEnhancer: Enhancer<
+  {},
+  {
+    utils: {
+      isOrIsWithinValidLink: (target: Event[`target`]) => boolean
+    }
   }
-}> = (next) => (options) => {
+> = (next) => (options) => {
   const reader = next(options)
 
   const isOrIsWithinValidLink = (target: Event[`target`]) => {

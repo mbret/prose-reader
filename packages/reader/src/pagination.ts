@@ -18,7 +18,7 @@ type PaginationInfo = {
   endSpineItemIndex: number | undefined
 }
 
-export const createPagination = ({ context }: { context: Context, spineItemManager: SpineItemManager }) => {
+export const createPagination = ({ context }: { context: Context; spineItemManager: SpineItemManager }) => {
   const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
     beginPageIndex: undefined,
     beginNumberOfPages: 0,
@@ -45,12 +45,12 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
   }
 
   const getInfoForUpdate = (info: {
-    spineItem: SpineItem,
+    spineItem: SpineItem
     // spineItemPosition: { x: number, y: number },
-    pageIndex: number,
-    cfi: string | undefined,
+    pageIndex: number
+    cfi: string | undefined
     options: {
-      isAtEndOfChapter?: boolean,
+      isAtEndOfChapter?: boolean
       // cfi?: string
     }
   }) => {
@@ -81,41 +81,42 @@ export const createPagination = ({ context }: { context: Context, spineItemManag
     }
   }
 
-  const updateBeginAndEnd = Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
-    begin: Parameters<typeof getInfoForUpdate>[0] & {
-      spineItemIndex: number,
+  const updateBeginAndEnd = Report.measurePerformance(
+    `${NAMESPACE} updateBeginAndEnd`,
+    1,
+    (
+      begin: Parameters<typeof getInfoForUpdate>[0] & {
+        spineItemIndex: number
+      },
+      end: Parameters<typeof getInfoForUpdate>[0] & {
+        spineItemIndex: number
+      }
+    ) => {
+      const beginInfo = getInfoForUpdate(begin)
+      const endInfo = getInfoForUpdate(end)
+
+      const newValues = {
+        beginPageIndex: beginInfo.pageIndex,
+        beginNumberOfPages: beginInfo.numberOfPages,
+        beginCfi: beginInfo.cfi,
+        beginSpineItemIndex: begin.spineItemIndex,
+        endPageIndex: endInfo.pageIndex,
+        endNumberOfPages: endInfo.numberOfPages,
+        endCfi: endInfo.cfi,
+        endSpineItemIndex: end.spineItemIndex
+      }
+
+      paginationSubject$.next({
+        ...paginationSubject$.value,
+        ...newValues
+      })
     },
-    end: Parameters<typeof getInfoForUpdate>[0] & {
-      spineItemIndex: number,
-    }
-  ) => {
-    const beginInfo = getInfoForUpdate(begin)
-    const endInfo = getInfoForUpdate(end)
-
-    const newValues = {
-      beginPageIndex: beginInfo.pageIndex,
-      beginNumberOfPages: beginInfo.numberOfPages,
-      beginCfi: beginInfo.cfi,
-      beginSpineItemIndex: begin.spineItemIndex,
-      endPageIndex: endInfo.pageIndex,
-      endNumberOfPages: endInfo.numberOfPages,
-      endCfi: endInfo.cfi,
-      endSpineItemIndex: end.spineItemIndex
-    }
-
-    paginationSubject$.next({
-      ...paginationSubject$.value,
-      ...newValues
-    })
-  }, { disable: true })
+    { disable: true }
+  )
 
   const getInfo = () => paginationSubject$.value
 
-  const info$ = paginationSubject$
-    .asObservable()
-    .pipe(
-      distinctUntilChanged(isShallowEqual)
-    )
+  const info$ = paginationSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual))
 
   const destroy = () => {
     paginationSubject$.complete()
@@ -149,7 +150,7 @@ export const getClosestValidOffsetFromApproximateOffsetInPages = (offset: number
   const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
-  if (offset >= (numberOfPages * pageWidth)) return offsetValues[offsetValues.length - 1] || 0
+  if (offset >= numberOfPages * pageWidth) return offsetValues[offsetValues.length - 1] || 0
 
-  return offsetValues.find(offsetRange => offset < (offsetRange + pageWidth)) || 0
+  return offsetValues.find((offsetRange) => offset < offsetRange + pageWidth) || 0
 }

@@ -13,104 +13,100 @@ type Item = Manifest[`spineItems`][number]
 const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
 const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
 
-export const loadingEnhancer: Enhancer<{
-  /**
-   * Only called once for every items. It is being used to construct the loading element.
-   * You can use it to customize your element.
-   */
-  loadingElementCreate?: (options: { container: HTMLElement, item: Item }) => HTMLElement
-}, {
-  loading: {
-    $: {
-      items$: Observable<Entries>
-    }
-  }
-}, {}, {}, typeof themeEnhancer> = (next) => ({
-  loadingElementCreate = defaultLoadingElementCreate,
-  ...options
-}) => {
-  const reader = next(options)
-
-  const createEntries$ = (items: ObservedValueOf<typeof reader.$.itemsCreated$>) =>
-    of(
-      items.reduce((acc, { item, element }) => {
-        const loadingElementContainer = loadingElementCreate({
-          container: createLoadingElementContainer(element, reader.context),
-          item
-        })
-
-        element.appendChild(loadingElementContainer)
-
-        return {
-          ...acc,
-          [item.id]: loadingElementContainer
-        }
-      }, {} as Entries)
-    )
-
-  const updateEntriesLayout$ = (entries: Entries) =>
-    combineLatest([reader.$.layout$, reader.theme.$.theme$])
-      .pipe(
-        map(([, theme]) => ({
-          width: reader.context.getVisibleAreaRect().width,
-          theme
-        })),
-        distinctUntilChanged(isShallowEqual),
-        tap(({ width, theme }) => {
-          Object.values(entries).forEach((element) => {
-            element.style.setProperty(`max-width`, `${width}px`)
-            element.style.setProperty(`color`, theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`)
-          })
-        })
-      )
-
-  const updateEntriesVisibility$ = (entries: Entries) =>
-    reader.$.itemIsReady$
-      .pipe(
-        tap(({ item, isReady }) => {
-          entries[item.id]?.style.setProperty(`visibility`, isReady ? `hidden` : `visible`)
-        })
-      )
-
-  const destroyEntries$ = (entries: Entries) =>
-    reader.$.itemsBeforeDestroy$
-      .pipe(
-        map(() => {
-          Object.values(entries).forEach((element) => element.remove())
-
-          return {}
-        })
-      )
-
-  const items$ = reader.$.itemsCreated$
-    .pipe(
-      switchMap(items => createEntries$(items)),
-      shareReplay(1),
-      takeUntil(reader.context.$.destroy$)
-    )
-
-  items$
-    .pipe(
-      switchMap(entries => merge(
-        of(entries),
-        destroyEntries$(entries)
-      )),
-      switchMap(entries => merge(
-        updateEntriesLayout$(entries),
-        updateEntriesVisibility$(entries)
-      )),
-      takeUntil(reader.$.destroy$)
-    ).subscribe()
-
-  return {
-    ...reader,
+export const loadingEnhancer: Enhancer<
+  {
+    /**
+     * Only called once for every items. It is being used to construct the loading element.
+     * You can use it to customize your element.
+     */
+    loadingElementCreate?: (options: { container: HTMLElement; item: Item }) => HTMLElement
+  },
+  {
     loading: {
       $: {
-        items$
+        items$: Observable<Entries>
       }
     }
-  }
-}
+  },
+  {},
+  {},
+  typeof themeEnhancer
+> =
+  (next) =>
+    ({ loadingElementCreate = defaultLoadingElementCreate, ...options }) => {
+      const reader = next(options)
+
+      const createEntries$ = (items: ObservedValueOf<typeof reader.$.itemsCreated$>) =>
+        of(
+          items.reduce((acc, { item, element }) => {
+            const loadingElementContainer = loadingElementCreate({
+              container: createLoadingElementContainer(element, reader.context),
+              item
+            })
+
+            element.appendChild(loadingElementContainer)
+
+            return {
+              ...acc,
+              [item.id]: loadingElementContainer
+            }
+          }, {} as Entries)
+        )
+
+      const updateEntriesLayout$ = (entries: Entries) =>
+        combineLatest([reader.$.layout$, reader.theme.$.theme$]).pipe(
+          map(([, theme]) => ({
+            width: reader.context.getVisibleAreaRect().width,
+            theme
+          })),
+          distinctUntilChanged(isShallowEqual),
+          tap(({ width, theme }) => {
+            Object.values(entries).forEach((element) => {
+              element.style.setProperty(`max-width`, `${width}px`)
+              element.style.setProperty(`color`, theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`)
+            })
+          })
+        )
+
+      const updateEntriesVisibility$ = (entries: Entries) =>
+        reader.$.itemIsReady$.pipe(
+          tap(({ item, isReady }) => {
+            entries[item.id]?.style.setProperty(`visibility`, isReady ? `hidden` : `visible`)
+          })
+        )
+
+      const destroyEntries$ = (entries: Entries) =>
+        reader.$.itemsBeforeDestroy$.pipe(
+          map(() => {
+            Object.values(entries).forEach((element) => element.remove())
+
+            return {}
+          })
+        )
+
+      const items$ = reader.$.itemsCreated$.pipe(
+        switchMap((items) => createEntries$(items)),
+        shareReplay(1),
+        takeUntil(reader.context.$.destroy$)
+      )
+
+      items$
+        .pipe(
+          switchMap((entries) => merge(of(entries), destroyEntries$(entries))),
+          switchMap((entries) => merge(updateEntriesLayout$(entries), updateEntriesVisibility$(entries))),
+          takeUntil(reader.$.destroy$)
+        )
+        .subscribe()
+
+      return {
+        ...reader,
+        loading: {
+          $: {
+            items$
+          }
+        }
+      }
+    }
 
 /**
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
@@ -138,7 +134,7 @@ const createLoadingElementContainer = (containerElement: HTMLElement, context: C
   return loadingElement
 }
 
-const defaultLoadingElementCreate = ({ container, item }: { container: HTMLElement, item: Manifest[`spineItems`][number] }) => {
+const defaultLoadingElementCreate = ({ container, item }: { container: HTMLElement; item: Manifest[`spineItems`][number] }) => {
   const logoElement = container.ownerDocument.createElement(`div`)
   logoElement.innerText = `prose`
   logoElement.style.cssText = `

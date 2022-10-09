@@ -8,26 +8,25 @@ import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
-export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, viewportState$ }: {
-  parent: HTMLElement,
-  item: Manifest[`spineItems`][number],
-  context: Context,
-  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>,
-  hooks$: Observable<Hook[]>,
+export const createFrameItem = ({
+  item,
+  parent,
+  fetchResource,
+  context,
+  hooks$,
+  viewportState$
+}: {
+  parent: HTMLElement
+  item: Manifest[`spineItems`][number]
+  context: Context
+  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+  hooks$: Observable<Hook[]>
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
 
   const {
-    $: {
-      unload$,
-      loaded$,
-      isLoaded$,
-      isReady$,
-      unloaded$,
-      frameElement$,
-      ready$
-    },
+    $: { unload$, loaded$, isLoaded$, isReady$, unloaded$, frameElement$, ready$ },
     load,
     unload,
     destroy: loaderDestroy,
@@ -87,14 +86,8 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
   }
 
   const contentLayoutChange$ = merge(
-    unloaded$
-      .pipe(
-        map(() => ({ isFirstLayout: false }))
-      ),
-    ready$
-      .pipe(
-        map(() => ({ isFirstLayout: true }))
-      )
+    unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
+    ready$.pipe(map(() => ({ isFirstLayout: true })))
   )
 
   const destroy = () => {
@@ -118,7 +111,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
      * an iframe `layout` event. Because the parent `layout` may change some of iframe properties we do not
      * want the iframe to trigger a new `layout` even and have infinite loop.
      */
-    staticLayout: (size: { width: number, height: number }) => {
+    staticLayout: (size: { width: number; height: number }) => {
       const frame = frameElement$.getValue()
       if (frame) {
         frame.style.width = `${size.width}px`
@@ -140,7 +133,7 @@ export const createFrameItem = ({ item, parent, fetchResource, context, hooks$, 
       }
 
       const direction = getComputedStyleAfterLoad()?.direction
-      if ([`ltr`, `rtl`].includes(direction || ``)) return direction as (`ltr` | `rtl`)
+      if ([`ltr`, `rtl`].includes(direction || ``)) return direction as `ltr` | `rtl`
 
       return undefined
     },

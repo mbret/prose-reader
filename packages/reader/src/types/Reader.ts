@@ -12,7 +12,7 @@ type ContextSettings = Parameters<Context[`setSettings`]>[0]
 type ViewportNavigator = ReturnType<typeof createViewportNavigator>
 
 export type LoadOptions = {
-  cfi?: string,
+  cfi?: string
   /**
    * Specify how you want to fetch resources for each spine item.
    * By default the reader will use an HTTP request with the uri provided in the manifest. We encourage
@@ -34,7 +34,7 @@ export type LoadOptions = {
    * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
    * not pass through the service worker.
    */
-  fetchResource?: ((item: Manifest[`spineItems`][number]) => Promise<Response>),
+  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   /**
    * Specify how many spine items you want to preload.
    * Useful for pre-paginated where you want the user to have a smooth transition between items.
@@ -44,67 +44,67 @@ export type LoadOptions = {
    * heavy work on the CPU. One reflowable book with several big chapter may slow down your app
    * significantly.
    */
-  numberOfAdjacentSpineItemToPreLoad?: number,
+  numberOfAdjacentSpineItemToPreLoad?: number
 }
 
 export type Reader = {
-  context: Context,
-  registerHook: RegisterHook,
-  spine: Spine,
+  context: Context
+  registerHook: RegisterHook
+  spine: Spine
   viewportNavigator: ViewportNavigator
-  manipulateSpineItems: Spine[`manipulateSpineItems`],
-  manipulateSpineItem: Spine[`manipulateSpineItem`],
-  manipulateContainer: (cb: (container: HTMLElement) => boolean) => void,
-  moveTo: ViewportNavigator[`moveTo`],
-  turnLeft: ViewportNavigator[`turnLeft`],
-  turnRight: ViewportNavigator[`turnRight`],
-  goToPageOfCurrentChapter: ViewportNavigator[`goToPageOfCurrentChapter`],
-  goToPage: ViewportNavigator[`goToPage`],
-  goToUrl: ViewportNavigator[`goToUrl`],
-  goToCfi: ViewportNavigator[`goToCfi`],
-  goToSpineItem: ViewportNavigator[`goToSpineItem`],
-  getFocusedSpineItemIndex: SpineItemManager[`getFocusedSpineItemIndex`],
-  getSpineItem: SpineItemManager[`get`],
-  getSpineItems: SpineItemManager[`getAll`],
-  getAbsolutePositionOf: SpineItemManager[`getAbsolutePositionOf`],
-  getSelection: Spine[`getSelection`],
-  isSelecting: Spine[`isSelecting`],
-  normalizeEventForViewport: Spine[`normalizeEventForViewport`],
-  getCfiMetaInformation: Spine[`cfiLocator`][`getCfiMetaInformation`],
-  resolveCfi: Spine[`cfiLocator`][`resolveCfi`],
-  generateCfi: Spine[`cfiLocator`][`generateFromRange`],
-  locator: Spine[`locator`],
-  getCurrentNavigationPosition: ViewportNavigator[`getCurrentNavigationPosition`],
-  getCurrentViewportPosition: ViewportNavigator[`getCurrentViewportPosition`],
-  layout: () => void,
-  load: (manifest: Manifest, loadOptions?: LoadOptions) => void,
-  destroy: () => void,
-  setSettings: Context[`setSettings`],
+  manipulateSpineItems: Spine[`manipulateSpineItems`]
+  manipulateSpineItem: Spine[`manipulateSpineItem`]
+  manipulateContainer: (cb: (container: HTMLElement) => boolean) => void
+  moveTo: ViewportNavigator[`moveTo`]
+  turnLeft: ViewportNavigator[`turnLeft`]
+  turnRight: ViewportNavigator[`turnRight`]
+  goToPageOfCurrentChapter: ViewportNavigator[`goToPageOfCurrentChapter`]
+  goToPage: ViewportNavigator[`goToPage`]
+  goToUrl: ViewportNavigator[`goToUrl`]
+  goToCfi: ViewportNavigator[`goToCfi`]
+  goToSpineItem: ViewportNavigator[`goToSpineItem`]
+  getFocusedSpineItemIndex: SpineItemManager[`getFocusedSpineItemIndex`]
+  getSpineItem: SpineItemManager[`get`]
+  getSpineItems: SpineItemManager[`getAll`]
+  getAbsolutePositionOf: SpineItemManager[`getAbsolutePositionOf`]
+  getSelection: Spine[`getSelection`]
+  isSelecting: Spine[`isSelecting`]
+  normalizeEventForViewport: Spine[`normalizeEventForViewport`]
+  getCfiMetaInformation: Spine[`cfiLocator`][`getCfiMetaInformation`]
+  resolveCfi: Spine[`cfiLocator`][`resolveCfi`]
+  generateCfi: Spine[`cfiLocator`][`generateFromRange`]
+  locator: Spine[`locator`]
+  getCurrentNavigationPosition: ViewportNavigator[`getCurrentNavigationPosition`]
+  getCurrentViewportPosition: ViewportNavigator[`getCurrentViewportPosition`]
+  layout: () => void
+  load: (manifest: Manifest, loadOptions?: LoadOptions) => void
+  destroy: () => void
+  setSettings: Context[`setSettings`]
   $: {
     pagination$: Pagination[`$`][`info$`]
-    settings$: Context[`$`][`settings$`],
+    settings$: Context[`$`][`settings$`]
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
       supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
       supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
       supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
-    }>,
+    }>
     /**
      * Dispatched when the reader has loaded a book and is displayed a book.
      * Using navigation API and getting information about current content will
      * have an effect.
      * It can typically be used to hide a loading indicator.
      */
-    ready$: Observable<void>,
+    ready$: Observable<void>
     /**
      * Dispatched when a change in selection happens
      */
-    selection$: Observable<ReturnType<typeof createSelection> | null>,
-    viewportState$: ViewportNavigator[`$`][`state$`],
-    layout$: Spine[`$`][`layout$`],
-    itemsCreated$: Spine[`$`][`itemsCreated$`],
-    itemsBeforeDestroy$: Spine[`$`][`itemsBeforeDestroy$`],
-    itemIsReady$: SpineItemManager[`$`][`itemIsReady$`],
-    destroy$: Observable<void>,
-  },
+    selection$: Observable<ReturnType<typeof createSelection> | null>
+    viewportState$: ViewportNavigator[`$`][`state$`]
+    layout$: Spine[`$`][`layout$`]
+    itemsCreated$: Spine[`$`][`itemsCreated$`]
+    itemsBeforeDestroy$: Spine[`$`][`itemsBeforeDestroy$`]
+    itemIsReady$: SpineItemManager[`$`][`itemIsReady$`]
+    destroy$: Observable<void>
+  }
 }

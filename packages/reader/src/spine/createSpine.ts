@@ -1,5 +1,18 @@
 import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
-import { catchError, debounce, distinctUntilChanged, filter, map, share, skip, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import {
+  catchError,
+  debounce,
+  distinctUntilChanged,
+  filter,
+  map,
+  share,
+  skip,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+  withLatestFrom
+} from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { Pagination } from "../pagination"
@@ -23,7 +36,7 @@ type RequireLayout = boolean
 type ManipulableSpineItemCallback = Parameters<SpineItem[`manipulateSpineItem`]>[0]
 type ManipulableSpineItemCallbackPayload = Parameters<ManipulableSpineItemCallback>[0]
 
-type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
+type Event = { type: `onSelectionChange`; data: ReturnType<typeof createSelection> | null }
 
 export const createSpine = ({
   ownerDocument,
@@ -40,21 +53,21 @@ export const createSpine = ({
   currentNavigationPosition$,
   viewportState$
 }: {
-  ownerDocument: Document,
-  iframeEventBridgeElement: HTMLElement,
-  context: Context,
-  pagination: Pagination,
-  spineItemManager: SpineItemManager,
-  hooks$: BehaviorSubject<Hook[]>,
-  spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
-  spineLocator: ReturnType<typeof createSpineLocationResolver>,
-  cfiLocator: ReturnType<typeof createCfiLocator>,
+  ownerDocument: Document
+  iframeEventBridgeElement: HTMLElement
+  context: Context
+  pagination: Pagination
+  spineItemManager: SpineItemManager
+  hooks$: BehaviorSubject<Hook[]>
+  spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>
+  spineLocator: ReturnType<typeof createSpineLocationResolver>
+  cfiLocator: ReturnType<typeof createCfiLocator>
   navigation$: Observable<Navigation>
   navigationAdjusted$: Observable<AdjustedNavigation>
   currentNavigationPosition$: Observable<{
-    x: number;
-    y: number;
-  }>,
+    x: number
+    y: number
+  }>
   viewportState$: Observable<`free` | `busy`>
 }): Spine => {
   const layoutSubject$ = new Subject<void>()
@@ -100,14 +113,12 @@ export const createSpine = ({
     spineItemManager.get(id)?.manipulateSpineItem(cb)
   }
 
-  context.$.load$
-    .pipe(
-      tap(reload),
-      takeUntil(context.$.destroy$)
-    )
-    .subscribe()
+  context.$.load$.pipe(tap(reload), takeUntil(context.$.destroy$)).subscribe()
 
-  const waitForViewportFree$ = viewportState$.pipe(filter(v => v === `free`), take(1))
+  const waitForViewportFree$ = viewportState$.pipe(
+    filter((v) => v === `free`),
+    take(1)
+  )
 
   /**
    * This adjustment is used to update the pagination with the most up to date values we can.
@@ -120,146 +131,157 @@ export const createSpine = ({
    * - items are different
    */
   const adjustPagination = (position: ViewportNavigationEntry) => {
-    return waitForViewportFree$
-      .pipe(
-        tap(report.measurePerformance(`adjustPagination`, 1, () => {
-          const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(position)
-          const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
-          const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
-          const beginLastCfi = pagination.getInfo().beginCfi
-          const endLastCfi = pagination.getInfo().endCfi
+    return waitForViewportFree$.pipe(
+      tap(
+        report.measurePerformance(
+          `adjustPagination`,
+          1,
+          () => {
+            const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(position)
+            const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
+            const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
+            const beginLastCfi = pagination.getInfo().beginCfi
+            const endLastCfi = pagination.getInfo().endCfi
 
-          const shouldUpdateBeginCfi =
-            pagination.getInfo().beginSpineItemIndex !== spineItemsFromPosition?.begin ||
-            beginLastCfi === undefined ||
-            beginLastCfi?.startsWith(`epubcfi(/0`)
+            const shouldUpdateBeginCfi =
+              pagination.getInfo().beginSpineItemIndex !== spineItemsFromPosition?.begin ||
+              beginLastCfi === undefined ||
+              beginLastCfi?.startsWith(`epubcfi(/0`)
 
-          const shouldUpdateEndCfi =
-            pagination.getInfo().endSpineItemIndex !== spineItemsFromPosition?.end ||
-            endLastCfi === undefined ||
-            endLastCfi?.startsWith(`epubcfi(/0`)
+            const shouldUpdateEndCfi =
+              pagination.getInfo().endSpineItemIndex !== spineItemsFromPosition?.end ||
+              endLastCfi === undefined ||
+              endLastCfi?.startsWith(`epubcfi(/0`)
 
-          if (beginSpineItem && endSpineItem && spineItemsFromPosition) {
-            const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.beginPosition, beginSpineItem)
-            const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
-            const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.endPosition, endSpineItem)
-            const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
+            if (beginSpineItem && endSpineItem && spineItemsFromPosition) {
+              const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(
+                spineItemsFromPosition.beginPosition,
+                beginSpineItem
+              )
+              const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
+              const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(
+                spineItemsFromPosition.endPosition,
+                endSpineItem
+              )
+              const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
 
-            pagination.updateBeginAndEnd({
-              spineItem: beginSpineItem,
-              spineItemIndex: spineItemManager.getSpineItemIndex(beginSpineItem) ?? 0,
-              pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem),
-              cfi: shouldUpdateBeginCfi ? cfiLocator.getCfi(beginPageIndex, beginSpineItem) : beginLastCfi,
-              options: {
-                isAtEndOfChapter: false
-              }
-            }, {
-              spineItem: endSpineItem,
-              spineItemIndex: spineItemManager.getSpineItemIndex(endSpineItem) ?? 0,
-              pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem),
-              cfi: shouldUpdateEndCfi ? cfiLocator.getCfi(endPageIndex, endSpineItem) : endLastCfi,
-              options: {
-                isAtEndOfChapter: false
-              }
-            })
-          }
-        }, { disable: true }))
+              pagination.updateBeginAndEnd(
+                {
+                  spineItem: beginSpineItem,
+                  spineItemIndex: spineItemManager.getSpineItemIndex(beginSpineItem) ?? 0,
+                  pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem),
+                  cfi: shouldUpdateBeginCfi ? cfiLocator.getCfi(beginPageIndex, beginSpineItem) : beginLastCfi,
+                  options: {
+                    isAtEndOfChapter: false
+                  }
+                },
+                {
+                  spineItem: endSpineItem,
+                  spineItemIndex: spineItemManager.getSpineItemIndex(endSpineItem) ?? 0,
+                  pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem),
+                  cfi: shouldUpdateEndCfi ? cfiLocator.getCfi(endPageIndex, endSpineItem) : endLastCfi,
+                  options: {
+                    isAtEndOfChapter: false
+                  }
+                }
+              )
+            }
+          },
+          { disable: true }
+        )
       )
+    )
   }
 
   merge(
-    spineItemManager.$.focus$
-      .pipe(
-        tap((event) => {
-          // @todo track tail as well (selection, finger etc)
+    spineItemManager.$.focus$.pipe(
+      tap((event) => {
+        // @todo track tail as well (selection, finger etc)
 
-          const spineItem = event.data
-          const fingerTracker$ = spineItem.fingerTracker.$
-          const selectionTracker$ = spineItem.selectionTracker.$
+        const spineItem = event.data
+        const fingerTracker$ = spineItem.fingerTracker.$
+        const selectionTracker$ = spineItem.selectionTracker.$
 
-          selectionSubscription?.unsubscribe()
-          selectionSubscription = merge(
-            selectionTracker$
-              .pipe(
-                filter(event => event.event === `selectionchange`),
-                tap(event => {
-                  subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, spineItem.item) : null })
-                })
-              ),
-            selectionTracker$
-              .pipe(
-                filter(({ event }) => event === `selectstart`),
-                switchMap(_ => fingerTracker$
-                  .pipe(
-                    filter(({ event }) => event === `fingermove`),
-                    debounce(() => interval(1000)),
-                    takeUntil(fingerTracker$
-                      .pipe(
-                        filter(({ event }) => event === `fingerout`),
-                        tap(() => {
-
-                        })
-                      )
-                    ),
-                    tap(({ data }) => {
-                      if (data) {
-                        // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, spineItem)
-                        // if (fingerPosition.x >= context.getPageSize().width) {
-                        //   viewportNavigator.turnRight({ allowSpineItemChange: false })
-                        // } else if (fingerPosition.x <= context.getPageSize().width) {
-                        //   viewportNavigator.turnLeft({ allowSpineItemChange: false })
-                        // }
-                      }
-                    })
+        selectionSubscription?.unsubscribe()
+        selectionSubscription = merge(
+          selectionTracker$.pipe(
+            filter((event) => event.event === `selectionchange`),
+            tap((event) => {
+              subject.next({ type: `onSelectionChange`, data: event.data ? createSelection(event.data, spineItem.item) : null })
+            })
+          ),
+          selectionTracker$.pipe(
+            filter(({ event }) => event === `selectstart`),
+            switchMap((_) =>
+              fingerTracker$.pipe(
+                filter(({ event }) => event === `fingermove`),
+                debounce(() => interval(1000)),
+                takeUntil(
+                  fingerTracker$.pipe(
+                    filter(({ event }) => event === `fingerout`),
+                    tap(() => {})
                   )
-                )
+                ),
+                tap(({ data }) => {
+                  if (data) {
+                    // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, spineItem)
+                    // if (fingerPosition.x >= context.getPageSize().width) {
+                    //   viewportNavigator.turnRight({ allowSpineItemChange: false })
+                    // } else if (fingerPosition.x <= context.getPageSize().width) {
+                    //   viewportNavigator.turnLeft({ allowSpineItemChange: false })
+                    // }
+                  }
+                })
               )
+            )
           )
-            .subscribe()
-        }),
-        catchError(e => {
-          Report.error(e)
+        ).subscribe()
+      }),
+      catchError((e) => {
+        Report.error(e)
 
-          return EMPTY
-        }),
-        takeUntil(context.$.destroy$)
-      )
-  )
-    .subscribe()
+        return EMPTY
+      }),
+      takeUntil(context.$.destroy$)
+    )
+  ).subscribe()
 
-  const itemUpdateOnNavigation$ = navigation$
-    .pipe(
-      tap((data) => {
-        const time = report.time(`navigation`, 1)
-        const currentSpineItem = spineItemManager.getFocusedSpineItem()
-        const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(data.position)
-        let beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
-        let endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
-        beginSpineItem = beginSpineItem || currentSpineItem
-        endSpineItem = endSpineItem || currentSpineItem
+  const itemUpdateOnNavigation$ = navigation$.pipe(
+    tap((data) => {
+      const time = report.time(`navigation`, 1)
+      const currentSpineItem = spineItemManager.getFocusedSpineItem()
+      const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(data.position)
+      let beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
+      let endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
+      beginSpineItem = beginSpineItem || currentSpineItem
+      endSpineItem = endSpineItem || currentSpineItem
 
-        // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
-        // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
-        // In case of no item to focus is detected we will just fallback to 0
-        const spineItemToFocus = data.position.spineItem || beginSpineItem
+      // In theory the item to focus should be either begin or end. This is because the navigation should at least take us on top
+      // of it. However this is the theory, due to wrong layout / missing adjustment it could be different.
+      // In case of no item to focus is detected we will just fallback to 0
+      const spineItemToFocus = data.position.spineItem || beginSpineItem
 
-        if (spineItemToFocus && spineItemToFocus !== currentSpineItem) {
-          spineItemManager.focus(spineItemToFocus)
-        } else if (!spineItemToFocus) {
-          // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
-          spineItemManager.focus(0)
-        }
+      if (spineItemToFocus && spineItemToFocus !== currentSpineItem) {
+        spineItemManager.focus(spineItemToFocus)
+      } else if (!spineItemToFocus) {
+        // we default to item 0 so if anything wrong happens during navigation we can fallback to a valid item
+        spineItemManager.focus(0)
+      }
 
-        if (spineItemToFocus && beginSpineItem && endSpineItem && spineItemsFromPosition) {
-          const lastExpectedNavigation = data.lastUserExpectedNavigation
-          const beginItemIndex = spineItemManager.getSpineItemIndex(beginSpineItem) ?? 0
-          const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.beginPosition, beginSpineItem)
-          const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
-          const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.endPosition, endSpineItem)
-          const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
-          const endItemIndex = spineItemManager.getSpineItemIndex(endSpineItem) ?? 0
+      if (spineItemToFocus && beginSpineItem && endSpineItem && spineItemsFromPosition) {
+        const lastExpectedNavigation = data.lastUserExpectedNavigation
+        const beginItemIndex = spineItemManager.getSpineItemIndex(beginSpineItem) ?? 0
+        const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(
+          spineItemsFromPosition.beginPosition,
+          beginSpineItem
+        )
+        const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
+        const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.endPosition, endSpineItem)
+        const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
+        const endItemIndex = spineItemManager.getSpineItemIndex(endSpineItem) ?? 0
 
-          pagination.updateBeginAndEnd({
+        pagination.updateBeginAndEnd(
+          {
             spineItem: beginSpineItem,
             spineItemIndex: beginItemIndex,
             pageIndex: beginPageIndex,
@@ -282,36 +304,47 @@ export const createSpine = ({
                   ? pagination.getInfo().beginCfi
                   : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
                     ? cfiLocator.getRootCfi(beginSpineItem)
-                    // @todo check ?
-                    : cfiLocator.getRootCfi(beginSpineItem),
+                    : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
             options: {
               isAtEndOfChapter: false
             }
-          }, {
+          },
+          {
             spineItem: endSpineItem,
             spineItemIndex: endItemIndex,
             pageIndex: endPageIndex,
-            cfi: lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
-              ? lastExpectedNavigation.data
-              : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getInfo().endCfi
-                : endItemIndex !== pagination.getInfo().endSpineItemIndex
-                  ? cfiLocator.getRootCfi(endSpineItem)
-                  // @todo check ?
-                  : cfiLocator.getRootCfi(endSpineItem),
+            cfi:
+              lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
+                ? lastExpectedNavigation.data
+                : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
+                  ? pagination.getInfo().endCfi
+                  : endItemIndex !== pagination.getInfo().endSpineItemIndex
+                    ? cfiLocator.getRootCfi(endSpineItem)
+                    : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
             options: {
               isAtEndOfChapter: false
             }
-          })
+          }
+        )
 
-          report.log(`navigation$`, { spineItemHasChanged: spineItemToFocus !== currentSpineItem, item: spineItemToFocus, spineItemToFocus, index: spineItemManager.getSpineItemIndex(spineItemToFocus), offset: data, endSpineItem, beginSpineItem, lastExpectedNavigation, spineItemsFromPosition })
-        }
+        report.log(`navigation$`, {
+          spineItemHasChanged: spineItemToFocus !== currentSpineItem,
+          item: spineItemToFocus,
+          spineItemToFocus,
+          index: spineItemManager.getSpineItemIndex(spineItemToFocus),
+          offset: data,
+          endSpineItem,
+          beginSpineItem,
+          lastExpectedNavigation,
+          spineItemsFromPosition
+        })
+      }
 
-        time()
-      }),
-      share(),
-      takeUntil(context.$.destroy$)
-    )
+      time()
+    }),
+    share(),
+    takeUntil(context.$.destroy$)
+  )
 
   /**
    * Adjust heavier pagination once the navigation and items are updated.
@@ -321,10 +354,7 @@ export const createSpine = ({
   itemUpdateOnNavigation$
     .pipe(
       switchMap((data) => {
-        return adjustPagination(data.position)
-          .pipe(
-            takeUntil(spineItemManager.$.layout$)
-          )
+        return adjustPagination(data.position).pipe(takeUntil(spineItemManager.$.layout$))
       }),
       takeUntil(context.$.destroy$)
     )
@@ -360,30 +390,31 @@ export const createSpine = ({
   )
     .pipe(
       switchMap(() => {
-        return waitForViewportFree$
-          .pipe(
-            withLatestFrom(currentNavigationPosition$),
-            map(([, currentNavigationPosition]) => {
-              const focusedSpineItemIndex = spineItemManager.getFocusedSpineItemIndex()
+        return waitForViewportFree$.pipe(
+          withLatestFrom(currentNavigationPosition$),
+          map(([, currentNavigationPosition]) => {
+            const focusedSpineItemIndex = spineItemManager.getFocusedSpineItemIndex()
 
-              report.log(`update contents`, { focusedSpineItemIndex })
+            report.log(`update contents`, { focusedSpineItemIndex })
 
-              if (focusedSpineItemIndex === undefined) return
+            if (focusedSpineItemIndex === undefined) return
 
-              const { begin = focusedSpineItemIndex, end = focusedSpineItemIndex } = spineLocator.getSpineItemsFromReadingOrderPosition(currentNavigationPosition) || {}
+            const { begin = focusedSpineItemIndex, end = focusedSpineItemIndex } =
+              spineLocator.getSpineItemsFromReadingOrderPosition(currentNavigationPosition) || {}
 
-              if (begin !== focusedSpineItemIndex && end !== focusedSpineItemIndex) {
-                Report.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
-                spineItemManager.loadContents([focusedSpineItemIndex, focusedSpineItemIndex])
-              } else {
-                spineItemManager.loadContents([begin, end])
-              }
-            }),
-            take(1)
-          )
+            if (begin !== focusedSpineItemIndex && end !== focusedSpineItemIndex) {
+              Report.warn(`Current viewport is not in sync with focus item, load from focus item rather than viewport`)
+              spineItemManager.loadContents([focusedSpineItemIndex, focusedSpineItemIndex])
+            } else {
+              spineItemManager.loadContents([begin, end])
+            }
+          }),
+          take(1)
+        )
       }),
       takeUntil(context.$.destroy$)
-    ).subscribe()
+    )
+    .subscribe()
 
   return {
     element: containerElement,
@@ -433,6 +464,4 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   }, element)
 }
 
-export {
-  Spine
-}
+export { Spine }

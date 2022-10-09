@@ -23,14 +23,10 @@ const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
 export type CreateReaderOptions = {
   hooks?: Hook[]
-  containerElement: HTMLElement,
+  containerElement: HTMLElement
 } & Pick<
   ContextSettings,
-  | `forceSinglePageMode`
-  | `pageTurnAnimation`
-  | `pageTurnDirection`
-  | `pageTurnMode`
-  | `navigationSnapThreshold`
+  `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode` | `navigationSnapThreshold`
 >
 
 export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): Reader => {
@@ -111,9 +107,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     const isReflow = true // @todo
     const containerElementWidth = dimensions.width
     const containerElementEvenWidth =
-      containerElementWidth % 2 === 0 || isReflow
-        ? containerElementWidth
-        : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
+      containerElementWidth % 2 === 0 || isReflow ? containerElementWidth : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
 
     element.style.setProperty(`overflow`, `hidden`)
     element.style.height = `${dimensions.height - marginTop - marginBottom}px`
@@ -124,21 +118,13 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     }
     const elementRect = element.getBoundingClientRect()
 
-    context.setVisibleAreaRect(
-      elementRect.x,
-      elementRect.y,
-      containerElementEvenWidth,
-      dimensions.height
-    )
+    context.setVisibleAreaRect(elementRect.x, elementRect.y, containerElementEvenWidth, dimensions.height)
 
     viewportNavigator.layout()
     spine.layout()
   }
 
-  const load = (
-    manifest: Manifest,
-    loadOptions: LoadOptions = {}
-  ) => {
+  const load = (manifest: Manifest, loadOptions: LoadOptions = {}) => {
     if (context.getManifest()) {
       Report.warn(`loading a new book is not supported yet`)
 
@@ -171,34 +157,25 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     cb(element)
   }
 
-  spine.$.$
-    .pipe(
-      tap(event => {
-        if (event.type === `onSelectionChange`) {
-          selectionSubject$.next(event.data)
-        }
-      }),
-      takeUntil(destroy$)
-    )
-    .subscribe()
+  spine.$.$.pipe(
+    tap((event) => {
+      if (event.type === `onSelectionChange`) {
+        selectionSubject$.next(event.data)
+      }
+    }),
+    takeUntil(destroy$)
+  ).subscribe()
 
   viewportNavigator.$.navigationAdjustedAfterLayout$
     .pipe(
       switchMap(({ adjustedSpinePosition }) => {
-        return spine.adjustPagination(adjustedSpinePosition)
-          .pipe(
-            takeUntil(navigation$)
-          )
+        return spine.adjustPagination(adjustedSpinePosition).pipe(takeUntil(navigation$))
       }),
       takeUntil(context.$.destroy$)
     )
     .subscribe()
 
-  merge(
-    context.$.load$,
-    context.$.settings$,
-    context.$.hasVerticalWriting$
-  )
+  merge(context.$.load$, context.$.settings$, context.$.hasVerticalWriting$)
     .pipe(
       mapTo(undefined),
       withLatestFrom(context.$.hasVerticalWriting$),
@@ -214,25 +191,34 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
         }
       }),
       distinctUntilChanged(isShallowEqual),
-      map(({ hasVerticalWriting, renditionFlow, renditionLayout, computedPageTurnMode }): ObservedValueOf<typeof stateSubject$> => ({
-        ...stateSubject$.value,
-        supportedPageTurnMode:
-          renditionFlow === `scrolled-continuous`
-            ? [`scrollable`]
-            : !context.areAllItemsPrePaginated() ? [`controlled`] : [`controlled`, `scrollable`],
-        supportedPageTurnAnimation:
-          renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
-            ? [`none`]
-            : hasVerticalWriting
-              ? [`fade`, `none`]
-              : [`fade`, `none`, `slide`],
-        supportedPageTurnDirection:
-          computedPageTurnMode === `scrollable`
-            ? [`vertical`]
-            : renditionLayout === `reflowable`
-              ? [`horizontal`]
-              : [`horizontal`, `vertical`]
-      })),
+      map(
+        ({
+          hasVerticalWriting,
+          renditionFlow,
+          renditionLayout,
+          computedPageTurnMode
+        }): ObservedValueOf<typeof stateSubject$> => ({
+          ...stateSubject$.value,
+          supportedPageTurnMode:
+            renditionFlow === `scrolled-continuous`
+              ? [`scrollable`]
+              : !context.areAllItemsPrePaginated()
+                  ? [`controlled`]
+                  : [`controlled`, `scrollable`],
+          supportedPageTurnAnimation:
+            renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
+              ? [`none`]
+              : hasVerticalWriting
+                ? [`fade`, `none`]
+                : [`fade`, `none`, `slide`],
+          supportedPageTurnDirection:
+            computedPageTurnMode === `scrollable`
+              ? [`vertical`]
+              : renditionLayout === `reflowable`
+                ? [`horizontal`]
+                : [`horizontal`, `vertical`]
+        })
+      ),
       takeUntil(destroy$)
     )
     .subscribe(stateSubject$)
@@ -353,6 +339,4 @@ const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
   return iframeEventBridgeElement
 }
 
-export {
-  Reader
-}
+export { Reader }

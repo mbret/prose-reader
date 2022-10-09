@@ -7,26 +7,21 @@ import { createSettings, PublicSettings } from "./settings"
 type SettingsManager = ReturnType<typeof createSettings>
 
 export type Context = {
-  load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void,
-  setSettings: (data: Partial<PublicSettings>) => void,
-  getSettings: () => ReturnType<SettingsManager[`getSettings`]>,
-  getManifest: () => Manifest | undefined,
-  areAllItemsPrePaginated: () => boolean,
-  getLoadOptions: () => LoadOptions | undefined,
-  getCalculatedInnerMargin: () => number,
-  getVisibleAreaRect: () => { width: number, height: number, x: number, y: number },
+  load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
+  setSettings: (data: Partial<PublicSettings>) => void
+  getSettings: () => ReturnType<SettingsManager[`getSettings`]>
+  getManifest: () => Manifest | undefined
+  areAllItemsPrePaginated: () => boolean
+  getLoadOptions: () => LoadOptions | undefined
+  getCalculatedInnerMargin: () => number
+  getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
   shouldDisplaySpread: () => boolean
-  setHasVerticalWriting: () => void,
+  setHasVerticalWriting: () => void
   getReadingDirection: () => Manifest[`readingDirection`] | undefined
-  getPageSize: () => { height: number, width: number }
-  setVisibleAreaRect: (
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => void,
-  isRTL: () => boolean,
-  destroy: () => void,
+  getPageSize: () => { height: number; width: number }
+  setVisibleAreaRect: (x: number, y: number, width: number, height: number) => void
+  isRTL: () => boolean
+  destroy: () => void
   $: {
     hasVerticalWriting$: Observable<boolean>
     settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
@@ -80,12 +75,10 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     // default auto behavior
     return (
       isLandscape &&
-      (
-        manifest?.renditionSpread === undefined ||
+      (manifest?.renditionSpread === undefined ||
         manifest?.renditionSpread === `auto` ||
         manifest?.renditionSpread === `landscape` ||
-        manifest?.renditionSpread === `both`
-      )
+        manifest?.renditionSpread === `both`)
     )
   }
 
@@ -139,12 +132,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     getVisibleAreaRect: () => visibleAreaRect,
     shouldDisplaySpread,
     setHasVerticalWriting,
-    setVisibleAreaRect: (
-      x: number,
-      y: number,
-      width: number,
-      height: number
-    ) => {
+    setVisibleAreaRect: (x: number, y: number, width: number, height: number) => {
       // visibleAreaRect.width = width - horizontalMargin * 2
       visibleAreaRect.width = width
       visibleAreaRect.height = height - marginTop - marginBottom
@@ -160,28 +148,24 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     getReadingDirection: () => manifest?.readingDirection,
     getPageSize: () => {
       return {
-        width: shouldDisplaySpread()
-          ? visibleAreaRect.width / 2
-          : visibleAreaRect.width,
+        width: shouldDisplaySpread() ? visibleAreaRect.width / 2 : visibleAreaRect.width,
         height: visibleAreaRect.height
       }
     },
     getSettings: settings.getSettings,
-    setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, {
-      hasVerticalWritingSubject: hasVerticalWritingSubject$.value,
-      manifest
-    }),
+    setSettings: (data: Parameters<typeof settings.setSettings>[0]) =>
+      settings.setSettings(data, {
+        hasVerticalWritingSubject: hasVerticalWritingSubject$.value,
+        manifest
+      }),
     $: {
-      hasVerticalWriting$: hasVerticalWritingSubject$
-        .asObservable()
-        .pipe(distinctUntilChanged()),
-      destroy$: destroy$
-        .asObservable(),
+      hasVerticalWriting$: hasVerticalWritingSubject$.asObservable().pipe(distinctUntilChanged()),
+      destroy$: destroy$.asObservable(),
       settings$: settings.$.settings$,
-      load$: loadSubject$
-        .asObservable()
+      load$: loadSubject$.asObservable()
     }
   }
 }
 
-const areAllItemsPrePaginated = (manifest: Manifest | undefined) => !manifest?.spineItems.some(item => item.renditionLayout === `reflowable`)
+const areAllItemsPrePaginated = (manifest: Manifest | undefined) =>
+  !manifest?.spineItems.some((item) => item.renditionLayout === `reflowable`)

@@ -42,7 +42,11 @@ import { Report } from "../report"
  */
 export const isHtmlElement = (element?: Element | Node | null | EventTarget): element is HTMLElement => {
   return (
-    typeof element === `object` && !!element && `nodeType` in element && element?.nodeType === Node.ELEMENT_NODE && `innerText` in (element as HTMLElement)
+    typeof element === `object` &&
+    !!element &&
+    `nodeType` in element &&
+    element?.nodeType === Node.ELEMENT_NODE &&
+    `innerText` in (element as HTMLElement)
   )
 }
 
@@ -51,71 +55,76 @@ function createRangeOrCaretFromPoint (doc: Document, startX: number, startY: num
   if (`caretPositionFromPoint` in doc) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
     // @ts-expect-error
-    return doc.caretPositionFromPoint(startX, startY) as { offsetNode: Node, offset: number }
+    return doc.caretPositionFromPoint(startX, startY) as { offsetNode: Node; offset: number }
   } else if (typeof doc.caretRangeFromPoint !== `undefined`) {
     return doc.caretRangeFromPoint(startX, startY)
   }
 }
 
-type ViewPort = { left: number, right: number, top: number, bottom: number }
+type ViewPort = { left: number; right: number; top: number; bottom: number }
 
 /**
  * @todo optimize
  */
-export const getFirstVisibleNodeForViewport = Report.measurePerformance(`getFirstVisibleNodeForViewport`, 1, (documentOrElement: Document | Element, viewport: ViewPort) => {
-  const element = (`body` in documentOrElement)
-    ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
-    : getFirstVisibleElementForViewport(documentOrElement, viewport)
+export const getFirstVisibleNodeForViewport = Report.measurePerformance(
+  `getFirstVisibleNodeForViewport`,
+  1,
+  (documentOrElement: Document | Element, viewport: ViewPort) => {
+    const element =
+      `body` in documentOrElement
+        ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
+        : getFirstVisibleElementForViewport(documentOrElement, viewport)
 
-  const ownerDocument = `createRange` in documentOrElement ? documentOrElement : documentOrElement.ownerDocument
+    const ownerDocument = `createRange` in documentOrElement ? documentOrElement : documentOrElement.ownerDocument
 
-  if (element) {
-    let lastValidRange: Range | undefined
-    let lastValidOffset = 0
-    const range = ownerDocument.createRange()
+    if (element) {
+      let lastValidRange: Range | undefined
+      let lastValidOffset = 0
+      const range = ownerDocument.createRange()
 
-    Array.from(element.childNodes).some(childNode => {
-      range.selectNodeContents(childNode)
-      const rects = range.getClientRects()
-      const visibleRect = getFirstVisibleDOMRect(rects, viewport)
+      Array.from(element.childNodes).some((childNode) => {
+        range.selectNodeContents(childNode)
+        const rects = range.getClientRects()
+        const visibleRect = getFirstVisibleDOMRect(rects, viewport)
 
-      // At this point we know the range is valid and contains visible rect.
-      // This means we have a valid Node. We still need to know the visible offset to be 100% accurate
-      if (visibleRect) {
-        lastValidRange = range.cloneRange()
+        // At this point we know the range is valid and contains visible rect.
+        // This means we have a valid Node. We still need to know the visible offset to be 100% accurate
+        if (visibleRect) {
+          lastValidRange = range.cloneRange()
 
-        /**
-         * Now we will try to refine the search to get the offset
-         * this is an incredibly expensive operation so we will try to
-         * use native functions to get something
-         * @important
-         * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
-         * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
-         * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
-         */
-        const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, Math.ceil(visibleRect.left), Math.ceil(visibleRect.top))
+          /**
+           * Now we will try to refine the search to get the offset
+           * this is an incredibly expensive operation so we will try to
+           * use native functions to get something
+           * @important
+           * when using float value it looks like sometime when at the begin of the book the returned range will be the last offset of the page
+           * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
+           * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
+           */
+          const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, Math.ceil(visibleRect.left), Math.ceil(visibleRect.top))
 
-        // good news we found something with same node so we can assume the offset is already better than nothing
-        if (rangeOrCaret && `startContainer` in rangeOrCaret && rangeOrCaret.startContainer === lastValidRange.startContainer) {
-          lastValidOffset = rangeOrCaret.startOffset
+          // good news we found something with same node so we can assume the offset is already better than nothing
+          if (rangeOrCaret && `startContainer` in rangeOrCaret && rangeOrCaret.startContainer === lastValidRange.startContainer) {
+            lastValidOffset = rangeOrCaret.startOffset
+          }
+          if (rangeOrCaret && `offsetNode` in rangeOrCaret && rangeOrCaret.offsetNode === lastValidRange.startContainer) {
+            lastValidOffset = rangeOrCaret.offset
+          }
+          return true
         }
-        if (rangeOrCaret && `offsetNode` in rangeOrCaret && rangeOrCaret.offsetNode === lastValidRange.startContainer) {
-          lastValidOffset = rangeOrCaret.offset
-        }
-        return true
+        return false
+      })
+
+      if (lastValidRange) {
+        return { node: lastValidRange.startContainer, offset: lastValidOffset }
       }
-      return false
-    })
 
-    if (lastValidRange) {
-      return { node: lastValidRange.startContainer, offset: lastValidOffset }
+      return { node: element, offset: 0 }
     }
 
-    return { node: element, offset: 0 }
+    return undefined
   }
-
-  return undefined
-})
+)
 
 const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort) => {
   let lastValidElement: Element | undefined
@@ -125,7 +134,7 @@ const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort)
     lastValidElement = element
   }
 
-  Array.from(element.children).some(child => {
+  Array.from(element.children).some((child) => {
     const childInViewPort = getFirstVisibleElementForViewport(child, viewport)
     if (childInViewPort) {
       lastValidElement = childInViewPort
@@ -153,7 +162,7 @@ function getElementOrNodePositionFromViewPort (domRect: DOMRect, { left, right }
 }
 
 function getFirstVisibleDOMRect (domRect: DOMRectList, viewport: ViewPort) {
-  return Array.from(domRect).find(domRect => {
+  return Array.from(domRect).find((domRect) => {
     const position = getElementOrNodePositionFromViewPort(domRect, viewport)
 
     if (position !== `before` && position !== `after`) {

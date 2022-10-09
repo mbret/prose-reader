@@ -16,25 +16,25 @@ type CfiLocator = ReturnType<typeof createCfiLocator>
 type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 type Locator = ReturnType<typeof createLocationResolver>
 
-type Event = { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
+type Event = { type: `onSelectionChange`; data: ReturnType<typeof createSelection> | null }
 
 export type Spine = {
-  element: HTMLElement,
+  element: HTMLElement
   locator: Locator
   spineItemLocator: SpineItemLocator
   cfiLocator: CfiLocator
-  normalizeEventForViewport: <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => E,
-  manipulateSpineItems: (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => void,
-  manipulateSpineItem: (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => void,
-  layout: () => void,
-  destroy: () => void,
-  isSelecting: () => boolean | undefined,
-  getSelection: () => Selection | undefined,
+  normalizeEventForViewport: <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => E
+  manipulateSpineItems: (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => void
+  manipulateSpineItem: (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => void
+  layout: () => void
+  destroy: () => void
+  isSelecting: () => boolean | undefined
+  getSelection: () => Selection | undefined
   adjustPagination: (position: ViewportNavigationEntry) => Observable<`free` | `busy`>
   $: {
-    $: Observable<Event>,
-    layout$: Observable<boolean>,
-    itemsCreated$: Observable<{ item: Manifest[`spineItems`][number], element: HTMLElement }[]>,
-    itemsBeforeDestroy$: Observable<void>,
+    $: Observable<Event>
+    layout$: Observable<boolean>
+    itemsCreated$: Observable<{ item: Manifest[`spineItems`][number]; element: HTMLElement }[]>
+    itemsBeforeDestroy$: Observable<void>
   }
 }

@@ -5,9 +5,7 @@ const SHOULD_NOT_LAYOUT = false
 /**
  * All fixes relative to chromes
  */
-export const chromeEnhancer: Enhancer<{}, {
-
-}> = (next) => (options) => {
+export const chromeEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   const reader = next(options)
 
   /**

@@ -13,23 +13,27 @@ type Primitive = number | string | ((...args: any) => any) | HTMLElement | Obser
 
 export type ModifyDeep<A extends AnyObject, B extends DeepPartialAny<A>> = {
   [K in keyof A]-?: B[K] extends never
-  ? A[K]
-  : B[K] extends Primitive
-  ? B[K]
-  : B[K] extends AnyObject
-  ? ModifyDeep<A[K], B[K]>
-  : A[K]
+    ? A[K]
+    : B[K] extends Primitive
+    ? B[K]
+    : B[K] extends AnyObject
+    ? ModifyDeep<A[K], B[K]>
+    : A[K]
 } & (A extends AnyObject ? Omit<B, keyof A> : A)
 
 type CreateReader<Options = CreateReaderOptions, Api = Reader> = (options: Options) => Api
 
-type RawEnhancer<Options = CreateReaderOptions, Api = Reader> = (createReader: CreateReader<Options, Api>) => (options: Options) => Api
+type RawEnhancer<Options = CreateReaderOptions, Api = Reader> = (
+  createReader: CreateReader<Options, Api>
+) => (options: Options) => Api
 
 type DefaultToEmptyObject<A> = A extends AnyObject ? A : {}
 
 export type ExtractOptions<E extends (...args: any) => (options: any) => any> = Parameters<ReturnType<E>>[0]
 export type ExtractApi<E extends (...args: any) => (options: any) => any> = ReturnType<ReturnType<E>>
-export type ExtractHiddenApi<E extends (...args: any) => (options: any) => any> = DefaultToEmptyObject<NonNullable<ReturnType<ReturnType<E>>[`__API`]>>
+export type ExtractHiddenApi<E extends (...args: any) => (options: any) => any> = DefaultToEmptyObject<
+  NonNullable<ReturnType<ReturnType<E>>[`__API`]>
+>
 
 export type Enhancer<
   Options = {},
@@ -38,28 +42,25 @@ export type Enhancer<
   OutputSettings = Settings,
   DependsOn extends (createReader: any) => (options: any) => any = RawEnhancer,
   DependsOnApi extends ExtractApi<DependsOn> = ExtractApi<DependsOn>
-  > =
-  (
-    createReader: (options: ExtractOptions<DependsOn>) =>
-      Omit<ReturnType<ReturnType<DependsOn>>, `__API` | `__OutputSettings`>
-  ) =>
-    (options: ExtractOptions<DependsOn> & Options) =>
-      ModifyDeep<
-        Omit<DependsOnApi, `__API` | `__OutputSettings` | `$`> & {
-          $: Omit<DependsOnApi[`$`], `settings$`> & {
-            /**
-             * special case for prose and to automatically merge settings output stream.
-             * - add correct type for enhancer dependances
-             * - add correct type for the combined final enhancer API
-             */
-            settings$: Observable<OutputSettings & ObservedValueOf<DependsOnApi[`$`][`settings$`]>>
-          }
-        }, {
-          /**
-           * special case for prose and to automatically extends settings.
-           * - add correct type for enhancer inside setSettings parameter
-           * - add correct type for end user using the enhancer
-           */
-          setSettings: (settings: Parameters<DependsOnApi[`setSettings`]>[0] & Settings) => void
-        } & Api>
-      & { __API?: Api, __OutputSettings?: OutputSettings }
+> = (
+  createReader: (options: ExtractOptions<DependsOn>) => Omit<ReturnType<ReturnType<DependsOn>>, `__API` | `__OutputSettings`>
+) => (options: ExtractOptions<DependsOn> & Options) => ModifyDeep<
+  Omit<DependsOnApi, `__API` | `__OutputSettings` | `$`> & {
+    $: Omit<DependsOnApi[`$`], `settings$`> & {
+      /**
+       * special case for prose and to automatically merge settings output stream.
+       * - add correct type for enhancer dependances
+       * - add correct type for the combined final enhancer API
+       */
+      settings$: Observable<OutputSettings & ObservedValueOf<DependsOnApi[`$`][`settings$`]>>
+    }
+  },
+  {
+    /**
+     * special case for prose and to automatically extends settings.
+     * - add correct type for enhancer inside setSettings parameter
+     * - add correct type for end user using the enhancer
+     */
+    setSettings: (settings: Parameters<DependsOnApi[`setSettings`]>[0] & Settings) => void
+  } & Api
+> & { __API?: Api; __OutputSettings?: OutputSettings }

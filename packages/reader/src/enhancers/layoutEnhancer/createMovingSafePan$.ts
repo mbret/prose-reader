@@ -32,45 +32,37 @@ export const createMovingSafePan$ = (reader: ReaderInstance) => {
     return SHOULD_NOT_LAYOUT
   })
 
-  const createResetLock$ = <T>(source: Observable<T>) => scheduled(source, animationFrameScheduler)
-    .pipe(
+  const createResetLock$ = <T>(source: Observable<T>) =>
+    scheduled(source, animationFrameScheduler).pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
       })
     )
 
-  const viewportFree$ = reader.$.viewportState$.pipe(filter(data => data === `free`))
-  const viewportBusy$ = reader.$.viewportState$.pipe(filter(data => data === `busy`))
+  const viewportFree$ = reader.$.viewportState$.pipe(filter((data) => data === `free`))
+  const viewportBusy$ = reader.$.viewportState$.pipe(filter((data) => data === `busy`))
 
-  const lockAfterViewportBusy$ = viewportBusy$
-    .pipe(
-      tap(() => {
-        iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
-      })
-    )
+  const lockAfterViewportBusy$ = viewportBusy$.pipe(
+    tap(() => {
+      iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
+    })
+  )
 
-  const resetLockViewportFree$ = createResetLock$(viewportFree$)
-    .pipe(
-      take(1)
-    )
+  const resetLockViewportFree$ = createResetLock$(viewportFree$).pipe(take(1))
 
-  const pageTurnMode$ = reader.context.$.settings$
-    .pipe(
-      map(() => reader.context.getSettings().computedPageTurnMode),
-      distinctUntilChanged()
-    )
+  const pageTurnMode$ = reader.context.$.settings$.pipe(
+    map(() => reader.context.getSettings().computedPageTurnMode),
+    distinctUntilChanged()
+  )
 
-  const handleViewportLock$ = pageTurnMode$
-    .pipe(
-      switchMap((mode) => mode === `controlled`
-        ? lockAfterViewportBusy$
-          .pipe(
-            switchMap(() => resetLockViewportFree$)
-          )
+  const handleViewportLock$ = pageTurnMode$.pipe(
+    switchMap((mode) =>
+      mode === `controlled`
+        ? lockAfterViewportBusy$.pipe(switchMap(() => resetLockViewportFree$))
         : createResetLock$(of(undefined))
-      ),
-      takeUntil(reader.$.destroy$)
-    )
+    ),
+    takeUntil(reader.$.destroy$)
+  )
 
   return handleViewportLock$
 }

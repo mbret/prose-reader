@@ -1,8 +1,8 @@
 import { Manifest } from "@prose-reader/shared"
 
-export type ViewportPosition = { x: number, y: number }
+export type ViewportPosition = { x: number; y: number }
 
-export { LoadOptions, Reader } from './Reader'
+export { LoadOptions, Reader } from "./Reader"
 
 declare global {
   interface Window {

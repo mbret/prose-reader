@@ -62,9 +62,7 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
       // The request will be also be aborted if we've exceeded our storage
       // space.
       transaction.onabort = function () {
-        const err = request.error
-          ? request.error
-          : request.transaction?.error
+        const err = request.error ? request.error : request.transaction?.error
         reject(err)
       }
     })

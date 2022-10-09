@@ -1,8 +1,8 @@
 import { Subject } from "rxjs"
 
 export const createFingerTracker = () => {
-  const fingerPositionInIframe: { x: number | undefined, y: number | undefined } = { x: undefined, y: undefined }
-  const subject = new Subject<{ event: `fingermove`, data: { x: number, y: number } } | { event: `fingerout`, data: undefined }>()
+  const fingerPositionInIframe: { x: number | undefined; y: number | undefined } = { x: undefined, y: undefined }
+  const subject = new Subject<{ event: `fingermove`; data: { x: number; y: number } } | { event: `fingerout`; data: undefined }>()
   let isMouseDown = false
 
   const track = (frame: HTMLIFrameElement) => {
@@ -33,11 +33,9 @@ export const createFingerTracker = () => {
   return {
     track,
     getFingerPositionInIframe () {
-      return (fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined) ? undefined : fingerPositionInIframe
+      return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined ? undefined : fingerPositionInIframe
     },
-    destroy: () => {
-
-    },
+    destroy: () => {},
     $: subject.asObservable()
   }
 }
@@ -46,19 +44,16 @@ export const createSelectionTracker = () => {
   let isSelecting = false
   let frame: HTMLIFrameElement | undefined
   const subject = new Subject<
-    { event: `selectionchange`, data: Selection | null }
-    | { event: `selectstart`, data: Selection | null }
-    | { event: `selectend`, data: Selection | null }
+    | { event: `selectionchange`; data: Selection | null }
+    | { event: `selectstart`; data: Selection | null }
+    | { event: `selectend`; data: Selection | null }
   >()
-  const mouseUpEvents = [
-    `mouseup` as const,
-    `pointerup` as const
-  ]
+  const mouseUpEvents = [`mouseup` as const, `pointerup` as const]
 
   const track = (frameToTrack: HTMLIFrameElement) => {
     frame = frameToTrack
 
-    mouseUpEvents.forEach(eventName => {
+    mouseUpEvents.forEach((eventName) => {
       frameToTrack.contentWindow?.addEventListener(eventName, () => {
         isSelecting = false
         // console.log(`${eventName} selectend`, frame?.contentWindow?.getSelection(), frame?.contentWindow?.getSelection()?.toString())
@@ -77,9 +72,7 @@ export const createSelectionTracker = () => {
     })
   }
 
-  const destroy = () => {
-
-  }
+  const destroy = () => {}
 
   return {
     track,

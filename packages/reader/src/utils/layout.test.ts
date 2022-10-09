@@ -24,7 +24,9 @@ describe(`getNewScaledOffset`, () => {
   ])(
     `From %i to %i, screen of %i, page of %i, scroll at %i, it should returns new scroll of %i`,
     (oldScale, newScale, screenWidth, pageWidth, viewportScrollLeft, value) => {
-      expect(getNewScaledOffset({ oldScale, newScale, screenSize: screenWidth, pageSize: pageWidth, scrollOffset: viewportScrollLeft })).toBe(value)
+      expect(
+        getNewScaledOffset({ oldScale, newScale, screenSize: screenWidth, pageSize: pageWidth, scrollOffset: viewportScrollLeft })
+      ).toBe(value)
     }
   )
 })

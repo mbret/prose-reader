@@ -4,7 +4,7 @@ const hasOwn = Object.prototype.hasOwnProperty
 // Object.is polyfill
 export const is = (x: any, y: any): boolean => {
   if (x === y) {
-    return (x !== 0) || (y !== 0) || (1 / x === 1 / y)
+    return x !== 0 || y !== 0 || 1 / x === 1 / y
   } else {
     return false
   }
@@ -25,7 +25,7 @@ export const isShallowEqual = <T = any, R = any>(
   objectA: T,
   objectB: R,
   options?: {
-    customEqual?: <T>(a: T, b: T) => boolean;
+    customEqual?: <T>(a: T, b: T) => boolean
   }
 ): boolean => {
   // @ts-ignore
@@ -70,10 +70,14 @@ export const groupBy = <T, K extends keyof any>(list: T[], getKey: (item: T) => 
 export const getBase64FromBlob = (data: Blob) => {
   const reader = new FileReader()
 
-  return new Promise<string>(resolve => {
-    reader.addEventListener(`load`, function () {
-      resolve(reader.result as string)
-    }, false)
+  return new Promise<string>((resolve) => {
+    reader.addEventListener(
+      `load`,
+      function () {
+        resolve(reader.result as string)
+      },
+      false
+    )
 
     reader.readAsDataURL(data)
   })

@@ -3,7 +3,7 @@
  * @see https://github.com/fread-ink/epub-cfi-resolver
  * @latest a0d7e4e39d5b4adc9150e006e0b6d7af9513ae27
  */
-'use strict'
+"use strict"
 
 const ELEMENT_NODE = Node.ELEMENT_NODE
 const TEXT_NODE = Node.TEXT_NODE
@@ -82,10 +82,7 @@ function calcSiblingCount (nodes: globalThis.NodeListOf<globalThis.ChildNode>, n
       }
       prevOffset = 0
       lastWasElement = true
-      // @ts-ignore
-    } else if (node.nodeType === TEXT_NODE ||
-      // @ts-ignore
-      node.nodeType === CDATA_SECTION_NODE) {
+    } else if (node?.nodeType === TEXT_NODE || node?.nodeType === CDATA_SECTION_NODE) {
       if (lastWasElement || firstNode) {
         count++
         firstNode = false
@@ -107,8 +104,8 @@ function calcSiblingCount (nodes: globalThis.NodeListOf<globalThis.ChildNode>, n
 }
 
 function compareTemporal (a: number, b: number) {
-  const isA = (typeof a === `number`)
-  const isB = (typeof b === `number`)
+  const isA = typeof a === `number`
+  const isB = typeof b === `number`
 
   if (!isA && !isB) return 0
   if (!isA && isB) return -1
@@ -135,14 +132,17 @@ class CFI {
   cfi: string
 
   constructor (str: string, opts: {}) {
-    this.opts = Object.assign({
-      // If CFI is a Simple Range, pretend it isn't
-      // by parsing only the start of the range
-      flattenRange: false,
-      // Strip temporal, spatial, offset and textLocationAssertion
-      // from places where they don't make sense
-      stricter: true
-    }, opts || {})
+    this.opts = Object.assign(
+      {
+        // If CFI is a Simple Range, pretend it isn't
+        // by parsing only the start of the range
+        flattenRange: false,
+        // Strip temporal, spatial, offset and textLocationAssertion
+        // from places where they don't make sense
+        stricter: true
+      },
+      opts || {}
+    )
 
     this.cfi = str
     this.parts = []
@@ -159,7 +159,7 @@ class CFI {
     let subParts = []
     let sawComma = 0
     while (str.length) {
-      ({ parsed, offset, newDoc } = this.parse(str))
+      ;({ parsed, offset, newDoc } = this.parse(str))
       if (!parsed || offset === null) throw new Error(`Parsing failed`)
       if (sawComma && newDoc) throw new Error(`CFI is a range that spans multiple documents. This is not allowed`)
 
@@ -171,7 +171,8 @@ class CFI {
         if (sawComma === 2) {
           // @ts-ignore
           this.to = subParts
-        } else { // not a range
+        } else {
+          // not a range
           this.parts.push(subParts)
         }
         subParts = []
@@ -248,7 +249,7 @@ class CFI {
 
   static generatePart (node: Element | Node, offset?: number, extra?: {}) {
     /* eslint-disable-next-line no-void */
-    void (extra)
+    void extra
     let cfi = ``
     let o
     while (node.parentNode) {
@@ -257,7 +258,7 @@ class CFI {
       if (!cfi && o.offset) cfi = `:` + o.offset
 
       // @ts-ignore
-      cfi = `/` + o.count + ((node.id) ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
+      cfi = `/` + o.count + (node.id ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
 
       // debugger
       node = node.parentNode
@@ -334,7 +335,8 @@ class CFI {
       if (b.isRange) oB = oB.from
 
       return this.comparePath(oA, oB)
-    } else { // neither a nor b is a range
+    } else {
+      // neither a nor b is a range
       return this.comparePath(oA, oB)
     }
   }
@@ -613,7 +615,7 @@ class CFI {
             // We've already had an offset
             // and temporal or spatial do not make sense at the same time
             // @ts-ignore
-            if ((cur === `~` || cur === `@`) && (typeof o.offset !== `undefined`)) {
+            if ((cur === `~` || cur === `@`) && typeof o.offset !== `undefined`) {
               break
             }
           }
@@ -688,7 +690,7 @@ class CFI {
     // @ts-ignore
     if (!o.nodeIndex && o.nodeIndex !== 0) throw new Error(`Missing child node index in CFI`)
 
-    return { parsed: o, offset: i, newDoc: (state === `!`) }
+    return { parsed: o, offset: i, newDoc: state === `!` }
   }
 
   // The CFI counts child nodes differently from the DOM
@@ -715,7 +717,6 @@ class CFI {
       // @ts-ignore
       switch (child.nodeType) {
         case ELEMENT_NODE:
-
           // If the previous node was also an element node
           // then we have to pretend there was a text node in between
           // the current and previous nodes (according to the CFI spec)
@@ -729,7 +730,8 @@ class CFI {
               }
               return { node: child, offset: 0 }
             }
-          } else { // Previous node was a text node
+          } else {
+            // Previous node was a text node
             cfiCount += 1
             if (cfiCount === index) {
               // @ts-ignore
@@ -826,7 +828,7 @@ class CFI {
       matchStr = assertion.pre + `.` + assertion.post
     }
 
-    if (!(this.isTextNode(node))) {
+    if (!this.isTextNode(node)) {
       return { node, offset: 0 }
     }
 
@@ -854,7 +856,7 @@ class CFI {
     }
 
     // Find all matches to the Text Location Assertion
-    const matchOffset = (assertion.pre) ? assertion.pre.length : 0
+    const matchOffset = assertion.pre ? assertion.pre.length : 0
     const m = matchAll(txt, new RegExp(matchStr), matchOffset)
     if (!m.length) return { node, offset }
 
@@ -884,7 +886,7 @@ class CFI {
     return { node: curNode, offset: newOffset }
   }
 
-  resolveNode (index: number, subparts: { nodeIndex: number, nodeID?: string, offset?: number }[], dom: Document, opts: {}) {
+  resolveNode (index: number, subparts: { nodeIndex: number; nodeID?: string; offset?: number }[], dom: Document, opts: {}) {
     opts = Object.assign({}, opts || {})
     if (!dom) throw new Error(`Missing DOM argument`)
 
@@ -978,9 +980,11 @@ class CFI {
 
     // @ts-ignore
     const tagName = node.tagName.toLowerCase()
-    if (tagName === `itemref` &&
+    if (
+      tagName === `itemref` &&
       // @ts-ignore
-      node.parentNode.tagName.toLowerCase() === `spine`) {
+      node.parentNode.tagName.toLowerCase() === `spine`
+    ) {
       // @ts-ignore
       const idref = node.getAttribute(`idref`)
       if (!idref) throw new Error(`Referenced node had not 'idref' attribute`)
@@ -1044,9 +1048,12 @@ class CFI {
   // document referenced by the CFI
   // and returns the node and offset into that node
   resolveLast (dom: Document, opts: {}): string | {} {
-    opts = Object.assign({
-      range: false
-    }, opts || {})
+    opts = Object.assign(
+      {
+        range: false
+      },
+      opts || {}
+    )
 
     if (!this.isRange) {
       return this.resolveLocation(dom, this.parts)
@@ -1087,30 +1094,26 @@ class CFI {
     }
   }
 
-  resolve (doc: Document, opts: {}): { node: Node, offset?: number } | { node?: undefined, offset?: number } {
+  resolve (doc: Document, opts: {}): { node: Node; offset?: number } | { node?: undefined; offset?: number } {
     // @ts-ignore
     return this.resolveLast(doc, opts)
   }
 }
 
-export {
-  CFI
-}
+export { CFI }
 
-export const extractProseMetadataFromCfi = (cfi: string): {
-  cleanedCfi: string,
+export const extractProseMetadataFromCfi = (
+  cfi: string
+): {
+  cleanedCfi: string
   itemId?: string
   offset?: number
 } => {
-  const [itemId] = cfi
-    .match(/\|(\[prose\~anchor[^\]]*\])+/ig)
-    ?.map(s => s.replace(/\|\[prose\~anchor\~/, ``)
-      .replace(/\]/, ``)) || []
-  const [offset] = cfi
-    .match(/\|(\[prose\~offset[^\]]*\])+/ig)
-    ?.map(s => s.replace(/\|\[prose\~offset\~/, ``)
-      .replace(/\]/, ``)) || []
-  const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/ig, ``)
+  const [itemId] =
+    cfi.match(/\|(\[prose\~anchor[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~anchor\~/, ``).replace(/\]/, ``)) || []
+  const [offset] =
+    cfi.match(/\|(\[prose\~offset[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) || []
+  const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/gi, ``)
   const foundOffset = parseInt(offset || ``)
 
   return {

@@ -1,22 +1,22 @@
-import { chromeEnhancer } from './enhancers/chrome'
-import { fontsEnhancer } from './enhancers/fonts'
-import { hotkeysEnhancer } from './enhancers/hotkeys'
-import { layoutEnhancer } from './enhancers/layoutEnhancer/layoutEnhancer'
-import { linksEnhancer } from './enhancers/links'
-import { navigationEnhancer } from './enhancers/navigation'
-import { paginationEnhancer } from './enhancers/pagination'
-import { themeEnhancer } from './enhancers/theme'
-import { ComposableEnhancer, composeEnhancer, ComposeEnhancer2 } from './enhancers/composeEnhancer'
-import { Enhancer } from './enhancers/types'
-import { zoomEnhancer } from './enhancers/zoom'
-import { createReader as createInternalReader, Reader as ReaderPublicApi } from './reader'
-import { utilsEnhancer } from './enhancers/utils'
-import { resourcesEnhancer } from './enhancers/resources'
-import { mediaEnhancer } from './enhancers/media'
-import { progressionEnhancer } from './enhancers/progression'
-import { accessibilityEnhancer } from './enhancers/accessibility'
-import { webkitEnhancer } from './enhancers/webkit'
-import { loadingEnhancer } from './enhancers/loadingEnhancer'
+import { chromeEnhancer } from "./enhancers/chrome"
+import { fontsEnhancer } from "./enhancers/fonts"
+import { hotkeysEnhancer } from "./enhancers/hotkeys"
+import { layoutEnhancer } from "./enhancers/layoutEnhancer/layoutEnhancer"
+import { linksEnhancer } from "./enhancers/links"
+import { navigationEnhancer } from "./enhancers/navigation"
+import { paginationEnhancer } from "./enhancers/pagination"
+import { themeEnhancer } from "./enhancers/theme"
+import { ComposableEnhancer, composeEnhancer, ComposeEnhancer2 } from "./enhancers/composeEnhancer"
+import { Enhancer } from "./enhancers/types"
+import { zoomEnhancer } from "./enhancers/zoom"
+import { createReader as createInternalReader, Reader as ReaderPublicApi } from "./reader"
+import { utilsEnhancer } from "./enhancers/utils"
+import { resourcesEnhancer } from "./enhancers/resources"
+import { mediaEnhancer } from "./enhancers/media"
+import { progressionEnhancer } from "./enhancers/progression"
+import { accessibilityEnhancer } from "./enhancers/accessibility"
+import { webkitEnhancer } from "./enhancers/webkit"
+import { loadingEnhancer } from "./enhancers/loadingEnhancer"
 
 /**
  * Only expose a subset of reader API in order to protect against
@@ -47,23 +47,23 @@ type ReaderPublicApiWithSafeExposedKeys = ReturnType<typeof withPublicApiOnly>
 type RemovedKeysOnly = keyof Omit<ReaderPublicApi, keyof ReaderPublicApiWithSafeExposedKeys>
 
 const internalEnhancer = composeEnhancer(
-  progressionEnhancer
+  progressionEnhancer,
   // @requires progressionEnhancer
-  , paginationEnhancer
-  , hotkeysEnhancer
-  , themeEnhancer
-  , navigationEnhancer
-  , chromeEnhancer
-  , mediaEnhancer
-  , zoomEnhancer
-  , layoutEnhancer
-  , utilsEnhancer
-  , resourcesEnhancer
-  , accessibilityEnhancer
-  , linksEnhancer
-  , fontsEnhancer
-  , webkitEnhancer
-  , loadingEnhancer
+  paginationEnhancer,
+  hotkeysEnhancer,
+  themeEnhancer,
+  navigationEnhancer,
+  chromeEnhancer,
+  mediaEnhancer,
+  zoomEnhancer,
+  layoutEnhancer,
+  utilsEnhancer,
+  resourcesEnhancer,
+  accessibilityEnhancer,
+  linksEnhancer,
+  fontsEnhancer,
+  webkitEnhancer,
+  loadingEnhancer
 )
 
 type WithoutPrivateApi<E> = Omit<E, RemovedKeysOnly | `__debug` | `__API` | `__OutputSettings`>
@@ -73,7 +73,9 @@ type EnhancerExposedApi<E extends (...args: any) => any> = ReturnType<ReturnType
 type CoreEnhancer = typeof internalEnhancer
 type CoreEnhancerApi = EnhancerExposedApi<CoreEnhancer>
 
-export type CoreEnhancerDependsOn = (createReader: Parameters<CoreEnhancer>[0]) => (options: EnhancerOptions<CoreEnhancer>) => CoreEnhancerApi
+export type CoreEnhancerDependsOn = (
+  createReader: Parameters<CoreEnhancer>[0]
+) => (options: EnhancerOptions<CoreEnhancer>) => CoreEnhancerApi
 
 export type ExternalEnhancer<
   Options = {},
@@ -81,17 +83,9 @@ export type ExternalEnhancer<
   Settings = {},
   OutputSettings = Settings,
   DependsOn extends (createReader: any) => (options: any) => any = CoreEnhancerDependsOn
-  > = Enhancer<
-    Options,
-    Api,
-    Settings,
-    OutputSettings,
-    DependsOn
-  >
+> = Enhancer<Options, Api, Settings, OutputSettings, DependsOn>
 
-export function createReaderWithEnhancer(
-  options: EnhancerOptions<CoreEnhancer>
-): WithoutPrivateApi<CoreEnhancerApi>
+export function createReaderWithEnhancer(options: EnhancerOptions<CoreEnhancer>): WithoutPrivateApi<CoreEnhancerApi>
 
 export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer>(
   options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,

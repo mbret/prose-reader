@@ -6,9 +6,12 @@ import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { Manifest } from "../types"
 
-export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
-  spineItemManager: SpineItemManager,
-  context: Context,
+export const createCfiLocator = ({
+  spineItemManager,
+  spineItemLocator
+}: {
+  spineItemManager: SpineItemManager
+  context: Context
   spineItemLocator: ReturnType<typeof createLocationResolver>
 }) => {
   const getItemAnchor = (spineItem: SpineItem) => `|[prose~anchor~${encodeURIComponent(spineItem.item.id)}]`
@@ -136,7 +139,10 @@ export const createCfiLocator = ({ spineItemManager, spineItemLocator }: {
    * @todo the package does not support creating for range at the moment @see https://github.com/fread-ink/epub-cfi-resolver/issues/3
    * so we use two cfi for start and end.
    */
-  const generateFromRange = ({ startNode, start, end, endNode }: { startNode: Node, start: number, endNode: Node, end: number }, item: Manifest[`spineItems`][number]) => {
+  const generateFromRange = (
+    { startNode, start, end, endNode }: { startNode: Node; start: number; endNode: Node; end: number },
+    item: Manifest[`spineItems`][number]
+  ) => {
     const startCFI = CFI.generate(startNode, start, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
     const endCFI = CFI.generate(endNode, end, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
 
