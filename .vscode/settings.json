@@ -2,6 +2,10 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
     "**/dist": false,
-    "**/build": true,
+    "**/build": true
+  },
+  "eslint.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
   }
 }

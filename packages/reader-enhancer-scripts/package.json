@@ -13,12 +13,6 @@
     "test": "echo"
   },
   "dependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-jest": "^25.3.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
     "ts-loader": "^9.2.8",
     "typescript": "*",
     "webpack": "^5.65.0",
