@@ -74,11 +74,12 @@ export const createReflowableSpineItem = ({
     spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
     spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
-    const viewportDimensions = spineItemFrame.getViewportDimensions()
+    const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
     const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
 
+    // @todo simplify ? should be from common spine item
     if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
       let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
@@ -87,16 +88,14 @@ export const createReflowableSpineItem = ({
       frameElement?.style.setProperty(`opacity`, `1`)
 
       if (viewportDimensions) {
-        const computedScale = Math.min(pageWidth / viewportDimensions.width, pageHeight / viewportDimensions.height)
-        commonSpineItem.injectStyle(buildStyleForFakePrePaginated())
+        commonSpineItem.injectStyle(buildStyleForViewportFrame())
 
-        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+        commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
 
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
           height: viewportDimensions.height
         })
-        frameElement?.style.setProperty(`--scale`, `${computedScale}`)
         frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
         frameElement?.style.setProperty(
@@ -111,6 +110,7 @@ export const createReflowableSpineItem = ({
                 : `25%`
               : `50%`
         )
+
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
@@ -123,7 +123,7 @@ export const createReflowableSpineItem = ({
 
         commonSpineItem.injectStyle(frameStyle)
 
-        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+        commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
 
         if (spineItemFrame.isUsingVerticalWriting()) {
           const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollHeight / pageHeight)
@@ -177,16 +177,16 @@ export const createReflowableSpineItem = ({
         frameElement?.style.setProperty(`margin-left`, `0px`)
       }
 
-      commonSpineItem.layout({ width: contentWidth, height: contentHeight })
+      commonSpineItem.layout({ width: contentWidth, height: contentHeight, blankPagePosition, minimumWidth })
 
       return { width: contentWidth, height: contentHeight }
     } else {
-      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+      commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
     }
 
     const height = latestContentHeightWhenLoaded || pageHeight
 
-    commonSpineItem.layout({ width: minimumWidth, height })
+    commonSpineItem.layout({ width: minimumWidth, height, blankPagePosition, minimumWidth })
 
     return { width: minimumWidth, height }
   }
@@ -202,9 +202,18 @@ export const createReflowableSpineItem = ({
  * Item is:
  * - anything that contains a defined width/height viewport
  *
- * In this case we respect the viewport, scale it and act as pre-paginated
+ * In this case we respect the viewport, scale it and act as pre-paginated.
+ *
+ * Using a viewport means the page should fit and be displayed as it is. This
+ * is one of the reason of using viewport.
+ *
+ * Ideally we should not touch too much of how things are presented, especially
+ * images since this mode would be most often used for it.
+ *
+ * Changing text display needs to be done carefully as well since it may overflow
+ * Again this is because the page is designed to fit perfectly due to viewport
  */
-const buildStyleForFakePrePaginated = () => {
+const buildStyleForViewportFrame = () => {
   return `
     html {
       width: 100%;
@@ -223,12 +232,6 @@ const buildStyleForFakePrePaginated = () => {
     }
     html, body {
       touch-action: none;
-    }
-    img {
-      display: flex;
-      max-width: 100%;
-      max-height: 100%;
-      margin: 0 auto;
     }
   `
 }

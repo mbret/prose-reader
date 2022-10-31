@@ -26,7 +26,7 @@ export type Hook =
    * Your logic will run everytime there is a layout triggered.
    */
   | {
-      name: `item.onLayoutBeforeMeasurment`
+      name: `item.onLayoutBeforeMeasurement`
       fn: (payload: {
         frame: {
           getManipulableFrame: () =>
@@ -50,15 +50,17 @@ export type Hook =
         isImageType: () => boolean | undefined
       }) => void
     }
-  // | {
-  //   name: `item.onLayout`,
-  //   fn: (payload: {
-  //     frame: HTMLIFrameElement | undefined,
-  //     container: HTMLElement,
-  //     item: Manifest[`spineItems`][number],
-  //     overlayElement: HTMLDivElement
-  //   }) => void
-  // }
+  | {
+      /**
+       * @todo explain
+       */
+      name: `item.onAfterLayout`
+      fn: (payload: {
+        item: Manifest[`spineItems`][number]
+        blankPagePosition: `before` | `after` | `none`
+        minimumWidth: number
+      }) => void
+    }
   | {
       name: `item.onGetResource`
       fn: (
@@ -85,6 +87,7 @@ export interface RegisterHook {
   (name: `item.onLoad`, fn: Extract<Hook, { name: `item.onLoad` }>[`fn`]): void
   (name: `item.onBeforeContainerCreated`, fn: Extract<Hook, { name: `item.onBeforeContainerCreated` }>[`fn`]): void
   (name: `item.onGetResource`, fn: Extract<Hook, { name: `item.onGetResource` }>[`fn`]): void
-  (name: `item.onLayoutBeforeMeasurment`, fn: Extract<Hook, { name: `item.onLayoutBeforeMeasurment` }>[`fn`]): void
+  (name: `item.onLayoutBeforeMeasurement`, fn: Extract<Hook, { name: `item.onLayoutBeforeMeasurement` }>[`fn`]): void
+  (name: `item.onAfterLayout`, fn: Extract<Hook, { name: `item.onAfterLayout` }>[`fn`]): void
   (name: `onViewportOffsetAdjust`, fn: Extract<Hook, { name: `onViewportOffsetAdjust` }>[`fn`]): void
 }

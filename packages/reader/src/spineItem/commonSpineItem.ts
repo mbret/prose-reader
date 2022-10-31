@@ -134,8 +134,6 @@ export const createCommonSpineItem = ({
 
       return { computedScale, computedWidthScale, viewportDimensions }
     }
-
-    return { computedScale: 1, computedWidthScale: 1, ...viewportDimensions }
   }
 
   const loadContent = () => spineItemFrame.load()
@@ -156,20 +154,27 @@ export const createCommonSpineItem = ({
     memoizedElementDimensions = undefined
   }
 
-  // const layout = ({ height, width, ...newLayoutInformation }: { height: number, width: number } & typeof layoutInformation) => {
-  const layout = ({ height, width }: { height: number; width: number }) => {
+  const layout = ({
+    height,
+    width,
+    blankPagePosition,
+    minimumWidth
+  }: {
+    height: number
+    width: number
+    blankPagePosition: `before` | `after` | `none`
+    minimumWidth: number
+  }) => {
     containerElement.style.width = `${width}px`
     containerElement.style.height = `${height}px`
 
-    // layoutInformation = newLayoutInformation
+    hooks$.getValue().forEach((hook) => {
+      if (hook.name === `item.onAfterLayout`) {
+        hook.fn({ blankPagePosition, item, minimumWidth })
+      }
+    })
 
     setLayoutDirty()
-
-    // hooks$.getValue().forEach(hook => {
-    //   if (hook.name === `item.onLayout`) {
-    //     hook.fn({ frame: spineItemFrame.getFrameElement(), container: containerElement, loadingElement, item, overlayElement })
-    //   }
-    // })
   }
 
   const translateFramePositionIntoPage = (position: { clientX: number; clientY: number }) => {
@@ -177,7 +182,7 @@ export const createCommonSpineItem = ({
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
     const { left = 0, top = 0 } = spineItemFrame.getFrameElement()?.getBoundingClientRect() || {}
-    const { computedScale = 1 } = getViewPortInformation() || {}
+    const computedScale = getViewPortInformation()?.computedScale ?? 1
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
 
@@ -241,9 +246,9 @@ export const createCommonSpineItem = ({
     })
   }
 
-  const executeOnLayoutBeforeMeasurmentHook = (options: { minimumWidth: number }) =>
+  const executeOnLayoutBeforeMeasurementHook = (options: { minimumWidth: number }) =>
     hooks$.getValue().forEach((hook) => {
-      if (hook.name === `item.onLayoutBeforeMeasurment`) {
+      if (hook.name === `item.onLayoutBeforeMeasurement`) {
         hook.fn({
           frame: spineItemFrame,
           container: containerElement,
@@ -263,6 +268,7 @@ export const createCommonSpineItem = ({
   )
 
   return {
+    item,
     load: () => {
       setLayoutDirty()
     },
@@ -296,7 +302,7 @@ export const createCommonSpineItem = ({
       return spineItemFrame.getReadingDirection() || context.getReadingDirection()
     },
     manipulateSpineItem,
-    executeOnLayoutBeforeMeasurmentHook,
+    executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
     selectionTracker,
     fingerTracker,
     $: {

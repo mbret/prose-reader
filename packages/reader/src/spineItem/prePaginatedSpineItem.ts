@@ -48,7 +48,7 @@ export const createPrePaginatedSpineItem = ({
     spreadPosition: `none` | `left` | `right`
   }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const { viewportDimensions, computedScale } = commonSpineItem.getViewPortInformation()
+    const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.getVisibleAreaRect()
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
 
@@ -74,7 +74,6 @@ export const createPrePaginatedSpineItem = ({
           width: viewportDimensions.width,
           height: viewportDimensions.height
         })
-        frameElement?.style.setProperty(`--scale`, `${computedScale}`)
         frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
         if (spreadPosition === `left`) {
@@ -111,7 +110,7 @@ export const createPrePaginatedSpineItem = ({
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
 
-        commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+        commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
       } else {
         commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
@@ -130,16 +129,16 @@ export const createPrePaginatedSpineItem = ({
         }
       }
 
-      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+      commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
 
       // commonSpineItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
-      commonSpineItem.layout({ width: minimumWidth, height: contentHeight })
+      commonSpineItem.layout({ width: minimumWidth, height: contentHeight, blankPagePosition, minimumWidth })
 
       return { width: minimumWidth, height: contentHeight }
     } else {
-      commonSpineItem.executeOnLayoutBeforeMeasurmentHook({ minimumWidth })
+      commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
       // commonSpineItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
-      commonSpineItem.layout({ width: minimumWidth, height: pageHeight })
+      commonSpineItem.layout({ width: minimumWidth, height: pageHeight, blankPagePosition, minimumWidth })
     }
 
     return { width: minimumWidth, height: pageHeight }

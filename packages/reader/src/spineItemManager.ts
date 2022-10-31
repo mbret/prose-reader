@@ -69,8 +69,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
            *
            * @important
            * For now this is impossible to have reflow not taking all screen. This is because
-           * when an element is unloaded, the next element will move back its x, then an adjustment
-           *  will occurs and the previous element will become visible again, meaning it will be loaded,
+           * when an element is unloaded, the next element will move back its x axis, then an adjustment
+           * will occurs and the previous element will become visible again, meaning it will be loaded,
            * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
            * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
            * book with spread on to make it work.
@@ -80,7 +80,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
            * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
            * we ignore it
            */
-          if (!isGloballyPrePaginated && item.isReflowable && index !== orderedSpineItemsSubject$.value.length - 1) {
+          if (!isGloballyPrePaginated && item.isReflowable && !isLastItem) {
             minimumWidth = context.getPageSize().width * 2
           }
 
@@ -88,7 +88,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           if (
             !isGloballyPrePaginated &&
             item.isReflowable &&
-            index === orderedSpineItemsSubject$.value.length - 1 &&
+            isLastItem &&
             itemStartOnNewScreen
           ) {
             minimumWidth = context.getPageSize().width * 2
