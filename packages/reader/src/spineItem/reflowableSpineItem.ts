@@ -40,28 +40,6 @@ export const createReflowableSpineItem = ({
    */
   let latestContentHeightWhenLoaded: number | undefined
 
-  const getDimensions = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
-    const pageSize = context.getPageSize()
-    const horizontalMargin = 0
-    const verticalMargin = 0
-    let columnWidth = pageSize.width - horizontalMargin * 2
-    const columnHeight = pageSize.height - verticalMargin * 2
-    let width = pageSize.width - horizontalMargin * 2
-
-    if (isUsingVerticalWriting) {
-      width = minimumWidth - horizontalMargin * 2
-      columnWidth = columnHeight
-    }
-
-    return {
-      columnHeight,
-      columnWidth,
-      // horizontalMargin,
-      // verticalMargin,
-      width
-    }
-  }
-
   const layout = ({
     blankPagePosition,
     minimumWidth
@@ -119,7 +97,9 @@ export const createReflowableSpineItem = ({
             isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
             enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
           })
-          : buildStyleWithMultiColumn(getDimensions(spineItemFrame.isUsingVerticalWriting(), minimumWidth))
+          : buildStyleWithMultiColumn(
+            commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth)
+          )
 
         commonSpineItem.injectStyle(frameStyle)
 

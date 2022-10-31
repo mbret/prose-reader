@@ -153,6 +153,37 @@ export const createCommonSpineItem = ({
     memoizedElementDimensions = undefined
   }
 
+  const getDimensionsForPaginatedContent = () => {
+    const pageSize = context.getPageSize()
+    const pageWidth = pageSize.width
+    const columnHeight = pageSize.height
+    const columnWidth = pageWidth
+
+    return { columnHeight, columnWidth }
+  }
+
+  const getDimensionsForReflowableContent = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
+    const pageSize = context.getPageSize()
+    const horizontalMargin = 0
+    const verticalMargin = 0
+    let columnWidth = pageSize.width - horizontalMargin * 2
+    const columnHeight = pageSize.height - verticalMargin * 2
+    let width = pageSize.width - horizontalMargin * 2
+
+    if (isUsingVerticalWriting) {
+      width = minimumWidth - horizontalMargin * 2
+      columnWidth = columnHeight
+    }
+
+    return {
+      columnHeight,
+      columnWidth,
+      // horizontalMargin,
+      // verticalMargin,
+      width
+    }
+  }
+
   const layout = ({
     height,
     width,
@@ -303,6 +334,8 @@ export const createCommonSpineItem = ({
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
     selectionTracker,
     fingerTracker,
+    getDimensionsForReflowableContent,
+    getDimensionsForPaginatedContent,
     $: {
       contentLayout$,
       loaded$: spineItemFrame.$.loaded$,

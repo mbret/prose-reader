@@ -29,16 +29,7 @@ export const createPrePaginatedSpineItem = ({
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
 
-  const getDimensions = () => {
-    const pageSize = context.getPageSize()
-    const pageWidth = pageSize.width
-    const columnHeight = pageSize.height
-    const columnWidth = pageWidth
-
-    return { columnHeight, columnWidth }
-  }
-
-  const applySize = ({
+  const layout = ({
     blankPagePosition,
     minimumWidth,
     spreadPosition
@@ -58,7 +49,7 @@ export const createPrePaginatedSpineItem = ({
 
       const cssLink = buildDocumentStyle(
         {
-          ...getDimensions(),
+          ...commonSpineItem.getDimensionsForPaginatedContent(),
           enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
           spreadPosition
         },
@@ -142,14 +133,6 @@ export const createPrePaginatedSpineItem = ({
     }
 
     return { width: minimumWidth, height: pageHeight }
-  }
-
-  const layout = (layoutInformation: {
-    blankPagePosition: `before` | `after` | `none`
-    minimumWidth: number
-    spreadPosition: `none` | `left` | `right`
-  }) => {
-    return applySize(layoutInformation)
   }
 
   return {
