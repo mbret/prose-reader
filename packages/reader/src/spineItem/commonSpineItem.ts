@@ -48,7 +48,6 @@ export const createCommonSpineItem = ({
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
-  const isReflowable = false
   const containerElement = createContainerElement(parentElement, item, hooks$)
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
@@ -284,7 +283,6 @@ export const createCommonSpineItem = ({
     unloadContent,
     spineItemFrame,
     element: containerElement,
-    isReflowable,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     isImageType,

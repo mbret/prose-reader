@@ -26,7 +26,7 @@ export const fixReflowable = (reader: ReaderInstance) => {
   reader.registerHook(`item.onAfterLayout`, ({ item, blankPagePosition, minimumWidth }) => {
     const spineItem = reader.getSpineItem(item.id)
 
-    if (!spineItem?.isReflowable) return
+    if (!(spineItem?.item.renditionLayout === `reflowable`)) return
 
     const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
     const { width: pageWidth } = reader.context.getPageSize()

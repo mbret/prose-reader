@@ -49,7 +49,7 @@ export const progressionEnhancer: Enhancer<
 
     let progressWithinThisItem = (pageIndex + 1) * (currentItemWeight / numberOfPages)
 
-    if (!isGloballyPrePaginated && currentItem.isReflowable && !currentItem.isReady()) {
+    if (!isGloballyPrePaginated && currentItem.item.renditionLayout === `reflowable` && !currentItem.isReady()) {
       progressWithinThisItem = 0
     }
 

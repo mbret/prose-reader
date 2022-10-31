@@ -80,14 +80,14 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
            * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
            * we ignore it
            */
-          if (!isGloballyPrePaginated && item.isReflowable && !isLastItem) {
+          if (!isGloballyPrePaginated && item.item.renditionLayout === `reflowable` && !isLastItem) {
             minimumWidth = context.getPageSize().width * 2
           }
 
           // mainly to make loading screen looks good
           if (
             !isGloballyPrePaginated &&
-            item.isReflowable &&
+            item.item.renditionLayout === `reflowable` &&
             isLastItem &&
             itemStartOnNewScreen
           ) {

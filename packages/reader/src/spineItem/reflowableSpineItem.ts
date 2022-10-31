@@ -193,7 +193,6 @@ export const createReflowableSpineItem = ({
 
   return {
     ...commonSpineItem,
-    isReflowable: true,
     layout
   }
 }
