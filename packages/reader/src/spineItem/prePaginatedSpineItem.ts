@@ -3,6 +3,7 @@ import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
+import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
 
 export const createPrePaginatedSpineItem = ({
   item,
@@ -155,11 +156,8 @@ const buildDocumentStyle = (
   viewportDimensions: { height: number; width: number } | undefined
 ) => {
   return `
+    ${getStyleForViewportDocument()}
     body {
-      
-    }
-    body {
-      margin: 0;
       ${
         !viewportDimensions
           ? `

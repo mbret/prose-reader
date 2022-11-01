@@ -3,6 +3,7 @@ import { Context } from "../context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
+import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
 
 export const createReflowableSpineItem = ({
   item,
@@ -194,6 +195,7 @@ export const createReflowableSpineItem = ({
  */
 const buildStyleForViewportFrame = () => {
   return `
+    ${getStyleForViewportDocument()}
     html {
       width: 100%;
       height: 100%;
