@@ -85,12 +85,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           }
 
           // mainly to make loading screen looks good
-          if (
-            !isGloballyPrePaginated &&
-            item.item.renditionLayout === `reflowable` &&
-            isLastItem &&
-            itemStartOnNewScreen
-          ) {
+          if (!isGloballyPrePaginated && item.item.renditionLayout === `reflowable` && isLastItem && itemStartOnNewScreen) {
             minimumWidth = context.getPageSize().width * 2
           }
 
