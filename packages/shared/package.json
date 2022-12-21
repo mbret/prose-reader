@@ -1,19 +1,24 @@
 {
   "name": "@prose-reader/shared",
   "version": "0.0.7",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "./dist/prose-shared.umd.cjs",
+  "module": "./dist/prose-shared.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-shared.js",
+      "require": "./dist/prose-shared.umd.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
     "lint": "echo",
-    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js",
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
     "test": "echo"
-  },
-  "devDependencies": {
-    "typescript": "*"
   }
 }
