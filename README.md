@@ -21,7 +21,16 @@
   </p>
 </p>
 
+### Development
+
+```
+yarn start
+```
+
+It will start the build for every projects and watch for changes. Each projects will rebuild based on each others.
+
 ### Tests
+
 You can run all the tests by using:
 
 ```
