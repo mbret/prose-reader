@@ -311,10 +311,10 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                  ? pagination.getInfo().beginCfi
-                  : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
-                    ? cfiLocator.getRootCfi(beginSpineItem)
-                    : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
+                ? pagination.getInfo().beginCfi
+                : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
+                ? cfiLocator.getRootCfi(beginSpineItem)
+                : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
             options: {
               isAtEndOfChapter: false
             }
@@ -327,10 +327,10 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                  ? pagination.getInfo().endCfi
-                  : endItemIndex !== pagination.getInfo().endSpineItemIndex
-                    ? cfiLocator.getRootCfi(endSpineItem)
-                    : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
+                ? pagination.getInfo().endCfi
+                : endItemIndex !== pagination.getInfo().endSpineItemIndex
+                ? cfiLocator.getRootCfi(endSpineItem)
+                : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
             options: {
               isAtEndOfChapter: false
             }

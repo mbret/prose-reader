@@ -28,7 +28,7 @@ function compose<R>(f1: (a: any) => R, ...funcs: Function[]): (...args: any[]) =
 
 function compose<R>(...funcs: Function[]): (...args: any[]) => R
 
-function compose (...funcs: Function[]) {
+function compose(...funcs: Function[]) {
   if (funcs.length === 0) {
     // infer the argument type so it is usable in inference down the line
     return <T>(arg: T) => arg

@@ -44,16 +44,16 @@ type OutputOptions = Required<Options>
  */
 export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
   (next) =>
-    ({ fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher`, ...options }) => {
-      const settingsSubject$ = new BehaviorSubject<OutputOptions>({
-        fontScale,
-        lineHeight,
-        fontWeight,
-        fontJustification
-      })
-      const reader = next(options)
+  ({ fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher`, ...options }) => {
+    const settingsSubject$ = new BehaviorSubject<OutputOptions>({
+      fontScale,
+      lineHeight,
+      fontWeight,
+      fontJustification
+    })
+    const reader = next(options)
 
-      const getStyle = () => `
+    const getStyle = () => `
     ${
       /*
       Ideally, we would like to use !important but it could break publisher specific
@@ -76,79 +76,79 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
     }
   `
 
-      /**
+    /**
      * Programmatically update every loaded items
      */
-      const applyChangeToSpineItem = (requireLayout: boolean) => {
-        reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
-          if (item.renditionLayout !== `pre-paginated`) {
-            removeStyle(`prose-reader-fonts`)
-            addStyle(`prose-reader-fonts`, getStyle())
-          }
-
-          return requireLayout
-        })
-      }
-
-      /**
-     * Make sure we apply the style to any new item loaded.
-     */
-      reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
+    const applyChangeToSpineItem = (requireLayout: boolean) => {
+      reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
         if (item.renditionLayout !== `pre-paginated`) {
           removeStyle(`prose-reader-fonts`)
           addStyle(`prose-reader-fonts`, getStyle())
         }
+
+        return requireLayout
       })
+    }
 
-      const shouldRequireLayout = <T extends ObservedValueOf<typeof settingsSubject$>>(source: Observable<T>) =>
-        source.pipe(
-          pairwise(),
-          map(([old, latest]) => {
-            if (latest.fontScale !== old.fontScale) return true
-            if (latest.lineHeight !== old.lineHeight) return true
+    /**
+     * Make sure we apply the style to any new item loaded.
+     */
+    reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
+      if (item.renditionLayout !== `pre-paginated`) {
+        removeStyle(`prose-reader-fonts`)
+        addStyle(`prose-reader-fonts`, getStyle())
+      }
+    })
 
-            return false
-          })
-        )
+    const shouldRequireLayout = <T extends ObservedValueOf<typeof settingsSubject$>>(source: Observable<T>) =>
+      source.pipe(
+        pairwise(),
+        map(([old, latest]) => {
+          if (latest.fontScale !== old.fontScale) return true
+          if (latest.lineHeight !== old.lineHeight) return true
 
-      settingsSubject$
-        .asObservable()
-        .pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$))
-        .subscribe()
+          return false
+        })
+      )
 
-      return {
-        ...reader,
-        /**
+    settingsSubject$
+      .asObservable()
+      .pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$))
+      .subscribe()
+
+    return {
+      ...reader,
+      /**
        * Absorb current enhancer settings and passthrough the rest to reader
        */
-        setSettings: (settings) => {
-          const {
-            fontJustification = settingsSubject$.value.fontJustification,
-            fontScale = settingsSubject$.value.fontScale,
-            fontWeight = settingsSubject$.value.fontWeight,
-            lineHeight = settingsSubject$.value.lineHeight,
-            ...passthroughSettings
-          } = settings
+      setSettings: (settings) => {
+        const {
+          fontJustification = settingsSubject$.value.fontJustification,
+          fontScale = settingsSubject$.value.fontScale,
+          fontWeight = settingsSubject$.value.fontWeight,
+          lineHeight = settingsSubject$.value.lineHeight,
+          ...passthroughSettings
+        } = settings
 
-          if (hasOneKey(settings, [`fontJustification`, `fontScale`, `fontWeight`, `lineHeight`])) {
-            settingsSubject$.next({ fontJustification, fontScale, fontWeight, lineHeight })
-          }
-          reader.setSettings(passthroughSettings)
-        },
-        $: {
-          ...reader.$,
-          /**
+        if (hasOneKey(settings, [`fontJustification`, `fontScale`, `fontWeight`, `lineHeight`])) {
+          settingsSubject$.next({ fontJustification, fontScale, fontWeight, lineHeight })
+        }
+        reader.setSettings(passthroughSettings)
+      },
+      $: {
+        ...reader.$,
+        /**
          * Combine reader settings with enhancer settings
          */
-          settings$: combineLatest([reader.$.settings$, settingsSubject$]).pipe(
-            map(([innerSettings, settings]) => ({
-              ...innerSettings,
-              ...settings
-            }))
-          )
-        }
+        settings$: combineLatest([reader.$.settings$, settingsSubject$]).pipe(
+          map(([innerSettings, settings]) => ({
+            ...innerSettings,
+            ...settings
+          }))
+        )
       }
     }
+  }
 
 const hasOneKey = <Obj extends Record<string, any>, Key extends keyof Obj>(obj: Obj, keys: Key[]) =>
   keys.some((key) => key in obj)

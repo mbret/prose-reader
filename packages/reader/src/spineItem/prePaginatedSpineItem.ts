@@ -85,10 +85,10 @@ export const createPrePaginatedSpineItem = ({
                 ? `25%`
                 : `75%`
               : blankPagePosition === `after`
-                ? context.isRTL()
-                  ? `75%`
-                  : `25%`
-                : `50%`
+              ? context.isRTL()
+                ? `75%`
+                : `25%`
+              : `50%`
           )
           frameElement?.style.removeProperty(`right`)
         }
@@ -97,8 +97,8 @@ export const createPrePaginatedSpineItem = ({
           spreadPosition === `right` && blankPagePosition !== `before`
             ? `left`
             : spreadPosition === `left` || (blankPagePosition === `before` && context.isRTL())
-              ? `right`
-              : `center`
+            ? `right`
+            : `center`
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
 
@@ -178,7 +178,7 @@ const buildDocumentStyle = (
       width: 100%;
     }
     ${
-  /*
+      /*
       This one is important for preventing 100% img to resize above
       current width. Especially needed for cbz conversion
     */ ``
@@ -215,13 +215,13 @@ const buildDocumentStyle = (
       -o-user-drag: none;
       user-drag: none;
       ${
-  /*
+        /*
         prevent weird overflow or margin. Try `block` if `flex` has weird behavior
       */ ``
       }
       display: flex;
       ${
-  /*
+        /*
         If the document does not have viewport, we cannot scale anything inside.
         This should never happens with a valid epub document however it will happens if
         we load .jpg, .png, etc directly in the iframe. This is expected, in this case we force

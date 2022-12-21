@@ -120,8 +120,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
                 ? `right`
                 : `left`
               : context.isRTL()
-                ? `left`
-                : `right`
+              ? `left`
+              : `right`
             : `none`
         })
 

@@ -128,8 +128,8 @@ export const createNavigationResolver = ({
             ? { x: position.x - context.getPageSize().width, y: 0 }
             : { y: position.y + context.getPageSize().height, x: 0 }
           : pageTurnDirection === `horizontal`
-            ? { x: position.x + context.getPageSize().width, y: 0 }
-            : { y: position.y + context.getPageSize().height, x: 0 }
+          ? { x: position.x + context.getPageSize().width, y: 0 }
+          : { y: position.y + context.getPageSize().height, x: 0 }
       )
     } else {
       const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigationForRightPage, spineItem)
@@ -159,8 +159,8 @@ export const createNavigationResolver = ({
             ? { x: position.x + context.getPageSize().width, y: 0 }
             : { y: position.y - context.getPageSize().height, x: 0 }
           : pageTurnDirection === `horizontal`
-            ? { x: position.x - context.getPageSize().width, y: 0 }
-            : { y: position.y - context.getPageSize().height, x: 0 }
+          ? { x: position.x - context.getPageSize().width, y: 0 }
+          : { y: position.y - context.getPageSize().height, x: 0 }
       )
     } else {
       const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)

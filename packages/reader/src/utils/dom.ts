@@ -50,7 +50,7 @@ export const isHtmlElement = (element?: Element | Node | null | EventTarget): el
   )
 }
 
-function createRangeOrCaretFromPoint (doc: Document, startX: number, startY: number) {
+function createRangeOrCaretFromPoint(doc: Document, startX: number, startY: number) {
   // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   if (`caretPositionFromPoint` in doc) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
@@ -148,7 +148,7 @@ const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort)
   return lastValidElement
 }
 
-function getElementOrNodePositionFromViewPort (domRect: DOMRect, { left, right }: ViewPort) {
+function getElementOrNodePositionFromViewPort(domRect: DOMRect, { left, right }: ViewPort) {
   // horizontal + ltr
   if (domRect.left <= left && domRect.right <= left) return `before`
   if (domRect.left <= left && domRect.right > left && domRect.right <= right) return `partially-before`
@@ -161,7 +161,7 @@ function getElementOrNodePositionFromViewPort (domRect: DOMRect, { left, right }
   // @todo vertical-rtl
 }
 
-function getFirstVisibleDOMRect (domRect: DOMRectList, viewport: ViewPort) {
+function getFirstVisibleDOMRect(domRect: DOMRectList, viewport: ViewPort) {
   return Array.from(domRect).find((domRect) => {
     const position = getElementOrNodePositionFromViewPort(domRect, viewport)
 

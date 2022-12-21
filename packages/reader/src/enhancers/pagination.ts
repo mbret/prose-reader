@@ -126,13 +126,13 @@ export const paginationEnhancer: Enhancer<
        */
       percentageEstimateOfBook: endItem
         ? reader.progression.getPercentageEstimate(
-          context,
-          paginationInfo.endSpineItemIndex ?? 0,
-          paginationInfo.endNumberOfPages,
-          paginationInfo.endPageIndex || 0,
-          reader.getCurrentViewportPosition(),
-          endItem
-        )
+            context,
+            paginationInfo.endSpineItemIndex ?? 0,
+            paginationInfo.endNumberOfPages,
+            paginationInfo.endPageIndex || 0,
+            reader.getCurrentViewportPosition(),
+            endItem
+          )
         : 0,
       isUsingSpread: context.shouldDisplaySpread()
       // chaptersOfBook: number;

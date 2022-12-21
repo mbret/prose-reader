@@ -215,20 +215,20 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
             renditionFlow === `scrolled-continuous`
               ? [`scrollable`]
               : !context.areAllItemsPrePaginated()
-                  ? [`controlled`]
-                  : [`controlled`, `scrollable`],
+              ? [`controlled`]
+              : [`controlled`, `scrollable`],
           supportedPageTurnAnimation:
             renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
               ? [`none`]
               : hasVerticalWriting
-                ? [`fade`, `none`]
-                : [`fade`, `none`, `slide`],
+              ? [`fade`, `none`]
+              : [`fade`, `none`, `slide`],
           supportedPageTurnDirection:
             computedPageTurnMode === `scrollable`
               ? [`vertical`]
               : renditionLayout === `reflowable`
-                ? [`horizontal`]
-                : [`horizontal`, `vertical`]
+              ? [`horizontal`]
+              : [`horizontal`, `vertical`]
         })
       ),
       takeUntil(destroy$)

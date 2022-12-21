@@ -9,13 +9,13 @@ const ELEMENT_NODE = Node.ELEMENT_NODE
 const TEXT_NODE = Node.TEXT_NODE
 const CDATA_SECTION_NODE = Node.CDATA_SECTION_NODE
 
-function cfiEscape (str: string) {
+function cfiEscape(str: string) {
   return str.replace(/[\[\]\^,();]/g, `^$&`)
 }
 
 // Get indices of all matches of regExp in str
 // if `add` is non-null, add it to the matched indices
-function matchAll (str: string, regExp: any, add: any) {
+function matchAll(str: string, regExp: any, add: any) {
   add = add || 0
   const matches = []
   let offset = 0
@@ -34,7 +34,7 @@ function matchAll (str: string, regExp: any, add: any) {
 }
 
 // Get the number in a that has the smallest diff to n
-function closest (a: any[], n: number) {
+function closest(a: any[], n: number) {
   let minDiff
   let closest
   let i, diff
@@ -54,7 +54,7 @@ function closest (a: any[], n: number) {
 // calculate the count/index of the node
 // according to the CFI spec.
 // Also re-calculate offset if supplied and relevant
-function calcSiblingCount (nodes: globalThis.NodeListOf<globalThis.ChildNode>, n: number, offset: number) {
+function calcSiblingCount(nodes: globalThis.NodeListOf<globalThis.ChildNode>, n: number, offset: number) {
   let count = 0
   let lastWasElement
   let prevOffset = 0
@@ -103,7 +103,7 @@ function calcSiblingCount (nodes: globalThis.NodeListOf<globalThis.ChildNode>, n
   throw new Error(`The specified node was not found in the array of siblings`)
 }
 
-function compareTemporal (a: number, b: number) {
+function compareTemporal(a: number, b: number) {
   const isA = typeof a === `number`
   const isB = typeof b === `number`
 
@@ -114,7 +114,7 @@ function compareTemporal (a: number, b: number) {
   return (a || 0.0) - (b || 0.0)
 }
 
-function compareSpatial (a: any, b: any) {
+function compareSpatial(a: any, b: any) {
   if (!a && !b) return 0
   if (!a && b) return -1
   if (a && !b) return 1
@@ -131,7 +131,7 @@ class CFI {
   opts: {}
   cfi: string
 
-  constructor (str: string, opts: {}) {
+  constructor(str: string, opts: {}) {
     this.opts = Object.assign(
       {
         // If CFI is a Simple Range, pretend it isn't
@@ -219,7 +219,7 @@ class CFI {
     }
   }
 
-  removeIllegalOpts (parts: any[]) {
+  removeIllegalOpts(parts: any[]) {
     if (!parts) {
       // @ts-ignore
       if (this.from) {
@@ -247,7 +247,7 @@ class CFI {
     }
   }
 
-  static generatePart (node: Element | Node, offset?: number, extra?: {}) {
+  static generatePart(node: Element | Node, offset?: number, extra?: {}) {
     /* eslint-disable-next-line no-void */
     void extra
     let cfi = ``
@@ -267,7 +267,7 @@ class CFI {
     return cfi
   }
 
-  static generate (node: Node, offset?: number, extra?: {}) {
+  static generate(node: Node, offset?: number, extra?: {}) {
     let cfi
 
     if (Array.isArray(node)) {
@@ -285,7 +285,7 @@ class CFI {
     return `epubcfi(` + cfi + `)`
   }
 
-  static toParsed (cfi: any) {
+  static toParsed(cfi: any) {
     if (typeof cfi === `string`) {
       // cif = new this(cfi)
     }
@@ -297,7 +297,7 @@ class CFI {
   }
 
   // Takes two CFI paths and compares them
-  static comparePath (a: any[], b: any[]) {
+  static comparePath(a: any[], b: any[]) {
     const max = Math.max(a.length, b.length)
 
     let i, cA, cB, diff
@@ -314,7 +314,7 @@ class CFI {
   }
 
   // Sort an array of CFI objects
-  static sort (a: any) {
+  static sort(a: any) {
     // @ts-ignore
     a.sort((a, b) => {
       return this.compare(a, b)
@@ -322,7 +322,7 @@ class CFI {
   }
 
   // Takes two CFI objects and compares them.
-  static compare (a: any, b: any) {
+  static compare(a: any, b: any) {
     let oA = a.get()
     let oB = b.get()
     if (a.isRange || b.isRange) {
@@ -342,7 +342,7 @@ class CFI {
   }
 
   // Takes two parsed path parts (assuming path is split on '!') and compares them.
-  static compareParts (a: any, b: any) {
+  static compareParts(a: any, b: any) {
     const max = Math.max(a.length, b.length)
 
     let i, cA, cB, diff
@@ -381,7 +381,7 @@ class CFI {
     return 0
   }
 
-  decodeEntities (dom: Document, str: string) {
+  decodeEntities(dom: Document, str: string) {
     try {
       const el = dom.createElement(`textarea`)
       el.innerHTML = str
@@ -394,11 +394,11 @@ class CFI {
   }
 
   // decode HTML/XML entities and compute length
-  trueLength (dom: Document, str: string) {
+  trueLength(dom: Document, str: string) {
     return this.decodeEntities(dom, str).length
   }
 
-  getFrom () {
+  getFrom() {
     if (!this.isRange) throw new Error(`Trying to get beginning of non-range CFI`)
     // @ts-ignore
     if (!this.from) {
@@ -410,7 +410,7 @@ class CFI {
     return parts
   }
 
-  getTo () {
+  getTo() {
     if (!this.isRange) throw new Error(`Trying to get end of non-range CFI`)
     const parts = this.deepClone(this.parts)
     // @ts-ignore
@@ -418,7 +418,7 @@ class CFI {
     return parts
   }
 
-  get () {
+  get() {
     if (this.isRange) {
       return {
         from: this.getFrom(),
@@ -429,7 +429,7 @@ class CFI {
     return this.deepClone(this.parts)
   }
 
-  parseSideBias (o: any, loc: any) {
+  parseSideBias(o: any, loc: any) {
     if (!loc) return
     const m = loc.trim().match(/^(.*);s=([ba])$/)
     if (!m || m.length < 3) {
@@ -455,7 +455,7 @@ class CFI {
     }
   }
 
-  parseSpatialRange (range: any) {
+  parseSpatialRange(range: any) {
     if (!range) return undefined
     const m = range.trim().match(/^([\d\.]+):([\d\.]+)$/)
     if (!m || m.length < 3) return undefined
@@ -469,7 +469,7 @@ class CFI {
     return o
   }
 
-  parse (cfi: any) {
+  parse(cfi: any) {
     const o = {}
     const isNumber = /[\d]/
     let f
@@ -696,7 +696,7 @@ class CFI {
   // The CFI counts child nodes differently from the DOM
   // Retrieve the child of parentNode at the specified index
   // according to the CFI standard way of counting
-  getChildNodeByCFIIndex (dom: Document, parentNode: Element, index: number, offset: number) {
+  getChildNodeByCFIIndex(dom: Document, parentNode: Element, index: number, offset: number) {
     // console.log(`getChildNodeByCFIIndex`, { parentNode, index, offset })
     const children = parentNode.childNodes
     if (!children.length) return { node: parentNode, offset: 0 }
@@ -807,7 +807,7 @@ class CFI {
     }
   }
 
-  isTextNode (node: Element) {
+  isTextNode(node: Element) {
     if (!node) return false
     if (node.nodeType === TEXT_NODE || node.nodeType === CDATA_SECTION_NODE) {
       return true
@@ -816,7 +816,7 @@ class CFI {
   }
 
   // Use a Text Location Assertion to correct and offset
-  correctOffset (dom: Document, node: Element, offset: number, assertion: any) {
+  correctOffset(dom: Document, node: Element, offset: number, assertion: any) {
     let curNode = node
     let matchStr: string | undefined
 
@@ -886,7 +886,7 @@ class CFI {
     return { node: curNode, offset: newOffset }
   }
 
-  resolveNode (index: number, subparts: { nodeIndex: number; nodeID?: string; offset?: number }[], dom: Document, opts: {}) {
+  resolveNode(index: number, subparts: { nodeIndex: number; nodeID?: string; offset?: number }[], dom: Document, opts: {}) {
     opts = Object.assign({}, opts || {})
     if (!dom) throw new Error(`Missing DOM argument`)
 
@@ -964,7 +964,7 @@ class CFI {
   // the next part of the CFI
   // If the opt `ignoreIDs` is true then IDs
   // will not be used while resolving
-  resolveURI (index: number, dom: Document, opts: { ignoreIDs?: boolean }) {
+  resolveURI(index: number, dom: Document, opts: { ignoreIDs?: boolean }) {
     opts = opts || {}
     if (index < 0 || index > this.parts.length - 2) {
       throw new Error(`index is out of bounds`)
@@ -1022,11 +1022,11 @@ class CFI {
     throw new Error(`No URI found`)
   }
 
-  deepClone (o: any) {
+  deepClone(o: any) {
     return JSON.parse(JSON.stringify(o))
   }
 
-  resolveLocation (dom: Document, parts: {}[]) {
+  resolveLocation(dom: Document, parts: {}[]) {
     const index = parts.length - 1
     const subparts = parts[index]
     if (!subparts) throw new Error(`Missing CFI part for index: ` + index)
@@ -1047,7 +1047,7 @@ class CFI {
   // Takes the Document or XMLDocument for the final
   // document referenced by the CFI
   // and returns the node and offset into that node
-  resolveLast (dom: Document, opts: {}): string | {} {
+  resolveLast(dom: Document, opts: {}): string | {} {
     opts = Object.assign(
       {
         range: false
@@ -1094,7 +1094,7 @@ class CFI {
     }
   }
 
-  resolve (doc: Document, opts: {}): { node: Node; offset?: number } | { node?: undefined; offset?: number } {
+  resolve(doc: Document, opts: {}): { node: Node; offset?: number } | { node?: undefined; offset?: number } {
     // @ts-ignore
     return this.resolveLast(doc, opts)
   }

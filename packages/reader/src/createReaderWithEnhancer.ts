@@ -92,7 +92,7 @@ export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer
   enhancer: UserEnhancer
 ): WithoutPrivateApi<EnhancerExposedApi<ComposeEnhancer2<typeof internalEnhancer, UserEnhancer>>>
 
-export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer> (
+export function createReaderWithEnhancer<UserEnhancer extends ComposableEnhancer>(
   options: EnhancerOptions<UserEnhancer> & EnhancerOptions<CoreEnhancer>,
   enhancer?: UserEnhancer
 ) {

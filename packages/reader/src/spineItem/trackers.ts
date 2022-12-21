@@ -32,7 +32,7 @@ export const createFingerTracker = () => {
 
   return {
     track,
-    getFingerPositionInIframe () {
+    getFingerPositionInIframe() {
       return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined ? undefined : fingerPositionInIframe
     },
     destroy: () => {},

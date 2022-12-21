@@ -335,6 +335,6 @@ export function composeEnhancer<
   o: O,
   p: P
 ): ComposeEnhancer<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P>
-export function composeEnhancer (...funcs: any[]) {
+export function composeEnhancer(...funcs: any[]) {
   return compose(...funcs)
 }

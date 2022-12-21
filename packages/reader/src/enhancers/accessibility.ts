@@ -22,7 +22,7 @@ export const accessibilityEnhancer: Enhancer<{}, {}> = (next) => (options) => {
       `
       :focus-visible {
         ${
-  /*
+          /*
           Some epubs remove the outline, this is not good practice since it reduce accessibility.
           We will try to restore it by force.
         */ ``

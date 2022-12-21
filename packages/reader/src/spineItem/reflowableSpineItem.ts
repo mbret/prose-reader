@@ -84,10 +84,10 @@ export const createReflowableSpineItem = ({
               ? `25%`
               : `75%`
             : blankPagePosition === `after`
-              ? context.isRTL()
-                ? `75%`
-                : `25%`
-              : `50%`
+            ? context.isRTL()
+              ? `75%`
+              : `25%`
+            : `50%`
         )
 
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
@@ -95,12 +95,12 @@ export const createReflowableSpineItem = ({
       } else {
         const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
-            isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
-            enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
-          })
+              isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
+              enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
+            })
           : buildStyleWithMultiColumn(
-            commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth)
-          )
+              commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth)
+            )
 
         commonSpineItem.injectStyle(frameStyle)
 
@@ -297,7 +297,7 @@ const buildStyleWithMultiColumn = ({
       display: none !important;
     }
     ${
-  /*
+      /*
       might be html * but it does mess up things like figure if so.
       check accessible_epub_3
     */ ``
@@ -308,7 +308,7 @@ const buildStyleWithMultiColumn = ({
       -max-width: ${columnWidth}px !important;
     }
     ${
-  /*
+      /*
       body {
         height: ${columnHeight}px !important;
         width: ${columnWidth}px !important;
@@ -336,7 +336,7 @@ const buildStyleWithMultiColumn = ({
     }
     body:focus-visible {
       ${
-  /*
+        /*
         we make sure that there are no outline when we focus something inside the iframe
       */ ``
       }
@@ -352,7 +352,7 @@ const buildStyleWithMultiColumn = ({
       touch-action: none;
     }
     ${
-  /*
+      /*
       this messes up hard, be careful with this
     */ ``
     }
@@ -360,7 +360,7 @@ const buildStyleWithMultiColumn = ({
       -max-width: ${columnWidth}px !important;
     }
     ${
-  /*
+      /*
       this is necessary to have a proper calculation when determining size
       of iframe content. If an img is using something like width:100% it would expand to
       the size of the original image and potentially gives back a wrong size (much larger)
@@ -386,7 +386,7 @@ const buildStyleWithMultiColumn = ({
       d-max-width: ${columnWidth}px !important;
     }
     ${
-  /*
+      /*
       img, video, audio, object, svg {
         max-height: ${columnHeight}px !important;
         box-sizing: border-box;
