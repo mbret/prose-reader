@@ -1,36 +1,39 @@
 {
   "name": "@prose-reader/core",
   "version": "0.0.49",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "./dist/prose.umd.cjs",
+  "module": "./dist/prose.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose.js",
+      "require": "./dist/prose.umd.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "start": "concurrently -n src,types \"yarn start-src\" \"yarn start-types\"",
-    "start-src": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "start-types": "yarn tsc -w --preserveWatchOutput --declaration --noEmit false --emitDeclarationOnly",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js && yarn build-types",
-    "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
-    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js",
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
     "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
     "test": "jest",
     "tsc": "tsc"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "rxjs": "*",
     "@prose-reader/shared": "^0.0.7"
   },
-  "peerDependencies": {
-    "rxjs": "*"
-  },
   "devDependencies": {
+    "@prose-reader/shared": "^0.0.7",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.4.0",
     "html-webpack-plugin": "^5.5.0",
     "terser-webpack-plugin": "^5.3.0",
     "ts-loader": "^9.2.8",
-    "typescript": "*",
     "webpack": "^5.65.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.1"

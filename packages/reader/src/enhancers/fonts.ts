@@ -150,4 +150,5 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
       }
     }
 
-const hasOneKey = <Obj, Key extends keyof Obj>(obj: Obj, keys: Key[]) => keys.some((key) => key in obj)
+const hasOneKey = <Obj extends Record<string, any>, Key extends keyof Obj>(obj: Obj, keys: Key[]) =>
+  keys.some((key) => key in obj)

@@ -18,7 +18,8 @@
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": true,
     "sourceMap": true,
-    "noEmit": true
+    "noEmit": true,
+    "isolatedModules": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "**/*.spec.ts"]
