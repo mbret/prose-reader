@@ -1,46 +1,30 @@
 {
   "name": "@prose-reader/streamer",
   "version": "0.0.37",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "./dist/prose-streamer.umd.cjs",
+  "module": "./dist/prose-streamer.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-streamer.js",
+      "require": "./dist/prose-streamer.umd.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "start": "concurrently -n src,types \"yarn start-src\" \"yarn start-types\"",
-    "start-src": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "start-types": "yarn tsc -w --preserveWatchOutput --declaration --noEmit false --emitDeclarationOnly",
-    "build": "concurrently -n src,types \"yarn build-src\" \"yarn build-types\"",
-    "build-src": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
-    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js && yarn build-types",
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
     "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
     "test": "jest"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@prose-reader/shared": "^0.0.7",
-    "@types/xmldoc": "^1.1.5",
-    "buffer": "6.0.3",
+    "buffer": "^6.0.3",
     "xmldoc": "^1.1.2"
-  },
-  "devDependencies": {
-    "@babel/preset-typescript": "^7.16.5",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.0.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-jest": "^25.3.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
-    "isomorphic-fetch": "^3.0.0",
-    "jest": "^29.1.2",
-    "prettier": "^2.5.1",
-    "ts-loader": "^9.2.8",
-    "ts-node": "^10.4.0",
-    "typescript": "*",
-    "webpack": "^5.65.0",
-    "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.6.0"
   },
   "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
 }

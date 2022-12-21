@@ -1,4 +1,4 @@
-import { detectContentType } from "@prose-reader/shared/src"
+import { detectContentType } from "@prose-reader/shared"
 import { getUriBasename } from "../utils/uri"
 import { Archive } from "./types"
 

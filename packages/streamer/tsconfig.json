@@ -11,7 +11,8 @@
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
-    "declaration": false
+    "declaration": true,
+    "isolatedModules": true,
+    "stripInternal": true
   },
-  "exclude": ["webpack.config.js", "**/dist", "**/*.test.ts"]
 }

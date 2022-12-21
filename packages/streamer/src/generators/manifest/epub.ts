@@ -5,6 +5,7 @@ import { extractKoboInformationFromArchive } from "../../parsers/kobo"
 import { Report } from "../../report"
 import { Archive } from "../../archives/types"
 import { getArchiveOpfInfo } from "../../archives/getArchiveOpfInfo"
+import { getSpineItemFilesFromArchive } from "../../epub/getSpineItemFilesFromArchive"
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
@@ -60,15 +61,7 @@ export const epubGenerator =
     const title = titleElm?.val || archive.files.find(({ dir }) => dir)?.basename || ``
     const pageProgressionDirection = spineElm?.attr[`page-progression-direction`] as `ltr` | `rtl` | undefined
 
-    const spineItemIds = spineElm?.childrenNamed(`itemref`).map((item) => item.attr.idref) as string[]
-    const manifestItemsFromSpine =
-      manifestElm?.childrenNamed(`item`).filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
-    const archiveSpineItems = archive.files.filter((file) => {
-      return manifestItemsFromSpine.find((item) => {
-        if (!opfBasePath) return `${item.attr.href}` === file.uri
-        return `${opfBasePath}/${item.attr.href}` === file.uri
-      })
-    })
+    const archiveSpineItems = await getSpineItemFilesFromArchive({ archive })
 
     const totalSize = archiveSpineItems.reduce((size, file) => file.size + size, 0)
 
@@ -97,7 +90,9 @@ export const epubGenerator =
               ? manifestItem?.attr.href
               : opfBasePath
               ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr.href}`
-              : `${baseUrl}/${manifestItem?.attr.href}`,
+              : baseUrl
+              ? `${baseUrl}/${manifestItem?.attr.href}`
+              : manifestItem?.attr.href ?? ``,
             renditionLayout: publisherRenditionLayout || `reflowable`,
             ...(properties.find((property) => property === `rendition:layout-reflowable`) && {
               renditionLayout: `reflowable`
