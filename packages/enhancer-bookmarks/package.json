@@ -21,7 +21,8 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.49"
+    "@prose-reader/core": "^0.0.49",
+    "rxjs": "*"
   },
   "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }
