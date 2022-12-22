@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "lerna run start --parallel",
-    "build": "lerna run build --parallel",
+    "build": "lerna run build",
     "tsc": "lerna run tsc --parallel",
     "lint": "lerna run lint --parallel",
     "test": "lerna run test --parallel",
