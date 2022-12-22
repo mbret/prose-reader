@@ -8,10 +8,10 @@
   "scripts": {
     "start": "lerna run start --parallel",
     "build": "lerna run build --parallel",
-    "tsc": "lerna exec --parallel -- yarn tsc",
+    "tsc": "lerna run tsc --parallel",
     "lint": "lerna run lint --parallel",
     "test": "lerna run test --parallel",
-    "publish-packages": "yarn test && yarn build && yarn tsc && lerna publish",
+    "publish-packages": "yarn test && yarn build && lerna publish",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
     "link-all": "lerna exec --parallel -- yarn link"
   },
