@@ -19,12 +19,12 @@
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
     "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
-    "test": "jest",
+    "test": "vitest run --coverage",
     "tsc": "tsc"
   },
   "peerDependencies": {
-    "rxjs": "*",
-    "@prose-reader/shared": "^0.0.7"
+    "@prose-reader/shared": "^0.0.7",
+    "rxjs": "*"
   },
   "devDependencies": {
     "@prose-reader/shared": "^0.0.7",
@@ -34,6 +34,7 @@
     "html-webpack-plugin": "^5.5.0",
     "terser-webpack-plugin": "^5.3.0",
     "ts-loader": "^9.2.8",
+    "vitest": "*",
     "webpack": "^5.65.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.1"
