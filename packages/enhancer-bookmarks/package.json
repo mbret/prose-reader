@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-bookmarks",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
@@ -14,8 +14,8 @@
     "test": "echo"
   },
   "dependencies": {
-    "@prose-reader/enhancer-scripts": "^0.0.8",
-    "@prose-reader/core": "^0.0.51"
+    "@prose-reader/core": "^0.0.52",
+    "@prose-reader/enhancer-scripts": "^0.0.8"
   },
   "peerDependencies": {
     "rxjs": "*"
