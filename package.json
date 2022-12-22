@@ -7,12 +7,11 @@
   "license": "MIT",
   "scripts": {
     "start": "lerna run start --parallel",
-    "publish-packages": "yarn test && yarn build:prod && yarn tsc && lerna publish",
-    "build": "lerna run build",
-    "build:prod": "lerna run build:prod",
+    "build": "lerna run build --parallel",
     "tsc": "lerna exec --parallel -- yarn tsc",
     "lint": "lerna run lint --parallel",
-    "test": "lerna exec --parallel -- yarn test",
+    "test": "lerna run test --parallel",
+    "publish-packages": "yarn test && yarn build && yarn tsc && lerna publish",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
     "link-all": "lerna exec --parallel -- yarn link"
   },
