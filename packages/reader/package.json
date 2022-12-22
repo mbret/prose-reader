@@ -22,12 +22,13 @@
     "test": "vitest run --coverage",
     "tsc": "tsc"
   },
+  "dependencies": {
+    "@prose-reader/shared": "^0.0.7"
+  },
   "peerDependencies": {
-    "@prose-reader/shared": "^0.0.7",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/shared": "^0.0.9",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.4.0",

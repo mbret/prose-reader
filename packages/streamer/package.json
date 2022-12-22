@@ -21,8 +21,10 @@
     "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
     "test": "vitest run --coverage"
   },
+  "dependencies": {
+    "@prose-reader/shared": "^0.0.7"
+  },
   "peerDependencies": {
-    "@prose-reader/shared": "^0.0.7",
     "buffer": "^6.0.3",
     "xmldoc": "^1.1.2"
   },

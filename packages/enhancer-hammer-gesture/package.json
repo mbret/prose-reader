@@ -14,16 +14,15 @@
     "test": "echo"
   },
   "dependencies": {
-    "@prose-reader/enhancer-scripts": "^0.0.8"
+    "@prose-reader/enhancer-scripts": "^0.0.8",
+    "@prose-reader/core": "^0.0.51"
   },
   "peerDependencies": {
-    "@prose-reader/core": "*",
     "@types/hammerjs": "*",
     "hammerjs": "*",
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/core": "^0.0.51",
     "@types/hammerjs": "*",
     "hammerjs": "*"
   },

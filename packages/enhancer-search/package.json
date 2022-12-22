@@ -14,14 +14,12 @@
     "test": "echo"
   },
   "dependencies": {
-    "@prose-reader/enhancer-scripts": "^0.0.8"
-  },
-  "peerDependencies": {
-    "@prose-reader/core": "*",
-    "rxjs": "*"
-  },
-  "devDependencies": {
+    "@prose-reader/enhancer-scripts": "^0.0.8",
     "@prose-reader/core": "^0.0.51"
   },
+  "peerDependencies": {
+    "rxjs": "*"
+  },
+  "devDependencies": {},
   "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }
