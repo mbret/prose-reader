@@ -1,3 +1,4 @@
+import { expect, it } from "vitest"
 import { sortByTitleComparator } from "./sortByTitleComparator"
 
 it(`should sort correctly`, () => {

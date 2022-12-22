@@ -1,8 +1,9 @@
 // import { isShallowEqual } from "./objects"
 
 import { isShallowEqual } from "./objects"
+import { expect, test } from "vitest"
 
-it(`Test shallow comparision`, () => {
+test(`shallow comparision`, () => {
   const base = { a: 1, b: 2 }
   expect(isShallowEqual(base, { a: 1, b: 2 })).toBe(true)
   expect(isShallowEqual(base, { a: 1, b: 3 })).toBe(false)
@@ -15,16 +16,16 @@ it(`Test shallow comparision`, () => {
   expect(isShallowEqual([0], [1])).toBe(false)
 })
 
-it(`not support deep comparision`, () => {
+test(`not support deep comparision`, () => {
   const base = { a: { b: 2 } }
   expect(isShallowEqual(base, { a: { b: 2 } })).toBe(false)
 })
 
-it(`null === null`, () => {
+test(`null === null`, () => {
   expect(isShallowEqual(null, null)).toBe(true)
 })
 
-it(`null !== {}`, () => {
+test(`null !== {}`, () => {
   expect(isShallowEqual({}, null)).toBe(false)
   expect(isShallowEqual(null, {})).toBe(false)
 })

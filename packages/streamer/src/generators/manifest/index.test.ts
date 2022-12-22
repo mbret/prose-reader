@@ -1,7 +1,8 @@
 import { getManifestFromArchive } from "./index"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
+import { expect, it, test } from "vitest"
 
-describe(`Given a list of urls archive`, () => {
+test(`Given a list of urls archive`, () => {
   it(`should return a valid pre-paginated manifest`, async () => {
     const archive = await createArchiveFromUrls([
       `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`
@@ -39,7 +40,7 @@ describe(`Given a list of urls archive`, () => {
   })
 })
 
-describe(`Given a list of urls with rendition flow archive`, () => {
+test(`Given a list of urls with rendition flow archive`, () => {
   it(`should return a valid reflowable manifest`, async () => {
     const archive = await createArchiveFromUrls(
       [`https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`],

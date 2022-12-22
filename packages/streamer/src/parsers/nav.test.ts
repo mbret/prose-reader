@@ -3,8 +3,9 @@ import fs from "fs"
 import path from "path"
 import { parseToc } from "./nav"
 import { Archive } from ".."
+import { expect, it, test } from "vitest"
 
-describe(`Given ncx toc with prefix`, () => {
+test(`Given ncx toc with prefix`, () => {
   it(`should generate toc correctly`, async () => {
     const toc = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`))).toString()
     const opf = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`))).toString()
