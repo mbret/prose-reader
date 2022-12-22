@@ -31,3 +31,7 @@ jobs:
       - name: Test
         run: |
           yarn test
+
+      - name: Publish
+        run: |
+          npx lerna publish minor --yes
