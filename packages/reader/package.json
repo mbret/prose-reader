@@ -23,7 +23,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/shared": "^0.0.7"
+    "@prose-reader/shared": "^0.0.9"
   },
   "peerDependencies": {
     "rxjs": "*"

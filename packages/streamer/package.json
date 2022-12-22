@@ -22,7 +22,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/shared": "^0.0.7"
+    "@prose-reader/shared": "^0.0.9"
   },
   "peerDependencies": {
     "buffer": "^6.0.3",
