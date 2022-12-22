@@ -13,8 +13,8 @@ jobs:
           node-version: "14"
       - uses: actions/checkout@v2
 
-      - name: Checkout release branch
-        run: git checkout -b release
+      # - name: Checkout release branch
+      #   run: git checkout -b release
 
       - name: Install
         run: |
@@ -31,7 +31,3 @@ jobs:
       - name: Test
         run: |
           yarn test
-
-      - name: Check typescript
-        run: |
-          yarn tsc
