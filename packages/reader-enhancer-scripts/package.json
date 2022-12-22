@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-scripts",
-  "version": "0.0.8",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "license": "MIT",
   "bin": {
