@@ -11,6 +11,7 @@ jobs:
         uses: actions/setup-node@v2.1.4
         with:
           node-version: "14"
+          registry-url: 'https://registry.npmjs.org'
       - uses: actions/checkout@v2
 
       # - name: Checkout release branch
@@ -35,3 +36,5 @@ jobs:
       - name: Publish
         run: |
           npx lerna publish minor --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
