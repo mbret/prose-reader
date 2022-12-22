@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "type": "module",
   "main": "./dist/prose.umd.cjs",
   "module": "./dist/prose.js",
@@ -27,7 +27,7 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "@prose-reader/shared": "^0.0.7",
+    "@prose-reader/shared": "^0.0.8",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.4.0",
