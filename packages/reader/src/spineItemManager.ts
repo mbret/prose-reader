@@ -111,6 +111,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           }
         }
 
+        // we trigger an item layout which will update the visual and return
+        // us with the item new eventual layout information.
+        // This step is not yet about moving item or adjusting position.
         const { width, height } = item.layout({
           minimumWidth,
           blankPagePosition,
@@ -161,6 +164,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           }
         }
 
+        // We can now adjust the position of the item if needed based on its
+        // new layout
         if (context.isRTL()) {
           // could also be negative left but I am not in the mood
           // will push items on the left

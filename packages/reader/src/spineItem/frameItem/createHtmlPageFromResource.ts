@@ -1,5 +1,5 @@
 import { Manifest } from "../../types"
-import { detectContentType, parseContentType } from "@prose-reader/shared"
+import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
 import { getBase64FromBlob } from "../../utils/objects"
 
 /**
@@ -8,7 +8,7 @@ import { getBase64FromBlob } from "../../utils/objects"
 export const createHtmlPageFromResource = async (resourceResponse: Response | string, item: Manifest[`spineItems`][number]) => {
   if (typeof resourceResponse === `string`) return resourceResponse
 
-  const contentType = parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectContentType(item.href)
+  const contentType = parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectMimeTypeFromName(item.href)
 
   if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some((mime) => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
