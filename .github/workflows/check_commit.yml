@@ -19,7 +19,7 @@ jobs:
 
       - name: Install
         run: |
-          yarn
+          yarn install --frozen-lockfile
 
       - name: Lint
         run: |
