@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/shared",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "main": "./dist/prose-shared.umd.cjs",
   "module": "./dist/prose-shared.js",
