@@ -26,7 +26,7 @@ export const defaultHook =
       })),
       items: files.map((file) => ({
         id: file.basename,
-        href: `${baseUrl}${file.uri}`,
+        href: `${baseUrl}${file.uri}`
       }))
     }
   }
