@@ -10,7 +10,7 @@ test(`Given a list of urls archive`, () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
-    expect(await manifest.json()).toEqual({
+    expect(manifest).toEqual({
       filename: ``,
       items: [
         {
@@ -51,7 +51,7 @@ test(`Given a list of urls with rendition flow archive`, () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
-    expect(await manifest.json()).toEqual({
+    expect(manifest).toEqual({
       filename: ``,
       items: [
         {
