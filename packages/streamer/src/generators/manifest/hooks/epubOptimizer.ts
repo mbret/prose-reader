@@ -40,6 +40,10 @@ export const epubOptimizerHook =
       if (hasAllViewport) {
         return {
           ...manifest,
+          spineItems: manifest.spineItems.map((item) => ({
+            ...item,
+            renditionLayout: "pre-paginated"
+          })),
           renditionLayout: "pre-paginated"
         }
       }
