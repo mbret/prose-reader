@@ -1,12 +1,12 @@
 import { Manifest } from "@prose-reader/shared"
 import xmldoc from "xmldoc"
-import { Archive } from "../../archives/types"
+import { Archive } from "../../../archives/types"
 
 /**
  * Handle archive which contains ComicInfo.xml. This is a meta file
  * used to define cbz, etc. I believe it comes from some sites or apps.
  */
-export const comicInfoGenerator =
+export const comicInfoHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const comicInfoFile = archive.files.find((file) => file.basename.toLowerCase() === `comicinfo.xml`)

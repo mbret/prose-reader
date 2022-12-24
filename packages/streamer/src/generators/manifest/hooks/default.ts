@@ -1,7 +1,7 @@
 import { Manifest } from "@prose-reader/shared"
-import { Archive } from "../../archives/types"
+import { Archive } from "../../../archives/types"
 
-export const defaultGenerator =
+export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const files = Object.values(archive.files).filter((file) => !file.dir)

@@ -1,9 +1,10 @@
 import type { Manifest } from "@prose-reader/shared"
 import { Report } from "../../report"
 import { Archive } from "../../archives/types"
-import { epubGenerator } from "./epub"
-import { comicInfoGenerator } from "./comicInfo"
-import { defaultGenerator } from "./default"
+import { defaultHook } from "./hooks/default"
+import { epubHook } from "./hooks/epub"
+import { comicInfoHook } from "./hooks/comicInfo"
+import { epubOptimizerHook } from "./hooks/epubOptimizer"
 
 const baseManifest: Manifest = {
   filename: ``,
@@ -18,23 +19,25 @@ const baseManifest: Manifest = {
   title: ``
 }
 
-export const getManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
-  const generators = [
-    defaultGenerator({ archive, baseUrl }),
-    epubGenerator({ archive, baseUrl }),
-    comicInfoGenerator({ archive, baseUrl })
+export const generateManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
+  const hooks = [
+    defaultHook({ archive, baseUrl }),
+    epubHook({ archive, baseUrl }),
+    epubOptimizerHook({ archive, baseUrl }),
+    comicInfoHook({ archive, baseUrl })
   ]
 
   try {
-    const manifest = await generators.reduce(async (manifest, gen) => {
+    const manifest = await hooks.reduce(async (manifest, gen) => {
       return await gen(await manifest)
     }, Promise.resolve(baseManifest))
 
-    const data = JSON.stringify(manifest)
+    Report.log("Generated manifest", manifest)
 
-    return new Response(data, { status: 200 })
+    return manifest
   } catch (e) {
     Report.error(e)
-    return new Response((e as any)?.message, { status: 500 })
+
+    throw e
   }
 }

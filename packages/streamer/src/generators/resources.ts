@@ -1,8 +1,8 @@
 import xmldoc from "xmldoc"
 import { Archive, getArchiveOpfInfo } from ".."
-import { getItemsFromDoc } from "./manifest/epub"
+import { getItemsFromDoc } from "./manifest/hooks/epub"
 
-export const getResourceFromArchive = async (archive: Archive, resourcePath: string) => {
+export const generateResourceFromArchive = async (archive: Archive, resourcePath: string) => {
   const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
 
   const metadata = await getMetadata(archive, resourcePath)
@@ -51,22 +51,23 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
   //   }
   // })
 
-  const response = new Response(blob, {
-    headers: {
-      ...(blob.type && {
-        "Content-Type": blob.type
-      }),
-      ...(file.encodingFormat && {
-        "Content-Type": file.encodingFormat
-      }),
-      ...(metadata.mediaType && {
-        "Content-Type": metadata.mediaType
-      })
-      // 'Cache-Control': `no-cache, no-store, no-transform`
+  return {
+    body: blob,
+    params: {
+      headers: {
+        ...(blob.type && {
+          "Content-Type": blob.type
+        }),
+        ...(file.encodingFormat && {
+          "Content-Type": file.encodingFormat
+        }),
+        ...(metadata.mediaType && {
+          "Content-Type": metadata.mediaType
+        })
+        // 'Cache-Control': `no-cache, no-store, no-transform`
+      }
     }
-  })
-
-  return response
+  }
 }
 
 const getMetadata = async (archive: Archive, resourcePath: string) => {

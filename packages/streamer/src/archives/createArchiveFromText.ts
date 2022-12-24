@@ -7,9 +7,13 @@ import { Archive } from "./types"
  */
 export const createArchiveFromText = async (
   content: string | Blob,
-  options?: {
-    direction: `ltr` | `rtl`
-  }
+  {
+    mimeType,
+    direction
+  }: {
+    direction?: `ltr` | `rtl`
+    mimeType?: string
+  } = { mimeType: "text/plain" }
 ) => {
   const txtOpfContent = `
       <?xml version="1.0" encoding="UTF-8"?>
@@ -22,7 +26,7 @@ export const createArchiveFromText = async (
         <manifest>
             <item id="p01" href="p01.txt" media-type="text/plain"/>
         </manifest>
-        <spine page-progression-direction="${options?.direction || `ltr`}">
+        <spine page-progression-direction="${direction ?? `ltr`}">
           <itemref idref="p01" />
         </spine>
       </package>
@@ -57,7 +61,7 @@ export const createArchiveFromText = async (
           return blobToBase64(content)
         },
         size: typeof content === `string` ? content.length : content.size,
-        encodingFormat: `text/plain`
+        encodingFormat: mimeType
       }
     ]
   }

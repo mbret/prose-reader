@@ -16,6 +16,7 @@ export type Archive = {
     base64: () => Promise<string>
     stream?: () => StreamResult
     size: number
-    encodingFormat?: undefined | `text/plain` | `image/png` | `image/jpg` | `image/jpeg` | `image/webp`
+    // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+    encodingFormat?: string
   }[]
 }

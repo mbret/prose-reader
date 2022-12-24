@@ -1,4 +1,4 @@
-import { detectContentType } from "@prose-reader/shared"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { getUriBasename } from "../utils/uri"
 import { Archive } from "./types"
 
@@ -16,7 +16,7 @@ export const createArchiveFromUrls = async (urls: string[], options?: { useRendi
       </metadata>
       <manifest>
         ${urls
-          .map((url) => `<item id="${getUriBasename(url)}" href="${url}" media-type="${detectContentType(url)}"/>`)
+          .map((url) => `<item id="${getUriBasename(url)}" href="${url}" media-type="${detectMimeTypeFromName(url)}"/>`)
           .join(`\n`)}
       </manifest>
       <spine>
@@ -28,7 +28,7 @@ export const createArchiveFromUrls = async (urls: string[], options?: { useRendi
   const filesFromUrl: Archive[`files`] = urls.map((url) => ({
     dir: false,
     basename: getUriBasename(url),
-    encodingFormat: detectContentType(url),
+    encodingFormat: detectMimeTypeFromName(url),
     uri: url,
     size: 100 / urls.length,
     base64: async () => ``,

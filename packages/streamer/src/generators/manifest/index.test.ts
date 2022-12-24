@@ -1,4 +1,4 @@
-import { getManifestFromArchive } from "./index"
+import { generateManifestFromArchive } from "./index"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 import { expect, it, test } from "vitest"
 
@@ -8,7 +8,7 @@ test(`Given a list of urls archive`, () => {
       `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`
     ])
 
-    const manifest = await getManifestFromArchive(archive)
+    const manifest = await generateManifestFromArchive(archive)
 
     expect(await manifest.json()).toEqual({
       filename: ``,
@@ -49,7 +49,7 @@ test(`Given a list of urls with rendition flow archive`, () => {
       }
     )
 
-    const manifest = await getManifestFromArchive(archive)
+    const manifest = await generateManifestFromArchive(archive)
 
     expect(await manifest.json()).toEqual({
       filename: ``,

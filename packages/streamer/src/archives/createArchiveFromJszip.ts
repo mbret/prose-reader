@@ -1,3 +1,4 @@
+import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { Archive, StreamResult } from "./types"
@@ -41,7 +42,7 @@ export const createArchiveFromJszip = async (
     files = files.sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
-  return {
+  const archive = {
     filename: name || ``,
     files: files.map((file) => ({
       dir: file.dir,
@@ -58,4 +59,8 @@ export const createArchiveFromJszip = async (
       size: file._data.uncompressedSize
     }))
   }
+
+  Report.log("Generated archive", archive)
+
+  return archive
 }

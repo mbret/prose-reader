@@ -1,11 +1,11 @@
 import xmldoc from "xmldoc"
-import { parseToc } from "../../parsers/nav"
+import { parseToc } from "../../../parsers/nav"
 import type { Manifest } from "@prose-reader/shared"
-import { extractKoboInformationFromArchive } from "../../parsers/kobo"
-import { Report } from "../../report"
-import { Archive } from "../../archives/types"
-import { getArchiveOpfInfo } from "../../archives/getArchiveOpfInfo"
-import { getSpineItemFilesFromArchive } from "../../epub/getSpineItemFilesFromArchive"
+import { extractKoboInformationFromArchive } from "../../../parsers/kobo"
+import { Report } from "../../../report"
+import { Archive } from "../../../archives/types"
+import { getArchiveOpfInfo } from "../../../archives/getArchiveOpfInfo"
+import { getSpineItemFilesFromArchive } from "../../../epub/getSpineItemFilesFromArchive"
 
 type SpineItemProperties = `rendition:layout-reflowable` | `page-spread-left` | `page-spread-right`
 
@@ -21,7 +21,7 @@ export const getItemsFromDoc = (doc: xmldoc.XmlDocument) => {
   )
 }
 
-export const epubGenerator =
+export const epubHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}

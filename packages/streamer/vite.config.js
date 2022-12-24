@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => ({
       fileName: `prose-streamer`
     },
     sourcemap: true,
+    minify: mode === "development" ? false : "esbuild",
     emptyOutDir: mode !== "development",
     rollupOptions: {
       external: ["xmldoc", "@prose-reader/shared"],
