@@ -82,17 +82,16 @@ export const epubHook =
           const properties = (itemrefElm?.attr.properties?.split(` `) || []) as SpineItemProperties[]
           const itemSize = archive.files.find((file) => file.uri.endsWith(href))?.size || 0
 
+          // we use base url or nothing (and stay relative)
+          const hrefBaseUri = baseUrl ?? ""
+
           return {
             id: manifestItem?.attr.id || ``,
-            path: opfBasePath ? `${opfBasePath}/${manifestItem?.attr.href}` : `${manifestItem?.attr.href}`,
-            // href: opfBasePath ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr['href']}` : `${baseUrl}/${manifestItem?.attr['href']}`,
             href: manifestItem?.attr.href?.startsWith(`https://`)
               ? manifestItem?.attr.href
               : opfBasePath
-              ? `${baseUrl}/${opfBasePath}/${manifestItem?.attr.href}`
-              : baseUrl
-              ? `${baseUrl}/${manifestItem?.attr.href}`
-              : manifestItem?.attr.href ?? ``,
+              ? `${hrefBaseUri}${opfBasePath}/${manifestItem?.attr.href}`
+              : `${hrefBaseUri}${manifestItem?.attr.href}`,
             renditionLayout: publisherRenditionLayout || `reflowable`,
             ...(properties.find((property) => property === `rendition:layout-reflowable`) && {
               renditionLayout: `reflowable`

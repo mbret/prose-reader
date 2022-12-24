@@ -233,9 +233,9 @@ export const paginationEnhancer: Enhancer<
 }
 
 export const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
-  const { path } = item
+  const { href } = item
 
-  return getChapterInfo(path, manifest.nav.toc)
+  return getChapterInfo(href, manifest.nav.toc)
 }
 
 const getChapterInfo = (path: string, tocItems: Manifest[`nav`][`toc`]): ChapterInfo | undefined => {

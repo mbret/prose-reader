@@ -17,8 +17,7 @@ export const defaultHook =
       readingDirection: `ltr`,
       spineItems: files.map((file) => ({
         id: file.basename,
-        path: `${file.uri}`,
-        href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri,
+        href: `${baseUrl}${file.uri}`,
         renditionLayout: `pre-paginated`,
         progressionWeight: 1 / files.length,
         pageSpreadLeft: undefined,
@@ -27,7 +26,7 @@ export const defaultHook =
       })),
       items: files.map((file) => ({
         id: file.basename,
-        href: baseUrl ? `${baseUrl}/${file.uri}` : file.uri
+        href: `${baseUrl}${file.uri}`,
       }))
     }
   }

@@ -6,5 +6,9 @@ import { Manifest } from "@prose-reader/shared"
 export const getCoverItem = (manifest: Manifest) => {
   const coverItem = manifest.guide?.find((item) => item.type === `cover`)
 
-  return manifest.spineItems.findIndex((item) => coverItem?.href.endsWith(item.path))
+  return manifest.spineItems.findIndex((item) => {
+    if (!coverItem?.href) return false
+
+    return item.href.endsWith(coverItem.href)
+  })
 }
