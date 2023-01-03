@@ -19,6 +19,6 @@
     "lint": "echo",
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "test": "echo"
+    "test": "vitest run --coverage"
   }
 }
