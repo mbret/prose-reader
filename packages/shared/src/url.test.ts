@@ -1,4 +1,4 @@
-import urlJoin from "./url";
+import { urlJoin } from "./url";
 import { expect, it, describe } from "vitest";
 
 describe("url join", () => {
