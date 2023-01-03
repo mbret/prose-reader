@@ -71,6 +71,39 @@ describe(`Given a xml document`, () => {
       expect(manifest).toEqual(firstManifest)
     })
   })
+
+  describe(`when there is more than one meta viewport`, () => {
+    it(`should return a valid pre-paginated manifest`, async () => {
+      const archive = await createArchiveFromText(
+        `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+      <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+          <title>Page 2</title>
+          <meta xmlns="http://www.w3.org/1999/xhtml" http-equiv="Content-Type" content="text/html; charset=utf-8" />
+          <meta name="viewport" content="width=569, height=739" />
+        </head>
+        <body class='standard-portrait style-modern'>
+          <div class='page'>
+            <div class='figure full-bleed'>
+            <img src='images/i002.jpg' alt='image'/></div>
+          </div>
+        </body>
+      </html>`,
+        {
+          mimeType: "application/xhtml+xml"
+        }
+      )
+
+      const firstManifest = await generateManifestFromArchive(archive)
+
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+
+      expect(manifest).toEqual({
+        ...firstManifest,
+        renditionLayout: "pre-paginated"
+      })
+    })
+  })
 })
 
 describe(`Given a non xml resource`, () => {

@@ -4,7 +4,10 @@ import { Archive } from "../../../archives/types"
 import { getSpineItemFilesFromArchive } from "../../../epub/getSpineItemFilesFromArchive"
 
 const hasDocMetaViewport = (doc: xmldoc.XmlDocument) => {
-  const metaElm = doc.descendantWithPath("head.meta")
+  const metaElm = doc
+    .descendantWithPath("head")
+    ?.childrenNamed("meta")
+    .find((node) => node.attr.name === "viewport")
 
   return !!(metaElm && metaElm.attr.name === "viewport")
 }

@@ -16,6 +16,9 @@ export const defaultHook =
       renditionSpread: `auto`,
       readingDirection: `ltr`,
       spineItems: files.map((file, index) => ({
+        // some books such as cbz can have same basename inside different sub folder
+        // we need to make sure to have unique index
+        // /chap01/01.png, /chap02/01.png, etc
         id: `${index}.${file.basename}`,
         href: `${baseUrl}${file.uri}`,
         renditionLayout: `pre-paginated`,
