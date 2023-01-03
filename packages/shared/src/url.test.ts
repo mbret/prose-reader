@@ -3,135 +3,134 @@ import { expect, it, describe } from "vitest";
 
 describe("url join", () => {
   it("should work for simple case", () => {
-    urlJoin("http://www.google.com/", "foo/bar", "?test=123").should.eql(
+    expect(urlJoin("http://www.google.com/", "foo/bar", "?test=123")).toEqual(
       "http://www.google.com/foo/bar?test=123"
     );
   });
 
   it("should work for simple case with new syntax", () => {
-    urlJoin(["http://www.google.com/", "foo/bar", "?test=123"]).should.eql(
+    expect(urlJoin(["http://www.google.com/", "foo/bar", "?test=123"])).toEqual(
       "http://www.google.com/foo/bar?test=123"
     );
   });
 
   it("should work for hashbang urls", () => {
-    urlJoin(["http://www.google.com", "#!", "foo/bar", "?test=123"]).should.eql(
-      "http://www.google.com/#!/foo/bar?test=123"
-    );
+    expect(
+      urlJoin(["http://www.google.com", "#!", "foo/bar", "?test=123"])
+    ).toEqual("http://www.google.com/#!/foo/bar?test=123");
   });
 
   it("should be able to join protocol", () => {
-    urlJoin("http:", "www.google.com/", "foo/bar", "?test=123").should.eql(
+    expect(urlJoin("http:", "www.google.com/", "foo/bar", "?test=123")).toEqual(
       "http://www.google.com/foo/bar?test=123"
     );
   });
 
   it("should be able to join protocol with slashes", () => {
-    urlJoin("http://", "www.google.com/", "foo/bar", "?test=123").should.eql(
-      "http://www.google.com/foo/bar?test=123"
-    );
+    expect(
+      urlJoin("http://", "www.google.com/", "foo/bar", "?test=123")
+    ).toEqual("http://www.google.com/foo/bar?test=123");
   });
 
   it("should remove extra slashes", () => {
-    urlJoin("http:", "www.google.com///", "foo/bar", "?test=123").should.eql(
-      "http://www.google.com/foo/bar?test=123"
-    );
+    expect(
+      urlJoin("http:", "www.google.com///", "foo/bar", "?test=123")
+    ).toEqual("http://www.google.com/foo/bar?test=123");
   });
 
   it("should not remove extra slashes in an encoded URL", () => {
-    urlJoin(
-      "http:",
-      "www.google.com///",
-      "foo/bar",
-      "?url=http%3A//Ftest.com"
-    ).should.eql("http://www.google.com/foo/bar?url=http%3A//Ftest.com");
+    expect(
+      urlJoin(
+        "http:",
+        "www.google.com///",
+        "foo/bar",
+        "?url=http%3A//Ftest.com"
+      )
+    ).toEqual("http://www.google.com/foo/bar?url=http%3A//Ftest.com");
 
-    urlJoin("http://a.com/23d04b3/", "/b/c.html")
-      .should.eql("http://a.com/23d04b3/b/c.html")
-      .should.not.eql("http://a.com/23d04b3//b/c.html");
+    expect(urlJoin("http://a.com/23d04b3/", "/b/c.html")).toEqual(
+      "http://a.com/23d04b3/b/c.html"
+    );
+    expect(urlJoin("http://a.com/23d04b3/", "/b/c.html")).not.toEqual(
+      "http://a.com/23d04b3//b/c.html"
+    );
   });
 
   it("should support anchors in urls", () => {
-    urlJoin(
-      "http:",
-      "www.google.com///",
-      "foo/bar",
-      "?test=123",
-      "#faaaaa"
-    ).should.eql("http://www.google.com/foo/bar?test=123#faaaaa");
+    expect(
+      urlJoin("http:", "www.google.com///", "foo/bar", "?test=123", "#faaaaa")
+    ).toEqual("http://www.google.com/foo/bar?test=123#faaaaa");
   });
 
   it("should support protocol-relative urls", () => {
-    urlJoin("//www.google.com", "foo/bar", "?test=123").should.eql(
+    expect(urlJoin("//www.google.com", "foo/bar", "?test=123")).toEqual(
       "//www.google.com/foo/bar?test=123"
     );
   });
 
   it("should support file protocol urls", () => {
-    urlJoin("file:/", "android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:/", "android_asset", "foo/bar")).toEqual(
       "file://android_asset/foo/bar"
     );
 
-    urlJoin("file:", "/android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:", "/android_asset", "foo/bar")).toEqual(
       "file://android_asset/foo/bar"
     );
   });
 
   it("should support absolute file protocol urls", () => {
-    urlJoin("file:", "///android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:", "///android_asset", "foo/bar")).toEqual(
       "file:///android_asset/foo/bar"
     );
 
-    urlJoin("file:///", "android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:///", "android_asset", "foo/bar")).toEqual(
       "file:///android_asset/foo/bar"
     );
 
-    urlJoin("file:///", "//android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:///", "//android_asset", "foo/bar")).toEqual(
       "file:///android_asset/foo/bar"
     );
 
-    urlJoin("file:///android_asset", "foo/bar").should.eql(
+    expect(urlJoin("file:///android_asset", "foo/bar")).toEqual(
       "file:///android_asset/foo/bar"
     );
   });
 
   it("should merge multiple query params properly", () => {
-    urlJoin(
-      "http:",
-      "www.google.com///",
-      "foo/bar",
-      "?test=123",
-      "?key=456"
-    ).should.eql("http://www.google.com/foo/bar?test=123&key=456");
+    expect(
+      urlJoin("http:", "www.google.com///", "foo/bar", "?test=123", "?key=456")
+    ).toEqual("http://www.google.com/foo/bar?test=123&key=456");
 
-    urlJoin(
-      "http:",
-      "www.google.com///",
-      "foo/bar",
-      "?test=123",
-      "?boom=value",
-      "&key=456"
-    ).should.eql("http://www.google.com/foo/bar?test=123&boom=value&key=456");
+    expect(
+      urlJoin(
+        "http:",
+        "www.google.com///",
+        "foo/bar",
+        "?test=123",
+        "?boom=value",
+        "&key=456"
+      )
+    ).toEqual("http://www.google.com/foo/bar?test=123&boom=value&key=456");
 
-    urlJoin("http://example.org/x", "?a=1", "?b=2", "?c=3", "?d=4").should.eql(
-      "http://example.org/x?a=1&b=2&c=3&d=4"
-    );
+    expect(
+      urlJoin("http://example.org/x", "?a=1", "?b=2", "?c=3", "?d=4")
+    ).toEqual("http://example.org/x?a=1&b=2&c=3&d=4");
   });
 
   it("should merge slashes in paths correctly", () => {
-    urlJoin("http://example.org", "a//", "b//", "A//", "B//").should.eql(
+    expect(urlJoin("http://example.org", "a//", "b//", "A//", "B//")).toEqual(
       "http://example.org/a/b/A/B/"
     );
   });
 
   it("should merge colons in paths correctly", () => {
-    urlJoin("http://example.org/", ":foo:", "bar").should.eql(
+    expect(urlJoin("http://example.org/", ":foo:", "bar")).toEqual(
       "http://example.org/:foo:/bar"
     );
   });
 
   it("should merge just a simple path without URL correctly", () => {
-    urlJoin("/", "test").should.eql("/test");
+    expect(urlJoin("/", "test")).toEqual("/test");
   });
 
   // it("should fail with segments that are not string", () => {
@@ -155,35 +154,45 @@ describe("url join", () => {
   // });
 
   it("should merge a path with colon properly", () => {
-    urlJoin("/users/:userId", "/cars/:carId").should.eql(
+    expect(urlJoin("/users/:userId", "/cars/:carId")).toEqual(
       "/users/:userId/cars/:carId"
     );
   });
 
   it("should merge slashes in protocol correctly", () => {
-    urlJoin("http://example.org", "a").should.eql("http://example.org/a");
-    urlJoin("http:", "//example.org", "a").should.eql("http://example.org/a");
-    urlJoin("http:///example.org", "a").should.eql("http://example.org/a");
-    urlJoin("file:///example.org", "a").should.eql("file:///example.org/a");
+    expect(urlJoin("http://example.org", "a")).toEqual("http://example.org/a");
+    expect(urlJoin("http:", "//example.org", "a")).toEqual(
+      "http://example.org/a"
+    );
+    expect(urlJoin("http:///example.org", "a")).toEqual("http://example.org/a");
+    expect(urlJoin("file:///example.org", "a")).toEqual(
+      "file:///example.org/a"
+    );
 
-    urlJoin("file:example.org", "a").should.eql("file://example.org/a");
+    expect(urlJoin("file:example.org", "a")).toEqual("file://example.org/a");
 
-    urlJoin("file:/", "example.org", "a").should.eql("file://example.org/a");
-    urlJoin("file:", "/example.org", "a").should.eql("file://example.org/a");
-    urlJoin("file:", "//example.org", "a").should.eql("file://example.org/a");
+    expect(urlJoin("file:/", "example.org", "a")).toEqual(
+      "file://example.org/a"
+    );
+    expect(urlJoin("file:", "/example.org", "a")).toEqual(
+      "file://example.org/a"
+    );
+    expect(urlJoin("file:", "//example.org", "a")).toEqual(
+      "file://example.org/a"
+    );
   });
 
   it("should skip empty strings", () => {
-    urlJoin("http://foobar.com", "", "test").should.eql(
+    expect(urlJoin("http://foobar.com", "", "test")).toEqual(
       "http://foobar.com/test"
     );
-    urlJoin("", "http://foobar.com", "", "test").should.eql(
+    expect(urlJoin("", "http://foobar.com", "", "test")).toEqual(
       "http://foobar.com/test"
     );
   });
 
   it("should return an empty string if no arguments are supplied", () => {
-    urlJoin().should.eql("");
+    expect(urlJoin()).toEqual("");
   });
 
   it("should not mutate the original reference", () => {
@@ -192,6 +201,6 @@ describe("url join", () => {
 
     urlJoin(input);
 
-    input.should.eql(expected);
+    expect(input).toEqual(expected);
   });
 });
