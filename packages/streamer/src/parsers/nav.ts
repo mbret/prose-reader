@@ -1,6 +1,7 @@
 import xmldoc, { XmlElement } from "xmldoc"
 import type { Manifest } from "@prose-reader/shared"
 import { Archive, getArchiveOpfInfo } from ".."
+import { urlJoin } from "@prose-reader/shared"
 
 type Toc = Manifest[`nav`][`toc`]
 type TocItem = Manifest[`nav`][`toc`][number]
@@ -22,8 +23,8 @@ const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePa
     }
   }
   if (node === `a` && contentNode?.attr.href) {
-    chp.path = opfBasePath ? `${opfBasePath}/${contentNode.attr.href}` : `${contentNode.attr.href}`
-    chp.href = opfBasePath ? `${baseUrl}/${opfBasePath}/${contentNode.attr.href}` : `${baseUrl}/${contentNode.attr.href}`
+    chp.path = urlJoin(opfBasePath, contentNode.attr.href)
+    chp.href = urlJoin(baseUrl, opfBasePath, contentNode.attr.href)
   }
   const sublistNode = li.childNamed(`ol`)
   if (sublistNode) {
@@ -80,10 +81,11 @@ const mapNcxChapter = (
   { opfBasePath, baseUrl, prefix }: { opfBasePath: string; baseUrl: string; prefix: string }
 ) => {
   const src = point?.childNamed(`${prefix}content`)?.attr.src || ``
+
   const out: TocItem = {
     title: point?.descendantWithPath(`${prefix}navLabel.${prefix}text`)?.val || ``,
-    path: opfBasePath ? `${opfBasePath}/${src}` : `${src}`,
-    href: opfBasePath ? `${baseUrl}/${opfBasePath}/${src}` : `${baseUrl}/${src}`,
+    path: urlJoin(opfBasePath, src),
+    href: urlJoin(baseUrl, opfBasePath, src),
     contents: []
   }
   const children = point.childrenNamed(`${prefix}navPoint`)
