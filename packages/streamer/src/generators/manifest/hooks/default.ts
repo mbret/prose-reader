@@ -15,8 +15,8 @@ export const defaultHook =
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
-      spineItems: files.map((file) => ({
-        id: file.basename,
+      spineItems: files.map((file, index) => ({
+        id: `${index}.${file.basename}`,
         href: `${baseUrl}${file.uri}`,
         renditionLayout: `pre-paginated`,
         progressionWeight: 1 / files.length,
@@ -24,8 +24,8 @@ export const defaultHook =
         pageSpreadRight: undefined,
         mediaType: file.encodingFormat
       })),
-      items: files.map((file) => ({
-        id: file.basename,
+      items: files.map((file, index) => ({
+        id: `${index}.${file.basename}`,
         href: `${baseUrl}${file.uri}`
       }))
     }
