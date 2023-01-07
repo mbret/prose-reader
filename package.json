@@ -48,6 +48,7 @@
     "prettier": "^2.5.1",
     "react": "*",
     "react-dom": "*",
+    "rollup-plugin-node-externals": "^5.0.3",
     "rollup-plugin-polyfill-node": "^0.11.0",
     "rxjs": "*",
     "serve": "^14.1.2",

@@ -107,6 +107,8 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
           tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination))
         )
     }
+
+    return undefined
   }
 
   // @todo handle spread

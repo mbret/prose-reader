@@ -15,7 +15,7 @@
     "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
     "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js && yarn build-types",
     "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
-    "test": "echo"
+    "tsc": "tsc"
   },
   "peerDependencies": {
     "@types/react": "*",

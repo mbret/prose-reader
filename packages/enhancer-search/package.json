@@ -1,17 +1,21 @@
 {
   "name": "@prose-reader/enhancer-search",
   "version": "1.8.0",
-  "main": "dist/index.js",
-  "license": "MIT",
-  "files": [
-    "/dist"
-  ],
+  "type": "module",
+  "main": "./dist/prose-reader-enhancer-search.umd.cjs",
+  "module": "./dist/prose-reader-enhancer-search.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-reader-enhancer-search.js",
+      "require": "./dist/prose-reader-enhancer-search.umd.cjs"
+    }
+  },
   "scripts": {
-    "start": "prose-reader-enhancer-scripts start",
-    "build": "NODE_ENV=development prose-reader-enhancer-scripts build",
-    "build:prod": "NODE_ENV=production prose-reader-enhancer-scripts build",
-    "lint": "prose-reader-enhancer-scripts lint",
-    "test": "echo"
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@prose-reader/core": "^1.8.0",

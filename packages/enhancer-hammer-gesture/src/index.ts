@@ -21,7 +21,7 @@ export const hammerGestureEnhancer: Enhancer<
       }
 
       // eslint-disable-next-line no-undef
-      const onPinchEnd = (ev: HammerInput) => {
+      const onPinchEnd = (_: HammerInput) => {
         if (reader?.zoom.isZooming()) {
           reader?.zoom.setCurrentScaleAsBase()
           if (
