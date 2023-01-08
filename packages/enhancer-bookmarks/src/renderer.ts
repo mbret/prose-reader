@@ -6,16 +6,23 @@ import { Bookmark, ReaderInstance } from "./types"
 
 const ELEMENT_ID = PACKAGE_NAME
 
-export const createRenderer = (reader: ReaderInstance, options: {
-  areaWidth: number,
-  areaHeight: number
-}) => {
+export const createRenderer = (
+  reader: ReaderInstance,
+  options: {
+    areaWidth: number
+    areaHeight: number
+  }
+) => {
   const element$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
-  const waitForViewportFree$ = reader.$.viewportState$.pipe(filter(v => v === `free`), take(1))
+  const waitForViewportFree$ = reader.$.viewportState$.pipe(
+    filter((v) => v === `free`),
+    take(1)
+  )
 
   const createBookmarkElement = () => {
-    reader.manipulateContainer(container => {
-      if (container.ownerDocument.getElementById(ELEMENT_ID)) return SHOULD_NOT_LAYOUT
+    reader.manipulateContainer((container) => {
+      if (container.ownerDocument.getElementById(ELEMENT_ID))
+        return SHOULD_NOT_LAYOUT
       const element = container.ownerDocument.createElement(`div`)
       element.id = ELEMENT_ID
       element.style.cssText = `
@@ -30,9 +37,14 @@ export const createRenderer = (reader: ReaderInstance, options: {
       `
       const innerWrapper = container.ownerDocument.createElement(`div`)
       innerWrapper.style.cssText = `
-        margin-top: -${((options.areaWidth / options.areaHeight) * options.areaHeight * 1.2) - options.areaHeight}px;
+        margin-top: -${
+          (options.areaWidth / options.areaHeight) * options.areaHeight * 1.2 -
+          options.areaHeight
+        }px;
       `
-      innerWrapper.innerHTML = getIcon(Math.max(options.areaHeight, options.areaWidth) * 1.2)
+      innerWrapper.innerHTML = getIcon(
+        Math.max(options.areaHeight, options.areaWidth) * 1.2
+      )
       element.appendChild(innerWrapper)
       container.appendChild(element)
 
@@ -43,7 +55,7 @@ export const createRenderer = (reader: ReaderInstance, options: {
   }
 
   const destroyBookmarkElement = () => {
-    reader.manipulateContainer(container => {
+    reader.manipulateContainer((container) => {
       container.ownerDocument.getElementById(ELEMENT_ID)?.remove()
 
       return SHOULD_NOT_LAYOUT
@@ -51,62 +63,64 @@ export const createRenderer = (reader: ReaderInstance, options: {
   }
 
   const redrawBookmarks$ = (bookmarks: Bookmark[]) =>
-    of(bookmarks)
-      .pipe(
-        withLatestFrom(reader.$.pagination$),
-        switchMap(([, pagination]) => {
-          const { beginCfi: currentCfi, beginPageIndexInChapter: currentPageIndex, beginSpineItemIndex: currentSpineItemIndex } = pagination
+    of(bookmarks).pipe(
+      withLatestFrom(reader.$.pagination$),
+      switchMap(([, pagination]) => {
+        const {
+          beginCfi: currentCfi,
+          beginPageIndexInChapter: currentPageIndex,
+          beginSpineItemIndex: currentSpineItemIndex,
+        } = pagination
 
-          if (currentPageIndex === undefined || currentSpineItemIndex === undefined) {
-            destroyBookmarkElement()
+        if (
+          currentPageIndex === undefined ||
+          currentSpineItemIndex === undefined
+        ) {
+          destroyBookmarkElement()
 
-            return EMPTY
-          }
+          return EMPTY
+        }
 
-          const bookmarkOnPage = bookmarks.find(bookmark =>
-            (
-              bookmark.pageIndex === currentPageIndex &&
-              bookmark.spineItemIndex === currentSpineItemIndex
-            ) ||
+        const bookmarkOnPage = bookmarks.find(
+          (bookmark) =>
+            (bookmark.pageIndex === currentPageIndex &&
+              bookmark.spineItemIndex === currentSpineItemIndex) ||
             // sometime the next page contains part of the previous page and the cfi is actually
             // the same for the page too. This special case can happens for
             // cover pages that are not well paginated for example.
             // It's better to duplicate the bookmark on the next page rather than having the user
             // wonder why he cannot interact with the bookmark area.
             bookmark.cfi === currentCfi
+        )
+
+        if (bookmarkOnPage) {
+          /**
+           * This ensure two things:
+           * - animations are done so the bookmark only appears when the user is on page
+           * - small opti
+           */
+          return element$.pipe(
+            take(1),
+            mergeMap((element) => {
+              if (element) {
+                destroyBookmarkElement()
+              }
+
+              return waitForViewportFree$.pipe(tap(createBookmarkElement))
+            })
           )
+        } else {
+          destroyBookmarkElement()
+        }
 
-          if (bookmarkOnPage) {
-            /**
-             * This ensure two things:
-             * - animations are done so the bookmark only appears when the user is on page
-             * - small opti
-             */
-            return element$
-              .pipe(
-                take(1),
-                mergeMap((element) => {
-                  if (element) {
-                    destroyBookmarkElement()
-                  }
-
-                  return waitForViewportFree$.pipe(
-                    tap(createBookmarkElement)
-                  )
-                })
-              )
-          } else {
-            destroyBookmarkElement()
-          }
-
-          return EMPTY
-        })
-      )
+        return EMPTY
+      })
+    )
 
   return {
     redrawBookmarks$,
     $: {
-      element$: element$.asObservable()
-    }
+      element$: element$.asObservable(),
+    },
   }
 }

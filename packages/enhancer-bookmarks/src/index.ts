@@ -1,30 +1,55 @@
-import { Reader, Report } from '@prose-reader/core'
+import { Reader, Report } from "@prose-reader/core"
 import {
-  BehaviorSubject, fromEvent, ObservedValueOf, switchMap, Subject, EMPTY, Observable, merge, animationFrameScheduler
-} from 'rxjs'
-import { tap, map, takeUntil, withLatestFrom, filter, pairwise, startWith, mergeMap, share, debounceTime } from 'rxjs/operators'
-import { mapBookmarkToImportableBookmark, mapImportableBookmarkToBookmark } from './bookmarks'
-import { createRenderer } from './renderer'
-import { Bookmark, BookmarkEnhancer, ImportableBookmark } from './types'
+  BehaviorSubject,
+  fromEvent,
+  ObservedValueOf,
+  switchMap,
+  Subject,
+  EMPTY,
+  Observable,
+  merge,
+  animationFrameScheduler,
+} from "rxjs"
+import {
+  tap,
+  map,
+  takeUntil,
+  withLatestFrom,
+  filter,
+  pairwise,
+  startWith,
+  mergeMap,
+  share,
+  debounceTime,
+} from "rxjs/operators"
+import {
+  mapBookmarkToImportableBookmark,
+  mapImportableBookmarkToBookmark,
+} from "./bookmarks"
+import { createRenderer } from "./renderer"
+import { Bookmark, BookmarkEnhancer, ImportableBookmark } from "./types"
 
 const PACKAGE_NAME = `@prose-reader/enhancer-bookmarks`
 
 const logger = Report.namespace(PACKAGE_NAME)
 
-export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
+export const bookmarksEnhancer: BookmarkEnhancer = (next) => (options) => {
   const reader = next(options)
   const bookmarksSubject$ = new BehaviorSubject<Bookmark[]>([])
   const bookmarks$ = bookmarksSubject$.pipe(
     startWith(undefined),
     pairwise(),
-    filter(([old, current]) => (!!current) && !(old && old.length === 0 && current.length === 0)),
+    filter(
+      ([old, current]) =>
+        !!current && !(old && old.length === 0 && current.length === 0)
+    ),
     map(([, bookmarks = []]) => bookmarks),
     share()
   )
   const loadedSubject$ = new Subject<void>()
   const settings = {
     areaWidth: 50,
-    areaHeight: 30
+    areaHeight: 30,
   }
   const renderer = createRenderer(reader, settings)
 
@@ -32,7 +57,11 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     const { node, offset = 0, spineItemIndex } = reader.resolveCfi(cfi) || {}
 
     if (node && spineItemIndex !== undefined) {
-      const pageIndex = reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
+      const pageIndex = reader.locator.getSpineItemPageIndexFromNode(
+        node,
+        offset,
+        spineItemIndex
+      )
 
       return { cfi, pageIndex, spineItemIndex }
     }
@@ -40,7 +69,9 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     return { cfi, pageIndex: undefined, spineItemIndex }
   }
 
-  const createBookmarkFromCurrentPagination = ({ beginCfi }: ObservedValueOf<Reader[`$`][`pagination$`]>) => {
+  const createBookmarkFromCurrentPagination = ({
+    beginCfi,
+  }: ObservedValueOf<Reader[`$`][`pagination$`]>) => {
     if (beginCfi) {
       return getCfiInformation(beginCfi)
     }
@@ -57,8 +88,8 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     const { width } = reader.context.getVisibleAreaRect()
 
     if (
-      ((event.x || 0) >= (width - settings.areaWidth)) &&
-      ((event.y || 0) <= settings.areaHeight)
+      (event.x || 0) >= width - settings.areaWidth &&
+      (event.y || 0) <= settings.areaHeight
     ) {
       return true
     }
@@ -66,12 +97,17 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     return false
   }
 
-  const onDocumentClick = (e: MouseEvent, pagination: ObservedValueOf<Reader[`$`][`pagination$`]>) => {
+  const onDocumentClick = (
+    e: MouseEvent,
+    pagination: ObservedValueOf<Reader[`$`][`pagination$`]>
+  ) => {
     if (isClickEventInsideBookmarkArea(e)) {
       const newBookmark = createBookmarkFromCurrentPagination(pagination)
 
       if (!newBookmark) {
-        logger.warn(`Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`)
+        logger.warn(
+          `Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`
+        )
         return
       }
 
@@ -95,17 +131,19 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     loadedSubject$.next()
   }
 
-  const createClickListener$ = (frameOrElement: HTMLIFrameElement | HTMLElement) => {
-    const windowOrElement = (`contentWindow` in frameOrElement)
-      ? frameOrElement.contentWindow
-      : frameOrElement
+  const createClickListener$ = (
+    frameOrElement: HTMLIFrameElement | HTMLElement
+  ) => {
+    const windowOrElement =
+      `contentWindow` in frameOrElement
+        ? frameOrElement.contentWindow
+        : frameOrElement
 
     if (windowOrElement) {
-      return fromEvent(windowOrElement, `click`, { capture: true })
-        .pipe(
-          withLatestFrom(reader.$.pagination$),
-          tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination))
-        )
+      return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
+        withLatestFrom(reader.$.pagination$),
+        tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination))
+      )
     }
 
     return undefined
@@ -113,22 +151,26 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
 
   // @todo handle spread
   const removeBookmarksOnCurrentPage = <T>(observer: Observable<T>) =>
-    observer
-      .pipe(
-        withLatestFrom(reader.$.pagination$),
-        tap(([, pagination]) => {
-          if (pagination.beginSpineItemIndex !== undefined) {
-            bookmarksSubject$.next(bookmarksSubject$.value
-              .filter(bookmark => bookmark.spineItemIndex !== pagination.beginSpineItemIndex))
-          }
-        })
-      )
+    observer.pipe(
+      withLatestFrom(reader.$.pagination$),
+      tap(([, pagination]) => {
+        if (pagination.beginSpineItemIndex !== undefined) {
+          bookmarksSubject$.next(
+            bookmarksSubject$.value.filter(
+              (bookmark) =>
+                bookmark.spineItemIndex !== pagination.beginSpineItemIndex
+            )
+          )
+        }
+      })
+    )
 
   const removeAll = () => {
     bookmarksSubject$.next([])
   }
 
-  const mapToImportable = (bookmarks: Bookmark[]) => bookmarks.map(mapBookmarkToImportableBookmark)
+  const mapToImportable = (bookmarks: Bookmark[]) =>
+    bookmarks.map(mapBookmarkToImportableBookmark)
 
   /**
    * For each item we register the container to be clickable to add a new bookmark.
@@ -137,7 +179,7 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
    */
   reader.$.itemsCreated$
     .pipe(
-      switchMap(items =>
+      switchMap((items) =>
         merge(items.map(({ element }) => createClickListener$(element)))
       ),
       takeUntil(reader.$.destroy$)
@@ -155,10 +197,7 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
       switchMap((element) => {
         if (!element) return EMPTY
 
-        return fromEvent(element, `click`)
-          .pipe(
-            removeBookmarksOnCurrentPage
-          )
+        return fromEvent(element, `click`).pipe(removeBookmarksOnCurrentPage)
       }),
       takeUntil(reader.$.destroy$)
     )
@@ -170,27 +209,28 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
     // It's important to force redraw and update bookmarkd on each layout
     // this is because pagination itself is not always garanteed to be updated
     // when the frame actually exists
-    reader.$.layout$
-      .pipe(
-        withLatestFrom(bookmarksSubject$),
-        map(([, bookmarks]) => bookmarks.map(bookmark => {
+    reader.$.layout$.pipe(
+      withLatestFrom(bookmarksSubject$),
+      map(([, bookmarks]) =>
+        bookmarks.map((bookmark) => {
           const { pageIndex, spineItemIndex } = getCfiInformation(bookmark.cfi)
 
           return {
             ...bookmark,
             pageIndex,
-            spineItemIndex
+            spineItemIndex,
           }
-        })),
-        mergeMap((newBookmarks) => {
-          // @todo optimize and not call next if bookmarks are the same
-          bookmarksSubject$.next(newBookmarks)
-
-          // Because we did not optimized above yet, the subject is always updated
-          // so we don't need to continue this and force a redraw
-          return EMPTY
         })
-      )
+      ),
+      mergeMap((newBookmarks) => {
+        // @todo optimize and not call next if bookmarks are the same
+        bookmarksSubject$.next(newBookmarks)
+
+        // Because we did not optimized above yet, the subject is always updated
+        // so we don't need to continue this and force a redraw
+        return EMPTY
+      })
+    )
   )
     .pipe(
       // since we trigger redraw from many scenario this is a good batch optimisation
@@ -210,9 +250,9 @@ export const bookmarksEnhancer: BookmarkEnhancer = next => options => {
       load,
       $: {
         loaded$: loadedSubject$.asObservable(),
-        bookmarks$
+        bookmarks$,
       },
-      __debug: () => bookmarksSubject$.value
-    }
+      __debug: () => bookmarksSubject$.value,
+    },
   }
 }
