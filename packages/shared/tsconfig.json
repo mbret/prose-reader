@@ -5,5 +5,5 @@
     "noEmit": true,
     "declaration": true,
     "isolatedModules": true
-  },
+  }
 }
