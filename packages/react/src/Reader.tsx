@@ -31,7 +31,7 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
   options,
   onPaginationChange,
   enhancer,
-  LoadingElement
+  LoadingElement,
 }: Props<UserEnhancer>) => {
   const [reader, setReader] = useState<CoreReader<UserEnhancer> | undefined | CoreReader>(undefined)
   const [loadingElementContainers, setLoadingElementContainers] = useState<HTMLElement[]>([])
@@ -57,9 +57,9 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
         containerElement: ref.current,
         ...(hasLoadingElement && {
           // we override loading element creator but don't do anything yet
-          loadingElementCreate: ({ container }: { container: HTMLElement }) => container
+          loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
         }),
-        ...options
+        ...options,
       }
       const newReader = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
       setReader(newReader as any)
@@ -110,7 +110,7 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
   const style = useMemo(
     () => ({
       width,
-      height
+      height,
     }),
     [height, width]
   )
