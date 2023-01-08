@@ -3,30 +3,41 @@ import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
 import { map, share, switchMap, takeUntil } from "rxjs/operators"
 
 type ResultItem = {
-  spineItemIndex: number,
-  startCfi: string,
-  endCfi: string,
-  pageIndex?: number,
+  spineItemIndex: number
+  startCfi: string
+  endCfi: string
+  pageIndex?: number
   contextText: string
-  startOffset: number,
-  endOffset: number,
+  startOffset: number
+  endOffset: number
 }
 
-const supportedContentType = [`application/xhtml+xml` as const, `application/xml` as const, `image/svg+xml` as const, `text/html` as const, `text/xml` as const]
+const supportedContentType = [
+  `application/xhtml+xml` as const,
+  `application/xml` as const,
+  `image/svg+xml` as const,
+  `text/html` as const,
+  `text/xml` as const,
+]
 
 export type SearchResult = ResultItem[]
 
 /**
  *
  */
-export const searchEnhancer: Enhancer<{}, {
-  search: {
-    search: (text: string) => void
-    $: {
-      search$: Observable<{ type: `start` } | { type: `end`, data: SearchResult }>
+export const searchEnhancer: Enhancer<
+  {},
+  {
+    search: {
+      search: (text: string) => void
+      $: {
+        search$: Observable<
+          { type: `start` } | { type: `end`; data: SearchResult }
+        >
+      }
     }
   }
-}> = (next) => (options) => {
+> = (next) => (options) => {
   const reader = next(options)
 
   const searchSubject$ = new Subject<string>()
@@ -36,7 +47,12 @@ export const searchEnhancer: Enhancer<{}, {
 
     if (node.nodeName === `head`) return []
 
-    const rangeList: { startNode: Node, start: number, endNode: Node, end: number }[] = []
+    const rangeList: {
+      startNode: Node
+      start: number
+      endNode: Node
+      end: number
+    }[] = []
     for (let i = 0; i < nodeList.length; i++) {
       const subNode = nodeList[i]
 
@@ -63,7 +79,7 @@ export const searchEnhancer: Enhancer<{}, {
                 startNode: subNode,
                 start: match.index,
                 endNode: subNode,
-                end: match.index + text.length
+                end: match.index + text.length,
               })
             }
           }
@@ -81,42 +97,53 @@ export const searchEnhancer: Enhancer<{}, {
       return of([])
     }
 
-    return from(item.getResource())
-      .pipe(
-        switchMap(response => {
-          // small optimization since we already know DOMParser only accept some documents only
-          // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
-          // however we can still avoid doing unnecessary HTML generation for images resources, etc.
-          if (!supportedContentType.includes(response?.headers.get(`Content-Type`) || `` as any)) return of([])
+    return from(item.getResource()).pipe(
+      switchMap((response) => {
+        // small optimization since we already know DOMParser only accept some documents only
+        // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
+        // however we can still avoid doing unnecessary HTML generation for images resources, etc.
+        if (
+          !supportedContentType.includes(
+            response?.headers.get(`Content-Type`) || (`` as any)
+          )
+        )
+          return of([])
 
-          return from(item.getHtmlFromResource(response))
-            .pipe(
-              map(html => {
-                const parser = new DOMParser()
-                const doc = parser.parseFromString(html, `application/xhtml+xml`)
+        return from(item.getHtmlFromResource(response)).pipe(
+          map((html) => {
+            const parser = new DOMParser()
+            const doc = parser.parseFromString(html, `application/xhtml+xml`)
 
-                const ranges = searchNodeContainingText(doc, text)
-                const newResults = ranges.map(range => {
-                  const { end, start } = reader.generateCfi(range, item.item)
-                  const { node, offset, spineItemIndex } = reader.resolveCfi(start) || {}
-                  const pageIndex = node && spineItemIndex !== undefined ? reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex) : undefined
+            const ranges = searchNodeContainingText(doc, text)
+            const newResults = ranges.map((range) => {
+              const { end, start } = reader.generateCfi(range, item.item)
+              const { node, offset, spineItemIndex } =
+                reader.resolveCfi(start) || {}
+              const pageIndex =
+                node && spineItemIndex !== undefined
+                  ? reader.locator.getSpineItemPageIndexFromNode(
+                      node,
+                      offset,
+                      spineItemIndex
+                    )
+                  : undefined
 
-                  return {
-                    spineItemIndex: index,
-                    startCfi: start,
-                    endCfi: end,
-                    pageIndex,
-                    contextText: range.startNode.parentElement?.textContent || ``,
-                    startOffset: range.start,
-                    endOffset: range.end
-                  }
-                })
+              return {
+                spineItemIndex: index,
+                startCfi: start,
+                endCfi: end,
+                pageIndex,
+                contextText: range.startNode.parentElement?.textContent || ``,
+                startOffset: range.start,
+                endOffset: range.end,
+              }
+            })
 
-                return newResults
-              })
-            )
-        })
-      )
+            return newResults
+          })
+        )
+      })
+    )
   }
 
   const search = (text: string) => {
@@ -127,33 +154,27 @@ export const searchEnhancer: Enhancer<{}, {
    * Main search process stream
    */
   const search$ = merge(
-    searchSubject$.asObservable()
-      .pipe(
-        map(() => ({ type: `start` as const }))
-      ),
-    searchSubject$.asObservable()
-      .pipe(
-        switchMap((text) => {
-          if (text === ``) {
-            return of([])
-          }
+    searchSubject$.asObservable().pipe(map(() => ({ type: `start` as const }))),
+    searchSubject$.asObservable().pipe(
+      switchMap((text) => {
+        if (text === ``) {
+          return of([])
+        }
 
-          const searches$ = reader.context.getManifest()?.spineItems.map((_, index) => searchForItem(index, text)) || []
+        const searches$ =
+          reader.context
+            .getManifest()
+            ?.spineItems.map((_, index) => searchForItem(index, text)) || []
 
-          return forkJoin(searches$)
-            .pipe(
-              map(results => {
-                return results.reduce((acc, value) => [...acc, ...value], [])
-              })
-            )
-        }),
-        map((data) => ({ type: `end` as const, data }))
-      )
-  )
-    .pipe(
-      share(),
-      takeUntil(reader.$.destroy$)
+        return forkJoin(searches$).pipe(
+          map((results) => {
+            return results.reduce((acc, value) => [...acc, ...value], [])
+          })
+        )
+      }),
+      map((data) => ({ type: `end` as const, data }))
     )
+  ).pipe(share(), takeUntil(reader.$.destroy$))
 
   const destroy = () => {
     searchSubject$.complete()
@@ -166,8 +187,8 @@ export const searchEnhancer: Enhancer<{}, {
     search: {
       search,
       $: {
-        search$
-      }
-    }
+        search$,
+      },
+    },
   }
 }

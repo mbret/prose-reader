@@ -12,10 +12,10 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: libName,
-      fileName: libName
+      fileName: libName,
     },
     emptyOutDir: mode !== `development`,
-    sourcemap: true
+    sourcemap: true,
   },
   plugins: [
     {
@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => ({
       ...externals({
         peerDeps: true,
         deps: true,
-        devDeps: true
-      })
+        devDeps: true,
+      }),
     },
-    dts()
-  ]
+    dts(),
+  ],
 }))
