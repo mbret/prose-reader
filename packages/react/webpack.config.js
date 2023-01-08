@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require("path")
 
 const IS_PROD = process.env.NODE_ENV !== "development"

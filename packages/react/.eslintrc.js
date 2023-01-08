@@ -4,7 +4,7 @@ module.exports = {
     es2021: true,
     "jest/globals": true
   },
-  extends: [`plugin:jest/recommended`, `standard`, `prettier`, `plugin:react/recommended`],
+  extends: [`plugin:jest/recommended`, `prettier`, `plugin:react/recommended`],
   parser: `@typescript-eslint/parser`,
   parserOptions: {
     ecmaVersion: 12,
@@ -19,6 +19,7 @@ module.exports = {
     "no-unused-vars": `off`, // use ts
     "no-use-before-define": `off`, // use ts
     "no-undef": `off`, // use ts
-    "no-redeclare": `off` // use ts
+    "no-redeclare": `off`, // use ts
+    "@typescript-eslint/no-explicit-any": ["off"]
   }
 }

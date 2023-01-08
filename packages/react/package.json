@@ -14,7 +14,8 @@
     "build-src": "NODE_ENV=development webpack build --config ./webpack.config.js",
     "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
     "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js && yarn build-types",
-    "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
     "tsc": "tsc"
   },
   "peerDependencies": {

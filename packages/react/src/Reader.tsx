@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import { createReader, Manifest, Reader as CoreReader, ReaderOptions, Report } from "@prose-reader/core"
 import { ObservedValueOf } from "rxjs"
 
-type Enhancer<Api = {}> = (createReader: any) => (options: any) => Api
+type Enhancer<Api = Record<string, never>> = (createReader: any) => (options: any) => Api
 type LoadOptions = Parameters<ReturnType<typeof createReader>["load"]>[1]
 type Pagination = ObservedValueOf<CoreReader["$"]["pagination$"]>
 
