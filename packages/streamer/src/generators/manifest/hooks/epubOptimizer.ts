@@ -38,8 +38,7 @@ export const epubOptimizerHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const bookIsFullReflowable =
-      manifest.renditionLayout === "reflowable" &&
-      manifest.spineItems.every((item) => item.renditionLayout === "reflowable")
+      manifest.renditionLayout === "reflowable" && manifest.spineItems.every((item) => item.renditionLayout === "reflowable")
 
     if (bookIsFullReflowable) {
       const files = await getSpineItemFilesFromArchive({ archive })

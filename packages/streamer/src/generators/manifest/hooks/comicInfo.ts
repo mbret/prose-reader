@@ -9,9 +9,7 @@ import { Archive } from "../../../archives/types"
 export const comicInfoHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const comicInfoFile = archive.files.find(
-      (file) => file.basename.toLowerCase() === `comicinfo.xml`
-    )
+    const comicInfoFile = archive.files.find((file) => file.basename.toLowerCase() === `comicinfo.xml`)
 
     if (!comicInfoFile) {
       return manifest
@@ -21,14 +19,11 @@ export const comicInfoHook =
     const content = await comicInfoFile.string()
     const xmlDoc = new xmldoc.XmlDocument(content)
 
-    const mangaVal =
-      (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
+    const mangaVal = (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
 
     return {
       ...manifest,
-      spineItems: manifest.spineItems.filter(
-        (item) => item.id.toLowerCase() !== `comicinfo.xml`
-      ),
+      spineItems: manifest.spineItems.filter((item) => item.id.toLowerCase() !== `comicinfo.xml`),
       readingDirection: mangaVal === `YesAndRightToLeft` ? `rtl` : `ltr`,
     }
   }

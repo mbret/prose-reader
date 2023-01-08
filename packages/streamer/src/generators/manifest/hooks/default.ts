@@ -11,8 +11,7 @@ export const defaultHook =
       nav: {
         toc: [],
       },
-      title:
-        archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
+      title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
       readingDirection: `ltr`,

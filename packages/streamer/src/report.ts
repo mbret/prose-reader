@@ -35,21 +35,12 @@ export const Report = {
       console.timeEnd(`[prose-reader-streamer] [metric] ${label}`)
     }
   },
-  metric: (
-    performanceEntry: { name: string; duration: number },
-    targetDuration = Infinity
-  ) => {
-    const duration =
-      typeof performanceEntry === `number`
-        ? performanceEntry
-        : performanceEntry.duration
+  metric: (performanceEntry: { name: string; duration: number }, targetDuration = Infinity) => {
+    const duration = typeof performanceEntry === `number` ? performanceEntry : performanceEntry.duration
     if (enabled) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
-        console.log(
-          `[prose-reader-streamer] [metric] `,
-          `${performanceEntry.name} took ${duration}ms`
-        )
+        console.log(`[prose-reader-streamer] [metric] `, `${performanceEntry.name} took ${duration}ms`)
       } else {
         // eslint-disable-next-line no-console
         console.warn(
@@ -60,11 +51,7 @@ export const Report = {
     }
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  measurePerformance: <F extends (...args: any[]) => any>(
-    name: string,
-    targetDuration = 10,
-    functionToMeasure: F
-  ) => {
+  measurePerformance: <F extends (...args: any[]) => any>(name: string, targetDuration = 10, functionToMeasure: F) => {
     return (...args: Parameters<F>): ReturnType<F> => {
       const t0 = performance.now()
 

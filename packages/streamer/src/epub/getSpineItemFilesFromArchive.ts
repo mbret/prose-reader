@@ -2,13 +2,8 @@ import xmldoc from "xmldoc"
 import { getArchiveOpfInfo } from "../archives/getArchiveOpfInfo"
 import { Archive } from "../archives/types"
 
-export const getSpineItemFilesFromArchive = async ({
-  archive,
-}: {
-  archive: Archive
-}) => {
-  const { data: opsFile, basePath: opfBasePath } =
-    getArchiveOpfInfo(archive) || {}
+export const getSpineItemFilesFromArchive = async ({ archive }: { archive: Archive }) => {
+  const { data: opsFile, basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
 
   const data = await opsFile?.string()
 
@@ -19,13 +14,9 @@ export const getSpineItemFilesFromArchive = async ({
   const manifestElm = _opfXmlDoc.childNamed(`manifest`)
   const spineElm = _opfXmlDoc.childNamed(`spine`)
 
-  const spineItemIds = spineElm
-    ?.childrenNamed(`itemref`)
-    .map((item) => item.attr.idref) as string[]
+  const spineItemIds = spineElm?.childrenNamed(`itemref`).map((item) => item.attr.idref) as string[]
   const manifestItemsFromSpine =
-    manifestElm
-      ?.childrenNamed(`item`)
-      .filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
+    manifestElm?.childrenNamed(`item`).filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
 
   const archiveSpineItems = archive.files.filter((file) => {
     return manifestItemsFromSpine.find((item) => {

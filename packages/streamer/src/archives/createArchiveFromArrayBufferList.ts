@@ -26,10 +26,7 @@ export const createArchiveFromArrayBufferList = async (
       blob: async () => new Blob([await file.data()]),
       string: async () => {
         const data = await file.data()
-        return String.fromCharCode.apply(
-          null,
-          Array.from(new Uint16Array(data))
-        )
+        return String.fromCharCode.apply(null, Array.from(new Uint16Array(data)))
       },
       base64: async () => {
         // @todo not used for now, lets implement it later if needed
