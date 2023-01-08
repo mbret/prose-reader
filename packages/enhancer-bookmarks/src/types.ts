@@ -10,7 +10,7 @@ export type Bookmark = {
 export type ImportableBookmark = Pick<Bookmark, `cfi`>
 
 export type BookmarkEnhancer = Enhancer<
-  {},
+  unknown,
   {
     bookmarks: {
       isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
@@ -23,8 +23,8 @@ export type BookmarkEnhancer = Enhancer<
       }
     }
   },
-  {},
-  {}
+  unknown,
+  unknown
 >
 
 export type ReaderInstance = ReturnType<Parameters<BookmarkEnhancer>[0]>

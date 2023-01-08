@@ -7,9 +7,21 @@ import { expect, it, describe } from "vitest"
 
 describe(`Given ncx toc with prefix`, () => {
   it(`should generate toc correctly`, async () => {
-    const toc = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`))).toString()
-    const opf = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`))).toString()
-    const tocResult = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.json`))).toString()
+    const toc = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`)
+      )
+    ).toString()
+    const opf = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`)
+      )
+    ).toString()
+    const tocResult = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.json`)
+      )
+    ).toString()
 
     const opfXmlDoc = new xmldoc.XmlDocument(opf)
 
@@ -23,7 +35,7 @@ describe(`Given ncx toc with prefix`, () => {
           blob: async () => new Blob([``]),
           string: async () => ``,
           base64: async () => ``,
-          size: 0
+          size: 0,
         },
         {
           dir: false,
@@ -32,13 +44,13 @@ describe(`Given ncx toc with prefix`, () => {
           blob: async () => new Blob([toc]),
           string: async () => toc,
           base64: async () => btoa(toc),
-          size: 0
-        }
-      ]
+          size: 0,
+        },
+      ],
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
-      baseUrl: `http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi`
+      baseUrl: `http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi`,
     })
 
     expect(result).toEqual(JSON.parse(tocResult))
@@ -47,8 +59,16 @@ describe(`Given ncx toc with prefix`, () => {
 
 describe("Given a base url with a slash at the end", () => {
   it(`should generate href with no extra slash`, async () => {
-    const toc = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`))).toString()
-    const opf = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`))).toString()
+    const toc = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`)
+      )
+    ).toString()
+    const opf = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`)
+      )
+    ).toString()
 
     const opfXmlDoc = new xmldoc.XmlDocument(opf)
 
@@ -62,7 +82,7 @@ describe("Given a base url with a slash at the end", () => {
           blob: async () => new Blob([``]),
           string: async () => ``,
           base64: async () => ``,
-          size: 0
+          size: 0,
         },
         {
           dir: false,
@@ -71,15 +91,17 @@ describe("Given a base url with a slash at the end", () => {
           blob: async () => new Blob([toc]),
           string: async () => toc,
           base64: async () => btoa(toc),
-          size: 0
-        }
-      ]
+          size: 0,
+        },
+      ],
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
-      baseUrl: `http://localhost:9000/streamer/`
+      baseUrl: `http://localhost:9000/streamer/`,
     })
 
-    expect((result ?? [])[0]?.href).toEqual(`http://localhost:9000/streamer/OEBPS/index.html`)
+    expect((result ?? [])[0]?.href).toEqual(
+      `http://localhost:9000/streamer/OEBPS/index.html`
+    )
   })
 })

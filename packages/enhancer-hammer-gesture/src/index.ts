@@ -8,7 +8,7 @@ export const hammerGestureEnhancer: Enhancer<
     // eslint-disable-next-line no-undef
     hammerManager?: HammerManager
   },
-  {}
+  unknown
 > =
   (next) =>
   ({ hammerManager, ...rest }) => {
@@ -21,13 +21,10 @@ export const hammerGestureEnhancer: Enhancer<
     }
 
     // eslint-disable-next-line no-undef
-    const onPinchEnd = (_: HammerInput) => {
+    const onPinchEnd = () => {
       if (reader?.zoom.isZooming()) {
         reader?.zoom.setCurrentScaleAsBase()
-        if (
-          reader?.zoom.isUsingScrollableZoom() &&
-          reader?.zoom.getScaleValue() <= 1
-        ) {
+        if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
           reader?.zoom.exit()
         }
       }

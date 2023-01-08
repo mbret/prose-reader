@@ -9,7 +9,7 @@ export const createArchiveFromText = async (
   content: string | Blob,
   {
     mimeType,
-    direction
+    direction,
   }: {
     direction?: `ltr` | `rtl`
     mimeType?: string
@@ -42,7 +42,7 @@ export const createArchiveFromText = async (
         blob: async () => new Blob([txtOpfContent]),
         string: async () => txtOpfContent,
         base64: async () => btoa(txtOpfContent),
-        size: 0
+        size: 0,
       },
       {
         dir: false,
@@ -61,9 +61,9 @@ export const createArchiveFromText = async (
           return blobToBase64(content)
         },
         size: typeof content === `string` ? content.length : content.size,
-        encodingFormat: mimeType
-      }
-    ]
+        encodingFormat: mimeType,
+      },
+    ],
   }
 
   return archive

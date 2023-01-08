@@ -52,12 +52,13 @@ export const createArchiveFromJszip = async (
       string: () => file.async(`string`),
       base64: () => file.async(`base64`),
       ...(file.internalStream && {
-        stream: file.internalStream
+        stream: file.internalStream,
       }),
       // this is private API
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      size: file._data.uncompressedSize
-    }))
+      size: file._data.uncompressedSize,
+    })),
   }
 
   Report.log("Generated archive", archive)

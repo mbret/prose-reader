@@ -2,8 +2,13 @@ import xmldoc from "xmldoc"
 import { Archive, getArchiveOpfInfo } from ".."
 import { getItemsFromDoc } from "./manifest/hooks/epub"
 
-export const generateResourceFromArchive = async (archive: Archive, resourcePath: string) => {
-  const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
+export const generateResourceFromArchive = async (
+  archive: Archive,
+  resourcePath: string
+) => {
+  const file = Object.values(archive.files).find(
+    (file) => file.uri === resourcePath
+  )
 
   const metadata = await getMetadata(archive, resourcePath)
 
@@ -56,17 +61,17 @@ export const generateResourceFromArchive = async (archive: Archive, resourcePath
     params: {
       headers: {
         ...(blob.type && {
-          "Content-Type": blob.type
+          "Content-Type": blob.type,
         }),
         ...(file.encodingFormat && {
-          "Content-Type": file.encodingFormat
+          "Content-Type": file.encodingFormat,
         }),
         ...(metadata.mediaType && {
-          "Content-Type": metadata.mediaType
-        })
+          "Content-Type": metadata.mediaType,
+        }),
         // 'Cache-Control': `no-cache, no-store, no-transform`
-      }
-    }
+      },
+    },
   }
 }
 
@@ -79,12 +84,13 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
     const items = getItemsFromDoc(opfXmlDoc)
 
     return {
-      mediaType: items.find((item) => resourcePath.endsWith(item.href))?.mediaType
+      mediaType: items.find((item) => resourcePath.endsWith(item.href))
+        ?.mediaType,
     }
   }
 
   return {
-    mediaType: getContentTypeFromExtension(resourcePath)
+    mediaType: getContentTypeFromExtension(resourcePath),
   }
 }
 

@@ -21,8 +21,7 @@ export const createRenderer = (
 
   const createBookmarkElement = () => {
     reader.manipulateContainer((container) => {
-      if (container.ownerDocument.getElementById(ELEMENT_ID))
-        return SHOULD_NOT_LAYOUT
+      if (container.ownerDocument.getElementById(ELEMENT_ID)) return SHOULD_NOT_LAYOUT
       const element = container.ownerDocument.createElement(`div`)
       element.id = ELEMENT_ID
       element.style.cssText = `
@@ -37,14 +36,9 @@ export const createRenderer = (
       `
       const innerWrapper = container.ownerDocument.createElement(`div`)
       innerWrapper.style.cssText = `
-        margin-top: -${
-          (options.areaWidth / options.areaHeight) * options.areaHeight * 1.2 -
-          options.areaHeight
-        }px;
+        margin-top: -${(options.areaWidth / options.areaHeight) * options.areaHeight * 1.2 - options.areaHeight}px;
       `
-      innerWrapper.innerHTML = getIcon(
-        Math.max(options.areaHeight, options.areaWidth) * 1.2
-      )
+      innerWrapper.innerHTML = getIcon(Math.max(options.areaHeight, options.areaWidth) * 1.2)
       element.appendChild(innerWrapper)
       container.appendChild(element)
 
@@ -72,10 +66,7 @@ export const createRenderer = (
           beginSpineItemIndex: currentSpineItemIndex,
         } = pagination
 
-        if (
-          currentPageIndex === undefined ||
-          currentSpineItemIndex === undefined
-        ) {
+        if (currentPageIndex === undefined || currentSpineItemIndex === undefined) {
           destroyBookmarkElement()
 
           return EMPTY
@@ -83,8 +74,7 @@ export const createRenderer = (
 
         const bookmarkOnPage = bookmarks.find(
           (bookmark) =>
-            (bookmark.pageIndex === currentPageIndex &&
-              bookmark.spineItemIndex === currentSpineItemIndex) ||
+            (bookmark.pageIndex === currentPageIndex && bookmark.spineItemIndex === currentSpineItemIndex) ||
             // sometime the next page contains part of the previous page and the cfi is actually
             // the same for the page too. This special case can happens for
             // cover pages that are not well paginated for example.

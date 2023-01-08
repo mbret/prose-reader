@@ -18,7 +18,12 @@ const allFilesHaveViewportMeta = (files: Archive["files"]) =>
 
     if (!_result) return false
 
-    if (!isXmlBasedMimeType({ mimeType: current.encodingFormat, uri: current.uri })) {
+    if (
+      !isXmlBasedMimeType({
+        mimeType: current.encodingFormat,
+        uri: current.uri,
+      })
+    ) {
       return false
     }
 
@@ -33,7 +38,8 @@ export const epubOptimizerHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const bookIsFullReflowable =
-      manifest.renditionLayout === "reflowable" && manifest.spineItems.every((item) => item.renditionLayout === "reflowable")
+      manifest.renditionLayout === "reflowable" &&
+      manifest.spineItems.every((item) => item.renditionLayout === "reflowable")
 
     if (bookIsFullReflowable) {
       const files = await getSpineItemFilesFromArchive({ archive })
@@ -45,9 +51,9 @@ export const epubOptimizerHook =
           ...manifest,
           spineItems: manifest.spineItems.map((item) => ({
             ...item,
-            renditionLayout: "pre-paginated"
+            renditionLayout: "pre-paginated",
           })),
-          renditionLayout: "pre-paginated"
+          renditionLayout: "pre-paginated",
         }
       }
     }

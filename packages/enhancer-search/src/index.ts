@@ -26,14 +26,12 @@ export type SearchResult = ResultItem[]
  *
  */
 export const searchEnhancer: Enhancer<
-  {},
+  Record<string, never>,
   {
     search: {
       search: (text: string) => void
       $: {
-        search$: Observable<
-          { type: `start` } | { type: `end`; data: SearchResult }
-        >
+        search$: Observable<{ type: `start` } | { type: `end`; data: SearchResult }>
       }
     }
   }
@@ -102,12 +100,7 @@ export const searchEnhancer: Enhancer<
         // small optimization since we already know DOMParser only accept some documents only
         // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
         // however we can still avoid doing unnecessary HTML generation for images resources, etc.
-        if (
-          !supportedContentType.includes(
-            response?.headers.get(`Content-Type`) || (`` as any)
-          )
-        )
-          return of([])
+        if (!supportedContentType.includes(response?.headers.get(`Content-Type`) || (`` as any))) return of([])
 
         return from(item.getHtmlFromResource(response)).pipe(
           map((html) => {
@@ -117,15 +110,10 @@ export const searchEnhancer: Enhancer<
             const ranges = searchNodeContainingText(doc, text)
             const newResults = ranges.map((range) => {
               const { end, start } = reader.generateCfi(range, item.item)
-              const { node, offset, spineItemIndex } =
-                reader.resolveCfi(start) || {}
+              const { node, offset, spineItemIndex } = reader.resolveCfi(start) || {}
               const pageIndex =
                 node && spineItemIndex !== undefined
-                  ? reader.locator.getSpineItemPageIndexFromNode(
-                      node,
-                      offset,
-                      spineItemIndex
-                    )
+                  ? reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
                   : undefined
 
               return {
@@ -161,10 +149,7 @@ export const searchEnhancer: Enhancer<
           return of([])
         }
 
-        const searches$ =
-          reader.context
-            .getManifest()
-            ?.spineItems.map((_, index) => searchForItem(index, text)) || []
+        const searches$ = reader.context.getManifest()?.spineItems.map((_, index) => searchForItem(index, text)) || []
 
         return forkJoin(searches$).pipe(
           map((results) => {

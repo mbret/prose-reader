@@ -6,6 +6,6 @@ export const getArchiveOpfInfo = (archive: Archive) => {
 
   return {
     data: file,
-    basePath: file?.uri.substring(0, file.uri.lastIndexOf(`/`)) || ``
+    basePath: file?.uri.substring(0, file.uri.lastIndexOf(`/`)) || ``,
   }
 }

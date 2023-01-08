@@ -1,8 +1,6 @@
 import { Bookmark, ImportableBookmark } from "./types"
 
-export const mapImportableBookmarkToBookmark = (
-  bookmark: ImportableBookmark
-): Bookmark => {
+export const mapImportableBookmarkToBookmark = (bookmark: ImportableBookmark): Bookmark => {
   return {
     ...bookmark,
     pageIndex: undefined,

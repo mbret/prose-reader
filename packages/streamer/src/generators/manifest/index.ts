@@ -10,21 +10,24 @@ const baseManifest: Manifest = {
   filename: ``,
   items: [],
   nav: {
-    toc: []
+    toc: [],
   },
   readingDirection: `ltr`,
   renditionLayout: `pre-paginated`,
   renditionSpread: `auto`,
   spineItems: [],
-  title: ``
+  title: ``,
 }
 
-export const generateManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
+export const generateManifestFromArchive = async (
+  archive: Archive,
+  { baseUrl = `` }: { baseUrl?: string } = {}
+) => {
   const hooks = [
     defaultHook({ archive, baseUrl }),
     epubHook({ archive, baseUrl }),
     epubOptimizerHook({ archive, baseUrl }),
-    comicInfoHook({ archive, baseUrl })
+    comicInfoHook({ archive, baseUrl }),
   ]
 
   try {

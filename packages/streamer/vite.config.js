@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: `prose-streamer`,
-      fileName: `prose-streamer`
+      fileName: `prose-streamer`,
     },
     sourcemap: true,
     minify: mode === "development" ? false : "esbuild",
@@ -18,10 +18,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         globals: {
           xmldoc: "xmldoc",
-          "@prose-reader/shared": `@prose-reader/shared`
-        }
-      }
-    }
+          "@prose-reader/shared": `@prose-reader/shared`,
+        },
+      },
+    },
   },
-  plugins: [dts()]
+  plugins: [dts()],
 }))

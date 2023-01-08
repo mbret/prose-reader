@@ -16,7 +16,8 @@
     "/dist"
   ],
   "scripts": {
-    "lint": "echo",
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
     "test": "vitest run --coverage"

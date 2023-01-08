@@ -17,9 +17,7 @@ type Highlight = {
 
 type UserHighlight = Pick<Highlight, `anchorCfi` | `focusCfi`>
 
-type SubjectType =
-  | { type: `onHighlightClick`; data: Highlight }
-  | { type: `onUpdate`; data: Highlight[] }
+type SubjectType = { type: `onHighlightClick`; data: Highlight } | { type: `onUpdate`; data: Highlight[] }
 
 const SHOULD_NOT_LAYOUT = false
 const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
@@ -36,14 +34,12 @@ export const createHighlightsEnhancer =
   }: {
     highlights: UserHighlight[]
   }): Enhancer<
-    {},
+    Record<string, never>,
     {
       highlights: {
         add: (highlight: UserHighlight) => void
         remove: (id: number) => void
-        isHighlightClicked: (
-          event: MouseEvent | TouchEvent | PointerEvent
-        ) => boolean
+        isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean
         $: Observable<SubjectType>
       }
     }
@@ -70,14 +66,9 @@ export const createHighlightsEnhancer =
       return range
     }
 
-    const drawHighlight = (
-      overlayElement: HTMLElement,
-      highlight: Highlight
-    ) => {
-      const { node: anchorNode, offset: anchorOffset } =
-        reader.resolveCfi(highlight.anchorCfi) || {}
-      const { node: focusNode, offset: focusOffset } =
-        reader.resolveCfi(highlight.focusCfi) || {}
+    const drawHighlight = (overlayElement: HTMLElement, highlight: Highlight) => {
+      const { node: anchorNode, offset: anchorOffset } = reader.resolveCfi(highlight.anchorCfi) || {}
+      const { node: focusNode, offset: focusOffset } = reader.resolveCfi(highlight.focusCfi) || {}
 
       if (anchorNode && focusNode) {
         // remove old previous highlight
@@ -91,10 +82,9 @@ export const createHighlightsEnhancer =
 
         highlight.text = range.toString()
 
-        const rectElements = Array.from(range.getClientRects()).map(
-          (domRect) => {
-            const rectElt = overlayElement.ownerDocument.createElement(`div`)
-            rectElt.style.cssText = `
+        const rectElements = Array.from(range.getClientRects()).map((domRect) => {
+          const rectElt = overlayElement.ownerDocument.createElement(`div`)
+          rectElt.style.cssText = `
             position: absolute;
             width: ${domRect.width}px;
             height: ${domRect.height}px;
@@ -103,14 +93,12 @@ export const createHighlightsEnhancer =
             background-color: green;
             opacity: 50%;
           `
-            rectElt.setAttribute(`data-${HIGHLIGHT_ID_PREFIX}`, ``)
+          rectElt.setAttribute(`data-${HIGHLIGHT_ID_PREFIX}`, ``)
 
-            return rectElt
-          }
-        )
+          return rectElt
+        })
 
-        const containerElement =
-          overlayElement.ownerDocument.createElement(`div`)
+        const containerElement = overlayElement.ownerDocument.createElement(`div`)
         containerElement.style.cssText = `
           pointer-events: auto;
         `
@@ -126,10 +114,7 @@ export const createHighlightsEnhancer =
       }
     }
 
-    const drawHighlightsForItem = (
-      overlayElement: HTMLElement,
-      itemIndex: number
-    ) => {
+    const drawHighlightsForItem = (overlayElement: HTMLElement, itemIndex: number) => {
       highlights.forEach((highlight) => {
         if (highlight.spineItemIndex === itemIndex) {
           drawHighlight(overlayElement, highlight)
@@ -178,9 +163,7 @@ export const createHighlightsEnhancer =
       highlights$.next({ type: `onUpdate`, data: highlights })
     }
 
-    const isHighlightClicked = (
-      event: MouseEvent | TouchEvent | PointerEvent
-    ) => {
+    const isHighlightClicked = (event: MouseEvent | TouchEvent | PointerEvent) => {
       if (event.target instanceof HTMLElement) {
         return event.target.hasAttribute(`data-${HIGHLIGHT_ID_PREFIX}`)
       }
@@ -208,9 +191,7 @@ export const createHighlightsEnhancer =
       })
     )
 
-    merge(initialHighlights$, refreshHighlights$)
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
+    merge(initialHighlights$, refreshHighlights$).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,

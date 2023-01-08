@@ -25,17 +25,19 @@ describe(`Given a xml document`, () => {
         </body>
       </html>`,
         {
-          mimeType: "application/xhtml+xml"
+          mimeType: "application/xhtml+xml",
         }
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest
+      )
 
       expect(manifest).toEqual({
         ...firstManifest,
-        renditionLayout: "pre-paginated"
+        renditionLayout: "pre-paginated",
       })
     })
   })
@@ -60,13 +62,15 @@ describe(`Given a xml document`, () => {
         </body>
       </html>`,
         {
-          mimeType: "application/xhtml+xml"
+          mimeType: "application/xhtml+xml",
         }
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest
+      )
 
       expect(manifest).toEqual(firstManifest)
     })
@@ -90,17 +94,19 @@ describe(`Given a xml document`, () => {
         </body>
       </html>`,
         {
-          mimeType: "application/xhtml+xml"
+          mimeType: "application/xhtml+xml",
         }
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest
+      )
 
       expect(manifest).toEqual({
         ...firstManifest,
-        renditionLayout: "pre-paginated"
+        renditionLayout: "pre-paginated",
       })
     })
   })
@@ -112,7 +118,9 @@ describe(`Given a non xml resource`, () => {
 
     const firstManifest = await generateManifestFromArchive(archive)
 
-    const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+    const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+      firstManifest
+    )
 
     expect(manifest).toEqual(firstManifest)
   })

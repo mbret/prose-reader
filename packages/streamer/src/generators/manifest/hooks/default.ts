@@ -9,9 +9,10 @@ export const defaultHook =
     return {
       filename: archive.filename,
       nav: {
-        toc: []
+        toc: [],
       },
-      title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
+      title:
+        archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
@@ -25,11 +26,11 @@ export const defaultHook =
         progressionWeight: 1 / files.length,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
-        mediaType: file.encodingFormat
+        mediaType: file.encodingFormat,
       })),
       items: files.map((file, index) => ({
         id: `${index}.${file.basename}`,
-        href: `${baseUrl}${file.uri}`
-      }))
+        href: `${baseUrl}${file.uri}`,
+      })),
     }
   }
