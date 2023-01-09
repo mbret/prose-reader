@@ -41,14 +41,14 @@ export const loadingEnhancer: Enhancer<
       items.reduce((acc, { item, element }) => {
         const loadingElementContainer = loadingElementCreate({
           container: createLoadingElementContainer(element, reader.context),
-          item
+          item,
         })
 
         element.appendChild(loadingElementContainer)
 
         return {
           ...acc,
-          [item.id]: loadingElementContainer
+          [item.id]: loadingElementContainer,
         }
       }, {} as Entries)
     )
@@ -57,7 +57,7 @@ export const loadingEnhancer: Enhancer<
     combineLatest([reader.$.layout$, reader.theme.$.theme$]).pipe(
       map(([, theme]) => ({
         width: reader.context.getVisibleAreaRect().width,
-        theme
+        theme,
       })),
       distinctUntilChanged(isShallowEqual),
       tap(({ width, theme }) => {
@@ -102,9 +102,9 @@ export const loadingEnhancer: Enhancer<
     ...reader,
     loading: {
       $: {
-        items$
-      }
-    }
+        items$,
+      },
+    },
   }
 }
 

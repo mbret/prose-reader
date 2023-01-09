@@ -41,7 +41,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     width: 0,
     height: 0,
     x: 0,
-    y: 0
+    y: 0,
   }
   const horizontalMargin = 24
   const verticalMargin = 20
@@ -149,21 +149,21 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     getPageSize: () => {
       return {
         width: shouldDisplaySpread() ? visibleAreaRect.width / 2 : visibleAreaRect.width,
-        height: visibleAreaRect.height
+        height: visibleAreaRect.height,
       }
     },
     getSettings: settings.getSettings,
     setSettings: (data: Parameters<typeof settings.setSettings>[0]) =>
       settings.setSettings(data, {
         hasVerticalWritingSubject: hasVerticalWritingSubject$.value,
-        manifest
+        manifest,
       }),
     $: {
       hasVerticalWriting$: hasVerticalWritingSubject$.asObservable().pipe(distinctUntilChanged()),
       destroy$: destroy$.asObservable(),
       settings$: settings.$.settings$,
-      load$: loadSubject$.asObservable()
-    }
+      load$: loadSubject$.asObservable(),
+    },
   }
 }
 

@@ -21,7 +21,7 @@ export const createManualViewportNavigator = ({
   spineItemManager,
   currentNavigationSubject$,
   locator,
-  context
+  context,
 }: {
   context: Context
   element: HTMLElement
@@ -72,7 +72,7 @@ export const createManualViewportNavigator = ({
         return of({
           ...navigation,
           animate: true,
-          lastUserExpectedNavigation: { type: `navigate-from-anchor` as const, data: navigation.url.hash }
+          lastUserExpectedNavigation: { type: `navigate-from-anchor` as const, data: navigation.url.hash },
         })
       }
 
@@ -104,7 +104,7 @@ export const createManualViewportNavigator = ({
       return {
         ...navigation,
         animate,
-        lastUserExpectedNavigation: { type: `navigate-from-cfi` as const, data: cfi }
+        lastUserExpectedNavigation: { type: `navigate-from-cfi` as const, data: cfi },
       }
     })
   )
@@ -138,7 +138,7 @@ export const createManualViewportNavigator = ({
       return of({
         ...navigator.getNavigationForPage(pageIndex),
         lastUserExpectedNavigation: undefined,
-        animate: true
+        animate: true,
       })
     })
   )
@@ -162,7 +162,7 @@ export const createManualViewportNavigator = ({
             return of({
               ...navigation,
               lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const },
-              animate: true
+              animate: true,
             })
           }
         }
@@ -180,9 +180,9 @@ export const createManualViewportNavigator = ({
     switchMap(
       ([
         {
-          data: { allowSpineItemChange }
+          data: { allowSpineItemChange },
         },
-        currentNavigation
+        currentNavigation,
       ]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
@@ -199,9 +199,9 @@ export const createManualViewportNavigator = ({
     switchMap(
       ([
         {
-          data: { allowSpineItemChange }
+          data: { allowSpineItemChange },
         },
-        currentNavigation
+        currentNavigation,
       ]) => {
         const navigation = navigator.getNavigationForRightPage(currentNavigation)
 
@@ -245,7 +245,7 @@ export const createManualViewportNavigator = ({
     goToPage,
     $: {
       state$: stateSubject$.asObservable(),
-      navigation$
-    }
+      navigation$,
+    },
   }
 }

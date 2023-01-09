@@ -106,7 +106,7 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
     put,
     keys,
     get,
-    remove
+    remove,
   }
 }
 

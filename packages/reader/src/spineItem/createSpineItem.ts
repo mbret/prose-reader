@@ -11,7 +11,7 @@ export const createSpineItem = ({
   containerElement,
   iframeEventBridgeElement,
   hooks$,
-  viewportState$
+  viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -27,7 +27,7 @@ export const createSpineItem = ({
       containerElement,
       iframeEventBridgeElement,
       hooks$,
-      viewportState$
+      viewportState$,
     })
   }
 
@@ -37,7 +37,7 @@ export const createSpineItem = ({
     containerElement,
     iframeEventBridgeElement,
     hooks$,
-    viewportState$
+    viewportState$,
   })
 }
 

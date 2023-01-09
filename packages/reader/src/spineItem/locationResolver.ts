@@ -15,7 +15,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
 
       return {
         x: 0,
-        y: ltrRelativeOffset
+        y: ltrRelativeOffset,
       }
     }
 
@@ -24,13 +24,13 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     if (itemReadingDirection === `rtl`) {
       return {
         x: itemWidth - ltrRelativeOffset - context.getPageSize().width,
-        y: 0
+        y: 0,
       }
     }
 
     return {
       x: ltrRelativeOffset,
-      y: 0
+      y: 0,
     }
   }
 
@@ -116,7 +116,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
         left,
         right: left + pageSize.width,
         top,
-        bottom: top + pageSize.height
+        bottom: top + pageSize.height,
       }
 
       const res = getFirstVisibleNodeForViewport(frame.contentWindow.document, viewport)
@@ -132,7 +132,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
 
     const adjustedPosition = {
       x: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.x, context.getPageSize().width, width),
-      y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height)
+      y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height),
     }
 
     return adjustedPosition
@@ -164,6 +164,6 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     getSpineItemPageIndexFromPosition,
     getSpineItemPageIndexFromNode,
     getSpineItemClosestPositionFromUnsafePosition,
-    getFirstNodeOrRangeAtPage
+    getFirstNodeOrRangeAtPage,
   }
 }

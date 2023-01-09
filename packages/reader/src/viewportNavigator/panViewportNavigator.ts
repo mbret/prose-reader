@@ -20,7 +20,7 @@ export const createPanViewportNavigator = ({
   spineItemManager,
   locator,
   context,
-  currentNavigationSubject$
+  currentNavigationSubject$,
 }: {
   context: Context
   element: HTMLElement
@@ -69,7 +69,7 @@ export const createPanViewportNavigator = ({
                 ? movingLastPosition.x + correctedX
                 : movingLastPosition.x - correctedX
               : 0,
-          y: pageTurnDirection === `horizontal` ? 0 : movingLastPosition.y - correctedY
+          y: pageTurnDirection === `horizontal` ? 0 : movingLastPosition.y - correctedY,
         })
 
         movingLastDelta = delta
@@ -85,7 +85,7 @@ export const createPanViewportNavigator = ({
         snapTo({
           from: currentNavigationSubject$.value,
           to: navigation,
-          pan: movingLastPosition
+          pan: movingLastPosition,
         })
         stateSubject$.next(`end`)
 
@@ -132,9 +132,9 @@ export const createPanViewportNavigator = ({
     switchMap(
       ([
         {
-          data: { from, to }
+          data: { from, to },
         },
-        { navigationSnapThreshold }
+        { navigationSnapThreshold },
       ]) => {
         const pageTurnDirection = context.getSettings().computedPageTurnDirection
         const movingForward = navigator.isNavigationGoingForwardFrom(to, from)
@@ -168,7 +168,7 @@ export const createPanViewportNavigator = ({
     $: {
       moveToSubject$,
       state$: stateSubject$.asObservable(),
-      navigation$: merge(snapNavigation$)
-    }
+      navigation$: merge(snapNavigation$),
+    },
   }
 }

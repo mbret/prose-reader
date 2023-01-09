@@ -126,7 +126,7 @@ function compareSpatial(a: any, b: any) {
 }
 
 class CFI {
-  isRange: boolean = false
+  isRange = false
   parts: {}[]
   opts: {}
   cfi: string
@@ -139,7 +139,7 @@ class CFI {
         flattenRange: false,
         // Strip temporal, spatial, offset and textLocationAssertion
         // from places where they don't make sense
-        stricter: true
+        stricter: true,
       },
       opts || {}
     )
@@ -423,7 +423,7 @@ class CFI {
       return {
         from: this.getFrom(),
         to: this.getTo(),
-        isRange: true
+        isRange: true,
       }
     }
     return this.deepClone(this.parts)
@@ -461,7 +461,7 @@ class CFI {
     if (!m || m.length < 3) return undefined
     const o = {
       x: parseInt(m[1]),
-      y: parseInt(m[2])
+      y: parseInt(m[2]),
     }
     if (typeof o.x !== `number` || typeof o.y !== `number`) {
       return undefined
@@ -916,7 +916,7 @@ class CFI {
     let node = startNode
     let startFrom = 0
     let i
-    let subpart: typeof subparts[number] | undefined
+    let subpart: (typeof subparts)[number] | undefined
     for (i = subparts.length - 1; i >= 0; i--) {
       subpart = subparts[i]
       // @ts-ignore
@@ -1050,7 +1050,7 @@ class CFI {
   resolveLast(dom: Document, opts: {}): string | {} {
     opts = Object.assign(
       {
-        range: false
+        range: false,
       },
       opts || {}
     )
@@ -1090,7 +1090,7 @@ class CFI {
     return {
       from: this.resolveLocation(dom, this.getFrom()),
       to: this.resolveLocation(dom, this.getTo()),
-      isRange: true
+      isRange: true,
     }
   }
 
@@ -1119,6 +1119,6 @@ export const extractProseMetadataFromCfi = (
   return {
     cleanedCfi,
     itemId: itemId ? decodeURIComponent(itemId) : itemId,
-    offset: isNaN(foundOffset) ? undefined : foundOffset
+    offset: isNaN(foundOffset) ? undefined : foundOffset,
   }
 }

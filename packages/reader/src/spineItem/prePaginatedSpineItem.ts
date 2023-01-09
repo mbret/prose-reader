@@ -11,7 +11,7 @@ export const createPrePaginatedSpineItem = ({
   containerElement,
   iframeEventBridgeElement,
   hooks$,
-  viewportState$
+  viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -26,14 +26,14 @@ export const createPrePaginatedSpineItem = ({
     parentElement: containerElement,
     iframeEventBridgeElement,
     hooks$,
-    viewportState$
+    viewportState$,
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
 
   const layout = ({
     blankPagePosition,
     minimumWidth,
-    spreadPosition
+    spreadPosition,
   }: {
     blankPagePosition: `before` | `after` | `none`
     minimumWidth: number
@@ -52,7 +52,7 @@ export const createPrePaginatedSpineItem = ({
         {
           ...commonSpineItem.getDimensionsForPaginatedContent(),
           enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
-          spreadPosition
+          spreadPosition,
         },
         viewportDimensions
       )
@@ -64,7 +64,7 @@ export const createPrePaginatedSpineItem = ({
         commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
-          height: viewportDimensions.height
+          height: viewportDimensions.height,
         })
         frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
@@ -107,7 +107,7 @@ export const createPrePaginatedSpineItem = ({
         commonSpineItem.injectStyle(cssLink)
         spineItemFrame.staticLayout({
           width: contentWidth,
-          height: contentHeight
+          height: contentHeight,
         })
         if (blankPagePosition === `before`) {
           if (context.isRTL()) {
@@ -138,7 +138,7 @@ export const createPrePaginatedSpineItem = ({
 
   return {
     ...commonSpineItem,
-    layout
+    layout,
   }
 }
 
@@ -146,7 +146,7 @@ const buildDocumentStyle = (
   {
     columnWidth,
     enableTouch,
-    spreadPosition
+    spreadPosition,
   }: {
     columnWidth: number
     columnHeight: number

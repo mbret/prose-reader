@@ -16,7 +16,7 @@ export const createNavigationResolver = ({
   context,
   spineItemManager,
   cfiLocator,
-  locator
+  locator,
 }: {
   context: Context
   spineItemManager: SpineItemManager
@@ -42,7 +42,7 @@ export const createNavigationResolver = ({
 
       return {
         x: Math.min(Math.max(0, position.x), maximumXOffset),
-        y: Math.min(Math.max(0, position.y), maximumYOffset)
+        y: Math.min(Math.max(0, position.y), maximumYOffset),
       }
     },
     { disable: true }
@@ -197,11 +197,11 @@ export const createNavigationResolver = ({
             context.isRTL()
               ? {
                   ...navigation,
-                  x: navigation.x - context.getPageSize().width
+                  x: navigation.x - context.getPageSize().width,
                 }
               : {
                   ...navigation,
-                  x: navigation.x + context.getPageSize().width
+                  x: navigation.x + context.getPageSize().width,
                 }
           )
         )
@@ -352,6 +352,6 @@ export const createNavigationResolver = ({
     wrapPositionWithSafeEdge,
     isNavigationGoingForwardFrom,
     areNavigationDifferent,
-    arePositionsDifferent
+    arePositionsDifferent,
   }
 }

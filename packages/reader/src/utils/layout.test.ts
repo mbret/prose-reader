@@ -21,7 +21,7 @@ test(`getNewScaledOffset`, () => {
     [3, 2, 600, 600 * 2, 615, 310],
     [3, 1, 969, 13442, 20592, 6541],
     // dangerous out of bound values
-    [3, 1, 600, 600 * 3, 0, 0]
+    [3, 1, 600, 600 * 3, 0, 0],
   ])(
     `From %i to %i, screen of %i, page of %i, scroll at %i, it should returns new scroll of %i`,
     (oldScale, newScale, screenWidth, pageWidth, viewportScrollLeft, value) => {

@@ -11,7 +11,7 @@ export const createReflowableSpineItem = ({
   containerElement,
   iframeEventBridgeElement,
   hooks$,
-  viewportState$
+  viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -26,7 +26,7 @@ export const createReflowableSpineItem = ({
     parentElement: containerElement,
     iframeEventBridgeElement,
     hooks$,
-    viewportState$
+    viewportState$,
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
   /**
@@ -43,7 +43,7 @@ export const createReflowableSpineItem = ({
 
   const layout = ({
     blankPagePosition,
-    minimumWidth
+    minimumWidth,
   }: {
     blankPagePosition: `before` | `after` | `none`
     minimumWidth: number
@@ -73,7 +73,7 @@ export const createReflowableSpineItem = ({
 
         spineItemFrame.staticLayout({
           width: viewportDimensions.width,
-          height: viewportDimensions.height
+          height: viewportDimensions.height,
         })
         frameElement?.style.setProperty(`position`, `absolute`)
         frameElement?.style.setProperty(`top`, `50%`)
@@ -96,7 +96,7 @@ export const createReflowableSpineItem = ({
         const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
               isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
-              enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`
+              enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
               commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth)
@@ -112,7 +112,7 @@ export const createReflowableSpineItem = ({
 
           spineItemFrame.staticLayout({
             width: minimumWidth,
-            height: contentHeight
+            height: contentHeight,
           })
         } else if (context.getManifest()?.renditionFlow === `scrolled-continuous`) {
           contentHeight = frameElement.contentDocument.documentElement.scrollHeight
@@ -120,7 +120,7 @@ export const createReflowableSpineItem = ({
 
           spineItemFrame.staticLayout({
             width: minimumWidth,
-            height: contentHeight
+            height: contentHeight,
           })
         } else {
           const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollWidth / pageWidth)
@@ -140,7 +140,7 @@ export const createReflowableSpineItem = ({
 
           spineItemFrame.staticLayout({
             width: contentWidth,
-            height: contentHeight
+            height: contentHeight,
           })
         }
       }
@@ -174,7 +174,7 @@ export const createReflowableSpineItem = ({
 
   return {
     ...commonSpineItem,
-    layout
+    layout,
   }
 }
 
@@ -286,7 +286,7 @@ const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enabl
 const buildStyleWithMultiColumn = ({
   width,
   columnHeight,
-  columnWidth
+  columnWidth,
 }: {
   width: number
   columnWidth: number

@@ -10,7 +10,7 @@ type SpineItemPosition = { x: number; y: number; outsideOfBoundaries?: boolean }
 export const createLocationResolver = ({
   spineItemManager,
   context,
-  spineItemLocator
+  spineItemLocator,
 }: {
   spineItemManager: SpineItemManager
   context: Context
@@ -39,7 +39,7 @@ export const createLocationResolver = ({
         return {
           x: leftEnd - position.x - context.getPageSize().width,
           // y: (topEnd - position.y) - context.getPageSize().height,
-          y: Math.max(0, position.y - topStart)
+          y: Math.max(0, position.y - topStart),
         }
       }
 
@@ -52,7 +52,7 @@ export const createLocationResolver = ({
          * However we can assume we are at 0, because we in fact can see the beginning of the item
          */
         x: Math.max(0, position.x - leftStart),
-        y: Math.max(0, position.y - topStart)
+        y: Math.max(0, position.y - topStart),
       }
     },
     { disable: true }
@@ -88,13 +88,13 @@ export const createLocationResolver = ({
       return {
         x: leftEnd - spineItemPosition.x - context.getPageSize().width,
         // y: (topEnd - spineItemPosition.y) - context.getPageSize().height,
-        y: topStart + spineItemPosition.y
+        y: topStart + spineItemPosition.y,
       }
     }
 
     return {
       x: leftStart + spineItemPosition.x,
-      y: topStart + spineItemPosition.y
+      y: topStart + spineItemPosition.y,
     }
   }
 
@@ -160,7 +160,7 @@ export const createLocationResolver = ({
       end: endItemIndex,
       endPosition: endPosition,
       left,
-      right
+      right,
     }
   }
 
@@ -185,6 +185,6 @@ export const createLocationResolver = ({
     getSpineItemFromPosition,
     getSpineItemFromIframe,
     getSpineItemPageIndexFromNode,
-    getSpineItemsFromReadingOrderPosition
+    getSpineItemsFromReadingOrderPosition,
   }
 }

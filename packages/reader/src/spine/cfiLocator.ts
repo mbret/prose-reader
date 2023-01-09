@@ -8,7 +8,7 @@ import { Manifest } from "../types"
 
 export const createCfiLocator = ({
   spineItemManager,
-  spineItemLocator
+  spineItemLocator,
 }: {
   spineItemManager: SpineItemManager
   context: Context
@@ -70,7 +70,7 @@ export const createCfiLocator = ({
 
     if (spineItem) {
       return {
-        spineItemIndex: spineItemManager.getSpineItemIndex(spineItem)
+        spineItemIndex: spineItemManager.getSpineItemIndex(spineItem),
       }
     }
 
@@ -102,13 +102,13 @@ export const createCfiLocator = ({
         Report.error(e)
 
         return {
-          spineItemIndex
+          spineItemIndex,
         }
       }
     }
 
     return {
-      spineItemIndex
+      spineItemIndex,
     }
   }
 
@@ -155,6 +155,6 @@ export const createCfiLocator = ({
     getCfi,
     getRootCfi,
     resolveCfi,
-    generateFromRange
+    generateFromRange,
   }
 }

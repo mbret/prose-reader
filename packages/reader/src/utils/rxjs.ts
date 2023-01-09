@@ -7,7 +7,7 @@ export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(k
       if (keys.includes(key as any)) {
         return {
           ...acc,
-          [key]: entry
+          [key]: entry,
         }
       }
 

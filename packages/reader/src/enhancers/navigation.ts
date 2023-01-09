@@ -48,6 +48,6 @@ export const navigationEnhancer: Enhancer<
       }
 
       return goToNextSpineItem()
-    }
+    },
   }
 }

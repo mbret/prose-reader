@@ -99,7 +99,7 @@ export const progressionEnhancer: Enhancer<
     ...reader,
     progression: {
       getPercentageEstimate,
-      getScrollPercentageWithinItem
-    }
+      getScrollPercentageWithinItem,
+    },
   }
 }

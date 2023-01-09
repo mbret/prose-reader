@@ -46,7 +46,7 @@ export const linksEnhancer: Enhancer<
     ...reader,
     $: {
       ...reader.$,
-      links$: subject.asObservable()
-    }
+      links$: subject.asObservable(),
+    },
   }
 }

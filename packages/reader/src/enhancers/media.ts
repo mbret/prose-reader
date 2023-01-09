@@ -24,7 +24,7 @@ export const mediaEnhancer: Enhancer<{}, {}> = (next) => (options) => {
       })
     },
     {
-      threshold: 0.01
+      threshold: 0.01,
     }
   )
 
@@ -49,7 +49,7 @@ export const mediaEnhancer: Enhancer<{}, {}> = (next) => (options) => {
       })
     },
     {
-      threshold: 0.5
+      threshold: 0.5,
     }
   )
 
@@ -78,6 +78,6 @@ export const mediaEnhancer: Enhancer<{}, {}> = (next) => (options) => {
 
   return {
     ...reader,
-    destroy
+    destroy,
   }
 }

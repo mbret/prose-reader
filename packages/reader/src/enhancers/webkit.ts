@@ -15,7 +15,7 @@ export const webkitEnhancer: Enhancer<{}, {}> = (next) => (options) => {
    * and more generally GPU transformation. I am not sure what is the impact on performance so
    * we only use them on needed engine (webkit).
    */
-  const transformFlickerFixHooks: typeof options[`hooks`] = [
+  const transformFlickerFixHooks: (typeof options)[`hooks`] = [
     {
       name: `viewportNavigator.onBeforeContainerCreated`,
       fn: (element) => {
@@ -25,7 +25,7 @@ export const webkitEnhancer: Enhancer<{}, {}> = (next) => (options) => {
         `
 
         return element
-      }
+      },
     },
     {
       name: `item.onBeforeContainerCreated`,
@@ -37,15 +37,15 @@ export const webkitEnhancer: Enhancer<{}, {}> = (next) => (options) => {
         `
 
         return element
-      }
-    }
+      },
+    },
   ]
 
   const reader = next({
     ...options,
     ...(IS_SAFARI && {
-      hooks: [...(options.hooks || []), ...transformFlickerFixHooks]
-    })
+      hooks: [...(options.hooks || []), ...transformFlickerFixHooks],
+    }),
   })
 
   return reader

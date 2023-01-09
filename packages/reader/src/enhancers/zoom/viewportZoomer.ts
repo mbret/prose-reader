@@ -50,14 +50,14 @@ export const createViewportZoomer = (reader: ReaderInstance) => {
       oldScale: currentScale,
       pageSize: reader.viewportNavigator.element.clientWidth,
       screenSize: reader.spine.element.offsetWidth,
-      scrollOffset: reader.viewportNavigator.element.scrollLeft
+      scrollOffset: reader.viewportNavigator.element.scrollLeft,
     })
     reader.viewportNavigator.element.scrollTop = getNewScaledOffset({
       newScale,
       oldScale: currentScale,
       pageSize: reader.viewportNavigator.element.clientHeight,
       screenSize: reader.spine.element.offsetHeight,
-      scrollOffset: currentScrollTop
+      scrollOffset: currentScrollTop,
     })
 
     lastUserScale = newScale
@@ -85,6 +85,6 @@ export const createViewportZoomer = (reader: ReaderInstance) => {
     getScaleValue: () => lastUserScale,
     isZooming: _isZooming,
     destroy,
-    isZooming$: isZooming$.asObservable()
+    isZooming$: isZooming$.asObservable(),
   }
 }

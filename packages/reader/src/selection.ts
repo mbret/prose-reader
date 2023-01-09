@@ -15,6 +15,6 @@ export const createSelection = (selection: Selection, item: Manifest[`spineItems
       if (selection.focusNode) {
         return CFI.generate(selection.focusNode, selection.focusOffset, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
       }
-    }
+    },
   }
 }

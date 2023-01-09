@@ -36,7 +36,7 @@ export const createFingerTracker = () => {
       return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined ? undefined : fingerPositionInIframe
     },
     destroy: () => {},
-    $: subject.asObservable()
+    $: subject.asObservable(),
   }
 }
 
@@ -84,6 +84,6 @@ export const createSelectionTracker = () => {
 
       return selection
     },
-    $: subject.asObservable()
+    $: subject.asObservable(),
   }
 }

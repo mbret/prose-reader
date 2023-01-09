@@ -114,6 +114,6 @@ export const createResourcesManager = (context: Context) => {
 
   return {
     get,
-    destroy
+    destroy,
   }
 }

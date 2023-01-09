@@ -5,21 +5,21 @@ import { Enhancer } from "./types"
 const defaultThemes = [
   {
     name: `bright` as const,
-    backgroundColor: `white`
+    backgroundColor: `white`,
   },
   {
     name: `sepia` as const,
     backgroundColor: `#eaddc7`,
-    foregroundColor: `black`
+    foregroundColor: `black`,
   },
   {
     name: `night` as const,
     backgroundColor: `#191717`,
-    foregroundColor: `#f1ebeb`
-  }
+    foregroundColor: `#f1ebeb`,
+  },
 ]
 
-export type Theme = typeof defaultThemes[number][`name`] | `publisher`
+export type Theme = (typeof defaultThemes)[number][`name`] | `publisher`
 
 export const themeEnhancer: Enhancer<
   {
@@ -121,8 +121,8 @@ export const themeEnhancer: Enhancer<
       },
       get: () => currentThemeSubject$.value,
       $: {
-        theme$: currentThemeSubject$.asObservable()
-      }
-    }
+        theme$: currentThemeSubject$.asObservable(),
+      },
+    },
   }
 }

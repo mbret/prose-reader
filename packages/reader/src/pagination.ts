@@ -27,7 +27,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
     endPageIndex: undefined,
     endNumberOfPages: 0,
     endCfi: undefined,
-    endSpineItemIndex: undefined
+    endSpineItemIndex: undefined,
   })
 
   const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
@@ -77,7 +77,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
     return {
       numberOfPages,
       pageIndex: info.pageIndex,
-      cfi: info.cfi
+      cfi: info.cfi,
     }
   }
 
@@ -103,12 +103,12 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
         endPageIndex: endInfo.pageIndex,
         endNumberOfPages: endInfo.numberOfPages,
         endCfi: endInfo.cfi,
-        endSpineItemIndex: end.spineItemIndex
+        endSpineItemIndex: end.spineItemIndex,
       }
 
       paginationSubject$.next({
         ...paginationSubject$.value,
-        ...newValues
+        ...newValues,
       })
     },
     { disable: true }
@@ -127,8 +127,8 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
     updateBeginAndEnd,
     getInfo,
     $: {
-      info$
-    }
+      info$,
+    },
   }
 }
 

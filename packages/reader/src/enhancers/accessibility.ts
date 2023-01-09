@@ -46,6 +46,6 @@ export const accessibilityEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   })
 
   return {
-    ...reader
+    ...reader,
   }
 }

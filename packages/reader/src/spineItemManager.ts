@@ -125,7 +125,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
               : context.isRTL()
               ? `left`
               : `right`
-            : `none`
+            : `none`,
         })
 
         if (context.getSettings().computedPageTurnDirection === `vertical`) {
@@ -137,12 +137,12 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           if (context.isRTL()) {
             item.adjustPositionOfElement({
               top: currentValidEdgeYForVerticalPositioning,
-              left: currentValidEdgeXForVerticalPositioning
+              left: currentValidEdgeXForVerticalPositioning,
             })
           } else {
             item.adjustPositionOfElement({
               top: currentValidEdgeYForVerticalPositioning,
-              left: currentValidEdgeXForVerticalPositioning
+              left: currentValidEdgeXForVerticalPositioning,
             })
           }
 
@@ -155,12 +155,12 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
             topStart: currentValidEdgeYForVerticalPositioning,
             topEnd: newEdgeY,
             height,
-            width
+            width,
           })
 
           return {
             edgeX: newEdgeX,
-            edgeY: newEdgeY
+            edgeY: newEdgeY,
           }
         }
 
@@ -183,12 +183,12 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           topStart: edgeOffset.edgeY,
           topEnd: height,
           height,
-          width
+          width,
         })
 
         return {
           edgeX: newEdgeX,
-          edgeY: 0
+          edgeY: 0,
         }
       },
       { edgeX: 0, edgeY: 0 }
@@ -271,7 +271,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           topStart: 0,
           topEnd: 0,
           width: 0,
-          height: 0
+          height: 0,
         }
       }
 
@@ -300,7 +300,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           topStart: 0,
           topEnd: 0,
           width: 0,
-          height: 0
+          height: 0,
         }
       )
     },
@@ -424,8 +424,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
 
           return merge(...itemsIsReady$)
         })
-      )
-    }
+      ),
+    },
   }
 }
 

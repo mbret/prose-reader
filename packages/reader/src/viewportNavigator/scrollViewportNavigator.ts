@@ -8,7 +8,7 @@ import {
   switchMap,
   takeUntil,
   withLatestFrom,
-  startWith
+  startWith,
 } from "rxjs/operators"
 import { Context } from "../context"
 import { Spine } from "../spine/createSpine"
@@ -26,7 +26,7 @@ export const createScrollViewportNavigator = ({
   element,
   navigator,
   currentNavigationSubject$,
-  spine
+  spine,
 }: {
   context: Context
   element: HTMLElement
@@ -88,15 +88,15 @@ export const createScrollViewportNavigator = ({
         oldScale: spineScaleX,
         screenSize: element.clientWidth,
         pageSize: spine.element.scrollWidth,
-        scrollOffset: x
+        scrollOffset: x,
       }),
       y: getNewScaledOffset({
         newScale: 1,
         oldScale: spineScaleX,
         screenSize: element.clientHeight,
         pageSize: spine.element.scrollHeight,
-        scrollOffset: y
-      })
+        scrollOffset: y,
+      }),
     }
 
     return scaledDownPosition
@@ -149,7 +149,7 @@ export const createScrollViewportNavigator = ({
     getCurrentViewportPosition,
     $: {
       state$,
-      navigation$: navigationOnScroll$
-    }
+      navigation$: navigationOnScroll$,
+    },
   }
 }

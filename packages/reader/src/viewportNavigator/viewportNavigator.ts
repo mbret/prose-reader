@@ -14,7 +14,7 @@ import {
   Observable,
   of,
   Subject,
-  take
+  take,
 } from "rxjs"
 import { SpineItem } from "../spineItem/createSpineItem"
 import {
@@ -30,7 +30,7 @@ import {
   takeUntil,
   tap,
   withLatestFrom,
-  skip
+  skip,
 } from "rxjs/operators"
 import { createCfiLocator } from "../spine/cfiLocator"
 import { createScrollViewportNavigator } from "./scrollViewportNavigator"
@@ -53,7 +53,7 @@ export const createViewportNavigator = ({
   cfiLocator,
   spineLocator,
   hooks$,
-  spine
+  spine,
 }: {
   spineItemManager: SpineItemManager
   pagination: Pagination
@@ -81,7 +81,7 @@ export const createViewportNavigator = ({
     context,
     spineItemManager,
     cfiLocator,
-    locator: spineLocator
+    locator: spineLocator,
   })
   const adjustNavigationSubject$ = new Subject<{
     position: ViewportNavigationEntry
@@ -115,7 +115,7 @@ export const createViewportNavigator = ({
       // however browser engine can also gives back x.yyyy based on their precision
       // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
       x: ~~(Math.abs(x) * 10) / 10,
-      y: ~~(Math.abs(y) * 10) / 10
+      y: ~~(Math.abs(y) * 10) / 10,
     }
     currentViewportPositionMemoUnused = newValue
 
@@ -129,7 +129,7 @@ export const createViewportNavigator = ({
     spineItemManager,
     locator: spineLocator,
     getCurrentViewportPosition,
-    currentNavigationSubject$: currentNavigationPositionSubject$
+    currentNavigationSubject$: currentNavigationPositionSubject$,
   })
   const scrollViewportNavigator = createScrollViewportNavigator({
     context,
@@ -137,7 +137,7 @@ export const createViewportNavigator = ({
     navigator,
     currentNavigationSubject$: currentNavigationPositionSubject$,
     spine,
-    spineItemManager
+    spineItemManager,
   })
   const manualViewportNavigator = createManualViewportNavigator({
     context,
@@ -145,7 +145,7 @@ export const createViewportNavigator = ({
     navigator,
     currentNavigationSubject$: currentNavigationPositionSubject$,
     spineItemManager,
-    locator: spineLocator
+    locator: spineLocator,
   })
 
   const viewportNavigators = [scrollViewportNavigator, panViewportNavigator, manualViewportNavigator]
@@ -265,20 +265,20 @@ export const createViewportNavigator = ({
       offsetInSpineItem,
       expectedSpineOffset: adjustedSpinePosition,
       currentNavigationPosition: currentNavigationPositionSubject$.value,
-      lastUserExpectedNavigation
+      lastUserExpectedNavigation,
     })
 
     if (areDifferent) {
       adjustNavigationSubject$.next({
         position: adjustedSpinePosition,
-        animate: false
+        animate: false,
       })
     }
 
     return of({
       previousNavigationPosition: currentNavigationPositionSubject$.value,
       adjustedSpinePosition,
-      areDifferent
+      areDifferent,
     })
   }
 
@@ -323,29 +323,29 @@ export const createViewportNavigator = ({
         ...event,
         position: { x: event.x, y: event.y, spineItem: event.spineItem },
         animation: `snap` as const,
-        triggeredBy: `manual` as const
+        triggeredBy: `manual` as const,
       }))
     ),
     manualViewportNavigator.$.navigation$.pipe(
       map((event) => ({
         ...event,
         position: { x: event.x, y: event.y, spineItem: event.spineItem },
-        animation: event.animate ? (`turn` as const) : (false as false),
-        triggeredBy: `manual` as const
+        animation: event.animate ? (`turn` as const) : (false as const),
+        triggeredBy: `manual` as const,
       }))
     ),
     adjustNavigationSubject$.pipe(
       map((event) => ({
         ...event,
         triggeredBy: `adjust` as const,
-        animation: event.animate ? (`turn` as const) : (false as false)
+        animation: event.animate ? (`turn` as const) : (false as const),
       }))
     ),
     scrollViewportNavigator.$.navigation$.pipe(
       map((event) => ({
         ...event,
         triggeredBy: `scroll` as const,
-        animation: event.animate ? (`turn` as const) : (false as false)
+        animation: event.animate ? (`turn` as const) : (false as const),
       }))
     )
   ).pipe(
@@ -379,7 +379,7 @@ export const createViewportNavigator = ({
   )
 
   const manualAdjust$ = merge(
-    panViewportNavigator.$.moveToSubject$.asObservable().pipe(map((event) => ({ ...event, animation: false as false }))),
+    panViewportNavigator.$.moveToSubject$.asObservable().pipe(map((event) => ({ ...event, animation: false as const }))),
     navigationWhichRequireManualAdjust$
   ).pipe(
     map(({ animation, position }) => {
@@ -389,7 +389,7 @@ export const createViewportNavigator = ({
         type: `manualAdjust` as const,
         shouldAnimate,
         animation,
-        position
+        position,
       }
     }),
     share()
@@ -603,8 +603,8 @@ export const createViewportNavigator = ({
       state$,
       navigation$,
       navigationAdjustedAfterLayout$,
-      currentNavigationPosition$: currentNavigationPositionSubject$.asObservable()
-    }
+      currentNavigationPosition$: currentNavigationPositionSubject$.asObservable(),
+    },
   }
 }
 

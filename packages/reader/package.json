@@ -18,7 +18,8 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "lint": "prettier -w . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
     "test": "vitest run --coverage",
     "tsc": "tsc"
   },

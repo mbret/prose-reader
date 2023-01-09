@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: `prose`,
-      fileName: `prose`
+      fileName: `prose`,
     },
     sourcemap: true,
     emptyOutDir: mode !== `development`,
@@ -17,10 +17,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         globals: {
           rxjs: `rxjs`,
-          "@prose-reader/shared": `@prose-reader/shared`
-        }
-      }
-    }
+          "@prose-reader/shared": `@prose-reader/shared`,
+        },
+      },
+    },
   },
-  plugins: [dts()]
+  plugins: [dts()],
 }))

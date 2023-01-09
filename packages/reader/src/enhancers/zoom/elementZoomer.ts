@@ -86,7 +86,7 @@ export const createElementZoomer = (reader: ReaderInstance) => {
 
       imgLastPosition = {
         x: imgLastPosition.x + correctedX,
-        y: imgLastPosition.y + correctedY
+        y: imgLastPosition.y + correctedY,
       }
 
       imgElement?.style.setProperty(
@@ -130,6 +130,6 @@ export const createElementZoomer = (reader: ReaderInstance) => {
     getScaleValue: () => lastUserScale,
     isZooming: _isZooming,
     destroy,
-    isZooming$: isZooming$.asObservable()
+    isZooming$: isZooming$.asObservable(),
   }
 }

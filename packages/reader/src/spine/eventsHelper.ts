@@ -6,7 +6,7 @@ import { createLocationResolver } from "./locationResolver"
 
 export const createEventsHelper = ({
   iframeEventBridgeElement,
-  locator
+  locator,
 }: {
   iframeEventBridgeElement: HTMLElement
   spineItemManager: SpineItemManager
@@ -30,7 +30,7 @@ export const createEventsHelper = ({
       const newEvent = new PointerEvent(event.type, {
         ...event,
         clientX,
-        clientY
+        clientY,
       }) as E
 
       Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
@@ -44,7 +44,7 @@ export const createEventsHelper = ({
       const newEvent = new MouseEvent(event.type, {
         ...event,
         clientX,
-        clientY
+        clientY,
       }) as E
 
       Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
@@ -60,14 +60,14 @@ export const createEventsHelper = ({
           identifier: touch.identifier,
           target: touch.target,
           clientX,
-          clientY
+          clientY,
         })
       })
 
       const newEvent = new TouchEvent(event.type, {
         touches,
         changedTouches: touches,
-        targetTouches: touches
+        targetTouches: touches,
       }) as E
 
       Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
@@ -79,6 +79,6 @@ export const createEventsHelper = ({
   }
 
   return {
-    normalizeEventForViewport
+    normalizeEventForViewport,
   }
 }

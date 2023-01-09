@@ -82,7 +82,7 @@ export const paginationEnhancer: Enhancer<
     return item && manifest && buildChapterInfoFromSpineItem(manifest, item)
   }
 
-  const mapPaginationInfoToExtendedInfo = (paginationInfo: ObservedValueOf<typeof reader[`$`][`pagination$`]>) => {
+  const mapPaginationInfoToExtendedInfo = (paginationInfo: ObservedValueOf<(typeof reader)[`$`][`pagination$`]>) => {
     const context = reader.context
     const beginItem =
       paginationInfo.beginSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.beginSpineItemIndex) : undefined
@@ -134,7 +134,7 @@ export const paginationEnhancer: Enhancer<
             endItem
           )
         : 0,
-      isUsingSpread: context.shouldDisplaySpread()
+      isUsingSpread: context.shouldDisplaySpread(),
       // chaptersOfBook: number;
       // chapter: string;
       // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
@@ -195,13 +195,13 @@ export const paginationEnhancer: Enhancer<
         /**
          * This may be not accurate for reflowable due to dynamic load / unload.
          */
-        numberOfTotalPages: numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0)
+        numberOfTotalPages: numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0),
       }
     }),
     distinctUntilChanged(isShallowEqual),
     startWith({
       numberOfPagesPerItems: [] as number[],
-      numberOfTotalPages: 0
+      numberOfTotalPages: 0,
     })
   )
 
@@ -214,7 +214,7 @@ export const paginationEnhancer: Enhancer<
         .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.beginPageIndexInChapter ?? 0),
       endAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
         .slice(0, pageInfo.endSpineItemIndex)
-        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0)
+        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0),
     })),
     tap((data) => {
       report.log(`pagination`, data)
@@ -227,8 +227,8 @@ export const paginationEnhancer: Enhancer<
     ...reader,
     $: {
       ...reader.$,
-      pagination$
-    }
+      pagination$,
+    },
   }
 }
 
@@ -245,7 +245,7 @@ const getChapterInfo = (path: string, tocItems: Manifest[`nav`][`toc`]): Chapter
     if (path.endsWith(tocItemPathWithoutAnchor)) {
       return {
         title: tocItem.title,
-        path: tocItem.path
+        path: tocItem.path,
       }
     }
 
@@ -255,7 +255,7 @@ const getChapterInfo = (path: string, tocItems: Manifest[`nav`][`toc`]): Chapter
       return {
         subChapter: subInfo,
         title: tocItem.title,
-        path: tocItem.path
+        path: tocItem.path,
       }
     }
 

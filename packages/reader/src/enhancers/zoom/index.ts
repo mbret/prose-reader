@@ -72,8 +72,8 @@ export const zoomEnhancer: ZoomEnhancer = (next) => (options) => {
       isUsingScrollableZoom: isUsingScrollableViewport,
       setCurrentScaleAsBase,
       $: {
-        isZooming$: currentZoomerSubject$.pipe(switchMap((zoomer) => zoomer?.isZooming$ || of(false)))
-      }
-    }
+        isZooming$: currentZoomerSubject$.pipe(switchMap((zoomer) => zoomer?.isZooming$ || of(false))),
+      },
+    },
   }
 }

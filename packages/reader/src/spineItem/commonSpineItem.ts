@@ -17,7 +17,7 @@ const pointerEvents = [
   `pointermove` as const,
   `pointerout` as const,
   `pointerover` as const,
-  `pointerup` as const
+  `pointerup` as const,
 ]
 
 const mouseEvents = [
@@ -27,7 +27,7 @@ const mouseEvents = [
   `mouseleave` as const,
   `mousemove` as const,
   `mouseout` as const,
-  `mouseover` as const
+  `mouseover` as const,
 ]
 
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
@@ -38,7 +38,7 @@ export const createCommonSpineItem = ({
   parentElement,
   iframeEventBridgeElement,
   hooks$,
-  viewportState$
+  viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
@@ -59,7 +59,7 @@ export const createCommonSpineItem = ({
     context,
     fetchResource: context.getLoadOptions()?.fetchResource,
     hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
-    viewportState$
+    viewportState$,
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
@@ -84,7 +84,7 @@ export const createCommonSpineItem = ({
       // we want to round to first decimal because it's possible to have half pixel
       // however browser engine can also gives back x.yyyy based on their precision
       width: Math.round(rect.width * 10) / 10,
-      height: Math.round(rect.height * 10) / 10
+      height: Math.round(rect.height * 10) / 10,
     }
 
     memoizedElementDimensions = normalizedValues
@@ -180,7 +180,7 @@ export const createCommonSpineItem = ({
       columnWidth,
       // horizontalMargin,
       // verticalMargin,
-      width
+      width,
     }
   }
 
@@ -188,7 +188,7 @@ export const createCommonSpineItem = ({
     height,
     width,
     blankPagePosition,
-    minimumWidth
+    minimumWidth,
   }: {
     height: number
     width: number
@@ -218,7 +218,7 @@ export const createCommonSpineItem = ({
 
     return {
       clientX: adjustedX,
-      clientY: adjustedY
+      clientY: adjustedY,
     }
   }
 
@@ -262,7 +262,7 @@ export const createCommonSpineItem = ({
         ...manipulableFrame,
         container: containerElement,
         item,
-        overlayElement
+        overlayElement,
       })
     }
 
@@ -272,7 +272,7 @@ export const createCommonSpineItem = ({
       frame: undefined,
       removeStyle: () => {},
       addStyle: () => {},
-      overlayElement
+      overlayElement,
     })
   }
 
@@ -284,7 +284,7 @@ export const createCommonSpineItem = ({
           container: containerElement,
           item,
           isImageType,
-          ...options
+          ...options,
         })
       }
     })
@@ -293,7 +293,7 @@ export const createCommonSpineItem = ({
     withLatestFrom(spineItemFrame.$.isReady$),
     map(([data, isReady]) => ({
       isFirstLayout: data.isFirstLayout,
-      isReady
+      isReady,
     }))
   )
 
@@ -339,8 +339,8 @@ export const createCommonSpineItem = ({
     $: {
       contentLayout$,
       loaded$: spineItemFrame.$.loaded$,
-      isReady$: spineItemFrame.$.isReady$
-    }
+      isReady$: spineItemFrame.$.isReady$,
+    },
   }
 }
 
@@ -425,7 +425,7 @@ const createFrameHooks = (
         return () => {
           unregister.forEach((cb) => cb())
         }
-      }
-    }
+      },
+    },
   ]
 }

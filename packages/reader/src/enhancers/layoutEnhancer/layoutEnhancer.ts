@@ -13,7 +13,7 @@ export const layoutEnhancer: LayoutEnhancer = (next) => {
     const reader = next(options)
     const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
       pageHorizontalMargin,
-      pageVerticalMargin
+      pageVerticalMargin,
     })
 
     reader.registerHook(`onViewportOffsetAdjust`, () => {
@@ -144,7 +144,7 @@ export const layoutEnhancer: LayoutEnhancer = (next) => {
         if (pageHorizontalMargin !== undefined || pageVerticalMargin !== undefined) {
           settingsSubject$.next({
             pageHorizontalMargin: pageHorizontalMargin ?? settingsSubject$.value.pageHorizontalMargin,
-            pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin
+            pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin,
           })
         }
 
@@ -155,10 +155,10 @@ export const layoutEnhancer: LayoutEnhancer = (next) => {
         settings$: combineLatest([reader.$.settings$, settingsSubject$.asObservable()]).pipe(
           map(([innerSettings, settings]) => ({
             ...innerSettings,
-            ...settings
+            ...settings,
           }))
-        )
-      }
+        ),
+      },
     }
   }
 }

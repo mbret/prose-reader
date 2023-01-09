@@ -11,7 +11,7 @@ import {
   take,
   takeUntil,
   tap,
-  withLatestFrom
+  withLatestFrom,
 } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
@@ -54,7 +54,7 @@ export const createSpine = ({
   navigation$,
   navigationAdjusted$,
   currentNavigationPosition$,
-  viewportState$
+  viewportState$,
 }: {
   ownerDocument: Document
   iframeEventBridgeElement: HTMLElement
@@ -81,7 +81,7 @@ export const createSpine = ({
     context,
     spineItemManager,
     iframeEventBridgeElement,
-    locator: spineLocator
+    locator: spineLocator,
   })
   let selectionSubscription: Subscription | undefined
 
@@ -98,7 +98,7 @@ export const createSpine = ({
         iframeEventBridgeElement,
         context,
         hooks$,
-        viewportState$
+        viewportState$,
       })
       spineItemManager.add(spineItem)
     })
@@ -179,8 +179,8 @@ export const createSpine = ({
                   pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem),
                   cfi: shouldUpdateBeginCfi ? cfiLocator.getCfi(beginPageIndex, beginSpineItem) : beginLastCfi,
                   options: {
-                    isAtEndOfChapter: false
-                  }
+                    isAtEndOfChapter: false,
+                  },
                 },
                 {
                   spineItem: endSpineItem,
@@ -188,8 +188,8 @@ export const createSpine = ({
                   pageIndex: spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem),
                   cfi: shouldUpdateEndCfi ? cfiLocator.getCfi(endPageIndex, endSpineItem) : endLastCfi,
                   options: {
-                    isAtEndOfChapter: false
-                  }
+                    isAtEndOfChapter: false,
+                  },
                 }
               )
             }
@@ -216,7 +216,7 @@ export const createSpine = ({
             tap((event) => {
               subject.next({
                 type: `onSelectionChange`,
-                data: event.data ? createSelection(event.data, spineItem.item) : null
+                data: event.data ? createSelection(event.data, spineItem.item) : null,
               })
             })
           ),
@@ -316,8 +316,8 @@ export const createSpine = ({
                 ? cfiLocator.getRootCfi(beginSpineItem)
                 : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
             options: {
-              isAtEndOfChapter: false
-            }
+              isAtEndOfChapter: false,
+            },
           },
           {
             spineItem: endSpineItem,
@@ -332,8 +332,8 @@ export const createSpine = ({
                 ? cfiLocator.getRootCfi(endSpineItem)
                 : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
             options: {
-              isAtEndOfChapter: false
-            }
+              isAtEndOfChapter: false,
+            },
           }
         )
 
@@ -346,7 +346,7 @@ export const createSpine = ({
           endSpineItem,
           beginSpineItem,
           lastExpectedNavigation,
-          spineItemsFromPosition
+          spineItemsFromPosition,
         })
       }
 
@@ -450,8 +450,8 @@ export const createSpine = ({
       $: subject.asObservable(),
       layout$: spineItemManager.$.layout$,
       itemsCreated$: itemsCreatedSubject$.asObservable(),
-      itemsBeforeDestroy$: itemsBeforeDestroySubject$.asObservable()
-    }
+      itemsBeforeDestroy$: itemsBeforeDestroySubject$.asObservable(),
+    },
   }
 }
 

@@ -44,7 +44,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
     supportedPageTurnDirection: [`horizontal`, `vertical`],
-    supportedComputedPageTurnDirection: [`horizontal`, `vertical`]
+    supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
   })
   const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
@@ -63,12 +63,12 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const spineLocator = createSpineLocator({
     context,
     spineItemManager,
-    spineItemLocator
+    spineItemLocator,
   })
   const cfiLocator = createCfiLocator({
     spineItemManager,
     context,
-    spineItemLocator
+    spineItemLocator,
   })
 
   const navigation$ = navigationSubject.asObservable()
@@ -86,7 +86,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     cfiLocator,
     navigationAdjusted$: navigationAdjustedSubject.asObservable(),
     viewportState$: viewportStateSubject.asObservable(),
-    currentNavigationPosition$: currentNavigationPositionSubject$.asObservable()
+    currentNavigationPosition$: currentNavigationPositionSubject$.asObservable(),
   })
 
   const viewportNavigator = createViewportNavigator({
@@ -97,7 +97,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     cfiLocator,
     spineLocator,
     hooks$: hooksSubject$,
-    spine
+    spine,
   })
 
   containerElement.appendChild(element)
@@ -112,7 +112,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const layout = () => {
     const dimensions = {
       width: containerElement.offsetWidth,
-      height: containerElement.offsetHeight
+      height: containerElement.offsetHeight,
     }
     const margin = 0
     const marginTop = 0
@@ -199,7 +199,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
           hasVerticalWriting,
           renditionFlow: manifest?.renditionFlow,
           renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settings.computedPageTurnMode
+          computedPageTurnMode: settings.computedPageTurnMode,
         }
       }),
       distinctUntilChanged(isShallowEqual),
@@ -208,7 +208,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
           hasVerticalWriting,
           renditionFlow,
           renditionLayout,
-          computedPageTurnMode
+          computedPageTurnMode,
         }): ObservedValueOf<typeof stateSubject$> => ({
           ...stateSubject$.value,
           supportedPageTurnMode:
@@ -228,7 +228,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
               ? [`vertical`]
               : renditionLayout === `reflowable`
               ? [`horizontal`]
-              : [`horizontal`, `vertical`]
+              : [`horizontal`, `vertical`],
         })
       ),
       takeUntil(destroy$)
@@ -313,13 +313,13 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       itemsCreated$: spine.$.itemsCreated$,
       itemsBeforeDestroy$: spine.$.itemsBeforeDestroy$,
       itemIsReady$: spineItemManager.$.itemIsReady$,
-      destroy$
+      destroy$,
     },
     __debug: {
       pagination,
       context,
-      spineItemManager
-    }
+      spineItemManager,
+    },
   }
 
   return reader

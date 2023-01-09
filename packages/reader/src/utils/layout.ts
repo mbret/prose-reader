@@ -2,7 +2,7 @@ export const getNewScaledOffset = ({
   newScale,
   oldScale,
   screenSize,
-  scrollOffset
+  scrollOffset,
 }: {
   screenSize: number
   pageSize: number

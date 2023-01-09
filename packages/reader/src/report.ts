@@ -95,10 +95,10 @@ const createReport = (namespace?: string) => ({
 
       return response
     }
-  }
+  },
 })
 
 export const Report = {
   ...createReport(),
-  namespace: (namespace: string) => createReport(namespace)
+  namespace: (namespace: string) => createReport(namespace),
 }

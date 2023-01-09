@@ -30,6 +30,6 @@ export const hotkeysEnhancer: Enhancer<{}, {}> = (next) => (options) => {
 
   return {
     ...reader,
-    destroy
+    destroy,
   }
 }

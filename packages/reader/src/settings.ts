@@ -56,7 +56,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     computedSnapAnimationDuration: 300,
     navigationSnapThreshold: 0.3,
     numberOfAdjacentSpineItemToPreLoad: 0,
-    ...initialSettings
+    ...initialSettings,
   }
 
   updateComputedSettings(undefined, mergedSettings, false)
@@ -97,8 +97,8 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     recompute,
     destroy,
     $: {
-      settings$: settingsSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual))
-    }
+      settings$: settingsSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual)),
+    },
   }
 }
 

@@ -11,7 +11,7 @@ export const resourcesEnhancer: Enhancer<{}, {}> = (next) => (options) => {
    */
   const load: typeof reader.load = (manifest, loadOptions) => {
     reader.load(manifest, {
-      ...loadOptions
+      ...loadOptions,
     })
   }
 
@@ -27,6 +27,6 @@ export const resourcesEnhancer: Enhancer<{}, {}> = (next) => (options) => {
   return {
     ...reader,
     destroy,
-    load
+    load,
   }
 }

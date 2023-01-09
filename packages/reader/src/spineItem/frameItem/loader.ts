@@ -12,7 +12,7 @@ import {
   tap,
   withLatestFrom,
   switchMap,
-  distinctUntilChanged
+  distinctUntilChanged,
 } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
@@ -31,7 +31,7 @@ export const createLoader = ({
   fetchResource,
   hooks$,
   context,
-  viewportState$
+  viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
@@ -176,7 +176,7 @@ export const createLoader = ({
               onLoadHookReturns = hooks.filter(isOnLoadHook).map((hook) => {
                 const hookReturn = hook.fn({
                   ...manipulableFrame,
-                  item
+                  item,
                 })
 
                 if (hookReturn && `subscribe` in hookReturn) {
@@ -246,7 +246,7 @@ export const createLoader = ({
       isReady$: isReadySubject$.asObservable().pipe(distinctUntilChanged()),
       ready$: ready$,
       unloaded$: unload$,
-      frameElement$: frameElementSubject$
-    }
+      frameElement$: frameElementSubject$,
+    },
   }
 }

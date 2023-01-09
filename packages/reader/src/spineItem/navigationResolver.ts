@@ -11,13 +11,13 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
   const getNavigationForLeftPage = (position: SpineItemPosition, spineItem: SpineItem): SpineItemPosition => {
     let nextPotentialPosition = {
       x: position.x - context.getPageSize().width,
-      y: position.y
+      y: position.y,
     }
 
     if (spineItem.isUsingVerticalWriting()) {
       nextPotentialPosition = {
         x: position.x,
-        y: position.y + context.getPageSize().height
+        y: position.y + context.getPageSize().height,
       }
     }
 
@@ -27,13 +27,13 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
   const getNavigationForRightPage = (position: SpineItemPosition, spineItem: SpineItem): SpineItemPosition => {
     let nextPotentialPosition = {
       x: position.x + context.getPageSize().width,
-      y: position.y
+      y: position.y,
     }
 
     if (spineItem.isUsingVerticalWriting()) {
       nextPotentialPosition = {
         x: position.x,
-        y: position.y - context.getPageSize().height
+        y: position.y - context.getPageSize().height,
       }
     }
 
@@ -76,6 +76,6 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
     getNavigationForLastPage,
     getNavigationForPage,
     getNavigationForPosition,
-    getNavigationFromNode
+    getNavigationFromNode,
   }
 }

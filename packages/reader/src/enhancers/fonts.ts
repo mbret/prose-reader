@@ -21,12 +21,12 @@ type Options = {
    * @description
    * Set font weight of text
    */
-  fontWeight?: typeof FONT_WEIGHT[number] | `publisher`
+  fontWeight?: (typeof FONT_WEIGHT)[number] | `publisher`
   /**
    * @description
    * Set text align justification
    */
-  fontJustification?: typeof FONT_JUSTIFICATION[number] | `publisher`
+  fontJustification?: (typeof FONT_JUSTIFICATION)[number] | `publisher`
 }
 
 type OutputOptions = Required<Options>
@@ -49,7 +49,7 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
       fontScale,
       lineHeight,
       fontWeight,
-      fontJustification
+      fontJustification,
     })
     const reader = next(options)
 
@@ -143,10 +143,10 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
         settings$: combineLatest([reader.$.settings$, settingsSubject$]).pipe(
           map(([innerSettings, settings]) => ({
             ...innerSettings,
-            ...settings
+            ...settings,
           }))
-        )
-      }
+        ),
+      },
     }
   }
 

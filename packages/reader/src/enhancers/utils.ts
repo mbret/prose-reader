@@ -25,7 +25,7 @@ export const utilsEnhancer: Enhancer<
   return {
     ...reader,
     utils: {
-      isOrIsWithinValidLink
-    }
+      isOrIsWithinValidLink,
+    },
   }
 }

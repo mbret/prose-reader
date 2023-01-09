@@ -14,7 +14,7 @@ export const createFrameItem = ({
   fetchResource,
   context,
   hooks$,
-  viewportState$
+  viewportState$,
 }: {
   parent: HTMLElement
   item: Manifest[`spineItems`][number]
@@ -30,7 +30,7 @@ export const createFrameItem = ({
     load,
     unload,
     destroy: loaderDestroy,
-    getComputedStyleAfterLoad
+    getComputedStyleAfterLoad,
   } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$ })
 
   const isLoadedSubject$ = new BehaviorSubject(false)
@@ -61,7 +61,7 @@ export const createFrameItem = ({
           if (width > 0 && height > 0) {
             return {
               width: width,
-              height: height
+              height: height,
             }
           } else {
             return undefined
@@ -150,8 +150,8 @@ export const createFrameItem = ({
        * This is used as upstream layout change. This event is being listened to by upper app
        * in order to layout again and adjust every element based on the new content.
        */
-      contentLayoutChange$
-    }
+      contentLayoutChange$,
+    },
   }
 }
 
