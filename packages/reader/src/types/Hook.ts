@@ -5,7 +5,7 @@ export type Hook =
   /**
    * Ideal when your logic only needs to apply something to the item when it's loaded.
    * You can manipulate your item later if you need to update it and trigger a layout.
-   * This logic will not run everytime there is a layout.
+   * This logic will not run every time there is a layout.
    */
   | {
       name: `item.onLoad`
