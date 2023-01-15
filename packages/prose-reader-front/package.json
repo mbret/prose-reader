@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start:front": "next start"
+    "start": "next start"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.13",
