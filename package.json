@@ -6,7 +6,8 @@
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "lerna run start --parallel",
+    "start": "lerna run start --stream",
+    "start:front": "lerna run start:front",
     "build": "lerna run build",
     "tsc": "lerna run tsc --parallel",
     "lint": "lerna run lint --parallel",
