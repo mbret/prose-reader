@@ -1,39 +1,32 @@
-import React, { memo, ReactElement, useEffect, useMemo, useRef, useState } from "react"
+import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom"
-import { createReader, Manifest, Reader as CoreReader, ReaderOptions, Report } from "@prose-reader/core"
+import { Manifest, Reader as ReaderInstance, Report } from "@prose-reader/core"
 import { ObservedValueOf } from "rxjs"
-
-type Enhancer<Api = Record<string, never>> = (createReader: any) => (options: any) => Api
-type LoadOptions = Parameters<ReturnType<typeof createReader>["load"]>[1]
-type Pagination = ObservedValueOf<CoreReader["$"]["pagination$"]>
 
 const report = Report.namespace("@prose-reader/react")
 
-export type Props<UserEnhancer extends Enhancer = Enhancer> = {
+export type Props<Options extends object, Instance extends ReaderInstance> = {
   manifest?: Manifest
-  options?: Omit<ReaderOptions<UserEnhancer>, "containerElement">
-  loadOptions?: LoadOptions
-  enhancer?: any
+  options?: Omit<Options, "containerElement">
+  loadOptions?: Parameters<Instance["load"]>[1]
+  createReader: (options: Options) => Instance
   onReader?: (reader: any) => void
-  // @todo uncomment and fix. It nukes the performances
-  // enhancer?: UserEnhancer,
-  // onReader?: (reader: CoreReader<UserEnhancer>) => void,
   onReady?: () => void
-  onPaginationChange?: (pagination: Pagination) => void
+  onPaginationChange?: (pagination: ObservedValueOf<Instance["$"]["pagination$"]>) => void
   LoadingElement?: ReactElement
 }
 
-const Reader = <UserEnhancer extends Enhancer = Enhancer>({
+export const Reader = <Options extends object, Instance extends ReaderInstance>({
   manifest,
   onReady,
   onReader,
   loadOptions,
   options,
   onPaginationChange,
-  enhancer,
   LoadingElement,
-}: Props<UserEnhancer>) => {
-  const [reader, setReader] = useState<CoreReader<UserEnhancer> | undefined | CoreReader>(undefined)
+  createReader,
+}: Props<Options, Instance>) => {
+  const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
   const [loadingElementContainers, setLoadingElementContainers] = useState<HTMLElement[]>([])
   const { width, height } = { width: `100%`, height: `100%` }
   const hasLoadingElement = !!LoadingElement
@@ -51,7 +44,7 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
       return
     }
 
-    if (ref.current && !reader) {
+    if (ref.current && !reader && options) {
       readerInitialized.current = true
       const readerOptions = {
         containerElement: ref.current,
@@ -61,7 +54,9 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
         }),
         ...options,
       }
-      const newReader = enhancer ? createReader(readerOptions, enhancer) : createReader(readerOptions)
+
+      const newReader = createReader(readerOptions as any)
+
       setReader(newReader as any)
       onReader && onReader(newReader as any)
     }
@@ -79,7 +74,7 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
 
   useEffect(() => {
     const paginationSubscription = reader?.$.pagination$.subscribe((data) => {
-      onPaginationChange && onPaginationChange(data)
+      onPaginationChange && onPaginationChange(data as any)
     })
 
     return () => {
@@ -89,7 +84,7 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
 
   useEffect(() => {
     if (manifest && reader) {
-      reader.load(manifest, loadOptions as any)
+      reader.load(manifest, loadOptions)
     }
   }, [manifest, reader, loadOptions])
 
@@ -122,7 +117,3 @@ const Reader = <UserEnhancer extends Enhancer = Enhancer>({
     </>
   )
 }
-
-const MemoizedReader = memo(Reader) as <UserEnhancer extends Enhancer = Enhancer>(props: Props<UserEnhancer>) => JSX.Element
-
-export { MemoizedReader as Reader }
