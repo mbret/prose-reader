@@ -2,7 +2,7 @@ import { loadEpub } from "./loadEpub"
 import {
   generateResourceFromArchive,
   generateManifestFromArchive,
-  generateResourceFromError,
+  // generateResourceFromError,
   configure
 } from "@prose-reader/streamer"
 import { STREAMER_URL_PREFIX } from "./constants"
@@ -56,9 +56,10 @@ const serveResource = async (event: any, epubUrl: string) => {
   } catch (e) {
     console.error(e)
 
-    const resource = generateResourceFromError(e)
+    // const resource = generateResourceFromError(e)
 
-    return new Response(resource.body, resource.params)
+    // return new Response(resource.body, resource.params)
+    return new Response(String(e), { status: 500 })
   }
 }
 
