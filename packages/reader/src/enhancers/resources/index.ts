@@ -1,13 +1,9 @@
-import { PROSE_READER_RESOURCE_ERROR_INJECTED_META_NAME } from "@prose-reader/shared"
-import { Subject } from "rxjs"
-import { isHtmlMetaElement } from "../../utils/dom"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createResourcesManager } from "./resourcesManager"
 
 export const resourcesEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
   (options: InheritOptions): InheritOutput => {
-    const errorsSubject$ = new Subject<unknown>()
     const reader = next(options)
     const resourceManager = createResourcesManager(reader.context)
 
@@ -23,14 +19,6 @@ export const resourcesEnhancer =
 
     reader.registerHook(`item.onGetResource`, (fetcher) => async (item) => {
       return resourceManager.get(item, fetcher)
-    })
-
-    reader.registerHook(`item.onLoad`, ({ frame }) => {
-      const errorElement = frame.contentDocument?.querySelector(`meta[name="${PROSE_READER_RESOURCE_ERROR_INJECTED_META_NAME}"]`)
-
-      if (isHtmlMetaElement(errorElement)) {
-        errorsSubject$.next(new Error(errorElement.content))
-      }
     })
 
     const destroy = () => {
