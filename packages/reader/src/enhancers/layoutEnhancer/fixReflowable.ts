@@ -1,6 +1,6 @@
-import { ReaderInstance } from "./types"
+import { Reader } from "../../reader"
 
-export const fixReflowable = (reader: ReaderInstance) => {
+export const fixReflowable = (reader: Reader) => {
   /**
    * Handle page spread for reflowable item that act as pre-paginated
    *

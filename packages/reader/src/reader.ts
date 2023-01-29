@@ -293,9 +293,9 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     load,
     destroy,
     setSettings: context.setSettings,
+    settings$: context.$.settings$,
+    pagination$: pagination.$.info$,
     $: {
-      pagination$: pagination.$.info$,
-      settings$: context.$.settings$,
       state$: stateSubject$.asObservable(),
       /**
        * Dispatched when the reader has loaded a book and is displayed a book.

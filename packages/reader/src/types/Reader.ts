@@ -70,9 +70,9 @@ export type Reader = {
   load: (manifest: Manifest, loadOptions?: LoadOptions) => void
   destroy: () => void
   setSettings: Context[`setSettings`]
+  settings$: Context[`$`][`settings$`]
+  pagination$: Pagination[`$`][`info$`]
   $: {
-    pagination$: Pagination[`$`][`info$`]
-    settings$: Context[`$`][`settings$`]
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
       supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]

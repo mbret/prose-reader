@@ -1,15 +1,29 @@
-import { BehaviorSubject, combineLatest } from "rxjs"
+import { BehaviorSubject, combineLatest, Observable, ObservedValueOf } from "rxjs"
 import { distinctUntilChanged, map, takeUntil, tap, skip } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
 import { isShallowEqual } from "../../utils/objects"
-import { LayoutEnhancer, SettingsOutput } from "./types"
+import { Options, SettingsInput, SettingsOutput } from "./types"
 import { fixReflowable } from "./fixReflowable"
+import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
 
 const SHOULD_NOT_LAYOUT = false
 
-export const layoutEnhancer: LayoutEnhancer = (next) => {
-  return ({ pageHorizontalMargin = 24, pageVerticalMargin = 24, ...options }) => {
+export const layoutEnhancer =
+  <
+    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    Settings$ extends Observable<any> = InheritOutput["settings$"]
+  >(
+    next: (options: InheritOptions) => InheritOutput
+  ) =>
+  (
+    options: InheritOptions & Options
+  ): Omit<InheritOutput, "setSettings" | "settings$"> & {
+    settings$: Observable<ObservedValueOf<Settings$> & SettingsOutput>
+    setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & SettingsInput) => void
+  } => {
+    const { pageHorizontalMargin = 24, pageVerticalMargin = 24 } = options
     const reader = next(options)
     const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
       pageHorizontalMargin,
@@ -150,15 +164,11 @@ export const layoutEnhancer: LayoutEnhancer = (next) => {
 
         reader.setSettings(rest)
       },
-      $: {
-        ...reader.$,
-        settings$: combineLatest([reader.$.settings$, settingsSubject$.asObservable()]).pipe(
-          map(([innerSettings, settings]) => ({
-            ...innerSettings,
-            ...settings,
-          }))
-        ),
-      },
+      settings$: combineLatest([reader.settings$, settingsSubject$.asObservable()]).pipe(
+        map(([innerSettings, settings]) => ({
+          ...(innerSettings as ObservedValueOf<Settings$>),
+          ...settings,
+        }))
+      ),
     }
   }
-}

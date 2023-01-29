@@ -1,4 +1,5 @@
-import { Enhancer } from "./types"
+import { Hook } from "../types/Hook"
+import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
  * Ideally we want to target all webkit browser but afaik there are no reliable way to do it.
@@ -9,44 +10,50 @@ const IS_SAFARI = navigator.userAgent.indexOf(``) > -1 && navigator.userAgent.in
 /**
  * All fixes relative to webkit
  */
-export const webkitEnhancer: Enhancer<{}, {}> = (next) => (options) => {
-  /**
-   * These hooks are used to fix the flickering on safari that occurs when using transform
-   * and more generally GPU transformation. I am not sure what is the impact on performance so
-   * we only use them on needed engine (webkit).
-   */
-  const transformFlickerFixHooks: (typeof options)[`hooks`] = [
-    {
-      name: `viewportNavigator.onBeforeContainerCreated`,
-      fn: (element) => {
-        element.style.cssText = `
+export const webkitEnhancer =
+  <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput
+  ) =>
+  (options: InheritOptions): InheritOutput => {
+    /**
+     * These hooks are used to fix the flickering on safari that occurs when using transform
+     * and more generally GPU transformation. I am not sure what is the impact on performance so
+     * we only use them on needed engine (webkit).
+     */
+    const transformFlickerFixHooks: Hook[] = [
+      {
+        name: `viewportNavigator.onBeforeContainerCreated`,
+        fn: (element) => {
+          element.style.cssText = `
           ${element.style.cssText}
           -webkit-transform-style: preserve-3d;
         `
 
-        return element
+          return element
+        },
       },
-    },
-    {
-      name: `item.onBeforeContainerCreated`,
-      fn: (element) => {
-        element.style.cssText = `
+      {
+        name: `item.onBeforeContainerCreated`,
+        fn: (element) => {
+          element.style.cssText = `
           ${element.style.cssText}
           -webkit-transform-style: preserve-3d;
           -webkit-backface-visibility: hidden;
         `
 
-        return element
+          return element
+        },
       },
-    },
-  ]
+    ]
 
-  const reader = next({
-    ...options,
-    ...(IS_SAFARI && {
-      hooks: [...(options.hooks || []), ...transformFlickerFixHooks],
-    }),
-  })
+    const existingHooks = options.hooks || []
 
-  return reader
-}
+    const reader = next({
+      ...options,
+      ...(IS_SAFARI && {
+        hooks: [...existingHooks, ...transformFlickerFixHooks],
+      }),
+    })
+
+    return reader
+  }

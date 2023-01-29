@@ -1,25 +1,27 @@
-import { Enhancer } from "./types"
+import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
  *
  */
-export const accessibilityEnhancer: Enhancer<{}, {}> = (next) => (options) => {
-  const reader = next(options)
+export const accessibilityEnhancer =
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  (options: InheritOptions): InheritOutput => {
+    const reader = next(options)
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.removeAttribute(`tab-index`)
-      } else {
-        entry.target.setAttribute(`tab-index`, `-1`)
-      }
-    })
-  }, {})
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.removeAttribute(`tab-index`)
+        } else {
+          entry.target.setAttribute(`tab-index`, `-1`)
+        }
+      })
+    }, {})
 
-  reader.registerHook(`item.onLoad`, ({ addStyle, frame }) => {
-    addStyle(
-      `prose-reader-accessibility`,
-      `
+    reader.registerHook(`item.onLoad`, ({ addStyle, frame }) => {
+      addStyle(
+        `prose-reader-accessibility`,
+        `
       :focus-visible {
         ${
           /*
@@ -30,22 +32,22 @@ export const accessibilityEnhancer: Enhancer<{}, {}> = (next) => (options) => {
         outline: -webkit-focus-ring-color auto 1px;
       }
     `
-    )
+      )
 
-    const links = frame.contentDocument?.body.querySelectorAll(`a`)
+      const links = frame.contentDocument?.body.querySelectorAll(`a`)
 
-    links?.forEach((link) => {
-      observer.observe(link)
+      links?.forEach((link) => {
+        observer.observe(link)
+      })
+
+      return () => {
+        links?.forEach((link) => {
+          observer.unobserve(link)
+        })
+      }
     })
 
-    return () => {
-      links?.forEach((link) => {
-        observer.unobserve(link)
-      })
+    return {
+      ...reader,
     }
-  })
-
-  return {
-    ...reader,
   }
-}

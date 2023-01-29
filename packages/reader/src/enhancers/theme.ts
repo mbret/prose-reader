@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import { Enhancer } from "./types"
+import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 const defaultThemes = [
   {
@@ -21,11 +21,13 @@ const defaultThemes = [
 
 export type Theme = (typeof defaultThemes)[number][`name`] | `publisher`
 
-export const themeEnhancer: Enhancer<
-  {
-    theme?: Theme
-  },
-  {
+export const themeEnhancer =
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  (
+    options: InheritOptions & {
+      theme?: Theme
+    }
+  ): InheritOutput & {
     theme: {
       set: (theme: Theme) => void
       get: () => Theme
@@ -33,16 +35,14 @@ export const themeEnhancer: Enhancer<
         theme$: Observable<Theme>
       }
     }
-  }
-> = (next) => (options) => {
-  const { theme } = options
-  const reader = next(options)
-  const currentThemeSubject$ = new BehaviorSubject<Theme>(options.theme ?? `bright`)
+  } => {
+    const reader = next(options)
+    const currentThemeSubject$ = new BehaviorSubject<Theme>(options.theme ?? `bright`)
 
-  const getStyle = () => {
-    const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
+    const getStyle = () => {
+      const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
 
-    return `
+      return `
       body {
         ${foundTheme !== undefined ? `background-color: ${foundTheme.backgroundColor} !important;` : ``}
       }
@@ -62,67 +62,69 @@ export const themeEnhancer: Enhancer<
           : ``
       }
     `
-  }
-
-  const applyChangeToSpineItemElement = ({ container }: { container: HTMLElement }) => {
-    const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
-    if (foundTheme) {
-      container.style.setProperty(`background-color`, foundTheme.backgroundColor)
     }
 
-    return () => {}
-  }
+    const applyChangeToSpineItemElement = ({ container }: { container: HTMLElement }) => {
+      const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
+      if (foundTheme) {
+        container.style.setProperty(`background-color`, foundTheme.backgroundColor)
+      }
 
-  const applyChangeToSpineItem = () => {
-    reader.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
+      return () => {
+        // __
+      }
+    }
+
+    const applyChangeToSpineItem = () => {
+      reader.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
+        removeStyle(`prose-reader-theme`)
+        addStyle(`prose-reader-theme`, getStyle())
+        applyChangeToSpineItemElement({ container })
+
+        return false
+      })
+    }
+
+    /**
+     * Make sure to apply theme on item load
+     */
+    reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
       removeStyle(`prose-reader-theme`)
       addStyle(`prose-reader-theme`, getStyle())
-      applyChangeToSpineItemElement({ container })
-
-      return false
     })
-  }
 
-  /**
-   * Make sure to apply theme on item load
-   */
-  reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
-    removeStyle(`prose-reader-theme`)
-    addStyle(`prose-reader-theme`, getStyle())
-  })
+    /**
+     * Make sure to apply theme on item container (fixed layout)
+     * & loading element
+     */
+    reader.$.itemsCreated$
+      .pipe(
+        tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
 
-  /**
-   * Make sure to apply theme on item container (fixed layout)
-   * & loading element
-   */
-  reader.$.itemsCreated$
-    .pipe(
-      tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
-      takeUntil(reader.$.destroy$)
-    )
-    .subscribe()
+    currentThemeSubject$
+      .pipe(
+        tap(() => {
+          applyChangeToSpineItem()
+        }),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
 
-  currentThemeSubject$
-    .pipe(
-      tap(() => {
-        applyChangeToSpineItem()
-      }),
-      takeUntil(reader.$.destroy$)
-    )
-    .subscribe()
-
-  return {
-    ...reader,
-    theme: {
-      set: (theme: Theme) => {
-        if (theme !== currentThemeSubject$.value) {
-          currentThemeSubject$.next(theme)
-        }
+    return {
+      ...reader,
+      theme: {
+        set: (theme) => {
+          if (theme !== currentThemeSubject$.value) {
+            currentThemeSubject$.next(theme)
+          }
+        },
+        get: () => currentThemeSubject$.value,
+        $: {
+          theme$: currentThemeSubject$.asObservable(),
+        },
       },
-      get: () => currentThemeSubject$.value,
-      $: {
-        theme$: currentThemeSubject$.asObservable(),
-      },
-    },
+    }
   }
-}

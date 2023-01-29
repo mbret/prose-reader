@@ -1,6 +1,6 @@
 import { BehaviorSubject, combineLatest, map, Observable, ObservedValueOf, takeUntil } from "rxjs"
 import { tap, pairwise } from "rxjs/operators"
-import { Enhancer } from "./types"
+import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
 const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
@@ -42,9 +42,21 @@ type OutputOptions = Required<Options>
  * font size on body if they already use something.
  * @see 9782714493743
  */
-export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
-  (next) =>
-  ({ fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher`, ...options }) => {
+export const fontsEnhancer =
+  <
+    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    Settings$ extends Observable<any> = InheritOutput["settings$"]
+  >(
+    next: (options: InheritOptions) => InheritOutput
+  ) =>
+  (
+    options: InheritOptions & Options
+  ): Omit<InheritOutput, "setSettings" | "settings$"> & {
+    settings$: Observable<ObservedValueOf<Settings$> & OutputOptions>
+    setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & Options) => void
+  } => {
+    const { fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher` } = options
     const settingsSubject$ = new BehaviorSubject<OutputOptions>({
       fontScale,
       lineHeight,
@@ -116,6 +128,13 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
       .pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$))
       .subscribe()
 
+    const settings$ = combineLatest([reader.settings$, settingsSubject$]).pipe(
+      map(([innerSettings, settings]) => ({
+        ...innerSettings,
+        ...(settings as ObservedValueOf<Settings$>),
+      }))
+    )
+
     return {
       ...reader,
       /**
@@ -135,20 +154,12 @@ export const fontsEnhancer: Enhancer<Options, {}, Options, OutputOptions> =
         }
         reader.setSettings(passthroughSettings)
       },
-      $: {
-        ...reader.$,
-        /**
-         * Combine reader settings with enhancer settings
-         */
-        settings$: combineLatest([reader.$.settings$, settingsSubject$]).pipe(
-          map(([innerSettings, settings]) => ({
-            ...innerSettings,
-            ...settings,
-          }))
-        ),
-      },
+      /**
+       * Combine reader settings with enhancer settings
+       */
+      settings$,
     }
   }
 
-const hasOneKey = <Obj extends Record<string, any>, Key extends keyof Obj>(obj: Obj, keys: Key[]) =>
+const hasOneKey = <Obj extends Record<string, unknown>, Key extends keyof Obj>(obj: Obj, keys: Key[]) =>
   keys.some((key) => key in obj)

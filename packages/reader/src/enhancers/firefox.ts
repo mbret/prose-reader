@@ -1,9 +1,11 @@
-import { Enhancer } from "./types"
+import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
-export const firefoxEnhancer: Enhancer<{}, {}> = (next) => (options) => {
-  const reader = next(options)
+export const firefoxEnhancer =
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  (options: InheritOptions): InheritOutput => {
+    const reader = next(options)
 
-  // add all normalization
+    // add all normalization
 
-  return reader
-}
+    return reader
+  }

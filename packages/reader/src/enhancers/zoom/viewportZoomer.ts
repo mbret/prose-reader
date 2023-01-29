@@ -1,8 +1,8 @@
 import { BehaviorSubject } from "rxjs"
+import { Reader } from "../../reader"
 import { getNewScaledOffset } from "../../utils/layout"
-import { ReaderInstance } from "./types"
 
-export const createViewportZoomer = (reader: ReaderInstance) => {
+export const createViewportZoomer = (reader: Reader) => {
   const isZooming$ = new BehaviorSubject<boolean>(false)
   // we use this value to compare with given scale. This allow user to keep scaling normally
   // even when doing several pinching one after another

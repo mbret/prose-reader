@@ -1,9 +1,9 @@
 import { BehaviorSubject } from "rxjs"
-import { ReaderInstance } from "./types"
+import { Reader } from "../../reader"
 
 const SHOULD_NOT_LAYOUT = false
 
-export const createElementZoomer = (reader: ReaderInstance) => {
+export const createElementZoomer = (reader: Reader) => {
   const isZooming$ = new BehaviorSubject<boolean>(false)
   let imageMagnifierContainer: HTMLDivElement | undefined
   let imgLastPosition: { x: number; y: number } = { x: 0, y: 0 }
