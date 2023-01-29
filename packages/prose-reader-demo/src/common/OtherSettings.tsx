@@ -12,11 +12,11 @@ import {
   NumberDecrementStepper
 } from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
-import { useReaderValue } from "../useReader"
+import { useReader } from "../useReader"
 
 export const OtherSettings = () => {
   const settings = useReaderSettings()
-  const reader = useReaderValue()
+  const [reader] = useReader()
 
   return (
     <FormControl as="fieldset" style={{ marginTop: 10 }}>

@@ -3,12 +3,12 @@ import { useRecoilState } from "recoil"
 import { Button } from "./common/Button"
 import { useCSS } from "./common/css"
 import { currentHighlight } from "./state"
-import { useReaderValue } from "./useReader"
+import { useReader } from "./useReader"
 
 export const HighlightMenu = () => {
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const [currentSelection, setCurrentSelection] = useRecoilState(currentHighlight)
-  const isCurrentSelectionSaved = currentSelection?.id !== undefined
+  const isCurrentSelectionSaved = currentSelection && reader?.highlights.has(currentSelection)
   const styles = useStyles()
 
   const addHighlight = useCallback(() => {

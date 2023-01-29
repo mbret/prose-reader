@@ -1,4 +1,4 @@
-import { atom, useRecoilState, useRecoilValue } from "recoil"
+import { atom, useRecoilState } from "recoil"
 import { ReaderInstance } from "./types"
 
 export const readerState = atom<ReaderInstance | undefined>({
@@ -8,4 +8,3 @@ export const readerState = atom<ReaderInstance | undefined>({
 })
 
 export const useReader = () => useRecoilState(readerState)
-export const useReaderValue = () => useRecoilValue(readerState)

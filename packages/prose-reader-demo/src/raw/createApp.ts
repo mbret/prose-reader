@@ -4,7 +4,9 @@ import * as Hammer from "hammerjs"
 
 export const createApp = async () => {
   const epubUrl = window.location.pathname.substring(`/raw/`.length)
-  const container = document.getElementById(`reader`)!
+  const container = document.getElementById(`reader`)
+
+  if (!container) throw new Error("No container")
 
   const reader = createReader({
     containerElement: container,
@@ -20,6 +22,7 @@ export const createApp = async () => {
 
   reader.load(bookManifest, {})
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
 }

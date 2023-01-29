@@ -14,7 +14,7 @@ import {
   paginationState
 } from "./state"
 import { AppBar } from "./common/AppBar"
-import { useReaderValue } from "./useReader"
+import { useReader } from "./useReader"
 
 export const QuickMenu = ({
   open,
@@ -26,7 +26,7 @@ export const QuickMenu = ({
   onSettingsClick?: () => void
 }) => {
   const navigate = useNavigate()
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
   const manifest = useRecoilValue(manifestState)
   const setIsSearchOpen = useSetRecoilState(isSearchOpenState)

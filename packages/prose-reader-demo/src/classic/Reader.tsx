@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { useGestureHandler } from "./useGestureHandler"
 import { Reader as ReactReader } from "@prose-reader/react"
-import { composeEnhancer, Manifest } from "@prose-reader/core"
+import { Manifest } from "@prose-reader/core"
 import { QuickMenu } from "../QuickMenu"
 import {
   bookReadyState,
@@ -17,7 +17,7 @@ import {
 } from "../state"
 import { ClassicSettings } from "./ClassicSettings"
 import { Loading } from "../Loading"
-import { ReactReaderProps, ReaderInstance } from "../types"
+import { createAppReader, ReactReaderProps, ReaderInstance } from "../types"
 import { useBookmarks } from "../useBookmarks"
 import { useParams } from "react-router"
 import { BookError } from "../BookError"
@@ -29,7 +29,7 @@ import { SearchDialog } from "../SearchDialog"
 import { TocDialog } from "../TocDialog"
 import { HelpDialog } from "../HelpDialog"
 import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
-import { useReaderValue } from "../useReader"
+import { useReader } from "../useReader"
 
 export const Reader = ({
   onReader,
@@ -41,7 +41,7 @@ export const Reader = ({
   manifestError?: unknown
 }) => {
   const { url = `` } = useParams<`url`>()
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const setPaginationState = useSetRecoilState(paginationState)
@@ -66,9 +66,6 @@ export const Reader = ({
 
   useGestureHandler(container)
   useBookmarks(reader, url)
-
-  // compose final enhancer
-  const readerEnhancer = highlightsEnhancer ? composeEnhancer(highlightsEnhancer, bookmarksEnhancer, searchEnhancer) : undefined
 
   const onPaginationChange: ComponentProps<typeof ReactReader>["onPaginationChange"] = (info) => {
     localStorage.setItem(`cfi`, info?.beginCfi || ``)
@@ -126,6 +123,7 @@ export const Reader = ({
 
   useResetStateOnUnMount()
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
 
@@ -142,7 +140,7 @@ export const Reader = ({
           }
         }}
       >
-        {readerEnhancer && readerLoadOptions && (
+        {readerLoadOptions && (
           <ReactReader
             manifest={manifest}
             onReader={onReader}
@@ -150,7 +148,7 @@ export const Reader = ({
             loadOptions={readerLoadOptions}
             onPaginationChange={onPaginationChange}
             options={readerOptions}
-            enhancer={readerEnhancer}
+            createReader={createAppReader}
           />
         )}
         {!!manifestError && <BookError url={getEpubUrlFromLocation(url)} />}

@@ -63,7 +63,7 @@ export const bookmarksEnhancer =
       return { cfi, pageIndex: undefined, spineItemIndex }
     }
 
-    const createBookmarkFromCurrentPagination = ({ beginCfi }: ObservedValueOf<Reader[`$`][`pagination$`]>) => {
+    const createBookmarkFromCurrentPagination = ({ beginCfi }: ObservedValueOf<Reader[`pagination$`]>) => {
       if (beginCfi) {
         return getCfiInformation(beginCfi)
       }
@@ -86,7 +86,7 @@ export const bookmarksEnhancer =
       return false
     }
 
-    const onDocumentClick = (e: MouseEvent, pagination: ObservedValueOf<Reader[`$`][`pagination$`]>) => {
+    const onDocumentClick = (e: MouseEvent, pagination: ObservedValueOf<Reader[`pagination$`]>) => {
       if (isClickEventInsideBookmarkArea(e)) {
         const newBookmark = createBookmarkFromCurrentPagination(pagination)
 
@@ -122,7 +122,7 @@ export const bookmarksEnhancer =
 
       if (windowOrElement) {
         return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
-          withLatestFrom(reader.$.pagination$),
+          withLatestFrom(reader.pagination$),
           tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination))
         )
       }
@@ -133,7 +133,7 @@ export const bookmarksEnhancer =
     // @todo handle spread
     const removeBookmarksOnCurrentPage = <T>(observer: Observable<T>) =>
       observer.pipe(
-        withLatestFrom(reader.$.pagination$),
+        withLatestFrom(reader.pagination$),
         tap(([, pagination]) => {
           if (pagination.beginSpineItemIndex !== undefined) {
             bookmarksSubject$.next(
@@ -180,7 +180,7 @@ export const bookmarksEnhancer =
 
     merge(
       bookmarks$,
-      reader.$.pagination$,
+      reader.pagination$,
       // It's important to force redraw and update bookmarkd on each layout
       // this is because pagination itself is not always garanteed to be updated
       // when the frame actually exists

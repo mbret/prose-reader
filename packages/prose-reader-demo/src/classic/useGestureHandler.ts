@@ -3,10 +3,10 @@ import { useEffect, useState } from "react"
 import { useRecoilCallback, useRecoilValue, useSetRecoilState } from "recoil"
 import { useReaderSettings } from "../common/useReaderSettings"
 import { hasCurrentHighlightState, isMenuOpenState } from "../state"
-import { useReaderValue } from "../useReader"
+import { useReader } from "../useReader"
 
 export const useGestureHandler = (container: HTMLElement | undefined) => {
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
   const { computedPageTurnDirection } = useReaderSettings() ?? {}
@@ -120,8 +120,8 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
     hammerManager?.on("singletap", onSingleTap)
     hammerManager?.on("panmove panstart panend", onPanMove)
 
-    let movingStarted = false
-    let movingStartOffset = 0
+    const movingStarted = false
+    const movingStartOffset = 0
     let hasHadPanStart = false
 
     /**
@@ -181,7 +181,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 }
 
 const useZoomGestureHandler = (hammerManager?: HammerManager) => {
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const { computedPageTurnDirection } = useReaderSettings() ?? {}
 

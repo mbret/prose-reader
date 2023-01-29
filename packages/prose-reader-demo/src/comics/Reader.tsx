@@ -12,15 +12,11 @@ import { useParams } from "react-router"
 import { BookError } from "../BookError"
 import { getEpubUrlFromLocation } from "../serviceWorker/utils"
 import { HighlightMenu } from "../HighlightMenu"
-import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { ZoomingIndicator } from "../common/ZoomingIndicator"
-import { composeEnhancer, Manifest } from "@prose-reader/core"
-import { hammerGestureEnhancer } from "@prose-reader/enhancer-hammer-gesture"
-import { ReactReaderProps, ReaderInstance } from "../types"
-import { useReaderValue } from "../useReader"
+import { Manifest } from "@prose-reader/core"
+import { createAppReader, ReactReaderProps, ReaderInstance } from "../types"
+import { useReader } from "../useReader"
 import { useReaderSettings } from "../common/useReaderSettings"
-
-const readerEnhancer = composeEnhancer(hammerGestureEnhancer, bookmarksEnhancer)
 
 export const Reader = ({
   onReader,
@@ -36,7 +32,7 @@ export const Reader = ({
   const { computedPageTurnMode } = useReaderSettings() ?? {}
   const isUsingFreeScroll = computedPageTurnMode === `scrollable`
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const setPaginationState = useSetRecoilState(paginationState)
@@ -94,6 +90,7 @@ export const Reader = ({
 
   useResetStateOnUnMount()
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
 
@@ -118,7 +115,7 @@ export const Reader = ({
             loadOptions={readerLoadOptions}
             onPaginationChange={onPaginationChange}
             options={readerOptions}
-            enhancer={readerEnhancer}
+            createReader={createAppReader}
           />
         )}
         {!!manifestError && <BookError url={getEpubUrlFromLocation(url)} />}

@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { ReaderInstance } from "./types"
-import { createHighlightsEnhancer } from "@prose-reader/enhancer-highlights"
 import { tap } from "rxjs/operators"
 import { useSetRecoilState } from "recoil"
 import { currentHighlight, isMenuOpenState } from "./state"
 
 export const useHighlights = (reader: ReaderInstance | undefined) => {
-  const [enhancer, setEnhancer] = useState<ReturnType<typeof createHighlightsEnhancer> | undefined>(undefined)
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const setCurrentSelection = useSetRecoilState(currentHighlight)
 
@@ -19,7 +17,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
             const focusCfi = data?.getFocusCfi()
 
             if (anchorCfi && focusCfi) {
-              const highlight = { anchorCfi, focusCfi, text: data?.toString() }
+              const highlight = { anchorCfi, focusCfi, text: data?.toString(), id: new Date().getTime().toString() }
               setCurrentSelection(highlight)
               setMenuOpenState(false)
             }
@@ -44,7 +42,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
         }
 
         if (event.type === `onUpdate`) {
-          const toStore = event.data.map(({ anchorCfi, focusCfi }) => ({ anchorCfi, focusCfi }))
+          const toStore = event.data.map(({ anchorCfi, focusCfi, id }) => ({ anchorCfi, focusCfi, id }))
           localStorage.setItem(`highlights`, JSON.stringify(toStore))
         }
       })
@@ -57,12 +55,12 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
 
   // create bookmarks enhancer and initialize with local storage bookmarks
   useEffect(() => {
+    if (!reader) return
+
     const storedHighlights = JSON.parse(localStorage.getItem(`highlights`) || `[]`)
 
-    const createdEnhancer = createHighlightsEnhancer({ highlights: storedHighlights })
+    console.log("FOOO", storedHighlights)
 
-    setEnhancer(() => createdEnhancer)
-  }, [])
-
-  return enhancer
+    reader.highlights.add(storedHighlights)
+  }, [reader])
 }

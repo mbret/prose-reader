@@ -3,10 +3,10 @@ import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useRecoilValue } from "recoil"
 import { isComicState, paginationState, manifestState } from "./state"
-import { useReaderValue } from "./useReader"
+import { useReader } from "./useReader"
 
 export const Scrubber = () => {
-  const reader = useReaderValue()
+  const [reader] = useReader()
   const isComic = useRecoilValue(isComicState)
   const pagination = useRecoilValue(paginationState)
   const manifest = useRecoilValue(manifestState)

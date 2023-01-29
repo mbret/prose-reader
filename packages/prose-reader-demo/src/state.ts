@@ -36,7 +36,7 @@ export const manifestState = atom<Manifest | undefined>({
   default: undefined
 })
 
-export const paginationState = atom<ObservedValueOf<ReaderInstance["$"]["pagination$"]> | undefined>({
+export const paginationState = atom<ObservedValueOf<ReaderInstance["pagination$"]> | undefined>({
   key: `paginationState`,
   default: undefined
 })
@@ -67,7 +67,7 @@ export const isMenuOpenState = atom({
   default: false
 })
 
-export const currentHighlight = atom<{ anchorCfi: string; focusCfi: string; text?: string; id?: number } | undefined>({
+export const currentHighlight = atom<{ anchorCfi: string; focusCfi: string; text?: string; id: string } | undefined>({
   key: `currentHighlightState`,
   default: undefined
 })

@@ -1,20 +1,24 @@
-import { Reader, ComposeEnhancer } from "@prose-reader/core"
 import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
-import { createHighlightsEnhancer } from "@prose-reader/enhancer-highlights"
-import { Props as ReactReaderGenericProps } from "@prose-reader/react"
+import { highlightsEnhancer } from "@prose-reader/enhancer-highlights"
 import { hammerGestureEnhancer } from "@prose-reader/enhancer-hammer-gesture"
+import { createReader } from "@prose-reader/core"
+import { Props as GenericReactReaderProps } from "@prose-reader/react"
 
-type AppEnhancer = ComposeEnhancer<
-  typeof searchEnhancer,
-  typeof bookmarksEnhancer,
-  typeof hammerGestureEnhancer,
-  ReturnType<typeof createHighlightsEnhancer>
->
+export const createAppReader = hammerGestureEnhancer(
+  highlightsEnhancer(
+    bookmarksEnhancer(
+      searchEnhancer(
+        // __
+        createReader
+      )
+    )
+  )
+)
 
-export type ReaderInstance = Reader<AppEnhancer>
+export type ReaderInstance = ReturnType<typeof createAppReader>
 
-export type ReactReaderProps = ReactReaderGenericProps<AppEnhancer>
+export type ReactReaderProps = GenericReactReaderProps<Parameters<typeof createAppReader>[0], ReturnType<typeof createAppReader>>
 
 declare global {
   interface Window {

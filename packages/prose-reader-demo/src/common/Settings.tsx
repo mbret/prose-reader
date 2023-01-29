@@ -1,9 +1,6 @@
 import React, { FC, useEffect, useState } from "react"
-import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
-import { atom, useRecoilCallback } from "recoil"
-import { Reader } from "@prose-reader/core"
-import { FormControl, FormHelperText, FormLabel, HStack, Radio, Stack, Checkbox, Box } from "@chakra-ui/react"
+import { FormControl, Stack, Checkbox, Box } from "@chakra-ui/react"
 import screenfull from "screenfull"
 
 export const Settings: FC<{ open: boolean; onExit: () => void; children: React.ReactNode }> = ({ open, children, onExit }) => {
