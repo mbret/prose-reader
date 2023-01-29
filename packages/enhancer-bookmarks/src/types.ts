@@ -1,4 +1,4 @@
-import { Enhancer } from "@prose-reader/core"
+import { Reader } from "@prose-reader/core"
 import { Observable } from "rxjs"
 
 export type Bookmark = {
@@ -7,24 +7,19 @@ export type Bookmark = {
   spineItemIndex: number | undefined
 }
 
+export type Api = {
+  bookmarks: {
+    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
+    load: (bookmarks: ImportableBookmark[]) => void
+    removeAll: () => void
+    mapToImportable: (bookmarks: Bookmark[]) => ImportableBookmark[]
+    $: {
+      bookmarks$: Observable<Bookmark[]>
+      loaded$: Observable<void>
+    }
+  }
+}
+
 export type ImportableBookmark = Pick<Bookmark, `cfi`>
 
-export type BookmarkEnhancer = Enhancer<
-  unknown,
-  {
-    bookmarks: {
-      isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
-      load: (bookmarks: ImportableBookmark[]) => void
-      removeAll: () => void
-      mapToImportable: (bookmarks: Bookmark[]) => ImportableBookmark[]
-      $: {
-        bookmarks$: Observable<Bookmark[]>
-        loaded$: Observable<void>
-      }
-    }
-  },
-  unknown,
-  unknown
->
-
-export type ReaderInstance = ReturnType<Parameters<BookmarkEnhancer>[0]>
+export type ReaderInstance = Reader & Api

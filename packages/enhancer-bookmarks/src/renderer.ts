@@ -1,13 +1,14 @@
+import { Reader } from "@prose-reader/core"
 import { BehaviorSubject, EMPTY, of, withLatestFrom } from "rxjs"
 import { switchMap, filter, take, tap, mergeMap } from "rxjs/operators"
 import { PACKAGE_NAME, SHOULD_NOT_LAYOUT } from "./constants"
 import { getIcon } from "./icon"
-import { Bookmark, ReaderInstance } from "./types"
+import { Bookmark } from "./types"
 
 const ELEMENT_ID = PACKAGE_NAME
 
 export const createRenderer = (
-  reader: ReaderInstance,
+  reader: Reader,
   options: {
     areaWidth: number
     areaHeight: number
