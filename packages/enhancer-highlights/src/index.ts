@@ -1,49 +1,51 @@
-import { merge, Observable, Subject } from "rxjs"
-import { Enhancer, Report } from "@oboku/reader"
-import { filter, takeUntil, tap } from "rxjs/operators"
+import { Observable, Subject } from "rxjs"
+import { Reader, Report } from "@prose-reader/core"
+import { takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
-  anchorCfi: string,
-  focusCfi: string,
-  id: number,
-  text?: string,
-  readingItemIndex?: number | undefined,
-  anchorNode?: Node,
-  anchorOffset?: number,
-  focusNode?: Node,
-  focusOffset?: number,
+  anchorCfi: string
+  focusCfi: string
+  id: string
+  text?: string
+  spineItemIndex?: number | undefined
+  anchorNode?: Node
+  anchorOffset?: number
+  focusNode?: Node
+  focusOffset?: number
   element?: HTMLElement
 }
 
-type UserHighlight = Pick<Highlight, 'anchorCfi' | 'focusCfi'>
-
-type SubjectType =
-  | { type: `onHighlightClick`, data: Highlight }
-  | { type: `onUpdate`, data: Highlight[] }
+type SubjectType = { type: `onHighlightClick`; data: Highlight } | { type: `onUpdate`; data: Highlight[] }
 
 const SHOULD_NOT_LAYOUT = false
-const HIGHLIGHT_ID_PREFIX = `oboku-reader-enhancer-highlights`
-
-let uniqueId = 0
+const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
 
 /**
  * @todo
  * Optimize refresh of elements
  */
-export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { highlights: UserHighlight[] }): Enhancer<{
-  highlights: {
-    add: (highlight: UserHighlight) => void,
-    remove: (id: number) => void,
-    isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean,
-  },
-  highlights$: Observable<SubjectType>
-}> =>
-  (next) => (options) => {
+export const highlightsEnhancer =
+  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  (
+    options: InheritOptions
+  ): InheritOutput & {
+    highlights: {
+      add: (highlight: Highlight) => void
+      has: (highlight: Highlight) => boolean
+      remove: (id: string) => void
+      isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean
+      $: Observable<SubjectType>
+    }
+  } => {
     const reader = next(options)
     const highlights$ = new Subject<SubjectType>()
     let highlights: Highlight[] = []
 
-    const getRangeForHighlight = (overlayElement: HTMLElement, anchor: { node: Node, offset?: number }, focus: { node: Node, offset?: number }) => {
+    const getRangeForHighlight = (
+      overlayElement: HTMLElement,
+      anchor: { node: Node; offset?: number },
+      focus: { node: Node; offset?: number }
+    ) => {
       const range = overlayElement.ownerDocument.createRange()
       try {
         range.setStart(anchor.node, anchor.offset || 0)
@@ -60,16 +62,19 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       const { node: focusNode, offset: focusOffset } = reader.resolveCfi(highlight.focusCfi) || {}
 
       if (anchorNode && focusNode) {
-
         // remove old previous highlight
         highlight.element?.remove()
 
-        const range = getRangeForHighlight(overlayElement, { node: anchorNode, offset: anchorOffset }, { node: focusNode, offset: focusOffset })
+        const range = getRangeForHighlight(
+          overlayElement,
+          { node: anchorNode, offset: anchorOffset },
+          { node: focusNode, offset: focusOffset }
+        )
 
         highlight.text = range.toString()
 
         const rectElements = Array.from(range.getClientRects()).map((domRect) => {
-          const rectElt = overlayElement.ownerDocument.createElement('div')
+          const rectElt = overlayElement.ownerDocument.createElement(`div`)
           rectElt.style.cssText = `
             position: absolute;
             width: ${domRect.width}px;
@@ -84,14 +89,14 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
           return rectElt
         })
 
-        const containerElement = overlayElement.ownerDocument.createElement('div')
+        const containerElement = overlayElement.ownerDocument.createElement(`div`)
         containerElement.style.cssText = `
           pointer-events: auto;
         `
 
         highlight.element = containerElement
 
-        rectElements.forEach(el => containerElement.appendChild(el))
+        rectElements.forEach((el) => containerElement.appendChild(el))
         overlayElement.appendChild(containerElement)
 
         containerElement.addEventListener(`click`, () => {
@@ -102,21 +107,29 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
 
     const drawHighlightsForItem = (overlayElement: HTMLElement, itemIndex: number) => {
       highlights.forEach((highlight) => {
-        if (highlight.readingItemIndex === itemIndex) {
+        if (highlight.spineItemIndex === itemIndex) {
           drawHighlight(overlayElement, highlight)
         }
       })
     }
 
-    const _add = (highlight: UserHighlight) => {
+    const enrichHighlight = (highlight: Highlight) => {
       const cfiMetaInfo = reader.getCfiMetaInformation(highlight.anchorCfi)
-      const newHighlight = { ...highlight, readingItemIndex: cfiMetaInfo?.readingItemIndex, id: uniqueId++ }
+
+      return {
+        ...highlight,
+        spineItemIndex: cfiMetaInfo?.spineItemIndex,
+      }
+    }
+
+    const _add = (highlight: Highlight) => {
+      const newHighlight = enrichHighlight(highlight)
 
       highlights.push(newHighlight)
 
-      if (newHighlight.readingItemIndex !== undefined) {
-        reader.manipulateReadingItems(({ index, overlayElement }) => {
-          if (index !== newHighlight.readingItemIndex) return SHOULD_NOT_LAYOUT
+      if (newHighlight.spineItemIndex !== undefined) {
+        reader.manipulateSpineItems(({ index, overlayElement }) => {
+          if (index !== newHighlight.spineItemIndex) return SHOULD_NOT_LAYOUT
 
           drawHighlight(overlayElement, newHighlight)
 
@@ -127,14 +140,14 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       return highlight
     }
 
-    const add = (highlight: UserHighlight) => {
-      _add(highlight)
+    const add = (highlight: Highlight | Highlight[]) => {
+      ;(!Array.isArray(highlight) ? [highlight] : highlight).forEach(_add)
 
       highlights$.next({ type: `onUpdate`, data: highlights })
     }
 
-    const remove = (id: number) => {
-      highlights = highlights.filter(highlight => {
+    const remove = (id: string) => {
+      highlights = highlights.filter((highlight) => {
         if (highlight.id === id) {
           highlight.element?.remove()
         }
@@ -145,6 +158,8 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       highlights$.next({ type: `onUpdate`, data: highlights })
     }
 
+    const has = (highlight: Highlight) => !!highlights.find(({ id }) => id === highlight.id)
+
     const isHighlightClicked = (event: MouseEvent | TouchEvent | PointerEvent) => {
       if (event.target instanceof HTMLElement) {
         return event.target.hasAttribute(`data-${HIGHLIGHT_ID_PREFIX}`)
@@ -153,41 +168,51 @@ export const createHighlightsEnhancer = ({ highlights: initialHighlights }: { hi
       return false
     }
 
-    const initialHighlights$ = reader.$.$
+    /**
+     * If the user has registered highlights before the reader was ready we want to
+     * init them and draw them
+     */
+    reader.$.ready$
       .pipe(
-        filter(event => event.type === `ready`),
         tap(() => {
-          initialHighlights.forEach(_add)
+          highlights = highlights.map((highlight) => {
+            if (!highlight.spineItemIndex) return enrichHighlight(highlight)
 
-          if (initialHighlights.length > 0) {
-            highlights$.next({ type: `onUpdate`, data: highlights })
-          }
-        })
-      )
+            return highlight
+          })
 
-    const refreshHighlights$ = reader.$.$
-      .pipe(
-        filter(event => event.type === `layoutUpdate`),
-        tap(() => {
-          reader.manipulateReadingItems(({ overlayElement, index }) => {
+          highlights$.next({ type: `onUpdate`, data: highlights })
+
+          reader.manipulateSpineItems(({ overlayElement, index }) => {
             drawHighlightsForItem(overlayElement, index)
 
             return SHOULD_NOT_LAYOUT
           })
-        })
+        }),
+        takeUntil(reader.$.destroy$)
       )
-
-    merge(initialHighlights$, refreshHighlights$)
-      .pipe(takeUntil(reader.destroy$))
       .subscribe()
+
+    const refreshHighlightsOnLayout$ = reader.$.layout$.pipe(
+      tap(() => {
+        reader.manipulateSpineItems(({ overlayElement, index }) => {
+          drawHighlightsForItem(overlayElement, index)
+
+          return SHOULD_NOT_LAYOUT
+        })
+      })
+    )
+
+    refreshHighlightsOnLayout$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
       highlights: {
         add,
         remove,
+        has,
         isHighlightClicked,
+        $: highlights$.asObservable(),
       },
-      highlights$: highlights$.asObservable(),
     }
   }

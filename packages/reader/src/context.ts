@@ -1,59 +1,54 @@
-import { BehaviorSubject, Subject } from "rxjs"
-import { Report } from "./report"
-import { LoadOptions, Manifest } from "./types"
+import { BehaviorSubject, Observable, Subject } from "rxjs"
+import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
+import { LoadOptions } from "./types"
+import { Manifest } from "@prose-reader/shared"
+import { createSettings, PublicSettings } from "./settings"
 
-export type Context = ReturnType<typeof createContext>
+type SettingsManager = ReturnType<typeof createSettings>
+
+export type Context = {
+  load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
+  setSettings: (data: Partial<PublicSettings>) => void
+  getSettings: () => ReturnType<SettingsManager[`getSettings`]>
+  getManifest: () => Manifest | undefined
+  areAllItemsPrePaginated: () => boolean
+  getLoadOptions: () => LoadOptions | undefined
+  getCalculatedInnerMargin: () => number
+  getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
+  shouldDisplaySpread: () => boolean
+  setHasVerticalWriting: () => void
+  getReadingDirection: () => Manifest[`readingDirection`] | undefined
+  getPageSize: () => { height: number; width: number }
+  setVisibleAreaRect: (x: number, y: number, width: number, height: number) => void
+  isRTL: () => boolean
+  destroy: () => void
+  $: {
+    hasVerticalWriting$: Observable<boolean>
+    settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
+    destroy$: Observable<void>
+    load$: Observable<Manifest>
+  }
+}
 
 export type ContextObservableEvents = {}
 
-type Settings = {
-  forceSinglePageMode: boolean,
-  pageTurnAnimation: `none` | `fade` | `slide`,
-  pageTurnAnimationDuration: undefined | number
-  pageTurnDirection: `vertical` | `horizontal`,
-  pageTurnMode: `controlled` | `free`,
-}
-
-export const createContext = (initialSettings: Partial<Settings>) => {
+export const createContext = (initialSettings: Parameters<typeof createSettings>[0]): Context => {
   let manifest: Manifest | undefined
   let loadOptions: LoadOptions | undefined
-  let settings: Settings = {
-    forceSinglePageMode: false,
-    pageTurnAnimation: `none`,
-    pageTurnDirection: `horizontal`,
-    pageTurnAnimationDuration: undefined,
-    pageTurnMode: `controlled`,
-    ...initialSettings
-  }
-  let computedPageTurnMode = settings.pageTurnMode
-  let computedPageTurnAnimationDuration = settings.pageTurnAnimationDuration || 0
-  const settings$ = new BehaviorSubject(settings)
-  const subject = new Subject<ContextObservableEvents>()
-  const loadSubject$ = new Subject()
+  const hasVerticalWritingSubject$ = new BehaviorSubject(false)
+  const loadSubject$ = new Subject<Manifest>()
   const visibleAreaRect = {
     width: 0,
     height: 0,
     x: 0,
-    y: 0
+    y: 0,
   }
   const horizontalMargin = 24
   const verticalMargin = 20
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
-
-  const updateComputedSettings = (newManifest: Manifest | undefined, newSettings: Settings) => {
-    if (computedPageTurnMode === `free` && newManifest?.renditionLayout !== `pre-paginated`) {
-      Report.warn(`pageTurnMode incompatible with current book, switching back to controlled mode`)
-      computedPageTurnMode = `controlled`
-    } else {
-      computedPageTurnMode = newSettings.pageTurnMode
-    }
-
-    computedPageTurnAnimationDuration = newSettings.pageTurnAnimationDuration !== undefined
-      ? newSettings.pageTurnAnimationDuration
-      : 300
-  }
+  const settings = createSettings(initialSettings)
 
   /**
    * Global spread behavior
@@ -64,7 +59,13 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     const { height, width } = visibleAreaRect
     const isLandscape = width > height
 
-    if (settings.forceSinglePageMode) return false
+    if (settings.getSettings().forceSinglePageMode) return false
+
+    /**
+     * For now we don't support spread for reflowable & scrollable content since
+     * two items could have different height, resulting in weird stuff.
+     */
+    if (manifest?.renditionFlow === `scrolled-continuous`) return false
 
     // portrait only
     if (!isLandscape && manifest?.renditionSpread === `portrait`) {
@@ -72,64 +73,66 @@ export const createContext = (initialSettings: Partial<Settings>) => {
     }
 
     // default auto behavior
-    return (isLandscape && (manifest?.renditionSpread === undefined || manifest?.renditionSpread === `auto` || manifest?.renditionSpread === `landscape` || manifest?.renditionSpread === `both`))
+    return (
+      isLandscape &&
+      (manifest?.renditionSpread === undefined ||
+        manifest?.renditionSpread === `auto` ||
+        manifest?.renditionSpread === `landscape` ||
+        manifest?.renditionSpread === `both`)
+    )
   }
 
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
     manifest = newManifest
     loadOptions = newLoadOptions
 
-    updateComputedSettings(newManifest, settings)
+    settings.recompute({ manifest, hasVerticalWritingSubject: hasVerticalWritingSubject$.value })
 
-    loadSubject$.next()
+    loadSubject$.next(newManifest)
   }
 
   /**
    * RTL only makes sense for horizontal scrolling
    */
   const isRTL = () => {
-    return manifest?.readingDirection === 'rtl'
-    // return true
+    return manifest?.readingDirection === `rtl`
   }
 
-  const setSettings = (newSettings: Partial<typeof settings>) => {
-    settings = { ...settings, ...newSettings }
+  const setHasVerticalWriting = () => hasVerticalWritingSubject$.next(true)
 
-    updateComputedSettings(manifest, settings)
-
-    settings$.next(settings)
-  }
-
-  const getSettings = () => settings
-
-  settings$.next(settings)
+  /**
+   * Some behavior may trigger settings to change
+   */
+  hasVerticalWritingSubject$
+    .pipe(
+      skip(1),
+      distinctUntilChanged(),
+      tap(() => {
+        settings.recompute({ manifest, hasVerticalWritingSubject: hasVerticalWritingSubject$.value })
+      }),
+      takeUntil(destroy$)
+    )
+    .subscribe()
 
   const destroy = () => {
-    subject.complete()
-    settings$.complete()
+    settings.destroy()
     loadSubject$.complete()
     destroy$.next()
     destroy$.complete()
+    hasVerticalWritingSubject$.complete()
   }
 
   return {
     load,
     isRTL,
+    areAllItemsPrePaginated: () => areAllItemsPrePaginated(manifest),
     destroy,
     getLoadOptions: () => loadOptions,
-    setSettings,
-    getSettings,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
-    getComputedPageTurnMode: () => computedPageTurnMode,
-    getComputedPageTurnAnimationDuration: () => computedPageTurnAnimationDuration,
     shouldDisplaySpread,
-    setVisibleAreaRect: (
-      x: number,
-      y: number,
-      width: number,
-      height: number
-    ) => {
+    setHasVerticalWriting,
+    setVisibleAreaRect: (x: number, y: number, width: number, height: number) => {
       // visibleAreaRect.width = width - horizontalMargin * 2
       visibleAreaRect.width = width
       visibleAreaRect.height = height - marginTop - marginBottom
@@ -141,26 +144,28 @@ export const createContext = (initialSettings: Partial<Settings>) => {
       //     this.visibleAreaRect.height - this.getCalculatedInnerMargin()
       // }
     },
-    getHorizontalMargin: () => horizontalMargin,
-    getVerticalMargin: () => verticalMargin,
+    getManifest: () => manifest,
+    getReadingDirection: () => manifest?.readingDirection,
     getPageSize: () => {
       return {
-        width: shouldDisplaySpread()
-          ? visibleAreaRect.width / 2
-          : visibleAreaRect.width,
+        width: shouldDisplaySpread() ? visibleAreaRect.width / 2 : visibleAreaRect.width,
         height: visibleAreaRect.height,
       }
     },
+    getSettings: settings.getSettings,
+    setSettings: (data: Parameters<typeof settings.setSettings>[0]) =>
+      settings.setSettings(data, {
+        hasVerticalWritingSubject: hasVerticalWritingSubject$.value,
+        manifest,
+      }),
     $: {
-      $: subject.asObservable(),
+      hasVerticalWriting$: hasVerticalWritingSubject$.asObservable().pipe(distinctUntilChanged()),
       destroy$: destroy$.asObservable(),
-      /**
-       * Will emit once on start
-       */
-      settings$: settings$.asObservable(),
-      load$: loadSubject$.asObservable()
+      settings$: settings.$.settings$,
+      load$: loadSubject$.asObservable(),
     },
-    getManifest: () => manifest,
-    getReadingDirection: () => manifest?.readingDirection
   }
 }
+
+const areAllItemsPrePaginated = (manifest: Manifest | undefined) =>
+  !manifest?.spineItems.some((item) => item.renditionLayout === `reflowable`)

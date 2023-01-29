@@ -1,0 +1,1556 @@
+<?xml version="1.0" encoding="UTF-8"?><ncx:ncx xmlns:ncx="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <ncx:head>
+    <ncx:meta name="cover" content="cover"/>
+    <ncx:meta name="dtb:uid" content="9781593273316"/>
+    <ncx:meta name="dtb:depth" content="-1"/>
+    <ncx:meta name="dtb:totalPageCount" content="0"/>
+    <ncx:meta name="dtb:maxPageNumber" content="0"/>
+  </ncx:head>
+  <ncx:docTitle>
+    <ncx:text>AUTOTOOLS</ncx:text>
+  </ncx:docTitle>
+  <ncx:navMap>
+    <ncx:navPoint id="id2656625" playOrder="1">
+      <ncx:navLabel>
+        <ncx:text>AUTOTOOLS</ncx:text>
+      </ncx:navLabel>
+      <ncx:content src="index.html"/>
+      <ncx:navPoint id="id2544933" playOrder="2">
+        <ncx:navLabel>
+          <ncx:text>FOREWORD</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="pr01.html"/>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2545323" playOrder="3">
+        <ncx:navLabel>
+          <ncx:text>PREFACE</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="pr02.html"/>
+        <ncx:navPoint id="id2625292" playOrder="4">
+          <ncx:navLabel>
+            <ncx:text>Why Use the Autotools?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr02.html#why_use_the_autotools_question"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2545541" playOrder="5">
+          <ncx:navLabel>
+            <ncx:text>Acknowledgments</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr02s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2625391" playOrder="6">
+          <ncx:navLabel>
+            <ncx:text>I Wish You the Very Best</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr02s03.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2625427" playOrder="7">
+        <ncx:navLabel>
+          <ncx:text>INTRODUCTION</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="pr03.html"/>
+        <ncx:navPoint id="id2539585" playOrder="8">
+          <ncx:navLabel>
+            <ncx:text>Who Should Read This Book</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr03.html#who_should_read_this_book"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2539601" playOrder="9">
+          <ncx:navLabel>
+            <ncx:text>How This Book Is Organized</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr03s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2545368" playOrder="10">
+          <ncx:navLabel>
+            <ncx:text>Conventions Used in This Book</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr03s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2550063" playOrder="11">
+          <ncx:navLabel>
+            <ncx:text>Autotools Versions Used in This Book</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="pr03s04.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2545416" playOrder="12">
+        <ncx:navLabel>
+          <ncx:text>1. A BRIEF INTRODUCTION TO THE GNU AUTOTOOLS</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch01.html"/>
+        <ncx:navPoint id="id2549483" playOrder="13">
+          <ncx:navLabel>
+            <ncx:text>Who Should Use the Autotools?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01.html#who_should_use_the_autotools_question"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2538954" playOrder="14">
+          <ncx:navLabel>
+            <ncx:text>When Should You Not Use the Autotools?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2550801" playOrder="15">
+          <ncx:navLabel>
+            <ncx:text>Apple Platforms and Mac OS X</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2550902" playOrder="16">
+          <ncx:navLabel>
+            <ncx:text>The Choice of Language</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2579297" playOrder="17">
+          <ncx:navLabel>
+            <ncx:text>Generating Your Package Build System</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s05.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2545586" playOrder="18">
+          <ncx:navLabel>
+            <ncx:text>Autoconf</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s06.html"/>
+          <ncx:navPoint id="id2545808" playOrder="19">
+            <ncx:navLabel>
+              <ncx:text>autoconf</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autoconf-id1"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2545835" playOrder="20">
+            <ncx:navLabel>
+              <ncx:text>autoreconf</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autoreconf"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2545889" playOrder="21">
+            <ncx:navLabel>
+              <ncx:text>autoheader</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autoheader"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2545945" playOrder="22">
+            <ncx:navLabel>
+              <ncx:text>autoscan</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autoscan"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2545989" playOrder="23">
+            <ncx:navLabel>
+              <ncx:text>autoupdate</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autoupdate"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2546011" playOrder="24">
+            <ncx:navLabel>
+              <ncx:text>ifnames</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#ifnames"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2557719" playOrder="25">
+            <ncx:navLabel>
+              <ncx:text>autom4te</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#autom4te"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2557774" playOrder="26">
+            <ncx:navLabel>
+              <ncx:text>Working Together</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s06.html#working_together"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2558033" playOrder="27">
+          <ncx:navLabel>
+            <ncx:text>Automake</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s07.html"/>
+          <ncx:navPoint id="id2550234" playOrder="28">
+            <ncx:navLabel>
+              <ncx:text>automake</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s07.html#automake-id1"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2550306" playOrder="29">
+            <ncx:navLabel>
+              <ncx:text>aclocal</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s07.html#aclocal"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2550589" playOrder="30">
+          <ncx:navLabel>
+            <ncx:text>Libtool</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s08.html"/>
+          <ncx:navPoint id="id2553301" playOrder="31">
+            <ncx:navLabel>
+              <ncx:text>libtool</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s08.html#libtool-id1"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2553324" playOrder="32">
+            <ncx:navLabel>
+              <ncx:text>libtoolize</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s08.html#libtoolize"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2553348" playOrder="33">
+            <ncx:navLabel>
+              <ncx:text>ltdl, the Libtool C API</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s08.html#ltdl_comma_the_libtool_c_api"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2553437" playOrder="34">
+          <ncx:navLabel>
+            <ncx:text>Building Your Package</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s09.html"/>
+          <ncx:navPoint id="id2553538" playOrder="35">
+            <ncx:navLabel>
+              <ncx:text>Running configure</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s09.html#running_configure"/>
+            <ncx:navPoint id="id2578442" playOrder="36">
+              <ncx:navLabel>
+                <ncx:text>Building Outside the Source Directory</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch01s09.html#building_outside_the_source_directory"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2578597" playOrder="37">
+            <ncx:navLabel>
+              <ncx:text>Running make</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch01s09.html#running_make"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2578686" playOrder="38">
+          <ncx:navLabel>
+            <ncx:text>Installing the Most Up-to-Date Autotools</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s10.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2579104" playOrder="39">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch01s11.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2579144" playOrder="40">
+        <ncx:navLabel>
+          <ncx:text>2. UNDERSTANDING THE GNU CODING STANDARDS</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch02.html"/>
+        <ncx:navPoint id="id2556622" playOrder="41">
+          <ncx:navLabel>
+            <ncx:text>Creating a New Project Directory Structure</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02.html#creating_a_new_project_directory_structu"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2556758" playOrder="42">
+          <ncx:navLabel>
+            <ncx:text>Project Structure</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2557029" playOrder="43">
+          <ncx:navLabel>
+            <ncx:text>Makefile Basics</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s03.html"/>
+          <ncx:navPoint id="id2557169" playOrder="44">
+            <ncx:navLabel>
+              <ncx:text>Commands and Rules</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#commands_and_rules"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2557453" playOrder="45">
+            <ncx:navLabel>
+              <ncx:text>Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#variables"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2546121" playOrder="46">
+            <ncx:navLabel>
+              <ncx:text>A Separate Shell for Each Command</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#a_separate_shell_for_each_command"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2546348" playOrder="47">
+            <ncx:navLabel>
+              <ncx:text>Variable Binding</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#variable_binding"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2546588" playOrder="48">
+            <ncx:navLabel>
+              <ncx:text>Rules in Detail</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#rules_in_detail"/>
+            <ncx:navPoint id="id2546979" playOrder="49">
+              <ncx:navLabel>
+                <ncx:text>Automatic Variables</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch02s03.html#automatic_variables"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2547250" playOrder="50">
+              <ncx:navLabel>
+                <ncx:text>Dependency Rules</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch02s03.html#dependency_rules"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2547372" playOrder="51">
+              <ncx:navLabel>
+                <ncx:text>Implicit Rules</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch02s03.html#implicit_rules"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2547790" playOrder="52">
+              <ncx:navLabel>
+                <ncx:text>Phony Targets</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch02s03.html#phony_targets"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2547850" playOrder="53">
+              <ncx:navLabel>
+                <ncx:text>Multiple Targets</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch02s03.html#multiple_targets"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2548019" playOrder="54">
+            <ncx:navLabel>
+              <ncx:text>Resources for Makefile Authors</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s03.html#resources_for_makefile_authors"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2548145" playOrder="55">
+          <ncx:navLabel>
+            <ncx:text>Creating a Source Distribution Archive</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s04.html"/>
+          <ncx:navPoint id="id2548696" playOrder="56">
+            <ncx:navLabel>
+              <ncx:text>Forcing a Rule to Run</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s04.html#forcing_a_rule_to_run"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2549020" playOrder="57">
+            <ncx:navLabel>
+              <ncx:text>Leading Control Characters</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s04.html#leading_control_characters"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2549295" playOrder="58">
+          <ncx:navLabel>
+            <ncx:text>Automatically Testing a Distribution</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s05.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2551135" playOrder="59">
+          <ncx:navLabel>
+            <ncx:text>Unit Testing, Anyone?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s06.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2551501" playOrder="60">
+          <ncx:navLabel>
+            <ncx:text>Installing Products</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s07.html"/>
+          <ncx:navPoint id="id2551857" playOrder="61">
+            <ncx:navLabel>
+              <ncx:text>Installation Choices</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s07.html#installation_choices"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2552342" playOrder="62">
+            <ncx:navLabel>
+              <ncx:text>Uninstalling a Package</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s07.html#uninstalling_a_package"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2552575" playOrder="63">
+            <ncx:navLabel>
+              <ncx:text>Testing Install and Uninstall</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s07.html#testing_install_and_uninstall"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2553098" playOrder="64">
+          <ncx:navLabel>
+            <ncx:text>The Filesystem Hierarchy Standard</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s08.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2554295" playOrder="65">
+          <ncx:navLabel>
+            <ncx:text>Supporting Standard Targets and Variables</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s09.html"/>
+          <ncx:navPoint id="id2554398" playOrder="66">
+            <ncx:navLabel>
+              <ncx:text>Standard Targets</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s09.html#standard_targets"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2554740" playOrder="67">
+            <ncx:navLabel>
+              <ncx:text>Standard Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s09.html#standard_variables"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2555492" playOrder="68">
+            <ncx:navLabel>
+              <ncx:text>Adding Location Variables to Jupiter</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch02s09.html#adding_location_variables_to_jupiter"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2555823" playOrder="69">
+          <ncx:navLabel>
+            <ncx:text>Getting Your Project into a Linux Distro</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s10.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2556272" playOrder="70">
+          <ncx:navLabel>
+            <ncx:text>Build vs. Installation Prefix Overrides</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s11.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2618369" playOrder="71">
+          <ncx:navLabel>
+            <ncx:text>User Variables</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s12.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2619006" playOrder="72">
+          <ncx:navLabel>
+            <ncx:text>Configuring Your Package</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s13.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2619276" playOrder="73">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch02s14.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2619326" playOrder="74">
+        <ncx:navLabel>
+          <ncx:text>3. CONFIGURING YOUR PROJECT WITH AUTOCONF</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch03.html"/>
+        <ncx:navPoint id="id2619431" playOrder="75">
+          <ncx:navLabel>
+            <ncx:text>Autoconf Configuration Scripts</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03.html#autoconf_configuration_scripts"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2619808" playOrder="76">
+          <ncx:navLabel>
+            <ncx:text>The Shortest configure.ac File</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2619888" playOrder="77">
+          <ncx:navLabel>
+            <ncx:text>Comparing M4 to the C Preprocessor</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2620039" playOrder="78">
+          <ncx:navLabel>
+            <ncx:text>The Nature of M4 Macros</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2620183" playOrder="79">
+          <ncx:navLabel>
+            <ncx:text>Executing autoconf</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s05.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2620452" playOrder="80">
+          <ncx:navLabel>
+            <ncx:text>Executing configure</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s06.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2620811" playOrder="81">
+          <ncx:navLabel>
+            <ncx:text>Executing config.status</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s07.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2621182" playOrder="82">
+          <ncx:navLabel>
+            <ncx:text>Adding Some Real Functionality</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s08.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2621882" playOrder="83">
+          <ncx:navLabel>
+            <ncx:text>Generating Files from Templates</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s09.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2622096" playOrder="84">
+          <ncx:navLabel>
+            <ncx:text>Adding VPATH Build Functionality</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s10.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2622654" playOrder="85">
+          <ncx:navLabel>
+            <ncx:text>Let's Take a Breather</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s11.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2622759" playOrder="86">
+          <ncx:navLabel>
+            <ncx:text>An Even Quicker Start with autoscan</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s12.html"/>
+          <ncx:navPoint id="id2623201" playOrder="87">
+            <ncx:navLabel>
+              <ncx:text>The Proverbial autogen.sh Script</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s12.html#the_proverbial_autogen.sh_script"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2623829" playOrder="88">
+            <ncx:navLabel>
+              <ncx:text>Updating Makefile.in</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s12.html#updating_makefile.in"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2624105" playOrder="89">
+          <ncx:navLabel>
+            <ncx:text>Initialization and Package Information</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s13.html"/>
+          <ncx:navPoint id="id2624127" playOrder="90">
+            <ncx:navLabel>
+              <ncx:text>AC_PREREQ</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s13.html#ac_underscore_prereq"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2624174" playOrder="91">
+            <ncx:navLabel>
+              <ncx:text>AC_INIT</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s13.html#ac_underscore_init"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2624567" playOrder="92">
+            <ncx:navLabel>
+              <ncx:text>AC_CONFIG_SRCDIR</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s13.html#ac_underscore_config_underscore_srcdir"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2624747" playOrder="93">
+          <ncx:navLabel>
+            <ncx:text>The Instantiating Macros</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s14.html"/>
+          <ncx:navPoint id="id2580209" playOrder="94">
+            <ncx:navLabel>
+              <ncx:text>AC_CONFIG_HEADERS</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s14.html#ac_underscore_config_underscore_headers"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2580481" playOrder="95">
+            <ncx:navLabel>
+              <ncx:text>Using autoheader to Generate an Include File Template</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch03s14.html#using_autoheader_to_generate_an_include"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2581083" playOrder="96">
+          <ncx:navLabel>
+            <ncx:text>Back to Remote Builds for a Moment</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s15.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2581252" playOrder="97">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch03s16.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2581292" playOrder="98">
+        <ncx:navLabel>
+          <ncx:text>4. MORE FUN WITH AUTOCONF: CONFIGURING USER OPTIONS</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch04.html"/>
+        <ncx:navPoint id="id2581395" playOrder="99">
+          <ncx:navLabel>
+            <ncx:text>Substitutions and Definitions</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04.html#substitutions_and_definitions"/>
+          <ncx:navPoint id="id2581522" playOrder="100">
+            <ncx:navLabel>
+              <ncx:text>AC_SUBST</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04.html#ac_underscore_subst"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2581671" playOrder="101">
+            <ncx:navLabel>
+              <ncx:text>AC_DEFINE</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04.html#ac_underscore_define"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2581890" playOrder="102">
+          <ncx:navLabel>
+            <ncx:text>Checking for Compilers</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2582301" playOrder="103">
+          <ncx:navLabel>
+            <ncx:text>Checking for Other Programs</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2582860" playOrder="104">
+          <ncx:navLabel>
+            <ncx:text>A Common Problem with Autoconf</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2583726" playOrder="105">
+          <ncx:navLabel>
+            <ncx:text>Checks for Libraries and Header Files</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s05.html"/>
+          <ncx:navPoint id="id2584445" playOrder="106">
+            <ncx:navLabel>
+              <ncx:text>Is It Right or Just Good Enough?</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04s05.html#is_it_right_or_just_good_enough_question"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2585686" playOrder="107">
+            <ncx:navLabel>
+              <ncx:text>Printing Messages</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04s05.html#printing_messages"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2586028" playOrder="108">
+          <ncx:navLabel>
+            <ncx:text>Supporting Optional Features and Packages</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s06.html"/>
+          <ncx:navPoint id="id2586389" playOrder="109">
+            <ncx:navLabel>
+              <ncx:text>Coding Up the Feature Option</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04s06.html#coding_up_the_feature_option"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2586827" playOrder="110">
+            <ncx:navLabel>
+              <ncx:text>Formatting Help Strings</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch04s06.html#formatting_help_strings"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2587032" playOrder="111">
+          <ncx:navLabel>
+            <ncx:text>Checks for Type and Structure Definitions</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s07.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2587654" playOrder="112">
+          <ncx:navLabel>
+            <ncx:text>The AC_OUTPUT Macro</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s08.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2587990" playOrder="113">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch04s09.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2588075" playOrder="114">
+        <ncx:navLabel>
+          <ncx:text>5. AUTOMATIC MAKEFILES WITH AUTOMAKE</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch05.html"/>
+        <ncx:navPoint id="id2588258" playOrder="115">
+          <ncx:navLabel>
+            <ncx:text>Getting Down to Business</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05.html#getting_down_to_business"/>
+          <ncx:navPoint id="id2588613" playOrder="116">
+            <ncx:navLabel>
+              <ncx:text>Enabling Automake in configure.ac</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05.html#enabling_automake_in_configure.ac"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2589743" playOrder="117">
+            <ncx:navLabel>
+              <ncx:text>A Hidden Benefit: Automatic Dependency Tracking</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05.html#a_hidden_benefit_colon_automatic_depende"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2589930" playOrder="118">
+          <ncx:navLabel>
+            <ncx:text>What's in a Makefile.am File?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2590262" playOrder="119">
+          <ncx:navLabel>
+            <ncx:text>Analyzing Our New Build System</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s03.html"/>
+          <ncx:navPoint id="id2590518" playOrder="120">
+            <ncx:navLabel>
+              <ncx:text>Product List Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05s03.html#product_list_variables"/>
+            <ncx:navPoint id="id2590596" playOrder="121">
+              <ncx:navLabel>
+                <ncx:text>Installation Location Prefixes</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch05s03.html#installation_location_prefixes"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2590948" playOrder="122">
+              <ncx:navLabel>
+                <ncx:text>Prefixes Not Associated with Installation</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch05s03.html#prefixes_not_associated_with_installatio"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2591230" playOrder="123">
+              <ncx:navLabel>
+                <ncx:text>Primaries</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch05s03.html#primaries"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2592142" playOrder="124">
+            <ncx:navLabel>
+              <ncx:text>Product Source Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05s03.html#product_source_variables"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2592340" playOrder="125">
+            <ncx:navLabel>
+              <ncx:text>PLV and PSV Modifiers</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05s03.html#plv_and_psv_modifiers"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2592734" playOrder="126">
+          <ncx:navLabel>
+            <ncx:text>Unit Tests: Supporting make check</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2593001" playOrder="127">
+          <ncx:navLabel>
+            <ncx:text>Reducing Complexity with Convenience Libraries</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s05.html"/>
+          <ncx:navPoint id="id2593431" playOrder="128">
+            <ncx:navLabel>
+              <ncx:text>Product Option Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05s05.html#product_option_variables"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2558243" playOrder="129">
+            <ncx:navLabel>
+              <ncx:text>Per-Makefile Option Variables</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch05s05.html#per-makefile_option_variables"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2558352" playOrder="130">
+          <ncx:navLabel>
+            <ncx:text>Building the New Library</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s06.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2558828" playOrder="131">
+          <ncx:navLabel>
+            <ncx:text>What Goes into a Distribution?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s07.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2559116" playOrder="132">
+          <ncx:navLabel>
+            <ncx:text>Maintainer Mode</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s08.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2559309" playOrder="133">
+          <ncx:navLabel>
+            <ncx:text>Cutting Through the Noise</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s09.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2559715" playOrder="134">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch05s10.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2559783" playOrder="135">
+        <ncx:navLabel>
+          <ncx:text>6. BUILDING LIBRARIES WITH LIBTOOL</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch06.html"/>
+        <ncx:navPoint id="id2559879" playOrder="136">
+          <ncx:navLabel>
+            <ncx:text>The Benefits of Shared Libraries</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06.html#the_benefits_of_shared_libraries"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2560012" playOrder="137">
+          <ncx:navLabel>
+            <ncx:text>How Shared Libraries Work</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06s02.html"/>
+          <ncx:navPoint id="id2560108" playOrder="138">
+            <ncx:navLabel>
+              <ncx:text>Dynamic Linking at Load Time</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s02.html#dynamic_linking_at_load_time"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2560472" playOrder="139">
+            <ncx:navLabel>
+              <ncx:text>Automatic Dynamic Linking at Runtime</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s02.html#automatic_dynamic_linking_at_runtime"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2560621" playOrder="140">
+            <ncx:navLabel>
+              <ncx:text>Manual Dynamic Linking at Runtime</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s02.html#manual_dynamic_linking_at_runtime"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2560770" playOrder="141">
+          <ncx:navLabel>
+            <ncx:text>Using Libtool</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06s03.html"/>
+          <ncx:navPoint id="id2560791" playOrder="142">
+            <ncx:navLabel>
+              <ncx:text>Abstracting the Build Process</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s03.html#abstracting_the_build_process"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2561096" playOrder="143">
+            <ncx:navLabel>
+              <ncx:text>Abstraction at Runtime</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s03.html#abstraction_at_runtime"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2561263" playOrder="144">
+          <ncx:navLabel>
+            <ncx:text>Installing Libtool</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2561378" playOrder="145">
+          <ncx:navLabel>
+            <ncx:text>Adding Shared Libraries to Jupiter</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06s05.html"/>
+          <ncx:navPoint id="id2561496" playOrder="146">
+            <ncx:navLabel>
+              <ncx:text>Using the LTLIBRARIES Primary</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#using_the_ltlibraries_primary"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2561559" playOrder="147">
+            <ncx:navLabel>
+              <ncx:text>Public Include Directories</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#public_include_directories"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2562441" playOrder="148">
+            <ncx:navLabel>
+              <ncx:text>Customizing Libtool with LT_INIT Options</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#customizing_libtool_with_lt_underscore_i"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2563620" playOrder="149">
+            <ncx:navLabel>
+              <ncx:text>Reconfigure and Build</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#reconfigure_and_build"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2564398" playOrder="150">
+            <ncx:navLabel>
+              <ncx:text>So What Is PIC, Anyway?</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#so_what_is_pic_comma_anyway_question"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2564755" playOrder="151">
+            <ncx:navLabel>
+              <ncx:text>Fixing the Jupiter PIC Problem</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch06s05.html#fixing_the_jupiter_pic_problem"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2565402" playOrder="152">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch06s06.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2565432" playOrder="153">
+        <ncx:navLabel>
+          <ncx:text>7. LIBRARY INTERFACE VERSIONING AND RUNTIME DYNAMIC LINKING</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch07.html"/>
+        <ncx:navPoint id="id2565615" playOrder="154">
+          <ncx:navLabel>
+            <ncx:text>System-Specific Versioning</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch07.html#system-specific_versioning"/>
+          <ncx:navPoint id="id2565712" playOrder="155">
+            <ncx:navLabel>
+              <ncx:text>Linux and Solaris Library Versioning</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07.html#linux_and_solaris_library_versioning"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2566083" playOrder="156">
+            <ncx:navLabel>
+              <ncx:text>IBM AIX Library Versioning</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07.html#ibm_aix_library_versioning"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2566535" playOrder="157">
+            <ncx:navLabel>
+              <ncx:text>HP-UX/AT&amp;T SVR4 Library Versioning</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07.html#hp-ux_solidus_atat_svr4_library_versioni"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2566620" playOrder="158">
+          <ncx:navLabel>
+            <ncx:text>The Libtool Library Versioning Scheme</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch07s02.html"/>
+          <ncx:navPoint id="id2566644" playOrder="159">
+            <ncx:navLabel>
+              <ncx:text>Library Versioning Is Interface Versioning</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s02.html#library_versioning_is_interface_versioni"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2567451" playOrder="160">
+            <ncx:navLabel>
+              <ncx:text>When Library Versioning Just Isn't Enough</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s02.html#when_library_versioning_just_isn_apostro"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2567618" playOrder="161">
+          <ncx:navLabel>
+            <ncx:text>Using libltdl</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch07s03.html"/>
+          <ncx:navPoint id="id2567640" playOrder="162">
+            <ncx:navLabel>
+              <ncx:text>Necessary Infrastructure</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#necessary_infrastructure"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2567992" playOrder="163">
+            <ncx:navLabel>
+              <ncx:text>Adding a Plug-In Interface</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#adding_a_plug-in_interface"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2568142" playOrder="164">
+            <ncx:navLabel>
+              <ncx:text>Doing It the Old-Fashioned Way</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#doing_it_the_old-fashioned_way"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2569196" playOrder="165">
+            <ncx:navLabel>
+              <ncx:text>Converting to Libtool's ltdl Library</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#converting_to_libtool_apostrophy_s_ltdl"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2570135" playOrder="166">
+            <ncx:navLabel>
+              <ncx:text>Preloading Multiple Modules</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#preloading_multiple_modules"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2570344" playOrder="167">
+            <ncx:navLabel>
+              <ncx:text>Checking It All Out</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch07s03.html#checking_it_all_out"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2570486" playOrder="168">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch07s04.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2570525" playOrder="169">
+        <ncx:navLabel>
+          <ncx:text>8. FLAIM: AN AUTOTOOLS EXAMPLE</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch08.html"/>
+        <ncx:navPoint id="id2570629" playOrder="170">
+          <ncx:navLabel>
+            <ncx:text>What Is FLAIM?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08.html#what_is_flaim_question"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2570736" playOrder="171">
+          <ncx:navLabel>
+            <ncx:text>Why FLAIM?</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2570909" playOrder="172">
+          <ncx:navLabel>
+            <ncx:text>An Initial Look</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2571104" playOrder="173">
+          <ncx:navLabel>
+            <ncx:text>Getting Started</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s04.html"/>
+          <ncx:navPoint id="id2571157" playOrder="174">
+            <ncx:navLabel>
+              <ncx:text>Adding the configure.ac Files</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s04.html#adding_the_configure.ac_files"/>
+            <ncx:navPoint id="id2571403" playOrder="175">
+              <ncx:navLabel>
+                <ncx:text>Automake in the Umbrella Project</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s04.html#automake_in_the_umbrella_project"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2571643" playOrder="176">
+              <ncx:navLabel>
+                <ncx:text>Why Add the Libtool Macros?</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s04.html#why_add_the_libtool_macros_question"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2571753" playOrder="177">
+              <ncx:navLabel>
+                <ncx:text>Adding a Macro Subdirectory</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s04.html#adding_a_macro_subdirectory"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2571946" playOrder="178">
+            <ncx:navLabel>
+              <ncx:text>The Top-Level Makefile.am File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s04.html#the_top-level_makefile.am_file"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2572412" playOrder="179">
+          <ncx:navLabel>
+            <ncx:text>The FLAIM Subprojects</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s05.html"/>
+          <ncx:navPoint id="id2572500" playOrder="180">
+            <ncx:navLabel>
+              <ncx:text>The FLAIM Toolkit configure.ac File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s05.html#the_flaim_toolkit_configure.ac_file"/>
+            <ncx:navPoint id="id2572888" playOrder="181">
+              <ncx:navLabel>
+                <ncx:text>Automake Configuration Features</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s05.html#automake_configuration_features"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2573633" playOrder="182">
+              <ncx:navLabel>
+                <ncx:text>Doing Threads the Right Way</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s05.html#doing_threads_the_right_way"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2574058" playOrder="183">
+              <ncx:navLabel>
+                <ncx:text>Getting Just the Right Libraries</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s05.html#getting_just_the_right_libraries"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2574223" playOrder="184">
+              <ncx:navLabel>
+                <ncx:text>Maintainer-Defined Command-Line Options</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s05.html#maintainer-defined_command-line_options"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2574601" playOrder="185">
+            <ncx:navLabel>
+              <ncx:text>The FLAIM Toolkit Makefile.am File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s05.html#the_flaim_toolkit_makefile.am_file"/>
+            <ncx:navPoint id="id2574962" playOrder="186">
+              <ncx:navLabel>
+                <ncx:text>Automake -hook and -local Rules</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s05.html#automake_-hook_and_-local_rules"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2575729" playOrder="187">
+            <ncx:navLabel>
+              <ncx:text>Designing the ftk/src/Makefile.am File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s05.html#designing_the_ftk_solidus_src_solidus_ma"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2576178" playOrder="188">
+            <ncx:navLabel>
+              <ncx:text>Moving On to the ftk/util Directory</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s05.html#moving_on_to_the_ftk_solidus_util_direct"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2576423" playOrder="189">
+          <ncx:navLabel>
+            <ncx:text>Designing the XFLAIM Build System</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s06.html"/>
+          <ncx:navPoint id="id2576476" playOrder="190">
+            <ncx:navLabel>
+              <ncx:text>The XFLAIM configure.ac File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s06.html#the_xflaim_configure.ac_file"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2577098" playOrder="191">
+            <ncx:navLabel>
+              <ncx:text>Creating the xflaim/src/Makefile.am File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s06.html#creating_the_xflaim_solidus_src_solidus"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2577328" playOrder="192">
+            <ncx:navLabel>
+              <ncx:text>Turning to the xflaim/util Directory</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch08s06.html#turning_to_the_xflaim_solidus_util_direc"/>
+            <ncx:navPoint id="id2577660" playOrder="193">
+              <ncx:navLabel>
+                <ncx:text>Stamp Targets</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s06.html#stamp_targets"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2577910" playOrder="194">
+              <ncx:navLabel>
+                <ncx:text>Cleaning Your Room</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch08s06.html#cleaning_your_room"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2578207" playOrder="195">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch08s07.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2578236" playOrder="196">
+        <ncx:navLabel>
+          <ncx:text>9. FLAIM PART II: PUSHING THE ENVELOPE</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch09.html"/>
+        <ncx:navPoint id="id2594104" playOrder="197">
+          <ncx:navLabel>
+            <ncx:text>Building Java Sources Using the Autotools</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09.html#building_java_sources_using_the_autotool"/>
+          <ncx:navPoint id="id2594181" playOrder="198">
+            <ncx:navLabel>
+              <ncx:text>Autotools Java Support</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#autotools_java_support"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2594815" playOrder="199">
+            <ncx:navLabel>
+              <ncx:text>Using ac-archive Macros</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#using_ac-archive_macros"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2595053" playOrder="200">
+            <ncx:navLabel>
+              <ncx:text>Canonical System Information</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#canonical_system_information"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2595317" playOrder="201">
+            <ncx:navLabel>
+              <ncx:text>The xflaim/java Directory Structure</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#the_xflaim_solidus_java_directory_struct"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2595451" playOrder="202">
+            <ncx:navLabel>
+              <ncx:text>The xflaim/src/Makefile.am File</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#the_xflaim_solidus_src_solidus_makefile"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2595634" playOrder="203">
+            <ncx:navLabel>
+              <ncx:text>Building the JNI C++ Sources</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#building_the_jni_c_plus_plus_sources"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2595740" playOrder="204">
+            <ncx:navLabel>
+              <ncx:text>The Java Wrapper Classes and JNI Headers</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#the_java_wrapper_classes_and_jni_headers"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2596257" playOrder="205">
+            <ncx:navLabel>
+              <ncx:text>A Caveat About Using the JAVA Primary</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09.html#a_caveat_about_using_the_java_primary"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2596368" playOrder="206">
+          <ncx:navLabel>
+            <ncx:text>Building the C# Sources</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09s02.html"/>
+          <ncx:navPoint id="id2596857" playOrder="207">
+            <ncx:navLabel>
+              <ncx:text>Manual Installation</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09s02.html#manual_installation"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2596976" playOrder="208">
+            <ncx:navLabel>
+              <ncx:text>Cleaning Up Again</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch09s02.html#cleaning_up_again"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2597014" playOrder="209">
+          <ncx:navLabel>
+            <ncx:text>Configuring Compiler Options</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2597367" playOrder="210">
+          <ncx:navLabel>
+            <ncx:text>Hooking Doxygen into the Build Process</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2597855" playOrder="211">
+          <ncx:navLabel>
+            <ncx:text>Adding Nonstandard Targets</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09s05.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2598302" playOrder="212">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch09s06.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2598329" playOrder="213">
+        <ncx:navLabel>
+          <ncx:text>10. USING THE M4 MACRO PROCESSOR WITH AUTOCONF</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch10.html"/>
+        <ncx:navPoint id="id2598609" playOrder="214">
+          <ncx:navLabel>
+            <ncx:text>M4 Text Processing</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10.html#m4_text_processing"/>
+          <ncx:navPoint id="id2598754" playOrder="215">
+            <ncx:navLabel>
+              <ncx:text>Defining Macros</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10.html#defining_macros"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2599172" playOrder="216">
+            <ncx:navLabel>
+              <ncx:text>Macros with Arguments</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10.html#macros_with_arguments"/>
+            <ncx:navPoint id="id2599361" playOrder="217">
+              <ncx:navLabel>
+                <ncx:text>Whitespace Around Arguments</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch10.html#whitespace_around_arguments"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2599491" playOrder="218">
+          <ncx:navLabel>
+            <ncx:text>The Recursive Nature of M4</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10s02.html"/>
+          <ncx:navPoint id="id2599732" playOrder="219">
+            <ncx:navLabel>
+              <ncx:text>Quoting Rules</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10s02.html#quoting_rules"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2599993" playOrder="220">
+          <ncx:navLabel>
+            <ncx:text>Autoconf and M4</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10s03.html"/>
+          <ncx:navPoint id="id2600196" playOrder="221">
+            <ncx:navLabel>
+              <ncx:text>The Autoconf M4 Environment</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10s03.html#the_autoconf_m4_environment"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2600366" playOrder="222">
+          <ncx:navLabel>
+            <ncx:text>Writing Autoconf Macros</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10s04.html"/>
+          <ncx:navPoint id="id2600427" playOrder="223">
+            <ncx:navLabel>
+              <ncx:text>Simple Text Replacement</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10s04.html#simple_text_replacement"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2600862" playOrder="224">
+            <ncx:navLabel>
+              <ncx:text>Documenting Your Macros</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10s04.html#documenting_your_macros"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2601074" playOrder="225">
+            <ncx:navLabel>
+              <ncx:text>M4 Conditionals</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch10s04.html#m4_conditionals"/>
+            <ncx:navPoint id="id2601478" playOrder="226">
+              <ncx:navLabel>
+                <ncx:text>Adding Precision</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch10s04.html#adding_precision"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2601872" playOrder="227">
+          <ncx:navLabel>
+            <ncx:text>Diagnosing Problems</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10s05.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2602155" playOrder="228">
+          <ncx:navLabel>
+            <ncx:text>Summary</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch10s06.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2602176" playOrder="229">
+        <ncx:navLabel>
+          <ncx:text>11. A CATALOG OF TIPS AND REUSABLE SOLUTIONS FOR CREATING GREAT PROJECTS</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="ch11.html"/>
+        <ncx:navPoint id="id2602246" playOrder="230">
+          <ncx:navLabel>
+            <ncx:text>Item 1: Keeping Private Details out of Public Interfaces</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11.html#item_1_colon_keeping_private_details_out"/>
+          <ncx:navPoint id="id2602517" playOrder="231">
+            <ncx:navLabel>
+              <ncx:text>Solutions in C</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11.html#solutions_in_c"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2602586" playOrder="232">
+            <ncx:navLabel>
+              <ncx:text>Solutions in C++</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11.html#solutions_in_c_plus_plus"/>
+            <ncx:navPoint id="id2602601" playOrder="233">
+              <ncx:navLabel>
+                <ncx:text>The PIMPL Pattern</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch11.html#the_pimpl_pattern"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2602726" playOrder="234">
+              <ncx:navLabel>
+                <ncx:text>C++ Virtual Interfaces</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch11.html#c_plus_plus_virtual_interfaces"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2603078" playOrder="235">
+          <ncx:navLabel>
+            <ncx:text>Item 2: Implementing Recursive Extension Targets</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s02.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2603731" playOrder="236">
+          <ncx:navLabel>
+            <ncx:text>Item 3: Using a Repository Revision Number in a Package Version</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s03.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2604230" playOrder="237">
+          <ncx:navLabel>
+            <ncx:text>Item 4: Ensuring Your Distribution Packages Are Clean</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s04.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2604365" playOrder="238">
+          <ncx:navLabel>
+            <ncx:text>Item 5: Hacking Autoconf Macros</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s05.html"/>
+          <ncx:navPoint id="id2605477" playOrder="239">
+            <ncx:navLabel>
+              <ncx:text>Providing Library-Specific Autoconf Macros</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s05.html#providing_library-specific_autoconf_macr"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2605515" playOrder="240">
+          <ncx:navLabel>
+            <ncx:text>Item 6: Cross-Compiling</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s06.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2606777" playOrder="241">
+          <ncx:navLabel>
+            <ncx:text>Item 7: Emulating Autoconf Text Replacement Techniques</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s07.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2608046" playOrder="242">
+          <ncx:navLabel>
+            <ncx:text>Item 8: Using the ac-archive Project</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s08.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2608176" playOrder="243">
+          <ncx:navLabel>
+            <ncx:text>Item 9: Using pkg-config with Autotools</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s09.html"/>
+          <ncx:navPoint id="id2608268" playOrder="244">
+            <ncx:navLabel>
+              <ncx:text>Providing pkg-config Files for Your Library Projects</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s09.html#providing_pkg-config_files_for_your_libr"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2608592" playOrder="245">
+            <ncx:navLabel>
+              <ncx:text>Using pkg-config Files in configure.ac</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s09.html#using_pkg-config_files_in_configure.ac"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2608877" playOrder="246">
+          <ncx:navLabel>
+            <ncx:text>Item 10: Using Incremental Installation Techniques</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s10.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2608943" playOrder="247">
+          <ncx:navLabel>
+            <ncx:text>Item 11: Using Generated Source Code</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s11.html"/>
+          <ncx:navPoint id="id2608983" playOrder="248">
+            <ncx:navLabel>
+              <ncx:text>Using the BUILT_SOURCES Variable</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s11.html#using_the_built_underscore_sources_varia"/>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2609140" playOrder="249">
+            <ncx:navLabel>
+              <ncx:text>Dependency Management</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s11.html#dependency_management"/>
+            <ncx:navPoint id="id2609471" playOrder="250">
+              <ncx:navLabel>
+                <ncx:text>A Two-Pass System</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch11s11.html#a_two-pass_system"/>
+            </ncx:navPoint>
+            <ncx:navPoint id="id2609819" playOrder="251">
+              <ncx:navLabel>
+                <ncx:text>Doing It in One Pass</ncx:text>
+              </ncx:navLabel>
+              <ncx:content src="ch11s11.html#doing_it_in_one_pass"/>
+            </ncx:navPoint>
+          </ncx:navPoint>
+          <ncx:navPoint id="id2609921" playOrder="252">
+            <ncx:navLabel>
+              <ncx:text>Built Sources Done Right</ncx:text>
+            </ncx:navLabel>
+            <ncx:content src="ch11s11.html#built_sources_done_right"/>
+          </ncx:navPoint>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2610437" playOrder="253">
+          <ncx:navLabel>
+            <ncx:text>Item 12: Disabling Undesirable Targets</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s12.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2610691" playOrder="254">
+          <ncx:navLabel>
+            <ncx:text>Item 13: Watch Those Tab Characters!</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s13.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2610846" playOrder="255">
+          <ncx:navLabel>
+            <ncx:text>Item 14: Packaging Choices</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s14.html"/>
+        </ncx:navPoint>
+        <ncx:navPoint id="id2610974" playOrder="256">
+          <ncx:navLabel>
+            <ncx:text>Wrapping Up</ncx:text>
+          </ncx:navLabel>
+          <ncx:content src="ch11s15.html"/>
+        </ncx:navPoint>
+      </ncx:navPoint>
+      <ncx:navPoint id="id2611027" playOrder="257">
+        <ncx:navLabel>
+          <ncx:text>UPDATES</ncx:text>
+        </ncx:navLabel>
+        <ncx:content src="co01.html"/>
+      </ncx:navPoint>
+    </ncx:navPoint>
+  </ncx:navMap>
+</ncx:ncx>

@@ -1,41 +1,37 @@
 {
-  "name": "@oboku/reader-streamer",
-  "version": "0.0.20",
-  "main": "dist/index.js",
+  "name": "@prose-reader/streamer",
+  "version": "1.10.0",
+  "type": "module",
+  "main": "./dist/prose-streamer.umd.cjs",
+  "module": "./dist/prose-streamer.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-streamer.js",
+      "require": "./dist/prose-streamer.umd.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "eslint '**/*.{js,ts,tsx}'",
-    "test": "jest"
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@oboku/shared": "^0.0.2",
-    "@types/xmldoc": "^1.1.5",
-    "buffer": "6.0.3",
+    "@prose-reader/shared": "^1.10.0"
+  },
+  "peerDependencies": {
+    "buffer": "^6.0.3",
     "xmldoc": "^1.1.2"
   },
+  "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de",
   "devDependencies": {
-    "@babel/preset-typescript": "^7.15.0",
-    "@types/jest": "^27.0.2",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-jest": "^24.5.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "jest": "^27.2.4",
-    "ts-loader": "^9.2.2",
-    "typescript": "^4.4.3",
-    "webpack": "^5.26",
-    "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.1"
-  },
-  "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
+    "buffer": "^6.0.3",
+    "xmldoc": "^1.2.0"
+  }
 }

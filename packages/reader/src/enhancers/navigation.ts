@@ -1,52 +1,56 @@
-import { Enhancer } from "../createReader";
+/**
+ * Offer extra convenient methods for navigation.
+ */
+import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
-export const navigationEnhancer: Enhancer<{
-  goToLeftSpineItem: () => void,
-  goToRightSpineItem: () => void,
-}> = (next) => (options) => {
-  const reader = next(options)
+export const navigationEnhancer =
+  <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput
+  ) =>
+  (
+    options: InheritOptions
+  ): InheritOutput & {
+    goToLeftSpineItem: () => void
+    goToRightSpineItem: () => void
+  } => {
+    const reader = next(options)
 
-  const goToNextSpineItem = () => {
-    const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
-    const { end = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
-    const numberOfSpineItems = reader.context.getManifest()?.readingOrder.length ?? 0
-    let nextItem = end + 1
-    if (nextItem < numberOfSpineItems) {
-      reader.goTo(nextItem)
-    }
-  }
-
-  const goToPreviousSpineItem = () => {
-    const focusedReadingItemIndex = reader.getFocusedReadingItemIndex() || 0
-    const { begin = focusedReadingItemIndex } = reader.locator.getReadingItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
-    let nextItem = begin - 1
-    if (nextItem >= 0) {
-      reader.goTo(nextItem)
-    }
-  }
-
-  return {
-    ...reader,
-    goToLeftSpineItem: () => {
-      if (reader.context.isRTL()) {
-        return goToNextSpineItem()
+    const goToNextSpineItem = () => {
+      const focusedSpineItemIndex = reader.getFocusedSpineItemIndex() || 0
+      const { end = focusedSpineItemIndex } =
+        reader.locator.getSpineItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
+      const numberOfSpineItems = reader.context.getManifest()?.spineItems.length ?? 0
+      const nextItem = end + 1
+      if (nextItem < numberOfSpineItems) {
+        reader.goToSpineItem(nextItem)
       }
+    }
 
-      return goToPreviousSpineItem()
-    },
-    goToRightSpineItem: () => {
-      if (reader.context.isRTL()) {
+    const goToPreviousSpineItem = () => {
+      const focusedSpineItemIndex = reader.getFocusedSpineItemIndex() || 0
+      const { begin = focusedSpineItemIndex } =
+        reader.locator.getSpineItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
+      const nextItem = begin - 1
+      if (nextItem >= 0) {
+        reader.goToSpineItem(nextItem)
+      }
+    }
+
+    return {
+      ...reader,
+      goToLeftSpineItem: () => {
+        if (reader.context.isRTL()) {
+          return goToNextSpineItem()
+        }
+
         return goToPreviousSpineItem()
-      }
+      },
+      goToRightSpineItem: () => {
+        if (reader.context.isRTL()) {
+          return goToPreviousSpineItem()
+        }
 
-      return goToNextSpineItem()
-    },
-    // goToPath: (path: string) => {
-    //   const manifest = reader.context.manifest
-    //   const foundItem = manifest?.readingOrder.find(item => item.path === path)
-    //   if (foundItem) {
-    //     reader.readingOrderView.goTo(foundItem.id)
-    //   }
-    // },
+        return goToNextSpineItem()
+      },
+    }
   }
-}

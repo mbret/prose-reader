@@ -2,5 +2,8 @@
   "extends": "../../tsconfig.common.json",
   "compilerOptions": {
     "outDir": "dist",
-  },
+    "noEmit": true,
+    "declaration": true,
+    "isolatedModules": true
+  }
 }

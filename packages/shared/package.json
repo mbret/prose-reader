@@ -1,13 +1,25 @@
 {
-  "name": "@oboku/shared",
-  "version": "0.0.2",
-  "main": "src/index.js",
-  "license": "MIT",
-  "scripts": {
-    "lint": "echo",
-    "start": "echo"
+  "name": "@prose-reader/shared",
+  "version": "1.10.0",
+  "type": "module",
+  "main": "./dist/prose-shared.umd.cjs",
+  "module": "./dist/prose-shared.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-shared.js",
+      "require": "./dist/prose-shared.umd.cjs"
+    }
   },
-  "devDependencies": {
-    "typescript": "^4.4.3"
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "test": "vitest run --coverage"
   }
 }

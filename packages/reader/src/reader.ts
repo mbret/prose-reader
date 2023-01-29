@@ -1,78 +1,126 @@
-import { Subject } from "rxjs";
-import { Report } from "./report";
-import { createContext as createBookContext } from "./context";
-import { createPagination } from "./pagination";
-import { createReadingOrderView } from "./readingOrderView/readingOrderView";
-import { LoadOptions, Manifest } from "./types";
-import { __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants";
-import { takeUntil, tap } from "rxjs/operators";
-import { createSelection } from "./selection";
-
-type ReadingOrderView = ReturnType<typeof createReadingOrderView>
-
-export type Reader = ReturnType<typeof createReader>
-
-const READING_ITEM_ON_LOAD_HOOK = 'readingItem.onLoad'
-const READING_ITEM_ON_CREATED_HOOK = 'readingItem.onCreated'
-const READING_ITEM_ON_GET_RESOURCE = 'readingItem.onGetResource'
-const ON_VIEWPORT_OFFSET_ADJUST_HOOK = 'onViewportOffsetAdjust'
-const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `obokuReaderIframeEventBridgeElement`
-
-type ReadingOrderViewHook = Parameters<ReadingOrderView['registerHook']>[0]
-type ViewportNavigatorHook = Parameters<ReadingOrderView['viewportNavigator']['registerHook']>[0]
-type ManipulateReadingItemsCallback = Parameters<ReadingOrderView['manipulateReadingItems']>[0]
-
-type Hooks = {
-  [READING_ITEM_ON_LOAD_HOOK]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_LOAD_HOOK }>
-  [READING_ITEM_ON_CREATED_HOOK]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_CREATED_HOOK }>
-  [READING_ITEM_ON_GET_RESOURCE]: Extract<ReadingOrderViewHook, { name: typeof READING_ITEM_ON_GET_RESOURCE }>
-  [ON_VIEWPORT_OFFSET_ADJUST_HOOK]: Extract<ViewportNavigatorHook, { name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK }>
-}
-
-type Event =
-  { type: 'iframe', data: HTMLIFrameElement }
-  | { type: 'ready' }
-  | { type: `layoutUpdate` }
-  | { type: `onSelectionChange`, data: ReturnType<typeof createSelection> | null }
-// | { type: `onNavigationChange` }
+import { BehaviorSubject, merge, ObservedValueOf, Subject, switchMap } from "rxjs"
+import { Report } from "./report"
+import { createContext as createBookContext } from "./context"
+import { createPagination } from "./pagination"
+import { createSpine } from "./spine/createSpine"
+import type { LoadOptions, Manifest, Reader } from "./types"
+import { HTML_PREFIX, __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
+import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
+import { createSelection } from "./selection"
+import { createSpineItemManager } from "./spineItemManager"
+import type { Hook, RegisterHook } from "./types/Hook"
+import { isShallowEqual } from "./utils/objects"
+import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
+import { createLocationResolver as createSpineItemLocator } from "./spineItem/locationResolver"
+import { createLocationResolver as createSpineLocator } from "./spine/locationResolver"
+import { createCfiLocator } from "./spine/cfiLocator"
+import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 
 type Context = ReturnType<typeof createBookContext>
-type ContextSettings = Parameters<Context['setSettings']>[0]
+type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
-export const createReader = ({ containerElement, ...settings }: {
-  containerElement: HTMLElement,
-} & Pick<ContextSettings, `forceSinglePageMode` | `pageTurnAnimation` | `pageTurnDirection` | `pageTurnMode`>) => {
-  const subject = new Subject<Event>()
+const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
+
+export type CreateReaderOptions = {
+  hooks?: Hook[]
+  containerElement: HTMLElement
+} & Pick<
+  ContextSettings,
+  | `forceSinglePageMode`
+  | `pageTurnAnimation`
+  | `pageTurnDirection`
+  | `pageTurnMode`
+  | `navigationSnapThreshold`
+  | `numberOfAdjacentSpineItemToPreLoad`
+>
+
+export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): Reader => {
+  const stateSubject$ = new BehaviorSubject<{
+    supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
+    supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
+    supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+    supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+  }>({
+    supportedPageTurnAnimation: [`fade`, `none`, `slide`],
+    supportedPageTurnMode: [`controlled`, `scrollable`],
+    supportedPageTurnDirection: [`horizontal`, `vertical`],
+    supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
+  })
+  const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
+  const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
+  const hooksSubject$ = new BehaviorSubject<Hook[]>(initialHooks || [])
+  const navigationSubject = new Subject<Navigation>()
+  const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
+  const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
+  const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
   const context = createBookContext(settings)
-  const pagination = createPagination({ context })
+  const spineItemManager = createSpineItemManager({ context })
+  const pagination = createPagination({ context, spineItemManager })
   const element = createWrapperElement(containerElement)
   const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
-  let containerManipulationOnDestroyCbList: (() => void)[] = []
-  const readingOrderView = createReadingOrderView({
-    containerElement: element,
+  const spineItemLocator = createSpineItemLocator({ context })
+  const spineLocator = createSpineLocator({
+    context,
+    spineItemManager,
+    spineItemLocator,
+  })
+  const cfiLocator = createCfiLocator({
+    spineItemManager,
+    context,
+    spineItemLocator,
+  })
+
+  const navigation$ = navigationSubject.asObservable()
+
+  const spine = createSpine({
+    ownerDocument: element.ownerDocument,
     iframeEventBridgeElement,
     context,
     pagination,
+    spineItemManager,
+    hooks$: hooksSubject$,
+    navigation$,
+    spineLocator,
+    spineItemLocator,
+    cfiLocator,
+    navigationAdjusted$: navigationAdjustedSubject.asObservable(),
+    viewportState$: viewportStateSubject.asObservable(),
+    currentNavigationPosition$: currentNavigationPositionSubject$.asObservable(),
+  })
+
+  const viewportNavigator = createViewportNavigator({
+    context,
+    pagination,
+    spineItemManager,
+    parentElement: element,
+    cfiLocator,
+    spineLocator,
+    hooks$: hooksSubject$,
+    spine,
   })
 
   containerElement.appendChild(element)
   element.appendChild(iframeEventBridgeElement)
+
+  // bridge all navigation stream with reader so they can be shared across app
+  viewportNavigator.$.state$.subscribe(viewportStateSubject)
+  viewportNavigator.$.navigation$.subscribe(navigationSubject)
+  viewportNavigator.$.navigationAdjustedAfterLayout$.subscribe(navigationAdjustedSubject)
+  viewportNavigator.$.currentNavigationPosition$.subscribe(currentNavigationPositionSubject$)
 
   const layout = () => {
     const dimensions = {
       width: containerElement.offsetWidth,
       height: containerElement.offsetHeight,
     }
-    let margin = 0
-    let marginTop = 0
-    let marginBottom = 0
-    let isReflow = true // @todo
+    const margin = 0
+    const marginTop = 0
+    const marginBottom = 0
+    const isReflow = true // @todo
     const containerElementWidth = dimensions.width
     const containerElementEvenWidth =
-      containerElementWidth % 2 === 0 || isReflow
-        ? containerElementWidth
-        : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
+      containerElementWidth % 2 === 0 || isReflow ? containerElementWidth : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
 
     element.style.setProperty(`overflow`, `hidden`)
     element.style.height = `${dimensions.height - marginTop - marginBottom}px`
@@ -83,22 +131,15 @@ export const createReader = ({ containerElement, ...settings }: {
     }
     const elementRect = element.getBoundingClientRect()
 
-    context.setVisibleAreaRect(
-      elementRect.x,
-      elementRect.y,
-      containerElementEvenWidth,
-      dimensions.height
-    )
+    context.setVisibleAreaRect(elementRect.x, elementRect.y, containerElementEvenWidth, dimensions.height)
 
-    readingOrderView.layout()
+    viewportNavigator.layout()
   }
 
-  const load = (
-    manifest: Manifest,
-    loadOptions: LoadOptions = {},
-  ) => {
+  const load = (manifest: Manifest, loadOptions: LoadOptions = {}) => {
     if (context.getManifest()) {
       Report.warn(`loading a new book is not supported yet`)
+
       return
     }
 
@@ -108,130 +149,195 @@ export const createReader = ({ containerElement, ...settings }: {
 
     // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
 
-    readingOrderView.load()
-
     layout()
 
     if (!loadOptions.cfi) {
-      readingOrderView.viewportNavigator.goToSpineItem(0, { animate: false })
+      viewportNavigator.goToSpineItem(0, { animate: false })
     } else {
-      readingOrderView.viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
+      viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
     }
 
-    subject.next({ type: 'ready' })
+    readySubject$.next()
   }
 
-  function registerHook(name: typeof READING_ITEM_ON_LOAD_HOOK, fn: Hooks[typeof READING_ITEM_ON_LOAD_HOOK]['fn']): void
-  function registerHook(name: typeof READING_ITEM_ON_CREATED_HOOK, fn: Hooks[typeof READING_ITEM_ON_CREATED_HOOK]['fn']): void
-  function registerHook(name: typeof READING_ITEM_ON_GET_RESOURCE, fn: Hooks[typeof READING_ITEM_ON_GET_RESOURCE]['fn']): void
-  function registerHook(name: typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK, fn: Hooks[typeof ON_VIEWPORT_OFFSET_ADJUST_HOOK]['fn']): void
-  function registerHook(name: string, fn: any) {
-    const readingOrderViewHooks = [READING_ITEM_ON_LOAD_HOOK, READING_ITEM_ON_CREATED_HOOK, READING_ITEM_ON_GET_RESOURCE] as const
-    if (readingOrderViewHooks.includes(name as typeof readingOrderViewHooks[number])) {
-      readingOrderView.registerHook({ name: name as typeof readingOrderViewHooks[number], fn })
-    }
-
-    const viewportNavigatorHooks = [ON_VIEWPORT_OFFSET_ADJUST_HOOK] as const
-    if (viewportNavigatorHooks.includes(name as typeof viewportNavigatorHooks[number])) {
-      readingOrderView.viewportNavigator.registerHook({ name: name as typeof viewportNavigatorHooks[number], fn })
-    }
+  const registerHook: RegisterHook = (name, fn) => {
+    hooksSubject$.next([...hooksSubject$.getValue(), { name, fn } as Hook])
   }
 
-  const manipulateReadingItems = (cb: ManipulateReadingItemsCallback) => {
-    readingOrderView.manipulateReadingItems(cb)
-  }
-
-  const manipulateContainer = (cb: (container: HTMLElement, onDestroy: (onDestroyCb: () => void) => void) => boolean) => {
-    const onDestroy = (onDestroyCb: () => void) => {
-      containerManipulationOnDestroyCbList.push(onDestroyCb)
-    }
-
+  const manipulateContainer = (cb: (container: HTMLElement) => boolean) => {
     // @todo re-layout based on return
-    cb(element, onDestroy)
+    cb(element)
   }
 
-  readingOrderView.$.$
+  spine.$.$.pipe(
+    tap((event) => {
+      if (event.type === `onSelectionChange`) {
+        selectionSubject$.next(event.data)
+      }
+    }),
+    takeUntil(destroy$)
+  ).subscribe()
+
+  viewportNavigator.$.navigationAdjustedAfterLayout$
     .pipe(
-      tap(event => subject.next(event)),
-      takeUntil(destroy$)
+      switchMap(({ adjustedSpinePosition }) => {
+        return spine.adjustPagination(adjustedSpinePosition).pipe(takeUntil(navigation$))
+      }),
+      takeUntil(context.$.destroy$)
     )
     .subscribe()
+
+  merge(context.$.load$, context.$.settings$, context.$.hasVerticalWriting$)
+    .pipe(
+      mapTo(undefined),
+      withLatestFrom(context.$.hasVerticalWriting$),
+      map(([, hasVerticalWriting]) => {
+        const settings = context.getSettings()
+        const manifest = context.getManifest()
+
+        return {
+          hasVerticalWriting,
+          renditionFlow: manifest?.renditionFlow,
+          renditionLayout: manifest?.renditionLayout,
+          computedPageTurnMode: settings.computedPageTurnMode,
+        }
+      }),
+      distinctUntilChanged(isShallowEqual),
+      map(
+        ({
+          hasVerticalWriting,
+          renditionFlow,
+          renditionLayout,
+          computedPageTurnMode,
+        }): ObservedValueOf<typeof stateSubject$> => ({
+          ...stateSubject$.value,
+          supportedPageTurnMode:
+            renditionFlow === `scrolled-continuous`
+              ? [`scrollable`]
+              : !context.areAllItemsPrePaginated()
+              ? [`controlled`]
+              : [`controlled`, `scrollable`],
+          supportedPageTurnAnimation:
+            renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
+              ? [`none`]
+              : hasVerticalWriting
+              ? [`fade`, `none`]
+              : [`fade`, `none`, `slide`],
+          supportedPageTurnDirection:
+            computedPageTurnMode === `scrollable`
+              ? [`vertical`]
+              : renditionLayout === `reflowable`
+              ? [`horizontal`]
+              : [`horizontal`, `vertical`],
+        })
+      ),
+      takeUntil(destroy$)
+    )
+    .subscribe(stateSubject$)
 
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
-   * 
+   *
    * This is not possible to use any of the reader features once it
    * has been destroyed. If you need to open a new book you need to
    * either create a new reader or call `load` with a different manifest
    * instead of destroying it.
    */
   const destroy = () => {
-    containerManipulationOnDestroyCbList.forEach(cb => cb())
-    containerManipulationOnDestroyCbList = []
+    hooksSubject$.next([])
+    hooksSubject$.complete()
+    pagination.destroy()
     context.destroy()
-    readingOrderView?.destroy()
+    viewportNavigator.destroy()
+    spine.destroy()
     element.remove()
     iframeEventBridgeElement.remove()
+    readySubject$.complete()
+    stateSubject$.complete()
+    selectionSubject$.complete()
     destroy$.next()
     destroy$.complete()
   }
 
   const reader = {
-    innerPagination: pagination,
     context,
     registerHook,
-    manipulateReadingItems,
+    spine,
+    viewportNavigator,
+    manipulateSpineItems: spine.manipulateSpineItems,
+    manipulateSpineItem: spine.manipulateSpineItem,
     manipulateContainer,
-    moveTo: readingOrderView.viewportNavigator.moveTo,
-    turnLeft: readingOrderView.viewportNavigator.turnLeft,
-    turnRight: readingOrderView.viewportNavigator.turnRight,
-    goToPageOfCurrentChapter: readingOrderView.viewportNavigator.goToPageOfCurrentChapter,
-    goTo: readingOrderView.viewportNavigator.goTo,
-    goToUrl: readingOrderView.viewportNavigator.goToUrl,
-    goToCfi: readingOrderView.viewportNavigator.goToCfi,
-    getChapterInfo: readingOrderView.getChapterInfo,
-    getFocusedReadingItemIndex: readingOrderView.getFocusedReadingItemIndex,
-    getReadingItem: readingOrderView.getReadingItem,
-    getSelection: readingOrderView.getSelection,
-    isSelecting: readingOrderView.isSelecting,
-    normalizeEventForViewport: readingOrderView.normalizeEventForViewport,
-    getCfiMetaInformation: readingOrderView.cfiLocator.getCfiMetaInformation,
-    resolveCfi: readingOrderView.cfiLocator.resolveCfi,
-    generateCfi: readingOrderView.cfiLocator.generateFromRange,
-    locator: readingOrderView.locator,
-    getCurrentNavigationPosition: readingOrderView.getCurrentNavigationPosition,
-    setPageTurnAnimation: (pageTurnAnimation: ContextSettings['pageTurnAnimation']) => context.setSettings({ pageTurnAnimation }),
-    setPageTurnDirection: (pageTurnDirection: ContextSettings['pageTurnDirection']) => context.setSettings({ pageTurnDirection }),
-    setPageTurnMode: (pageTurnMode: ContextSettings['pageTurnMode']) => context.setSettings({ pageTurnMode }),
+    moveTo: viewportNavigator.moveTo,
+    turnLeft: viewportNavigator.turnLeft,
+    turnRight: viewportNavigator.turnRight,
+    goToPageOfCurrentChapter: viewportNavigator.goToPageOfCurrentChapter,
+    goToPage: viewportNavigator.goToPage,
+    goToUrl: viewportNavigator.goToUrl,
+    goToCfi: viewportNavigator.goToCfi,
+    goToSpineItem: viewportNavigator.goToSpineItem,
+    getFocusedSpineItemIndex: spineItemManager.getFocusedSpineItemIndex,
+    getSpineItem: spineItemManager.get,
+    getSpineItems: spineItemManager.getAll,
+    getAbsolutePositionOf: spineItemManager.getAbsolutePositionOf,
+    getSelection: spine.getSelection,
+    isSelecting: spine.isSelecting,
+    normalizeEventForViewport: spine.normalizeEventForViewport,
+    getCfiMetaInformation: spine.cfiLocator.getCfiMetaInformation,
+    resolveCfi: spine.cfiLocator.resolveCfi,
+    generateCfi: spine.cfiLocator.generateFromRange,
+    locator: spine.locator,
+    getCurrentNavigationPosition: viewportNavigator.getCurrentNavigationPosition,
+    getCurrentViewportPosition: viewportNavigator.getCurrentViewportPosition,
     layout,
     load,
     destroy,
+    setSettings: context.setSettings,
+    settings$: context.$.settings$,
+    pagination$: pagination.$.info$,
     $: {
-      $: subject.asObservable(),
-      viewportState$: readingOrderView.$.viewportState$,
+      state$: stateSubject$.asObservable(),
+      /**
+       * Dispatched when the reader has loaded a book and is displayed a book.
+       * Using navigation API and getting information about current content will
+       * have an effect.
+       * It can typically be used to hide a loading indicator.
+       */
+      ready$: readySubject$.asObservable(),
+      /**
+       * Dispatched when a change in selection happens
+       */
+      selection$: selectionSubject$.asObservable(),
+      viewportState$: viewportNavigator.$.state$,
+      layout$: spine.$.layout$,
+      itemsCreated$: spine.$.itemsCreated$,
+      itemsBeforeDestroy$: spine.$.itemsBeforeDestroy$,
+      itemIsReady$: spineItemManager.$.itemIsReady$,
+      destroy$,
     },
-    destroy$,
     __debug: {
       pagination,
       context,
-      readingOrderView,
-    }
+      spineItemManager,
+    },
   }
 
   return reader
 }
 
 const createWrapperElement = (containerElement: HTMLElement) => {
-  const element = containerElement.ownerDocument.createElement('div')
-  element.id = 'BookView'
-  element.style.setProperty(`position`, `relative`)
+  const element = containerElement.ownerDocument.createElement(`div`)
+  element.style.cssText = `
+    background-color: white;
+    position: relative;
+  `
+  element.className = `${HTML_PREFIX}-reader`
 
   return element
 }
 
 const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
-  const iframeEventBridgeElement = containerElement.ownerDocument.createElement('div')
+  const iframeEventBridgeElement = containerElement.ownerDocument.createElement(`div`)
   iframeEventBridgeElement.id = IFRAME_EVENT_BRIDGE_ELEMENT_ID
   iframeEventBridgeElement.style.cssText = `
     position: absolute;
@@ -244,3 +350,5 @@ const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
 
   return iframeEventBridgeElement
 }
+
+export { Reader }

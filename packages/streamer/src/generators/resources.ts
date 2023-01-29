@@ -1,7 +1,11 @@
-import { Archive } from "../archives"
+import xmldoc from "xmldoc"
+import { Archive, getArchiveOpfInfo } from ".."
+import { getItemsFromDoc } from "./manifest/hooks/epub"
 
-export const getResourceFromArchive = async (archive: Archive, resourcePath: string) => {
-  const file = Object.values(archive.files).find(file => file.uri === resourcePath)
+export const generateResourceFromArchive = async (archive: Archive, resourcePath: string) => {
+  const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
+
+  const metadata = await getMetadata(archive, resourcePath)
 
   if (!file) {
     throw new Error(`no file found`)
@@ -47,30 +51,57 @@ export const getResourceFromArchive = async (archive: Archive, resourcePath: str
   //   }
   // })
 
-  const response = new Response(blob, {
-    // status: 206,
-    headers: {
-      ...file.uri.endsWith(`.css`) && {
-        'Content-Type': `text/css; charset=UTF-8`
+  return {
+    body: blob,
+    params: {
+      headers: {
+        ...(blob.type && {
+          "Content-Type": blob.type,
+        }),
+        ...(file.encodingFormat && {
+          "Content-Type": file.encodingFormat,
+        }),
+        ...(metadata.mediaType && {
+          "Content-Type": metadata.mediaType,
+        }),
+        // 'Cache-Control': `no-cache, no-store, no-transform`
       },
-      ...file.uri.endsWith(`.jpg`) && {
-        'Content-Type': `image/jpg`
-      },
-      ...file.uri.endsWith(`.xhtml`) && {
-        'Content-Type': `application/xhtml+xml`
-      },
-      ...file.uri.endsWith(`.mp4`) && {
-        'Content-Type': `video/mp4`
-      },
-      ...blob.type && {
-        'Content-Type': blob.type
-      },
-      ...file.encodingFormat && {
-        'Content-Type': file.encodingFormat
-      }
-      // 'Cache-Control': `no-cache, no-store, no-transform`
-    }
-  })
+    },
+  }
+}
 
-  return response
+const getMetadata = async (archive: Archive, resourcePath: string) => {
+  const opfInfo = getArchiveOpfInfo(archive)
+  const data = await opfInfo.data?.string()
+
+  if (data) {
+    const opfXmlDoc = new xmldoc.XmlDocument(data)
+    const items = getItemsFromDoc(opfXmlDoc)
+
+    return {
+      mediaType: items.find((item) => resourcePath.endsWith(item.href))?.mediaType,
+    }
+  }
+
+  return {
+    mediaType: getContentTypeFromExtension(resourcePath),
+  }
+}
+
+const getContentTypeFromExtension = (uri: string) => {
+  if (uri.endsWith(`.css`)) {
+    return `text/css; charset=UTF-8`
+  }
+  if (uri.endsWith(`.jpg`)) {
+    return `image/jpg`
+  }
+  if (uri.endsWith(`.xhtml`)) {
+    return `application/xhtml+xml`
+  }
+  if (uri.endsWith(`.mp4`)) {
+    return `video/mp4`
+  }
+  if (uri.endsWith(`.svg`)) {
+    return `image/svg+xml`
+  }
 }

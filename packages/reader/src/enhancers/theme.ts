@@ -1,93 +1,130 @@
-import { Enhancer } from "../createReader";
-
-export type Theme = (typeof defaultThemes[number])['name']
+import { BehaviorSubject, Observable } from "rxjs"
+import { takeUntil, tap } from "rxjs/operators"
+import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 const defaultThemes = [
   {
-    name: 'bright' as const,
-    backgroundColor: 'white',
+    name: `bright` as const,
+    backgroundColor: `white`,
   },
   {
     name: `sepia` as const,
-    backgroundColor: '#eaddc7',
-    foregroundColor: 'black',
+    backgroundColor: `#eaddc7`,
+    foregroundColor: `black`,
   },
   {
     name: `night` as const,
-    backgroundColor: '#191717',
-    foregroundColor: '#f1ebeb',
+    backgroundColor: `#191717`,
+    foregroundColor: `#f1ebeb`,
   },
 ]
 
-export const themeEnhancer: Enhancer<{
-  setTheme: (theme: Theme | undefined) => void,
-  getTheme: () => Theme | undefined,
-}> = (next) => (options) => {
-  const { theme } = options
-  const reader = next(options)
-  let currentTheme = theme
+export type Theme = (typeof defaultThemes)[number][`name`] | `publisher`
 
-  const getStyle = () => {
-    const foundTheme = defaultThemes.find(entry => entry.name === currentTheme)
-
-    return `
-      body {
-        ${foundTheme !== undefined
-        ? `background-color: ${foundTheme.backgroundColor} !important;`
-        : ``}
+export const themeEnhancer =
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  (
+    options: InheritOptions & {
+      theme?: Theme
+    }
+  ): InheritOutput & {
+    theme: {
+      set: (theme: Theme) => void
+      get: () => Theme
+      $: {
+        theme$: Observable<Theme>
       }
-      ${foundTheme?.foregroundColor
-        ? `
+    }
+  } => {
+    const reader = next(options)
+    const currentThemeSubject$ = new BehaviorSubject<Theme>(options.theme ?? `bright`)
+
+    const getStyle = () => {
+      const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
+
+      return `
+      body {
+        ${foundTheme !== undefined ? `background-color: ${foundTheme.backgroundColor} !important;` : ``}
+      }
+      ${
+        foundTheme?.foregroundColor
+          ? `
           body * {
-            ${/*
+            ${
+              /*
               Ideally, we would like to use !important but it could break publisher specific
               cases
-            */``}
+            */ ``
+            }
             color: ${foundTheme.foregroundColor};
           }
         `
-        : ``}
+          : ``
+      }
     `
-  }
+    }
 
-  const applyChangeToReadingItemElement = ({ container, loadingElement }: { container: HTMLElement, loadingElement: HTMLElement }) => {
-    const foundTheme = defaultThemes.find(entry => entry.name === currentTheme)
-    if (foundTheme) {
-      container.style.setProperty(`background-color`, foundTheme.backgroundColor)
-      loadingElement.style.setProperty(`background-color`, foundTheme.backgroundColor)
+    const applyChangeToSpineItemElement = ({ container }: { container: HTMLElement }) => {
+      const foundTheme = defaultThemes.find((entry) => entry.name === currentThemeSubject$.value)
+      if (foundTheme) {
+        container.style.setProperty(`background-color`, foundTheme.backgroundColor)
+      }
+
+      return () => {
+        // __
+      }
+    }
+
+    const applyChangeToSpineItem = () => {
+      reader.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
+        removeStyle(`prose-reader-theme`)
+        addStyle(`prose-reader-theme`, getStyle())
+        applyChangeToSpineItemElement({ container })
+
+        return false
+      })
+    }
+
+    /**
+     * Make sure to apply theme on item load
+     */
+    reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle }) => {
+      removeStyle(`prose-reader-theme`)
+      addStyle(`prose-reader-theme`, getStyle())
+    })
+
+    /**
+     * Make sure to apply theme on item container (fixed layout)
+     * & loading element
+     */
+    reader.$.itemsCreated$
+      .pipe(
+        tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
+
+    currentThemeSubject$
+      .pipe(
+        tap(() => {
+          applyChangeToSpineItem()
+        }),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
+
+    return {
+      ...reader,
+      theme: {
+        set: (theme) => {
+          if (theme !== currentThemeSubject$.value) {
+            currentThemeSubject$.next(theme)
+          }
+        },
+        get: () => currentThemeSubject$.value,
+        $: {
+          theme$: currentThemeSubject$.asObservable(),
+        },
+      },
     }
   }
-
-  const applyChangeToReadingItem = () => {
-    reader.manipulateReadingItems(({ removeStyle, addStyle, container, loadingElement }) => {
-      removeStyle('oboku-reader-theme')
-      addStyle('oboku-reader-theme', getStyle())
-      applyChangeToReadingItemElement({ container, loadingElement })
-
-      return false
-    })
-  }
-
-  /**
-   * Make sure to apply theme on item load
-   */
-  reader.registerHook(`readingItem.onLoad`, ({ removeStyle, addStyle }) => {
-    removeStyle('oboku-reader-theme')
-    addStyle('oboku-reader-theme', getStyle())
-  })
-
-  /**
-   * Make sure to apply theme on item container (fixed layout)
-   * & loading element
-   */
-  reader.registerHook(`readingItem.onCreated`, applyChangeToReadingItemElement)
-
-  return {
-    ...reader,
-    setTheme: (theme: Theme | undefined) => {
-      currentTheme = theme
-      applyChangeToReadingItem()
-    },
-    getTheme: () => currentTheme
-  }
-}

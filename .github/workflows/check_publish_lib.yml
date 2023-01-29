@@ -1,0 +1,44 @@
+name: check_publish_lib
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+      - uses: actions/checkout@v3
+
+      # - name: Checkout release branch
+      #   run: git checkout -b release
+
+      - name: Install
+        run: |
+          yarn install --frozen-lockfile
+
+      # We only build library on this pipe
+      - name: Lint
+        run: |
+          npx lerna run lint --stream --scope @prose-reader/*
+
+      # We only build library on this pipe
+      - name: Build
+        run: |
+          npx lerna run build --stream --scope @prose-reader/*
+
+      - name: Test
+        run: |
+          yarn test
+
+      - name: Publish
+        run: |
+          git config --global user.email "bret.maxime@gmail.com"
+          git config --global user.name "Maxime Bret"
+          npx lerna publish minor --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}

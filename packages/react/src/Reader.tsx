@@ -1,47 +1,86 @@
-import React, { useCallback, useEffect, useState } from "react"
-import { createReader, Enhancer, Manifest, ReaderWithEnhancer } from '@oboku/reader'
+import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react"
+import ReactDOM from "react-dom"
+import { Manifest, Reader as ReaderInstance, Report } from "@prose-reader/core"
+import { ObservedValueOf } from "rxjs"
 
-type Options = Parameters<typeof createReader>[0]
-type LoadOptions = Parameters<ReturnType<typeof createReader>['load']>[1]
-type Pagination = ReturnType<ReturnType<typeof createReader>['pagination']['getInfo']>
+const report = Report.namespace("@prose-reader/react")
 
-type Props<Ext = {}> = {
-  manifest?: Manifest,
-  onReady?: () => void,
-  onReader?: (reader: ReaderWithEnhancer<Enhancer<Ext>>) => void,
-  onPaginationChange?: (pagination: Pagination) => void,
-  options?: Omit<Options, 'containerElement'>,
-  loadOptions?: LoadOptions,
-  enhancer?: Enhancer<Ext>
+export type Props<Options extends object, Instance extends ReaderInstance> = {
+  manifest?: Manifest
+  options?: Omit<Options, "containerElement">
+  loadOptions?: Parameters<Instance["load"]>[1]
+  createReader: (options: Options) => Instance
+  onReader?: (reader: any) => void
+  onReady?: () => void
+  onPaginationChange?: (pagination: ObservedValueOf<Instance["pagination$"]>) => void
+  LoadingElement?: ReactElement
 }
 
-export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, options, onPaginationChange, enhancer }: Props<Ext>) {
-  const [reader, setReader] = useState<ReaderWithEnhancer<Enhancer<Ext>> | undefined>(undefined)
-
-  const onRef = useCallback(ref => {
-    if (ref && !reader) {
-      const reader = createReader({ containerElement: ref, ...options }, enhancer)
-      setReader(reader)
-      onReader && onReader(reader)
-    }
-  }, [setReader, onReader, reader, options])
+export const Reader = <Options extends object, Instance extends ReaderInstance>({
+  manifest,
+  onReady,
+  onReader,
+  loadOptions,
+  options,
+  onPaginationChange,
+  LoadingElement,
+  createReader,
+}: Props<Options, Instance>) => {
+  const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
+  const [loadingElementContainers, setLoadingElementContainers] = useState<HTMLElement[]>([])
+  const { width, height } = { width: `100%`, height: `100%` }
+  const hasLoadingElement = !!LoadingElement
+  const ref = useRef<HTMLElement>()
+  const readerInitialized = useRef(false)
 
   useEffect(() => {
-    const readerSubscription$ = reader?.$.$.subscribe((data) => {
-      if (data.type === 'ready') {
-        onReady && onReady()
-      }
-    })
+    if (!ref.current || !!reader) return
 
-    const paginationSubscription = reader?.pagination.$.subscribe(data => {
-      onPaginationChange && onPaginationChange(data)
+    if (readerInitialized.current) {
+      report.warn(
+        "One of the props relative to the reader creation has changed but the reader is already initialized. Please make sure to memoize or delay the render!"
+      )
+
+      return
+    }
+
+    if (ref.current && !reader && options) {
+      readerInitialized.current = true
+      const readerOptions = {
+        containerElement: ref.current,
+        ...(hasLoadingElement && {
+          // we override loading element creator but don't do anything yet
+          loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
+        }),
+        ...options,
+      }
+
+      const newReader = createReader(readerOptions as any)
+
+      setReader(newReader as any)
+      onReader && onReader(newReader as any)
+    }
+  }, [setReader, onReader, reader, options, hasLoadingElement])
+
+  useEffect(() => {
+    const readerSubscription$ = reader?.$.ready$.subscribe(() => {
+      onReady && onReady()
     })
 
     return () => {
       readerSubscription$?.unsubscribe()
-      paginationSubscription?.unsubscribe()
     }
   }, [reader, onReady])
+
+  useEffect(() => {
+    const paginationSubscription = reader?.pagination$.subscribe((data) => {
+      onPaginationChange && onPaginationChange(data as any)
+    })
+
+    return () => {
+      paginationSubscription?.unsubscribe()
+    }
+  }, [onPaginationChange, reader])
 
   useEffect(() => {
     if (manifest && reader) {
@@ -53,17 +92,28 @@ export function Reader<Ext = {},>({ manifest, onReady, onReader, loadOptions, op
     return () => reader?.destroy()
   }, [reader])
 
-  return (
-    <div
-      style={styles.reader}
-      ref={onRef}
-    />
-  )
-}
+  useEffect(() => {
+    if (hasLoadingElement && reader) {
+      const subscription = reader.loading.$.items$.subscribe((entries) => {
+        setLoadingElementContainers(Object.values(entries))
+      })
 
-const styles = {
-  reader: {
-    width: `100%`,
-    height: `100%`
-  }
+      return () => subscription.unsubscribe()
+    }
+  }, [reader, hasLoadingElement])
+
+  const style = useMemo(
+    () => ({
+      width,
+      height,
+    }),
+    [height, width]
+  )
+
+  return (
+    <>
+      <div style={style} ref={ref as any} />
+      {loadingElementContainers.map((element) => ReactDOM.createPortal(LoadingElement, element))}
+    </>
+  )
 }

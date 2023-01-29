@@ -1,1 +1,1 @@
-export { Reader } from './Reader'
+export * from "./Reader"

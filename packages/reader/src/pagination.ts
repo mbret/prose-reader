@@ -1,34 +1,43 @@
-import { Subject } from "rxjs"
+import { BehaviorSubject, distinctUntilChanged } from "rxjs"
 import { Context } from "./context"
-import { ReadingItem } from "./readingItem"
+import { SpineItem } from "./spineItem/createSpineItem"
+import { SpineItemManager } from "./spineItemManager"
 import { Report } from "./report"
-import { createLocator } from "./readingItem/locator"
+import { isShallowEqual } from "./utils/objects"
 
-const NAMESPACE = 'pagination'
+const NAMESPACE = `pagination`
 
-export type Pagination = ReturnType<typeof createPagination>
+type PaginationInfo = {
+  beginPageIndex: number | undefined
+  beginNumberOfPages: number
+  beginCfi: string | undefined
+  beginSpineItemIndex: number | undefined
+  endPageIndex: number | undefined
+  endNumberOfPages: number
+  endCfi: string | undefined
+  endSpineItemIndex: number | undefined
+}
 
-export const createPagination = ({ context }: { context: Context }) => {
-  const subject = new Subject<{ event: 'change' }>()
-  const readingItemLocator = createLocator({ context })
-  let beginPageIndex: number | undefined
-  let beginNumberOfPages = 0
-  let beginCfi: string | undefined = undefined
-  let beginReadingItemIndex: number | undefined = undefined
-  let endPageIndex: number | undefined
-  let endNumberOfPages = 0
-  let endCfi: string | undefined = undefined
-  let endReadingItemIndex: number | undefined = undefined
-  let numberOfPagesPerItems: number[] = []
+export const createPagination = ({ context }: { context: Context; spineItemManager: SpineItemManager }) => {
+  const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
+    beginPageIndex: undefined,
+    beginNumberOfPages: 0,
+    beginCfi: undefined,
+    beginSpineItemIndex: undefined,
+    endPageIndex: undefined,
+    endNumberOfPages: 0,
+    endCfi: undefined,
+    endSpineItemIndex: undefined,
+  })
 
-  const getReadingItemNumberOfPages = (readingItem: ReadingItem) => {
+  const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
     // pre-paginated always are only one page
-    // if (!readingItem.isReflowable) return 1
+    // if (!spineItem.isReflowable) return 1
 
-    const writingMode = readingItem.readingItemFrame.getWritingMode()
-    const { width, height } = readingItem.getElementDimensions()
+    const writingMode = spineItem.spineItemFrame.getWritingMode()
+    const { width, height } = spineItem.getElementDimensions()
 
-    if (writingMode === 'vertical-rl') {
+    if (writingMode === `vertical-rl`) {
       return getNumberOfPages(height, context.getPageSize().height)
     }
 
@@ -36,18 +45,18 @@ export const createPagination = ({ context }: { context: Context }) => {
   }
 
   const getInfoForUpdate = (info: {
-    readingItem: ReadingItem,
-    // readingItemPosition: { x: number, y: number },
-    pageIndex: number,
-    cfi: string | undefined,
+    spineItem: SpineItem
+    // spineItemPosition: { x: number, y: number },
+    pageIndex: number
+    cfi: string | undefined
     options: {
-      isAtEndOfChapter?: boolean,
+      isAtEndOfChapter?: boolean
       // cfi?: string
     }
   }) => {
-    const numberOfPages = getReadingItemNumberOfPages(info.readingItem)
-    // const pageIndex = readingItemLocator.getReadingItemPageIndexFromPosition(info.readingItemPosition, info.readingItem)
-    let cfi: string | undefined = undefined
+    const numberOfPages = getSpineItemNumberOfPages(info.spineItem)
+    // const pageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(info.spineItemPosition, info.spineItem)
+    const cfi: string | undefined = undefined
 
     // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
     // @todo update cfi also whenever a resize occurs in the iframe
@@ -56,9 +65,8 @@ export const createPagination = ({ context }: { context: Context }) => {
     // - resize
     // future changes would potentially only be resize (easy to track) and font size family change.
     // to track that we can have a hidden text element and track it and send event back
-    // console.warn(typeof info.options.cfi)
     // if (info.options.cfi === undefined) {
-    //   cfi = readingItemLocator.getCfi(pageIndex, info.readingItem)
+    //   cfi = spineItemLocator.getCfi(pageIndex, info.spineItem)
     //   Report.log(`pagination`, `cfi`, pageIndex, cfi)
     // } else {
     //   cfi = info.options.cfi
@@ -73,70 +81,58 @@ export const createPagination = ({ context }: { context: Context }) => {
     }
   }
 
-  return {
-    getBeginInfo() {
-      return {
-        pageIndex: beginPageIndex,
-        absolutePageIndex: numberOfPagesPerItems
-          .slice(0, beginReadingItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, beginPageIndex ?? 0),
-        cfi: beginCfi,
-        numberOfPages: beginNumberOfPages,
-        readingItemIndex: beginReadingItemIndex,
-      }
-    },
-    getEndInfo() {
-      return {
-        pageIndex: endPageIndex,
-        absolutePageIndex: numberOfPagesPerItems
-          .slice(0, endReadingItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, endPageIndex ?? 0),
-        cfi: endCfi,
-        numberOfPages: endNumberOfPages,
-        readingItemIndex: endReadingItemIndex,
-      }
-    },
-    getTotalNumberOfPages: () => numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0),
-    updateTotalNumberOfPages: (readingItems: ReadingItem[]) => {
-      numberOfPagesPerItems = readingItems.map((item) => {
-        // Some pre-paginated first page can have blank page to push them on right/left to make
-        // it looks more like a real book
-        // if (index === 0 && !item.isReflowable) {
-        //   return acc + 1
-        // }
-        return getReadingItemNumberOfPages(item)
-      }, 0)
-
-      subject.next({ event: 'change' })
-    },
-    updateBeginAndEnd: Report.measurePerformance(`${NAMESPACE} updateBeginAndEnd`, 1, (
+  const updateBeginAndEnd = Report.measurePerformance(
+    `${NAMESPACE} updateBeginAndEnd`,
+    1,
+    (
       begin: Parameters<typeof getInfoForUpdate>[0] & {
-        readingItemIndex: number,
+        spineItemIndex: number
       },
       end: Parameters<typeof getInfoForUpdate>[0] & {
-        readingItemIndex: number,
+        spineItemIndex: number
       }
     ) => {
       const beginInfo = getInfoForUpdate(begin)
       const endInfo = getInfoForUpdate(end)
 
-      beginPageIndex = beginInfo.pageIndex
-      beginNumberOfPages = beginInfo.numberOfPages
-      beginCfi = beginInfo.cfi
-      beginReadingItemIndex = begin.readingItemIndex
+      const newValues = {
+        beginPageIndex: beginInfo.pageIndex,
+        beginNumberOfPages: beginInfo.numberOfPages,
+        beginCfi: beginInfo.cfi,
+        beginSpineItemIndex: begin.spineItemIndex,
+        endPageIndex: endInfo.pageIndex,
+        endNumberOfPages: endInfo.numberOfPages,
+        endCfi: endInfo.cfi,
+        endSpineItemIndex: end.spineItemIndex,
+      }
 
-      endPageIndex = endInfo.pageIndex
-      endNumberOfPages = endInfo.numberOfPages
-      endCfi = endInfo.cfi
-      endReadingItemIndex = end.readingItemIndex
+      paginationSubject$.next({
+        ...paginationSubject$.value,
+        ...newValues,
+      })
+    },
+    { disable: true }
+  )
 
-      Report.log(NAMESPACE, `updateBeginAndEnd`, { begin, end, beginCfi, beginReadingItemIndex, endCfi, endReadingItemIndex })
+  const getInfo = () => paginationSubject$.value
 
-      subject.next({ event: 'change' })
-    }, { disable: true }),
-    $: subject.asObservable()
+  const info$ = paginationSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual))
+
+  const destroy = () => {
+    paginationSubject$.complete()
+  }
+
+  return {
+    destroy,
+    updateBeginAndEnd,
+    getInfo,
+    $: {
+      info$,
+    },
   }
 }
+
+export type Pagination = ReturnType<typeof createPagination>
 
 export const getItemOffsetFromPageIndex = (pageWidth: number, pageIndex: number, itemWidth: number) => {
   const lastPageOffset = itemWidth - pageWidth
@@ -154,7 +150,7 @@ export const getClosestValidOffsetFromApproximateOffsetInPages = (offset: number
   const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
-  if (offset >= (numberOfPages * pageWidth)) return offsetValues[offsetValues.length - 1] || 0
+  if (offset >= numberOfPages * pageWidth) return offsetValues[offsetValues.length - 1] || 0
 
-  return offsetValues.find(offsetRange => offset < (offsetRange + pageWidth)) || 0
+  return offsetValues.find((offsetRange) => offset < offsetRange + pageWidth) || 0
 }

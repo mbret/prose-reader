@@ -4,25 +4,23 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,
-    "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
     "pretty": false,
     "stripInternal": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
     "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true
+    "noPropertyAccessFromIndexSignature": true,
+    "sourceMap": true,
+    "noEmit": true,
+    "isolatedModules": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist"],
+  "exclude": ["dist", "**/*.spec.ts"]
 }

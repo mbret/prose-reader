@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
+  <metadata>
+    <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">AUTOTOOLS</dc:title>
+    <dc:rights xmlns:dc="http://purl.org/dc/elements/1.1/">Copyright © 2010 </dc:rights>
+    <dc:subject xmlns:dc="http://purl.org/dc/elements/1.1/">COMPUTERS / Software Development &amp; Engineering / General</dc:subject>
+    <dc:date xmlns:dc="http://purl.org/dc/elements/1.1/">2010-07-22</dc:date>
+    <dc:description xmlns:dc="http://purl.org/dc/elements/1.1/">&lt;p&gt;The GNU Autotools (the GNU Build System) is a group of utilities designed to make it easy for developers to create software that is portable across many Unix-like operating systems. &lt;i&gt;Autotools: A Practical Guide&lt;/i&gt; is the first book to offer programmers a tutorial-based guide to the Autotools.&lt;/p&gt;</dc:description>
+    <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf" opf:file-as="John Calcote">John Calcote</dc:creator>
+    <dc:language xmlns:dc="http://purl.org/dc/elements/1.1/">en</dc:language>
+    <meta name="cover" content="cover-image"/>
+  <dc:identifier xmlns:dc="http://purl.org/dc/elements/1.1/" id="bookid">urn:uuid:b987bdbd-6599-48b5-861c-1f5c8b8c5eb8</dc:identifier></metadata>
+  <manifest>
+    <item id="ncxtoc" media-type="application/x-dtbncx+xml" href="toc.ncx"/>
+    <item media-type="text/css" id="css" href="core.css"/>
+    <item id="cover" href="cover.html" media-type="application/xhtml+xml"/>
+    <item id="epub.embedded.font.1" href="DejaVuSansMono.otf" media-type="font/opentype"/>
+    <item id="epub.embedded.font.2" href="DejaVuSerif.otf" media-type="font/opentype"/>
+    <item id="id2656625" href="index.html" media-type="application/xhtml+xml"/>
+    <item id="cover-image" href="httpatomoreillycomsourcenostarchimages655925.jpg" media-type="image/jpeg"/>
+    <item id="id2544933" href="pr01.html" media-type="application/xhtml+xml"/>
+    <item id="id2545323" href="pr02.html" media-type="application/xhtml+xml"/>
+    <item id="id2545541" href="pr02s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2625391" href="pr02s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2625427" href="pr03.html" media-type="application/xhtml+xml"/>
+    <item id="id2539551" href="httpatomoreillycomsourcenostarchimages655930.png.jpg" media-type="image/jpeg"/>
+    <item id="id2539601" href="pr03s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2545368" href="pr03s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2550063" href="pr03s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2545416" href="ch01.html" media-type="application/xhtml+xml"/>
+    <item id="id2538954" href="ch01s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2550801" href="ch01s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2550902" href="ch01s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2579297" href="ch01s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2545586" href="ch01s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2557858" href="httpatomoreillycomsourcenostarchimages655932.png.jpg" media-type="image/jpeg"/>
+    <item id="id2558033" href="ch01s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2550501" href="httpatomoreillycomsourcenostarchimages655934.png.jpg" media-type="image/jpeg"/>
+    <item id="id2550589" href="ch01s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2553431" href="httpatomoreillycomsourcenostarchimages655936.png.jpg" media-type="image/jpeg"/>
+    <item id="id2553437" href="ch01s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2553735" href="httpatomoreillycomsourcenostarchimages655938.png.jpg" media-type="image/jpeg"/>
+    <item id="id2578680" href="httpatomoreillycomsourcenostarchimages655940.png.jpg" media-type="image/jpeg"/>
+    <item id="id2578686" href="ch01s10.html" media-type="application/xhtml+xml"/>
+    <item id="id2579104" href="ch01s11.html" media-type="application/xhtml+xml"/>
+    <item id="id2579144" href="ch02.html" media-type="application/xhtml+xml"/>
+    <item id="id2556758" href="ch02s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2557029" href="ch02s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2546728" href="httpatomoreillycomsourcenostarchimages655942.png.jpg" media-type="image/jpeg"/>
+    <item id="id2548145" href="ch02s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2549295" href="ch02s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2551135" href="ch02s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2551501" href="ch02s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2553098" href="ch02s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2554295" href="ch02s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2555823" href="ch02s10.html" media-type="application/xhtml+xml"/>
+    <item id="id2556272" href="ch02s11.html" media-type="application/xhtml+xml"/>
+    <item id="id2618369" href="ch02s12.html" media-type="application/xhtml+xml"/>
+    <item id="id2619006" href="ch02s13.html" media-type="application/xhtml+xml"/>
+    <item id="id2619276" href="ch02s14.html" media-type="application/xhtml+xml"/>
+    <item id="id2619326" href="ch03.html" media-type="application/xhtml+xml"/>
+    <item id="id2619808" href="ch03s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2619888" href="ch03s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2620039" href="ch03s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2620183" href="ch03s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2620452" href="ch03s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2620811" href="ch03s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2621182" href="ch03s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2621882" href="ch03s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2622096" href="ch03s10.html" media-type="application/xhtml+xml"/>
+    <item id="id2622654" href="ch03s11.html" media-type="application/xhtml+xml"/>
+    <item id="id2622759" href="ch03s12.html" media-type="application/xhtml+xml"/>
+    <item id="id2624105" href="ch03s13.html" media-type="application/xhtml+xml"/>
+    <item id="id2624747" href="ch03s14.html" media-type="application/xhtml+xml"/>
+    <item id="id2581083" href="ch03s15.html" media-type="application/xhtml+xml"/>
+    <item id="id2581252" href="ch03s16.html" media-type="application/xhtml+xml"/>
+    <item id="id2581292" href="ch04.html" media-type="application/xhtml+xml"/>
+    <item id="id2581890" href="ch04s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2582301" href="ch04s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2582860" href="ch04s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2583726" href="ch04s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2586028" href="ch04s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2587032" href="ch04s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2587654" href="ch04s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2587990" href="ch04s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2588075" href="ch05.html" media-type="application/xhtml+xml"/>
+    <item id="id2589930" href="ch05s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2590262" href="ch05s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2592734" href="ch05s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2593001" href="ch05s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2558352" href="ch05s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2558828" href="ch05s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2559116" href="ch05s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2559309" href="ch05s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2559715" href="ch05s10.html" media-type="application/xhtml+xml"/>
+    <item id="id2559783" href="ch06.html" media-type="application/xhtml+xml"/>
+    <item id="id2560012" href="ch06s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2560770" href="ch06s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2561263" href="ch06s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2561378" href="ch06s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2564519" href="httpatomoreillycomsourcenostarchimages655944.png.jpg" media-type="image/jpeg"/>
+    <item id="id2564722" href="httpatomoreillycomsourcenostarchimages655946.png.jpg" media-type="image/jpeg"/>
+    <item id="id2565402" href="ch06s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2565432" href="ch07.html" media-type="application/xhtml+xml"/>
+    <item id="id2566620" href="ch07s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2567618" href="ch07s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2570486" href="ch07s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2570525" href="ch08.html" media-type="application/xhtml+xml"/>
+    <item id="id2570736" href="ch08s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2570909" href="ch08s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2571104" href="ch08s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2572412" href="ch08s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2576423" href="ch08s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2578207" href="ch08s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2578236" href="ch09.html" media-type="application/xhtml+xml"/>
+    <item id="id2596368" href="ch09s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2597014" href="ch09s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2597367" href="ch09s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2597855" href="ch09s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2598302" href="ch09s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2598329" href="ch10.html" media-type="application/xhtml+xml"/>
+    <item id="id2599491" href="ch10s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2599589" href="httpatomoreillycomsourcenostarchimages655948.png.jpg" media-type="image/jpeg"/>
+    <item id="id2599993" href="ch10s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2600366" href="ch10s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2601872" href="ch10s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2602155" href="ch10s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2602176" href="ch11.html" media-type="application/xhtml+xml"/>
+    <item id="id2603078" href="ch11s02.html" media-type="application/xhtml+xml"/>
+    <item id="id2603731" href="ch11s03.html" media-type="application/xhtml+xml"/>
+    <item id="id2604230" href="ch11s04.html" media-type="application/xhtml+xml"/>
+    <item id="id2604365" href="ch11s05.html" media-type="application/xhtml+xml"/>
+    <item id="id2605515" href="ch11s06.html" media-type="application/xhtml+xml"/>
+    <item id="id2606777" href="ch11s07.html" media-type="application/xhtml+xml"/>
+    <item id="id2608046" href="ch11s08.html" media-type="application/xhtml+xml"/>
+    <item id="id2608176" href="ch11s09.html" media-type="application/xhtml+xml"/>
+    <item id="id2608877" href="ch11s10.html" media-type="application/xhtml+xml"/>
+    <item id="id2608943" href="ch11s11.html" media-type="application/xhtml+xml"/>
+    <item id="id2610437" href="ch11s12.html" media-type="application/xhtml+xml"/>
+    <item id="id2610691" href="ch11s13.html" media-type="application/xhtml+xml"/>
+    <item id="id2610846" href="ch11s14.html" media-type="application/xhtml+xml"/>
+    <item id="id2610974" href="ch11s15.html" media-type="application/xhtml+xml"/>
+    <item id="id2611027" href="co01.html" media-type="application/xhtml+xml"/>
+  <item id="js-kobo.js" href="../js/kobo.js" media-type="application/javascript"/><item id="css-kobo.css" href="../css/kobo.css" media-type="text/css"/></manifest>
+  <spine toc="ncxtoc">
+    <itemref idref="cover" linear="no"/>
+    <itemref idref="id2656625"/>
+    <itemref idref="id2544933"/>
+    <itemref idref="id2545323"/>
+    <itemref idref="id2545541"/>
+    <itemref idref="id2625391"/>
+    <itemref idref="id2625427"/>
+    <itemref idref="id2539601"/>
+    <itemref idref="id2545368"/>
+    <itemref idref="id2550063"/>
+    <itemref idref="id2545416"/>
+    <itemref idref="id2538954"/>
+    <itemref idref="id2550801"/>
+    <itemref idref="id2550902"/>
+    <itemref idref="id2579297"/>
+    <itemref idref="id2545586"/>
+    <itemref idref="id2558033"/>
+    <itemref idref="id2550589"/>
+    <itemref idref="id2553437"/>
+    <itemref idref="id2578686"/>
+    <itemref idref="id2579104"/>
+    <itemref idref="id2579144"/>
+    <itemref idref="id2556758"/>
+    <itemref idref="id2557029"/>
+    <itemref idref="id2548145"/>
+    <itemref idref="id2549295"/>
+    <itemref idref="id2551135"/>
+    <itemref idref="id2551501"/>
+    <itemref idref="id2553098"/>
+    <itemref idref="id2554295"/>
+    <itemref idref="id2555823"/>
+    <itemref idref="id2556272"/>
+    <itemref idref="id2618369"/>
+    <itemref idref="id2619006"/>
+    <itemref idref="id2619276"/>
+    <itemref idref="id2619326"/>
+    <itemref idref="id2619808"/>
+    <itemref idref="id2619888"/>
+    <itemref idref="id2620039"/>
+    <itemref idref="id2620183"/>
+    <itemref idref="id2620452"/>
+    <itemref idref="id2620811"/>
+    <itemref idref="id2621182"/>
+    <itemref idref="id2621882"/>
+    <itemref idref="id2622096"/>
+    <itemref idref="id2622654"/>
+    <itemref idref="id2622759"/>
+    <itemref idref="id2624105"/>
+    <itemref idref="id2624747"/>
+    <itemref idref="id2581083"/>
+    <itemref idref="id2581252"/>
+    <itemref idref="id2581292"/>
+    <itemref idref="id2581890"/>
+    <itemref idref="id2582301"/>
+    <itemref idref="id2582860"/>
+    <itemref idref="id2583726"/>
+    <itemref idref="id2586028"/>
+    <itemref idref="id2587032"/>
+    <itemref idref="id2587654"/>
+    <itemref idref="id2587990"/>
+    <itemref idref="id2588075"/>
+    <itemref idref="id2589930"/>
+    <itemref idref="id2590262"/>
+    <itemref idref="id2592734"/>
+    <itemref idref="id2593001"/>
+    <itemref idref="id2558352"/>
+    <itemref idref="id2558828"/>
+    <itemref idref="id2559116"/>
+    <itemref idref="id2559309"/>
+    <itemref idref="id2559715"/>
+    <itemref idref="id2559783"/>
+    <itemref idref="id2560012"/>
+    <itemref idref="id2560770"/>
+    <itemref idref="id2561263"/>
+    <itemref idref="id2561378"/>
+    <itemref idref="id2565402"/>
+    <itemref idref="id2565432"/>
+    <itemref idref="id2566620"/>
+    <itemref idref="id2567618"/>
+    <itemref idref="id2570486"/>
+    <itemref idref="id2570525"/>
+    <itemref idref="id2570736"/>
+    <itemref idref="id2570909"/>
+    <itemref idref="id2571104"/>
+    <itemref idref="id2572412"/>
+    <itemref idref="id2576423"/>
+    <itemref idref="id2578207"/>
+    <itemref idref="id2578236"/>
+    <itemref idref="id2596368"/>
+    <itemref idref="id2597014"/>
+    <itemref idref="id2597367"/>
+    <itemref idref="id2597855"/>
+    <itemref idref="id2598302"/>
+    <itemref idref="id2598329"/>
+    <itemref idref="id2599491"/>
+    <itemref idref="id2599993"/>
+    <itemref idref="id2600366"/>
+    <itemref idref="id2601872"/>
+    <itemref idref="id2602155"/>
+    <itemref idref="id2602176"/>
+    <itemref idref="id2603078"/>
+    <itemref idref="id2603731"/>
+    <itemref idref="id2604230"/>
+    <itemref idref="id2604365"/>
+    <itemref idref="id2605515"/>
+    <itemref idref="id2606777"/>
+    <itemref idref="id2608046"/>
+    <itemref idref="id2608176"/>
+    <itemref idref="id2608877"/>
+    <itemref idref="id2608943"/>
+    <itemref idref="id2610437"/>
+    <itemref idref="id2610691"/>
+    <itemref idref="id2610846"/>
+    <itemref idref="id2610974"/>
+    <itemref idref="id2611027"/>
+  </spine>
+  <guide>
+    <reference href="cover.html" type="cover" title="Cover"/>
+  </guide>
+</package>

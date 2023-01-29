@@ -1,19 +1,16 @@
-export { Manifest } from './types'
+import { createSelection } from "./selection"
+export { compose } from "./utils/compose"
 
-import { createReaderWithEnhancers as createReader, Enhancer, ReaderWithEnhancer } from './createReader'
-import { createSelection } from './selection'
+export type { Manifest } from "./types"
 
-export type Reader = ReturnType<typeof createReader>
+import { createReaderWithEnhancers } from "./createReaderWithEnhancer"
 
-export {
-  createReader,
-  Enhancer,
-  ReaderWithEnhancer
-}
+export type Reader = ReturnType<typeof createReaderWithEnhancers>
+
+export { createReaderWithEnhancers as createReader }
 
 export type ReaderSelection = ReturnType<typeof createSelection>
 
-export { Report } from './report'
+export { Report } from "./report"
 
-export { composeEnhancer } from './utils/composeEnhancer'
-export { groupBy } from './utils/objects'
+export { groupBy, isShallowEqual } from "./utils/objects"

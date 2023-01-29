@@ -1,23 +1,31 @@
 {
-  "name": "@oboku/reader-react",
-  "version": "0.0.14",
+  "name": "@prose-reader/react",
+  "version": "1.10.0",
   "main": "dist/index.js",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "start": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "build": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "prepublishOnly": "rm -rf dist && NODE_ENV=production webpack build --config ./webpack.config.js",
-    "lint": "echo"
+    "start": "concurrently -n src,types \"yarn start-src\" \"yarn start-types\"",
+    "start-src": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
+    "start-types": "yarn tsc -w --preserveWatchOutput --declaration --noEmit false --emitDeclarationOnly",
+    "build": "concurrently -n src,types \"yarn build-src\" \"yarn build-types\"",
+    "build-src": "NODE_ENV=development webpack build --config ./webpack.config.js",
+    "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
+    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js && yarn build-types",
+    "lint:read": "prettier --check . && eslint .",
+    "lint:write": "prettier --write . && eslint --fix .",
+    "tsc": "tsc"
   },
   "peerDependencies": {
-    "@oboku/reader": "*",
     "@types/react": "*",
     "@types/react-dom": "*",
     "react": "*",
     "react-dom": "*"
   },
-  "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de"
+  "dependencies": {
+    "@prose-reader/core": "^1.10.0"
+  },
+  "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }
