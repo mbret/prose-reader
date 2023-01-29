@@ -1,18 +1,18 @@
-import { Enhancer } from "@prose-reader/core"
+import { Reader } from "@prose-reader/core"
 import "hammerjs"
 
 /**
  */
-export const hammerGestureEnhancer: Enhancer<
-  {
-    // eslint-disable-next-line no-undef
-    hammerManager?: HammerManager
-  },
-  unknown
-> =
-  (next) =>
-  ({ hammerManager, ...rest }) => {
-    const reader = next(rest)
+export const hammerGestureEnhancer =
+  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  (
+    options: InheritOptions & {
+      // eslint-disable-next-line no-undef
+      hammerManager?: HammerManager
+    }
+  ): InheritOutput => {
+    const hammerManager = options.hammerManager
+    const reader = next(options)
 
     const onPinchStart = () => {
       if (!reader?.zoom.isZooming()) {
