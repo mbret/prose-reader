@@ -1,11 +1,11 @@
-import { merge, Observable, Subject } from "rxjs"
-import { Enhancer, Report } from "@prose-reader/core"
+import { Observable, Subject } from "rxjs"
+import { Reader, Report } from "@prose-reader/core"
 import { takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
   anchorCfi: string
   focusCfi: string
-  id: number
+  id: string
   text?: string
   spineItemIndex?: number | undefined
   anchorNode?: Node
@@ -15,37 +15,28 @@ type Highlight = {
   element?: HTMLElement
 }
 
-type UserHighlight = Pick<Highlight, `anchorCfi` | `focusCfi`>
-
 type SubjectType = { type: `onHighlightClick`; data: Highlight } | { type: `onUpdate`; data: Highlight[] }
 
 const SHOULD_NOT_LAYOUT = false
 const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
 
-let uniqueId = 0
-
 /**
  * @todo
  * Optimize refresh of elements
  */
-export const createHighlightsEnhancer =
-  ({
-    highlights: initialHighlights,
-  }: {
-    highlights: UserHighlight[]
-  }): Enhancer<
-    Record<string, never>,
-    {
-      highlights: {
-        add: (highlight: UserHighlight) => void
-        remove: (id: number) => void
-        isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean
-        $: Observable<SubjectType>
-      }
+export const highlightsEnhancer =
+  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  (
+    options: InheritOptions
+  ): InheritOutput & {
+    highlights: {
+      add: (highlight: Highlight) => void
+      has: (highlight: Highlight) => boolean
+      remove: (id: string) => void
+      isHighlightClicked: (event: MouseEvent | TouchEvent | PointerEvent) => boolean
+      $: Observable<SubjectType>
     }
-  > =>
-  (next) =>
-  (options) => {
+  } => {
     const reader = next(options)
     const highlights$ = new Subject<SubjectType>()
     let highlights: Highlight[] = []
@@ -122,13 +113,17 @@ export const createHighlightsEnhancer =
       })
     }
 
-    const _add = (highlight: UserHighlight) => {
+    const enrichHighlight = (highlight: Highlight) => {
       const cfiMetaInfo = reader.getCfiMetaInformation(highlight.anchorCfi)
-      const newHighlight = {
+
+      return {
         ...highlight,
         spineItemIndex: cfiMetaInfo?.spineItemIndex,
-        id: uniqueId++,
       }
+    }
+
+    const _add = (highlight: Highlight) => {
+      const newHighlight = enrichHighlight(highlight)
 
       highlights.push(newHighlight)
 
@@ -145,13 +140,13 @@ export const createHighlightsEnhancer =
       return highlight
     }
 
-    const add = (highlight: UserHighlight) => {
-      _add(highlight)
+    const add = (highlight: Highlight | Highlight[]) => {
+      ;(!Array.isArray(highlight) ? [highlight] : highlight).forEach(_add)
 
       highlights$.next({ type: `onUpdate`, data: highlights })
     }
 
-    const remove = (id: number) => {
+    const remove = (id: string) => {
       highlights = highlights.filter((highlight) => {
         if (highlight.id === id) {
           highlight.element?.remove()
@@ -163,6 +158,8 @@ export const createHighlightsEnhancer =
       highlights$.next({ type: `onUpdate`, data: highlights })
     }
 
+    const has = (highlight: Highlight) => !!highlights.find(({ id }) => id === highlight.id)
+
     const isHighlightClicked = (event: MouseEvent | TouchEvent | PointerEvent) => {
       if (event.target instanceof HTMLElement) {
         return event.target.hasAttribute(`data-${HIGHLIGHT_ID_PREFIX}`)
@@ -171,17 +168,32 @@ export const createHighlightsEnhancer =
       return false
     }
 
-    const initialHighlights$ = reader.$.ready$.pipe(
-      tap(() => {
-        initialHighlights.forEach(_add)
+    /**
+     * If the user has registered highlights before the reader was ready we want to
+     * init them and draw them
+     */
+    reader.$.ready$
+      .pipe(
+        tap(() => {
+          highlights = highlights.map((highlight) => {
+            if (!highlight.spineItemIndex) return enrichHighlight(highlight)
 
-        if (initialHighlights.length > 0) {
+            return highlight
+          })
+
           highlights$.next({ type: `onUpdate`, data: highlights })
-        }
-      })
-    )
 
-    const refreshHighlights$ = reader.$.layout$.pipe(
+          reader.manipulateSpineItems(({ overlayElement, index }) => {
+            drawHighlightsForItem(overlayElement, index)
+
+            return SHOULD_NOT_LAYOUT
+          })
+        }),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
+
+    const refreshHighlightsOnLayout$ = reader.$.layout$.pipe(
       tap(() => {
         reader.manipulateSpineItems(({ overlayElement, index }) => {
           drawHighlightsForItem(overlayElement, index)
@@ -191,13 +203,14 @@ export const createHighlightsEnhancer =
       })
     )
 
-    merge(initialHighlights$, refreshHighlights$).pipe(takeUntil(reader.$.destroy$)).subscribe()
+    refreshHighlightsOnLayout$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
       highlights: {
         add,
         remove,
+        has,
         isHighlightClicked,
         $: highlights$.asObservable(),
       },
