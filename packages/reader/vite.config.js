@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
       name: `prose`,
       fileName: `prose`,
     },
+    minify: false,
     sourcemap: true,
     emptyOutDir: mode !== `development`,
     rollupOptions: {
