@@ -105,10 +105,6 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
             }
             minimumWidth = context.getPageSize().width * 2
           }
-
-          if (isGloballyPrePaginated && isPageCover) {
-            minimumWidth = context.getPageSize().width * 2
-          }
         }
 
         // we trigger an item layout which will update the visual and return
