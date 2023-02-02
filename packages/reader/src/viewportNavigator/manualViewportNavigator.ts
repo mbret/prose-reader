@@ -1,5 +1,5 @@
 import { BehaviorSubject, EMPTY, merge, of, Subject } from "rxjs"
-import { filter, map, switchMap, tap, withLatestFrom } from "rxjs/operators"
+import { filter, map, switchMap, withLatestFrom } from "rxjs/operators"
 import { Context } from "../context"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
@@ -128,7 +128,7 @@ export const createManualViewportNavigator = ({
 
   const pageNavigation$ = navigationTriggerSubject$.pipe(
     filter((e): e is PageIndexNavigation => e.type === `pageIndex`),
-    filter((_) => {
+    filter(() => {
       if (context.getManifest()?.renditionLayout === `reflowable`) {
         Report.warn(`This method only works for pre-paginated content`)
         return false
@@ -236,8 +236,10 @@ export const createManualViewportNavigator = ({
   )
 
   return {
-    destroy: () => {},
-    adjustReadingOffset: (_: { x: number; y: number }) => {
+    destroy: () => {
+      // ...
+    },
+    adjustReadingOffset: () => {
       return false
     },
     turnLeft,

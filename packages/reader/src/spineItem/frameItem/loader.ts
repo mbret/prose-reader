@@ -1,18 +1,17 @@
-import { BehaviorSubject, EMPTY, from, fromEvent, isObservable, merge, Observable, of, Subject, Subscription } from "rxjs"
+import { BehaviorSubject, EMPTY, from, fromEvent, merge, Observable, of, Subject, Subscription } from "rxjs"
 import {
   exhaustMap,
   filter,
   map,
-  mapTo,
   mergeMap,
   share,
   take,
   takeUntil,
-  delay,
   tap,
   withLatestFrom,
   switchMap,
   distinctUntilChanged,
+  catchError,
 } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
@@ -55,9 +54,7 @@ export const createLoader = ({
     return source$
   }
 
-  const getHtmlFromResource = (response: Response) => {
-    return createHtmlPageFromResource(response, item)
-  }
+  const getHtmlFromResource = (response: Response) => createHtmlPageFromResource(response, item)
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
@@ -94,7 +91,7 @@ export const createLoader = ({
     // let's ignore later load as long as the first one still runs
     exhaustMap(() => {
       return createFrame$().pipe(
-        mergeMap((frame) => waitForViewportFree$.pipe(mapTo(frame))),
+        mergeMap((frame) => waitForViewportFree$.pipe(map(() => frame))),
         mergeMap((frame) => {
           parent.appendChild(frame)
 
@@ -124,16 +121,26 @@ export const createLoader = ({
             return from(fetchFn(item)).pipe(
               mergeMap((response) => getHtmlFromResource(response)),
               tap((htmlDoc) => {
-                frame?.setAttribute(`srcdoc`, htmlDoc)
+                if (htmlDoc) {
+                  frame?.setAttribute(`srcdoc`, htmlDoc)
+                }
               }),
-              map(() => frame)
+              map(() => frame),
+              catchError((e) => {
+                Report.error(`Error while trying to fetch or load resource for item ${item.id}`)
+                console.error(e)
+
+                return of(frame)
+              })
             )
           }
         }),
+
         mergeMap((frame) => {
           if (!frame) return EMPTY
 
-          frame.setAttribute(`sandbox`, `allow-same-origin allow-scripts`)
+          // We don't need sandbox since we are actually already allowing too much to the iframe
+          // frame.setAttribute(`sandbox`, `allow-same-origin allow-scripts`)
 
           return fromEvent(frame, `load`).pipe(
             take(1),
@@ -194,6 +201,7 @@ export const createLoader = ({
             })
           )
         }),
+
         // we stop loading as soon as unload is requested
         takeUntil(unloadSubject$)
       )
@@ -215,11 +223,11 @@ export const createLoader = ({
     takeUntil(destroySubject$)
   )
 
-  merge(load$.pipe(mapTo(true)), unloadSubject$.pipe(mapTo(false)))
+  merge(load$.pipe(map(() => true)), unloadSubject$.pipe(map(() => false)))
     .pipe(distinctUntilChanged(), takeUntil(destroySubject$))
     .subscribe(isLoadedSubject$)
 
-  merge(ready$.pipe(mapTo(true)), unloadSubject$.pipe(mapTo(false)))
+  merge(ready$.pipe(map(() => true)), unloadSubject$.pipe(map(() => false)))
     .pipe(distinctUntilChanged(), takeUntil(destroySubject$))
     .subscribe(isReadySubject$)
 

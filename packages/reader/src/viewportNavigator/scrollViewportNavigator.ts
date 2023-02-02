@@ -143,7 +143,9 @@ export const createScrollViewportNavigator = ({
   ).pipe(startWith(`end` as const))
 
   return {
-    destroy: () => {},
+    destroy: () => {
+      // ...
+    },
     adjustReadingOffset,
     getNavigationForPosition,
     getCurrentViewportPosition,

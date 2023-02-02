@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint no-useless-escape: "off" */
 /**
  * @see https://github.com/fread-ink/epub-cfi-resolver

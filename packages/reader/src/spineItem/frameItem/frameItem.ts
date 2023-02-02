@@ -33,15 +33,22 @@ export const createFrameItem = ({
     getComputedStyleAfterLoad,
   } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$ })
 
-  const isLoadedSubject$ = new BehaviorSubject(false)
+  /**
+   * @deprecated
+   */
+  let isLoadedSync = false
   const isReadySubject$ = new BehaviorSubject(false)
 
-  isLoaded$.subscribe(isLoadedSubject$)
+  isLoaded$.subscribe({
+    next: (value) => {
+      isLoadedSync = value
+    },
+  })
   isReady$.subscribe(isReadySubject$)
 
-  const getManipulableFrame = () => {
-    const frame = frameElement$.getValue()
-    if (isLoadedSubject$.value && frame) {
+  const getManipulableFrame = (): ReturnType<typeof createFrameManipulator> | undefined => {
+    const frame = frameElement$.value
+    if (isLoadedSync && frame) {
       return createFrameManipulator(frame)
     }
   }
@@ -98,7 +105,7 @@ export const createFrameItem = ({
   }
 
   return {
-    getIsLoaded: () => isLoadedSubject$.value,
+    getIsLoaded: () => isLoadedSync,
     getIsReady: () => isReadySubject$.value,
     getViewportDimensions,
     getFrameElement: () => frameElement$.getValue(),

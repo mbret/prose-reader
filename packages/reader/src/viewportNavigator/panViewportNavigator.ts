@@ -162,7 +162,7 @@ export const createPanViewportNavigator = ({
   return {
     moveTo,
     destroy,
-    adjustReadingOffset: (_: { x: number; y: number }) => {
+    adjustReadingOffset: () => {
       return false
     },
     $: {
