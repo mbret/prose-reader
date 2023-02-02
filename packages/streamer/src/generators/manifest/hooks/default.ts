@@ -3,14 +3,11 @@ import { Archive } from "../../../archives/types"
 
 export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
-  async (manifest: Manifest): Promise<Manifest> => {
+  async (): Promise<Manifest> => {
     const files = Object.values(archive.files).filter((file) => !file.dir)
 
     return {
       filename: archive.filename,
-      nav: {
-        toc: [],
-      },
       title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
@@ -20,7 +17,7 @@ export const defaultHook =
         // we need to make sure to have unique index
         // /chap01/01.png, /chap02/01.png, etc
         id: `${index}.${file.basename}`,
-        href: `${baseUrl}${file.uri}`,
+        href: encodeURI(`${baseUrl}${file.uri}`),
         renditionLayout: `pre-paginated`,
         progressionWeight: 1 / files.length,
         pageSpreadLeft: undefined,

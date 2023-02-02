@@ -44,3 +44,7 @@ yarn test --watch
 ```
 
 see https://jestjs.io/docs/cli.
+
+Run tests for a specific scope
+
+`npx lerna run test --scope=@prose-reader/streamer`

@@ -239,21 +239,31 @@ export const paginationEnhancer =
 export const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
   const { href } = item
 
-  return getChapterInfo(href, manifest.nav.toc)
+  return getChapterInfo(href, manifest.nav?.toc ?? [])
 }
 
-const getChapterInfo = (path: string, tocItems: Manifest[`nav`][`toc`]): ChapterInfo | undefined => {
+/**
+ * @important it's important to compare only path vs path and or href vs href since
+ * they have not comparable due to possible encoded values
+ */
+const getChapterInfo = (href: string, tocItems: NonNullable<Manifest[`nav`]>[`toc`]): ChapterInfo | undefined => {
   return tocItems.reduce((acc: ChapterInfo | undefined, tocItem) => {
-    const indexOfHash = tocItem.path.indexOf(`#`)
-    const tocItemPathWithoutAnchor = indexOfHash > 0 ? tocItem.path.substr(0, indexOfHash) : tocItem.path
-    if (path.endsWith(tocItemPathWithoutAnchor)) {
+    const indexOfHash = tocItem.href.indexOf(`#`)
+    const tocItemPathWithoutAnchor = indexOfHash > 0 ? tocItem.href.substr(0, indexOfHash) : tocItem.href
+    const tocItemHrefWithoutFilename = tocItemPathWithoutAnchor.substring(0, tocItemPathWithoutAnchor.lastIndexOf("/"))
+    const hrefWithoutFilename = href.substring(0, href.lastIndexOf("/"))
+
+    const hrefIsChapterHref = href.endsWith(tocItemPathWithoutAnchor)
+    const hrefIsWithinChapter = hrefWithoutFilename !== "" && hrefWithoutFilename.endsWith(tocItemHrefWithoutFilename)
+
+    if (hrefIsChapterHref || hrefIsWithinChapter) {
       return {
         title: tocItem.title,
         path: tocItem.path,
       }
     }
 
-    const subInfo = getChapterInfo(path, tocItem.contents)
+    const subInfo = getChapterInfo(href, tocItem.contents)
 
     if (subInfo) {
       return {

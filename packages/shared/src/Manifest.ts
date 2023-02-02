@@ -7,7 +7,7 @@ export type TocItem = {
 
 export type Manifest = {
   filename: string
-  nav: {
+  nav?: {
     toc: TocItem[]
   }
   title: string

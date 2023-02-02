@@ -5,6 +5,7 @@ import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub"
 import { comicInfoHook } from "./hooks/comicInfo"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
+import { navigationFallbackHook } from "./hooks/navigationFallback"
 
 const baseManifest: Manifest = {
   filename: ``,
@@ -25,6 +26,7 @@ export const generateManifestFromArchive = async (archive: Archive, { baseUrl = 
     epubHook({ archive, baseUrl }),
     epubOptimizerHook({ archive, baseUrl }),
     comicInfoHook({ archive, baseUrl }),
+    navigationFallbackHook({ archive, baseUrl }),
   ]
 
   try {

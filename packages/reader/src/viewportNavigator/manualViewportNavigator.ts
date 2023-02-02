@@ -68,6 +68,8 @@ export const createManualViewportNavigator = ({
     switchMap(({ data }) => {
       const navigation = navigator.getNavigationForUrl(data)
 
+      Report.log(NAMESPACE, `urlNavigation`, { data, navigation })
+
       if (navigation) {
         return of({
           ...navigation,
@@ -156,7 +158,9 @@ export const createManualViewportNavigator = ({
 
       if (spineItemHasChanged) {
         if (allowSpineItemChange) {
-          if (spineItemManager.comparePositionOf(newSpineItem, currentSpineItem) === `before`) {
+          const positionOfNewSpineItemComparedToCurrentOne = spineItemManager.comparePositionOf(newSpineItem, currentSpineItem)
+
+          if (positionOfNewSpineItemComparedToCurrentOne === `before`) {
             return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true })
           } else {
             return of({
@@ -186,7 +190,7 @@ export const createManualViewportNavigator = ({
       ]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
-        Report.log(NAMESPACE, `turnLeft`)
+        Report.log(NAMESPACE, `turnLeft`, { currentNavigation, navigation, allowSpineItemChange })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
       }
@@ -205,7 +209,7 @@ export const createManualViewportNavigator = ({
       ]) => {
         const navigation = navigator.getNavigationForRightPage(currentNavigation)
 
-        Report.log(NAMESPACE, `turnRight`)
+        Report.log(NAMESPACE, `turnRight`, { currentNavigation, navigation, allowSpineItemChange })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
       }

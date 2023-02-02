@@ -20,7 +20,8 @@
     "build": "tsc && vite build",
     "lint:read": "prettier --check . && eslint .",
     "lint:write": "prettier --write . && eslint --fix .",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@prose-reader/shared": "^1.12.0"

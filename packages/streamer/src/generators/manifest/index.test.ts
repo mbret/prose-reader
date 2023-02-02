@@ -1,6 +1,13 @@
 import { generateManifestFromArchive } from "./index"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
-import { expect, it, test } from "vitest"
+import { describe, expect, it, test } from "vitest"
+import { Archive } from "../../archives/types"
+
+const fakeContent = {
+  base64: () => Promise.resolve(""),
+  blob: () => Promise.resolve(new Blob([])),
+  string: () => Promise.resolve(""),
+}
 
 test(`Given a list of urls archive`, () => {
   it(`should return a valid pre-paginated manifest`, async () => {
@@ -77,6 +84,137 @@ test(`Given a list of urls with rendition flow archive`, () => {
         },
       ],
       title: "",
+    })
+  })
+})
+
+describe("Given archive with a folder containing a space", () => {
+  const fakeContent = {
+    base64: () => Promise.resolve(""),
+    blob: () => Promise.resolve(new Blob([])),
+    string: () => Promise.resolve(""),
+  }
+
+  it("should encode space but not the slash", async () => {
+    const archive: Archive = {
+      filename: "",
+      files: [
+        {
+          ...fakeContent,
+          basename: "Chapter 1/",
+          uri: "Chapter 1/",
+          dir: true,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "Chapter 1/page_1.jpg",
+          dir: false,
+          size: 1,
+        },
+      ],
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems).toEqual([
+      {
+        href: "Chapter%201/page_1.jpg",
+        id: "0.page_1.jpg",
+        mediaType: undefined,
+        pageSpreadLeft: undefined,
+        pageSpreadRight: undefined,
+        progressionWeight: 1,
+        renditionLayout: "pre-paginated",
+      },
+    ])
+  })
+})
+
+describe("Given archive with no folders", () => {
+  it("should not create any toc", async () => {
+    const archive: Archive = {
+      filename: "",
+      files: [
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "page_1.jpg",
+          dir: false,
+          size: 1,
+        },
+      ],
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.nav).toEqual(undefined)
+  })
+})
+
+describe("Given archive with folders", () => {
+  it("should create correct toc", async () => {
+    const archive: Archive = {
+      filename: "",
+      files: [
+        {
+          ...fakeContent,
+          basename: "Chapter 1/",
+          uri: "Chapter 1/",
+          dir: true,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "Chapter 2",
+          uri: "Chapter 2",
+          dir: true,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_2.jpg",
+          uri: "Chapter 1/page_2.jpg",
+          dir: false,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "Chapter 1/page_1.jpg",
+          dir: false,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_3.jpg",
+          uri: "Chapter 4/page_3.jpg",
+          dir: false,
+          size: 1,
+        },
+      ],
+    }
+
+    const baseUrl = "http://localhost:9000"
+
+    const manifest = await generateManifestFromArchive(archive, { baseUrl })
+
+    expect(manifest.nav).toEqual({
+      toc: [
+        {
+          contents: [],
+          href: `${baseUrl}/Chapter%201/page_1.jpg`,
+          path: "Chapter 1/page_1.jpg",
+          title: "Chapter 1",
+        },
+        {
+          contents: [],
+          href: `${baseUrl}/Chapter%204/page_3.jpg`,
+          path: "Chapter 4/page_3.jpg",
+          title: "Chapter 4",
+        },
+      ],
     })
   })
 })
