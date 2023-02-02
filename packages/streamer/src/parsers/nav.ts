@@ -3,8 +3,8 @@ import type { Manifest } from "@prose-reader/shared"
 import { Archive, getArchiveOpfInfo } from ".."
 import { urlJoin } from "@prose-reader/shared"
 
-type Toc = Manifest[`nav`][`toc`]
-type TocItem = Manifest[`nav`][`toc`][number]
+type Toc = NonNullable<Manifest[`nav`]>[`toc`]
+type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
 
 const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }) => {
   const chp: TocItem = {
@@ -97,7 +97,7 @@ const mapNcxChapter = (
 }
 
 const buildTOCFromNCX = (ncxData: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }) => {
-  const toc: Manifest[`nav`][`toc`] = []
+  const toc: NonNullable<Manifest[`nav`]>[`toc`] = []
 
   const rootTagName = ncxData.name
   let prefix = ``
