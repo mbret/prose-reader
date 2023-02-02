@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "type": "module",
   "main": "./dist/prose-streamer.umd.cjs",
   "module": "./dist/prose-streamer.js",
@@ -24,7 +24,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/shared": "^1.12.0"
+    "@prose-reader/shared": "^1.13.0"
   },
   "peerDependencies": {
     "buffer": "^6.0.3",
