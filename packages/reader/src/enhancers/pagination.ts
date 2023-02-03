@@ -236,18 +236,24 @@ export const paginationEnhancer =
     }
   }
 
-export const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
+const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
   const { href } = item
 
-  return getChapterInfo(href, manifest.nav?.toc ?? [])
+  return getChapterInfo(href, manifest.nav?.toc ?? [], manifest)
 }
 
 /**
  * @important it's important to compare only path vs path and or href vs href since
  * they have not comparable due to possible encoded values
  */
-const getChapterInfo = (href: string, tocItems: NonNullable<Manifest[`nav`]>[`toc`]): ChapterInfo | undefined => {
-  return tocItems.reduce((acc: ChapterInfo | undefined, tocItem) => {
+const getChapterInfo = (
+  href: string,
+  tocItem: NonNullable<Manifest["nav"]>["toc"],
+  manifest: Manifest
+): ChapterInfo | undefined => {
+  const spineItemIndex = manifest.spineItems.findIndex((item) => item.href === href)
+
+  return tocItem.reduce((acc: ChapterInfo | undefined, tocItem) => {
     const indexOfHash = tocItem.href.indexOf(`#`)
     const tocItemPathWithoutAnchor = indexOfHash > 0 ? tocItem.href.substr(0, indexOfHash) : tocItem.href
     const tocItemHrefWithoutFilename = tocItemPathWithoutAnchor.substring(0, tocItemPathWithoutAnchor.lastIndexOf("/"))
@@ -256,14 +262,32 @@ const getChapterInfo = (href: string, tocItems: NonNullable<Manifest[`nav`]>[`to
     const hrefIsChapterHref = href.endsWith(tocItemPathWithoutAnchor)
     const hrefIsWithinChapter = hrefWithoutFilename !== "" && hrefWithoutFilename.endsWith(tocItemHrefWithoutFilename)
 
-    if (hrefIsChapterHref || hrefIsWithinChapter) {
+    /**
+     * @important
+     * A possible toc item candidate means that the chapter is at least not after the item.
+     * It does not mean it's the correct chapter. The algorithm proceed by reducing every item
+     * until we find the one that is not. We then return the last found one.
+     *
+     * This is the most important piece as it's the reason why we can detect all the pages
+     * within a chapter.
+     *
+     * We rely on the order of items to be true. See https://www.w3.org/publishing/epub3/epub-packages.html#sec-nav-toc
+     */
+    const isPossibleTocItemCandidate = hrefIsChapterHref || hrefIsWithinChapter
+
+    if (isPossibleTocItemCandidate) {
+      const spineItemIndexOfPossibleCandidate = manifest.spineItems.findIndex((item) => item.href === tocItem.href)
+      const spineItemIsBeforeThisTocItem = spineItemIndex < spineItemIndexOfPossibleCandidate
+
+      if (spineItemIsBeforeThisTocItem) return acc
+
       return {
         title: tocItem.title,
         path: tocItem.path,
       }
     }
 
-    const subInfo = getChapterInfo(href, tocItem.contents)
+    const subInfo = getChapterInfo(href, tocItem.contents, manifest)
 
     if (subInfo) {
       return {
