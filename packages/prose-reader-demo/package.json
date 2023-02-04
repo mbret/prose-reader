@@ -36,7 +36,7 @@
     "buffer": "^6.0.3",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
-    "framer-motion": "^7.5.3",
+    "framer-motion": "^9.0.1",
     "hammerjs": "^2.0.8",
     "jszip": "^3.10.0",
     "localforage": "^1.10.0",
