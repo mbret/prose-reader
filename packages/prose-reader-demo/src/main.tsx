@@ -1,4 +1,4 @@
-window.__PROSE_READER_DEBUG = !!import.meta.env.PROD
+window.__PROSE_READER_DEBUG = !import.meta.env.PROD
 
 import React from "react"
 import { createRoot } from "react-dom/client"
