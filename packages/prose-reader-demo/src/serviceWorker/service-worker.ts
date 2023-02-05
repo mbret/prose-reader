@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+/* eslint-disable no-restricted-globals */
 import { loadEpub } from "./loadEpub"
 import {
   generateResourceFromArchive,
@@ -8,19 +10,22 @@ import {
 import { STREAMER_URL_PREFIX } from "./constants"
 import { extractInfoFromEvent, getResourcePath } from "./utils"
 
-// @todo typing
-const worker: any = self as any
+declare const self: ServiceWorkerGlobalScope
 
 configure({
-  enableReport: process.env.NODE_ENV === `development`
+  enableReport: !import.meta.env.PROD
 })
 
-worker.addEventListener("install", function (e: any) {
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+console.log(self.__WB_MANIFEST)
+
+self.addEventListener("install", function (e: any) {
   console.log("service worker install")
-  e.waitUntil(worker.skipWaiting()) // Activate worker immediately
+  e.waitUntil(self.skipWaiting()) // Activate worker immediately
 
   setTimeout(async () => {
-    const client = await worker.clients.get(e.clientId)
+    const client = await self.clients.get(e.clientId)
     if (!e.clientId) {
       console.log("no client id")
       return
@@ -31,8 +36,8 @@ worker.addEventListener("install", function (e: any) {
   })
 })
 
-worker.addEventListener("activate", function (event: any) {
-  event.waitUntil((worker as any).clients.claim()) // Become available to all pages
+self.addEventListener("activate", function (event) {
+  event.waitUntil(self.clients.claim()) // Become available to all pages
 })
 
 const serveManifest = async (epubUrl: string, baseUrl: string) => {
@@ -68,7 +73,7 @@ const serveResource = async (event: any, epubUrl: string) => {
  * We need to provide our custom function to retrieve the archive.
  * This getter can fetch the epub from internet, indexedDB, etc
  */
-worker.addEventListener("fetch", (event: any) => {
+self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url)
 
   if (url.pathname.startsWith(`/${STREAMER_URL_PREFIX}`)) {

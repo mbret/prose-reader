@@ -2,7 +2,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "noImplicitAny": true,
-    "module": "es6",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
     "paths": {
@@ -11,7 +12,6 @@
     },
     "strict": true,
     "jsx": "react",
-    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true

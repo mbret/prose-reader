@@ -3,21 +3,24 @@ import { resolve } from "path"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
 import { externals } from "rollup-plugin-node-externals"
+import { name } from "./package.json"
+
+const libName = name.replace(`@`, ``).replace(`/`, `-`)
 
 export default defineConfig(({ mode }) => ({
   build: {
+    minify: false,
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
-      name: `prose-react`,
-      fileName: `prose-react`,
+      name: libName,
+      fileName: libName,
     },
-    minify: false,
-    sourcemap: true,
     emptyOutDir: mode !== `development`,
+    sourcemap: true,
   },
   plugins: [
     {
-      enforce: "pre",
+      enforce: `pre`,
       ...externals({
         peerDeps: true,
         deps: true,
@@ -27,3 +30,4 @@ export default defineConfig(({ mode }) => ({
     dts(),
   ],
 }))
+

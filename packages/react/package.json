@@ -1,12 +1,13 @@
 {
   "name": "@prose-reader/react",
   "version": "1.16.0",
-  "main": "./dist/prose-react.umd.cjs",
-  "module": "./dist/prose-react.js",
+  "type": "module",
+  "main": "./dist/prose-reader-react.umd.cjs",
+  "module": "./dist/prose-reader-react.js",
   "exports": {
     ".": {
-      "import": "./dist/prose-react.js",
-      "require": "./dist/prose-react.umd.cjs"
+      "import": "./dist/prose-reader-react.js",
+      "require": "./dist/prose-reader-react.umd.cjs"
     }
   },
   "types": "./dist/index.d.ts",
