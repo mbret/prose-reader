@@ -34,7 +34,7 @@ export default function Index() {
             extensive functionalities.
           </Text>
           <Text paddingY={5} textAlign="center">
-            prose is a library licensed under MIT license. It's{" "}
+            prose is a library licensed under <b>MIT license</b>. It's{" "}
             <Link href="https://github.com/mbret/prose-reader/blob/master/LICENCE" isExternal color="blue.500">
               free of use <ExternalLinkIcon mx="2px" />
             </Link>{" "}
