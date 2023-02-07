@@ -66,15 +66,11 @@ export const Home = () => {
 
   return (
     <div>
-      <div
-        style={{
-          padding: 10
-        }}
-      >
+      <Box padding={[4]}>
         <Link to={`/`} style={{ marginBottom: 20 }}>
           <ChakraButton leftIcon={<ArrowBackIcon />}>Back to home</ChakraButton>
         </Link>
-      </div>
+      </Box>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
         {property.map((item, i) => (
           <MangaCard {...item} key={i} />

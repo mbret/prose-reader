@@ -14,7 +14,7 @@ import {
   Text,
   IconButton
 } from "@chakra-ui/react"
-import { ArrowBackIcon, DeleteIcon } from "@chakra-ui/icons"
+import { ArrowBackIcon, DeleteIcon, ExternalLinkIcon } from "@chakra-ui/icons"
 import { useDropzone } from "react-dropzone"
 import localforage from "localforage"
 import { useUploadedBooks } from "./useUploadedBooks"
@@ -32,18 +32,7 @@ const items = [
     name: `moby-dick_txt.txt`,
     type: `EN - LTR - TXT`
   },
-  {
-    name: `mymedia_lite.epub`,
-    type: `JP - RTL - RFL`
-  },
-  {
-    name: `haruko-html-jpeg.epub`,
-    type: `JP - RTL - FXL(P)`
-  },
-  {
-    name: `regime-anticancer-arabic.epub`,
-    type: `AR - RTL - RFL`
-  },
+
   {
     name: `sample.cbz`,
     type: `EN - LTR - FXL`
@@ -55,6 +44,18 @@ const items = [
   {
     name: `Accessibility-Tests-Mathematics.epub`,
     type: `EN - LTR - RFL`
+  },
+  {
+    name: `regime-anticancer-arabic.epub`,
+    type: `AR - RTL - RFL`
+  },
+  {
+    name: `mymedia_lite.epub`,
+    type: `JP - RTL - RFL`
+  },
+  {
+    name: `haruko-html-jpeg.epub`,
+    type: `JP - RTL - FXL(P)`
   }
 ]
 
@@ -131,7 +132,7 @@ export const Home = () => {
           }}>open</button>
         </Box> */}
       </Box>
-      <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginBottom={[8]}>
+      <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto">
         <Table variant="simple" size={tableSize} style={{ tableLayout: `fixed` }}>
           <Thead>
             <Tr>
@@ -162,7 +163,18 @@ export const Home = () => {
           </Tbody>
         </Table>
       </Box>
-      <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginBottom={[8]}>
+      <Box borderWidth={[0, `1px`]} borderRadius={10} padding={4} maxW={[`auto`, `md`, `lg`]} margin="auto" marginTop={5}>
+        <Box mb={2}>
+          <RouterLink to={`/comics`}>
+            <ChakraButton width="100%">Visit the comic reader</ChakraButton>
+          </RouterLink>
+        </Box>
+        <Text>
+          If you only care about manga or comics, discover a manga showcase featuring various type of reading style and more
+          focused for your needs
+        </Text>
+      </Box>
+      <Box borderWidth={[0, `1px`]} borderRadius="lg" maxW={[`auto`, `md`, `lg`]} margin="auto" marginTop={5} marginBottom={[8]}>
         <Table variant="simple" size={tableSize} style={{ tableLayout: `fixed` }}>
           <Thead>
             <Tr>

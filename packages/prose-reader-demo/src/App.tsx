@@ -4,7 +4,7 @@ import { useSetRecoilState } from "recoil"
 import { Home as ComicsHome } from "./comics/Home"
 import { Home } from "./Home"
 import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react"
-import { theme } from "./theme"
+import { theme } from "./theme/theme"
 import { ReaderInstance } from "./types"
 import { Home as ClassicHome } from "./classic/Home"
 import { takeUntil } from "rxjs"
@@ -14,6 +14,7 @@ import { ErrorBoundary } from "./common/ErrorBoundary"
 import { useReader } from "./useReader"
 import { Subscribe } from "@react-rxjs/core"
 import { Reader } from "./Reader"
+import '@fontsource/dancing-script/400.css'
 
 export const App = memo(() => {
   const [reader, setReader] = useReader()
@@ -32,7 +33,7 @@ export const App = memo(() => {
                   </ErrorBoundary>
                 }
               />
-              <Route path="/classic" element={<ClassicHome />} />
+              <Route path="/books" element={<ClassicHome />} />
               <Route path="/comics" element={<ComicsHome />} />
               <Route path="/" element={<Home />} />
               <Route path="*" element={<Navigate to="/" />} />

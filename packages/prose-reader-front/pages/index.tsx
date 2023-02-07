@@ -68,6 +68,16 @@ export default function Index() {
             discord
           </Button>
         </Box>
+        <Box as="footer" marginTop={16} paddingBottom={8} textAlign="center">
+          <Text>
+            © Copyright{" "}
+            <b>
+              <Link href="https://www.linkedin.com/in/maxime-bret/" rel="nofollow noopener noreferrer" isExternal>
+                Maxime Bret
+              </Link>
+            </b>
+          </Text>
+        </Box>
       </Box>
     </>
   )
