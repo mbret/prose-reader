@@ -1,9 +1,12 @@
-name: check_publish_lib
+name: check
 
 on:
   push:
-    branches:
-      - 'master'
+    branches-ignore:
+      - "master"
+  pull_request:
+    branches-ignore:
+      - "master"
 
 jobs:
   check:
