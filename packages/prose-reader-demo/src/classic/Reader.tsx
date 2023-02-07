@@ -10,7 +10,6 @@ import {
   isHelpOpenState,
   isMenuOpenState,
   isSearchOpenState,
-  isTocOpenState,
   manifestState,
   paginationState,
   useResetStateOnUnMount
@@ -23,12 +22,8 @@ import { useParams } from "react-router"
 import { BookError } from "../BookError"
 import { getEpubUrlFromLocation } from "../serviceWorker/utils"
 import { HighlightMenu } from "../HighlightMenu"
-import { useHighlights } from "../useHighlights"
-import { useSearch } from "../useSearch"
 import { SearchDialog } from "../SearchDialog"
-import { TocDialog } from "../TocDialog"
 import { HelpDialog } from "../HelpDialog"
-import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { useReader } from "../useReader"
 
 export const Reader = ({
@@ -47,11 +42,8 @@ export const Reader = ({
   const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const highlightsEnhancer = useHighlights(reader)
-  const searchEnhancer = useSearch(reader)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
-  const [isTocOpen, setIsTocOpen] = useRecoilState(isTocOpenState)
   const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
   const [readerOptions] = useState<ReactReaderProps["options"]>({
     // fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
@@ -158,7 +150,6 @@ export const Reader = ({
       <QuickMenu open={isMenuOpen} isComics={false} onSettingsClick={() => setIsSettingsOpen(true)} />
       {reader && <ClassicSettings reader={reader} open={isSettingsOpen} onExit={onClassicSettingsExit} />}
       <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
-      <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
       <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />
     </>
   )

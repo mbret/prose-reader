@@ -76,7 +76,7 @@ export const createViewportNavigator = ({
    * This value may be used to adjust / get current valid info about what should be visible.
    * This DOES NOT reflect necessarily what is visible for the user at instant T.
    */
-  const currentNavigationPositionSubject$ = new BehaviorSubject({ x: -1, y: 0 })
+  const currentNavigationPositionSubject$ = new BehaviorSubject<ViewportNavigationEntry>({ x: -1, y: 0, spineItem: undefined })
   const navigator = createNavigationResolver({
     context,
     spineItemManager,
@@ -595,7 +595,6 @@ export const createViewportNavigator = ({
     goToUrl: manualViewportNavigator.goToUrl,
     goToCfi: manualViewportNavigator.goToCfi,
     goToPageOfCurrentChapter: manualViewportNavigator.goToPageOfCurrentChapter,
-    adjustNavigation,
     moveTo: panViewportNavigator.moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
     element,

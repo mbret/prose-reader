@@ -1,6 +1,6 @@
 import { PROJECT_NAME } from "./constants.shared"
 
-const IS_DEVELOPMENT = process.env.NODE_ENV === `development`
+const IS_DEVELOPMENT = !import.meta.env.PROD
 
 export const Report = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

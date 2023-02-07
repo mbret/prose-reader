@@ -1,21 +1,27 @@
 {
   "name": "@prose-reader/react",
-  "version": "1.13.0",
-  "main": "dist/index.js",
+  "version": "1.20.0",
+  "type": "module",
+  "main": "./dist/prose-reader-react.umd.cjs",
+  "module": "./dist/prose-reader-react.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-reader-react.js",
+      "require": "./dist/prose-reader-react.umd.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "license": "MIT",
   "files": [
     "/dist"
   ],
   "scripts": {
-    "start": "concurrently -n src,types \"yarn start-src\" \"yarn start-types\"",
-    "start-src": "NODE_ENV=development webpack build --config ./webpack.config.js --watch",
-    "start-types": "yarn tsc -w --preserveWatchOutput --declaration --noEmit false --emitDeclarationOnly",
-    "build": "concurrently -n src,types \"yarn build-src\" \"yarn build-types\"",
-    "build-src": "NODE_ENV=development webpack build --config ./webpack.config.js",
-    "build-types": "yarn tsc --declaration --noEmit false --emitDeclarationOnly",
-    "build:prod": "NODE_ENV=production webpack build --config ./webpack.config.js && yarn build-types",
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
     "lint:read": "prettier --check . && eslint .",
     "lint:write": "prettier --write . && eslint --fix .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "tsc": "tsc"
   },
   "peerDependencies": {
@@ -25,7 +31,7 @@
     "react-dom": "*"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.13.0"
+    "@prose-reader/core": "^1.20.0"
   },
   "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }

@@ -1,7 +1,7 @@
 {
-  "npmClient": "yarn",
+  "npmClient": "npm",
   "useWorkspaces": true,
-  "version": "1.13.0",
+  "version": "1.20.0",
   "command": {
     "publish": {
       "graphType": "all"

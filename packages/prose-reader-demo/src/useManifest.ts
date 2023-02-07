@@ -15,6 +15,9 @@ export const useManifest = (epubUrl: string) =>
       return bookManifest
     },
     {
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
       onError: Report.error
     }
   )

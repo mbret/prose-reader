@@ -100,7 +100,7 @@ export const QuickMenu = ({
               }}
             >
               {!isComics && <IconButton icon={<QuestionOutlineIcon />} aria-label="help" onClick={onHelpClick} marginRight={1} />}
-              {!isComics && <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />}
+              <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />
               {!isComics && <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />}
               <IconButton icon={<SettingsIcon />} onClick={onSettingsClick} aria-label="settings" />
             </div>

@@ -1,8 +1,8 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
-import { LoadOptions } from "./types"
 import { Manifest } from "@prose-reader/shared"
 import { createSettings, PublicSettings } from "./settings"
+import { LoadOptions } from "./reader"
 
 type SettingsManager = ReturnType<typeof createSettings>
 

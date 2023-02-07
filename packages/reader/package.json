@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "1.13.0",
+  "version": "1.20.0",
   "type": "module",
   "main": "./dist/prose.umd.cjs",
   "module": "./dist/prose.js",
@@ -21,22 +21,17 @@
     "lint:read": "prettier --check . && eslint .",
     "lint:write": "prettier --write . && eslint --fix .",
     "test": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/shared": "^1.13.0"
+    "@prose-reader/shared": "^1.20.0"
   },
   "peerDependencies": {
     "rxjs": "*"
   },
   "devDependencies": {
-    "concurrently": "^7.4.0",
-    "html-webpack-plugin": "^5.5.0",
-    "terser-webpack-plugin": "^5.3.0",
-    "ts-loader": "^9.2.8",
-    "webpack": "^5.65.0",
-    "webpack-bundle-analyzer": "^4.5.0",
-    "webpack-cli": "^4.9.1"
+    "jsdom": "^21.1.0"
   },
   "gitHead": "fe0faae4e663ef215fe9ecb047076aab5d2dfd4a"
 }

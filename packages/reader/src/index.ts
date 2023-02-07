@@ -1,5 +1,4 @@
 import { createSelection } from "./selection"
-export { compose } from "./utils/compose"
 
 export type { Manifest } from "./types"
 

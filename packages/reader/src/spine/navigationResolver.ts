@@ -268,15 +268,13 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForUrl = (url: string | URL): (ViewportNavigationEntry & { url: URL }) | undefined => {
-    let validUrl: URL | undefined
     try {
-      validUrl = url instanceof URL ? url : new URL(url)
-    } catch (e) {
-      Report.error(e)
-    }
-    if (validUrl) {
+      const validUrl = url instanceof URL ? url : new URL(url)
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
       const existingSpineItem = context.getManifest()?.spineItems.find((item) => item.href === urlWithoutAnchor)
+
+      console.log({ validUrl, urlWithoutAnchor, existingSpineItem }, context.getManifest()?.spineItems)
+
       if (existingSpineItem) {
         const spineItem = spineItemManager.get(existingSpineItem.id)
         if (spineItem) {
@@ -285,9 +283,13 @@ export const createNavigationResolver = ({
           return { ...getAdjustedPositionForSpread(position), url: validUrl }
         }
       }
-    }
 
-    return undefined
+      return undefined
+    } catch (e) {
+      Report.error(e)
+
+      return undefined
+    }
   }
 
   const getNavigationForAnchor = (anchor: string, spineItem: SpineItem) => {

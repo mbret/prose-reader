@@ -59,7 +59,7 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
     } else {
       setCurrentSubChapter(undefined)
     }
-  }, [isOpen])
+  }, [isOpen, pagination])
 
   return (
     <FullScreenModal isOpen={isOpen} onClose={onExit} title="Table Of Content">

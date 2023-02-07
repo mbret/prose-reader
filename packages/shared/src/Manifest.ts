@@ -7,7 +7,10 @@ export type TocItem = {
 
 export type Manifest = {
   filename: string
-  nav: {
+  /**
+   * @see https://www.w3.org/publishing/epub3/epub-packages.html#sec-nav-toc
+   */
+  nav?: {
     toc: TocItem[]
   }
   title: string
