@@ -1,6 +1,6 @@
 {
   "name": "prose-reader-front",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "private": true,
   "engines": {
     "node": ">=18"
