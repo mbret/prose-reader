@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "start": "vite --port 9000",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
     "lint": "prettier -w .",
     "test": "echo",
     "tsc": "tsc"
