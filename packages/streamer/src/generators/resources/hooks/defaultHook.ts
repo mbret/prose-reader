@@ -1,4 +1,3 @@
-import { Manifest } from "@prose-reader/shared"
 import { getArchiveOpfInfo } from "../../../archives/getArchiveOpfInfo"
 import { Archive } from "../../../archives/types"
 import { getItemsFromDoc } from "../../manifest/hooks/epub"
