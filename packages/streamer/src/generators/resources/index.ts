@@ -25,7 +25,7 @@ export const generateResourceFromArchive = async (archive: Archive, resourcePath
       return await gen(await manifest)
     }, Promise.resolve(defaultResource))
 
-    Report.log("Generated resource", resource)
+    Report.log("Generated resource", resourcePath, resource)
 
     return {
       ...resource,
