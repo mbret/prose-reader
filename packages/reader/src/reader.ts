@@ -325,6 +325,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
      * BehaviorSubject
      */
     pagination$: pagination.$.info$,
+    spineItems$: spine.$.spineItems$,
     $: {
       state$: stateSubject$.asObservable(),
       /**

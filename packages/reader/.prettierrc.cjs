@@ -1,3 +1,4 @@
 module.exports = {
-  ...require("../../.prettierrc.js"),
+  semi: false,
+  printWidth: 120,
 }
