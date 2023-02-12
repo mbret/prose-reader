@@ -154,7 +154,7 @@ export const bookmarksEnhancer =
      * This way it works even if the item is not loaded. It will be relative to first page
      * anyway.
      */
-    reader.$.itemsCreated$
+    reader.spineItems$
       .pipe(
         switchMap((items) => merge(items.map(({ element }) => createClickListener$(element)))),
         takeUntil(reader.$.destroy$)

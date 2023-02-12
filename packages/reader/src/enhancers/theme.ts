@@ -97,7 +97,7 @@ export const themeEnhancer =
      * Make sure to apply theme on item container (fixed layout)
      * & loading element
      */
-    reader.$.itemsCreated$
+    reader.spineItems$
       .pipe(
         tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
         takeUntil(reader.$.destroy$)
