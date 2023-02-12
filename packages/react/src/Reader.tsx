@@ -12,7 +12,6 @@ export type Props<Options extends object, Instance extends ReaderInstance> = {
   createReader: (options: Options) => Instance
   onReader?: (reader: any) => void
   onReady?: () => void
-  onPaginationChange?: (pagination: ObservedValueOf<Instance["pagination$"]>) => void
   LoadingElement?: ReactElement
 }
 
@@ -22,7 +21,6 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
   onReader,
   loadOptions,
   options,
-  onPaginationChange,
   LoadingElement,
   createReader,
 }: Props<Options, Instance>) => {
@@ -71,16 +69,6 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
       readerSubscription$?.unsubscribe()
     }
   }, [reader, onReady])
-
-  useEffect(() => {
-    const paginationSubscription = reader?.pagination$.subscribe((data) => {
-      onPaginationChange && onPaginationChange(data as any)
-    })
-
-    return () => {
-      paginationSubscription?.unsubscribe()
-    }
-  }, [onPaginationChange, reader])
 
   useEffect(() => {
     if (manifest && reader) {
