@@ -1,6 +1,8 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import { Button as ChakraButton, Text, Box, Heading, Link as ChakraLink } from "@chakra-ui/react"
+import { OrDivider } from "./common/OrDivider"
+import { ExternalLinkIcon } from "@chakra-ui/icons"
 
 export const Home = () => {
   return (
@@ -32,7 +34,7 @@ export const Home = () => {
             demo
           </Text>
         </Box>
-        <Box padding={2} textAlign="justify" maxWidth={[`auto`]} marginX={[4]} mb={4}>
+        <Box textAlign="justify" maxWidth={[`auto`]} marginX={[4]} mb={4}>
           <Text as="p">
             This demo is a reader made with React and use <b>prose</b> to render its content.
           </Text>
@@ -41,12 +43,25 @@ export const Home = () => {
             reader app.
           </Text>
         </Box>
-        <Box marginTop={4}>
+        <Box mt={4} mb={2} width="100%" paddingX={4}>
           <Link to={`/books`} style={{ marginBottom: 20 }}>
             <ChakraButton size="lg" width="100%">
               Take me in!
             </ChakraButton>
           </Link>
+        </Box>
+        <OrDivider />
+        <Box mt={2} width="100%" paddingX={4}>
+          <ChakraButton
+            size="lg"
+            width="100%"
+            as="a"
+            href="https://prose-reader.com/"
+            target="_blank"
+            rightIcon={<ExternalLinkIcon />}
+          >
+            landing page
+          </ChakraButton>
         </Box>
       </div>
       <Box as="footer" paddingBottom={8} textAlign="center">
