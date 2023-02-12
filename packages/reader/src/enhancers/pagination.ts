@@ -63,6 +63,8 @@ type PaginationInfo = {
   numberOfTotalPages: number | undefined
   isUsingSpread: boolean
   // numberOfSpineItems: number | undefined
+  canGoLeft: boolean
+  canGoRight: boolean
 }
 
 export const paginationEnhancer =
@@ -86,12 +88,24 @@ export const paginationEnhancer =
       return item && manifest && buildChapterInfoFromSpineItem(manifest, item)
     }
 
-    const mapPaginationInfoToExtendedInfo = (paginationInfo: ObservedValueOf<typeof reader.pagination$>) => {
+    const mapPaginationInfoToExtendedInfo = (
+      paginationInfo: ObservedValueOf<typeof reader.pagination$>
+    ): Omit<
+      PaginationInfo,
+      "beginAbsolutePageIndex" | "endAbsolutePageIndex" | "beginAbsolutePageIndex" | "numberOfTotalPages"
+    > => {
       const context = reader.context
+      const manifest = context.getManifest()
+      const numberOfSpineItems = manifest?.spineItems.length ?? 0
       const beginItem =
         paginationInfo.beginSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.beginSpineItemIndex) : undefined
       const endItem =
         paginationInfo.endSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.endSpineItemIndex) : undefined
+
+      const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndex === 0
+      const isAtAbsoluteEnd =
+        paginationInfo.endPageIndex === paginationInfo.endNumberOfPages - 1 &&
+        paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
 
       return {
         beginPageIndexInChapter: paginationInfo.beginPageIndex,
@@ -144,6 +158,12 @@ export const paginationEnhancer =
         // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // numberOfSpineItems: context.getManifest()?.readingOrder.length,
+        canGoLeft:
+          (manifest?.readingDirection === "ltr" && !isAtAbsoluteBeginning) ||
+          (manifest?.readingDirection === "rtl" && !isAtAbsoluteEnd),
+        canGoRight:
+          (manifest?.readingDirection === "ltr" && !isAtAbsoluteEnd) ||
+          (manifest?.readingDirection === "rtl" && !isAtAbsoluteBeginning),
       }
     }
 
@@ -171,7 +191,7 @@ export const paginationEnhancer =
         return getSpineItemNumberOfPages(item)
       }, 0)
 
-    reader.$.itemsCreated$
+    reader.spineItems$
       .pipe(
         tap((items) =>
           items.forEach(({ item }) => {
@@ -190,7 +210,10 @@ export const paginationEnhancer =
       distinctUntilChanged(isShallowEqual)
     )
 
-    const totalPages$ = reader.$.layout$.pipe(
+    const totalPages$: Observable<{
+      numberOfPagesPerItems: number[]
+      numberOfTotalPages: number
+    }> = reader.$.layout$.pipe(
       debounceTime(10, animationFrameScheduler),
       withLatestFrom(reader.pagination$),
       map(() => {
@@ -207,7 +230,7 @@ export const paginationEnhancer =
       }),
       distinctUntilChanged(isShallowEqual),
       startWith({
-        numberOfPagesPerItems: [] as number[],
+        numberOfPagesPerItems: [],
         numberOfTotalPages: 0,
       })
     )
