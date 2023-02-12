@@ -2,11 +2,9 @@ import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscript
 import {
   catchError,
   debounce,
-  distinctUntilChanged,
   filter,
   map,
   share,
-  skip,
   switchMap,
   take,
   takeUntil,
@@ -73,7 +71,7 @@ export const createSpine = ({
   }>
   viewportState$: Observable<`free` | `busy`>
 }): Spine => {
-  const itemsCreatedSubject$ = new Subject<Pick<SpineItem, `item` | `element`>[]>()
+  const spineItems$ = new Subject<SpineItem[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
   const subject = new Subject<Event>()
   const containerElement = createContainerElement(ownerDocument, hooks$)
@@ -91,7 +89,7 @@ export const createSpine = ({
   const reload = () => {
     itemsBeforeDestroySubject$.next()
     spineItemManager.destroyItems()
-    context.getManifest()?.spineItems.map(async (resource) => {
+    context.getManifest()?.spineItems.map((resource) => {
       const spineItem = createSpineItem({
         item: resource,
         containerElement: containerElement,
@@ -102,7 +100,7 @@ export const createSpine = ({
       })
       spineItemManager.add(spineItem)
     })
-    itemsCreatedSubject$.next(spineItemManager.getAll())
+    spineItems$.next(spineItemManager.getAll())
   }
 
   const manipulateSpineItems = (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => {
@@ -435,7 +433,7 @@ export const createSpine = ({
     manipulateSpineItems,
     manipulateSpineItem,
     destroy: () => {
-      itemsCreatedSubject$.complete()
+      spineItems$.complete()
       itemsBeforeDestroySubject$.next()
       itemsBeforeDestroySubject$.complete()
       subject.complete()
@@ -449,7 +447,7 @@ export const createSpine = ({
     $: {
       $: subject.asObservable(),
       layout$: spineItemManager.$.layout$,
-      itemsCreated$: itemsCreatedSubject$.asObservable(),
+      spineItems$: spineItems$.asObservable(),
       itemsBeforeDestroy$: itemsBeforeDestroySubject$.asObservable(),
     },
   }

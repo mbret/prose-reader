@@ -1,21 +1,23 @@
 import { Manifest } from "@prose-reader/shared"
 import { Observable } from "rxjs"
 
+/**
+ * Ideal when your logic only needs to apply something to the item when it's loaded.
+ * You can manipulate your item later if you need to update it and trigger a layout.
+ * This logic will not run every time there is a layout.
+ */
+type ItemOnLoadHook = {
+  name: `item.onLoad`
+  fn: (manipulableFrame: {
+    frame: HTMLIFrameElement
+    removeStyle: (id: string) => void
+    item: Manifest[`spineItems`][number]
+    addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void
+  }) => (() => void) | Observable<unknown> | void
+}
+
 export type Hook =
-  /**
-   * Ideal when your logic only needs to apply something to the item when it's loaded.
-   * You can manipulate your item later if you need to update it and trigger a layout.
-   * This logic will not run every time there is a layout.
-   */
-  | {
-      name: `item.onLoad`
-      fn: (manipulableFrame: {
-        frame: HTMLIFrameElement
-        removeStyle: (id: string) => void
-        item: Manifest[`spineItems`][number]
-        addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void
-      }) => (() => void) | Observable<any> | void
-    }
+  | ItemOnLoadHook
   | {
       name: `item.onBeforeContainerCreated`
       fn: (payload: HTMLElement) => HTMLElement
@@ -84,10 +86,10 @@ export type Hook =
     }
 
 export interface RegisterHook {
-  (name: `item.onLoad`, fn: Extract<Hook, { name: `item.onLoad` }>[`fn`]): void
   (name: `item.onBeforeContainerCreated`, fn: Extract<Hook, { name: `item.onBeforeContainerCreated` }>[`fn`]): void
   (name: `item.onGetResource`, fn: Extract<Hook, { name: `item.onGetResource` }>[`fn`]): void
   (name: `item.onLayoutBeforeMeasurement`, fn: Extract<Hook, { name: `item.onLayoutBeforeMeasurement` }>[`fn`]): void
   (name: `item.onAfterLayout`, fn: Extract<Hook, { name: `item.onAfterLayout` }>[`fn`]): void
   (name: `onViewportOffsetAdjust`, fn: Extract<Hook, { name: `onViewportOffsetAdjust` }>[`fn`]): void
+  (name: `item.onLoad`, fn: ItemOnLoadHook["fn"]): void
 }
