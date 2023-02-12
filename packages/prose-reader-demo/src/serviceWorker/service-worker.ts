@@ -57,7 +57,7 @@ const serveResource = async (event: any, epubUrl: string) => {
 
     const resource = await generateResourceFromArchive(archive, resourcePath)
 
-    return new Response(resource.body, { ...resource.params, status: 200 })
+    return new Response(resource.body, resource.params)
   } catch (e) {
     console.error(e)
 

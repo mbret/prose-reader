@@ -19,7 +19,7 @@ if ("serviceWorker" in navigator) {
            * firefox does not support module type for dev service worker.
            * Please build and copy dist service worker in public when developing with firefox
            */
-          navigator.userAgent.startsWith("Mozilla/")
+          navigator.userAgent.includes("Firefox/")
           ? "/service-worker.js"
           : "/dev-sw.js?dev-sw",
         {
