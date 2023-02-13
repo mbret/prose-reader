@@ -19,7 +19,7 @@ export type Context = {
   setHasVerticalWriting: () => void
   getReadingDirection: () => Manifest[`readingDirection`] | undefined
   getPageSize: () => { height: number; width: number }
-  setVisibleAreaRect: (x: number, y: number, width: number, height: number) => void
+  setVisibleAreaRect: (options: { x: number; y: number; width: number; height: number }) => void
   isRTL: () => boolean
   destroy: () => void
   $: {
@@ -132,7 +132,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     getVisibleAreaRect: () => visibleAreaRect,
     shouldDisplaySpread,
     setHasVerticalWriting,
-    setVisibleAreaRect: (x: number, y: number, width: number, height: number) => {
+    setVisibleAreaRect: ({ height, width, x, y }: { x: number; y: number; width: number; height: number }) => {
       // visibleAreaRect.width = width - horizontalMargin * 2
       visibleAreaRect.width = width
       visibleAreaRect.height = height - marginTop - marginBottom

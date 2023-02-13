@@ -64,7 +64,11 @@ export const progressionEnhancer =
           // Therefore it effectively prevent jump from 30% to 25% for example.
           progressWithinThisItem = 0
         }
-        totalProgress = getTotalProgressFromPercentages(estimateBeforeThisItem, currentItemWeight, progressWithinThisItem)
+        totalProgress = getTotalProgressFromPercentages(
+          estimateBeforeThisItem,
+          currentItemWeight,
+          progressWithinThisItem
+        )
       }
 
       // because the rounding of weight use a lot of decimals we will end up with
@@ -91,12 +95,12 @@ export const progressionEnhancer =
     ) => {
       const { height, width } = currentItem.getElementDimensions()
 
-      const { topStart, leftStart } = reader.getAbsolutePositionOf(currentItem)
+      const { topStart, startOffset } = reader.getAbsolutePositionOf(currentItem)
 
       if (context.getSettings().computedPageTurnDirection === `vertical`) {
         return Math.max(0, Math.min(1, (currentPosition.y - topStart + context.getVisibleAreaRect().height) / height))
       } else {
-        return Math.max(0, Math.min(1, (currentPosition.x - leftStart + context.getVisibleAreaRect().width) / width))
+        return Math.max(0, Math.min(1, (currentPosition.x - startOffset + context.getVisibleAreaRect().width) / width))
       }
     }
 

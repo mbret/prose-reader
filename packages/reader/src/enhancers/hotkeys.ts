@@ -1,5 +1,5 @@
 import { KeyboardEvent } from "react"
-import { EMPTY, endWith, fromEvent, map, merge, switchMap, takeUntil, withLatestFrom } from "rxjs"
+import { EMPTY, fromEvent, map, merge, switchMap, takeUntil, withLatestFrom } from "rxjs"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =
@@ -45,12 +45,12 @@ export const hotkeysEnhancer =
           merge(
             ...spineItems.map((item) =>
               item.$.loaded$.pipe(
-                endWith(undefined),
                 switchMap((iframe) => (iframe?.contentDocument ? navigateOnKey(iframe.contentDocument) : EMPTY))
               )
             )
           )
-        )
+        ),
+        takeUntil(reader.$.destroy$)
       )
       .subscribe()
 

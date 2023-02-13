@@ -122,19 +122,14 @@ export const paginationEnhancer =
         // charOffset: number;
         // serializeString?: string;
         beginSpineItemIndex: paginationInfo.beginSpineItemIndex,
-        // spineItemPath: beginItem?.item.path,
-        // spineItemId: beginItem?.item.id,
         beginCfi: paginationInfo.beginCfi,
         beginSpineItemReadingDirection: beginItem?.getReadingDirection(),
         endChapterInfo: endItem ? chaptersInfo[endItem.item.id] : undefined,
         endPageIndexInChapter: paginationInfo.endPageIndex,
         endNumberOfPagesInChapter: paginationInfo.endNumberOfPages,
         endSpineItemIndex: paginationInfo.endSpineItemIndex,
-        // spineItemPath: endItem?.item.path,
-        // spineItemId: endItem?.item.id,
         endSpineItemReadingDirection: endItem?.getReadingDirection(),
         endCfi: paginationInfo.endCfi,
-        // end: ReadingLocation;
         // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
         /**
          * This percentage is based of the weight (kb) of every items and the number of pages.
@@ -153,8 +148,6 @@ export const paginationEnhancer =
             )
           : 0,
         isUsingSpread: context.shouldDisplaySpread(),
-        // chaptersOfBook: number;
-        // chapter: string;
         // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // numberOfSpineItems: context.getManifest()?.readingOrder.length,

@@ -161,7 +161,11 @@ export const createManualViewportNavigator = ({
           const positionOfNewSpineItemComparedToCurrentOne = spineItemManager.comparePositionOf(newSpineItem, currentSpineItem)
 
           if (positionOfNewSpineItemComparedToCurrentOne === `before`) {
-            return of({ ...navigation, lastUserExpectedNavigation: { type: `navigate-from-next-item` as const }, animate: true })
+            return of({
+              ...navigation,
+              lastUserExpectedNavigation: { type: `navigate-from-next-item` as const },
+              animate: true,
+            })
           } else {
             return of({
               ...navigation,

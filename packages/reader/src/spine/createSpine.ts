@@ -1,16 +1,5 @@
 import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
-import {
-  catchError,
-  debounce,
-  filter,
-  map,
-  share,
-  switchMap,
-  take,
-  takeUntil,
-  tap,
-  withLatestFrom,
-} from "rxjs/operators"
+import { catchError, debounce, filter, map, share, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
 import { Pagination } from "../pagination"

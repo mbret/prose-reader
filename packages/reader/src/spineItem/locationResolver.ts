@@ -2,8 +2,7 @@ import { Context } from "../context"
 import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getNumberOfPages } from "../pagination"
 import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
-
-type SpineItemPosition = { x: number; y: number }
+import { SpineItemPosition, UnsafeSpineItemPosition } from "./types"
 
 export const createLocationResolver = ({ context }: { context: Context }) => {
   const getSpineItemPositionFromPageIndex = (pageIndex: number, spineItem: SpineItem): SpineItemPosition => {
@@ -39,7 +38,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
    * This calculation takes blank page into account, the iframe could be only one page but with a blank page
    * positioned before. Resulting on two page index possible values (0 & 1).
    */
-  const getSpineItemPageIndexFromPosition = (position: SpineItemPosition, spineItem: SpineItem) => {
+  const getSpineItemPageIndexFromPosition = (position: UnsafeSpineItemPosition, spineItem: SpineItem) => {
     const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
     const itemReadingDirection = spineItem.getReadingDirection()
     const pageWidth = context.getPageSize().width
@@ -127,7 +126,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     return undefined
   }
 
-  const getSpineItemClosestPositionFromUnsafePosition = (unsafePosition: SpineItemPosition, spineItem: SpineItem) => {
+  const getSpineItemClosestPositionFromUnsafePosition = (unsafePosition: UnsafeSpineItemPosition, spineItem: SpineItem) => {
     const { width, height } = spineItem.getElementDimensions()
 
     const adjustedPosition = {

@@ -3,9 +3,8 @@ import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
-
-type SpinePosition = { x: number; y: number }
-type SpineItemPosition = { x: number; y: number; outsideOfBoundaries?: boolean }
+import { SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
+import { SpinePosition } from "./types"
 
 export const createLocationResolver = ({
   spineItemManager,
@@ -19,8 +18,8 @@ export const createLocationResolver = ({
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
     10,
-    (position: SpinePosition, spineItem: SpineItem): SpineItemPosition => {
-      const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
+    (position: SpinePosition, spineItem: SpineItem): UnsafeSpineItemPosition => {
+      const { startOffset, endOffset, topStart } = spineItemManager.getAbsolutePositionOf(spineItem)
 
       /**
        * For this case the global offset move from right to left but this specific item
@@ -37,7 +36,7 @@ export const createLocationResolver = ({
 
       if (context.isRTL()) {
         return {
-          x: leftEnd - position.x - context.getPageSize().width,
+          x: endOffset - position.x - context.getPageSize().width,
           // y: (topEnd - position.y) - context.getPageSize().height,
           y: Math.max(0, position.y - topStart),
         }
@@ -51,8 +50,8 @@ export const createLocationResolver = ({
          * 400 - 600 = -200.
          * However we can assume we are at 0, because we in fact can see the beginning of the item
          */
-        x: Math.max(0, position.x - leftStart),
-        y: Math.max(0, position.y - topStart),
+        x: position.x - startOffset,
+        y: position.y - topStart,
       }
     },
     { disable: true }
@@ -68,8 +67,11 @@ export const createLocationResolver = ({
    * 400          200           0
    * will return 200, which probably needs to be adjusted as 0
    */
-  const getSpinePositionFromSpineItemPosition = (spineItemPosition: SpineItemPosition, spineItem: SpineItem): SpinePosition => {
-    const { leftEnd, leftStart, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
+  const getSpinePositionFromSpineItemPosition = (
+    spineItemPosition: SpineItemPosition,
+    spineItem: SpineItem
+  ): SpinePosition => {
+    const { endOffset, startOffset, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -86,14 +88,14 @@ export const createLocationResolver = ({
 
     if (context.isRTL()) {
       return {
-        x: leftEnd - spineItemPosition.x - context.getPageSize().width,
+        x: endOffset - spineItemPosition.x - context.getPageSize().width,
         // y: (topEnd - spineItemPosition.y) - context.getPageSize().height,
         y: topStart + spineItemPosition.y,
       }
     }
 
     return {
-      x: leftStart + spineItemPosition.x,
+      x: startOffset + spineItemPosition.x,
       y: topStart + spineItemPosition.y,
     }
   }
@@ -105,7 +107,21 @@ export const createLocationResolver = ({
     `getSpineItemFromOffset`,
     10,
     (position: SpinePosition) => {
-      const spineItem = spineItemManager.getSpineItemAtPosition(position)
+      const spineItem = spineItemManager.getAll().find((item) => {
+        const { startOffset, endOffset, topEnd, topStart } = spineItemManager.getAbsolutePositionOf(item)
+
+        const isWithinXAxis = position.x >= startOffset && position.x < endOffset
+
+        if (context.getSettings().computedPageTurnDirection === `horizontal`) {
+          return isWithinXAxis
+        } else {
+          return isWithinXAxis && position.y >= topStart && position.y < topEnd
+        }
+      })
+
+      if (position.x === 0 && !spineItem) {
+        return spineItemManager.getAll()[0]
+      }
 
       return spineItem
     },
@@ -148,8 +164,9 @@ export const createLocationResolver = ({
     }
 
     const endItemIndex =
-      spineItemManager.getSpineItemIndex(getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()) ??
-      beginItemIndex
+      spineItemManager.getSpineItemIndex(
+        getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()
+      ) ?? beginItemIndex
 
     const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort((a, b) => a - b)
     // const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort()
@@ -168,7 +185,11 @@ export const createLocationResolver = ({
     return spineItemManager.getAll().find((item) => item.spineItemFrame.getFrameElement() === iframe)
   }
 
-  const getSpineItemPageIndexFromNode = (node: Node, offset: number | undefined, spineItemOrIndex: SpineItem | number) => {
+  const getSpineItemPageIndexFromNode = (
+    node: Node,
+    offset: number | undefined,
+    spineItemOrIndex: SpineItem | number
+  ) => {
     if (typeof spineItemOrIndex === `number`) {
       const spineItem = spineItemManager.get(spineItemOrIndex)
       return spineItem ? spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItem) : undefined
