@@ -19,9 +19,11 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * done with the manager.
    */
   let itemLayoutInformation: {
-    leftStart: number
-    leftEnd: number
+    startOffset: number
+    endOffset: number
+    // @deprecated use above
     topStart: number
+    // @deprecated use above
     topEnd: number
     width: number
     height: number
@@ -146,8 +148,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
           newItemLayoutInformation.push({
-            leftStart: currentValidEdgeXForVerticalPositioning,
-            leftEnd: newEdgeX,
+            startOffset: currentValidEdgeXForVerticalPositioning,
+            endOffset: newEdgeX,
             topStart: currentValidEdgeYForVerticalPositioning,
             topEnd: newEdgeY,
             height,
@@ -174,8 +176,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
         const newEdgeX = width + edgeOffset.edgeX
 
         newItemLayoutInformation.push({
-          leftStart: edgeOffset.edgeX,
-          leftEnd: newEdgeX,
+          startOffset: edgeOffset.edgeX,
+          endOffset: newEdgeX,
           topStart: edgeOffset.edgeY,
           topEnd: height,
           height,
@@ -190,7 +192,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       { edgeX: 0, edgeY: 0 }
     )
 
-    const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
+    const hasLayoutChanges = itemLayoutInformation.some(
+      (old, index) => !isShallowEqual(old, newItemLayoutInformation[index])
+    )
 
     itemLayoutInformation = newItemLayoutInformation
 
@@ -228,7 +232,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
-        index < leftIndex && !isPrePaginated && isUsingFreeScroll ? true : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
+        index < leftIndex && !isPrePaginated && isUsingFreeScroll
+          ? true
+          : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
       const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedSpineItem.loadContent()
@@ -256,14 +262,16 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     (spineItemOrIndex: SpineItem | number) => {
       const pageTurnDirection = context.getSettings().computedPageTurnDirection
       const indexOfItem =
-        typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
+        typeof spineItemOrIndex === `number`
+          ? spineItemOrIndex
+          : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
 
       const layoutInformation = itemLayoutInformation[indexOfItem]
 
       if (!layoutInformation) {
         return {
-          leftStart: 0,
-          leftEnd: 0,
+          startOffset: 0,
+          endOffset: 0,
           topStart: 0,
           topEnd: 0,
           width: 0,
@@ -291,8 +299,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
 
       return (
         itemLayoutInformation[indexOfItem] || {
-          leftStart: 0,
-          leftEnd: 0,
+          startOffset: 0,
+          endOffset: 0,
           topStart: 0,
           topEnd: 0,
           width: 0,
@@ -307,7 +315,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
 
   const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
-    const isAfter = orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
+    const isAfter =
+      orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
 
     if (isAfter) {
       return `after`
@@ -357,31 +366,6 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     return item && getSpineItemIndex(item)
   }
 
-  const getSpineItemAtPosition = Report.measurePerformance(
-    `getSpineItemAtPosition`,
-    10,
-    (position: ViewportPosition) => {
-      const detectedItem = orderedSpineItemsSubject$.value.find((item) => {
-        const { leftStart, leftEnd, topEnd, topStart } = getAbsolutePositionOf(item)
-
-        const isWithinXAxis = position.x >= leftStart && position.x < leftEnd
-
-        if (context.getSettings().computedPageTurnDirection === `horizontal`) {
-          return isWithinXAxis
-        } else {
-          return isWithinXAxis && position.y >= topStart && position.y < topEnd
-        }
-      })
-
-      if (position.x === 0 && !detectedItem) {
-        return orderedSpineItemsSubject$.value[0]
-      }
-
-      return detectedItem
-    },
-    { disable: true }
-  )
-
   /**
    * @todo handle reload, remove subscription to each items etc. See add()
    */
@@ -406,7 +390,6 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     loadContents,
     comparePositionOf,
     getAbsolutePositionOf,
-    getSpineItemAtPosition,
     getFocusedSpineItem,
     getFocusedSpineItemIndex,
     getSpineItemIndex,
@@ -416,7 +399,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       layout$: layout$.asObservable(),
       itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
         switchMap((items) => {
-          const itemsIsReady$ = items.map((item) => item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))))
+          const itemsIsReady$ = items.map((item) =>
+            item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady })))
+          )
 
           return merge(...itemsIsReady$)
         })
