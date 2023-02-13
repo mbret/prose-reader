@@ -2,16 +2,18 @@ import { CheckCircleIcon } from "@chakra-ui/icons"
 import { List, ListIcon, ListItem, Text } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
 import { useRecoilValue } from "recoil"
-import { currentPageState, manifestState, paginationState } from "./state"
+import { manifestState } from "./state"
 import { FullScreenModal } from "./common/FullScreenModal"
-import { useReader } from "./useReader"
+import { useReader } from "./reader/useReader"
+import { usePagination } from "./reader/state"
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
-  const [reader] = useReader()
-  const { nav } = useRecoilValue(manifestState) || {}
-  const pagination = useRecoilValue(paginationState)
+  const { nav, renditionLayout } = useRecoilValue(manifestState) || {}
+  const { reader$, reader } = useReader()
+  const pagination = usePagination(reader$)
   const toc = nav?.toc || []
-  const currentPage = useRecoilValue(currentPageState) || 0
+  const { beginPageIndexInChapter, beginSpineItemIndex } = pagination ?? {}
+  const currentPage = (renditionLayout === "reflowable" ? beginPageIndexInChapter : beginSpineItemIndex) || 0
   const [currentSubChapter, setCurrentSubChapter] = useState<NonNullable<typeof pagination>["beginChapterInfo"] | undefined>()
 
   const buildTocForItem = (tocItem: (typeof toc)[number], index: number, lvl: number) => (

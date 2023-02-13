@@ -4,17 +4,10 @@ import { useRecoilValue, useSetRecoilState } from "recoil"
 import { IconButton, Box } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
 import { Scrubber } from "./Scrubber"
-import {
-  bookTitleState,
-  isComicState,
-  isHelpOpenState,
-  isSearchOpenState,
-  isTocOpenState,
-  manifestState,
-  paginationState
-} from "./state"
+import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState, manifestState } from "./state"
 import { AppBar } from "./common/AppBar"
-import { useReader } from "./useReader"
+import { useReader } from "./reader/useReader"
+import { usePagination } from "./reader/state"
 
 export const QuickMenu = ({
   open,
@@ -26,14 +19,12 @@ export const QuickMenu = ({
   onSettingsClick?: () => void
 }) => {
   const navigate = useNavigate()
-  const [reader] = useReader()
+  const { reader, reader$ } = useReader()
   const bookTitle = useRecoilValue(bookTitleState)
-  const manifest = useRecoilValue(manifestState)
   const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
   const setIsTocOpenState = useSetRecoilState(isTocOpenState)
   const setIsHelpOpenState = useSetRecoilState(isHelpOpenState)
-  const numberOfSpineItems = manifest?.spineItems.length ?? 0
-  const pagination = useRecoilValue(paginationState)
+  const pagination = usePagination(reader$)
   const [pageIndex, endPageIndex] = [
     (pagination?.beginPageIndexInChapter || 0) + 1,
     (pagination?.endPageIndexInChapter || 0) + 1
@@ -46,7 +37,6 @@ export const QuickMenu = ({
   // theses are mostly webtoon so we don't need pages, it would be weird
   // const shouldHidePages = manifest?.renditionLayout === `reflowable` && manifest.renditionFlow === `scrolled-continuous`
   const shouldHidePages = false
-  const currentBeginSpineItemIndex = pagination?.beginSpineItemIndex || 0
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [
     pagination?.beginAbsolutePageIndex,
     pagination?.endAbsolutePageIndex
@@ -116,56 +106,22 @@ export const QuickMenu = ({
           height="auto"
           minHeight={140}
           leftElement={
-            <div
-              style={{
-                paddingLeft: 10
-              }}
-            >
-              {(manifest?.readingDirection === "ltr" && currentBeginSpineItemIndex > 0) ||
-              (manifest?.readingDirection !== "ltr" && (pagination?.beginSpineItemIndex || 0) < numberOfSpineItems - 1) ? (
-                <IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={(_) => reader?.goToLeftSpineItem()} />
-              ) : (
-                <IconButton
-                  icon={<ArrowBackIcon />}
-                  aria-label="back"
-                  disabled
-                  style={{
-                    ...(hasOnlyOnePage && {
-                      opacity: 1
-                    })
-                  }}
-                />
-              )}
-            </div>
+            <IconButton
+              icon={<ArrowBackIcon />}
+              aria-label="back"
+              onClick={() => reader?.goToLeftSpineItem()}
+              isDisabled={!pagination?.canGoLeft}
+            />
           }
           rightElement={
-            <div
-              style={{
-                paddingRight: 10
+            <IconButton
+              icon={<ArrowForwardIcon />}
+              aria-label="forward"
+              isDisabled={!pagination?.canGoRight}
+              onClick={(_) => {
+                reader?.goToRightSpineItem()
               }}
-            >
-              {(manifest?.readingDirection === "ltr" && (pagination?.endSpineItemIndex || 0) < numberOfSpineItems - 1) ||
-              (manifest?.readingDirection !== "ltr" && currentBeginSpineItemIndex > 0) ? (
-                <IconButton
-                  icon={<ArrowForwardIcon />}
-                  onClick={(_) => {
-                    reader?.goToRightSpineItem()
-                  }}
-                  aria-label="forward"
-                />
-              ) : (
-                <IconButton
-                  icon={<ArrowForwardIcon />}
-                  aria-label="forward"
-                  disabled
-                  style={{
-                    ...(hasOnlyOnePage && {
-                      opacity: 1
-                    })
-                  }}
-                />
-              )}
-            </div>
+            />
           }
           middleElement={
             <div

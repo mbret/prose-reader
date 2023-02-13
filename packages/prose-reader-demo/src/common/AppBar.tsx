@@ -20,7 +20,7 @@ export const AppBar: FC<Props> = ({ children, leftElement, middleElement, rightE
     paddingY={4}
     {...rest}
   >
-    <Box display="flex" alignItems="center" justifyContent="space-between" flex={1} overflow="auto">
+    <Box display="flex" alignItems="center" justifyContent="space-between" flex={1}>
       <Box flex={1}>{leftElement}</Box>
       <Box paddingX={2} overflow="auto" flexGrow={1} display="flex" justifyContent="center">
         {typeof middleElement === `string` ? (

@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useSetRecoilState } from "recoil"
 import { useReaderSettings } from "../common/useReaderSettings"
 import { isMenuOpenState } from "../state"
-import { useReader } from "../useReader"
+import { useReader } from "../reader/useReader"
 
 export const useGestureHandler = (container: HTMLElement | undefined, isUsingFreeMode = false) => {
-  const [reader] = useReader()
+  const {reader} = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const movingHasStarted = useRef(false)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)

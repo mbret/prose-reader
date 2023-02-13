@@ -1,13 +1,12 @@
 import React from "react"
 import { Reader } from "@prose-reader/core"
-import { FormControl, FormHelperText, FormLabel, Stack, Radio, RadioGroup, Box, Checkbox, CheckboxGroup } from "@chakra-ui/react"
-import { useRecoilValue } from "recoil"
-import { readerStateState } from "../state"
+import { FormControl, FormHelperText, FormLabel, Stack, Radio, RadioGroup, Box, Checkbox } from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
+import { useReaderState } from "../reader/state"
 
 export const NavigationSettings = ({ reader }: { reader: Reader }) => {
   const settings = useReaderSettings()
-  const readerState = useRecoilValue(readerStateState)
+  const readerState = useReaderState(reader)
 
   const pageTurnAnimation = settings?.computedPageTurnMode === `scrollable` ? `scrollable` : settings?.computedPageTurnAnimation
   const onlySupportScrollableMode =

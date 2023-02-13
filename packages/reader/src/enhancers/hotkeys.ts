@@ -1,14 +1,5 @@
 import { KeyboardEvent } from "react"
-import {
-  EMPTY,
-  endWith,
-  fromEvent,
-  map,
-  merge,
-  switchMap,
-  takeUntil,
-  withLatestFrom,
-} from "rxjs"
+import { EMPTY, endWith, fromEvent, map, merge, switchMap, takeUntil, withLatestFrom } from "rxjs"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =

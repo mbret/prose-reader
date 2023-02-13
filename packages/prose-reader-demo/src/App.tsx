@@ -7,17 +7,15 @@ import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"
 import { ReaderInstance } from "./types"
 import { Home as ClassicHome } from "./classic/Home"
-import { takeUntil } from "rxjs"
-import { isZoomingState, readerStateState } from "./state"
-import { Report } from "./report"
+import { isZoomingState } from "./state"
 import { ErrorBoundary } from "./common/ErrorBoundary"
-import { useReader } from "./useReader"
+import { useReader } from "./reader/useReader"
 import { Subscribe } from "@react-rxjs/core"
 import { Reader } from "./Reader"
-import '@fontsource/dancing-script/400.css'
+import "@fontsource/dancing-script/400.css"
 
 export const App = memo(() => {
-  const [reader, setReader] = useReader()
+  const { reader, setReader } = useReader()
 
   return (
     <Subscribe>
@@ -47,16 +45,19 @@ export const App = memo(() => {
 })
 
 const Effects: FC<{ reader: ReaderInstance | undefined }> = ({ reader }) => {
-  const setReaderStateState = useSetRecoilState(readerStateState)
   const setIsZoomingState = useSetRecoilState(isZoomingState)
 
   useEffect(() => {
-    reader?.$.state$.pipe(takeUntil(reader.$.destroy$)).subscribe((state) => {
-      Report.log(`reader.$.state$`, state)
-      setReaderStateState(state)
+    const zoomSub = reader?.zoom.$.isZooming$.subscribe(setIsZoomingState)
+
+    const paginationSub = reader?.pagination$.subscribe(({ beginCfi = `` }) => {
+      localStorage.setItem(`cfi`, beginCfi)
     })
 
-    reader?.zoom.$.isZooming$.subscribe(setIsZoomingState)
+    return () => {
+      paginationSub?.unsubscribe()
+      zoomSub?.unsubscribe()
+    }
   }, [reader, setIsZoomingState])
 
   return null

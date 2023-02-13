@@ -4,7 +4,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { useGestureHandler } from "./useGestureHandler"
 import { Reader as ReactReader } from "@prose-reader/react"
 import { QuickMenu } from "../QuickMenu"
-import { bookReadyState, isMenuOpenState, manifestState, paginationState, useResetStateOnUnMount } from "../state"
+import { bookReadyState, isMenuOpenState, manifestState, useResetStateOnUnMount } from "../state"
 import { ComicsSettings } from "./ComicsSettings"
 import { Loading } from "../Loading"
 import { useBookmarks } from "../useBookmarks"
@@ -15,7 +15,7 @@ import { HighlightMenu } from "../HighlightMenu"
 import { ZoomingIndicator } from "../common/ZoomingIndicator"
 import { Manifest } from "@prose-reader/core"
 import { createAppReader, ReactReaderProps, ReaderInstance } from "../types"
-import { useReader } from "../useReader"
+import { useReader } from "../reader/useReader"
 import { useReaderSettings } from "../common/useReaderSettings"
 
 export const Reader = ({
@@ -32,10 +32,9 @@ export const Reader = ({
   const { computedPageTurnMode } = useReaderSettings() ?? {}
   const isUsingFreeScroll = computedPageTurnMode === `scrollable`
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [reader] = useReader()
+  const {reader} = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
-  const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [readerOptions, setReaderOptions] = useState<ReactReaderProps["options"] | undefined>(undefined)
@@ -57,11 +56,6 @@ export const Reader = ({
       })
     }
   }, [hammerManager])
-
-  const onPaginationChange: ComponentProps<typeof ReactReader>["onPaginationChange"] = (info) => {
-    localStorage.setItem(`cfi`, info?.beginCfi || ``)
-    setPaginationState(info)
-  }
 
   const onReady = useCallback(() => {
     setBookReady(true)
@@ -113,7 +107,6 @@ export const Reader = ({
             onReader={onReader}
             onReady={onReady}
             loadOptions={readerLoadOptions}
-            onPaginationChange={onPaginationChange}
             options={readerOptions}
             createReader={createAppReader}
           />

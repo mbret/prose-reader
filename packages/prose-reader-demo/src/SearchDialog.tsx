@@ -4,13 +4,13 @@ import { tap } from "rxjs/operators"
 import { SearchResult } from "@prose-reader/enhancer-search"
 import { groupBy } from "@prose-reader/core"
 import { FullScreenModal } from "./common/FullScreenModal"
-import { useReader } from "./useReader"
+import { useReader } from "./reader/useReader"
 
 export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const [text, setText] = useState("")
   const [results, setResults] = useState<SearchResult>([])
   const [searching, setSearching] = useState(false)
-  const [reader] = useReader()
+  const {reader} = useReader()
 
   const onValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value)
