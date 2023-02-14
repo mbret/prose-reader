@@ -59,7 +59,7 @@ export default function Index() {
           </Button>
           <Button
             as="a"
-            href="hhttps://discord.gg/k4X53Yd4Ar"
+            href="https://discord.gg/avcf3Hf6hx"
             target="_blank"
             variant="outline"
             leftIcon={<DiscordMarkBlueIcon />}
