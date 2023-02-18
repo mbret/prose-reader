@@ -1,4 +1,4 @@
-import { BehaviorSubject, merge, Observable, Subject } from "rxjs"
+import { merge, Observable, Subject } from "rxjs"
 import { Manifest } from "../../types"
 import { Context } from "../../context"
 import { getAttributeValueFromString } from "../../frames"
@@ -37,14 +37,21 @@ export const createFrameItem = ({
    * @deprecated
    */
   let isLoadedSync = false
-  const isReadySubject$ = new BehaviorSubject(false)
+  /**
+   * @deprecated
+   */
+  let isReadySync = false
 
   isLoaded$.subscribe({
     next: (value) => {
       isLoadedSync = value
     },
   })
-  isReady$.subscribe(isReadySubject$)
+  isReady$.subscribe({
+    next: (value) => {
+      isReadySync = value
+    },
+  })
 
   const getManipulableFrame = (): ReturnType<typeof createFrameManipulator> | undefined => {
     const frame = frameElement$.value
@@ -105,8 +112,14 @@ export const createFrameItem = ({
   }
 
   return {
+    /**
+     * @deprecated
+     */
     getIsLoaded: () => isLoadedSync,
-    getIsReady: () => isReadySubject$.value,
+    /**
+     * @deprecated
+     */
+    getIsReady: () => isReadySync,
     getViewportDimensions,
     getFrameElement: () => frameElement$.getValue(),
     getHtmlFromResource,
@@ -152,7 +165,7 @@ export const createFrameItem = ({
       unloaded$: unloaded$,
       loaded$,
       ready$,
-      isReady$: isReadySubject$.asObservable(),
+      isReady$,
       /**
        * This is used as upstream layout change. This event is being listened to by upper app
        * in order to layout again and adjust every element based on the new content.
