@@ -1,7 +1,6 @@
 import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom"
 import { Manifest, Reader as ReaderInstance, Report } from "@prose-reader/core"
-import { ObservedValueOf } from "rxjs"
 
 const report = Report.namespace("@prose-reader/react")
 
