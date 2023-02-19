@@ -5,9 +5,13 @@ import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import { SpineItemPosition, UnsafeSpineItemPosition } from "./types"
 
 export const createLocationResolver = ({ context }: { context: Context }) => {
+  const getSafePosition = (unsafeSpineItemPosition: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemPosition => ({
+    x: Math.min(spineItem.getElementDimensions().width, Math.max(0, unsafeSpineItemPosition.x)),
+    y: Math.min(spineItem.getElementDimensions().height, Math.max(0, unsafeSpineItemPosition.y)),
+  })
+
   const getSpineItemPositionFromPageIndex = (pageIndex: number, spineItem: SpineItem): SpineItemPosition => {
     const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
-    const itemReadingDirection = spineItem.getReadingDirection()
 
     if (spineItem.isUsingVerticalWriting()) {
       const ltrRelativeOffset = getItemOffsetFromPageIndex(context.getPageSize().height, pageIndex, itemHeight)
@@ -20,7 +24,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
 
     const ltrRelativeOffset = getItemOffsetFromPageIndex(context.getPageSize().width, pageIndex, itemWidth)
 
-    if (itemReadingDirection === `rtl`) {
+    if (context.isRTL()) {
       return {
         x: itemWidth - ltrRelativeOffset - context.getPageSize().width,
         y: 0,
@@ -40,15 +44,12 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
    */
   const getSpineItemPageIndexFromPosition = (position: UnsafeSpineItemPosition, spineItem: SpineItem) => {
     const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
-    const itemReadingDirection = spineItem.getReadingDirection()
     const pageWidth = context.getPageSize().width
     const pageHeight = context.getPageSize().height
 
-    let offsetNormalizedForLtr = Math.min(itemWidth, Math.max(0, position.x))
+    const safePosition = getSafePosition(position, spineItem)
 
-    if (itemReadingDirection === `rtl`) {
-      offsetNormalizedForLtr = itemWidth - offsetNormalizedForLtr - context.getPageSize().width
-    }
+    const offset = context.isRTL() ? itemWidth - safePosition.x - context.getPageSize().width : safePosition.x
 
     if (spineItem.isUsingVerticalWriting()) {
       const numberOfPages = getNumberOfPages(itemHeight, pageHeight)
@@ -56,7 +57,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
     } else {
       const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
-      const pageIndex = getPageFromOffset(offsetNormalizedForLtr, pageWidth, numberOfPages)
+      const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
 
       return pageIndex
     }

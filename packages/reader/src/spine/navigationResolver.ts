@@ -5,7 +5,8 @@ import { SpineItem } from "../spineItem/createSpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../spineItem/navigationResolver"
 import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
-import { SpinePosition } from "./types"
+import { SpinePosition, UnsafeSpinePosition } from "./types"
+import { SpineItemNavigationPosition } from "../spineItem/types"
 
 export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
 type ViewportPosition = { x: number; y: number }
@@ -37,12 +38,25 @@ export const createNavigationResolver = ({
       // @todo use container width instead to increase performances
       const lastSpineItem = spineItemManager.get(spineItemManager.getLength() - 1)
       const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(lastSpineItem || 0)
-      const maximumXOffset = distanceOfLastSpineItem.endOffset - context.getPageSize().width
-      const maximumYOffset = distanceOfLastSpineItem.topEnd - context.getPageSize().height
+      const maximumYOffset = distanceOfLastSpineItem.bottom - context.getPageSize().height
+      const y = Math.min(Math.max(0, position.y), maximumYOffset)
+
+      /**
+       * For RTL books we move from right to left so negative x.
+       * [-x, 0]
+       */
+      if (context.isRTL()) {
+        return {
+          x: Math.max(Math.min(0, position.x), distanceOfLastSpineItem.left),
+          y,
+        }
+      }
+
+      const maximumXOffset = distanceOfLastSpineItem.right - context.getPageSize().width
 
       return {
         x: Math.min(Math.max(0, position.x), maximumXOffset),
-        y: Math.min(Math.max(0, position.y), maximumYOffset),
+        y,
       }
     },
     { disable: true }
@@ -62,7 +76,9 @@ export const createNavigationResolver = ({
     if (!spineItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
     } else {
-      const spineItemNavigation = node ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset) : { x: 0, y: 0 }
+      const spineItemNavigation = node
+        ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
+        : new SpineItemNavigationPosition({ x: 0, y: 0 })
       const readingPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
 
       // very important to always return a reading item since we want to focus on that particular one
@@ -122,11 +138,7 @@ export const createNavigationResolver = ({
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
-        context.isRTL()
-          ? pageTurnDirection === `horizontal`
-            ? { x: position.x - context.getPageSize().width, y: 0 }
-            : { y: position.y + context.getPageSize().height, x: 0 }
-          : pageTurnDirection === `horizontal`
+        pageTurnDirection === `horizontal`
           ? { x: position.x + context.getPageSize().width, y: 0 }
           : { y: position.y + context.getPageSize().height, x: 0 }
       )
@@ -137,7 +149,7 @@ export const createNavigationResolver = ({
     }
   }
 
-  const getNavigationForLeftSinglePage = (position: SpinePosition): ViewportNavigationEntry => {
+  const getNavigationForLeftSinglePage = (position: UnsafeSpinePosition): ViewportNavigationEntry => {
     const pageTurnDirection = context.getSettings().computedPageTurnDirection
     const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = { ...position, spineItem }
@@ -152,11 +164,7 @@ export const createNavigationResolver = ({
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
-        context.isRTL()
-          ? pageTurnDirection === `horizontal`
-            ? { x: position.x + context.getPageSize().width, y: 0 }
-            : { y: position.y - context.getPageSize().height, x: 0 }
-          : pageTurnDirection === `horizontal`
+        pageTurnDirection === `horizontal`
           ? { x: position.x - context.getPageSize().width, y: 0 }
           : { y: position.y - context.getPageSize().height, x: 0 }
       )
@@ -177,7 +185,7 @@ export const createNavigationResolver = ({
   const getNavigationForRightPage = (position: SpinePosition): ViewportNavigationEntry => {
     const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
 
-    let navigation = getNavigationForRightSinglePage(position)
+    const navigation = getNavigationForRightSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
     if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
@@ -213,7 +221,9 @@ export const createNavigationResolver = ({
         return getAdjustedPositionForSpread(navigation)
       }
 
-      navigation = getNavigationForRightSinglePage(navigation)
+      const doubleNavigation = getNavigationForRightSinglePage(navigation)
+
+      return getAdjustedPositionForSpread(doubleNavigation)
     }
 
     return getAdjustedPositionForSpread(navigation)
@@ -226,10 +236,10 @@ export const createNavigationResolver = ({
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForLeftPage = (position: SpinePosition): ViewportNavigationEntry => {
+  const getNavigationForLeftPage = (position: UnsafeSpinePosition): SpinePosition => {
     const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
 
-    let navigation = getNavigationForLeftSinglePage(position)
+    const navigation = getNavigationForLeftSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
     if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
@@ -259,7 +269,9 @@ export const createNavigationResolver = ({
         return getAdjustedPositionForSpread(navigation)
       }
 
-      navigation = getNavigationForLeftSinglePage(navigation)
+      const doubleNavigation = getNavigationForLeftSinglePage(navigation)
+
+      return getAdjustedPositionForSpread(doubleNavigation)
     }
 
     return getAdjustedPositionForSpread(navigation)

@@ -327,6 +327,14 @@ export const createCommonSpineItem = ({
       destroySubject$.complete()
     },
     isUsingVerticalWriting: () => spineItemFrame.getWritingMode()?.startsWith(`vertical`),
+    /**
+     * @important
+     * Do not use this value for layout and navigation. It will be in possible conflict
+     * with the global reading direction. A book should not mix them anyway. A page can have
+     * a different reading direction for style reason but it should be in theory pre-paginated.
+     * For example an english page in a japanese manga. That's expected and will
+     * be confined to a single page.
+     */
     getReadingDirection: () => {
       return spineItemFrame.getReadingDirection() || context.getReadingDirection()
     },

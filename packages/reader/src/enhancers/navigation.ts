@@ -31,6 +31,7 @@ export const navigationEnhancer =
       const { begin = focusedSpineItemIndex } =
         reader.locator.getSpineItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
       const nextItem = begin - 1
+
       if (nextItem >= 0) {
         reader.goToSpineItem(nextItem)
       }

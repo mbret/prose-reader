@@ -239,9 +239,6 @@ export const paginationEnhancer =
           .slice(0, pageInfo.endSpineItemIndex)
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0),
       })),
-      tap((data) => {
-        report.log(`pagination`, data)
-      }),
       shareReplay(1),
       takeUntil(reader.$.destroy$)
     )

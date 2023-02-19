@@ -7,3 +7,9 @@ export type SpinePosition = {
   y: number
   __symbol?: `SpinePosition`
 }
+
+export type UnsafeSpinePosition = {
+  x: number
+  y: number
+  __symbol?: `UnsafeSpinePosition` | `SpinePosition`
+}

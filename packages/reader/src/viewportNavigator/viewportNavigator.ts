@@ -178,11 +178,11 @@ export const createViewportNavigator = ({
       }, false)
 
       if (!isAdjusted) {
-        if (context.isRTL()) {
-          element.style.transform = `translate3d(${x}px, -${y}px, 0)`
-        } else {
-          element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
-        }
+        /**
+         * @important
+         * will work automatically with RTL since x will be negative.
+         */
+        element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
       }
 
       hooks.forEach((hook) => {

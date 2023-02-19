@@ -3,8 +3,8 @@ import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
-import { SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
-import { SpinePosition } from "./types"
+import { SpineItemNavigationPosition, SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
+import { SpinePosition, UnsafeSpinePosition } from "./types"
 
 export const createLocationResolver = ({
   spineItemManager,
@@ -18,8 +18,8 @@ export const createLocationResolver = ({
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
     10,
-    (position: SpinePosition, spineItem: SpineItem): UnsafeSpineItemPosition => {
-      const { startOffset, endOffset, topStart } = spineItemManager.getAbsolutePositionOf(spineItem)
+    (position: UnsafeSpinePosition, spineItem: SpineItem): UnsafeSpineItemPosition => {
+      const { left, top } = spineItemManager.getAbsolutePositionOf(spineItem)
 
       /**
        * For this case the global offset move from right to left but this specific item
@@ -34,14 +34,6 @@ export const createLocationResolver = ({
       //   return (end - readingOrderViewOffset) - context.getPageSize().width
       // }
 
-      if (context.isRTL()) {
-        return {
-          x: endOffset - position.x - context.getPageSize().width,
-          // y: (topEnd - position.y) - context.getPageSize().height,
-          y: Math.max(0, position.y - topStart),
-        }
-      }
-
       return {
         /**
          * when using spread the item could be on the right and therefore will be negative
@@ -50,8 +42,8 @@ export const createLocationResolver = ({
          * 400 - 600 = -200.
          * However we can assume we are at 0, because we in fact can see the beginning of the item
          */
-        x: position.x - startOffset,
-        y: position.y - topStart,
+        x: position.x - left,
+        y: position.y - top,
       }
     },
     { disable: true }
@@ -68,10 +60,10 @@ export const createLocationResolver = ({
    * will return 200, which probably needs to be adjusted as 0
    */
   const getSpinePositionFromSpineItemPosition = (
-    spineItemPosition: SpineItemPosition,
+    spineItemPosition: SpineItemNavigationPosition | SpineItemPosition,
     spineItem: SpineItem
   ): SpinePosition => {
-    const { endOffset, startOffset, topStart, topEnd } = spineItemManager.getAbsolutePositionOf(spineItem)
+    const { left, top } = spineItemManager.getAbsolutePositionOf(spineItem)
 
     /**
      * For this case the global offset move from right to left but this specific item
@@ -86,17 +78,9 @@ export const createLocationResolver = ({
     //   return (end - spineItemOffset) - context.getPageSize().width
     // }
 
-    if (context.isRTL()) {
-      return {
-        x: endOffset - spineItemPosition.x - context.getPageSize().width,
-        // y: (topEnd - spineItemPosition.y) - context.getPageSize().height,
-        y: topStart + spineItemPosition.y,
-      }
-    }
-
     return {
-      x: startOffset + spineItemPosition.x,
-      y: topStart + spineItemPosition.y,
+      x: left + spineItemPosition.x,
+      y: top + spineItemPosition.y,
     }
   }
 
@@ -106,16 +90,16 @@ export const createLocationResolver = ({
   const getSpineItemFromPosition = Report.measurePerformance(
     `getSpineItemFromOffset`,
     10,
-    (position: SpinePosition) => {
+    (position: UnsafeSpinePosition) => {
       const spineItem = spineItemManager.getAll().find((item) => {
-        const { startOffset, endOffset, topEnd, topStart } = spineItemManager.getAbsolutePositionOf(item)
+        const { left, right, bottom, top } = spineItemManager.getAbsolutePositionOf(item)
 
-        const isWithinXAxis = position.x >= startOffset && position.x < endOffset
+        const isWithinXAxis = position.x >= left && position.x < right
 
         if (context.getSettings().computedPageTurnDirection === `horizontal`) {
           return isWithinXAxis
         } else {
-          return isWithinXAxis && position.y >= topStart && position.y < topEnd
+          return isWithinXAxis && position.y >= top && position.y < bottom
         }
       })
 
@@ -144,18 +128,16 @@ export const createLocationResolver = ({
     position: SpinePosition
   ):
     | {
-        left: number
-        right: number
         begin: number
         beginPosition: SpinePosition
         end: number
         endPosition: SpinePosition
       }
     | undefined => {
-    const beginItem = getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
-    const beginItemIndex = spineItemManager.getSpineItemIndex(beginItem)
+    const itemAtPosition = getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+    const itemAtPositionIndex = spineItemManager.getSpineItemIndex(itemAtPosition)
 
-    if (beginItemIndex === undefined) return undefined
+    if (itemAtPositionIndex === undefined) return undefined
 
     let endPosition = position
 
@@ -164,20 +146,30 @@ export const createLocationResolver = ({
     }
 
     const endItemIndex =
-      spineItemManager.getSpineItemIndex(
-        getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()
-      ) ?? beginItemIndex
+      spineItemManager.getSpineItemIndex(getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()) ??
+      itemAtPositionIndex
 
-    const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort((a, b) => a - b)
-    // const [left = beginItemIndex, right = beginItemIndex] = [beginItemIndex, endItemIndex].sort()
+    /**
+     * This sort is a quick trick to always order correctly and thus simplify when dealing with ltr/rtl
+     */
+    const items = [
+      { item: itemAtPositionIndex, position },
+      { item: endItemIndex, position: endPosition },
+    ] as [{ item: number; position: typeof position }, { item: number; position: typeof position }]
+    const [begin, end] = items.sort((a, b) => {
+      // if we have same item index, we sort by position number
+      if (a.item === b.item) {
+        return context.isRTL() ? b.position.x - a.position.x : a.position.x - b.position.x
+      }
+
+      return a.item - b.item
+    })
 
     return {
-      begin: beginItemIndex,
-      beginPosition: position,
-      end: endItemIndex,
-      endPosition: endPosition,
-      left,
-      right,
+      begin: begin.item,
+      beginPosition: begin.position,
+      end: end.item,
+      endPosition: end.position,
     }
   }
 
@@ -185,11 +177,7 @@ export const createLocationResolver = ({
     return spineItemManager.getAll().find((item) => item.spineItemFrame.getFrameElement() === iframe)
   }
 
-  const getSpineItemPageIndexFromNode = (
-    node: Node,
-    offset: number | undefined,
-    spineItemOrIndex: SpineItem | number
-  ) => {
+  const getSpineItemPageIndexFromNode = (node: Node, offset: number | undefined, spineItemOrIndex: SpineItem | number) => {
     if (typeof spineItemOrIndex === `number`) {
       const spineItem = spineItemManager.get(spineItemOrIndex)
       return spineItem ? spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItem) : undefined

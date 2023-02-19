@@ -5,7 +5,6 @@ import { Context } from "./context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
 import { getCoverItem } from "./utils/manifest"
-import { ViewportPosition } from "./types"
 
 const NAMESPACE = `spineItemManager`
 
@@ -19,12 +18,10 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * done with the manager.
    */
   let itemLayoutInformation: {
-    startOffset: number
-    endOffset: number
-    // @deprecated use above
-    topStart: number
-    // @deprecated use above
-    topEnd: number
+    left: number
+    right: number
+    top: number
+    bottom: number
     width: number
     height: number
   }[] = []
@@ -56,11 +53,11 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
     orderedSpineItemsSubject$.value.reduce(
-      (edgeOffset, item, index) => {
+      ({ horizontalOffset, verticalOffset }, item, index) => {
         const isPageCover = coverItemIndex === index
         let minimumWidth = context.getPageSize().width
         let blankPagePosition: `none` | `before` | `after` = `none`
-        const itemStartOnNewScreen = edgeOffset.edgeX % context.getVisibleAreaRect().width === 0
+        const itemStartOnNewScreen = horizontalOffset % context.getVisibleAreaRect().width === 0
         const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
 
         if (context.shouldDisplaySpread()) {
@@ -128,9 +125,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
 
         if (context.getSettings().computedPageTurnDirection === `vertical`) {
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
-            ? edgeOffset.edgeY
-            : edgeOffset.edgeY - context.getVisibleAreaRect().height
-          const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : edgeOffset.edgeX
+            ? verticalOffset
+            : verticalOffset - context.getVisibleAreaRect().height
+          const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : horizontalOffset
 
           if (context.isRTL()) {
             item.adjustPositionOfElement({
@@ -148,53 +145,50 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
           newItemLayoutInformation.push({
-            startOffset: currentValidEdgeXForVerticalPositioning,
-            endOffset: newEdgeX,
-            topStart: currentValidEdgeYForVerticalPositioning,
-            topEnd: newEdgeY,
+            left: currentValidEdgeXForVerticalPositioning,
+            right: newEdgeX,
+            top: currentValidEdgeYForVerticalPositioning,
+            bottom: newEdgeY,
             height,
             width,
           })
 
           return {
-            edgeX: newEdgeX,
-            edgeY: newEdgeY,
+            horizontalOffset: newEdgeX,
+            verticalOffset: newEdgeY,
           }
         }
 
-        // We can now adjust the position of the item if needed based on its
-        // new layout
-        if (context.isRTL()) {
-          // could also be negative left but I am not in the mood
-          // will push items on the left
-          item.adjustPositionOfElement({ right: edgeOffset.edgeX, top: 0 })
-        } else {
-          // will push items on the right
-          item.adjustPositionOfElement({ left: edgeOffset.edgeX, top: 0 })
-        }
-
-        const newEdgeX = width + edgeOffset.edgeX
+        // We can now adjust the position of the item if needed based on its new layout.
+        // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
+        // it will be x from right
+        item.adjustPositionOfElement(context.isRTL() ? { right: horizontalOffset, top: 0 } : { left: horizontalOffset, top: 0 })
 
         newItemLayoutInformation.push({
-          startOffset: edgeOffset.edgeX,
-          endOffset: newEdgeX,
-          topStart: edgeOffset.edgeY,
-          topEnd: height,
+          ...(context.isRTL()
+            ? {
+                left: context.getVisibleAreaRect().width - horizontalOffset - width,
+                right: context.getVisibleAreaRect().width - horizontalOffset,
+              }
+            : {
+                left: horizontalOffset,
+                right: horizontalOffset + width,
+              }),
+          top: verticalOffset,
+          bottom: height,
           height,
           width,
         })
 
         return {
-          edgeX: newEdgeX,
-          edgeY: 0,
+          horizontalOffset: horizontalOffset + width,
+          verticalOffset: 0,
         }
       },
-      { edgeX: 0, edgeY: 0 }
+      { horizontalOffset: 0, verticalOffset: 0 }
     )
 
-    const hasLayoutChanges = itemLayoutInformation.some(
-      (old, index) => !isShallowEqual(old, newItemLayoutInformation[index])
-    )
+    const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
 
     itemLayoutInformation = newItemLayoutInformation
 
@@ -232,9 +226,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
-        index < leftIndex && !isPrePaginated && isUsingFreeScroll
-          ? true
-          : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
+        index < leftIndex && !isPrePaginated && isUsingFreeScroll ? true : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
       const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedSpineItem.loadContent()
@@ -256,67 +248,29 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
    * current window (viewport).
    */
-  const getAbsolutePositionOf = Report.measurePerformance(
-    `getAbsolutePositionOf`,
-    10,
-    (spineItemOrIndex: SpineItem | number) => {
-      const pageTurnDirection = context.getSettings().computedPageTurnDirection
-      const indexOfItem =
-        typeof spineItemOrIndex === `number`
-          ? spineItemOrIndex
-          : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
+  const getAbsolutePositionOf = (spineItemOrIndex: SpineItem | number) => {
+    const indexOfItem =
+      typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
 
-      const layoutInformation = itemLayoutInformation[indexOfItem]
+    const layoutInformation = itemLayoutInformation[indexOfItem]
 
-      if (!layoutInformation) {
-        return {
-          startOffset: 0,
-          endOffset: 0,
-          topStart: 0,
-          topEnd: 0,
-          width: 0,
-          height: 0,
-        }
+    return (
+      layoutInformation || {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: 0,
+        height: 0,
       }
-
-      // const distance = orderedSpineItems.value
-      //   .slice(0, indexOfItem + 1)
-      //   .reduce((acc, spineItem) => {
-      //     const { width, height } = spineItem.getElementDimensions()
-
-      //     return {
-      //       leftStart: pageTurnDirection === `horizontal` ? acc.leftEnd : 0,
-      //       leftEnd: pageTurnDirection === `horizontal` ? acc.leftEnd + width : width,
-      //       topStart: pageTurnDirection === `horizontal` ? 0 : acc.topEnd,
-      //       topEnd: pageTurnDirection === `horizontal` ? height : acc.topEnd + height,
-      //       width,
-      //       height
-      //     }
-      //   }, { leftStart: 0, leftEnd: 0, topStart: 0, topEnd: 0, width: 0, height: 0 })
-
-      // console.log(distance, itemLayoutInformation[indexOfItem])
-      // return distance
-
-      return (
-        itemLayoutInformation[indexOfItem] || {
-          startOffset: 0,
-          endOffset: 0,
-          topStart: 0,
-          topEnd: 0,
-          width: 0,
-          height: 0,
-        }
-      )
-    },
-    { disable: true }
-  )
+    )
+  }
 
   const getFocusedSpineItem = () =>
     focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
 
   const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
-    const isAfter =
-      orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
+    const isAfter = orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
 
     if (isAfter) {
       return `after`
@@ -399,9 +353,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       layout$: layout$.asObservable(),
       itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
         switchMap((items) => {
-          const itemsIsReady$ = items.map((item) =>
-            item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady })))
-          )
+          const itemsIsReady$ = items.map((item) => item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))))
 
           return merge(...itemsIsReady$)
         })

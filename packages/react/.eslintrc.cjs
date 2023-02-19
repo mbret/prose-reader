@@ -13,5 +13,5 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: [`jest`, `@typescript-eslint`, `react`]
+  plugins: [`jest`, `@typescript-eslint`, `react`],
 }

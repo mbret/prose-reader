@@ -11,5 +11,15 @@ export type SpineItemPosition = {
 export type UnsafeSpineItemPosition = {
   x: number
   y: number
-  __symbol?: `UnsafeSpineItemPosition`
+  __symbol?: `UnsafeSpineItemPosition` | `SpineItemPosition`
+}
+
+export class SpineItemNavigationPosition {
+  __symbol = `SpineItemNavigationPosition`
+  public x: number
+  public y: number
+  constructor(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
 }
