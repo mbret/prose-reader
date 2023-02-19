@@ -13,13 +13,5 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: [`jest`, `@typescript-eslint`, `react`],
-  rules: {
-    "node/no-callback-literal": `off`, // huh, 1990 coding
-    "no-unused-vars": `off`, // use ts
-    "no-use-before-define": `off`, // use ts
-    "no-undef": `off`, // use ts
-    "no-redeclare": `off`, // use ts
-    "@typescript-eslint/no-explicit-any": ["off"],
-  },
+  plugins: [`jest`, `@typescript-eslint`, `react`]
 }

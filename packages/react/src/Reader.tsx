@@ -9,6 +9,7 @@ export type Props<Options extends object, Instance extends ReaderInstance> = {
   options?: Omit<Options, "containerElement">
   loadOptions?: Parameters<Instance["load"]>[1]
   createReader: (options: Options) => Instance
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onReader?: (reader: any) => void
   onReady?: () => void
   LoadingElement?: ReactElement
@@ -27,7 +28,7 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
   const [loadingElementContainers, setLoadingElementContainers] = useState<HTMLElement[]>([])
   const { width, height } = { width: `100%`, height: `100%` }
   const hasLoadingElement = !!LoadingElement
-  const ref = useRef<HTMLElement>()
+  const ref = useRef<HTMLDivElement | null>(null)
   const readerInitialized = useRef(false)
 
   useEffect(() => {
@@ -50,12 +51,12 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
           loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
         }),
         ...options,
-      }
+      } as Options
 
-      const newReader = createReader(readerOptions as any)
+      const newReader = createReader(readerOptions)
 
-      setReader(newReader as any)
-      onReader && onReader(newReader as any)
+      setReader(newReader)
+      onReader && onReader(newReader)
     }
   }, [setReader, onReader, reader, options, hasLoadingElement])
 
@@ -99,7 +100,7 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
 
   return (
     <>
-      <div style={style} ref={ref as any} />
+      <div style={style} ref={ref} />
       {loadingElementContainers.map((element) => ReactDOM.createPortal(LoadingElement, element))}
     </>
   )
