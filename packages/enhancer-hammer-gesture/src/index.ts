@@ -5,6 +5,7 @@ import {
   filter,
   fromEvent,
   interval,
+  map,
   merge,
   Observable,
   switchMap,
@@ -44,34 +45,31 @@ export const hammerGestureEnhancer =
     const manager$ = new BehaviorSubject<HammerManager | undefined>(managerInstance)
     const reader = next(options)
 
-    const destroy = () => {
-      manager$.complete()
-      reader.destroy()
-    }
-
     manager$
       .pipe(
         isNotNullOrUndefined,
         switchMap((instance) => {
-          let initialFontScale = 1
-
           const pinchStart$ = fromEvent(instance, "pinchstart").pipe(
-            withLatestFrom(reader.settings$),
-            tap(([, settings]) => {
-              initialFontScale = settings.fontScale
+            tap(() => {
               if (!reader?.zoom.isZooming()) {
                 reader?.zoom.enter()
               }
             })
           )
 
+          const settingsLastPinchStart$ = pinchStart$.pipe(
+            withLatestFrom(reader.settings$),
+            map(([, settings]) => settings)
+          )
+
           const pinch$ = fromEvent(instance, "pinch").pipe(
             throttle(() => interval(100)),
-            tap((event) => {
+            withLatestFrom(settingsLastPinchStart$),
+            tap(([event, { fontScale: fontScaleOnPinchStart }]) => {
               if (reader?.zoom.isZooming()) {
                 reader?.zoom.scale(event.scale)
               } else if (enableFontScalePinch) {
-                const value = initialFontScale + (event.scale - 1)
+                const value = fontScaleOnPinchStart + (event.scale - 1)
                 reader.setSettings({
                   fontScale: Math.max(fontScaleMin, Math.min(fontScaleMax, value)),
                 })
@@ -95,6 +93,11 @@ export const hammerGestureEnhancer =
         takeUntil(reader.$.destroy$)
       )
       .subscribe()
+
+    const destroy = () => {
+      manager$.complete()
+      reader.destroy()
+    }
 
     return {
       ...reader,
