@@ -1,5 +1,16 @@
-import { BehaviorSubject, combineLatest, map, Observable, ObservedValueOf, takeUntil } from "rxjs"
-import { tap, pairwise } from "rxjs/operators"
+import { BehaviorSubject, combineLatest, EMPTY, map, Observable, ObservedValueOf, Subject, takeUntil } from "rxjs"
+import {
+  tap,
+  pairwise,
+  withLatestFrom,
+  distinctUntilChanged,
+  share,
+  catchError,
+  startWith,
+  skip,
+  shareReplay,
+} from "rxjs/operators"
+import { isShallowEqual } from "../utils/objects"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
@@ -57,7 +68,8 @@ export const fontsEnhancer =
     setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & Options) => void
   } => {
     const { fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher` } = options
-    const settingsSubject$ = new BehaviorSubject<OutputOptions>({
+    const changes$ = new Subject<Partial<OutputOptions>>()
+    const settings$ = new BehaviorSubject<OutputOptions>({
       fontScale,
       lineHeight,
       fontWeight,
@@ -77,14 +89,10 @@ export const fontsEnhancer =
     */ ``
     }
     body {
-      ${settingsSubject$.value.fontScale !== 1 ? `font-size: ${settingsSubject$.value.fontScale}em !important;` : ``}
-      ${settingsSubject$.value.lineHeight !== `publisher` ? `line-height: ${settingsSubject$.value.lineHeight} !important;` : ``}
-      ${settingsSubject$.value.fontWeight !== `publisher` ? `font-weight: ${settingsSubject$.value.fontWeight} !important;` : ``}
-      ${
-        settingsSubject$.value.fontJustification !== `publisher`
-          ? `text-align: ${settingsSubject$.value.fontJustification} !important;`
-          : ``
-      }
+      ${settings$.value.fontScale !== 1 ? `font-size: ${settings$.value.fontScale}em !important;` : ``}
+      ${settings$.value.lineHeight !== `publisher` ? `line-height: ${settings$.value.lineHeight} !important;` : ``}
+      ${settings$.value.fontWeight !== `publisher` ? `font-weight: ${settings$.value.fontWeight} !important;` : ``}
+      ${settings$.value.fontJustification !== `publisher` ? `text-align: ${settings$.value.fontJustification} !important;` : ``}
     }
   `
 
@@ -112,7 +120,7 @@ export const fontsEnhancer =
       }
     })
 
-    const shouldRequireLayout = <T extends ObservedValueOf<typeof settingsSubject$>>(source: Observable<T>) =>
+    const shouldRequireLayout = <T extends ObservedValueOf<typeof changes$>>(source: Observable<T>) =>
       source.pipe(
         pairwise(),
         map(([old, latest]) => {
@@ -123,12 +131,23 @@ export const fontsEnhancer =
         })
       )
 
-    settingsSubject$
-      .asObservable()
-      .pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$))
-      .subscribe()
+    const newSettings$ = changes$.pipe(
+      withLatestFrom(settings$),
+      map(([changes, settings]) => ({
+        fontJustification: changes.fontJustification ?? settings.fontJustification,
+        fontWeight: changes.fontWeight ?? settings.fontWeight,
+        lineHeight: changes.lineHeight ?? settings.lineHeight,
+        fontScale: Math.max(0.01, changes.fontScale ?? settings.fontScale),
+      })),
+      distinctUntilChanged(isShallowEqual),
+      shareReplay(1)
+    )
 
-    const settings$ = combineLatest([reader.settings$, settingsSubject$]).pipe(
+    newSettings$.subscribe(settings$)
+
+    settings$.pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$)).subscribe()
+
+    const settingsMerge$ = combineLatest([reader.settings$, settings$]).pipe(
       map(([innerSettings, settings]) => ({
         ...innerSettings,
         ...(settings as ObservedValueOf<Settings$>),
@@ -137,29 +156,16 @@ export const fontsEnhancer =
 
     return {
       ...reader,
-      /**
-       * Absorb current enhancer settings and passthrough the rest to reader
-       */
+      destroy: () => {
+        changes$.complete()
+        settings$.complete()
+      },
       setSettings: (settings) => {
-        const {
-          fontJustification = settingsSubject$.value.fontJustification,
-          fontScale = settingsSubject$.value.fontScale,
-          fontWeight = settingsSubject$.value.fontWeight,
-          lineHeight = settingsSubject$.value.lineHeight,
-          ...passthroughSettings
-        } = settings
+        const { fontJustification, fontScale, fontWeight, lineHeight, ...passthroughSettings } = settings
+        changes$.next({ fontJustification, fontScale, fontWeight, lineHeight })
 
-        if (hasOneKey(settings, [`fontJustification`, `fontScale`, `fontWeight`, `lineHeight`])) {
-          settingsSubject$.next({ fontJustification, fontScale, fontWeight, lineHeight })
-        }
         reader.setSettings(passthroughSettings)
       },
-      /**
-       * Combine reader settings with enhancer settings
-       */
-      settings$,
+      settings$: settingsMerge$,
     }
   }
-
-const hasOneKey = <Obj extends Record<string, unknown>, Key extends keyof Obj>(obj: Obj, keys: Key[]) =>
-  keys.some((key) => key in obj)

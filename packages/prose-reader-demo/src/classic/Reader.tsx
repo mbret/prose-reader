@@ -24,6 +24,7 @@ import { HighlightMenu } from "../HighlightMenu"
 import { SearchDialog } from "../SearchDialog"
 import { HelpDialog } from "../HelpDialog"
 import { useReader } from "../reader/useReader"
+import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants"
 
 export const Reader = ({
   onReader,
@@ -35,7 +36,7 @@ export const Reader = ({
   manifestError?: unknown
 }) => {
   const { url = `` } = useParams<`url`>()
-  const {reader} = useReader()
+  const { reader } = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
@@ -43,16 +44,20 @@ export const Reader = ({
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
-  const [readerOptions] = useState<ReactReaderProps["options"]>({
+  const [readerOptions] = useState<ReactReaderProps["options"] | undefined>({
     // fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
     // lineHeight: parseFloat(localStorage.getItem(`lineHeight`) || ``) || undefined,
     // theme: undefined,
     pageTurnAnimation: `fade`,
     layoutAutoResize: `container`,
-    numberOfAdjacentSpineItemToPreLoad: 0
+    numberOfAdjacentSpineItemToPreLoad: 0,
+    hammerGesture: {
+      enableFontScalePinch: true,
+      fontScaleMax: FONT_SCALE_MAX,
+      fontScaleMin: FONT_SCALE_MIN
+    }
   })
-
-  const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>(undefined)
+  const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>()
 
   useGestureHandler(container)
   useBookmarks(reader, url)

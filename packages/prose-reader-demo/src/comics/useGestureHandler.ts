@@ -6,7 +6,7 @@ import { isMenuOpenState } from "../state"
 import { useReader } from "../reader/useReader"
 
 export const useGestureHandler = (container: HTMLElement | undefined, isUsingFreeMode = false) => {
-  const {reader} = useReader()
+  const { reader } = useReader()
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const movingHasStarted = useRef(false)
   const [hammerManager, setHammerManager] = useState<HammerManager | undefined>(undefined)
@@ -132,5 +132,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
     }
   }, [reader, setMenuOpenState, onSingleTap, hammerManager, movingHasStarted, isUsingFreeMode, isScrollableBook])
 
-  return hammerManager
+  useEffect(() => {
+    hammerManager && reader?.hammerGesture.setManagerInstance(hammerManager)
+  }, [reader, hammerManager])
 }

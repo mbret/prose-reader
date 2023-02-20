@@ -32,30 +32,23 @@ export const Reader = ({
   const { computedPageTurnMode } = useReaderSettings() ?? {}
   const isUsingFreeScroll = computedPageTurnMode === `scrollable`
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const {reader} = useReader()
+  const { reader } = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
-  const [readerOptions, setReaderOptions] = useState<ReactReaderProps["options"] | undefined>(undefined)
+  const [readerOptions] = useState<ReactReaderProps["options"] | undefined>({
+    pageTurnAnimation: `slide`,
+    pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
+    pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
+    layoutAutoResize: `container`,
+    // cover portrait and spread mode without blank page
+    numberOfAdjacentSpineItemToPreLoad: 2
+  })
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>(undefined)
 
   useBookmarks(reader, url)
-  const hammerManager = useGestureHandler(container, isUsingFreeScroll)
-
-  useEffect(() => {
-    if (hammerManager) {
-      setReaderOptions({
-        pageTurnAnimation: `slide`,
-        pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
-        pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
-        layoutAutoResize: `container`,
-        hammerManager,
-        // cover portrait and spread mode without blank page
-        numberOfAdjacentSpineItemToPreLoad: 2
-      })
-    }
-  }, [hammerManager])
+  useGestureHandler(container, isUsingFreeScroll)
 
   const onReady = useCallback(() => {
     setBookReady(true)
@@ -101,7 +94,7 @@ export const Reader = ({
           }
         }}
       >
-        {!!readerLoadOptions && !!readerOptions && (
+        {!!readerLoadOptions && (
           <ReactReader
             manifest={manifest}
             onReader={onReader}
