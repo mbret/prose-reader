@@ -22,5 +22,5 @@
     "build": "tsc && vite build",
     "test": "vitest run --coverage"
   },
-  "gitHead": "3dfe1d5c5a9e3226235f8b4cc0b978f390a6e98b"
+  "gitHead": "e91fb5e9437bdca93b52dc6f5a5078c7a7437a72"
 }
