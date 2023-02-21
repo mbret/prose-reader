@@ -51,5 +51,6 @@
     "stream-browserify": "^3.0.0",
     "typescript": "^4.9.5",
     "xmldoc": "^1.2.0"
-  }
+  },
+  "gitHead": "cb867aca2d6cebf23744d0c7b3867c6b13e1d512"
 }

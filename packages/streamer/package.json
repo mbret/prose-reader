@@ -30,7 +30,7 @@
     "buffer": "^6.0.3",
     "xmldoc": "^1.1.2"
   },
-  "gitHead": "a005ccf2d302179a488d3f5e79c1f043d3ce29de",
+  "gitHead": "cb867aca2d6cebf23744d0c7b3867c6b13e1d512",
   "devDependencies": {
     "buffer": "^6.0.3",
     "xmldoc": "^1.2.0"

@@ -21,5 +21,6 @@
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
     "test": "vitest run --coverage"
-  }
+  },
+  "gitHead": "cb867aca2d6cebf23744d0c7b3867c6b13e1d512"
 }
