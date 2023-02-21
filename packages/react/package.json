@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "type": "module",
   "main": "./dist/prose-reader-react.umd.cjs",
   "module": "./dist/prose-reader-react.js",
@@ -31,7 +31,7 @@
     "react-dom": "*"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.22.0"
+    "@prose-reader/core": "^1.23.0"
   },
   "gitHead": "cb867aca2d6cebf23744d0c7b3867c6b13e1d512"
 }
