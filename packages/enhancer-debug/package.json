@@ -1,0 +1,27 @@
+{
+  "name": "@prose-reader/enhancer-debug",
+  "version": "1.21.0",
+  "type": "module",
+  "main": "./dist/prose-reader-enhancer-debug.umd.cjs",
+  "module": "./dist/prose-reader-enhancer-debug.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-reader-enhancer-debug.js",
+      "require": "./dist/prose-reader-enhancer-debug.umd.cjs"
+    }
+  },
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "lint:read": "prettier --check . && eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:write": "prettier --write . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@prose-reader/core": "^1.21.0"
+  },
+  "peerDependencies": {
+    "rxjs": "*"
+  }
+}

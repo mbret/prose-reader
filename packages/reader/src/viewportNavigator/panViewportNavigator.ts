@@ -63,12 +63,7 @@ export const createPanViewportNavigator = ({
         const correctedY = delta.y - (movingLastDelta?.y || 0)
 
         navigation = navigator.wrapPositionWithSafeEdge({
-          x:
-            pageTurnDirection === `horizontal`
-              ? context.isRTL()
-                ? movingLastPosition.x + correctedX
-                : movingLastPosition.x - correctedX
-              : 0,
+          x: pageTurnDirection === `horizontal` ? movingLastPosition.x - correctedX : 0,
           y: pageTurnDirection === `horizontal` ? 0 : movingLastPosition.y - correctedY,
         })
 
@@ -143,7 +138,10 @@ export const createPanViewportNavigator = ({
           pageTurnDirection === `horizontal` ? to.x + context.getVisibleAreaRect().width * triggerPercentage : 0
         const triggerYPosition =
           pageTurnDirection === `horizontal` ? 0 : to.y + context.getVisibleAreaRect().height * triggerPercentage
-        const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
+        const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({
+          x: triggerXPosition,
+          y: triggerYPosition,
+        })
         const finalNavigation = navigator.getNavigationForPosition(midScreenPositionSafePosition)
         const lastUserExpectedNavigation = getLastUserExpectedNavigation(finalNavigation)
 

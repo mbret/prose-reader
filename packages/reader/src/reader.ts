@@ -157,7 +157,12 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     }
     const elementRect = element.getBoundingClientRect()
 
-    context.setVisibleAreaRect(elementRect.x, elementRect.y, containerElementEvenWidth, dimensions.height)
+    context.setVisibleAreaRect({
+      x: elementRect.x,
+      y: elementRect.y,
+      width: containerElementEvenWidth,
+      height: dimensions.height,
+    })
 
     viewportNavigator.layout()
   }
@@ -325,6 +330,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
      * BehaviorSubject
      */
     pagination$: pagination.$.info$,
+    spineItems$: spine.$.spineItems$,
     $: {
       state$: stateSubject$.asObservable(),
       /**
@@ -340,7 +346,6 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       selection$: selectionSubject$.asObservable(),
       viewportState$: viewportNavigator.$.state$,
       layout$: spine.$.layout$,
-      itemsCreated$: spine.$.itemsCreated$,
       itemsBeforeDestroy$: spine.$.itemsBeforeDestroy$,
       itemIsReady$: spineItemManager.$.itemIsReady$,
       destroy$,

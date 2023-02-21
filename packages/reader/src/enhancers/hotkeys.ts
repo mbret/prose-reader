@@ -1,3 +1,5 @@
+import { KeyboardEvent } from "react"
+import { EMPTY, fromEvent, map, merge, switchMap, takeUntil, withLatestFrom } from "rxjs"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =
@@ -7,33 +9,50 @@ export const hotkeysEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    const onKeyPress = (e: KeyboardEvent) => {
-      if (e.key === `ArrowRight`) {
-        reader.turnRight()
-      }
+    const navigateOnKey = (document: Document) =>
+      fromEvent<KeyboardEvent>(document, "keyup").pipe(
+        withLatestFrom(reader.settings$),
+        map(([e, { pageTurnDirection }]) => {
+          if (pageTurnDirection === "horizontal") {
+            if (e.key === `ArrowRight`) {
+              reader.turnRight()
+            }
 
-      if (e.key === `ArrowLeft`) {
-        reader.turnLeft()
-      }
-    }
+            if (e.key === `ArrowLeft`) {
+              reader.turnLeft()
+            }
+          }
 
-    document.addEventListener(`keyup`, onKeyPress)
+          if (pageTurnDirection === "vertical") {
+            if (e.key === `ArrowDown`) {
+              reader.turnRight()
+            }
 
-    reader.registerHook(`item.onLoad`, ({ frame }) => {
-      frame.contentDocument?.addEventListener(`keyup`, onKeyPress)
+            if (e.key === `ArrowUp`) {
+              reader.turnLeft()
+            }
+          }
 
-      return () => {
-        frame.contentDocument?.removeEventListener(`keyup`, onKeyPress)
-      }
-    })
+          return e
+        })
+      )
 
-    const destroy = () => {
-      document.removeEventListener(`keyup`, onKeyPress)
-      reader.destroy()
-    }
+    navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
-    return {
-      ...reader,
-      destroy,
-    }
+    reader.spineItems$
+      .pipe(
+        switchMap((spineItems) =>
+          merge(
+            ...spineItems.map((item) =>
+              item.$.loaded$.pipe(
+                switchMap((iframe) => (iframe?.contentDocument ? navigateOnKey(iframe.contentDocument) : EMPTY))
+              )
+            )
+          )
+        ),
+        takeUntil(reader.$.destroy$)
+      )
+      .subscribe()
+
+    return reader
   }

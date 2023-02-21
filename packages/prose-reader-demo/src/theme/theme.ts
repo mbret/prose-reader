@@ -6,5 +6,8 @@ const config: ThemeConfig = {
 }
 
 export const theme = extendTheme({
+  fonts: {
+    // heading: `'Dancing Script', sans-serif`
+  },
   config
 })

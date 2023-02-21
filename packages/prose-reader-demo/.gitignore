@@ -24,6 +24,8 @@ yarn-error.log*
 dist
 
 public/epubs/*
+public/service-worker.js
+public/service-worker.js.map
 !public/epubs/accessible_epub_3.epub
 !public/epubs/haruko-html-jpeg.epub
 !public/epubs/moby-dick_txt.txt

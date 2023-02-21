@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useState } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useRecoilValue } from "recoil"
-import { isComicState, paginationState, manifestState } from "./state"
-import { useReader } from "./useReader"
+import { isComicState, manifestState } from "./state"
+import { useReader } from "./reader/useReader"
+import { usePagination } from "./reader/state"
 
 export const Scrubber = () => {
-  const [reader] = useReader()
+  const { reader, reader$ } = useReader()
   const isComic = useRecoilValue(isComicState)
-  const pagination = useRecoilValue(paginationState)
+  const pagination = usePagination(reader$)
   const manifest = useRecoilValue(manifestState)
   const isUsingSpread = pagination?.isUsingSpread
   const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInChapter

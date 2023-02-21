@@ -1,4 +1,4 @@
-import React, { ComponentProps, useCallback, useState } from "react"
+import React, { useCallback, useState } from "react"
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { useGestureHandler } from "./useGestureHandler"
@@ -11,7 +11,6 @@ import {
   isMenuOpenState,
   isSearchOpenState,
   manifestState,
-  paginationState,
   useResetStateOnUnMount
 } from "../state"
 import { ClassicSettings } from "./ClassicSettings"
@@ -24,7 +23,8 @@ import { getEpubUrlFromLocation } from "../serviceWorker/utils"
 import { HighlightMenu } from "../HighlightMenu"
 import { SearchDialog } from "../SearchDialog"
 import { HelpDialog } from "../HelpDialog"
-import { useReader } from "../useReader"
+import { useReader } from "../reader/useReader"
+import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants"
 
 export const Reader = ({
   onReader,
@@ -36,33 +36,31 @@ export const Reader = ({
   manifestError?: unknown
 }) => {
   const { url = `` } = useParams<`url`>()
-  const [reader] = useReader()
+  const { reader } = useReader()
   const setManifestState = useSetRecoilState(manifestState)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
-  const setPaginationState = useSetRecoilState(paginationState)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
-  const [readerOptions] = useState<ReactReaderProps["options"]>({
+  const [readerOptions] = useState<ReactReaderProps["options"] | undefined>({
     // fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
     // lineHeight: parseFloat(localStorage.getItem(`lineHeight`) || ``) || undefined,
     // theme: undefined,
     pageTurnAnimation: `fade`,
     layoutAutoResize: `container`,
-    numberOfAdjacentSpineItemToPreLoad: 0
+    numberOfAdjacentSpineItemToPreLoad: 0,
+    hammerGesture: {
+      enableFontScalePinch: true,
+      fontScaleMax: FONT_SCALE_MAX,
+      fontScaleMin: FONT_SCALE_MIN
+    }
   })
-
-  const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>(undefined)
+  const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>()
 
   useGestureHandler(container)
   useBookmarks(reader, url)
-
-  const onPaginationChange: ComponentProps<typeof ReactReader>["onPaginationChange"] = (info) => {
-    localStorage.setItem(`cfi`, info?.beginCfi || ``)
-    setPaginationState(info)
-  }
 
   const onReady = useCallback(() => {
     setBookReady(true)
@@ -138,7 +136,6 @@ export const Reader = ({
             onReader={onReader}
             onReady={onReady}
             loadOptions={readerLoadOptions}
-            onPaginationChange={onPaginationChange}
             options={readerOptions}
             createReader={createAppReader}
           />

@@ -1,8 +1,6 @@
 import { atom, selector, useRecoilCallback } from "recoil"
 import { Manifest } from "@prose-reader/core"
 import { useEffect } from "react"
-import { ReaderInstance } from "./types"
-import { ObservedValueOf } from "rxjs"
 
 export const isSearchOpenState = atom({
   key: `isSearchOpenState`,
@@ -33,16 +31,6 @@ export const bookReadyState = atom({
 
 export const manifestState = atom<Manifest | undefined>({
   key: `manifestState`,
-  default: undefined
-})
-
-export const paginationState = atom<ObservedValueOf<ReaderInstance["pagination$"]> | undefined>({
-  key: `paginationState`,
-  default: undefined
-})
-
-export const readerStateState = atom<ObservedValueOf<ReaderInstance["$"]["state$"]> | undefined>({
-  key: `readerStateState`,
   default: undefined
 })
 
@@ -79,23 +67,12 @@ export const hasCurrentHighlightState = selector({
   }
 })
 
-export const currentPageState = selector({
-  key: `currentPageState`,
-  get: ({ get }) => {
-    const { renditionLayout } = get(manifestState) || {}
-    const { beginPageIndexInChapter, beginSpineItemIndex } = get(paginationState) || {}
-
-    if (renditionLayout === "reflowable") return beginPageIndexInChapter
-    return beginSpineItemIndex
-  }
-})
-
 export const isZoomingState = atom<boolean>({
   key: `isZoomingState`,
   default: false
 })
 
-const statesToReset = [isMenuOpenState, paginationState, manifestState, bookReadyState, currentHighlight]
+const statesToReset = [isMenuOpenState, manifestState, bookReadyState, currentHighlight]
 
 export const useResetStateOnUnMount = () => {
   const resetStates = useRecoilCallback(

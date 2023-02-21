@@ -76,7 +76,11 @@ export const createViewportNavigator = ({
    * This value may be used to adjust / get current valid info about what should be visible.
    * This DOES NOT reflect necessarily what is visible for the user at instant T.
    */
-  const currentNavigationPositionSubject$ = new BehaviorSubject<ViewportNavigationEntry>({ x: -1, y: 0, spineItem: undefined })
+  const currentNavigationPositionSubject$ = new BehaviorSubject<ViewportNavigationEntry>({
+    x: -1,
+    y: 0,
+    spineItem: undefined,
+  })
   const navigator = createNavigationResolver({
     context,
     spineItemManager,
@@ -96,25 +100,24 @@ export const createViewportNavigator = ({
    * use the dedicated property.
    */
   const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
-    if (
-      currentViewportPositionMemoUnused &&
-      currentViewportPositionMemoUnused?.x !== ~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10
-    ) {
-      // console.error(`FOOOOO`, currentViewportPositionMemo?.x, ~~(Math.abs(element.getBoundingClientRect().x) * 10) / 10)
-    }
-    // if (currentViewportPositionMemo) return currentViewportPositionMemo
-
     if (context.getSettings().computedPageTurnMode === `scrollable`) {
       return scrollViewportNavigator.getCurrentViewportPosition()
     }
 
+    /**
+     * `x` will be either negative or positive depending on which side we are translating.
+     * For example LTR books which translate by moving up will have negative x. The viewport position
+     * is not however negative (this is only because of translate). However it can be legit negative
+     * for RTL
+     */
     const { x, y } = element.getBoundingClientRect()
 
     const newValue = {
       // we want to round to first decimal because it's possible to have half pixel
       // however browser engine can also gives back x.yyyy based on their precision
       // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
-      x: ~~(Math.abs(x) * 10) / 10,
+      x: ~~(x * -1 * 10) / 10,
+      // x: ~~(x * 10) / 10,
       y: ~~(Math.abs(y) * 10) / 10,
     }
     currentViewportPositionMemoUnused = newValue
@@ -174,11 +177,11 @@ export const createViewportNavigator = ({
       }, false)
 
       if (!isAdjusted) {
-        if (context.isRTL()) {
-          element.style.transform = `translate3d(${x}px, -${y}px, 0)`
-        } else {
-          element.style.transform = `translate3d(-${x}px, -${y}px, 0)`
-        }
+        /**
+         * @important
+         * will work automatically with RTL since x will be negative.
+         */
+        element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
       }
 
       hooks.forEach((hook) => {
@@ -426,7 +429,6 @@ export const createViewportNavigator = ({
          */
         currentEvent.shouldAnimate ? delay(1, animationFrameScheduler) : identity,
         tap((data) => {
-          // const noAdjustmentNeeded = !areNavigationDifferent(data.position, getCurrentViewportPosition())
           const noAdjustmentNeeded = false
 
           if (data.shouldAnimate && !noAdjustmentNeeded) {

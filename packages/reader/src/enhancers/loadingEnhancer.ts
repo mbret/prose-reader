@@ -38,7 +38,7 @@ export const loadingEnhancer =
 
     const reader = next(options)
 
-    const createEntries$ = (items: ObservedValueOf<typeof reader.$.itemsCreated$>) =>
+    const createEntries$ = (items: ObservedValueOf<typeof reader.spineItems$>) =>
       of(
         items.reduce((acc, { item, element }) => {
           const loadingElementContainer = loadingElementCreate({
@@ -86,7 +86,7 @@ export const loadingEnhancer =
         })
       )
 
-    const items$ = reader.$.itemsCreated$.pipe(
+    const items$ = reader.spineItems$.pipe(
       switchMap((items) => createEntries$(items)),
       shareReplay(1),
       takeUntil(reader.context.$.destroy$)

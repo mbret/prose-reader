@@ -1,11 +1,12 @@
 import { List, ListIcon, ListItem } from "@chakra-ui/react"
 import React from "react"
-import { useRecoilValue } from "recoil"
-import { paginationState } from "./state"
 import { FullScreenModal } from "./common/FullScreenModal"
+import { usePagination } from "./reader/state"
+import { useReader } from "./reader/useReader"
 
 export const HelpDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
-  const pagination = useRecoilValue(paginationState)
+  const { reader$ } = useReader()
+  const pagination = usePagination(reader$)
 
   let currentSubChapter = pagination?.beginChapterInfo
 

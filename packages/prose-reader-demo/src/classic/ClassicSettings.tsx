@@ -8,6 +8,7 @@ import { Settings } from "../common/Settings"
 import { ArrowDownIcon, ArrowUpIcon, ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons"
 import { OtherSettings } from "../common/OtherSettings"
 import { useReaderSettings } from "../common/useReaderSettings"
+import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants"
 
 type Theme = Parameters<Reader[`theme`][`set`]>[0]
 
@@ -52,8 +53,8 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
               flex: 1
             }}
             value={fontScaleSliderValue}
-            max={5}
-            min={0.2}
+            max={FONT_SCALE_MAX}
+            min={FONT_SCALE_MIN}
             step={0.2}
             onChange={(value) => {
               if (typeof value === "number") {

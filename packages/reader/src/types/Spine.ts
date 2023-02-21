@@ -31,7 +31,7 @@ export type Spine = {
   $: {
     $: Observable<Event>
     layout$: Observable<boolean>
-    itemsCreated$: Observable<{ item: Manifest[`spineItems`][number]; element: HTMLElement }[]>
+    spineItems$: Observable<SpineItem[]>
     itemsBeforeDestroy$: Observable<void>
   }
 }

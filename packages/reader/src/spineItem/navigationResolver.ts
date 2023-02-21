@@ -2,13 +2,12 @@ import { SpineItem } from "./createSpineItem"
 import { Context } from "../context"
 import { getNumberOfPages } from "../pagination"
 import { createLocationResolver } from "./locationResolver"
-
-type SpineItemPosition = { x: number; y: number }
+import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"
 
 export const createNavigationResolver = ({ context }: { context: Context }) => {
   const spineItemLocator = createLocationResolver({ context })
 
-  const getNavigationForLeftPage = (position: SpineItemPosition, spineItem: SpineItem): SpineItemPosition => {
+  const getNavigationForLeftPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {
     let nextPotentialPosition = {
       x: position.x - context.getPageSize().width,
       y: position.y,
@@ -21,10 +20,12 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
       }
     }
 
-    return spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+
+    return new SpineItemNavigationPosition(navigationPosition)
   }
 
-  const getNavigationForRightPage = (position: SpineItemPosition, spineItem: SpineItem): SpineItemPosition => {
+  const getNavigationForRightPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {
     let nextPotentialPosition = {
       x: position.x + context.getPageSize().width,
       y: position.y,
@@ -37,10 +38,12 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
       }
     }
 
-    return spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+
+    return new SpineItemNavigationPosition(navigationPosition)
   }
 
-  const getNavigationForLastPage = (spineItem: SpineItem): SpineItemPosition => {
+  const getNavigationForLastPage = (spineItem: SpineItem): SpineItemNavigationPosition => {
     if (spineItem.isUsingVerticalWriting()) {
       const pageHeight = context.getPageSize().height
       const numberOfPages = getNumberOfPages(spineItem.getElementDimensions().height, pageHeight)
@@ -52,22 +55,22 @@ export const createNavigationResolver = ({ context }: { context: Context }) => {
     }
   }
 
-  const getNavigationForPage = (pageIndex: number, spineItem: SpineItem): SpineItemPosition => {
-    const currentViewport = spineItemLocator.getSpineItemPositionFromPageIndex(pageIndex, spineItem)
+  const getNavigationForPage = (pageIndex: number, spineItem: SpineItem): SpineItemNavigationPosition => {
+    const { x, y } = spineItemLocator.getSpineItemPositionFromPageIndex(pageIndex, spineItem)
 
-    return currentViewport
+    return new SpineItemNavigationPosition({ x, y })
   }
 
-  const getNavigationFromNode = (spineItem: SpineItem, node: Node, offset: number) => {
+  const getNavigationFromNode = (spineItem: SpineItem, node: Node, offset: number): SpineItemNavigationPosition => {
     const position = spineItemLocator.getSpineItemPositionFromNode(node, offset, spineItem)
 
-    return position || { x: 0, y: 0 }
+    return new SpineItemNavigationPosition(position || { x: 0, y: 0 })
   }
 
-  const getNavigationForPosition = (spineItem: SpineItem, position: SpineItemPosition) => {
+  const getNavigationForPosition = (spineItem: SpineItem, position: UnsafeSpineItemPosition): SpineItemNavigationPosition => {
     const potentiallyCorrectedPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(position, spineItem)
 
-    return potentiallyCorrectedPosition
+    return new SpineItemNavigationPosition(potentiallyCorrectedPosition)
   }
 
   return {

@@ -13,7 +13,19 @@ const queryClient = new QueryClient()
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js", {})
+      .register(
+        import.meta.env.MODE === "production" ||
+          /**
+           * firefox does not support module type for dev service worker.
+           * Please build and copy dist service worker in public when developing with firefox
+           */
+          navigator.userAgent.includes("Firefox/")
+          ? "/service-worker.js"
+          : "/dev-sw.js?dev-sw",
+        {
+          type: import.meta.env.MODE === "production" ? "classic" : "module"
+        }
+      )
       .then((registration) => {
         console.log("SW registered: ", registration)
         if (!container) return

@@ -3,11 +3,11 @@ import { Box, Icon } from "@chakra-ui/react"
 import { useRecoilValue } from "recoil"
 import { isZoomingState } from "../state"
 import { AiOutlineZoomOut } from "react-icons/ai"
-import { useReader } from "../useReader"
+import { useReader } from "../reader/useReader"
 
 export const ZoomingIndicator = () => {
   const isZooming = useRecoilValue(isZoomingState)
-  const [reader] = useReader()
+  const {reader} = useReader()
 
   if (!isZooming) {
     return null

@@ -252,7 +252,7 @@ export const createLoader = ({
       loaded$: load$,
       isLoaded$: isLoadedSubject$.asObservable(),
       isReady$: isReadySubject$.asObservable().pipe(distinctUntilChanged()),
-      ready$: ready$,
+      ready$,
       unloaded$: unload$,
       frameElement$: frameElementSubject$,
     },
