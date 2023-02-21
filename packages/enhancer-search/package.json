@@ -19,8 +19,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.29.0",
-    "@prose-reader/enhancer-scripts": "^1.8.0"
+    "@prose-reader/core": "^1.29.0"
   },
   "peerDependencies": {
     "rxjs": "*"
