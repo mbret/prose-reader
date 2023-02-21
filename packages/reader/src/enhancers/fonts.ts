@@ -1,11 +1,5 @@
 import { BehaviorSubject, combineLatest, map, Observable, ObservedValueOf, Subject, takeUntil } from "rxjs"
-import {
-  tap,
-  pairwise,
-  withLatestFrom,
-  distinctUntilChanged,
-  shareReplay,
-} from "rxjs/operators"
+import { tap, pairwise, withLatestFrom, distinctUntilChanged, shareReplay } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
