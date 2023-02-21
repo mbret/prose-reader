@@ -108,4 +108,4 @@ export const hammerGestureEnhancer =
     }
   }
 
-export const bump = 1
+export const bump = 2
