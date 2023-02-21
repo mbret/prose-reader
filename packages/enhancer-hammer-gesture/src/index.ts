@@ -107,3 +107,5 @@ export const hammerGestureEnhancer =
       },
     }
   }
+
+export const bump = 1
