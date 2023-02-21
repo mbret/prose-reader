@@ -3,6 +3,7 @@
   "version": "1.25.0",
   "main": "dist/index.js",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "start": "vite --port 9000",
     "build": "tsc --noEmit && vite build",
