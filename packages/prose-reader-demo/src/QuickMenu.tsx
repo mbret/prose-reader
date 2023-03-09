@@ -105,6 +105,7 @@ export const QuickMenu = ({
           bottom={0}
           height="auto"
           minHeight={140}
+          
           leftElement={
             <IconButton
               icon={<ArrowBackIcon />}
@@ -140,16 +141,18 @@ export const QuickMenu = ({
               >
                 {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
               </div>
-              <div
-                style={{
-                  color: "white",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                  overflow: "hidden"
-                }}
-              >
-                {chapterTitle ? `Chapter ${chapterTitle}` : ``}
-              </div>
+              <Box flex={1}>
+                <div
+                  style={{
+                    color: "white",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden"
+                  }}
+                >
+                  {chapterTitle ? `Chapter ${chapterTitle}` : ``}
+                </div>
+              </Box>
               {!isComic && !hasOnlyOnePage && (
                 <div
                   style={{
