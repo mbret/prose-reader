@@ -294,20 +294,21 @@ const getChapterInfo = (
 
       if (spineItemIsBeforeThisTocItem) return acc
 
-      return {
+      const info = {
         title: tocItem.title,
         path: tocItem.path,
       }
-    }
 
-    const subInfo = getChapterInfo(href, tocItem.contents, manifest)
+      const subInfo = getChapterInfo(href, tocItem.contents, manifest)
 
-    if (subInfo) {
-      return {
-        subChapter: subInfo,
-        title: tocItem.title,
-        path: tocItem.path,
+      if (subInfo) {
+        return {
+          ...info,
+          subChapter: subInfo,
+        }
       }
+
+      return info
     }
 
     return acc

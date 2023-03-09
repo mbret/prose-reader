@@ -88,7 +88,7 @@ describe("Given a book with one chapter", () => {
       })
 
       const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-        reader.pagination$.pipe(skip(1)).subscribe({
+        reader.pagination$.pipe(skip(2)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -138,6 +138,80 @@ describe("Given a book with one chapter", () => {
       expect(value.beginChapterInfo).toEqual({
         path: "/chapter_1/page_1.jpg",
         title: "Chapter 1",
+      })
+    })
+  })
+
+  describe("and contain inner chapter", () => {
+    describe(`when we are on first page`, () => {
+      describe("and the first page is within firt chapter sub chapter", () => {
+        it(`should return correct chapter with its subChapter info filled`, async () => {
+          const reader = paginationEnhancer(progressionEnhancer(createReader))({
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            containerElement: document.getElementById("test-container")!,
+          })
+
+          const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
+            reader.pagination$.pipe(skip(2)).subscribe({
+              next: resolve,
+              error: reject,
+            })
+
+            reader.load(
+              {
+                ...BASE_MANIFEST,
+                nav: {
+                  toc: [
+                    {
+                      contents: [
+                        {
+                          contents: [],
+                          href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                          path: "OEBPS/part0007.xhtml",
+                          title: "Chapter 1",
+                        },
+                      ],
+                      href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                      path: "OEBPS/part0006.xhtml",
+                      title: "Part 1",
+                    },
+                  ],
+                },
+                spineItems: [
+                  {
+                    href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                    id: "part0006.xhtml",
+                    pageSpreadLeft: true,
+                    pageSpreadRight: true,
+                    progressionWeight: 0,
+                    renditionLayout: "pre-paginated",
+                  },
+                  {
+                    href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                    id: "part0007.xhtml",
+                    pageSpreadLeft: true,
+                    pageSpreadRight: true,
+                    progressionWeight: 0,
+                    renditionLayout: "pre-paginated",
+                  },
+                ],
+              },
+              {
+                fetchResource: async () => {
+                  return new Response("", { status: 200 })
+                },
+              }
+            )
+
+            reader.goToSpineItem(1)
+          })
+
+          expect(value.beginChapterInfo).toEqual({
+            path: "OEBPS/part0006.xhtml",
+            title: "Part 1",
+            subChapter: { title: "Chapter 1", path: "OEBPS/part0007.xhtml" },
+          })
+        })
       })
     })
   })
