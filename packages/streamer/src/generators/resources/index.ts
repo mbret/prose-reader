@@ -1,6 +1,7 @@
 import { PROSE_READER_RESOURCE_ERROR_INJECTED_META_NAME } from "@prose-reader/shared"
 import { Archive } from "../.."
 import { Report } from "../../report"
+import { calibreFixHook } from "./hooks/calibreFixHook"
 import { cssFixHook } from "./hooks/cssFixHook"
 import { defaultHook } from "./hooks/defaultHook"
 import { HookResource } from "./hooks/types"
@@ -18,7 +19,11 @@ export const generateResourceFromArchive = async (archive: Archive, resourcePath
     },
   }
 
-  const hooks = [defaultHook({ archive, resourcePath }), cssFixHook({ archive, resourcePath })]
+  const hooks = [
+    defaultHook({ archive, resourcePath }),
+    cssFixHook({ archive, resourcePath }),
+    calibreFixHook({ archive, resourcePath }),
+  ]
 
   try {
     const resource = await hooks.reduce(async (manifest, gen) => {
