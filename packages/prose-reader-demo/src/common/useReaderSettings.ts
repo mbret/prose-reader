@@ -8,7 +8,7 @@ const undefined$ = of(undefined)
 const [useSettings] = bind((reader?: ReaderInstance) => reader?.settings$ ?? undefined$)
 
 export const useReaderSettings = () => {
-  const {reader} = useReader()
+  const { reader } = useReader()
 
   return useSettings(reader)
 }

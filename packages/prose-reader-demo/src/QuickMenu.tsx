@@ -105,7 +105,6 @@ export const QuickMenu = ({
           bottom={0}
           height="auto"
           minHeight={140}
-          
           leftElement={
             <IconButton
               icon={<ArrowBackIcon />}

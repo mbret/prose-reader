@@ -7,7 +7,7 @@ import { useReader } from "../reader/useReader"
 
 export const ZoomingIndicator = () => {
   const isZooming = useRecoilValue(isZoomingState)
-  const {reader} = useReader()
+  const { reader } = useReader()
 
   if (!isZooming) {
     return null

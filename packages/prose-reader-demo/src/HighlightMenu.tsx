@@ -6,7 +6,7 @@ import { currentHighlight } from "./state"
 import { useReader } from "./reader/useReader"
 
 export const HighlightMenu = () => {
-  const {reader} = useReader()
+  const { reader } = useReader()
   const [currentSelection, setCurrentSelection] = useRecoilState(currentHighlight)
   const isCurrentSelectionSaved = currentSelection && reader?.highlights.has(currentSelection)
   const styles = useStyles()

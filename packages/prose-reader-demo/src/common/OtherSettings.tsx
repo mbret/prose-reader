@@ -16,7 +16,7 @@ import { useReader } from "../reader/useReader"
 
 export const OtherSettings = () => {
   const settings = useReaderSettings()
-  const {reader} = useReader()
+  const { reader } = useReader()
 
   return (
     <FormControl as="fieldset" style={{ marginTop: 10 }}>

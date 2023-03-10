@@ -9,7 +9,7 @@ export const OrDivider: FC<{ title?: string; style?: React.CSSProperties } & Box
         height="1px"
         style={{
           borderBottom: "1px solid white",
-          opacity: "30%",
+          opacity: "30%"
         }}
       ></Box>
       <Box marginX={2}>
@@ -19,7 +19,7 @@ export const OrDivider: FC<{ title?: string; style?: React.CSSProperties } & Box
         width="100%"
         style={{
           borderBottom: "1px solid white",
-          opacity: "30%",
+          opacity: "30%"
         }}
       ></Box>
     </Box>

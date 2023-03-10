@@ -10,7 +10,7 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: b
   const [text, setText] = useState("")
   const [results, setResults] = useState<SearchResult>([])
   const [searching, setSearching] = useState(false)
-  const {reader} = useReader()
+  const { reader } = useReader()
 
   const onValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value)
