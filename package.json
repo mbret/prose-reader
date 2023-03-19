@@ -71,6 +71,7 @@
     "@types/react": "18.0.28"
   },
   "dependencies": {
+    "@rollup/plugin-replace": "^5.0.2",
     "typescript": "^5.0.2"
   }
 }
