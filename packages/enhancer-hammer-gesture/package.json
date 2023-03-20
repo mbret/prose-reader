@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-hammer-gesture",
-  "version": "1.38.0",
+  "version": "1.39.0",
   "type": "module",
   "main": "./dist/prose-reader-enhancer-hammer.gesture.cjs",
   "module": "./dist/prose-reader-enhancer-hammer-gesture.js",
@@ -22,7 +22,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.38.0"
+    "@prose-reader/core": "^1.39.0"
   },
   "peerDependencies": {
     "@types/hammerjs": "*",
