@@ -72,6 +72,6 @@
   },
   "dependencies": {
     "@rollup/plugin-replace": "^5.0.2",
-    "typescript": "^5.0.2"
+    "typescript": "^4.9.5"
   }
 }

@@ -1,8 +1,8 @@
-import { Box, Image, Badge, Flex, Spacer } from "@chakra-ui/react"
+import { Box, Image, Badge } from "@chakra-ui/react"
 import { StarIcon } from "@chakra-ui/icons"
 import React from "react"
 import { Link } from "react-router-dom"
-import { Button as ChakraButton, Text } from "@chakra-ui/react"
+import { Button as ChakraButton } from "@chakra-ui/react"
 import { ArrowBackIcon } from "@chakra-ui/icons"
 
 export const Home = () => {
