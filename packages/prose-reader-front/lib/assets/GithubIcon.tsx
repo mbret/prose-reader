@@ -1,5 +1,6 @@
 import { Icon } from "@chakra-ui/react"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GithubIcon = (props: any) => {
   return (
     <Icon viewBox="0 0 98 96" {...props}>

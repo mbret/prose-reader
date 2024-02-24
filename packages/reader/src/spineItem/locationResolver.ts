@@ -153,7 +153,7 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
 
     return Math.max(
       0,
-      offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth)
+      offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth),
     )
   }
 

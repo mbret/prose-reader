@@ -25,7 +25,7 @@ jobs:
 
       - name: Install
         run: |
-          yarn install --frozen-lockfile
+          npm ci
 
       # We only build library on this pipe
       - name: Lint
@@ -39,4 +39,4 @@ jobs:
 
       - name: Test
         run: |
-          yarn test
+          npm test

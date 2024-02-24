@@ -7,7 +7,7 @@ import { Archive } from "../../../archives/types"
  * used to define cbz, etc. I believe it comes from some sites or apps.
  */
 export const comicInfoHook =
-  ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
+  ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const comicInfoFile = archive.files.find((file) => file.basename.toLowerCase() === `comicinfo.xml`)
 

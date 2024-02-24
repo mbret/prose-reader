@@ -101,7 +101,7 @@ export const createFrameItem = ({
 
   const contentLayoutChange$ = merge(
     unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
-    ready$.pipe(map(() => ({ isFirstLayout: true })))
+    ready$.pipe(map(() => ({ isFirstLayout: true }))),
   )
 
   const destroy = () => {

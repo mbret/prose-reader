@@ -4,7 +4,7 @@ import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
@@ -34,7 +34,7 @@ export const hotkeysEnhancer =
           }
 
           return e
-        })
+        }),
       )
 
     navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
@@ -45,12 +45,12 @@ export const hotkeysEnhancer =
           merge(
             ...spineItems.map((item) =>
               item.$.loaded$.pipe(
-                switchMap((iframe) => (iframe?.contentDocument ? navigateOnKey(iframe.contentDocument) : EMPTY))
-              )
-            )
-          )
+                switchMap((iframe) => (iframe?.contentDocument ? navigateOnKey(iframe.contentDocument) : EMPTY)),
+              ),
+            ),
+          ),
         ),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 

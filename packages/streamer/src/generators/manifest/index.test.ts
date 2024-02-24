@@ -53,7 +53,7 @@ test(`Given a list of urls with rendition flow archive`, () => {
       [`https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`],
       {
         useRenditionFlow: true,
-      }
+      },
     )
 
     const manifest = await generateManifestFromArchive(archive)

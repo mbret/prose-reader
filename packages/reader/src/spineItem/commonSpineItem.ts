@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Context } from "../context"
 import { createFrameItem } from "./frameItem/frameItem"
 import { Manifest } from "../types"
@@ -252,8 +253,8 @@ export const createCommonSpineItem = ({
       } & (
         | ReturnType<typeof createFrameManipulator>
         | { frame: undefined; removeStyle: (id: string) => void; addStyle: (id: string, style: string) => void }
-      )
-    ) => boolean
+      ),
+    ) => boolean,
   ) => {
     const manipulableFrame = spineItemFrame.getManipulableFrame()
 
@@ -294,7 +295,7 @@ export const createCommonSpineItem = ({
     map(([data, isReady]) => ({
       isFirstLayout: data.isFirstLayout,
       isReady,
-    }))
+    })),
   )
 
   return {
@@ -355,7 +356,7 @@ export const createCommonSpineItem = ({
 const createContainerElement = (
   containerElement: HTMLElement,
   item: Manifest[`spineItems`][number],
-  hooks$: BehaviorSubject<Hook[]>
+  hooks$: BehaviorSubject<Hook[]>,
 ) => {
   const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItem`)
@@ -392,7 +393,7 @@ const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spi
 const createFrameHooks = (
   iframeEventBridgeElement: HTMLElement,
   fingerTracker: ReturnType<typeof createFingerTracker>,
-  selectionTracker: ReturnType<typeof createSelectionTracker>
+  selectionTracker: ReturnType<typeof createSelectionTracker>,
 ): Hook[] => {
   return [
     {

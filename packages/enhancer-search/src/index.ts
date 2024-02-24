@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Reader } from "@prose-reader/core"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
 import { map, share, switchMap, takeUntil } from "rxjs/operators"
@@ -28,7 +29,7 @@ export type SearchResult = ResultItem[]
 export const searchEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     search: {
       search: (text: string) => void
@@ -129,9 +130,9 @@ export const searchEnhancer =
               })
 
               return newResults
-            })
+            }),
           )
-        })
+        }),
       )
     }
 
@@ -155,11 +156,11 @@ export const searchEnhancer =
           return forkJoin(searches$).pipe(
             map((results) => {
               return results.reduce((acc, value) => [...acc, ...value], [])
-            })
+            }),
           )
         }),
-        map((data) => ({ type: `end` as const, data }))
-      )
+        map((data) => ({ type: `end` as const, data })),
+      ),
     ).pipe(share(), takeUntil(reader.$.destroy$))
 
     const destroy = () => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BehaviorSubject, combineLatest, map, Observable, ObservedValueOf, Subject, takeUntil } from "rxjs"
 import { tap, pairwise, withLatestFrom, distinctUntilChanged, shareReplay } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
@@ -47,12 +48,12 @@ export const fontsEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    Settings$ extends Observable<any> = InheritOutput["settings$"]
+    Settings$ extends Observable<any> = InheritOutput["settings$"],
   >(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
-    options: InheritOptions & Options
+    options: InheritOptions & Options,
   ): Omit<InheritOutput, "setSettings" | "settings$"> & {
     settings$: Observable<ObservedValueOf<Settings$> & OutputOptions>
     setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & Options) => void
@@ -118,7 +119,7 @@ export const fontsEnhancer =
           if (latest.lineHeight !== old.lineHeight) return true
 
           return false
-        })
+        }),
       )
 
     const newSettings$ = changes$.pipe(
@@ -130,7 +131,7 @@ export const fontsEnhancer =
         fontScale: Math.max(0.01, changes.fontScale ?? settings.fontScale),
       })),
       distinctUntilChanged(isShallowEqual),
-      shareReplay(1)
+      shareReplay(1),
     )
 
     newSettings$.subscribe(settings$)
@@ -141,7 +142,7 @@ export const fontsEnhancer =
       map(([innerSettings, settings]) => ({
         ...innerSettings,
         ...(settings as ObservedValueOf<Settings$>),
-      }))
+      })),
     )
 
     return {

@@ -56,7 +56,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
   }) => {
     const numberOfPages = getSpineItemNumberOfPages(info.spineItem)
     // const pageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(info.spineItemPosition, info.spineItem)
-    const cfi: string | undefined = undefined
+    // const cfi: string | undefined = undefined
 
     // @todo update pagination cfi whenever iframe is ready (cause even offset may not change but we still need to get the iframe for cfi)
     // @todo update cfi also whenever a resize occurs in the iframe
@@ -90,7 +90,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
       },
       end: Parameters<typeof getInfoForUpdate>[0] & {
         spineItemIndex: number
-      }
+      },
     ) => {
       const beginInfo = getInfoForUpdate(begin)
       const endInfo = getInfoForUpdate(end)
@@ -111,7 +111,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
         ...newValues,
       })
     },
-    { disable: true }
+    { disable: true },
   )
 
   const getInfo = () => paginationSubject$.value

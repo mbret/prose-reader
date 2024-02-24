@@ -35,7 +35,7 @@ const allFilesHaveViewportMeta = (files: Archive["files"]) =>
   }, Promise.resolve(true))
 
 export const epubOptimizerHook =
-  ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
+  ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const bookIsFullReflowable =
       manifest.renditionLayout === "reflowable" && manifest.spineItems.every((item) => item.renditionLayout === "reflowable")

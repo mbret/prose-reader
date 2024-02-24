@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const ROOT_NAMESPACE = `@prose-reader/core`
 
 const wrap = (str: string) => `[${str}]`
@@ -62,7 +63,7 @@ const createReport = (namespace?: string) => ({
         // eslint-disable-next-line no-console
         console.warn(
           `[prose-reader] [metric] `,
-          `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`
+          `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`,
         )
       }
     }
@@ -72,7 +73,7 @@ const createReport = (namespace?: string) => ({
     name: string,
     targetDuration = 10,
     functionToMeasure: F,
-    { disable }: { disable?: boolean } = {}
+    { disable }: { disable?: boolean } = {},
   ) => {
     if (disable || !window.__PROSE_READER_DEBUG) return functionToMeasure
 

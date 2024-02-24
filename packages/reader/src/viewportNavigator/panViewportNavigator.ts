@@ -89,7 +89,7 @@ export const createPanViewportNavigator = ({
 
       moveToSubject$.next({ position: navigation })
     },
-    { disable: false }
+    { disable: false },
   )
 
   const snapTo = (data: SnapNavigation[`data`]) => {
@@ -118,7 +118,7 @@ export const createPanViewportNavigator = ({
       } else {
         return undefined
       }
-    }
+    },
   )
 
   const snapNavigation$ = navigationTriggerSubject$.pipe(
@@ -148,8 +148,8 @@ export const createPanViewportNavigator = ({
         // @todo return an animation interpolation based on the distance
 
         return of({ ...finalNavigation, lastUserExpectedNavigation })
-      }
-    )
+      },
+    ),
   )
 
   const destroy = () => {

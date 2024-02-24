@@ -90,8 +90,8 @@ export const epubHook =
             href: manifestItem?.attr.href?.startsWith(`https://`)
               ? manifestItem?.attr.href
               : opfBasePath
-              ? `${hrefBaseUri}${opfBasePath}/${manifestItem?.attr.href}`
-              : `${hrefBaseUri}${manifestItem?.attr.href}`,
+                ? `${hrefBaseUri}${opfBasePath}/${manifestItem?.attr.href}`
+                : `${hrefBaseUri}${manifestItem?.attr.href}`,
             renditionLayout: publisherRenditionLayout || `reflowable`,
             ...(properties.find((property) => property === `rendition:layout-reflowable`) && {
               renditionLayout: `reflowable`,

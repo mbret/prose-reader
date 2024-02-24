@@ -15,35 +15,38 @@ export const navigationFallbackHook =
 
     const filesSortedByAlpha = [...archive.files].sort((a, b) => sortByTitleComparator(a.uri, b.uri))
 
-    const toc: NonNullable<Manifest["nav"]>["toc"] = Object.values(filesSortedByAlpha).reduce((acc, file) => {
-      const parts = file.uri.split("/")
+    const toc: NonNullable<Manifest["nav"]>["toc"] = Object.values(filesSortedByAlpha).reduce(
+      (acc, file) => {
+        const parts = file.uri.split("/")
 
-      // we have a file that is
-      const isFileUnderFolder = !file.dir && parts.length > 1
+        // we have a file that is
+        const isFileUnderFolder = !file.dir && parts.length > 1
 
-      if (isFileUnderFolder) {
-        parts.forEach((part, level) => {
-          const partIsFileName = level === parts.length - 1
+        if (isFileUnderFolder) {
+          parts.forEach((part, level) => {
+            const partIsFileName = level === parts.length - 1
 
-          if (partIsFileName) return
+            if (partIsFileName) return
 
-          const existingTocItem = acc.find(({ title }) => title === part)
+            const existingTocItem = acc.find(({ title }) => title === part)
 
-          if (existingTocItem) {
-            // @todo
-          } else {
-            acc.push({
-              contents: [],
-              href: urlJoin(baseUrl, encodeURI(file.uri)).replace(/\/$/, ""),
-              path: file.uri.replace(/\/$/, ""),
-              title: parts[0] ?? "",
-            })
-          }
-        })
-      }
+            if (existingTocItem) {
+              // @todo
+            } else {
+              acc.push({
+                contents: [],
+                href: urlJoin(baseUrl, encodeURI(file.uri)).replace(/\/$/, ""),
+                path: file.uri.replace(/\/$/, ""),
+                title: parts[0] ?? "",
+              })
+            }
+          })
+        }
 
-      return acc
-    }, [] as NonNullable<Manifest["nav"]>["toc"])
+        return acc
+      },
+      [] as NonNullable<Manifest["nav"]>["toc"],
+    )
 
     if (toc.length === 0) return manifest
 

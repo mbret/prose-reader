@@ -46,7 +46,7 @@ export const createScrollViewportNavigator = ({
         }
 
         return true
-      })
+      }),
     )
 
   const adjustReadingOffset = ({ x, y }: { x: number; y: number }) => {
@@ -64,13 +64,13 @@ export const createScrollViewportNavigator = ({
     context.$.settings$.pipe(
       map(() => context.getSettings().computedPageTurnMode),
       distinctUntilChanged(),
-      switchMap((mode) => iif(() => mode === `controlled`, EMPTY, source))
+      switchMap((mode) => iif(() => mode === `controlled`, EMPTY, source)),
     )
 
   const userScroll$ = runOnFreePageTurnModeOnly$(fromEvent(element, `scroll`)).pipe(
     onlyUserScrollFilter,
     share(),
-    takeUntil(context.$.destroy$)
+    takeUntil(context.$.destroy$),
   )
 
   const getScaledDownPosition = ({ x, y }: ViewportPosition) => {
@@ -125,21 +125,21 @@ export const createScrollViewportNavigator = ({
        */
       return of({ position: navigation, animate: false, lastUserExpectedNavigation: undefined })
     }),
-    share()
+    share(),
   )
 
   const userScrollEnd$ = userScroll$.pipe(
     debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
     share(),
-    takeUntil(context.$.destroy$)
+    takeUntil(context.$.destroy$),
   )
 
   const state$ = merge(
     userScroll$.pipe(
       map(() => `start` as const),
-      distinctUntilChanged()
+      distinctUntilChanged(),
     ),
-    userScrollEnd$.pipe(map(() => `end` as const))
+    userScrollEnd$.pipe(map(() => `end` as const)),
   ).pipe(startWith(`end` as const))
 
   return {

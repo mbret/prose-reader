@@ -1,5 +1,6 @@
 import { Icon } from "@chakra-ui/react"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DiscordMarkBlueIcon(props: any) {
   return (
     <Icon viewBox="0 0 127.14 96.36" {...props}>

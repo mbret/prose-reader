@@ -8,7 +8,7 @@ import { Reader } from "../reader"
 export const progressionEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     progression: {
       getPercentageEstimate: (
@@ -17,12 +17,12 @@ export const progressionEnhancer =
         numberOfPages: number,
         pageIndex: number,
         currentPosition: { x: number; y: number },
-        currentItem: SpineItem
+        currentItem: SpineItem,
       ) => number
       getScrollPercentageWithinItem: (
         context: Context,
         currentPosition: { x: number; y: number },
-        currentItem: SpineItem
+        currentItem: SpineItem,
       ) => number
     }
   } => {
@@ -34,7 +34,7 @@ export const progressionEnhancer =
       numberOfPages: number,
       pageIndex: number,
       currentPosition: { x: number; y: number },
-      currentItem: SpineItem
+      currentItem: SpineItem,
     ) => {
       const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
       const readingOrderLength = context.getManifest()?.spineItems.length || 0
@@ -79,7 +79,7 @@ export const progressionEnhancer =
     const getTotalProgressFromPercentages = (
       estimateBeforeThisItem: number,
       currentItemWeight: number,
-      progressWithinThisItem: number
+      progressWithinThisItem: number,
     ) => {
       return estimateBeforeThisItem + currentItemWeight * progressWithinThisItem
     }
@@ -87,7 +87,7 @@ export const progressionEnhancer =
     const getScrollPercentageWithinItem = (
       context: Context,
       currentPosition: { x: number; y: number },
-      currentItem: SpineItem
+      currentItem: SpineItem,
     ) => {
       const { height, width } = currentItem.getElementDimensions()
 

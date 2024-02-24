@@ -1,7 +1,6 @@
 import React, { useCallback } from "react"
 import { useRecoilState } from "recoil"
 import { Button } from "./common/Button"
-import { useCSS } from "./common/css"
 import { currentHighlight } from "./state"
 import { useReader } from "./reader/useReader"
 
@@ -9,7 +8,6 @@ export const HighlightMenu = () => {
   const { reader } = useReader()
   const [currentSelection, setCurrentSelection] = useRecoilState(currentHighlight)
   const isCurrentSelectionSaved = currentSelection && reader?.highlights.has(currentSelection)
-  const styles = useStyles()
 
   const addHighlight = useCallback(() => {
     if (currentSelection) {
@@ -28,9 +26,32 @@ export const HighlightMenu = () => {
   return (
     <>
       {currentSelection && (
-        <div style={styles.container}>
-          <div style={styles.subContainer}>
-            <p style={styles.text}>"{currentSelection.text}"</p>
+        <div
+          style={{
+            position: `absolute`,
+            left: 0,
+            bottom: 0,
+            width: `100%`,
+            height: 100,
+            backgroundColor: "chocolate",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div style={{ paddingLeft: 10, width: `100%`, color: "white", height: `100%`, overflow: "hidden" }}>
+            <p
+              style={{
+                // @see https://css-tricks.com/flexbox-truncated-text/
+                // white-space: nowrap;
+                overflow: "hidden",
+                height: 30,
+                textOverflow: "ellipsis"
+              }}
+            >
+              "{currentSelection.text}"
+            </p>
             {!isCurrentSelectionSaved && <Button onClick={addHighlight}>Highlight</Button>}
             {isCurrentSelectionSaved && <Button onClick={removeHighlight}>Remove highlight</Button>}
           </div>
@@ -39,36 +60,3 @@ export const HighlightMenu = () => {
     </>
   )
 }
-
-const useStyles = () =>
-  useCSS(
-    () => ({
-      container: {
-        position: `absolute`,
-        left: 0,
-        bottom: 0,
-        width: `100%`,
-        height: 100,
-        backgroundColor: "chocolate",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center"
-      },
-      subContainer: {
-        paddingLeft: 10,
-        width: `100%`,
-        color: "white",
-        height: `100%`,
-        overflow: "hidden"
-      },
-      text: {
-        // @see https://css-tricks.com/flexbox-truncated-text/
-        // white-space: nowrap;
-        overflow: "hidden",
-        height: 30,
-        textOverflow: "ellipsis"
-      }
-    }),
-    []
-  )

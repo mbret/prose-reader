@@ -9,7 +9,7 @@ export const createArchiveFromArrayBufferList = async (
     size: number
     data: () => Promise<ArrayBuffer>
   }[],
-  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {}
+  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {},
 ): Promise<Archive> => {
   let files = list
 

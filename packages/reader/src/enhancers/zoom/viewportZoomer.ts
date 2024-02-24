@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BehaviorSubject } from "rxjs"
 import { Reader } from "../../reader"
 import { getNewScaledOffset } from "../../utils/layout"

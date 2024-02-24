@@ -31,7 +31,7 @@ type Output = {
 
 export const loadingEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<typeof themeEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Options): InheritOutput & Output => {
     const { loadingElementCreate = defaultLoadingElementCreate } = options
@@ -52,7 +52,7 @@ export const loadingEnhancer =
             ...acc,
             [item.id]: loadingElementContainer,
           }
-        }, {} as Entries)
+        }, {} as Entries),
       )
 
     const updateEntriesLayout$ = (entries: Entries) =>
@@ -67,14 +67,14 @@ export const loadingEnhancer =
             element.style.setProperty(`max-width`, `${width}px`)
             element.style.setProperty(`color`, theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`)
           })
-        })
+        }),
       )
 
     const updateEntriesVisibility$ = (entries: Entries) =>
       reader.$.itemIsReady$.pipe(
         tap(({ item, isReady }) => {
           entries[item.id]?.style.setProperty(`visibility`, isReady ? `hidden` : `visible`)
-        })
+        }),
       )
 
     const destroyEntries$ = (entries: Entries) =>
@@ -83,20 +83,20 @@ export const loadingEnhancer =
           Object.values(entries).forEach((element) => element.remove())
 
           return {}
-        })
+        }),
       )
 
     const items$ = reader.spineItems$.pipe(
       switchMap((items) => createEntries$(items)),
       shareReplay(1),
-      takeUntil(reader.context.$.destroy$)
+      takeUntil(reader.context.$.destroy$),
     )
 
     items$
       .pipe(
         switchMap((entries) => merge(of(entries), destroyEntries$(entries))),
         switchMap((entries) => merge(updateEntriesLayout$(entries), updateEntriesVisibility$(entries))),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 

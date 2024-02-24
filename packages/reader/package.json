@@ -31,7 +31,7 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "jsdom": "^21.1.0"
+    "jsdom": "^24.0.0"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

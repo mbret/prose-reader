@@ -36,7 +36,7 @@ export const createMovingSafePan$ = (reader: Reader) => {
     scheduled(source, animationFrameScheduler).pipe(
       tap(() => {
         iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
-      })
+      }),
     )
 
   const viewportFree$ = reader.$.viewportState$.pipe(filter((data) => data === `free`))
@@ -45,23 +45,23 @@ export const createMovingSafePan$ = (reader: Reader) => {
   const lockAfterViewportBusy$ = viewportBusy$.pipe(
     tap(() => {
       iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
-    })
+    }),
   )
 
   const resetLockViewportFree$ = createResetLock$(viewportFree$).pipe(take(1))
 
   const pageTurnMode$ = reader.context.$.settings$.pipe(
     map(() => reader.context.getSettings().computedPageTurnMode),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   )
 
   const handleViewportLock$ = pageTurnMode$.pipe(
     switchMap((mode) =>
       mode === `controlled`
         ? lockAfterViewportBusy$.pipe(switchMap(() => resetLockViewportFree$))
-        : createResetLock$(of(undefined))
+        : createResetLock$(of(undefined)),
     ),
-    takeUntil(reader.$.destroy$)
+    takeUntil(reader.$.destroy$),
   )
 
   return handleViewportLock$

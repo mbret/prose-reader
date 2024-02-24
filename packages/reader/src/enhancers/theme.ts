@@ -26,7 +26,7 @@ export const themeEnhancer =
   (
     options: InheritOptions & {
       theme?: Theme
-    }
+    },
   ): InheritOutput & {
     theme: {
       set: (theme: Theme) => void
@@ -100,7 +100,7 @@ export const themeEnhancer =
     reader.spineItems$
       .pipe(
         tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -109,7 +109,7 @@ export const themeEnhancer =
         tap(() => {
           applyChangeToSpineItem()
         }),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 

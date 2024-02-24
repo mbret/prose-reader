@@ -46,7 +46,7 @@ export const createLocationResolver = ({
         y: position.y - top,
       }
     },
-    { disable: true }
+    { disable: true },
   )
 
   /**
@@ -61,7 +61,7 @@ export const createLocationResolver = ({
    */
   const getSpinePositionFromSpineItemPosition = (
     spineItemPosition: SpineItemNavigationPosition | SpineItemPosition,
-    spineItem: SpineItem
+    spineItem: SpineItem,
   ): SpinePosition => {
     const { left, top } = spineItemManager.getAbsolutePositionOf(spineItem)
 
@@ -109,7 +109,7 @@ export const createLocationResolver = ({
 
       return spineItem
     },
-    { disable: true }
+    { disable: true },
   )
 
   const getSpinePositionFromSpineItem = (spineItem: SpineItem) => {
@@ -125,7 +125,7 @@ export const createLocationResolver = ({
   }
 
   const getSpineItemsFromReadingOrderPosition = (
-    position: SpinePosition
+    position: SpinePosition,
   ):
     | {
         begin: number

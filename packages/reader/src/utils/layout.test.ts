@@ -32,8 +32,8 @@ test(`getNewScaledOffset`, () => {
           screenSize: screenWidth,
           pageSize: pageWidth,
           scrollOffset: viewportScrollLeft,
-        })
+        }),
       ).toBe(value)
-    }
+    },
   )
 })

@@ -22,7 +22,7 @@ const logger = Report.namespace(PACKAGE_NAME)
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     bookmarks: {
       isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
@@ -42,7 +42,7 @@ export const bookmarksEnhancer =
       pairwise(),
       filter(([old, current]) => !!current && !(old && old.length === 0 && current.length === 0)),
       map(([, bookmarks = []]) => bookmarks),
-      share()
+      share(),
     )
     const loadedSubject$ = new Subject<void>()
     const settings = {
@@ -92,7 +92,7 @@ export const bookmarksEnhancer =
 
         if (!newBookmark) {
           logger.warn(
-            `Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`
+            `Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`,
           )
           return
         }
@@ -123,7 +123,7 @@ export const bookmarksEnhancer =
       if (windowOrElement) {
         return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
           withLatestFrom(reader.pagination$),
-          tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination))
+          tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination)),
         )
       }
 
@@ -137,10 +137,10 @@ export const bookmarksEnhancer =
         tap(([, pagination]) => {
           if (pagination.beginSpineItemIndex !== undefined) {
             bookmarksSubject$.next(
-              bookmarksSubject$.value.filter((bookmark) => bookmark.spineItemIndex !== pagination.beginSpineItemIndex)
+              bookmarksSubject$.value.filter((bookmark) => bookmark.spineItemIndex !== pagination.beginSpineItemIndex),
             )
           }
-        })
+        }),
       )
 
     const removeAll = () => {
@@ -157,7 +157,7 @@ export const bookmarksEnhancer =
     reader.spineItems$
       .pipe(
         switchMap((items) => merge(items.map(({ element }) => createClickListener$(element)))),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -174,7 +174,7 @@ export const bookmarksEnhancer =
 
           return fromEvent(element, `click`).pipe(removeBookmarksOnCurrentPage)
         }),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -195,7 +195,7 @@ export const bookmarksEnhancer =
               pageIndex,
               spineItemIndex,
             }
-          })
+          }),
         ),
         mergeMap((newBookmarks) => {
           // @todo optimize and not call next if bookmarks are the same
@@ -204,15 +204,15 @@ export const bookmarksEnhancer =
           // Because we did not optimized above yet, the subject is always updated
           // so we don't need to continue this and force a redraw
           return EMPTY
-        })
-      )
+        }),
+      ),
     )
       .pipe(
         // since we trigger redraw from many scenario this is a good batch optimisation
         debounceTime(100, animationFrameScheduler),
         withLatestFrom(bookmarks$),
         switchMap(([, bookmarks]) => renderer.redrawBookmarks$(bookmarks)),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 

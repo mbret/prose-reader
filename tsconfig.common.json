@@ -12,11 +12,14 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": false,
+    "declaration": true,
     "removeComments": true,
     "noEmit": true,
     "pretty": false,
-    "stripInternal": true,
+    "stripInternal": true,   
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true
   },
   // important to avoid infinite build from resolved path
   "exclude": ["**/dist"]

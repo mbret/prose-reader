@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { animationFrameScheduler, combineLatest, Observable, ObservedValueOf } from "rxjs"
 import { map, debounceTime, startWith, shareReplay, distinctUntilChanged, withLatestFrom, takeUntil, tap } from "rxjs/operators"
 import { SpineItem } from "../spineItem/createSpineItem"
@@ -13,6 +14,8 @@ type ProgressionEnhancer = typeof progressionEnhancer
 const NAMESPACE = `paginationEnhancer`
 
 const report = Report.namespace(NAMESPACE)
+
+void report
 
 /**
  * @todo
@@ -71,12 +74,12 @@ export const paginationEnhancer =
   <
     InheritOptions,
     InheritOutput extends EnhancerOutput<ProgressionEnhancer>,
-    Pagination$ extends Observable<any> = InheritOutput["pagination$"]
+    Pagination$ extends Observable<any> = InheritOutput["pagination$"],
   >(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): Omit<InheritOutput, "pagination$"> & {
     pagination$: Observable<ObservedValueOf<Pagination$> & PaginationInfo>
   } => {
@@ -89,7 +92,7 @@ export const paginationEnhancer =
     }
 
     const mapPaginationInfoToExtendedInfo = (
-      paginationInfo: ObservedValueOf<typeof reader.pagination$>
+      paginationInfo: ObservedValueOf<typeof reader.pagination$>,
     ): Omit<
       PaginationInfo,
       "beginAbsolutePageIndex" | "endAbsolutePageIndex" | "beginAbsolutePageIndex" | "numberOfTotalPages"
@@ -144,7 +147,7 @@ export const paginationEnhancer =
               paginationInfo.endNumberOfPages,
               paginationInfo.endPageIndex || 0,
               reader.getCurrentViewportPosition(),
-              endItem
+              endItem,
             )
           : 0,
         isUsingSpread: context.shouldDisplaySpread(),
@@ -189,9 +192,9 @@ export const paginationEnhancer =
         tap((items) =>
           items.forEach(({ item }) => {
             chaptersInfo[item.id] = getChapterInfo(item)
-          })
+          }),
         ),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -200,7 +203,7 @@ export const paginationEnhancer =
         ...(info as ObservedValueOf<Pagination$>),
         ...mapPaginationInfoToExtendedInfo(info),
       })),
-      distinctUntilChanged(isShallowEqual)
+      distinctUntilChanged(isShallowEqual),
     )
 
     const totalPages$: Observable<{
@@ -225,7 +228,7 @@ export const paginationEnhancer =
       startWith({
         numberOfPagesPerItems: [],
         numberOfTotalPages: 0,
-      })
+      }),
     )
 
     const pagination$ = combineLatest([innerPaginationExtendedInfo$, totalPages$]).pipe(
@@ -240,7 +243,7 @@ export const paginationEnhancer =
           .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0),
       })),
       shareReplay(1),
-      takeUntil(reader.$.destroy$)
+      takeUntil(reader.$.destroy$),
     )
 
     return {
@@ -262,7 +265,7 @@ const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spine
 const getChapterInfo = (
   href: string,
   tocItem: NonNullable<Manifest["nav"]>["toc"],
-  manifest: Manifest
+  manifest: Manifest,
 ): ChapterInfo | undefined => {
   const spineItemIndex = manifest.spineItems.findIndex((item) => item.href === href)
 

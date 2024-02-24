@@ -27,7 +27,7 @@ export const mediaEnhancer =
       },
       {
         threshold: 0.01,
-      }
+      },
     )
 
     const elementObserver = new IntersectionObserver(
@@ -52,7 +52,7 @@ export const mediaEnhancer =
       },
       {
         threshold: 0.5,
-      }
+      },
     )
 
     reader.registerHook(`item.onLoad`, ({ frame }) => {

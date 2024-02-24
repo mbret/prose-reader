@@ -3,7 +3,7 @@ import { resolve } from "path"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   return {
     build: {
       lib: {
@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => {
           // Provide global variables to use in the UMD build
           // for externalized deps
           globals: {
-            vue: `Vue`,
+            // vue: `Vue`,
           },
         },
       },

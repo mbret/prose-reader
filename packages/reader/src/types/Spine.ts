@@ -1,5 +1,4 @@
 import { Observable } from "rxjs"
-import { Manifest } from "@prose-reader/shared"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createSelection } from "../selection"
 import { createCfiLocator } from "../spine/cfiLocator"

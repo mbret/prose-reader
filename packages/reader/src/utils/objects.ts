@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // MIT © 2017 azu
 const hasOwn = Object.prototype.hasOwnProperty
 
@@ -26,7 +28,7 @@ export const isShallowEqual = <T = any, R = any>(
   objectB: R,
   options?: {
     customEqual?: <T>(a: T, b: T) => boolean
-  }
+  },
 ): boolean => {
   // @ts-ignore
   if (objectA === objectB) {
@@ -60,12 +62,15 @@ export const isShallowEqual = <T = any, R = any>(
 }
 
 export const groupBy = <T, K extends keyof any>(list: T[], getKey: (item: T) => K) =>
-  list.reduce((previous, currentItem) => {
-    const group = getKey(currentItem)
-    if (!previous[group]) previous[group] = []
-    previous[group].push(currentItem)
-    return previous
-  }, {} as Record<K, T[]>)
+  list.reduce(
+    (previous, currentItem) => {
+      const group = getKey(currentItem)
+      if (!previous[group]) previous[group] = []
+      previous[group].push(currentItem)
+      return previous
+    },
+    {} as Record<K, T[]>,
+  )
 
 export const getBase64FromBlob = (data: Blob) => {
   const reader = new FileReader()
@@ -76,7 +81,7 @@ export const getBase64FromBlob = (data: Blob) => {
       function () {
         resolve(reader.result as string)
       },
-      false
+      false,
     )
 
     reader.readAsDataURL(data)

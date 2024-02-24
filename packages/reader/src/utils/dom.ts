@@ -123,7 +123,7 @@ export const getFirstVisibleNodeForViewport = Report.measurePerformance(
     }
 
     return undefined
-  }
+  },
 )
 
 const getFirstVisibleElementForViewport = (element: Element, viewport: ViewPort) => {

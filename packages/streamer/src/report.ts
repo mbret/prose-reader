@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 let enabled = false
 
 export const Report = {
@@ -45,7 +46,7 @@ export const Report = {
         // eslint-disable-next-line no-console
         console.warn(
           `[prose-reader-streamer] [metric] `,
-          `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`
+          `${performanceEntry.name} took ${performanceEntry.duration}ms which is above the ${targetDuration}ms target for this function`,
         )
       }
     }

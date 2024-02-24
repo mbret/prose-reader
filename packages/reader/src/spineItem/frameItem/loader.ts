@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BehaviorSubject, EMPTY, from, fromEvent, merge, Observable, of, Subject, Subscription } from "rxjs"
 import {
   exhaustMap,
@@ -58,7 +59,7 @@ export const createLoader = ({
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
-    take(1)
+    take(1),
   )
 
   const unload$ = unloadSubject$.asObservable().pipe(
@@ -79,7 +80,7 @@ export const createLoader = ({
       frameElementSubject$.next(undefined)
     }),
     share(),
-    takeUntil(destroySubject$)
+    takeUntil(destroySubject$),
   )
 
   /**
@@ -131,7 +132,7 @@ export const createLoader = ({
                 console.error(e)
 
                 return of(frame)
-              })
+              }),
             )
           }
         }),
@@ -198,17 +199,17 @@ export const createLoader = ({
               // domReadySubject$.next(frame)
 
               return of(frame)
-            })
+            }),
           )
         }),
 
         // we stop loading as soon as unload is requested
-        takeUntil(unloadSubject$)
+        takeUntil(unloadSubject$),
       )
     }),
     share(),
     makeItHot,
-    takeUntil(destroySubject$)
+    takeUntil(destroySubject$),
   )
 
   /**
@@ -220,7 +221,7 @@ export const createLoader = ({
     switchMap((frame) => from(frame?.contentDocument?.fonts.ready || of(undefined)).pipe(takeUntil(unloadSubject$))),
     share(),
     makeItHot,
-    takeUntil(destroySubject$)
+    takeUntil(destroySubject$),
   )
 
   merge(load$.pipe(map(() => true)), unloadSubject$.pipe(map(() => false)))

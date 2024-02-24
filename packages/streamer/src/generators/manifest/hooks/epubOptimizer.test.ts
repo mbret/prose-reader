@@ -26,7 +26,7 @@ describe(`Given a xml document`, () => {
       </html>`,
         {
           mimeType: "application/xhtml+xml",
-        }
+        },
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
@@ -61,7 +61,7 @@ describe(`Given a xml document`, () => {
       </html>`,
         {
           mimeType: "application/xhtml+xml",
-        }
+        },
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
@@ -91,7 +91,7 @@ describe(`Given a xml document`, () => {
       </html>`,
         {
           mimeType: "application/xhtml+xml",
-        }
+        },
       )
 
       const firstManifest = await generateManifestFromArchive(archive)

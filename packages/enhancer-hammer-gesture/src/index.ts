@@ -35,7 +35,7 @@ export const hammerGestureEnhancer =
       hammerGesture?: {
         managerInstance?: HammerManager
       } & Options
-    }
+    },
   ): InheritOutput & {
     hammerGesture: {
       setManagerInstance: (managerInstance: HammerManager) => void
@@ -56,12 +56,12 @@ export const hammerGestureEnhancer =
             }
 
             return undefined
-          })
+          }),
         )
 
         const settingsLastPinchStart$ = pinchStart$.pipe(
           withLatestFrom(reader.settings$),
-          map(([, settings]) => settings)
+          map(([, settings]) => settings),
         )
 
         const pinch$ = fromEvent(instance, "pinch").pipe(
@@ -85,7 +85,7 @@ export const hammerGestureEnhancer =
             }
 
             return undefined
-          })
+          }),
         )
 
         const pinchEnd$ = fromEvent(instance, `pinchend`).pipe(
@@ -98,14 +98,14 @@ export const hammerGestureEnhancer =
             }
 
             return undefined
-          })
+          }),
         )
 
         return merge(pinchStart$, pinch$, pinchEnd$)
       }),
       isNotNullOrUndefined,
       share(),
-      takeUntil(reader.$.destroy$)
+      takeUntil(reader.$.destroy$),
     )
 
     changes$.subscribe()

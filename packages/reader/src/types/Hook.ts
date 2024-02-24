@@ -66,7 +66,7 @@ export type Hook =
   | {
       name: `item.onGetResource`
       fn: (
-        fetchResource: (item: Manifest[`spineItems`][number]) => Promise<Response>
+        fetchResource: (item: Manifest[`spineItems`][number]) => Promise<Response>,
       ) => (item: Manifest[`spineItems`][number]) => Promise<Response>
     }
   /**

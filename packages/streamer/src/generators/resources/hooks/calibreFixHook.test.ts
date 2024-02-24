@@ -52,7 +52,7 @@ describe("Given a book from calibre", () => {
         </body>
       </html>`
         .replace(/>\s*/g, ">")
-        .replace(/\s*</g, "<")
+        .replace(/\s*</g, "<"),
     )
   })
 })

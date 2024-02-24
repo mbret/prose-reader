@@ -79,7 +79,7 @@ export const createManualViewportNavigator = ({
       }
 
       return EMPTY
-    })
+    }),
   )
 
   const spineItemNavigation$ = navigationTriggerSubject$.pipe(
@@ -93,7 +93,7 @@ export const createManualViewportNavigator = ({
       Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, animate, navigation })
 
       return of({ ...navigation, animate, lastUserExpectedNavigation })
-    })
+    }),
   )
 
   const cfiNavigation$ = navigationTriggerSubject$.pipe(
@@ -108,7 +108,7 @@ export const createManualViewportNavigator = ({
         animate,
         lastUserExpectedNavigation: { type: `navigate-from-cfi` as const, data: cfi },
       }
-    })
+    }),
   )
 
   const chapterPageNavigation$ = navigationTriggerSubject$.pipe(
@@ -123,7 +123,7 @@ export const createManualViewportNavigator = ({
       }
 
       return EMPTY
-    })
+    }),
   )
 
   const pageNavigation$ = navigationTriggerSubject$.pipe(
@@ -142,7 +142,7 @@ export const createManualViewportNavigator = ({
         lastUserExpectedNavigation: undefined,
         animate: true,
       })
-    })
+    }),
   )
 
   const turnPageTo$ = Report.measurePerformance(
@@ -179,7 +179,7 @@ export const createManualViewportNavigator = ({
       }
 
       return EMPTY
-    }
+    },
   )
 
   const leftPageNavigation$ = navigationTriggerSubject$.pipe(
@@ -197,8 +197,8 @@ export const createManualViewportNavigator = ({
         Report.log(NAMESPACE, `turnLeft`, { currentNavigation, navigation, allowSpineItemChange })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
-      }
-    )
+      },
+    ),
   )
 
   const rightPageNavigation$ = navigationTriggerSubject$.pipe(
@@ -216,8 +216,8 @@ export const createManualViewportNavigator = ({
         Report.log(NAMESPACE, `turnRight`, { currentNavigation, navigation, allowSpineItemChange })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
-      }
-    )
+      },
+    ),
   )
 
   const navigation$ = merge(
@@ -227,7 +227,7 @@ export const createManualViewportNavigator = ({
     leftPageNavigation$,
     rightPageNavigation$,
     // for some reason after too much item ts complains
-    merge(cfiNavigation$, pageNavigation$)
+    merge(cfiNavigation$, pageNavigation$),
   ).pipe(
     /**
      * Ideally when manually navigating we expect the navigation to be different from the previous one.
@@ -236,7 +236,7 @@ export const createManualViewportNavigator = ({
      */
     withLatestFrom(currentNavigationSubject$),
     filter(([navigation, currentNavigation]) => navigator.areNavigationDifferent(navigation, currentNavigation)),
-    map(([navigation]) => navigation)
+    map(([navigation]) => navigation),
   )
 
   return {

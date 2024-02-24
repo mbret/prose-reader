@@ -13,7 +13,7 @@ export const createArchiveFromText = async (
   }: {
     direction?: `ltr` | `rtl`
     mimeType?: string
-  } = { mimeType: "text/plain" }
+  } = { mimeType: "text/plain" },
 ) => {
   const txtOpfContent = `
       <?xml version="1.0" encoding="UTF-8"?>

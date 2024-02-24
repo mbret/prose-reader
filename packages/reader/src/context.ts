@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
@@ -43,8 +44,6 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     x: 0,
     y: 0,
   }
-  const horizontalMargin = 24
-  const verticalMargin = 20
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
@@ -110,7 +109,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
       tap(() => {
         settings.recompute({ manifest, hasVerticalWritingSubject: hasVerticalWritingSubject$.value })
       }),
-      takeUntil(destroy$)
+      takeUntil(destroy$),
     )
     .subscribe()
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint no-useless-escape: "off" */
@@ -143,7 +144,7 @@ class CFI {
         // from places where they don't make sense
         stricter: true,
       },
-      opts || {}
+      opts || {},
     )
 
     this.cfi = str
@@ -936,7 +937,6 @@ class CFI {
 
     let o = { node, offset: 0 }
 
-    let nodeIndex
     for (i = startFrom; i < subparts.length; i++) {
       subpart = subparts[i]
 
@@ -1054,7 +1054,7 @@ class CFI {
       {
         range: false,
       },
-      opts || {}
+      opts || {},
     )
 
     if (!this.isRange) {
@@ -1105,7 +1105,7 @@ class CFI {
 export { CFI }
 
 export const extractProseMetadataFromCfi = (
-  cfi: string
+  cfi: string,
 ): {
   cleanedCfi: string
   itemId?: string

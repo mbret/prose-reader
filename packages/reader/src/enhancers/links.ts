@@ -6,10 +6,10 @@ type SubjectData = { event: `linkClicked`; data: HTMLAnchorElement }
 
 export const linksEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     $: {
       links$: Observable<SubjectData>
@@ -40,7 +40,7 @@ export const linksEnhancer =
               handleNavigationForClick(element)
               subject.next({ event: `linkClicked`, data: element })
             }
-          })
+          }),
         )
       }
     })

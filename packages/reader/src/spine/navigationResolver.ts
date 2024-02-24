@@ -59,7 +59,7 @@ export const createNavigationResolver = ({
         y,
       }
     },
-    { disable: true }
+    { disable: true },
   )
 
   const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
@@ -140,7 +140,7 @@ export const createNavigationResolver = ({
       return wrapPositionWithSafeEdge(
         pageTurnDirection === `horizontal`
           ? { x: position.x + context.getPageSize().width, y: 0 }
-          : { y: position.y + context.getPageSize().height, x: 0 }
+          : { y: position.y + context.getPageSize().height, x: 0 },
       )
     } else {
       const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigationForRightPage, spineItem)
@@ -166,7 +166,7 @@ export const createNavigationResolver = ({
       return wrapPositionWithSafeEdge(
         pageTurnDirection === `horizontal`
           ? { x: position.x - context.getPageSize().width, y: 0 }
-          : { y: position.y - context.getPageSize().height, x: 0 }
+          : { y: position.y - context.getPageSize().height, x: 0 },
       )
     } else {
       const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
@@ -208,8 +208,8 @@ export const createNavigationResolver = ({
               : {
                   ...navigation,
                   x: navigation.x + context.getPageSize().width,
-                }
-          )
+                },
+          ),
         )
       }
 
@@ -256,8 +256,8 @@ export const createNavigationResolver = ({
           wrapPositionWithSafeEdge(
             context.isRTL()
               ? { ...navigation, x: navigation.x + context.getPageSize().width }
-              : { ...navigation, x: navigation.x - context.getPageSize().width }
-          )
+              : { ...navigation, x: navigation.x - context.getPageSize().width },
+          ),
         )
       }
 

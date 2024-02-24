@@ -23,7 +23,7 @@ export const createResourcesManager = (context: Context) => {
 
   const get = async (
     itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>,
-    fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+    fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>,
   ) => {
     const item = retrieveItem(itemIndexOrId)
 
@@ -63,17 +63,17 @@ export const createResourcesManager = (context: Context) => {
             Report.error(error)
 
             return EMPTY
-          })
+          }),
         )
       }),
-      takeUntil(context.$.destroy$)
+      takeUntil(context.$.destroy$),
     )
     .subscribe()
 
   const onLoad$ = context.$.load$.pipe(
     tap(() => {
       uniqueID = Date.now().toString()
-    })
+    }),
   )
 
   /**
@@ -94,17 +94,17 @@ export const createResourcesManager = (context: Context) => {
                 const promises = keysToRemove.map((key) => db.remove(key))
 
                 return from(Promise.all(promises))
-              })
-            )
+              }),
+            ),
           ),
           catchError((error) => {
             Report.error(error)
 
             return EMPTY
-          })
+          }),
         )
       }),
-      takeUntil(context.$.destroy$)
+      takeUntil(context.$.destroy$),
     )
     .subscribe()
 

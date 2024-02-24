@@ -68,7 +68,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
     options: {
       hasVerticalWritingSubject: boolean
       manifest: Manifest | undefined
-    }
+    },
   ) => {
     if (Object.keys(newSettings).length === 0) return
 
@@ -130,7 +130,7 @@ const updateComputedSettings = (newManifest: Manifest | undefined, settings: Inn
   // some settings are not available for vertical writing
   if (hasVerticalWriting && settings.computedPageTurnAnimation === `slide`) {
     Report.warn(
-      `pageTurnAnimation ${settings.computedPageTurnAnimation} incompatible with current book, switching back to default`
+      `pageTurnAnimation ${settings.computedPageTurnAnimation} incompatible with current book, switching back to default`,
     )
     settings.computedPageTurnAnimation = `none`
   }

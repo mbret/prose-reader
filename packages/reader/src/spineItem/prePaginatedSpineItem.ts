@@ -54,7 +54,7 @@ export const createPrePaginatedSpineItem = ({
           enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
           spreadPosition,
         },
-        viewportDimensions
+        viewportDimensions,
       )
 
       frameElement?.style.setProperty(`visibility`, `visible`)
@@ -85,10 +85,10 @@ export const createPrePaginatedSpineItem = ({
                 ? `25%`
                 : `75%`
               : blankPagePosition === `after`
-              ? context.isRTL()
-                ? `75%`
-                : `25%`
-              : `50%`
+                ? context.isRTL()
+                  ? `75%`
+                  : `25%`
+                : `50%`,
           )
           frameElement?.style.removeProperty(`right`)
         }
@@ -97,8 +97,8 @@ export const createPrePaginatedSpineItem = ({
           spreadPosition === `right` && blankPagePosition !== `before`
             ? `left`
             : spreadPosition === `left` || (blankPagePosition === `before` && context.isRTL())
-            ? `right`
-            : `center`
+              ? `right`
+              : `center`
         frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
         frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
 
@@ -153,7 +153,7 @@ const buildDocumentStyle = (
     enableTouch: boolean
     spreadPosition: `none` | `left` | `right`
   },
-  viewportDimensions: { height: number; width: number } | undefined
+  viewportDimensions: { height: number; width: number } | undefined,
 ) => {
   return `
     ${getStyleForViewportDocument()}

@@ -47,7 +47,7 @@ function compose(...funcs: Function[]) {
   return funcs.reduce(
     (a, b) =>
       (...args: any) =>
-        b(a(...args))
+        b(a(...args)),
   )
 }
 

@@ -12,7 +12,7 @@ const IS_SAFARI = navigator.userAgent.indexOf(``) > -1 && navigator.userAgent.in
  */
 export const webkitEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {
     /**

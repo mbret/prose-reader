@@ -6,7 +6,7 @@ const report = Report.namespace(`@prose-reader/debug`)
 export const debugEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
-    { enable }: { enable: boolean }
+    { enable }: { enable: boolean },
   ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
@@ -17,13 +17,13 @@ export const debugEnhancer =
       reader.$.state$.pipe(
         tap((state) => {
           report.log(`reader.$.state$`, state)
-        })
+        }),
       ),
       reader.pagination$.pipe(
         tap((state) => {
           report.log(`reader.pagination$`, state)
-        })
-      )
+        }),
+      ),
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()

@@ -68,7 +68,7 @@ export const createElementZoomer = (reader: Reader) => {
 
     imgElement?.style.setProperty(
       `transform`,
-      `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${newScale}, ${newScale}, 1)`
+      `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${newScale}, ${newScale}, 1)`,
     )
     lastUserScale = newScale
   }
@@ -91,7 +91,7 @@ export const createElementZoomer = (reader: Reader) => {
 
       imgElement?.style.setProperty(
         `transform`,
-        `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${baseScale}, ${baseScale}, 1)`
+        `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${baseScale}, ${baseScale}, 1)`,
       )
 
       movingLastDelta = delta

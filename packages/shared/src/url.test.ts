@@ -28,7 +28,7 @@ describe("url join", () => {
 
   it("should not remove extra slashes in an encoded URL", () => {
     expect(urlJoin("http:", "www.google.com///", "foo/bar", "?url=http%3A//Ftest.com")).toEqual(
-      "http://www.google.com/foo/bar?url=http%3A//Ftest.com"
+      "http://www.google.com/foo/bar?url=http%3A//Ftest.com",
     )
 
     expect(urlJoin("http://a.com/23d04b3/", "/b/c.html")).toEqual("http://a.com/23d04b3/b/c.html")
@@ -37,7 +37,7 @@ describe("url join", () => {
 
   it("should support anchors in urls", () => {
     expect(urlJoin("http:", "www.google.com///", "foo/bar", "?test=123", "#faaaaa")).toEqual(
-      "http://www.google.com/foo/bar?test=123#faaaaa"
+      "http://www.google.com/foo/bar?test=123#faaaaa",
     )
   })
 
@@ -63,11 +63,11 @@ describe("url join", () => {
 
   it("should merge multiple query params properly", () => {
     expect(urlJoin("http:", "www.google.com///", "foo/bar", "?test=123", "?key=456")).toEqual(
-      "http://www.google.com/foo/bar?test=123&key=456"
+      "http://www.google.com/foo/bar?test=123&key=456",
     )
 
     expect(urlJoin("http:", "www.google.com///", "foo/bar", "?test=123", "?boom=value", "&key=456")).toEqual(
-      "http://www.google.com/foo/bar?test=123&boom=value&key=456"
+      "http://www.google.com/foo/bar?test=123&boom=value&key=456",
     )
 
     expect(urlJoin("http://example.org/x", "?a=1", "?b=2", "?c=3", "?d=4")).toEqual("http://example.org/x?a=1&b=2&c=3&d=4")

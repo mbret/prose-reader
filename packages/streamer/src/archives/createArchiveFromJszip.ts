@@ -34,7 +34,7 @@ interface JSZip {
 
 export const createArchiveFromJszip = async (
   jszip: JSZip,
-  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {}
+  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {},
 ): Promise<Archive> => {
   let files = Object.values(jszip.files)
 

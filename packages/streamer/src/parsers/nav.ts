@@ -59,7 +59,7 @@ const buildTOCFromNav = (doc: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { op
 const parseTocFromNavPath = async (
   opfXmlDoc: xmldoc.XmlDocument,
   archive: Archive,
-  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }
+  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
 ) => {
   // Try to detect if there is a nav item
   const navItem = opfXmlDoc
@@ -78,7 +78,7 @@ const parseTocFromNavPath = async (
 
 const mapNcxChapter = (
   point: xmldoc.XmlElement,
-  { opfBasePath, baseUrl, prefix }: { opfBasePath: string; baseUrl: string; prefix: string }
+  { opfBasePath, baseUrl, prefix }: { opfBasePath: string; baseUrl: string; prefix: string },
 ) => {
   const src = point?.childNamed(`${prefix}content`)?.attr.src || ``
 

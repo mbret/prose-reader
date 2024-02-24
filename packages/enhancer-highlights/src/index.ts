@@ -27,7 +27,7 @@ const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
 export const highlightsEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     highlights: {
       add: (highlight: Highlight) => void
@@ -44,7 +44,7 @@ export const highlightsEnhancer =
     const getRangeForHighlight = (
       overlayElement: HTMLElement,
       anchor: { node: Node; offset?: number },
-      focus: { node: Node; offset?: number }
+      focus: { node: Node; offset?: number },
     ) => {
       const range = overlayElement.ownerDocument.createRange()
       try {
@@ -68,7 +68,7 @@ export const highlightsEnhancer =
         const range = getRangeForHighlight(
           overlayElement,
           { node: anchorNode, offset: anchorOffset },
-          { node: focusNode, offset: focusOffset }
+          { node: focusNode, offset: focusOffset },
         )
 
         highlight.text = range.toString()
@@ -189,7 +189,7 @@ export const highlightsEnhancer =
             return SHOULD_NOT_LAYOUT
           })
         }),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -200,7 +200,7 @@ export const highlightsEnhancer =
 
           return SHOULD_NOT_LAYOUT
         })
-      })
+      }),
     )
 
     refreshHighlightsOnLayout$.pipe(takeUntil(reader.$.destroy$)).subscribe()

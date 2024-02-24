@@ -4,7 +4,7 @@ import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 export const utilsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
   (
-    options: InheritOptions
+    options: InheritOptions,
   ): InheritOutput & {
     utils: {
       isOrIsWithinValidLink: (target: Event[`target`]) => boolean

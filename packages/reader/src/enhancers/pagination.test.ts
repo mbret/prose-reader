@@ -69,7 +69,7 @@ describe("Given a book with one chapter", () => {
             fetchResource: async () => {
               return new Response("", { status: 200 })
             },
-          }
+          },
         )
       })
 
@@ -129,7 +129,7 @@ describe("Given a book with one chapter", () => {
             fetchResource: async () => {
               return new Response("", { status: 200 })
             },
-          }
+          },
         )
 
         reader.goToSpineItem(1)
@@ -200,7 +200,7 @@ describe("Given a book with one chapter", () => {
                 fetchResource: async () => {
                   return new Response("", { status: 200 })
                 },
-              }
+              },
             )
 
             reader.goToSpineItem(1)
@@ -273,7 +273,7 @@ describe("Given a book with two chapters", () => {
             fetchResource: async () => {
               return new Response("", { status: 200 })
             },
-          }
+          },
         )
       })
 
@@ -339,7 +339,7 @@ describe("Given a book with two chapters", () => {
             fetchResource: async () => {
               return new Response("", { status: 200 })
             },
-          }
+          },
         )
 
         reader.goToSpineItem(1)

@@ -12,12 +12,12 @@ export const createRenderer = (
   options: {
     areaWidth: number
     areaHeight: number
-  }
+  },
 ) => {
   const element$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
   const waitForViewportFree$ = reader.$.viewportState$.pipe(
     filter((v) => v === `free`),
-    take(1)
+    take(1),
   )
 
   const createBookmarkElement = () => {
@@ -81,7 +81,7 @@ export const createRenderer = (
             // cover pages that are not well paginated for example.
             // It's better to duplicate the bookmark on the next page rather than having the user
             // wonder why he cannot interact with the bookmark area.
-            bookmark.cfi === currentCfi
+            bookmark.cfi === currentCfi,
         )
 
         if (bookmarkOnPage) {
@@ -98,14 +98,14 @@ export const createRenderer = (
               }
 
               return waitForViewportFree$.pipe(tap(createBookmarkElement))
-            })
+            }),
           )
         } else {
           destroyBookmarkElement()
         }
 
         return EMPTY
-      })
+      }),
     )
 
   return {

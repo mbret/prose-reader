@@ -190,7 +190,7 @@ export const createViewportNavigator = ({
         }
       })
     },
-    { disable: true }
+    { disable: true },
   )
 
   /**
@@ -300,7 +300,7 @@ export const createViewportNavigator = ({
   const layoutChangeSettings$ = context.$.settings$.pipe(
     mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`, `numberOfAdjacentSpineItemToPreLoad`]),
     distinctUntilChanged(isShallowEqual),
-    skip(1)
+    skip(1),
   )
 
   const layout$ = merge(layoutSubject$, layoutChangeSettings$).pipe(
@@ -315,7 +315,7 @@ export const createViewportNavigator = ({
       }
 
       spineItemManager.layout()
-    })
+    }),
   )
 
   layout$.subscribe()
@@ -327,7 +327,7 @@ export const createViewportNavigator = ({
         position: { x: event.x, y: event.y, spineItem: event.spineItem },
         animation: `snap` as const,
         triggeredBy: `manual` as const,
-      }))
+      })),
     ),
     manualViewportNavigator.$.navigation$.pipe(
       map((event) => ({
@@ -335,22 +335,22 @@ export const createViewportNavigator = ({
         position: { x: event.x, y: event.y, spineItem: event.spineItem },
         animation: event.animate ? (`turn` as const) : (false as const),
         triggeredBy: `manual` as const,
-      }))
+      })),
     ),
     adjustNavigationSubject$.pipe(
       map((event) => ({
         ...event,
         triggeredBy: `adjust` as const,
         animation: event.animate ? (`turn` as const) : (false as const),
-      }))
+      })),
     ),
     scrollViewportNavigator.$.navigation$.pipe(
       map((event) => ({
         ...event,
         triggeredBy: `scroll` as const,
         animation: event.animate ? (`turn` as const) : (false as const),
-      }))
-    )
+      })),
+    ),
   ).pipe(
     map((event) => {
       if (`lastUserExpectedNavigation` in event) {
@@ -362,7 +362,7 @@ export const createViewportNavigator = ({
       return { ...event, lastUserExpectedNavigation }
     }),
     share(),
-    takeUntil(context.$.destroy$)
+    takeUntil(context.$.destroy$),
   )
 
   /**
@@ -378,12 +378,12 @@ export const createViewportNavigator = ({
       } else {
         return true
       }
-    })
+    }),
   )
 
   const manualAdjust$ = merge(
     panViewportNavigator.$.moveToSubject$.asObservable().pipe(map((event) => ({ ...event, animation: false as const }))),
-    navigationWhichRequireManualAdjust$
+    navigationWhichRequireManualAdjust$,
   ).pipe(
     map(({ animation, position }) => {
       const shouldAnimate = !(!animation || (animation === `turn` && context.getSettings().computedPageTurnAnimation === `none`))
@@ -395,7 +395,7 @@ export const createViewportNavigator = ({
         position,
       }
     }),
-    share()
+    share(),
   )
 
   const processManualAdjust$ = merge(manualAdjust$).pipe(
@@ -474,13 +474,13 @@ export const createViewportNavigator = ({
         takeUntil(
           viewportNavigatorsSharedState$.pipe(
             filter((state) => state === `start`),
-            skip(1)
-          )
-        )
+            skip(1),
+          ),
+        ),
       )
     }),
     share(),
-    takeUntil(context.$.destroy$)
+    takeUntil(context.$.destroy$),
   )
 
   /**
@@ -489,7 +489,7 @@ export const createViewportNavigator = ({
    */
   const adjustmentState$ = merge(
     merge(manualAdjust$).pipe(map(() => `start` as const)),
-    merge(processManualAdjust$).pipe(map(() => `end` as const))
+    merge(processManualAdjust$).pipe(map(() => `end` as const)),
   )
 
   /**
@@ -512,12 +512,12 @@ export const createViewportNavigator = ({
      * hot so it always have the correct value no matter when someone subscribe later.
      * We cannot wait for the cold stream to start after a navigation already happened for example.
      */
-    makeItHot
+    makeItHot,
   )
 
   const waitForViewportFree$ = state$.pipe(
     filter((v) => v === `free`),
-    take(1)
+    take(1),
   )
 
   /**
@@ -572,10 +572,10 @@ export const createViewportNavigator = ({
 
           return adjustNavigation(focusedSpineItem)
         }),
-        takeUntil(navigation$)
-      )
+        takeUntil(navigation$),
+      ),
     ),
-    share()
+    share(),
   )
 
   const destroy = () => {

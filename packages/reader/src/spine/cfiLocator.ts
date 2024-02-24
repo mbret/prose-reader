@@ -141,7 +141,7 @@ export const createCfiLocator = ({
    */
   const generateFromRange = (
     { startNode, start, end, endNode }: { startNode: Node; start: number; endNode: Node; end: number },
-    item: Manifest[`spineItems`][number]
+    item: Manifest[`spineItems`][number],
   ) => {
     const startCFI = CFI.generate(startNode, start, `|[prose~anchor~${encodeURIComponent(item.id)}]`)
     const endCFI = CFI.generate(endNode, end, `|[prose~anchor~${encodeURIComponent(item.id)}]`)

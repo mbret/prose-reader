@@ -84,10 +84,10 @@ export const createReflowableSpineItem = ({
               ? `25%`
               : `75%`
             : blankPagePosition === `after`
-            ? context.isRTL()
-              ? `75%`
-              : `25%`
-            : `50%`
+              ? context.isRTL()
+                ? `75%`
+                : `25%`
+              : `50%`,
         )
 
         frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
@@ -99,7 +99,7 @@ export const createReflowableSpineItem = ({
               enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
-              commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth)
+              commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth),
             )
 
         commonSpineItem.injectStyle(frameStyle)

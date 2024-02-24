@@ -3,7 +3,7 @@ import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
 import { createPagination } from "./pagination"
 import { createSpine } from "./spine/createSpine"
-import { HTML_PREFIX, __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY } from "./constants"
+import { HTML_PREFIX } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
 import { createSelection } from "./selection"
 import { createSpineItemManager } from "./spineItemManager"
@@ -206,7 +206,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
         selectionSubject$.next(event.data)
       }
     }),
-    takeUntil(destroy$)
+    takeUntil(destroy$),
   ).subscribe()
 
   viewportNavigator.$.navigationAdjustedAfterLayout$
@@ -214,7 +214,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
       switchMap(({ adjustedSpinePosition }) => {
         return spine.adjustPagination(adjustedSpinePosition).pipe(takeUntil(navigation$))
       }),
-      takeUntil(context.$.destroy$)
+      takeUntil(context.$.destroy$),
     )
     .subscribe()
 
@@ -246,23 +246,23 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
             renditionFlow === `scrolled-continuous`
               ? [`scrollable`]
               : !context.areAllItemsPrePaginated()
-              ? [`controlled`]
-              : [`controlled`, `scrollable`],
+                ? [`controlled`]
+                : [`controlled`, `scrollable`],
           supportedPageTurnAnimation:
             renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
               ? [`none`]
               : hasVerticalWriting
-              ? [`fade`, `none`]
-              : [`fade`, `none`, `slide`],
+                ? [`fade`, `none`]
+                : [`fade`, `none`, `slide`],
           supportedPageTurnDirection:
             computedPageTurnMode === `scrollable`
               ? [`vertical`]
               : renditionLayout === `reflowable`
-              ? [`horizontal`]
-              : [`horizontal`, `vertical`],
-        })
+                ? [`horizontal`]
+                : [`horizontal`, `vertical`],
+        }),
       ),
-      takeUntil(destroy$)
+      takeUntil(destroy$),
     )
     .subscribe(stateSubject$)
 

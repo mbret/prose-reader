@@ -111,7 +111,7 @@ export const createSpine = ({
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
-    take(1)
+    take(1),
   )
 
   /**
@@ -150,12 +150,12 @@ export const createSpine = ({
             if (beginSpineItem && endSpineItem && spineItemsFromPosition) {
               const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(
                 spineItemsFromPosition.beginPosition,
-                beginSpineItem
+                beginSpineItem,
               )
               const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
               const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(
                 spineItemsFromPosition.endPosition,
-                endSpineItem
+                endSpineItem,
               )
               const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
 
@@ -177,13 +177,13 @@ export const createSpine = ({
                   options: {
                     isAtEndOfChapter: false,
                   },
-                }
+                },
               )
             }
           },
-          { disable: true }
-        )
-      )
+          { disable: true },
+        ),
+      ),
     )
   }
 
@@ -205,20 +205,15 @@ export const createSpine = ({
                 type: `onSelectionChange`,
                 data: event.data ? createSelection(event.data, spineItem.item) : null,
               })
-            })
+            }),
           ),
           selectionTracker$.pipe(
             filter(({ event }) => event === `selectstart`),
-            switchMap((_) =>
+            switchMap(() =>
               fingerTracker$.pipe(
                 filter(({ event }) => event === `fingermove`),
                 debounce(() => interval(1000)),
-                takeUntil(
-                  fingerTracker$.pipe(
-                    filter(({ event }) => event === `fingerout`),
-                    tap(() => {})
-                  )
-                ),
+                takeUntil(fingerTracker$.pipe(filter(({ event }) => event === `fingerout`))),
                 tap(({ data }) => {
                   if (data) {
                     // const fingerPosition = translateFramePositionIntoPage(context, pagination, data, spineItem)
@@ -228,10 +223,10 @@ export const createSpine = ({
                     //   viewportNavigator.turnLeft({ allowSpineItemChange: false })
                     // }
                   }
-                })
-              )
-            )
-          )
+                }),
+              ),
+            ),
+          ),
         ).subscribe()
       }),
       catchError((e) => {
@@ -239,8 +234,8 @@ export const createSpine = ({
 
         return EMPTY
       }),
-      takeUntil(context.$.destroy$)
-    )
+      takeUntil(context.$.destroy$),
+    ),
   ).subscribe()
 
   const itemUpdateOnNavigation$ = navigation$.pipe(
@@ -270,7 +265,7 @@ export const createSpine = ({
         const beginItemIndex = spineItemManager.getSpineItemIndex(beginSpineItem) ?? 0
         const beginPosition = spineLocator.getSpineItemPositionFromSpinePosition(
           spineItemsFromPosition.beginPosition,
-          beginSpineItem
+          beginSpineItem,
         )
         const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
         const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.endPosition, endSpineItem)
@@ -298,10 +293,10 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getInfo().beginCfi
-                : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
-                ? cfiLocator.getRootCfi(beginSpineItem)
-                : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
+                  ? pagination.getInfo().beginCfi
+                  : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
+                    ? cfiLocator.getRootCfi(beginSpineItem)
+                    : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
             options: {
               isAtEndOfChapter: false,
             },
@@ -314,14 +309,14 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                ? pagination.getInfo().endCfi
-                : endItemIndex !== pagination.getInfo().endSpineItemIndex
-                ? cfiLocator.getRootCfi(endSpineItem)
-                : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
+                  ? pagination.getInfo().endCfi
+                  : endItemIndex !== pagination.getInfo().endSpineItemIndex
+                    ? cfiLocator.getRootCfi(endSpineItem)
+                    : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
             options: {
               isAtEndOfChapter: false,
             },
-          }
+          },
         )
 
         report.log(`navigation$`, {
@@ -340,7 +335,7 @@ export const createSpine = ({
       time()
     }),
     share(),
-    takeUntil(context.$.destroy$)
+    takeUntil(context.$.destroy$),
   )
 
   /**
@@ -353,7 +348,7 @@ export const createSpine = ({
       switchMap((data) => {
         return adjustPagination(data.position).pipe(takeUntil(spineItemManager.$.layout$))
       }),
-      takeUntil(context.$.destroy$)
+      takeUntil(context.$.destroy$),
     )
     .subscribe()
 
@@ -383,7 +378,7 @@ export const createSpine = ({
      * This one make sure we also listen for layout change and that we execute the code once the navigation
      * has been adjusted (whether it's needed or not).
      */
-    navigationAdjusted$
+    navigationAdjusted$,
   )
     .pipe(
       switchMap(() => {
@@ -406,10 +401,10 @@ export const createSpine = ({
               spineItemManager.loadContents([begin, end])
             }
           }),
-          take(1)
+          take(1),
         )
       }),
-      takeUntil(context.$.destroy$)
+      takeUntil(context.$.destroy$),
     )
     .subscribe()
 

@@ -34,20 +34,20 @@ export const createReaderWithEnhancers = //__
                               paginationEnhancer(
                                 progressionEnhancer(
                                   // __
-                                  createInternalReader
-                                )
-                              )
-                            )
-                          )
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    )
+                                  createInternalReader,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
   )

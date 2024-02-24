@@ -36,7 +36,7 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
 
     if (readerInitialized.current) {
       report.warn(
-        "One of the props relative to the reader creation has changed but the reader is already initialized. Please make sure to memoize or delay the render!"
+        "One of the props relative to the reader creation has changed but the reader is already initialized. Please make sure to memoize or delay the render!",
       )
 
       return
@@ -95,7 +95,7 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
       width,
       height,
     }),
-    [height, width]
+    [height, width],
   )
 
   return (

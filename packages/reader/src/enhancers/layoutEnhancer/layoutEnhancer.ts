@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BehaviorSubject, combineLatest, Observable, ObservedValueOf } from "rxjs"
 import { distinctUntilChanged, map, takeUntil, tap, skip } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
@@ -13,12 +14,12 @@ export const layoutEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    Settings$ extends Observable<any> = InheritOutput["settings$"]
+    Settings$ extends Observable<any> = InheritOutput["settings$"],
   >(
-    next: (options: InheritOptions) => InheritOutput
+    next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
-    options: InheritOptions & Options
+    options: InheritOptions & Options,
   ): Omit<InheritOutput, "setSettings" | "settings$"> & {
     settings$: Observable<ObservedValueOf<Settings$> & SettingsOutput>
     setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & SettingsInput) => void
@@ -107,7 +108,7 @@ export const layoutEnhancer =
           td {
             max-width: ${columnWidth}px;
           }
-        `
+        `,
         )
       }
     })
@@ -144,7 +145,7 @@ export const layoutEnhancer =
         tap(() => {
           reader.layout()
         }),
-        takeUntil(reader.$.destroy$)
+        takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
@@ -168,7 +169,7 @@ export const layoutEnhancer =
         map(([innerSettings, settings]) => ({
           ...(innerSettings as ObservedValueOf<Settings$>),
           ...settings,
-        }))
+        })),
       ),
     }
   }

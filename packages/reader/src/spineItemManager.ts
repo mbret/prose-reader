@@ -4,7 +4,6 @@ import { Report } from "./report"
 import { Context } from "./context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
-import { getCoverItem } from "./utils/manifest"
 
 const NAMESPACE = `spineItemManager`
 
@@ -50,11 +49,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
     const manifest = context.getManifest()
     const newItemLayoutInformation: typeof itemLayoutInformation = []
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
-    const coverItemIndex = manifest ? getCoverItem(manifest) : undefined
 
     orderedSpineItemsSubject$.value.reduce(
       ({ horizontalOffset, verticalOffset }, item, index) => {
-        const isPageCover = coverItemIndex === index
         let minimumWidth = context.getPageSize().width
         let blankPagePosition: `none` | `before` | `after` = `none`
         const itemStartOnNewScreen = horizontalOffset % context.getVisibleAreaRect().width === 0
@@ -118,8 +115,8 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
                 ? `right`
                 : `left`
               : context.isRTL()
-              ? `left`
-              : `right`
+                ? `left`
+                : `right`
             : `none`,
         })
 
@@ -185,7 +182,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           verticalOffset: 0,
         }
       },
-      { horizontalOffset: 0, verticalOffset: 0 }
+      { horizontalOffset: 0, verticalOffset: 0 },
     )
 
     const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
@@ -302,7 +299,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
             context.setHasVerticalWriting()
           }
         }),
-        takeUntil(context.$.destroy$)
+        takeUntil(context.$.destroy$),
       )
       .subscribe()
 
@@ -356,7 +353,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
           const itemsIsReady$ = items.map((item) => item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))))
 
           return merge(...itemsIsReady$)
-        })
+        }),
       ),
     },
   }

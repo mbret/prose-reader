@@ -19,7 +19,7 @@ export const extractKoboInformationFromArchive = async (archive: Archive) => {
           koboInformation.renditionLayout = `pre-paginated`
         }
       }
-    })
+    }),
   )
 
   return koboInformation
