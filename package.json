@@ -9,7 +9,7 @@
     "start": "lerna run start --stream --ignore prose-reader-front",
     "start:lib": "lerna run start --stream --scope @prose-reader/*",
     "start:front": "lerna run dev --stream --scope prose-reader-front",
-    "start:demo": "lerna run start --stream --scope prose-reader-demo",
+    "start:demo": "lerna run start --stream --scope demo",
     "build": "lerna run build --stream",
     "tsc": "lerna run tsc --parallel",
     "lint": "lerna run lint --parallel",

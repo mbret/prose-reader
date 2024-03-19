@@ -1,4 +1,4 @@
-# prose-reader-demo
+# demo
 
 Official demo project using https://github.com/mbret/prose-reader. It showcase capabilities of the engine and its plugins together with what can be done to provide full reading experience to the user.
 

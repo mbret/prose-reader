@@ -1,5 +1,5 @@
 {
-  "name": "prose-reader-demo",
+  "name": "demo",
   "version": "1.27.0",
   "main": "dist/index.js",
   "license": "MIT",
