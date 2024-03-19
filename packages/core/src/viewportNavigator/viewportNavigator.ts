@@ -582,11 +582,14 @@ export const createViewportNavigator = ({
     share(),
   )
 
-  const parentElementSub = parentElement$.pipe(filter(isDefined), withLatestFrom(spine.element$)).subscribe(([parentElement, spineElement]) => {
-    const element = createElement(parentElement.ownerDocument, hooks$)
-    element.appendChild(spineElement)
-    parentElement.appendChild(element)
-  })
+  const parentElementSub = parentElement$
+    .pipe(filter(isDefined), withLatestFrom(spine.element$))
+    .subscribe(([parentElement, spineElement]) => {
+      const element = createElement(parentElement.ownerDocument, hooks$)
+      element.appendChild(spineElement)
+      parentElement.appendChild(element)
+      element$.next(element)
+    })
 
   const destroy = () => {
     layoutSubject$.complete()
