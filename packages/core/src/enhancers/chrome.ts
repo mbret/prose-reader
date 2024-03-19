@@ -1,6 +1,5 @@
+import { takeUntil } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
-
-const SHOULD_NOT_LAYOUT = false
 
 /**
  * All fixes relative to chromes
@@ -34,10 +33,12 @@ export const chromeEnhancer =
      */
     // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
 
-    reader.manipulateContainer((container) => {
+    reader.context$.pipe(takeUntil(reader.$.destroy$)).subscribe(({ containerElement }) => {
+      if (!containerElement) return
+
       const onScroll = () => {
         if (reader.context.getSettings().computedPageTurnMode === `controlled`) {
-          container.scrollTo(0, 0)
+          containerElement.scrollTo(0, 0)
         }
       }
 
@@ -46,21 +47,7 @@ export const chromeEnhancer =
        * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
        * but a scroll on the container itself..
        */
-      container.addEventListener(`scroll`, onScroll)
-
-      // screenForceRefreshElt = container.ownerDocument.createElement('div')
-      // screenForceRefreshElt.style.cssText = `
-      //   position: absolute;
-      //   background-color: black;
-      //   left: 0;
-      //   top: -1px;
-      //   width: 1px;
-      //   height: 1px;
-      // `
-
-      // container.appendChild(screenForceRefreshElt)
-
-      return SHOULD_NOT_LAYOUT
+      containerElement.addEventListener(`scroll`, onScroll)
     })
 
     reader.registerHook(`item.onLoad`, ({ frame }) => {

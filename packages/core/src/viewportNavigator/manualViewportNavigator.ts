@@ -24,7 +24,6 @@ export const createManualViewportNavigator = ({
   context,
 }: {
   context: Context
-  element: HTMLElement
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
   spineItemManager: SpineItemManager

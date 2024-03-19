@@ -73,10 +73,6 @@ export type Hook =
    * Only available during reader creation
    */
   | {
-      name: `spine.onBeforeContainerCreated`
-      fn: (payload: HTMLElement) => HTMLElement
-    }
-  | {
       name: `viewportNavigator.onBeforeContainerCreated`
       fn: (payload: HTMLElement) => HTMLElement
     }

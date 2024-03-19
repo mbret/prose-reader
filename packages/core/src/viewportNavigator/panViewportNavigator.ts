@@ -23,7 +23,6 @@ export const createPanViewportNavigator = ({
   currentNavigationSubject$,
 }: {
   context: Context
-  element: HTMLElement
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
   spineItemManager: SpineItemManager

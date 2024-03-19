@@ -9,13 +9,13 @@ export const createSpineItem = ({
   item,
   context,
   containerElement,
-  iframeEventBridgeElement,
+  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
-  iframeEventBridgeElement: HTMLElement
+  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
@@ -25,7 +25,7 @@ export const createSpineItem = ({
       item,
       context,
       containerElement,
-      iframeEventBridgeElement,
+      iframeEventBridgeElement$,
       hooks$,
       viewportState$,
     })
@@ -35,7 +35,7 @@ export const createSpineItem = ({
     item,
     context,
     containerElement,
-    iframeEventBridgeElement,
+    iframeEventBridgeElement$,
     hooks$,
     viewportState$,
   })

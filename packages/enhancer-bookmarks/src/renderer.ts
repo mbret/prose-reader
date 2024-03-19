@@ -21,11 +21,14 @@ export const createRenderer = (
   )
 
   const createBookmarkElement = () => {
-    reader.manipulateContainer((container) => {
-      if (container.ownerDocument.getElementById(ELEMENT_ID)) return SHOULD_NOT_LAYOUT
-      const element = container.ownerDocument.createElement(`div`)
-      element.id = ELEMENT_ID
-      element.style.cssText = `
+    const container = reader.context.getState().containerElement
+
+    if (!container) return
+
+    if (container.ownerDocument.getElementById(ELEMENT_ID)) return SHOULD_NOT_LAYOUT
+    const element = container.ownerDocument.createElement(`div`)
+    element.id = ELEMENT_ID
+    element.style.cssText = `
         top: 0px;
         right: 0px;
         background: transparent;
@@ -35,26 +38,21 @@ export const createRenderer = (
         display: flex;
         justify-content: center;
       `
-      const innerWrapper = container.ownerDocument.createElement(`div`)
-      innerWrapper.style.cssText = `
+    const innerWrapper = container.ownerDocument.createElement(`div`)
+    innerWrapper.style.cssText = `
         margin-top: -${(options.areaWidth / options.areaHeight) * options.areaHeight * 1.2 - options.areaHeight}px;
       `
-      innerWrapper.innerHTML = getIcon(Math.max(options.areaHeight, options.areaWidth) * 1.2)
-      element.appendChild(innerWrapper)
-      container.appendChild(element)
+    innerWrapper.innerHTML = getIcon(Math.max(options.areaHeight, options.areaWidth) * 1.2)
+    element.appendChild(innerWrapper)
+    container.appendChild(element)
 
-      element$.next(element)
+    element$.next(element)
 
-      return SHOULD_NOT_LAYOUT
-    })
+    return SHOULD_NOT_LAYOUT
   }
 
   const destroyBookmarkElement = () => {
-    reader.manipulateContainer((container) => {
-      container.ownerDocument.getElementById(ELEMENT_ID)?.remove()
-
-      return SHOULD_NOT_LAYOUT
-    })
+    reader.context.getState().containerElement?.ownerDocument.getElementById(ELEMENT_ID)?.remove()
   }
 
   const redrawBookmarks$ = (bookmarks: Bookmark[]) =>

@@ -9,13 +9,13 @@ export const createPrePaginatedSpineItem = ({
   item,
   context,
   containerElement,
-  iframeEventBridgeElement,
+  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
-  iframeEventBridgeElement: HTMLElement
+  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
@@ -24,7 +24,7 @@ export const createPrePaginatedSpineItem = ({
     context,
     item,
     parentElement: containerElement,
-    iframeEventBridgeElement,
+    iframeEventBridgeElement$,
     hooks$,
     viewportState$,
   })

@@ -20,7 +20,11 @@ export const createViewportZoomer = (reader: Reader) => {
   const enter = () => {
     reset()
 
-    reader.spine.element.style.transformOrigin = `0 0`
+    const spineElement = reader.spine.getElement()
+
+    if (spineElement) {
+      spineElement.style.transformOrigin = `0 0`
+    }
 
     isZooming$.next(true)
 
@@ -33,31 +37,37 @@ export const createViewportZoomer = (reader: Reader) => {
   }
 
   const scale = (userScale: number) => {
+    const spineElement = reader.spine.getElement()
+    const viewportElement = reader.viewportNavigator.getElement()
+
+    if (!spineElement || !viewportElement) return
+
     const roundedScale = Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
     const newScale = Math.max(roundedScale, 1)
 
     // GET CURRENT SCALE
     // no need to check for Y as both axis have same scale
-    const currentScale = reader.spine.element.getBoundingClientRect().width / reader.spine.element.offsetWidth
+    const currentScale = spineElement.getBoundingClientRect().width / spineElement.offsetWidth
 
-    const currentScrollTop = reader.viewportNavigator.element.scrollTop
+    const currentScrollTop = viewportElement.scrollTop
 
     // viewportNavigator.element.scrollTop does not change after the scale change thanks to fixed origin position
     // the scroll offset is the one before the new scale and can be used to add / remove on newly scaled view
-    reader.spine.element.style.transform = `scale(${newScale})`
+    spineElement.style.transform = `scale(${newScale})`
 
-    reader.viewportNavigator.element.scrollLeft = getNewScaledOffset({
+    viewportElement.scrollLeft = getNewScaledOffset({
       newScale,
       oldScale: currentScale,
-      pageSize: reader.viewportNavigator.element.clientWidth,
-      screenSize: reader.spine.element.offsetWidth,
-      scrollOffset: reader.viewportNavigator.element.scrollLeft,
+      pageSize: viewportElement.clientWidth,
+      screenSize: spineElement.offsetWidth,
+      scrollOffset: viewportElement.scrollLeft,
     })
-    reader.viewportNavigator.element.scrollTop = getNewScaledOffset({
+
+    viewportElement.scrollTop = getNewScaledOffset({
       newScale,
       oldScale: currentScale,
-      pageSize: reader.viewportNavigator.element.clientHeight,
-      screenSize: reader.spine.element.offsetHeight,
+      pageSize: viewportElement.clientHeight,
+      screenSize: spineElement.offsetHeight,
       scrollOffset: currentScrollTop,
     })
 

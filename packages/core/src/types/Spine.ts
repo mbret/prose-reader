@@ -16,7 +16,8 @@ type Locator = ReturnType<typeof createLocationResolver>
 type Event = { type: `onSelectionChange`; data: ReturnType<typeof createSelection> | null }
 
 export type Spine = {
-  element: HTMLElement
+  element$: Observable<HTMLElement>
+  getElement: () => HTMLElement | undefined
   locator: Locator
   spineItemLocator: SpineItemLocator
   cfiLocator: CfiLocator

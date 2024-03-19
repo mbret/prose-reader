@@ -70,7 +70,7 @@ export const createResourcesManager = (context: Context) => {
     )
     .subscribe()
 
-  const onLoad$ = context.$.load$.pipe(
+  const onLoad$ = context.$.manifest$.pipe(
     tap(() => {
       uniqueID = Date.now().toString()
     }),

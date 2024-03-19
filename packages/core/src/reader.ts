@@ -4,7 +4,7 @@ import { createContext as createBookContext } from "./context"
 import { createPagination } from "./pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
-import { takeUntil, tap, distinctUntilChanged, withLatestFrom, mapTo, map } from "rxjs/operators"
+import { takeUntil, tap, distinctUntilChanged, withLatestFrom, map, filter } from "rxjs/operators"
 import { createSelection } from "./selection"
 import { createSpineItemManager } from "./spineItemManager"
 import type { Hook, RegisterHook } from "./types/Hook"
@@ -16,12 +16,12 @@ import { createCfiLocator } from "./spine/cfiLocator"
 import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
 import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
+import { isDefined } from "./utils/isDefined"
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
 export type CreateReaderOptions = {
   hooks?: Hook[]
-  containerElement: HTMLElement
 } & Pick<
   ContextSettings,
   | `forceSinglePageMode`
@@ -34,7 +34,7 @@ export type CreateReaderOptions = {
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): ReaderInternal => {
+export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderOptions): ReaderInternal => {
   const stateSubject$ = new BehaviorSubject<ObservedValueOf<ReaderInternal["$"]["state$"]>>({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
@@ -52,8 +52,9 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const context = createBookContext(settings)
   const spineItemManager = createSpineItemManager({ context })
   const pagination = createPagination({ context, spineItemManager })
-  const element = createWrapperElement(containerElement)
-  const iframeEventBridgeElement = createIframeEventBridgeElement(containerElement)
+  const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
+  const element$ = elementSubject$.pipe(filter(isDefined))
+  const iframeEventBridgeElement$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
   const spineItemLocator = createSpineItemLocator({ context })
   const spineLocator = createSpineLocator({
     context,
@@ -69,8 +70,8 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   const navigation$ = navigationSubject.asObservable()
 
   const spine = createSpine({
-    ownerDocument: element.ownerDocument,
-    iframeEventBridgeElement,
+    element$,
+    iframeEventBridgeElement$,
     context,
     pagination,
     spineItemManager,
@@ -88,15 +89,12 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     context,
     pagination,
     spineItemManager,
-    parentElement: element,
+    parentElement$: elementSubject$,
     cfiLocator,
     spineLocator,
     hooks$: hooksSubject$,
     spine,
   })
-
-  containerElement.appendChild(element)
-  element.appendChild(iframeEventBridgeElement)
 
   // bridge all navigation stream with reader so they can be shared across app
   viewportNavigator.$.state$.subscribe(viewportStateSubject)
@@ -105,9 +103,14 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
   viewportNavigator.$.currentNavigationPosition$.subscribe(currentNavigationPositionSubject$)
 
   const layout = () => {
+    const containerElement = elementSubject$.getValue()?.parentElement
+    const element = elementSubject$.getValue()
+
+    if (!element || !containerElement) throw new Error("Invalid element")
+
     const dimensions = {
-      width: containerElement.offsetWidth,
-      height: containerElement.offsetHeight,
+      width: containerElement?.offsetWidth,
+      height: containerElement?.offsetHeight,
     }
     const margin = 0
     const marginTop = 0
@@ -136,7 +139,7 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     viewportNavigator.layout()
   }
 
-  const load = (manifest: Manifest, loadOptions: LoadOptions = {}) => {
+  const load = (manifest: Manifest, loadOptions: LoadOptions) => {
     if (context.getManifest()) {
       Report.warn(`loading a new book is not supported yet`)
 
@@ -144,6 +147,18 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     }
 
     Report.log(`load`, { manifest, loadOptions })
+
+    const element = createWrapperElement(loadOptions.containerElement)
+    const iframeEventBridgeElement = createIframeEventBridgeElement(loadOptions.containerElement)
+
+    if (loadOptions.containerElement !== elementSubject$.getValue()?.parentElement) {
+      elementSubject$.next(element)
+      iframeEventBridgeElement$.next(iframeEventBridgeElement)
+
+      loadOptions.containerElement.appendChild(element)
+
+      element.appendChild(iframeEventBridgeElement)
+    }
 
     context.load(manifest, loadOptions)
 
@@ -164,11 +179,6 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     hooksSubject$.next([...hooksSubject$.getValue(), { name, fn } as Hook])
   }
 
-  const manipulateContainer = (cb: (container: HTMLElement) => boolean) => {
-    // @todo re-layout based on return
-    cb(element)
-  }
-
   spine.$.$.pipe(
     tap((event) => {
       if (event.type === `onSelectionChange`) {
@@ -187,10 +197,10 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     )
     .subscribe()
 
-  merge(context.$.load$, context.$.settings$, context.$.hasVerticalWriting$)
+  merge(context.$.state$, context.$.settings$)
     .pipe(
-      mapTo(undefined),
-      withLatestFrom(context.$.hasVerticalWriting$),
+      map(() => undefined),
+      withLatestFrom(context.$.state$),
       map(([, hasVerticalWriting]) => {
         const settings = context.getSettings()
         const manifest = context.getManifest()
@@ -251,8 +261,8 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     context.destroy()
     viewportNavigator.destroy()
     spine.destroy()
-    element.remove()
-    iframeEventBridgeElement.remove()
+    elementSubject$.getValue()?.remove()
+    iframeEventBridgeElement$.getValue()?.remove()
     readySubject$.complete()
     stateSubject$.complete()
     selectionSubject$.complete()
@@ -267,7 +277,6 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
     viewportNavigator,
     manipulateSpineItems: spine.manipulateSpineItems,
     manipulateSpineItem: spine.manipulateSpineItem,
-    manipulateContainer,
     moveTo: viewportNavigator.moveTo,
     turnLeft: viewportNavigator.turnLeft,
     turnRight: viewportNavigator.turnRight,
@@ -300,10 +309,11 @@ export const createReader = ({ containerElement, hooks: initialHooks, ...setting
      */
     pagination$: pagination.$.info$,
     spineItems$: spine.$.spineItems$,
+    context$: context.$.state$,
     $: {
       state$: stateSubject$.asObservable(),
       /**
-       * Dispatched when the reader has loaded a book and is displayed a book.
+       * Dispatched when the reader has loaded a book and is rendering a book.
        * Using navigation API and getting information about current content will
        * have an effect.
        * It can typically be used to hide a loading indicator.

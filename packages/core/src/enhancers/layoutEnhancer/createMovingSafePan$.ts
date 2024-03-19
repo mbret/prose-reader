@@ -1,8 +1,6 @@
-import { animationFrameScheduler, Observable, of, scheduled } from "rxjs"
+import { animationFrameScheduler, merge, Observable, of, scheduled } from "rxjs"
 import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Reader } from "../../reader"
-
-const SHOULD_NOT_LAYOUT = false
 
 /**
  * For some reason (bug / expected / engine layout optimization) when the viewport is being animated clicking inside iframe
@@ -17,9 +15,12 @@ const SHOULD_NOT_LAYOUT = false
 export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
-  reader.manipulateContainer((container) => {
-    iframeOverlayForAnimationsElement = container.ownerDocument.createElement(`div`)
-    iframeOverlayForAnimationsElement.style.cssText = `
+  const updateOverlayElement$ = reader.context$.pipe(
+    tap(({ containerElement }) => {
+      if (!containerElement) return
+
+      iframeOverlayForAnimationsElement = containerElement.ownerDocument.createElement(`div`)
+      iframeOverlayForAnimationsElement.style.cssText = `
       position: absolute;
       left: 0;
       top: 0;
@@ -27,10 +28,9 @@ export const createMovingSafePan$ = (reader: Reader) => {
       height: 100%;
       visibility: hidden;
     `
-    container.appendChild(iframeOverlayForAnimationsElement)
-
-    return SHOULD_NOT_LAYOUT
-  })
+      containerElement.appendChild(iframeOverlayForAnimationsElement)
+    }),
+  )
 
   const createResetLock$ = <T>(source: Observable<T>) =>
     scheduled(source, animationFrameScheduler).pipe(
@@ -64,5 +64,5 @@ export const createMovingSafePan$ = (reader: Reader) => {
     takeUntil(reader.$.destroy$),
   )
 
-  return handleViewportLock$
+  return merge(updateOverlayElement$, handleViewportLock$)
 }

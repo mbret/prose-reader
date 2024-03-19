@@ -16,6 +16,7 @@ import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navi
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportPosition } from "../types"
 import { getNewScaledOffset } from "../utils/layout"
+import { isDefined } from "../utils/isDefined"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
@@ -23,13 +24,13 @@ type ScaledDownPosition = ViewportPosition
 
 export const createScrollViewportNavigator = ({
   context,
-  element,
+  element$,
   navigator,
   currentNavigationSubject$,
   spine,
 }: {
   context: Context
-  element: HTMLElement
+  element$: BehaviorSubject<HTMLElement>
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
   spine: Spine
@@ -52,7 +53,7 @@ export const createScrollViewportNavigator = ({
   const adjustReadingOffset = ({ x, y }: { x: number; y: number }) => {
     if (context.getSettings().computedPageTurnMode === `scrollable`) {
       lastScrollWasProgrammaticallyTriggered = true
-      element.scrollTo({ left: x, top: y })
+      element$.getValue()?.scrollTo({ left: x, top: y })
 
       return true
     }
@@ -67,14 +68,19 @@ export const createScrollViewportNavigator = ({
       switchMap((mode) => iif(() => mode === `controlled`, EMPTY, source)),
     )
 
-  const userScroll$ = runOnFreePageTurnModeOnly$(fromEvent(element, `scroll`)).pipe(
-    onlyUserScrollFilter,
-    share(),
-    takeUntil(context.$.destroy$),
-  )
+  const userScroll$ = runOnFreePageTurnModeOnly$(
+    element$.pipe(
+      filter(isDefined),
+      switchMap((element) => fromEvent(element, `scroll`)),
+    ),
+  ).pipe(onlyUserScrollFilter, share(), takeUntil(context.$.destroy$))
 
   const getScaledDownPosition = ({ x, y }: ViewportPosition) => {
-    const spineScaleX = spine.element.getBoundingClientRect().width / spine.element.offsetWidth
+    const spineElement = spine.getElement()
+
+    if (!spineElement) throw new Error("Invalid spine element")
+
+    const spineScaleX = spineElement.getBoundingClientRect().width / spineElement.offsetWidth
 
     /**
      * @important
@@ -86,15 +92,15 @@ export const createScrollViewportNavigator = ({
       x: getNewScaledOffset({
         newScale: 1,
         oldScale: spineScaleX,
-        screenSize: element.clientWidth,
-        pageSize: spine.element.scrollWidth,
+        screenSize: element$.getValue()?.clientWidth ?? 0,
+        pageSize: spineElement.scrollWidth,
         scrollOffset: x,
       }),
       y: getNewScaledOffset({
         newScale: 1,
         oldScale: spineScaleX,
-        screenSize: element.clientHeight,
-        pageSize: spine.element.scrollHeight,
+        screenSize: element$.getValue()?.clientHeight ?? 0,
+        pageSize: spineElement.scrollHeight,
         scrollOffset: y,
       }),
     }
@@ -109,14 +115,16 @@ export const createScrollViewportNavigator = ({
   }
 
   const getCurrentViewportPosition = () => {
-    return getScaledDownPosition({ x: element.scrollLeft, y: element.scrollTop })
+    return getScaledDownPosition({ x: element$.getValue()?.scrollLeft ?? 0, y: element$.getValue()?.scrollTop ?? 0 })
   }
 
   const navigationOnScroll$ = userScroll$.pipe(
     debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
     withLatestFrom(currentNavigationSubject$),
     switchMap(() => {
-      const navigation = getNavigationForPosition(getScaledDownPosition({ x: element.scrollLeft, y: element.scrollTop }))
+      const navigation = getNavigationForPosition(
+        getScaledDownPosition({ x: element$.getValue()?.scrollLeft ?? 0, y: element$.getValue()?.scrollTop ?? 0 }),
+      )
 
       /**
        * Because scroll navigation is always different: we can scroll through the same item but at different progress

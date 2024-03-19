@@ -37,13 +37,13 @@ export const createCommonSpineItem = ({
   item,
   context,
   parentElement,
-  iframeEventBridgeElement,
+  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
-  iframeEventBridgeElement: HTMLElement
+  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
@@ -53,12 +53,12 @@ export const createCommonSpineItem = ({
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  const frameHooks = createFrameHooks(iframeEventBridgeElement, fingerTracker, selectionTracker)
+  const frameHooks = createFrameHooks(iframeEventBridgeElement$, fingerTracker, selectionTracker)
   const spineItemFrame = createFrameItem({
     parent: containerElement,
     item,
     context,
-    fetchResource: context.getLoadOptions()?.fetchResource,
+    fetchResource: context.getState()?.fetchResource,
     hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
     viewportState$,
   })
@@ -224,10 +224,10 @@ export const createCommonSpineItem = ({
   }
 
   const getResource = async () => {
-    const loadOptions = context.getLoadOptions()
+    const fetchResource = context.getState().fetchResource
     const lastFetch = (_: Manifest[`spineItems`][number]) => {
-      if (loadOptions?.fetchResource) {
-        return loadOptions.fetchResource(item)
+      if (fetchResource) {
+        return fetchResource(item)
       }
 
       return fetch(item.href)
@@ -391,7 +391,7 @@ const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spi
 }
 
 const createFrameHooks = (
-  iframeEventBridgeElement: HTMLElement,
+  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>,
   fingerTracker: ReturnType<typeof createFingerTracker>,
   selectionTracker: ReturnType<typeof createSelectionTracker>,
 ): Hook[] => {
@@ -417,7 +417,7 @@ const createFrameHooks = (
 
             if (convertedEvent !== e) {
               attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
-              iframeEventBridgeElement.dispatchEvent(convertedEvent)
+              iframeEventBridgeElement$.getValue()?.dispatchEvent(convertedEvent)
             }
           }
 

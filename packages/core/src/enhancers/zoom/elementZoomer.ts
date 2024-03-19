@@ -1,8 +1,6 @@
 import { BehaviorSubject } from "rxjs"
 import { Reader } from "../../reader"
 
-const SHOULD_NOT_LAYOUT = false
-
 export const createElementZoomer = (reader: Reader) => {
   const isZooming$ = new BehaviorSubject<boolean>(false)
   let imageMagnifierContainer: HTMLDivElement | undefined
@@ -20,7 +18,9 @@ export const createElementZoomer = (reader: Reader) => {
     baseScale = 1
     lastUserScale = 1
 
-    reader.manipulateContainer((container) => {
+    const container = reader.context.getState().containerElement
+
+    if (container) {
       imageMagnifierContainer = container.ownerDocument.createElement(`div`)
       imageMagnifierContainer.style.cssText = `
           top: 0;
@@ -43,9 +43,7 @@ export const createElementZoomer = (reader: Reader) => {
 
       imageMagnifierContainer.appendChild(clonedImgElement)
       container.appendChild(imageMagnifierContainer)
-
-      return SHOULD_NOT_LAYOUT
-    })
+    }
 
     scale(1.2)
     setCurrentScaleAsBase()
@@ -104,12 +102,10 @@ export const createElementZoomer = (reader: Reader) => {
 
   const exit = () => {
     lastUserScale = 1
-    reader.manipulateContainer(() => {
-      imageMagnifierContainer?.remove()
-      imageMagnifierContainer = undefined
 
-      return SHOULD_NOT_LAYOUT
-    })
+    imageMagnifierContainer?.remove()
+    imageMagnifierContainer = undefined
+
     isZooming$.next(false)
   }
 

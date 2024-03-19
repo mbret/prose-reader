@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { BehaviorSubject, Observable, Subject } from "rxjs"
-import { distinctUntilChanged, takeUntil, tap, skip } from "rxjs/operators"
+import { BehaviorSubject, Observable, Subject, merge } from "rxjs"
+import { distinctUntilChanged, takeUntil, tap, map, filter, withLatestFrom } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
 import { createSettings, PublicSettings } from "./settings"
 import { LoadOptions } from "./types/reader"
+import { isDefined } from "./utils/isDefined"
 
 type SettingsManager = ReturnType<typeof createSettings>
+
+type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
+  manifest?: Manifest
+  hasVerticalWritingSubject?: boolean
+}
 
 export type Context = {
   load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
@@ -13,7 +19,6 @@ export type Context = {
   getSettings: () => ReturnType<SettingsManager[`getSettings`]>
   getManifest: () => Manifest | undefined
   areAllItemsPrePaginated: () => boolean
-  getLoadOptions: () => LoadOptions | undefined
   getCalculatedInnerMargin: () => number
   getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
   shouldDisplaySpread: () => boolean
@@ -23,21 +28,28 @@ export type Context = {
   setVisibleAreaRect: (options: { x: number; y: number; width: number; height: number }) => void
   isRTL: () => boolean
   destroy: () => void
+  getState: () => State
   $: {
-    hasVerticalWriting$: Observable<boolean>
     settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
     destroy$: Observable<void>
-    load$: Observable<Manifest>
+    state$: Observable<State>
+    manifest$: Observable<Manifest>
   }
 }
 
 export type ContextObservableEvents = {}
 
 export const createContext = (initialSettings: Parameters<typeof createSettings>[0]): Context => {
-  let manifest: Manifest | undefined
-  let loadOptions: LoadOptions | undefined
-  const hasVerticalWritingSubject$ = new BehaviorSubject(false)
-  const loadSubject$ = new Subject<Manifest>()
+  const stateSubject = new BehaviorSubject<State>({})
+  const manifest$ = stateSubject.pipe(
+    map((state) => state.manifest),
+    filter(isDefined),
+  )
+  const hasVerticalWritingSubject$ = stateSubject.pipe(
+    map((state) => state.hasVerticalWritingSubject),
+    filter(isDefined),
+    distinctUntilChanged(),
+  )
   const visibleAreaRect = {
     width: 0,
     height: 0,
@@ -55,6 +67,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
    * @todo user setting
    */
   const shouldDisplaySpread = () => {
+    const manifest = stateSubject.getValue().manifest
     const { height, width } = visibleAreaRect
     const isLandscape = width > height
 
@@ -82,32 +95,32 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   }
 
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
-    manifest = newManifest
-    loadOptions = newLoadOptions
-
-    settings.recompute({ manifest, hasVerticalWritingSubject: hasVerticalWritingSubject$.value })
-
-    loadSubject$.next(newManifest)
+    stateSubject.next({
+      manifest: newManifest,
+      ...newLoadOptions,
+    })
   }
 
   /**
    * RTL only makes sense for horizontal scrolling
    */
   const isRTL = () => {
-    return manifest?.readingDirection === `rtl`
+    return stateSubject.getValue().manifest?.readingDirection === `rtl`
   }
 
-  const setHasVerticalWriting = () => hasVerticalWritingSubject$.next(true)
+  const setHasVerticalWriting = () =>
+    stateSubject.next({
+      ...stateSubject.getValue(),
+      hasVerticalWritingSubject: true,
+    })
 
-  /**
-   * Some behavior may trigger settings to change
-   */
-  hasVerticalWritingSubject$
+  const recomputeSettings$ = merge(hasVerticalWritingSubject$, manifest$)
+
+  recomputeSettings$
     .pipe(
-      skip(1),
-      distinctUntilChanged(),
-      tap(() => {
-        settings.recompute({ manifest, hasVerticalWritingSubject: hasVerticalWritingSubject$.value })
+      withLatestFrom(hasVerticalWritingSubject$, manifest$),
+      tap(([, hasVerticalWritingSubject, manifest]) => {
+        settings.recompute({ hasVerticalWritingSubject, manifest })
       }),
       takeUntil(destroy$),
     )
@@ -115,18 +128,16 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
 
   const destroy = () => {
     settings.destroy()
-    loadSubject$.complete()
+    stateSubject.complete()
     destroy$.next()
     destroy$.complete()
-    hasVerticalWritingSubject$.complete()
   }
 
   return {
     load,
     isRTL,
-    areAllItemsPrePaginated: () => areAllItemsPrePaginated(manifest),
+    areAllItemsPrePaginated: () => areAllItemsPrePaginated(stateSubject.getValue()?.manifest),
     destroy,
-    getLoadOptions: () => loadOptions,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
     shouldDisplaySpread,
@@ -143,8 +154,9 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
       //     this.visibleAreaRect.height - this.getCalculatedInnerMargin()
       // }
     },
-    getManifest: () => manifest,
-    getReadingDirection: () => manifest?.readingDirection,
+    getState: () => stateSubject.getValue(),
+    getManifest: () => stateSubject.getValue()?.manifest,
+    getReadingDirection: () => stateSubject.getValue()?.manifest?.readingDirection,
     getPageSize: () => {
       return {
         width: shouldDisplaySpread() ? visibleAreaRect.width / 2 : visibleAreaRect.width,
@@ -152,16 +164,12 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
       }
     },
     getSettings: settings.getSettings,
-    setSettings: (data: Parameters<typeof settings.setSettings>[0]) =>
-      settings.setSettings(data, {
-        hasVerticalWritingSubject: hasVerticalWritingSubject$.value,
-        manifest,
-      }),
+    setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, stateSubject.getValue()),
     $: {
-      hasVerticalWriting$: hasVerticalWritingSubject$.asObservable().pipe(distinctUntilChanged()),
+      manifest$,
       destroy$: destroy$.asObservable(),
       settings$: settings.$.settings$,
-      load$: loadSubject$.asObservable(),
+      state$: stateSubject.asObservable(),
     },
   }
 }

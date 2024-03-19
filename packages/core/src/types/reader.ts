@@ -35,6 +35,7 @@ export type LoadOptions = {
    * not pass through the service worker.
    */
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+  containerElement: HTMLElement
 }
 
 export type ReaderInternal = {
@@ -44,7 +45,6 @@ export type ReaderInternal = {
   viewportNavigator: ViewportNavigator
   manipulateSpineItems: Spine["manipulateSpineItems"]
   manipulateSpineItem: Spine["manipulateSpineItem"]
-  manipulateContainer: (cb: (container: HTMLElement) => boolean) => void
   moveTo: ViewportNavigator["moveTo"]
   turnLeft: ViewportNavigator["turnLeft"]
   turnRight: ViewportNavigator["turnRight"]
@@ -67,7 +67,7 @@ export type ReaderInternal = {
   getCurrentNavigationPosition: ViewportNavigator['getCurrentNavigationPosition']
   getCurrentViewportPosition: ViewportNavigator['getCurrentViewportPosition']
   layout: () => void
-  load: (manifest: Manifest, loadOptions?: LoadOptions) => void
+  load: (manifest: Manifest, loadOptions: LoadOptions) => void
   destroy: () => void
   setSettings: Context["setSettings"]
   settings$: Context["$"]["settings$"]
@@ -77,6 +77,7 @@ export type ReaderInternal = {
    */
   pagination$: Observable<PaginationInfo>
   spineItems$: Spine["$"]["spineItems$"]
+  context$: Context['$']['state$']
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]

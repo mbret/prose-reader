@@ -15,8 +15,10 @@ import type { Hook } from "../types/Hook"
 import type { Spine } from "../types/Spine"
 import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
+import { Manifest } from ".."
 
 const report = Report.namespace(`spine`)
+const noopElement = document.createElement("div")
 
 type SpineItem = ReturnType<typeof createSpineItem>
 type RequireLayout = boolean
@@ -29,10 +31,10 @@ type Event = {
 }
 
 export const createSpine = ({
-  ownerDocument,
+  element$,
   context,
   pagination,
-  iframeEventBridgeElement,
+  iframeEventBridgeElement$,
   spineItemManager,
   hooks$,
   spineItemLocator,
@@ -43,8 +45,8 @@ export const createSpine = ({
   currentNavigationPosition$,
   viewportState$,
 }: {
-  ownerDocument: Document
-  iframeEventBridgeElement: HTMLElement
+  element$: Observable<HTMLElement>
+  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   pagination: Pagination
   spineItemManager: SpineItemManager
@@ -63,11 +65,11 @@ export const createSpine = ({
   const spineItems$ = new Subject<SpineItem[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
   const subject = new Subject<Event>()
-  const containerElement = createContainerElement(ownerDocument, hooks$)
+  const containerElement$ = new BehaviorSubject<HTMLElement>(noopElement)
   const eventsHelper = createEventsHelper({
     context,
     spineItemManager,
-    iframeEventBridgeElement,
+    iframeEventBridgeElement$,
     locator: spineLocator,
   })
   let selectionSubscription: Subscription | undefined
@@ -75,20 +77,23 @@ export const createSpine = ({
   /**
    * @todo handle reload
    */
-  const reload = () => {
+  const reload = (manifest: Manifest) => {
     itemsBeforeDestroySubject$.next()
+
     spineItemManager.destroyItems()
-    context.getManifest()?.spineItems.map((resource) => {
+
+    manifest.spineItems.map((resource) => {
       const spineItem = createSpineItem({
         item: resource,
-        containerElement: containerElement,
-        iframeEventBridgeElement,
+        containerElement: containerElement$.getValue(),
+        iframeEventBridgeElement$,
         context,
         hooks$,
         viewportState$,
       })
       spineItemManager.add(spineItem)
     })
+
     spineItems$.next(spineItemManager.getAll())
   }
 
@@ -107,7 +112,7 @@ export const createSpine = ({
     spineItemManager.get(id)?.manipulateSpineItem(cb)
   }
 
-  context.$.load$.pipe(tap(reload), takeUntil(context.$.destroy$)).subscribe()
+  context.$.manifest$.pipe(tap(reload), takeUntil(context.$.destroy$)).subscribe()
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
@@ -408,8 +413,15 @@ export const createSpine = ({
     )
     .subscribe()
 
+  const elementSub = element$.pipe().subscribe((element) => {
+    const containerElement = createContainerElement(element.ownerDocument)
+
+    containerElement$.next(containerElement)
+  })
+
   return {
-    element: containerElement,
+    element$: containerElement$,
+    getElement: () => containerElement$.getValue(),
     locator: spineLocator,
     spineItemLocator,
     cfiLocator,
@@ -417,13 +429,14 @@ export const createSpine = ({
     manipulateSpineItems,
     manipulateSpineItem,
     destroy: () => {
+      elementSub.unsubscribe()
       spineItems$.complete()
       itemsBeforeDestroySubject$.next()
       itemsBeforeDestroySubject$.complete()
       subject.complete()
       spineItemManager.destroy()
       selectionSubscription?.unsubscribe()
-      containerElement.remove()
+      containerElement$.getValue().remove()
     },
     adjustPagination,
     isSelecting: () => spineItemManager.getFocusedSpineItem()?.selectionTracker.isSelecting(),
@@ -437,7 +450,7 @@ export const createSpine = ({
   }
 }
 
-const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
+const createContainerElement = (doc: Document) => {
   const element: HTMLElement = doc.createElement(`div`)
   element.style.cssText = `
     height: 100%;
@@ -445,13 +458,7 @@ const createContainerElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) 
   `
   element.className = `${HTML_PREFIX}-spine`
 
-  return hooks$.getValue().reduce((element, hook) => {
-    if (hook.name === `spine.onBeforeContainerCreated`) {
-      return hook.fn(element)
-    }
-
-    return element
-  }, element)
+  return element
 }
 
 export { Spine }

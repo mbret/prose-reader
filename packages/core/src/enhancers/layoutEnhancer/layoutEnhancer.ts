@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BehaviorSubject, combineLatest, Observable, ObservedValueOf } from "rxjs"
-import { distinctUntilChanged, map, takeUntil, tap, skip } from "rxjs/operators"
+import { distinctUntilChanged, map, takeUntil, tap, skip, filter } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
 import { isShallowEqual } from "../../utils/objects"
 import { Options, SettingsInput, SettingsOutput } from "./types"
 import { fixReflowable } from "./fixReflowable"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import { isDefined } from "../../utils/isDefined"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -127,10 +128,20 @@ export const layoutEnhancer =
     let observer: ResizeObserver | undefined
 
     if (options.layoutAutoResize === `container`) {
-      observer = new ResizeObserver(() => {
-        reader?.layout()
-      })
-      observer.observe(options.containerElement)
+      reader.context$
+        .pipe(
+          map((state) => state.containerElement),
+          filter(isDefined),
+          distinctUntilChanged(),
+          takeUntil(reader.$.destroy$)
+        )
+        .subscribe((container) => {
+          observer = new ResizeObserver(() => {
+            reader?.layout()
+          })
+
+          observer.observe(container)
+        })
     }
 
     const movingSafePan$ = createMovingSafePan$(reader)

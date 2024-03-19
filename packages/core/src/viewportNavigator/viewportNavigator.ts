@@ -42,14 +42,17 @@ import { mapKeysTo } from "../utils/rxjs"
 import { isShallowEqual } from ".."
 import { LastUserExpectedNavigation, Navigation } from "./types"
 import { Spine } from "../spine/createSpine"
+import { isDefined } from "../utils/isDefined"
 
 const NAMESPACE = `viewportNavigator`
+
+const noopElement = document.createElement("div")
 
 export const createViewportNavigator = ({
   spineItemManager,
   context,
   pagination,
-  parentElement,
+  parentElement$,
   cfiLocator,
   spineLocator,
   hooks$,
@@ -58,15 +61,13 @@ export const createViewportNavigator = ({
   spineItemManager: SpineItemManager
   pagination: Pagination
   context: Context
-  parentElement: HTMLElement
+  parentElement$: BehaviorSubject<HTMLElement | undefined>
   cfiLocator: ReturnType<typeof createCfiLocator>
   spineLocator: ReturnType<typeof createLocationResolver>
   hooks$: BehaviorSubject<Hook[]>
   spine: Spine
 }) => {
-  const element = createElement(parentElement.ownerDocument, hooks$)
-  element.appendChild(spine.element)
-
+  const element$ = new BehaviorSubject<HTMLElement>(noopElement)
   const layoutSubject$ = new Subject<void>()
   let currentViewportPositionMemoUnused: { x: number; y: number } | undefined
   /**
@@ -92,8 +93,6 @@ export const createViewportNavigator = ({
     animate: boolean
   }>()
 
-  parentElement.appendChild(element)
-
   /**
    * Keep in mind that the viewport position IS NOT necessarily the current navigation position.
    * Because there could be an animation running the viewport may be late. To retrieve the current position
@@ -110,7 +109,7 @@ export const createViewportNavigator = ({
      * is not however negative (this is only because of translate). However it can be legit negative
      * for RTL
      */
-    const { x, y } = element.getBoundingClientRect()
+    const { x, y } = element$.getValue()?.getBoundingClientRect() ?? { x: 0, y: 0 }
 
     const newValue = {
       // we want to round to first decimal because it's possible to have half pixel
@@ -127,24 +126,24 @@ export const createViewportNavigator = ({
 
   const panViewportNavigator = createPanViewportNavigator({
     context,
-    element,
     navigator,
     spineItemManager,
     locator: spineLocator,
     getCurrentViewportPosition,
     currentNavigationSubject$: currentNavigationPositionSubject$,
   })
+
   const scrollViewportNavigator = createScrollViewportNavigator({
     context,
-    element,
+    element$,
     navigator,
     currentNavigationSubject$: currentNavigationPositionSubject$,
     spine,
     spineItemManager,
   })
+
   const manualViewportNavigator = createManualViewportNavigator({
     context,
-    element,
     navigator,
     currentNavigationSubject$: currentNavigationPositionSubject$,
     spineItemManager,
@@ -170,6 +169,10 @@ export const createViewportNavigator = ({
     `adjustReadingOffset`,
     2,
     ({ x, y }: { x: number; y: number }, hooks: Hook[]) => {
+      const element = element$.getValue()
+
+      if (!element) throw new Error("Invalid element")
+
       currentViewportPositionMemoUnused = undefined
 
       const isAdjusted = viewportNavigators.reduce((isAdjusted, navigator) => {
@@ -304,7 +307,8 @@ export const createViewportNavigator = ({
   )
 
   const layout$ = merge(layoutSubject$, layoutChangeSettings$).pipe(
-    tap(() => {
+    withLatestFrom(element$),
+    tap(([, element]) => {
       if (context.getSettings().computedPageTurnMode === `scrollable`) {
         element.style.removeProperty(`transform`)
         element.style.removeProperty(`transition`)
@@ -404,8 +408,8 @@ export const createViewportNavigator = ({
     tap(([prevEvent, currentEvent]) => {
       // cleanup potential previous manual adjust
       if (prevEvent?.type === `manualAdjust` && currentEvent?.type !== `manualAdjust`) {
-        element.style.setProperty(`transition`, `none`)
-        element.style.setProperty(`opacity`, `1`)
+        element$.getValue().style.setProperty(`transition`, `none`)
+        element$.getValue().style.setProperty(`opacity`, `1`)
       }
     }),
     switchMap(([, currentEvent]) => {
@@ -433,15 +437,15 @@ export const createViewportNavigator = ({
 
           if (data.shouldAnimate && !noAdjustmentNeeded) {
             if (pageTurnAnimation === `fade`) {
-              element.style.setProperty(`transition`, `opacity ${animationDuration / 2}ms`)
-              element.style.setProperty(`opacity`, `0`)
+              element$.getValue().style.setProperty(`transition`, `opacity ${animationDuration / 2}ms`)
+              element$.getValue().style.setProperty(`opacity`, `0`)
             } else if (currentEvent.animation === `snap` || pageTurnAnimation === `slide`) {
-              element.style.setProperty(`transition`, `transform ${animationDuration}ms`)
-              element.style.setProperty(`opacity`, `1`)
+              element$.getValue().style.setProperty(`transition`, `transform ${animationDuration}ms`)
+              element$.getValue().style.setProperty(`opacity`, `1`)
             }
           } else {
-            element.style.setProperty(`transition`, `none`)
-            element.style.setProperty(`opacity`, `1`)
+            element$.getValue().style.setProperty(`transition`, `none`)
+            element$.getValue().style.setProperty(`opacity`, `1`)
           }
         }),
         /**
@@ -462,7 +466,7 @@ export const createViewportNavigator = ({
         tap(([data, hooks]) => {
           if (pageTurnAnimation === `fade`) {
             adjustReadingOffset(data.position, hooks)
-            element.style.setProperty(`opacity`, `1`)
+            element$.getValue().style.setProperty(`opacity`, `1`)
           }
         }),
         currentEvent.shouldAnimate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
@@ -578,10 +582,17 @@ export const createViewportNavigator = ({
     share(),
   )
 
+  const parentElementSub = parentElement$.pipe(filter(isDefined), withLatestFrom(spine.element$)).subscribe(([parentElement, spineElement]) => {
+    const element = createElement(parentElement.ownerDocument, hooks$)
+    element.appendChild(spineElement)
+    parentElement.appendChild(element)
+  })
+
   const destroy = () => {
     layoutSubject$.complete()
     adjustNavigationSubject$.complete()
     currentNavigationPositionSubject$.complete()
+    parentElementSub.unsubscribe()
     viewportNavigators.forEach((navigator) => navigator.destroy())
   }
 
@@ -599,7 +610,8 @@ export const createViewportNavigator = ({
     goToPageOfCurrentChapter: manualViewportNavigator.goToPageOfCurrentChapter,
     moveTo: panViewportNavigator.moveTo,
     getLastUserExpectedNavigation: () => lastUserExpectedNavigation,
-    element,
+    element$,
+    getElement: () => element$.getValue(),
     $: {
       state$,
       navigation$,
