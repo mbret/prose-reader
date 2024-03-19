@@ -41,7 +41,6 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     supportedPageTurnDirection: [`horizontal`, `vertical`],
     supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
   })
-  const readySubject$ = new Subject<void>()
   const destroy$ = new Subject<void>()
   const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
   const hooksSubject$ = new BehaviorSubject<Hook[]>(initialHooks || [])
@@ -171,8 +170,6 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     } else {
       viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
     }
-
-    readySubject$.next()
   }
 
   const registerHook: RegisterHook = (name, fn) => {
@@ -263,7 +260,6 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     spine.destroy()
     elementSubject$.getValue()?.remove()
     iframeEventBridgeElement$.getValue()?.remove()
-    readySubject$.complete()
     stateSubject$.complete()
     selectionSubject$.complete()
     destroy$.next()
@@ -318,7 +314,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
        * have an effect.
        * It can typically be used to hide a loading indicator.
        */
-      ready$: readySubject$.asObservable(),
+      loadStatus$: context.$.manifest$.pipe(map((manifest) => (manifest ? "ready" : "idle"))),
       /**
        * Dispatched when a change in selection happens
        */

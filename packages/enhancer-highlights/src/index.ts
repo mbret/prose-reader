@@ -1,6 +1,6 @@
 import { Observable, Subject } from "rxjs"
 import { Reader, Report } from "@prose-reader/core"
-import { takeUntil, tap } from "rxjs/operators"
+import { filter, takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
   anchorCfi: string
@@ -172,8 +172,9 @@ export const highlightsEnhancer =
      * If the user has registered highlights before the reader was ready we want to
      * init them and draw them
      */
-    reader.$.ready$
+    reader.$.loadStatus$
       .pipe(
+        filter((state) => state === "ready"),
         tap(() => {
           highlights = highlights.map((highlight) => {
             if (!highlight.spineItemIndex) return enrichHighlight(highlight)

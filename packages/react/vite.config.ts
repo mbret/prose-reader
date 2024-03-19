@@ -4,6 +4,7 @@ import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
 import externals from "rollup-plugin-node-externals"
 import { name } from "./package.json"
+import react from "@vitejs/plugin-react"
 
 const libName = name.replace(`@`, ``).replace(`/`, `-`)
 
@@ -19,6 +20,7 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
   },
   plugins: [
+    react(),
     {
       enforce: `pre`,
       ...externals({
@@ -31,8 +33,8 @@ export default defineConfig(({ mode }) => ({
       entryRoot: "src",
       compilerOptions: {
         declaration: false,
-        skipLibCheck: true
-      }
+        skipLibCheck: true,
+      },
     }),
   ],
 }))

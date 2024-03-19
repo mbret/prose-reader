@@ -59,13 +59,13 @@ export type ReaderInternal = {
   getAbsolutePositionOf: SpineItemManager["getAbsolutePositionOf"]
   getSelection: Spine["getSelection"]
   isSelecting: Spine["isSelecting"]
-  normalizeEventForViewport: Spine['normalizeEventForViewport']
-  getCfiMetaInformation: Spine['cfiLocator']['getCfiMetaInformation']
-  resolveCfi: Spine['cfiLocator']['resolveCfi']
-  generateCfi: Spine['cfiLocator']['generateFromRange']
-  locator: Spine['locator']
-  getCurrentNavigationPosition: ViewportNavigator['getCurrentNavigationPosition']
-  getCurrentViewportPosition: ViewportNavigator['getCurrentViewportPosition']
+  normalizeEventForViewport: Spine["normalizeEventForViewport"]
+  getCfiMetaInformation: Spine["cfiLocator"]["getCfiMetaInformation"]
+  resolveCfi: Spine["cfiLocator"]["resolveCfi"]
+  generateCfi: Spine["cfiLocator"]["generateFromRange"]
+  locator: Spine["locator"]
+  getCurrentNavigationPosition: ViewportNavigator["getCurrentNavigationPosition"]
+  getCurrentViewportPosition: ViewportNavigator["getCurrentViewportPosition"]
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void
   destroy: () => void
@@ -77,7 +77,7 @@ export type ReaderInternal = {
    */
   pagination$: Observable<PaginationInfo>
   spineItems$: Spine["$"]["spineItems$"]
-  context$: Context['$']['state$']
+  context$: Context["$"]["state$"]
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
@@ -91,7 +91,7 @@ export type ReaderInternal = {
      * have an effect.
      * It can typically be used to hide a loading indicator.
      */
-    ready$: Observable<void>
+    loadStatus$: Observable<"idle" | "loading" | "ready">
     /**
      * Dispatched when a change in selection happens
      */
@@ -103,7 +103,7 @@ export type ReaderInternal = {
     viewportState$: Observable<"free" | "busy">
     layout$: Spine["$"]["layout$"]
     itemsBeforeDestroy$: Spine["$"]["itemsBeforeDestroy$"]
-    itemIsReady$: SpineItemManager['$']['itemIsReady$']
+    itemIsReady$: SpineItemManager["$"]["itemIsReady$"]
     destroy$: Observable<void>
   }
   __debug: {
