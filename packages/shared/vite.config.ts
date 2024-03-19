@@ -10,8 +10,7 @@ export default defineConfig(({ mode }) => {
         // Could also be a dictionary or array of multiple entry points
         entry: resolve(__dirname, `src/index.ts`),
         name: `prose-shared`,
-        // the proper extensions will be added
-        fileName: `prose-shared`,
+        fileName: `index`,
       },
       emptyOutDir: mode !== "development",
       sourcemap: true,
@@ -28,6 +27,10 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [dts()],
+    plugins: [
+      dts({
+        entryRoot: "src",
+      }),
+    ],
   }
 })

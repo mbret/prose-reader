@@ -32,7 +32,7 @@
     "@react-rxjs/core": "^0.10.3",
     "@react-rxjs/utils": "^0.9.5",
     "@types/hammerjs": "^2.0.41",
-    "@types/react-dom": "18.2.19",
+    "@types/react-dom": "18.2.22",
     "buffer": "^6.0.3",
     "framer-motion": "^11.0.6",
     "hammerjs": "^2.0.8",

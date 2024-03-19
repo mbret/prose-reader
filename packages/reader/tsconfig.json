@@ -6,7 +6,7 @@
     "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
     "declaration": false,

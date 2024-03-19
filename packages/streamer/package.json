@@ -2,12 +2,12 @@
   "name": "@prose-reader/streamer",
   "version": "1.41.0",
   "type": "module",
-  "main": "./dist/prose-streamer.umd.cjs",
-  "module": "./dist/prose-streamer.js",
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
   "exports": {
     ".": {
-      "import": "./dist/prose-streamer.js",
-      "require": "./dist/prose-streamer.umd.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
     }
   },
   "types": "./dist/index.d.ts",

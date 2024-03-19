@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: `prose-streamer`,
-      fileName: `prose-streamer`,
+      fileName: `index`,
     },
     sourcemap: true,
     minify: mode === "development" ? false : "esbuild",
@@ -23,5 +23,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  plugins: [dts()],
+  plugins: [dts({
+    entryRoot: "src"
+  })],
 }))

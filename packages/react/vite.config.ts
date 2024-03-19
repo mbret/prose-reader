@@ -2,7 +2,7 @@
 import { resolve } from "path"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import { externals } from "rollup-plugin-node-externals"
+import externals from "rollup-plugin-node-externals"
 import { name } from "./package.json"
 
 const libName = name.replace(`@`, ``).replace(`/`, `-`)
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: libName,
-      fileName: libName,
+      fileName: "index",
     },
     emptyOutDir: mode !== `development`,
     sourcemap: true,
@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => ({
         devDeps: true,
       }),
     },
-    dts(),
+    dts({
+      entryRoot: "src",
+    }),
   ],
 }))

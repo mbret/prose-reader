@@ -2,12 +2,12 @@
   "name": "@prose-reader/core",
   "version": "1.41.0",
   "type": "module",
-  "main": "./dist/prose.umd.cjs",
-  "module": "./dist/prose.js",
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
   "exports": {
     ".": {
-      "import": "./dist/prose.js",
-      "require": "./dist/prose.umd.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
     }
   },
   "types": "./dist/index.d.ts",

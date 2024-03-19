@@ -4,6 +4,7 @@
     "outDir": "dist",
     "noEmit": true,
     "declaration": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "moduleResolution": "bundler"
   }
 }
