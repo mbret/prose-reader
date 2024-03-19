@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "jsx": "react",
-    "moduleResolution": "Bundler"
+    "moduleResolution": "Bundler",
+    "disableSizeLimit": true,
   }
 }

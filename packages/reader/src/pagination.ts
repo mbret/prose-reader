@@ -7,7 +7,7 @@ import { isShallowEqual } from "./utils/objects"
 
 const NAMESPACE = `pagination`
 
-type PaginationInfo = {
+export type PaginationInfo = {
   beginPageIndex: number | undefined
   beginNumberOfPages: number
   beginCfi: string | undefined

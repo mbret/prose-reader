@@ -15,9 +15,7 @@ import { createLocationResolver as createSpineLocator } from "./spine/locationRe
 import { createCfiLocator } from "./spine/cfiLocator"
 import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
-
-type Context = ReturnType<typeof createBookContext>
-type ContextSettings = Parameters<Context[`setSettings`]>[0]
+import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
@@ -34,39 +32,10 @@ export type CreateReaderOptions = {
   | `numberOfAdjacentSpineItemToPreLoad`
 >
 
-export type LoadOptions = {
-  cfi?: string
-  /**
-   * Specify how you want to fetch resources for each spine item.
-   * By default the reader will use an HTTP request with the uri provided in the manifest. We encourage
-   * you to keep this behavior as it let the browser to optimize requests. Ideally you would serve your
-   * content using a service worker or a backend service and the item uri will hit theses endpoints.
-   *
-   * @example
-   * - Web app with back end to serve content
-   * - Web app with service worker to serve content via http interceptor
-   *
-   * If for whatever reason you need a specific behavior for your items you can specify a function.
-   * @example
-   * - Web app without backend and no service worker
-   * - Providing custom font, img, etc with direct import
-   *
-   * @important
-   * Due to a bug in chrome/firefox https://bugs.chromium.org/p/chromium/issues/detail?id=880768 you should avoid
-   * having a custom fetch method if you serve your content from service worker. This is because when you set fetchResource
-   * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
-   * not pass through the service worker.
-   */
-  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
-}
+export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions) => {
-  const stateSubject$ = new BehaviorSubject<{
-    supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
-    supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
-    supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
-    supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
-  }>({
+export const createReader = ({ containerElement, hooks: initialHooks, ...settings }: CreateReaderOptions): ReaderInternal => {
+  const stateSubject$ = new BehaviorSubject<ObservedValueOf<ReaderInternal["$"]["state$"]>>({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
     supportedPageTurnDirection: [`horizontal`, `vertical`],

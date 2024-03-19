@@ -636,3 +636,5 @@ const createElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
     return element
   }, element)
 }
+
+export type ViewportNavigator = ReturnType<typeof createViewportNavigator>

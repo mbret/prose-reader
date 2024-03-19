@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => ({
         devDeps: true,
       }),
     },
-    dts(),
+    dts({
+      rollupTypes: true
+    }),
   ],
 }))

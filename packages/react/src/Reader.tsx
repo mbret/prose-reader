@@ -1,6 +1,7 @@
 import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react"
 import ReactDOM from "react-dom"
-import { Manifest, Reader as ReaderInstance, Report } from "@prose-reader/core"
+import { Manifest, Report } from "@prose-reader/core"
+import type { Reader as ReaderInstance } from "@prose-reader/core"
 
 const report = Report.namespace("@prose-reader/react")
 
