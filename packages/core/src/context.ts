@@ -29,6 +29,7 @@ export type Context = {
   isRTL: () => boolean
   destroy: () => void
   getState: () => State
+  containerElement$: Observable<HTMLElement>
   $: {
     settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
     destroy$: Observable<void>
@@ -43,6 +44,10 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const stateSubject = new BehaviorSubject<State>({})
   const manifest$ = stateSubject.pipe(
     map((state) => state.manifest),
+    filter(isDefined),
+  )
+  const containerElement$ = stateSubject.pipe(
+    map((state) => state.containerElement),
     filter(isDefined),
   )
   const hasVerticalWritingSubject$ = stateSubject.pipe(
@@ -165,6 +170,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     },
     getSettings: settings.getSettings,
     setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, stateSubject.getValue()),
+    containerElement$,
     $: {
       manifest$,
       destroy$: destroy$.asObservable(),

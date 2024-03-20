@@ -8,12 +8,17 @@ import {
   map,
   merge,
   Observable,
+  of,
   share,
   switchMap,
   takeUntil,
   throttle,
   withLatestFrom,
 } from "rxjs"
+import { createTapListener } from "./createTapListener"
+import { isDefined } from "reactjrx"
+import { createPanMoveListener } from "./createPanMoveListener"
+import { createManager } from "./createManager"
 
 type Options = {
   enableFontScalePinch?: boolean
@@ -39,79 +44,95 @@ export const hammerGestureEnhancer =
   ): InheritOutput & {
     hammerGesture: {
       setManagerInstance: (managerInstance: HammerManager) => void
-      changes$: Observable<{ type: "fontScaleChange"; value: number }>
+      changes$: Observable<{ type: "fontScaleChange"; value: number } | { type: "tap" }>
+      hammerManager$: Observable<HammerManager>
     }
   } => {
     const { hammerGesture: { enableFontScalePinch, fontScaleMax = 10, fontScaleMin = 1, managerInstance } = {} } = options
-    const manager$ = new BehaviorSubject<HammerManager | undefined>(managerInstance)
+    const userHammerManager$ = new BehaviorSubject<HammerManager | undefined>(managerInstance)
     const reader = next(options)
 
-    const changes$ = manager$.pipe(
-      isNotNullOrUndefined,
-      switchMap((instance) => {
-        const pinchStart$ = fromEvent(instance, "pinchstart").pipe(
-          map(() => {
-            if (!reader?.zoom.isZooming()) {
-              reader?.zoom.enter()
-            }
+    const hammerManager$ = userHammerManager$.pipe(
+      switchMap((manager) => {
+        if (manager) return of(manager)
 
-            return undefined
-          }),
-        )
-
-        const settingsLastPinchStart$ = pinchStart$.pipe(
-          withLatestFrom(reader.settings$),
-          map(([, settings]) => settings),
-        )
-
-        const pinch$ = fromEvent(instance, "pinch").pipe(
-          throttle(() => interval(100)),
-          withLatestFrom(settingsLastPinchStart$),
-          map(([event, { fontScale: fontScaleOnPinchStart }]) => {
-            if (reader?.zoom.isZooming()) {
-              reader?.zoom.scale(event.scale)
-            } else if (enableFontScalePinch) {
-              const value = fontScaleOnPinchStart + (event.scale - 1)
-              const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
-
-              reader.setSettings({
-                fontScale: newScale,
-              })
-
-              return {
-                type: "fontScaleChange" as const,
-                value: newScale,
-              }
-            }
-
-            return undefined
-          }),
-        )
-
-        const pinchEnd$ = fromEvent(instance, `pinchend`).pipe(
-          map(() => {
-            if (reader?.zoom.isZooming()) {
-              reader?.zoom.setCurrentScaleAsBase()
-              if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
-                reader?.zoom.exit()
-              }
-            }
-
-            return undefined
-          }),
-        )
-
-        return merge(pinchStart$, pinch$, pinchEnd$)
+        return createManager(reader)
       }),
-      isNotNullOrUndefined,
-      share(),
-      takeUntil(reader.$.destroy$),
+      share()
     )
+
+    const tapListenerEvents$ = hammerManager$.pipe(
+      filter(isDefined),
+      switchMap((manager) => merge(createPanMoveListener(reader, manager), createTapListener(reader, manager))),
+    )
+
+    const changes$ = merge(
+      tapListenerEvents$,
+      hammerManager$.pipe(
+        isNotNullOrUndefined,
+        switchMap((instance) => {
+          const pinchStart$ = fromEvent(instance, "pinchstart").pipe(
+            map(() => {
+              if (!reader?.zoom.isZooming()) {
+                reader?.zoom.enter()
+              }
+
+              return undefined
+            }),
+          )
+
+          const settingsLastPinchStart$ = pinchStart$.pipe(
+            withLatestFrom(reader.settings$),
+            map(([, settings]) => settings),
+          )
+
+          const pinch$ = fromEvent(instance, "pinch").pipe(
+            throttle(() => interval(100)),
+            withLatestFrom(settingsLastPinchStart$),
+            map(([event, { fontScale: fontScaleOnPinchStart }]) => {
+              if (reader?.zoom.isZooming()) {
+                reader?.zoom.scale(event.scale)
+              } else if (enableFontScalePinch) {
+                const value = fontScaleOnPinchStart + (event.scale - 1)
+                const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
+
+                reader.setSettings({
+                  fontScale: newScale,
+                })
+
+                return {
+                  type: "fontScaleChange" as const,
+                  value: newScale,
+                }
+              }
+
+              return undefined
+            }),
+          )
+
+          const pinchEnd$ = fromEvent(instance, `pinchend`).pipe(
+            map(() => {
+              if (reader?.zoom.isZooming()) {
+                reader?.zoom.setCurrentScaleAsBase()
+                if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
+                  reader?.zoom.exit()
+                }
+              }
+
+              return undefined
+            }),
+          )
+
+          return merge(pinchStart$, pinch$, pinchEnd$)
+        }),
+        isNotNullOrUndefined,
+      ),
+    ).pipe(share(), takeUntil(reader.$.destroy$))
 
     changes$.subscribe()
 
     const destroy = () => {
-      manager$.complete()
+      userHammerManager$.complete()
       reader.destroy()
     }
 
@@ -119,8 +140,9 @@ export const hammerGestureEnhancer =
       ...reader,
       destroy,
       hammerGesture: {
-        setManagerInstance: (instance) => manager$.next(instance),
+        setManagerInstance: (instance) => userHammerManager$.next(instance),
         changes$,
+        hammerManager$,
       },
     }
   }
