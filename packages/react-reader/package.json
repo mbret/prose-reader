@@ -1,5 +1,5 @@
 {
-  "name": "@prose-reader/react",
+  "name": "@prose-reader/react-reader",
   "version": "1.41.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
