@@ -45,10 +45,12 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const manifest$ = stateSubject.pipe(
     map((state) => state.manifest),
     filter(isDefined),
+    distinctUntilChanged(),
   )
   const containerElement$ = stateSubject.pipe(
     map((state) => state.containerElement),
     filter(isDefined),
+    distinctUntilChanged(),
   )
   const hasVerticalWritingSubject$ = stateSubject.pipe(
     map((state) => state.hasVerticalWritingSubject),
