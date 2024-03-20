@@ -198,7 +198,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     .pipe(
       map(() => undefined),
       withLatestFrom(context.$.state$),
-      map(([, hasVerticalWriting]) => {
+      map(([, { hasVerticalWriting }]) => {
         const settings = context.getSettings()
         const manifest = context.getManifest()
 
@@ -211,32 +211,29 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
       }),
       distinctUntilChanged(isShallowEqual),
       map(
-        ({
-          hasVerticalWriting,
-          renditionFlow,
-          renditionLayout,
-          computedPageTurnMode,
-        }): ObservedValueOf<typeof stateSubject$> => ({
-          ...stateSubject$.value,
-          supportedPageTurnMode:
-            renditionFlow === `scrolled-continuous`
-              ? [`scrollable`]
-              : !context.areAllItemsPrePaginated()
-                ? [`controlled`]
-                : [`controlled`, `scrollable`],
-          supportedPageTurnAnimation:
-            renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
-              ? [`none`]
-              : hasVerticalWriting
-                ? [`fade`, `none`]
-                : [`fade`, `none`, `slide`],
-          supportedPageTurnDirection:
-            computedPageTurnMode === `scrollable`
-              ? [`vertical`]
-              : renditionLayout === `reflowable`
-                ? [`horizontal`]
-                : [`horizontal`, `vertical`],
-        }),
+        ({ hasVerticalWriting, renditionFlow, renditionLayout, computedPageTurnMode }): ObservedValueOf<typeof stateSubject$> => {
+          return {
+            ...stateSubject$.value,
+            supportedPageTurnMode:
+              renditionFlow === `scrolled-continuous`
+                ? [`scrollable`]
+                : !context.areAllItemsPrePaginated()
+                  ? [`controlled`]
+                  : [`controlled`, `scrollable`],
+            supportedPageTurnAnimation:
+              renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
+                ? [`none`]
+                : hasVerticalWriting
+                  ? [`fade`, `none`]
+                  : [`fade`, `none`, `slide`],
+            supportedPageTurnDirection:
+              computedPageTurnMode === `scrollable`
+                ? [`vertical`]
+                : renditionLayout === `reflowable`
+                  ? [`horizontal`]
+                  : [`horizontal`, `vertical`],
+          }
+        },
       ),
       takeUntil(destroy$),
     )

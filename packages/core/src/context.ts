@@ -10,7 +10,7 @@ type SettingsManager = ReturnType<typeof createSettings>
 
 type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
   manifest?: Manifest
-  hasVerticalWritingSubject?: boolean
+  hasVerticalWriting?: boolean
 }
 
 export type Context = {
@@ -53,7 +53,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     distinctUntilChanged(),
   )
   const hasVerticalWritingSubject$ = stateSubject.pipe(
-    map((state) => state.hasVerticalWritingSubject),
+    map((state) => state.hasVerticalWriting),
     filter(isDefined),
     distinctUntilChanged(),
   )
@@ -118,7 +118,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const setHasVerticalWriting = () =>
     stateSubject.next({
       ...stateSubject.getValue(),
-      hasVerticalWritingSubject: true,
+      hasVerticalWriting: true,
     })
 
   const recomputeSettings$ = merge(hasVerticalWritingSubject$, manifest$)

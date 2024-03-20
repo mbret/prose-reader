@@ -66,7 +66,7 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
   const setSettings = (
     newSettings: Partial<PublicSettings>,
     options: {
-      hasVerticalWritingSubject?: boolean
+      hasVerticalWriting?: boolean
       manifest?: Manifest | undefined
     },
   ) => {
@@ -74,15 +74,15 @@ export const createSettings = (initialSettings: Partial<PublicSettings>) => {
 
     const newMergedSettings = { ...settingsSubject$.value, ...newSettings }
 
-    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWritingSubject ?? false)
+    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWriting ?? false)
 
     settingsSubject$.next(newMergedSettings)
   }
 
-  const recompute = (options: { hasVerticalWritingSubject?: boolean; manifest?: Manifest | undefined }) => {
+  const recompute = (options: { hasVerticalWriting?: boolean; manifest?: Manifest | undefined }) => {
     const newMergedSettings = { ...settingsSubject$.value }
 
-    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWritingSubject ?? false)
+    updateComputedSettings(options.manifest, newMergedSettings, options.hasVerticalWriting ?? false)
 
     settingsSubject$.next(newMergedSettings)
   }
