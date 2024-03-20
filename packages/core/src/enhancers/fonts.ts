@@ -150,6 +150,7 @@ export const fontsEnhancer =
       destroy: () => {
         changes$.complete()
         settings$.complete()
+        reader.destroy()
       },
       setSettings: (settings) => {
         const { fontJustification, fontScale, fontWeight, lineHeight, ...passthroughSettings } = settings
