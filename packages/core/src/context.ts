@@ -126,8 +126,8 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   recomputeSettings$
     .pipe(
       withLatestFrom(hasVerticalWritingSubject$, manifest$),
-      tap(([, hasVerticalWritingSubject, manifest]) => {
-        settings.recompute({ hasVerticalWritingSubject, manifest })
+      tap(([, hasVerticalWriting, manifest]) => {
+        settings.recompute({ hasVerticalWriting, manifest })
       }),
       takeUntil(destroy$),
     )
