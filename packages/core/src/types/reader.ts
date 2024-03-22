@@ -2,7 +2,7 @@ import { Observable } from "rxjs"
 import { createContext as createBookContext } from "../context"
 import { RegisterHook } from "./Hook"
 import { Spine } from "./Spine"
-import { Pagination, PaginationInfo } from "../pagination"
+import { Pagination } from "../pagination/pagination"
 import { Manifest } from "@prose-reader/shared"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportNavigator } from "../viewportNavigator/viewportNavigator"
@@ -12,7 +12,7 @@ type Context = ReturnType<typeof createBookContext>
 export type ContextSettings = Parameters<Context[`setSettings`]>[0]
 
 export type LoadOptions = {
-  cfi?: string
+  cfi?: string | null
   /**
    * Specify how you want to fetch resources for each spine item.
    * By default the reader will use an HTTP request with the uri provided in the manifest. We encourage
@@ -71,11 +71,7 @@ export type ReaderInternal = {
   destroy: () => void
   setSettings: Context["setSettings"]
   settings$: Context["$"]["settings$"]
-  /**
-   * @important
-   * BehaviorSubject
-   */
-  pagination$: Observable<PaginationInfo>
+  pagination: Pagination
   spineItems$: Spine["$"]["spineItems$"]
   context$: Context["$"]["state$"]
   $: {

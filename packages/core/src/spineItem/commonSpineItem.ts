@@ -19,9 +19,12 @@ const pointerEvents = [
   `pointerout` as const,
   `pointerover` as const,
   `pointerup` as const,
+  `touchstart` as const,
+  `touchend` as const,
 ]
 
 const mouseEvents = [
+  `click` as const,
   `mousedown` as const,
   `mouseup` as const,
   `mouseenter` as const,
@@ -404,7 +407,7 @@ const createFrameHooks = (
          * passthrough events to main document
          */
         const unregister = passthroughEvents.map((event) => {
-          const listener = (e: MouseEvent | PointerEvent) => {
+          const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
             let convertedEvent = e
 
             if (isPointerEvent(e)) {

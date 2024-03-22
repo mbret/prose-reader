@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { animationFrameScheduler, combineLatest, Observable, ObservedValueOf } from "rxjs"
+import { animationFrameScheduler, combineLatest, Observable } from "rxjs"
 import { map, debounceTime, startWith, shareReplay, distinctUntilChanged, withLatestFrom, takeUntil, tap } from "rxjs/operators"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { Manifest } from "../types"
 import { progressionEnhancer } from "./progression"
-import { getNumberOfPages } from "../pagination"
+import { getNumberOfPages } from "../pagination/pagination"
 import { Report } from "../report"
 import { isShallowEqual } from "../utils/objects"
 import { EnhancerOutput } from "./types/enhancer"
+import { PaginationInfo } from "../pagination/types"
 
 type ProgressionEnhancer = typeof progressionEnhancer
 
@@ -40,19 +41,15 @@ type ChapterInfo = {
   path: string
 }
 
-type PaginationInfo = {
+type EnhancedPaginationInfo = {
   beginChapterInfo: ChapterInfo | undefined
   beginPageIndexInChapter: number | undefined
   beginNumberOfPagesInChapter: number | undefined
-  beginSpineItemIndex: number | undefined
-  beginCfi: string | undefined
   beginSpineItemReadingDirection: `rtl` | `ltr` | undefined
   beginAbsolutePageIndex: number | undefined
   endChapterInfo: ChapterInfo | undefined
   endPageIndexInChapter: number | undefined
   endNumberOfPagesInChapter: number | undefined
-  endSpineItemIndex: number | undefined
-  endCfi: string | undefined
   endSpineItemReadingDirection: `rtl` | `ltr` | undefined
   endAbsolutePageIndex: number | undefined
   percentageEstimateOfBook: number | undefined
@@ -74,14 +71,16 @@ export const paginationEnhancer =
   <
     InheritOptions,
     InheritOutput extends EnhancerOutput<ProgressionEnhancer>,
-    Pagination$ extends Observable<any> = InheritOutput["pagination$"],
+    PaginationOutput extends Omit<InheritOutput["pagination"], "paginationInfo$"> & {
+      paginationInfo$: Observable<PaginationInfo & EnhancedPaginationInfo>
+    },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
     options: InheritOptions,
-  ): Omit<InheritOutput, "pagination$"> & {
-    pagination$: Observable<ObservedValueOf<Pagination$> & PaginationInfo>
+  ): Omit<InheritOutput, "pagination"> & {
+    pagination: PaginationOutput
   } => {
     const reader = next(options)
     const chaptersInfo: { [key: string]: ChapterInfo | undefined } = {}
@@ -92,9 +91,9 @@ export const paginationEnhancer =
     }
 
     const mapPaginationInfoToExtendedInfo = (
-      paginationInfo: ObservedValueOf<typeof reader.pagination$>,
+      paginationInfo: PaginationInfo,
     ): Omit<
-      PaginationInfo,
+      EnhancedPaginationInfo,
       "beginAbsolutePageIndex" | "endAbsolutePageIndex" | "beginAbsolutePageIndex" | "numberOfTotalPages"
     > => {
       const context = reader.context
@@ -111,6 +110,7 @@ export const paginationEnhancer =
         paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
 
       return {
+        ...paginationInfo,
         beginPageIndexInChapter: paginationInfo.beginPageIndex,
         beginNumberOfPagesInChapter: paginationInfo.beginNumberOfPages,
         beginChapterInfo: beginItem ? chaptersInfo[beginItem.item.id] : undefined,
@@ -124,15 +124,11 @@ export const paginationEnhancer =
         // domIndex: number;
         // charOffset: number;
         // serializeString?: string;
-        beginSpineItemIndex: paginationInfo.beginSpineItemIndex,
-        beginCfi: paginationInfo.beginCfi,
         beginSpineItemReadingDirection: beginItem?.getReadingDirection(),
         endChapterInfo: endItem ? chaptersInfo[endItem.item.id] : undefined,
         endPageIndexInChapter: paginationInfo.endPageIndex,
         endNumberOfPagesInChapter: paginationInfo.endNumberOfPages,
-        endSpineItemIndex: paginationInfo.endSpineItemIndex,
         endSpineItemReadingDirection: endItem?.getReadingDirection(),
-        endCfi: paginationInfo.endCfi,
         // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
         /**
          * This percentage is based of the weight (kb) of every items and the number of pages.
@@ -198,9 +194,9 @@ export const paginationEnhancer =
       )
       .subscribe()
 
-    const innerPaginationExtendedInfo$ = reader.pagination$.pipe(
+    const innerPaginationExtendedInfo$ = reader.pagination.paginationInfo$.pipe(
       map((info) => ({
-        ...(info as ObservedValueOf<Pagination$>),
+        ...info,
         ...mapPaginationInfoToExtendedInfo(info),
       })),
       distinctUntilChanged(isShallowEqual),
@@ -211,7 +207,7 @@ export const paginationEnhancer =
       numberOfTotalPages: number
     }> = reader.$.layout$.pipe(
       debounceTime(10, animationFrameScheduler),
-      withLatestFrom(reader.pagination$),
+      withLatestFrom(reader.pagination.paginationInfo$),
       map(() => {
         // @todo trigger change to pagination info (+ memo if number is same)
         const numberOfPagesPerItems = getNumberOfPagesPerItems()
@@ -231,7 +227,10 @@ export const paginationEnhancer =
       }),
     )
 
-    const pagination$ = combineLatest([innerPaginationExtendedInfo$, totalPages$]).pipe(
+    const paginationInfo$: Observable<PaginationInfo & EnhancedPaginationInfo> = combineLatest([
+      innerPaginationExtendedInfo$,
+      totalPages$,
+    ]).pipe(
       map(([pageInfo, totalPageInfo]) => ({
         ...pageInfo,
         ...totalPageInfo,
@@ -248,7 +247,10 @@ export const paginationEnhancer =
 
     return {
       ...reader,
-      pagination$,
+      pagination: {
+        ...reader.pagination,
+        paginationInfo$,
+      } as unknown as PaginationOutput,
     }
   }
 

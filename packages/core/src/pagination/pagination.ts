@@ -1,22 +1,12 @@
-import { BehaviorSubject, distinctUntilChanged } from "rxjs"
-import { Context } from "./context"
-import { SpineItem } from "./spineItem/createSpineItem"
-import { SpineItemManager } from "./spineItemManager"
-import { Report } from "./report"
-import { isShallowEqual } from "./utils/objects"
+import { BehaviorSubject, distinctUntilChanged, filter } from "rxjs"
+import { Context } from "../context"
+import { SpineItem } from "../spineItem/createSpineItem"
+import { SpineItemManager } from "../spineItemManager"
+import { Report } from "../report"
+import { isShallowEqual } from "../utils/objects"
+import { PaginationInfo } from "./types"
 
 const NAMESPACE = `pagination`
-
-export type PaginationInfo = {
-  beginPageIndex: number | undefined
-  beginNumberOfPages: number
-  beginCfi: string | undefined
-  beginSpineItemIndex: number | undefined
-  endPageIndex: number | undefined
-  endNumberOfPages: number
-  endCfi: string | undefined
-  endSpineItemIndex: number | undefined
-}
 
 export const createPagination = ({ context }: { context: Context; spineItemManager: SpineItemManager }) => {
   const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
@@ -114,9 +104,15 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
     { disable: true },
   )
 
-  const getInfo = () => paginationSubject$.value
+  const getPaginationInfo = () => paginationSubject$.value
 
-  const info$ = paginationSubject$.asObservable().pipe(distinctUntilChanged(isShallowEqual))
+  /**
+   * We start emitting pagination information as soon as there is a valid pagination
+   */
+  const paginationInfo$ = paginationSubject$.pipe(
+    distinctUntilChanged(isShallowEqual),
+    filter(({ beginPageIndex }) => beginPageIndex !== undefined),
+  )
 
   const destroy = () => {
     paginationSubject$.complete()
@@ -125,10 +121,8 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
   return {
     destroy,
     updateBeginAndEnd,
-    getInfo,
-    $: {
-      info$,
-    },
+    getPaginationInfo,
+    paginationInfo$,
   }
 }
 

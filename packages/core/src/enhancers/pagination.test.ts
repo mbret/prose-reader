@@ -32,8 +32,8 @@ describe("Given a book with one chapter", () => {
     it(`should return first chapter`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({})
 
-      const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-        reader.pagination$.pipe(skip(1)).subscribe({
+      const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
+        reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -82,8 +82,8 @@ describe("Given a book with one chapter", () => {
     it(`should return first chapter`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({})
 
-      const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-        reader.pagination$.pipe(skip(2)).subscribe({
+      const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
+        reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -144,8 +144,8 @@ describe("Given a book with one chapter", () => {
         it(`should return correct chapter with its subChapter info filled`, async () => {
           const reader = paginationEnhancer(progressionEnhancer(createReader))({})
 
-          const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-            reader.pagination$.pipe(skip(2)).subscribe({
+          const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
+            reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
               next: resolve,
               error: reject,
             })
@@ -216,8 +216,8 @@ describe("Given a book with two chapters", () => {
     it(`should return chapter 1`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({})
 
-      const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-        reader.pagination$.pipe(skip(1)).subscribe({
+      const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
+        reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -280,8 +280,8 @@ describe("Given a book with two chapters", () => {
     it(`return chapter 2`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({})
 
-      const value = await new Promise<ObservedValueOf<typeof reader.pagination$>>((resolve, reject) => {
-        reader.pagination$.pipe(skip(2)).subscribe({
+      const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
+        reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
           next: resolve,
           error: reject,
         })

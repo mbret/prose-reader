@@ -19,9 +19,9 @@ export const debugEnhancer =
           report.log(`reader.$.state$`, state)
         }),
       ),
-      reader.pagination$.pipe(
+      reader.pagination.paginationInfo$.pipe(
         tap((state) => {
-          report.log(`reader.pagination$`, state)
+          report.log(`reader.pagination.paginationInfo$`, state)
         }),
       ),
     )

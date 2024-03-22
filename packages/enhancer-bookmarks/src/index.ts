@@ -35,7 +35,10 @@ export const bookmarksEnhancer =
       }
     }
   } => {
+    type PaginationInfo = ObservedValueOf<Reader[`pagination`][`paginationInfo$`]>
+
     const reader = next(options)
+
     const bookmarksSubject$ = new BehaviorSubject<Bookmark[]>([])
     const bookmarks$ = bookmarksSubject$.pipe(
       startWith(undefined),
@@ -63,7 +66,7 @@ export const bookmarksEnhancer =
       return { cfi, pageIndex: undefined, spineItemIndex }
     }
 
-    const createBookmarkFromCurrentPagination = ({ beginCfi }: ObservedValueOf<Reader[`pagination$`]>) => {
+    const createBookmarkFromCurrentPagination = ({ beginCfi }: PaginationInfo) => {
       if (beginCfi) {
         return getCfiInformation(beginCfi)
       }
@@ -86,7 +89,7 @@ export const bookmarksEnhancer =
       return false
     }
 
-    const onDocumentClick = (e: MouseEvent, pagination: ObservedValueOf<Reader[`pagination$`]>) => {
+    const onDocumentClick = (e: MouseEvent, pagination: PaginationInfo) => {
       if (isClickEventInsideBookmarkArea(e)) {
         const newBookmark = createBookmarkFromCurrentPagination(pagination)
 
@@ -122,7 +125,7 @@ export const bookmarksEnhancer =
 
       if (windowOrElement) {
         return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
-          withLatestFrom(reader.pagination$),
+          withLatestFrom(reader.pagination.paginationInfo$),
           tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination)),
         )
       }
@@ -133,7 +136,7 @@ export const bookmarksEnhancer =
     // @todo handle spread
     const removeBookmarksOnCurrentPage = <T>(observer: Observable<T>) =>
       observer.pipe(
-        withLatestFrom(reader.pagination$),
+        withLatestFrom(reader.pagination.paginationInfo$),
         tap(([, pagination]) => {
           if (pagination.beginSpineItemIndex !== undefined) {
             bookmarksSubject$.next(
@@ -180,7 +183,7 @@ export const bookmarksEnhancer =
 
     merge(
       bookmarks$,
-      reader.pagination$,
+      reader.pagination.paginationInfo$,
       // It's important to force redraw and update bookmarkd on each layout
       // this is because pagination itself is not always garanteed to be updated
       // when the frame actually exists

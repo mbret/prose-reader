@@ -1,7 +1,7 @@
 import { BehaviorSubject, merge, ObservedValueOf, Subject, switchMap } from "rxjs"
 import { Report } from "./report"
 import { createContext as createBookContext } from "./context"
-import { createPagination } from "./pagination"
+import { createPagination } from "./pagination/pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, map, filter } from "rxjs/operators"
@@ -296,13 +296,9 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     destroy,
     setSettings: context.setSettings,
     settings$: context.$.settings$,
-    /**
-     * @important
-     * BehaviorSubject
-     */
-    pagination$: pagination.$.info$,
     spineItems$: spine.$.spineItems$,
     context$: context.$.state$,
+    pagination,
     $: {
       state$: stateSubject$.asObservable(),
       /**

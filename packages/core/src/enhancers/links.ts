@@ -2,7 +2,7 @@ import { Observable, Subject } from "rxjs"
 import { Report } from "../report"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
-type SubjectData = { event: `linkClicked`; data: HTMLAnchorElement }
+type SubjectData = { event: `linkClicked`; data: HTMLAnchorElement; isNavigable: boolean }
 
 export const linksEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
@@ -19,7 +19,7 @@ export const linksEnhancer =
     const subject = new Subject<SubjectData>()
 
     const handleNavigationForClick = (element: HTMLAnchorElement) => {
-      if (!element.href) return
+      if (!element.href) return false
 
       const hrefUrl = new URL(element.href)
       const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
@@ -27,7 +27,11 @@ export const linksEnhancer =
       const hasExistingSpineItem = reader.context.getManifest()?.spineItems.some((item) => item.href === hrefWithoutAnchor)
       if (hasExistingSpineItem) {
         reader.goToUrl(hrefUrl)
+
+        return true
       }
+
+      return false
     }
 
     reader.registerHook(`item.onLoad`, ({ frame }) => {
@@ -36,9 +40,12 @@ export const linksEnhancer =
           element.addEventListener(`click`, (e) => {
             if (e.target && `style` in e.target && `ELEMENT_NODE` in e.target) {
               Report.warn(`prevented click on`, element, e)
+
               e.preventDefault()
-              handleNavigationForClick(element)
-              subject.next({ event: `linkClicked`, data: element })
+
+              const isNavigable = handleNavigationForClick(element)
+
+              subject.next({ event: `linkClicked`, data: element, isNavigable })
             }
           }),
         )

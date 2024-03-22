@@ -15,26 +15,29 @@ import { progressionEnhancer } from "./enhancers/progression"
 import { accessibilityEnhancer } from "./enhancers/accessibility"
 import { webkitEnhancer } from "./enhancers/webkit"
 import { loadingEnhancer } from "./enhancers/loadingEnhancer"
+import { publicApiEnhancer } from "./enhancers/publicApi"
 
 export const createReaderWithEnhancers = //__
-  loadingEnhancer(
-    webkitEnhancer(
-      fontsEnhancer(
-        linksEnhancer(
-          accessibilityEnhancer(
-            resourcesEnhancer(
-              utilsEnhancer(
-                layoutEnhancer(
-                  zoomEnhancer(
-                    mediaEnhancer(
-                      chromeEnhancer(
-                        navigationEnhancer(
-                          themeEnhancer(
-                            hotkeysEnhancer(
-                              paginationEnhancer(
-                                progressionEnhancer(
-                                  // __
-                                  createInternalReader,
+  publicApiEnhancer(
+    loadingEnhancer(
+      webkitEnhancer(
+        fontsEnhancer(
+          linksEnhancer(
+            accessibilityEnhancer(
+              resourcesEnhancer(
+                utilsEnhancer(
+                  layoutEnhancer(
+                    zoomEnhancer(
+                      mediaEnhancer(
+                        chromeEnhancer(
+                          navigationEnhancer(
+                            themeEnhancer(
+                              hotkeysEnhancer(
+                                paginationEnhancer(
+                                  progressionEnhancer(
+                                    // __
+                                    createInternalReader,
+                                  ),
                                 ),
                               ),
                             ),

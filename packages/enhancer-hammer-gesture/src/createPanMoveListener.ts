@@ -1,9 +1,13 @@
-import { Reader } from "@prose-reader/core"
-import { Observable, switchMap } from "rxjs"
+import { Reader, isShallowEqual } from "@prose-reader/core"
+import { NEVER, Observable, distinctUntilChanged, map, switchMap } from "rxjs"
 
 export const createPanMoveListener = (reader: Reader, hammerManager: HammerManager) => {
-  return reader.context.containerElement$.pipe(
-    switchMap(() => {
+  return reader.context.$.state$.pipe(
+    map(({ manifest }) => ({ manifest })),
+    distinctUntilChanged(isShallowEqual),
+    switchMap(({ manifest }) => {
+      if (manifest?.renditionLayout !== "pre-paginated") return NEVER
+
       return new Observable<{ type: "tap" }>(() => {
         let movingStartOffsets = { x: 0, y: 0 }
         let movingHasStarted = false

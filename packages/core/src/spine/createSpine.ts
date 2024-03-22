@@ -2,7 +2,7 @@ import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscript
 import { catchError, debounce, filter, map, share, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context"
-import { Pagination } from "../pagination"
+import { Pagination } from "../pagination/pagination"
 import { createSpineItem } from "../spineItem/createSpineItem"
 import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver as createSpineLocationResolver } from "./locationResolver"
@@ -139,16 +139,16 @@ export const createSpine = ({
             const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(position)
             const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
             const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
-            const beginLastCfi = pagination.getInfo().beginCfi
-            const endLastCfi = pagination.getInfo().endCfi
+            const beginLastCfi = pagination.getPaginationInfo().beginCfi
+            const endLastCfi = pagination.getPaginationInfo().endCfi
 
             const shouldUpdateBeginCfi =
-              pagination.getInfo().beginSpineItemIndex !== spineItemsFromPosition?.begin ||
+              pagination.getPaginationInfo().beginSpineItemIndex !== spineItemsFromPosition?.begin ||
               beginLastCfi === undefined ||
               beginLastCfi?.startsWith(`epubcfi(/0`)
 
             const shouldUpdateEndCfi =
-              pagination.getInfo().endSpineItemIndex !== spineItemsFromPosition?.end ||
+              pagination.getPaginationInfo().endSpineItemIndex !== spineItemsFromPosition?.end ||
               endLastCfi === undefined ||
               endLastCfi?.startsWith(`epubcfi(/0`)
 
@@ -298,8 +298,8 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                  ? pagination.getInfo().beginCfi
-                  : beginItemIndex !== pagination.getInfo().beginSpineItemIndex
+                  ? pagination.getPaginationInfo().beginCfi
+                  : beginItemIndex !== pagination.getPaginationInfo().beginSpineItemIndex
                     ? cfiLocator.getRootCfi(beginSpineItem)
                     : /* @todo check ? */ cfiLocator.getRootCfi(beginSpineItem),
             options: {
@@ -314,8 +314,8 @@ export const createSpine = ({
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
                 ? lastExpectedNavigation.data
                 : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
-                  ? pagination.getInfo().endCfi
-                  : endItemIndex !== pagination.getInfo().endSpineItemIndex
+                  ? pagination.getPaginationInfo().endCfi
+                  : endItemIndex !== pagination.getPaginationInfo().endSpineItemIndex
                     ? cfiLocator.getRootCfi(endSpineItem)
                     : /* @todo check ? */ cfiLocator.getRootCfi(endSpineItem),
             options: {
