@@ -2,13 +2,13 @@
   "name": "@prose-reader/enhancer-hammer-gesture",
   "version": "1.41.0",
   "type": "module",
-  "main": "./dist/prose-reader-enhancer-hammer.gesture.cjs",
-  "module": "./dist/prose-reader-enhancer-hammer-gesture.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/prose-reader-enhancer-hammer-gesture.js",
-      "require": "./dist/prose-reader-enhancer-hammer-gesture.umd.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
     }
   },
   "files": [

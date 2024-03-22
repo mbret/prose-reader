@@ -1,148 +1,68 @@
 import { Reader } from "@prose-reader/core"
-import "hammerjs"
-import {
-  BehaviorSubject,
-  filter,
-  fromEvent,
-  interval,
-  map,
-  merge,
-  Observable,
-  of,
-  share,
-  switchMap,
-  takeUntil,
-  throttle,
-  withLatestFrom,
-} from "rxjs"
-import { createTapListener } from "./createTapListener"
-import { isDefined } from "reactjrx"
-import { createPanMoveListener } from "./createPanMoveListener"
-import { createManager } from "./createManager"
+import { catchError, map, merge, Observable, share, takeUntil, tap } from "rxjs"
+import { createPanHandler, PanEvent } from "./createPanHandler"
+import { createContainerEvents } from "./createContainerEvents"
+import { createTapHandler, mapMixedEventToPosition, TapEvent } from "./createTapHandler"
 
-type Options = {
-  enableFontScalePinch?: boolean
-  fontScaleMin?: number
-  fontScaleMax?: number
+// eslint-disable-next-line @typescript-eslint/ban-types
+type Options = {}
+
+export type HammerGestureEnhancerOutput = {
+  hammerGesture: {
+    events$: Observable<(PanEvent | TapEvent) & { x: number; y: number }>
+  }
 }
-
-function inputIsNotNullOrUndefined<T>(input: null | undefined | T): input is T {
-  return input !== null && input !== undefined
-}
-
-export const isNotNullOrUndefined = <T>(source$: Observable<null | undefined | T>) =>
-  source$.pipe(filter(inputIsNotNullOrUndefined))
 
 export const hammerGestureEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (
     options: InheritOptions & {
-      hammerGesture?: {
-        managerInstance?: HammerManager
-      } & Options
+      hammerGesture?: Options
     },
-  ): InheritOutput & {
-    hammerGesture: {
-      setManagerInstance: (managerInstance: HammerManager) => void
-      changes$: Observable<{ type: "fontScaleChange"; value: number } | { type: "tap" }>
-      hammerManager$: Observable<HammerManager>
-    }
-  } => {
-    const { hammerGesture: { enableFontScalePinch, fontScaleMax = 10, fontScaleMin = 1, managerInstance } = {} } = options
-    const userHammerManager$ = new BehaviorSubject<HammerManager | undefined>(managerInstance)
+  ): InheritOutput & HammerGestureEnhancerOutput => {
     const reader = next(options)
 
-    const hammerManager$ = userHammerManager$.pipe(
-      switchMap((manager) => {
-        if (manager) return of(manager)
-
-        return createManager(reader)
-      }),
-      share()
-    )
-
-    const tapListenerEvents$ = hammerManager$.pipe(
-      filter(isDefined),
-      switchMap((manager) => merge(createPanMoveListener(reader, manager), createTapListener(reader, manager))),
-    )
-
-    const changes$ = merge(
-      tapListenerEvents$,
-      hammerManager$.pipe(
-        isNotNullOrUndefined,
-        switchMap((instance) => {
-          const pinchStart$ = fromEvent(instance, "pinchstart").pipe(
-            map(() => {
-              if (!reader?.zoom.isZooming()) {
-                reader?.zoom.enter()
-              }
-
-              return undefined
-            }),
-          )
-
-          const settingsLastPinchStart$ = pinchStart$.pipe(
-            withLatestFrom(reader.settings$),
-            map(([, settings]) => settings),
-          )
-
-          const pinch$ = fromEvent(instance, "pinch").pipe(
-            throttle(() => interval(100)),
-            withLatestFrom(settingsLastPinchStart$),
-            map(([event, { fontScale: fontScaleOnPinchStart }]) => {
-              if (reader?.zoom.isZooming()) {
-                reader?.zoom.scale(event.scale)
-              } else if (enableFontScalePinch) {
-                const value = fontScaleOnPinchStart + (event.scale - 1)
-                const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
-
-                reader.setSettings({
-                  fontScale: newScale,
-                })
-
-                return {
-                  type: "fontScaleChange" as const,
-                  value: newScale,
-                }
-              }
-
-              return undefined
-            }),
-          )
-
-          const pinchEnd$ = fromEvent(instance, `pinchend`).pipe(
-            map(() => {
-              if (reader?.zoom.isZooming()) {
-                reader?.zoom.setCurrentScaleAsBase()
-                if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
-                  reader?.zoom.exit()
-                }
-              }
-
-              return undefined
-            }),
-          )
-
-          return merge(pinchStart$, pinch$, pinchEnd$)
-        }),
-        isNotNullOrUndefined,
-      ),
-    ).pipe(share(), takeUntil(reader.$.destroy$))
-
-    changes$.subscribe()
-
     const destroy = () => {
-      userHammerManager$.complete()
       reader.destroy()
     }
+
+    const containerEvents = createContainerEvents(reader)
+
+    const { dragEvent$, isDragging$ } = createPanHandler(reader, containerEvents)
+    const { doubleTapEvent$, singleTapEvent$ } = createTapHandler({ ...containerEvents, dragEvent$, isDragging$ })
+
+    reader.context.containerElement$
+      .pipe(
+        tap((container) => {
+          /**
+           * @see https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action#none
+           * - allow pointer events to works with chrome dev tool mobile view
+           */
+          container.style.touchAction = `none`
+        }),
+        takeUntil(reader.$.destroy$),
+      )
+      .subscribe()
+
+    const events$ = merge(dragEvent$, doubleTapEvent$, singleTapEvent$).pipe(
+      map((event) => {
+        const normalizedEvent = reader.normalizeEventForViewport(event.event)
+
+        return { ...event, event: normalizedEvent as PointerEvent, ...mapMixedEventToPosition(normalizedEvent) }
+      }),
+      catchError((error) => {
+        console.error(error)
+
+        throw error
+      }),
+      share(),
+    )
 
     return {
       ...reader,
       destroy,
       hammerGesture: {
-        setManagerInstance: (instance) => userHammerManager$.next(instance),
-        changes$,
-        hammerManager$,
+        events$,
       },
     }
   }
