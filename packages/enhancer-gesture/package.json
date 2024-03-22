@@ -1,5 +1,5 @@
 {
-  "name": "@prose-reader/enhancer-hammer-gesture",
+  "name": "@prose-reader/enhancer-gesture",
   "version": "1.41.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -25,13 +25,8 @@
     "@prose-reader/core": "^1.41.0"
   },
   "peerDependencies": {
-    "@types/hammerjs": "*",
-    "hammerjs": "*",
     "rxjs": "*"
   },
-  "devDependencies": {
-    "@types/hammerjs": "*",
-    "hammerjs": "*"
-  },
+  "devDependencies": {},
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

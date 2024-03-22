@@ -32,7 +32,8 @@
     "@types/react": "*",
     "@types/react-dom": "*",
     "react": "*",
-    "react-dom": "*"
+    "react-dom": "*",
+    "@prose-reader/enhancer-gesture": "*"
   },
   "dependencies": {
     "@prose-reader/core": "^1.41.0"
