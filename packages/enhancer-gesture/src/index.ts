@@ -1,15 +1,16 @@
 import { Reader } from "@prose-reader/core"
-import { catchError, map, merge, Observable, share, takeUntil, tap } from "rxjs"
+import { merge, Observable, share, takeUntil, tap } from "rxjs"
 import { createPanHandler, PanEvent } from "./createPanHandler"
 import { createContainerEvents } from "./createContainerEvents"
-import { createTapHandler, mapMixedEventToPosition, TapEvent } from "./createTapHandler"
+import { createTapHandler, TapEvent } from "./createTapHandler"
+import { createPinchHandler, PinchEvent } from "./createPinchHandler"
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type Options = {}
 
 export type HammerGestureEnhancerOutput = {
   hammerGesture: {
-    events$: Observable<(PanEvent | TapEvent) & { x: number; y: number }>
+    events$: Observable<PanEvent | TapEvent | PinchEvent>
   }
 }
 
@@ -28,8 +29,9 @@ export const hammerGestureEnhancer =
 
     const containerEvents = createContainerEvents(reader)
 
+    const { pinchEvent$ } = createPinchHandler(reader, containerEvents)
     const { dragEvent$, isDragging$ } = createPanHandler(reader, containerEvents)
-    const { doubleTapEvent$, singleTapEvent$ } = createTapHandler({ ...containerEvents, dragEvent$, isDragging$ })
+    const { doubleTapEvent$, singleTapEvent$ } = createTapHandler({ ...containerEvents, dragEvent$, isDragging$ }, reader)
 
     reader.context.containerElement$
       .pipe(
@@ -44,19 +46,7 @@ export const hammerGestureEnhancer =
       )
       .subscribe()
 
-    const events$ = merge(dragEvent$, doubleTapEvent$, singleTapEvent$).pipe(
-      map((event) => {
-        const normalizedEvent = reader.normalizeEventForViewport(event.event)
-
-        return { ...event, event: normalizedEvent as PointerEvent, ...mapMixedEventToPosition(normalizedEvent) }
-      }),
-      catchError((error) => {
-        console.error(error)
-
-        throw error
-      }),
-      share(),
-    )
+    const events$ = merge(pinchEvent$, dragEvent$, doubleTapEvent$, singleTapEvent$).pipe(share())
 
     return {
       ...reader,

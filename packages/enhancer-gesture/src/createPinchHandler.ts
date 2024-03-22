@@ -1,4 +1,5 @@
 import {
+  EMPTY,
   buffer,
   filter,
   first,
@@ -17,27 +18,23 @@ import { createContainerEvents } from "./createContainerEvents"
 import { Reader } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 
-/**
- * Center position for multi-touch, or just the single pointer.
- */
-type Center = { x: number; y: number }
-
-export type PanEvent =
+export type PinchEvent =
   | {
-      type: "panStart"
+      type: "pinchStart"
       event: PointerEvent
-      deltaX: number
-      deltaY: number
-      center: Center
-      /**
-       * Delay between the tap and the first moving
-       */
-      delay: number
+      scale: number
     }
-  | { type: "panMove"; event: PointerEvent; deltaX: number; deltaY: number; center: Center }
-  | { type: "panEnd"; event: PointerEvent; deltaX: number; deltaY: number; center: Center }
+  | { type: "pinchMove"; event: PointerEvent; scale: number }
+  | { type: "pinchEnd"; event: PointerEvent; scale: number }
 
-export const createPanHandler = (
+function calculateDistance(pointA: PointerEvent, pointB: PointerEvent) {
+  const dx = pointA.clientX - pointB.clientX
+  const dy = pointA.clientY - pointB.clientY
+
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+export const createPinchHandler = (
   reader: Reader,
   { pointerMove$, pointerUp$, pointerDown$ }: ReturnType<typeof createContainerEvents>,
 ) => {
@@ -66,46 +63,48 @@ export const createPanHandler = (
         !pointerDownEvents.find((event) => event === latestPointerDownFollowedByUp),
     ),
     map(([pointerDownEvents]) => pointerDownEvents),
-    // If a panStart start with more than one pointerdown it is not a pan but a pinch
-    filter((pointerDownEvents) => pointerDownEvents.length === 1),
-    map((events) => events[0]),
+    // If a panStart start with more than one pointerdown it is a pinch
+    filter((pointerDownEvents) => pointerDownEvents.length > 1),
     filter(isDefined),
   )
 
-  const dragEvent$ = panStart$.pipe(
-    switchMap((startPointerDownEvent) => {
-      const now = new Date().getTime()
-      const normalizedStartPointerDownEvent = reader.normalizeEventForViewport(startPointerDownEvent)
+  const pinchEvent$ = panStart$.pipe(
+    switchMap(([firstPointerDown, secondPointerDown]) => {
+      if (!firstPointerDown || !secondPointerDown) return EMPTY
 
-      const startX = normalizedStartPointerDownEvent.clientX
-      const startY = normalizedStartPointerDownEvent.clientY
+      const previousFingerEvents = [firstPointerDown, secondPointerDown]
 
-      const normalizeEvent = (event: PointerEvent): Omit<PanEvent, "type"> => {
+      const normalizeEvent = (event: PointerEvent): Omit<PinchEvent, "type"> => {
         const normalizedEvent = reader.normalizeEventForViewport(event)
 
         return {
           event: normalizedEvent,
-          deltaX: normalizedEvent.clientX - startX,
-          deltaY: normalizedEvent.clientY - startY,
-          center: {
-            x: normalizedEvent.x,
-            y: normalizedEvent.y,
-          },
+          scale: 1,
         }
       }
 
-      const dragStartEvent = {
-        type: "panStart",
-        ...normalizeEvent(startPointerDownEvent),
-        delay: new Date().getTime() - now,
-      } satisfies PanEvent
+      const normalizedFirstPointerDown = reader.normalizeEventForViewport(firstPointerDown)
+      const normalizedSecondPointerDown = reader.normalizeEventForViewport(secondPointerDown)
+      const initialDistance = calculateDistance(normalizedFirstPointerDown, normalizedSecondPointerDown)
+
+      const startEvent = {
+        type: "pinchStart",
+        ...normalizeEvent(normalizedFirstPointerDown),
+      } satisfies PinchEvent
 
       const dragMove$ = pointerMove$.pipe(
         map((moveEvent) => {
+          const previousMatchingEvent = previousFingerEvents.find((event) => event.pointerId === moveEvent.pointerId)
+          const previousMatchingOtherEvent = previousFingerEvents.find((event) => event !== previousMatchingEvent)
+
+          const newDistance = calculateDistance(moveEvent, previousMatchingOtherEvent ?? moveEvent)
+          const scale = newDistance / initialDistance
+
           return {
-            type: "panMove",
+            type: "pinchMove",
             ...normalizeEvent(moveEvent),
-          } satisfies PanEvent
+            scale,
+          } satisfies PinchEvent
         }),
         share(),
         takeUntil(pointerUp$),
@@ -116,28 +115,21 @@ export const createPanHandler = (
           pointerUp$.pipe(
             map((endEvent) => {
               return {
-                type: "panEnd",
+                type: "pinchEnd",
                 ...normalizeEvent(endEvent),
-              } satisfies PanEvent
+              } satisfies PinchEvent
             }),
             first(),
           ),
         ),
       )
 
-      return merge(of(dragStartEvent), dragMove$, dragEnd$)
+      return merge(of(startEvent), dragMove$, dragEnd$)
     }),
     share(),
   )
 
-  const isDragging$ = dragEvent$.pipe(
-    map(({ type }) => type === "panMove"),
-    startWith(false),
-    shareReplay(1),
-  )
-
   return {
-    isDragging$,
-    dragEvent$,
+    pinchEvent$,
   }
 }

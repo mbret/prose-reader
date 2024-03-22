@@ -2,21 +2,21 @@ import { buffer, debounceTime, filter, first, map, of, share, shareReplay, start
 import { createContainerEvents } from "./createContainerEvents"
 import { createPanHandler } from "./createPanHandler"
 import { isDefined } from "reactjrx"
+import { Reader } from "@prose-reader/core"
 
 export type TapEvent =
-  | { type: "singleTap"; event: MouseEvent | TouchEvent | PointerEvent }
-  | { type: "doubleTap"; event: MouseEvent | TouchEvent | PointerEvent }
+  | { type: "singleTap"; event: MouseEvent | TouchEvent | PointerEvent; x: number; y: number }
+  | { type: "doubleTap"; event: MouseEvent | TouchEvent | PointerEvent; x: number; y: number }
 
 export const mapMixedEventToPosition = (event: MouseEvent | TouchEvent) => ({
   x: "changedTouches" in event ? event.changedTouches[0]?.pageX ?? 0 : event.x,
   y: "changedTouches" in event ? event.changedTouches[0]?.pageY ?? 0 : event.y,
 })
 
-export const createTapHandler = ({
-  pointerDown$,
-  pointerUp$,
-  isDragging$,
-}: ReturnType<typeof createContainerEvents> & ReturnType<typeof createPanHandler>) => {
+export const createTapHandler = (
+  { pointerDown$, pointerUp$, isDragging$ }: ReturnType<typeof createContainerEvents> & ReturnType<typeof createPanHandler>,
+  reader: Reader,
+) => {
   const clickThreshold = 200 // Threshold in milliseconds for double click detection
 
   function isDrag(startEvent: MouseEvent | TouchEvent, endEvent: MouseEvent | TouchEvent) {
@@ -65,7 +65,13 @@ export const createTapHandler = ({
     }),
     filter(isDefined),
     map((event) => {
-      return { type: "singleTap", event } satisfies TapEvent
+      const normalizedEvent = reader.normalizeEventForViewport(event)
+
+      return {
+        type: "singleTap",
+        event: normalizedEvent as PointerEvent,
+        ...mapMixedEventToPosition(normalizedEvent),
+      } satisfies TapEvent
     }),
   )
 
@@ -81,7 +87,13 @@ export const createTapHandler = ({
     }),
     filter(isDefined),
     map((event) => {
-      return { type: "doubleTap", event } satisfies TapEvent
+      const normalizedEvent = reader.normalizeEventForViewport(event)
+
+      return {
+        type: "doubleTap",
+        event: normalizedEvent as PointerEvent,
+        ...mapMixedEventToPosition(normalizedEvent),
+      } satisfies TapEvent
     }),
   )
 
