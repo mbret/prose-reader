@@ -77,39 +77,6 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const destroy$ = new Subject<void>()
   const settings = createSettings(initialSettings)
 
-  // /**
-  //  * Global spread behavior
-  //  * @see http://idpf.org/epub/fxl/#property-spread
-  //  * @todo user setting
-  //  */
-  // const isUsingSpreadMode = () => {
-  //   const manifest = stateSubject.getValue().manifest
-  //   const { height, width } = visibleAreaRect
-  //   const isLandscape = width > height
-
-  //   if (settings.getSettings().forceSinglePageMode) return false
-
-  //   /**
-  //    * For now we don't support spread for reflowable & scrollable content since
-  //    * two items could have different height, resulting in weird stuff.
-  //    */
-  //   if (manifest?.renditionFlow === `scrolled-continuous`) return false
-
-  //   // portrait only
-  //   if (!isLandscape && manifest?.renditionSpread === `portrait`) {
-  //     return true
-  //   }
-
-  //   // default auto behavior
-  //   return (
-  //     isLandscape &&
-  //     (manifest?.renditionSpread === undefined ||
-  //       manifest?.renditionSpread === `auto` ||
-  //       manifest?.renditionSpread === `landscape` ||
-  //       manifest?.renditionSpread === `both`)
-  //   )
-  // }
-
   const setState = (newState: Partial<ObservedValueOf<typeof stateSubject>>) => {
     const newCompleteState = { ...stateSubject.getValue(), ...newState }
 
@@ -197,6 +164,18 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
       visibleAreaRect.height = height - marginTop - marginBottom
       visibleAreaRect.x = x
       visibleAreaRect.y = y
+
+      const manifest = stateSubject.getValue().manifest
+
+      if (manifest) {
+        setState({
+          isUsingSpreadMode: isUsingSpreadMode({
+            manifest,
+            visibleAreaRect,
+            forceSinglePageMode: settings.getSettings().forceSinglePageMode,
+          }),
+        })
+      }
 
       // if (this.useChromiumRubyBugSafeInnerMargin) {
       //   this.visibleAreaRect.height =
