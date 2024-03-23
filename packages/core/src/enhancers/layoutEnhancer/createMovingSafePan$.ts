@@ -1,4 +1,4 @@
-import { animationFrameScheduler, merge, Observable, of, scheduled } from "rxjs"
+import { animationFrameScheduler, merge, NEVER, Observable, of, scheduled } from "rxjs"
 import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
 import { Reader } from "../../reader"
 
@@ -16,19 +16,26 @@ export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
   const updateOverlayElement$ = reader.context$.pipe(
-    tap(({ containerElement }) => {
-      if (!containerElement) return
+    switchMap(({ containerElement }) => {
+      if (!containerElement) return NEVER
 
-      iframeOverlayForAnimationsElement = containerElement.ownerDocument.createElement(`div`)
-      iframeOverlayForAnimationsElement.style.cssText = `
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      visibility: hidden;
-    `
-      containerElement.appendChild(iframeOverlayForAnimationsElement)
+      return new Observable(() => {
+        iframeOverlayForAnimationsElement = containerElement.ownerDocument.createElement(`div`)
+        iframeOverlayForAnimationsElement.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        visibility: hidden;
+      `
+        containerElement.appendChild(iframeOverlayForAnimationsElement)
+
+        return () => {
+          iframeOverlayForAnimationsElement?.remove()
+          iframeOverlayForAnimationsElement = undefined
+        }
+      })
     }),
   )
 

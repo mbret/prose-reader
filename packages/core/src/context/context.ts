@@ -62,7 +62,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     distinctUntilChanged(),
   )
   const isUsingSpreadMode$ = stateSubject.pipe(
-    map((state) => state.hasVerticalWriting),
+    map((state) => state.isUsingSpreadMode),
     distinctUntilChanged(),
   )
 
