@@ -1,5 +1,5 @@
 import { Report } from "../report"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { SpineItemManager } from "../spineItemManager"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../spineItem/navigationResolver"
@@ -192,7 +192,7 @@ export const createNavigationResolver = ({
       return getAdjustedPositionForSpread(navigation)
     }
 
-    if (context.shouldDisplaySpread()) {
+    if (context.isUsingSpreadMode()) {
       // in case of spread the entire screen is taken as one real page for vertical content
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
@@ -246,7 +246,7 @@ export const createNavigationResolver = ({
       return getAdjustedPositionForSpread(navigation)
     }
 
-    if (context.shouldDisplaySpread()) {
+    if (context.isUsingSpreadMode()) {
       // in case of spread the entire screen is taken as one real page for vertical content
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y

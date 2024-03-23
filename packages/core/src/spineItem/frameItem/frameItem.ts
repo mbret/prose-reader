@@ -1,6 +1,6 @@
 import { merge, Observable, Subject } from "rxjs"
 import { Manifest } from "../../types"
-import { Context } from "../../context"
+import { Context } from "../../context/context"
 import { getAttributeValueFromString } from "../../frames"
 import { Hook } from "../../types/Hook"
 import { map } from "rxjs/operators"

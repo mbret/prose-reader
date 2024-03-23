@@ -3,7 +3,7 @@
  */
 import { EMPTY, forkJoin, from, merge, Subject } from "rxjs"
 import { catchError, map, mergeMap, switchMap, takeUntil, tap } from "rxjs/operators"
-import { Context } from "../../context"
+import { Context } from "../../context/context"
 import { Report } from "../../report"
 import { Manifest } from "../../types"
 import { openDatabase } from "./indexedDB"

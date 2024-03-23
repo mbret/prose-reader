@@ -1,6 +1,6 @@
 import { BehaviorSubject, EMPTY, merge, of, Subject } from "rxjs"
 import { filter, map, switchMap, withLatestFrom } from "rxjs/operators"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"

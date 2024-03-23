@@ -1,4 +1,4 @@
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
@@ -141,7 +141,7 @@ export const createLocationResolver = ({
 
     let endPosition = position
 
-    if (context.shouldDisplaySpread()) {
+    if (context.isUsingSpreadMode()) {
       endPosition = { x: position.x + context.getPageSize().width, y: position.y }
     }
 

@@ -146,7 +146,7 @@ export const paginationEnhancer =
               endItem,
             )
           : 0,
-        isUsingSpread: context.shouldDisplaySpread(),
+        isUsingSpread: context.isUsingSpreadMode(),
         // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // numberOfSpineItems: context.getManifest()?.readingOrder.length,

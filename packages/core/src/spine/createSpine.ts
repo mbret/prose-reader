@@ -1,7 +1,7 @@
 import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
 import { catchError, debounce, filter, map, share, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { Report } from "../report"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { Pagination } from "../pagination/pagination"
 import { createSpineItem } from "../spineItem/createSpineItem"
 import { SpineItemManager } from "../spineItemManager"

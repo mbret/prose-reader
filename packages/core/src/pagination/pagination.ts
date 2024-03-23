@@ -1,5 +1,5 @@
 import { BehaviorSubject, distinctUntilChanged, filter } from "rxjs"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"

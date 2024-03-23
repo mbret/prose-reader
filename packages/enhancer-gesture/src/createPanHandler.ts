@@ -83,9 +83,11 @@ export const createPanHandler = (
       const normalizeEvent = (event: PointerEvent): Omit<PanEvent, "type"> => {
         const normalizedEvent = reader.normalizeEventForViewport(event)
 
+        const deltaX = normalizedEvent.clientX - startX
+
         return {
           event: normalizedEvent,
-          deltaX: normalizedEvent.clientX - startX,
+          deltaX,
           deltaY: normalizedEvent.clientY - startY,
           center: {
             x: normalizedEvent.x,

@@ -5,6 +5,7 @@ import { createCfiLocator } from "../spine/cfiLocator"
 import { createLocationResolver } from "../spine/locationResolver"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { ViewportNavigationEntry } from "../spine/navigationResolver"
+import { createEventsHelper } from "../spine/eventsHelper"
 
 type RequireLayout = boolean
 type ManipulableSpineItemCallback = Parameters<SpineItem[`manipulateSpineItem`]>[0]
@@ -21,7 +22,7 @@ export type Spine = {
   locator: Locator
   spineItemLocator: SpineItemLocator
   cfiLocator: CfiLocator
-  normalizeEventForViewport: <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => E
+  normalizeEventForViewport: ReturnType<typeof createEventsHelper>["normalizeEventForViewport"]
   manipulateSpineItems: (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => void
   manipulateSpineItem: (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => void
   destroy: () => void

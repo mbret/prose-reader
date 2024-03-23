@@ -1,5 +1,5 @@
 import { Report } from "../report"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { Pagination } from "../pagination/pagination"
 import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver } from "../spine/locationResolver"

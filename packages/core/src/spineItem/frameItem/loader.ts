@@ -16,7 +16,7 @@ import {
 } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
-import { Context } from "../../context"
+import { Context } from "../../context/context"
 import { Manifest } from "../../types"
 import { Hook } from "../../types/Hook"
 import { createFrame$ } from "./createFrame$"

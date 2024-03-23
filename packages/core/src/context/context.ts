@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { BehaviorSubject, Observable, Subject, merge } from "rxjs"
+import { BehaviorSubject, Observable, ObservedValueOf, Subject, merge } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, map, filter, withLatestFrom } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
-import { createSettings, PublicSettings } from "./settings"
-import { LoadOptions } from "./types/reader"
-import { isDefined } from "./utils/isDefined"
+import { createSettings, PublicSettings } from "../settings"
+import { LoadOptions } from "../types/reader"
+import { isDefined } from "../utils/isDefined"
+import { isUsingSpreadMode } from "./isUsingSpreadMode"
+import { isShallowEqual } from "../utils/objects"
 
 type SettingsManager = ReturnType<typeof createSettings>
 
 type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
   manifest?: Manifest
   hasVerticalWriting?: boolean
+  isUsingSpreadMode?: boolean
 }
 
 export type Context = {
@@ -21,7 +24,7 @@ export type Context = {
   areAllItemsPrePaginated: () => boolean
   getCalculatedInnerMargin: () => number
   getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
-  shouldDisplaySpread: () => boolean
+  isUsingSpreadMode: () => boolean | undefined
   setHasVerticalWriting: () => void
   getReadingDirection: () => Manifest[`readingDirection`] | undefined
   getPageSize: () => { height: number; width: number }
@@ -30,6 +33,7 @@ export type Context = {
   destroy: () => void
   getState: () => State
   containerElement$: Observable<HTMLElement>
+  isUsingSpreadMode$: Observable<boolean | undefined>
   $: {
     settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
     destroy$: Observable<void>
@@ -52,11 +56,16 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     filter(isDefined),
     distinctUntilChanged(),
   )
-  const hasVerticalWritingSubject$ = stateSubject.pipe(
+  const hasVerticalWriting$ = stateSubject.pipe(
     map((state) => state.hasVerticalWriting),
     filter(isDefined),
     distinctUntilChanged(),
   )
+  const isUsingSpreadMode$ = stateSubject.pipe(
+    map((state) => state.hasVerticalWriting),
+    distinctUntilChanged(),
+  )
+
   const visibleAreaRect = {
     width: 0,
     height: 0,
@@ -68,43 +77,56 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const destroy$ = new Subject<void>()
   const settings = createSettings(initialSettings)
 
-  /**
-   * Global spread behavior
-   * @see http://idpf.org/epub/fxl/#property-spread
-   * @todo user setting
-   */
-  const shouldDisplaySpread = () => {
-    const manifest = stateSubject.getValue().manifest
-    const { height, width } = visibleAreaRect
-    const isLandscape = width > height
+  // /**
+  //  * Global spread behavior
+  //  * @see http://idpf.org/epub/fxl/#property-spread
+  //  * @todo user setting
+  //  */
+  // const isUsingSpreadMode = () => {
+  //   const manifest = stateSubject.getValue().manifest
+  //   const { height, width } = visibleAreaRect
+  //   const isLandscape = width > height
 
-    if (settings.getSettings().forceSinglePageMode) return false
+  //   if (settings.getSettings().forceSinglePageMode) return false
 
-    /**
-     * For now we don't support spread for reflowable & scrollable content since
-     * two items could have different height, resulting in weird stuff.
-     */
-    if (manifest?.renditionFlow === `scrolled-continuous`) return false
+  //   /**
+  //    * For now we don't support spread for reflowable & scrollable content since
+  //    * two items could have different height, resulting in weird stuff.
+  //    */
+  //   if (manifest?.renditionFlow === `scrolled-continuous`) return false
 
-    // portrait only
-    if (!isLandscape && manifest?.renditionSpread === `portrait`) {
-      return true
+  //   // portrait only
+  //   if (!isLandscape && manifest?.renditionSpread === `portrait`) {
+  //     return true
+  //   }
+
+  //   // default auto behavior
+  //   return (
+  //     isLandscape &&
+  //     (manifest?.renditionSpread === undefined ||
+  //       manifest?.renditionSpread === `auto` ||
+  //       manifest?.renditionSpread === `landscape` ||
+  //       manifest?.renditionSpread === `both`)
+  //   )
+  // }
+
+  const setState = (newState: Partial<ObservedValueOf<typeof stateSubject>>) => {
+    const newCompleteState = { ...stateSubject.getValue(), ...newState }
+
+    if (!isShallowEqual(newCompleteState, stateSubject.getValue())) {
+      stateSubject.next(newCompleteState)
     }
-
-    // default auto behavior
-    return (
-      isLandscape &&
-      (manifest?.renditionSpread === undefined ||
-        manifest?.renditionSpread === `auto` ||
-        manifest?.renditionSpread === `landscape` ||
-        manifest?.renditionSpread === `both`)
-    )
   }
 
   const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
-    stateSubject.next({
+    setState({
       manifest: newManifest,
       ...newLoadOptions,
+      isUsingSpreadMode: isUsingSpreadMode({
+        manifest: newManifest,
+        visibleAreaRect,
+        forceSinglePageMode: settings.getSettings().forceSinglePageMode,
+      }),
     })
   }
 
@@ -116,18 +138,38 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   }
 
   const setHasVerticalWriting = () =>
-    stateSubject.next({
-      ...stateSubject.getValue(),
+    setState({
       hasVerticalWriting: true,
     })
 
-  const recomputeSettings$ = merge(hasVerticalWritingSubject$, manifest$)
+  const recomputeSettings$ = merge(hasVerticalWriting$, manifest$)
 
   recomputeSettings$
     .pipe(
-      withLatestFrom(hasVerticalWritingSubject$, manifest$),
+      withLatestFrom(hasVerticalWriting$, manifest$),
       tap(([, hasVerticalWriting, manifest]) => {
         settings.recompute({ hasVerticalWriting, manifest })
+      }),
+      takeUntil(destroy$),
+    )
+    .subscribe()
+
+  /**
+   * Update state based on settings
+   */
+  settings.$.settings$
+    .pipe(
+      map(({ forceSinglePageMode }) => forceSinglePageMode),
+      distinctUntilChanged(),
+      withLatestFrom(manifest$),
+      tap(([forceSinglePageMode, manifest]) => {
+        setState({
+          isUsingSpreadMode: isUsingSpreadMode({
+            manifest,
+            visibleAreaRect,
+            forceSinglePageMode: forceSinglePageMode,
+          }),
+        })
       }),
       takeUntil(destroy$),
     )
@@ -147,7 +189,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     destroy,
     getCalculatedInnerMargin: () => 0,
     getVisibleAreaRect: () => visibleAreaRect,
-    shouldDisplaySpread,
+    isUsingSpreadMode: () => stateSubject.getValue().isUsingSpreadMode,
     setHasVerticalWriting,
     setVisibleAreaRect: ({ height, width, x, y }: { x: number; y: number; width: number; height: number }) => {
       // visibleAreaRect.width = width - horizontalMargin * 2
@@ -166,13 +208,14 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     getReadingDirection: () => stateSubject.getValue()?.manifest?.readingDirection,
     getPageSize: () => {
       return {
-        width: shouldDisplaySpread() ? visibleAreaRect.width / 2 : visibleAreaRect.width,
+        width: stateSubject.getValue().isUsingSpreadMode ? visibleAreaRect.width / 2 : visibleAreaRect.width,
         height: visibleAreaRect.height,
       }
     },
     getSettings: settings.getSettings,
     setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, stateSubject.getValue()),
     containerElement$,
+    isUsingSpreadMode$,
     $: {
       manifest$,
       destroy$: destroy$.asObservable(),

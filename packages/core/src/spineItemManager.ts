@@ -1,7 +1,7 @@
 import { BehaviorSubject, merge, Subject } from "rxjs"
 import { tap, takeUntil, switchMap, map } from "rxjs/operators"
 import { Report } from "./report"
-import { Context } from "./context"
+import { Context } from "./context/context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
 
@@ -57,7 +57,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
         const itemStartOnNewScreen = horizontalOffset % context.getVisibleAreaRect().width === 0
         const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
 
-        if (context.shouldDisplaySpread()) {
+        if (context.isUsingSpreadMode()) {
           /**
            * for now every reflowable content that has reflow siblings takes the entire screen by default
            * this simplify many things and I am not sure the specs allow one reflow
@@ -109,7 +109,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
         const { width, height } = item.layout({
           minimumWidth,
           blankPagePosition,
-          spreadPosition: context.shouldDisplaySpread()
+          spreadPosition: context.isUsingSpreadMode()
             ? itemStartOnNewScreen
               ? context.isRTL()
                 ? `right`

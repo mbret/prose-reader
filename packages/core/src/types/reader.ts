@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import { createContext as createBookContext } from "../context"
+import { createContext as createBookContext } from "../context/context"
 import { RegisterHook } from "./Hook"
 import { Spine } from "./Spine"
 import { Pagination } from "../pagination/pagination"

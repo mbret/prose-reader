@@ -1,7 +1,7 @@
 import { combineLatest, merge, Observable, ObservedValueOf, of } from "rxjs"
 import { takeUntil, switchMap, tap, map, distinctUntilChanged, shareReplay } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { Manifest } from "../types"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../constants"
 import { EnhancerOutput } from "./types/enhancer"

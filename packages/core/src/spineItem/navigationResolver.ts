@@ -1,5 +1,5 @@
 import { SpineItem } from "./createSpineItem"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { getNumberOfPages } from "../pagination/pagination"
 import { createLocationResolver } from "./locationResolver"
 import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"

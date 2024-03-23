@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"

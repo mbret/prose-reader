@@ -10,7 +10,7 @@ import {
   withLatestFrom,
   startWith,
 } from "rxjs/operators"
-import { Context } from "../context"
+import { Context } from "../context/context"
 import { Spine } from "../spine/createSpine"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 import { SpineItemManager } from "../spineItemManager"

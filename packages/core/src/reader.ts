@@ -1,6 +1,6 @@
 import { BehaviorSubject, merge, ObservedValueOf, Subject, switchMap } from "rxjs"
 import { Report } from "./report"
-import { createContext as createBookContext } from "./context"
+import { createContext as createBookContext } from "./context/context"
 import { createPagination } from "./pagination/pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
