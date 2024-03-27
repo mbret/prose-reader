@@ -22,6 +22,10 @@ export const createElementZoomer = (reader: Reader) => {
 
     if (container) {
       imageMagnifierContainer = container.ownerDocument.createElement(`div`)
+      /**
+       * We use `user-select: none;` to prevent blue selection
+       * flickering and because there are no point to select so far.
+       */
       imageMagnifierContainer.style.cssText = `
           top: 0;
           left: 0;
@@ -31,6 +35,7 @@ export const createElementZoomer = (reader: Reader) => {
           background: black;
           width: 100%;
           height: 100%;
+          user-select: none;
         `
       const clonedImgElement = imgElement.cloneNode() as HTMLImageElement
       clonedImgElement.src = imgElement.src
@@ -68,6 +73,7 @@ export const createElementZoomer = (reader: Reader) => {
       `transform`,
       `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${newScale}, ${newScale}, 1)`,
     )
+
     lastUserScale = newScale
   }
 
@@ -75,16 +81,16 @@ export const createElementZoomer = (reader: Reader) => {
     const imgElement = imageMagnifierContainer?.querySelector(`img`)
 
     if (isFirst) {
-      movingLastDelta = { x: 0, y: 0 }
+      movingLastDelta = delta
     }
 
     if (delta) {
-      const correctedX = delta.x - (movingLastDelta?.x || 0)
-      const correctedY = delta.y - (movingLastDelta?.y || 0)
+      const newOffsetX = delta.x - (movingLastDelta?.x || 0)
+      const newOffsetY = delta.y - (movingLastDelta?.y || 0)
 
       imgLastPosition = {
-        x: imgLastPosition.x + correctedX,
-        y: imgLastPosition.y + correctedY,
+        x: imgLastPosition.x + newOffsetX,
+        y: imgLastPosition.y + newOffsetY,
       }
 
       imgElement?.style.setProperty(
