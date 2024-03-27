@@ -1,7 +1,7 @@
 /**
  * Offer extra convenient methods for navigation.
  */
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
 
 export const navigationEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
