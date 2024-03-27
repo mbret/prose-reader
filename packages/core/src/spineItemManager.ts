@@ -296,7 +296,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
       .pipe(
         tap(() => {
           if (spineItem.isUsingVerticalWriting()) {
-            context.setHasVerticalWriting()
+            context.setHasVerticalWriting(true)
+          } else {
+            context.setHasVerticalWriting(false)
           }
         }),
         takeUntil(context.$.destroy$),

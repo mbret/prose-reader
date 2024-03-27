@@ -2,11 +2,12 @@
 import { BehaviorSubject, Observable, ObservedValueOf, Subject, merge } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, map, filter, withLatestFrom } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
-import { createSettings, PublicSettings } from "../settings"
+import { createSettings } from "../settings/settings"
 import { LoadOptions } from "../types/reader"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
+import { InputSettings } from "../settings/types"
 
 type SettingsManager = ReturnType<typeof createSettings>
 
@@ -18,14 +19,14 @@ type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & 
 
 export type Context = {
   load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
-  setSettings: (data: Partial<PublicSettings>) => void
+  setSettings: (data: Partial<InputSettings>) => void
   getSettings: () => ReturnType<SettingsManager[`getSettings`]>
   getManifest: () => Manifest | undefined
   areAllItemsPrePaginated: () => boolean
   getCalculatedInnerMargin: () => number
   getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
   isUsingSpreadMode: () => boolean | undefined
-  setHasVerticalWriting: () => void
+  setHasVerticalWriting: (value: boolean) => void
   getReadingDirection: () => Manifest[`readingDirection`] | undefined
   getPageSize: () => { height: number; width: number }
   setVisibleAreaRect: (options: { x: number; y: number; width: number; height: number }) => void
@@ -34,6 +35,7 @@ export type Context = {
   getState: () => State
   containerElement$: Observable<HTMLElement>
   isUsingSpreadMode$: Observable<boolean | undefined>
+  hasVerticalWriting$: Observable<boolean>
   $: {
     settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
     destroy$: Observable<void>
@@ -104,9 +106,9 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     return stateSubject.getValue().manifest?.readingDirection === `rtl`
   }
 
-  const setHasVerticalWriting = () =>
+  const setHasVerticalWriting = (value: boolean) =>
     setState({
-      hasVerticalWriting: true,
+      hasVerticalWriting: value,
     })
 
   const recomputeSettings$ = merge(hasVerticalWriting$, manifest$)
@@ -195,6 +197,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, stateSubject.getValue()),
     containerElement$,
     isUsingSpreadMode$,
+    hasVerticalWriting$,
     $: {
       manifest$,
       destroy$: destroy$.asObservable(),
