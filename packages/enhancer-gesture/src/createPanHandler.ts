@@ -17,25 +17,27 @@ import { createContainerEvents } from "./createContainerEvents"
 import { Reader } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 
-/**
- * Center position for multi-touch, or just the single pointer.
- */
-type Center = { x: number; y: number }
+type CommonData = {
+  event: PointerEvent
+  deltaX: number
+  deltaY: number
+  // Velocity on the X axis, in px/ms.
+  velocityX: number
+  // Velocity on the Y axis, in px/ms.
+  velocityY: number
+  center: { x: number; y: number }
+}
 
 export type PanEvent =
-  | {
+  | ({
       type: "panStart"
-      event: PointerEvent
-      deltaX: number
-      deltaY: number
-      center: Center
       /**
        * Delay between the tap and the first moving
        */
       delay: number
-    }
-  | { type: "panMove"; event: PointerEvent; deltaX: number; deltaY: number; center: Center }
-  | { type: "panEnd"; event: PointerEvent; deltaX: number; deltaY: number; center: Center }
+    } & CommonData)
+  | ({ type: "panMove" } & CommonData)
+  | ({ type: "panEnd" } & CommonData)
 
 export const createPanHandler = (
   reader: Reader,
@@ -74,9 +76,9 @@ export const createPanHandler = (
 
   const dragEvent$ = panStart$.pipe(
     switchMap((startPointerDownEvent) => {
-      const now = new Date().getTime()
       const normalizedStartPointerDownEvent = reader.normalizeEventForViewport(startPointerDownEvent)
 
+      const startTime = new Date().getTime()
       const startX = normalizedStartPointerDownEvent.clientX
       const startY = normalizedStartPointerDownEvent.clientY
 
@@ -84,11 +86,22 @@ export const createPanHandler = (
         const normalizedEvent = reader.normalizeEventForViewport(event)
 
         const deltaX = normalizedEvent.clientX - startX
+        const deltaY = normalizedEvent.clientY - startY
+
+        // Calculate the change in time
+        const dt = (Date.now() - startTime)
+
+        // Avoid division by zero
+        // Calculate velocity in pixels per second
+        const velocityX = dt > 0 ? deltaX / dt : 0
+        const velocityY = dt > 0 ? deltaY / dt : 0
 
         return {
           event: normalizedEvent,
           deltaX,
-          deltaY: normalizedEvent.clientY - startY,
+          deltaY,
+          velocityX,
+          velocityY,
           center: {
             x: normalizedEvent.x,
             y: normalizedEvent.y,
@@ -99,7 +112,7 @@ export const createPanHandler = (
       const dragStartEvent = {
         type: "panStart",
         ...normalizeEvent(startPointerDownEvent),
-        delay: new Date().getTime() - now,
+        delay: new Date().getTime() - startTime,
       } satisfies PanEvent
 
       const dragMove$ = pointerMove$.pipe(
