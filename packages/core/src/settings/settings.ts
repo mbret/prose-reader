@@ -4,6 +4,9 @@ import { Manifest } from "../types"
 import { Report } from "../report"
 import { isShallowEqual } from "../utils/objects"
 import { InputSettings, OutputSettings } from "./types"
+import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
+
+export type Settings = ReturnType<typeof createSettings>
 
 export const createSettings = (initialSettings: Partial<InputSettings>) => {
   const mergedSettings: OutputSettings = {
@@ -64,9 +67,6 @@ export const createSettings = (initialSettings: Partial<InputSettings>) => {
     },
   }
 }
-
-const areAllItemsPrePaginated = (manifest: Manifest | undefined) =>
-  !manifest?.spineItems.some((item) => item.renditionLayout === `reflowable`)
 
 const updateComputedSettings = (newManifest: Manifest | undefined, settings: OutputSettings, hasVerticalWriting: boolean) => {
   settings.computedPageTurnDirection = settings.pageTurnDirection

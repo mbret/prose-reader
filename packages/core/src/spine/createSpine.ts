@@ -16,6 +16,7 @@ import type { Spine } from "../types/Spine"
 import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
 import { Manifest } from ".."
+import { Settings } from "../settings/settings"
 
 const report = Report.namespace(`spine`)
 const noopElement = document.createElement("div")
@@ -44,6 +45,7 @@ export const createSpine = ({
   navigationAdjusted$,
   currentNavigationPosition$,
   viewportState$,
+  settings
 }: {
   element$: Observable<HTMLElement>
   iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
@@ -61,6 +63,7 @@ export const createSpine = ({
     y: number
   }>
   viewportState$: Observable<`free` | `busy`>
+  settings: Settings
 }): Spine => {
   const spineItems$ = new Subject<SpineItem[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
@@ -90,6 +93,7 @@ export const createSpine = ({
         context,
         hooks$,
         viewportState$,
+        settings
       })
       spineItemManager.add(spineItem)
     })
@@ -297,7 +301,7 @@ export const createSpine = ({
             cfi:
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
                 ? lastExpectedNavigation.data
-                : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
+                : data.triggeredBy === `adjust` && settings.getSettings().computedPageTurnMode === `controlled`
                   ? pagination.getPaginationInfo().beginCfi
                   : beginItemIndex !== pagination.getPaginationInfo().beginSpineItemIndex
                     ? cfiLocator.getRootCfi(beginSpineItem)
@@ -313,7 +317,7 @@ export const createSpine = ({
             cfi:
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
                 ? lastExpectedNavigation.data
-                : data.triggeredBy === `adjust` && context.getSettings().computedPageTurnMode === `controlled`
+                : data.triggeredBy === `adjust` && settings.getSettings().computedPageTurnMode === `controlled`
                   ? pagination.getPaginationInfo().endCfi
                   : endItemIndex !== pagination.getPaginationInfo().endSpineItemIndex
                     ? cfiLocator.getRootCfi(endSpineItem)

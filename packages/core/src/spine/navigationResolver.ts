@@ -7,6 +7,7 @@ import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
 import { SpineItemNavigationPosition } from "../spineItem/types"
+import { Settings } from "../settings/settings"
 
 export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
 type ViewportPosition = { x: number; y: number }
@@ -18,13 +19,15 @@ export const createNavigationResolver = ({
   spineItemManager,
   cfiLocator,
   locator,
+  settings
 }: {
   context: Context
   spineItemManager: SpineItemManager
   cfiLocator: ReturnType<typeof createCfiLocator>
   locator: ReturnType<typeof createLocationResolver>
+  settings: Settings
 }) => {
-  const spineItemNavigator = createSpineItemNavigator({ context })
+  const spineItemNavigator = createSpineItemNavigator({ context, settings })
 
   const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
 
@@ -121,7 +124,7 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForRightSinglePage = (position: SpinePosition): ViewportNavigationEntry => {
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
     const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = position
 
@@ -150,7 +153,7 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForLeftSinglePage = (position: UnsafeSpinePosition): ViewportNavigationEntry => {
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
     const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = { ...position, spineItem }
 
@@ -217,7 +220,7 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (context.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (settings.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -265,7 +268,7 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (context.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (settings.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -325,7 +328,7 @@ export const createNavigationResolver = ({
    * try to get the most visible / relevant element as navigation reference
    */
   const getMostPredominantNavigationForPosition = (viewportPosition: ViewportPosition) => {
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
     // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
     // const triggerPercentage = movingForward ? 0.7 : 0.3
@@ -339,7 +342,7 @@ export const createNavigationResolver = ({
   }
 
   const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
-    const pageTurnDirection = context.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
 
     if (pageTurnDirection === `vertical`) {
       return to.y > from.y

@@ -17,6 +17,7 @@ import { SpineItemManager } from "../spineItemManager"
 import { ViewportPosition } from "../types"
 import { getNewScaledOffset } from "../utils/layout"
 import { isDefined } from "../utils/isDefined"
+import { Settings } from "../settings/settings"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
@@ -27,9 +28,11 @@ export const createScrollViewportNavigator = ({
   element$,
   navigator,
   currentNavigationSubject$,
+  settings,
   spine,
 }: {
   context: Context
+  settings: Settings
   element$: BehaviorSubject<HTMLElement>
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
@@ -51,7 +54,7 @@ export const createScrollViewportNavigator = ({
     )
 
   const adjustReadingOffset = ({ x, y }: { x: number; y: number }) => {
-    if (context.getSettings().computedPageTurnMode === `scrollable`) {
+    if (settings.getSettings().computedPageTurnMode === `scrollable`) {
       lastScrollWasProgrammaticallyTriggered = true
       element$.getValue()?.scrollTo({ left: x, top: y })
 
@@ -62,8 +65,8 @@ export const createScrollViewportNavigator = ({
   }
 
   const runOnFreePageTurnModeOnly$ = <T>(source: Observable<T>) =>
-    context.$.settings$.pipe(
-      map(() => context.getSettings().computedPageTurnMode),
+    settings.$.settings$.pipe(
+      map(({ computedPageTurnMode }) => computedPageTurnMode),
       distinctUntilChanged(),
       switchMap((mode) => iif(() => mode === `controlled`, EMPTY, source)),
     )

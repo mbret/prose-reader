@@ -17,6 +17,7 @@ import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
 import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
+import { createSettings } from "./settings/settings"
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
@@ -34,7 +35,7 @@ export type CreateReaderOptions = {
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderOptions): ReaderInternal => {
+export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateReaderOptions): ReaderInternal => {
   const stateSubject$ = new BehaviorSubject<ObservedValueOf<ReaderInternal["$"]["state$"]>>({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
@@ -48,8 +49,9 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
   const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
   const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
   const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
+  const settings = createSettings(inputSettings)
   const context = createBookContext(settings)
-  const spineItemManager = createSpineItemManager({ context })
+  const spineItemManager = createSpineItemManager({ context, settings })
   const pagination = createPagination({ context, spineItemManager })
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
   const element$ = elementSubject$.pipe(filter(isDefined))
@@ -59,6 +61,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     context,
     spineItemManager,
     spineItemLocator,
+    settings
   })
   const cfiLocator = createCfiLocator({
     spineItemManager,
@@ -72,6 +75,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     element$,
     iframeEventBridgeElement$,
     context,
+    settings,
     pagination,
     spineItemManager,
     hooks$: hooksSubject$,
@@ -93,6 +97,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     spineLocator,
     hooks$: hooksSubject$,
     spine,
+    settings,
   })
 
   // bridge all navigation stream with reader so they can be shared across app
@@ -194,19 +199,18 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     )
     .subscribe()
 
-  merge(context.$.state$, context.$.settings$)
+  merge(context.$.state$, settings.$.settings$)
     .pipe(
       map(() => undefined),
       withLatestFrom(context.$.state$),
       map(([, { hasVerticalWriting }]) => {
-        const settings = context.getSettings()
         const manifest = context.getManifest()
 
         return {
           hasVerticalWriting,
           renditionFlow: manifest?.renditionFlow,
           renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settings.computedPageTurnMode,
+          computedPageTurnMode: settings.getSettings().computedPageTurnMode,
         }
       }),
       distinctUntilChanged(isShallowEqual),
@@ -249,6 +253,7 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
    * instead of destroying it.
    */
   const destroy = () => {
+    settings.destroy()
     hooksSubject$.next([])
     hooksSubject$.complete()
     pagination.destroy()
@@ -294,11 +299,12 @@ export const createReader = ({ hooks: initialHooks, ...settings }: CreateReaderO
     layout,
     load,
     destroy,
-    setSettings: context.setSettings,
-    settings$: context.$.settings$,
     spineItems$: spine.$.spineItems$,
     context$: context.$.state$,
     pagination,
+    settings$: settings.$.settings$,
+    getSettings: settings.getSettings,
+    setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, context.getState()),
     $: {
       state$: stateSubject$.asObservable(),
       /**

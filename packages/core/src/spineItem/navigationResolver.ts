@@ -3,8 +3,9 @@ import { Context } from "../context/context"
 import { getNumberOfPages } from "../pagination/pagination"
 import { createLocationResolver } from "./locationResolver"
 import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"
+import { Settings } from "../settings/settings"
 
-export const createNavigationResolver = ({ context }: { context: Context }) => {
+export const createNavigationResolver = ({ context }: { context: Context, settings: Settings }) => {
   const spineItemLocator = createLocationResolver({ context })
 
   const getNavigationForLeftPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {

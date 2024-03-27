@@ -6,10 +6,12 @@ import { Pagination } from "../pagination/pagination"
 import { Manifest } from "@prose-reader/shared"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportNavigator } from "../viewportNavigator/viewportNavigator"
+import { Settings, createSettings } from "../settings/settings"
+import { InputSettings } from "../settings/types"
 
 type Context = ReturnType<typeof createBookContext>
 
-export type ContextSettings = Parameters<Context[`setSettings`]>[0]
+export type ContextSettings = Partial<InputSettings>
 
 export type LoadOptions = {
   cfi?: string | null
@@ -69,11 +71,12 @@ export type ReaderInternal = {
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void
   destroy: () => void
-  setSettings: Context["setSettings"]
-  settings$: Context["$"]["settings$"]
   pagination: Pagination
   spineItems$: Spine["$"]["spineItems$"]
   context$: Context["$"]["state$"]
+  settings$: ReturnType<typeof createSettings>["$"]["settings$"]
+  setSettings: (data: Partial<InputSettings>) => void
+  getSettings: Settings["getSettings"]
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]

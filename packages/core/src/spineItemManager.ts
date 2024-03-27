@@ -4,10 +4,11 @@ import { Report } from "./report"
 import { Context } from "./context/context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
+import { Settings } from "./settings/settings"
 
 const NAMESPACE = `spineItemManager`
 
-export const createSpineItemManager = ({ context }: { context: Context }) => {
+export const createSpineItemManager = ({ context, settings }: { context: Context; settings: Settings }) => {
   const focus$ = new Subject<{ data: SpineItem }>()
   const layout$ = new Subject<boolean>()
   /**
@@ -120,7 +121,7 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
             : `none`,
         })
 
-        if (context.getSettings().computedPageTurnDirection === `vertical`) {
+        if (settings.getSettings().computedPageTurnDirection === `vertical`) {
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
             ? verticalOffset
             : verticalOffset - context.getVisibleAreaRect().height
@@ -216,9 +217,9 @@ export const createSpineItemManager = ({ context }: { context: Context }) => {
    */
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
-    const numberOfAdjacentSpineItemToPreLoad = context.getSettings().numberOfAdjacentSpineItemToPreLoad
+    const numberOfAdjacentSpineItemToPreLoad = settings.getSettings().numberOfAdjacentSpineItemToPreLoad
     const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
-    const isUsingFreeScroll = context.getSettings().computedPageTurnMode === `scrollable`
+    const isUsingFreeScroll = settings.getSettings().computedPageTurnMode === `scrollable`
 
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =

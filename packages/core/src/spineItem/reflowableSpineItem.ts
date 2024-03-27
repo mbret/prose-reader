@@ -4,6 +4,7 @@ import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
+import { Settings } from "../settings/settings"
 
 export const createReflowableSpineItem = ({
   item,
@@ -12,6 +13,7 @@ export const createReflowableSpineItem = ({
   iframeEventBridgeElement$,
   hooks$,
   viewportState$,
+  settings
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -19,6 +21,7 @@ export const createReflowableSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
+  settings: Settings
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
@@ -27,6 +30,7 @@ export const createReflowableSpineItem = ({
     iframeEventBridgeElement$,
     hooks$,
     viewportState$,
+    settings
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
   /**
@@ -96,7 +100,7 @@ export const createReflowableSpineItem = ({
         const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
               isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
-              enableTouch: context.getSettings().computedPageTurnMode !== `scrollable`,
+              enableTouch: settings.getSettings().computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
               commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth),

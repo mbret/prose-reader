@@ -5,15 +5,18 @@ import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { SpineItemNavigationPosition, SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
+import { Settings } from "../settings/settings"
 
 export const createLocationResolver = ({
   spineItemManager,
   context,
   spineItemLocator,
+  settings
 }: {
   spineItemManager: SpineItemManager
   context: Context
   spineItemLocator: ReturnType<typeof createSpineItemLocator>
+  settings: Settings
 }) => {
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
@@ -96,7 +99,7 @@ export const createLocationResolver = ({
 
         const isWithinXAxis = position.x >= left && position.x < right
 
-        if (context.getSettings().computedPageTurnDirection === `horizontal`) {
+        if (settings.getSettings().computedPageTurnDirection === `horizontal`) {
           return isWithinXAxis
         } else {
           return isWithinXAxis && position.y >= top && position.y < bottom

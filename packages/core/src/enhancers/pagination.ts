@@ -146,7 +146,7 @@ export const paginationEnhancer =
               endItem,
             )
           : 0,
-        isUsingSpread: context.isUsingSpreadMode(),
+        isUsingSpread: context.isUsingSpreadMode() ?? false,
         // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // numberOfSpineItems: context.getManifest()?.readingOrder.length,
@@ -165,7 +165,7 @@ export const paginationEnhancer =
 
       const writingMode = spineItem.spineItemFrame.getWritingMode()
       const { width, height } = spineItem.getElementDimensions()
-      const settings = reader.context.getSettings()
+      const settings = reader.getSettings()
 
       if (settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`) {
         return 1

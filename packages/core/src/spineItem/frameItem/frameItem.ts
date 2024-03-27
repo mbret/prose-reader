@@ -7,6 +7,7 @@ import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
+import { Settings } from "../../settings/settings"
 
 export const createFrameItem = ({
   item,
@@ -15,6 +16,7 @@ export const createFrameItem = ({
   context,
   hooks$,
   viewportState$,
+  settings
 }: {
   parent: HTMLElement
   item: Manifest[`spineItems`][number]
@@ -22,6 +24,7 @@ export const createFrameItem = ({
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   hooks$: Observable<Hook[]>
   viewportState$: Observable<`free` | `busy`>
+  settings: Settings
 }) => {
   const destroySubject$ = new Subject<void>()
 
@@ -31,7 +34,7 @@ export const createFrameItem = ({
     unload,
     destroy: loaderDestroy,
     getComputedStyleAfterLoad,
-  } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$ })
+  } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$, settings })
 
   /**
    * @deprecated
@@ -137,7 +140,7 @@ export const createFrameItem = ({
         frame.style.width = `${size.width}px`
         frame.style.height = `${size.height}px`
 
-        if (context.getSettings().computedPageTurnMode !== `scrollable`) {
+        if (settings.getSettings().computedPageTurnMode !== `scrollable`) {
           // @todo see what's the impact
           frame.setAttribute(`tab-index`, `0`)
         }

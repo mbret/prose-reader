@@ -7,9 +7,6 @@ import { LoadOptions } from "../types/reader"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
-import { InputSettings } from "../settings/types"
-
-type SettingsManager = ReturnType<typeof createSettings>
 
 type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
   manifest?: Manifest
@@ -19,8 +16,6 @@ type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & 
 
 export type Context = {
   load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
-  setSettings: (data: Partial<InputSettings>) => void
-  getSettings: () => ReturnType<SettingsManager[`getSettings`]>
   getManifest: () => Manifest | undefined
   areAllItemsPrePaginated: () => boolean
   getCalculatedInnerMargin: () => number
@@ -37,7 +32,6 @@ export type Context = {
   isUsingSpreadMode$: Observable<boolean | undefined>
   hasVerticalWriting$: Observable<boolean>
   $: {
-    settings$: Observable<ReturnType<SettingsManager[`getSettings`]>>
     destroy$: Observable<void>
     state$: Observable<State>
     manifest$: Observable<Manifest>
@@ -46,7 +40,7 @@ export type Context = {
 
 export type ContextObservableEvents = {}
 
-export const createContext = (initialSettings: Parameters<typeof createSettings>[0]): Context => {
+export const createContext = (settings: ReturnType<typeof createSettings>): Context => {
   const stateSubject = new BehaviorSubject<State>({})
   const manifest$ = stateSubject.pipe(
     map((state) => state.manifest),
@@ -77,7 +71,7 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
-  const settings = createSettings(initialSettings)
+  
 
   const setState = (newState: Partial<ObservedValueOf<typeof stateSubject>>) => {
     const newCompleteState = { ...stateSubject.getValue(), ...newState }
@@ -145,7 +139,6 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
     .subscribe()
 
   const destroy = () => {
-    settings.destroy()
     stateSubject.complete()
     destroy$.next()
     destroy$.complete()
@@ -193,15 +186,12 @@ export const createContext = (initialSettings: Parameters<typeof createSettings>
         height: visibleAreaRect.height,
       }
     },
-    getSettings: settings.getSettings,
-    setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, stateSubject.getValue()),
     containerElement$,
     isUsingSpreadMode$,
     hasVerticalWriting$,
     $: {
       manifest$,
       destroy$: destroy$.asObservable(),
-      settings$: settings.$.settings$,
       state$: stateSubject.asObservable(),
     },
   }

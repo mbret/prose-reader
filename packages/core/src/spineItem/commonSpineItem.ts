@@ -9,6 +9,7 @@ import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 import { Hook } from "../types/Hook"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
+import { Settings } from "../settings/settings"
 
 const pointerEvents = [
   `pointercancel` as const,
@@ -43,6 +44,7 @@ export const createCommonSpineItem = ({
   iframeEventBridgeElement$,
   hooks$,
   viewportState$,
+  settings
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
@@ -50,6 +52,7 @@ export const createCommonSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
+  settings: Settings
 }) => {
   const destroySubject$ = new Subject<void>()
   const containerElement = createContainerElement(parentElement, item, hooks$)
@@ -64,6 +67,7 @@ export const createCommonSpineItem = ({
     fetchResource: context.getState()?.fetchResource,
     hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
     viewportState$,
+    settings
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 

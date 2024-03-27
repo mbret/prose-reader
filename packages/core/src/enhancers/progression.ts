@@ -93,7 +93,7 @@ export const progressionEnhancer =
 
       const { top, left } = reader.getAbsolutePositionOf(currentItem)
 
-      if (context.getSettings().computedPageTurnDirection === `vertical`) {
+      if (reader.getSettings().computedPageTurnDirection === `vertical`) {
         return Math.max(0, Math.min(1, (currentPosition.y - top + context.getVisibleAreaRect().height) / height))
       } else {
         return Math.max(0, Math.min(1, (currentPosition.x - left + context.getVisibleAreaRect().width) / width))

@@ -6,6 +6,7 @@ import { Report } from "../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 import { createLocationResolver } from "../spine/locationResolver"
 import { ViewportPosition } from "../types"
+import { Settings } from "../settings/settings"
 
 const NAMESPACE = `panViewportNavigator`
 
@@ -21,6 +22,7 @@ export const createPanViewportNavigator = ({
   locator,
   context,
   currentNavigationSubject$,
+  settings
 }: {
   context: Context
   navigator: ReturnType<typeof createNavigationResolver>
@@ -28,6 +30,7 @@ export const createPanViewportNavigator = ({
   spineItemManager: SpineItemManager
   locator: ReturnType<typeof createLocationResolver>
   getCurrentViewportPosition: () => ViewportPosition
+  settings: Settings
 }) => {
   const navigationTriggerSubject$ = new Subject<SnapNavigation>()
   const stateSubject$ = new BehaviorSubject<`end` | `start`>(`end`)
@@ -42,12 +45,12 @@ export const createPanViewportNavigator = ({
     `${NAMESPACE} moveTo`,
     5,
     (delta: { x: number; y: number } | undefined, { final, start }: { start?: boolean; final?: boolean } = {}) => {
-      if (context.getSettings().computedPageTurnMode === `scrollable`) {
+      if (settings.getSettings().computedPageTurnMode === `scrollable`) {
         Report.warn(`pan control is not available on free page turn mode`)
         return
       }
 
-      const pageTurnDirection = context.getSettings().computedPageTurnDirection
+      const pageTurnDirection = settings.getSettings().computedPageTurnDirection
 
       if (start) {
         stateSubject$.next(`start`)
@@ -122,7 +125,7 @@ export const createPanViewportNavigator = ({
 
   const snapNavigation$ = navigationTriggerSubject$.pipe(
     filter((e): e is SnapNavigation => e.type === `snap`),
-    withLatestFrom(context.$.settings$),
+    withLatestFrom(settings.$.settings$),
     switchMap(
       ([
         {
@@ -130,7 +133,7 @@ export const createPanViewportNavigator = ({
         },
         { navigationSnapThreshold },
       ]) => {
-        const pageTurnDirection = context.getSettings().computedPageTurnDirection
+        const pageTurnDirection = settings.getSettings().computedPageTurnDirection
         const movingForward = navigator.isNavigationGoingForwardFrom(to, from)
         const triggerPercentage = movingForward ? 1 - navigationSnapThreshold : navigationSnapThreshold
         const triggerXPosition =

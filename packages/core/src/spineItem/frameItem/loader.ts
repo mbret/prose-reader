@@ -22,6 +22,7 @@ import { Hook } from "../../types/Hook"
 import { createFrame$ } from "./createFrame$"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
+import { Settings } from "../../settings/settings"
 
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
@@ -32,12 +33,14 @@ export const createLoader = ({
   hooks$,
   context,
   viewportState$,
+  settings
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   hooks$: Observable<Hook[]>
   context: Context
+  settings: Settings
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
@@ -174,7 +177,7 @@ export const createLoader = ({
                 computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
               }
 
-              if (context.getSettings().computedPageTurnMode !== `scrollable`) {
+              if (settings.getSettings().computedPageTurnMode !== `scrollable`) {
                 // @todo see what's the impact
                 frame.setAttribute(`tab-index`, `0`)
               }
