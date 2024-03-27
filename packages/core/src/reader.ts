@@ -61,7 +61,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     context,
     spineItemManager,
     spineItemLocator,
-    settings
+    settings,
   })
   const cfiLocator = createCfiLocator({
     spineItemManager,
@@ -302,9 +302,11 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     spineItems$: spine.$.spineItems$,
     context$: context.$.state$,
     pagination,
-    settings$: settings.$.settings$,
-    getSettings: settings.getSettings,
-    setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, context.getState()),
+    settings: {
+      settings$: settings.$.settings$,
+      getSettings: settings.getSettings,
+      setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, context.getState()),
+    },
     $: {
       state$: stateSubject$.asObservable(),
       /**

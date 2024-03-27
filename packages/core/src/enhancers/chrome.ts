@@ -37,7 +37,7 @@ export const chromeEnhancer =
       if (!containerElement) return
 
       const onScroll = () => {
-        if (reader.getSettings().computedPageTurnMode === `controlled`) {
+        if (reader.settings.getSettings().computedPageTurnMode === `controlled`) {
           containerElement.scrollTo(0, 0)
         }
       }

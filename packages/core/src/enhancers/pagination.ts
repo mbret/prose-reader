@@ -165,7 +165,7 @@ export const paginationEnhancer =
 
       const writingMode = spineItem.spineItemFrame.getWritingMode()
       const { width, height } = spineItem.getElementDimensions()
-      const settings = reader.getSettings()
+      const settings = reader.settings.getSettings()
 
       if (settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`) {
         return 1

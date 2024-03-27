@@ -15,16 +15,18 @@ export const layoutEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    Settings$ extends Observable<any> = InheritOutput["settings$"],
+    Settings$ extends InheritOutput["settings"]["settings$"],
+    SetSettings extends (settings: Parameters<InheritOutput["settings"]["setSettings"]>[0] & SettingsInput) => void,
+    Output extends Omit<InheritOutput, "settings"> & {
+      settings: Omit<InheritOutput["settings"], "setSettings" | "settings$"> & {
+        settings$: Observable<ObservedValueOf<Settings$> & SettingsOutput>
+        setSettings: SetSettings
+      }
+    },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions & Options,
-  ): Omit<InheritOutput, "setSettings" | "settings$"> & {
-    settings$: Observable<ObservedValueOf<Settings$> & SettingsOutput>
-    setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & SettingsInput) => void
-  } => {
+  (options: InheritOptions & Options): Output => {
     const { pageHorizontalMargin = 24, pageVerticalMargin = 24 } = options
     const reader = next(options)
     const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
@@ -133,7 +135,7 @@ export const layoutEnhancer =
           map((state) => state.containerElement),
           filter(isDefined),
           distinctUntilChanged(),
-          takeUntil(reader.$.destroy$)
+          takeUntil(reader.$.destroy$),
         )
         .subscribe((container) => {
           observer = new ResizeObserver(() => {
@@ -160,27 +162,34 @@ export const layoutEnhancer =
       )
       .subscribe()
 
+    const settings$ = combineLatest([reader.settings.settings$, settingsSubject$.asObservable()]).pipe(
+      map(([innerSettings, settings]) => ({
+        ...(innerSettings as ObservedValueOf<Settings$>),
+        ...settings,
+      })),
+    )
+
+    const setSettings = (({ pageVerticalMargin, pageHorizontalMargin, ...rest }) => {
+      if (pageHorizontalMargin !== undefined || pageVerticalMargin !== undefined) {
+        settingsSubject$.next({
+          pageHorizontalMargin: pageHorizontalMargin ?? settingsSubject$.value.pageHorizontalMargin,
+          pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin,
+        })
+      }
+
+      reader.settings.setSettings(rest)
+    }) as SetSettings
+
     return {
       ...reader,
       destroy: () => {
         reader.destroy()
         observer?.disconnect()
       },
-      setSettings: ({ pageVerticalMargin, pageHorizontalMargin, ...rest }) => {
-        if (pageHorizontalMargin !== undefined || pageVerticalMargin !== undefined) {
-          settingsSubject$.next({
-            pageHorizontalMargin: pageHorizontalMargin ?? settingsSubject$.value.pageHorizontalMargin,
-            pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin,
-          })
-        }
-
-        reader.setSettings(rest)
+      settings: {
+        ...reader.settings,
+        setSettings,
+        settings$,
       },
-      settings$: combineLatest([reader.settings$, settingsSubject$.asObservable()]).pipe(
-        map(([innerSettings, settings]) => ({
-          ...(innerSettings as ObservedValueOf<Settings$>),
-          ...settings,
-        })),
-      ),
-    }
+    } as unknown as Output
   }

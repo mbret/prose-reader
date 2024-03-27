@@ -48,16 +48,18 @@ export const fontsEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    Settings$ extends Observable<any> = InheritOutput["settings$"],
+    SetSettings extends (settings: Parameters<InheritOutput["settings"]["setSettings"]>[0] & Options) => void,
+    Settings$ extends Observable<ObservedValueOf<InheritOutput["settings"]["settings$"]> & OutputOptions>,
+    Output extends Omit<InheritOutput, "settings"> & {
+      settings: Omit<InheritOutput["settings"], "setSettings" | "settings$"> & {
+        settings$: Settings$
+        setSettings: SetSettings
+      }
+    },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions & Options,
-  ): Omit<InheritOutput, "setSettings" | "settings$"> & {
-    settings$: Observable<ObservedValueOf<Settings$> & OutputOptions>
-    setSettings: (settings: Parameters<InheritOutput["setSettings"]>[0] & Options) => void
-  } => {
+  (options: InheritOptions & Options): Output => {
     const { fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher` } = options
     const changes$ = new Subject<Partial<OutputOptions>>()
     const settings$ = new BehaviorSubject<OutputOptions>({
@@ -138,12 +140,19 @@ export const fontsEnhancer =
 
     settings$.pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$)).subscribe()
 
-    const settingsMerge$ = combineLatest([reader.settings$, settings$]).pipe(
+    const settingsMerge$ = combineLatest([reader.settings.settings$, settings$]).pipe(
       map(([innerSettings, settings]) => ({
         ...innerSettings,
         ...(settings as ObservedValueOf<Settings$>),
       })),
     )
+
+    const setSettings = ((settings) => {
+      const { fontJustification, fontScale, fontWeight, lineHeight, ...passthroughSettings } = settings
+      changes$.next({ fontJustification, fontScale, fontWeight, lineHeight })
+
+      reader.settings.setSettings(passthroughSettings)
+    }) as SetSettings
 
     return {
       ...reader,
@@ -152,12 +161,10 @@ export const fontsEnhancer =
         settings$.complete()
         reader.destroy()
       },
-      setSettings: (settings) => {
-        const { fontJustification, fontScale, fontWeight, lineHeight, ...passthroughSettings } = settings
-        changes$.next({ fontJustification, fontScale, fontWeight, lineHeight })
-
-        reader.setSettings(passthroughSettings)
+      settings: {
+        ...reader.settings,
+        setSettings,
+        settings$: settingsMerge$,
       },
-      settings$: settingsMerge$,
-    }
+    } as unknown as Output
   }

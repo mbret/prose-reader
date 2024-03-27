@@ -14,7 +14,7 @@ export const zoomEnhancer =
     const viewportZoomer = createViewportZoomer(reader)
     const currentZoomerSubject$ = new BehaviorSubject<typeof elementZoomer | undefined>(undefined)
 
-    const isUsingScrollableViewport = () => reader.getSettings().computedPageTurnMode === `scrollable`
+    const isUsingScrollableViewport = () => reader.settings.getSettings().computedPageTurnMode === `scrollable`
 
     const enter = (imgElement?: HTMLImageElement) => {
       currentZoomerSubject$?.value?.exit()

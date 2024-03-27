@@ -74,9 +74,11 @@ export type ReaderInternal = {
   pagination: Pagination
   spineItems$: Spine["$"]["spineItems$"]
   context$: Context["$"]["state$"]
-  settings$: ReturnType<typeof createSettings>["$"]["settings$"]
-  setSettings: (data: Partial<InputSettings>) => void
-  getSettings: Settings["getSettings"]
+  settings: {
+    settings$: ReturnType<typeof createSettings>["$"]["settings$"]
+    setSettings: (data: Partial<InputSettings>) => void
+    getSettings: Settings["getSettings"]
+  }
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
