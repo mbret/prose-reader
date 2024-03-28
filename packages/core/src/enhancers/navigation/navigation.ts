@@ -1,7 +1,6 @@
-/**
- * Offer extra convenient methods for navigation.
- */
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import { createNavigator } from "./navigator"
+import { createState } from "./state"
 
 export const navigationEnhancer =
   <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
@@ -10,48 +9,21 @@ export const navigationEnhancer =
   (
     options: InheritOptions,
   ): InheritOutput & {
-    goToLeftSpineItem: () => void
-    goToRightSpineItem: () => void
+    navigation: ReturnType<typeof createNavigator> & {
+      state$: ReturnType<typeof createState>
+    }
   } => {
     const reader = next(options)
 
-    const goToNextSpineItem = () => {
-      const focusedSpineItemIndex = reader.getFocusedSpineItemIndex() || 0
-      const { end = focusedSpineItemIndex } =
-        reader.locator.getSpineItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
-      const numberOfSpineItems = reader.context.getManifest()?.spineItems.length ?? 0
-      const nextItem = end + 1
-      if (nextItem < numberOfSpineItems) {
-        reader.goToSpineItem(nextItem)
-      }
-    }
+    const state$ = createState(reader)
 
-    const goToPreviousSpineItem = () => {
-      const focusedSpineItemIndex = reader.getFocusedSpineItemIndex() || 0
-      const { begin = focusedSpineItemIndex } =
-        reader.locator.getSpineItemsFromReadingOrderPosition(reader.getCurrentNavigationPosition()) || {}
-      const nextItem = begin - 1
-
-      if (nextItem >= 0) {
-        reader.goToSpineItem(nextItem)
-      }
-    }
+    const navigator = createNavigator(reader)
 
     return {
       ...reader,
-      goToLeftSpineItem: () => {
-        if (reader.context.isRTL()) {
-          return goToNextSpineItem()
-        }
-
-        return goToPreviousSpineItem()
-      },
-      goToRightSpineItem: () => {
-        if (reader.context.isRTL()) {
-          return goToPreviousSpineItem()
-        }
-
-        return goToNextSpineItem()
+      navigation: {
+        ...navigator,
+        state$,
       },
     }
   }

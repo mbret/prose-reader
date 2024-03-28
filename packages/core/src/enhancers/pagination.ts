@@ -63,8 +63,6 @@ type EnhancedPaginationInfo = {
   numberOfTotalPages: number | undefined
   isUsingSpread: boolean
   // numberOfSpineItems: number | undefined
-  canGoLeft: boolean
-  canGoRight: boolean
 }
 
 export const paginationEnhancer =
@@ -97,17 +95,10 @@ export const paginationEnhancer =
       "beginAbsolutePageIndex" | "endAbsolutePageIndex" | "beginAbsolutePageIndex" | "numberOfTotalPages"
     > => {
       const context = reader.context
-      const manifest = context.getManifest()
-      const numberOfSpineItems = manifest?.spineItems.length ?? 0
       const beginItem =
         paginationInfo.beginSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.beginSpineItemIndex) : undefined
       const endItem =
         paginationInfo.endSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.endSpineItemIndex) : undefined
-
-      const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndex === 0
-      const isAtAbsoluteEnd =
-        paginationInfo.endPageIndex === paginationInfo.endNumberOfPages - 1 &&
-        paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
 
       return {
         ...paginationInfo,
@@ -150,12 +141,6 @@ export const paginationEnhancer =
         // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
         // numberOfSpineItems: context.getManifest()?.readingOrder.length,
-        canGoLeft:
-          (manifest?.readingDirection === "ltr" && !isAtAbsoluteBeginning) ||
-          (manifest?.readingDirection === "rtl" && !isAtAbsoluteEnd),
-        canGoRight:
-          (manifest?.readingDirection === "ltr" && !isAtAbsoluteEnd) ||
-          (manifest?.readingDirection === "rtl" && !isAtAbsoluteBeginning),
       }
     }
 
