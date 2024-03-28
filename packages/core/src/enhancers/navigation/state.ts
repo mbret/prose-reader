@@ -14,7 +14,7 @@ export const createState = (reader: Reader) => {
       const numberOfSpineItems = manifest?.spineItems.length ?? 0
       const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndex === 0
       const isAtAbsoluteEnd =
-        paginationInfo.endPageIndex === paginationInfo.endNumberOfPages - 1 &&
+        paginationInfo.endPageIndexInChapter === paginationInfo.endNumberOfPagesInChapter - 1 &&
         paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
 
       return {

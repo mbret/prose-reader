@@ -43,13 +43,9 @@ type ChapterInfo = {
 
 type EnhancedPaginationInfo = {
   beginChapterInfo: ChapterInfo | undefined
-  beginPageIndexInChapter: number | undefined
-  beginNumberOfPagesInChapter: number | undefined
   beginSpineItemReadingDirection: `rtl` | `ltr` | undefined
   beginAbsolutePageIndex: number | undefined
   endChapterInfo: ChapterInfo | undefined
-  endPageIndexInChapter: number | undefined
-  endNumberOfPagesInChapter: number | undefined
   endSpineItemReadingDirection: `rtl` | `ltr` | undefined
   endAbsolutePageIndex: number | undefined
   percentageEstimateOfBook: number | undefined
@@ -102,8 +98,6 @@ export const paginationEnhancer =
 
       return {
         ...paginationInfo,
-        beginPageIndexInChapter: paginationInfo.beginPageIndex,
-        beginNumberOfPagesInChapter: paginationInfo.beginNumberOfPages,
         beginChapterInfo: beginItem ? chaptersInfo[beginItem.item.id] : undefined,
         // chapterIndex: number;
         // pages: number;
@@ -117,8 +111,6 @@ export const paginationEnhancer =
         // serializeString?: string;
         beginSpineItemReadingDirection: beginItem?.getReadingDirection(),
         endChapterInfo: endItem ? chaptersInfo[endItem.item.id] : undefined,
-        endPageIndexInChapter: paginationInfo.endPageIndex,
-        endNumberOfPagesInChapter: paginationInfo.endNumberOfPages,
         endSpineItemReadingDirection: endItem?.getReadingDirection(),
         // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
         /**
@@ -131,8 +123,8 @@ export const paginationEnhancer =
           ? reader.progression.getPercentageEstimate(
               context,
               paginationInfo.endSpineItemIndex ?? 0,
-              paginationInfo.endNumberOfPages,
-              paginationInfo.endPageIndex || 0,
+              paginationInfo.endNumberOfPagesInChapter,
+              paginationInfo.endPageIndexInChapter || 0,
               reader.getCurrentViewportPosition(),
               endItem,
             )
