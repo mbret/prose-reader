@@ -265,7 +265,7 @@ export const createViewportNavigator = ({
        */
       // @todo get x of first visible element and try to get the page for this element
       // using the last page is not accurate since we could have less pages
-      const currentPageIndex = pagination.getPaginationInfo().beginPageIndex || 0
+      const currentPageIndex = pagination.getPaginationInfo().beginPageIndexInChapter || 0
       adjustedSpinePosition = navigator.getNavigationForPage(currentPageIndex, spineItem)
       Report.log(NAMESPACE, `adjustNavigation`, `use guess strategy`, {})
     }

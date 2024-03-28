@@ -12,7 +12,7 @@ export const createState = (reader: Reader) => {
     withLatestFrom(reader.context.$.manifest$, reader.settings.settings$),
     map(([paginationInfo, manifest, { computedPageTurnDirection }]) => {
       const numberOfSpineItems = manifest?.spineItems.length ?? 0
-      const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndex === 0
+      const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndexInChapter === 0
       const isAtAbsoluteEnd =
         paginationInfo.endPageIndexInChapter === paginationInfo.endNumberOfPagesInChapter - 1 &&
         paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
