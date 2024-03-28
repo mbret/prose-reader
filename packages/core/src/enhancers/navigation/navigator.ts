@@ -27,6 +27,8 @@ export const createNavigator = (reader: Reader) => {
     goToNextSpineItem,
     goToPreviousSpineItem,
     goToLeftSpineItem: () => {
+      if (reader.settings.getSettings().computedPageTurnDirection === "vertical") return
+
       if (reader.context.isRTL()) {
         return goToNextSpineItem()
       }
@@ -34,6 +36,8 @@ export const createNavigator = (reader: Reader) => {
       return goToPreviousSpineItem()
     },
     goToRightSpineItem: () => {
+      if (reader.settings.getSettings().computedPageTurnDirection === "vertical") return
+
       if (reader.context.isRTL()) {
         return goToPreviousSpineItem()
       }

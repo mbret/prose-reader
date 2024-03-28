@@ -9,8 +9,8 @@ export type State = {
 
 export const createState = (reader: Reader) => {
   return reader.pagination.paginationInfo$.pipe(
-    withLatestFrom(reader.context.$.manifest$),
-    map(([paginationInfo, manifest]) => {
+    withLatestFrom(reader.context.$.manifest$, reader.settings.settings$),
+    map(([paginationInfo, manifest, { computedPageTurnDirection }]) => {
       const numberOfSpineItems = manifest?.spineItems.length ?? 0
       const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndex === 0
       const isAtAbsoluteEnd =
@@ -18,12 +18,16 @@ export const createState = (reader: Reader) => {
         paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
 
       return {
+        canGoTopSpineItem: computedPageTurnDirection === "vertical" && !isAtAbsoluteBeginning,
+        canGoBottomSpineItem: computedPageTurnDirection === "vertical" && !isAtAbsoluteEnd,
         canGoLeftSpineItem:
-          (manifest?.readingDirection === "ltr" && !isAtAbsoluteBeginning) ||
-          (manifest?.readingDirection === "rtl" && !isAtAbsoluteEnd),
+          computedPageTurnDirection !== "vertical" &&
+          ((manifest?.readingDirection === "ltr" && !isAtAbsoluteBeginning) ||
+            (manifest?.readingDirection === "rtl" && !isAtAbsoluteEnd)),
         canGoRightSpineItem:
-          (manifest?.readingDirection === "ltr" && !isAtAbsoluteEnd) ||
-          (manifest?.readingDirection === "rtl" && !isAtAbsoluteBeginning),
+          computedPageTurnDirection !== "vertical" &&
+          ((manifest?.readingDirection === "ltr" && !isAtAbsoluteEnd) ||
+            (manifest?.readingDirection === "rtl" && !isAtAbsoluteBeginning)),
       }
     }),
     distinctUntilChanged(isShallowEqual),
