@@ -10,12 +10,12 @@ const NAMESPACE = `pagination`
 
 export const createPagination = ({ context }: { context: Context; spineItemManager: SpineItemManager }) => {
   const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
-    beginPageIndexInChapter: undefined,
-    beginNumberOfPagesInChapter: 0,
+    beginPageIndexInSpineItem: undefined,
+    beginNumberOfPagesInSpineItem: 0,
     beginCfi: undefined,
     beginSpineItemIndex: undefined,
-    endPageIndexInChapter: undefined,
-    endNumberOfPagesInChapter: 0,
+    endPageIndexInSpineItem: undefined,
+    endNumberOfPagesInSpineItem: 0,
     endCfi: undefined,
     endSpineItemIndex: undefined,
   })
@@ -86,12 +86,12 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
       const endInfo = getInfoForUpdate(end)
 
       const newValues: PaginationInfo = {
-        beginPageIndexInChapter: beginInfo.pageIndex,
-        beginNumberOfPagesInChapter: beginInfo.numberOfPages,
+        beginPageIndexInSpineItem: beginInfo.pageIndex,
+        beginNumberOfPagesInSpineItem: beginInfo.numberOfPages,
         beginCfi: beginInfo.cfi,
         beginSpineItemIndex: begin.spineItemIndex,
-        endPageIndexInChapter: endInfo.pageIndex,
-        endNumberOfPagesInChapter: endInfo.numberOfPages,
+        endPageIndexInSpineItem: endInfo.pageIndex,
+        endNumberOfPagesInSpineItem: endInfo.numberOfPages,
         endCfi: endInfo.cfi,
         endSpineItemIndex: end.spineItemIndex,
       }
@@ -111,7 +111,7 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
    */
   const paginationInfo$ = paginationSubject$.pipe(
     distinctUntilChanged(isShallowEqual),
-    filter(({ beginPageIndexInChapter }) => beginPageIndexInChapter !== undefined),
+    filter(({ beginPageIndexInSpineItem }) => beginPageIndexInSpineItem !== undefined),
   )
 
   const destroy = () => {

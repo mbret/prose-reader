@@ -123,8 +123,8 @@ export const paginationEnhancer =
           ? reader.progression.getPercentageEstimate(
               context,
               paginationInfo.endSpineItemIndex ?? 0,
-              paginationInfo.endNumberOfPagesInChapter,
-              paginationInfo.endPageIndexInChapter || 0,
+              paginationInfo.endNumberOfPagesInSpineItem,
+              paginationInfo.endPageIndexInSpineItem || 0,
               reader.getCurrentViewportPosition(),
               endItem,
             )
@@ -213,10 +213,10 @@ export const paginationEnhancer =
         ...totalPageInfo,
         beginAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
           .slice(0, pageInfo.beginSpineItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.beginPageIndexInChapter ?? 0),
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.beginPageIndexInSpineItem ?? 0),
         endAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
           .slice(0, pageInfo.endSpineItemIndex)
-          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInChapter ?? 0),
+          .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInSpineItem ?? 0),
       })),
       shareReplay(1),
       takeUntil(reader.$.destroy$),

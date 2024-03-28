@@ -7,11 +7,13 @@ import { LoadOptions } from "../types/reader"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
+import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 
 type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
   manifest?: Manifest
   hasVerticalWriting?: boolean
   isUsingSpreadMode?: boolean
+  isFullyPrePaginated?: boolean
 }
 
 export type Context = {
@@ -71,7 +73,6 @@ export const createContext = (settings: ReturnType<typeof createSettings>): Cont
   const marginTop = 0
   const marginBottom = 0
   const destroy$ = new Subject<void>()
-  
 
   const setState = (newState: Partial<ObservedValueOf<typeof stateSubject>>) => {
     const newCompleteState = { ...stateSubject.getValue(), ...newState }
@@ -85,6 +86,7 @@ export const createContext = (settings: ReturnType<typeof createSettings>): Cont
     setState({
       manifest: newManifest,
       ...newLoadOptions,
+      isFullyPrePaginated: isFullyPrePaginated(newManifest),
       isUsingSpreadMode: isUsingSpreadMode({
         manifest: newManifest,
         visibleAreaRect,

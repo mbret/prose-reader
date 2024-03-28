@@ -1,10 +1,10 @@
 export type PaginationInfo = {
-  beginPageIndexInChapter: number | undefined
-  beginNumberOfPagesInChapter: number
+  beginPageIndexInSpineItem: number | undefined
+  beginNumberOfPagesInSpineItem: number
   beginCfi: string | undefined
   beginSpineItemIndex: number | undefined
-  endPageIndexInChapter: number | undefined
-  endNumberOfPagesInChapter: number
+  endPageIndexInSpineItem: number | undefined
+  endNumberOfPagesInSpineItem: number
   endCfi: string | undefined
   endSpineItemIndex: number | undefined
 }
