@@ -49,7 +49,7 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
           // we override loading element creator but don't do anything yet
           loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
         }),
-        // ...options,
+        ...options,
       } as Options
 
       const newReader = createReader(readerOptions)
