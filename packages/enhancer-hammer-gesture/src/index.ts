@@ -63,15 +63,13 @@ export const hammerGestureEnhancer =
     )
 
     const tapListenerEvents$ = hammerManager$.pipe(
+      ignoreElements(),
       filter(isDefined),
       switchMap((manager) => merge(createPanMoveListener(reader, manager), createTapListener(reader, manager))),
     )
 
     const changes$ = merge(
-      tapListenerEvents$.pipe(
-        // disabled for now
-        ignoreElements()
-      ),
+      tapListenerEvents$,
       hammerManager$.pipe(
         isNotNullOrUndefined,
         switchMap((instance) => {
