@@ -1,7 +1,7 @@
-import { expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 import { getNewScaledOffset } from "./layout"
 
-test(`getNewScaledOffset`, () => {
+describe(`getNewScaledOffset`, () => {
   test.each([
     // same scale
     [1, 1, 600, 600, 0, 0],
