@@ -4,6 +4,7 @@ import {
   BehaviorSubject,
   filter,
   fromEvent,
+  ignoreElements,
   interval,
   map,
   merge,
@@ -67,15 +68,18 @@ export const hammerGestureEnhancer =
     )
 
     const changes$ = merge(
-      tapListenerEvents$,
+      tapListenerEvents$.pipe(
+        // disabled for now
+        ignoreElements()
+      ),
       hammerManager$.pipe(
         isNotNullOrUndefined,
         switchMap((instance) => {
           const pinchStart$ = fromEvent(instance, "pinchstart").pipe(
             map(() => {
-              if (!reader?.zoom.isZooming()) {
-                reader?.zoom.enter()
-              }
+              // if (!reader?.zoom.isZooming()) {
+              //   reader?.zoom.enter()
+              // }
 
               return undefined
             }),
@@ -90,9 +94,10 @@ export const hammerGestureEnhancer =
             throttle(() => interval(100)),
             withLatestFrom(settingsLastPinchStart$),
             map(([event, { fontScale: fontScaleOnPinchStart }]) => {
-              if (reader?.zoom.isZooming()) {
-                reader?.zoom.scale(event.scale)
-              } else if (enableFontScalePinch) {
+              // if (reader?.zoom.isZooming()) {
+              //   reader?.zoom.scale(event.scale)
+              // } else 
+              if (enableFontScalePinch) {
                 const value = fontScaleOnPinchStart + (event.scale - 1)
                 const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
 
@@ -112,12 +117,12 @@ export const hammerGestureEnhancer =
 
           const pinchEnd$ = fromEvent(instance, `pinchend`).pipe(
             map(() => {
-              if (reader?.zoom.isZooming()) {
-                reader?.zoom.setCurrentScaleAsBase()
-                if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
-                  reader?.zoom.exit()
-                }
-              }
+              // if (reader?.zoom.isZooming()) {
+              //   reader?.zoom.setCurrentScaleAsBase()
+              //   if (reader?.zoom.isUsingScrollableZoom() && reader?.zoom.getScaleValue() <= 1) {
+              //     reader?.zoom.exit()
+              //   }
+              // }
 
               return undefined
             }),
