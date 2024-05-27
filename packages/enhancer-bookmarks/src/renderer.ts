@@ -61,7 +61,7 @@ export const createRenderer = (
       switchMap(([, pagination]) => {
         const {
           beginCfi: currentCfi,
-          beginPageIndexInChapter: currentPageIndex,
+          beginPageIndexInSpineItem: currentPageIndex,
           beginSpineItemIndex: currentSpineItemIndex,
         } = pagination
 
