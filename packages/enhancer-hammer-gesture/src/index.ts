@@ -82,7 +82,7 @@ export const hammerGestureEnhancer =
           )
 
           const settingsLastPinchStart$ = pinchStart$.pipe(
-            withLatestFrom(reader.settings$),
+            withLatestFrom(reader.settings.settings$),
             map(([, settings]) => settings),
           )
 
@@ -96,7 +96,7 @@ export const hammerGestureEnhancer =
                 const value = fontScaleOnPinchStart + (event.scale - 1)
                 const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
 
-                reader.setSettings({
+                reader.settings.setSettings({
                   fontScale: newScale,
                 })
 

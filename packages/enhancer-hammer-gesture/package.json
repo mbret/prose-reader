@@ -22,7 +22,7 @@
       "test": "vitest run --coverage"
     },
     "dependencies": {
-      "@prose-reader/core": "^1.41.0"
+      "@prose-reader/core": "^1.43.0"
     },
     "peerDependencies": {
       "@types/hammerjs": "*",
