@@ -7,7 +7,7 @@ const report = Report.namespace("@prose-reader/react")
 export type Props<Options extends object, Instance extends ReaderInstance> = {
   manifest?: Manifest
   options?: Omit<Options, "containerElement">
-  loadOptions?: Parameters<Instance["load"]>[1]
+  loadOptions?: Omit<Parameters<Instance["load"]>[1], "containerElement">
   createReader: (options: Options) => Instance
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onReader?: (reader: any) => void
@@ -45,12 +45,11 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
     if (ref.current && !reader && options) {
       readerInitialized.current = true
       const readerOptions = {
-        containerElement: ref.current,
         ...(hasLoadingElement && {
           // we override loading element creator but don't do anything yet
           loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
         }),
-        ...options,
+        // ...options,
       } as Options
 
       const newReader = createReader(readerOptions)
@@ -73,8 +72,11 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
   }, [reader, onReady])
 
   useEffect(() => {
-    if (manifest && reader && loadOptions) {
-      reader.load(manifest, loadOptions)
+    if (manifest && reader && loadOptions && ref.current) {
+      reader.load(manifest, {
+        ...loadOptions,
+        containerElement: ref.current,
+      })
     }
   }, [manifest, reader, loadOptions])
 
