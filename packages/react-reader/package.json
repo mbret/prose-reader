@@ -4,6 +4,7 @@
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
+  "private": true,
   "exports": {
     ".": {
       "import": "./dist/index.js",
