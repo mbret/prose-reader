@@ -29,7 +29,6 @@
     "tsc": "tsc"
   },
   "peerDependencies": {
-    "@prose-reader/enhancer-gesture": "*",
     "@types/react": "*",
     "@types/react-dom": "*",
     "react": "*",
