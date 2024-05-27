@@ -15,15 +15,27 @@ export const comicInfoHook =
       return manifest
     }
 
-    // @todo handle more meta
-    const content = await comicInfoFile.string()
-    const xmlDoc = new xmldoc.XmlDocument(content)
-
-    const mangaVal = (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
-
-    return {
+    const manifestWithoutComicInfo = {
       ...manifest,
       spineItems: manifest.spineItems.filter((item) => item.id.toLowerCase() !== `comicinfo.xml`),
-      readingDirection: mangaVal === `YesAndRightToLeft` ? `rtl` : `ltr`,
+    }
+
+    // @todo handle more meta
+    const content = await comicInfoFile.string()
+
+    try {
+      const xmlDoc = new xmldoc.XmlDocument(content)
+
+      const mangaVal = (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
+
+      return {
+        ...manifestWithoutComicInfo,
+        readingDirection: mangaVal === `YesAndRightToLeft` ? `rtl` : `ltr`,
+      }
+    } catch (e) {
+      console.error("Unable to parse comicinfo.xml for content\n", content)
+      console.error(e)
+
+      return manifestWithoutComicInfo
     }
   }
