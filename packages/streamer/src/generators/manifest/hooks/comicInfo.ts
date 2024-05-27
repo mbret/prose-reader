@@ -17,7 +17,7 @@ export const comicInfoHook =
 
     const manifestWithoutComicInfo = {
       ...manifest,
-      spineItems: manifest.spineItems.filter((item) => item.id.toLowerCase() !== `comicinfo.xml`),
+      spineItems: manifest.spineItems.filter((item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`)),
     }
 
     // @todo handle more meta
