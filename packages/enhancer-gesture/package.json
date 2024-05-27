@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-gesture",
-  "version": "1.41.0",
+  "version": "1.42.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -22,11 +22,10 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.41.0"
+    "@prose-reader/core": "^1.42.0"
   },
   "peerDependencies": {
     "rxjs": "*"
   },
-  "devDependencies": {},
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

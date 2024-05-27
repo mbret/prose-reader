@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react-reader",
-  "version": "1.41.0",
+  "version": "1.42.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
@@ -29,14 +29,14 @@
     "tsc": "tsc"
   },
   "peerDependencies": {
+    "@prose-reader/enhancer-gesture": "*",
     "@types/react": "*",
     "@types/react-dom": "*",
     "react": "*",
-    "react-dom": "*",
-    "@prose-reader/enhancer-gesture": "*"
+    "react-dom": "*"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.41.0"
+    "@prose-reader/core": "^1.42.0"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
