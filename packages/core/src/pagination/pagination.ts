@@ -28,10 +28,10 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
     const { width, height } = spineItem.getElementDimensions()
 
     if (writingMode === `vertical-rl`) {
-      return getNumberOfPages(height, context.getPageSize().height)
+      return calculateNumberOfPagesForItem(height, context.getPageSize().height)
     }
 
-    return getNumberOfPages(width, context.getPageSize().width)
+    return calculateNumberOfPagesForItem(width, context.getPageSize().width)
   }
 
   const getInfoForUpdate = (info: {
@@ -135,13 +135,13 @@ export const getItemOffsetFromPageIndex = (pageWidth: number, pageIndex: number,
   return Math.max(0, Math.min(lastPageOffset, logicalOffset))
 }
 
-export const getNumberOfPages = (itemWidth: number, pageWidth: number) => {
+export const calculateNumberOfPagesForItem = (itemWidth: number, pageWidth: number) => {
   if ((pageWidth || 0) === 0 || (itemWidth || 0) === 0) return 1
   return Math.floor(Math.max(1, itemWidth / pageWidth))
 }
 
 export const getClosestValidOffsetFromApproximateOffsetInPages = (offset: number, pageWidth: number, itemWidth: number) => {
-  const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
+  const numberOfPages = calculateNumberOfPagesForItem(itemWidth, pageWidth)
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
   if (offset >= numberOfPages * pageWidth) return offsetValues[offsetValues.length - 1] || 0

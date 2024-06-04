@@ -1,5 +1,5 @@
 import { Context } from "../context/context"
-import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, getNumberOfPages } from "../pagination/pagination"
+import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, calculateNumberOfPagesForItem } from "../pagination/pagination"
 import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import { SpineItemPosition, UnsafeSpineItemPosition } from "./types"
@@ -52,11 +52,11 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     const offset = context.isRTL() ? itemWidth - safePosition.x - context.getPageSize().width : safePosition.x
 
     if (spineItem.isUsingVerticalWriting()) {
-      const numberOfPages = getNumberOfPages(itemHeight, pageHeight)
+      const numberOfPages = calculateNumberOfPagesForItem(itemHeight, pageHeight)
 
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
     } else {
-      const numberOfPages = getNumberOfPages(itemWidth, pageWidth)
+      const numberOfPages = calculateNumberOfPagesForItem(itemWidth, pageWidth)
       const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
 
       return pageIndex

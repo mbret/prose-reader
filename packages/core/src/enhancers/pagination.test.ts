@@ -2,7 +2,7 @@ import { Manifest } from "@prose-reader/shared"
 import { ObservedValueOf, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../reader"
-import { paginationEnhancer } from "./pagination"
+import { paginationEnhancer } from "./pagination/enhancer"
 import { progressionEnhancer } from "./progression"
 
 window.__PROSE_READER_DEBUG = false

@@ -226,6 +226,7 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
         index < leftIndex && !isPrePaginated && isUsingFreeScroll ? true : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
       const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
+
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
         orderedSpineItem.loadContent()
       } else {

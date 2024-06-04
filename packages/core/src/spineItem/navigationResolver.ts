@@ -1,6 +1,6 @@
 import { SpineItem } from "./createSpineItem"
 import { Context } from "../context/context"
-import { getNumberOfPages } from "../pagination/pagination"
+import { calculateNumberOfPagesForItem } from "../pagination/pagination"
 import { createLocationResolver } from "./locationResolver"
 import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"
 import { Settings } from "../settings/settings"
@@ -47,11 +47,11 @@ export const createNavigationResolver = ({ context }: { context: Context, settin
   const getNavigationForLastPage = (spineItem: SpineItem): SpineItemNavigationPosition => {
     if (spineItem.isUsingVerticalWriting()) {
       const pageHeight = context.getPageSize().height
-      const numberOfPages = getNumberOfPages(spineItem.getElementDimensions().height, pageHeight)
+      const numberOfPages = calculateNumberOfPagesForItem(spineItem.getElementDimensions().height, pageHeight)
       return getNavigationForPage(numberOfPages - 1, spineItem)
     } else {
       const pageWidth = context.getPageSize().width
-      const numberOfPages = getNumberOfPages(spineItem.getElementDimensions().width, pageWidth)
+      const numberOfPages = calculateNumberOfPagesForItem(spineItem.getElementDimensions().width, pageWidth)
       return getNavigationForPage(numberOfPages - 1, spineItem)
     }
   }
