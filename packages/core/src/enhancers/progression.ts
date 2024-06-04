@@ -70,10 +70,10 @@ export const progressionEnhancer =
       // because the rounding of weight use a lot of decimals we will end up with
       // something like 0.999878 for the last page
       if (currentSpineIndex === readingOrderLength - 1 && pageIndex === numberOfPages - 1 && totalProgress > 0.99) {
-        return 100
+        return 1
       }
 
-      return totalProgress * 100
+      return totalProgress
     }
 
     const getTotalProgressFromPercentages = (
