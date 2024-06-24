@@ -30,6 +30,7 @@ export const createEventsHelper = ({
 
       const newEvent = new PointerEvent(event.type, {
         ...event,
+        pointerId: event.pointerId,
         clientX,
         clientY,
       }) as E

@@ -35,6 +35,9 @@ export default defineConfig(({ mode }) => ({
       minify: false,
       injectRegister: null,
       strategies: "injectManifest",
+      manifest: {
+        theme_color: "#ffffff"
+      },
       injectManifest: {
         rollupFormat: "iife",
         // globPatterns: ["**\/*.{js,css,html,js.mem,ico,json}"],

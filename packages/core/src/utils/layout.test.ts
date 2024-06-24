@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest"
+import { expect, test, describe } from "vitest"
 import { getNewScaledOffset } from "./layout"
 
 describe(`getNewScaledOffset`, () => {

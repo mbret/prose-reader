@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const ROOT_NAMESPACE = `@prose-reader/core`
 
+const getWindow = () => {
+  if (typeof window === "undefined") {
+    return undefined
+  }
+
+  return window
+}
+
 const wrap = (str: string) => `[${str}]`
 
 const time = (name: string, targetDuration = 0) => {
@@ -21,7 +29,7 @@ const time = (name: string, targetDuration = 0) => {
 const createReport = (namespace?: string) => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log: (...data: any[]) => {
-    if (window.__PROSE_READER_DEBUG) {
+    if (getWindow()?.__PROSE_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.log(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
       else console.log(wrap(ROOT_NAMESPACE), ...data)
@@ -29,7 +37,7 @@ const createReport = (namespace?: string) => ({
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   warn: (...data: any[]) => {
-    if (window.__PROSE_READER_DEBUG) {
+    if (getWindow()?.__PROSE_READER_DEBUG) {
       // eslint-disable-next-line no-console
       if (namespace) console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
       else console.warn(wrap(ROOT_NAMESPACE), ...data)
@@ -55,7 +63,7 @@ const createReport = (namespace?: string) => ({
   time,
   logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
     // const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
-    if (window.__PROSE_READER_DEBUG) {
+    if (getWindow()?.__PROSE_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {
         // eslint-disable-next-line no-console
         // console.log(`[prose-reader] [metric] `, `${performanceEntry.name} took ${duration}ms`);
@@ -75,7 +83,7 @@ const createReport = (namespace?: string) => ({
     functionToMeasure: F,
     { disable }: { disable?: boolean } = {},
   ) => {
-    if (disable || !window.__PROSE_READER_DEBUG) return functionToMeasure
+    if (disable || !getWindow()?.__PROSE_READER_DEBUG) return functionToMeasure
 
     return (...args: Parameters<F>): ReturnType<F> => {
       const t0 = performance.now()
@@ -87,11 +95,13 @@ const createReport = (namespace?: string) => ({
         return response.then((res: any) => {
           const t1 = performance.now()
           Report.logMetric({ name, duration: t1 - t0 }, targetDuration)
+
           return res
         })
       }
 
       const t1 = performance.now()
+
       Report.logMetric({ name, duration: t1 - t0 }, targetDuration)
 
       return response

@@ -1,7 +1,7 @@
 import { ArrowBackIcon } from "@chakra-ui/icons"
 import { IconButton, Box, Modal, ModalContent, ModalOverlay } from "@chakra-ui/react"
 import React, { FC, ReactNode } from "react"
-import { AppBar } from "./AppBar"
+import { AppBar } from "../navigation/AppBar"
 
 export const FullScreenModal: FC<{ onClose: () => void; isOpen: boolean; title: string; children: ReactNode }> = ({
   onClose,
