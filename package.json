@@ -63,17 +63,20 @@
     "vite-plugin-pwa": "^0.20.0",
     "vite-plugin-svgr": "^4.2.0",
     "vitest": "^1.4.0",
-    "wait-on": "^7.0.1",
     "workbox-build": "^7.0.0",
     "workbox-window": "^7.0.0",
     "xmldoc": "^1.1.2"
   },
-  "resolutions": {
-    "@types/react": "18.0.28"
-  },
   "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
     "@rollup/plugin-replace": "^5.0.2",
+    "framer-motion": "^11.0.22",
+    "happy-dom": "^14.7.1",
+    "prettier-plugin-tailwindcss": "^0.5.12",
     "reactjrx": "^1.81.0",
+    "screenfull": "^6.0.2",
     "typescript": "^5.3.3"
   }
 }
