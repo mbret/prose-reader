@@ -1,10 +1,10 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
 import { createReflowableSpineItem } from "./reflowableSpineItem"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 export const createSpineItem = ({
   item,
@@ -21,7 +21,7 @@ export const createSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   if (item.renditionLayout === `pre-paginated`) {
     return createPrePaginatedSpineItem({

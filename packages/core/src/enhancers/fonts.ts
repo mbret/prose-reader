@@ -93,7 +93,7 @@ export const fontsEnhancer =
      * Programmatically update every loaded items
      */
     const applyChangeToSpineItem = (requireLayout: boolean) => {
-      reader.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
+      reader.spine.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
         if (item.renditionLayout !== `pre-paginated`) {
           removeStyle(`prose-reader-fonts`)
           addStyle(`prose-reader-fonts`, getStyle())

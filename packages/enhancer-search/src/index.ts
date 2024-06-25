@@ -91,7 +91,7 @@ export const searchEnhancer =
     }
 
     const searchForItem = (index: number, text: string) => {
-      const item = reader.getSpineItem(index)
+      const item = reader.spineItemManager.get(index)
 
       if (!item) {
         return of([])
@@ -111,11 +111,11 @@ export const searchEnhancer =
 
               const ranges = searchNodeContainingText(doc, text)
               const newResults = ranges.map((range) => {
-                const { end, start } = reader.generateCfi(range, item.item)
-                const { node, offset, spineItemIndex } = reader.resolveCfi(start) || {}
+                const { end, start } = reader.spine.cfiLocator.generateFromRange(range, item.item)
+                const { node, offset, spineItemIndex } = reader.spine.cfiLocator.resolveCfi(start) || {}
                 const pageIndex =
                   node && spineItemIndex !== undefined
-                    ? reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
+                    ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
                     : undefined
 
                 return {
@@ -151,7 +151,7 @@ export const searchEnhancer =
             return of([])
           }
 
-          const searches$ = reader.context.getManifest()?.spineItems.map((_, index) => searchForItem(index, text)) || []
+          const searches$ = reader.context.manifest?.spineItems.map((_, index) => searchForItem(index, text)) || []
 
           return forkJoin(searches$).pipe(
             map((results) => {

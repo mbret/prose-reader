@@ -1,170 +1,161 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { BehaviorSubject, ObservedValueOf, Subject, merge } from "rxjs"
-import { distinctUntilChanged, takeUntil, tap, map, filter, withLatestFrom } from "rxjs/operators"
+import { BehaviorSubject, Subject } from "rxjs"
+import { distinctUntilChanged, map, filter } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
-import { createSettings } from "../settings/settings"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { Context, State } from "./types"
+import { LoadOptions } from "../types/reader"
+import { ComputedSettings } from "../settings/types"
+import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 
-export const createContext = (settings: ReturnType<typeof createSettings>): Context => {
-  const stateSubject = new BehaviorSubject<State>({})
-  const manifest$ = stateSubject.pipe(
+export type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
+  manifest?: Manifest
+  hasVerticalWriting?: boolean
+  isUsingSpreadMode?: boolean
+  isFullyPrePaginated?: boolean
+  forceSinglePageMode?: boolean
+  areAllItemsPrePaginated?: boolean
+  calculatedInnerMargin: number
+  marginTop: number
+  marginBottom: number
+  visibleAreaRect: {
+    width: number
+    height: number
+    x: number
+    y: number
+  }
+}
+
+export class Context {
+  // @see https://github.com/microsoft/TypeScript/issues/17293
+  _stateSubject = new BehaviorSubject<State>({
+    marginBottom: 0,
+    marginTop: 0,
+    calculatedInnerMargin: 0,
+    visibleAreaRect: {
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+    },
+  })
+
+  public destroy$ = new Subject<void>()
+
+  public state$ = this._stateSubject.pipe(distinctUntilChanged(isShallowEqual))
+
+  public manifest$ = this._stateSubject.pipe(
     map((state) => state.manifest),
     filter(isDefined),
     distinctUntilChanged(),
   )
-  const containerElement$ = stateSubject.pipe(
+
+  public containerElement$ = this._stateSubject.pipe(
     map((state) => state.containerElement),
     filter(isDefined),
     distinctUntilChanged(),
   )
-  const hasVerticalWriting$ = stateSubject.pipe(
+
+  public hasVerticalWriting$ = this._stateSubject.pipe(
     map((state) => state.hasVerticalWriting),
     filter(isDefined),
     distinctUntilChanged(),
   )
-  const isUsingSpreadMode$ = stateSubject.pipe(
+
+  public isUsingSpreadMode$ = this._stateSubject.pipe(
     map((state) => state.isUsingSpreadMode),
     distinctUntilChanged(),
   )
 
-  const visibleAreaRect = {
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-  }
-  const marginTop = 0
-  const marginBottom = 0
-  const destroy$ = new Subject<void>()
+  /**
+   * @todo optimize to not run if not necessary
+   */
+  public update(newState: {
+    manifest?: Manifest
+    forceSinglePageMode?: boolean
+    visibleAreaRect?: State["visibleAreaRect"]
+    marginTop?: number
+    marginBottom?: number
+    hasVerticalWriting?: boolean
+  }) {
+    // visibleAreaRect.width = width - horizontalMargin * 2
 
-  const setState = (newState: Partial<ObservedValueOf<typeof stateSubject>>) => {
-    const newCompleteState = { ...stateSubject.getValue(), ...newState }
+    const previousState = this._stateSubject.getValue()
+    const manifest = newState.manifest ?? previousState.manifest
+    const forceSinglePageMode = newState.forceSinglePageMode ?? previousState.forceSinglePageMode
+    const visibleAreaRect = newState.visibleAreaRect ?? previousState.visibleAreaRect
+    const marginTop = newState.marginTop ?? previousState.marginTop
+    const marginBottom = newState.marginBottom ?? previousState.marginBottom
 
-    if (!isShallowEqual(newCompleteState, stateSubject.getValue())) {
-      stateSubject.next(newCompleteState)
+    // if (this.useChromiumRubyBugSafeInnerMargin) {
+    //   this.visibleAreaRect.height =
+    //     this.visibleAreaRect.height - this.getCalculatedInnerMargin()
+    // }
+
+    const newCompleteState = {
+      ...previousState,
+      ...newState,
+      ...(newState.visibleAreaRect && {
+        ...newState.visibleAreaRect,
+        height: newState.visibleAreaRect.height - marginTop - marginBottom,
+      }),
+      ...(newState.manifest && {
+        areAllItemsPrePaginated: areAllItemsPrePaginated(manifest),
+        isFullyPrePaginated: isFullyPrePaginated(manifest),
+      }),
+      isUsingSpreadMode: isUsingSpreadMode({
+        manifest,
+        visibleAreaRect,
+        forceSinglePageMode,
+      }),
+    }
+
+    if (!isShallowEqual(newCompleteState, previousState)) {
+      this._stateSubject.next(newCompleteState)
     }
   }
 
-  const load: Context["load"] = (newManifest, newLoadOptions, settings) => {
-    setState({
+  public load(newManifest: Manifest, newLoadOptions: LoadOptions, settings: ComputedSettings) {
+    this.update({
       manifest: newManifest,
       ...newLoadOptions,
-      isFullyPrePaginated: isFullyPrePaginated(newManifest),
-      isUsingSpreadMode: isUsingSpreadMode({
-        manifest: newManifest,
-        visibleAreaRect,
-        forceSinglePageMode: settings.forceSinglePageMode,
-      }),
+      forceSinglePageMode: settings.forceSinglePageMode,
     })
   }
 
   /**
    * RTL only makes sense for horizontal scrolling
    */
-  const isRTL = () => {
-    return stateSubject.getValue().manifest?.readingDirection === `rtl`
+  public isRTL = () => {
+    return this._stateSubject.getValue().manifest?.readingDirection === `rtl`
   }
 
-  const setHasVerticalWriting = (value: boolean) =>
-    setState({
-      hasVerticalWriting: value,
-    })
-
-  const recomputeSettings$ = merge(hasVerticalWriting$, manifest$)
-
-  recomputeSettings$
-    .pipe(
-      withLatestFrom(hasVerticalWriting$, manifest$),
-      tap(([, hasVerticalWriting, manifest]) => {
-        settings.recompute({ hasVerticalWriting, manifest })
-      }),
-      takeUntil(destroy$),
-    )
-    .subscribe()
-
-  /**
-   * Update state based on settings
-   */
-  settings.$.settings$
-    .pipe(
-      map(({ forceSinglePageMode }) => forceSinglePageMode),
-      distinctUntilChanged(),
-      withLatestFrom(manifest$),
-      tap(([forceSinglePageMode, manifest]) => {
-        setState({
-          isUsingSpreadMode: isUsingSpreadMode({
-            manifest,
-            visibleAreaRect,
-            forceSinglePageMode: forceSinglePageMode,
-          }),
-        })
-      }),
-      takeUntil(destroy$),
-    )
-    .subscribe()
-
-  const destroy = () => {
-    stateSubject.complete()
-    destroy$.next()
-    destroy$.complete()
+  get state() {
+    return this._stateSubject.getValue()
   }
 
-  return {
-    load,
-    isRTL,
-    areAllItemsPrePaginated: () => areAllItemsPrePaginated(stateSubject.getValue()?.manifest),
-    destroy,
-    getCalculatedInnerMargin: () => 0,
-    getVisibleAreaRect: () => visibleAreaRect,
-    isUsingSpreadMode: () => stateSubject.getValue().isUsingSpreadMode,
-    setHasVerticalWriting,
-    setVisibleAreaRect: ({ height, width, x, y }: { x: number; y: number; width: number; height: number }) => {
-      // visibleAreaRect.width = width - horizontalMargin * 2
-      visibleAreaRect.width = width
-      visibleAreaRect.height = height - marginTop - marginBottom
-      visibleAreaRect.x = x
-      visibleAreaRect.y = y
+  get manifest() {
+    return this.state.manifest
+  }
 
-      const manifest = stateSubject.getValue().manifest
+  get readingDirection() {
+    return this.manifest?.readingDirection
+  }
 
-      if (manifest) {
-        setState({
-          isUsingSpreadMode: isUsingSpreadMode({
-            manifest,
-            visibleAreaRect,
-            forceSinglePageMode: settings.getSettings().forceSinglePageMode,
-          }),
-        })
-      }
+  public getPageSize() {
+    const { isUsingSpreadMode, visibleAreaRect } = this._stateSubject.getValue()
 
-      // if (this.useChromiumRubyBugSafeInnerMargin) {
-      //   this.visibleAreaRect.height =
-      //     this.visibleAreaRect.height - this.getCalculatedInnerMargin()
-      // }
-    },
-    getState: () => stateSubject.getValue(),
-    getManifest: () => stateSubject.getValue()?.manifest,
-    getReadingDirection: () => stateSubject.getValue()?.manifest?.readingDirection,
-    getPageSize: () => {
-      return {
-        width: stateSubject.getValue().isUsingSpreadMode ? visibleAreaRect.width / 2 : visibleAreaRect.width,
-        height: visibleAreaRect.height,
-      }
-    },
-    containerElement$,
-    isUsingSpreadMode$,
-    hasVerticalWriting$,
-    $: {
-      manifest$,
-      destroy$: destroy$.asObservable(),
-      state$: stateSubject.asObservable(),
-    },
+    return {
+      width: isUsingSpreadMode ? visibleAreaRect.width / 2 : visibleAreaRect.width,
+      height: visibleAreaRect.height,
+    }
+  }
+
+  public destroy = () => {
+    this._stateSubject.complete()
+    this.destroy$.next()
+    this.destroy$.complete()
   }
 }
-
-const areAllItemsPrePaginated = (manifest: Manifest | undefined) =>
-  !manifest?.spineItems.some((item) => item.renditionLayout === `reflowable`)

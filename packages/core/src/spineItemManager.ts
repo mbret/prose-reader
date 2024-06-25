@@ -1,14 +1,14 @@
 import { BehaviorSubject, merge, Subject } from "rxjs"
 import { tap, takeUntil, switchMap, map } from "rxjs/operators"
 import { Report } from "./report"
-import { Context } from "./context/context"
+import { Context } from "./context/Context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
-import { Settings } from "./settings/settings"
+import { SettingsManager } from "./settings/SettingsManager"
 
 const NAMESPACE = `spineItemManager`
 
-export const createSpineItemManager = ({ context, settings }: { context: Context; settings: Settings }) => {
+export const createSpineItemManager = ({ context, settings }: { context: Context; settings: SettingsManager }) => {
   const focus$ = new Subject<{ data: SpineItem }>()
   const layout$ = new Subject<boolean>()
   /**
@@ -47,7 +47,7 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
    * it is called eery time an item is being unload (which can adds up quickly for big books)
    */
   const layout = () => {
-    const manifest = context.getManifest()
+    const manifest = context.manifest
     const newItemLayoutInformation: typeof itemLayoutInformation = []
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
 
@@ -55,10 +55,10 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       ({ horizontalOffset, verticalOffset }, item, index) => {
         let minimumWidth = context.getPageSize().width
         let blankPagePosition: `none` | `before` | `after` = `none`
-        const itemStartOnNewScreen = horizontalOffset % context.getVisibleAreaRect().width === 0
+        const itemStartOnNewScreen = horizontalOffset % context.state.visibleAreaRect.width === 0
         const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
 
-        if (context.isUsingSpreadMode()) {
+        if (context.state.isUsingSpreadMode) {
           /**
            * for now every reflowable content that has reflow siblings takes the entire screen by default
            * this simplify many things and I am not sure the specs allow one reflow
@@ -110,7 +110,7 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
         const { width, height } = item.layout({
           minimumWidth,
           blankPagePosition,
-          spreadPosition: context.isUsingSpreadMode()
+          spreadPosition: context.state.isUsingSpreadMode
             ? itemStartOnNewScreen
               ? context.isRTL()
                 ? `right`
@@ -121,10 +121,10 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
             : `none`,
         })
 
-        if (settings.getSettings().computedPageTurnDirection === `vertical`) {
+        if (settings.settings.computedPageTurnDirection === `vertical`) {
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
             ? verticalOffset
-            : verticalOffset - context.getVisibleAreaRect().height
+            : verticalOffset - context.state.visibleAreaRect.height
           const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : horizontalOffset
 
           if (context.isRTL()) {
@@ -165,8 +165,8 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
         newItemLayoutInformation.push({
           ...(context.isRTL()
             ? {
-                left: context.getVisibleAreaRect().width - horizontalOffset - width,
-                right: context.getVisibleAreaRect().width - horizontalOffset,
+                left: context.state.visibleAreaRect.width - horizontalOffset - width,
+                right: context.state.visibleAreaRect.width - horizontalOffset,
               }
             : {
                 left: horizontalOffset,
@@ -217,9 +217,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
    */
   const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
     const [leftIndex, rightIndex] = rangeOfIndex
-    const numberOfAdjacentSpineItemToPreLoad = settings.getSettings().numberOfAdjacentSpineItemToPreLoad
-    const isPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
-    const isUsingFreeScroll = settings.getSettings().computedPageTurnMode === `scrollable`
+    const numberOfAdjacentSpineItemToPreLoad = settings.settings.numberOfAdjacentSpineItemToPreLoad
+    const isPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
+    const isUsingFreeScroll = settings.settings.computedPageTurnMode === `scrollable`
 
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
@@ -288,7 +288,7 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
   const add = (spineItem: SpineItem) => {
     orderedSpineItemsSubject$.value.push(spineItem)
 
-    spineItem.$.contentLayout$.pipe(takeUntil(context.$.destroy$)).subscribe(() => {
+    spineItem.$.contentLayout$.pipe(takeUntil(context.destroy$)).subscribe(() => {
       // upstream change, meaning we need to layout again to both resize correctly each item but also to
       // adjust positions, etc
       layout()
@@ -298,12 +298,16 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       .pipe(
         tap(() => {
           if (spineItem.isUsingVerticalWriting()) {
-            context.setHasVerticalWriting(true)
+            context.update({
+              hasVerticalWriting: true,
+            })
           } else {
-            context.setHasVerticalWriting(false)
+            context.update({
+              hasVerticalWriting: false,
+            })
           }
         }),
-        takeUntil(context.$.destroy$),
+        takeUntil(context.destroy$),
       )
       .subscribe()
 

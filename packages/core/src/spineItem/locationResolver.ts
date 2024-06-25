@@ -1,4 +1,4 @@
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, calculateNumberOfPagesForItem } from "../pagination/pagination"
 import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"

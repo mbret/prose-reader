@@ -24,7 +24,7 @@ export const fixReflowable = (reader: Reader) => {
    * - the core handle this kind of fake reflowable and insert blank page
    */
   reader.registerHook(`item.onAfterLayout`, ({ item, blankPagePosition, minimumWidth }) => {
-    const spineItem = reader.getSpineItem(item.id)
+    const spineItem = reader.spineItemManager.get(item.id)
 
     if (!(spineItem?.item.renditionLayout === `reflowable`)) return
 

@@ -10,7 +10,7 @@ export const getSpineItemNumberOfPages = ({ spineItem, reader }: { spineItem: Sp
 
   const writingMode = spineItem.spineItemFrame.getWritingMode()
   const { width, height } = spineItem.getElementDimensions()
-  const settings = reader.settings.getSettings()
+  const settings = reader.settings.settings
 
   if (settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`) {
     return 1
@@ -24,7 +24,7 @@ export const getSpineItemNumberOfPages = ({ spineItem, reader }: { spineItem: Sp
 }
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>
-  reader.getSpineItems().map((item) => {
+  reader.spineItemManager.getAll().map((item) => {
     return getSpineItemNumberOfPages({ spineItem: item, reader })
   }, 0)
 
@@ -32,7 +32,7 @@ export const trackTotalPages = (reader: Reader) => {
   const totalPages$: Observable<{
     numberOfPagesPerItems: number[]
     numberOfTotalPages: number
-  }> = reader.$.layout$.pipe(
+  }> = reader.spine.$.layout$.pipe(
     debounceTime(10, animationFrameScheduler),
     withLatestFrom(reader.pagination.paginationInfo$),
     map(() => {

@@ -128,7 +128,7 @@ describe("Given a book with one chapter", () => {
           },
         )
 
-        reader.goToSpineItem(1)
+        reader.viewportNavigator.goToSpineItem(1)
       })
 
       expect(value.beginChapterInfo).toEqual({
@@ -197,7 +197,7 @@ describe("Given a book with one chapter", () => {
               },
             )
 
-            reader.goToSpineItem(1)
+            reader.viewportNavigator.goToSpineItem(1)
           })
 
           expect(value.beginChapterInfo).toEqual({
@@ -332,7 +332,7 @@ describe("Given a book with two chapters", () => {
           },
         )
 
-        reader.goToSpineItem(1)
+        reader.viewportNavigator.goToSpineItem(1)
       })
 
       expect(value.beginChapterInfo).toEqual({

@@ -9,7 +9,7 @@ export type State = {
 
 export const createState = (reader: Reader) => {
   return reader.pagination.paginationInfo$.pipe(
-    withLatestFrom(reader.context.$.manifest$, reader.settings.settings$),
+    withLatestFrom(reader.context.manifest$, reader.settings.settings$),
     map(([paginationInfo, manifest, { computedPageTurnDirection }]) => {
       const numberOfSpineItems = manifest?.spineItems.length ?? 0
       const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0 && paginationInfo.beginPageIndexInSpineItem === 0

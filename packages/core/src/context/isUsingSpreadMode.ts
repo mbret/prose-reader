@@ -10,7 +10,7 @@ export const isUsingSpreadMode = ({
   visibleAreaRect,
   forceSinglePageMode,
 }: {
-  manifest: Manifest
+  manifest?: Manifest
   visibleAreaRect: { height: number; width: number }
   forceSinglePageMode?: boolean
 }) => {

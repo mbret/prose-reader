@@ -58,8 +58,8 @@ export const highlightsEnhancer =
     }
 
     const drawHighlight = (overlayElement: HTMLElement, highlight: Highlight) => {
-      const { node: anchorNode, offset: anchorOffset } = reader.resolveCfi(highlight.anchorCfi) || {}
-      const { node: focusNode, offset: focusOffset } = reader.resolveCfi(highlight.focusCfi) || {}
+      const { node: anchorNode, offset: anchorOffset } = reader.spine.cfiLocator.resolveCfi(highlight.anchorCfi) || {}
+      const { node: focusNode, offset: focusOffset } = reader.spine.cfiLocator.resolveCfi(highlight.focusCfi) || {}
 
       if (anchorNode && focusNode) {
         // remove old previous highlight
@@ -114,7 +114,7 @@ export const highlightsEnhancer =
     }
 
     const enrichHighlight = (highlight: Highlight) => {
-      const cfiMetaInfo = reader.getCfiMetaInformation(highlight.anchorCfi)
+      const cfiMetaInfo = reader.spine.cfiLocator.getCfiMetaInformation(highlight.anchorCfi)
 
       return {
         ...highlight,
@@ -128,7 +128,7 @@ export const highlightsEnhancer =
       highlights.push(newHighlight)
 
       if (newHighlight.spineItemIndex !== undefined) {
-        reader.manipulateSpineItems(({ index, overlayElement }) => {
+        reader.spine.manipulateSpineItems(({ index, overlayElement }) => {
           if (index !== newHighlight.spineItemIndex) return SHOULD_NOT_LAYOUT
 
           drawHighlight(overlayElement, newHighlight)
@@ -184,7 +184,7 @@ export const highlightsEnhancer =
 
           highlights$.next({ type: `onUpdate`, data: highlights })
 
-          reader.manipulateSpineItems(({ overlayElement, index }) => {
+          reader.spine.manipulateSpineItems(({ overlayElement, index }) => {
             drawHighlightsForItem(overlayElement, index)
 
             return SHOULD_NOT_LAYOUT
@@ -194,9 +194,9 @@ export const highlightsEnhancer =
       )
       .subscribe()
 
-    const refreshHighlightsOnLayout$ = reader.$.layout$.pipe(
+    const refreshHighlightsOnLayout$ = reader.spine.$.layout$.pipe(
       tap(() => {
-        reader.manipulateSpineItems(({ overlayElement, index }) => {
+        reader.spine.manipulateSpineItems(({ overlayElement, index }) => {
           drawHighlightsForItem(overlayElement, index)
 
           return SHOULD_NOT_LAYOUT

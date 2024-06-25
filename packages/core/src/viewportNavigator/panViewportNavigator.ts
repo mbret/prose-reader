@@ -1,12 +1,12 @@
 import { BehaviorSubject, merge, of, Subject, withLatestFrom } from "rxjs"
 import { filter, switchMap } from "rxjs/operators"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 import { createLocationResolver } from "../spine/locationResolver"
 import { ViewportPosition } from "../types"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 const NAMESPACE = `panViewportNavigator`
 
@@ -22,7 +22,7 @@ export const createPanViewportNavigator = ({
   locator,
   context,
   currentNavigationSubject$,
-  settings
+  settings,
 }: {
   context: Context
   navigator: ReturnType<typeof createNavigationResolver>
@@ -30,7 +30,7 @@ export const createPanViewportNavigator = ({
   spineItemManager: SpineItemManager
   locator: ReturnType<typeof createLocationResolver>
   getCurrentViewportPosition: () => ViewportPosition
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const navigationTriggerSubject$ = new Subject<SnapNavigation>()
   const stateSubject$ = new BehaviorSubject<`end` | `start`>(`end`)
@@ -45,12 +45,12 @@ export const createPanViewportNavigator = ({
     `${NAMESPACE} moveTo`,
     5,
     (delta: { x: number; y: number } | undefined, { final, start }: { start?: boolean; final?: boolean } = {}) => {
-      if (settings.getSettings().computedPageTurnMode === `scrollable`) {
+      if (settings.settings.computedPageTurnMode === `scrollable`) {
         Report.warn(`pan control is not available on free page turn mode`)
         return
       }
 
-      const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+      const pageTurnDirection = settings.settings.computedPageTurnDirection
 
       if (start) {
         stateSubject$.next(`start`)
@@ -125,7 +125,7 @@ export const createPanViewportNavigator = ({
 
   const snapNavigation$ = navigationTriggerSubject$.pipe(
     filter((e): e is SnapNavigation => e.type === `snap`),
-    withLatestFrom(settings.$.settings$),
+    withLatestFrom(settings.settings$),
     switchMap(
       ([
         {
@@ -133,13 +133,13 @@ export const createPanViewportNavigator = ({
         },
         { navigationSnapThreshold },
       ]) => {
-        const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+        const pageTurnDirection = settings.settings.computedPageTurnDirection
         const movingForward = navigator.isNavigationGoingForwardFrom(to, from)
         const triggerPercentage = movingForward ? 1 - navigationSnapThreshold : navigationSnapThreshold
         const triggerXPosition =
-          pageTurnDirection === `horizontal` ? to.x + context.getVisibleAreaRect().width * triggerPercentage : 0
+          pageTurnDirection === `horizontal` ? to.x + context.state.visibleAreaRect.width * triggerPercentage : 0
         const triggerYPosition =
-          pageTurnDirection === `horizontal` ? 0 : to.y + context.getVisibleAreaRect().height * triggerPercentage
+          pageTurnDirection === `horizontal` ? 0 : to.y + context.state.visibleAreaRect.height * triggerPercentage
         const midScreenPositionSafePosition = navigator.wrapPositionWithSafeEdge({
           x: triggerXPosition,
           y: triggerYPosition,

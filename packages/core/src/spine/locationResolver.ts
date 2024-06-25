@@ -1,11 +1,11 @@
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { SpineItemNavigationPosition, SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 export const createLocationResolver = ({
   spineItemManager,
@@ -16,7 +16,7 @@ export const createLocationResolver = ({
   spineItemManager: SpineItemManager
   context: Context
   spineItemLocator: ReturnType<typeof createSpineItemLocator>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
@@ -99,7 +99,7 @@ export const createLocationResolver = ({
 
         const isWithinXAxis = position.x >= left && position.x < right
 
-        if (settings.getSettings().computedPageTurnDirection === `horizontal`) {
+        if (settings.settings.computedPageTurnDirection === `horizontal`) {
           return isWithinXAxis
         } else {
           return isWithinXAxis && position.y >= top && position.y < bottom
@@ -144,7 +144,7 @@ export const createLocationResolver = ({
 
     let endPosition = position
 
-    if (context.isUsingSpreadMode()) {
+    if (context.state.isUsingSpreadMode) {
       endPosition = { x: position.x + context.getPageSize().width, y: position.y }
     }
 

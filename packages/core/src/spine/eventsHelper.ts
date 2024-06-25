@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { getOriginalFrameEventFromDocumentEvent } from "../frames"
 import { SpineItemManager } from "../spineItemManager"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"

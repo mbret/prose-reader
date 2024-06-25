@@ -1,4 +1,4 @@
-export type InputSettings = {
+export type Settings = {
   forceSinglePageMode: boolean
   pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
@@ -24,14 +24,14 @@ export type InputSettings = {
  * For example if the user decide to use horizontal page turn direction with scrolled content
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
-export type OutputSettings = InputSettings & {
+export type ComputedSettings = Settings & {
   /**
    * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
    * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content
    */
-  computedPageTurnMode: InputSettings[`pageTurnMode`]
-  computedPageTurnDirection: InputSettings[`pageTurnDirection`]
-  computedPageTurnAnimation: InputSettings[`pageTurnAnimation`]
+  computedPageTurnMode: Settings[`pageTurnMode`]
+  computedPageTurnDirection: Settings[`pageTurnDirection`]
+  computedPageTurnAnimation: Settings[`pageTurnAnimation`]
   computedPageTurnAnimationDuration: number
   computedSnapAnimationDuration: number
 }

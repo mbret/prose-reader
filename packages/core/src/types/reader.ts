@@ -1,17 +1,15 @@
 import { Observable } from "rxjs"
-import { createContext as createBookContext } from "../context/context"
 import { RegisterHook } from "./Hook"
 import { Spine } from "./Spine"
 import { Pagination } from "../pagination/pagination"
 import { Manifest } from "@prose-reader/shared"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportNavigator } from "../viewportNavigator/viewportNavigator"
-import { Settings, createSettings } from "../settings/settings"
-import { InputSettings } from "../settings/types"
+import { SettingsManager } from "../settings/SettingsManager"
+import { Settings } from "../settings/types"
+import { Context } from "../context/Context"
 
-type Context = ReturnType<typeof createBookContext>
-
-export type ContextSettings = Partial<InputSettings>
+export type ContextSettings = Partial<Settings>
 
 export type LoadOptions = {
   cfi?: string | null
@@ -44,41 +42,13 @@ export type ReaderInternal = {
   context: Context
   registerHook: RegisterHook
   spine: Spine
+  spineItemManager: SpineItemManager
   viewportNavigator: ViewportNavigator
-  manipulateSpineItems: Spine["manipulateSpineItems"]
-  manipulateSpineItem: Spine["manipulateSpineItem"]
-  moveTo: ViewportNavigator["moveTo"]
-  turnLeft: ViewportNavigator["turnLeft"]
-  turnRight: ViewportNavigator["turnRight"]
-  goToPageOfCurrentChapter: ViewportNavigator["goToPageOfCurrentChapter"]
-  goToPage: ViewportNavigator["goToPage"]
-  goToUrl: ViewportNavigator["goToUrl"]
-  goToCfi: ViewportNavigator["goToCfi"]
-  goToSpineItem: ViewportNavigator["goToSpineItem"]
-  getFocusedSpineItemIndex: SpineItemManager["getFocusedSpineItemIndex"]
-  getSpineItem: SpineItemManager["get"]
-  getSpineItems: SpineItemManager["getAll"]
-  getAbsolutePositionOf: SpineItemManager["getAbsolutePositionOf"]
-  getSelection: Spine["getSelection"]
-  isSelecting: Spine["isSelecting"]
-  normalizeEventForViewport: Spine["normalizeEventForViewport"]
-  getCfiMetaInformation: Spine["cfiLocator"]["getCfiMetaInformation"]
-  resolveCfi: Spine["cfiLocator"]["resolveCfi"]
-  generateCfi: Spine["cfiLocator"]["generateFromRange"]
-  locator: Spine["locator"]
-  getCurrentNavigationPosition: ViewportNavigator["getCurrentNavigationPosition"]
-  getCurrentViewportPosition: ViewportNavigator["getCurrentViewportPosition"]
+  settings: SettingsManager
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void
   destroy: () => void
   pagination: Pagination
-  spineItems$: Spine["$"]["spineItems$"]
-  context$: Context["$"]["state$"]
-  settings: {
-    settings$: ReturnType<typeof createSettings>["$"]["settings$"]
-    setSettings: (data: Partial<InputSettings>) => void
-    getSettings: Settings["getSettings"]
-  }
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
@@ -101,15 +71,6 @@ export type ReaderInternal = {
       getAnchorCfi: () => string | undefined
       getFocusCfi: () => string | undefined
     } | null>
-    viewportState$: Observable<"free" | "busy">
-    layout$: Spine["$"]["layout$"]
-    itemsBeforeDestroy$: Spine["$"]["itemsBeforeDestroy$"]
-    itemIsReady$: SpineItemManager["$"]["itemIsReady$"]
     destroy$: Observable<void>
-  }
-  __debug: {
-    pagination: Pagination
-    context: Context
-    spineItemManager: SpineItemManager
   }
 }

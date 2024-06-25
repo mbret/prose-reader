@@ -1,10 +1,10 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 export const createPrePaginatedSpineItem = ({
   item,
@@ -21,7 +21,7 @@ export const createPrePaginatedSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
@@ -45,17 +45,17 @@ export const createPrePaginatedSpineItem = ({
   }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
-    const visibleArea = context.getVisibleAreaRect()
+    const visibleArea = context.state.visibleAreaRect
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
 
     if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       const contentWidth = pageWidth
-      const contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
+      const contentHeight = visibleArea.height + context.state.calculatedInnerMargin
 
       const cssLink = buildDocumentStyle(
         {
           ...commonSpineItem.getDimensionsForPaginatedContent(),
-          enableTouch: settings.getSettings().computedPageTurnMode !== `scrollable`,
+          enableTouch: settings.settings.computedPageTurnMode !== `scrollable`,
           spreadPosition,
         },
         viewportDimensions,

@@ -10,14 +10,14 @@ import {
   withLatestFrom,
   startWith,
 } from "rxjs/operators"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Spine } from "../spine/createSpine"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportPosition } from "../types"
 import { getNewScaledOffset } from "../utils/layout"
 import { isDefined } from "../utils/isDefined"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
@@ -32,7 +32,7 @@ export const createScrollViewportNavigator = ({
   spine,
 }: {
   context: Context
-  settings: Settings
+  settings: SettingsManager
   element$: BehaviorSubject<HTMLElement>
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>
@@ -54,7 +54,7 @@ export const createScrollViewportNavigator = ({
     )
 
   const adjustReadingOffset = ({ x, y }: { x: number; y: number }) => {
-    if (settings.getSettings().computedPageTurnMode === `scrollable`) {
+    if (settings.settings.computedPageTurnMode === `scrollable`) {
       lastScrollWasProgrammaticallyTriggered = true
       element$.getValue()?.scrollTo({ left: x, top: y })
 
@@ -65,7 +65,7 @@ export const createScrollViewportNavigator = ({
   }
 
   const runOnFreePageTurnModeOnly$ = <T>(source: Observable<T>) =>
-    settings.$.settings$.pipe(
+    settings.settings$.pipe(
       map(({ computedPageTurnMode }) => computedPageTurnMode),
       distinctUntilChanged(),
       switchMap((mode) => iif(() => mode === `controlled`, EMPTY, source)),
@@ -76,7 +76,7 @@ export const createScrollViewportNavigator = ({
       filter(isDefined),
       switchMap((element) => fromEvent(element, `scroll`)),
     ),
-  ).pipe(onlyUserScrollFilter, share(), takeUntil(context.$.destroy$))
+  ).pipe(onlyUserScrollFilter, share(), takeUntil(context.destroy$))
 
   const getScaledDownPosition = ({ x, y }: ViewportPosition) => {
     const spineElement = spine.getElement()
@@ -142,7 +142,7 @@ export const createScrollViewportNavigator = ({
   const userScrollEnd$ = userScroll$.pipe(
     debounceTime(SCROLL_FINISHED_DEBOUNCE_TIMEOUT, animationFrameScheduler),
     share(),
-    takeUntil(context.$.destroy$),
+    takeUntil(context.destroy$),
   )
 
   const state$ = merge(

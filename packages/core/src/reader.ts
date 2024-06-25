@@ -1,6 +1,6 @@
 import { BehaviorSubject, merge, ObservedValueOf, Subject, switchMap } from "rxjs"
 import { Report } from "./report"
-import { createContext as createBookContext } from "./context/context"
+import { Context } from "./context/Context"
 import { createPagination } from "./pagination/pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
@@ -17,7 +17,7 @@ import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
 import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
-import { createSettings } from "./settings/settings"
+import { SettingsManager } from "./settings/SettingsManager"
 
 const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
 
@@ -49,8 +49,8 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
   const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
   const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
   const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
-  const settings = createSettings(inputSettings)
-  const context = createBookContext(settings)
+  const context = new Context()
+  const settings = new SettingsManager(inputSettings, context)
   const spineItemManager = createSpineItemManager({ context, settings })
   const pagination = createPagination({ context, spineItemManager })
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
@@ -133,18 +133,20 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     }
     const elementRect = element.getBoundingClientRect()
 
-    context.setVisibleAreaRect({
-      x: elementRect.x,
-      y: elementRect.y,
-      width: containerElementEvenWidth,
-      height: dimensions.height,
+    context.update({
+      visibleAreaRect: {
+        x: elementRect.x,
+        y: elementRect.y,
+        width: containerElementEvenWidth,
+        height: dimensions.height,
+      },
     })
 
     viewportNavigator.layout()
   }
 
   const load = (manifest: Manifest, loadOptions: LoadOptions) => {
-    if (context.getManifest()) {
+    if (context.manifest) {
       Report.warn(`loading a new book is not supported yet`)
 
       return
@@ -164,7 +166,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
       element.appendChild(iframeEventBridgeElement)
     }
 
-    context.load(manifest, loadOptions)
+    context.load(manifest, loadOptions, settings.settings)
 
     // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
 
@@ -195,22 +197,22 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
       switchMap(({ adjustedSpinePosition }) => {
         return spine.adjustPagination(adjustedSpinePosition).pipe(takeUntil(navigation$))
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     )
     .subscribe()
 
-  merge(context.$.state$, settings.$.settings$)
+  merge(context.state$, settings.settings$)
     .pipe(
       map(() => undefined),
-      withLatestFrom(context.$.state$),
+      withLatestFrom(context.state$),
       map(([, { hasVerticalWriting }]) => {
-        const manifest = context.getManifest()
+        const manifest = context.manifest
 
         return {
           hasVerticalWriting,
           renditionFlow: manifest?.renditionFlow,
           renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settings.getSettings().computedPageTurnMode,
+          computedPageTurnMode: settings.settings.computedPageTurnMode,
         }
       }),
       distinctUntilChanged(isShallowEqual),
@@ -221,7 +223,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
             supportedPageTurnMode:
               renditionFlow === `scrolled-continuous`
                 ? [`scrollable`]
-                : !context.areAllItemsPrePaginated()
+                : !context.state.areAllItemsPrePaginated
                   ? [`controlled`]
                   : [`controlled`, `scrollable`],
             supportedPageTurnAnimation:
@@ -273,40 +275,12 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     registerHook,
     spine,
     viewportNavigator,
-    manipulateSpineItems: spine.manipulateSpineItems,
-    manipulateSpineItem: spine.manipulateSpineItem,
-    moveTo: viewportNavigator.moveTo,
-    turnLeft: viewportNavigator.turnLeft,
-    turnRight: viewportNavigator.turnRight,
-    goToPageOfCurrentChapter: viewportNavigator.goToPageOfCurrentChapter,
-    goToPage: viewportNavigator.goToPage,
-    goToUrl: viewportNavigator.goToUrl,
-    goToCfi: viewportNavigator.goToCfi,
-    goToSpineItem: viewportNavigator.goToSpineItem,
-    getFocusedSpineItemIndex: spineItemManager.getFocusedSpineItemIndex,
-    getSpineItem: spineItemManager.get,
-    getSpineItems: spineItemManager.getAll,
-    getAbsolutePositionOf: spineItemManager.getAbsolutePositionOf,
-    getSelection: spine.getSelection,
-    isSelecting: spine.isSelecting,
-    normalizeEventForViewport: spine.normalizeEventForViewport,
-    getCfiMetaInformation: spine.cfiLocator.getCfiMetaInformation,
-    resolveCfi: spine.cfiLocator.resolveCfi,
-    generateCfi: spine.cfiLocator.generateFromRange,
-    locator: spine.locator,
-    getCurrentNavigationPosition: viewportNavigator.getCurrentNavigationPosition,
-    getCurrentViewportPosition: viewportNavigator.getCurrentViewportPosition,
+    spineItemManager,
     layout,
     load,
     destroy,
-    spineItems$: spine.$.spineItems$,
-    context$: context.$.state$,
     pagination,
-    settings: {
-      settings$: settings.$.settings$,
-      getSettings: settings.getSettings,
-      setSettings: (data: Parameters<typeof settings.setSettings>[0]) => settings.setSettings(data, context.getState()),
-    },
+    settings,
     $: {
       state$: stateSubject$.asObservable(),
       /**
@@ -315,21 +289,12 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
        * have an effect.
        * It can typically be used to hide a loading indicator.
        */
-      loadStatus$: context.$.manifest$.pipe(map((manifest) => (manifest ? "ready" : "idle"))),
+      loadStatus$: context.manifest$.pipe(map((manifest) => (manifest ? "ready" : "idle"))),
       /**
        * Dispatched when a change in selection happens
        */
       selection$: selectionSubject$.asObservable(),
-      viewportState$: viewportNavigator.$.state$,
-      layout$: spine.$.layout$,
-      itemsBeforeDestroy$: spine.$.itemsBeforeDestroy$,
-      itemIsReady$: spineItemManager.$.itemIsReady$,
       destroy$,
-    },
-    __debug: {
-      pagination,
-      context,
-      spineItemManager,
     },
   }
 

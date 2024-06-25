@@ -1,4 +1,4 @@
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { Reader } from "../reader"
 
@@ -36,14 +36,14 @@ export const progressionEnhancer =
       currentPosition: { x: number; y: number },
       currentItem: SpineItem,
     ) => {
-      const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
-      const readingOrderLength = context.getManifest()?.spineItems.length || 0
+      const isGloballyPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
+      const readingOrderLength = context.manifest?.spineItems.length || 0
       const estimateBeforeThisItem =
         context
-          .getManifest()
+          .manifest
           ?.spineItems.slice(0, currentSpineIndex)
           .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
-      const currentItemWeight = context.getManifest()?.spineItems[currentSpineIndex]?.progressionWeight || 0
+      const currentItemWeight = context.manifest?.spineItems[currentSpineIndex]?.progressionWeight || 0
       // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
       // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
       // const progressWeightGap = (currentItemWeight + estimateBeforeThisItem) - estimateBeforeThisItem
@@ -56,7 +56,7 @@ export const progressionEnhancer =
 
       let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
-      if (context.getManifest()?.renditionFlow === `scrolled-continuous`) {
+      if (context.manifest?.renditionFlow === `scrolled-continuous`) {
         if (currentItem.isReady()) {
           progressWithinThisItem = getScrollPercentageWithinItem(context, currentPosition, currentItem)
         } else {
@@ -91,12 +91,12 @@ export const progressionEnhancer =
     ) => {
       const { height, width } = currentItem.getElementDimensions()
 
-      const { top, left } = reader.getAbsolutePositionOf(currentItem)
+      const { top, left } = reader.spineItemManager.getAbsolutePositionOf(currentItem)
 
-      if (reader.settings.getSettings().computedPageTurnDirection === `vertical`) {
-        return Math.max(0, Math.min(1, (currentPosition.y - top + context.getVisibleAreaRect().height) / height))
+      if (reader.settings.settings.computedPageTurnDirection === `vertical`) {
+        return Math.max(0, Math.min(1, (currentPosition.y - top + context.state.visibleAreaRect.height) / height))
       } else {
-        return Math.max(0, Math.min(1, (currentPosition.x - left + context.getVisibleAreaRect().width) / width))
+        return Math.max(0, Math.min(1, (currentPosition.x - left + context.state.visibleAreaRect.width) / width))
       }
     }
 

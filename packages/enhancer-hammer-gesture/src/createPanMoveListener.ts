@@ -2,7 +2,7 @@ import { Reader, isShallowEqual } from "@prose-reader/core"
 import { NEVER, Observable, distinctUntilChanged, map, switchMap } from "rxjs"
 
 export const createPanMoveListener = (reader: Reader, hammerManager: HammerManager) => {
-  return reader.context.$.state$.pipe(
+  return reader.context.state$.pipe(
     map(({ manifest }) => ({ manifest })),
     distinctUntilChanged(isShallowEqual),
     switchMap(({ manifest }) => {
@@ -29,7 +29,7 @@ export const createPanMoveListener = (reader: Reader, hammerManager: HammerManag
             return
           }
 
-          const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
+          const normalizedEvent = reader?.spine.normalizeEventForViewport(ev.srcEvent)
 
           // because of iframe moving we have to calculate the delta ourselves with normalized value
           const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX
@@ -44,7 +44,7 @@ export const createPanMoveListener = (reader: Reader, hammerManager: HammerManag
             } else {
               if (normalizedEvent && `x` in normalizedEvent) {
                 movingStartOffsets = { x: normalizedEvent.x, y: normalizedEvent.y }
-                reader?.moveTo({ x: 0, y: 0 }, { start: true })
+                reader?.viewportNavigator.moveTo({ x: 0, y: 0 }, { start: true })
               }
             }
           }
@@ -53,7 +53,7 @@ export const createPanMoveListener = (reader: Reader, hammerManager: HammerManag
             if (reader?.zoom.isZooming()) {
               reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
             } else {
-              reader?.moveTo({ x: deltaX, y: deltaY })
+              reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY })
             }
           }
 
@@ -63,7 +63,7 @@ export const createPanMoveListener = (reader: Reader, hammerManager: HammerManag
               reader.zoom.move(undefined, { isFirst: false, isLast: true })
             } else {
               if (movingHasStarted) {
-                reader?.moveTo({ x: deltaX, y: deltaY }, { final: true })
+                reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY }, { final: true })
               }
             }
 

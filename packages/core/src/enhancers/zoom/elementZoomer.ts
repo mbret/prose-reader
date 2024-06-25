@@ -18,7 +18,7 @@ export const createElementZoomer = (reader: Reader) => {
     baseScale = 1
     lastUserScale = 1
 
-    const container = reader.context.getState().containerElement
+    const container = reader.context.state.containerElement
 
     if (container) {
       imageMagnifierContainer = container.ownerDocument.createElement(`div`)

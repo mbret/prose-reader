@@ -1,7 +1,7 @@
 import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
 import { catchError, debounce, filter, map, share, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { Report } from "../report"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Pagination } from "../pagination/pagination"
 import { createSpineItem } from "../spineItem/createSpineItem"
 import { SpineItemManager } from "../spineItemManager"
@@ -16,7 +16,7 @@ import type { Spine } from "../types/Spine"
 import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
 import { Manifest } from ".."
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 const report = Report.namespace(`spine`)
 const noopElement = document.createElement("div")
@@ -63,7 +63,7 @@ export const createSpine = ({
     y: number
   }>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }): Spine => {
   const spineItems$ = new Subject<SpineItem[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
@@ -116,7 +116,7 @@ export const createSpine = ({
     spineItemManager.get(id)?.manipulateSpineItem(cb)
   }
 
-  context.$.manifest$.pipe(tap(reload), takeUntil(context.$.destroy$)).subscribe()
+  context.manifest$.pipe(tap(reload), takeUntil(context.destroy$)).subscribe()
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
@@ -243,7 +243,7 @@ export const createSpine = ({
 
         return EMPTY
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     ),
   ).subscribe()
 
@@ -301,7 +301,7 @@ export const createSpine = ({
             cfi:
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === beginSpineItem
                 ? lastExpectedNavigation.data
-                : data.triggeredBy === `adjust` && settings.getSettings().computedPageTurnMode === `controlled`
+                : data.triggeredBy === `adjust` && settings.settings.computedPageTurnMode === `controlled`
                   ? pagination.getPaginationInfo().beginCfi
                   : beginItemIndex !== pagination.getPaginationInfo().beginSpineItemIndex
                     ? cfiLocator.getRootCfi(beginSpineItem)
@@ -317,7 +317,7 @@ export const createSpine = ({
             cfi:
               lastExpectedNavigation?.type === `navigate-from-cfi` && spineItemToFocus === endSpineItem
                 ? lastExpectedNavigation.data
-                : data.triggeredBy === `adjust` && settings.getSettings().computedPageTurnMode === `controlled`
+                : data.triggeredBy === `adjust` && settings.settings.computedPageTurnMode === `controlled`
                   ? pagination.getPaginationInfo().endCfi
                   : endItemIndex !== pagination.getPaginationInfo().endSpineItemIndex
                     ? cfiLocator.getRootCfi(endSpineItem)
@@ -344,7 +344,7 @@ export const createSpine = ({
       time()
     }),
     share(),
-    takeUntil(context.$.destroy$),
+    takeUntil(context.destroy$),
   )
 
   /**
@@ -357,7 +357,7 @@ export const createSpine = ({
       switchMap((data) => {
         return adjustPagination(data.position).pipe(takeUntil(spineItemManager.$.layout$))
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     )
     .subscribe()
 
@@ -413,7 +413,7 @@ export const createSpine = ({
           take(1),
         )
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     )
     .subscribe()
 

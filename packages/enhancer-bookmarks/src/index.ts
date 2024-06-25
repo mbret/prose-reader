@@ -55,10 +55,10 @@ export const bookmarksEnhancer =
     const renderer = createRenderer(reader, settings)
 
     const getCfiInformation = (cfi: string) => {
-      const { node, offset = 0, spineItemIndex } = reader.resolveCfi(cfi) || {}
+      const { node, offset = 0, spineItemIndex } = reader.spine.cfiLocator.resolveCfi(cfi) || {}
 
       if (node && spineItemIndex !== undefined) {
-        const pageIndex = reader.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
+        const pageIndex = reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
 
         return { cfi, pageIndex, spineItemIndex }
       }
@@ -78,9 +78,9 @@ export const bookmarksEnhancer =
      * Bookmark area is top right corner
      */
     const isClickEventInsideBookmarkArea = (e: MouseEvent | PointerEvent) => {
-      const event = reader.normalizeEventForViewport(e)
+      const event = reader.spine.normalizeEventForViewport(e)
 
-      const { width } = reader.context.getVisibleAreaRect()
+      const { width } = reader.context.state.visibleAreaRect
 
       if ((event.x || 0) >= width - settings.areaWidth && (event.y || 0) <= settings.areaHeight) {
         return true
@@ -157,7 +157,7 @@ export const bookmarksEnhancer =
      * This way it works even if the item is not loaded. It will be relative to first page
      * anyway.
      */
-    reader.spineItems$
+    reader.spine.$.spineItems$
       .pipe(
         switchMap((items) => merge(items.map(({ element }) => createClickListener$(element)))),
         takeUntil(reader.$.destroy$),
@@ -187,7 +187,7 @@ export const bookmarksEnhancer =
       // It's important to force redraw and update bookmarkd on each layout
       // this is because pagination itself is not always garanteed to be updated
       // when the frame actually exists
-      reader.$.layout$.pipe(
+      reader.spine.$.layout$.pipe(
         withLatestFrom(bookmarksSubject$),
         map(([, bookmarks]) =>
           bookmarks.map((bookmark) => {

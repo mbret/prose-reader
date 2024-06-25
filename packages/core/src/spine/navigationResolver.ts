@@ -1,5 +1,5 @@
 import { Report } from "../report"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { SpineItemManager } from "../spineItemManager"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../spineItem/navigationResolver"
@@ -7,7 +7,7 @@ import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
 import { SpineItemNavigationPosition } from "../spineItem/types"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
 type ViewportPosition = { x: number; y: number }
@@ -25,7 +25,7 @@ export const createNavigationResolver = ({
   spineItemManager: SpineItemManager
   cfiLocator: ReturnType<typeof createCfiLocator>
   locator: ReturnType<typeof createLocationResolver>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context, settings })
 
@@ -66,7 +66,7 @@ export const createNavigationResolver = ({
   )
 
   const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
-    const isOffsetNotAtEdge = x % context.getVisibleAreaRect().width !== 0
+    const isOffsetNotAtEdge = x % context.state.visibleAreaRect.width !== 0
     const correctedX = isOffsetNotAtEdge ? x - context.getPageSize().width : x
 
     return { x: correctedX, y }
@@ -124,7 +124,7 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForRightSinglePage = (position: SpinePosition): ViewportNavigationEntry => {
-    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.settings.computedPageTurnDirection
     const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = position
 
@@ -153,7 +153,7 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForLeftSinglePage = (position: UnsafeSpinePosition): ViewportNavigationEntry => {
-    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.settings.computedPageTurnDirection
     const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
     const defaultNavigation = { ...position, spineItem }
 
@@ -195,7 +195,7 @@ export const createNavigationResolver = ({
       return getAdjustedPositionForSpread(navigation)
     }
 
-    if (context.isUsingSpreadMode()) {
+    if (context.state.isUsingSpreadMode) {
       // in case of spread the entire screen is taken as one real page for vertical content
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
@@ -220,7 +220,7 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (settings.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (settings.settings.computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -249,7 +249,7 @@ export const createNavigationResolver = ({
       return getAdjustedPositionForSpread(navigation)
     }
 
-    if (context.isUsingSpreadMode()) {
+    if (context.state.isUsingSpreadMode) {
       // in case of spread the entire screen is taken as one real page for vertical content
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
@@ -268,7 +268,7 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (settings.getSettings().computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (settings.settings.computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -284,7 +284,7 @@ export const createNavigationResolver = ({
     try {
       const validUrl = url instanceof URL ? url : new URL(url)
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
-      const existingSpineItem = context.getManifest()?.spineItems.find((item) => item.href === urlWithoutAnchor)
+      const existingSpineItem = context.manifest?.spineItems.find((item) => item.href === urlWithoutAnchor)
 
       if (existingSpineItem) {
         const spineItem = spineItemManager.get(existingSpineItem.id)
@@ -328,21 +328,21 @@ export const createNavigationResolver = ({
    * try to get the most visible / relevant element as navigation reference
    */
   const getMostPredominantNavigationForPosition = (viewportPosition: ViewportPosition) => {
-    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.settings.computedPageTurnDirection
     // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
     // const triggerPercentage = movingForward ? 0.7 : 0.3
     const triggerPercentage = 0.5
     const triggerXPosition =
-      pageTurnDirection === `horizontal` ? viewportPosition.x + context.getVisibleAreaRect().width * triggerPercentage : 0
+      pageTurnDirection === `horizontal` ? viewportPosition.x + context.state.visibleAreaRect.width * triggerPercentage : 0
     const triggerYPosition =
-      pageTurnDirection === `horizontal` ? 0 : viewportPosition.y + context.getVisibleAreaRect().height * triggerPercentage
+      pageTurnDirection === `horizontal` ? 0 : viewportPosition.y + context.state.visibleAreaRect.height * triggerPercentage
     const midScreenPositionSafePosition = wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
     return getNavigationForPosition(midScreenPositionSafePosition)
   }
 
   const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
-    const pageTurnDirection = settings.getSettings().computedPageTurnDirection
+    const pageTurnDirection = settings.settings.computedPageTurnDirection
 
     if (pageTurnDirection === `vertical`) {
       return to.y > from.y

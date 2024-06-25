@@ -26,9 +26,9 @@ export const mapPaginationInfoToExtendedInfo =
   > => {
     const context = reader.context
     const beginItem =
-      paginationInfo.beginSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.beginSpineItemIndex) : undefined
+      paginationInfo.beginSpineItemIndex !== undefined ? reader.spineItemManager.get(paginationInfo.beginSpineItemIndex) : undefined
     const endItem =
-      paginationInfo.endSpineItemIndex !== undefined ? reader.getSpineItem(paginationInfo.endSpineItemIndex) : undefined
+      paginationInfo.endSpineItemIndex !== undefined ? reader.spineItemManager.get(paginationInfo.endSpineItemIndex) : undefined
 
     return {
       ...paginationInfo,
@@ -59,14 +59,14 @@ export const mapPaginationInfoToExtendedInfo =
             paginationInfo.endSpineItemIndex ?? 0,
             paginationInfo.endNumberOfPagesInSpineItem,
             paginationInfo.endPageIndexInSpineItem || 0,
-            reader.getCurrentViewportPosition(),
+            reader.viewportNavigator.getCurrentViewportPosition(),
             endItem,
           )
         : 0,
-      isUsingSpread: context.isUsingSpreadMode() ?? false,
+      isUsingSpread: context.state.isUsingSpreadMode ?? false,
       // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
       // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
-      // numberOfSpineItems: context.getManifest()?.readingOrder.length,
+      // numberOfSpineItems: context.manifest?.readingOrder.length,
     }
   }
 

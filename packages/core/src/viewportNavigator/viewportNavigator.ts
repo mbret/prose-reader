@@ -1,5 +1,5 @@
 import { Report } from "../report"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Pagination } from "../pagination/pagination"
 import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver } from "../spine/locationResolver"
@@ -43,7 +43,7 @@ import { isShallowEqual } from ".."
 import { LastUserExpectedNavigation, Navigation } from "./types"
 import { Spine } from "../spine/createSpine"
 import { isDefined } from "../utils/isDefined"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -68,7 +68,7 @@ export const createViewportNavigator = ({
   spineLocator: ReturnType<typeof createLocationResolver>
   hooks$: BehaviorSubject<Hook[]>
   spine: Spine
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const element$ = new BehaviorSubject<HTMLElement>(noopElement)
   const layoutSubject$ = new Subject<void>()
@@ -103,7 +103,7 @@ export const createViewportNavigator = ({
    * use the dedicated property.
    */
   const getCurrentViewportPosition = Report.measurePerformance(`${NAMESPACE} getCurrentViewportPosition`, 1, () => {
-    if (settings.getSettings().computedPageTurnMode === `scrollable`) {
+    if (settings.settings.computedPageTurnMode === `scrollable`) {
       return scrollViewportNavigator.getCurrentViewportPosition()
     }
 
@@ -162,7 +162,7 @@ export const createViewportNavigator = ({
   let lastUserExpectedNavigation: LastUserExpectedNavigation
 
   const makeItHot = <T>(source$: Observable<T>) => {
-    source$.pipe(takeUntil(context.$.destroy$)).subscribe()
+    source$.pipe(takeUntil(context.destroy$)).subscribe()
 
     return source$
   }
@@ -219,7 +219,7 @@ export const createViewportNavigator = ({
     let adjustedSpinePosition = currentNavigationPositionSubject$.value
     const offsetInSpineItem = 0
 
-    if (settings.getSettings().computedPageTurnMode === `scrollable`) {
+    if (settings.settings.computedPageTurnMode === `scrollable`) {
       adjustedSpinePosition = scrollViewportNavigator.getNavigationForPosition(getCurrentViewportPosition())
     } else if (lastUserExpectedNavigation?.type === `navigate-from-cfi`) {
       /**
@@ -306,7 +306,7 @@ export const createViewportNavigator = ({
    * Try not to have duplicate with other lower components that also listen to settings change and re-layout
    * on the same settings.
    */
-  const layoutChangeSettings$ = settings.$.settings$.pipe(
+  const layoutChangeSettings$ = settings.settings$.pipe(
     mapKeysTo([`computedPageTurnDirection`, `computedPageTurnMode`, `numberOfAdjacentSpineItemToPreLoad`]),
     distinctUntilChanged(isShallowEqual),
     skip(1),
@@ -315,7 +315,7 @@ export const createViewportNavigator = ({
   const layout$ = merge(layoutSubject$, layoutChangeSettings$).pipe(
     withLatestFrom(element$),
     tap(([, element]) => {
-      if (settings.getSettings().computedPageTurnMode === `scrollable`) {
+      if (settings.settings.computedPageTurnMode === `scrollable`) {
         element.style.removeProperty(`transform`)
         element.style.removeProperty(`transition`)
         element.style.overflow = `scroll`
@@ -372,7 +372,7 @@ export const createViewportNavigator = ({
       return { ...event, lastUserExpectedNavigation }
     }),
     share(),
-    takeUntil(context.$.destroy$),
+    takeUntil(context.destroy$),
   )
 
   /**
@@ -385,7 +385,7 @@ export const createViewportNavigator = ({
     filter(({ triggeredBy }) => {
       if (
         triggeredBy === `scroll` ||
-        (settings.getSettings().computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)
+        (settings.settings.computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)
       ) {
         return false
       } else {
@@ -399,7 +399,7 @@ export const createViewportNavigator = ({
     navigationWhichRequireManualAdjust$,
   ).pipe(
     map(({ animation, position }) => {
-      const shouldAnimate = !(!animation || (animation === `turn` && settings.getSettings().computedPageTurnAnimation === `none`))
+      const shouldAnimate = !(!animation || (animation === `turn` && settings.settings.computedPageTurnAnimation === `none`))
 
       return {
         type: `manualAdjust` as const,
@@ -426,10 +426,10 @@ export const createViewportNavigator = ({
 
       const animationDuration =
         currentEvent.animation === `snap`
-          ? settings.getSettings().computedSnapAnimationDuration
-          : settings.getSettings().computedPageTurnAnimationDuration
+          ? settings.settings.computedSnapAnimationDuration
+          : settings.settings.computedPageTurnAnimationDuration
       const pageTurnAnimation =
-        currentEvent.animation === `snap` ? (`slide` as const) : settings.getSettings().computedPageTurnAnimation
+        currentEvent.animation === `snap` ? (`slide` as const) : settings.settings.computedPageTurnAnimation
 
       return of(currentEvent).pipe(
         /**
@@ -493,7 +493,7 @@ export const createViewportNavigator = ({
       )
     }),
     share(),
-    takeUntil(context.$.destroy$),
+    takeUntil(context.destroy$),
   )
 
   /**

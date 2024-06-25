@@ -15,13 +15,13 @@ export const createRenderer = (
   },
 ) => {
   const element$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
-  const waitForViewportFree$ = reader.$.viewportState$.pipe(
+  const waitForViewportFree$ = reader.viewportNavigator.$.state$.pipe(
     filter((v) => v === `free`),
     take(1),
   )
 
   const createBookmarkElement = () => {
-    const container = reader.context.getState().containerElement
+    const container = reader.context.state.containerElement
 
     if (!container) return
 
@@ -52,7 +52,7 @@ export const createRenderer = (
   }
 
   const destroyBookmarkElement = () => {
-    reader.context.getState().containerElement?.ownerDocument.getElementById(ELEMENT_ID)?.remove()
+    reader.context.state.containerElement?.ownerDocument.getElementById(ELEMENT_ID)?.remove()
   }
 
   const redrawBookmarks$ = (bookmarks: Bookmark[]) =>

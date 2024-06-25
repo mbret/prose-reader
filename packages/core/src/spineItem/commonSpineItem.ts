@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { createFrameItem } from "./frameItem/frameItem"
 import { Manifest } from "../types"
 import { BehaviorSubject, Observable, Subject } from "rxjs"
@@ -9,7 +9,7 @@ import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 import { Hook } from "../types/Hook"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 const pointerEvents = [
   `pointercancel` as const,
@@ -52,7 +52,7 @@ export const createCommonSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const destroySubject$ = new Subject<void>()
   const containerElement = createContainerElement(parentElement, item, hooks$)
@@ -64,7 +64,7 @@ export const createCommonSpineItem = ({
     parent: containerElement,
     item,
     context,
-    fetchResource: context.getState()?.fetchResource,
+    fetchResource: context.state?.fetchResource,
     hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
     viewportState$,
     settings
@@ -231,7 +231,7 @@ export const createCommonSpineItem = ({
   }
 
   const getResource = async () => {
-    const fetchResource = context.getState().fetchResource
+    const fetchResource = context.state.fetchResource
     const lastFetch = (_: Manifest[`spineItems`][number]) => {
       if (fetchResource) {
         return fetchResource(item)
@@ -344,7 +344,7 @@ export const createCommonSpineItem = ({
      * be confined to a single page.
      */
     getReadingDirection: () => {
-      return spineItemFrame.getReadingDirection() || context.getReadingDirection()
+      return spineItemFrame.getReadingDirection() || context.readingDirection
     },
     manipulateSpineItem,
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,

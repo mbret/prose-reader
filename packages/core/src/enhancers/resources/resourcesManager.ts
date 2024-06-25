@@ -3,7 +3,7 @@
  */
 import { EMPTY, forkJoin, from, merge, Subject } from "rxjs"
 import { catchError, map, mergeMap, switchMap, takeUntil, tap } from "rxjs/operators"
-import { Context } from "../../context/context"
+import { Context } from "../../context/Context"
 import { Report } from "../../report"
 import { Manifest } from "../../types"
 import { openDatabase } from "./indexedDB"
@@ -15,9 +15,9 @@ export const createResourcesManager = (context: Context) => {
   const retrieveItem = (itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>) => {
     if (typeof itemIndexOrId === `string` || typeof itemIndexOrId === `object`) {
       const id = typeof itemIndexOrId === `object` ? itemIndexOrId.id : undefined
-      return context.getManifest()?.spineItems.find((entry) => entry.id === id)
+      return context.manifest?.spineItems.find((entry) => entry.id === id)
     } else {
-      return context.getManifest()?.spineItems[itemIndexOrId]
+      return context.manifest?.spineItems[itemIndexOrId]
     }
   }
 
@@ -66,11 +66,11 @@ export const createResourcesManager = (context: Context) => {
           }),
         )
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     )
     .subscribe()
 
-  const onLoad$ = context.$.manifest$.pipe(
+  const onLoad$ = context.manifest$.pipe(
     tap(() => {
       uniqueID = Date.now().toString()
     }),
@@ -104,7 +104,7 @@ export const createResourcesManager = (context: Context) => {
           }),
         )
       }),
-      takeUntil(context.$.destroy$),
+      takeUntil(context.destroy$),
     )
     .subscribe()
 

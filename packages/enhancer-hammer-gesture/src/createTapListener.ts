@@ -11,7 +11,7 @@ export const createTapListener = (reader: Reader, hammerManager: HammerManager) 
           const width = window.innerWidth
           const pageTurnMargin = 0.15
 
-          const normalizedEvent = reader.normalizeEventForViewport(srcEvent) || {}
+          const normalizedEvent = reader.spine.normalizeEventForViewport(srcEvent) || {}
 
           if (`x` in normalizedEvent) {
             const { x = 0 } = normalizedEvent
@@ -21,9 +21,9 @@ export const createTapListener = (reader: Reader, hammerManager: HammerManager) 
             //   }
 
             if (x < width * pageTurnMargin) {
-              reader.turnLeft()
+              reader.viewportNavigator.turnLeft()
             } else if (x > width * (1 - pageTurnMargin)) {
-              reader.turnRight()
+              reader.viewportNavigator.turnRight()
             } else {
               observer.next({ type: "tap" })
             }

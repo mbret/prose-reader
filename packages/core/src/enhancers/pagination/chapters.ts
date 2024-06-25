@@ -92,8 +92,8 @@ const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spine
 }
 
 export const getChaptersInfo = (reader: Reader): { [key: string]: ChapterInfo | undefined } => {
-  const manifest = reader.context.getManifest()
-  const items = reader.getSpineItems()
+  const manifest = reader.context.manifest
+  const items = reader.spineItemManager.getAll()
 
   if (!manifest) return {}
 
@@ -109,7 +109,7 @@ export const getChaptersInfo = (reader: Reader): { [key: string]: ChapterInfo | 
 }
 
 export const trackChapterInfo = (reader: Reader) => {
-  return reader.spineItems$.pipe(
+  return reader.spine.$.spineItems$.pipe(
     startWith([]),
     map(() => getChaptersInfo(reader)),
   )

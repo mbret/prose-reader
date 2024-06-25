@@ -16,13 +16,13 @@ import {
 } from "rxjs/operators"
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
-import { Context } from "../../context/context"
+import { Context } from "../../context/Context"
 import { Manifest } from "../../types"
 import { Hook } from "../../types/Hook"
 import { createFrame$ } from "./createFrame$"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { Settings } from "../../settings/settings"
+import { SettingsManager } from "../../settings/SettingsManager"
 
 const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
 
@@ -40,7 +40,7 @@ export const createLoader = ({
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   hooks$: Observable<Hook[]>
   context: Context
-  settings: Settings
+  settings: SettingsManager
   viewportState$: Observable<`free` | `busy`>
 }) => {
   const destroySubject$ = new Subject<void>()
@@ -53,7 +53,7 @@ export const createLoader = ({
   let computedStyleAfterLoad: CSSStyleDeclaration | undefined
 
   const makeItHot = <T>(source$: Observable<T>) => {
-    source$.pipe(takeUntil(context.$.destroy$)).subscribe()
+    source$.pipe(takeUntil(context.destroy$)).subscribe()
 
     return source$
   }
@@ -177,7 +177,7 @@ export const createLoader = ({
                 computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
               }
 
-              if (settings.getSettings().computedPageTurnMode !== `scrollable`) {
+              if (settings.settings.computedPageTurnMode !== `scrollable`) {
                 // @todo see what's the impact
                 frame.setAttribute(`tab-index`, `0`)
               }

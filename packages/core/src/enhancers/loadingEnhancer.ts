@@ -1,7 +1,7 @@
 import { combineLatest, merge, Observable, ObservedValueOf, of } from "rxjs"
 import { takeUntil, switchMap, tap, map, distinctUntilChanged, shareReplay } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../constants"
 import { EnhancerOutput } from "./types/enhancer"
@@ -38,7 +38,7 @@ export const loadingEnhancer =
 
     const reader = next(options)
 
-    const createEntries$ = (items: ObservedValueOf<typeof reader.spineItems$>) =>
+    const createEntries$ = (items: ObservedValueOf<typeof reader.spine.$.spineItems$>) =>
       of(
         items.reduce((acc, { item, element }) => {
           const loadingElementContainer = loadingElementCreate({
@@ -56,9 +56,9 @@ export const loadingEnhancer =
       )
 
     const updateEntriesLayout$ = (entries: Entries) =>
-      combineLatest([reader.$.layout$, reader.theme.$.theme$]).pipe(
+      combineLatest([reader.spine.$.layout$, reader.theme.$.theme$]).pipe(
         map(([, theme]) => ({
-          width: reader.context.getVisibleAreaRect().width,
+          width: reader.context.state.visibleAreaRect.width,
           theme,
         })),
         distinctUntilChanged(isShallowEqual),
@@ -71,14 +71,14 @@ export const loadingEnhancer =
       )
 
     const updateEntriesVisibility$ = (entries: Entries) =>
-      reader.$.itemIsReady$.pipe(
+      reader.spineItemManager.$.itemIsReady$.pipe(
         tap(({ item, isReady }) => {
           entries[item.id]?.style.setProperty(`visibility`, isReady ? `hidden` : `visible`)
         }),
       )
 
     const destroyEntries$ = (entries: Entries) =>
-      reader.$.itemsBeforeDestroy$.pipe(
+      reader.spine.$.itemsBeforeDestroy$.pipe(
         map(() => {
           Object.values(entries).forEach((element) => element.remove())
 
@@ -86,10 +86,10 @@ export const loadingEnhancer =
         }),
       )
 
-    const items$ = reader.spineItems$.pipe(
+    const items$ = reader.spine.$.spineItems$.pipe(
       switchMap((items) => createEntries$(items)),
       shareReplay(1),
-      takeUntil(reader.context.$.destroy$),
+      takeUntil(reader.context.destroy$),
     )
 
     items$
@@ -120,7 +120,7 @@ const createLoadingElementContainer = (containerElement: HTMLElement, context: C
   loadingElement.style.cssText = `
     height: 100%;
     width: 100%;
-    max-width: ${context.getVisibleAreaRect().width}px;
+    max-width: ${context.state.visibleAreaRect.width}px;
     text-align: center;
     display: flex;
     justify-content: center;

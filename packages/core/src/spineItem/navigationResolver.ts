@@ -1,11 +1,11 @@
 import { SpineItem } from "./createSpineItem"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { calculateNumberOfPagesForItem } from "../pagination/pagination"
 import { createLocationResolver } from "./locationResolver"
 import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
-export const createNavigationResolver = ({ context }: { context: Context, settings: Settings }) => {
+export const createNavigationResolver = ({ context }: { context: Context, settings: SettingsManager }) => {
   const spineItemLocator = createLocationResolver({ context })
 
   const getNavigationForLeftPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {

@@ -1,13 +1,13 @@
 import { merge, Observable, Subject } from "rxjs"
 import { Manifest } from "../../types"
-import { Context } from "../../context/context"
+import { Context } from "../../context/Context"
 import { getAttributeValueFromString } from "../../frames"
 import { Hook } from "../../types/Hook"
 import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { Settings } from "../../settings/settings"
+import { SettingsManager } from "../../settings/SettingsManager"
 
 export const createFrameItem = ({
   item,
@@ -24,7 +24,7 @@ export const createFrameItem = ({
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   hooks$: Observable<Hook[]>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const destroySubject$ = new Subject<void>()
 
@@ -140,7 +140,7 @@ export const createFrameItem = ({
         frame.style.width = `${size.width}px`
         frame.style.height = `${size.height}px`
 
-        if (settings.getSettings().computedPageTurnMode !== `scrollable`) {
+        if (settings.settings.computedPageTurnMode !== `scrollable`) {
           // @todo see what's the impact
           frame.setAttribute(`tab-index`, `0`)
         }

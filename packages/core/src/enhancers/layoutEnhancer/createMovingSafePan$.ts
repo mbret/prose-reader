@@ -15,7 +15,7 @@ import { Reader } from "../../reader"
 export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
-  const updateOverlayElement$ = reader.context$.pipe(
+  const updateOverlayElement$ = reader.context.state$.pipe(
     switchMap(({ containerElement }) => {
       if (!containerElement) return NEVER
 
@@ -46,8 +46,8 @@ export const createMovingSafePan$ = (reader: Reader) => {
       }),
     )
 
-  const viewportFree$ = reader.$.viewportState$.pipe(filter((data) => data === `free`))
-  const viewportBusy$ = reader.$.viewportState$.pipe(filter((data) => data === `busy`))
+  const viewportFree$ = reader.viewportNavigator.$.state$.pipe(filter((data) => data === `free`))
+  const viewportBusy$ = reader.viewportNavigator.$.state$.pipe(filter((data) => data === `busy`))
 
   const lockAfterViewportBusy$ = viewportBusy$.pipe(
     tap(() => {
@@ -58,7 +58,7 @@ export const createMovingSafePan$ = (reader: Reader) => {
   const resetLockViewportFree$ = createResetLock$(viewportFree$).pipe(take(1))
 
   const pageTurnMode$ = reader.settings.settings$.pipe(
-    map(() => reader.settings.getSettings().computedPageTurnMode),
+    map(() => reader.settings.settings.computedPageTurnMode),
     distinctUntilChanged(),
   )
 

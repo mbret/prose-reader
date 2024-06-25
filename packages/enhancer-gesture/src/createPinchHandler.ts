@@ -75,7 +75,7 @@ export const createPinchHandler = (
       const previousFingerEvents = [firstPointerDown, secondPointerDown]
 
       const normalizeEvent = (event: PointerEvent): Omit<PinchEvent, "type"> => {
-        const normalizedEvent = reader.normalizeEventForViewport(event)
+        const normalizedEvent = reader.spine.normalizeEventForViewport(event)
 
         return {
           event: normalizedEvent,
@@ -83,8 +83,8 @@ export const createPinchHandler = (
         }
       }
 
-      const normalizedFirstPointerDown = reader.normalizeEventForViewport(firstPointerDown)
-      const normalizedSecondPointerDown = reader.normalizeEventForViewport(secondPointerDown)
+      const normalizedFirstPointerDown = reader.spine.normalizeEventForViewport(firstPointerDown)
+      const normalizedSecondPointerDown = reader.spine.normalizeEventForViewport(secondPointerDown)
       const initialDistance = calculateDistance(normalizedFirstPointerDown, normalizedSecondPointerDown)
 
       const startEvent = {

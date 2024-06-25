@@ -80,7 +80,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   }
 
   const applyChangeToSpineItem = () => {
-    reader.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
+    reader.spine.manipulateSpineItems(({ removeStyle, addStyle, container }) => {
       removeStyle(`prose-reader-theme`)
       addStyle(`prose-reader-theme`, getStyle())
       applyChangeToSpineItemElement({ container })
@@ -101,7 +101,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
    * Make sure to apply theme on item container (fixed layout)
    * & loading element
    */
-  reader.spineItems$
+  reader.spine.$.spineItems$
     .pipe(
       tap((items) => items.map(({ element }) => applyChangeToSpineItemElement({ container: element }))),
       takeUntil(reader.$.destroy$),

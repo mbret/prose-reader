@@ -59,7 +59,7 @@ export const layoutEnhancer =
        * @todo
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
-      reader.manipulateSpineItems(({ frame }) => {
+      reader.spine.manipulateSpineItems(({ frame }) => {
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
           void frame.getBoundingClientRect().left
@@ -130,7 +130,7 @@ export const layoutEnhancer =
     let observer: ResizeObserver | undefined
 
     if (options.layoutAutoResize === `container`) {
-      reader.context$
+      reader.context.state$
         .pipe(
           map((state) => state.containerElement),
           filter(isDefined),

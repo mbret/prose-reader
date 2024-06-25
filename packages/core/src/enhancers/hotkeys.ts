@@ -15,21 +15,21 @@ export const hotkeysEnhancer =
         map(([e, { pageTurnDirection }]) => {
           if (pageTurnDirection === "horizontal") {
             if (e.key === `ArrowRight`) {
-              reader.turnRight()
+              reader.viewportNavigator.turnRight()
             }
 
             if (e.key === `ArrowLeft`) {
-              reader.turnLeft()
+              reader.viewportNavigator.turnLeft()
             }
           }
 
           if (pageTurnDirection === "vertical") {
             if (e.key === `ArrowDown`) {
-              reader.turnRight()
+              reader.viewportNavigator.turnRight()
             }
 
             if (e.key === `ArrowUp`) {
-              reader.turnLeft()
+              reader.viewportNavigator.turnLeft()
             }
           }
 
@@ -39,7 +39,7 @@ export const hotkeysEnhancer =
 
     navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
-    reader.spineItems$
+    reader.spine.$.spineItems$
       .pipe(
         switchMap((spineItems) =>
           merge(

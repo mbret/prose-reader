@@ -1,10 +1,10 @@
 import { BehaviorSubject, Observable } from "rxjs"
-import { Context } from "../context/context"
+import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
-import { Settings } from "../settings/settings"
+import { SettingsManager } from "../settings/SettingsManager"
 
 export const createReflowableSpineItem = ({
   item,
@@ -21,7 +21,7 @@ export const createReflowableSpineItem = ({
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
-  settings: Settings
+  settings: SettingsManager
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
@@ -58,14 +58,14 @@ export const createReflowableSpineItem = ({
     spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
     const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
-    const visibleArea = context.getVisibleAreaRect()
+    const visibleArea = context.state.visibleAreaRect
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
-    const isGloballyPrePaginated = context.getManifest()?.renditionLayout === `pre-paginated`
+    const isGloballyPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
 
     // @todo simplify ? should be from common spine item
     if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
       let contentWidth = pageWidth
-      let contentHeight = visibleArea.height + context.getCalculatedInnerMargin()
+      let contentHeight = visibleArea.height + context.state.calculatedInnerMargin
 
       frameElement?.style.setProperty(`visibility`, `visible`)
       frameElement?.style.setProperty(`opacity`, `1`)
@@ -99,8 +99,8 @@ export const createReflowableSpineItem = ({
       } else {
         const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
-              isScrollable: context.getManifest()?.renditionFlow === `scrolled-continuous`,
-              enableTouch: settings.getSettings().computedPageTurnMode !== `scrollable`,
+              isScrollable: context.manifest?.renditionFlow === `scrolled-continuous`,
+              enableTouch: settings.settings.computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
               commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth),
@@ -118,7 +118,7 @@ export const createReflowableSpineItem = ({
             width: minimumWidth,
             height: contentHeight,
           })
-        } else if (context.getManifest()?.renditionFlow === `scrolled-continuous`) {
+        } else if (context.manifest?.renditionFlow === `scrolled-continuous`) {
           contentHeight = frameElement.contentDocument.documentElement.scrollHeight
           latestContentHeightWhenLoaded = contentHeight
 
