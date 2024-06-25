@@ -1,46 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { BehaviorSubject, Observable, ObservedValueOf, Subject, merge } from "rxjs"
+import { BehaviorSubject, ObservedValueOf, Subject, merge } from "rxjs"
 import { distinctUntilChanged, takeUntil, tap, map, filter, withLatestFrom } from "rxjs/operators"
 import { Manifest } from "@prose-reader/shared"
 import { createSettings } from "../settings/settings"
-import { LoadOptions } from "../types/reader"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-
-type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
-  manifest?: Manifest
-  hasVerticalWriting?: boolean
-  isUsingSpreadMode?: boolean
-  isFullyPrePaginated?: boolean
-}
-
-export type Context = {
-  load: (newManifest: Manifest, newLoadOptions: LoadOptions) => void
-  getManifest: () => Manifest | undefined
-  areAllItemsPrePaginated: () => boolean
-  getCalculatedInnerMargin: () => number
-  getVisibleAreaRect: () => { width: number; height: number; x: number; y: number }
-  isUsingSpreadMode: () => boolean | undefined
-  setHasVerticalWriting: (value: boolean) => void
-  getReadingDirection: () => Manifest[`readingDirection`] | undefined
-  getPageSize: () => { height: number; width: number }
-  setVisibleAreaRect: (options: { x: number; y: number; width: number; height: number }) => void
-  isRTL: () => boolean
-  destroy: () => void
-  getState: () => State
-  containerElement$: Observable<HTMLElement>
-  isUsingSpreadMode$: Observable<boolean | undefined>
-  hasVerticalWriting$: Observable<boolean>
-  $: {
-    destroy$: Observable<void>
-    state$: Observable<State>
-    manifest$: Observable<Manifest>
-  }
-}
-
-export type ContextObservableEvents = {}
+import { Context, State } from "./types"
 
 export const createContext = (settings: ReturnType<typeof createSettings>): Context => {
   const stateSubject = new BehaviorSubject<State>({})
@@ -82,7 +49,7 @@ export const createContext = (settings: ReturnType<typeof createSettings>): Cont
     }
   }
 
-  const load = (newManifest: Manifest, newLoadOptions: LoadOptions) => {
+  const load: Context["load"] = (newManifest, newLoadOptions, settings) => {
     setState({
       manifest: newManifest,
       ...newLoadOptions,
@@ -90,7 +57,7 @@ export const createContext = (settings: ReturnType<typeof createSettings>): Cont
       isUsingSpreadMode: isUsingSpreadMode({
         manifest: newManifest,
         visibleAreaRect,
-        forceSinglePageMode: settings.getSettings().forceSinglePageMode,
+        forceSinglePageMode: settings.forceSinglePageMode,
       }),
     })
   }
