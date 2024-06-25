@@ -5,32 +5,33 @@ import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
 import { SettingsManager } from "../settings/SettingsManager"
+import { HookManager } from "../hooks/HookManager"
 
 export const createReflowableSpineItem = ({
   item,
   context,
   containerElement,
-  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
-  settings
+  settings,
+  hookManager
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
-  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
+  hookManager: HookManager
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
     item,
     parentElement: containerElement,
-    iframeEventBridgeElement$,
     hooks$,
     viewportState$,
-    settings
+    settings,
+    hookManager
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
   /**

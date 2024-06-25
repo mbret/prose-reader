@@ -34,7 +34,7 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         const height = window.innerHeight
         const pageTurnMargin = 0.15
 
-        const normalizedEvent = reader?.normalizeEventForViewport(srcEvent)
+        const normalizedEvent = reader?.events.normalizeEventForViewport(srcEvent)
         // console.log('hammer.handleSingleTap', srcEvent.target, srcEvent.type, center, normalizedEvent)
 
         // if (reader?.getSelection()) return
@@ -60,10 +60,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
           // console.log('hammer.tap', x, width * pageTurnMargin)
           if (x < width * pageTurnMargin) {
-            reader.turnLeft()
+            reader.viewportNavigator.turnLeft()
             // console.log('hammer.tap.left')
           } else if (x > width * (1 - pageTurnMargin)) {
-            reader.turnRight()
+            reader.viewportNavigator.turnRight()
           } else {
             if (hasCurrentHighlight) {
               setMenuOpenState(false)
@@ -150,14 +150,14 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
       }
 
       // if (!movingStarted && ev.isFinal && !reader?.isSelecting()) {
-      if (hasHadPanStart && ev.isFinal && !reader?.isSelecting() && !reader?.zoom.isZooming()) {
+      if (hasHadPanStart && ev.isFinal && !reader?.spine.isSelecting() && !reader?.zoom.isZooming()) {
         const velocity = computedPageTurnDirection === `horizontal` ? ev.velocityX : ev.velocityY
         // console.log(`hammer.onPanMove.velocity`, velocity)
         if (velocity < -0.5) {
-          reader?.turnRight()
+          reader?.viewportNavigator.turnRight()
         }
         if (velocity > 0.5) {
-          reader?.turnLeft()
+          reader?.viewportNavigator.turnLeft()
         }
       }
 
@@ -195,7 +195,7 @@ const useZoomGestureHandler = (hammerManager?: HammerManager) => {
      * It will enter the zoom if user double tap on an img element
      */
     const onDoubleTap: HammerListener = ({ srcEvent }) => {
-      const normalizedEvent = reader?.normalizeEventForViewport(srcEvent)
+      const normalizedEvent = reader?.events.normalizeEventForViewport(srcEvent)
       const target = normalizedEvent?.target as null | undefined | HTMLElement
 
       if (reader?.zoom.isZooming()) {

@@ -20,7 +20,7 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: b
   const onClick = useCallback(
     (cfi: string) => {
       onExit()
-      reader?.goToCfi(cfi)
+      reader?.viewportNavigator.goToCfi(cfi)
     },
     [reader]
   )

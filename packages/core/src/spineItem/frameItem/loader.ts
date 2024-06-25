@@ -20,28 +20,26 @@ import { Context } from "../../context/Context"
 import { Manifest } from "../../types"
 import { Hook } from "../../types/Hook"
 import { createFrame$ } from "./createFrame$"
-import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { SettingsManager } from "../../settings/SettingsManager"
-
-const isOnLoadHook = (hook: Hook): hook is Extract<Hook, { name: `item.onLoad` }> => hook.name === `item.onLoad`
+import { HookManager } from "../../hooks/HookManager"
 
 export const createLoader = ({
   item,
   parent,
   fetchResource,
-  hooks$,
   context,
   viewportState$,
-  settings
+  settings,
+  hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
-  hooks$: Observable<Hook[]>
   context: Context
   settings: SettingsManager
   viewportState$: Observable<`free` | `busy`>
+  hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
   const loadSubject$ = new Subject<void>()
@@ -49,7 +47,7 @@ export const createLoader = ({
   const frameElementSubject$ = new BehaviorSubject<HTMLIFrameElement | undefined>(undefined)
   const isLoadedSubject$ = new BehaviorSubject(false)
   const isReadySubject$ = new BehaviorSubject(false)
-  let onLoadHookReturns: ((() => void) | Subscription | void)[] = []
+  // let onLoadHookReturns: ((() => void) | Subscription | void)[] = []
   let computedStyleAfterLoad: CSSStyleDeclaration | undefined
 
   const makeItHot = <T>(source$: Observable<T>) => {
@@ -71,15 +69,10 @@ export const createLoader = ({
     withLatestFrom(frameElementSubject$),
     filter(([_, frame]) => !!frame),
     map(([, frame]) => {
-      onLoadHookReturns.forEach((fn) => {
-        if (fn && `unsubscribe` in fn) {
-          fn.unsubscribe()
-        } else if (fn) {
-          fn()
-        }
-      })
-      onLoadHookReturns = []
+      hookManager.destroy(`item.onLoad`, item.id)
+
       frame?.remove()
+
       frameElementSubject$.next(undefined)
     }),
     share(),
@@ -148,8 +141,7 @@ export const createLoader = ({
 
           return fromEvent(frame, `load`).pipe(
             take(1),
-            withLatestFrom(hooks$),
-            mergeMap(([_, hooks]) => {
+            mergeMap(() => {
               const body: HTMLElement | undefined | null = frame.contentDocument?.body
 
               if (!body) {
@@ -182,26 +174,16 @@ export const createLoader = ({
                 frame.setAttribute(`tab-index`, `0`)
               }
 
-              const manipulableFrame = createFrameManipulator(frame)
-
-              onLoadHookReturns = hooks.filter(isOnLoadHook).map((hook) => {
-                const hookReturn = hook.fn({
-                  ...manipulableFrame,
-                  item,
-                })
-
-                if (hookReturn && `subscribe` in hookReturn) {
-                  return hookReturn.subscribe()
-                }
-
-                return hookReturn
-              })
-
               // we conveniently wait for all the hooks so that the dom is correctly prepared
               // in addition to be ready.
               // domReadySubject$.next(frame)
 
-              return of(frame)
+              return hookManager
+                .execute(`item.onLoad`, item.id, {
+                  itemId: item.id,
+                  frame
+                })
+                .pipe(map(() => frame))
             }),
           )
         }),

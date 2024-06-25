@@ -5,33 +5,34 @@ import { Hook } from "../types/Hook"
 import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
 import { createReflowableSpineItem } from "./reflowableSpineItem"
 import { SettingsManager } from "../settings/SettingsManager"
+import { HookManager } from "../hooks/HookManager"
 
 export const createSpineItem = ({
   item,
   context,
   containerElement,
-  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
-  settings
+  settings,
+  hookManager
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
-  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
+  hookManager: HookManager
 }) => {
   if (item.renditionLayout === `pre-paginated`) {
     return createPrePaginatedSpineItem({
       item,
       context,
       containerElement,
-      iframeEventBridgeElement$,
       hooks$,
       viewportState$,
-      settings
+      settings,
+      hookManager
     })
   }
 
@@ -39,10 +40,10 @@ export const createSpineItem = ({
     item,
     context,
     containerElement,
-    iframeEventBridgeElement$,
     hooks$,
     viewportState$,
-    settings
+    settings,
+    hookManager
   })
 }
 

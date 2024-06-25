@@ -2,29 +2,29 @@ import { merge, Observable, Subject } from "rxjs"
 import { Manifest } from "../../types"
 import { Context } from "../../context/Context"
 import { getAttributeValueFromString } from "../../frames"
-import { Hook } from "../../types/Hook"
 import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { SettingsManager } from "../../settings/SettingsManager"
+import { HookManager } from "../../hooks/HookManager"
 
 export const createFrameItem = ({
   item,
   parent,
   fetchResource,
   context,
-  hooks$,
   viewportState$,
-  settings
+  settings,
+  hookManager
 }: {
   parent: HTMLElement
   item: Manifest[`spineItems`][number]
   context: Context
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
-  hooks$: Observable<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
+  hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
 
@@ -34,7 +34,7 @@ export const createFrameItem = ({
     unload,
     destroy: loaderDestroy,
     getComputedStyleAfterLoad,
-  } = createLoader({ context, hooks$, item, parent, fetchResource, viewportState$, settings })
+  } = createLoader({ context, hookManager, item, parent, fetchResource, viewportState$, settings })
 
   /**
    * @deprecated
@@ -56,6 +56,7 @@ export const createFrameItem = ({
     },
   })
 
+  // @todo redo
   const getManipulableFrame = (): ReturnType<typeof createFrameManipulator> | undefined => {
     const frame = frameElement$.value
     if (isLoadedSync && frame) {

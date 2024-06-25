@@ -43,7 +43,7 @@ const createHammerInteraction = (container: HTMLElement, reader: Reader) => {
   let movingHasStarted = false
 
   manager?.on("panmove panstart panend", function onPanMove(ev: HammerInput) {
-    const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
+    const normalizedEvent = reader?.events.normalizeEventForViewport(ev.srcEvent)
 
     const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX
     const deltaY = normalizedEvent && `y` in normalizedEvent ? normalizedEvent?.y - movingStartOffsets.y : ev.deltaY
@@ -53,17 +53,17 @@ const createHammerInteraction = (container: HTMLElement, reader: Reader) => {
 
       if (normalizedEvent && `x` in normalizedEvent) {
         movingStartOffsets = { x: normalizedEvent.x, y: normalizedEvent.y }
-        reader?.moveTo({ x: 0, y: 0 }, { start: true })
+        reader?.viewportNavigator.moveTo({ x: 0, y: 0 }, { start: true })
       }
     }
 
     if (ev.type === `panmove` && movingHasStarted) {
-      reader?.moveTo({ x: deltaX, y: deltaY })
+      reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY })
     }
 
     if (ev.type === `panend`) {
       if (movingHasStarted) {
-        reader?.moveTo({ x: deltaX, y: deltaY }, { final: true })
+        reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY }, { final: true })
       }
 
       movingHasStarted = false

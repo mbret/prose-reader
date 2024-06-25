@@ -76,14 +76,14 @@ export const createPanHandler = (
 
   const dragEvent$ = panStart$.pipe(
     switchMap((startPointerDownEvent) => {
-      const normalizedStartPointerDownEvent = reader.spine.normalizeEventForViewport(startPointerDownEvent)
+      const normalizedStartPointerDownEvent = reader.events.normalizeEventForViewport(startPointerDownEvent)
 
       const startTime = new Date().getTime()
       const startX = normalizedStartPointerDownEvent.clientX
       const startY = normalizedStartPointerDownEvent.clientY
 
       const normalizeEvent = (event: PointerEvent): Omit<PanEvent, "type"> => {
-        const normalizedEvent = reader.spine.normalizeEventForViewport(event)
+        const normalizedEvent = reader.events.normalizeEventForViewport(event)
 
         const deltaX = normalizedEvent.clientX - startX
         const deltaY = normalizedEvent.clientY - startY

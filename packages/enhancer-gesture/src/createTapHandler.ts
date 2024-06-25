@@ -65,7 +65,7 @@ export const createTapHandler = (
     }),
     filter(isDefined),
     map((event) => {
-      const normalizedEvent = reader.spine.normalizeEventForViewport(event)
+      const normalizedEvent = reader.events.normalizeEventForViewport(event)
 
       return {
         type: "singleTap",
@@ -87,7 +87,7 @@ export const createTapHandler = (
     }),
     filter(isDefined),
     map((event) => {
-      const normalizedEvent = reader.spine.normalizeEventForViewport(event)
+      const normalizedEvent = reader.events.normalizeEventForViewport(event)
 
       return {
         type: "doubleTap",

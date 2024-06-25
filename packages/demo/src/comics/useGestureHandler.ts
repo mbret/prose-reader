@@ -20,7 +20,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
       const width = window.innerWidth
       const pageTurnMargin = 0.15
 
-      const normalizedEvent = reader.normalizeEventForViewport(srcEvent) || {}
+      const normalizedEvent = reader.events.normalizeEventForViewport(srcEvent) || {}
 
       if (`x` in normalizedEvent) {
         const { x = 0 } = normalizedEvent
@@ -30,9 +30,9 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         }
 
         if (x < width * pageTurnMargin) {
-          reader.turnLeft()
+          reader.viewportNavigator.turnLeft()
         } else if (x > width * (1 - pageTurnMargin)) {
-          reader.turnRight()
+          reader.viewportNavigator.turnRight()
         } else {
           setMenuOpenState((val) => !val)
         }
@@ -81,7 +81,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         return
       }
 
-      const normalizedEvent = reader?.normalizeEventForViewport(ev.srcEvent)
+      const normalizedEvent = reader?.events.normalizeEventForViewport(ev.srcEvent)
 
       // because of iframe moving we have to calculate the delta ourselves with normalized value
       const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX
@@ -96,7 +96,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         } else {
           if (normalizedEvent && `x` in normalizedEvent) {
             movingStartOffsets = { x: normalizedEvent.x, y: normalizedEvent.y }
-            reader?.moveTo({ x: 0, y: 0 }, { start: true })
+            reader?.viewportNavigator.moveTo({ x: 0, y: 0 }, { start: true })
           }
         }
       }
@@ -105,7 +105,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         if (reader?.zoom.isZooming()) {
           reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
         } else {
-          reader?.moveTo({ x: deltaX, y: deltaY })
+          reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY })
         }
       }
 
@@ -115,7 +115,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
           if (movingHasStarted.current) {
-            reader?.moveTo({ x: deltaX, y: deltaY }, { final: true })
+            reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY }, { final: true })
           }
         }
 

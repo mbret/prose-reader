@@ -55,7 +55,7 @@ export const mediaEnhancer =
       },
     )
 
-    reader.registerHook(`item.onLoad`, ({ frame }) => {
+    reader.hookManager.register(`item.onLoad`, ({ frame, destroy }) => {
       frameObserver.observe(frame)
 
       const videos = frame.contentDocument?.body.getElementsByTagName(`video`)
@@ -66,10 +66,10 @@ export const mediaEnhancer =
         return () => elementObserver.unobserve(element)
       })
 
-      return () => {
+      destroy(() => {
         frameObserver.unobserve(frame)
         unobserveElements.forEach((unobserve) => unobserve())
-      }
+      })
     })
 
     const destroy = () => {

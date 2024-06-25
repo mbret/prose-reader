@@ -1,17 +1,13 @@
 import { BehaviorSubject } from "rxjs"
-import { Context } from "../context/Context"
-import { getOriginalFrameEventFromDocumentEvent } from "../frames"
-import { SpineItemManager } from "../spineItemManager"
-import { isMouseEvent, isPointerEvent, isTouchEvent } from "../utils/dom"
-import { createLocationResolver } from "./locationResolver"
+import { getOriginalFrameEventFromDocumentEvent } from "../../frames"
+import { createLocationResolver } from "../../spine/locationResolver"
+import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
 
-export const createEventsHelper = ({
+export const createNormalizeEventForViewport = ({
   iframeEventBridgeElement$,
   locator,
 }: {
   iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
-  spineItemManager: SpineItemManager
-  context: Context
   locator: ReturnType<typeof createLocationResolver>
 }) => {
   const normalizeEventForViewport = <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => {
@@ -80,7 +76,5 @@ export const createEventsHelper = ({
     return event
   }
 
-  return {
-    normalizeEventForViewport,
-  }
+  return normalizeEventForViewport
 }

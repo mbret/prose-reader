@@ -7,7 +7,6 @@ import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { LoadOptions } from "../types/reader"
-import { ComputedSettings } from "../settings/types"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 
 export type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
@@ -115,14 +114,6 @@ export class Context {
     if (!isShallowEqual(newCompleteState, previousState)) {
       this._stateSubject.next(newCompleteState)
     }
-  }
-
-  public load(newManifest: Manifest, newLoadOptions: LoadOptions, settings: ComputedSettings) {
-    this.update({
-      manifest: newManifest,
-      ...newLoadOptions,
-      forceSinglePageMode: settings.forceSinglePageMode,
-    })
   }
 
   /**

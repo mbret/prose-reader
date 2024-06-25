@@ -8,7 +8,6 @@ import { SpineItemManager } from "../spineItemManager"
 import { createLocationResolver as createSpineLocationResolver } from "./locationResolver"
 import { createLocationResolver as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import { createCfiLocator } from "./cfiLocator"
-import { createEventsHelper } from "./eventsHelper"
 import { createSelection } from "../selection"
 import { ViewportNavigationEntry } from "./navigationResolver"
 import type { Hook } from "../types/Hook"
@@ -17,6 +16,7 @@ import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
 import { Manifest } from ".."
 import { SettingsManager } from "../settings/SettingsManager"
+import { HookManager } from "../hooks/HookManager"
 
 const report = Report.namespace(`spine`)
 const noopElement = document.createElement("div")
@@ -35,7 +35,6 @@ export const createSpine = ({
   element$,
   context,
   pagination,
-  iframeEventBridgeElement$,
   spineItemManager,
   hooks$,
   spineItemLocator,
@@ -45,10 +44,10 @@ export const createSpine = ({
   navigationAdjusted$,
   currentNavigationPosition$,
   viewportState$,
-  settings
+  settings,
+  hookManager
 }: {
   element$: Observable<HTMLElement>
-  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   pagination: Pagination
   spineItemManager: SpineItemManager
@@ -64,17 +63,12 @@ export const createSpine = ({
   }>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
+  hookManager: HookManager
 }): Spine => {
   const spineItems$ = new Subject<SpineItem[]>()
   const itemsBeforeDestroySubject$ = new Subject<void>()
   const subject = new Subject<Event>()
   const containerElement$ = new BehaviorSubject<HTMLElement>(noopElement)
-  const eventsHelper = createEventsHelper({
-    context,
-    spineItemManager,
-    iframeEventBridgeElement$,
-    locator: spineLocator,
-  })
   let selectionSubscription: Subscription | undefined
 
   /**
@@ -89,11 +83,11 @@ export const createSpine = ({
       const spineItem = createSpineItem({
         item: resource,
         containerElement: containerElement$.getValue(),
-        iframeEventBridgeElement$,
         context,
         hooks$,
         viewportState$,
-        settings
+        settings,
+        hookManager
       })
       spineItemManager.add(spineItem)
     })
@@ -429,7 +423,6 @@ export const createSpine = ({
     locator: spineLocator,
     spineItemLocator,
     cfiLocator,
-    normalizeEventForViewport: eventsHelper.normalizeEventForViewport,
     manipulateSpineItems,
     manipulateSpineItem,
     destroy: () => {

@@ -78,7 +78,7 @@ export const bookmarksEnhancer =
      * Bookmark area is top right corner
      */
     const isClickEventInsideBookmarkArea = (e: MouseEvent | PointerEvent) => {
-      const event = reader.spine.normalizeEventForViewport(e)
+      const event = reader.events.normalizeEventForViewport(e)
 
       const { width } = reader.context.state.visibleAreaRect
 
@@ -168,7 +168,10 @@ export const bookmarksEnhancer =
      * For each item frame we register even on click to be able to click within
      * the frame
      */
-    reader.registerHook(`item.onLoad`, ({ frame }) => createClickListener$(frame))
+    reader.hookManager.register(`item.onLoad`, ({ frame }) => {
+      
+      createClickListener$(frame)
+    })
 
     renderer.$.element$
       .pipe(

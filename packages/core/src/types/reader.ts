@@ -8,6 +8,7 @@ import { ViewportNavigator } from "../viewportNavigator/viewportNavigator"
 import { SettingsManager } from "../settings/SettingsManager"
 import { Settings } from "../settings/types"
 import { Context } from "../context/Context"
+import { HookManager } from "../hooks/HookManager"
 
 export type ContextSettings = Partial<Settings>
 
@@ -45,10 +46,12 @@ export type ReaderInternal = {
   spineItemManager: SpineItemManager
   viewportNavigator: ViewportNavigator
   settings: SettingsManager
+  hookManager: HookManager
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void
   destroy: () => void
   pagination: Pagination
+  element$: Observable<HTMLElement>
   $: {
     state$: Observable<{
       supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]

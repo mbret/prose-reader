@@ -29,7 +29,7 @@ export const createPanMoveListener = (reader: Reader, hammerManager: HammerManag
             return
           }
 
-          const normalizedEvent = reader?.spine.normalizeEventForViewport(ev.srcEvent)
+          const normalizedEvent = reader?.events.normalizeEventForViewport(ev.srcEvent)
 
           // because of iframe moving we have to calculate the delta ourselves with normalized value
           const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX

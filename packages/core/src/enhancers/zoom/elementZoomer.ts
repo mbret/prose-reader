@@ -61,10 +61,17 @@ export const createElementZoomer = (reader: Reader) => {
   const scale = (userScale: number) => {
     const imgElement = imageMagnifierContainer?.querySelector(`img`)
 
+    // const userScaleScaledToLastValue = userScale * lastUserScale
+
     const roundedScale = Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
+
+    // const userScaleScaledToLastValue = userScale * lastUserScale
+
     const newScale = Math.max(roundedScale, 1)
 
-    // // if user zoom out that much, we reset img position
+    // console.log({ userScale, lastUserScale, userScaleScaledToLastValue, roundedScale })
+
+    // if user zoom out that much, we reset img position
     if (roundedScale < 1) {
       imgLastPosition = { x: 0, y: 0 }
     }
@@ -98,6 +105,7 @@ export const createElementZoomer = (reader: Reader) => {
         `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${baseScale}, ${baseScale}, 1)`,
       )
 
+      console.log({ delta, imgLastPosition })
       movingLastDelta = delta
     }
 

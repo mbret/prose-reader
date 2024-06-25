@@ -106,11 +106,17 @@ export const fontsEnhancer =
     /**
      * Make sure we apply the style to any new item loaded.
      */
-    reader.registerHook(`item.onLoad`, ({ removeStyle, addStyle, item }) => {
-      if (item.renditionLayout !== `pre-paginated`) {
-        removeStyle(`prose-reader-fonts`)
-        addStyle(`prose-reader-fonts`, getStyle())
-      }
+    reader.hookManager.register(`item.onLoad`, ({ itemId }) => {
+      const item = reader.spineItemManager.get(itemId)
+
+      item?.manipulateSpineItem(({ addStyle, removeStyle }) => {
+        if (item.item.renditionLayout !== `pre-paginated`) {
+          removeStyle(`prose-reader-fonts`)
+          addStyle(`prose-reader-fonts`, getStyle())
+        }
+
+        return false
+      })
     })
 
     const shouldRequireLayout = <T extends ObservedValueOf<typeof changes$>>(source: Observable<T>) =>

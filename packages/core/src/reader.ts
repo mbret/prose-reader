@@ -18,8 +18,7 @@ import { Manifest } from "@prose-reader/shared"
 import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
 import { SettingsManager } from "./settings/SettingsManager"
-
-const IFRAME_EVENT_BRIDGE_ELEMENT_ID = `proseReaderIframeEventBridgeElement`
+import { HookManager } from "./hooks/HookManager"
 
 export type CreateReaderOptions = {
   hooks?: Hook[]
@@ -49,19 +48,20 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
   const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
   const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
   const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
+  const hookManager = new HookManager()
   const context = new Context()
-  const settings = new SettingsManager(inputSettings, context)
-  const spineItemManager = createSpineItemManager({ context, settings })
+  const settingsManager = new SettingsManager(inputSettings, context)
+  const spineItemManager = createSpineItemManager({ context, settings: settingsManager })
   const pagination = createPagination({ context, spineItemManager })
+
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
   const element$ = elementSubject$.pipe(filter(isDefined))
-  const iframeEventBridgeElement$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
   const spineItemLocator = createSpineItemLocator({ context })
   const spineLocator = createSpineLocator({
     context,
     spineItemManager,
     spineItemLocator,
-    settings,
+    settings: settingsManager,
   })
   const cfiLocator = createCfiLocator({
     spineItemManager,
@@ -73,9 +73,8 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
 
   const spine = createSpine({
     element$,
-    iframeEventBridgeElement$,
     context,
-    settings,
+    settings: settingsManager,
     pagination,
     spineItemManager,
     hooks$: hooksSubject$,
@@ -86,6 +85,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     navigationAdjusted$: navigationAdjustedSubject.asObservable(),
     viewportState$: viewportStateSubject.asObservable(),
     currentNavigationPosition$: currentNavigationPositionSubject$.asObservable(),
+    hookManager,
   })
 
   const viewportNavigator = createViewportNavigator({
@@ -97,7 +97,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     spineLocator,
     hooks$: hooksSubject$,
     spine,
-    settings,
+    settings: settingsManager,
   })
 
   // bridge all navigation stream with reader so they can be shared across app
@@ -154,19 +154,16 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
 
     Report.log(`load`, { manifest, loadOptions })
 
+    // @todo hook
     const element = createWrapperElement(loadOptions.containerElement)
-    const iframeEventBridgeElement = createIframeEventBridgeElement(loadOptions.containerElement)
 
     if (loadOptions.containerElement !== elementSubject$.getValue()?.parentElement) {
       elementSubject$.next(element)
-      iframeEventBridgeElement$.next(iframeEventBridgeElement)
 
       loadOptions.containerElement.appendChild(element)
-
-      element.appendChild(iframeEventBridgeElement)
     }
 
-    context.load(manifest, loadOptions, settings.settings)
+    context.update({ manifest, ...loadOptions, forceSinglePageMode: settingsManager.settings.forceSinglePageMode })
 
     // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
 
@@ -201,7 +198,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     )
     .subscribe()
 
-  merge(context.state$, settings.settings$)
+  merge(context.state$, settingsManager.settings$)
     .pipe(
       map(() => undefined),
       withLatestFrom(context.state$),
@@ -212,7 +209,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
           hasVerticalWriting,
           renditionFlow: manifest?.renditionFlow,
           renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settings.settings.computedPageTurnMode,
+          computedPageTurnMode: settingsManager.settings.computedPageTurnMode,
         }
       }),
       distinctUntilChanged(isShallowEqual),
@@ -255,7 +252,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
    * instead of destroying it.
    */
   const destroy = () => {
-    settings.destroy()
+    settingsManager.destroy()
     hooksSubject$.next([])
     hooksSubject$.complete()
     pagination.destroy()
@@ -263,7 +260,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     viewportNavigator.destroy()
     spine.destroy()
     elementSubject$.getValue()?.remove()
-    iframeEventBridgeElement$.getValue()?.remove()
     stateSubject$.complete()
     selectionSubject$.complete()
     destroy$.next()
@@ -274,13 +270,15 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     context,
     registerHook,
     spine,
+    hookManager,
     viewportNavigator,
     spineItemManager,
     layout,
     load,
     destroy,
     pagination,
-    settings,
+    settings: settingsManager,
+    element$,
     $: {
       state$: stateSubject$.asObservable(),
       /**
@@ -310,21 +308,6 @@ const createWrapperElement = (containerElement: HTMLElement) => {
   element.className = `${HTML_PREFIX}-reader`
 
   return element
-}
-
-const createIframeEventBridgeElement = (containerElement: HTMLElement) => {
-  const iframeEventBridgeElement = containerElement.ownerDocument.createElement(`div`)
-  iframeEventBridgeElement.id = IFRAME_EVENT_BRIDGE_ELEMENT_ID
-  iframeEventBridgeElement.style.cssText = `
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: -1;
-  `
-
-  return iframeEventBridgeElement
 }
 
 type Reader = ReturnType<typeof createReader>

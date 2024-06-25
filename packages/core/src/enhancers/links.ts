@@ -34,8 +34,8 @@ export const linksEnhancer =
       return false
     }
 
-    reader.registerHook(`item.onLoad`, ({ frame }) => {
-      if (frame.contentDocument) {
+    reader.hookManager.register(`item.onLoad`, ({ frame }) => {
+      if (frame?.contentDocument) {
         Array.from(frame.contentDocument.querySelectorAll(`a`)).forEach((element) =>
           element.addEventListener(`click`, (e) => {
             if (e.target && `style` in e.target && `ELEMENT_NODE` in e.target) {

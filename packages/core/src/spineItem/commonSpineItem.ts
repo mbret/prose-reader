@@ -4,70 +4,42 @@ import { createFrameItem } from "./frameItem/frameItem"
 import { Manifest } from "../types"
 import { BehaviorSubject, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
-import { isMouseEvent, isPointerEvent } from "../utils/dom"
-import { attachOriginalFrameEventToDocumentEvent } from "../frames"
 import { Hook } from "../types/Hook"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 import { SettingsManager } from "../settings/SettingsManager"
-
-const pointerEvents = [
-  `pointercancel` as const,
-  `pointerdown` as const,
-  `pointerenter` as const,
-  `pointerleave` as const,
-  `pointermove` as const,
-  `pointerout` as const,
-  `pointerover` as const,
-  `pointerup` as const,
-  `touchstart` as const,
-  `touchend` as const,
-]
-
-const mouseEvents = [
-  `click` as const,
-  `mousedown` as const,
-  `mouseup` as const,
-  `mouseenter` as const,
-  `mouseleave` as const,
-  `mousemove` as const,
-  `mouseout` as const,
-  `mouseover` as const,
-]
-
-const passthroughEvents = [...pointerEvents, ...mouseEvents]
+import { HookManager } from "../hooks/HookManager"
 
 export const createCommonSpineItem = ({
   item,
   context,
   parentElement,
-  iframeEventBridgeElement$,
   hooks$,
   viewportState$,
-  settings
+  settings,
+  hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
-  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   context: Context
   hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
+  hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
   const containerElement = createContainerElement(parentElement, item, hooks$)
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  const frameHooks = createFrameHooks(iframeEventBridgeElement$, fingerTracker, selectionTracker)
   const spineItemFrame = createFrameItem({
     parent: containerElement,
     item,
     context,
     fetchResource: context.state?.fetchResource,
-    hooks$: hooks$.asObservable().pipe(map((hooks) => [...hooks, ...frameHooks])),
+    hookManager,
     viewportState$,
-    settings
+    settings,
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
@@ -395,53 +367,4 @@ const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spi
   `
 
   return element
-}
-
-const createFrameHooks = (
-  iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>,
-  fingerTracker: ReturnType<typeof createFingerTracker>,
-  selectionTracker: ReturnType<typeof createSelectionTracker>,
-): Hook[] => {
-  return [
-    {
-      name: `item.onLoad`,
-      fn: ({ frame }) => {
-        /**
-         * Register event listener for all mouse/pointer event in order to
-         * passthrough events to main document
-         */
-        const unregister = passthroughEvents.map((event) => {
-          const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
-            let convertedEvent = e
-
-            if (isPointerEvent(e)) {
-              convertedEvent = new PointerEvent(e.type, e)
-            }
-
-            if (isMouseEvent(e)) {
-              convertedEvent = new MouseEvent(e.type, e)
-            }
-
-            if (convertedEvent !== e) {
-              attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
-              iframeEventBridgeElement$.getValue()?.dispatchEvent(convertedEvent)
-            }
-          }
-
-          frame.contentDocument?.addEventListener(event, listener)
-
-          return () => {
-            frame.contentDocument?.removeEventListener(event, listener)
-          }
-        })
-
-        selectionTracker.track(frame)
-        fingerTracker.track(frame)
-
-        return () => {
-          unregister.forEach((cb) => cb())
-        }
-      },
-    },
-  ]
 }
