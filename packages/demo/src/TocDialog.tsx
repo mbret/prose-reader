@@ -12,8 +12,8 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
   const { reader$, reader } = useReader()
   const pagination = usePagination(reader$)
   const toc = nav?.toc || []
-  const { beginPageIndexInChapter, beginSpineItemIndex } = pagination ?? {}
-  const currentPage = (renditionLayout === "reflowable" ? beginPageIndexInChapter : beginSpineItemIndex) || 0
+  const { beginSpineItemIndex, beginPageIndexInSpineItem } = pagination ?? {}
+  const currentPage = (renditionLayout === "reflowable" ? beginPageIndexInSpineItem : beginSpineItemIndex) || 0
   const [currentSubChapter, setCurrentSubChapter] = useState<NonNullable<typeof pagination>["beginChapterInfo"] | undefined>()
 
   const buildTocForItem = (tocItem: (typeof toc)[number], index: number, lvl: number) => (

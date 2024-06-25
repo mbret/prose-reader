@@ -3,8 +3,6 @@ import {
   FormControl,
   FormHelperText,
   FormLabel,
-  Box,
-  Input,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -28,7 +26,7 @@ export const OtherSettings = () => {
       <NumberInput
         value={settings?.numberOfAdjacentSpineItemToPreLoad ?? 0}
         onChange={(_, value) => {
-          reader?.setSettings({
+          reader?.settings.setSettings({
             numberOfAdjacentSpineItemToPreLoad: value
           })
         }}

@@ -5,7 +5,7 @@ import { useReader } from "../reader/useReader"
 
 const undefined$ = of(undefined)
 
-const [useSettings] = bind((reader?: ReaderInstance) => reader?.settings$ ?? undefined$)
+const [useSettings] = bind((reader?: ReaderInstance) => reader?.settings.settings$ ?? undefined$)
 
 export const useReaderSettings = () => {
   const { reader } = useReader()

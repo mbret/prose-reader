@@ -12,9 +12,9 @@ export const Scrubber = () => {
   const pagination = usePagination(reader$)
   const manifest = useRecoilValue(manifestState)
   const isUsingSpread = pagination?.isUsingSpread
-  const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInChapter
+  const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInSpineItem
   const currentPage = isUsingSpread ? Math.floor((currentRealPage || 0) / 2) : currentRealPage
-  const totalApproximatePages = (isComic ? pagination?.numberOfTotalPages : pagination?.beginNumberOfPagesInChapter || 1) || 0
+  const totalApproximatePages = (isComic ? pagination?.numberOfTotalPages : pagination?.beginNumberOfPagesInSpineItem || 1) || 0
   const [value, setValue] = useState(currentPage || 0)
   const max = (isUsingSpread ? totalApproximatePages / 2 : totalApproximatePages) - 1
   const step = 1

@@ -58,7 +58,7 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
             step={0.2}
             onChange={(value) => {
               if (typeof value === "number") {
-                reader.setSettings({
+                reader.settings.setSettings({
                   fontScale: value
                 })
                 setFontScaleSliderValue(value)
@@ -75,7 +75,7 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
         <RadioGroup
           defaultValue="publisher"
           onChange={(value) => {
-            reader.setSettings({
+            reader.settings.setSettings({
               lineHeight: value === `publisher` ? `publisher` : parseInt(value)
             })
           }}
@@ -94,7 +94,7 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
         <RadioGroup
           defaultValue="publisher"
           onChange={(value) => {
-            reader.setSettings({
+            reader.settings.setSettings({
               fontWeight: value === `publisher` ? `publisher` : (parseInt(value) as 100)
             })
           }}
@@ -144,7 +144,7 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
             step={4}
             onChange={(value) => {
               if (typeof value === "number") {
-                reader.setSettings({
+                reader.settings.setSettings({
                   pageVerticalMargin: value
                 })
                 setVerticalMarginSliderValue(value)
@@ -171,7 +171,7 @@ export const ClassicSettings = memo(({ reader, open, onExit }: { reader: Reader;
             step={4}
             onChange={(value) => {
               if (typeof value === "number") {
-                reader.setSettings({
+                reader.settings.setSettings({
                   pageHorizontalMargin: value
                 })
                 setHorizontalMarginSliderValue(value)

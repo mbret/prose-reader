@@ -30,7 +30,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
         <RadioGroup
           defaultValue={settings?.computedPageTurnAnimation}
           onChange={(value) => {
-            reader.setSettings({
+            reader.settings.setSettings({
               pageTurnAnimation: value as NonNullable<typeof settings>["computedPageTurnAnimation"],
               pageTurnMode: `controlled`
             })
@@ -68,7 +68,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
             isChecked={settings?.computedPageTurnMode === `scrollable`}
             defaultChecked={settings?.computedPageTurnMode === `scrollable`}
             onChange={(e) => {
-              reader.setSettings({
+              reader.settings.setSettings({
                 pageTurnMode: e.target.checked ? `scrollable` : `controlled`
               })
             }}
@@ -84,7 +84,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
             isChecked={settings?.computedPageTurnDirection === `vertical`}
             defaultChecked={settings?.computedPageTurnDirection === `vertical`}
             onChange={(e) => {
-              reader.setSettings({
+              reader.settings.setSettings({
                 pageTurnDirection: e.target.checked ? `vertical` : `horizontal`
               })
             }}
@@ -93,7 +93,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
           </Checkbox>
         </Stack>
         {/* <RadioGroup defaultValue={settings?.computedPageTurnDirection} onChange={value => {
-          reader.setSettings({
+          reader.settings.setSettings({
             pageTurnDirection: value as NonNullable<typeof settings>['computedPageTurnDirection']
           })
         }} value={settings?.computedPageTurnDirection}>

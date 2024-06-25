@@ -4,10 +4,12 @@ import { useRecoilValue, useSetRecoilState } from "recoil"
 import { IconButton, Box } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowForwardIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
 import { Scrubber } from "./Scrubber"
-import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState, manifestState } from "./state"
+import { bookTitleState, isComicState, isHelpOpenState, isSearchOpenState, isTocOpenState } from "./state"
 import { AppBar } from "./common/AppBar"
 import { useReader } from "./reader/useReader"
 import { usePagination } from "./reader/state"
+import { useObserve } from "reactjrx"
+import { NEVER } from "rxjs"
 
 export const QuickMenu = ({
   open,
@@ -24,13 +26,14 @@ export const QuickMenu = ({
   const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
   const setIsTocOpenState = useSetRecoilState(isTocOpenState)
   const setIsHelpOpenState = useSetRecoilState(isHelpOpenState)
+  const navigation = useObserve(reader?.navigation.state$ ?? NEVER)
   const pagination = usePagination(reader$)
   const [pageIndex, endPageIndex] = [
-    (pagination?.beginPageIndexInChapter || 0) + 1,
-    (pagination?.endPageIndexInChapter || 0) + 1
+    (pagination?.beginPageIndexInSpineItem || 0) + 1,
+    (pagination?.endPageIndexInSpineItem || 0) + 1
   ].sort((a, b) => a - b)
   const beginAndEndAreDifferent =
-    pagination?.beginPageIndexInChapter !== pagination?.endPageIndexInChapter ||
+    pagination?.beginPageIndexInSpineItem !== pagination?.endPageIndexInSpineItem ||
     pagination?.beginSpineItemIndex !== pagination?.endSpineItemIndex
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
   const isComic = useRecoilValue(isComicState)
@@ -109,17 +112,17 @@ export const QuickMenu = ({
             <IconButton
               icon={<ArrowBackIcon />}
               aria-label="back"
-              onClick={() => reader?.goToLeftSpineItem()}
-              isDisabled={!pagination?.canGoLeft}
+              onClick={() => reader?.navigation.goToLeftSpineItem()}
+              isDisabled={!navigation?.canGoLeftSpineItem}
             />
           }
           rightElement={
             <IconButton
               icon={<ArrowForwardIcon />}
               aria-label="forward"
-              isDisabled={!pagination?.canGoRight}
-              onClick={(_) => {
-                reader?.goToRightSpineItem()
+              isDisabled={!navigation?.canGoRightSpineItem}
+              onClick={() => {
+                reader?.navigation.goToRightSpineItem()
               }}
             />
           }
@@ -159,9 +162,9 @@ export const QuickMenu = ({
                   }}
                 >
                   {beginAndEndAreDifferent && (
-                    <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.beginNumberOfPagesInChapter}`}</>
+                    <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}</>
                   )}
-                  {!beginAndEndAreDifferent && <>{`page ${pageIndex} of ${pagination?.beginNumberOfPagesInChapter}`}</>}
+                  {!beginAndEndAreDifferent && <>{`page ${pageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}</>}
                 </div>
               )}
               {isComic && !hasOnlyOnePage && (

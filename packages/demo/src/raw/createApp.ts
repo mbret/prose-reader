@@ -9,7 +9,6 @@ export const createApp = async () => {
   if (!container) throw new Error("No container")
 
   const reader = createReader({
-    containerElement: container,
     pageTurnAnimation: `slide`
   })
 
@@ -20,7 +19,9 @@ export const createApp = async () => {
   })
   const bookManifest: Manifest = await response.json()
 
-  reader.load(bookManifest, {})
+  reader.load(bookManifest, {
+    containerElement: container
+  })
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
