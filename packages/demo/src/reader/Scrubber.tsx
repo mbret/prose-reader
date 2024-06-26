@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useState } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useRecoilValue } from "recoil"
-import { isComicState, manifestState } from "./state"
-import { useReader } from "./reader/useReader"
-import { usePagination } from "./reader/state"
+import { isComicState, manifestState } from "../state"
+import { useReader } from "./useReader"
+import { usePagination } from "./state"
 
 export const Scrubber = () => {
   const { reader, reader$ } = useReader()

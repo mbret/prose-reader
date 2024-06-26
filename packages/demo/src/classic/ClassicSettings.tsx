@@ -8,7 +8,7 @@ import { Settings } from "../common/Settings"
 import { ArrowDownIcon, ArrowUpIcon, ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons"
 import { OtherSettings } from "../common/OtherSettings"
 import { useReaderSettings } from "../common/useReaderSettings"
-import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants"
+import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants.shared"
 
 type Theme = Parameters<Reader[`theme`][`set`]>[0]
 

@@ -1,7 +1,6 @@
 import { useEffect } from "react"
 import { tap, switchMap } from "rxjs/operators"
-import { Report } from "./report"
-import { ReaderInstance } from "./types"
+import { ReaderInstance } from "../types"
 
 type Bookmark = Parameters<ReaderInstance[`bookmarks`][`load`]>[0][number]
 
@@ -17,7 +16,7 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
                 const importableBookmarks = reader.bookmarks.mapToImportable(bookmarks)
                 persist(bookKey, importableBookmarks)
 
-                Report.log(`persisted bookmarks`, importableBookmarks)
+                console.log(`persisted bookmarks`, importableBookmarks)
               })
             )
           )
@@ -36,7 +35,7 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
   useEffect(() => {
     const bookmarksForBook = restore(bookKey)
 
-    Report.log(`restored bookmarks`, bookmarksForBook)
+    console.log(`restored bookmarks`, bookmarksForBook)
 
     reader?.bookmarks.load(bookmarksForBook)
   }, [reader, bookKey])

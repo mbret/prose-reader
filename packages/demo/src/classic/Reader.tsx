@@ -4,7 +4,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { useGestureHandler } from "./useGestureHandler"
 import { Reader as ReactReader } from "@prose-reader/react"
 import { Manifest } from "@prose-reader/core"
-import { QuickMenu } from "../QuickMenu"
+import { QuickMenu } from "../reader/QuickMenu"
 import {
   bookReadyState,
   isHelpOpenState,
@@ -14,17 +14,17 @@ import {
   useResetStateOnUnMount
 } from "../state"
 import { ClassicSettings } from "./ClassicSettings"
-import { Loading } from "../Loading"
+import { Loading } from "../reader/Loading"
 import { createAppReader, ReactReaderProps, ReaderInstance } from "../types"
-import { useBookmarks } from "../useBookmarks"
+import { useBookmarks } from "../reader/useBookmarks"
 import { useParams } from "react-router"
-import { BookError } from "../BookError"
+import { BookError } from "../reader/BookError"
 import { getEpubUrlFromLocation } from "../serviceWorker/utils"
-import { HighlightMenu } from "../HighlightMenu"
-import { SearchDialog } from "../SearchDialog"
-import { HelpDialog } from "../HelpDialog"
+import { HighlightMenu } from "../reader/HighlightMenu"
+import { SearchDialog } from "../reader/SearchDialog"
+import { HelpDialog } from "../reader/HelpDialog"
 import { useReader } from "../reader/useReader"
-import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants"
+import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants.shared"
 
 export const Reader = ({
   onReader,

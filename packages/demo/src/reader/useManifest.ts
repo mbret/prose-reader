@@ -1,7 +1,6 @@
 import { Manifest } from "@prose-reader/core"
 import { useQuery } from "react-query"
-import { Report } from "./report"
-import { STREAMER_URL_PREFIX } from "./serviceWorker/constants"
+import { STREAMER_URL_PREFIX } from "../serviceWorker/constants"
 
 export const useManifest = (epubUrl: string) =>
   useQuery(
@@ -18,6 +17,6 @@ export const useManifest = (epubUrl: string) =>
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
-      onError: Report.error
+      onError: console.error
     }
   )

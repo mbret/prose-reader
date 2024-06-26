@@ -1,8 +1,8 @@
 import React, { useCallback } from "react"
 import { useRecoilState } from "recoil"
-import { Button } from "./common/Button"
-import { currentHighlight } from "./state"
-import { useReader } from "./reader/useReader"
+import { Button } from "../common/Button"
+import { currentHighlight } from "../state"
+import { useReader } from "./useReader"
 
 export const HighlightMenu = () => {
   const { reader } = useReader()

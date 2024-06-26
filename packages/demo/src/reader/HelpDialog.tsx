@@ -1,8 +1,8 @@
 import { List, ListIcon, ListItem } from "@chakra-ui/react"
 import React from "react"
-import { FullScreenModal } from "./common/FullScreenModal"
-import { usePagination } from "./reader/state"
-import { useReader } from "./reader/useReader"
+import { FullScreenModal } from "../common/FullScreenModal"
+import { usePagination } from "./state"
+import { useReader } from "./useReader"
 
 export const HelpDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const { reader$ } = useReader()

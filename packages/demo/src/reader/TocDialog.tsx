@@ -2,10 +2,10 @@ import { CheckCircleIcon } from "@chakra-ui/icons"
 import { List, ListIcon, ListItem, Text } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
 import { useRecoilValue } from "recoil"
-import { manifestState } from "./state"
-import { FullScreenModal } from "./common/FullScreenModal"
-import { useReader } from "./reader/useReader"
-import { usePagination } from "./reader/state"
+import { manifestState } from "../state"
+import { FullScreenModal } from "../common/FullScreenModal"
+import { useReader } from "./useReader"
+import { usePagination } from "./state"
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const { nav, renditionLayout } = useRecoilValue(manifestState) || {}

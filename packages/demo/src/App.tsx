@@ -2,7 +2,7 @@ import React, { FC, memo, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { useSetRecoilState } from "recoil"
 import { Home as ComicsHome } from "./comics/Home"
-import { Home } from "./Home"
+import { Home } from "./home/Home"
 import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"
 import { ReaderInstance } from "./types"
@@ -11,36 +11,41 @@ import { isZoomingState } from "./state"
 import { ErrorBoundary } from "./common/ErrorBoundary"
 import { useReader } from "./reader/useReader"
 import { Subscribe } from "@react-rxjs/core"
-import { Reader } from "./Reader"
+import { Reader } from "./reader/Reader"
 import "@fontsource/dancing-script/400.css"
+import { QueryClient, QueryClientProvider } from "reactjrx"
+
+const queryClient = new QueryClient()
 
 export const App = memo(() => {
   const { reader, setReader } = useReader()
 
   return (
-    <Subscribe>
-      <ChakraProvider theme={theme}>
-        <ColorModeProvider value="dark" options={{ initialColorMode: `dark`, useSystemColorMode: false }}>
-          <Router>
-            <Routes>
-              <Route
-                path="/reader/:url"
-                element={
-                  <ErrorBoundary>
-                    <Reader onReader={setReader} />
-                  </ErrorBoundary>
-                }
-              />
-              <Route path="/books" element={<ClassicHome />} />
-              <Route path="/comics" element={<ComicsHome />} />
-              <Route path="/" element={<Home />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Router>
-        </ColorModeProvider>
-      </ChakraProvider>
-      <Effects reader={reader} />
-    </Subscribe>
+    <QueryClientProvider client={queryClient}>
+      <Subscribe>
+        <ChakraProvider theme={theme}>
+          <ColorModeProvider value="dark" options={{ initialColorMode: `dark`, useSystemColorMode: false }}>
+            <Router>
+              <Routes>
+                <Route
+                  path="/reader/:url"
+                  element={
+                    <ErrorBoundary>
+                      <Reader onReader={setReader} />
+                    </ErrorBoundary>
+                  }
+                />
+                <Route path="/books" element={<ClassicHome />} />
+                <Route path="/comics" element={<ComicsHome />} />
+                <Route path="/" element={<Home />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Router>
+          </ColorModeProvider>
+        </ChakraProvider>
+        <Effects reader={reader} />
+      </Subscribe>
+    </QueryClientProvider>
   )
 })
 

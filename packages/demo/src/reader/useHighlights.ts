@@ -1,8 +1,8 @@
 import { useEffect } from "react"
-import { ReaderInstance } from "./types"
+import { ReaderInstance } from "../types"
 import { tap } from "rxjs/operators"
 import { useSetRecoilState } from "recoil"
-import { currentHighlight, isMenuOpenState } from "./state"
+import { currentHighlight, isMenuOpenState } from "../state"
 
 export const useHighlights = (reader: ReaderInstance | undefined) => {
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)

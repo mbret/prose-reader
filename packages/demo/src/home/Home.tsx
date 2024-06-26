@@ -1,7 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import { Button as ChakraButton, Text, Box, Heading, Link as ChakraLink } from "@chakra-ui/react"
-import { OrDivider } from "./common/OrDivider"
+import { OrDivider } from "../common/OrDivider"
 import { ExternalLinkIcon } from "@chakra-ui/icons"
 
 export const Home = () => {

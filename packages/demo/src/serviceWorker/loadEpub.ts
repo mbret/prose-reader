@@ -1,5 +1,4 @@
 import { loadAsync } from "jszip"
-import { Report } from "../report"
 import { createArchiveFromText, Archive, createArchiveFromJszip } from "@prose-reader/streamer"
 import localforage from "localforage"
 import { getEpubFilenameFromUrl } from "./utils"
@@ -14,7 +13,7 @@ const cleanup = () => {
   cleanupInterval = setInterval(
     () => {
       if (!loading && archive) {
-        Report.log(`serviceWorker`, `cleaning up unused epub archive reference (after 5mn)`)
+        console.log(`serviceWorker`, `cleaning up unused epub archive reference (after 5mn)`)
         archive = undefined
         lastUrl = undefined
       }

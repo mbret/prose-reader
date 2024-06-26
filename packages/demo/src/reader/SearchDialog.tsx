@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from "react"
 import { tap } from "rxjs/operators"
 import { SearchResult } from "@prose-reader/enhancer-search"
 import { groupBy } from "@prose-reader/core"
-import { FullScreenModal } from "./common/FullScreenModal"
-import { useReader } from "./reader/useReader"
+import { FullScreenModal } from "../common/FullScreenModal"
+import { useReader } from "./useReader"
 
 export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const [text, setText] = useState("")
