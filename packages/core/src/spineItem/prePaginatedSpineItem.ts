@@ -1,7 +1,6 @@
-import { BehaviorSubject, Observable } from "rxjs"
+import { Observable } from "rxjs"
 import { Context } from "../context/Context"
 import { Manifest } from "../types"
-import { Hook } from "../types/Hook"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
 import { SettingsManager } from "../settings/SettingsManager"
@@ -11,7 +10,6 @@ export const createPrePaginatedSpineItem = ({
   item,
   context,
   containerElement,
-  hooks$,
   viewportState$,
   settings,
   hookManager
@@ -19,7 +17,6 @@ export const createPrePaginatedSpineItem = ({
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   context: Context
-  hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
   hookManager: HookManager
@@ -28,7 +25,6 @@ export const createPrePaginatedSpineItem = ({
     context,
     item,
     parentElement: containerElement,
-    hooks$,
     viewportState$,
     settings,
     hookManager

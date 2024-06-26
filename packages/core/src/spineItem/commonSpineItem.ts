@@ -2,9 +2,8 @@
 import { Context } from "../context/Context"
 import { createFrameItem } from "./frameItem/frameItem"
 import { Manifest } from "../types"
-import { BehaviorSubject, Observable, Subject } from "rxjs"
+import { Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
-import { Hook } from "../types/Hook"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 import { SettingsManager } from "../settings/SettingsManager"
@@ -14,7 +13,6 @@ export const createCommonSpineItem = ({
   item,
   context,
   parentElement,
-  hooks$,
   viewportState$,
   settings,
   hookManager,
@@ -22,13 +20,12 @@ export const createCommonSpineItem = ({
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
   context: Context
-  hooks$: BehaviorSubject<Hook[]>
   viewportState$: Observable<`free` | `busy`>
   settings: SettingsManager
   hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
-  const containerElement = createContainerElement(parentElement, item, hooks$)
+  const containerElement = createContainerElement(parentElement, item, hookManager)
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
@@ -36,7 +33,6 @@ export const createCommonSpineItem = ({
     parent: containerElement,
     item,
     context,
-    fetchResource: context.state?.fetchResource,
     hookManager,
     viewportState$,
     settings,
@@ -178,11 +174,7 @@ export const createCommonSpineItem = ({
     containerElement.style.width = `${width}px`
     containerElement.style.height = `${height}px`
 
-    hooks$.getValue().forEach((hook) => {
-      if (hook.name === `item.onAfterLayout`) {
-        hook.fn({ blankPagePosition, item, minimumWidth })
-      }
-    })
+    hookManager.execute(`item.onAfterLayout`, undefined, { blankPagePosition, item, minimumWidth })
 
     setLayoutDirty()
   }
@@ -203,7 +195,8 @@ export const createCommonSpineItem = ({
   }
 
   const getResource = async () => {
-    const fetchResource = context.state.fetchResource
+    const fetchResource = settings.settings.fetchResource
+
     const lastFetch = (_: Manifest[`spineItems`][number]) => {
       if (fetchResource) {
         return fetchResource(item)
@@ -212,15 +205,16 @@ export const createCommonSpineItem = ({
       return fetch(item.href)
     }
 
-    const finalFetch = hooks$.getValue().reduce((acc, hook) => {
-      if (hook.name === `item.onGetResource`) {
-        return hook.fn(acc)
-      }
+    // const finalFetch = hooks$.getValue().reduce((acc, hook) => {
+    //   if (hook.name === `item.onGetResource`) {
+    //     return hook.fn(acc)
+    //   }
 
-      return acc
-    }, lastFetch)
+    //   return acc
+    // }, lastFetch)
 
-    return await finalFetch(item)
+    // return await finalFetch(item)
+    return await lastFetch(item)
   }
 
   const manipulateSpineItem = (
@@ -257,16 +251,12 @@ export const createCommonSpineItem = ({
   }
 
   const executeOnLayoutBeforeMeasurementHook = (options: { minimumWidth: number }) =>
-    hooks$.getValue().forEach((hook) => {
-      if (hook.name === `item.onLayoutBeforeMeasurement`) {
-        hook.fn({
-          frame: spineItemFrame,
-          container: containerElement,
-          item,
-          isImageType,
-          ...options,
-        })
-      }
+    hookManager.execute("item.onLayoutBeforeMeasurement", undefined, {
+      frame: spineItemFrame,
+      container: containerElement,
+      item,
+      isImageType,
+      ...options,
     })
 
   const contentLayout$ = spineItemFrame.$.contentLayoutChange$.pipe(
@@ -335,7 +325,7 @@ export const createCommonSpineItem = ({
 const createContainerElement = (
   containerElement: HTMLElement,
   item: Manifest[`spineItems`][number],
-  hooks$: BehaviorSubject<Hook[]>,
+  hookManager: HookManager,
 ) => {
   const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItem`)
@@ -345,13 +335,9 @@ const createContainerElement = (
     overflow: hidden;
   `
 
-  return hooks$.getValue().reduce((element, hook) => {
-    if (hook.name === `item.onBeforeContainerCreated`) {
-      return hook.fn(element)
-    }
+  hookManager.execute("item.onBeforeContainerCreated", undefined, { element })
 
-    return element
-  }, element)
+  return element
 }
 
 const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {

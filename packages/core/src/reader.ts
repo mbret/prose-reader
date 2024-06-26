@@ -7,7 +7,6 @@ import { HTML_PREFIX } from "./constants"
 import { takeUntil, tap, distinctUntilChanged, withLatestFrom, map, filter } from "rxjs/operators"
 import { createSelection } from "./selection"
 import { createSpineItemManager } from "./spineItemManager"
-import type { Hook, RegisterHook } from "./types/Hook"
 import { isShallowEqual } from "./utils/objects"
 import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
 import { createLocationResolver as createSpineItemLocator } from "./spineItem/locationResolver"
@@ -15,26 +14,17 @@ import { createLocationResolver as createSpineLocator } from "./spine/locationRe
 import { createCfiLocator } from "./spine/cfiLocator"
 import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
-import { ContextSettings, LoadOptions, ReaderInternal } from "./types/reader"
+import { LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
 import { SettingsManager } from "./settings/SettingsManager"
 import { HookManager } from "./hooks/HookManager"
+import { Settings } from "./settings/types"
 
-export type CreateReaderOptions = {
-  hooks?: Hook[]
-} & Pick<
-  ContextSettings,
-  | `forceSinglePageMode`
-  | `pageTurnAnimation`
-  | `pageTurnDirection`
-  | `pageTurnMode`
-  | `navigationSnapThreshold`
-  | `numberOfAdjacentSpineItemToPreLoad`
->
+export type CreateReaderOptions = Partial<Settings>
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateReaderOptions): ReaderInternal => {
+export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal => {
   const stateSubject$ = new BehaviorSubject<ObservedValueOf<ReaderInternal["$"]["state$"]>>({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
@@ -43,7 +33,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
   })
   const destroy$ = new Subject<void>()
   const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
-  const hooksSubject$ = new BehaviorSubject<Hook[]>(initialHooks || [])
   const navigationSubject = new Subject<Navigation>()
   const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
   const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
@@ -77,7 +66,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     settings: settingsManager,
     pagination,
     spineItemManager,
-    hooks$: hooksSubject$,
     navigation$,
     spineLocator,
     spineItemLocator,
@@ -95,7 +83,7 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     parentElement$: elementSubject$,
     cfiLocator,
     spineLocator,
-    hooks$: hooksSubject$,
+    hookManager,
     spine,
     settings: settingsManager,
   })
@@ -176,10 +164,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
     }
   }
 
-  const registerHook: RegisterHook = (name, fn) => {
-    hooksSubject$.next([...hooksSubject$.getValue(), { name, fn } as Hook])
-  }
-
   spine.$.$.pipe(
     tap((event) => {
       if (event.type === `onSelectionChange`) {
@@ -253,8 +237,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
    */
   const destroy = () => {
     settingsManager.destroy()
-    hooksSubject$.next([])
-    hooksSubject$.complete()
     pagination.destroy()
     context.destroy()
     viewportNavigator.destroy()
@@ -268,7 +250,6 @@ export const createReader = ({ hooks: initialHooks, ...inputSettings }: CreateRe
 
   const reader = {
     context,
-    registerHook,
     spine,
     hookManager,
     viewportNavigator,

@@ -9,7 +9,7 @@ import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { LoadOptions } from "../types/reader"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 
-export type State = Partial<Pick<LoadOptions, "containerElement" | "fetchResource">> & {
+export type State = Partial<Pick<LoadOptions, "containerElement">> & {
   manifest?: Manifest
   hasVerticalWriting?: boolean
   isUsingSpreadMode?: boolean

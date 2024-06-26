@@ -1,11 +1,6 @@
-import { EMPTY, Observable, Subject, combineLatest, of, tap } from "rxjs"
-
-type UserDestroyFn = () => void | Observable<unknown>
-
-type Params = { destroy$: Observable<void>; destroy: (fn: UserDestroyFn) => void; itemId: string; frame: HTMLIFrameElement }
-
-type Hook = { name: `item.onLoad`; runFn: (params: Params) => Observable<void> }
-type HookExecution = { name: string; id: string; destroyFn: () => Observable<unknown>; ref: Hook }
+import { Observable, Subject, combineLatest, of } from "rxjs"
+import { Hook, HookExecution, HookFrom, HookParamsFrom, Params } from "./types"
+import { UserDestroyFn } from "./types"
 
 export class HookManager {
   _hooks: Array<Hook> = []
@@ -27,7 +22,7 @@ export class HookManager {
    * You can manipulate your item later if you need to update it and trigger a layout.
    * This logic will not run every time there is a layout.
    */
-  public register(name: `item.onLoad`, fn: (params: Params) => void | Observable<void>) {
+  public register<Name extends Hook["name"]>(name: Name, fn: (params: HookParamsFrom<Name>) => void | Observable<void>) {
     const hook: Hook = {
       name,
       runFn: (params: Params) => {
@@ -46,11 +41,15 @@ export class HookManager {
     }
   }
 
-  public execute(name: `item.onLoad`, id: string, params: Omit<Params, "destroy$" | "destroy">) {
-    const hooks = this._hooks.filter((hookInstance) => name === hookInstance.name)
+  public execute<Name extends Hook["name"]>(
+    name: Name,
+    id: string | undefined,
+    params: Omit<HookParamsFrom<Name>, "destroy$" | "destroy">,
+  ) {
+    const hooks = this._hooks.filter((hook): hook is HookFrom<Name> => name === hook.name)
 
     const runFns = hooks.map((hook) => {
-      let userDestroyFn: UserDestroyFn = () => EMPTY
+      let userDestroyFn: UserDestroyFn = () => of(undefined)
 
       const destroySubject = new Subject<void>()
       const destroy = (fn: UserDestroyFn) => {
@@ -63,10 +62,11 @@ export class HookManager {
 
         const result = userDestroyFn()
 
-        return result ?? EMPTY
+        return result ?? of(undefined)
       }
 
-      const execution = hook.runFn({ ...params, destroy$: destroySubject.asObservable(), destroy })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const execution = hook.runFn({ ...(params as any), destroy$: destroySubject.asObservable(), destroy })
 
       this._hookExecutions.push({
         name,
@@ -78,11 +78,10 @@ export class HookManager {
       return execution
     })
 
-    console.log({ hooks, runFns })
     return combineLatest(runFns)
   }
 
-  public destroy(name: `item.onLoad`, id?: string, ref?: Hook) {
+  public destroy<Name extends Hook["name"]>(name: Name, id?: string, ref?: Hook) {
     const instances = this._hookExecutions.filter(
       (hookInstance) =>
         // by ref is higher priority

@@ -35,7 +35,6 @@ import {
 import { createCfiLocator } from "../spine/cfiLocator"
 import { createScrollViewportNavigator } from "./scrollViewportNavigator"
 import { createManualViewportNavigator } from "./manualViewportNavigator"
-import { Hook } from "../types/Hook"
 import { createPanViewportNavigator } from "./panViewportNavigator"
 import { HTML_PREFIX } from "../constants"
 import { mapKeysTo } from "../utils/rxjs"
@@ -44,6 +43,7 @@ import { LastUserExpectedNavigation, Navigation } from "./types"
 import { Spine } from "../spine/createSpine"
 import { isDefined } from "../utils/isDefined"
 import { SettingsManager } from "../settings/SettingsManager"
+import { HookManager } from "../hooks/HookManager"
 
 const NAMESPACE = `viewportNavigator`
 
@@ -56,7 +56,7 @@ export const createViewportNavigator = ({
   parentElement$,
   cfiLocator,
   spineLocator,
-  hooks$,
+  hookManager,
   spine,
   settings,
 }: {
@@ -66,7 +66,7 @@ export const createViewportNavigator = ({
   parentElement$: BehaviorSubject<HTMLElement | undefined>
   cfiLocator: ReturnType<typeof createCfiLocator>
   spineLocator: ReturnType<typeof createLocationResolver>
-  hooks$: BehaviorSubject<Hook[]>
+  hookManager: HookManager
   spine: Spine
   settings: SettingsManager
 }) => {
@@ -174,7 +174,7 @@ export const createViewportNavigator = ({
   const adjustReadingOffset = Report.measurePerformance(
     `adjustReadingOffset`,
     2,
-    ({ x, y }: { x: number; y: number }, hooks: Hook[]) => {
+    ({ x, y }: { x: number; y: number }) => {
       const element = element$.getValue()
 
       if (!element) throw new Error("Invalid element")
@@ -193,11 +193,7 @@ export const createViewportNavigator = ({
         element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
       }
 
-      hooks.forEach((hook) => {
-        if (hook.name === `onViewportOffsetAdjust`) {
-          hook.fn()
-        }
-      })
+      hookManager.execute("onViewportOffsetAdjust", undefined, {})
     },
     { disable: true },
   )
@@ -383,10 +379,7 @@ export const createViewportNavigator = ({
    */
   const navigationWhichRequireManualAdjust$ = navigation$.pipe(
     filter(({ triggeredBy }) => {
-      if (
-        triggeredBy === `scroll` ||
-        (settings.settings.computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)
-      ) {
+      if (triggeredBy === `scroll` || (settings.settings.computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)) {
         return false
       } else {
         return true
@@ -465,23 +458,22 @@ export const createViewportNavigator = ({
          * need to adjust to anchor to the payload position. This is because we use viewport computed position,
          * not the value set by `setProperty`
          */
-        withLatestFrom(hooks$),
-        tap(([data, hooks]) => {
+        tap((data) => {
           if (pageTurnAnimation !== `fade`) {
-            adjustReadingOffset(data.position, hooks)
+            adjustReadingOffset(data.position)
           }
         }),
         currentEvent.shouldAnimate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
-        tap(([data, hooks]) => {
+        tap((data) => {
           if (pageTurnAnimation === `fade`) {
-            adjustReadingOffset(data.position, hooks)
+            adjustReadingOffset(data.position)
             element$.getValue().style.setProperty(`opacity`, `1`)
           }
         }),
         currentEvent.shouldAnimate ? delay(animationDuration / 2, animationFrameScheduler) : identity,
-        tap(([data, hooks]) => {
+        tap((data) => {
           if (pageTurnAnimation === `fade`) {
-            adjustReadingOffset(data.position, hooks)
+            adjustReadingOffset(data.position)
           }
         }),
         takeUntil(
@@ -594,7 +586,7 @@ export const createViewportNavigator = ({
   const parentElementSub = parentElement$
     .pipe(filter(isDefined), withLatestFrom(spine.element$))
     .subscribe(([parentElement, spineElement]) => {
-      const element = createElement(parentElement.ownerDocument, hooks$)
+      const element = createElement(parentElement.ownerDocument, hookManager)
       element.appendChild(spineElement)
       parentElement.appendChild(element)
       element$.next(element)
@@ -633,7 +625,7 @@ export const createViewportNavigator = ({
   }
 }
 
-const createElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
+const createElement = (doc: Document, hookManager: HookManager) => {
   const element: HTMLElement = doc.createElement(`div`)
   element.style.cssText = `
     height: 100%;
@@ -652,13 +644,9 @@ const createElement = (doc: Document, hooks$: BehaviorSubject<Hook[]>) => {
   // element.style.willChange = `transform`
   // element.style.transformOrigin = `0 0`
 
-  return hooks$.getValue().reduce((element, hook) => {
-    if (hook.name === `viewportNavigator.onBeforeContainerCreated`) {
-      return hook.fn(element)
-    }
+  hookManager.execute("viewportNavigator.onBeforeContainerCreated", undefined, { element })
 
-    return element
-  }, element)
+  return element
 }
 
 export type ViewportNavigator = ReturnType<typeof createViewportNavigator>

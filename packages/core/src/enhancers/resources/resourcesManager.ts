@@ -30,6 +30,7 @@ export const createResourcesManager = (context: Context) => {
     if (!item) return new Response(`Item not found`, { status: 404 })
 
     const db = await openDatabase(`prose-reader`)
+
     const cacheData = await db.get(`${uniqueID}_${item.id}`)
 
     if (cacheData) {

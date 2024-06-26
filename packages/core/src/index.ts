@@ -3,7 +3,6 @@ import { createSelection } from "./selection"
 export type { Manifest } from "./types"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
-export type { RegisterHook } from "./types/Hook"
 
 export type Reader = ReturnType<typeof createReader>
 

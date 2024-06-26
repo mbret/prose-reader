@@ -30,7 +30,11 @@ afterEach(() => {
 describe("Given a book with one chapter", () => {
   describe(`when we navigate to first page`, () => {
     it(`should return first chapter`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({})
+      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+        fetchResource: async () => {
+          return new Response("", { status: 200 })
+        },
+      })
 
       const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
         reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
@@ -64,9 +68,6 @@ describe("Given a book with one chapter", () => {
           },
           {
             containerElement: document.getElementById("test-container")!,
-            fetchResource: async () => {
-              return new Response("", { status: 200 })
-            },
           },
         )
       })
@@ -80,7 +81,11 @@ describe("Given a book with one chapter", () => {
 
   describe("when we navigate to second page", () => {
     it(`should return first chapter`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({})
+      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+        fetchResource: async () => {
+          return new Response("", { status: 200 })
+        },
+      })
 
       const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
         reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
@@ -122,9 +127,6 @@ describe("Given a book with one chapter", () => {
           },
           {
             containerElement: document.getElementById("test-container")!,
-            fetchResource: async () => {
-              return new Response("", { status: 200 })
-            },
           },
         )
 
@@ -142,7 +144,11 @@ describe("Given a book with one chapter", () => {
     describe(`when we are on first page`, () => {
       describe("and the first page is within firt chapter sub chapter", () => {
         it(`should return correct chapter with its subChapter info filled`, async () => {
-          const reader = paginationEnhancer(progressionEnhancer(createReader))({})
+          const reader = paginationEnhancer(progressionEnhancer(createReader))({
+            fetchResource: async () => {
+              return new Response("", { status: 200 })
+            },
+          })
 
           const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
             reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
@@ -191,9 +197,6 @@ describe("Given a book with one chapter", () => {
               },
               {
                 containerElement: document.getElementById("test-container")!,
-                fetchResource: async () => {
-                  return new Response("", { status: 200 })
-                },
               },
             )
 
@@ -214,7 +217,11 @@ describe("Given a book with one chapter", () => {
 describe("Given a book with two chapters", () => {
   describe("when we navigate to the first page which is in first chapter", () => {
     it(`should return chapter 1`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({})
+      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+        fetchResource: async () => {
+          return new Response("", { status: 200 })
+        },
+      })
 
       const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
         reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
@@ -262,9 +269,6 @@ describe("Given a book with two chapters", () => {
           },
           {
             containerElement: document.getElementById("test-container")!,
-            fetchResource: async () => {
-              return new Response("", { status: 200 })
-            },
           },
         )
       })
@@ -278,7 +282,11 @@ describe("Given a book with two chapters", () => {
 
   describe("when we navigate to a page that is in a second chapter", () => {
     it(`return chapter 2`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({})
+      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+        fetchResource: async () => {
+          return new Response("", { status: 200 })
+        },
+      })
 
       const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
         reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
@@ -326,9 +334,6 @@ describe("Given a book with two chapters", () => {
           },
           {
             containerElement: document.getElementById("test-container")!,
-            fetchResource: async () => {
-              return new Response("", { status: 200 })
-            },
           },
         )
 

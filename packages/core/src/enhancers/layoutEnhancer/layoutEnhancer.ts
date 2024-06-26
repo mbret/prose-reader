@@ -34,7 +34,7 @@ export const layoutEnhancer =
       pageVerticalMargin,
     })
 
-    reader.registerHook(`onViewportOffsetAdjust`, () => {
+    reader.hookManager.register(`onViewportOffsetAdjust`, () => {
       let hasRedrawn = false
 
       /**
@@ -74,7 +74,7 @@ export const layoutEnhancer =
      * Apply margins to frame item
      * @todo memoize
      */
-    reader.registerHook(`item.onLayoutBeforeMeasurement`, ({ frame, minimumWidth, item, isImageType }) => {
+    reader.hookManager.register(`item.onLayoutBeforeMeasurement`, ({ frame, minimumWidth, item, isImageType }) => {
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
       const pageSize = reader.context.getPageSize()
 

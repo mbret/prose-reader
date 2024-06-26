@@ -10,7 +10,6 @@ import { createLocationResolver as createSpineItemLocationResolver } from "../sp
 import { createCfiLocator } from "./cfiLocator"
 import { createSelection } from "../selection"
 import { ViewportNavigationEntry } from "./navigationResolver"
-import type { Hook } from "../types/Hook"
 import type { Spine } from "../types/Spine"
 import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
@@ -36,7 +35,6 @@ export const createSpine = ({
   context,
   pagination,
   spineItemManager,
-  hooks$,
   spineItemLocator,
   spineLocator,
   cfiLocator,
@@ -51,7 +49,6 @@ export const createSpine = ({
   context: Context
   pagination: Pagination
   spineItemManager: SpineItemManager
-  hooks$: BehaviorSubject<Hook[]>
   spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>
   spineLocator: ReturnType<typeof createSpineLocationResolver>
   cfiLocator: ReturnType<typeof createCfiLocator>
@@ -84,7 +81,6 @@ export const createSpine = ({
         item: resource,
         containerElement: containerElement$.getValue(),
         context,
-        hooks$,
         viewportState$,
         settings,
         hookManager
