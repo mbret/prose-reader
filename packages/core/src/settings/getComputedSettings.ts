@@ -11,7 +11,6 @@ export const getComputedSettings = (settings: Settings, context: Context) => {
     computedPageTurnAnimation: settings.pageTurnAnimation,
     computedPageTurnMode: `controlled`,
     computedPageTurnAnimationDuration: 0,
-    computedSnapAnimationDuration: 0,
   }
 
   // We force scroll mode for some books

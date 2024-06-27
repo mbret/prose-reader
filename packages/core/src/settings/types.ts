@@ -6,6 +6,7 @@ export type Settings = {
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`
   pageTurnMode: `controlled` | `scrollable`
+  snapAnimationDuration: number
   navigationSnapThreshold: number
   /**
    * Specify how many spine items you want to preload.
@@ -57,5 +58,4 @@ export type ComputedSettings = Settings & {
   computedPageTurnDirection: Settings[`pageTurnDirection`]
   computedPageTurnAnimation: Settings[`pageTurnAnimation`]
   computedPageTurnAnimationDuration: number
-  computedSnapAnimationDuration: number
 }

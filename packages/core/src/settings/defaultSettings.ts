@@ -10,7 +10,7 @@ export const defaultSettings: Settings = {
   //   computedPageTurnAnimationDuration: 0,
   pageTurnMode: `controlled`,
   //   computedPageTurnMode: `controlled`,
-  //   computedSnapAnimationDuration: 300,
+  snapAnimationDuration: 300,
   navigationSnapThreshold: 0.3,
   numberOfAdjacentSpineItemToPreLoad: 0,
 }
