@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
       }),
     },
     dts({
-      rollupTypes: true
+      // rollupTypes: true
     }),
   ],
 }))
