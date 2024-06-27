@@ -82,11 +82,17 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
           }
 
           // mainly to make loading screen looks good
-          if (!isGloballyPrePaginated && item.item.renditionLayout === `reflowable` && isLastItem && itemStartOnNewScreen) {
+          if (
+            !isGloballyPrePaginated &&
+            item.item.renditionLayout === `reflowable` &&
+            isLastItem &&
+            itemStartOnNewScreen
+          ) {
             minimumWidth = context.getPageSize().width * 2
           }
 
-          const lastItemStartOnNewScreenInAPrepaginatedBook = itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
+          const lastItemStartOnNewScreenInAPrepaginatedBook =
+            itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
 
           if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
             blankPagePosition = `before`
@@ -160,7 +166,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
         // We can now adjust the position of the item if needed based on its new layout.
         // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
         // it will be x from right
-        item.adjustPositionOfElement(context.isRTL() ? { right: horizontalOffset, top: 0 } : { left: horizontalOffset, top: 0 })
+        item.adjustPositionOfElement(
+          context.isRTL() ? { right: horizontalOffset, top: 0 } : { left: horizontalOffset, top: 0 },
+        )
 
         newItemLayoutInformation.push({
           ...(context.isRTL()
@@ -186,7 +194,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       { horizontalOffset: 0, verticalOffset: 0 },
     )
 
-    const hasLayoutChanges = itemLayoutInformation.some((old, index) => !isShallowEqual(old, newItemLayoutInformation[index]))
+    const hasLayoutChanges = itemLayoutInformation.some(
+      (old, index) => !isShallowEqual(old, newItemLayoutInformation[index]),
+    )
 
     itemLayoutInformation = newItemLayoutInformation
 
@@ -224,7 +234,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
     orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
       const isBeforeFocusedWithPreload =
         // we never want to preload anything before on free scroll on flow because it could offset the cursor
-        index < leftIndex && !isPrePaginated && isUsingFreeScroll ? true : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
+        index < leftIndex && !isPrePaginated && isUsingFreeScroll
+          ? true
+          : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
       const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
 
       if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
@@ -249,7 +261,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
    */
   const getAbsolutePositionOf = (spineItemOrIndex: SpineItem | number) => {
     const indexOfItem =
-      typeof spineItemOrIndex === `number` ? spineItemOrIndex : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
+      typeof spineItemOrIndex === `number`
+        ? spineItemOrIndex
+        : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
 
     const layoutInformation = itemLayoutInformation[indexOfItem]
 
@@ -269,7 +283,8 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
     focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
 
   const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
-    const isAfter = orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
+    const isAfter =
+      orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
 
     if (isAfter) {
       return `after`
@@ -358,7 +373,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       layout$: layout$.asObservable(),
       itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
         switchMap((items) => {
-          const itemsIsReady$ = items.map((item) => item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))))
+          const itemsIsReady$ = items.map((item) =>
+            item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))),
+          )
 
           return merge(...itemsIsReady$)
         }),

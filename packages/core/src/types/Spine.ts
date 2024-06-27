@@ -21,7 +21,9 @@ export type Spine = {
   locator: Locator
   spineItemLocator: SpineItemLocator
   cfiLocator: CfiLocator
-  manipulateSpineItems: (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => void
+  manipulateSpineItems: (
+    cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout,
+  ) => void
   manipulateSpineItem: (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => void
   destroy: () => void
   isSelecting: () => boolean | undefined

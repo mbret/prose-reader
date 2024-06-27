@@ -30,6 +30,19 @@
 
 import { Report } from "../report"
 
+const pointerEvents: string[] = [
+  `pointercancel` as const,
+  `pointerdown` as const,
+  `pointerenter` as const,
+  `pointerleave` as const,
+  `pointermove` as const,
+  `pointerout` as const,
+  `pointerover` as const,
+  `pointerup` as const,
+  // `touchstart` as const,
+  // `touchend` as const,
+]
+
 /**
  * Global env agnostic method to detect if an element is HtmlElement.
  *
@@ -101,13 +114,25 @@ export const getFirstVisibleNodeForViewport = Report.measurePerformance(
            * it can be tested with moby-dick.txt by using different font size. Whenever using something different than default font size we might
            * have floating point for font and we start having issue. Using ceil "make sure" to be inside the point. Hopefully.
            */
-          const rangeOrCaret = createRangeOrCaretFromPoint(ownerDocument, Math.ceil(visibleRect.left), Math.ceil(visibleRect.top))
+          const rangeOrCaret = createRangeOrCaretFromPoint(
+            ownerDocument,
+            Math.ceil(visibleRect.left),
+            Math.ceil(visibleRect.top),
+          )
 
           // good news we found something with same node so we can assume the offset is already better than nothing
-          if (rangeOrCaret && `startContainer` in rangeOrCaret && rangeOrCaret.startContainer === lastValidRange.startContainer) {
+          if (
+            rangeOrCaret &&
+            `startContainer` in rangeOrCaret &&
+            rangeOrCaret.startContainer === lastValidRange.startContainer
+          ) {
             lastValidOffset = rangeOrCaret.startOffset
           }
-          if (rangeOrCaret && `offsetNode` in rangeOrCaret && rangeOrCaret.offsetNode === lastValidRange.startContainer) {
+          if (
+            rangeOrCaret &&
+            `offsetNode` in rangeOrCaret &&
+            rangeOrCaret.offsetNode === lastValidRange.startContainer
+          ) {
             lastValidOffset = rangeOrCaret.offset
           }
           return true
@@ -195,17 +220,21 @@ export const isPointerEvent = (event: Event): event is PointerEvent => {
   if ((event as PointerEvent)?.target && (event?.target as Element)?.ownerDocument?.defaultView) {
     const eventView = (event?.target as Element)?.ownerDocument?.defaultView as Window & typeof globalThis
 
-    if (eventView.PointerEvent) {
-      return event instanceof eventView.PointerEvent
+    if (eventView.PointerEvent && event instanceof eventView.PointerEvent) {
+      return true
     }
   }
 
   if ((event as PointerEvent)?.view && (event as PointerEvent)?.view?.window) {
     const eventView = (event as PointerEvent)?.view as Window & typeof globalThis
 
-    if (eventView.PointerEvent) {
-      return event instanceof eventView.PointerEvent
+    if (eventView.PointerEvent && event instanceof eventView.PointerEvent) {
+      return true
     }
+  }
+
+  if (pointerEvents.includes(event.type)) {
+    return true
   }
 
   return false

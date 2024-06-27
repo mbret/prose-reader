@@ -379,7 +379,10 @@ export const createViewportNavigator = ({
    */
   const navigationWhichRequireManualAdjust$ = navigation$.pipe(
     filter(({ triggeredBy }) => {
-      if (triggeredBy === `scroll` || (settings.settings.computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)) {
+      if (
+        triggeredBy === `scroll` ||
+        (settings.settings.computedPageTurnMode === `scrollable` && triggeredBy === `adjust`)
+      ) {
         return false
       } else {
         return true
@@ -388,11 +391,16 @@ export const createViewportNavigator = ({
   )
 
   const manualAdjust$ = merge(
-    panViewportNavigator.$.moveToSubject$.asObservable().pipe(map((event) => ({ ...event, animation: false as const }))),
+    panViewportNavigator.$.moveToSubject$
+      .asObservable()
+      .pipe(map((event) => ({ ...event, animation: false as const }))),
     navigationWhichRequireManualAdjust$,
   ).pipe(
     map(({ animation, position }) => {
-      const shouldAnimate = !(!animation || (animation === `turn` && settings.settings.computedPageTurnAnimation === `none`))
+      const shouldAnimate = !(
+        !animation ||
+        (animation === `turn` && settings.settings.computedPageTurnAnimation === `none`)
+      )
 
       return {
         type: `manualAdjust` as const,

@@ -157,7 +157,10 @@ export const createManualViewportNavigator = ({
 
       if (spineItemHasChanged) {
         if (allowSpineItemChange) {
-          const positionOfNewSpineItemComparedToCurrentOne = spineItemManager.comparePositionOf(newSpineItem, currentSpineItem)
+          const positionOfNewSpineItemComparedToCurrentOne = spineItemManager.comparePositionOf(
+            newSpineItem,
+            currentSpineItem,
+          )
 
           if (positionOfNewSpineItemComparedToCurrentOne === `before`) {
             return of({

@@ -889,7 +889,12 @@ class CFI {
     return { node: curNode, offset: newOffset }
   }
 
-  resolveNode(index: number, subparts: { nodeIndex: number; nodeID?: string; offset?: number }[], dom: Document, opts: {}) {
+  resolveNode(
+    index: number,
+    subparts: { nodeIndex: number; nodeID?: string; offset?: number }[],
+    dom: Document,
+    opts: {},
+  ) {
     opts = Object.assign({}, opts || {})
     if (!dom) throw new Error(`Missing DOM argument`)
 
@@ -1112,9 +1117,11 @@ export const extractProseMetadataFromCfi = (
   offset?: number
 } => {
   const [itemId] =
-    cfi.match(/\|(\[prose\~anchor[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~anchor\~/, ``).replace(/\]/, ``)) || []
+    cfi.match(/\|(\[prose\~anchor[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~anchor\~/, ``).replace(/\]/, ``)) ||
+    []
   const [offset] =
-    cfi.match(/\|(\[prose\~offset[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) || []
+    cfi.match(/\|(\[prose\~offset[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) ||
+    []
   const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/gi, ``)
   const foundOffset = parseInt(offset || ``)
 
