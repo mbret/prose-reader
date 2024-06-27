@@ -23,7 +23,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  plugins: [dts({
-    entryRoot: "src"
-  })],
+  plugins: [
+    dts({
+      entryRoot: "src",
+    }),
+  ],
 }))

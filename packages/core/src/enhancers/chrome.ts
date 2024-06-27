@@ -5,7 +5,9 @@ import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
  * All fixes relative to chromes
  */
 export const chromeEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 

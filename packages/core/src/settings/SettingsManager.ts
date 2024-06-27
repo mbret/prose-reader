@@ -45,7 +45,9 @@ export class SettingsManager {
       }),
     )
 
-    merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$).pipe(takeUntil(context.destroy$)).subscribe()
+    merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$)
+      .pipe(takeUntil(context.destroy$))
+      .subscribe()
   }
 
   // @see https://github.com/microsoft/TypeScript/issues/17293

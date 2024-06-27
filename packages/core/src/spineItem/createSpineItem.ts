@@ -12,7 +12,7 @@ export const createSpineItem = ({
   containerElement,
   viewportState$,
   settings,
-  hookManager
+  hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -28,7 +28,7 @@ export const createSpineItem = ({
       containerElement,
       viewportState$,
       settings,
-      hookManager
+      hookManager,
     })
   }
 
@@ -38,7 +38,7 @@ export const createSpineItem = ({
     containerElement,
     viewportState$,
     settings,
-    hookManager
+    hookManager,
   })
 }
 

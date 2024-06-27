@@ -26,9 +26,13 @@ export const mapPaginationInfoToExtendedInfo =
   > => {
     const context = reader.context
     const beginItem =
-      paginationInfo.beginSpineItemIndex !== undefined ? reader.spineItemManager.get(paginationInfo.beginSpineItemIndex) : undefined
+      paginationInfo.beginSpineItemIndex !== undefined
+        ? reader.spineItemManager.get(paginationInfo.beginSpineItemIndex)
+        : undefined
     const endItem =
-      paginationInfo.endSpineItemIndex !== undefined ? reader.spineItemManager.get(paginationInfo.endSpineItemIndex) : undefined
+      paginationInfo.endSpineItemIndex !== undefined
+        ? reader.spineItemManager.get(paginationInfo.endSpineItemIndex)
+        : undefined
 
     return {
       ...paginationInfo,
@@ -90,7 +94,10 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
     distinctUntilChanged(isShallowEqual),
   )
 
-  const paginationInfo$: Observable<EnhancerPaginationInto> = combineLatest([extandedBasePagination$, totalPages$]).pipe(
+  const paginationInfo$: Observable<EnhancerPaginationInto> = combineLatest([
+    extandedBasePagination$,
+    totalPages$,
+  ]).pipe(
     map(([pageInfo, totalPageInfo]) => ({
       ...pageInfo,
       ...totalPageInfo,
@@ -104,7 +111,7 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
     tap((value) => {
       currentValue.next(value)
     }),
-    shareReplay(1)
+    shareReplay(1),
   )
 
   return { paginationInfo$, getPaginationInfo: () => currentValue.value }

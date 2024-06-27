@@ -63,7 +63,8 @@ export const createElementZoomer = (reader: Reader) => {
 
     // const userScaleScaledToLastValue = userScale * lastUserScale
 
-    const roundedScale = Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
+    const roundedScale =
+      Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
 
     // const userScaleScaledToLastValue = userScale * lastUserScale
 
@@ -84,7 +85,10 @@ export const createElementZoomer = (reader: Reader) => {
     lastUserScale = newScale
   }
 
-  const move = (delta: { x: number; y: number } | undefined, { isFirst, isLast }: { isFirst: boolean; isLast: boolean }) => {
+  const move = (
+    delta: { x: number; y: number } | undefined,
+    { isFirst, isLast }: { isFirst: boolean; isLast: boolean },
+  ) => {
     const imgElement = imageMagnifierContainer?.querySelector(`img`)
 
     if (isFirst) {

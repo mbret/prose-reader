@@ -1,11 +1,18 @@
 import { Context } from "../context/Context"
-import { getItemOffsetFromPageIndex, getClosestValidOffsetFromApproximateOffsetInPages, calculateNumberOfPagesForItem } from "../pagination/pagination"
+import {
+  getItemOffsetFromPageIndex,
+  getClosestValidOffsetFromApproximateOffsetInPages,
+  calculateNumberOfPagesForItem,
+} from "../pagination/pagination"
 import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import { SpineItemPosition, UnsafeSpineItemPosition } from "./types"
 
 export const createLocationResolver = ({ context }: { context: Context }) => {
-  const getSafePosition = (unsafeSpineItemPosition: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemPosition => ({
+  const getSafePosition = (
+    unsafeSpineItemPosition: UnsafeSpineItemPosition,
+    spineItem: SpineItem,
+  ): SpineItemPosition => ({
     x: Math.min(spineItem.getElementDimensions().width, Math.max(0, unsafeSpineItemPosition.x)),
     y: Math.min(spineItem.getElementDimensions().height, Math.max(0, unsafeSpineItemPosition.y)),
   })
@@ -127,7 +134,10 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     return undefined
   }
 
-  const getSpineItemClosestPositionFromUnsafePosition = (unsafePosition: UnsafeSpineItemPosition, spineItem: SpineItem) => {
+  const getSpineItemClosestPositionFromUnsafePosition = (
+    unsafePosition: UnsafeSpineItemPosition,
+    spineItem: SpineItem,
+  ) => {
     const { width, height } = spineItem.getElementDimensions()
 
     const adjustedPosition = {

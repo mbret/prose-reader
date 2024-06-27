@@ -11,7 +11,7 @@ export const createLocationResolver = ({
   spineItemManager,
   context,
   spineItemLocator,
-  settings
+  settings,
 }: {
   spineItemManager: SpineItemManager
   context: Context
@@ -149,8 +149,9 @@ export const createLocationResolver = ({
     }
 
     const endItemIndex =
-      spineItemManager.getSpineItemIndex(getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem()) ??
-      itemAtPositionIndex
+      spineItemManager.getSpineItemIndex(
+        getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem(),
+      ) ?? itemAtPositionIndex
 
     /**
      * This sort is a quick trick to always order correctly and thus simplify when dealing with ltr/rtl
@@ -180,7 +181,11 @@ export const createLocationResolver = ({
     return spineItemManager.getAll().find((item) => item.spineItemFrame.getFrameElement() === iframe)
   }
 
-  const getSpineItemPageIndexFromNode = (node: Node, offset: number | undefined, spineItemOrIndex: SpineItem | number) => {
+  const getSpineItemPageIndexFromNode = (
+    node: Node,
+    offset: number | undefined,
+    spineItemOrIndex: SpineItem | number,
+  ) => {
     if (typeof spineItemOrIndex === `number`) {
       const spineItem = spineItemManager.get(spineItemOrIndex)
       return spineItem ? spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItem) : undefined

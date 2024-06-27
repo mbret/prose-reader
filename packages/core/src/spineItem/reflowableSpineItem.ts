@@ -12,7 +12,7 @@ export const createReflowableSpineItem = ({
   containerElement,
   viewportState$,
   settings,
-  hookManager
+  hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -27,7 +27,7 @@ export const createReflowableSpineItem = ({
     parentElement: containerElement,
     viewportState$,
     settings,
-    hookManager
+    hookManager,
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
   /**
@@ -225,7 +225,13 @@ const buildStyleForViewportFrame = () => {
  *
  * It does not means it has to be pre-paginated (scrollable for example)
  */
-const buildStyleForReflowableImageOnly = ({ isScrollable, enableTouch }: { enableTouch: boolean; isScrollable: boolean }) => {
+const buildStyleForReflowableImageOnly = ({
+  isScrollable,
+  enableTouch,
+}: {
+  enableTouch: boolean
+  isScrollable: boolean
+}) => {
   return `
     ${
       /*

@@ -140,7 +140,11 @@ export const calculateNumberOfPagesForItem = (itemWidth: number, pageWidth: numb
   return Math.floor(Math.max(1, itemWidth / pageWidth))
 }
 
-export const getClosestValidOffsetFromApproximateOffsetInPages = (offset: number, pageWidth: number, itemWidth: number) => {
+export const getClosestValidOffsetFromApproximateOffsetInPages = (
+  offset: number,
+  pageWidth: number,
+  itemWidth: number,
+) => {
   const numberOfPages = calculateNumberOfPagesForItem(itemWidth, pageWidth)
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 

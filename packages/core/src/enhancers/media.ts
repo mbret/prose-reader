@@ -1,7 +1,9 @@
 import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const mediaEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 

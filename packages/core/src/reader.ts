@@ -198,7 +198,12 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
       }),
       distinctUntilChanged(isShallowEqual),
       map(
-        ({ hasVerticalWriting, renditionFlow, renditionLayout, computedPageTurnMode }): ObservedValueOf<typeof stateSubject$> => {
+        ({
+          hasVerticalWriting,
+          renditionFlow,
+          renditionLayout,
+          computedPageTurnMode,
+        }): ObservedValueOf<typeof stateSubject$> => {
           return {
             ...stateSubject$.value,
             supportedPageTurnMode:

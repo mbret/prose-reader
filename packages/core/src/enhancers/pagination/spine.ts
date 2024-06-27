@@ -1,8 +1,16 @@
-import { Observable, debounceTime, animationFrameScheduler, withLatestFrom, map, distinctUntilChanged, startWith } from "rxjs";
+import {
+  Observable,
+  debounceTime,
+  animationFrameScheduler,
+  withLatestFrom,
+  map,
+  distinctUntilChanged,
+  startWith,
+} from "rxjs"
 import { calculateNumberOfPagesForItem } from "../../pagination/pagination"
 import { Reader } from "../../reader"
 import { SpineItem } from "../../spineItem/createSpineItem"
-import { isShallowEqual } from "../../utils/objects";
+import { isShallowEqual } from "../../utils/objects"
 
 export const getSpineItemNumberOfPages = ({ spineItem, reader }: { spineItem: SpineItem; reader: Reader }) => {
   // pre-paginated always are only one page

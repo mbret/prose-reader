@@ -150,58 +150,60 @@ describe("Given a book with one chapter", () => {
             },
           })
 
-          const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>((resolve, reject) => {
-            reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
-              next: resolve,
-              error: reject,
-            })
+          const value = await new Promise<ObservedValueOf<typeof reader.pagination.paginationInfo$>>(
+            (resolve, reject) => {
+              reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
+                next: resolve,
+                error: reject,
+              })
 
-            reader.load(
-              {
-                ...BASE_MANIFEST,
-                nav: {
-                  toc: [
+              reader.load(
+                {
+                  ...BASE_MANIFEST,
+                  nav: {
+                    toc: [
+                      {
+                        contents: [
+                          {
+                            contents: [],
+                            href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                            path: "OEBPS/part0007.xhtml",
+                            title: "Chapter 1",
+                          },
+                        ],
+                        href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                        path: "OEBPS/part0006.xhtml",
+                        title: "Part 1",
+                      },
+                    ],
+                  },
+                  spineItems: [
                     {
-                      contents: [
-                        {
-                          contents: [],
-                          href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
-                          path: "OEBPS/part0007.xhtml",
-                          title: "Chapter 1",
-                        },
-                      ],
                       href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
-                      path: "OEBPS/part0006.xhtml",
-                      title: "Part 1",
+                      id: "part0006.xhtml",
+                      pageSpreadLeft: true,
+                      pageSpreadRight: true,
+                      progressionWeight: 0,
+                      renditionLayout: "pre-paginated",
+                    },
+                    {
+                      href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                      id: "part0007.xhtml",
+                      pageSpreadLeft: true,
+                      pageSpreadRight: true,
+                      progressionWeight: 0,
+                      renditionLayout: "pre-paginated",
                     },
                   ],
                 },
-                spineItems: [
-                  {
-                    href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
-                    id: "part0006.xhtml",
-                    pageSpreadLeft: true,
-                    pageSpreadRight: true,
-                    progressionWeight: 0,
-                    renditionLayout: "pre-paginated",
-                  },
-                  {
-                    href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
-                    id: "part0007.xhtml",
-                    pageSpreadLeft: true,
-                    pageSpreadRight: true,
-                    progressionWeight: 0,
-                    renditionLayout: "pre-paginated",
-                  },
-                ],
-              },
-              {
-                containerElement: document.getElementById("test-container")!,
-              },
-            )
+                {
+                  containerElement: document.getElementById("test-container")!,
+                },
+              )
 
-            reader.viewportNavigator.goToSpineItem(1)
-          })
+              reader.viewportNavigator.goToSpineItem(1)
+            },
+          )
 
           expect(value.beginChapterInfo).toEqual({
             path: "OEBPS/part0006.xhtml",

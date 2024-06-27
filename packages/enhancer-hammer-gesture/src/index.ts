@@ -59,7 +59,7 @@ export const hammerGestureEnhancer =
 
         return createManager(reader)
       }),
-      share()
+      share(),
     )
 
     const tapListenerEvents$ = hammerManager$.pipe(
@@ -94,7 +94,7 @@ export const hammerGestureEnhancer =
             map(([event, { fontScale: fontScaleOnPinchStart }]) => {
               // if (reader?.zoom.isZooming()) {
               //   reader?.zoom.scale(event.scale)
-              // } else 
+              // } else
               if (enableFontScalePinch) {
                 const value = fontScaleOnPinchStart + (event.scale - 1)
                 const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))

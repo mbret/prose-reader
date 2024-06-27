@@ -19,7 +19,7 @@ export const createNavigationResolver = ({
   spineItemManager,
   cfiLocator,
   locator,
-  settings
+  settings,
 }: {
   context: Context
   spineItemManager: SpineItemManager
@@ -146,7 +146,10 @@ export const createNavigationResolver = ({
           : { y: position.y + context.getPageSize().height, x: 0 },
       )
     } else {
-      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigationForRightPage, spineItem)
+      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(
+        spineItemNavigationForRightPage,
+        spineItem,
+      )
 
       return readingOrderPosition
     }
@@ -334,9 +337,13 @@ export const createNavigationResolver = ({
     // const triggerPercentage = movingForward ? 0.7 : 0.3
     const triggerPercentage = 0.5
     const triggerXPosition =
-      pageTurnDirection === `horizontal` ? viewportPosition.x + context.state.visibleAreaRect.width * triggerPercentage : 0
+      pageTurnDirection === `horizontal`
+        ? viewportPosition.x + context.state.visibleAreaRect.width * triggerPercentage
+        : 0
     const triggerYPosition =
-      pageTurnDirection === `horizontal` ? 0 : viewportPosition.y + context.state.visibleAreaRect.height * triggerPercentage
+      pageTurnDirection === `horizontal`
+        ? 0
+        : viewportPosition.y + context.state.visibleAreaRect.height * triggerPercentage
     const midScreenPositionSafePosition = wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
     return getNavigationForPosition(midScreenPositionSafePosition)
   }

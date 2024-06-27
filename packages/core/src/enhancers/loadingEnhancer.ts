@@ -136,7 +136,13 @@ const createLoadingElementContainer = (containerElement: HTMLElement, context: C
   return loadingElement
 }
 
-const defaultLoadingElementCreate = ({ container, item }: { container: HTMLElement; item: Manifest[`spineItems`][number] }) => {
+const defaultLoadingElementCreate = ({
+  container,
+  item,
+}: {
+  container: HTMLElement
+  item: Manifest[`spineItems`][number]
+}) => {
   const logoElement = container.ownerDocument.createElement(`div`)
   logoElement.innerText = `prose`
   logoElement.style.cssText = `

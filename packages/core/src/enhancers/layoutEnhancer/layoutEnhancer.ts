@@ -78,7 +78,12 @@ export const layoutEnhancer =
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
       const pageSize = reader.context.getPageSize()
 
-      if (item.renditionLayout === `reflowable` && frame.getIsReady() && !isImageType() && !frame.getViewportDimensions()) {
+      if (
+        item.renditionLayout === `reflowable` &&
+        frame.getIsReady() &&
+        !isImageType() &&
+        !frame.getViewportDimensions()
+      ) {
         let columnWidth = pageSize.width - pageHorizontalMargin * 2
         const columnHeight = pageSize.height - pageVerticalMargin * 2
         let width = pageSize.width - pageHorizontalMargin * 2

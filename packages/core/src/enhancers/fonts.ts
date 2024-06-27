@@ -60,7 +60,12 @@ export const fontsEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Options): Output => {
-    const { fontScale = 1, lineHeight = `publisher`, fontWeight = `publisher`, fontJustification = `publisher` } = options
+    const {
+      fontScale = 1,
+      lineHeight = `publisher`,
+      fontWeight = `publisher`,
+      fontJustification = `publisher`,
+    } = options
     const changes$ = new Subject<Partial<OutputOptions>>()
     const settings$ = new BehaviorSubject<OutputOptions>({
       fontScale,

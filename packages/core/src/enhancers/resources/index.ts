@@ -2,7 +2,9 @@ import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createResourcesManager } from "./resourcesManager"
 
 export const resourcesEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
     const resourceManager = createResourcesManager(reader.context)

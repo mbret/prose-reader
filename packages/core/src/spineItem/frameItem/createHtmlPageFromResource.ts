@@ -18,10 +18,14 @@ const getIntrinsicDimensionsFromBase64Img = (data: string) =>
  * @todo only keep a very basic default one which just put the resource as <media> inside html page
  * @todo use the core default one as last resort if the pipe does not return an html document
  */
-export const createHtmlPageFromResource = async (resourceResponse: Response | string, item: Manifest[`spineItems`][number]) => {
+export const createHtmlPageFromResource = async (
+  resourceResponse: Response | string,
+  item: Manifest[`spineItems`][number],
+) => {
   if (typeof resourceResponse === `string`) return resourceResponse
 
-  const contentType = parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectMimeTypeFromName(item.href)
+  const contentType =
+    parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectMimeTypeFromName(item.href)
 
   if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some((mime) => mime === contentType)) {
     const data = await getBase64FromBlob(await resourceResponse.blob())

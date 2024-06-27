@@ -42,7 +42,8 @@ export const createViewportZoomer = (reader: Reader) => {
 
     if (!spineElement || !viewportElement) return
 
-    const roundedScale = Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
+    const roundedScale =
+      Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
     const newScale = Math.max(roundedScale, 1)
 
     // GET CURRENT SCALE

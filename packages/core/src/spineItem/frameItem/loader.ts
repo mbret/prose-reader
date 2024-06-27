@@ -1,5 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BehaviorSubject, EMPTY, from, fromEvent, merge, Observable, of, Subject, Subscription } from "rxjs"
+import {
+  BehaviorSubject,
+  combineLatest,
+  EMPTY,
+  from,
+  fromEvent,
+  merge,
+  Observable,
+  of,
+  Subject,
+  Subscription,
+} from "rxjs"
 import {
   exhaustMap,
   filter,
@@ -104,9 +115,11 @@ export const createLoader = ({
             !fetchResource &&
             item.href.startsWith(window.location.origin) &&
             // we have an encoding and it's a valid html
-            ((item.mediaType && [`application/xhtml+xml`, `application/xml`, `text/html`, `text/xml`].includes(item.mediaType)) ||
+            ((item.mediaType &&
+              [`application/xhtml+xml`, `application/xml`, `text/html`, `text/xml`].includes(item.mediaType)) ||
               // no encoding ? then try to detect html
-              (!item.mediaType && ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some((extension) => item.href.endsWith(extension))))
+              (!item.mediaType &&
+                ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some((extension) => item.href.endsWith(extension))))
           ) {
             frame?.setAttribute(`src`, item.href)
 
@@ -177,12 +190,14 @@ export const createLoader = ({
               // in addition to be ready.
               // domReadySubject$.next(frame)
 
-              return hookManager
+              const hookResults = hookManager
                 .execute(`item.onLoad`, item.id, {
                   itemId: item.id,
-                  frame
+                  frame,
                 })
-                .pipe(map(() => frame))
+                .filter((result): result is Observable<void> => result instanceof Observable)
+
+              return combineLatest([of(null), ...hookResults]).pipe(map(() => frame))
             }),
           )
         }),

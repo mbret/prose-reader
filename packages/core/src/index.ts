@@ -4,6 +4,8 @@ export type { Manifest } from "./types"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 
+export { HookManager } from "./hooks/HookManager"
+
 export type Reader = ReturnType<typeof createReader>
 
 export { createReader }

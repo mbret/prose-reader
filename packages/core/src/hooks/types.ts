@@ -3,7 +3,12 @@ import { Observable } from "rxjs"
 
 export type UserDestroyFn = () => void | Observable<unknown>
 
-export type Hook =
+export interface Hook<Name, Params, Result> {
+  name: Name
+  runFn: (params: Params) => Result
+}
+
+export type CoreHook =
   | {
       name: `item.onLoad`
       runFn: (params: {
@@ -11,7 +16,7 @@ export type Hook =
         destroy: (fn: UserDestroyFn) => void
         itemId: string
         frame: HTMLIFrameElement
-      }) => Observable<void>
+      }) => Observable<void> | void
     }
   | {
       name: "item.onAfterLayout"
@@ -76,16 +81,22 @@ export type Hook =
 //     ) => (item: Manifest[`spineItems`][number]) => Promise<Response>
 //   }
 
-export type Params = Parameters<Hook["runFn"]>[0]
+// export type Params = Parameters<CoreHook["runFn"]>[0]
 
-export type HookExecution = { name: string; id: string | undefined; destroyFn: () => Observable<unknown>; ref: Hook }
+export type HookExecution<H extends Hook<any, any, any>> = {
+  name: string
+  id: string | undefined
+  destroyFn: () => Observable<unknown>
+  ref: H
+}
 
-export type HookFrom<Name extends Hook["name"]> = Hook extends infer HK
-  ? HK extends Hook
+export type HookFrom<H extends Hook<any, any, any>, Name extends H["name"]> = H extends infer HK
+  ? HK extends H
     ? HK["name"] extends Name
       ? HK
       : never
     : never
   : never
 
-export type HookParamsFrom<Name extends Hook["name"]> = Parameters<HookFrom<Name>["runFn"]>[0]
+// export type HookParamsFrom<H extends Hook<any, any, any>, Name> = Name extends H["name"] ? Parameters<H['runFn']>[0] : never
+// export type HookResultFrom<H extends Hook<any, any, any>, Name> = Name extends H["name"] ? ReturnType<H['runFn']> : never

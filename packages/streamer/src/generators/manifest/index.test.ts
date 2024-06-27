@@ -41,11 +41,11 @@ describe(`Given a list of urls archive`, () => {
           renditionLayout: "pre-paginated",
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
-          pageSpreadRight: undefined
+          pageSpreadRight: undefined,
         },
       ],
       title: "",
-      renditionSpread: undefined
+      renditionSpread: undefined,
     } satisfies Manifest)
   })
 })
@@ -84,11 +84,11 @@ describe(`Given a list of urls with rendition flow archive`, () => {
           renditionLayout: "reflowable",
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
-          pageSpreadRight: undefined
+          pageSpreadRight: undefined,
         },
       ],
       title: "",
-      renditionSpread: undefined
+      renditionSpread: undefined,
     } satisfies Manifest)
   })
 })

@@ -5,10 +5,13 @@ import { createLocationResolver } from "./locationResolver"
 import { SpineItemNavigationPosition, UnsafeSpineItemPosition } from "./types"
 import { SettingsManager } from "../settings/SettingsManager"
 
-export const createNavigationResolver = ({ context }: { context: Context, settings: SettingsManager }) => {
+export const createNavigationResolver = ({ context }: { context: Context; settings: SettingsManager }) => {
   const spineItemLocator = createLocationResolver({ context })
 
-  const getNavigationForLeftPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {
+  const getNavigationForLeftPage = (
+    position: UnsafeSpineItemPosition,
+    spineItem: SpineItem,
+  ): SpineItemNavigationPosition => {
     let nextPotentialPosition = {
       x: position.x - context.getPageSize().width,
       y: position.y,
@@ -21,12 +24,18 @@ export const createNavigationResolver = ({ context }: { context: Context, settin
       }
     }
 
-    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(
+      nextPotentialPosition,
+      spineItem,
+    )
 
     return new SpineItemNavigationPosition(navigationPosition)
   }
 
-  const getNavigationForRightPage = (position: UnsafeSpineItemPosition, spineItem: SpineItem): SpineItemNavigationPosition => {
+  const getNavigationForRightPage = (
+    position: UnsafeSpineItemPosition,
+    spineItem: SpineItem,
+  ): SpineItemNavigationPosition => {
     let nextPotentialPosition = {
       x: position.x + context.getPageSize().width,
       y: position.y,
@@ -39,7 +48,10 @@ export const createNavigationResolver = ({ context }: { context: Context, settin
       }
     }
 
-    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(nextPotentialPosition, spineItem)
+    const navigationPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(
+      nextPotentialPosition,
+      spineItem,
+    )
 
     return new SpineItemNavigationPosition(navigationPosition)
   }
@@ -68,8 +80,14 @@ export const createNavigationResolver = ({ context }: { context: Context, settin
     return new SpineItemNavigationPosition(position || { x: 0, y: 0 })
   }
 
-  const getNavigationForPosition = (spineItem: SpineItem, position: UnsafeSpineItemPosition): SpineItemNavigationPosition => {
-    const potentiallyCorrectedPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(position, spineItem)
+  const getNavigationForPosition = (
+    spineItem: SpineItem,
+    position: UnsafeSpineItemPosition,
+  ): SpineItemNavigationPosition => {
+    const potentiallyCorrectedPosition = spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(
+      position,
+      spineItem,
+    )
 
     return new SpineItemNavigationPosition(potentiallyCorrectedPosition)
   }

@@ -4,7 +4,9 @@ export const createNavigator = (reader: Reader) => {
   const goToNextSpineItem = () => {
     const focusedSpineItemIndex = reader.spineItemManager.getFocusedSpineItemIndex() || 0
     const { end = focusedSpineItemIndex } =
-      reader.spine.locator.getSpineItemsFromReadingOrderPosition(reader.viewportNavigator.getCurrentNavigationPosition()) || {}
+      reader.spine.locator.getSpineItemsFromReadingOrderPosition(
+        reader.viewportNavigator.getCurrentNavigationPosition(),
+      ) || {}
     const numberOfSpineItems = reader.context.manifest?.spineItems.length ?? 0
     const nextItem = end + 1
     if (nextItem < numberOfSpineItems) {
@@ -15,7 +17,9 @@ export const createNavigator = (reader: Reader) => {
   const goToPreviousSpineItem = () => {
     const focusedSpineItemIndex = reader.spineItemManager.getFocusedSpineItemIndex() || 0
     const { begin = focusedSpineItemIndex } =
-      reader.spine.locator.getSpineItemsFromReadingOrderPosition(reader.viewportNavigator.getCurrentNavigationPosition()) || {}
+      reader.spine.locator.getSpineItemsFromReadingOrderPosition(
+        reader.viewportNavigator.getCurrentNavigationPosition(),
+      ) || {}
     const nextItem = begin - 1
 
     if (nextItem >= 0) {

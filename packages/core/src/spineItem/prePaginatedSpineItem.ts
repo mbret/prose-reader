@@ -12,7 +12,7 @@ export const createPrePaginatedSpineItem = ({
   containerElement,
   viewportState$,
   settings,
-  hookManager
+  hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -27,7 +27,7 @@ export const createPrePaginatedSpineItem = ({
     parentElement: containerElement,
     viewportState$,
     settings,
-    hookManager
+    hookManager,
   })
   const spineItemFrame = commonSpineItem.spineItemFrame
 

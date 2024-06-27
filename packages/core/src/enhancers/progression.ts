@@ -39,9 +39,8 @@ export const progressionEnhancer =
       const isGloballyPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
       const readingOrderLength = context.manifest?.spineItems.length || 0
       const estimateBeforeThisItem =
-        context
-          .manifest
-          ?.spineItems.slice(0, currentSpineIndex)
+        context.manifest?.spineItems
+          .slice(0, currentSpineIndex)
           .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
       const currentItemWeight = context.manifest?.spineItems[currentSpineIndex]?.progressionWeight || 0
       // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
@@ -64,7 +63,11 @@ export const progressionEnhancer =
           // Therefore it effectively prevent jump from 30% to 25% for example.
           progressWithinThisItem = 0
         }
-        totalProgress = getTotalProgressFromPercentages(estimateBeforeThisItem, currentItemWeight, progressWithinThisItem)
+        totalProgress = getTotalProgressFromPercentages(
+          estimateBeforeThisItem,
+          currentItemWeight,
+          progressWithinThisItem,
+        )
       }
 
       // because the rounding of weight use a lot of decimals we will end up with

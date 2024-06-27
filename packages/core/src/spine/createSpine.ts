@@ -1,5 +1,16 @@
 import { BehaviorSubject, EMPTY, interval, merge, Observable, Subject, Subscription } from "rxjs"
-import { catchError, debounce, filter, map, share, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import {
+  catchError,
+  debounce,
+  filter,
+  map,
+  share,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+  withLatestFrom,
+} from "rxjs/operators"
 import { Report } from "../report"
 import { Context } from "../context/Context"
 import { Pagination } from "../pagination/pagination"
@@ -43,7 +54,7 @@ export const createSpine = ({
   currentNavigationPosition$,
   viewportState$,
   settings,
-  hookManager
+  hookManager,
 }: {
   element$: Observable<HTMLElement>
   context: Context
@@ -83,7 +94,7 @@ export const createSpine = ({
         context,
         viewportState$,
         settings,
-        hookManager
+        hookManager,
       })
       spineItemManager.add(spineItem)
     })
@@ -91,7 +102,9 @@ export const createSpine = ({
     spineItems$.next(spineItemManager.getAll())
   }
 
-  const manipulateSpineItems = (cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout) => {
+  const manipulateSpineItems = (
+    cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout,
+  ) => {
     let shouldLayout = false
     spineItemManager.getAll().forEach((item, index) => {
       shouldLayout = item.manipulateSpineItem((opts) => cb({ index, ...opts })) || shouldLayout
@@ -131,7 +144,9 @@ export const createSpine = ({
           1,
           () => {
             const spineItemsFromPosition = spineLocator.getSpineItemsFromReadingOrderPosition(position)
-            const beginSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.begin) : undefined
+            const beginSpineItem = spineItemsFromPosition
+              ? spineItemManager.get(spineItemsFromPosition.begin)
+              : undefined
             const endSpineItem = spineItemsFromPosition ? spineItemManager.get(spineItemsFromPosition.end) : undefined
             const beginLastCfi = pagination.getPaginationInfo().beginCfi
             const endLastCfi = pagination.getPaginationInfo().endCfi
@@ -267,7 +282,10 @@ export const createSpine = ({
           beginSpineItem,
         )
         const beginPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(beginPosition, beginSpineItem)
-        const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(spineItemsFromPosition.endPosition, endSpineItem)
+        const endPosition = spineLocator.getSpineItemPositionFromSpinePosition(
+          spineItemsFromPosition.endPosition,
+          endSpineItem,
+        )
         const endPageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(endPosition, endSpineItem)
         const endItemIndex = spineItemManager.getSpineItemIndex(endSpineItem) ?? 0
 

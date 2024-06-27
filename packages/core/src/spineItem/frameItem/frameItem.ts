@@ -16,7 +16,7 @@ export const createFrameItem = ({
   context,
   viewportState$,
   settings,
-  hookManager
+  hookManager,
 }: {
   parent: HTMLElement
   item: Manifest[`spineItems`][number]

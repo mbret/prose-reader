@@ -2,7 +2,9 @@ import { Subject } from "rxjs"
 
 export const createFingerTracker = () => {
   const fingerPositionInIframe: { x: number | undefined; y: number | undefined } = { x: undefined, y: undefined }
-  const subject = new Subject<{ event: `fingermove`; data: { x: number; y: number } } | { event: `fingerout`; data: undefined }>()
+  const subject = new Subject<
+    { event: `fingermove`; data: { x: number; y: number } } | { event: `fingerout`; data: undefined }
+  >()
   let isMouseDown = false
 
   const track = (frame: HTMLIFrameElement) => {
@@ -33,7 +35,9 @@ export const createFingerTracker = () => {
   return {
     track,
     getFingerPositionInIframe() {
-      return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined ? undefined : fingerPositionInIframe
+      return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined
+        ? undefined
+        : fingerPositionInIframe
     },
     destroy: () => {},
     $: subject.asObservable(),
