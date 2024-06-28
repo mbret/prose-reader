@@ -6,7 +6,7 @@ import { Report } from "../report"
 import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
 import { createLocationResolver } from "../spine/locationResolver"
 import { ViewportPosition } from "../types"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
 const NAMESPACE = `panViewportNavigator`
 
@@ -30,7 +30,7 @@ export const createPanViewportNavigator = ({
   spineItemManager: SpineItemManager
   locator: ReturnType<typeof createLocationResolver>
   getCurrentViewportPosition: () => ViewportPosition
-  settings: SettingsManager
+  settings: ReaderSettingsManager
 }) => {
   const navigationTriggerSubject$ = new Subject<SnapNavigation>()
   const stateSubject$ = new BehaviorSubject<`end` | `start`>(`end`)
@@ -84,6 +84,7 @@ export const createPanViewportNavigator = ({
           to: navigation,
           pan: movingLastPosition,
         })
+
         stateSubject$.next(`end`)
 
         return

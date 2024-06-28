@@ -42,7 +42,7 @@ import { isShallowEqual } from ".."
 import { LastUserExpectedNavigation, Navigation } from "./types"
 import { Spine } from "../spine/createSpine"
 import { isDefined } from "../utils/isDefined"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
 const NAMESPACE = `viewportNavigator`
@@ -68,7 +68,7 @@ export const createViewportNavigator = ({
   spineLocator: ReturnType<typeof createLocationResolver>
   hookManager: HookManager
   spine: Spine
-  settings: SettingsManager
+  settings: ReaderSettingsManager
 }) => {
   const element$ = new BehaviorSubject<HTMLElement>(noopElement)
   const layoutSubject$ = new Subject<void>()

@@ -17,7 +17,7 @@ import { SpineItemManager } from "../spineItemManager"
 import { ViewportPosition } from "../types"
 import { getNewScaledOffset } from "../utils/layout"
 import { isDefined } from "../utils/isDefined"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 200
 
@@ -32,7 +32,7 @@ export const createScrollViewportNavigator = ({
   spine,
 }: {
   context: Context
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   element$: BehaviorSubject<HTMLElement>
   navigator: ReturnType<typeof createNavigationResolver>
   currentNavigationSubject$: BehaviorSubject<ViewportNavigationEntry>

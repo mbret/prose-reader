@@ -4,12 +4,12 @@ import { Pagination } from "../pagination/pagination"
 import { Manifest } from "@prose-reader/shared"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportNavigator } from "../viewportNavigator/viewportNavigator"
-import { SettingsManager } from "../settings/SettingsManager"
-import { Settings } from "../settings/types"
+import { ComputedCoreSettings, CoreInputSettings } from "../settings/types"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
+import { SettingsInterface } from "../settings/SettingsInterface"
 
-export type ContextSettings = Partial<Settings>
+export type ContextSettings = Partial<CoreInputSettings>
 
 export type LoadOptions = {
   cfi?: string | null
@@ -21,7 +21,7 @@ export type ReaderInternal = {
   spine: Spine
   spineItemManager: SpineItemManager
   viewportNavigator: ViewportNavigator
-  settings: SettingsManager
+  settings: SettingsInterface<CoreInputSettings, CoreInputSettings & ComputedCoreSettings>
   hookManager: HookManager
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void

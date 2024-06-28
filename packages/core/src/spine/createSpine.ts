@@ -25,7 +25,7 @@ import type { Spine } from "../types/Spine"
 import { HTML_PREFIX } from "../constants"
 import { AdjustedNavigation, Navigation } from "../viewportNavigator/types"
 import { Manifest } from ".."
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
 const report = Report.namespace(`spine`)
@@ -70,7 +70,7 @@ export const createSpine = ({
     y: number
   }>
   viewportState$: Observable<`free` | `busy`>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   hookManager: HookManager
 }): Spine => {
   const spineItems$ = new Subject<SpineItem[]>()

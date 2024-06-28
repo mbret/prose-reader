@@ -30,7 +30,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
         <RadioGroup
           defaultValue={settings?.computedPageTurnAnimation}
           onChange={(value) => {
-            reader.settings.setSettings({
+            reader.settings.update({
               pageTurnAnimation: value as NonNullable<typeof settings>["computedPageTurnAnimation"],
               pageTurnMode: `controlled`
             })
@@ -68,7 +68,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
             isChecked={settings?.computedPageTurnMode === `scrollable`}
             defaultChecked={settings?.computedPageTurnMode === `scrollable`}
             onChange={(e) => {
-              reader.settings.setSettings({
+              reader.settings.update({
                 pageTurnMode: e.target.checked ? `scrollable` : `controlled`
               })
             }}
@@ -84,7 +84,7 @@ export const NavigationSettings = ({ reader }: { reader: Reader }) => {
             isChecked={settings?.computedPageTurnDirection === `vertical`}
             defaultChecked={settings?.computedPageTurnDirection === `vertical`}
             onChange={(e) => {
-              reader.settings.setSettings({
+              reader.settings.update({
                 pageTurnDirection: e.target.checked ? `vertical` : `horizontal`
               })
             }}

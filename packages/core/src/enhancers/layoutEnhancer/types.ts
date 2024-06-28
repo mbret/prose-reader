@@ -1,18 +1,12 @@
-export type SettingsInput = {
-  pageHorizontalMargin?: number
-  pageVerticalMargin?: number
-}
-
-export type SettingsOutput = Required<SettingsInput>
-
-export type Options = SettingsInput & {
+export type InputSettings = {
+  pageHorizontalMargin: number
+  pageVerticalMargin: number
   /**
    * Can be used to let the reader automatically resize.
    * `container`: observe and resize the reader whenever the container resize.
    * `false`: do not automatically resize.
    */
-  layoutAutoResize?: `container` | false
+  layoutAutoResize: `container` | false
 }
-// export type LayoutEnhancer =
 
-// export type ReaderInstance = ReturnType<Parameters<LayoutEnhancer>[0]>
+export type OutputSettings = InputSettings

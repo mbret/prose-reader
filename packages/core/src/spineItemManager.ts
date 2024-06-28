@@ -4,11 +4,11 @@ import { Report } from "./report"
 import { Context } from "./context/Context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
-import { SettingsManager } from "./settings/SettingsManager"
+import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 
 const NAMESPACE = `spineItemManager`
 
-export const createSpineItemManager = ({ context, settings }: { context: Context; settings: SettingsManager }) => {
+export const createSpineItemManager = ({ context, settings }: { context: Context; settings: ReaderSettingsManager }) => {
   const focus$ = new Subject<{ data: SpineItem }>()
   const layout$ = new Subject<boolean>()
   /**

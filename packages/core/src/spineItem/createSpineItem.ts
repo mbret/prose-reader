@@ -3,7 +3,7 @@ import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
 import { createReflowableSpineItem } from "./reflowableSpineItem"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
 export const createSpineItem = ({
@@ -18,7 +18,7 @@ export const createSpineItem = ({
   containerElement: HTMLElement
   context: Context
   viewportState$: Observable<`free` | `busy`>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
   if (item.renditionLayout === `pre-paginated`) {

@@ -6,7 +6,7 @@ import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
 import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { SettingsManager } from "../../settings/SettingsManager"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { HookManager } from "../../hooks/HookManager"
 
 export const createFrameItem = ({
@@ -23,7 +23,7 @@ export const createFrameItem = ({
   context: Context
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   viewportState$: Observable<`free` | `busy`>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()

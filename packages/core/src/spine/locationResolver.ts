@@ -5,7 +5,7 @@ import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { SpineItemNavigationPosition, SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
 export const createLocationResolver = ({
   spineItemManager,
@@ -16,7 +16,7 @@ export const createLocationResolver = ({
   spineItemManager: SpineItemManager
   context: Context
   spineItemLocator: ReturnType<typeof createSpineItemLocator>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
 }) => {
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,

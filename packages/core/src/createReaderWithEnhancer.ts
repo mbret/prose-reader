@@ -1,5 +1,5 @@
 import { chromeEnhancer } from "./enhancers/chrome"
-import { fontsEnhancer } from "./enhancers/fonts"
+import { fontsEnhancer } from "./enhancers/fonts/fonts"
 import { hotkeysEnhancer } from "./enhancers/hotkeys"
 import { layoutEnhancer } from "./enhancers/layoutEnhancer/layoutEnhancer"
 import { linksEnhancer } from "./enhancers/links"

@@ -99,7 +99,7 @@ export const hammerGestureEnhancer =
                 const value = fontScaleOnPinchStart + (event.scale - 1)
                 const newScale = Math.max(fontScaleMin, Math.min(fontScaleMax, value))
 
-                reader.settings.setSettings({
+                reader.settings.update({
                   fontScale: newScale,
                 })
 

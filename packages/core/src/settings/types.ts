@@ -1,6 +1,6 @@
 import { Manifest } from "@prose-reader/shared"
 
-export type Settings = {
+export type CoreInputSettings = {
   forceSinglePageMode: boolean
   pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
@@ -49,13 +49,15 @@ export type Settings = {
  * For example if the user decide to use horizontal page turn direction with scrolled content
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
-export type ComputedSettings = Settings & {
+export type ComputedCoreSettings = {
   /**
    * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
    * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content
    */
-  computedPageTurnMode: Settings[`pageTurnMode`]
-  computedPageTurnDirection: Settings[`pageTurnDirection`]
-  computedPageTurnAnimation: Settings[`pageTurnAnimation`]
+  computedPageTurnMode: CoreInputSettings[`pageTurnMode`]
+  computedPageTurnDirection: CoreInputSettings[`pageTurnDirection`]
+  computedPageTurnAnimation: CoreInputSettings[`pageTurnAnimation`]
   computedPageTurnAnimationDuration: number
 }
+
+export type CoreOutputSettings = CoreInputSettings & ComputedCoreSettings

@@ -31,7 +31,7 @@ import { Context } from "../../context/Context"
 import { Manifest } from "../../types"
 import { createFrame$ } from "./createFrame$"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { SettingsManager } from "../../settings/SettingsManager"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { HookManager } from "../../hooks/HookManager"
 
 export const createLoader = ({
@@ -47,7 +47,7 @@ export const createLoader = ({
   parent: HTMLElement
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   context: Context
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   viewportState$: Observable<`free` | `busy`>
   hookManager: HookManager
 }) => {

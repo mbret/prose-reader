@@ -7,7 +7,7 @@ import { createLocationResolver } from "./locationResolver"
 import { createCfiLocator } from "./cfiLocator"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
 import { SpineItemNavigationPosition } from "../spineItem/types"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
 export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
 type ViewportPosition = { x: number; y: number }
@@ -25,7 +25,7 @@ export const createNavigationResolver = ({
   spineItemManager: SpineItemManager
   cfiLocator: ReturnType<typeof createCfiLocator>
   locator: ReturnType<typeof createLocationResolver>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context, settings })
 

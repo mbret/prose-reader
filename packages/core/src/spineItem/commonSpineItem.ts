@@ -6,7 +6,7 @@ import { Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
 export const createCommonSpineItem = ({
@@ -21,7 +21,7 @@ export const createCommonSpineItem = ({
   parentElement: HTMLElement
   context: Context
   viewportState$: Observable<`free` | `busy`>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()

@@ -3,7 +3,7 @@ import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { createCommonSpineItem } from "./commonSpineItem"
 import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
-import { SettingsManager } from "../settings/SettingsManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
 export const createPrePaginatedSpineItem = ({
@@ -18,7 +18,7 @@ export const createPrePaginatedSpineItem = ({
   containerElement: HTMLElement
   context: Context
   viewportState$: Observable<`free` | `busy`>
-  settings: SettingsManager
+  settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
   const commonSpineItem = createCommonSpineItem({

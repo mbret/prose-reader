@@ -169,7 +169,6 @@ export const bookmarksEnhancer =
      * the frame
      */
     reader.hookManager.register(`item.onLoad`, ({ frame }) => {
-      
       createClickListener$(frame)
     })
 

@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BehaviorSubject, combineLatest, Observable, ObservedValueOf } from "rxjs"
 import { distinctUntilChanged, map, takeUntil, tap, skip, filter } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
 import { isShallowEqual } from "../../utils/objects"
-import { Options, SettingsInput, SettingsOutput } from "./types"
 import { fixReflowable } from "./fixReflowable"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { isDefined } from "../../utils/isDefined"
+import { SettingsInterface } from "../../settings/SettingsInterface"
+import { SettingsManager } from "./SettingsManager"
+import { InputSettings, OutputSettings } from "./types"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -15,24 +16,26 @@ export const layoutEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    Settings$ extends InheritOutput["settings"]["settings$"],
-    SetSettings extends (settings: Parameters<InheritOutput["settings"]["setSettings"]>[0] & SettingsInput) => void,
+    InheritSettings extends NonNullable<InheritOutput["settings"]["_inputSettings"]>,
+    InheritComputedSettings extends NonNullable<InheritOutput["settings"]["_outputSettings"]>,
     Output extends Omit<InheritOutput, "settings"> & {
-      settings: Omit<InheritOutput["settings"], "setSettings" | "settings$"> & {
-        settings$: Observable<ObservedValueOf<Settings$> & SettingsOutput>
-        setSettings: SetSettings
-      }
+      settings: SettingsInterface<InheritSettings & InputSettings, OutputSettings & InheritComputedSettings>
     },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Options): Output => {
-    const { pageHorizontalMargin = 24, pageVerticalMargin = 24 } = options
+  (options: InheritOptions & Partial<InputSettings>): Output => {
+    const { pageHorizontalMargin, pageVerticalMargin, layoutAutoResize } = options
     const reader = next(options)
-    const settingsSubject$ = new BehaviorSubject<SettingsOutput>({
-      pageHorizontalMargin,
-      pageVerticalMargin,
-    })
+
+    const settingsManager = new SettingsManager<InheritSettings, InheritComputedSettings>(
+      {
+        pageHorizontalMargin,
+        pageVerticalMargin,
+        layoutAutoResize,
+      },
+      reader.settings as SettingsInterface<InheritSettings, InheritComputedSettings>,
+    )
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
       let hasRedrawn = false
@@ -75,15 +78,10 @@ export const layoutEnhancer =
      * @todo memoize
      */
     reader.hookManager.register(`item.onLayoutBeforeMeasurement`, ({ frame, minimumWidth, item, isImageType }) => {
-      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsSubject$.value
+      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsManager.settings
       const pageSize = reader.context.getPageSize()
 
-      if (
-        item.renditionLayout === `reflowable` &&
-        frame.getIsReady() &&
-        !isImageType() &&
-        !frame.getViewportDimensions()
-      ) {
+      if (item.renditionLayout === `reflowable` && frame.getIsReady() && !isImageType() && !frame.getViewportDimensions()) {
         let columnWidth = pageSize.width - pageHorizontalMargin * 2
         const columnHeight = pageSize.height - pageVerticalMargin * 2
         let width = pageSize.width - pageHorizontalMargin * 2
@@ -155,7 +153,7 @@ export const layoutEnhancer =
 
     movingSafePan$.subscribe()
 
-    settingsSubject$
+    settingsManager.settings$
       .pipe(
         mapKeysTo([`pageHorizontalMargin`, `pageVerticalMargin`]),
         distinctUntilChanged(isShallowEqual),
@@ -167,34 +165,13 @@ export const layoutEnhancer =
       )
       .subscribe()
 
-    const settings$ = combineLatest([reader.settings.settings$, settingsSubject$.asObservable()]).pipe(
-      map(([innerSettings, settings]) => ({
-        ...(innerSettings as ObservedValueOf<Settings$>),
-        ...settings,
-      })),
-    )
-
-    const setSettings = (({ pageVerticalMargin, pageHorizontalMargin, ...rest }) => {
-      if (pageHorizontalMargin !== undefined || pageVerticalMargin !== undefined) {
-        settingsSubject$.next({
-          pageHorizontalMargin: pageHorizontalMargin ?? settingsSubject$.value.pageHorizontalMargin,
-          pageVerticalMargin: pageVerticalMargin ?? settingsSubject$.value.pageVerticalMargin,
-        })
-      }
-
-      reader.settings.setSettings(rest)
-    }) as SetSettings
-
     return {
       ...reader,
       destroy: () => {
+        settingsManager.destroy()
         reader.destroy()
         observer?.disconnect()
       },
-      settings: {
-        ...reader.settings,
-        setSettings,
-        settings$,
-      },
+      settings: settingsManager,
     } as unknown as Output
   }

@@ -16,11 +16,11 @@ import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
 import { Manifest } from "@prose-reader/shared"
 import { LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
-import { SettingsManager } from "./settings/SettingsManager"
+import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import { HookManager } from "./hooks/HookManager"
-import { Settings } from "./settings/types"
+import { CoreInputSettings } from "./settings/types"
 
-export type CreateReaderOptions = Partial<Settings>
+export type CreateReaderOptions = Partial<CoreInputSettings>
 
 export type CreateReaderParameters = CreateReaderOptions
 
@@ -39,7 +39,7 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
   const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
   const hookManager = new HookManager()
   const context = new Context()
-  const settingsManager = new SettingsManager(inputSettings, context)
+  const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const spineItemManager = createSpineItemManager({ context, settings: settingsManager })
   const pagination = createPagination({ context, spineItemManager })
 
