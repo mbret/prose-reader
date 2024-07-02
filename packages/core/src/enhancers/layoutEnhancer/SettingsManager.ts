@@ -12,8 +12,8 @@ export class SettingsManager<
   ParentInputSettings,
   ParentOutputSettings
 > {
-  computeOutputSettings(): InputSettings {
-    return this.inputSettings
+  computeOutputSettings(inputSettings: InputSettings): InputSettings {
+    return inputSettings
   }
 
   hasSettingsChanged(newOutputSettings: InputSettings): boolean {

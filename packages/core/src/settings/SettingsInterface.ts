@@ -9,7 +9,7 @@ export interface SettingsInterface<
 
   _prepareUpdate(settings: Partial<InputSettings>): {
     hasChanged: boolean
-    commit: () => void
+    commit: () => OutputSettings
   }
 
   update(settings: Partial<InputSettings>): void

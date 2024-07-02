@@ -34,12 +34,16 @@ export abstract class SettingsManagerOverload<
   ) {
     this.settingsManager = settingsManager
 
-    this.inputSettings = shallowMergeIfDefined(
+    const inputSettings = shallowMergeIfDefined(
       this.getDefaultSettings(),
       initialSettings,
     )
 
-    this.outputSettings = this.computeOutputSettings()
+    this.outputSettings = this.computeOutputSettings(inputSettings)
+    this.inputSettings = shallowMergeIfDefined(
+      this.getDefaultSettings(),
+      initialSettings,
+    )
     this.outputSettingsUpdateSubject = new Subject()
 
     this.settings$ = combineLatest([
@@ -55,7 +59,7 @@ export abstract class SettingsManagerOverload<
 
   abstract getDefaultSettings(): InputSettings
 
-  abstract computeOutputSettings(): OutputSettings
+  abstract computeOutputSettings(inputSettings: InputSettings): OutputSettings
 
   /**
    * Returns true if both are equal
@@ -68,29 +72,34 @@ export abstract class SettingsManagerOverload<
 
   _prepareUpdate(settings: Partial<InputSettings & ParentInputSettings>): {
     hasChanged: boolean
-    commit: () => void
+    commit: () => OutputSettings & ParentOutputSettings
   } {
     const parentInputSettings = this.getCleanedParentInputSettings(settings)
 
     const parentManagerPreparedUpdate =
       this.settingsManager._prepareUpdate(parentInputSettings)
 
-    this.inputSettings = { ...this.inputSettings, ...settings }
+    const inputSettings = shallowMergeIfDefined(this.inputSettings, settings)
 
-    const outputSettings = this.computeOutputSettings()
+    const outputSettings = this.computeOutputSettings(inputSettings)
     const hasChanged = this.hasSettingsChanged(outputSettings)
 
-    console.log({ outputSettings, hasChanged, parentManagerPreparedUpdate })
     return {
       hasChanged: hasChanged || parentManagerPreparedUpdate.hasChanged,
       commit: () => {
+        this.inputSettings = inputSettings
         this.outputSettings = outputSettings
 
         if (!parentManagerPreparedUpdate.hasChanged && hasChanged) {
           this.outputSettingsUpdateSubject.next(outputSettings)
         }
 
-        parentManagerPreparedUpdate.commit()
+        const parentOutputSettings = parentManagerPreparedUpdate.commit()
+
+        return {
+          ...parentOutputSettings,
+          ...outputSettings,
+        }
       },
     }
   }

@@ -12,7 +12,6 @@ import { HookManager } from "../../hooks/HookManager"
 export const createFrameItem = ({
   item,
   parent,
-  fetchResource,
   context,
   viewportState$,
   settings,
@@ -21,7 +20,6 @@ export const createFrameItem = ({
   parent: HTMLElement
   item: Manifest[`spineItems`][number]
   context: Context
-  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   viewportState$: Observable<`free` | `busy`>
   settings: ReaderSettingsManager
   hookManager: HookManager
@@ -47,7 +45,6 @@ export const createFrameItem = ({
     hookManager,
     item,
     parent,
-    fetchResource,
     viewportState$,
     settings,
   })

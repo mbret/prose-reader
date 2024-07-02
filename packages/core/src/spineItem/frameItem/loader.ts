@@ -37,7 +37,6 @@ import { HookManager } from "../../hooks/HookManager"
 export const createLoader = ({
   item,
   parent,
-  fetchResource,
   context,
   viewportState$,
   settings,
@@ -45,7 +44,6 @@ export const createLoader = ({
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
-  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
   context: Context
   settings: ReaderSettingsManager
   viewportState$: Observable<`free` | `busy`>
@@ -106,6 +104,8 @@ export const createLoader = ({
           parent.appendChild(frame)
 
           frameElementSubject$.next(frame)
+
+          const { fetchResource } = settings.settings
 
           /**
            * Because of the bug with iframe and sw, we should not use srcdoc and sw together for

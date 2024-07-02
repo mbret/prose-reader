@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Observable, Subject, combineLatest, merge } from "rxjs"
-import { shareReplay, startWith, takeUntil, tap } from "rxjs/operators"
+import { combineLatest, merge } from "rxjs"
+import { takeUntil, tap } from "rxjs/operators"
 import {
   CoreInputSettings,
   ComputedCoreSettings,
@@ -9,34 +9,17 @@ import {
 import { Context } from "../context/Context"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { Report } from "../report"
-import { SettingsInterface } from "./SettingsInterface"
-import { isShallowEqual } from "../utils/objects"
+import { SettingsManager } from "./SettingsManager"
 
-export class ReaderSettingsManager
-  implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
-{
-  #context: Context
-  protected outputSettings: CoreOutputSettings
-  protected outputSettingsUpdateSubject: Subject<CoreOutputSettings>
-
-  public settings$: Observable<CoreOutputSettings>
-
-  constructor(initialSettings: Partial<CoreInputSettings>, context: Context) {
-    this.#context = context
-
-    const settingsWithDefaults: CoreInputSettings = {
-      ...this.getDefaultSettings(),
-      ...initialSettings,
-    }
-
-    const outputSettings = this.getOutputSettings(settingsWithDefaults)
-
-    this.outputSettings = outputSettings
-    this.outputSettingsUpdateSubject = new Subject()
-
-    this.settings$ = this.outputSettingsUpdateSubject
-      .asObservable()
-      .pipe(startWith(this.settings), shareReplay(1))
+export class ReaderSettingsManager extends SettingsManager<
+  CoreInputSettings,
+  CoreOutputSettings
+> {
+  constructor(
+    initialSettings: Partial<CoreInputSettings>,
+    protected context: Context,
+  ) {
+    super(initialSettings)
 
     const recomputeSettingsOnContextChange$ = combineLatest([
       context.hasVerticalWriting$,
@@ -66,8 +49,8 @@ export class ReaderSettingsManager
   private getComputedSettings(
     settings: CoreInputSettings,
   ): ComputedCoreSettings {
-    const manifest = this.#context.manifest
-    const hasVerticalWriting = this.#context.state.hasVerticalWriting ?? false
+    const manifest = this.context.manifest
+    const hasVerticalWriting = this.context.state.hasVerticalWriting ?? false
     const computedSettings: ComputedCoreSettings = {
       computedPageTurnDirection: settings.pageTurnDirection,
       computedPageTurnAnimation: settings.pageTurnAnimation,
@@ -120,35 +103,10 @@ export class ReaderSettingsManager
     return computedSettings
   }
 
-  _prepareUpdate(settings: Partial<CoreInputSettings>): {
-    hasChanged: boolean
-    state: CoreInputSettings & ComputedCoreSettings
-    commit: () => void
-  } {
-    const state = this.getOutputSettings(settings)
-
-    const hasChanged = !isShallowEqual(this.outputSettings, state)
-
-    return {
-      hasChanged: hasChanged,
-      state,
-      commit: () => {
-        this.outputSettings = state
-
-        if (hasChanged) {
-          this.outputSettingsUpdateSubject.next(state)
-        }
-      },
-    }
-  }
-
   getOutputSettings(
-    inputSettings: Partial<CoreInputSettings>,
+    inputSettings: CoreInputSettings,
   ): CoreInputSettings & ComputedCoreSettings {
-    const computedSettings = this.getComputedSettings({
-      ...this.outputSettings,
-      ...inputSettings,
-    })
+    const computedSettings = this.getComputedSettings(inputSettings)
 
     return { ...this.outputSettings, ...inputSettings, ...computedSettings }
   }
@@ -168,19 +126,5 @@ export class ReaderSettingsManager
       navigationSnapThreshold: 0.3,
       numberOfAdjacentSpineItemToPreLoad: 0,
     }
-  }
-
-  public update(settings: Partial<CoreInputSettings>) {
-    const { commit } = this._prepareUpdate(settings)
-
-    commit()
-  }
-
-  get settings() {
-    return this.outputSettings
-  }
-
-  public destroy() {
-    this.outputSettingsUpdateSubject.complete()
   }
 }

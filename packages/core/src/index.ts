@@ -6,6 +6,8 @@ import { createReaderWithEnhancers as createReader } from "./createReaderWithEnh
 
 export { HookManager } from "./hooks/HookManager"
 
+export { SettingsManager } from "./settings/SettingsManager"
+
 export type Reader = ReturnType<typeof createReader>
 
 export { createReader }
