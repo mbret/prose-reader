@@ -64,6 +64,7 @@ export const createArchiveFromText = async (
         encodingFormat: mimeType,
       },
     ],
+    close: () => Promise.resolve(),
   }
 
   return archive

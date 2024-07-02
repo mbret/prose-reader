@@ -19,4 +19,5 @@ export type Archive = {
     // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
     encodingFormat?: string
   }[]
+  close: () => Promise<void>
 }

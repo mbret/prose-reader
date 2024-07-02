@@ -14,7 +14,7 @@ export const createArchiveFromArrayBufferList = async (
   let files = list
 
   if (orderByAlpha) {
-    files = files.sort((a, b) => sortByTitleComparator(a.name, b.name))
+    files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
   return {
@@ -34,5 +34,6 @@ export const createArchiveFromArrayBufferList = async (
       },
       size: file.size,
     })),
+    close: () => Promise.resolve(),
   }
 }

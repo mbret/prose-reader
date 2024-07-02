@@ -119,6 +119,7 @@ describe("Given archive with a folder containing a space", () => {
           size: 1,
         },
       ],
+      close: () => Promise.resolve(),
     }
 
     const manifest = await generateManifestFromArchive(archive)
@@ -150,6 +151,7 @@ describe("Given archive with no folders", () => {
           size: 1,
         },
       ],
+      close: () => Promise.resolve(),
     }
 
     const manifest = await generateManifestFromArchive(archive)
@@ -199,6 +201,7 @@ describe("Given archive with folders", () => {
           size: 1,
         },
       ],
+      close: () => Promise.resolve(),
     }
 
     const baseUrl = "http://localhost:9000"

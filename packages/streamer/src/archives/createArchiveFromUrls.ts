@@ -49,5 +49,6 @@ export const createArchiveFromUrls = async (urls: string[], options?: { useRendi
   return {
     filename: ``,
     files: [opfFile, ...filesFromUrl],
+    close: () => Promise.resolve(),
   }
 }

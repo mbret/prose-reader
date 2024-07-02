@@ -39,7 +39,7 @@ export const createArchiveFromJszip = async (
   let files = Object.values(jszip.files)
 
   if (orderByAlpha) {
-    files = files.sort((a, b) => sortByTitleComparator(a.name, b.name))
+    files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
   const archive = {
@@ -59,6 +59,7 @@ export const createArchiveFromJszip = async (
       // @ts-ignore
       size: file._data.uncompressedSize,
     })),
+    close: () => Promise.resolve(),
   }
 
   Report.log("Generated archive", archive)
