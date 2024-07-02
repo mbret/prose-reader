@@ -26,7 +26,7 @@ export const OtherSettings = () => {
       <NumberInput
         value={settings?.numberOfAdjacentSpineItemToPreLoad ?? 0}
         onChange={(_, value) => {
-          reader?.settings.setSettings({
+          reader?.settings.update({
             numberOfAdjacentSpineItemToPreLoad: value
           })
         }}
