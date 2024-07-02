@@ -13,18 +13,20 @@ export const defaultHook =
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
-      spineItems: files.map((file, index) => ({
-        // some books such as cbz can have same basename inside different sub folder
-        // we need to make sure to have unique index
-        // /chap01/01.png, /chap02/01.png, etc
-        id: `${index}.${file.basename}`,
-        href: encodeURI(`${baseUrl}${file.uri}`),
-        renditionLayout: `pre-paginated`,
-        progressionWeight: 1 / files.length,
-        pageSpreadLeft: undefined,
-        pageSpreadRight: undefined,
-        mediaType: file.encodingFormat,
-      })),
+      spineItems: files
+        .filter((file) => !file.basename.endsWith(`.db`))
+        .map((file, index) => ({
+          // some books such as cbz can have same basename inside different sub folder
+          // we need to make sure to have unique index
+          // /chap01/01.png, /chap02/01.png, etc
+          id: `${index}.${file.basename}`,
+          href: encodeURI(`${baseUrl}${file.uri}`),
+          renditionLayout: `pre-paginated`,
+          progressionWeight: 1 / files.length,
+          pageSpreadLeft: undefined,
+          pageSpreadRight: undefined,
+          mediaType: file.encodingFormat,
+        })),
       items: files.map((file, index) => ({
         id: `${index}.${file.basename}`,
         href: `${baseUrl}${file.uri}`,
