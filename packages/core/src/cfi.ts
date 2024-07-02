@@ -270,8 +270,8 @@ class CFI {
       o = calcSiblingCount(node.parentNode.childNodes, node, offset)
       if (!cfi && o.offset) cfi = `:` + o.offset
 
-      // @ts-ignore
       cfi =
+        // @ts-ignore
         `/` + o.count + (node.id ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
 
       // debugger
@@ -623,10 +623,11 @@ class CFI {
           if (this.opts.stricter) {
             // We've already had a temporal or spatial indicator
             // and offset does not make sense and the same time
-            // @ts-ignore
             if (
               cur === `:` &&
+              // @ts-ignore
               (typeof o.temporal !== `undefined` ||
+                // @ts-ignore
                 typeof o.spatial !== `undefined`)
             ) {
               break
@@ -636,6 +637,7 @@ class CFI {
             // @ts-ignore
             if (
               (cur === `~` || cur === `@`) &&
+              // @ts-ignore
               typeof o.offset !== `undefined`
             ) {
               break
@@ -776,9 +778,10 @@ class CFI {
               if (!lastChild) {
                 return { node: parentNode, offset: 0 }
               }
-              // @ts-ignore
+
               return {
                 node: lastChild,
+                // @ts-ignore
                 offset: this.trueLength(dom, lastChild.textContent),
               }
             }
@@ -956,10 +959,13 @@ class CFI {
     let subpart: (typeof subparts)[number] | undefined
     for (i = subparts.length - 1; i >= 0; i--) {
       subpart = subparts[i]
-      // @ts-ignore
+
       if (
+        // @ts-ignore
         !opts.ignoreIDs &&
+        // @ts-ignore
         subpart.nodeID &&
+        // @ts-ignore
         (node = dom.getElementById(subpart.nodeID))
       ) {
         startFrom = i + 1
@@ -983,6 +989,7 @@ class CFI {
         // @ts-ignore
         o = this.getChildNodeByCFIIndex(
           dom,
+          // @ts-ignore
           o.node,
           subpart.nodeIndex,
           subpart.offset,
@@ -994,8 +1001,10 @@ class CFI {
           // @ts-ignore
           o = this.correctOffset(
             dom,
+            // @ts-ignore
             o.node,
             subpart.offset,
+            // @ts-ignore
             subpart.textLocationAssertion,
           )
         }

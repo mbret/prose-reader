@@ -1,6 +1,6 @@
 import { generateManifestFromArchive } from "./index"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
-import { describe, expect, it, test } from "vitest"
+import { describe, expect, it } from "vitest"
 import { Archive } from "../../archives/types"
 import { Manifest } from "@prose-reader/shared"
 
