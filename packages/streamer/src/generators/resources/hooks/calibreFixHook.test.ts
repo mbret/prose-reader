@@ -29,6 +29,7 @@ describe("Given a book from calibre", () => {
           size: 1,
         },
       ],
+      close: () => Promise.resolve()
     }
 
     const response = await calibreFixHook({ archive, resourcePath: "foo.xhtml" })({
