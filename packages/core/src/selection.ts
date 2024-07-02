@@ -1,7 +1,10 @@
 import { CFI } from "./cfi"
 import { Manifest } from "./types"
 
-export const createSelection = (selection: Selection, item: Manifest[`spineItems`][number]) => {
+export const createSelection = (
+  selection: Selection,
+  item: Manifest[`spineItems`][number],
+) => {
   const text = selection.toString()
 
   return {

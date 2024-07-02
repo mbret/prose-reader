@@ -1,4 +1,13 @@
-import { animationFrameScheduler, BehaviorSubject, EMPTY, fromEvent, iif, merge, Observable, of } from "rxjs"
+import {
+  animationFrameScheduler,
+  BehaviorSubject,
+  EMPTY,
+  fromEvent,
+  iif,
+  merge,
+  Observable,
+  of,
+} from "rxjs"
 import {
   debounceTime,
   distinctUntilChanged,
@@ -12,7 +21,10 @@ import {
 } from "rxjs/operators"
 import { Context } from "../context/Context"
 import { Spine } from "../spine/createSpine"
-import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
+import {
+  createNavigationResolver,
+  ViewportNavigationEntry,
+} from "../spine/navigationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { ViewportPosition } from "../types"
 import { getNewScaledOffset } from "../utils/layout"
@@ -83,7 +95,8 @@ export const createScrollViewportNavigator = ({
 
     if (!spineElement) throw new Error("Invalid spine element")
 
-    const spineScaleX = spineElement.getBoundingClientRect().width / spineElement.offsetWidth
+    const spineScaleX =
+      spineElement.getBoundingClientRect().width / spineElement.offsetWidth
 
     /**
      * @important
@@ -112,13 +125,17 @@ export const createScrollViewportNavigator = ({
   }
 
   const getNavigationForPosition = (position: ScaledDownPosition) => {
-    const navigation = navigator.getMostPredominantNavigationForPosition(position)
+    const navigation =
+      navigator.getMostPredominantNavigationForPosition(position)
 
     return navigation
   }
 
   const getCurrentViewportPosition = () => {
-    return getScaledDownPosition({ x: element$.getValue()?.scrollLeft ?? 0, y: element$.getValue()?.scrollTop ?? 0 })
+    return getScaledDownPosition({
+      x: element$.getValue()?.scrollLeft ?? 0,
+      y: element$.getValue()?.scrollTop ?? 0,
+    })
   }
 
   const navigationOnScroll$ = userScroll$.pipe(
@@ -126,7 +143,10 @@ export const createScrollViewportNavigator = ({
     withLatestFrom(currentNavigationSubject$),
     switchMap(() => {
       const navigation = getNavigationForPosition(
-        getScaledDownPosition({ x: element$.getValue()?.scrollLeft ?? 0, y: element$.getValue()?.scrollTop ?? 0 }),
+        getScaledDownPosition({
+          x: element$.getValue()?.scrollLeft ?? 0,
+          y: element$.getValue()?.scrollTop ?? 0,
+        }),
       )
 
       /**
@@ -134,7 +154,11 @@ export const createScrollViewportNavigator = ({
        * we always return something from the observable. So for example if we have only one long height item (webtoon)
        * we are able to update the general progress
        */
-      return of({ position: navigation, animate: false, lastUserExpectedNavigation: undefined })
+      return of({
+        position: navigation,
+        animate: false,
+        lastUserExpectedNavigation: undefined,
+      })
     }),
     share(),
   )

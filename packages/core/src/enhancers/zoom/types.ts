@@ -4,7 +4,10 @@ export type Api = {
   zoom: {
     enter: (imgElement?: HTMLImageElement) => void
     exit: () => void
-    move: (position: { x: number; y: number } | undefined, details: { isFirst: boolean; isLast: boolean }) => void
+    move: (
+      position: { x: number; y: number } | undefined,
+      details: { isFirst: boolean; isLast: boolean },
+    ) => void
     isZooming: () => boolean
     isUsingScrollableZoom: () => boolean
     getScaleValue: () => number

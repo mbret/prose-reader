@@ -3,7 +3,11 @@ import { SpineItem } from "../spineItem/createSpineItem"
 import { createLocationResolver as createSpineItemLocator } from "../spineItem/locationResolver"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
-import { SpineItemNavigationPosition, SpineItemPosition, UnsafeSpineItemPosition } from "../spineItem/types"
+import {
+  SpineItemNavigationPosition,
+  SpineItemPosition,
+  UnsafeSpineItemPosition,
+} from "../spineItem/types"
 import { SpinePosition, UnsafeSpinePosition } from "./types"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
@@ -21,7 +25,10 @@ export const createLocationResolver = ({
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
     10,
-    (position: UnsafeSpinePosition, spineItem: SpineItem): UnsafeSpineItemPosition => {
+    (
+      position: UnsafeSpinePosition,
+      spineItem: SpineItem,
+    ): UnsafeSpineItemPosition => {
       const { left, top } = spineItemManager.getAbsolutePositionOf(spineItem)
 
       /**
@@ -95,7 +102,8 @@ export const createLocationResolver = ({
     10,
     (position: UnsafeSpinePosition) => {
       const spineItem = spineItemManager.getAll().find((item) => {
-        const { left, right, bottom, top } = spineItemManager.getAbsolutePositionOf(item)
+        const { left, right, bottom, top } =
+          spineItemManager.getAbsolutePositionOf(item)
 
         const isWithinXAxis = position.x >= left && position.x < right
 
@@ -119,10 +127,19 @@ export const createLocationResolver = ({
     return getSpinePositionFromSpineItemPosition({ x: 0, y: 0 }, spineItem)
   }
 
-  const getSpinePositionFromSpineItemAnchor = (anchor: string, spineItem: SpineItem) => {
-    const spineItemOffset = spineItemLocator.getSpineItemOffsetFromAnchor(anchor, spineItem)
+  const getSpinePositionFromSpineItemAnchor = (
+    anchor: string,
+    spineItem: SpineItem,
+  ) => {
+    const spineItemOffset = spineItemLocator.getSpineItemOffsetFromAnchor(
+      anchor,
+      spineItem,
+    )
 
-    const position = getSpinePositionFromSpineItemPosition({ x: spineItemOffset, y: 0 }, spineItem)
+    const position = getSpinePositionFromSpineItemPosition(
+      { x: spineItemOffset, y: 0 },
+      spineItem,
+    )
 
     return position
   }
@@ -137,20 +154,27 @@ export const createLocationResolver = ({
         endPosition: SpinePosition
       }
     | undefined => {
-    const itemAtPosition = getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
-    const itemAtPositionIndex = spineItemManager.getSpineItemIndex(itemAtPosition)
+    const itemAtPosition =
+      getSpineItemFromPosition(position) ||
+      spineItemManager.getFocusedSpineItem()
+    const itemAtPositionIndex =
+      spineItemManager.getSpineItemIndex(itemAtPosition)
 
     if (itemAtPositionIndex === undefined) return undefined
 
     let endPosition = position
 
     if (context.state.isUsingSpreadMode) {
-      endPosition = { x: position.x + context.getPageSize().width, y: position.y }
+      endPosition = {
+        x: position.x + context.getPageSize().width,
+        y: position.y,
+      }
     }
 
     const endItemIndex =
       spineItemManager.getSpineItemIndex(
-        getSpineItemFromPosition(endPosition) || spineItemManager.getFocusedSpineItem(),
+        getSpineItemFromPosition(endPosition) ||
+          spineItemManager.getFocusedSpineItem(),
       ) ?? itemAtPositionIndex
 
     /**
@@ -159,11 +183,16 @@ export const createLocationResolver = ({
     const items = [
       { item: itemAtPositionIndex, position },
       { item: endItemIndex, position: endPosition },
-    ] as [{ item: number; position: typeof position }, { item: number; position: typeof position }]
+    ] as [
+      { item: number; position: typeof position },
+      { item: number; position: typeof position },
+    ]
     const [begin, end] = items.sort((a, b) => {
       // if we have same item index, we sort by position number
       if (a.item === b.item) {
-        return context.isRTL() ? b.position.x - a.position.x : a.position.x - b.position.x
+        return context.isRTL()
+          ? b.position.x - a.position.x
+          : a.position.x - b.position.x
       }
 
       return a.item - b.item
@@ -178,7 +207,9 @@ export const createLocationResolver = ({
   }
 
   const getSpineItemFromIframe = (iframe: Element) => {
-    return spineItemManager.getAll().find((item) => item.spineItemFrame.getFrameElement() === iframe)
+    return spineItemManager
+      .getAll()
+      .find((item) => item.spineItemFrame.getFrameElement() === iframe)
   }
 
   const getSpineItemPageIndexFromNode = (
@@ -188,10 +219,20 @@ export const createLocationResolver = ({
   ) => {
     if (typeof spineItemOrIndex === `number`) {
       const spineItem = spineItemManager.get(spineItemOrIndex)
-      return spineItem ? spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItem) : undefined
+      return spineItem
+        ? spineItemLocator.getSpineItemPageIndexFromNode(
+            node,
+            offset || 0,
+            spineItem,
+          )
+        : undefined
     }
 
-    return spineItemLocator.getSpineItemPageIndexFromNode(node, offset || 0, spineItemOrIndex)
+    return spineItemLocator.getSpineItemPageIndexFromNode(
+      node,
+      offset || 0,
+      spineItemOrIndex,
+    )
   }
 
   return {

@@ -23,22 +23,29 @@ export const fixReflowable = (reader: Reader) => {
    *
    * - the core handle this kind of fake reflowable and insert blank page
    */
-  reader.hookManager.register(`item.onAfterLayout`, ({ item, blankPagePosition, minimumWidth }) => {
-    const spineItem = reader.spineItemManager.get(item.id)
+  reader.hookManager.register(
+    `item.onAfterLayout`,
+    ({ item, blankPagePosition, minimumWidth }) => {
+      const spineItem = reader.spineItemManager.get(item.id)
 
-    if (!(spineItem?.item.renditionLayout === `reflowable`)) return
+      if (!(spineItem?.item.renditionLayout === `reflowable`)) return
 
-    const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
-    const { width: pageWidth } = reader.context.getPageSize()
-    const frameElement = spineItem?.spineItemFrame.getManipulableFrame()?.frame
+      const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
+      const { width: pageWidth } = reader.context.getPageSize()
+      const frameElement =
+        spineItem?.spineItemFrame.getManipulableFrame()?.frame
 
-    if (viewportDimensions) {
-      const spineManagerWantAFullWidthItem = pageWidth < minimumWidth
-      const noBlankPageAsked = blankPagePosition === `none`
+      if (viewportDimensions) {
+        const spineManagerWantAFullWidthItem = pageWidth < minimumWidth
+        const noBlankPageAsked = blankPagePosition === `none`
 
-      if (noBlankPageAsked && spineManagerWantAFullWidthItem) {
-        frameElement?.style.setProperty(`left`, reader.context.isRTL() ? `75%` : `25%`)
+        if (noBlankPageAsked && spineManagerWantAFullWidthItem) {
+          frameElement?.style.setProperty(
+            `left`,
+            reader.context.isRTL() ? `75%` : `25%`,
+          )
+        }
       }
-    }
-  })
+    },
+  )
 }

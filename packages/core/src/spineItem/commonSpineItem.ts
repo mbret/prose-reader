@@ -25,7 +25,11 @@ export const createCommonSpineItem = ({
   hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
-  const containerElement = createContainerElement(parentElement, item, hookManager)
+  const containerElement = createContainerElement(
+    parentElement,
+    item,
+    hookManager,
+  )
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
@@ -80,7 +84,15 @@ export const createCommonSpineItem = ({
     spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
   }
 
-  const adjustPositionOfElement = ({ right, left, top }: { right?: number; left?: number; top?: number }) => {
+  const adjustPositionOfElement = ({
+    right,
+    left,
+    top,
+  }: {
+    right?: number
+    left?: number
+    top?: number
+  }) => {
     if (right !== undefined) {
       containerElement.style.right = `${right}px`
     } else {
@@ -103,9 +115,17 @@ export const createCommonSpineItem = ({
     const viewportDimensions = spineItemFrame.getViewportDimensions()
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
 
-    if (containerElement && frameElement?.contentDocument && frameElement?.contentWindow && viewportDimensions) {
+    if (
+      containerElement &&
+      frameElement?.contentDocument &&
+      frameElement?.contentWindow &&
+      viewportDimensions
+    ) {
       const computedWidthScale = pageWidth / viewportDimensions.width
-      const computedScale = Math.min(computedWidthScale, pageHeight / viewportDimensions.height)
+      const computedScale = Math.min(
+        computedWidthScale,
+        pageHeight / viewportDimensions.height,
+      )
 
       return { computedScale, computedWidthScale, viewportDimensions }
     }
@@ -119,9 +139,13 @@ export const createCommonSpineItem = ({
     const frame = spineItemFrame.getManipulableFrame()?.frame
     if (frame && selector) {
       if (selector.startsWith(`#`)) {
-        return frame.contentDocument?.getElementById(selector.replace(`#`, ``))?.getBoundingClientRect()
+        return frame.contentDocument
+          ?.getElementById(selector.replace(`#`, ``))
+          ?.getBoundingClientRect()
       }
-      return frame.contentDocument?.querySelector(selector)?.getBoundingClientRect()
+      return frame.contentDocument
+        ?.querySelector(selector)
+        ?.getBoundingClientRect()
     }
   }
 
@@ -138,7 +162,10 @@ export const createCommonSpineItem = ({
     return { columnHeight, columnWidth }
   }
 
-  const getDimensionsForReflowableContent = (isUsingVerticalWriting: boolean, minimumWidth: number) => {
+  const getDimensionsForReflowableContent = (
+    isUsingVerticalWriting: boolean,
+    minimumWidth: number,
+  ) => {
     const pageSize = context.getPageSize()
     const horizontalMargin = 0
     const verticalMargin = 0
@@ -174,16 +201,24 @@ export const createCommonSpineItem = ({
     containerElement.style.width = `${width}px`
     containerElement.style.height = `${height}px`
 
-    hookManager.execute(`item.onAfterLayout`, undefined, { blankPagePosition, item, minimumWidth })
+    hookManager.execute(`item.onAfterLayout`, undefined, {
+      blankPagePosition,
+      item,
+      minimumWidth,
+    })
 
     setLayoutDirty()
   }
 
-  const translateFramePositionIntoPage = (position: { clientX: number; clientY: number }) => {
+  const translateFramePositionIntoPage = (position: {
+    clientX: number
+    clientY: number
+  }) => {
     // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
-    const { left = 0, top = 0 } = spineItemFrame.getFrameElement()?.getBoundingClientRect() || {}
+    const { left = 0, top = 0 } =
+      spineItemFrame.getFrameElement()?.getBoundingClientRect() || {}
     const computedScale = getViewPortInformation()?.computedScale ?? 1
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
@@ -225,7 +260,11 @@ export const createCommonSpineItem = ({
         overlayElement: HTMLDivElement
       } & (
         | ReturnType<typeof createFrameManipulator>
-        | { frame: undefined; removeStyle: (id: string) => void; addStyle: (id: string, style: string) => void }
+        | {
+            frame: undefined
+            removeStyle: (id: string) => void
+            addStyle: (id: string, style: string) => void
+          }
       ),
     ) => boolean,
   ) => {
@@ -250,7 +289,9 @@ export const createCommonSpineItem = ({
     })
   }
 
-  const executeOnLayoutBeforeMeasurementHook = (options: { minimumWidth: number }) =>
+  const executeOnLayoutBeforeMeasurementHook = (options: {
+    minimumWidth: number
+  }) =>
     hookManager.execute("item.onLayoutBeforeMeasurement", undefined, {
       frame: spineItemFrame,
       container: containerElement,
@@ -296,7 +337,8 @@ export const createCommonSpineItem = ({
       selectionTracker.destroy()
       destroySubject$.complete()
     },
-    isUsingVerticalWriting: () => spineItemFrame.getWritingMode()?.startsWith(`vertical`),
+    isUsingVerticalWriting: () =>
+      spineItemFrame.getWritingMode()?.startsWith(`vertical`),
     /**
      * @important
      * Do not use this value for layout and navigation. It will be in possible conflict
@@ -327,7 +369,8 @@ const createContainerElement = (
   item: Manifest[`spineItems`][number],
   hookManager: HookManager,
 ) => {
-  const element: HTMLElement = containerElement.ownerDocument.createElement(`div`)
+  const element: HTMLElement =
+    containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItem`)
   element.classList.add(`spineItem-${item.renditionLayout}`)
   element.style.cssText = `
@@ -340,7 +383,10 @@ const createContainerElement = (
   return element
 }
 
-const createOverlayElement = (containerElement: HTMLElement, item: Manifest[`spineItems`][number]) => {
+const createOverlayElement = (
+  containerElement: HTMLElement,
+  item: Manifest[`spineItems`][number],
+) => {
   const element = containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItemOverlay`)
   element.classList.add(`spineItemOverlay-${item.renditionLayout}`)

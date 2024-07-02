@@ -11,7 +11,11 @@ import {
 } from "rxjs"
 import { PaginationInfo } from "../../pagination/types"
 import { getChaptersInfo, trackChapterInfo } from "./chapters"
-import { EnhancerPaginationInto, ExtraPaginationInfo, ReaderWithProgression } from "./types"
+import {
+  EnhancerPaginationInto,
+  ExtraPaginationInfo,
+  ReaderWithProgression,
+} from "./types"
 import { isShallowEqual } from "../../utils/objects"
 import { trackTotalPages } from "./spine"
 
@@ -22,7 +26,10 @@ export const mapPaginationInfoToExtendedInfo =
     chaptersInfo: ObservedValueOf<ReturnType<typeof trackChapterInfo>>,
   ): Omit<
     ExtraPaginationInfo,
-    "beginAbsolutePageIndex" | "endAbsolutePageIndex" | "beginAbsolutePageIndex" | "numberOfTotalPages"
+    | "beginAbsolutePageIndex"
+    | "endAbsolutePageIndex"
+    | "beginAbsolutePageIndex"
+    | "numberOfTotalPages"
   > => {
     const context = reader.context
     const beginItem =
@@ -79,7 +86,10 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({
     ...reader.pagination.getPaginationInfo(),
-    ...mapPaginationInfoToExtendedInfo(reader)(reader.pagination.getPaginationInfo(), getChaptersInfo(reader)),
+    ...mapPaginationInfoToExtendedInfo(reader)(
+      reader.pagination.getPaginationInfo(),
+      getChaptersInfo(reader),
+    ),
     beginAbsolutePageIndex: 0,
     endAbsolutePageIndex: 0,
     numberOfTotalPages: 0,
@@ -103,10 +113,16 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
       ...totalPageInfo,
       beginAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
         .slice(0, pageInfo.beginSpineItemIndex)
-        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.beginPageIndexInSpineItem ?? 0),
+        .reduce(
+          (acc, numberOfPagesForItem) => acc + numberOfPagesForItem,
+          pageInfo.beginPageIndexInSpineItem ?? 0,
+        ),
       endAbsolutePageIndex: totalPageInfo.numberOfPagesPerItems
         .slice(0, pageInfo.endSpineItemIndex)
-        .reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, pageInfo.endPageIndexInSpineItem ?? 0),
+        .reduce(
+          (acc, numberOfPagesForItem) => acc + numberOfPagesForItem,
+          pageInfo.endPageIndexInSpineItem ?? 0,
+        ),
     })),
     tap((value) => {
       currentValue.next(value)

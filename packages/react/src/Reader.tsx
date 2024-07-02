@@ -1,4 +1,10 @@
-import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  ReactElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import ReactDOM from "react-dom"
 import { Manifest, Reader as ReaderInstance, Report } from "@prose-reader/core"
 
@@ -15,7 +21,10 @@ export type Props<Options extends object, Instance extends ReaderInstance> = {
   LoadingElement?: ReactElement
 }
 
-export const Reader = <Options extends object, Instance extends ReaderInstance>({
+export const Reader = <
+  Options extends object,
+  Instance extends ReaderInstance,
+>({
   manifest,
   onReady,
   onReader,
@@ -24,8 +33,12 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
   LoadingElement,
   createReader,
 }: Props<Options, Instance>) => {
-  const [reader, setReader] = useState<ReturnType<typeof createReader> | undefined>(undefined)
-  const [loadingElementContainers, setLoadingElementContainers] = useState<HTMLElement[]>([])
+  const [reader, setReader] = useState<
+    ReturnType<typeof createReader> | undefined
+  >(undefined)
+  const [loadingElementContainers, setLoadingElementContainers] = useState<
+    HTMLElement[]
+  >([])
   const { width, height } = { width: `100%`, height: `100%` }
   const hasLoadingElement = !!LoadingElement
   const ref = useRef<HTMLDivElement | null>(null)
@@ -47,7 +60,8 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
       const readerOptions = {
         ...(hasLoadingElement && {
           // we override loading element creator but don't do anything yet
-          loadingElementCreate: ({ container }: { container: HTMLElement }) => container,
+          loadingElementCreate: ({ container }: { container: HTMLElement }) =>
+            container,
         }),
         ...options,
       } as Options
@@ -105,7 +119,9 @@ export const Reader = <Options extends object, Instance extends ReaderInstance>(
   return (
     <>
       <div style={style} ref={ref} />
-      {loadingElementContainers.map((element) => ReactDOM.createPortal(LoadingElement, element))}
+      {loadingElementContainers.map((element) =>
+        ReactDOM.createPortal(LoadingElement, element),
+      )}
     </>
   )
 }

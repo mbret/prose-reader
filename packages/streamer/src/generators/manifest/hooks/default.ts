@@ -8,7 +8,8 @@ export const defaultHook =
 
     return {
       filename: archive.filename,
-      title: archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
+      title:
+        archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
       renditionLayout: `pre-paginated`,
       renditionSpread: `auto`,
       readingDirection: `ltr`,

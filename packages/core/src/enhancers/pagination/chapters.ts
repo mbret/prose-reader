@@ -34,16 +34,24 @@ const buildChaptersInfo = (
   tocItem: NonNullable<Manifest["nav"]>["toc"],
   manifest: Manifest,
 ): ChapterInfo | undefined => {
-  const spineItemIndex = manifest.spineItems.findIndex((item) => item.href === href)
+  const spineItemIndex = manifest.spineItems.findIndex(
+    (item) => item.href === href,
+  )
 
   return tocItem.reduce((acc: ChapterInfo | undefined, tocItem) => {
     const indexOfHash = tocItem.href.indexOf(`#`)
-    const tocItemPathWithoutAnchor = indexOfHash > 0 ? tocItem.href.substr(0, indexOfHash) : tocItem.href
-    const tocItemHrefWithoutFilename = tocItemPathWithoutAnchor.substring(0, tocItemPathWithoutAnchor.lastIndexOf("/"))
+    const tocItemPathWithoutAnchor =
+      indexOfHash > 0 ? tocItem.href.substr(0, indexOfHash) : tocItem.href
+    const tocItemHrefWithoutFilename = tocItemPathWithoutAnchor.substring(
+      0,
+      tocItemPathWithoutAnchor.lastIndexOf("/"),
+    )
     const hrefWithoutFilename = href.substring(0, href.lastIndexOf("/"))
 
     const hrefIsChapterHref = href.endsWith(tocItemPathWithoutAnchor)
-    const hrefIsWithinChapter = hrefWithoutFilename !== "" && hrefWithoutFilename.endsWith(tocItemHrefWithoutFilename)
+    const hrefIsWithinChapter =
+      hrefWithoutFilename !== "" &&
+      hrefWithoutFilename.endsWith(tocItemHrefWithoutFilename)
 
     /**
      * @important
@@ -59,8 +67,11 @@ const buildChaptersInfo = (
     const isPossibleTocItemCandidate = hrefIsChapterHref || hrefIsWithinChapter
 
     if (isPossibleTocItemCandidate) {
-      const spineItemIndexOfPossibleCandidate = manifest.spineItems.findIndex((item) => item.href === tocItem.href)
-      const spineItemIsBeforeThisTocItem = spineItemIndex < spineItemIndexOfPossibleCandidate
+      const spineItemIndexOfPossibleCandidate = manifest.spineItems.findIndex(
+        (item) => item.href === tocItem.href,
+      )
+      const spineItemIsBeforeThisTocItem =
+        spineItemIndex < spineItemIndexOfPossibleCandidate
 
       if (spineItemIsBeforeThisTocItem) return acc
 
@@ -85,13 +96,18 @@ const buildChaptersInfo = (
   }, undefined)
 }
 
-const buildChapterInfoFromSpineItem = (manifest: Manifest, item: Manifest[`spineItems`][number]) => {
+const buildChapterInfoFromSpineItem = (
+  manifest: Manifest,
+  item: Manifest[`spineItems`][number],
+) => {
   const { href } = item
 
   return buildChaptersInfo(href, manifest.nav?.toc ?? [], manifest)
 }
 
-export const getChaptersInfo = (reader: Reader): { [key: string]: ChapterInfo | undefined } => {
+export const getChaptersInfo = (
+  reader: Reader,
+): { [key: string]: ChapterInfo | undefined } => {
   const manifest = reader.context.manifest
   const items = reader.spineItemManager.getAll()
 

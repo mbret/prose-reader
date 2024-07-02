@@ -46,7 +46,10 @@ export type CoreHook =
             | undefined
             | {
                 removeStyle: (id: string) => void
-                addStyle: (id: string, style: CSSStyleDeclaration[`cssText`]) => void
+                addStyle: (
+                  id: string,
+                  style: CSSStyleDeclaration[`cssText`],
+                ) => void
               }
           getViewportDimensions: () =>
             | {
@@ -81,8 +84,7 @@ export type CoreHook =
 //     ) => (item: Manifest[`spineItems`][number]) => Promise<Response>
 //   }
 
-// export type Params = Parameters<CoreHook["runFn"]>[0]
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HookExecution<H extends Hook<any, any, any>> = {
   name: string
   id: string | undefined
@@ -90,13 +92,14 @@ export type HookExecution<H extends Hook<any, any, any>> = {
   ref: H
 }
 
-export type HookFrom<H extends Hook<any, any, any>, Name extends H["name"]> = H extends infer HK
+export type HookFrom<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  H extends Hook<any, any, any>,
+  Name extends H["name"],
+> = H extends infer HK
   ? HK extends H
     ? HK["name"] extends Name
       ? HK
       : never
     : never
   : never
-
-// export type HookParamsFrom<H extends Hook<any, any, any>, Name> = Name extends H["name"] ? Parameters<H['runFn']>[0] : never
-// export type HookResultFrom<H extends Hook<any, any, any>, Name> = Name extends H["name"] ? ReturnType<H['runFn']> : never

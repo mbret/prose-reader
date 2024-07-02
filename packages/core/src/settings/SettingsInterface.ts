@@ -1,6 +1,9 @@
 import { Observable } from "rxjs"
 
-export interface SettingsInterface<InputSettings, OutputSettings = Record<string, never>> {
+export interface SettingsInterface<
+  InputSettings,
+  OutputSettings = Record<string, never>,
+> {
   _outputSettings?: OutputSettings
   _inputSettings?: InputSettings
 

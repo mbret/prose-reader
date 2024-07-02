@@ -8,7 +8,12 @@ import { PaginationInfo } from "./types"
 
 const NAMESPACE = `pagination`
 
-export const createPagination = ({ context }: { context: Context; spineItemManager: SpineItemManager }) => {
+export const createPagination = ({
+  context,
+}: {
+  context: Context
+  spineItemManager: SpineItemManager
+}) => {
   const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
     beginPageIndexInSpineItem: undefined,
     beginNumberOfPagesInSpineItem: 0,
@@ -111,7 +116,10 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
    */
   const paginationInfo$ = paginationSubject$.pipe(
     distinctUntilChanged(isShallowEqual),
-    filter(({ beginPageIndexInSpineItem }) => beginPageIndexInSpineItem !== undefined),
+    filter(
+      ({ beginPageIndexInSpineItem }) =>
+        beginPageIndexInSpineItem !== undefined,
+    ),
   )
 
   const destroy = () => {
@@ -128,14 +136,21 @@ export const createPagination = ({ context }: { context: Context; spineItemManag
 
 export type Pagination = ReturnType<typeof createPagination>
 
-export const getItemOffsetFromPageIndex = (pageWidth: number, pageIndex: number, itemWidth: number) => {
+export const getItemOffsetFromPageIndex = (
+  pageWidth: number,
+  pageIndex: number,
+  itemWidth: number,
+) => {
   const lastPageOffset = itemWidth - pageWidth
   const logicalOffset = (itemWidth * (pageIndex * pageWidth)) / itemWidth
 
   return Math.max(0, Math.min(lastPageOffset, logicalOffset))
 }
 
-export const calculateNumberOfPagesForItem = (itemWidth: number, pageWidth: number) => {
+export const calculateNumberOfPagesForItem = (
+  itemWidth: number,
+  pageWidth: number,
+) => {
   if ((pageWidth || 0) === 0 || (itemWidth || 0) === 0) return 1
   return Math.floor(Math.max(1, itemWidth / pageWidth))
 }
@@ -148,7 +163,10 @@ export const getClosestValidOffsetFromApproximateOffsetInPages = (
   const numberOfPages = calculateNumberOfPagesForItem(itemWidth, pageWidth)
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
-  if (offset >= numberOfPages * pageWidth) return offsetValues[offsetValues.length - 1] || 0
+  if (offset >= numberOfPages * pageWidth)
+    return offsetValues[offsetValues.length - 1] || 0
 
-  return offsetValues.find((offsetRange) => offset < offsetRange + pageWidth) || 0
+  return (
+    offsetValues.find((offsetRange) => offset < offsetRange + pageWidth) || 0
+  )
 }

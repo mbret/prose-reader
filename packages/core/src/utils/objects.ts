@@ -48,7 +48,10 @@ export const isShallowEqual = <T = any, R = any>(
     return false
   }
 
-  const isEqual = options && typeof options.customEqual === `function` ? options.customEqual : is
+  const isEqual =
+    options && typeof options.customEqual === `function`
+      ? options.customEqual
+      : is
 
   for (let i = 0; i < keysA.length; i++) {
     const key = keysA[i] || ``
@@ -61,7 +64,10 @@ export const isShallowEqual = <T = any, R = any>(
   return true
 }
 
-export const groupBy = <T, K extends keyof any>(list: T[], getKey: (item: T) => K) =>
+export const groupBy = <T, K extends keyof any>(
+  list: T[],
+  getKey: (item: T) => K,
+) =>
   list.reduce(
     (previous, currentItem) => {
       const group = getKey(currentItem)

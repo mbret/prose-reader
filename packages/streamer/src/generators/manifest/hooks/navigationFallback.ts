@@ -13,9 +13,13 @@ export const navigationFallbackHook =
   async (manifest: Manifest): Promise<Manifest> => {
     if (manifest.nav) return manifest
 
-    const filesSortedByAlpha = [...archive.files].sort((a, b) => sortByTitleComparator(a.uri, b.uri))
+    const filesSortedByAlpha = [...archive.files].sort((a, b) =>
+      sortByTitleComparator(a.uri, b.uri),
+    )
 
-    const toc: NonNullable<Manifest["nav"]>["toc"] = Object.values(filesSortedByAlpha).reduce(
+    const toc: NonNullable<Manifest["nav"]>["toc"] = Object.values(
+      filesSortedByAlpha,
+    ).reduce(
       (acc, file) => {
         const parts = file.uri.split("/")
 

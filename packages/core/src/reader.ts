@@ -1,10 +1,23 @@
-import { BehaviorSubject, merge, ObservedValueOf, Subject, switchMap } from "rxjs"
+import {
+  BehaviorSubject,
+  merge,
+  ObservedValueOf,
+  Subject,
+  switchMap,
+} from "rxjs"
 import { Report } from "./report"
 import { Context } from "./context/Context"
 import { createPagination } from "./pagination/pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
-import { takeUntil, tap, distinctUntilChanged, withLatestFrom, map, filter } from "rxjs/operators"
+import {
+  takeUntil,
+  tap,
+  distinctUntilChanged,
+  withLatestFrom,
+  map,
+  filter,
+} from "rxjs/operators"
 import { createSelection } from "./selection"
 import { createSpineItemManager } from "./spineItemManager"
 import { isShallowEqual } from "./utils/objects"
@@ -24,15 +37,21 @@ export type CreateReaderOptions = Partial<CoreInputSettings>
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal => {
-  const stateSubject$ = new BehaviorSubject<ObservedValueOf<ReaderInternal["$"]["state$"]>>({
+export const createReader = (
+  inputSettings: CreateReaderOptions,
+): ReaderInternal => {
+  const stateSubject$ = new BehaviorSubject<
+    ObservedValueOf<ReaderInternal["$"]["state$"]>
+  >({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
     supportedPageTurnDirection: [`horizontal`, `vertical`],
     supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
   })
   const destroy$ = new Subject<void>()
-  const selectionSubject$ = new Subject<ReturnType<typeof createSelection> | null>()
+  const selectionSubject$ = new Subject<ReturnType<
+    typeof createSelection
+  > | null>()
   const navigationSubject = new Subject<Navigation>()
   const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
   const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
@@ -40,10 +59,15 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
   const hookManager = new HookManager()
   const context = new Context()
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
-  const spineItemManager = createSpineItemManager({ context, settings: settingsManager })
+  const spineItemManager = createSpineItemManager({
+    context,
+    settings: settingsManager,
+  })
   const pagination = createPagination({ context, spineItemManager })
 
-  const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
+  const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(
+    undefined,
+  )
   const element$ = elementSubject$.pipe(filter(isDefined))
   const spineItemLocator = createSpineItemLocator({ context })
   const spineLocator = createSpineLocator({
@@ -72,7 +96,8 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
     cfiLocator,
     navigationAdjusted$: navigationAdjustedSubject.asObservable(),
     viewportState$: viewportStateSubject.asObservable(),
-    currentNavigationPosition$: currentNavigationPositionSubject$.asObservable(),
+    currentNavigationPosition$:
+      currentNavigationPositionSubject$.asObservable(),
     hookManager,
   })
 
@@ -91,8 +116,12 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
   // bridge all navigation stream with reader so they can be shared across app
   viewportNavigator.$.state$.subscribe(viewportStateSubject)
   viewportNavigator.$.navigation$.subscribe(navigationSubject)
-  viewportNavigator.$.navigationAdjustedAfterLayout$.subscribe(navigationAdjustedSubject)
-  viewportNavigator.$.currentNavigationPosition$.subscribe(currentNavigationPositionSubject$)
+  viewportNavigator.$.navigationAdjustedAfterLayout$.subscribe(
+    navigationAdjustedSubject,
+  )
+  viewportNavigator.$.currentNavigationPosition$.subscribe(
+    currentNavigationPositionSubject$,
+  )
 
   const layout = () => {
     const containerElement = elementSubject$.getValue()?.parentElement
@@ -110,7 +139,9 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
     const isReflow = true // @todo
     const containerElementWidth = dimensions.width
     const containerElementEvenWidth =
-      containerElementWidth % 2 === 0 || isReflow ? containerElementWidth : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
+      containerElementWidth % 2 === 0 || isReflow
+        ? containerElementWidth
+        : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
 
     element.style.setProperty(`overflow`, `hidden`)
     element.style.height = `${dimensions.height - marginTop - marginBottom}px`
@@ -145,13 +176,19 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
     // @todo hook
     const element = createWrapperElement(loadOptions.containerElement)
 
-    if (loadOptions.containerElement !== elementSubject$.getValue()?.parentElement) {
+    if (
+      loadOptions.containerElement !== elementSubject$.getValue()?.parentElement
+    ) {
       elementSubject$.next(element)
 
       loadOptions.containerElement.appendChild(element)
     }
 
-    context.update({ manifest, ...loadOptions, forceSinglePageMode: settingsManager.settings.forceSinglePageMode })
+    context.update({
+      manifest,
+      ...loadOptions,
+      forceSinglePageMode: settingsManager.settings.forceSinglePageMode,
+    })
 
     // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
 
@@ -176,7 +213,9 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
   viewportNavigator.$.navigationAdjustedAfterLayout$
     .pipe(
       switchMap(({ adjustedSpinePosition }) => {
-        return spine.adjustPagination(adjustedSpinePosition).pipe(takeUntil(navigation$))
+        return spine
+          .adjustPagination(adjustedSpinePosition)
+          .pipe(takeUntil(navigation$))
       }),
       takeUntil(context.destroy$),
     )
@@ -213,7 +252,8 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
                   ? [`controlled`]
                   : [`controlled`, `scrollable`],
             supportedPageTurnAnimation:
-              renditionFlow === `scrolled-continuous` || computedPageTurnMode === `scrollable`
+              renditionFlow === `scrolled-continuous` ||
+              computedPageTurnMode === `scrollable`
                 ? [`none`]
                 : hasVerticalWriting
                   ? [`fade`, `none`]
@@ -273,7 +313,9 @@ export const createReader = (inputSettings: CreateReaderOptions): ReaderInternal
        * have an effect.
        * It can typically be used to hide a loading indicator.
        */
-      loadStatus$: context.manifest$.pipe(map((manifest) => (manifest ? "ready" : "idle"))),
+      loadStatus$: context.manifest$.pipe(
+        map((manifest) => (manifest ? "ready" : "idle")),
+      ),
       /**
        * Dispatched when a change in selection happens
        */

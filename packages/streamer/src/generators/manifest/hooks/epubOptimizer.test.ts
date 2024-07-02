@@ -31,7 +31,9 @@ describe(`Given a xml document`, () => {
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest,
+      )
 
       expect(manifest).toEqual({
         ...firstManifest,
@@ -66,7 +68,9 @@ describe(`Given a xml document`, () => {
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest,
+      )
 
       expect(manifest).toEqual(firstManifest)
     })
@@ -96,7 +100,9 @@ describe(`Given a xml document`, () => {
 
       const firstManifest = await generateManifestFromArchive(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+        firstManifest,
+      )
 
       expect(manifest).toEqual({
         ...firstManifest,
@@ -112,7 +118,9 @@ describe(`Given a non xml resource`, () => {
 
     const firstManifest = await generateManifestFromArchive(archive)
 
-    const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(firstManifest)
+    const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
+      firstManifest,
+    )
 
     expect(manifest).toEqual(firstManifest)
   })

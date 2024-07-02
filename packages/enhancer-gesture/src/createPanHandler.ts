@@ -89,7 +89,7 @@ export const createPanHandler = (
         const deltaY = normalizedEvent.clientY - startY
 
         // Calculate the change in time
-        const dt = (Date.now() - startTime)
+        const dt = Date.now() - startTime
 
         // Avoid division by zero
         // Calculate velocity in pixels per second

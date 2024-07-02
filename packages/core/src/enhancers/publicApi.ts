@@ -10,7 +10,10 @@ export const publicApiEnhancer = <InheritOptions, InheritOutput extends Reader>(
   return (
     options: InheritOptions,
   ): Omit<InheritOutput, "pagination"> & {
-    pagination: Pick<InheritOutput["pagination"], "paginationInfo$" | "getPaginationInfo">
+    pagination: Pick<
+      InheritOutput["pagination"],
+      "paginationInfo$" | "getPaginationInfo"
+    >
   } => {
     const reader = next(options)
 

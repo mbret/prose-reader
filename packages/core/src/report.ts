@@ -22,7 +22,10 @@ const time = (name: string, targetDuration = 0) => {
     const t1 = performance.now()
     // const t1 = Date.now()
     // console.timeEnd(name)
-    Report.logMetric({ name: `${name} - tick ${tick}`, duration: t1 - t0 }, targetDuration)
+    Report.logMetric(
+      { name: `${name} - tick ${tick}`, duration: t1 - t0 },
+      targetDuration,
+    )
   }
 }
 
@@ -39,7 +42,8 @@ const createReport = (namespace?: string) => ({
   warn: (...data: any[]) => {
     if (getWindow()?.__PROSE_READER_DEBUG) {
       // eslint-disable-next-line no-console
-      if (namespace) console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
+      if (namespace)
+        console.warn(wrap(ROOT_NAMESPACE), wrap(namespace), ...data)
       else console.warn(wrap(ROOT_NAMESPACE), ...data)
     }
   },
@@ -61,7 +65,10 @@ const createReport = (namespace?: string) => ({
   //   }
   // },
   time,
-  logMetric: (performanceEntry: PerformanceEntry | { name: string; duration: number }, targetDuration = 0) => {
+  logMetric: (
+    performanceEntry: PerformanceEntry | { name: string; duration: number },
+    targetDuration = 0,
+  ) => {
     // const duration = typeof performanceEntry === 'number' ? performanceEntry : performanceEntry.duration;
     if (getWindow()?.__PROSE_READER_DEBUG) {
       if (performanceEntry.duration <= targetDuration) {

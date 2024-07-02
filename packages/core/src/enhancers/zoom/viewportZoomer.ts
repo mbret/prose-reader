@@ -43,12 +43,17 @@ export const createViewportZoomer = (reader: Reader) => {
     if (!spineElement || !viewportElement) return
 
     const roundedScale =
-      Math.ceil((userScale < 1 ? baseScale - (1 - userScale) : baseScale + (userScale - 1)) * 100) / 100
+      Math.ceil(
+        (userScale < 1
+          ? baseScale - (1 - userScale)
+          : baseScale + (userScale - 1)) * 100,
+      ) / 100
     const newScale = Math.max(roundedScale, 1)
 
     // GET CURRENT SCALE
     // no need to check for Y as both axis have same scale
-    const currentScale = spineElement.getBoundingClientRect().width / spineElement.offsetWidth
+    const currentScale =
+      spineElement.getBoundingClientRect().width / spineElement.offsetWidth
 
     const currentScrollTop = viewportElement.scrollTop
 
@@ -75,7 +80,10 @@ export const createViewportZoomer = (reader: Reader) => {
     lastUserScale = newScale
   }
 
-  const move = (_: { x: number; y: number } | undefined, __: { isFirst: boolean; isLast: boolean }) => {}
+  const move = (
+    _: { x: number; y: number } | undefined,
+    __: { isFirst: boolean; isLast: boolean },
+  ) => {}
 
   const exit = () => {
     reset()

@@ -25,9 +25,14 @@ export const createHtmlPageFromResource = async (
   if (typeof resourceResponse === `string`) return resourceResponse
 
   const contentType =
-    parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) || detectMimeTypeFromName(item.href)
+    parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) ||
+    detectMimeTypeFromName(item.href)
 
-  if ([`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some((mime) => mime === contentType)) {
+  if (
+    [`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some(
+      (mime) => mime === contentType,
+    )
+  ) {
     const data = await getBase64FromBlob(await resourceResponse.blob())
     const { height, width } = await getIntrinsicDimensionsFromBase64Img(data)
 

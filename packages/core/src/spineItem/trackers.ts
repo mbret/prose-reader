@@ -1,9 +1,13 @@
 import { Subject } from "rxjs"
 
 export const createFingerTracker = () => {
-  const fingerPositionInIframe: { x: number | undefined; y: number | undefined } = { x: undefined, y: undefined }
+  const fingerPositionInIframe: {
+    x: number | undefined
+    y: number | undefined
+  } = { x: undefined, y: undefined }
   const subject = new Subject<
-    { event: `fingermove`; data: { x: number; y: number } } | { event: `fingerout`; data: undefined }
+    | { event: `fingermove`; data: { x: number; y: number } }
+    | { event: `fingerout`; data: undefined }
   >()
   let isMouseDown = false
 
@@ -35,7 +39,8 @@ export const createFingerTracker = () => {
   return {
     track,
     getFingerPositionInIframe() {
-      return fingerPositionInIframe.x === undefined || fingerPositionInIframe.y === undefined
+      return fingerPositionInIframe.x === undefined ||
+        fingerPositionInIframe.y === undefined
         ? undefined
         : fingerPositionInIframe
     },
@@ -66,7 +71,10 @@ export const createSelectionTracker = () => {
     })
 
     frameToTrack.contentDocument?.addEventListener(`selectionchange`, () => {
-      subject.next({ event: `selectionchange`, data: frame?.contentWindow?.getSelection() || null })
+      subject.next({
+        event: `selectionchange`,
+        data: frame?.contentWindow?.getSelection() || null,
+      })
     })
 
     frameToTrack.contentWindow?.addEventListener(`selectstart`, () => {
@@ -84,7 +92,12 @@ export const createSelectionTracker = () => {
     isSelecting: () => isSelecting,
     getSelection: () => {
       const selection = frame?.contentWindow?.getSelection()
-      if (!selection?.anchorNode || selection.type === `None` || selection.type === `Caret`) return undefined
+      if (
+        !selection?.anchorNode ||
+        selection.type === `None` ||
+        selection.type === `Caret`
+      )
+        return undefined
 
       return selection
     },

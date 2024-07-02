@@ -2,7 +2,8 @@ import { Reader } from "../../reader"
 
 export const createNavigator = (reader: Reader) => {
   const goToNextSpineItem = () => {
-    const focusedSpineItemIndex = reader.spineItemManager.getFocusedSpineItemIndex() || 0
+    const focusedSpineItemIndex =
+      reader.spineItemManager.getFocusedSpineItemIndex() || 0
     const { end = focusedSpineItemIndex } =
       reader.spine.locator.getSpineItemsFromReadingOrderPosition(
         reader.viewportNavigator.getCurrentNavigationPosition(),
@@ -15,7 +16,8 @@ export const createNavigator = (reader: Reader) => {
   }
 
   const goToPreviousSpineItem = () => {
-    const focusedSpineItemIndex = reader.spineItemManager.getFocusedSpineItemIndex() || 0
+    const focusedSpineItemIndex =
+      reader.spineItemManager.getFocusedSpineItemIndex() || 0
     const { begin = focusedSpineItemIndex } =
       reader.spine.locator.getSpineItemsFromReadingOrderPosition(
         reader.viewportNavigator.getCurrentNavigationPosition(),
@@ -31,7 +33,8 @@ export const createNavigator = (reader: Reader) => {
     goToNextSpineItem,
     goToPreviousSpineItem,
     goToLeftSpineItem: () => {
-      if (reader.settings.settings.computedPageTurnDirection === "vertical") return
+      if (reader.settings.settings.computedPageTurnDirection === "vertical")
+        return
 
       if (reader.context.isRTL()) {
         return goToNextSpineItem()
@@ -40,7 +43,8 @@ export const createNavigator = (reader: Reader) => {
       return goToPreviousSpineItem()
     },
     goToRightSpineItem: () => {
-      if (reader.settings.settings.computedPageTurnDirection === "vertical") return
+      if (reader.settings.settings.computedPageTurnDirection === "vertical")
+        return
 
       if (reader.context.isRTL()) {
         return goToPreviousSpineItem()

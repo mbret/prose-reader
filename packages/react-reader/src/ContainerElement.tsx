@@ -17,7 +17,7 @@ export const ContainerElement = function ContainerElement({
       style={{
         display: visible ? "flex" : "none",
       }}
-      className="prose-reader-flex prose-reader-items-center prose-reader-justify-center prose-reader-w-full prose-reader-h-full"
+      className="prose-reader-flex prose-reader-h-full prose-reader-w-full prose-reader-items-center prose-reader-justify-center"
     ></div>
   )
 }

@@ -51,18 +51,29 @@ export const createReflowableSpineItem = ({
   }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
     // reset width of iframe to be able to retrieve real size later
-    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`width`, `${pageWidth}px`)
-    spineItemFrame.getManipulableFrame()?.frame?.style.setProperty(`height`, `${pageHeight}px`)
+    spineItemFrame
+      .getManipulableFrame()
+      ?.frame?.style.setProperty(`width`, `${pageWidth}px`)
+    spineItemFrame
+      .getManipulableFrame()
+      ?.frame?.style.setProperty(`height`, `${pageHeight}px`)
 
-    const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
+    const { viewportDimensions, computedScale = 1 } =
+      commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.state.visibleAreaRect
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
-    const isGloballyPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
+    const isGloballyPrePaginated =
+      context.manifest?.renditionLayout === `pre-paginated`
 
     // @todo simplify ? should be from common spine item
-    if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
+    if (
+      spineItemFrame?.getIsLoaded() &&
+      frameElement?.contentDocument &&
+      frameElement?.contentWindow
+    ) {
       let contentWidth = pageWidth
-      let contentHeight = visibleArea.height + context.state.calculatedInnerMargin
+      let contentHeight =
+        visibleArea.height + context.state.calculatedInnerMargin
 
       frameElement?.style.setProperty(`visibility`, `visible`)
       frameElement?.style.setProperty(`opacity`, `1`)
@@ -91,16 +102,24 @@ export const createReflowableSpineItem = ({
               : `50%`,
         )
 
-        frameElement?.style.setProperty(`transform`, `translate(-50%, -50%) scale(${computedScale})`)
+        frameElement?.style.setProperty(
+          `transform`,
+          `translate(-50%, -50%) scale(${computedScale})`,
+        )
         frameElement?.style.setProperty(`transform-origin`, `center center`)
       } else {
         const frameStyle = commonSpineItem.isImageType()
           ? buildStyleForReflowableImageOnly({
-              isScrollable: context.manifest?.renditionFlow === `scrolled-continuous`,
-              enableTouch: settings.settings.computedPageTurnMode !== `scrollable`,
+              isScrollable:
+                context.manifest?.renditionFlow === `scrolled-continuous`,
+              enableTouch:
+                settings.settings.computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
-              commonSpineItem.getDimensionsForReflowableContent(spineItemFrame.isUsingVerticalWriting(), minimumWidth),
+              commonSpineItem.getDimensionsForReflowableContent(
+                spineItemFrame.isUsingVerticalWriting(),
+                minimumWidth,
+              ),
             )
 
         commonSpineItem.injectStyle(frameStyle)
@@ -108,7 +127,10 @@ export const createReflowableSpineItem = ({
         commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
 
         if (spineItemFrame.isUsingVerticalWriting()) {
-          const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollHeight / pageHeight)
+          const pages = Math.ceil(
+            frameElement.contentDocument.documentElement.scrollHeight /
+              pageHeight,
+          )
           contentHeight = pages * pageHeight
 
           spineItemFrame.staticLayout({
@@ -116,7 +138,8 @@ export const createReflowableSpineItem = ({
             height: contentHeight,
           })
         } else if (context.manifest?.renditionFlow === `scrolled-continuous`) {
-          contentHeight = frameElement.contentDocument.documentElement.scrollHeight
+          contentHeight =
+            frameElement.contentDocument.documentElement.scrollHeight
           latestContentHeightWhenLoaded = contentHeight
 
           spineItemFrame.staticLayout({
@@ -124,7 +147,10 @@ export const createReflowableSpineItem = ({
             height: contentHeight,
           })
         } else {
-          const pages = Math.ceil(frameElement.contentDocument.documentElement.scrollWidth / pageWidth)
+          const pages = Math.ceil(
+            frameElement.contentDocument.documentElement.scrollWidth /
+              pageWidth,
+          )
           /**
            * It is possible that a pre-paginated epub has reflowable item inside it. This is weird because
            * the spec says that we should use pre-paginated for each spine item. Could be a publisher mistake, in
@@ -159,7 +185,12 @@ export const createReflowableSpineItem = ({
         frameElement?.style.setProperty(`margin-left`, `0px`)
       }
 
-      commonSpineItem.layout({ width: contentWidth, height: contentHeight, blankPagePosition, minimumWidth })
+      commonSpineItem.layout({
+        width: contentWidth,
+        height: contentHeight,
+        blankPagePosition,
+        minimumWidth,
+      })
 
       return { width: contentWidth, height: contentHeight }
     } else {
@@ -168,7 +199,12 @@ export const createReflowableSpineItem = ({
 
     const height = latestContentHeightWhenLoaded || pageHeight
 
-    commonSpineItem.layout({ width: minimumWidth, height, blankPagePosition, minimumWidth })
+    commonSpineItem.layout({
+      width: minimumWidth,
+      height,
+      blankPagePosition,
+      minimumWidth,
+    })
 
     return { width: minimumWidth, height }
   }

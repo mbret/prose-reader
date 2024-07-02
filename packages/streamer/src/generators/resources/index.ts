@@ -6,8 +6,13 @@ import { cssFixHook } from "./hooks/cssFixHook"
 import { defaultHook } from "./hooks/defaultHook"
 import { HookResource } from "./hooks/types"
 
-export const generateResourceFromArchive = async (archive: Archive, resourcePath: string) => {
-  const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
+export const generateResourceFromArchive = async (
+  archive: Archive,
+  resourcePath: string,
+) => {
+  const file = Object.values(archive.files).find(
+    (file) => file.uri === resourcePath,
+  )
 
   if (!file) {
     throw new Error(`no file found`)

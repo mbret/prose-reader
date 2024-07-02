@@ -6,15 +6,20 @@ import type { Api } from "./types"
 import { createViewportZoomer } from "./viewportZoomer"
 
 export const zoomEnhancer =
-  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (options: InheritOptions): InheritOutput & Api => {
     const reader = next(options)
 
     const elementZoomer = createElementZoomer(reader)
     const viewportZoomer = createViewportZoomer(reader)
-    const currentZoomerSubject$ = new BehaviorSubject<typeof elementZoomer | undefined>(undefined)
+    const currentZoomerSubject$ = new BehaviorSubject<
+      typeof elementZoomer | undefined
+    >(undefined)
 
-    const isUsingScrollableViewport = () => reader.settings.settings.computedPageTurnMode === `scrollable`
+    const isUsingScrollableViewport = () =>
+      reader.settings.settings.computedPageTurnMode === `scrollable`
 
     const enter = (imgElement?: HTMLImageElement) => {
       currentZoomerSubject$?.value?.exit()
@@ -48,7 +53,10 @@ export const zoomEnhancer =
       currentZoomerSubject$.value.scale(userScale)
     }
 
-    const move = (delta: { x: number; y: number } | undefined, options: { isFirst: boolean; isLast: boolean }) => {
+    const move = (
+      delta: { x: number; y: number } | undefined,
+      options: { isFirst: boolean; isLast: boolean },
+    ) => {
       currentZoomerSubject$.value?.move(delta, options)
     }
 
@@ -76,7 +84,9 @@ export const zoomEnhancer =
         isUsingScrollableZoom: isUsingScrollableViewport,
         setCurrentScaleAsBase,
         $: {
-          isZooming$: currentZoomerSubject$.pipe(switchMap((zoomer) => zoomer?.isZooming$ || of(false))),
+          isZooming$: currentZoomerSubject$.pipe(
+            switchMap((zoomer) => zoomer?.isZooming$ || of(false)),
+          ),
         },
       },
     }

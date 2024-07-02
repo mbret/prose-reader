@@ -83,8 +83,10 @@ export class Context {
 
     const previousState = this._stateSubject.getValue()
     const manifest = newState.manifest ?? previousState.manifest
-    const forceSinglePageMode = newState.forceSinglePageMode ?? previousState.forceSinglePageMode
-    const visibleAreaRect = newState.visibleAreaRect ?? previousState.visibleAreaRect
+    const forceSinglePageMode =
+      newState.forceSinglePageMode ?? previousState.forceSinglePageMode
+    const visibleAreaRect =
+      newState.visibleAreaRect ?? previousState.visibleAreaRect
     const marginTop = newState.marginTop ?? previousState.marginTop
     const marginBottom = newState.marginBottom ?? previousState.marginBottom
 
@@ -139,7 +141,9 @@ export class Context {
     const { isUsingSpreadMode, visibleAreaRect } = this._stateSubject.getValue()
 
     return {
-      width: isUsingSpreadMode ? visibleAreaRect.width / 2 : visibleAreaRect.width,
+      width: isUsingSpreadMode
+        ? visibleAreaRect.width / 2
+        : visibleAreaRect.width,
       height: visibleAreaRect.height,
     }
   }

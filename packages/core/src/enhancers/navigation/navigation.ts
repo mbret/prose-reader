@@ -1,9 +1,16 @@
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "../types/enhancer"
 import { createNavigator } from "./navigator"
 import { createState } from "./state"
 
 export const navigationEnhancer =
-  <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+  <
+    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+  >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (

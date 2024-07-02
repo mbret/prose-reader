@@ -1,9 +1,18 @@
-const extend = require(`../../.eslintrc.cjs`)
-
 module.exports = {
-  ...extend,
+  env: {
+    browser: true,
+    node: true,
+    es2021: true,
+  },
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    `prettier`,
+  ],
+  parser: `@typescript-eslint/parser`,
+  plugins: [`@typescript-eslint`],
+  ignorePatterns: [`dist`],
   rules: {
-    ...extend.rules,
     "@typescript-eslint/no-empty-function": "warn",
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",

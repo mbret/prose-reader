@@ -3,18 +3,33 @@ import { filter, map, switchMap, withLatestFrom } from "rxjs/operators"
 import { Context } from "../context/Context"
 import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
-import { createNavigationResolver, ViewportNavigationEntry } from "../spine/navigationResolver"
+import {
+  createNavigationResolver,
+  ViewportNavigationEntry,
+} from "../spine/navigationResolver"
 import { createLocationResolver } from "../spine/locationResolver"
 
 const NAMESPACE = `manualViewportNavigator`
 
 type UrlNavigation = { type: `url`; data: string | URL }
-type SpineItemNavigation = { type: `spineItem`; data: { indexOrId: number | string; animate: boolean } }
+type SpineItemNavigation = {
+  type: `spineItem`
+  data: { indexOrId: number | string; animate: boolean }
+}
 type CfiNavigation = { type: `cfi`; data: { cfi: string; animate: boolean } }
-type ChapterPageNavigation = { type: `chapterPage`; data: { pageIndex: number } }
+type ChapterPageNavigation = {
+  type: `chapterPage`
+  data: { pageIndex: number }
+}
 type PageIndexNavigation = { type: `pageIndex`; data: { pageIndex: number } }
-type LeftPageNavigation = { type: `leftPage`; data: { allowSpineItemChange: boolean } }
-type RightPageNavigation = { type: `rightPage`; data: { allowSpineItemChange: boolean } }
+type LeftPageNavigation = {
+  type: `leftPage`
+  data: { allowSpineItemChange: boolean }
+}
+type RightPageNavigation = {
+  type: `rightPage`
+  data: { allowSpineItemChange: boolean }
+}
 
 export const createManualViewportNavigator = ({
   navigator,
@@ -40,26 +55,47 @@ export const createManualViewportNavigator = ({
     | RightPageNavigation
   >()
 
-  const turnLeft = ({ allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) =>
-    navigationTriggerSubject$.next({ type: `leftPage`, data: { allowSpineItemChange } })
+  const turnLeft = ({
+    allowSpineItemChange = true,
+  }: { allowSpineItemChange?: boolean } = {}) =>
+    navigationTriggerSubject$.next({
+      type: `leftPage`,
+      data: { allowSpineItemChange },
+    })
 
-  const turnRight = ({ allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) => {
-    navigationTriggerSubject$.next({ type: `rightPage`, data: { allowSpineItemChange } })
+  const turnRight = ({
+    allowSpineItemChange = true,
+  }: { allowSpineItemChange?: boolean } = {}) => {
+    navigationTriggerSubject$.next({
+      type: `rightPage`,
+      data: { allowSpineItemChange },
+    })
   }
 
   // @todo it's wrong because we can be in two different chapter on same page for spread
   const goToPageOfCurrentChapter = (pageIndex: number) =>
     navigationTriggerSubject$.next({ type: `chapterPage`, data: { pageIndex } })
 
-  const goToPage = (pageIndex: number) => navigationTriggerSubject$.next({ type: `pageIndex`, data: { pageIndex } })
+  const goToPage = (pageIndex: number) =>
+    navigationTriggerSubject$.next({ type: `pageIndex`, data: { pageIndex } })
 
-  const goToCfi = (cfi: string, options: { animate: boolean } = { animate: true }) =>
+  const goToCfi = (
+    cfi: string,
+    options: { animate: boolean } = { animate: true },
+  ) =>
     navigationTriggerSubject$.next({ type: `cfi`, data: { cfi, ...options } })
 
-  const goToUrl = (url: string | URL) => navigationTriggerSubject$.next({ type: `url`, data: url })
+  const goToUrl = (url: string | URL) =>
+    navigationTriggerSubject$.next({ type: `url`, data: url })
 
-  const goToSpineItem = (indexOrId: number | string, options: { animate: boolean } = { animate: true }) => {
-    navigationTriggerSubject$.next({ type: `spineItem`, data: { indexOrId, ...options } })
+  const goToSpineItem = (
+    indexOrId: number | string,
+    options: { animate: boolean } = { animate: true },
+  ) => {
+    navigationTriggerSubject$.next({
+      type: `spineItem`,
+      data: { indexOrId, ...options },
+    })
   }
 
   const urlNavigation$ = navigationTriggerSubject$.pipe(
@@ -73,7 +109,10 @@ export const createManualViewportNavigator = ({
         return of({
           ...navigation,
           animate: true,
-          lastUserExpectedNavigation: { type: `navigate-from-anchor` as const, data: navigation.url.hash },
+          lastUserExpectedNavigation: {
+            type: `navigate-from-anchor` as const,
+            data: navigation.url.hash,
+          },
         })
       }
 
@@ -87,7 +126,9 @@ export const createManualViewportNavigator = ({
       const navigation = navigator.getNavigationForSpineIndexOrId(indexOrId)
 
       // always want to be at the beginning of the item
-      const lastUserExpectedNavigation = { type: `navigate-from-previous-item` as const }
+      const lastUserExpectedNavigation = {
+        type: `navigate-from-previous-item` as const,
+      }
 
       Report.log(NAMESPACE, `goToSpineItem`, { indexOrId, animate, navigation })
 
@@ -105,7 +146,10 @@ export const createManualViewportNavigator = ({
       return {
         ...navigation,
         animate,
-        lastUserExpectedNavigation: { type: `navigate-from-cfi` as const, data: cfi },
+        lastUserExpectedNavigation: {
+          type: `navigate-from-cfi` as const,
+          data: cfi,
+        },
       }
     }),
   )
@@ -118,7 +162,11 @@ export const createManualViewportNavigator = ({
       if (spineItem) {
         const navigation = navigator.getNavigationForPage(pageIndex, spineItem)
 
-        return of({ ...navigation, lastUserExpectedNavigation: undefined, animate: true })
+        return of({
+          ...navigation,
+          lastUserExpectedNavigation: undefined,
+          animate: true,
+        })
       }
 
       return EMPTY
@@ -147,37 +195,47 @@ export const createManualViewportNavigator = ({
   const turnPageTo$ = Report.measurePerformance(
     `turnTo`,
     10,
-    (navigation: ViewportNavigationEntry, { allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {}) => {
+    (
+      navigation: ViewportNavigationEntry,
+      { allowSpineItemChange = true }: { allowSpineItemChange?: boolean } = {},
+    ) => {
       const currentSpineItem = spineItemManager.getFocusedSpineItem()
 
       if (!currentSpineItem) return EMPTY
 
-      const newSpineItem = locator.getSpineItemFromPosition(navigation) || currentSpineItem
+      const newSpineItem =
+        locator.getSpineItemFromPosition(navigation) || currentSpineItem
       const spineItemHasChanged = newSpineItem !== currentSpineItem
 
       if (spineItemHasChanged) {
         if (allowSpineItemChange) {
-          const positionOfNewSpineItemComparedToCurrentOne = spineItemManager.comparePositionOf(
-            newSpineItem,
-            currentSpineItem,
-          )
+          const positionOfNewSpineItemComparedToCurrentOne =
+            spineItemManager.comparePositionOf(newSpineItem, currentSpineItem)
 
           if (positionOfNewSpineItemComparedToCurrentOne === `before`) {
             return of({
               ...navigation,
-              lastUserExpectedNavigation: { type: `navigate-from-next-item` as const },
+              lastUserExpectedNavigation: {
+                type: `navigate-from-next-item` as const,
+              },
               animate: true,
             })
           } else {
             return of({
               ...navigation,
-              lastUserExpectedNavigation: { type: `navigate-from-previous-item` as const },
+              lastUserExpectedNavigation: {
+                type: `navigate-from-previous-item` as const,
+              },
               animate: true,
             })
           }
         }
       } else {
-        return of({ ...navigation, lastUserExpectedNavigation: undefined, animate: true })
+        return of({
+          ...navigation,
+          lastUserExpectedNavigation: undefined,
+          animate: true,
+        })
       }
 
       return EMPTY
@@ -196,7 +254,11 @@ export const createManualViewportNavigator = ({
       ]) => {
         const navigation = navigator.getNavigationForLeftPage(currentNavigation)
 
-        Report.log(NAMESPACE, `turnLeft`, { currentNavigation, navigation, allowSpineItemChange })
+        Report.log(NAMESPACE, `turnLeft`, {
+          currentNavigation,
+          navigation,
+          allowSpineItemChange,
+        })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
       },
@@ -213,9 +275,14 @@ export const createManualViewportNavigator = ({
         },
         currentNavigation,
       ]) => {
-        const navigation = navigator.getNavigationForRightPage(currentNavigation)
+        const navigation =
+          navigator.getNavigationForRightPage(currentNavigation)
 
-        Report.log(NAMESPACE, `turnRight`, { currentNavigation, navigation, allowSpineItemChange })
+        Report.log(NAMESPACE, `turnRight`, {
+          currentNavigation,
+          navigation,
+          allowSpineItemChange,
+        })
 
         return turnPageTo$(navigation, { allowSpineItemChange })
       },
@@ -237,7 +304,9 @@ export const createManualViewportNavigator = ({
      * navigation would theoretically always move to different items.
      */
     withLatestFrom(currentNavigationSubject$),
-    filter(([navigation, currentNavigation]) => navigator.areNavigationDifferent(navigation, currentNavigation)),
+    filter(([navigation, currentNavigation]) =>
+      navigator.areNavigationDifferent(navigation, currentNavigation),
+    ),
     map(([navigation]) => navigation),
   )
 

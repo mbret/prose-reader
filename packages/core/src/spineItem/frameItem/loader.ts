@@ -54,7 +54,9 @@ export const createLoader = ({
   const destroySubject$ = new Subject<void>()
   const loadSubject$ = new Subject<void>()
   const unloadSubject$ = new Subject<void>()
-  const frameElementSubject$ = new BehaviorSubject<HTMLIFrameElement | undefined>(undefined)
+  const frameElementSubject$ = new BehaviorSubject<
+    HTMLIFrameElement | undefined
+  >(undefined)
   const isLoadedSubject$ = new BehaviorSubject(false)
   const isReadySubject$ = new BehaviorSubject(false)
   // let onLoadHookReturns: ((() => void) | Subscription | void)[] = []
@@ -66,7 +68,8 @@ export const createLoader = ({
     return source$
   }
 
-  const getHtmlFromResource = (response: Response) => createHtmlPageFromResource(response, item)
+  const getHtmlFromResource = (response: Response) =>
+    createHtmlPageFromResource(response, item)
 
   const waitForViewportFree$ = viewportState$.pipe(
     filter((v) => v === `free`),
@@ -116,10 +119,17 @@ export const createLoader = ({
             item.href.startsWith(window.location.origin) &&
             // we have an encoding and it's a valid html
             ((item.mediaType &&
-              [`application/xhtml+xml`, `application/xml`, `text/html`, `text/xml`].includes(item.mediaType)) ||
+              [
+                `application/xhtml+xml`,
+                `application/xml`,
+                `text/html`,
+                `text/xml`,
+              ].includes(item.mediaType)) ||
               // no encoding ? then try to detect html
               (!item.mediaType &&
-                ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some((extension) => item.href.endsWith(extension))))
+                ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some((extension) =>
+                  item.href.endsWith(extension),
+                )))
           ) {
             frame?.setAttribute(`src`, item.href)
 
@@ -136,7 +146,9 @@ export const createLoader = ({
               }),
               map(() => frame),
               catchError((e) => {
-                Report.error(`Error while trying to fetch or load resource for item ${item.id}`)
+                Report.error(
+                  `Error while trying to fetch or load resource for item ${item.id}`,
+                )
                 console.error(e)
 
                 return of(frame)
@@ -154,7 +166,8 @@ export const createLoader = ({
           return fromEvent(frame, `load`).pipe(
             take(1),
             mergeMap(() => {
-              const body: HTMLElement | undefined | null = frame.contentDocument?.body
+              const body: HTMLElement | undefined | null =
+                frame.contentDocument?.body
 
               if (!body) {
                 Report.error(`Something went wrong on iframe load ${item.id}`)
@@ -178,7 +191,8 @@ export const createLoader = ({
               frame.setAttribute(`role`, `main`)
 
               if (frame?.contentDocument && body) {
-                computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
+                computedStyleAfterLoad =
+                  frame?.contentWindow?.getComputedStyle(body)
               }
 
               if (settings.settings.computedPageTurnMode !== `scrollable`) {
@@ -195,9 +209,14 @@ export const createLoader = ({
                   itemId: item.id,
                   frame,
                 })
-                .filter((result): result is Observable<void> => result instanceof Observable)
+                .filter(
+                  (result): result is Observable<void> =>
+                    result instanceof Observable,
+                )
 
-              return combineLatest([of(null), ...hookResults]).pipe(map(() => frame))
+              return combineLatest([of(null), ...hookResults]).pipe(
+                map(() => frame),
+              )
             }),
           )
         }),
@@ -217,7 +236,11 @@ export const createLoader = ({
    * - ready
    */
   const ready$ = load$.pipe(
-    switchMap((frame) => from(frame?.contentDocument?.fonts.ready || of(undefined)).pipe(takeUntil(unloadSubject$))),
+    switchMap((frame) =>
+      from(frame?.contentDocument?.fonts.ready || of(undefined)).pipe(
+        takeUntil(unloadSubject$),
+      ),
+    ),
     share(),
     makeItHot,
     takeUntil(destroySubject$),

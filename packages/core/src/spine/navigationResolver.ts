@@ -9,7 +9,11 @@ import { SpinePosition, UnsafeSpinePosition } from "./types"
 import { SpineItemNavigationPosition } from "../spineItem/types"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 
-export type ViewportNavigationEntry = { x: number; y: number; spineItem?: SpineItem }
+export type ViewportNavigationEntry = {
+  x: number
+  y: number
+  spineItem?: SpineItem
+}
 type ViewportPosition = { x: number; y: number }
 
 const NAMESPACE = `spineNavigator`
@@ -29,19 +33,31 @@ export const createNavigationResolver = ({
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context, settings })
 
-  const arePositionsDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) => a.x !== b.x || a.y !== b.y
+  const arePositionsDifferent = (
+    a: ViewportNavigationEntry,
+    b: ViewportNavigationEntry,
+  ) => a.x !== b.x || a.y !== b.y
 
-  const areNavigationDifferent = (a: ViewportNavigationEntry, b: ViewportNavigationEntry) =>
-    arePositionsDifferent(a, b) || (!!a.spineItem && !!b.spineItem && a.spineItem !== b.spineItem)
+  const areNavigationDifferent = (
+    a: ViewportNavigationEntry,
+    b: ViewportNavigationEntry,
+  ) =>
+    arePositionsDifferent(a, b) ||
+    (!!a.spineItem && !!b.spineItem && a.spineItem !== b.spineItem)
 
   const wrapPositionWithSafeEdge = Report.measurePerformance(
     `${NAMESPACE} wrapPositionWithSafeEdge`,
     1,
     (position: SpinePosition) => {
       // @todo use container width instead to increase performances
-      const lastSpineItem = spineItemManager.get(spineItemManager.getLength() - 1)
-      const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(lastSpineItem || 0)
-      const maximumYOffset = distanceOfLastSpineItem.bottom - context.getPageSize().height
+      const lastSpineItem = spineItemManager.get(
+        spineItemManager.getLength() - 1,
+      )
+      const distanceOfLastSpineItem = spineItemManager.getAbsolutePositionOf(
+        lastSpineItem || 0,
+      )
+      const maximumYOffset =
+        distanceOfLastSpineItem.bottom - context.getPageSize().height
       const y = Math.min(Math.max(0, position.y), maximumYOffset)
 
       /**
@@ -55,7 +71,8 @@ export const createNavigationResolver = ({
         }
       }
 
-      const maximumXOffset = distanceOfLastSpineItem.right - context.getPageSize().width
+      const maximumXOffset =
+        distanceOfLastSpineItem.right - context.getPageSize().width
 
       return {
         x: Math.min(Math.max(0, position.x), maximumXOffset),
@@ -65,7 +82,10 @@ export const createNavigationResolver = ({
     { disable: true },
   )
 
-  const getAdjustedPositionForSpread = ({ x, y }: ViewportNavigationEntry): ViewportNavigationEntry => {
+  const getAdjustedPositionForSpread = ({
+    x,
+    y,
+  }: ViewportNavigationEntry): ViewportNavigationEntry => {
     const isOffsetNotAtEdge = x % context.state.visibleAreaRect.width !== 0
     const correctedX = isOffsetNotAtEdge ? x - context.getPageSize().width : x
 
@@ -82,7 +102,10 @@ export const createNavigationResolver = ({
       const spineItemNavigation = node
         ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
         : new SpineItemNavigationPosition({ x: 0, y: 0 })
-      const readingPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
+      const readingPosition = locator.getSpinePositionFromSpineItemPosition(
+        spineItemNavigation,
+        spineItem,
+      )
 
       // very important to always return a reading item since we want to focus on that particular one
       return { ...getAdjustedPositionForSpread(readingPosition), spineItem }
@@ -91,7 +114,10 @@ export const createNavigationResolver = ({
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForPage = (pageIndex: number, spineItem?: SpineItem): ViewportNavigationEntry => {
+  const getNavigationForPage = (
+    pageIndex: number,
+    spineItem?: SpineItem,
+  ): ViewportNavigationEntry => {
     // lookup for entire book
     // This is reliable for pre-paginated, do not use it for reflowable book
     if (!spineItem) {
@@ -99,20 +125,34 @@ export const createNavigationResolver = ({
       return getNavigationForPosition({ x: xPositionForPageIndex, y: 0 })
     }
 
-    const spineItemNavigation = spineItemNavigator.getNavigationForPage(pageIndex, spineItem)
-    const readingOffset = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
+    const spineItemNavigation = spineItemNavigator.getNavigationForPage(
+      pageIndex,
+      spineItem,
+    )
+    const readingOffset = locator.getSpinePositionFromSpineItemPosition(
+      spineItemNavigation,
+      spineItem,
+    )
 
     return getAdjustedPositionForSpread(readingOffset)
   }
 
-  const getNavigationForLastPage = (spineItem: SpineItem): ViewportNavigationEntry => {
-    const spineItemNavigation = spineItemNavigator.getNavigationForLastPage(spineItem)
-    const position = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
+  const getNavigationForLastPage = (
+    spineItem: SpineItem,
+  ): ViewportNavigationEntry => {
+    const spineItemNavigation =
+      spineItemNavigator.getNavigationForLastPage(spineItem)
+    const position = locator.getSpinePositionFromSpineItemPosition(
+      spineItemNavigation,
+      spineItem,
+    )
 
     return getAdjustedPositionForSpread(position)
   }
 
-  const getNavigationForSpineIndexOrId = (indexOrId: number | string): ViewportNavigationEntry => {
+  const getNavigationForSpineIndexOrId = (
+    indexOrId: number | string,
+  ): ViewportNavigationEntry => {
     const spineItem = spineItemManager.get(indexOrId)
     if (spineItem) {
       const position = locator.getSpinePositionFromSpineItem(spineItem)
@@ -123,9 +163,13 @@ export const createNavigationResolver = ({
     return { x: 0, y: 0 }
   }
 
-  const getNavigationForRightSinglePage = (position: SpinePosition): ViewportNavigationEntry => {
+  const getNavigationForRightSinglePage = (
+    position: SpinePosition,
+  ): ViewportNavigationEntry => {
     const pageTurnDirection = settings.settings.computedPageTurnDirection
-    const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+    const spineItem =
+      locator.getSpineItemFromPosition(position) ||
+      spineItemManager.getFocusedSpineItem()
     const defaultNavigation = position
 
     if (!spineItem) {
@@ -133,11 +177,18 @@ export const createNavigationResolver = ({
     }
 
     // translate viewport position into reading item local position
-    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(position, spineItem)
+    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(
+      position,
+      spineItem,
+    )
     // get reading item local position for right page
-    const spineItemNavigationForRightPage = spineItemNavigator.getNavigationForRightPage(spineItemPosition, spineItem)
+    const spineItemNavigationForRightPage =
+      spineItemNavigator.getNavigationForRightPage(spineItemPosition, spineItem)
     // check both position to see if we moved out of it
-    const isNewNavigationInCurrentItem = arePositionsDifferent(spineItemNavigationForRightPage, spineItemPosition)
+    const isNewNavigationInCurrentItem = arePositionsDifferent(
+      spineItemNavigationForRightPage,
+      spineItemPosition,
+    )
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
@@ -146,27 +197,41 @@ export const createNavigationResolver = ({
           : { y: position.y + context.getPageSize().height, x: 0 },
       )
     } else {
-      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(
-        spineItemNavigationForRightPage,
-        spineItem,
-      )
+      const readingOrderPosition =
+        locator.getSpinePositionFromSpineItemPosition(
+          spineItemNavigationForRightPage,
+          spineItem,
+        )
 
       return readingOrderPosition
     }
   }
 
-  const getNavigationForLeftSinglePage = (position: UnsafeSpinePosition): ViewportNavigationEntry => {
+  const getNavigationForLeftSinglePage = (
+    position: UnsafeSpinePosition,
+  ): ViewportNavigationEntry => {
     const pageTurnDirection = settings.settings.computedPageTurnDirection
-    const spineItem = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+    const spineItem =
+      locator.getSpineItemFromPosition(position) ||
+      spineItemManager.getFocusedSpineItem()
     const defaultNavigation = { ...position, spineItem }
 
     if (!spineItem) {
       return defaultNavigation
     }
 
-    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(position, spineItem)
-    const spineItemNavigation = spineItemNavigator.getNavigationForLeftPage(spineItemPosition, spineItem)
-    const isNewNavigationInCurrentItem = arePositionsDifferent(spineItemNavigation, spineItemPosition)
+    const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(
+      position,
+      spineItem,
+    )
+    const spineItemNavigation = spineItemNavigator.getNavigationForLeftPage(
+      spineItemPosition,
+      spineItem,
+    )
+    const isNewNavigationInCurrentItem = arePositionsDifferent(
+      spineItemNavigation,
+      spineItemPosition,
+    )
 
     if (!isNewNavigationInCurrentItem) {
       return wrapPositionWithSafeEdge(
@@ -175,7 +240,11 @@ export const createNavigationResolver = ({
           : { y: position.y - context.getPageSize().height, x: 0 },
       )
     } else {
-      const readingOrderPosition = locator.getSpinePositionFromSpineItemPosition(spineItemNavigation, spineItem)
+      const readingOrderPosition =
+        locator.getSpinePositionFromSpineItemPosition(
+          spineItemNavigation,
+          spineItem,
+        )
 
       return readingOrderPosition
     }
@@ -188,13 +257,20 @@ export const createNavigationResolver = ({
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForRightPage = (position: SpinePosition): ViewportNavigationEntry => {
-    const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+  const getNavigationForRightPage = (
+    position: SpinePosition,
+  ): ViewportNavigationEntry => {
+    const spineItemOnPosition =
+      locator.getSpineItemFromPosition(position) ||
+      spineItemManager.getFocusedSpineItem()
 
     const navigation = getNavigationForRightSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
-    if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+    if (
+      spineItemOnPosition?.isUsingVerticalWriting() &&
+      position.x === navigation.x
+    ) {
       return getAdjustedPositionForSpread(navigation)
     }
 
@@ -203,7 +279,10 @@ export const createNavigationResolver = ({
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
-      if (spineItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+      if (
+        spineItemOnPosition?.isUsingVerticalWriting() &&
+        position.x !== navigation.x
+      ) {
         return getAdjustedPositionForSpread(
           wrapPositionWithSafeEdge(
             context.isRTL()
@@ -223,7 +302,10 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (settings.settings.computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (
+        settings.settings.computedPageTurnDirection === `vertical` &&
+        position.y !== navigation.y
+      ) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -242,13 +324,20 @@ export const createNavigationResolver = ({
    * @important
    * Special case for vertical content, read content
    */
-  const getNavigationForLeftPage = (position: UnsafeSpinePosition): SpinePosition => {
-    const spineItemOnPosition = locator.getSpineItemFromPosition(position) || spineItemManager.getFocusedSpineItem()
+  const getNavigationForLeftPage = (
+    position: UnsafeSpinePosition,
+  ): SpinePosition => {
+    const spineItemOnPosition =
+      locator.getSpineItemFromPosition(position) ||
+      spineItemManager.getFocusedSpineItem()
 
     const navigation = getNavigationForLeftSinglePage(position)
 
     // when we move withing vertical content, because only y moves, we don't need two navigation
-    if (spineItemOnPosition?.isUsingVerticalWriting() && position.x === navigation.x) {
+    if (
+      spineItemOnPosition?.isUsingVerticalWriting() &&
+      position.x === navigation.x
+    ) {
       return getAdjustedPositionForSpread(navigation)
     }
 
@@ -257,12 +346,18 @@ export const createNavigationResolver = ({
       // in order to move out from it we add an extra page width.
       // using `getNavigationForLeftSinglePage` again would keep x as it is and wrongly move y
       // for the next item in case it's also a vertical content
-      if (spineItemOnPosition?.isUsingVerticalWriting() && position.x !== navigation.x) {
+      if (
+        spineItemOnPosition?.isUsingVerticalWriting() &&
+        position.x !== navigation.x
+      ) {
         return getAdjustedPositionForSpread(
           wrapPositionWithSafeEdge(
             context.isRTL()
               ? { ...navigation, x: navigation.x + context.getPageSize().width }
-              : { ...navigation, x: navigation.x - context.getPageSize().width },
+              : {
+                  ...navigation,
+                  x: navigation.x - context.getPageSize().width,
+                },
           ),
         )
       }
@@ -271,7 +366,10 @@ export const createNavigationResolver = ({
        * In vase we move vertically and the y is already different, we don't need a second navigation
        * since we already jumped to a new screen
        */
-      if (settings.settings.computedPageTurnDirection === `vertical` && position.y !== navigation.y) {
+      if (
+        settings.settings.computedPageTurnDirection === `vertical` &&
+        position.y !== navigation.y
+      ) {
         return getAdjustedPositionForSpread(navigation)
       }
 
@@ -283,11 +381,15 @@ export const createNavigationResolver = ({
     return getAdjustedPositionForSpread(navigation)
   }
 
-  const getNavigationForUrl = (url: string | URL): (ViewportNavigationEntry & { url: URL }) | undefined => {
+  const getNavigationForUrl = (
+    url: string | URL,
+  ): (ViewportNavigationEntry & { url: URL }) | undefined => {
     try {
       const validUrl = url instanceof URL ? url : new URL(url)
       const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
-      const existingSpineItem = context.manifest?.spineItems.find((item) => item.href === urlWithoutAnchor)
+      const existingSpineItem = context.manifest?.spineItems.find(
+        (item) => item.href === urlWithoutAnchor,
+      )
 
       if (existingSpineItem) {
         const spineItem = spineItemManager.get(existingSpineItem.id)
@@ -307,7 +409,10 @@ export const createNavigationResolver = ({
   }
 
   const getNavigationForAnchor = (anchor: string, spineItem: SpineItem) => {
-    const position = locator.getSpinePositionFromSpineItemAnchor(anchor, spineItem)
+    const position = locator.getSpinePositionFromSpineItemAnchor(
+      anchor,
+      spineItem,
+    )
 
     return getAdjustedPositionForSpread(position)
   }
@@ -316,9 +421,19 @@ export const createNavigationResolver = ({
     const spineItem = locator.getSpineItemFromPosition(viewportPosition)
 
     if (spineItem) {
-      const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(viewportPosition, spineItem)
-      const spineItemValidPosition = spineItemNavigator.getNavigationForPosition(spineItem, spineItemPosition)
-      const viewportNavigation = locator.getSpinePositionFromSpineItemPosition(spineItemValidPosition, spineItem)
+      const spineItemPosition = locator.getSpineItemPositionFromSpinePosition(
+        viewportPosition,
+        spineItem,
+      )
+      const spineItemValidPosition =
+        spineItemNavigator.getNavigationForPosition(
+          spineItem,
+          spineItemPosition,
+        )
+      const viewportNavigation = locator.getSpinePositionFromSpineItemPosition(
+        spineItemValidPosition,
+        spineItem,
+      )
 
       return getAdjustedPositionForSpread(viewportNavigation)
     }
@@ -330,7 +445,9 @@ export const createNavigationResolver = ({
    * Useful when you want to get a navigation from a scroll position. It uses trigger points so it will
    * try to get the most visible / relevant element as navigation reference
    */
-  const getMostPredominantNavigationForPosition = (viewportPosition: ViewportPosition) => {
+  const getMostPredominantNavigationForPosition = (
+    viewportPosition: ViewportPosition,
+  ) => {
     const pageTurnDirection = settings.settings.computedPageTurnDirection
     // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
@@ -338,17 +455,25 @@ export const createNavigationResolver = ({
     const triggerPercentage = 0.5
     const triggerXPosition =
       pageTurnDirection === `horizontal`
-        ? viewportPosition.x + context.state.visibleAreaRect.width * triggerPercentage
+        ? viewportPosition.x +
+          context.state.visibleAreaRect.width * triggerPercentage
         : 0
     const triggerYPosition =
       pageTurnDirection === `horizontal`
         ? 0
-        : viewportPosition.y + context.state.visibleAreaRect.height * triggerPercentage
-    const midScreenPositionSafePosition = wrapPositionWithSafeEdge({ x: triggerXPosition, y: triggerYPosition })
+        : viewportPosition.y +
+          context.state.visibleAreaRect.height * triggerPercentage
+    const midScreenPositionSafePosition = wrapPositionWithSafeEdge({
+      x: triggerXPosition,
+      y: triggerYPosition,
+    })
     return getNavigationForPosition(midScreenPositionSafePosition)
   }
 
-  const isNavigationGoingForwardFrom = (to: ViewportPosition, from: ViewportPosition) => {
+  const isNavigationGoingForwardFrom = (
+    to: ViewportPosition,
+    from: ViewportPosition,
+  ) => {
     const pageTurnDirection = settings.settings.computedPageTurnDirection
 
     if (pageTurnDirection === `vertical`) {

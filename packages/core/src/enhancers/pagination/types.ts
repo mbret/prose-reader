@@ -4,7 +4,8 @@ import { progressionEnhancer } from "../progression"
 import { EnhancerOutput } from "../types/enhancer"
 import { ChapterInfo } from "./chapters"
 
-export type ReaderWithProgression = Reader & EnhancerOutput<typeof progressionEnhancer>
+export type ReaderWithProgression = Reader &
+  EnhancerOutput<typeof progressionEnhancer>
 
 export type ExtraPaginationInfo = {
   beginChapterInfo: ChapterInfo | undefined

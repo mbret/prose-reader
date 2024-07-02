@@ -20,7 +20,10 @@ const baseManifest: Manifest = {
   title: ``,
 }
 
-export const generateManifestFromArchive = async (archive: Archive, { baseUrl = `` }: { baseUrl?: string } = {}) => {
+export const generateManifestFromArchive = async (
+  archive: Archive,
+  { baseUrl = `` }: { baseUrl?: string } = {},
+) => {
   const hooks = [
     defaultHook({ archive, baseUrl }),
     epubHook({ archive, baseUrl }),

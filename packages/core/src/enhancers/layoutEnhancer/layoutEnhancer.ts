@@ -1,10 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { distinctUntilChanged, map, takeUntil, tap, skip, filter } from "rxjs/operators"
+import {
+  distinctUntilChanged,
+  map,
+  takeUntil,
+  tap,
+  skip,
+  filter,
+} from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
 import { isShallowEqual } from "../../utils/objects"
 import { fixReflowable } from "./fixReflowable"
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "../types/enhancer"
 import { isDefined } from "../../utils/isDefined"
 import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
@@ -16,25 +27,39 @@ export const layoutEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    InheritSettings extends NonNullable<InheritOutput["settings"]["_inputSettings"]>,
-    InheritComputedSettings extends NonNullable<InheritOutput["settings"]["_outputSettings"]>,
+    InheritSettings extends NonNullable<
+      InheritOutput["settings"]["_inputSettings"]
+    >,
+    InheritComputedSettings extends NonNullable<
+      InheritOutput["settings"]["_outputSettings"]
+    >,
     Output extends Omit<InheritOutput, "settings"> & {
-      settings: SettingsInterface<InheritSettings & InputSettings, OutputSettings & InheritComputedSettings>
+      settings: SettingsInterface<
+        InheritSettings & InputSettings,
+        OutputSettings & InheritComputedSettings
+      >
     },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<InputSettings>): Output => {
-    const { pageHorizontalMargin, pageVerticalMargin, layoutAutoResize } = options
+    const { pageHorizontalMargin, pageVerticalMargin, layoutAutoResize } =
+      options
     const reader = next(options)
 
-    const settingsManager = new SettingsManager<InheritSettings, InheritComputedSettings>(
+    const settingsManager = new SettingsManager<
+      InheritSettings,
+      InheritComputedSettings
+    >(
       {
         pageHorizontalMargin,
         pageVerticalMargin,
         layoutAutoResize,
       },
-      reader.settings as SettingsInterface<InheritSettings, InheritComputedSettings>,
+      reader.settings as SettingsInterface<
+        InheritSettings,
+        InheritComputedSettings
+      >,
     )
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
@@ -77,26 +102,34 @@ export const layoutEnhancer =
      * Apply margins to frame item
      * @todo memoize
      */
-    reader.hookManager.register(`item.onLayoutBeforeMeasurement`, ({ frame, minimumWidth, item, isImageType }) => {
-      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } = settingsManager.settings
-      const pageSize = reader.context.getPageSize()
+    reader.hookManager.register(
+      `item.onLayoutBeforeMeasurement`,
+      ({ frame, minimumWidth, item, isImageType }) => {
+        const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
+          settingsManager.settings
+        const pageSize = reader.context.getPageSize()
 
-      if (item.renditionLayout === `reflowable` && frame.getIsReady() && !isImageType() && !frame.getViewportDimensions()) {
-        let columnWidth = pageSize.width - pageHorizontalMargin * 2
-        const columnHeight = pageSize.height - pageVerticalMargin * 2
-        let width = pageSize.width - pageHorizontalMargin * 2
-        let columnGap = pageHorizontalMargin * 2
+        if (
+          item.renditionLayout === `reflowable` &&
+          frame.getIsReady() &&
+          !isImageType() &&
+          !frame.getViewportDimensions()
+        ) {
+          let columnWidth = pageSize.width - pageHorizontalMargin * 2
+          const columnHeight = pageSize.height - pageVerticalMargin * 2
+          let width = pageSize.width - pageHorizontalMargin * 2
+          let columnGap = pageHorizontalMargin * 2
 
-        if (frame.isUsingVerticalWriting()) {
-          width = minimumWidth - pageHorizontalMargin * 2
-          columnWidth = columnHeight
-          columnGap = pageVerticalMargin * 2
-        }
+          if (frame.isUsingVerticalWriting()) {
+            width = minimumWidth - pageHorizontalMargin * 2
+            columnWidth = columnHeight
+            columnGap = pageVerticalMargin * 2
+          }
 
-        frame.getManipulableFrame()?.removeStyle(`prose-layout-enhancer-css`)
-        frame.getManipulableFrame()?.addStyle(
-          `prose-layout-enhancer-css`,
-          `
+          frame.getManipulableFrame()?.removeStyle(`prose-layout-enhancer-css`)
+          frame.getManipulableFrame()?.addStyle(
+            `prose-layout-enhancer-css`,
+            `
           body {
             width: ${width}px !important;
             margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
@@ -115,9 +148,10 @@ export const layoutEnhancer =
             max-width: ${columnWidth}px;
           }
         `,
-        )
-      }
-    })
+          )
+        }
+      },
+    )
 
     fixReflowable(reader)
 

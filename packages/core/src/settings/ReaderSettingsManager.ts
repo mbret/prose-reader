@@ -1,14 +1,20 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { Observable, Subject, combineLatest, merge } from "rxjs"
 import { shareReplay, startWith, takeUntil, tap } from "rxjs/operators"
-import { CoreInputSettings, ComputedCoreSettings, CoreOutputSettings } from "./types"
+import {
+  CoreInputSettings,
+  ComputedCoreSettings,
+  CoreOutputSettings,
+} from "./types"
 import { Context } from "../context/Context"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { Report } from "../report"
 import { SettingsInterface } from "./SettingsInterface"
 import { isShallowEqual } from "../utils/objects"
 
-export class ReaderSettingsManager implements SettingsInterface<CoreInputSettings, CoreOutputSettings> {
+export class ReaderSettingsManager
+  implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
+{
   #context: Context
   protected outputSettings: CoreOutputSettings
   protected outputSettingsUpdateSubject: Subject<CoreOutputSettings>
@@ -28,9 +34,14 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
     this.outputSettings = outputSettings
     this.outputSettingsUpdateSubject = new Subject()
 
-    this.settings$ = this.outputSettingsUpdateSubject.asObservable().pipe(startWith(this.settings), shareReplay(1))
+    this.settings$ = this.outputSettingsUpdateSubject
+      .asObservable()
+      .pipe(startWith(this.settings), shareReplay(1))
 
-    const recomputeSettingsOnContextChange$ = combineLatest([context.hasVerticalWriting$, context.manifest$]).pipe(
+    const recomputeSettingsOnContextChange$ = combineLatest([
+      context.hasVerticalWriting$,
+      context.manifest$,
+    ]).pipe(
       tap(() => {
         this.update(this.settings)
       }),
@@ -45,12 +56,16 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
       }),
     )
 
-    merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$).pipe(takeUntil(context.destroy$)).subscribe()
+    merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$)
+      .pipe(takeUntil(context.destroy$))
+      .subscribe()
 
     this.settings$.subscribe()
   }
 
-  private getComputedSettings(settings: CoreInputSettings): ComputedCoreSettings {
+  private getComputedSettings(
+    settings: CoreInputSettings,
+  ): ComputedCoreSettings {
     const manifest = this.#context.manifest
     const hasVerticalWriting = this.#context.state.hasVerticalWriting ?? false
     const computedSettings: ComputedCoreSettings = {
@@ -67,9 +82,12 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
     } else if (
       manifest &&
       settings.pageTurnMode === `scrollable` &&
-      (manifest.renditionLayout !== `pre-paginated` || !areAllItemsPrePaginated(manifest))
+      (manifest.renditionLayout !== `pre-paginated` ||
+        !areAllItemsPrePaginated(manifest))
     ) {
-      Report.warn(`pageTurnMode ${settings.pageTurnMode} incompatible with current book, switching back to default`)
+      Report.warn(
+        `pageTurnMode ${settings.pageTurnMode} incompatible with current book, switching back to default`,
+      )
       computedSettings.computedPageTurnAnimation = `none`
       computedSettings.computedPageTurnMode = `controlled`
     } else if (settings.pageTurnMode === `scrollable`) {
@@ -78,7 +96,10 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
     }
 
     // some settings are not available for vertical writing
-    if (hasVerticalWriting && computedSettings.computedPageTurnAnimation === `slide`) {
+    if (
+      hasVerticalWriting &&
+      computedSettings.computedPageTurnAnimation === `slide`
+    ) {
       Report.warn(
         `pageTurnAnimation ${computedSettings.computedPageTurnAnimation} incompatible with current book, switching back to default`,
       )
@@ -91,7 +112,9 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
       computedSettings.computedPageTurnAnimation = `none`
     } else {
       computedSettings.computedPageTurnAnimationDuration =
-        settings.pageTurnAnimationDuration !== undefined ? settings.pageTurnAnimationDuration : 300
+        settings.pageTurnAnimationDuration !== undefined
+          ? settings.pageTurnAnimationDuration
+          : 300
     }
 
     return computedSettings
@@ -119,8 +142,13 @@ export class ReaderSettingsManager implements SettingsInterface<CoreInputSetting
     }
   }
 
-  getOutputSettings(inputSettings: Partial<CoreInputSettings>): CoreInputSettings & ComputedCoreSettings {
-    const computedSettings = this.getComputedSettings({ ...this.outputSettings, ...inputSettings })
+  getOutputSettings(
+    inputSettings: Partial<CoreInputSettings>,
+  ): CoreInputSettings & ComputedCoreSettings {
+    const computedSettings = this.getComputedSettings({
+      ...this.outputSettings,
+      ...inputSettings,
+    })
 
     return { ...this.outputSettings, ...inputSettings, ...computedSettings }
   }

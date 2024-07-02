@@ -29,10 +29,13 @@ describe("Given a book from calibre", () => {
           size: 1,
         },
       ],
-      close: () => Promise.resolve()
+      close: () => Promise.resolve(),
     }
 
-    const response = await calibreFixHook({ archive, resourcePath: "foo.xhtml" })({
+    const response = await calibreFixHook({
+      archive,
+      resourcePath: "foo.xhtml",
+    })({
       params: {
         status: 200,
       },

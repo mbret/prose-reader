@@ -1,5 +1,12 @@
 import { combineLatest, merge, Observable, ObservedValueOf, of } from "rxjs"
-import { takeUntil, switchMap, tap, map, distinctUntilChanged, shareReplay } from "rxjs/operators"
+import {
+  takeUntil,
+  switchMap,
+  tap,
+  map,
+  distinctUntilChanged,
+  shareReplay,
+} from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
 import { Context } from "../context/Context"
 import { Manifest } from "../types"
@@ -18,7 +25,10 @@ type Options = {
    * Only called once for every items. It is being used to construct the loading element.
    * You can use it to customize your element.
    */
-  loadingElementCreate?: (options: { container: HTMLElement; item: Item }) => HTMLElement
+  loadingElementCreate?: (options: {
+    container: HTMLElement
+    item: Item
+  }) => HTMLElement
 }
 
 type Output = {
@@ -38,7 +48,9 @@ export const loadingEnhancer =
 
     const reader = next(options)
 
-    const createEntries$ = (items: ObservedValueOf<typeof reader.spine.$.spineItems$>) =>
+    const createEntries$ = (
+      items: ObservedValueOf<typeof reader.spine.$.spineItems$>,
+    ) =>
       of(
         items.reduce((acc, { item, element }) => {
           const loadingElementContainer = loadingElementCreate({
@@ -65,7 +77,10 @@ export const loadingEnhancer =
         tap(({ width, theme }) => {
           Object.values(entries).forEach((element) => {
             element.style.setProperty(`max-width`, `${width}px`)
-            element.style.setProperty(`color`, theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`)
+            element.style.setProperty(
+              `color`,
+              theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`,
+            )
           })
         }),
       )
@@ -73,7 +88,10 @@ export const loadingEnhancer =
     const updateEntriesVisibility$ = (entries: Entries) =>
       reader.spineItemManager.$.itemIsReady$.pipe(
         tap(({ item, isReady }) => {
-          entries[item.id]?.style.setProperty(`visibility`, isReady ? `hidden` : `visible`)
+          entries[item.id]?.style.setProperty(
+            `visibility`,
+            isReady ? `hidden` : `visible`,
+          )
         }),
       )
 
@@ -95,7 +113,12 @@ export const loadingEnhancer =
     items$
       .pipe(
         switchMap((entries) => merge(of(entries), destroyEntries$(entries))),
-        switchMap((entries) => merge(updateEntriesLayout$(entries), updateEntriesVisibility$(entries))),
+        switchMap((entries) =>
+          merge(
+            updateEntriesLayout$(entries),
+            updateEntriesVisibility$(entries),
+          ),
+        ),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()
@@ -114,7 +137,10 @@ export const loadingEnhancer =
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
  * with iframe. That way the loading element always match whatever style is applied to iframe.
  */
-const createLoadingElementContainer = (containerElement: HTMLElement, context: Context) => {
+const createLoadingElementContainer = (
+  containerElement: HTMLElement,
+  context: Context,
+) => {
   const loadingElement = containerElement.ownerDocument.createElement(`div`)
   loadingElement.classList.add(CONTAINER_HTML_PREFIX)
   loadingElement.style.cssText = `

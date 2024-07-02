@@ -13,7 +13,8 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
     const items = getItemsFromDoc(opfXmlDoc)
 
     return {
-      mediaType: items.find((item) => resourcePath.endsWith(item.href))?.mediaType,
+      mediaType: items.find((item) => resourcePath.endsWith(item.href))
+        ?.mediaType,
     }
   }
 
@@ -43,7 +44,9 @@ const getContentTypeFromExtension = (uri: string) => {
 export const defaultHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
+    const file = Object.values(archive.files).find(
+      (file) => file.uri === resourcePath,
+    )
 
     if (!file) return resource
 

@@ -35,22 +35,24 @@ export const chromeEnhancer =
      */
     // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
 
-    reader.context.state$.pipe(takeUntil(reader.$.destroy$)).subscribe(({ containerElement }) => {
-      if (!containerElement) return
+    reader.context.state$
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe(({ containerElement }) => {
+        if (!containerElement) return
 
-      const onScroll = () => {
-        if (reader.settings.settings.computedPageTurnMode === `controlled`) {
-          containerElement.scrollTo(0, 0)
+        const onScroll = () => {
+          if (reader.settings.settings.computedPageTurnMode === `controlled`) {
+            containerElement.scrollTo(0, 0)
+          }
         }
-      }
 
-      /**
-       * For some reason I have yet to find, chrome will force scroll x-axis on the container
-       * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
-       * but a scroll on the container itself..
-       */
-      containerElement.addEventListener(`scroll`, onScroll)
-    })
+        /**
+         * For some reason I have yet to find, chrome will force scroll x-axis on the container
+         * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
+         * but a scroll on the container itself..
+         */
+        containerElement.addEventListener(`scroll`, onScroll)
+      })
 
     reader.hookManager.register(`item.onLoad`, ({ frame }) => {
       /**

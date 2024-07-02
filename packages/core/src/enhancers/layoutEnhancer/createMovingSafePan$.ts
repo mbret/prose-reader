@@ -1,5 +1,20 @@
-import { animationFrameScheduler, merge, NEVER, Observable, of, scheduled } from "rxjs"
-import { distinctUntilChanged, filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators"
+import {
+  animationFrameScheduler,
+  merge,
+  NEVER,
+  Observable,
+  of,
+  scheduled,
+} from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+} from "rxjs/operators"
 import { Reader } from "../../reader"
 
 /**
@@ -20,7 +35,8 @@ export const createMovingSafePan$ = (reader: Reader) => {
       if (!containerElement) return NEVER
 
       return new Observable(() => {
-        iframeOverlayForAnimationsElement = containerElement.ownerDocument.createElement(`div`)
+        iframeOverlayForAnimationsElement =
+          containerElement.ownerDocument.createElement(`div`)
         iframeOverlayForAnimationsElement.style.cssText = `
         position: absolute;
         left: 0;
@@ -42,16 +58,26 @@ export const createMovingSafePan$ = (reader: Reader) => {
   const createResetLock$ = <T>(source: Observable<T>) =>
     scheduled(source, animationFrameScheduler).pipe(
       tap(() => {
-        iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `hidden`)
+        iframeOverlayForAnimationsElement?.style.setProperty(
+          `visibility`,
+          `hidden`,
+        )
       }),
     )
 
-  const viewportFree$ = reader.viewportNavigator.$.state$.pipe(filter((data) => data === `free`))
-  const viewportBusy$ = reader.viewportNavigator.$.state$.pipe(filter((data) => data === `busy`))
+  const viewportFree$ = reader.viewportNavigator.$.state$.pipe(
+    filter((data) => data === `free`),
+  )
+  const viewportBusy$ = reader.viewportNavigator.$.state$.pipe(
+    filter((data) => data === `busy`),
+  )
 
   const lockAfterViewportBusy$ = viewportBusy$.pipe(
     tap(() => {
-      iframeOverlayForAnimationsElement?.style.setProperty(`visibility`, `visible`)
+      iframeOverlayForAnimationsElement?.style.setProperty(
+        `visibility`,
+        `visible`,
+      )
     }),
   )
 

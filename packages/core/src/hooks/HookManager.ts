@@ -23,7 +23,10 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
    * You can manipulate your item later if you need to update it and trigger a layout.
    * This logic will not run every time there is a layout.
    */
-  public register<Name extends H["name"]>(name: Name, fn: HookFrom<H, Name>["runFn"]) {
+  public register<Name extends H["name"]>(
+    name: Name,
+    fn: HookFrom<H, Name>["runFn"],
+  ) {
     const hook = {
       name,
       runFn: fn,
@@ -39,9 +42,14 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
   public execute<Name extends H["name"]>(
     name: Name,
     id: string | undefined,
-    params: Omit<Parameters<HookFrom<H, Name>["runFn"]>[0], "destroy" | "destroy$">,
+    params: Omit<
+      Parameters<HookFrom<H, Name>["runFn"]>[0],
+      "destroy" | "destroy$"
+    >,
   ): ReturnType<HookFrom<H, Name>["runFn"]>[] {
-    const hooks = this._hooks.filter((hook): hook is HookFrom<H, Name> => name === hook.name)
+    const hooks = this._hooks.filter(
+      (hook): hook is HookFrom<H, Name> => name === hook.name,
+    )
 
     const fnResults = hooks.map((hook) => {
       let userDestroyFn: UserDestroyFn = () => of(undefined)
@@ -61,7 +69,11 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fnResult = hook.runFn({ ...(params as any), destroy$: destroySubject.asObservable(), destroy })
+      const fnResult = hook.runFn({
+        ...(params as any),
+        destroy$: destroySubject.asObservable(),
+        destroy,
+      })
 
       this._hookExecutions.push({
         name,
@@ -86,7 +98,9 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
     )
 
     // remove destroyed instances from internal list
-    this._hookExecutions = this._hookExecutions.filter((instance) => !instances.includes(instance))
+    this._hookExecutions = this._hookExecutions.filter(
+      (instance) => !instances.includes(instance),
+    )
 
     const destroyFns = instances.map(({ destroyFn }) => destroyFn())
 

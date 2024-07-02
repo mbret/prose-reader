@@ -11,7 +11,9 @@ export const mediaEnhancer =
       (entries) => {
         entries.forEach((entry) => {
           const frame = entry.target as HTMLIFrameElement
-          const audios = Array.from(frame.contentDocument?.body.getElementsByTagName(`audio`) || [])
+          const audios = Array.from(
+            frame.contentDocument?.body.getElementsByTagName(`audio`) || [],
+          )
 
           if (!entry.isIntersecting) {
             audios.forEach((audioElement) => {
@@ -20,7 +22,11 @@ export const mediaEnhancer =
             })
           } else {
             audios.forEach((audioElement) => {
-              if (audioElement.hasAttribute(`autoplay`) && audioElement.paused && audioElement.readyState >= 2) {
+              if (
+                audioElement.hasAttribute(`autoplay`) &&
+                audioElement.paused &&
+                audioElement.readyState >= 2
+              ) {
                 audioElement.play().catch(console.error)
               }
             })

@@ -9,7 +9,9 @@ import { Archive } from "../../../archives/types"
 export const comicInfoHook =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const comicInfoFile = archive.files.find((file) => file.basename.toLowerCase() === `comicinfo.xml`)
+    const comicInfoFile = archive.files.find(
+      (file) => file.basename.toLowerCase() === `comicinfo.xml`,
+    )
 
     if (!comicInfoFile) {
       return manifest
@@ -17,7 +19,9 @@ export const comicInfoHook =
 
     const manifestWithoutComicInfo = {
       ...manifest,
-      spineItems: manifest.spineItems.filter((item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`)),
+      spineItems: manifest.spineItems.filter(
+        (item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`),
+      ),
     }
 
     // @todo handle more meta
@@ -26,7 +30,8 @@ export const comicInfoHook =
     try {
       const xmlDoc = new xmldoc.XmlDocument(content)
 
-      const mangaVal = (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
+      const mangaVal =
+        (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
 
       return {
         ...manifestWithoutComicInfo,

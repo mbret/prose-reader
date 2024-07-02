@@ -8,7 +8,13 @@ import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 
 const NAMESPACE = `spineItemManager`
 
-export const createSpineItemManager = ({ context, settings }: { context: Context; settings: ReaderSettingsManager }) => {
+export const createSpineItemManager = ({
+  context,
+  settings,
+}: {
+  context: Context
+  settings: ReaderSettingsManager
+}) => {
   const focus$ = new Subject<{ data: SpineItem }>()
   const layout$ = new Subject<boolean>()
   /**
@@ -55,7 +61,8 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       ({ horizontalOffset, verticalOffset }, item, index) => {
         let minimumWidth = context.getPageSize().width
         let blankPagePosition: `none` | `before` | `after` = `none`
-        const itemStartOnNewScreen = horizontalOffset % context.state.visibleAreaRect.width === 0
+        const itemStartOnNewScreen =
+          horizontalOffset % context.state.visibleAreaRect.width === 0
         const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
 
         if (context.state.isUsingSpreadMode) {
@@ -77,7 +84,11 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
            * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
            * we ignore it
            */
-          if (!isGloballyPrePaginated && item.item.renditionLayout === `reflowable` && !isLastItem) {
+          if (
+            !isGloballyPrePaginated &&
+            item.item.renditionLayout === `reflowable` &&
+            !isLastItem
+          ) {
             minimumWidth = context.getPageSize().width * 2
           }
 
@@ -94,10 +105,18 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
           const lastItemStartOnNewScreenInAPrepaginatedBook =
             itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
 
-          if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
+          if (
+            item.item.pageSpreadRight &&
+            itemStartOnNewScreen &&
+            !context.isRTL()
+          ) {
             blankPagePosition = `before`
             minimumWidth = context.getPageSize().width * 2
-          } else if (item.item.pageSpreadLeft && itemStartOnNewScreen && context.isRTL()) {
+          } else if (
+            item.item.pageSpreadLeft &&
+            itemStartOnNewScreen &&
+            context.isRTL()
+          ) {
             blankPagePosition = `before`
             minimumWidth = context.getPageSize().width * 2
           } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
@@ -131,7 +150,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
             ? verticalOffset
             : verticalOffset - context.state.visibleAreaRect.height
-          const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen ? 0 : horizontalOffset
+          const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen
+            ? 0
+            : horizontalOffset
 
           if (context.isRTL()) {
             item.adjustPositionOfElement({
@@ -167,13 +188,18 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
         // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
         // it will be x from right
         item.adjustPositionOfElement(
-          context.isRTL() ? { right: horizontalOffset, top: 0 } : { left: horizontalOffset, top: 0 },
+          context.isRTL()
+            ? { right: horizontalOffset, top: 0 }
+            : { left: horizontalOffset, top: 0 },
         )
 
         newItemLayoutInformation.push({
           ...(context.isRTL()
             ? {
-                left: context.state.visibleAreaRect.width - horizontalOffset - width,
+                left:
+                  context.state.visibleAreaRect.width -
+                  horizontalOffset -
+                  width,
                 right: context.state.visibleAreaRect.width - horizontalOffset,
               }
             : {
@@ -206,11 +232,15 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
   }
 
   const focus = (indexOrSpineItem: number | SpineItem) => {
-    const spineItemToFocus = typeof indexOrSpineItem === `number` ? get(indexOrSpineItem) : indexOrSpineItem
+    const spineItemToFocus =
+      typeof indexOrSpineItem === `number`
+        ? get(indexOrSpineItem)
+        : indexOrSpineItem
 
     if (!spineItemToFocus) return
 
-    const newActiveSpineItemIndex = orderedSpineItemsSubject$.value.indexOf(spineItemToFocus)
+    const newActiveSpineItemIndex =
+      orderedSpineItemsSubject$.value.indexOf(spineItemToFocus)
 
     if (newActiveSpineItemIndex === focusedSpineItemIndex) return
 
@@ -225,34 +255,44 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
    * @todo
    * analyze poor performances
    */
-  const loadContents = Report.measurePerformance(`loadContents`, 10, (rangeOfIndex: [number, number]) => {
-    const [leftIndex, rightIndex] = rangeOfIndex
-    const numberOfAdjacentSpineItemToPreLoad = settings.settings.numberOfAdjacentSpineItemToPreLoad
-    const isPrePaginated = context.manifest?.renditionLayout === `pre-paginated`
-    const isUsingFreeScroll = settings.settings.computedPageTurnMode === `scrollable`
+  const loadContents = Report.measurePerformance(
+    `loadContents`,
+    10,
+    (rangeOfIndex: [number, number]) => {
+      const [leftIndex, rightIndex] = rangeOfIndex
+      const numberOfAdjacentSpineItemToPreLoad =
+        settings.settings.numberOfAdjacentSpineItemToPreLoad
+      const isPrePaginated =
+        context.manifest?.renditionLayout === `pre-paginated`
+      const isUsingFreeScroll =
+        settings.settings.computedPageTurnMode === `scrollable`
 
-    orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
-      const isBeforeFocusedWithPreload =
-        // we never want to preload anything before on free scroll on flow because it could offset the cursor
-        index < leftIndex && !isPrePaginated && isUsingFreeScroll
-          ? true
-          : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
-      const isAfterTailWithPreload = index > rightIndex + numberOfAdjacentSpineItemToPreLoad
+      orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
+        const isBeforeFocusedWithPreload =
+          // we never want to preload anything before on free scroll on flow because it could offset the cursor
+          index < leftIndex && !isPrePaginated && isUsingFreeScroll
+            ? true
+            : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
+        const isAfterTailWithPreload =
+          index > rightIndex + numberOfAdjacentSpineItemToPreLoad
 
-      if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
-        orderedSpineItem.loadContent()
-      } else {
-        orderedSpineItem.unloadContent()
-      }
-    })
-  })
+        if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
+          orderedSpineItem.loadContent()
+        } else {
+          orderedSpineItem.unloadContent()
+        }
+      })
+    },
+  )
 
   const get = (indexOrId: number | string) => {
     if (typeof indexOrId === `number`) {
       return orderedSpineItemsSubject$.value[indexOrId]
     }
 
-    return orderedSpineItemsSubject$.value.find(({ item }) => item.id === indexOrId)
+    return orderedSpineItemsSubject$.value.find(
+      ({ item }) => item.id === indexOrId,
+    )
   }
 
   /**
@@ -280,11 +320,14 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
   }
 
   const getFocusedSpineItem = () =>
-    focusedSpineItemIndex !== undefined ? orderedSpineItemsSubject$.value[focusedSpineItemIndex] : undefined
+    focusedSpineItemIndex !== undefined
+      ? orderedSpineItemsSubject$.value[focusedSpineItemIndex]
+      : undefined
 
   const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
     const isAfter =
-      orderedSpineItemsSubject$.value.indexOf(toCompare) > orderedSpineItemsSubject$.value.indexOf(withItem)
+      orderedSpineItemsSubject$.value.indexOf(toCompare) >
+      orderedSpineItemsSubject$.value.indexOf(withItem)
 
     if (isAfter) {
       return `after`
@@ -303,11 +346,13 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
   const add = (spineItem: SpineItem) => {
     orderedSpineItemsSubject$.value.push(spineItem)
 
-    spineItem.$.contentLayout$.pipe(takeUntil(context.destroy$)).subscribe(() => {
-      // upstream change, meaning we need to layout again to both resize correctly each item but also to
-      // adjust positions, etc
-      layout()
-    })
+    spineItem.$.contentLayout$
+      .pipe(takeUntil(context.destroy$))
+      .subscribe(() => {
+        // upstream change, meaning we need to layout again to both resize correctly each item but also to
+        // adjust positions, etc
+        layout()
+      })
 
     spineItem.$.loaded$
       .pipe(
@@ -374,7 +419,9 @@ export const createSpineItemManager = ({ context, settings }: { context: Context
       itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
         switchMap((items) => {
           const itemsIsReady$ = items.map((item) =>
-            item.$.isReady$.pipe(map((isReady) => ({ item: item.item, isReady }))),
+            item.$.isReady$.pipe(
+              map((isReady) => ({ item: item.item, isReady })),
+            ),
           )
 
           return merge(...itemsIsReady$)

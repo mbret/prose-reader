@@ -7,13 +7,19 @@ import { createLocationResolver as createSpineItemLocator } from "../spineItem/l
 import { ViewportNavigationEntry } from "../spine/navigationResolver"
 
 type RequireLayout = boolean
-type ManipulableSpineItemCallback = Parameters<SpineItem[`manipulateSpineItem`]>[0]
-type ManipulableSpineItemCallbackPayload = Parameters<ManipulableSpineItemCallback>[0]
+type ManipulableSpineItemCallback = Parameters<
+  SpineItem[`manipulateSpineItem`]
+>[0]
+type ManipulableSpineItemCallbackPayload =
+  Parameters<ManipulableSpineItemCallback>[0]
 type CfiLocator = ReturnType<typeof createCfiLocator>
 type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 type Locator = ReturnType<typeof createLocationResolver>
 
-type Event = { type: `onSelectionChange`; data: ReturnType<typeof createSelection> | null }
+type Event = {
+  type: `onSelectionChange`
+  data: ReturnType<typeof createSelection> | null
+}
 
 export type Spine = {
   element$: Observable<HTMLElement>
@@ -22,13 +28,20 @@ export type Spine = {
   spineItemLocator: SpineItemLocator
   cfiLocator: CfiLocator
   manipulateSpineItems: (
-    cb: (payload: ManipulableSpineItemCallbackPayload & { index: number }) => RequireLayout,
+    cb: (
+      payload: ManipulableSpineItemCallbackPayload & { index: number },
+    ) => RequireLayout,
   ) => void
-  manipulateSpineItem: (id: string, cb: Parameters<SpineItem[`manipulateSpineItem`]>[0]) => void
+  manipulateSpineItem: (
+    id: string,
+    cb: Parameters<SpineItem[`manipulateSpineItem`]>[0],
+  ) => void
   destroy: () => void
   isSelecting: () => boolean | undefined
   getSelection: () => Selection | undefined
-  adjustPagination: (position: ViewportNavigationEntry) => Observable<`free` | `busy`>
+  adjustPagination: (
+    position: ViewportNavigationEntry,
+  ) => Observable<`free` | `busy`>
   $: {
     $: Observable<Event>
     layout$: Observable<boolean>

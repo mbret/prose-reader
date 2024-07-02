@@ -21,7 +21,10 @@ export type ReaderInternal = {
   spine: Spine
   spineItemManager: SpineItemManager
   viewportNavigator: ViewportNavigator
-  settings: SettingsInterface<CoreInputSettings, CoreInputSettings & ComputedCoreSettings>
+  settings: SettingsInterface<
+    CoreInputSettings,
+    CoreInputSettings & ComputedCoreSettings
+  >
   hookManager: HookManager
   layout: () => void
   load: (manifest: Manifest, loadOptions: LoadOptions) => void
@@ -30,10 +33,16 @@ export type ReaderInternal = {
   element$: Observable<HTMLElement>
   $: {
     state$: Observable<{
-      supportedPageTurnAnimation: NonNullable<ContextSettings[`pageTurnAnimation`]>[]
+      supportedPageTurnAnimation: NonNullable<
+        ContextSettings[`pageTurnAnimation`]
+      >[]
       supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
-      supportedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
-      supportedComputedPageTurnDirection: NonNullable<ContextSettings[`pageTurnDirection`]>[]
+      supportedPageTurnDirection: NonNullable<
+        ContextSettings[`pageTurnDirection`]
+      >[]
+      supportedComputedPageTurnDirection: NonNullable<
+        ContextSettings[`pageTurnDirection`]
+      >[]
     }>
     /**
      * Dispatched when the reader has loaded a book and is displayed a book.

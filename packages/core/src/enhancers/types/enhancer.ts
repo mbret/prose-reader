@@ -2,8 +2,11 @@
 import { CreateReaderParameters } from "../../reader"
 import { ReaderInternal } from "../../types/reader"
 
-export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<ReturnType<Enhancer>>
-export type EnhancerOptions<Enhancer extends (options: any) => any> = Parameters<ReturnType<Enhancer>>[0]
+export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<
+  ReturnType<Enhancer>
+>
+export type EnhancerOptions<Enhancer extends (options: any) => any> =
+  Parameters<ReturnType<Enhancer>>[0]
 
 export interface RootEnhancer<
   Options extends CreateReaderParameters = CreateReaderParameters,
@@ -13,7 +16,9 @@ export interface RootEnhancer<
 }
 
 export const rootEnhancer =
-  <Options extends CreateReaderParameters, Reader extends ReaderInternal>(next: (options: Options) => Reader) =>
+  <Options extends CreateReaderParameters, Reader extends ReaderInternal>(
+    next: (options: Options) => Reader,
+  ) =>
   (options: Options): Reader => {
     const reader = next(options)
 

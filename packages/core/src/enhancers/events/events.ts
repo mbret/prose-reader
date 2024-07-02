@@ -32,15 +32,21 @@ const mouseEvents = [
 const passthroughEvents = [...pointerEvents, ...mouseEvents]
 
 export const eventsEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (
     options: InheritOptions,
   ): InheritOutput & {
     events: {
-      normalizeEventForViewport: ReturnType<typeof createNormalizeEventForViewport>
+      normalizeEventForViewport: ReturnType<
+        typeof createNormalizeEventForViewport
+      >
     }
   } => {
-    const iframeEventBridgeElement$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
+    const iframeEventBridgeElement$ = new BehaviorSubject<
+      HTMLElement | undefined
+    >(undefined)
 
     const reader = next(options)
 
@@ -89,7 +95,8 @@ export const eventsEnhancer =
     reader.element$
       .pipe(
         tap((wrapper) => {
-          const iframeEventBridgeElement = createIframeEventBridgeElement(wrapper)
+          const iframeEventBridgeElement =
+            createIframeEventBridgeElement(wrapper)
 
           wrapper.appendChild(iframeEventBridgeElement)
 

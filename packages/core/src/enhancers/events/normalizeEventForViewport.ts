@@ -10,19 +10,26 @@ export const createNormalizeEventForViewport = ({
   iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
   locator: ReturnType<typeof createLocationResolver>
 }) => {
-  const normalizeEventForViewport = <E extends MouseEvent | TouchEvent | PointerEvent>(event: E) => {
-    const eventIsComingFromBridge = event.target === iframeEventBridgeElement$.getValue()
+  const normalizeEventForViewport = <
+    E extends MouseEvent | TouchEvent | PointerEvent,
+  >(
+    event: E,
+  ) => {
+    const eventIsComingFromBridge =
+      event.target === iframeEventBridgeElement$.getValue()
     const iframeOriginalEvent = getOriginalFrameEventFromDocumentEvent(event)
     const originalFrame = iframeOriginalEvent?.view?.frameElement
 
-    if (!eventIsComingFromBridge || !iframeOriginalEvent || !originalFrame) return event
+    if (!eventIsComingFromBridge || !iframeOriginalEvent || !originalFrame)
+      return event
 
     const spineItem = locator.getSpineItemFromIframe(originalFrame)
 
     if (!spineItem) return event
 
     if (isPointerEvent(event)) {
-      const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
+      const { clientX, clientY } =
+        spineItem.translateFramePositionIntoPage(event)
 
       const newEvent = new PointerEvent(event.type, {
         ...event,
@@ -31,13 +38,17 @@ export const createNormalizeEventForViewport = ({
         clientY,
       }) as E
 
-      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
+      Object.defineProperty(newEvent, `target`, {
+        value: iframeOriginalEvent.target,
+        enumerable: true,
+      })
 
       return newEvent
     }
 
     if (isMouseEvent(event)) {
-      const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
+      const { clientX, clientY } =
+        spineItem.translateFramePositionIntoPage(event)
 
       const newEvent = new MouseEvent(event.type, {
         ...event,
@@ -45,14 +56,18 @@ export const createNormalizeEventForViewport = ({
         clientY,
       }) as E
 
-      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
+      Object.defineProperty(newEvent, `target`, {
+        value: iframeOriginalEvent.target,
+        enumerable: true,
+      })
 
       return newEvent
     }
 
     if (isTouchEvent(event)) {
       const touches = Array.from(event.touches).map((touch) => {
-        const { clientX, clientY } = spineItem.translateFramePositionIntoPage(touch)
+        const { clientX, clientY } =
+          spineItem.translateFramePositionIntoPage(touch)
 
         return new Touch({
           identifier: touch.identifier,
@@ -68,7 +83,10 @@ export const createNormalizeEventForViewport = ({
         targetTouches: touches,
       }) as E
 
-      Object.defineProperty(newEvent, `target`, { value: iframeOriginalEvent.target, enumerable: true })
+      Object.defineProperty(newEvent, `target`, {
+        value: iframeOriginalEvent.target,
+        enumerable: true,
+      })
 
       return newEvent
     }

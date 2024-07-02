@@ -41,13 +41,19 @@ export const createPrePaginatedSpineItem = ({
     spreadPosition: `none` | `left` | `right`
   }) => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const { viewportDimensions, computedScale = 1 } = commonSpineItem.getViewPortInformation() ?? {}
+    const { viewportDimensions, computedScale = 1 } =
+      commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.state.visibleAreaRect
     const frameElement = spineItemFrame.getManipulableFrame()?.frame
 
-    if (spineItemFrame?.getIsLoaded() && frameElement?.contentDocument && frameElement?.contentWindow) {
+    if (
+      spineItemFrame?.getIsLoaded() &&
+      frameElement?.contentDocument &&
+      frameElement?.contentWindow
+    ) {
       const contentWidth = pageWidth
-      const contentHeight = visibleArea.height + context.state.calculatedInnerMargin
+      const contentHeight =
+        visibleArea.height + context.state.calculatedInnerMargin
 
       const cssLink = buildDocumentStyle(
         {
@@ -97,11 +103,18 @@ export const createPrePaginatedSpineItem = ({
         const transformOriginX =
           spreadPosition === `right` && blankPagePosition !== `before`
             ? `left`
-            : spreadPosition === `left` || (blankPagePosition === `before` && context.isRTL())
+            : spreadPosition === `left` ||
+                (blankPagePosition === `before` && context.isRTL())
               ? `right`
               : `center`
-        frameElement?.style.setProperty(`transform`, `translate(${transformTranslateX}, -50%) scale(${computedScale})`)
-        frameElement?.style.setProperty(`transform-origin`, `${transformOriginX} center`)
+        frameElement?.style.setProperty(
+          `transform`,
+          `translate(${transformTranslateX}, -50%) scale(${computedScale})`,
+        )
+        frameElement?.style.setProperty(
+          `transform-origin`,
+          `${transformOriginX} center`,
+        )
 
         commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
       } else {
@@ -125,13 +138,23 @@ export const createPrePaginatedSpineItem = ({
       commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
 
       // commonSpineItem.layout({ width: minimumWidth, height: contentHeight, minimumWidth, blankPagePosition })
-      commonSpineItem.layout({ width: minimumWidth, height: contentHeight, blankPagePosition, minimumWidth })
+      commonSpineItem.layout({
+        width: minimumWidth,
+        height: contentHeight,
+        blankPagePosition,
+        minimumWidth,
+      })
 
       return { width: minimumWidth, height: contentHeight }
     } else {
       commonSpineItem.executeOnLayoutBeforeMeasurementHook({ minimumWidth })
       // commonSpineItem.layout({ width: minimumWidth, height: pageHeight, minimumWidth, blankPagePosition })
-      commonSpineItem.layout({ width: minimumWidth, height: pageHeight, blankPagePosition, minimumWidth })
+      commonSpineItem.layout({
+        width: minimumWidth,
+        height: pageHeight,
+        blankPagePosition,
+        minimumWidth,
+      })
     }
 
     return { width: minimumWidth, height: pageHeight }

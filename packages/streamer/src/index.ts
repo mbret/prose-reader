@@ -1,4 +1,7 @@
-export { generateResourceFromArchive, generateResourceFromError } from "./generators/resources"
+export {
+  generateResourceFromArchive,
+  generateResourceFromError,
+} from "./generators/resources"
 export { generateManifestFromArchive } from "./generators/manifest"
 
 export { getArchiveOpfInfo } from "./archives/getArchiveOpfInfo"

@@ -1,9 +1,20 @@
 import { KeyboardEvent } from "react"
-import { EMPTY, fromEvent, map, merge, switchMap, takeUntil, withLatestFrom } from "rxjs"
+import {
+  EMPTY,
+  fromEvent,
+  map,
+  merge,
+  switchMap,
+  takeUntil,
+  withLatestFrom,
+} from "rxjs"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const hotkeysEnhancer =
-  <InheritOptions extends EnhancerOptions<RootEnhancer>, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+  <
+    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+  >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {
@@ -45,7 +56,11 @@ export const hotkeysEnhancer =
           merge(
             ...spineItems.map((item) =>
               item.$.loaded$.pipe(
-                switchMap((iframe) => (iframe?.contentDocument ? navigateOnKey(iframe.contentDocument) : EMPTY)),
+                switchMap((iframe) =>
+                  iframe?.contentDocument
+                    ? navigateOnKey(iframe.contentDocument)
+                    : EMPTY,
+                ),
               ),
             ),
           ),

@@ -16,13 +16,18 @@ const getBuggyCoverSvg = (doc: XmlDocument) => {
     .descendantWithPath("body")
     ?.descendantWithPath("div")
     ?.childrenNamed("svg")
-    ?.find((node) => node.attr.width === "100%" && node.attr.preserveAspectRatio === "none")
+    ?.find(
+      (node) =>
+        node.attr.width === "100%" && node.attr.preserveAspectRatio === "none",
+    )
 }
 
 const fixBuggyCover =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.files).find((file) => file.uri === resourcePath)
+    const file = Object.values(archive.files).find(
+      (file) => file.uri === resourcePath,
+    )
 
     if (file?.basename.endsWith(`.xhtml`)) {
       const bodyToParse = resource.body ?? (await file.string())

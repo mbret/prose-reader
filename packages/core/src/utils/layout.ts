@@ -10,8 +10,10 @@ export const getNewScaledOffset = ({
   newScale: number
   oldScale: number
 }) => {
-  const centerXPosition = (screenSize * newScale) / 2 - screenSize + screenSize / 2
-  const oldCenterPosition = (screenSize * oldScale) / 2 - screenSize + screenSize / 2
+  const centerXPosition =
+    (screenSize * newScale) / 2 - screenSize + screenSize / 2
+  const oldCenterPosition =
+    (screenSize * oldScale) / 2 - screenSize + screenSize / 2
   const scaleDifference = newScale / oldScale
   const realScrollOffset = scrollOffset - oldCenterPosition
 

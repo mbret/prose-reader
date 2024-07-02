@@ -29,12 +29,28 @@ export const createFrameItem = ({
   const destroySubject$ = new Subject<void>()
 
   const {
-    $: { unload$, loaded$, isLoaded$, isReady$, unloaded$, frameElement$, ready$ },
+    $: {
+      unload$,
+      loaded$,
+      isLoaded$,
+      isReady$,
+      unloaded$,
+      frameElement$,
+      ready$,
+    },
     load,
     unload,
     destroy: loaderDestroy,
     getComputedStyleAfterLoad,
-  } = createLoader({ context, hookManager, item, parent, fetchResource, viewportState$, settings })
+  } = createLoader({
+    context,
+    hookManager,
+    item,
+    parent,
+    fetchResource,
+    viewportState$,
+    settings,
+  })
 
   /**
    * @deprecated
@@ -57,7 +73,9 @@ export const createFrameItem = ({
   })
 
   // @todo redo
-  const getManipulableFrame = (): ReturnType<typeof createFrameManipulator> | undefined => {
+  const getManipulableFrame = ():
+    | ReturnType<typeof createFrameManipulator>
+    | undefined => {
     const frame = frameElement$.value
     if (isLoadedSync && frame) {
       return createFrameManipulator(frame)
@@ -75,7 +93,10 @@ export const createFrameItem = ({
         const viewPortMetaInfos = viewPortMeta.getAttribute(`content`)
         if (viewPortMetaInfos) {
           const width = getAttributeValueFromString(viewPortMetaInfos, `width`)
-          const height = getAttributeValueFromString(viewPortMetaInfos, `height`)
+          const height = getAttributeValueFromString(
+            viewPortMetaInfos,
+            `height`,
+          )
           if (width > 0 && height > 0) {
             return {
               width: width,
@@ -92,7 +113,10 @@ export const createFrameItem = ({
   }
 
   const getWritingMode = () => {
-    return getComputedStyleAfterLoad()?.writingMode as `vertical-rl` | `horizontal-tb` | undefined
+    return getComputedStyleAfterLoad()?.writingMode as
+      | `vertical-rl`
+      | `horizontal-tb`
+      | undefined
   }
 
   const isUsingVerticalWriting = () => {
@@ -157,7 +181,8 @@ export const createFrameItem = ({
       }
 
       const direction = getComputedStyleAfterLoad()?.direction
-      if ([`ltr`, `rtl`].includes(direction || ``)) return direction as `ltr` | `rtl`
+      if ([`ltr`, `rtl`].includes(direction || ``))
+        return direction as `ltr` | `rtl`
 
       return undefined
     },

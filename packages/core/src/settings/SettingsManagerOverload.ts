@@ -9,22 +9,35 @@ export abstract class SettingsManagerOverload<
   OutputSettings,
   ParentInputSettings extends CoreInputSettings,
   ParentOutputSettings extends CoreOutputSettings,
-> implements SettingsInterface<InputSettings & ParentInputSettings, OutputSettings & ParentOutputSettings>
+> implements
+    SettingsInterface<
+      InputSettings & ParentInputSettings,
+      OutputSettings & ParentOutputSettings
+    >
 {
   protected inputSettings: InputSettings
   protected outputSettings: OutputSettings
   protected outputSettingsUpdateSubject: Subject<OutputSettings>
-  protected settingsManager: SettingsInterface<ParentInputSettings, ParentOutputSettings>
+  protected settingsManager: SettingsInterface<
+    ParentInputSettings,
+    ParentOutputSettings
+  >
 
   public settings$: Observable<ParentOutputSettings & OutputSettings>
 
   constructor(
     initialSettings: Partial<InputSettings>,
-    settingsManager: SettingsInterface<ParentInputSettings, ParentOutputSettings>,
+    settingsManager: SettingsInterface<
+      ParentInputSettings,
+      ParentOutputSettings
+    >,
   ) {
     this.settingsManager = settingsManager
 
-    this.inputSettings = shallowMergeIfDefined(this.getDefaultSettings(), initialSettings)
+    this.inputSettings = shallowMergeIfDefined(
+      this.getDefaultSettings(),
+      initialSettings,
+    )
 
     this.outputSettings = this.computeOutputSettings()
     this.outputSettingsUpdateSubject = new Subject()
@@ -49,7 +62,9 @@ export abstract class SettingsManagerOverload<
    */
   abstract hasSettingsChanged(newOutputSettings: OutputSettings): boolean
 
-  abstract getCleanedParentInputSettings(settings: Partial<InputSettings & ParentInputSettings>): ParentInputSettings
+  abstract getCleanedParentInputSettings(
+    settings: Partial<InputSettings & ParentInputSettings>,
+  ): ParentInputSettings
 
   _prepareUpdate(settings: Partial<InputSettings & ParentInputSettings>): {
     hasChanged: boolean
@@ -57,7 +72,8 @@ export abstract class SettingsManagerOverload<
   } {
     const parentInputSettings = this.getCleanedParentInputSettings(settings)
 
-    const parentManagerPreparedUpdate = this.settingsManager._prepareUpdate(parentInputSettings)
+    const parentManagerPreparedUpdate =
+      this.settingsManager._prepareUpdate(parentInputSettings)
 
     this.inputSettings = { ...this.inputSettings, ...settings }
 

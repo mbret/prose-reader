@@ -6,7 +6,10 @@ import { urlJoin } from "@prose-reader/shared"
 type Toc = NonNullable<Manifest[`nav`]>[`toc`]
 type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
 
-const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }) => {
+const extractNavChapter = (
+  li: XmlElement,
+  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+) => {
   const chp: TocItem = {
     contents: [],
     path: ``,
@@ -30,14 +33,19 @@ const extractNavChapter = (li: XmlElement, { opfBasePath, baseUrl }: { opfBasePa
   if (sublistNode) {
     const children = sublistNode.childrenNamed(`li`)
     if (children && children.length > 0) {
-      chp.contents = children.map((child) => extractNavChapter(child, { opfBasePath, baseUrl }))
+      chp.contents = children.map((child) =>
+        extractNavChapter(child, { opfBasePath, baseUrl }),
+      )
     }
   }
 
   return chp
 }
 
-const buildTOCFromNav = (doc: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }) => {
+const buildTOCFromNav = (
+  doc: xmldoc.XmlDocument,
+  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+) => {
   const toc: Toc = []
 
   let navDataChildren
@@ -50,7 +58,9 @@ const buildTOCFromNav = (doc: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { op
   if (navDataChildren && navDataChildren.length > 0) {
     navDataChildren
       .filter((li) => (li as XmlElement).name === `li`)
-      .forEach((li) => toc.push(extractNavChapter(li as XmlElement, { opfBasePath, baseUrl })))
+      .forEach((li) =>
+        toc.push(extractNavChapter(li as XmlElement, { opfBasePath, baseUrl })),
+      )
   }
 
   return toc
@@ -68,7 +78,9 @@ const parseTocFromNavPath = async (
     .find((child) => child.attr.properties === `nav`)
 
   if (navItem) {
-    const tocFile = Object.values(archive.files).find((item) => item.uri.endsWith(navItem.attr.href || ``))
+    const tocFile = Object.values(archive.files).find((item) =>
+      item.uri.endsWith(navItem.attr.href || ``),
+    )
     if (tocFile) {
       const doc = new xmldoc.XmlDocument(await tocFile.string())
       return buildTOCFromNav(doc, { opfBasePath, baseUrl })
@@ -78,25 +90,35 @@ const parseTocFromNavPath = async (
 
 const mapNcxChapter = (
   point: xmldoc.XmlElement,
-  { opfBasePath, baseUrl, prefix }: { opfBasePath: string; baseUrl: string; prefix: string },
+  {
+    opfBasePath,
+    baseUrl,
+    prefix,
+  }: { opfBasePath: string; baseUrl: string; prefix: string },
 ) => {
   const src = point?.childNamed(`${prefix}content`)?.attr.src || ``
 
   const out: TocItem = {
-    title: point?.descendantWithPath(`${prefix}navLabel.${prefix}text`)?.val || ``,
+    title:
+      point?.descendantWithPath(`${prefix}navLabel.${prefix}text`)?.val || ``,
     path: urlJoin(opfBasePath, src),
     href: urlJoin(baseUrl, opfBasePath, src),
     contents: [],
   }
   const children = point.childrenNamed(`${prefix}navPoint`)
   if (children && children.length > 0) {
-    out.contents = children.map((pt) => mapNcxChapter(pt, { opfBasePath, baseUrl, prefix }))
+    out.contents = children.map((pt) =>
+      mapNcxChapter(pt, { opfBasePath, baseUrl, prefix }),
+    )
   }
 
   return out
 }
 
-const buildTOCFromNCX = (ncxData: xmldoc.XmlDocument, { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string }) => {
+const buildTOCFromNCX = (
+  ncxData: xmldoc.XmlDocument,
+  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+) => {
   const toc: NonNullable<Manifest[`nav`]>[`toc`] = []
 
   const rootTagName = ncxData.name
@@ -108,7 +130,9 @@ const buildTOCFromNCX = (ncxData: xmldoc.XmlDocument, { opfBasePath, baseUrl }: 
   ncxData
     .childNamed(`${prefix}navMap`)
     ?.childrenNamed(`${prefix}navPoint`)
-    .forEach((point) => toc.push(mapNcxChapter(point, { opfBasePath, baseUrl, prefix })))
+    .forEach((point) =>
+      toc.push(mapNcxChapter(point, { opfBasePath, baseUrl, prefix })),
+    )
 
   return toc
 }
@@ -136,7 +160,9 @@ const parseTocFromNcx = async ({
     if (ncxItem) {
       const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.attr.href}`
 
-      const file = Object.values(archive.files).find((item) => item.uri.endsWith(ncxPath))
+      const file = Object.values(archive.files).find((item) =>
+        item.uri.endsWith(ncxPath),
+      )
 
       if (file) {
         const ncxData = new xmldoc.XmlDocument(await file.string())
@@ -147,7 +173,11 @@ const parseTocFromNcx = async ({
   }
 }
 
-export const parseToc = async (opfXmlDoc: xmldoc.XmlDocument, archive: Archive, { baseUrl }: { baseUrl: string }) => {
+export const parseToc = async (
+  opfXmlDoc: xmldoc.XmlDocument,
+  archive: Archive,
+  { baseUrl }: { baseUrl: string },
+) => {
   const { basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
 
   const tocFromNcx = await parseTocFromNcx({

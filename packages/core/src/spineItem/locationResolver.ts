@@ -13,15 +13,29 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     unsafeSpineItemPosition: UnsafeSpineItemPosition,
     spineItem: SpineItem,
   ): SpineItemPosition => ({
-    x: Math.min(spineItem.getElementDimensions().width, Math.max(0, unsafeSpineItemPosition.x)),
-    y: Math.min(spineItem.getElementDimensions().height, Math.max(0, unsafeSpineItemPosition.y)),
+    x: Math.min(
+      spineItem.getElementDimensions().width,
+      Math.max(0, unsafeSpineItemPosition.x),
+    ),
+    y: Math.min(
+      spineItem.getElementDimensions().height,
+      Math.max(0, unsafeSpineItemPosition.y),
+    ),
   })
 
-  const getSpineItemPositionFromPageIndex = (pageIndex: number, spineItem: SpineItem): SpineItemPosition => {
-    const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
+  const getSpineItemPositionFromPageIndex = (
+    pageIndex: number,
+    spineItem: SpineItem,
+  ): SpineItemPosition => {
+    const { width: itemWidth, height: itemHeight } =
+      spineItem.getElementDimensions()
 
     if (spineItem.isUsingVerticalWriting()) {
-      const ltrRelativeOffset = getItemOffsetFromPageIndex(context.getPageSize().height, pageIndex, itemHeight)
+      const ltrRelativeOffset = getItemOffsetFromPageIndex(
+        context.getPageSize().height,
+        pageIndex,
+        itemHeight,
+      )
 
       return {
         x: 0,
@@ -29,7 +43,11 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
       }
     }
 
-    const ltrRelativeOffset = getItemOffsetFromPageIndex(context.getPageSize().width, pageIndex, itemWidth)
+    const ltrRelativeOffset = getItemOffsetFromPageIndex(
+      context.getPageSize().width,
+      pageIndex,
+      itemWidth,
+    )
 
     if (context.isRTL()) {
       return {
@@ -49,17 +67,26 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
    * This calculation takes blank page into account, the iframe could be only one page but with a blank page
    * positioned before. Resulting on two page index possible values (0 & 1).
    */
-  const getSpineItemPageIndexFromPosition = (position: UnsafeSpineItemPosition, spineItem: SpineItem) => {
-    const { width: itemWidth, height: itemHeight } = spineItem.getElementDimensions()
+  const getSpineItemPageIndexFromPosition = (
+    position: UnsafeSpineItemPosition,
+    spineItem: SpineItem,
+  ) => {
+    const { width: itemWidth, height: itemHeight } =
+      spineItem.getElementDimensions()
     const pageWidth = context.getPageSize().width
     const pageHeight = context.getPageSize().height
 
     const safePosition = getSafePosition(position, spineItem)
 
-    const offset = context.isRTL() ? itemWidth - safePosition.x - context.getPageSize().width : safePosition.x
+    const offset = context.isRTL()
+      ? itemWidth - safePosition.x - context.getPageSize().width
+      : safePosition.x
 
     if (spineItem.isUsingVerticalWriting()) {
-      const numberOfPages = calculateNumberOfPagesForItem(itemHeight, pageHeight)
+      const numberOfPages = calculateNumberOfPagesForItem(
+        itemHeight,
+        pageHeight,
+      )
 
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
     } else {
@@ -70,32 +97,52 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     }
   }
 
-  const getSpineItemOffsetFromAnchor = (anchor: string, spineItem: SpineItem) => {
+  const getSpineItemOffsetFromAnchor = (
+    anchor: string,
+    spineItem: SpineItem,
+  ) => {
     const itemWidth = spineItem.getElementDimensions()?.width || 0
     const pageWidth = context.getPageSize().width
-    const anchorElementBoundingRect = spineItem.getBoundingRectOfElementFromSelector(anchor)
+    const anchorElementBoundingRect =
+      spineItem.getBoundingRectOfElementFromSelector(anchor)
 
     const offsetOfAnchor = anchorElementBoundingRect?.x || 0
 
-    return getClosestValidOffsetFromApproximateOffsetInPages(offsetOfAnchor, pageWidth, itemWidth)
+    return getClosestValidOffsetFromApproximateOffsetInPages(
+      offsetOfAnchor,
+      pageWidth,
+      itemWidth,
+    )
   }
 
-  const getSpineItemPositionFromNode = (node: Node, offset: number, spineItem: SpineItem) => {
+  const getSpineItemPositionFromNode = (
+    node: Node,
+    offset: number,
+    spineItem: SpineItem,
+  ) => {
     let offsetOfNodeInSpineItem: number | undefined
 
     // for some reason `img` does not work with range (x always = 0)
-    if (node?.nodeName === `img` || (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE)) {
+    if (
+      node?.nodeName === `img` ||
+      (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE)
+    ) {
       offsetOfNodeInSpineItem = (node as HTMLElement).getBoundingClientRect().x
     } else if (node) {
       const range = node ? getRangeFromNode(node, offset) : undefined
-      offsetOfNodeInSpineItem = range?.getBoundingClientRect().x || offsetOfNodeInSpineItem
+      offsetOfNodeInSpineItem =
+        range?.getBoundingClientRect().x || offsetOfNodeInSpineItem
     }
 
     const spineItemWidth = spineItem.getElementDimensions()?.width || 0
     const pageWidth = context.getPageSize().width
 
     if (offsetOfNodeInSpineItem) {
-      const val = getClosestValidOffsetFromApproximateOffsetInPages(offsetOfNodeInSpineItem, pageWidth, spineItemWidth)
+      const val = getClosestValidOffsetFromApproximateOffsetInPages(
+        offsetOfNodeInSpineItem,
+        pageWidth,
+        spineItemWidth,
+      )
 
       // @todo vertical
       return { x: val, y: 0 }
@@ -107,7 +154,10 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
   /**
    * @todo handle vertical
    */
-  const getFirstNodeOrRangeAtPage = (pageIndex: number, spineItem: SpineItem) => {
+  const getFirstNodeOrRangeAtPage = (
+    pageIndex: number,
+    spineItem: SpineItem,
+  ) => {
     const pageSize = context.getPageSize()
     const frame = spineItem.spineItemFrame?.getManipulableFrame()?.frame
 
@@ -118,7 +168,10 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     ) {
       // @todo handle vertical jp
       // top seems ok but left is not, it should probably not be 0 or something
-      const { x: left, y: top } = getSpineItemPositionFromPageIndex(pageIndex, spineItem)
+      const { x: left, y: top } = getSpineItemPositionFromPageIndex(
+        pageIndex,
+        spineItem,
+      )
       const viewport = {
         left,
         right: left + pageSize.width,
@@ -126,7 +179,10 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
         bottom: top + pageSize.height,
       }
 
-      const res = getFirstVisibleNodeForViewport(frame.contentWindow.document, viewport)
+      const res = getFirstVisibleNodeForViewport(
+        frame.contentWindow.document,
+        viewport,
+      )
 
       return res
     }
@@ -141,20 +197,38 @@ export const createLocationResolver = ({ context }: { context: Context }) => {
     const { width, height } = spineItem.getElementDimensions()
 
     const adjustedPosition = {
-      x: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.x, context.getPageSize().width, width),
-      y: getClosestValidOffsetFromApproximateOffsetInPages(unsafePosition.y, context.getPageSize().height, height),
+      x: getClosestValidOffsetFromApproximateOffsetInPages(
+        unsafePosition.x,
+        context.getPageSize().width,
+        width,
+      ),
+      y: getClosestValidOffsetFromApproximateOffsetInPages(
+        unsafePosition.y,
+        context.getPageSize().height,
+        height,
+      ),
     }
 
     return adjustedPosition
   }
 
-  const getSpineItemPageIndexFromNode = (node: Node, offset: number, spineItem: SpineItem) => {
+  const getSpineItemPageIndexFromNode = (
+    node: Node,
+    offset: number,
+    spineItem: SpineItem,
+  ) => {
     const position = getSpineItemPositionFromNode(node, offset, spineItem)
 
-    return position ? getSpineItemPageIndexFromPosition(position, spineItem) : undefined
+    return position
+      ? getSpineItemPageIndexFromPosition(position, spineItem)
+      : undefined
   }
 
-  const getPageFromOffset = (offset: number, pageWidth: number, numberOfPages: number) => {
+  const getPageFromOffset = (
+    offset: number,
+    pageWidth: number,
+    numberOfPages: number,
+  ) => {
     const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
     if (offset <= 0) return 0

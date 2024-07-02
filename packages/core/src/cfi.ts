@@ -57,7 +57,11 @@ function closest(a: any[], n: number) {
 // calculate the count/index of the node
 // according to the CFI spec.
 // Also re-calculate offset if supplied and relevant
-function calcSiblingCount(nodes: globalThis.NodeListOf<globalThis.ChildNode>, n: number, offset: number) {
+function calcSiblingCount(
+  nodes: globalThis.NodeListOf<globalThis.ChildNode>,
+  n: number,
+  offset: number,
+) {
   let count = 0
   let lastWasElement
   let prevOffset = 0
@@ -85,7 +89,10 @@ function calcSiblingCount(nodes: globalThis.NodeListOf<globalThis.ChildNode>, n:
       }
       prevOffset = 0
       lastWasElement = true
-    } else if (node?.nodeType === TEXT_NODE || node?.nodeType === CDATA_SECTION_NODE) {
+    } else if (
+      node?.nodeType === TEXT_NODE ||
+      node?.nodeType === CDATA_SECTION_NODE
+    ) {
       if (lastWasElement || firstNode) {
         count++
         firstNode = false
@@ -164,7 +171,10 @@ class CFI {
     while (str.length) {
       ;({ parsed, offset, newDoc } = this.parse(str))
       if (!parsed || offset === null) throw new Error(`Parsing failed`)
-      if (sawComma && newDoc) throw new Error(`CFI is a range that spans multiple documents. This is not allowed`)
+      if (sawComma && newDoc)
+        throw new Error(
+          `CFI is a range that spans multiple documents. This is not allowed`,
+        )
 
       subParts.push(parsed)
 
@@ -261,7 +271,8 @@ class CFI {
       if (!cfi && o.offset) cfi = `:` + o.offset
 
       // @ts-ignore
-      cfi = `/` + o.count + (node.id ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
+      cfi =
+        `/` + o.count + (node.id ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
 
       // debugger
       node = node.parentNode
@@ -402,7 +413,8 @@ class CFI {
   }
 
   getFrom() {
-    if (!this.isRange) throw new Error(`Trying to get beginning of non-range CFI`)
+    if (!this.isRange)
+      throw new Error(`Trying to get beginning of non-range CFI`)
     // @ts-ignore
     if (!this.from) {
       return this.deepClone(this.parts)
@@ -612,13 +624,20 @@ class CFI {
             // We've already had a temporal or spatial indicator
             // and offset does not make sense and the same time
             // @ts-ignore
-            if (cur === `:` && (typeof o.temporal !== `undefined` || typeof o.spatial !== `undefined`)) {
+            if (
+              cur === `:` &&
+              (typeof o.temporal !== `undefined` ||
+                typeof o.spatial !== `undefined`)
+            ) {
               break
             }
             // We've already had an offset
             // and temporal or spatial do not make sense at the same time
             // @ts-ignore
-            if ((cur === `~` || cur === `@`) && typeof o.offset !== `undefined`) {
+            if (
+              (cur === `~` || cur === `@`) &&
+              typeof o.offset !== `undefined`
+            ) {
               break
             }
           }
@@ -691,7 +710,8 @@ class CFI {
     }
 
     // @ts-ignore
-    if (!o.nodeIndex && o.nodeIndex !== 0) throw new Error(`Missing child node index in CFI`)
+    if (!o.nodeIndex && o.nodeIndex !== 0)
+      throw new Error(`Missing child node index in CFI`)
 
     return { parsed: o, offset: i, newDoc: state === `!` }
   }
@@ -699,7 +719,12 @@ class CFI {
   // The CFI counts child nodes differently from the DOM
   // Retrieve the child of parentNode at the specified index
   // according to the CFI standard way of counting
-  getChildNodeByCFIIndex(dom: Document, parentNode: Element, index: number, offset: number) {
+  getChildNodeByCFIIndex(
+    dom: Document,
+    parentNode: Element,
+    index: number,
+    offset: number,
+  ) {
     // console.log(`getChildNodeByCFIIndex`, { parentNode, index, offset })
     const children = parentNode.childNodes
     if (!children.length) return { node: parentNode, offset: 0 }
@@ -752,7 +777,10 @@ class CFI {
                 return { node: parentNode, offset: 0 }
               }
               // @ts-ignore
-              return { node: lastChild, offset: this.trueLength(dom, lastChild.textContent) }
+              return {
+                node: lastChild,
+                offset: this.trueLength(dom, lastChild.textContent),
+              }
             }
           }
           lastChild = child
@@ -880,7 +908,8 @@ class CFI {
 
       const nodeOffsets = [] // added because original code has nodeOffsets undefined. @see https://github.com/fread-ink/epub-cfi-resolver/blob/master/index.js#L826
 
-      if (!curNode.nextSibling || i + 1 >= nodeOffsets.length) return { node, offset }
+      if (!curNode.nextSibling || i + 1 >= nodeOffsets.length)
+        return { node, offset }
       i++
       // @ts-ignore
       curNode = curNode.nextSibling
@@ -928,7 +957,11 @@ class CFI {
     for (i = subparts.length - 1; i >= 0; i--) {
       subpart = subparts[i]
       // @ts-ignore
-      if (!opts.ignoreIDs && subpart.nodeID && (node = dom.getElementById(subpart.nodeID))) {
+      if (
+        !opts.ignoreIDs &&
+        subpart.nodeID &&
+        (node = dom.getElementById(subpart.nodeID))
+      ) {
         startFrom = i + 1
         break
       }
@@ -948,13 +981,23 @@ class CFI {
       if (subpart) {
         // console.log(o, dom, o.node, subpart.nodeIndex, subpart.offset)
         // @ts-ignore
-        o = this.getChildNodeByCFIIndex(dom, o.node, subpart.nodeIndex, subpart.offset)
+        o = this.getChildNodeByCFIIndex(
+          dom,
+          o.node,
+          subpart.nodeIndex,
+          subpart.offset,
+        )
 
         // @ts-ignore
         if (subpart.textLocationAssertion) {
           // console.log(subparts, subpart, o)
           // @ts-ignore
-          o = this.correctOffset(dom, o.node, subpart.offset, subpart.textLocationAssertion)
+          o = this.correctOffset(
+            dom,
+            o.node,
+            subpart.offset,
+            subpart.textLocationAssertion,
+          )
         }
       }
     }
@@ -1015,14 +1058,16 @@ class CFI {
     if (tagName === `object`) {
       // @ts-ignore
       const data = node.getAttribute(`data`)
-      if (!data) throw new Error(tagName + ` element is missing 'data' attribute`)
+      if (!data)
+        throw new Error(tagName + ` element is missing 'data' attribute`)
       return data
     }
 
     if (tagName === `image` || tagName === `use`) {
       // @ts-ignore
       const href = node.getAttribute(`xlink:href`)
-      if (!href) throw new Error(tagName + ` element is missing 'xlink:href' attribute`)
+      if (!href)
+        throw new Error(tagName + ` element is missing 'xlink:href' attribute`)
       return href
     }
 
@@ -1101,7 +1146,10 @@ class CFI {
     }
   }
 
-  resolve(doc: Document, opts: {}): { node: Node; offset?: number } | { node?: undefined; offset?: number } {
+  resolve(
+    doc: Document,
+    opts: {},
+  ): { node: Node; offset?: number } | { node?: undefined; offset?: number } {
     // @ts-ignore
     return this.resolveLast(doc, opts)
   }
@@ -1117,11 +1165,13 @@ export const extractProseMetadataFromCfi = (
   offset?: number
 } => {
   const [itemId] =
-    cfi.match(/\|(\[prose\~anchor[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~anchor\~/, ``).replace(/\]/, ``)) ||
-    []
+    cfi
+      .match(/\|(\[prose\~anchor[^\]]*\])+/gi)
+      ?.map((s) => s.replace(/\|\[prose\~anchor\~/, ``).replace(/\]/, ``)) || []
   const [offset] =
-    cfi.match(/\|(\[prose\~offset[^\]]*\])+/gi)?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) ||
-    []
+    cfi
+      .match(/\|(\[prose\~offset[^\]]*\])+/gi)
+      ?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) || []
   const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/gi, ``)
   const foundOffset = parseInt(offset || ``)
 

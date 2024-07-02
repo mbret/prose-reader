@@ -7,9 +7,21 @@ import { expect, it, describe } from "vitest"
 
 describe(`Given ncx toc with prefix`, () => {
   it(`should generate toc correctly`, async () => {
-    const toc = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`))).toString()
-    const opf = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`))).toString()
-    const tocResult = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.json`))).toString()
+    const toc = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`),
+      )
+    ).toString()
+    const opf = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`),
+      )
+    ).toString()
+    const tocResult = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.json`),
+      )
+    ).toString()
 
     const opfXmlDoc = new xmldoc.XmlDocument(opf)
 
@@ -35,7 +47,7 @@ describe(`Given ncx toc with prefix`, () => {
           size: 0,
         },
       ],
-      close: () => Promise.resolve()
+      close: () => Promise.resolve(),
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
@@ -48,8 +60,16 @@ describe(`Given ncx toc with prefix`, () => {
 
 describe("Given a base url with a slash at the end", () => {
   it(`should generate href with no extra slash`, async () => {
-    const toc = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`))).toString()
-    const opf = (await fs.promises.readFile(path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`))).toString()
+    const toc = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/toc.ncx`),
+      )
+    ).toString()
+    const opf = (
+      await fs.promises.readFile(
+        path.resolve(__dirname, `../tests/tocWithPrefix/content.opf`),
+      )
+    ).toString()
 
     const opfXmlDoc = new xmldoc.XmlDocument(opf)
 
@@ -75,13 +95,15 @@ describe("Given a base url with a slash at the end", () => {
           size: 0,
         },
       ],
-      close: () => Promise.resolve()
+      close: () => Promise.resolve(),
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
       baseUrl: `http://localhost:9000/streamer/`,
     })
 
-    expect((result ?? [])[0]?.href).toEqual(`http://localhost:9000/streamer/OEBPS/index.html`)
+    expect((result ?? [])[0]?.href).toEqual(
+      `http://localhost:9000/streamer/OEBPS/index.html`,
+    )
   })
 })

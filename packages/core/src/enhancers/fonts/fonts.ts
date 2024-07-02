@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { map, Observable, ObservedValueOf, Subject, takeUntil } from "rxjs"
 import { tap, pairwise } from "rxjs/operators"
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "../types/enhancer"
 import { InputSettings } from "./types"
 import { SettingsManager } from "./SettingsManager"
 import { SettingsInterface } from "../../settings/SettingsInterface"
@@ -23,10 +27,17 @@ export const fontsEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
     InheritOutput extends EnhancerOutput<RootEnhancer>,
-    InheritSettings extends NonNullable<InheritOutput["settings"]["_inputSettings"]>,
-    InheritComputedSettings extends NonNullable<InheritOutput["settings"]["_outputSettings"]>,
+    InheritSettings extends NonNullable<
+      InheritOutput["settings"]["_inputSettings"]
+    >,
+    InheritComputedSettings extends NonNullable<
+      InheritOutput["settings"]["_outputSettings"]
+    >,
     Output extends Omit<InheritOutput, "settings"> & {
-      settings: SettingsInterface<InheritSettings & InputSettings, InputSettings & InheritComputedSettings>
+      settings: SettingsInterface<
+        InheritSettings & InputSettings,
+        InputSettings & InheritComputedSettings
+      >
     },
   >(
     next: (options: InheritOptions) => InheritOutput,
@@ -36,14 +47,20 @@ export const fontsEnhancer =
     const changes$ = new Subject<Partial<OutputOptions>>()
     const reader = next(options)
 
-    const settingsManager = new SettingsManager<InheritSettings, InheritComputedSettings>(
+    const settingsManager = new SettingsManager<
+      InheritSettings,
+      InheritComputedSettings
+    >(
       {
         fontScale,
         lineHeight,
         fontWeight,
         fontJustification,
       },
-      reader.settings as SettingsInterface<InheritSettings, InheritComputedSettings>,
+      reader.settings as SettingsInterface<
+        InheritSettings,
+        InheritComputedSettings
+      >,
     )
 
     const getStyle = () => `
@@ -95,7 +112,9 @@ export const fontsEnhancer =
       })
     })
 
-    const shouldRequireLayout = <T extends ObservedValueOf<typeof changes$>>(source: Observable<T>) =>
+    const shouldRequireLayout = <T extends ObservedValueOf<typeof changes$>>(
+      source: Observable<T>,
+    ) =>
       source.pipe(
         pairwise(),
         map(([old, latest]) => {
@@ -106,7 +125,13 @@ export const fontsEnhancer =
         }),
       )
 
-    settingsManager.settings$.pipe(shouldRequireLayout, tap(applyChangeToSpineItem), takeUntil(reader.$.destroy$)).subscribe()
+    settingsManager.settings$
+      .pipe(
+        shouldRequireLayout,
+        tap(applyChangeToSpineItem),
+        takeUntil(reader.$.destroy$),
+      )
+      .subscribe()
 
     return {
       ...reader,

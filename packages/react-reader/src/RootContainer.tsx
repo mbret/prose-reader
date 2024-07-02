@@ -1,7 +1,7 @@
 import React from "react"
 import { ReactNode } from "react"
 
-export const RootContainer = ({ children }: { children: ReactNode; }) => {
+export const RootContainer = ({ children }: { children: ReactNode }) => {
   return (
     <div
       style={{
@@ -9,7 +9,7 @@ export const RootContainer = ({ children }: { children: ReactNode; }) => {
         width: "100%",
         backgroundColor: "white",
         color: "black",
-        display: "flex"
+        display: "flex",
       }}
     >
       {children}

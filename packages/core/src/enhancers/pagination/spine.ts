@@ -12,7 +12,13 @@ import { Reader } from "../../reader"
 import { SpineItem } from "../../spineItem/createSpineItem"
 import { isShallowEqual } from "../../utils/objects"
 
-export const getSpineItemNumberOfPages = ({ spineItem, reader }: { spineItem: SpineItem; reader: Reader }) => {
+export const getSpineItemNumberOfPages = ({
+  spineItem,
+  reader,
+}: {
+  spineItem: SpineItem
+  reader: Reader
+}) => {
   // pre-paginated always are only one page
   // if (!spineItem.isReflowable) return 1
 
@@ -20,15 +26,24 @@ export const getSpineItemNumberOfPages = ({ spineItem, reader }: { spineItem: Sp
   const { width, height } = spineItem.getElementDimensions()
   const settings = reader.settings.settings
 
-  if (settings.pageTurnDirection === `vertical` && settings.pageTurnMode === `scrollable`) {
+  if (
+    settings.pageTurnDirection === `vertical` &&
+    settings.pageTurnMode === `scrollable`
+  ) {
     return 1
   }
 
   if (writingMode === `vertical-rl`) {
-    return calculateNumberOfPagesForItem(height, reader.context.getPageSize().height)
+    return calculateNumberOfPagesForItem(
+      height,
+      reader.context.getPageSize().height,
+    )
   }
 
-  return calculateNumberOfPagesForItem(width, reader.context.getPageSize().width)
+  return calculateNumberOfPagesForItem(
+    width,
+    reader.context.getPageSize().width,
+  )
 }
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>
@@ -52,7 +67,10 @@ export const trackTotalPages = (reader: Reader) => {
         /**
          * This may be not accurate for reflowable due to dynamic load / unload.
          */
-        numberOfTotalPages: numberOfPagesPerItems.reduce((acc, numberOfPagesForItem) => acc + numberOfPagesForItem, 0),
+        numberOfTotalPages: numberOfPagesPerItems.reduce(
+          (acc, numberOfPagesForItem) => acc + numberOfPagesForItem,
+          0,
+        ),
       }
     }),
     distinctUntilChanged(isShallowEqual),
