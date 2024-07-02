@@ -35,6 +35,7 @@ describe(`Given ncx toc with prefix`, () => {
           size: 0,
         },
       ],
+      close: () => Promise.resolve()
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
@@ -74,6 +75,7 @@ describe("Given a base url with a slash at the end", () => {
           size: 0,
         },
       ],
+      close: () => Promise.resolve()
     }
 
     const result = await parseToc(opfXmlDoc, archive, {
