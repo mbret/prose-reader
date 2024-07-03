@@ -2,7 +2,7 @@ import { Observable } from "rxjs"
 import { Context } from "../context/Context"
 import { Manifest } from "../types"
 import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
-import { createReflowableSpineItem } from "./reflowableSpineItem"
+import { createReflowableSpineItem } from "./reflowableSpineItems"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 
