@@ -9,6 +9,7 @@ export { getArchiveOpfInfo } from "./archives/getArchiveOpfInfo"
 export { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
 export { createArchiveFromText } from "./archives/createArchiveFromText"
 export { createArchiveFromJszip } from "./archives/createArchiveFromJszip"
+export { createArchiveFromLibArchive } from "./archives/createArchiveFromLibArchive"
 export { createArchiveFromArrayBufferList } from "./archives/createArchiveFromArrayBufferList"
 
 export type { Manifest } from "@prose-reader/shared"
