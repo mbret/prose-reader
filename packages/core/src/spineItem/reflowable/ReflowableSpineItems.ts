@@ -1,10 +1,10 @@
 import { Observable } from "rxjs"
-import { Context } from "../context/Context"
-import { Manifest } from "../types"
-import { createCommonSpineItem } from "./commonSpineItem"
-import { getStyleForViewportDocument } from "./styles/getStyleForViewportDocument"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { HookManager } from "../hooks/HookManager"
+import { Context } from "../../context/Context"
+import { Manifest } from "../../types"
+import { createCommonSpineItem } from "../commonSpineItem"
+import { getStyleForViewportDocument } from "../styles/getStyleForViewportDocument"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { HookManager } from "../../hooks/HookManager"
 
 export const createReflowableSpineItem = ({
   item,
