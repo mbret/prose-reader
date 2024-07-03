@@ -8,66 +8,18 @@
 import { Report } from "../report"
 import { Archive } from "./types"
 
-export declare class ArchiveReader {
-  private file
-  private client
-  private worker
-  private _content
-  private _processed
-  constructor(file: File, client: any, worker: any)
-  /**
-   * Prepares file for reading
-   * @returns {Promise<Archive>} archive instance
-   */
-  open(): Promise<ArchiveReader>
+interface ArchiveReader {
+  getFilesArray(): Promise<any[]>
   /**
    * Terminate worker to free up memory
    */
   close(): Promise<void>
-  /**
-   * detect if archive has encrypted data
-   * @returns {boolean|null} null if could not be determined
-   */
-  hasEncryptedData(): Promise<boolean | null>
-  /**
-   * set password to be used when reading archive
-   */
-  usePassword(archivePassword: string): Promise<void>
-  /**
-   * Set locale, defaults to en_US.UTF-8
-   */
-  setLocale(locale: string): Promise<void>
-  /**
-   * Returns object containing directory structure and file information
-   * @returns {Promise<object>}
-   */
-  getFilesObject(): Promise<any>
-  getFilesArray(): Promise<any[]>
-  extractSingleFile(target: string): Promise<File>
-  /**
-   * Returns object containing directory structure and extracted File objects
-   * @param {Function} extractCallback
-   *
-   */
-  extractFiles(extractCallback?: Function | undefined): Promise<any>
 }
 
 /**
  * Represents compressed file before extraction
  */
-export declare class CompressedFile {
-  constructor(
-    name: string,
-    size: number,
-    path: string,
-    lastModified: number,
-    archiveRef: ArchiveReader,
-  )
-  private _name
-  private _size
-  private _path
-  private _lastModified
-  private _archiveRef
+interface CompressedFile {
   /**
    * File name
    */
