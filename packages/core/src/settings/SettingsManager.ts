@@ -11,7 +11,7 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
   protected outputSettings?: OutputSettings
   protected outputSettingsUpdateSubject: Subject<OutputSettings>
 
-  public settings$: Observable<OutputSettings>
+  public _settings$: Observable<OutputSettings>
 
   constructor(initialSettings: Partial<InputSettings>) {
     const settingsWithDefaults: InputSettings = {
@@ -22,11 +22,11 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
     this.inputSettings = settingsWithDefaults
     this.outputSettingsUpdateSubject = new Subject()
 
-    this.settings$ = this.outputSettingsUpdateSubject
+    this._settings$ = this.outputSettingsUpdateSubject
       .asObservable()
       .pipe(shareReplay(1))
 
-    this.settings$.subscribe()
+    this._settings$.subscribe()
   }
 
   _prepareUpdate(settings: Partial<InputSettings>): {
@@ -74,6 +74,16 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
     }
 
     return this.outputSettings
+  }
+
+  get settings$() {
+    if (!this.outputSettings) {
+      const { commit } = this._prepareUpdate(this.inputSettings)
+
+      commit()
+    }
+
+    return this._settings$
   }
 
   public destroy() {

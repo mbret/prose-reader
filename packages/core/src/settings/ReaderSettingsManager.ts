@@ -42,8 +42,6 @@ export class ReaderSettingsManager extends SettingsManager<
     merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$)
       .pipe(takeUntil(context.destroy$))
       .subscribe()
-
-    this.settings$.subscribe()
   }
 
   private getComputedSettings(
