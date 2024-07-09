@@ -19,9 +19,12 @@ export const comicInfoHook =
 
     const manifestWithoutComicInfo = {
       ...manifest,
-      spineItems: manifest.spineItems.filter(
-        (item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`),
-      ),
+      spineItems: manifest.spineItems
+        .filter((item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`))
+        .map((item, _, items) => ({
+          ...item,
+          progressionWeight: 1 / items.length,
+        })),
     }
 
     // @todo handle more meta
