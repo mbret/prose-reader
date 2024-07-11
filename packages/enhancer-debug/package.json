@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-debug",
-  "version": "1.66.0",
+  "version": "1.67.0",
   "type": "module",
   "main": "./dist/prose-reader-enhancer-debug.umd.cjs",
   "module": "./dist/prose-reader-enhancer-debug.js",
@@ -19,7 +19,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.66.0"
+    "@prose-reader/core": "^1.67.0"
   },
   "peerDependencies": {
     "rxjs": "*"
