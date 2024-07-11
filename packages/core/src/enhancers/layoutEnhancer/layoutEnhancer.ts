@@ -6,6 +6,8 @@ import {
   tap,
   skip,
   filter,
+  switchMap,
+  debounceTime,
 } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
@@ -20,6 +22,7 @@ import { isDefined } from "../../utils/isDefined"
 import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
+import { merge, Observable } from "rxjs"
 
 const SHOULD_NOT_LAYOUT = false
 
@@ -164,24 +167,29 @@ export const layoutEnhancer =
     //   })
     // })
 
-    let observer: ResizeObserver | undefined
-
-    if (options.layoutAutoResize === `container`) {
-      reader.context.state$
-        .pipe(
-          map((state) => state.containerElement),
-          filter(isDefined),
-          distinctUntilChanged(),
-          takeUntil(reader.$.destroy$),
-        )
-        .subscribe((container) => {
-          observer = new ResizeObserver(() => {
-            reader?.layout()
-          })
-
-          observer.observe(container)
+    const observeContainerResize = (container: HTMLElement) =>
+      new Observable((observer) => {
+        const resizeObserver = new ResizeObserver(() => {
+          observer.next()
         })
-    }
+
+        resizeObserver.observe(container)
+
+        return () => {
+          resizeObserver.disconnect()
+        }
+      })
+
+    const layoutOnContainerResize$ = settingsManager.settings$.pipe(
+      filter(({ layoutAutoResize }) => layoutAutoResize === "container"),
+      switchMap(() => reader.context.containerElement$),
+      filter(isDefined),
+      switchMap((container) => observeContainerResize(container)),
+      debounceTime(100),
+      tap(() => {
+        reader?.layout()
+      }),
+    )
 
     const movingSafePan$ = createMovingSafePan$(reader)
 
@@ -199,12 +207,15 @@ export const layoutEnhancer =
       )
       .subscribe()
 
+    merge(layoutOnContainerResize$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
+
     return {
       ...reader,
       destroy: () => {
         settingsManager.destroy()
         reader.destroy()
-        observer?.disconnect()
       },
       settings: settingsManager,
     } as unknown as Output
