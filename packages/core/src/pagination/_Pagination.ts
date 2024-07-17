@@ -5,16 +5,12 @@ import { SpineItemManager } from "../spineItemManager"
 import { Report } from "../report"
 import { isShallowEqual } from "../utils/objects"
 import { PaginationInfo } from "./types"
+import { createLocationResolver } from "../spineItem/locationResolver"
 
 const NAMESPACE = `pagination`
 
-export const createPagination = ({
-  context,
-}: {
-  context: Context
-  spineItemManager: SpineItemManager
-}) => {
-  const paginationSubject$ = new BehaviorSubject<PaginationInfo>({
+export class Pagination {
+  protected paginationSubject$ = new BehaviorSubject<PaginationInfo>({
     beginPageIndexInSpineItem: undefined,
     beginNumberOfPagesInSpineItem: 0,
     beginCfi: undefined,
@@ -25,31 +21,35 @@ export const createPagination = ({
     endSpineItemIndex: undefined,
   })
 
-  const getSpineItemNumberOfPages = (spineItem: SpineItem) => {
-    // pre-paginated always are only one page
-    // if (!spineItem.isReflowable) return 1
+  /**
+   * We start emitting pagination information as soon as there is a valid pagination
+   */
+  public paginationInfo$ = this.paginationSubject$.pipe(
+    distinctUntilChanged(isShallowEqual),
+    filter(
+      ({ beginPageIndexInSpineItem }) =>
+        beginPageIndexInSpineItem !== undefined,
+    ),
+  )
 
-    const writingMode = spineItem.spineItemFrame.getWritingMode()
-    const { width, height } = spineItem.getElementDimensions()
+  constructor(
+    protected context: Context,
+    protected spineITemManager: SpineItemManager,
+    protected spineItemlocationResolve: ReturnType<
+      typeof createLocationResolver
+    >,
+  ) {}
 
-    if (writingMode === `vertical-rl`) {
-      return calculateNumberOfPagesForItem(height, context.getPageSize().height)
-    }
-
-    return calculateNumberOfPagesForItem(width, context.getPageSize().width)
-  }
-
-  const getInfoForUpdate = (info: {
+  getInfoForUpdate(info: {
     spineItem: SpineItem
     // spineItemPosition: { x: number, y: number },
     pageIndex: number
     cfi: string | undefined
-    options: {
-      isAtEndOfChapter?: boolean
-      // cfi?: string
-    }
-  }) => {
-    const numberOfPages = getSpineItemNumberOfPages(info.spineItem)
+  }) {
+    const numberOfPages =
+      this.spineItemlocationResolve.getSpineItemNumberOfPages({
+        spineItem: info.spineItem,
+      })
     // const pageIndex = spineItemLocator.getSpineItemPageIndexFromPosition(info.spineItemPosition, info.spineItem)
     // const cfi: string | undefined = undefined
 
@@ -76,19 +76,19 @@ export const createPagination = ({
     }
   }
 
-  const updateBeginAndEnd = Report.measurePerformance(
+  public updateBeginAndEnd = Report.measurePerformance(
     `${NAMESPACE} updateBeginAndEnd`,
     1,
     (
-      begin: Parameters<typeof getInfoForUpdate>[0] & {
+      begin: Parameters<typeof this.getInfoForUpdate>[0] & {
         spineItemIndex: number
       },
-      end: Parameters<typeof getInfoForUpdate>[0] & {
+      end: Parameters<typeof this.getInfoForUpdate>[0] & {
         spineItemIndex: number
       },
     ) => {
-      const beginInfo = getInfoForUpdate(begin)
-      const endInfo = getInfoForUpdate(end)
+      const beginInfo = this.getInfoForUpdate(begin)
+      const endInfo = this.getInfoForUpdate(end)
 
       const newValues: PaginationInfo = {
         beginPageIndexInSpineItem: beginInfo.pageIndex,
@@ -101,40 +101,22 @@ export const createPagination = ({
         endSpineItemIndex: end.spineItemIndex,
       }
 
-      paginationSubject$.next({
-        ...paginationSubject$.value,
+      this.paginationSubject$.next({
+        ...this.paginationSubject$.value,
         ...newValues,
       })
     },
     { disable: true },
   )
 
-  const getPaginationInfo = () => paginationSubject$.value
-
-  /**
-   * We start emitting pagination information as soon as there is a valid pagination
-   */
-  const paginationInfo$ = paginationSubject$.pipe(
-    distinctUntilChanged(isShallowEqual),
-    filter(
-      ({ beginPageIndexInSpineItem }) =>
-        beginPageIndexInSpineItem !== undefined,
-    ),
-  )
-
-  const destroy = () => {
-    paginationSubject$.complete()
+  getPaginationInfo() {
+    return this.paginationSubject$.value
   }
 
-  return {
-    destroy,
-    updateBeginAndEnd,
-    getPaginationInfo,
-    paginationInfo$,
+  destroy() {
+    this.paginationSubject$.complete()
   }
 }
-
-export type Pagination = ReturnType<typeof createPagination>
 
 export const getItemOffsetFromPageIndex = (
   pageWidth: number,
