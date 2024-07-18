@@ -38,10 +38,13 @@ export type Manifest = {
      * http://localhost:9000/streamer/ZmlsZTovL2VwdWJzL3BhdGhmaW5kZXJfdm9sMS5lcHVi/OEBPS/p002.xhtml
      */
     href: string
-    renditionLayout: `reflowable` | `pre-paginated`
-    progressionWeight: number
-    pageSpreadLeft: true | undefined
-    pageSpreadRight: true | undefined
+    /**
+     * @see https://www.w3.org/TR/epub-33/#property-layout-global
+     */
+    renditionLayout?: `reflowable` | `pre-paginated`
+    progressionWeight?: number
+    pageSpreadLeft?: true | undefined
+    pageSpreadRight?: true | undefined
     // encodingFormat?: string,
     mediaType?: string
   }[]
