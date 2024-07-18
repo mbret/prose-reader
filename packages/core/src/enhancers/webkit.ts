@@ -28,7 +28,7 @@ export const webkitEnhancer =
      */
     if (IS_SAFARI) {
       reader.hookManager.register(
-        "viewportNavigator.onBeforeContainerCreated",
+        "navigator.onBeforeContainerCreated",
         ({ element }) => {
           element.style.cssText = `
           ${element.style.cssText}

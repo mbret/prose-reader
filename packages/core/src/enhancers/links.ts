@@ -1,6 +1,7 @@
 import { Observable, Subject } from "rxjs"
 import { Report } from "../report"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import { NavigationEnhancerOutput } from "./navigation/types"
 
 type SubjectData = {
   event: `linkClicked`
@@ -11,7 +12,8 @@ type SubjectData = {
 export const linksEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer> &
+      NavigationEnhancerOutput,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -35,7 +37,7 @@ export const linksEnhancer =
         (item) => item.href === hrefWithoutAnchor,
       )
       if (hasExistingSpineItem) {
-        reader.viewportNavigator.goToUrl(hrefUrl)
+        reader.navigation.goToUrl(hrefUrl)
 
         return true
       }

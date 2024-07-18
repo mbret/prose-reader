@@ -1,6 +1,6 @@
 import { Reader } from "@prose-reader/core"
 import { BehaviorSubject, EMPTY, of, withLatestFrom } from "rxjs"
-import { switchMap, filter, take, tap, mergeMap } from "rxjs/operators"
+import { switchMap, take, tap, mergeMap } from "rxjs/operators"
 import { PACKAGE_NAME, SHOULD_NOT_LAYOUT } from "./constants"
 import { getIcon } from "./icon"
 import { Bookmark } from "./types"
@@ -15,10 +15,7 @@ export const createRenderer = (
   },
 ) => {
   const element$ = new BehaviorSubject<HTMLElement | undefined>(undefined)
-  const waitForViewportFree$ = reader.viewportNavigator.$.state$.pipe(
-    filter((v) => v === `free`),
-    take(1),
-  )
+  const waitForViewportFree$ = reader.navigation.viewportFree$.pipe(take(1))
 
   const createBookmarkElement = () => {
     const container = reader.context.state.containerElement

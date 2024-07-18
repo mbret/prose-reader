@@ -44,7 +44,7 @@ export const progressionEnhancer =
       const estimateBeforeThisItem =
         context.manifest?.spineItems
           .slice(0, currentSpineIndex)
-          .reduce((acc, item) => acc + item.progressionWeight, 0) || 0
+          .reduce((acc, item) => acc + (item.progressionWeight ?? 0), 0) || 0
       const currentItemWeight =
         context.manifest?.spineItems[currentSpineIndex]?.progressionWeight || 0
       // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]

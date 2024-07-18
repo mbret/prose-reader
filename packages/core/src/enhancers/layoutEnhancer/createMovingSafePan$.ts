@@ -8,7 +8,6 @@ import {
 } from "rxjs"
 import {
   distinctUntilChanged,
-  filter,
   map,
   switchMap,
   take,
@@ -65,14 +64,7 @@ export const createMovingSafePan$ = (reader: Reader) => {
       }),
     )
 
-  const viewportFree$ = reader.viewportNavigator.$.state$.pipe(
-    filter((data) => data === `free`),
-  )
-  const viewportBusy$ = reader.viewportNavigator.$.state$.pipe(
-    filter((data) => data === `busy`),
-  )
-
-  const lockAfterViewportBusy$ = viewportBusy$.pipe(
+  const lockAfterViewportBusy$ = reader.navigation.viewportBusy$.pipe(
     tap(() => {
       iframeOverlayForAnimationsElement?.style.setProperty(
         `visibility`,
@@ -81,7 +73,9 @@ export const createMovingSafePan$ = (reader: Reader) => {
     }),
   )
 
-  const resetLockViewportFree$ = createResetLock$(viewportFree$).pipe(take(1))
+  const resetLockViewportFree$ = createResetLock$(
+    reader.navigation.viewportFree$,
+  ).pipe(take(1))
 
   const pageTurnMode$ = reader.settings.settings$.pipe(
     map(() => reader.settings.settings.computedPageTurnMode),

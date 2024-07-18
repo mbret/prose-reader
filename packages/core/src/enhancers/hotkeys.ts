@@ -9,11 +9,13 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import { NavigationEnhancerOutput } from "./navigation/types"
 
 export const hotkeysEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer> &
+      NavigationEnhancerOutput,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -26,21 +28,21 @@ export const hotkeysEnhancer =
         map(([e, { pageTurnDirection }]) => {
           if (pageTurnDirection === "horizontal") {
             if (e.key === `ArrowRight`) {
-              reader.viewportNavigator.turnRight()
+              reader.navigation.turnRight()
             }
 
             if (e.key === `ArrowLeft`) {
-              reader.viewportNavigator.turnLeft()
+              reader.navigation.turnLeft()
             }
           }
 
           if (pageTurnDirection === "vertical") {
             if (e.key === `ArrowDown`) {
-              reader.viewportNavigator.turnRight()
+              reader.navigation.turnRight()
             }
 
             if (e.key === `ArrowUp`) {
-              reader.viewportNavigator.turnLeft()
+              reader.navigation.turnLeft()
             }
           }
 

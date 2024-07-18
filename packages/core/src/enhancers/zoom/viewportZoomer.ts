@@ -38,7 +38,7 @@ export const createViewportZoomer = (reader: Reader) => {
 
   const scale = (userScale: number) => {
     const spineElement = reader.spine.getElement()
-    const viewportElement = reader.viewportNavigator.getElement()
+    const viewportElement = reader.navigation.getElement()
 
     if (!spineElement || !viewportElement) return
 
@@ -57,7 +57,7 @@ export const createViewportZoomer = (reader: Reader) => {
 
     const currentScrollTop = viewportElement.scrollTop
 
-    // viewportNavigator.element.scrollTop does not change after the scale change thanks to fixed origin position
+    // navigator.element.scrollTop does not change after the scale change thanks to fixed origin position
     // the scroll offset is the one before the new scale and can be used to add / remove on newly scaled view
     spineElement.style.transform = `scale(${newScale})`
 
