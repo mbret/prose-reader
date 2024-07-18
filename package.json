@@ -16,6 +16,7 @@
     "lint:check": "lerna run lint:check --parallel",
     "lint:write": "lerna run lint:write --parallel --verbose",
     "test": "lerna run test --parallel",
+    "test-watch:core": "lerna run test:watch --parallel --scope @prose-reader/core",
     "publish-packages": "npm test && npm run build && lerna publish minor --yes",
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"
   },
