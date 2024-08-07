@@ -58,8 +58,8 @@ export const highlightsEnhancer =
     }
 
     const drawHighlight = (overlayElement: HTMLElement, highlight: Highlight) => {
-      const { node: anchorNode, offset: anchorOffset } = reader.spine.cfiLocator.resolveCfi(highlight.anchorCfi) || {}
-      const { node: focusNode, offset: focusOffset } = reader.spine.cfiLocator.resolveCfi(highlight.focusCfi) || {}
+      const { node: anchorNode, offset: anchorOffset } = reader.cfi.resolveCfi({ cfi: highlight.anchorCfi }) || {}
+      const { node: focusNode, offset: focusOffset } = reader.cfi.resolveCfi({ cfi: highlight.focusCfi }) || {}
 
       if (anchorNode && focusNode) {
         // remove old previous highlight
@@ -114,11 +114,12 @@ export const highlightsEnhancer =
     }
 
     const enrichHighlight = (highlight: Highlight) => {
-      const cfiMetaInfo = reader.spine.cfiLocator.getCfiMetaInformation(highlight.anchorCfi)
+      const spineItem = reader.spineItemManager.getSpineItemFromCfi(highlight.anchorCfi)
+      const spineItemIndex = reader.spineItemManager.getSpineItemIndex(spineItem)
 
       return {
         ...highlight,
-        spineItemIndex: cfiMetaInfo?.spineItemIndex,
+        spineItemIndex,
       }
     }
 

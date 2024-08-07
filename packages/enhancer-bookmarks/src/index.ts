@@ -55,7 +55,7 @@ export const bookmarksEnhancer =
     const renderer = createRenderer(reader, settings)
 
     const getCfiInformation = (cfi: string) => {
-      const { node, offset = 0, spineItemIndex } = reader.spine.cfiLocator.resolveCfi(cfi) || {}
+      const { node, offset = 0, spineItemIndex } = reader.cfi.resolveCfi({ cfi }) || {}
 
       if (node && spineItemIndex !== undefined) {
         const pageIndex = reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)

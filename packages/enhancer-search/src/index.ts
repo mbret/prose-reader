@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Reader } from "@prose-reader/core"
+import { generateCfiFromRange } from "@prose-reader/core"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
 import { map, share, switchMap, takeUntil } from "rxjs/operators"
 
@@ -111,8 +112,8 @@ export const searchEnhancer =
 
               const ranges = searchNodeContainingText(doc, text)
               const newResults = ranges.map((range) => {
-                const { end, start } = reader.spine.cfiLocator.generateFromRange(range, item.item)
-                const { node, offset, spineItemIndex } = reader.spine.cfiLocator.resolveCfi(start) || {}
+                const { end, start } = reader.cfi.generateCfiFromRange(range, item.item)
+                const { node, offset, spineItemIndex } = reader.cfi.resolveCfi({ cfi: start }) || {}
                 const pageIndex =
                   node && spineItemIndex !== undefined
                     ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
