@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CreateReaderParameters } from "../../reader"
-import { ReaderInternal } from "../../types/reader"
+import { CreateReaderParameters, ReaderInternal } from "../../reader"
 
 export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<
   ReturnType<Enhancer>

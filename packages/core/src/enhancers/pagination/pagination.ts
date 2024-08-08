@@ -9,7 +9,6 @@ import {
   shareReplay,
   tap,
 } from "rxjs"
-import { PaginationInfo } from "../../pagination/types"
 import { getChaptersInfo, trackChapterInfo } from "./chapters"
 import {
   EnhancerPaginationInto,
@@ -18,6 +17,7 @@ import {
 } from "./types"
 import { isShallowEqual } from "../../utils/objects"
 import { trackTotalPages } from "./spine"
+import { PaginationInfo } from "../../pagination/Pagination"
 
 export const mapPaginationInfoToExtendedInfo =
   (reader: ReaderWithProgression) =>
@@ -34,11 +34,11 @@ export const mapPaginationInfoToExtendedInfo =
     const context = reader.context
     const beginItem =
       paginationInfo.beginSpineItemIndex !== undefined
-        ? reader.spineItemManager.get(paginationInfo.beginSpineItemIndex)
+        ? reader.spineItemsManager.get(paginationInfo.beginSpineItemIndex)
         : undefined
     const endItem =
       paginationInfo.endSpineItemIndex !== undefined
-        ? reader.spineItemManager.get(paginationInfo.endSpineItemIndex)
+        ? reader.spineItemsManager.get(paginationInfo.endSpineItemIndex)
         : undefined
 
     return {
@@ -70,7 +70,7 @@ export const mapPaginationInfoToExtendedInfo =
             paginationInfo.endSpineItemIndex ?? 0,
             paginationInfo.endNumberOfPagesInSpineItem,
             paginationInfo.endPageIndexInSpineItem || 0,
-            reader.viewportNavigator.getCurrentViewportPosition(),
+            reader.navigation.getCurrentViewportPosition(),
             endItem,
           )
         : 0,

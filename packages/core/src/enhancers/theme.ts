@@ -108,7 +108,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
    * Make sure to apply theme on item load
    */
   reader.hookManager.register(`item.onLoad`, ({ itemId }) => {
-    const item = reader.spineItemManager.get(itemId)
+    const item = reader.spineItemsManager.get(itemId)
 
     item?.manipulateSpineItem(({ removeStyle, addStyle }) => {
       removeStyle(`prose-reader-theme`)

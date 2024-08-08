@@ -109,7 +109,7 @@ export const getChaptersInfo = (
   reader: Reader,
 ): { [key: string]: ChapterInfo | undefined } => {
   const manifest = reader.context.manifest
-  const items = reader.spineItemManager.getAll()
+  const items = reader.spineItemsManager.getAll()
 
   if (!manifest) return {}
 

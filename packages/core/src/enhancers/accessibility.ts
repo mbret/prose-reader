@@ -21,7 +21,7 @@ export const accessibilityEnhancer =
     }, {})
 
     reader.hookManager.register(`item.onLoad`, ({ itemId, frame, destroy }) => {
-      const item = reader.spineItemManager.get(itemId)
+      const item = reader.spineItemsManager.get(itemId)
 
       if (!item) return
 

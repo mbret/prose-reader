@@ -12,7 +12,7 @@ import {
 } from "rxjs/operators"
 import { Context } from "../../context/Context"
 import { Report } from "../../report"
-import { Manifest } from "../../types"
+import { Manifest } from "../.."
 import { openDatabase } from "./indexedDB"
 
 export const createResourcesManager = (context: Context) => {

@@ -112,7 +112,7 @@ export const progressionEnhancer =
       const { height, width } = currentItem.getElementDimensions()
 
       const { top, left } =
-        reader.spineItemManager.getAbsolutePositionOf(currentItem)
+        reader.spineItemsManager.getAbsolutePositionOf(currentItem)
 
       if (reader.settings.settings.computedPageTurnDirection === `vertical`) {
         return Math.max(

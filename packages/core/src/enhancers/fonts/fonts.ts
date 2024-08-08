@@ -100,7 +100,7 @@ export const fontsEnhancer =
      * Make sure we apply the style to any new item loaded.
      */
     reader.hookManager.register(`item.onLoad`, ({ itemId }) => {
-      const item = reader.spineItemManager.get(itemId)
+      const item = reader.spineItemsManager.get(itemId)
 
       item?.manipulateSpineItem(({ addStyle, removeStyle }) => {
         if (item.item.renditionLayout !== `pre-paginated`) {

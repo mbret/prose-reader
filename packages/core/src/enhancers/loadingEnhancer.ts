@@ -9,7 +9,7 @@ import {
 } from "rxjs/operators"
 import { isShallowEqual } from "../utils/objects"
 import { Context } from "../context/Context"
-import { Manifest } from "../types"
+import { Manifest } from ".."
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../constants"
 import { EnhancerOutput } from "./types/enhancer"
 import { themeEnhancer } from "./theme"
@@ -86,9 +86,9 @@ export const loadingEnhancer =
       )
 
     const updateEntriesVisibility$ = (entries: Entries) =>
-      reader.spineItemManager.$.itemIsReady$.pipe(
+      reader.spineItemsObserver.itemIsReady$.pipe(
         tap(({ item, isReady }) => {
-          entries[item.id]?.style.setProperty(
+          entries[item.item.id]?.style.setProperty(
             `visibility`,
             isReady ? `hidden` : `visible`,
           )

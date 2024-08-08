@@ -113,7 +113,6 @@ export const createElementZoomer = (reader: Reader) => {
         `translate3d(${imgLastPosition.x}px, ${imgLastPosition.y}px, 0px) scale3d(${baseScale}, ${baseScale}, 1)`,
       )
 
-      console.log({ delta, imgLastPosition })
       movingLastDelta = delta
     }
 

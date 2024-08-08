@@ -26,7 +26,7 @@ export const fixReflowable = (reader: Reader) => {
   reader.hookManager.register(
     `item.onAfterLayout`,
     ({ item, blankPagePosition, minimumWidth }) => {
-      const spineItem = reader.spineItemManager.get(item.id)
+      const spineItem = reader.spineItemsManager.get(item.id)
 
       if (!(spineItem?.item.renditionLayout === `reflowable`)) return
 
