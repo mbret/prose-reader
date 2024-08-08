@@ -1,5 +1,5 @@
 import { CfiHandler } from "./cfi/CfiHandler"
-import { Manifest } from "./types"
+import { Manifest } from "."
 
 export const createSelection = (
   selection: Selection,

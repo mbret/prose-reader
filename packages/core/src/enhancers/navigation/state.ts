@@ -5,7 +5,7 @@ import { isShallowEqual } from "../../utils/objects"
 export type State = ReturnType<typeof observeState>
 
 export const observeState = (reader: Reader) => {
-  return reader.pagination.paginationInfo$.pipe(
+  return reader.pagination.pagination$.pipe(
     withLatestFrom(reader.context.manifest$, reader.settings.settings$),
     map(([paginationInfo, manifest, { computedPageTurnDirection }]) => {
       const numberOfSpineItems = manifest?.spineItems.length ?? 0

@@ -54,7 +54,7 @@ export const createRenderer = (
 
   const redrawBookmarks$ = (bookmarks: Bookmark[]) =>
     of(bookmarks).pipe(
-      withLatestFrom(reader.pagination.paginationInfo$),
+      withLatestFrom(reader.pagination.pagination$),
       switchMap(([, pagination]) => {
         const {
           beginCfi: currentCfi,

@@ -292,8 +292,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     load,
     destroy,
     pagination: {
-      getPaginationInfo: pagination.getPaginationInfo.bind(pagination),
-      paginationInfo$: pagination.pagination$,
+      pagination: pagination.pagination,
+      pagination$: pagination.pagination$,
     },
     settings: settingsManager as SettingsInterface<
       NonNullable<(typeof settingsManager)["inputSettings"]>,

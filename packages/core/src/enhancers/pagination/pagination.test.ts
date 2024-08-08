@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
 import { paginationEnhancer } from "./enhancer"
 import { progressionEnhancer } from "../progression"
-import { navigationEnhancer } from "../navigation/navigationEnhancer"
+import { navigationEnhancer } from "../navigation"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -38,9 +38,9 @@ describe("Given a book with one chapter", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.paginationInfo$>
+        ObservedValueOf<typeof reader.pagination.pagination$>
       >((resolve, reject) => {
-        reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
+        reader.pagination.pagination$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -93,9 +93,9 @@ describe("Given a book with one chapter", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.paginationInfo$>
+        ObservedValueOf<typeof reader.pagination.pagination$>
       >((resolve, reject) => {
-        reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
+        reader.pagination.pagination$.pipe(skip(2)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -160,9 +160,9 @@ describe("Given a book with one chapter", () => {
           })
 
           const value = await new Promise<
-            ObservedValueOf<typeof reader.pagination.paginationInfo$>
+            ObservedValueOf<typeof reader.pagination.pagination$>
           >((resolve, reject) => {
-            reader.pagination.paginationInfo$.pipe(skip(2)).subscribe({
+            reader.pagination.pagination$.pipe(skip(2)).subscribe({
               next: resolve,
               error: reject,
             })
@@ -237,9 +237,9 @@ describe("Given a book with two chapters", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.paginationInfo$>
+        ObservedValueOf<typeof reader.pagination.pagination$>
       >((resolve, reject) => {
-        reader.pagination.paginationInfo$.pipe(skip(1)).subscribe({
+        reader.pagination.pagination$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })

@@ -27,7 +27,7 @@ export const trackTotalPages = (reader: Reader) => {
     numberOfTotalPages: number
   }> = reader.spine.$.layout$.pipe(
     debounceTime(10, animationFrameScheduler),
-    withLatestFrom(reader.pagination.paginationInfo$),
+    withLatestFrom(reader.pagination.pagination$),
     map(() => {
       // @todo trigger change to pagination info (+ memo if number is same)
       const numberOfPagesPerItems = getNumberOfPagesForAllSpineItems(reader)

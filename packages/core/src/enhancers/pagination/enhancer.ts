@@ -19,10 +19,10 @@ export const paginationEnhancer =
     InheritOutput extends EnhancerOutput<ProgressionEnhancer>,
     PaginationOutput extends Omit<
       InheritOutput["pagination"],
-      "paginationInfo$" | "getPaginationInfo"
+      "pagination$" | "pagination"
     > & {
-      paginationInfo$: Observable<PaginationInfo & ExtraPaginationInfo>
-      getPaginationInfo: () => PaginationInfo & ExtraPaginationInfo
+      pagination$: Observable<PaginationInfo & ExtraPaginationInfo>
+      pagination: PaginationInfo & ExtraPaginationInfo
     },
   >(
     next: (options: InheritOptions) => InheritOutput,
@@ -42,8 +42,10 @@ export const paginationEnhancer =
       ...reader,
       pagination: {
         ...reader.pagination,
-        getPaginationInfo,
-        paginationInfo$,
+        get pagination() {
+          return getPaginationInfo()
+        },
+        pagination$: paginationInfo$,
       } as unknown as PaginationOutput,
     }
   }

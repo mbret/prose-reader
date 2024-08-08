@@ -85,9 +85,9 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
   const chaptersInfo$ = trackChapterInfo(reader)
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({
-    ...reader.pagination.getPaginationInfo(),
+    ...reader.pagination.pagination,
     ...mapPaginationInfoToExtendedInfo(reader)(
-      reader.pagination.getPaginationInfo(),
+      reader.pagination.pagination,
       getChaptersInfo(reader),
     ),
     beginAbsolutePageIndex: 0,
@@ -95,7 +95,7 @@ export const trackPaginationInfo = (reader: ReaderWithProgression) => {
     numberOfTotalPages: 0,
   })
 
-  const extandedBasePagination$ = reader.pagination.paginationInfo$.pipe(
+  const extandedBasePagination$ = reader.pagination.pagination$.pipe(
     combineLatestWith(chaptersInfo$),
     map(([info, chaptersInfo]) => ({
       ...info,
