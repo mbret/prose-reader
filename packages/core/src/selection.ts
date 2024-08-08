@@ -1,4 +1,4 @@
-import { CFI } from "./cfi"
+import { CfiHandler } from "./cfi/CfiHandler"
 import { Manifest } from "./types"
 
 export const createSelection = (
@@ -11,7 +11,7 @@ export const createSelection = (
     toString: () => text,
     getAnchorCfi: () => {
       if (selection.anchorNode) {
-        return CFI.generate(
+        return CfiHandler.generate(
           selection.anchorNode,
           selection.anchorOffset,
           `|[prose~anchor~${encodeURIComponent(item.id)}]`,
@@ -20,7 +20,7 @@ export const createSelection = (
     },
     getFocusCfi: () => {
       if (selection.focusNode) {
-        return CFI.generate(
+        return CfiHandler.generate(
           selection.focusNode,
           selection.focusOffset,
           `|[prose~anchor~${encodeURIComponent(item.id)}]`,
