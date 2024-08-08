@@ -7,7 +7,7 @@ import {
   calculateNumberOfPagesForItem,
   getItemOffsetFromPageIndex,
   getClosestValidOffsetFromApproximateOffsetInPages,
-} from "../pagination/helpers"
+} from "./helpers"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
