@@ -92,7 +92,7 @@ export const searchEnhancer =
     }
 
     const searchForItem = (index: number, text: string) => {
-      const item = reader.spineItemManager.get(index)
+      const item = reader.spineItemsManager.get(index)
 
       if (!item) {
         return of([])

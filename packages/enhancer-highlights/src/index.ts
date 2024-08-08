@@ -114,8 +114,8 @@ export const highlightsEnhancer =
     }
 
     const enrichHighlight = (highlight: Highlight) => {
-      const spineItem = reader.spineItemManager.getSpineItemFromCfi(highlight.anchorCfi)
-      const spineItemIndex = reader.spineItemManager.getSpineItemIndex(spineItem)
+      const spineItem = reader.spineItemsManager.getSpineItemFromCfi(highlight.anchorCfi)
+      const spineItemIndex = reader.spineItemsManager.getSpineItemIndex(spineItem)
 
       return {
         ...highlight,
