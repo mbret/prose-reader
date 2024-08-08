@@ -1,15 +1,14 @@
-import { takeUntil, tap } from "rxjs"
 import {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { ManualNavigator } from "./manualNavigator"
-import { PanNavigator } from "./panNavigator"
+import { ManualNavigator } from "./navigators/manualNavigator"
+import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
 import { NavigationEnhancerOutput } from "./types"
 import { Manifest } from "@prose-reader/shared"
-import { LoadOptions } from "../../types/reader"
+import { type LoadOptions } from "../../reader"
 
 export const navigationEnhancer =
   <
@@ -38,6 +37,7 @@ export const navigationEnhancer =
       ...reader,
       load,
       navigation: {
+        ...reader.navigation,
         state$,
         moveTo: panNavigator.moveTo.bind(panNavigator),
         turnLeft: manualNavigator.turnLeft.bind(manualNavigator),
@@ -53,6 +53,8 @@ export const navigationEnhancer =
           manualNavigator.goToLeftSpineItem.bind(manualNavigator),
         goToRightSpineItem:
           manualNavigator.goToRightSpineItem.bind(manualNavigator),
+        goToPageOfSpineItem:
+          manualNavigator.goToPageOfSpineItem.bind(manualNavigator),
       },
     }
   }
