@@ -1,5 +1,5 @@
-import { merge, Observable, Subject } from "rxjs"
-import { Manifest } from "../../types"
+import { merge, Subject } from "rxjs"
+import { Manifest } from "../.."
 import { Context } from "../../context/Context"
 import { getAttributeValueFromString } from "../../frames"
 import { map } from "rxjs/operators"
@@ -13,14 +13,12 @@ export const createFrameItem = ({
   item,
   parent,
   context,
-  viewportState$,
   settings,
   hookManager,
 }: {
   parent: HTMLElement
   item: Manifest[`spineItems`][number]
   context: Context
-  viewportState$: Observable<`free` | `busy`>
   settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
@@ -45,7 +43,6 @@ export const createFrameItem = ({
     hookManager,
     item,
     parent,
-    viewportState$,
     settings,
   })
 

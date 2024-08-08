@@ -9,7 +9,6 @@ import {
   Observable,
   of,
   Subject,
-  Subscription,
 } from "rxjs"
 import {
   exhaustMap,
@@ -28,7 +27,7 @@ import {
 import { Report } from "../.."
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
 import { Context } from "../../context/Context"
-import { Manifest } from "../../types"
+import { Manifest } from "../.."
 import { createFrame$ } from "./createFrame$"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -38,7 +37,6 @@ export const createLoader = ({
   item,
   parent,
   context,
-  viewportState$,
   settings,
   hookManager,
 }: {
@@ -46,7 +44,6 @@ export const createLoader = ({
   parent: HTMLElement
   context: Context
   settings: ReaderSettingsManager
-  viewportState$: Observable<`free` | `busy`>
   hookManager: HookManager
 }) => {
   const destroySubject$ = new Subject<void>()
@@ -69,7 +66,7 @@ export const createLoader = ({
   const getHtmlFromResource = (response: Response) =>
     createHtmlPageFromResource(response, item)
 
-  const waitForViewportFree$ = viewportState$.pipe(
+  const waitForViewportFree$ = context.bridgeEvent.viewportState$.pipe(
     filter((v) => v === `free`),
     take(1),
   )

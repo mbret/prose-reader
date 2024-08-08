@@ -1,6 +1,5 @@
-import { Observable } from "rxjs"
 import { Context } from "../context/Context"
-import { Manifest } from "../types"
+import { Manifest } from ".."
 import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
 import { createReflowableSpineItem } from "./reflowable/ReflowableSpineItems"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -10,14 +9,12 @@ export const createSpineItem = ({
   item,
   context,
   containerElement,
-  viewportState$,
   settings,
   hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   context: Context
-  viewportState$: Observable<`free` | `busy`>
   settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
@@ -26,7 +23,6 @@ export const createSpineItem = ({
       item,
       context,
       containerElement,
-      viewportState$,
       settings,
       hookManager,
     })
@@ -36,7 +32,6 @@ export const createSpineItem = ({
     item,
     context,
     containerElement,
-    viewportState$,
     settings,
     hookManager,
   })

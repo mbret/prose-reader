@@ -1,4 +1,4 @@
-import { Manifest } from "../../types"
+import { Manifest } from "../.."
 import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
 import { getBase64FromBlob } from "../../utils/objects"
 

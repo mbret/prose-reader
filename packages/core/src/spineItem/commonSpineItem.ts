@@ -1,26 +1,25 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Context } from "../context/Context"
 import { createFrameItem } from "./frameItem/frameItem"
-import { Manifest } from "../types"
-import { Observable, Subject } from "rxjs"
+import { Manifest } from ".."
+import { Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { map, withLatestFrom } from "rxjs/operators"
 import { createFrameManipulator } from "./frameItem/createFrameManipulator"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 
 export const createCommonSpineItem = ({
   item,
   context,
   parentElement,
-  viewportState$,
   settings,
   hookManager,
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
   context: Context
-  viewportState$: Observable<`free` | `busy`>
   settings: ReaderSettingsManager
   hookManager: HookManager
 }) => {
@@ -38,7 +37,6 @@ export const createCommonSpineItem = ({
     item,
     context,
     hookManager,
-    viewportState$,
     settings,
   })
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
@@ -46,16 +44,9 @@ export const createCommonSpineItem = ({
   containerElement.appendChild(overlayElement)
   parentElement.appendChild(containerElement)
 
-  // Do not memoize x,y,top,left as they change relatively to the viewport all the time
-  let memoizedElementDimensions: { width: number; height: number } | undefined
-
   // @todo use spine item manager global layout reference if possible
   // @todo getAbsolutePositionOf (for width and height)
   const getElementDimensions = () => {
-    if (memoizedElementDimensions) {
-      return memoizedElementDimensions
-    }
-
     // Keep in mind that getBoundingClientRect takes scale transform into consideration
     // It's better to not use this is the viewport / spine is being scaled
     const rect = containerElement.getBoundingClientRect()
@@ -67,9 +58,7 @@ export const createCommonSpineItem = ({
       height: Math.round(rect.height * 10) / 10,
     }
 
-    memoizedElementDimensions = normalizedValues
-
-    return memoizedElementDimensions
+    return normalizedValues
   }
 
   /**
@@ -77,7 +66,11 @@ export const createCommonSpineItem = ({
    * If an image is detected for reflowable for example we may want to display
    * things accordingly.
    */
-  const isImageType = () => !!item.mediaType?.startsWith(`image/`)
+  const isImageType = () => {
+    const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
+
+    return !!mimeType?.startsWith(`image/`)
+  }
 
   const injectStyle = (cssText: string) => {
     spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)
@@ -131,9 +124,9 @@ export const createCommonSpineItem = ({
     }
   }
 
-  const loadContent = () => spineItemFrame.load()
+  const load = () => spineItemFrame.load()
 
-  const unloadContent = () => spineItemFrame.unload()
+  const unload = () => spineItemFrame.unload()
 
   const getBoundingRectOfElementFromSelector = (selector: string) => {
     const frame = spineItemFrame.getManipulableFrame()?.frame
@@ -147,10 +140,6 @@ export const createCommonSpineItem = ({
         ?.querySelector(selector)
         ?.getBoundingClientRect()
     }
-  }
-
-  const setLayoutDirty = () => {
-    memoizedElementDimensions = undefined
   }
 
   const getDimensionsForPaginatedContent = () => {
@@ -206,8 +195,6 @@ export const createCommonSpineItem = ({
       item,
       minimumWidth,
     })
-
-    setLayoutDirty()
   }
 
   const translateFramePositionIntoPage = (position: {
@@ -310,19 +297,15 @@ export const createCommonSpineItem = ({
 
   return {
     item,
-    load: () => {
-      setLayoutDirty()
-    },
     layout,
     adjustPositionOfElement,
     getElementDimensions,
     getHtmlFromResource: spineItemFrame.getHtmlFromResource,
     getResource,
     translateFramePositionIntoPage,
-    setLayoutDirty,
     injectStyle,
-    loadContent,
-    unloadContent,
+    load,
+    unload,
     spineItemFrame,
     element: containerElement,
     getBoundingRectOfElementFromSelector,
