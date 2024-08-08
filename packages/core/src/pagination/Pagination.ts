@@ -34,9 +34,6 @@ export class Pagination extends DestroyableClass {
     navigationId: undefined,
   })
 
-  /**
-   * We start emitting pagination information as soon as there is a valid pagination
-   */
   public pagination$ = this.paginationSubject.pipe(
     distinctUntilChanged(isShallowEqual),
     tap((value) => {

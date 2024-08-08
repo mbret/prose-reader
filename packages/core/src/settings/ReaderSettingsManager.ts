@@ -10,11 +10,12 @@ import { Context } from "../context/Context"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { Report } from "../report"
 import { SettingsManager } from "./SettingsManager"
+import { SettingsInterface } from "./SettingsInterface"
 
-export class ReaderSettingsManager extends SettingsManager<
-  CoreInputSettings,
-  CoreOutputSettings
-> {
+export class ReaderSettingsManager
+  extends SettingsManager<CoreInputSettings, CoreOutputSettings>
+  implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
+{
   constructor(
     initialSettings: Partial<CoreInputSettings>,
     protected context: Context,
@@ -113,13 +114,9 @@ export class ReaderSettingsManager extends SettingsManager<
     return {
       forceSinglePageMode: false,
       pageTurnAnimation: `none` as const,
-      //   computedPageTurnAnimation: `none`,
       pageTurnDirection: `horizontal` as const,
-      //   computedPageTurnDirection: `horizontal`,
       pageTurnAnimationDuration: undefined,
-      //   computedPageTurnAnimationDuration: 0,
       pageTurnMode: `controlled` as const,
-      //   computedPageTurnMode: `controlled`,
       snapAnimationDuration: 300,
       navigationSnapThreshold: 0.3,
       numberOfAdjacentSpineItemToPreLoad: 0,

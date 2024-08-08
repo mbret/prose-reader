@@ -18,6 +18,8 @@ import { getCfi } from "../cfi/generate/getCfiForSpineItemPage"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
 import { Spine } from "../spine/createSpine"
+import { SpineItem } from "../spineItem/createSpineItem"
+import { ViewportPosition } from "../navigation/ViewportNavigator"
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -48,6 +50,19 @@ export class PaginationController extends DestroyableClass {
       spineItemsManager.layout$.pipe(filter((hasChanged) => hasChanged)),
     ).pipe(
       switchMap(() => {
+        const getVisiblePagesFromViewportPosition = ({
+          spineItem,
+          position,
+        }: {
+          spineItem: SpineItem
+          position: ViewportPosition
+        }) =>
+          this.spine.spineLocator.getVisiblePagesFromViewportPosition({
+            spineItem: spineItem,
+            position,
+            threshold: 0.5,
+          })
+
         /**
          * @important
          *
@@ -86,17 +101,15 @@ export class PaginationController extends DestroyableClass {
             const endLastCfi = previousPagination.endCfi
 
             const { beginPageIndex = 0 } =
-              this.spine.spineLocator.getVisiblePagesFromViewportPosition({
+              getVisiblePagesFromViewportPosition({
                 spineItem: beginSpineItem,
                 position,
-                threshold: 0.5,
               }) ?? {}
 
             const { endPageIndex = 0 } =
-              this.spine.spineLocator.getVisiblePagesFromViewportPosition({
+              getVisiblePagesFromViewportPosition({
                 spineItem: endSpineItem,
                 position,
-                threshold: 0.5,
               }) ?? {}
 
             const shouldUpdateBeginCfi =
