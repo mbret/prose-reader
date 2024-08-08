@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { OperatorFunction } from "rxjs"
+import { Observable, OperatorFunction } from "rxjs"
 import { map } from "rxjs/operators"
 
 export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
@@ -19,5 +19,21 @@ export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
       },
       {} as Pick<typeof obj, K>,
     )
+  })
+}
+
+export function observeResize(
+  element: HTMLElement,
+): Observable<ResizeObserverEntry[]> {
+  return new Observable<ResizeObserverEntry[]>((observer) => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      observer.next(entries)
+    })
+
+    resizeObserver.observe(element)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
   })
 }
