@@ -8,9 +8,9 @@ import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { extractProseMetadataFromCfi } from "../cfi/lookup/extractProseMetadataFromCfi"
 import { DestroyableClass } from "../utils/DestroyableClass"
 
-const NAMESPACE = `spineItemManager`
+const NAMESPACE = `spineItemsManager`
 
-export class SpineItemManager extends DestroyableClass {
+export class SpineItemsManager extends DestroyableClass {
   constructor(
     protected context: Context,
     protected settings: ReaderSettingsManager,
