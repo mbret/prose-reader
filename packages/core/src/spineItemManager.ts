@@ -1,29 +1,32 @@
-import { BehaviorSubject, merge, Subject } from "rxjs"
-import { tap, takeUntil, switchMap, map } from "rxjs/operators"
+import { BehaviorSubject, Subject } from "rxjs"
+import { tap, takeUntil } from "rxjs/operators"
 import { Report } from "./report"
 import { Context } from "./context/Context"
 import { SpineItem } from "./spineItem/createSpineItem"
 import { isShallowEqual } from "./utils/objects"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
+import { extractProseMetadataFromCfi } from "./cfi/lookup/extractProseMetadataFromCfi"
+import { DestroyableClass } from "./utils/DestroyableClass"
 
 const NAMESPACE = `spineItemManager`
 
-export const createSpineItemManager = ({
-  context,
-  settings,
-}: {
-  context: Context
-  settings: ReaderSettingsManager
-}) => {
-  const focus$ = new Subject<{ data: SpineItem }>()
-  const layout$ = new Subject<boolean>()
+export class SpineItemManager extends DestroyableClass {
+  constructor(
+    protected context: Context,
+    protected settings: ReaderSettingsManager,
+  ) {
+    super()
+  }
+
+  protected layoutSubject = new Subject<boolean>()
+
   /**
    * This contains every item dimension / position on the viewport.
    * This is only used to avoid intensively request bounding of each items later.
    * This is always in sync with every layout since it is being updated for every layout
    * done with the manager.
    */
-  let itemLayoutInformation: {
+  protected itemLayoutInformation: {
     left: number
     right: number
     top: number
@@ -31,18 +34,11 @@ export const createSpineItemManager = ({
     width: number
     height: number
   }[] = []
-  const orderedSpineItemsSubject$ = new BehaviorSubject<SpineItem[]>([])
-  /**
-   * focused item represent the current item that the user navigated to.
-   * It can be either the left or right page for a spread, not necessarily the begin item
-   * either. This focused item is very important for everything that is related to navigation
-   * and adjustment of viewport.
-   *
-   * @important
-   * The focused item can sometime not be visible on the screen, in case of a viewport misalignment.
-   * However it means the next adjustment will use the focused item to detect when to move the viewport.
-   */
-  let focusedSpineItemIndex: number | undefined
+
+  protected orderedSpineItemsSubject = new BehaviorSubject<SpineItem[]>([])
+
+  public items$ = this.orderedSpineItemsSubject.asObservable()
+  public layout$ = this.layoutSubject.asObservable()
 
   /**
    * @todo
@@ -52,20 +48,21 @@ export const createSpineItemManager = ({
    * make sure to check how many times it is being called and try to reduce number of layouts
    * it is called eery time an item is being unload (which can adds up quickly for big books)
    */
-  const layout = () => {
-    const manifest = context.manifest
-    const newItemLayoutInformation: typeof itemLayoutInformation = []
+  layout() {
+    const manifest = this.context.manifest
+    const newItemLayoutInformation: typeof this.itemLayoutInformation = []
     const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
 
-    orderedSpineItemsSubject$.value.reduce(
+    this.orderedSpineItemsSubject.value.reduce(
       ({ horizontalOffset, verticalOffset }, item, index) => {
-        let minimumWidth = context.getPageSize().width
+        let minimumWidth = this.context.getPageSize().width
         let blankPagePosition: `none` | `before` | `after` = `none`
         const itemStartOnNewScreen =
-          horizontalOffset % context.state.visibleAreaRect.width === 0
-        const isLastItem = index === orderedSpineItemsSubject$.value.length - 1
+          horizontalOffset % this.context.state.visibleAreaRect.width === 0
+        const isLastItem =
+          index === this.orderedSpineItemsSubject.value.length - 1
 
-        if (context.state.isUsingSpreadMode) {
+        if (this.context.state.isUsingSpreadMode) {
           /**
            * for now every reflowable content that has reflow siblings takes the entire screen by default
            * this simplify many things and I am not sure the specs allow one reflow
@@ -89,7 +86,7 @@ export const createSpineItemManager = ({
             item.item.renditionLayout === `reflowable` &&
             !isLastItem
           ) {
-            minimumWidth = context.getPageSize().width * 2
+            minimumWidth = this.context.getPageSize().width * 2
           }
 
           // mainly to make loading screen looks good
@@ -99,7 +96,7 @@ export const createSpineItemManager = ({
             isLastItem &&
             itemStartOnNewScreen
           ) {
-            minimumWidth = context.getPageSize().width * 2
+            minimumWidth = this.context.getPageSize().width * 2
           }
 
           const lastItemStartOnNewScreenInAPrepaginatedBook =
@@ -108,24 +105,24 @@ export const createSpineItemManager = ({
           if (
             item.item.pageSpreadRight &&
             itemStartOnNewScreen &&
-            !context.isRTL()
+            !this.context.isRTL()
           ) {
             blankPagePosition = `before`
-            minimumWidth = context.getPageSize().width * 2
+            minimumWidth = this.context.getPageSize().width * 2
           } else if (
             item.item.pageSpreadLeft &&
             itemStartOnNewScreen &&
-            context.isRTL()
+            this.context.isRTL()
           ) {
             blankPagePosition = `before`
-            minimumWidth = context.getPageSize().width * 2
+            minimumWidth = this.context.getPageSize().width * 2
           } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
-            if (context.isRTL()) {
+            if (this.context.isRTL()) {
               blankPagePosition = `before`
             } else {
               blankPagePosition = `after`
             }
-            minimumWidth = context.getPageSize().width * 2
+            minimumWidth = this.context.getPageSize().width * 2
           }
         }
 
@@ -135,26 +132,26 @@ export const createSpineItemManager = ({
         const { width, height } = item.layout({
           minimumWidth,
           blankPagePosition,
-          spreadPosition: context.state.isUsingSpreadMode
+          spreadPosition: this.context.state.isUsingSpreadMode
             ? itemStartOnNewScreen
-              ? context.isRTL()
+              ? this.context.isRTL()
                 ? `right`
                 : `left`
-              : context.isRTL()
+              : this.context.isRTL()
                 ? `left`
                 : `right`
             : `none`,
         })
 
-        if (settings.settings.computedPageTurnDirection === `vertical`) {
+        if (this.settings.settings.computedPageTurnDirection === `vertical`) {
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
             ? verticalOffset
-            : verticalOffset - context.state.visibleAreaRect.height
+            : verticalOffset - this.context.state.visibleAreaRect.height
           const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen
             ? 0
             : horizontalOffset
 
-          if (context.isRTL()) {
+          if (this.context.isRTL()) {
             item.adjustPositionOfElement({
               top: currentValidEdgeYForVerticalPositioning,
               left: currentValidEdgeXForVerticalPositioning,
@@ -188,19 +185,20 @@ export const createSpineItemManager = ({
         // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
         // it will be x from right
         item.adjustPositionOfElement(
-          context.isRTL()
+          this.context.isRTL()
             ? { right: horizontalOffset, top: 0 }
             : { left: horizontalOffset, top: 0 },
         )
 
         newItemLayoutInformation.push({
-          ...(context.isRTL()
+          ...(this.context.isRTL()
             ? {
                 left:
-                  context.state.visibleAreaRect.width -
+                  this.context.state.visibleAreaRect.width -
                   horizontalOffset -
                   width,
-                right: context.state.visibleAreaRect.width - horizontalOffset,
+                right:
+                  this.context.state.visibleAreaRect.width - horizontalOffset,
               }
             : {
                 left: horizontalOffset,
@@ -220,215 +218,144 @@ export const createSpineItemManager = ({
       { horizontalOffset: 0, verticalOffset: 0 },
     )
 
-    const hasLayoutChanges = itemLayoutInformation.some(
-      (old, index) => !isShallowEqual(old, newItemLayoutInformation[index]),
-    )
+    const hasLayoutChanges =
+      this.itemLayoutInformation.length !== newItemLayoutInformation.length ||
+      this.itemLayoutInformation.some(
+        (old, index) => !isShallowEqual(old, newItemLayoutInformation[index]),
+      )
 
-    itemLayoutInformation = newItemLayoutInformation
+    this.itemLayoutInformation = newItemLayoutInformation
 
-    Report.log(NAMESPACE, `layout`, { hasLayoutChanges, itemLayoutInformation })
+    Report.log(NAMESPACE, `layout`, {
+      hasLayoutChanges,
+      itemLayoutInformation: this.itemLayoutInformation,
+    })
 
-    layout$.next(hasLayoutChanges)
+    this.layoutSubject.next(hasLayoutChanges)
   }
 
-  const focus = (indexOrSpineItem: number | SpineItem) => {
-    const spineItemToFocus =
-      typeof indexOrSpineItem === `number`
-        ? get(indexOrSpineItem)
-        : indexOrSpineItem
-
-    if (!spineItemToFocus) return
-
-    const newActiveSpineItemIndex =
-      orderedSpineItemsSubject$.value.indexOf(spineItemToFocus)
-
-    if (newActiveSpineItemIndex === focusedSpineItemIndex) return
-
-    focusedSpineItemIndex = newActiveSpineItemIndex
-
-    focus$.next({ data: spineItemToFocus })
-  }
-
-  /**
-   * @todo
-   * optimize useless calls to it, such as when the layout has not changed and the focus is still the same
-   * @todo
-   * analyze poor performances
-   */
-  const loadContents = Report.measurePerformance(
-    `loadContents`,
-    10,
-    (rangeOfIndex: [number, number]) => {
-      const [leftIndex, rightIndex] = rangeOfIndex
-      const numberOfAdjacentSpineItemToPreLoad =
-        settings.settings.numberOfAdjacentSpineItemToPreLoad
-      const isPrePaginated =
-        context.manifest?.renditionLayout === `pre-paginated`
-      const isUsingFreeScroll =
-        settings.settings.computedPageTurnMode === `scrollable`
-
-      orderedSpineItemsSubject$.value.forEach((orderedSpineItem, index) => {
-        const isBeforeFocusedWithPreload =
-          // we never want to preload anything before on free scroll on flow because it could offset the cursor
-          index < leftIndex && !isPrePaginated && isUsingFreeScroll
-            ? true
-            : index < leftIndex - numberOfAdjacentSpineItemToPreLoad
-        const isAfterTailWithPreload =
-          index > rightIndex + numberOfAdjacentSpineItemToPreLoad
-
-        if (!isBeforeFocusedWithPreload && !isAfterTailWithPreload) {
-          orderedSpineItem.loadContent()
-        } else {
-          orderedSpineItem.unloadContent()
-        }
-      })
-    },
-  )
-
-  const get = (indexOrId: number | string) => {
+  get(indexOrId: number | string | SpineItem | undefined) {
     if (typeof indexOrId === `number`) {
-      return orderedSpineItemsSubject$.value[indexOrId]
+      return this.orderedSpineItemsSubject.value[indexOrId]
     }
 
-    return orderedSpineItemsSubject$.value.find(
-      ({ item }) => item.id === indexOrId,
-    )
+    if (typeof indexOrId === `string`) {
+      return this.orderedSpineItemsSubject.value.find(
+        ({ item }) => item.id === indexOrId,
+      )
+    }
+
+    return indexOrId
   }
 
   /**
    * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
    * current window (viewport).
    */
-  const getAbsolutePositionOf = (spineItemOrIndex: SpineItem | number) => {
-    const indexOfItem =
-      typeof spineItemOrIndex === `number`
-        ? spineItemOrIndex
-        : orderedSpineItemsSubject$.value.indexOf(spineItemOrIndex)
-
-    const layoutInformation = itemLayoutInformation[indexOfItem]
-
-    return (
-      layoutInformation || {
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-      }
-    )
-  }
-
-  const getFocusedSpineItem = () =>
-    focusedSpineItemIndex !== undefined
-      ? orderedSpineItemsSubject$.value[focusedSpineItemIndex]
-      : undefined
-
-  const comparePositionOf = (toCompare: SpineItem, withItem: SpineItem) => {
-    const isAfter =
-      orderedSpineItemsSubject$.value.indexOf(toCompare) >
-      orderedSpineItemsSubject$.value.indexOf(withItem)
-
-    if (isAfter) {
-      return `after`
+  getAbsolutePositionOf(
+    spineItemOrIndex: SpineItem | number | string | undefined,
+  ) {
+    const fallback = {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 0,
+      height: 0,
     }
 
-    return `before`
+    const spineItem = this.get(spineItemOrIndex)
+
+    const indexOfItem = spineItem
+      ? this.orderedSpineItemsSubject.value.indexOf(spineItem)
+      : -1
+
+    const layoutInformation = this.itemLayoutInformation[indexOfItem]
+
+    return layoutInformation || fallback
   }
 
-  const getSpineItemIndex = (spineItem: SpineItem | undefined) => {
+  comparePositionOf(toCompare: SpineItem, withItem: SpineItem) {
+    const toCompareIndex = this.getSpineItemIndex(toCompare) ?? 0
+    const withIndex = this.getSpineItemIndex(withItem) ?? 0
+
+    return toCompareIndex > withIndex
+      ? `after`
+      : toCompareIndex === withIndex
+        ? `same`
+        : `before`
+  }
+
+  getSpineItemIndex(spineItem: SpineItem | undefined) {
     if (!spineItem) return undefined
-    const index = orderedSpineItemsSubject$.value.indexOf(spineItem)
+    const index = this.orderedSpineItemsSubject.value.indexOf(spineItem)
 
     return index < 0 ? undefined : index
   }
 
-  const add = (spineItem: SpineItem) => {
-    orderedSpineItemsSubject$.value.push(spineItem)
+  add(spineItem: SpineItem) {
+    this.orderedSpineItemsSubject.next([
+      ...this.orderedSpineItemsSubject.getValue(),
+      spineItem,
+    ])
 
     spineItem.$.contentLayout$
-      .pipe(takeUntil(context.destroy$))
+      .pipe(takeUntil(this.context.destroy$))
       .subscribe(() => {
         // upstream change, meaning we need to layout again to both resize correctly each item but also to
         // adjust positions, etc
-        layout()
+        this.layout()
       })
 
     spineItem.$.loaded$
       .pipe(
         tap(() => {
           if (spineItem.isUsingVerticalWriting()) {
-            context.update({
+            this.context.update({
               hasVerticalWriting: true,
             })
           } else {
-            context.update({
+            this.context.update({
               hasVerticalWriting: false,
             })
           }
         }),
-        takeUntil(context.destroy$),
+        takeUntil(this.context.destroy$),
       )
       .subscribe()
-
-    spineItem.load()
   }
 
-  const getAll = () => orderedSpineItemsSubject$.value
-
-  const getLength = () => {
-    return orderedSpineItemsSubject$.value.length
+  getAll() {
+    return this.orderedSpineItemsSubject.value
   }
 
-  const getFocusedSpineItemIndex = () => {
-    const item = getFocusedSpineItem()
-    return item && getSpineItemIndex(item)
+  getLength() {
+    return this.orderedSpineItemsSubject.value.length
+  }
+
+  getSpineItemFromCfi(cfi: string) {
+    const { itemId } = extractProseMetadataFromCfi(cfi)
+
+    if (itemId) {
+      const { itemId } = extractProseMetadataFromCfi(cfi)
+      const spineItem = (itemId ? this.get(itemId) : undefined) || this.get(0)
+
+      return spineItem
+    }
+
+    return undefined
   }
 
   /**
    * @todo handle reload, remove subscription to each items etc. See add()
    */
-  const destroyItems = () => {
-    orderedSpineItemsSubject$.value.forEach((item) => item.destroy())
+  destroyItems() {
+    this.orderedSpineItemsSubject.value.forEach((item) => item.destroy())
   }
 
-  const destroy = () => {
-    destroyItems()
-    focus$.complete()
-    layout$.complete()
-  }
+  destroy() {
+    super.destroy()
 
-  return {
-    destroyItems,
-    add,
-    get,
-    getAll,
-    getLength,
-    layout,
-    focus,
-    loadContents,
-    comparePositionOf,
-    getAbsolutePositionOf,
-    getFocusedSpineItem,
-    getFocusedSpineItemIndex,
-    getSpineItemIndex,
-    destroy,
-    $: {
-      focus$: focus$.asObservable(),
-      layout$: layout$.asObservable(),
-      itemIsReady$: orderedSpineItemsSubject$.asObservable().pipe(
-        switchMap((items) => {
-          const itemsIsReady$ = items.map((item) =>
-            item.$.isReady$.pipe(
-              map((isReady) => ({ item: item.item, isReady })),
-            ),
-          )
-
-          return merge(...itemsIsReady$)
-        }),
-      ),
-    },
+    this.layoutSubject.complete()
   }
 }
-
-export type SpineItemManager = ReturnType<typeof createSpineItemManager>
