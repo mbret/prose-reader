@@ -1,10 +1,8 @@
 import {
   merge,
   filter,
-  switchMap,
   withLatestFrom,
   map,
-  take,
   debounceTime,
   animationFrameScheduler,
   takeUntil,
