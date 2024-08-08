@@ -17,7 +17,6 @@ import { isShallowEqual } from "./utils/objects"
 import { createNavigator } from "./navigation/Navigator"
 import { createSpineItemLocator as createSpineItemLocator } from "./spineItem/locationResolver"
 import { Manifest } from "@prose-reader/shared"
-import { LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import { HookManager } from "./hooks/HookManager"
@@ -27,17 +26,34 @@ import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
 import { resolveCfi } from "./cfi/lookup/resolveCfi"
 import { SpineItemsObserver } from "./spine/SpineItemsObserver"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
+import { SettingsInterface } from "./settings/SettingsInterface"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export const createReader = (
-  inputSettings: CreateReaderOptions,
-): ReaderInternal => {
-  const stateSubject$ = new BehaviorSubject<
-    ObservedValueOf<ReaderInternal["$"]["state$"]>
-  >({
+export type ContextSettings = Partial<CoreInputSettings>
+
+export type LoadOptions = {
+  cfi?: string | null
+  containerElement: HTMLElement
+}
+
+export type ReaderInternal = ReturnType<typeof createReader>
+
+export const createReader = (inputSettings: CreateReaderOptions) => {
+  const stateSubject$ = new BehaviorSubject<{
+    supportedPageTurnAnimation: NonNullable<
+      ContextSettings[`pageTurnAnimation`]
+    >[]
+    supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
+    supportedPageTurnDirection: NonNullable<
+      ContextSettings[`pageTurnDirection`]
+    >[]
+    supportedComputedPageTurnDirection: NonNullable<
+      ContextSettings[`pageTurnDirection`]
+    >[]
+  }>({
     supportedPageTurnAnimation: [`fade`, `none`, `slide`],
     supportedPageTurnMode: [`controlled`, `scrollable`],
     supportedPageTurnDirection: [`horizontal`, `vertical`],
@@ -255,7 +271,9 @@ export const createReader = (
     hookManager,
     cfi: {
       generateCfiFromRange,
-      resolveCfi: (params) => resolveCfi({ ...params, spineItemsManager }),
+      resolveCfi: (
+        params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,
+      ) => resolveCfi({ ...params, spineItemsManager }),
     },
     navigation: {
       viewportFree$: context.bridgeEvent.viewportFree$,
@@ -277,7 +295,10 @@ export const createReader = (
       getPaginationInfo: pagination.getPaginationInfo.bind(pagination),
       paginationInfo$: pagination.pagination$,
     },
-    settings: settingsManager,
+    settings: settingsManager as SettingsInterface<
+      NonNullable<(typeof settingsManager)["inputSettings"]>,
+      NonNullable<(typeof settingsManager)["outputSettings"]>
+    >,
     element$,
     $: {
       state$: stateSubject$.asObservable(),
