@@ -1,13 +1,7 @@
-import {
-  BehaviorSubject,
-  merge,
-  ObservedValueOf,
-  Subject,
-  switchMap,
-} from "rxjs"
+import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { Context } from "./context/Context"
-import { createPagination } from "./pagination/pagination"
+import { Pagination } from "./pagination/Pagination"
 import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
 import {
@@ -19,19 +13,20 @@ import {
   filter,
 } from "rxjs/operators"
 import { createSelection } from "./selection"
-import { createSpineItemManager } from "./spineItemManager"
 import { isShallowEqual } from "./utils/objects"
-import { createViewportNavigator } from "./viewportNavigator/viewportNavigator"
-import { createLocationResolver as createSpineItemLocator } from "./spineItem/locationResolver"
-import { createLocationResolver as createSpineLocator } from "./spine/locationResolver"
-import { createCfiLocator } from "./spine/cfiLocator"
-import { AdjustedNavigation, Navigation } from "./viewportNavigator/types"
+import { createNavigator } from "./navigation/Navigator"
+import { createSpineItemLocator as createSpineItemLocator } from "./spineItem/locationResolver"
 import { Manifest } from "@prose-reader/shared"
 import { LoadOptions, ReaderInternal } from "./types/reader"
 import { isDefined } from "./utils/isDefined"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import { HookManager } from "./hooks/HookManager"
 import { CoreInputSettings } from "./settings/types"
+import { PaginationController } from "./pagination/PaginationController"
+import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
+import { resolveCfi } from "./cfi/lookup/resolveCfi"
+import { SpineItemsObserver } from "./spine/SpineItemsObserver"
+import { SpineItemsManager } from "./spine/SpineItemsManager"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -52,76 +47,55 @@ export const createReader = (
   const selectionSubject$ = new Subject<ReturnType<
     typeof createSelection
   > | null>()
-  const navigationSubject = new Subject<Navigation>()
-  const navigationAdjustedSubject = new Subject<AdjustedNavigation>()
-  const currentNavigationPositionSubject$ = new BehaviorSubject({ x: 0, y: 0 })
-  const viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
   const hookManager = new HookManager()
   const context = new Context()
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
-  const spineItemManager = createSpineItemManager({
-    context,
-    settings: settingsManager,
-  })
-  const pagination = createPagination({ context, spineItemManager })
-
+  const spineItemsManager = new SpineItemsManager(context, settingsManager)
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(
     undefined,
   )
   const element$ = elementSubject$.pipe(filter(isDefined))
-  const spineItemLocator = createSpineItemLocator({ context })
-  const spineLocator = createSpineLocator({
+  const spineItemLocator = createSpineItemLocator({
     context,
-    spineItemManager,
-    spineItemLocator,
     settings: settingsManager,
   })
-  const cfiLocator = createCfiLocator({
-    spineItemManager,
-    context,
-    spineItemLocator,
-  })
-
-  const navigation$ = navigationSubject.asObservable()
+  const pagination = new Pagination(context, spineItemsManager)
 
   const spine = createSpine({
     element$,
     context,
     settings: settingsManager,
     pagination,
-    spineItemManager,
-    navigation$,
-    spineLocator,
+    spineItemsManager,
     spineItemLocator,
-    cfiLocator,
-    navigationAdjusted$: navigationAdjustedSubject.asObservable(),
-    viewportState$: viewportStateSubject.asObservable(),
-    currentNavigationPosition$:
-      currentNavigationPositionSubject$.asObservable(),
     hookManager,
   })
 
-  const viewportNavigator = createViewportNavigator({
+  const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
+
+  const navigator = createNavigator({
     context,
-    pagination,
-    spineItemManager,
+    spineItemsManager,
+    spineItemsObserver,
     parentElement$: elementSubject$,
-    cfiLocator,
-    spineLocator,
     hookManager,
     spine,
     settings: settingsManager,
   })
 
+  const paginationController = new PaginationController(
+    context,
+    pagination,
+    spineItemsManager,
+    spine,
+    spineItemLocator,
+  )
+
   // bridge all navigation stream with reader so they can be shared across app
-  viewportNavigator.$.state$.subscribe(viewportStateSubject)
-  viewportNavigator.$.navigation$.subscribe(navigationSubject)
-  viewportNavigator.$.navigationAdjustedAfterLayout$.subscribe(
-    navigationAdjustedSubject,
-  )
-  viewportNavigator.$.currentNavigationPosition$.subscribe(
-    currentNavigationPositionSubject$,
-  )
+  navigator.viewportState$.subscribe(context.bridgeEvent.viewportStateSubject)
+  navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
+  navigator.isLocked$.subscribe(context.bridgeEvent.navigationIsLockedSubject)
+  pagination.pagination$.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {
     const containerElement = elementSubject$.getValue()?.parentElement
@@ -161,7 +135,7 @@ export const createReader = (
       },
     })
 
-    viewportNavigator.layout()
+    spine.layout()
   }
 
   const load = (manifest: Manifest, loadOptions: LoadOptions) => {
@@ -190,15 +164,7 @@ export const createReader = (
       forceSinglePageMode: settingsManager.settings.forceSinglePageMode,
     })
 
-    // manifest.readingOrder.forEach((_, index) => resourcesManager.cache(index))
-
     layout()
-
-    if (!loadOptions.cfi) {
-      viewportNavigator.goToSpineItem(0, { animate: false })
-    } else {
-      viewportNavigator.goToCfi(loadOptions.cfi, { animate: false })
-    }
   }
 
   spine.$.$.pipe(
@@ -209,17 +175,6 @@ export const createReader = (
     }),
     takeUntil(destroy$),
   ).subscribe()
-
-  viewportNavigator.$.navigationAdjustedAfterLayout$
-    .pipe(
-      switchMap(({ adjustedSpinePosition }) => {
-        return spine
-          .adjustPagination(adjustedSpinePosition)
-          .pipe(takeUntil(navigation$))
-      }),
-      takeUntil(context.destroy$),
-    )
-    .subscribe()
 
   merge(context.state$, settingsManager.settings$)
     .pipe(
@@ -281,10 +236,11 @@ export const createReader = (
    * instead of destroying it.
    */
   const destroy = () => {
+    paginationController.destroy()
     settingsManager.destroy()
     pagination.destroy()
     context.destroy()
-    viewportNavigator.destroy()
+    navigator.destroy()
     spine.destroy()
     elementSubject$.getValue()?.remove()
     stateSubject$.complete()
@@ -293,16 +249,34 @@ export const createReader = (
     destroy$.complete()
   }
 
-  const reader = {
+  return {
     context,
     spine,
     hookManager,
-    viewportNavigator,
-    spineItemManager,
+    cfi: {
+      generateCfiFromRange,
+      resolveCfi: (params) => resolveCfi({ ...params, spineItemsManager }),
+    },
+    navigation: {
+      viewportFree$: context.bridgeEvent.viewportFree$,
+      viewportBusy$: context.bridgeEvent.viewportBusy$,
+      getCurrentViewportPosition:
+        navigator.getCurrentViewportPosition.bind(navigator),
+      getNavigation: navigator.getNavigation.bind(navigator),
+      getElement: navigator.getElement.bind(navigator),
+      navigate: navigator.navigate.bind(navigator),
+      lock: navigator.lock.bind(navigator),
+      navigationResolver: navigator.navigationResolver,
+    },
+    spineItemsObserver,
+    spineItemsManager,
     layout,
     load,
     destroy,
-    pagination,
+    pagination: {
+      getPaginationInfo: pagination.getPaginationInfo.bind(pagination),
+      paginationInfo$: pagination.pagination$,
+    },
     settings: settingsManager,
     element$,
     $: {
@@ -323,8 +297,6 @@ export const createReader = (
       destroy$,
     },
   }
-
-  return reader
 }
 
 const createWrapperElement = (containerElement: HTMLElement) => {
