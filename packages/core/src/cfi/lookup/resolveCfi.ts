@@ -1,5 +1,5 @@
 import { Report } from "../../report"
-import { SpineItemManager } from "../../spineItemManager"
+import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { CfiHandler } from "../CfiHandler"
 import { extractProseMetadataFromCfi } from "./extractProseMetadataFromCfi"
 
@@ -8,15 +8,15 @@ import { extractProseMetadataFromCfi } from "./extractProseMetadataFromCfi"
  */
 export const resolveCfi = ({
   cfi,
-  spineItemManager,
+  spineItemsManager,
 }: {
   cfi: string
-  spineItemManager: SpineItemManager
+  spineItemsManager: SpineItemsManager
 }) => {
   if (!cfi) return undefined
 
-  const spineItem = spineItemManager.getSpineItemFromCfi(cfi)
-  const spineItemIndex = spineItemManager.getSpineItemIndex(spineItem) || 0
+  const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
+  const spineItemIndex = spineItemsManager.getSpineItemIndex(spineItem) || 0
 
   if (!spineItem) return undefined
 

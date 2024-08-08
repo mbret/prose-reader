@@ -6,8 +6,9 @@ import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { LoadOptions } from "../types/reader"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
+import { BridgeEvent } from "./BridgeEvent"
+import { type LoadOptions } from "../reader"
 
 export type State = Partial<Pick<LoadOptions, "containerElement">> & {
   manifest?: Manifest
@@ -40,6 +41,8 @@ export class Context {
       y: 0,
     },
   })
+
+  public bridgeEvent = new BridgeEvent()
 
   public destroy$ = new Subject<void>()
 
