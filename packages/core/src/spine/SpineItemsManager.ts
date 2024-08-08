@@ -1,12 +1,12 @@
 import { BehaviorSubject, Subject } from "rxjs"
 import { tap, takeUntil } from "rxjs/operators"
-import { Report } from "./report"
-import { Context } from "./context/Context"
-import { SpineItem } from "./spineItem/createSpineItem"
-import { isShallowEqual } from "./utils/objects"
-import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
-import { extractProseMetadataFromCfi } from "./cfi/lookup/extractProseMetadataFromCfi"
-import { DestroyableClass } from "./utils/DestroyableClass"
+import { Report } from "../report"
+import { Context } from "../context/Context"
+import { SpineItem } from "../spineItem/createSpineItem"
+import { isShallowEqual } from "../utils/objects"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { extractProseMetadataFromCfi } from "../cfi/lookup/extractProseMetadataFromCfi"
+import { DestroyableClass } from "../utils/DestroyableClass"
 
 const NAMESPACE = `spineItemManager`
 
