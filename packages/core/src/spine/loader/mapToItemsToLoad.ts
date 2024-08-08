@@ -2,7 +2,7 @@ import { map, Observable } from "rxjs"
 import { ViewportPosition } from "../../navigation/ViewportNavigator"
 import { SpineLocationResolver } from "../resolvers/SpineLocationResolver"
 
-export const detectItemsToLoad =
+export const mapToItemsToLoad =
   ({ spineLocator }: { spineLocator: SpineLocationResolver }) =>
   (stream: Observable<ViewportPosition>) =>
     stream.pipe(

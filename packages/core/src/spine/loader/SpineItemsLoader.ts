@@ -15,7 +15,7 @@ import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { loadItems } from "./loadItems"
-import { detectItemsToLoad } from "./detectItemsToLoad"
+import { mapToItemsToLoad } from "./mapToItemsToLoad"
 
 export class SpineItemsLoader extends DestroyableClass {
   constructor(
@@ -51,7 +51,7 @@ export class SpineItemsLoader extends DestroyableClass {
       withLatestFrom(this.context.bridgeEvent.viewportFree$),
       withLatestFrom(this.context.bridgeEvent.navigation$),
       map(([, navigation]) => navigation.position),
-      detectItemsToLoad({ spineLocator }),
+      mapToItemsToLoad({ spineLocator }),
       loadItems({ spineItemsManager, settings }),
     )
 
