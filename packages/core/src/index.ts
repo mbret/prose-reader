@@ -1,6 +1,6 @@
 import { createSelection } from "./selection"
 
-export type { Manifest } from "./types"
+export type { Manifest } from "@prose-reader/shared"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 
