@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Context } from "../context/Context"
-import { createFrameItem } from "./frameItem/frameItem"
+import { createFrameItem } from "./frame/frameItem"
 import { Manifest } from ".."
 import { Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { map, withLatestFrom } from "rxjs/operators"
-import { createFrameManipulator } from "./frameItem/createFrameManipulator"
+import { createFrameManipulator } from "./frame/createFrameManipulator"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
