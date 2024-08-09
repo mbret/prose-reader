@@ -7,11 +7,7 @@ type Navigation = {
 }
 
 export const withUrlInfo =
-  ({
-    navigationResolver,
-  }: {
-    navigationResolver: NavigationResolver
-  }) =>
+  ({ navigationResolver }: { navigationResolver: NavigationResolver }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
       map((params) => {

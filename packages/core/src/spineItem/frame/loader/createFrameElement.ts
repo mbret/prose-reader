@@ -28,6 +28,6 @@ export const createFrameElement = Report.measurePerformance(
     opacity: 0;
   `
 
-  return frame
+    return frame
   },
 )

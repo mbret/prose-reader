@@ -23,9 +23,7 @@ export const resolveCfi = ({
   const { cleanedCfi, offset } = extractProseMetadataFromCfi(cfi)
   const cfiHandler = new CfiHandler(cleanedCfi, {})
 
-  const doc =
-    spineItem.frame.element?.contentWindow
-      ?.document
+  const doc = spineItem.frame.element?.contentWindow?.document
 
   if (doc) {
     try {

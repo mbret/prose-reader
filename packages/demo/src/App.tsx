@@ -55,7 +55,7 @@ const Effects: FC<{ reader: ReaderInstance | undefined }> = ({ reader }) => {
   useEffect(() => {
     const zoomSub = reader?.zoom.$.isZooming$.subscribe(setIsZoomingState)
 
-    const paginationSub = reader?.pagination.paginationInfo$.subscribe(({ beginCfi = `` }) => {
+    const paginationSub = reader?.pagination.pagination$.subscribe(({ beginCfi = `` }) => {
       localStorage.setItem(`cfi`, beginCfi)
     })
 

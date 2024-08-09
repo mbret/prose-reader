@@ -11,7 +11,7 @@ export const createSpineItem = ({
   containerElement,
   settings,
   hookManager,
-  index
+  index,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -27,7 +27,7 @@ export const createSpineItem = ({
       containerElement,
       settings,
       hookManager,
-      index
+      index,
     })
   }
 
@@ -37,7 +37,7 @@ export const createSpineItem = ({
     containerElement,
     settings,
     hookManager,
-    index
+    index,
   })
 }
 

@@ -9,8 +9,8 @@ export type TapEvent =
   | { type: "doubleTap"; event: MouseEvent | TouchEvent | PointerEvent; x: number; y: number }
 
 export const mapMixedEventToPosition = (event: MouseEvent | TouchEvent) => ({
-  x: "changedTouches" in event ? event.changedTouches[0]?.pageX ?? 0 : event.x,
-  y: "changedTouches" in event ? event.changedTouches[0]?.pageY ?? 0 : event.y,
+  x: "changedTouches" in event ? (event.changedTouches[0]?.pageX ?? 0) : event.x,
+  y: "changedTouches" in event ? (event.changedTouches[0]?.pageY ?? 0) : event.y,
 })
 
 export const createTapHandler = (

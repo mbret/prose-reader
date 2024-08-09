@@ -8,30 +8,30 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const setCurrentSelection = useSetRecoilState(currentHighlight)
 
-  useEffect(() => {
-    const readerSubscription = reader?.$.selection$
-      .pipe(
-        tap((data) => {
-          if (data?.toString() !== ``) {
-            const anchorCfi = data?.getAnchorCfi()
-            const focusCfi = data?.getFocusCfi()
+  // useEffect(() => {
+  //   const readerSubscription = reader?.$.selection$
+  //     .pipe(
+  //       tap((data) => {
+  //         if (data?.toString() !== ``) {
+  //           const anchorCfi = data?.getAnchorCfi()
+  //           const focusCfi = data?.getFocusCfi()
 
-            if (anchorCfi && focusCfi) {
-              const highlight = { anchorCfi, focusCfi, text: data?.toString(), id: new Date().getTime().toString() }
-              setCurrentSelection(highlight)
-              setMenuOpenState(false)
-            }
-          } else {
-            setCurrentSelection(undefined)
-          }
-        })
-      )
-      .subscribe()
+  //           if (anchorCfi && focusCfi) {
+  //             const highlight = { anchorCfi, focusCfi, text: data?.toString(), id: new Date().getTime().toString() }
+  //             setCurrentSelection(highlight)
+  //             setMenuOpenState(false)
+  //           }
+  //         } else {
+  //           setCurrentSelection(undefined)
+  //         }
+  //       })
+  //     )
+  //     .subscribe()
 
-    return () => {
-      readerSubscription?.unsubscribe()
-    }
-  }, [reader, setMenuOpenState])
+  //   return () => {
+  //     readerSubscription?.unsubscribe()
+  //   }
+  // }, [reader, setMenuOpenState])
 
   useEffect(() => {
     const subscription = reader?.highlights.$.pipe(

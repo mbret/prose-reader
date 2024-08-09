@@ -26,7 +26,7 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
         }}
         onClick={() => {
           onExit()
-          reader?.viewportNavigator.goToUrl(tocItem.href)
+          reader?.navigation.goToUrl(tocItem.href)
         }}
       >
         {currentSubChapter?.path === tocItem.path && <ListIcon as={CheckCircleIcon} />}

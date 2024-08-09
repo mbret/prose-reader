@@ -60,10 +60,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
 
           // console.log('hammer.tap', x, width * pageTurnMargin)
           if (x < width * pageTurnMargin) {
-            reader.viewportNavigator.turnLeft()
+            reader.navigation.turnLeft()
             // console.log('hammer.tap.left')
           } else if (x > width * (1 - pageTurnMargin)) {
-            reader.viewportNavigator.turnRight()
+            reader.navigation.turnRight()
           } else {
             if (hasCurrentHighlight) {
               setMenuOpenState(false)
@@ -154,10 +154,10 @@ export const useGestureHandler = (container: HTMLElement | undefined) => {
         const velocity = computedPageTurnDirection === `horizontal` ? ev.velocityX : ev.velocityY
         // console.log(`hammer.onPanMove.velocity`, velocity)
         if (velocity < -0.5) {
-          reader?.viewportNavigator.turnRight()
+          reader?.navigation.turnRight()
         }
         if (velocity > 0.5) {
-          reader?.viewportNavigator.turnLeft()
+          reader?.navigation.turnLeft()
         }
       }
 

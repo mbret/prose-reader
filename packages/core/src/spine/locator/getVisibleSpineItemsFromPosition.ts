@@ -32,9 +32,8 @@ export const getVisibleSpineItemsFromPosition = ({
     getSpineItemFromPosition({ position, settings, spineItemsManager }) ||
     spineItemsManager.get(0)
 
-  const spineItemsVisible = spineItemsManager
-    .items
-    .reduce<SpineItem[]>((acc, spineItem) => {
+  const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
+    (acc, spineItem) => {
       const itemPosition = spineItemsManager.getAbsolutePositionOf(spineItem)
 
       const { visible } = getItemVisibilityForPosition({
@@ -50,7 +49,9 @@ export const getVisibleSpineItemsFromPosition = ({
       }
 
       return acc
-    }, [])
+    },
+    [],
+  )
 
   const beginItem = spineItemsVisible[0] ?? fallbackSpineItem
   const endItem = spineItemsVisible[spineItemsVisible.length - 1] ?? beginItem

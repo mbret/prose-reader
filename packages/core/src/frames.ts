@@ -44,6 +44,7 @@ export const getAttributeValueFromString = (string: string, key: string) => {
 export const getOriginalFrameEventFromDocumentEvent = <E extends Event>(
   event: E,
 ): E | undefined => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   return event[__UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY]
 }

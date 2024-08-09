@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Observable, of, OperatorFunction } from "rxjs"
-import { first, map, switchMap, withLatestFrom } from "rxjs/operators"
+import { Observable, OperatorFunction } from "rxjs"
+import { first, map, switchMap } from "rxjs/operators"
 
 export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
   keys: K[],

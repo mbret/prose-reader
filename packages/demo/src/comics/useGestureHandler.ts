@@ -30,9 +30,9 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         }
 
         if (x < width * pageTurnMargin) {
-          reader.viewportNavigator.turnLeft()
+          reader.navigation.turnLeft()
         } else if (x > width * (1 - pageTurnMargin)) {
-          reader.viewportNavigator.turnRight()
+          reader.navigation.turnRight()
         } else {
           setMenuOpenState((val) => !val)
         }
@@ -96,7 +96,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         } else {
           if (normalizedEvent && `x` in normalizedEvent) {
             movingStartOffsets = { x: normalizedEvent.x, y: normalizedEvent.y }
-            reader?.viewportNavigator.moveTo({ x: 0, y: 0 }, { start: true })
+            reader?.navigation.moveTo({ x: 0, y: 0 }, { start: true })
           }
         }
       }
@@ -105,7 +105,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
         if (reader?.zoom.isZooming()) {
           reader.zoom.move({ x: ev.deltaX, y: ev.deltaY }, { isFirst: false, isLast: false })
         } else {
-          reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY })
+          reader?.navigation.moveTo({ x: deltaX, y: deltaY })
         }
       }
 
@@ -115,7 +115,7 @@ export const useGestureHandler = (container: HTMLElement | undefined, isUsingFre
           reader.zoom.move(undefined, { isFirst: false, isLast: true })
         } else {
           if (movingHasStarted.current) {
-            reader?.viewportNavigator.moveTo({ x: deltaX, y: deltaY }, { final: true })
+            reader?.navigation.moveTo({ x: deltaX, y: deltaY }, { final: true })
           }
         }
 

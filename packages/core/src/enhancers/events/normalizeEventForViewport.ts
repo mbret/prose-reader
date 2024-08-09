@@ -1,14 +1,14 @@
 import { BehaviorSubject } from "rxjs"
 import { getOriginalFrameEventFromDocumentEvent } from "../../frames"
-import { createLocationResolver } from "../../spine/locationResolver"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
+import { SpineLocator } from "../../spine/locator/SpineLocator"
 
 export const createNormalizeEventForViewport = ({
   iframeEventBridgeElement$,
   locator,
 }: {
   iframeEventBridgeElement$: BehaviorSubject<HTMLElement | undefined>
-  locator: ReturnType<typeof createLocationResolver>
+  locator: SpineLocator
 }) => {
   const normalizeEventForViewport = <
     E extends MouseEvent | TouchEvent | PointerEvent,

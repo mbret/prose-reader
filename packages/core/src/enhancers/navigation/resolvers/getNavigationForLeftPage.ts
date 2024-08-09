@@ -20,7 +20,7 @@ export const getNavigationForLeftPage = ({
   navigationResolver,
   spineItemsManager,
   spineLocator,
-  computedPageTurnDirection
+  computedPageTurnDirection,
 }: {
   position: ViewportPosition
   spineItem: SpineItem

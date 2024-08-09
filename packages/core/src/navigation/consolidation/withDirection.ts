@@ -106,7 +106,6 @@ export const getOrGuessDirection = ({
   }
 }
 
-
 export const withDirection =
   ({
     context,

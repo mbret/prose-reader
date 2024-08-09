@@ -4,6 +4,6 @@ import { Observable, switchMap } from "rxjs"
 
 export const [useReaderState] = bind((reader: Reader) => reader.$.state$)
 export const [usePagination] = bind(
-  (reader$: Observable<Reader>) => reader$.pipe(switchMap((reader) => reader.pagination.paginationInfo$)),
+  (reader$: Observable<Reader>) => reader$.pipe(switchMap((reader) => reader.pagination.pagination$)),
   undefined
 )

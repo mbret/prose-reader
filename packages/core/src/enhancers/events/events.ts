@@ -51,7 +51,7 @@ export const eventsEnhancer =
     const reader = next(options)
 
     reader.hookManager.register(`item.onLoad`, ({ destroy, frame, itemId }) => {
-      const item = reader.spineItemManager.get(itemId)
+      const item = reader.spineItemsManager.get(itemId)
 
       if (!item) return
 
