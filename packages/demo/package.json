@@ -24,7 +24,6 @@
       "@fontsource/dancing-script": "^5.0.16",
       "@prose-reader/core": "*",
       "@prose-reader/enhancer-bookmarks": "*",
-      "@prose-reader/enhancer-debug": "*",
       "@prose-reader/enhancer-hammer-gesture": "*",
       "@prose-reader/enhancer-highlights": "*",
       "@prose-reader/enhancer-search": "*",
