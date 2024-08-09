@@ -330,7 +330,6 @@ const createContainerElement = (
   element.style.cssText = `
     position: absolute;
     overflow: hidden;
-    border: 1px solid red;
   `
 
   hookManager.execute("item.onBeforeContainerCreated", undefined, { element })
