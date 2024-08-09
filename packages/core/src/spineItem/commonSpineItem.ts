@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Context } from "../context/Context"
-import { createFrameItem } from "./frame/FrameItem"
+import { FrameItem } from "./frame/FrameItem"
 import { Manifest } from ".."
 import { Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
@@ -33,13 +33,13 @@ export const createCommonSpineItem = ({
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  const frame = createFrameItem({
-    parent: containerElement,
+  const frame = new FrameItem(
+    containerElement,
     item,
     context,
-    hookManager,
     settings,
-  })
+    hookManager,
+  )
   // let layoutInformation: { blankPagePosition: `before` | `after` | `none`, minimumWidth: number } = { blankPagePosition: `none`, minimumWidth: context.getPageSize().width }
 
   containerElement.appendChild(overlayElement)
@@ -249,8 +249,8 @@ export const createCommonSpineItem = ({
       ...options,
     })
 
-  const contentLayout$ = frame.$.contentLayoutChange$.pipe(
-    withLatestFrom(frame.$.isReady$),
+  const contentLayout$ = frame.contentLayoutChange$.pipe(
+    withLatestFrom(frame.isReady$),
     map(([data, isReady]) => ({
       isFirstLayout: data.isFirstLayout,
       isReady,
@@ -303,8 +303,8 @@ export const createCommonSpineItem = ({
     getDimensionsForPaginatedContent,
     $: {
       contentLayout$,
-      loaded$: frame.$.loaded$,
-      isReady$: frame.$.isReady$,
+      loaded$: frame.loaded$,
+      isReady$: frame.isReady$,
     },
   }
 }

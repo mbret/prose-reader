@@ -1,4 +1,4 @@
-import { merge, Subject } from "rxjs"
+import { merge, Observable, Subject } from "rxjs"
 import { Manifest } from "../.."
 import { Context } from "../../context/Context"
 import {
@@ -11,67 +11,69 @@ import { createLoader } from "./loader"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { type HookManager } from "../../hooks/HookManager"
+import { DestroyableClass } from "../../utils/DestroyableClass"
 
-export const createFrameItem = ({
-  item,
-  parent,
-  context,
-  settings,
-  hookManager,
-}: {
-  parent: HTMLElement
-  item: Manifest[`spineItems`][number]
-  context: Context
-  settings: ReaderSettingsManager
-  hookManager: HookManager
-}) => {
-  const destroySubject$ = new Subject<void>()
+export class FrameItem extends DestroyableClass {
+  protected loader: ReturnType<typeof createLoader>
 
-  const {
-    $: {
-      unload$,
-      loaded$,
-      isLoaded$,
-      isReady$,
-      unloaded$,
-      frameElement$,
-      ready$,
-    },
-    load,
-    unload,
-    destroy: loaderDestroy,
-    getComputedStyleAfterLoad,
-  } = createLoader({
-    context,
-    hookManager,
-    item,
-    parent,
-    settings,
-  })
+  public contentLayoutChange$: Observable<{
+    isFirstLayout: boolean
+  }>
+
+  constructor(
+    protected parent: HTMLElement,
+    protected item: Manifest[`spineItems`][number],
+    protected context: Context,
+    protected settings: ReaderSettingsManager,
+    protected hookManager: HookManager,
+  ) {
+    super()
+
+    this.loader = createLoader({
+      context,
+      hookManager,
+      item,
+      parent,
+      settings,
+    })
+
+    this.loader.$.isLoaded$.subscribe({
+      next: (value) => {
+        this.isLoadedSync = value
+      },
+    })
+
+    this.loader.$.isReady$.subscribe({
+      next: (value) => {
+        this.isReadySync = value
+      },
+    })
+
+    /**
+     * This is used as upstream layout change. This event is being listened to by upper app
+     * in order to layout again and adjust every element based on the new content.
+     */
+    this.contentLayoutChange$ = merge(
+      this.loader.$.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
+      this.ready$.pipe(map(() => ({ isFirstLayout: true }))),
+    )
+  }
+
+  public destroySubject$ = new Subject<void>()
 
   /**
    * @deprecated
    */
-  let isLoadedSync = false
+  public isLoadedSync = false
+
   /**
    * @deprecated
    */
-  let isReadySync = false
-
-  isLoaded$.subscribe({
-    next: (value) => {
-      isLoadedSync = value
-    },
-  })
-  isReady$.subscribe({
-    next: (value) => {
-      isReadySync = value
-    },
-  })
+  public isReadySync = false
 
   // @todo memoize
-  const getViewportDimensions = () => {
-    const frame = frameElement$.getValue()
+  public getViewportDimensions = () => {
+    const frame = this.loader.$.frameElement$.getValue()
 
     if (frame && frame?.contentDocument) {
       const doc = frame.contentDocument
@@ -99,110 +101,117 @@ export const createFrameItem = ({
     return undefined
   }
 
-  const getWritingMode = () => {
-    return getComputedStyleAfterLoad()?.writingMode as
+  public getWritingMode = () => {
+    return this.loader.getComputedStyleAfterLoad()?.writingMode as
       | `vertical-rl`
       | `horizontal-tb`
       | undefined
   }
 
-  const isUsingVerticalWriting = () => {
-    return !!getWritingMode()?.startsWith(`vertical`)
+  public isUsingVerticalWriting = () => {
+    return !!this.getWritingMode()?.startsWith(`vertical`)
   }
 
-  const getHtmlFromResource = (response: Response) => {
-    return createHtmlPageFromResource(response, item)
+  public getHtmlFromResource = (response: Response) => {
+    return createHtmlPageFromResource(response, this.item)
   }
 
-  const contentLayoutChange$ = merge(
-    unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
-    ready$.pipe(map(() => ({ isFirstLayout: true }))),
-  )
+  public destroy = () => {
+    super.destroy()
 
-  const destroy = () => {
-    unload()
-    loaderDestroy()
-    destroySubject$.next()
-    destroySubject$.complete()
+    this.loader.unload()
+    this.loader.destroy()
   }
 
-  return {
-    get element() {
-      return frameElement$.getValue()
-    },
-    /**
-     * @deprecated
-     */
-    getIsLoaded: () => isLoadedSync,
-    /**
-     * @deprecated
-     */
-    getIsReady: () => isReadySync,
-    getViewportDimensions,
-    getFrameElement: () => frameElement$.getValue(),
-    getHtmlFromResource,
-    load,
-    unload,
-    /**
-     * Upward layout is used when the parent wants to manipulate the iframe without triggering
-     * `layout` event. This is a particular case needed for iframe because the parent can layout following
-     * an iframe `layout` event. Because the parent `layout` may change some of iframe properties we do not
-     * want the iframe to trigger a new `layout` even and have infinite loop.
-     */
-    staticLayout: (size: { width: number; height: number }) => {
-      const frame = frameElement$.getValue()
-      if (frame) {
-        frame.style.width = `${size.width}px`
-        frame.style.height = `${size.height}px`
+  get element() {
+    return this.loader.$.frameElement$.getValue()
+  }
 
-        if (settings.settings.computedPageTurnMode !== `scrollable`) {
-          // @todo see what's the impact
-          frame.setAttribute(`tab-index`, `0`)
-        }
+  /**
+   * @deprecated
+   */
+  public getIsLoaded = () => this.isLoadedSync
+
+  /**
+   * @deprecated
+   */
+  public getIsReady = () => this.isReadySync
+
+  public getFrameElement = () => this.loader.$.frameElement$.getValue()
+
+  public load() {
+    this.loader.load()
+  }
+
+  public unload() {
+    this.loader.unload()
+  }
+
+  /**
+   * Upward layout is used when the parent wants to manipulate the iframe without triggering
+   * `layout` event. This is a particular case needed for iframe because the parent can layout following
+   * an iframe `layout` event. Because the parent `layout` may change some of iframe properties we do not
+   * want the iframe to trigger a new `layout` even and have infinite loop.
+   */
+  public staticLayout = (size: { width: number; height: number }) => {
+    const frame = this.loader.$.frameElement$.getValue()
+    if (frame) {
+      frame.style.width = `${size.width}px`
+      frame.style.height = `${size.height}px`
+
+      if (this.settings.settings.computedPageTurnMode !== `scrollable`) {
+        // @todo see what's the impact
+        frame.setAttribute(`tab-index`, `0`)
       }
-    },
-    addStyle(id: string, style: string, prepend?: boolean) {
-      const frameElement = frameElement$.getValue()
+    }
+  }
 
-      if (frameElement) {
-        createAddStyleHelper(frameElement)(id, style, prepend)
-      }
-    },
-    removeStyle(id: string) {
-      const frameElement = frameElement$.getValue()
+  public addStyle(id: string, style: string, prepend?: boolean) {
+    const frameElement = this.loader.$.frameElement$.getValue()
 
-      if (frameElement) {
-        createRemoveStyleHelper(frameElement)(id)
-      }
-    },
-    getReadingDirection: (): `ltr` | `rtl` | undefined => {
-      const writingMode = getWritingMode()
-      if (writingMode === `vertical-rl`) {
-        return `rtl`
-      }
+    if (frameElement) {
+      createAddStyleHelper(frameElement)(id, style, prepend)
+    }
+  }
 
-      const direction = getComputedStyleAfterLoad()?.direction
-      if ([`ltr`, `rtl`].includes(direction || ``))
-        return direction as `ltr` | `rtl`
+  public removeStyle(id: string) {
+    const frameElement = this.loader.$.frameElement$.getValue()
 
-      return undefined
-    },
-    isUsingVerticalWriting,
-    getWritingMode,
-    destroy,
-    $: {
-      unload$: unload$,
-      unloaded$: unloaded$,
-      loaded$,
-      ready$,
-      isReady$,
-      /**
-       * This is used as upstream layout change. This event is being listened to by upper app
-       * in order to layout again and adjust every element based on the new content.
-       */
-      contentLayoutChange$,
-    },
+    if (frameElement) {
+      createRemoveStyleHelper(frameElement)(id)
+    }
+  }
+
+  public getReadingDirection = (): `ltr` | `rtl` | undefined => {
+    const writingMode = this.getWritingMode()
+    if (writingMode === `vertical-rl`) {
+      return `rtl`
+    }
+
+    const direction = this.loader.getComputedStyleAfterLoad()?.direction
+    if ([`ltr`, `rtl`].includes(direction || ``))
+      return direction as `ltr` | `rtl`
+
+    return undefined
+  }
+
+  get unload$() {
+    return this.loader.$.unload$
+  }
+
+  get unloaded$() {
+    return this.loader.$.unloaded$
+  }
+
+  get loaded$() {
+    return this.loader.$.loaded$
+  }
+
+  get ready$() {
+    return this.loader.$.ready$
+  }
+
+  get isReady$() {
+    return this.loader.$.isReady$
   }
 }
-
-export type SpineItemFrame = ReturnType<typeof createFrameItem>
