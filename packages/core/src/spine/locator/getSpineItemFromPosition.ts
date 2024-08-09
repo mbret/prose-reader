@@ -1,4 +1,4 @@
-import { ViewportPosition } from "../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManager } from "../SpineItemsManager"
 

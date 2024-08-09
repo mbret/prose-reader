@@ -1,5 +1,5 @@
 import { map, Observable } from "rxjs"
-import { ViewportPosition } from "../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { SpineLocator } from "../locator/SpineLocator"
 
 export const mapToItemsToLoad =

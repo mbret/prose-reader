@@ -1,6 +1,6 @@
 import { Context } from "../../../context/Context"
 import { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import { ViewportPosition } from "../../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import { SpineLocator } from "../../../spine/locator/SpineLocator"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import { getSpineItemPositionForLeftPage } from "./getSpineItemPositionForLeftPage"

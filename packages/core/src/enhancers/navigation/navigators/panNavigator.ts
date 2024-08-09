@@ -1,6 +1,6 @@
 import { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import { ViewportPosition } from "../../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }
@@ -29,8 +29,8 @@ export class PanNavigator {
 
       // stateSubject$.next(`start`)
       this.lastDelta = { x: 0, y: 0 }
-      this.lastStartPosition =
-        this.reader.navigation.getCurrentViewportPosition()
+      this.lastStartPosition = this.reader.navigation.viewportPosition
+
       this.lastPosition = this.lastStartPosition
     }
 

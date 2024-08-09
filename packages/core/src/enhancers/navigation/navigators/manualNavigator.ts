@@ -1,6 +1,6 @@
 import { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import { ViewportPosition } from "../../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import { getNavigationForRightPage } from "../resolvers/getNavigationForRightPage"
 import { getNavigationForLeftPage } from "../resolvers/getNavigationForLeftPage"
 

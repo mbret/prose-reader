@@ -1,5 +1,5 @@
 import { Context } from "../../context/Context"
-import { ViewportPosition } from "../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItem } from "../../spineItem/createSpineItem"
 import { SpineItemsManager } from "../SpineItemsManager"

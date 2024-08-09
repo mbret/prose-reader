@@ -264,8 +264,10 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     navigation: {
       viewportFree$: context.bridgeEvent.viewportFree$,
       viewportBusy$: context.bridgeEvent.viewportBusy$,
-      getCurrentViewportPosition:
-        navigator.getCurrentViewportPosition.bind(navigator),
+      // rest safe
+      get viewportPosition() {
+        return navigator.viewportNavigator.viewportPosition
+      },
       getNavigation: navigator.getNavigation.bind(navigator),
       getElement: navigator.getElement.bind(navigator),
       navigate: navigator.navigate.bind(navigator),

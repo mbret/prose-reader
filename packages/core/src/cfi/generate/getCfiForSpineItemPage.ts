@@ -27,9 +27,7 @@ export const getCfi = Report.measurePerformance(
       pageIndex,
       spineItem,
     )
-    const doc =
-      spineItem.frame.getManipulableFrame()?.frame?.contentWindow
-        ?.document
+    const doc = spineItem.frame.element?.contentWindow?.document
 
     const itemAnchor = getItemAnchor(spineItem)
     // because the current cfi library does not works well with offset we are just using custom

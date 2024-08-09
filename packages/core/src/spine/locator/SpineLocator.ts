@@ -8,7 +8,7 @@ import {
   UnsafeSpineItemPosition,
 } from "../../spineItem/types"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { ViewportPosition } from "../../navigation/ViewportNavigator"
+import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
