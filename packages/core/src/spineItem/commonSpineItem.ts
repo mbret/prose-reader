@@ -5,7 +5,6 @@ import { Manifest } from ".."
 import { Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { map, withLatestFrom } from "rxjs/operators"
-import { createFrameManipulator } from "./frame/createFrameManipulator"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
@@ -241,43 +240,6 @@ export const createCommonSpineItem = ({
     return await lastFetch(item)
   }
 
-  const manipulateSpineItem = (
-    cb: (
-      options: {
-        container: HTMLElement
-        item: Manifest[`spineItems`][number]
-        overlayElement: HTMLDivElement
-      } & (
-        | ReturnType<typeof createFrameManipulator>
-        | {
-            frame: undefined
-            removeStyle: (id: string) => void
-            addStyle: (id: string, style: string) => void
-          }
-      ),
-    ) => boolean,
-  ) => {
-    if (frame.element) {
-      return cb({
-        frame: frame.element,
-        removeStyle: frame.removeStyle,
-        addStyle: frame.addStyle,
-        container: containerElement,
-        item,
-        overlayElement,
-      })
-    }
-
-    return cb({
-      container: containerElement,
-      item,
-      frame: undefined,
-      removeStyle: () => {},
-      addStyle: () => {},
-      overlayElement,
-    })
-  }
-
   const executeOnLayoutBeforeMeasurementHook = (options: {
     minimumWidth: number
   }) =>
@@ -334,7 +296,6 @@ export const createCommonSpineItem = ({
     getReadingDirection: () => {
       return frame.getReadingDirection() || context.readingDirection
     },
-    manipulateSpineItem,
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
     selectionTracker,
     fingerTracker,

@@ -25,10 +25,9 @@ export const accessibilityEnhancer =
 
       if (!item) return
 
-      item.manipulateSpineItem(({ addStyle }) => {
-        addStyle(
-          `prose-reader-accessibility`,
-          `
+      item.frame.addStyle(
+        `prose-reader-accessibility`,
+        `
         :focus-visible {
           ${
             /*
@@ -39,10 +38,7 @@ export const accessibilityEnhancer =
           outline: -webkit-focus-ring-color auto 1px;
         }
       `,
-        )
-
-        return false
-      })
+      )
 
       const links = frame.contentDocument?.body.querySelectorAll(`a`)
 

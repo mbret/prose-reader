@@ -1,6 +1,6 @@
 import { Manifest } from "@prose-reader/shared"
 import { Observable } from "rxjs"
-import { type createFrameItem } from "../spineItem/frameItem/frameItem"
+import { type createFrameItem } from "../spineItem/frame/frameItem"
 
 export type UserDestroyFn = () => void | Observable<unknown>
 

@@ -96,6 +96,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
     reader.spineItemsManager.items.forEach((item) => {
       item.frame.removeStyle?.(`prose-reader-theme`)
       item.frame.addStyle?.(`prose-reader-theme`, getStyle())
+
       applyChangeToSpineItemElement({ container: item.element })
     })
   }
@@ -106,12 +107,8 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   reader.hookManager.register(`item.onLoad`, ({ itemId }) => {
     const item = reader.spineItemsManager.get(itemId)
 
-    item?.manipulateSpineItem(({ removeStyle, addStyle }) => {
-      removeStyle(`prose-reader-theme`)
-      addStyle(`prose-reader-theme`, getStyle())
-
-      return false
-    })
+    item?.frame.removeStyle(`prose-reader-theme`)
+    item?.frame.addStyle(`prose-reader-theme`, getStyle())
   })
 
   /**
