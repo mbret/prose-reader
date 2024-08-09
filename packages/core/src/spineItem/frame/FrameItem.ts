@@ -7,7 +7,7 @@ import {
   getAttributeValueFromString,
 } from "../../frames"
 import { map } from "rxjs/operators"
-import { createLoader } from "./loader"
+import { createLoader } from "./loader/loader"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { type HookManager } from "../../hooks/HookManager"

@@ -24,14 +24,14 @@ import {
   distinctUntilChanged,
   catchError,
 } from "rxjs/operators"
-import { Report } from "../.."
-import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../constants"
-import { Context } from "../../context/Context"
-import { Manifest } from "../.."
-import { createFrame$ } from "./createFrame$"
-import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { HookManager } from "../../hooks/HookManager"
+import { Report } from "../../.."
+import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
+import { Context } from "../../../context/Context"
+import { Manifest } from "../../.."
+import { createFrame$ } from "../createFrame$"
+import { createHtmlPageFromResource } from "../createHtmlPageFromResource"
+import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
+import { HookManager } from "../../../hooks/HookManager"
 
 export const createLoader = ({
   item,
