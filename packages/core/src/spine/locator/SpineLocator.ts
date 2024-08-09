@@ -13,9 +13,7 @@ import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 
-export type SpineLocator = ReturnType<
-  typeof createSpineLocator
->
+export type SpineLocator = ReturnType<typeof createSpineLocator>
 
 export const createSpineLocator = ({
   spineItemsManager,
@@ -105,9 +103,7 @@ export const createSpineLocator = ({
   }
 
   const getSpineItemFromIframe = (iframe: Element) => {
-    return spineItemsManager
-      .items
-      .find((item) => item.frame.getFrameElement() === iframe)
+    return spineItemsManager.items.find((item) => item.frame.element === iframe)
   }
 
   const getSpineItemPageIndexFromNode = (

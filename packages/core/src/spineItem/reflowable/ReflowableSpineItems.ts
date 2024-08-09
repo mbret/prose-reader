@@ -94,7 +94,7 @@ export const createReflowableSpineItem = ({
 
     // @todo simplify ? should be from common spine item
     if (
-      spineItemFrame?.getIsLoaded() &&
+      spineItemFrame?.isLoaded &&
       frameElement?.contentDocument &&
       frameElement?.contentWindow
     ) {

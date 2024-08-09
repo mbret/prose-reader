@@ -88,7 +88,7 @@ export const layoutEnhancer =
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
       reader.spineItemsManager.items.forEach((item) => {
-        const frame = item.frame.getFrameElement()
+        const frame = item.frame.element
 
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
@@ -113,7 +113,7 @@ export const layoutEnhancer =
 
         if (
           item?.item.renditionLayout === `reflowable` &&
-          frame?.getIsReady() &&
+          frame?.isReady &&
           !isImageType() &&
           !frame.getViewportDimensions()
         ) {

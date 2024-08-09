@@ -1,4 +1,4 @@
-import { merge, Observable, Subject } from "rxjs"
+import { merge, Observable } from "rxjs"
 import { Manifest } from "../.."
 import { Context } from "../../context/Context"
 import {
@@ -14,7 +14,7 @@ import { type HookManager } from "../../hooks/HookManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 
 export class FrameItem extends DestroyableClass {
-  public loader: ReturnType<typeof createLoader>
+  protected loader: ReturnType<typeof createLoader>
 
   public contentLayoutChange$: Observable<{
     isFirstLayout: boolean
@@ -37,43 +37,29 @@ export class FrameItem extends DestroyableClass {
       settings,
     })
 
-    this.loader.$.isLoaded$.subscribe({
-      next: (value) => {
-        this.isLoadedSync = value
-      },
-    })
-
-    this.loader.$.isReady$.subscribe({
-      next: (value) => {
-        this.isReadySync = value
-      },
-    })
-
     /**
      * This is used as upstream layout change. This event is being listened to by upper app
      * in order to layout again and adjust every element based on the new content.
      */
     this.contentLayoutChange$ = merge(
-      this.loader.$.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
+      this.loader.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
       this.ready$.pipe(map(() => ({ isFirstLayout: true }))),
     )
   }
 
-  public destroySubject$ = new Subject<void>()
+  // @todo optimize
+  public getComputedStyleAfterLoad() {
+    const frame = this.loader.element
+    const body = frame?.contentDocument?.body
 
-  /**
-   * @deprecated
-   */
-  public isLoadedSync = false
-
-  /**
-   * @deprecated
-   */
-  public isReadySync = false
+    if (body) {
+      return frame?.contentWindow?.getComputedStyle(body)
+    }
+  }
 
   // @todo memoize
   public getViewportDimensions = () => {
-    const frame = this.loader.$.frameElement$.getValue()
+    const frame = this.loader.element
 
     if (frame && frame?.contentDocument) {
       const doc = frame.contentDocument
@@ -102,7 +88,7 @@ export class FrameItem extends DestroyableClass {
   }
 
   public getWritingMode = () => {
-    return this.loader.getComputedStyleAfterLoad()?.writingMode as
+    return this.getComputedStyleAfterLoad()?.writingMode as
       | `vertical-rl`
       | `horizontal-tb`
       | undefined
@@ -116,21 +102,33 @@ export class FrameItem extends DestroyableClass {
     return createHtmlPageFromResource(response, this.item)
   }
 
-  get element() {
-    return this.loader.$.frameElement$.getValue()
+  public get element() {
+    return this.loader.element
   }
 
-  /**
-   * @deprecated
-   */
-  public getIsLoaded = () => this.isLoadedSync
+  public get unloaded$() {
+    return this.loader.unloaded$
+  }
 
-  /**
-   * @deprecated
-   */
-  public getIsReady = () => this.isReadySync
+  public get loaded$() {
+    return this.loader.loaded$
+  }
 
-  public getFrameElement = () => this.loader.$.frameElement$.getValue()
+  public get ready$() {
+    return this.loader.ready$
+  }
+
+  public get isReady$() {
+    return this.loader.isReady$
+  }
+
+  public get isLoaded() {
+    return this.loader.state === "loaded" || this.loader.state === "ready"
+  }
+
+  public get isReady() {
+    return this.loader.state === "ready"
+  }
 
   public load() {
     this.loader.load()
@@ -147,7 +145,7 @@ export class FrameItem extends DestroyableClass {
    * want the iframe to trigger a new `layout` even and have infinite loop.
    */
   public staticLayout = (size: { width: number; height: number }) => {
-    const frame = this.loader.$.frameElement$.getValue()
+    const frame = this.loader.element
     if (frame) {
       frame.style.width = `${size.width}px`
       frame.style.height = `${size.height}px`
@@ -160,7 +158,7 @@ export class FrameItem extends DestroyableClass {
   }
 
   public addStyle(id: string, style: string, prepend?: boolean) {
-    const frameElement = this.loader.$.frameElement$.getValue()
+    const frameElement = this.loader.element
 
     if (frameElement) {
       createAddStyleHelper(frameElement)(id, style, prepend)
@@ -168,37 +166,16 @@ export class FrameItem extends DestroyableClass {
   }
 
   public removeStyle(id: string) {
-    const frameElement = this.loader.$.frameElement$.getValue()
+    const frameElement = this.loader.element
 
     if (frameElement) {
       createRemoveStyleHelper(frameElement)(id)
     }
   }
 
-  get unload$() {
-    return this.loader.$.unload$
-  }
-
-  get unloaded$() {
-    return this.loader.$.unloaded$
-  }
-
-  get loaded$() {
-    return this.loader.$.loaded$
-  }
-
-  get ready$() {
-    return this.loader.$.ready$
-  }
-
-  get isReady$() {
-    return this.loader.$.isReady$
-  }
-
   public destroy = () => {
     super.destroy()
 
-    this.loader.unload()
     this.loader.destroy()
   }
 }

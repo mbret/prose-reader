@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Observable, OperatorFunction } from "rxjs"
-import { map } from "rxjs/operators"
+import { Observable, of, OperatorFunction } from "rxjs"
+import { first, map, switchMap, withLatestFrom } from "rxjs/operators"
 
 export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
   keys: K[],
@@ -37,3 +37,15 @@ export function observeResize(
     }
   })
 }
+
+export const waitForSwitch =
+  <O>(waitForStream: Observable<O>) =>
+  <N>(stream: Observable<N>) =>
+    stream.pipe(
+      switchMap((value) =>
+        waitForStream.pipe(
+          first(),
+          map(() => value),
+        ),
+      ),
+    )

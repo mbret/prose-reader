@@ -1,7 +1,6 @@
-import { of } from "rxjs"
-import { Report } from "../../report"
+import { Report } from "../../../report"
 
-export const createFrame$ = Report.measurePerformance(
+export const createFrameElement = Report.measurePerformance(
   `SpineItemFrame createFrame`,
   Infinity,
   () => {
@@ -29,6 +28,6 @@ export const createFrame$ = Report.measurePerformance(
     opacity: 0;
   `
 
-    return of(frame)
+  return frame
   },
 )

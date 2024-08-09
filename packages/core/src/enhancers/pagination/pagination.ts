@@ -54,9 +54,9 @@ export const mapPaginationInfoToExtendedInfo =
       // domIndex: number;
       // charOffset: number;
       // serializeString?: string;
-      beginSpineItemReadingDirection: beginItem?.getReadingDirection(),
+      beginSpineItemReadingDirection: beginItem?.readingDirection,
       endChapterInfo: endItem ? chaptersInfo[endItem.item.id] : undefined,
-      endSpineItemReadingDirection: endItem?.getReadingDirection(),
+      endSpineItemReadingDirection: endItem?.readingDirection,
       // spineItemReadingDirection: focusedSpineItem?.getReadingDirection(),
       /**
        * This percentage is based of the weight (kb) of every items and the number of pages.

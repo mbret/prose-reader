@@ -11,7 +11,7 @@ export const createPrePaginatedSpineItem = ({
   containerElement,
   settings,
   hookManager,
-  index
+  index,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -26,7 +26,7 @@ export const createPrePaginatedSpineItem = ({
     parentElement: containerElement,
     settings,
     hookManager,
-    index
+    index,
   })
   const spineItemFrame = commonSpineItem.frame
 
@@ -46,7 +46,7 @@ export const createPrePaginatedSpineItem = ({
     const frameElement = spineItemFrame.element
 
     if (
-      spineItemFrame?.getIsLoaded() &&
+      spineItemFrame?.isLoaded &&
       frameElement?.contentDocument &&
       frameElement?.contentWindow
     ) {

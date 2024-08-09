@@ -33,7 +33,7 @@ export const createCommonSpineItem = ({
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  const frame = new FrameItem(
+  const frameItem = new FrameItem(
     containerElement,
     item,
     context,
@@ -74,8 +74,8 @@ export const createCommonSpineItem = ({
   }
 
   const injectStyle = (cssText: string) => {
-    frame.removeStyle(`prose-reader-css`)
-    frame.addStyle(`prose-reader-css`, cssText)
+    frameItem.removeStyle(`prose-reader-css`)
+    frameItem.addStyle(`prose-reader-css`, cssText)
   }
 
   const adjustPositionOfElement = ({
@@ -106,8 +106,8 @@ export const createCommonSpineItem = ({
 
   const getViewPortInformation = () => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const viewportDimensions = frame.getViewportDimensions()
-    const frameElement = frame.element
+    const viewportDimensions = frameItem.getViewportDimensions()
+    const frameElement = frameItem.element
 
     if (
       containerElement &&
@@ -125,12 +125,12 @@ export const createCommonSpineItem = ({
     }
   }
 
-  const load = () => frame.load()
+  const load = () => frameItem.load()
 
-  const unload = () => frame.unload()
+  const unload = () => frameItem.unload()
 
   const getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frameElement = frame.element
+    const frameElement = frameItem.element
     if (frameElement && selector) {
       if (selector.startsWith(`#`)) {
         return frameElement.contentDocument
@@ -206,7 +206,7 @@ export const createCommonSpineItem = ({
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
     const { left = 0, top = 0 } =
-      frame.getFrameElement()?.getBoundingClientRect() || {}
+      frameItem.element?.getBoundingClientRect() || {}
     const computedScale = getViewPortInformation()?.computedScale ?? 1
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
@@ -249,8 +249,8 @@ export const createCommonSpineItem = ({
       ...options,
     })
 
-  const contentLayout$ = frame.contentLayoutChange$.pipe(
-    withLatestFrom(frame.isReady$),
+  const contentLayout$ = frameItem.contentLayoutChange$.pipe(
+    withLatestFrom(frameItem.isReady$),
     map(([data, isReady]) => ({
       isFirstLayout: data.isFirstLayout,
       isReady,
@@ -263,22 +263,22 @@ export const createCommonSpineItem = ({
     overlayElement,
     adjustPositionOfElement,
     getElementDimensions,
-    getHtmlFromResource: frame.getHtmlFromResource,
+    getHtmlFromResource: frameItem.getHtmlFromResource,
     getResource,
     translateFramePositionIntoPage,
     injectStyle,
     load,
     unload,
-    frame,
+    frame: frameItem,
     element: containerElement,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     isImageType,
-    isReady: frame.getIsReady,
+    isReady: () => frameItem.isReady,
     destroy: () => {
       destroySubject$.next()
       containerElement.remove()
-      frame?.destroy()
+      frameItem?.destroy()
       fingerTracker.destroy()
       selectionTracker.destroy()
       destroySubject$.complete()
@@ -297,14 +297,14 @@ export const createCommonSpineItem = ({
         return `rtl`
       }
 
-      const direction = this.frame.loader.getComputedStyleAfterLoad()?.direction
+      const direction = this.frame.getComputedStyleAfterLoad()?.direction
       if ([`ltr`, `rtl`].includes(direction || ``))
         return direction as `ltr` | `rtl`
 
       return undefined
     },
     isUsingVerticalWriting: () =>
-      frame.getWritingMode()?.startsWith(`vertical`),
+      frameItem.getWritingMode()?.startsWith(`vertical`),
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
     selectionTracker,
     fingerTracker,
@@ -312,8 +312,8 @@ export const createCommonSpineItem = ({
     getDimensionsForPaginatedContent,
     $: {
       contentLayout$,
-      loaded$: frame.loaded$,
-      isReady$: frame.isReady$,
+      loaded$: frameItem.loaded$,
+      isReady$: frameItem.isReady$,
     },
   }
 }

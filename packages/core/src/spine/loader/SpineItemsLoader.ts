@@ -14,6 +14,7 @@ import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { loadItems } from "./loadItems"
 import { mapToItemsToLoad } from "./mapToItemsToLoad"
+import { waitForSwitch } from "../../utils/rxjs"
 
 export class SpineItemsLoader extends DestroyableClass {
   constructor(
@@ -45,8 +46,11 @@ export class SpineItemsLoader extends DestroyableClass {
      * layout method we have to take it into consideration.
      */
     const loadSpineItems$ = merge(navigationUpdate$, layoutHasChanged$).pipe(
+      // this can be changed by whatever we want and SHOULD not break navigation.
+      // Ideally loading faster is better but loading too close to user navigating can
+      // be dangerous.
       debounceTime(100, animationFrameScheduler),
-      withLatestFrom(this.context.bridgeEvent.viewportFree$),
+      waitForSwitch(this.context.bridgeEvent.viewportFree$),
       withLatestFrom(this.context.bridgeEvent.navigation$),
       map(([, navigation]) => navigation.position),
       mapToItemsToLoad({ spineLocator }),
