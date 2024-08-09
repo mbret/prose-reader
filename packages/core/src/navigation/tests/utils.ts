@@ -47,7 +47,6 @@ export const createNavigator = () => {
   const elementSubject = new BehaviorSubject<HTMLElement>(
     document.createElement(`div`),
   )
-  const viewportState$ = new BehaviorSubject<"free" | "busy">("free")
   const spineLocator = createSpineLocator({
     context,
     settings,
@@ -86,7 +85,7 @@ export const createNavigator = () => {
     spineItemsManagerMock as any,
     spineLocator,
     elementSubject,
-    viewportState$,
+    userNavigator.locker.isLocked$,
   )
 
   return { internalNavigator, userNavigator, context, spineItemsManagerMock }
