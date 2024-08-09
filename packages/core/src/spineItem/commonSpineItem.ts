@@ -283,8 +283,6 @@ export const createCommonSpineItem = ({
       selectionTracker.destroy()
       destroySubject$.complete()
     },
-    isUsingVerticalWriting: () =>
-      frame.getWritingMode()?.startsWith(`vertical`),
     /**
      * @important
      * Do not use this value for layout and navigation. It will be in possible conflict
@@ -293,9 +291,20 @@ export const createCommonSpineItem = ({
      * For example an english page in a japanese manga. That's expected and will
      * be confined to a single page.
      */
-    getReadingDirection: () => {
-      return frame.getReadingDirection() || context.readingDirection
+    get readingDirection(): `ltr` | `rtl` | undefined {
+      const writingMode = this.frame.getWritingMode()
+      if (writingMode === `vertical-rl`) {
+        return `rtl`
+      }
+
+      const direction = this.frame.loader.getComputedStyleAfterLoad()?.direction
+      if ([`ltr`, `rtl`].includes(direction || ``))
+        return direction as `ltr` | `rtl`
+
+      return undefined
     },
+    isUsingVerticalWriting: () =>
+      frame.getWritingMode()?.startsWith(`vertical`),
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
     selectionTracker,
     fingerTracker,

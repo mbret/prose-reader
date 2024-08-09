@@ -14,7 +14,7 @@ import { type HookManager } from "../../hooks/HookManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 
 export class FrameItem extends DestroyableClass {
-  protected loader: ReturnType<typeof createLoader>
+  public loader: ReturnType<typeof createLoader>
 
   public contentLayoutChange$: Observable<{
     isFirstLayout: boolean
@@ -116,13 +116,6 @@ export class FrameItem extends DestroyableClass {
     return createHtmlPageFromResource(response, this.item)
   }
 
-  public destroy = () => {
-    super.destroy()
-
-    this.loader.unload()
-    this.loader.destroy()
-  }
-
   get element() {
     return this.loader.$.frameElement$.getValue()
   }
@@ -182,19 +175,6 @@ export class FrameItem extends DestroyableClass {
     }
   }
 
-  public getReadingDirection = (): `ltr` | `rtl` | undefined => {
-    const writingMode = this.getWritingMode()
-    if (writingMode === `vertical-rl`) {
-      return `rtl`
-    }
-
-    const direction = this.loader.getComputedStyleAfterLoad()?.direction
-    if ([`ltr`, `rtl`].includes(direction || ``))
-      return direction as `ltr` | `rtl`
-
-    return undefined
-  }
-
   get unload$() {
     return this.loader.$.unload$
   }
@@ -213,5 +193,12 @@ export class FrameItem extends DestroyableClass {
 
   get isReady$() {
     return this.loader.$.isReady$
+  }
+
+  public destroy = () => {
+    super.destroy()
+
+    this.loader.unload()
+    this.loader.destroy()
   }
 }
