@@ -17,7 +17,6 @@ type Highlight = {
 
 type SubjectType = { type: `onHighlightClick`; data: Highlight } | { type: `onUpdate`; data: Highlight[] }
 
-const SHOULD_NOT_LAYOUT = false
 const HIGHLIGHT_ID_PREFIX = `prose-reader-enhancer-highlights`
 
 /**
@@ -129,12 +128,10 @@ export const highlightsEnhancer =
       highlights.push(newHighlight)
 
       if (newHighlight.spineItemIndex !== undefined) {
-        reader.spine.manipulateSpineItems(({ index, overlayElement }) => {
-          if (index !== newHighlight.spineItemIndex) return SHOULD_NOT_LAYOUT
+        reader.spineItemsManager.items.forEach((item, index) => {
+          if (index !== newHighlight.spineItemIndex) return
 
-          drawHighlight(overlayElement, newHighlight)
-
-          return SHOULD_NOT_LAYOUT
+          drawHighlight(item.overlayElement, newHighlight)
         })
       }
 
@@ -185,22 +182,18 @@ export const highlightsEnhancer =
 
           highlights$.next({ type: `onUpdate`, data: highlights })
 
-          reader.spine.manipulateSpineItems(({ overlayElement, index }) => {
-            drawHighlightsForItem(overlayElement, index)
-
-            return SHOULD_NOT_LAYOUT
+          reader.spineItemsManager.items.forEach((item, index) => {
+            drawHighlightsForItem(item.overlayElement, index)
           })
         }),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()
 
-    const refreshHighlightsOnLayout$ = reader.spine.$.layout$.pipe(
+    const refreshHighlightsOnLayout$ = reader.spine.layout$.pipe(
       tap(() => {
-        reader.spine.manipulateSpineItems(({ overlayElement, index }) => {
-          drawHighlightsForItem(overlayElement, index)
-
-          return SHOULD_NOT_LAYOUT
+        reader.spineItemsManager.items.forEach((item, index) => {
+          drawHighlightsForItem(item.overlayElement, index)
         })
       }),
     )

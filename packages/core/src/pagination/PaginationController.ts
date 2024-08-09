@@ -57,7 +57,7 @@ export class PaginationController extends DestroyableClass {
           spineItem: SpineItem
           position: ViewportPosition
         }) =>
-          this.spine.spineLocationResolver.getVisiblePagesFromViewportPosition({
+          this.spine.locator.getVisiblePagesFromViewportPosition({
             spineItem: spineItem,
             position,
             threshold: 0.5,
@@ -86,7 +86,7 @@ export class PaginationController extends DestroyableClass {
               beginIndex: beginSpineItemIndex,
               endIndex: endSpineItemIndex,
             } =
-              this.spine.spineLocationResolver.getVisibleSpineItemsFromPosition({
+              this.spine.locator.getVisibleSpineItemsFromPosition({
                 position,
                 threshold: 0.5,
               }) ?? {}

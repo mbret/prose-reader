@@ -85,15 +85,17 @@ export const fontsEnhancer =
     /**
      * Programmatically update every loaded items
      */
-    const applyChangeToSpineItem = (requireLayout: boolean) => {
-      reader.spine.manipulateSpineItems(({ removeStyle, addStyle, item }) => {
-        if (item.renditionLayout !== `pre-paginated`) {
-          removeStyle(`prose-reader-fonts`)
-          addStyle(`prose-reader-fonts`, getStyle())
+    const applyChangeToSpineItems = (requireLayout: boolean) => {
+      reader.spineItemsManager.items.forEach((item) => {
+        if (item.item.renditionLayout !== `pre-paginated`) {
+          item.frame.removeStyle?.(`prose-reader-fonts`)
+          item.frame.addStyle?.(`prose-reader-fonts`, getStyle())
         }
-
-        return requireLayout
       })
+
+      if (requireLayout) {
+        reader.layout()
+      }
     }
 
     /**
@@ -128,7 +130,7 @@ export const fontsEnhancer =
     settingsManager.settings$
       .pipe(
         shouldRequireLayout,
-        tap(applyChangeToSpineItem),
+        tap(applyChangeToSpineItems),
         takeUntil(reader.$.destroy$),
       )
       .subscribe()

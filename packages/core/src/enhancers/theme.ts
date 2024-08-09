@@ -93,15 +93,11 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   }
 
   const applyChangeToSpineItem = () => {
-    reader.spine.manipulateSpineItems(
-      ({ removeStyle, addStyle, container }) => {
-        removeStyle(`prose-reader-theme`)
-        addStyle(`prose-reader-theme`, getStyle())
-        applyChangeToSpineItemElement({ container })
-
-        return false
-      },
-    )
+    reader.spineItemsManager.items.forEach((item) => {
+      item.frame.removeStyle?.(`prose-reader-theme`)
+      item.frame.addStyle?.(`prose-reader-theme`, getStyle())
+      applyChangeToSpineItemElement({ container: item.element })
+    })
   }
 
   /**
@@ -122,7 +118,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
    * Make sure to apply theme on item container (fixed layout)
    * & loading element
    */
-  reader.spine.$.spineItems$
+  reader.spineItemsManager.items$
     .pipe(
       tap((items) =>
         items.map(({ element }) =>

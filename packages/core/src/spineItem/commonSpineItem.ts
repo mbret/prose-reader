@@ -16,12 +16,14 @@ export const createCommonSpineItem = ({
   parentElement,
   settings,
   hookManager,
+  index,
 }: {
   item: Manifest[`spineItems`][number]
   parentElement: HTMLElement
   context: Context
   settings: ReaderSettingsManager
   hookManager: HookManager
+  index: number
 }) => {
   const destroySubject$ = new Subject<void>()
   const containerElement = createContainerElement(
@@ -32,7 +34,7 @@ export const createCommonSpineItem = ({
   const overlayElement = createOverlayElement(parentElement, item)
   const fingerTracker = createFingerTracker()
   const selectionTracker = createSelectionTracker()
-  const spineItemFrame = createFrameItem({
+  const frame = createFrameItem({
     parent: containerElement,
     item,
     context,
@@ -73,8 +75,8 @@ export const createCommonSpineItem = ({
   }
 
   const injectStyle = (cssText: string) => {
-    spineItemFrame.getManipulableFrame()?.removeStyle(`prose-reader-css`)
-    spineItemFrame.getManipulableFrame()?.addStyle(`prose-reader-css`, cssText)
+    frame.removeStyle(`prose-reader-css`)
+    frame.addStyle(`prose-reader-css`, cssText)
   }
 
   const adjustPositionOfElement = ({
@@ -105,8 +107,8 @@ export const createCommonSpineItem = ({
 
   const getViewPortInformation = () => {
     const { width: pageWidth, height: pageHeight } = context.getPageSize()
-    const viewportDimensions = spineItemFrame.getViewportDimensions()
-    const frameElement = spineItemFrame.getManipulableFrame()?.frame
+    const viewportDimensions = frame.getViewportDimensions()
+    const frameElement = frame.element
 
     if (
       containerElement &&
@@ -124,19 +126,19 @@ export const createCommonSpineItem = ({
     }
   }
 
-  const load = () => spineItemFrame.load()
+  const load = () => frame.load()
 
-  const unload = () => spineItemFrame.unload()
+  const unload = () => frame.unload()
 
   const getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frame = spineItemFrame.getManipulableFrame()?.frame
-    if (frame && selector) {
+    const frameElement = frame.element
+    if (frameElement && selector) {
       if (selector.startsWith(`#`)) {
-        return frame.contentDocument
+        return frameElement.contentDocument
           ?.getElementById(selector.replace(`#`, ``))
           ?.getBoundingClientRect()
       }
-      return frame.contentDocument
+      return frameElement.contentDocument
         ?.querySelector(selector)
         ?.getBoundingClientRect()
     }
@@ -205,7 +207,7 @@ export const createCommonSpineItem = ({
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
     const { left = 0, top = 0 } =
-      spineItemFrame.getFrameElement()?.getBoundingClientRect() || {}
+      frame.getFrameElement()?.getBoundingClientRect() || {}
     const computedScale = getViewPortInformation()?.computedScale ?? 1
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
@@ -255,11 +257,11 @@ export const createCommonSpineItem = ({
       ),
     ) => boolean,
   ) => {
-    const manipulableFrame = spineItemFrame.getManipulableFrame()
-
-    if (manipulableFrame) {
+    if (frame.element) {
       return cb({
-        ...manipulableFrame,
+        frame: frame.element,
+        removeStyle: frame.removeStyle,
+        addStyle: frame.addStyle,
         container: containerElement,
         item,
         overlayElement,
@@ -280,15 +282,13 @@ export const createCommonSpineItem = ({
     minimumWidth: number
   }) =>
     hookManager.execute("item.onLayoutBeforeMeasurement", undefined, {
-      frame: spineItemFrame,
-      container: containerElement,
-      item,
+      itemIndex: index,
       isImageType,
       ...options,
     })
 
-  const contentLayout$ = spineItemFrame.$.contentLayoutChange$.pipe(
-    withLatestFrom(spineItemFrame.$.isReady$),
+  const contentLayout$ = frame.$.contentLayoutChange$.pipe(
+    withLatestFrom(frame.$.isReady$),
     map(([data, isReady]) => ({
       isFirstLayout: data.isFirstLayout,
       isReady,
@@ -301,28 +301,28 @@ export const createCommonSpineItem = ({
     overlayElement,
     adjustPositionOfElement,
     getElementDimensions,
-    getHtmlFromResource: spineItemFrame.getHtmlFromResource,
+    getHtmlFromResource: frame.getHtmlFromResource,
     getResource,
     translateFramePositionIntoPage,
     injectStyle,
     load,
     unload,
-    spineItemFrame,
+    frame,
     element: containerElement,
     getBoundingRectOfElementFromSelector,
     getViewPortInformation,
     isImageType,
-    isReady: spineItemFrame.getIsReady,
+    isReady: frame.getIsReady,
     destroy: () => {
       destroySubject$.next()
       containerElement.remove()
-      spineItemFrame?.destroy()
+      frame?.destroy()
       fingerTracker.destroy()
       selectionTracker.destroy()
       destroySubject$.complete()
     },
     isUsingVerticalWriting: () =>
-      spineItemFrame.getWritingMode()?.startsWith(`vertical`),
+      frame.getWritingMode()?.startsWith(`vertical`),
     /**
      * @important
      * Do not use this value for layout and navigation. It will be in possible conflict
@@ -332,7 +332,7 @@ export const createCommonSpineItem = ({
      * be confined to a single page.
      */
     getReadingDirection: () => {
-      return spineItemFrame.getReadingDirection() || context.readingDirection
+      return frame.getReadingDirection() || context.readingDirection
     },
     manipulateSpineItem,
     executeOnLayoutBeforeMeasurementHook: executeOnLayoutBeforeMeasurementHook,
@@ -342,8 +342,8 @@ export const createCommonSpineItem = ({
     getDimensionsForPaginatedContent,
     $: {
       contentLayout$,
-      loaded$: spineItemFrame.$.loaded$,
-      isReady$: spineItemFrame.$.isReady$,
+      loaded$: frame.$.loaded$,
+      isReady$: frame.$.isReady$,
     },
   }
 }
@@ -360,6 +360,7 @@ const createContainerElement = (
   element.style.cssText = `
     position: absolute;
     overflow: hidden;
+    border: 1px solid red;
   `
 
   hookManager.execute("item.onBeforeContainerCreated", undefined, { element })

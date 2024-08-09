@@ -49,10 +49,20 @@ export const loadingEnhancer =
     const reader = next(options)
 
     const createEntries$ = (
-      items: ObservedValueOf<typeof reader.spine.$.spineItems$>,
+      items: ObservedValueOf<typeof reader.spineItemsManager.items$>,
     ) =>
       of(
         items.reduce((acc, { item, element }) => {
+          const alreadyExistingElement = element.querySelector(
+            `.${CONTAINER_HTML_PREFIX}`,
+          )
+
+          if (alreadyExistingElement instanceof HTMLElement)
+            return {
+              ...acc,
+              [item.id]: alreadyExistingElement,
+            }
+
           const loadingElementContainer = loadingElementCreate({
             container: createLoadingElementContainer(element, reader.context),
             item,
@@ -68,7 +78,7 @@ export const loadingEnhancer =
       )
 
     const updateEntriesLayout$ = (entries: Entries) =>
-      combineLatest([reader.spine.$.layout$, reader.theme.$.theme$]).pipe(
+      combineLatest([reader.spine.layout$, reader.theme.$.theme$]).pipe(
         map(([, theme]) => ({
           width: reader.context.state.visibleAreaRect.width,
           theme,
@@ -95,24 +105,14 @@ export const loadingEnhancer =
         }),
       )
 
-    const destroyEntries$ = (entries: Entries) =>
-      reader.spine.$.itemsBeforeDestroy$.pipe(
-        map(() => {
-          Object.values(entries).forEach((element) => element.remove())
-
-          return {}
-        }),
-      )
-
-    const items$ = reader.spine.$.spineItems$.pipe(
+    const loadingItems$ = reader.spineItemsManager.items$.pipe(
       switchMap((items) => createEntries$(items)),
       shareReplay(1),
       takeUntil(reader.context.destroy$),
     )
 
-    items$
+    loadingItems$
       .pipe(
-        switchMap((entries) => merge(of(entries), destroyEntries$(entries))),
         switchMap((entries) =>
           merge(
             updateEntriesLayout$(entries),
@@ -127,7 +127,7 @@ export const loadingEnhancer =
       ...reader,
       loading: {
         $: {
-          items$,
+          items$: loadingItems$,
         },
       },
     }

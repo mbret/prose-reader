@@ -52,7 +52,7 @@ export const hotkeysEnhancer =
 
     navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
-    reader.spine.$.spineItems$
+    reader.spineItemsManager.items$
       .pipe(
         switchMap((spineItems) =>
           merge(

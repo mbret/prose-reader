@@ -14,7 +14,7 @@ export const getSpineItemFromPosition = ({
   spineItemsManager: SpineItemsManager
   settings: ReaderSettingsManager
 }) => {
-  const spineItem = spineItemsManager.getAll().find((item) => {
+  const spineItem = spineItemsManager.items.find((item) => {
     const { left, right, bottom, top } =
       spineItemsManager.getAbsolutePositionOf(item)
 
@@ -28,7 +28,7 @@ export const getSpineItemFromPosition = ({
   })
 
   if (position.x === 0 && !spineItem) {
-    return spineItemsManager.getAll()[0]
+    return spineItemsManager.items[0]
   }
 
   return spineItem

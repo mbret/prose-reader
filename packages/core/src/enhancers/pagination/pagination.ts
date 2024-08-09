@@ -70,7 +70,7 @@ export const mapPaginationInfoToExtendedInfo =
             paginationInfo.endSpineItemIndex ?? 0,
             paginationInfo.endNumberOfPagesInSpineItem,
             paginationInfo.endPageIndexInSpineItem || 0,
-            reader.navigation.getCurrentViewportPosition(),
+            reader.navigation.getNavigation().position,
             endItem,
           )
         : 0,

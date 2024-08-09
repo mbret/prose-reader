@@ -21,7 +21,7 @@ export const loadItems =
         const leftMaximumIndex = beginIndex - numberOfAdjacentSpineItemToPreLoad
         const rightMaximumIndex = endIndex + numberOfAdjacentSpineItemToPreLoad
 
-        spineItemsManager.getAll().forEach((orderedSpineItem, index) => {
+        spineItemsManager.items.forEach((orderedSpineItem, index) => {
           const isWithinRange =
             index >= leftMaximumIndex && index <= rightMaximumIndex
 

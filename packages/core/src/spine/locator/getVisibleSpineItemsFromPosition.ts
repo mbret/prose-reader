@@ -33,7 +33,7 @@ export const getVisibleSpineItemsFromPosition = ({
     spineItemsManager.get(0)
 
   const spineItemsVisible = spineItemsManager
-    .getAll()
+    .items
     .reduce<SpineItem[]>((acc, spineItem) => {
       const itemPosition = spineItemsManager.getAbsolutePositionOf(spineItem)
 

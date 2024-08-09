@@ -25,7 +25,7 @@ export class ManualNavigator {
         this.reader.settings.settings.computedPageTurnDirection,
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
-      spineLocator: this.reader.spine.spineLocator,
+      spineLocator: this.reader.spine.locator,
     })
 
     return this.reader.navigation.navigate({
@@ -47,7 +47,7 @@ export class ManualNavigator {
         this.reader.settings.settings.computedPageTurnDirection,
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
-      spineLocator: this.reader.spine.spineLocator,
+      spineLocator: this.reader.spine.locator,
     })
 
     return this.reader.navigation.navigate({
@@ -81,7 +81,7 @@ export class ManualNavigator {
 
   goToNextSpineItem() {
     const { endIndex = 0 } =
-      this.reader.spine.spineLocator.getVisibleSpineItemsFromPosition({
+      this.reader.spine.locator.getVisibleSpineItemsFromPosition({
         position: this.reader.navigation.getNavigation().position,
         threshold: 0.5,
       }) || {}
@@ -91,7 +91,7 @@ export class ManualNavigator {
 
   goToPreviousSpineItem() {
     const { beginIndex = 0 } =
-      this.reader.spine.spineLocator.getVisibleSpineItemsFromPosition({
+      this.reader.spine.locator.getVisibleSpineItemsFromPosition({
         position: this.reader.navigation.getNavigation().position,
         threshold: 0.5,
       }) ?? {}

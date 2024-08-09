@@ -28,7 +28,7 @@ export const getCfi = Report.measurePerformance(
       spineItem,
     )
     const doc =
-      spineItem.spineItemFrame.getManipulableFrame()?.frame?.contentWindow
+      spineItem.frame.getManipulableFrame()?.frame?.contentWindow
         ?.document
 
     const itemAnchor = getItemAnchor(spineItem)

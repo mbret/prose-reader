@@ -1,13 +1,16 @@
 import { merge, Subject } from "rxjs"
 import { Manifest } from "../.."
 import { Context } from "../../context/Context"
-import { getAttributeValueFromString } from "../../frames"
+import {
+  createAddStyleHelper,
+  createRemoveStyleHelper,
+  getAttributeValueFromString,
+} from "../../frames"
 import { map } from "rxjs/operators"
 import { createLoader } from "./loader"
-import { createFrameManipulator } from "./createFrameManipulator"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { HookManager } from "../../hooks/HookManager"
+import { type HookManager } from "../../hooks/HookManager"
 
 export const createFrameItem = ({
   item,
@@ -65,16 +68,6 @@ export const createFrameItem = ({
       isReadySync = value
     },
   })
-
-  // @todo redo
-  const getManipulableFrame = ():
-    | ReturnType<typeof createFrameManipulator>
-    | undefined => {
-    const frame = frameElement$.value
-    if (isLoadedSync && frame) {
-      return createFrameManipulator(frame)
-    }
-  }
 
   // @todo memoize
   const getViewportDimensions = () => {
@@ -134,6 +127,9 @@ export const createFrameItem = ({
   }
 
   return {
+    get element() {
+      return frameElement$.getValue()
+    },
     /**
      * @deprecated
      */
@@ -165,9 +161,20 @@ export const createFrameItem = ({
         }
       }
     },
-    // @todo block access, only public API to manipulate / get information (in order to memo / optimize)
-    // manipulate() with cb and return boolean whether re-layout or not
-    getManipulableFrame,
+    addStyle(id: string, style: string, prepend?: boolean) {
+      const frameElement = frameElement$.getValue()
+
+      if (frameElement) {
+        createAddStyleHelper(frameElement)(id, style, prepend)
+      }
+    },
+    removeStyle(id: string) {
+      const frameElement = frameElement$.getValue()
+
+      if (frameElement) {
+        createRemoveStyleHelper(frameElement)(id)
+      }
+    },
     getReadingDirection: (): `ltr` | `rtl` | undefined => {
       const writingMode = getWritingMode()
       if (writingMode === `vertical-rl`) {

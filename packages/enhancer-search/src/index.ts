@@ -115,7 +115,7 @@ export const searchEnhancer =
                 const { node, offset, spineItemIndex } = reader.cfi.resolveCfi({ cfi: start }) || {}
                 const pageIndex =
                   node && spineItemIndex !== undefined
-                    ? reader.spine.spineLocator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
+                    ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
                     : undefined
 
                 return {

@@ -15,12 +15,14 @@ export const createReflowableSpineItem = ({
   containerElement,
   settings,
   hookManager,
+  index
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   context: Context
   settings: ReaderSettingsManager
   hookManager: HookManager
+  index: number
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
@@ -28,8 +30,9 @@ export const createReflowableSpineItem = ({
     parentElement: containerElement,
     settings,
     hookManager,
+    index
   })
-  const spineItemFrame = commonSpineItem.spineItemFrame
+  const spineItemFrame = commonSpineItem.frame
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
    * the content has been loaded.

@@ -11,7 +11,7 @@ import { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>
-  reader.spineItemsManager.getAll().map((item) => {
+  reader.spineItemsManager.items.map((item) => {
     const { height, width } = item.getElementDimensions()
 
     return reader.spine.spineItemLocator.getSpineItemNumberOfPages({
@@ -25,7 +25,7 @@ export const trackTotalPages = (reader: Reader) => {
   const totalPages$: Observable<{
     numberOfPagesPerItems: number[]
     numberOfTotalPages: number
-  }> = reader.spine.$.layout$.pipe(
+  }> = reader.spine.layout$.pipe(
     debounceTime(10, animationFrameScheduler),
     withLatestFrom(reader.pagination.pagination$),
     map(() => {

@@ -1,5 +1,6 @@
 import { Manifest } from "@prose-reader/shared"
 import { Observable } from "rxjs"
+import { type createFrameItem } from "../spineItem/frameItem/frameItem"
 
 export type UserDestroyFn = () => void | Observable<unknown>
 
@@ -41,27 +42,7 @@ export type CoreHook =
   | {
       name: "item.onLayoutBeforeMeasurement"
       runFn: (params: {
-        frame: {
-          getManipulableFrame: () =>
-            | undefined
-            | {
-                removeStyle: (id: string) => void
-                addStyle: (
-                  id: string,
-                  style: CSSStyleDeclaration[`cssText`],
-                ) => void
-              }
-          getViewportDimensions: () =>
-            | {
-                width: number
-                height: number
-              }
-            | undefined
-          isUsingVerticalWriting: () => boolean
-          getIsReady: () => boolean
-        }
-        container: HTMLElement
-        item: Manifest[`spineItems`][number]
+        itemIndex: number
         minimumWidth: number
         isImageType: () => boolean | undefined
       }) => void

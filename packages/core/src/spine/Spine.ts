@@ -4,10 +4,7 @@ import { Context } from "../context/Context"
 import { Pagination } from "../pagination/Pagination"
 import { createSpineItem } from "../spineItem/createSpineItem"
 import { SpineItemsManager } from "./SpineItemsManager"
-import {
-  createSpineLocationResolver,
-  SpineLocationResolver,
-} from "./resolvers/SpineLocationResolver"
+import { createSpineLocator, SpineLocator } from "./locator/SpineLocator"
 import { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import { HTML_PREFIX } from "../constants"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -21,7 +18,7 @@ export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
   protected spineItemsLoader: SpineItemsLoader
 
-  public spineLocationResolver: SpineLocationResolver
+  public locator: SpineLocator
 
   public elementResize$ = this.elementSubject.pipe(
     switchMap((element) => observeResize(element)),
@@ -41,7 +38,7 @@ export class Spine extends DestroyableClass {
   ) {
     super()
 
-    this.spineLocationResolver = createSpineLocationResolver({
+    this.locator = createSpineLocator({
       context,
       spineItemsManager,
       spineItemLocator,
@@ -51,7 +48,7 @@ export class Spine extends DestroyableClass {
     this.spineItemsLoader = new SpineItemsLoader(
       this.context,
       spineItemsManager,
-      this.spineLocationResolver,
+      this.locator,
       settings,
     )
 
@@ -59,13 +56,14 @@ export class Spine extends DestroyableClass {
       tap((manifest) => {
         this.spineItemsManager.destroyItems()
 
-        const spineItems = manifest.spineItems.map((resource) =>
+        const spineItems = manifest.spineItems.map((resource, index) =>
           createSpineItem({
             item: resource,
             containerElement: this.elementSubject.getValue(),
             context: this.context,
             settings: this.settings,
             hookManager: this.hookManager,
+            index,
           }),
         )
 
@@ -101,14 +99,13 @@ export class Spine extends DestroyableClass {
   }
 
   public isSelecting() {
-    return this.spineItemsManager
-      .getAll()
-      .some((item) => item.selectionTracker.isSelecting())
+    return this.spineItemsManager.items.some((item) =>
+      item.selectionTracker.isSelecting(),
+    )
   }
 
   public getSelection() {
-    return this.spineItemsManager
-      .getAll()
+    return this.spineItemsManager.items
       .find((item) => item.selectionTracker.getSelection())
       ?.selectionTracker.getSelection()
   }

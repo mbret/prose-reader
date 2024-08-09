@@ -327,7 +327,7 @@ export class SpineItemsManager extends DestroyableClass {
     })
   }
 
-  getAll() {
+  get items() {
     return this.orderedSpineItemsSubject.value
   }
 

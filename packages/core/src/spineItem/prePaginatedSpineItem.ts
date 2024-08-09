@@ -11,12 +11,14 @@ export const createPrePaginatedSpineItem = ({
   containerElement,
   settings,
   hookManager,
+  index
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   context: Context
   settings: ReaderSettingsManager
   hookManager: HookManager
+  index: number
 }) => {
   const commonSpineItem = createCommonSpineItem({
     context,
@@ -24,8 +26,9 @@ export const createPrePaginatedSpineItem = ({
     parentElement: containerElement,
     settings,
     hookManager,
+    index
   })
-  const spineItemFrame = commonSpineItem.spineItemFrame
+  const spineItemFrame = commonSpineItem.frame
 
   const layout = ({
     blankPagePosition,
@@ -40,7 +43,7 @@ export const createPrePaginatedSpineItem = ({
     const { viewportDimensions, computedScale = 1 } =
       commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.state.visibleAreaRect
-    const frameElement = spineItemFrame.getManipulableFrame()?.frame
+    const frameElement = spineItemFrame.element
 
     if (
       spineItemFrame?.getIsLoaded() &&

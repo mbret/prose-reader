@@ -8,7 +8,7 @@ import {
   takeUntil,
 } from "rxjs"
 import { SpineItemsManager } from "../SpineItemsManager"
-import { SpineLocationResolver } from "../resolvers/SpineLocationResolver"
+import { SpineLocator } from "../locator/SpineLocator"
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
@@ -19,7 +19,7 @@ export class SpineItemsLoader extends DestroyableClass {
   constructor(
     protected context: Context,
     protected spineItemsManager: SpineItemsManager,
-    protected spineLocator: SpineLocationResolver,
+    protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
   ) {
     super()

@@ -24,7 +24,7 @@ export const resolveCfi = ({
   const cfiHandler = new CfiHandler(cleanedCfi, {})
 
   const doc =
-    spineItem.spineItemFrame.getManipulableFrame()?.frame?.contentWindow
+    spineItem.frame.getManipulableFrame()?.frame?.contentWindow
       ?.document
 
   if (doc) {

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   distinctUntilChanged,
-  map,
   takeUntil,
   tap,
   skip,
@@ -23,8 +22,6 @@ import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
 import { merge, Observable } from "rxjs"
-
-const SHOULD_NOT_LAYOUT = false
 
 export const layoutEnhancer =
   <
@@ -90,14 +87,14 @@ export const layoutEnhancer =
        * @todo
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
-      reader.spine.manipulateSpineItems(({ frame }) => {
+      reader.spineItemsManager.items.forEach((item) => {
+        const frame = item.frame.getFrameElement()
+
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
           void frame.getBoundingClientRect().left
           hasRedrawn = true
         }
-
-        return SHOULD_NOT_LAYOUT
       })
     })
 
@@ -107,14 +104,16 @@ export const layoutEnhancer =
      */
     reader.hookManager.register(
       `item.onLayoutBeforeMeasurement`,
-      ({ frame, minimumWidth, item, isImageType }) => {
+      ({ itemIndex, minimumWidth, isImageType }) => {
+        const item = reader.spineItemsManager.get(itemIndex)
+        const frame = item?.frame
         const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
           settingsManager.settings
         const pageSize = reader.context.getPageSize()
 
         if (
-          item.renditionLayout === `reflowable` &&
-          frame.getIsReady() &&
+          item?.item.renditionLayout === `reflowable` &&
+          frame?.getIsReady() &&
           !isImageType() &&
           !frame.getViewportDimensions()
         ) {
@@ -129,8 +128,8 @@ export const layoutEnhancer =
             columnGap = pageVerticalMargin * 2
           }
 
-          frame.getManipulableFrame()?.removeStyle(`prose-layout-enhancer-css`)
-          frame.getManipulableFrame()?.addStyle(
+          frame?.removeStyle(`prose-layout-enhancer-css`)
+          frame?.addStyle(
             `prose-layout-enhancer-css`,
             `
           body {

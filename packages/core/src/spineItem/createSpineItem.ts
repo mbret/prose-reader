@@ -11,12 +11,14 @@ export const createSpineItem = ({
   containerElement,
   settings,
   hookManager,
+  index
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   context: Context
   settings: ReaderSettingsManager
   hookManager: HookManager
+  index: number
 }) => {
   if (item.renditionLayout === `pre-paginated`) {
     return createPrePaginatedSpineItem({
@@ -25,6 +27,7 @@ export const createSpineItem = ({
       containerElement,
       settings,
       hookManager,
+      index
     })
   }
 
@@ -34,6 +37,7 @@ export const createSpineItem = ({
     containerElement,
     settings,
     hookManager,
+    index
   })
 }
 

@@ -20,7 +20,7 @@ export const createViewportZoomer = (reader: Reader) => {
   const enter = () => {
     reset()
 
-    const spineElement = reader.spine.getElement()
+    const spineElement = reader.spine.element
 
     if (spineElement) {
       spineElement.style.transformOrigin = `0 0`
@@ -37,7 +37,7 @@ export const createViewportZoomer = (reader: Reader) => {
   }
 
   const scale = (userScale: number) => {
-    const spineElement = reader.spine.getElement()
+    const spineElement = reader.spine.element
     const viewportElement = reader.navigation.getElement()
 
     if (!spineElement || !viewportElement) return
