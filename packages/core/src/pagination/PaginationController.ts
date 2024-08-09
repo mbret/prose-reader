@@ -17,7 +17,7 @@ import { createSpineItemLocator } from "../spineItem/locationResolver"
 import { getCfi } from "../cfi/generate/getCfiForSpineItemPage"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
-import { Spine } from "../spine/createSpine"
+import { Spine } from "../spine/Spine"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { ViewportPosition } from "../navigation/ViewportNavigator"
 
@@ -57,7 +57,7 @@ export class PaginationController extends DestroyableClass {
           spineItem: SpineItem
           position: ViewportPosition
         }) =>
-          this.spine.spineLocator.getVisiblePagesFromViewportPosition({
+          this.spine.spineLocationResolver.getVisiblePagesFromViewportPosition({
             spineItem: spineItem,
             position,
             threshold: 0.5,
@@ -86,7 +86,7 @@ export class PaginationController extends DestroyableClass {
               beginIndex: beginSpineItemIndex,
               endIndex: endSpineItemIndex,
             } =
-              this.spine.spineLocator.getVisibleSpineItemsFromPosition({
+              this.spine.spineLocationResolver.getVisibleSpineItemsFromPosition({
                 position,
                 threshold: 0.5,
               }) ?? {}

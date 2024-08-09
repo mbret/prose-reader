@@ -293,36 +293,38 @@ export class SpineItemsManager extends DestroyableClass {
     return index < 0 ? undefined : index
   }
 
-  add(spineItem: SpineItem) {
+  addMany(spineItems: SpineItem[]) {
     this.orderedSpineItemsSubject.next([
       ...this.orderedSpineItemsSubject.getValue(),
-      spineItem,
+      ...spineItems,
     ])
 
-    spineItem.$.contentLayout$
-      .pipe(takeUntil(this.context.destroy$))
-      .subscribe(() => {
-        // upstream change, meaning we need to layout again to both resize correctly each item but also to
-        // adjust positions, etc
-        this.layout()
-      })
+    spineItems.forEach((spineItem) => {
+      spineItem.$.contentLayout$
+        .pipe(takeUntil(this.context.destroy$))
+        .subscribe(() => {
+          // upstream change, meaning we need to layout again to both resize correctly each item but also to
+          // adjust positions, etc
+          this.layout()
+        })
 
-    spineItem.$.loaded$
-      .pipe(
-        tap(() => {
-          if (spineItem.isUsingVerticalWriting()) {
-            this.context.update({
-              hasVerticalWriting: true,
-            })
-          } else {
-            this.context.update({
-              hasVerticalWriting: false,
-            })
-          }
-        }),
-        takeUntil(this.context.destroy$),
-      )
-      .subscribe()
+      spineItem.$.loaded$
+        .pipe(
+          tap(() => {
+            if (spineItem.isUsingVerticalWriting()) {
+              this.context.update({
+                hasVerticalWriting: true,
+              })
+            } else {
+              this.context.update({
+                hasVerticalWriting: false,
+              })
+            }
+          }),
+          takeUntil(this.context.destroy$),
+        )
+        .subscribe()
+    })
   }
 
   getAll() {

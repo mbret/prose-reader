@@ -298,6 +298,7 @@ export const createCommonSpineItem = ({
   return {
     item,
     layout,
+    overlayElement,
     adjustPositionOfElement,
     getElementDimensions,
     getHtmlFromResource: spineItemFrame.getHtmlFromResource,

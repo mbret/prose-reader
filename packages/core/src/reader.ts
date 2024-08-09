@@ -2,17 +2,14 @@ import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
 import { Context } from "./context/Context"
 import { Pagination } from "./pagination/Pagination"
-import { createSpine } from "./spine/createSpine"
 import { HTML_PREFIX } from "./constants"
 import {
   takeUntil,
-  tap,
   distinctUntilChanged,
   withLatestFrom,
   map,
   filter,
 } from "rxjs/operators"
-import { createSelection } from "./selection"
 import { isShallowEqual } from "./utils/objects"
 import { createNavigator } from "./navigation/Navigator"
 import { createSpineItemLocator as createSpineItemLocator } from "./spineItem/locationResolver"
@@ -27,6 +24,7 @@ import { resolveCfi } from "./cfi/lookup/resolveCfi"
 import { SpineItemsObserver } from "./spine/SpineItemsObserver"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { SettingsInterface } from "./settings/SettingsInterface"
+import { Spine } from "./spine/Spine"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -60,9 +58,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
   })
   const destroy$ = new Subject<void>()
-  const selectionSubject$ = new Subject<ReturnType<
-    typeof createSelection
-  > | null>()
   const hookManager = new HookManager()
   const context = new Context()
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
@@ -77,15 +72,15 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   })
   const pagination = new Pagination(context, spineItemsManager)
 
-  const spine = createSpine({
+  const spine = new Spine(
     element$,
     context,
-    settings: settingsManager,
     pagination,
     spineItemsManager,
     spineItemLocator,
+    settingsManager,
     hookManager,
-  })
+  )
 
   const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
 
@@ -183,15 +178,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     layout()
   }
 
-  spine.$.$.pipe(
-    tap((event) => {
-      if (event.type === `onSelectionChange`) {
-        selectionSubject$.next(event.data)
-      }
-    }),
-    takeUntil(destroy$),
-  ).subscribe()
-
   merge(context.state$, settingsManager.settings$)
     .pipe(
       map(() => undefined),
@@ -252,6 +238,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
    * instead of destroying it.
    */
   const destroy = () => {
+    spineItemsManager.destroy()
     paginationController.destroy()
     settingsManager.destroy()
     pagination.destroy()
@@ -260,7 +247,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spine.destroy()
     elementSubject$.getValue()?.remove()
     stateSubject$.complete()
-    selectionSubject$.complete()
     destroy$.next()
     destroy$.complete()
   }
@@ -311,10 +297,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       loadStatus$: context.manifest$.pipe(
         map((manifest) => (manifest ? "ready" : "idle")),
       ),
-      /**
-       * Dispatched when a change in selection happens
-       */
-      selection$: selectionSubject$.asObservable(),
       destroy$,
     },
   }
