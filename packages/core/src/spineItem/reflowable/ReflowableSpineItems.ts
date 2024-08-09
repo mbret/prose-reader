@@ -15,7 +15,7 @@ export const createReflowableSpineItem = ({
   containerElement,
   settings,
   hookManager,
-  index
+  index,
 }: {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
@@ -30,7 +30,7 @@ export const createReflowableSpineItem = ({
     parentElement: containerElement,
     settings,
     hookManager,
-    index
+    index,
   })
   const spineItemFrame = commonSpineItem.frame
   /**
@@ -52,19 +52,43 @@ export const createReflowableSpineItem = ({
     blankPagePosition: `before` | `after` | `none`
     minimumWidth: number
   }) => {
-    const { width: pageWidth, height: pageHeight } = context.getPageSize()
+    const { width: pageWidth, height: pageSizeHeight } = context.getPageSize()
+
+    const continuousScrollableReflowableItem =
+      context.manifest?.renditionLayout === "reflowable" &&
+      context.manifest?.renditionFlow === "scrolled-continuous" &&
+      commonSpineItem.item.renditionLayout === "reflowable"
+
+    /**
+     * In case of reflowable with continous scrolling, we don't know if the content is
+     * bigger or smaller than the page size, therefore we find a middle ground to have
+     * a pre-load page that is not too big nor too small to prevent weird jumping
+     * once the frame load.
+     *
+     * We also use a minimum height still becaues we don't want all of the items to
+     * preload since they would be in the current viewport.
+     *
+     * @todo make it a setting
+     */
+    const pageHeight = continuousScrollableReflowableItem
+      ? Math.min(400, pageSizeHeight)
+      : pageSizeHeight
+
     // reset width of iframe to be able to retrieve real size later
-    spineItemFrame
-      .getManipulableFrame()
-      ?.frame?.style.setProperty(`width`, `${pageWidth}px`)
-    spineItemFrame
-      .getManipulableFrame()
-      ?.frame?.style.setProperty(`height`, `${pageHeight}px`)
+    spineItemFrame.element?.style.setProperty(`width`, `${pageWidth}px`)
+
+    /**
+     * In case of reflowable with continous scrolling, we let the frame takes whatever height
+     * it needs since it could be less or more than page size and we want a continous reading
+     */
+    if (!continuousScrollableReflowableItem) {
+      spineItemFrame.element?.style.setProperty(`height`, `${pageHeight}px`)
+    }
 
     const { viewportDimensions, computedScale = 1 } =
       commonSpineItem.getViewPortInformation() ?? {}
     const visibleArea = context.state.visibleAreaRect
-    const frameElement = spineItemFrame.getManipulableFrame()?.frame
+    const frameElement = spineItemFrame.element
     const isGloballyPrePaginated =
       context.manifest?.renditionLayout === `pre-paginated`
 
@@ -141,8 +165,13 @@ export const createReflowableSpineItem = ({
             height: contentHeight,
           })
         } else if (context.manifest?.renditionFlow === `scrolled-continuous`) {
-          contentHeight =
-            frameElement.contentDocument.documentElement.scrollHeight
+          /**
+           * We take body content here because the frame body might be smaller after
+           * layout due to possible image content and image ratio. We need to be able
+           * to retrieve the actual real body height. The window height is probably the same
+           * as the current frame set height which may be wrong after resize.
+           */
+          contentHeight = frameElement.contentDocument.body.scrollHeight
           latestContentHeightWhenLoaded = contentHeight
 
           spineItemFrame.staticLayout({
