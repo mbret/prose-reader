@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Context } from "../context/Context"
-import { createFrameItem } from "./frame/frameItem"
+import { createFrameItem } from "./frame/frameItems"
 import { Manifest } from ".."
 import { Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
