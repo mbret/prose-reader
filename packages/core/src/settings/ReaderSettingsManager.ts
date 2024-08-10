@@ -119,7 +119,7 @@ export class ReaderSettingsManager
       pageTurnMode: `controlled` as const,
       snapAnimationDuration: 300,
       navigationSnapThreshold: 0.3,
-      numberOfAdjacentSpineItemToPreLoad: 0,
+      numberOfAdjacentSpineItemToPreLoad: 2,
     }
   }
 }
