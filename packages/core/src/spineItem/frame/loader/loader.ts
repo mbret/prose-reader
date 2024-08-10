@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { BehaviorSubject, merge, of, Subject } from "rxjs"
+import { BehaviorSubject, merge, NEVER, of, Subject } from "rxjs"
 import {
   exhaustMap,
   filter,
@@ -11,12 +10,16 @@ import {
   map,
   distinctUntilChanged,
   withLatestFrom,
+  endWith,
+  ignoreElements,
+  startWith,
+  shareReplay,
+  defaultIfEmpty,
 } from "rxjs/operators"
 import { Context } from "../../../context/Context"
 import { Manifest } from "../../.."
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { HookManager } from "../../../hooks/HookManager"
-import { waitForSwitch } from "../../../utils/rxjs"
 import { loadFrame } from "./loadFrame"
 import { unloadFrame } from "./unloadFrame"
 import { waitForFrameReady } from "./waitForFrameReady"
@@ -43,79 +46,95 @@ export const createLoader = ({
   const frameElementSubject = new BehaviorSubject<
     HTMLIFrameElement | undefined
   >(undefined)
-  const load$ = loadSubject.asObservable()
-  const unload$ = unloadSubject.asObservable()
-  const stateIdle$ = stateSubject.pipe(filter((state) => state === "idle"))
-  const stateIsReady$ = stateSubject.pipe(
-    map((state) => state === "ready"),
-    distinctUntilChanged(),
-  )
 
-  const unloaded$ = unload$.pipe(
+  const unloadFrame$ = unloadSubject.pipe(
     withLatestFrom(stateSubject),
     filter(([, state]) => state !== "unloading" && state !== "idle"),
-    exhaustMap(() => {
-      stateSubject.next("unloading")
-
-      return unloadFrame({
-        hookManager,
-        item,
-        frameElement: frameElementSubject.getValue(),
-        context,
-      }).pipe(
-        tap(() => {
-          frameElementSubject.next(undefined)
-
-          stateSubject.next("idle")
-        }),
-      )
-    }),
-    share(),
-  )
-
-  const loaded$ = load$.pipe(
     exhaustMap(() =>
-      stateIdle$.pipe(
+      context.bridgeEvent.viewportFree$.pipe(
         first(),
-        tap(() => {
-          stateSubject.next("loading")
-        }),
-        waitForSwitch(context.bridgeEvent.viewportFree$),
         switchMap(() =>
-          loadFrame({
-            element: parent,
+          unloadFrame({
             hookManager,
             item,
-            onFrameElement: (element) => {
-              frameElementSubject.next(element)
-            },
-            settings,
+            frameElement: frameElementSubject.getValue(),
             context,
           }),
         ),
         tap(() => {
-          stateSubject.next("loaded")
+          frameElementSubject.next(undefined)
         }),
-        takeUntil(unload$),
+        ignoreElements(),
+        startWith("loading" as const),
+        endWith("success" as const),
+        defaultIfEmpty("idle" as const),
       ),
+    ),
+    startWith("idle" as const),
+    distinctUntilChanged(),
+    share(),
+  )
+
+  const unloaded$ = unloadFrame$.pipe(filter((state) => state === "success"))
+  const unloading$ = unloadFrame$.pipe(filter((state) => state === "loading"))
+
+  const loadFrame$ = loadSubject.pipe(
+    exhaustMap(() => {
+      const preventFurtherLoad$ = NEVER
+
+      return merge(
+        preventFurtherLoad$,
+        context.bridgeEvent.viewportFree$.pipe(
+          first(),
+          switchMap(() =>
+            loadFrame({
+              element: parent,
+              hookManager,
+              item,
+              onFrameElement: (element) => {
+                frameElementSubject.next(element)
+              },
+              settings,
+              context,
+            }),
+          ),
+          map((frame) => ({ state: "success" as const, frame })),
+          startWith({ state: "loading" as const }),
+          defaultIfEmpty({ state: "idle" as const }),
+        ),
+      ).pipe(takeUntil(unloaded$))
+    }),
+    startWith({ state: "idle" as const }),
+    share(),
+  )
+
+  const loading$ = loadFrame$.pipe(filter(({ state }) => state === "loading"))
+  const loaded$ = loadFrame$.pipe(filter((state) => state.state === "success"))
+
+  const frameIsReady$ = loaded$.pipe(
+    switchMap(({ frame }) =>
+      of(frame).pipe(waitForFrameReady, takeUntil(unloadSubject)),
     ),
     share(),
   )
 
-  const ready$ = loaded$.pipe(
-    switchMap((frame) =>
-      of(frame).pipe(
-        waitForFrameReady,
-        tap(() => {
-          stateSubject.next("ready")
-        }),
-        takeUntil(unload$),
-      ),
-    ),
-    share(),
+  const ready$ = frameIsReady$
+
+  const state$ = merge(
+    unloaded$.pipe(map(() => "idle" as const)),
+    unloading$.pipe(map(() => "unloading" as const)),
+    loaded$.pipe(map(() => "loaded" as const)),
+    loading$.pipe(map(() => "loading" as const)),
+    ready$.pipe(map(() => "ready" as const)),
+  ).pipe(
+    startWith("idle" as const),
+    tap((state) => stateSubject.next(state)),
+    shareReplay(1),
   )
 
-  merge(unloaded$, loaded$, ready$).pipe(takeUntil(destroySubject$)).subscribe()
+  const isReady$ = state$.pipe(map((state) => state === "ready"))
+
+  state$.pipe(takeUntil(destroySubject$)).subscribe()
 
   return {
     load: () => loadSubject.next(),
@@ -127,6 +146,7 @@ export const createLoader = ({
       frameElementSubject.complete()
       destroySubject$.next()
       destroySubject$.complete()
+      stateSubject.complete()
     },
     get state() {
       return stateSubject.getValue()
@@ -134,7 +154,7 @@ export const createLoader = ({
     get element() {
       return frameElementSubject.getValue()
     },
-    isReady$: stateIsReady$,
+    isReady$,
     ready$,
     loaded$,
     unloaded$,
