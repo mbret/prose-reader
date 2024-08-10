@@ -109,10 +109,13 @@ export const createLoader = ({
   )
 
   const loading$ = loadFrame$.pipe(filter(({ state }) => state === "loading"))
-  const loaded$ = loadFrame$.pipe(filter((state) => state.state === "success"))
+  const loaded$ = loadFrame$.pipe(
+    filter((state) => state.state === "success"),
+    map(({ frame }) => frame),
+  )
 
   const frameIsReady$ = loaded$.pipe(
-    switchMap(({ frame }) =>
+    switchMap((frame) =>
       of(frame).pipe(waitForFrameReady, takeUntil(unloadSubject)),
     ),
     share(),
