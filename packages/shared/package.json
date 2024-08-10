@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/shared",
-  "version": "1.68.0",
+  "version": "1.69.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
