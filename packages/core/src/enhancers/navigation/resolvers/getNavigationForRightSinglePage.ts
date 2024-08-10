@@ -50,7 +50,7 @@ export const getNavigationForRightSinglePage = ({
   )
 
   if (!isNewNavigationInCurrentItem) {
-    return navigationResolver.wrapPositionWithSafeEdge(
+    return navigationResolver.getAdjustedPositionWithSafeEdge(
       pageTurnDirection === `horizontal`
         ? { x: position.x + context.getPageSize().width, y: 0 }
         : { y: position.y + context.getPageSize().height, x: 0 },

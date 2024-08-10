@@ -51,7 +51,7 @@ export const getNavigationForLeftPage = ({
     // for the next item in case it's also a vertical content
     if (spineItem?.isUsingVerticalWriting() && position.x !== navigation.x) {
       return navigationResolver.getAdjustedPositionForSpread(
-        navigationResolver.wrapPositionWithSafeEdge(
+        navigationResolver.getAdjustedPositionWithSafeEdge(
           context.isRTL()
             ? { ...navigation, x: navigation.x + context.getPageSize().width }
             : {

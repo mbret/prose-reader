@@ -33,7 +33,7 @@ export const withFallbackPosition =
           return {
             navigation: {
               ...navigation,
-              position: navigationResolver.wrapPositionWithSafeEdge(
+              position: navigationResolver.getAdjustedPositionWithSafeEdge(
                 navigation.position,
               ),
             },

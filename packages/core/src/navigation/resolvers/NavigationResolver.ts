@@ -11,7 +11,7 @@ import {
   UnsafeSpineItemPosition,
 } from "../../spineItem/types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
-import { wrapPositionWithSafeEdge } from "./wrapPositionWithSafeEdge"
+import { getAdjustedPositionWithSafeEdge } from "./getAdjustedPositionWithSafeEdge"
 import { getNavigationForUrl } from "./getNavigationForUrl"
 import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItemPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
@@ -128,14 +128,14 @@ export const createNavigationResolver = ({
         ? 0
         : viewportPosition.y +
           context.state.visibleAreaRect.height * triggerPercentage
-    const midScreenPositionSafePosition = wrapPositionWithSafeEdge({
+    const midScreenPositionSafePosition = getAdjustedPositionWithSafeEdge({
       position: {
         x: triggerXPosition,
         y: triggerYPosition,
       },
       isRTL: context.isRTL(),
       pageSizeHeight: context.getPageSize().height,
-      pageSizeWidth: context.getPageSize().width,
+      visibleAreaRectWidth: context.state.visibleAreaRect.width,
       spineItemsManager,
     })
 
@@ -207,12 +207,12 @@ export const createNavigationResolver = ({
         spineLocator: locator,
       }),
     getMostPredominantNavigationForPosition,
-    wrapPositionWithSafeEdge: (position: ViewportPosition) =>
-      wrapPositionWithSafeEdge({
+    getAdjustedPositionWithSafeEdge: (position: ViewportPosition) =>
+      getAdjustedPositionWithSafeEdge({
         position,
         isRTL: context.isRTL(),
         pageSizeHeight: context.getPageSize().height,
-        pageSizeWidth: context.getPageSize().width,
+        visibleAreaRectWidth: context.state.visibleAreaRect.width,
         spineItemsManager,
       }),
     isNavigationGoingForwardFrom,
