@@ -6,6 +6,8 @@ import {
   debounceTime,
   animationFrameScheduler,
   takeUntil,
+  skip,
+  distinctUntilChanged,
 } from "rxjs"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLocator } from "../locator/SpineLocator"
@@ -29,6 +31,14 @@ export class SpineItemsLoader extends DestroyableClass {
     const layoutHasChanged$ = spineItemsManager.layout$.pipe(
       filter((hasChanged) => hasChanged),
     )
+    const numberOfAdjacentSpineItemToPreLoad$ = settings.settings$.pipe(
+      map(
+        ({ numberOfAdjacentSpineItemToPreLoad }) =>
+          numberOfAdjacentSpineItemToPreLoad,
+      ),
+      skip(1),
+      distinctUntilChanged(),
+    )
 
     /**
      * Loading and unloading content has two important issues that need to be considered
@@ -45,7 +55,11 @@ export class SpineItemsLoader extends DestroyableClass {
      * It would ne nice to be able to load/unload without having to worry about viewport mis-adjustment but due to the current iframe and viewport
      * layout method we have to take it into consideration.
      */
-    const loadSpineItems$ = merge(navigationUpdate$, layoutHasChanged$).pipe(
+    const loadSpineItems$ = merge(
+      navigationUpdate$,
+      layoutHasChanged$,
+      numberOfAdjacentSpineItemToPreLoad$,
+    ).pipe(
       // this can be changed by whatever we want and SHOULD not break navigation.
       // Ideally loading faster is better but loading too close to user navigating can
       // be dangerous.
