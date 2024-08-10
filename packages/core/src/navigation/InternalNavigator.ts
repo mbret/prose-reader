@@ -249,7 +249,7 @@ export class InternalNavigator extends DestroyableClass {
           map(
             (): InternalNavigationEntry => ({
               ...navigation,
-              animation: "turn" as const,
+              animation: "snap" as const,
             }),
           ),
           finalize(() => {
