@@ -5,7 +5,7 @@ import { isShallowEqual } from "../../utils/objects"
 export type State = ReturnType<typeof observeState>
 
 export const observeState = (reader: Reader) => {
-  return reader.pagination.pagination$.pipe(
+  return reader.pagination.state$.pipe(
     withLatestFrom(reader.context.manifest$, reader.settings.settings$),
     map(
       ([

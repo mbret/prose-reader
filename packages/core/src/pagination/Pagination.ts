@@ -34,7 +34,7 @@ export class Pagination extends DestroyableClass {
     navigationId: undefined,
   })
 
-  public pagination$ = this.paginationSubject.pipe(
+  public state$ = this.paginationSubject.pipe(
     distinctUntilChanged(isShallowEqual),
     tap((value) => {
       report.info(`update`, value)
@@ -56,7 +56,7 @@ export class Pagination extends DestroyableClass {
     })
   }
 
-  get pagination() {
+  get state() {
     return this.paginationSubject.value
   }
 

@@ -38,9 +38,9 @@ describe("Given a book with one chapter", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.pagination$>
+        ObservedValueOf<typeof reader.pagination.state$>
       >((resolve, reject) => {
-        reader.pagination.pagination$.pipe(skip(1)).subscribe({
+        reader.pagination.state$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -93,9 +93,9 @@ describe("Given a book with one chapter", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.pagination$>
+        ObservedValueOf<typeof reader.pagination.state$>
       >((resolve, reject) => {
-        reader.pagination.pagination$.pipe(skip(2)).subscribe({
+        reader.pagination.state$.pipe(skip(2)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -160,9 +160,9 @@ describe("Given a book with one chapter", () => {
           })
 
           const value = await new Promise<
-            ObservedValueOf<typeof reader.pagination.pagination$>
+            ObservedValueOf<typeof reader.pagination.state$>
           >((resolve, reject) => {
-            reader.pagination.pagination$.pipe(skip(2)).subscribe({
+            reader.pagination.state$.pipe(skip(2)).subscribe({
               next: resolve,
               error: reject,
             })
@@ -237,9 +237,9 @@ describe("Given a book with two chapters", () => {
       })
 
       const value = await new Promise<
-        ObservedValueOf<typeof reader.pagination.pagination$>
+        ObservedValueOf<typeof reader.pagination.state$>
       >((resolve, reject) => {
-        reader.pagination.pagination$.pipe(skip(1)).subscribe({
+        reader.pagination.state$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })

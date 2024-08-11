@@ -80,7 +80,7 @@ export class PaginationController extends DestroyableClass {
           withLatestFrom(this.context.bridgeEvent.navigation$),
           tap(([, navigation]) => {
             const { position } = navigation
-            const previousPagination = this.pagination.pagination
+            const previousPagination = this.pagination.state
 
             const {
               beginIndex: beginSpineItemIndex,
@@ -181,7 +181,7 @@ export class PaginationController extends DestroyableClass {
           endSpineItemIndex,
           beginPageIndexInSpineItem,
           endPageIndexInSpineItem,
-        } = this.pagination.pagination
+        } = this.pagination.state
 
         if (
           beginPageIndexInSpineItem === undefined ||

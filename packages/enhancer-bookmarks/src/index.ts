@@ -35,7 +35,7 @@ export const bookmarksEnhancer =
       }
     }
   } => {
-    type PaginationInfo = ObservedValueOf<Reader[`pagination`][`pagination$`]>
+    type PaginationInfo = ObservedValueOf<Reader[`pagination`][`state$`]>
 
     const reader = next(options)
 
@@ -125,7 +125,7 @@ export const bookmarksEnhancer =
 
       if (windowOrElement) {
         return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
-          withLatestFrom(reader.pagination.pagination$),
+          withLatestFrom(reader.pagination.state$),
           tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination)),
         )
       }
@@ -136,7 +136,7 @@ export const bookmarksEnhancer =
     // @todo handle spread
     const removeBookmarksOnCurrentPage = <T>(observer: Observable<T>) =>
       observer.pipe(
-        withLatestFrom(reader.pagination.pagination$),
+        withLatestFrom(reader.pagination.state$),
         tap(([, pagination]) => {
           if (pagination.beginSpineItemIndex !== undefined) {
             bookmarksSubject$.next(
@@ -185,7 +185,7 @@ export const bookmarksEnhancer =
 
     merge(
       bookmarks$,
-      reader.pagination.pagination$,
+      reader.pagination.state$,
       // It's important to force redraw and update bookmarkd on each layout
       // this is because pagination itself is not always garanteed to be updated
       // when the frame actually exists

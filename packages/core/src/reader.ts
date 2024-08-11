@@ -106,7 +106,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   navigator.viewportState$.subscribe(context.bridgeEvent.viewportStateSubject)
   navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
   navigator.isLocked$.subscribe(context.bridgeEvent.navigationIsLockedSubject)
-  pagination.pagination$.subscribe(context.bridgeEvent.paginationSubject)
+  pagination.state$.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {
     const containerElement = elementSubject$.getValue()?.parentElement
@@ -280,8 +280,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     load,
     destroy,
     pagination: {
-      pagination: pagination.pagination,
-      pagination$: pagination.pagination$,
+      state: pagination.state,
+      state$: pagination.state$,
     },
     settings: settingsManager as SettingsInterface<
       NonNullable<(typeof settingsManager)["inputSettings"]>,
