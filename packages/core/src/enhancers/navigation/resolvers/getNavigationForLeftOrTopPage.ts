@@ -4,7 +4,7 @@ import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator
 import { SpineLocator } from "../../../spine/locator/SpineLocator"
 import { SpineItem } from "../../../spineItem/createSpineItem"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
+import { getNavigationForLeftSinglePage } from "./getNavigationForLeftSinglePage"
 
 /**
  * Very naive approach for spread. It could be optimized but by using this approach
@@ -13,7 +13,7 @@ import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePa
  * @important
  * Special case for vertical content, read content
  */
-export const getNavigationForRightPage = ({
+export const getNavigationForLeftOrTopPage = ({
   position,
   spineItem,
   context,
@@ -30,7 +30,7 @@ export const getNavigationForRightPage = ({
   spineLocator: SpineLocator
   computedPageTurnDirection: "horizontal" | "vertical"
 }): ViewportPosition => {
-  const navigation = getNavigationForRightSinglePage({
+  const navigation = getNavigationForLeftSinglePage({
     position,
     context,
     navigationResolver,
@@ -53,13 +53,10 @@ export const getNavigationForRightPage = ({
       return navigationResolver.getAdjustedPositionForSpread(
         navigationResolver.getAdjustedPositionWithSafeEdge(
           context.isRTL()
-            ? {
-                ...navigation,
-                x: navigation.x - context.getPageSize().width,
-              }
+            ? { ...navigation, x: navigation.x + context.getPageSize().width }
             : {
                 ...navigation,
-                x: navigation.x + context.getPageSize().width,
+                x: navigation.x - context.getPageSize().width,
               },
         ),
       )
@@ -76,7 +73,7 @@ export const getNavigationForRightPage = ({
       return navigationResolver.getAdjustedPositionForSpread(navigation)
     }
 
-    const doubleNavigation = getNavigationForRightSinglePage({
+    const doubleNavigation = getNavigationForLeftSinglePage({
       position: navigation,
       context,
       navigationResolver,

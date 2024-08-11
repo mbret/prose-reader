@@ -1,8 +1,8 @@
 import { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
-import { getNavigationForRightPage } from "../resolvers/getNavigationForRightPage"
-import { getNavigationForLeftPage } from "../resolvers/getNavigationForLeftPage"
+import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
+import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
@@ -12,12 +12,28 @@ export class ManualNavigator {
   constructor(protected reader: Reader) {}
 
   turnRight() {
+    return this.turnRightOrBottom()
+  }
+
+  turnLeft() {
+    return this.turnLeftOrTop()
+  }
+
+  turnTop() {
+    return this.turnLeftOrTop()
+  }
+
+  turnBottom() {
+    return this.turnRightOrBottom()
+  }
+
+  turnRightOrBottom() {
     const navigation = this.reader.navigation.getNavigation()
     const spineItem = this.reader.spineItemsManager.get(navigation.spineItem)
 
     if (!spineItem) return
 
-    const position = getNavigationForRightPage({
+    const position = getNavigationForRightOrBottomPage({
       context: this.reader.context,
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,
@@ -33,13 +49,13 @@ export class ManualNavigator {
     })
   }
 
-  turnLeft() {
+  turnLeftOrTop() {
     const navigation = this.reader.navigation.getNavigation()
     const spineItem = this.reader.spineItemsManager.get(navigation.spineItem)
 
     if (!spineItem) return
 
-    const position = getNavigationForLeftPage({
+    const position = getNavigationForLeftOrTopPage({
       context: this.reader.context,
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,

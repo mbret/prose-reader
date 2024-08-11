@@ -6,6 +6,10 @@ export type NavigationEnhancerOutput = {
   navigation: {
     state$: ReturnType<typeof observeState>
     moveTo: PanNavigator["moveTo"]
+    turnTop: ManualNavigator["turnTop"]
+    turnBottom: ManualNavigator["turnBottom"]
+    turnLeftOrTop: ManualNavigator["turnLeftOrTop"]
+    turnRightOrBottom: ManualNavigator["turnRightOrBottom"]
     turnLeft: ManualNavigator["turnLeft"]
     turnRight: ManualNavigator["turnRight"]
     goToCfi: ManualNavigator["goToCfi"]

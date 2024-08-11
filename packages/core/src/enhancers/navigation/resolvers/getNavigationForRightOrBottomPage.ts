@@ -4,7 +4,7 @@ import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator
 import { SpineLocator } from "../../../spine/locator/SpineLocator"
 import { SpineItem } from "../../../spineItem/createSpineItem"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { getNavigationForLeftSinglePage } from "./getNavigationForLeftSinglePage"
+import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
 
 /**
  * Very naive approach for spread. It could be optimized but by using this approach
@@ -13,7 +13,7 @@ import { getNavigationForLeftSinglePage } from "./getNavigationForLeftSinglePage
  * @important
  * Special case for vertical content, read content
  */
-export const getNavigationForLeftPage = ({
+export const getNavigationForRightOrBottomPage = ({
   position,
   spineItem,
   context,
@@ -30,7 +30,7 @@ export const getNavigationForLeftPage = ({
   spineLocator: SpineLocator
   computedPageTurnDirection: "horizontal" | "vertical"
 }): ViewportPosition => {
-  const navigation = getNavigationForLeftSinglePage({
+  const navigation = getNavigationForRightSinglePage({
     position,
     context,
     navigationResolver,
@@ -53,10 +53,13 @@ export const getNavigationForLeftPage = ({
       return navigationResolver.getAdjustedPositionForSpread(
         navigationResolver.getAdjustedPositionWithSafeEdge(
           context.isRTL()
-            ? { ...navigation, x: navigation.x + context.getPageSize().width }
-            : {
+            ? {
                 ...navigation,
                 x: navigation.x - context.getPageSize().width,
+              }
+            : {
+                ...navigation,
+                x: navigation.x + context.getPageSize().width,
               },
         ),
       )
@@ -73,7 +76,7 @@ export const getNavigationForLeftPage = ({
       return navigationResolver.getAdjustedPositionForSpread(navigation)
     }
 
-    const doubleNavigation = getNavigationForLeftSinglePage({
+    const doubleNavigation = getNavigationForRightSinglePage({
       position: navigation,
       context,
       navigationResolver,
