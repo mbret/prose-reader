@@ -13,7 +13,7 @@ export const loadItems =
   (stream: Observable<readonly [number, number]>) =>
     stream.pipe(
       tap(([beginIndex, endIndex]) => {
-        const { numberOfAdjacentSpineItemToPreLoad } = settings.settings
+        const { numberOfAdjacentSpineItemToPreLoad } = settings.values
         /**
          * @todo
          * optimize useless calls to it, such as when the layout has not changed and the focus is still the same

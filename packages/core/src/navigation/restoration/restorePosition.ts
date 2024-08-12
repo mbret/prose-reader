@@ -42,7 +42,7 @@ const restoreNavigationForScrollingPageTurnMode = ({
   /**
    * - vertical scroll
    */
-  if (settings.settings.computedPageTurnDirection === "vertical") {
+  if (settings.values.computedPageTurnDirection === "vertical") {
     /**
      * - item did not shift
      * - item same height
@@ -208,7 +208,7 @@ export const restorePosition = ({
   spineItemLocator: SpineItemLocator
   context: Context
 }): ViewportPosition => {
-  if (settings.settings.computedPageTurnMode === "scrollable") {
+  if (settings.values.computedPageTurnMode === "scrollable") {
     return restoreNavigationForScrollingPageTurnMode({
       navigation,
       spineLocator,

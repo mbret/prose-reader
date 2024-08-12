@@ -108,7 +108,7 @@ export const layoutEnhancer =
         const item = reader.spineItemsManager.get(itemIndex)
         const frame = item?.frame
         const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
-          settingsManager.settings
+          settingsManager.values
         const pageSize = reader.context.getPageSize()
 
         if (
@@ -179,7 +179,7 @@ export const layoutEnhancer =
         }
       })
 
-    const layoutOnContainerResize$ = settingsManager.settings$.pipe(
+    const layoutOnContainerResize$ = settingsManager.values$.pipe(
       filter(({ layoutAutoResize }) => layoutAutoResize === "container"),
       switchMap(() => reader.context.containerElement$),
       filter(isDefined),
@@ -194,7 +194,7 @@ export const layoutEnhancer =
 
     movingSafePan$.subscribe()
 
-    settingsManager.settings$
+    settingsManager.values$
       .pipe(
         mapKeysTo([`pageHorizontalMargin`, `pageVerticalMargin`]),
         distinctUntilChanged(isShallowEqual),

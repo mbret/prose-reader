@@ -209,7 +209,7 @@ export class InternalNavigator extends DestroyableClass {
           const shouldNotAlterPosition =
             params.navigation.cfi ||
             params.navigation.url ||
-            settings.settings.computedPageTurnMode === "scrollable" ||
+            settings.values.computedPageTurnMode === "scrollable" ||
             isUserLocked
 
           return of(params).pipe(

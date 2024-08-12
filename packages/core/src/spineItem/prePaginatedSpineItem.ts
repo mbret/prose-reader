@@ -57,7 +57,7 @@ export const createPrePaginatedSpineItem = ({
       const cssLink = buildDocumentStyle(
         {
           ...commonSpineItem.getDimensionsForPaginatedContent(),
-          enableTouch: settings.settings.computedPageTurnMode !== `scrollable`,
+          enableTouch: settings.values.computedPageTurnMode !== `scrollable`,
           spreadPosition,
         },
         viewportDimensions,

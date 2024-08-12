@@ -31,7 +31,7 @@ export class SpineItemsLoader extends DestroyableClass {
     const layoutHasChanged$ = spineItemsManager.layout$.pipe(
       filter((hasChanged) => hasChanged),
     )
-    const numberOfAdjacentSpineItemToPreLoad$ = settings.settings$.pipe(
+    const numberOfAdjacentSpineItemToPreLoad$ = settings.values$.pipe(
       map(
         ({ numberOfAdjacentSpineItemToPreLoad }) =>
           numberOfAdjacentSpineItemToPreLoad,

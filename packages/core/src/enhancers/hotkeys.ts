@@ -24,7 +24,7 @@ export const hotkeysEnhancer =
 
     const navigateOnKey = (document: Document) =>
       fromEvent<KeyboardEvent>(document, "keyup").pipe(
-        withLatestFrom(reader.settings.settings$),
+        withLatestFrom(reader.settings.values$),
         map(([e, { pageTurnDirection }]) => {
           if (pageTurnDirection === "horizontal") {
             if (e.key === `ArrowRight`) {

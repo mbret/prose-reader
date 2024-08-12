@@ -6,7 +6,7 @@ export type State = ReturnType<typeof observeState>
 
 export const observeState = (reader: Reader) => {
   return reader.pagination.state$.pipe(
-    withLatestFrom(reader.context.manifest$, reader.settings.settings$),
+    withLatestFrom(reader.context.manifest$, reader.settings.values$),
     map(
       ([
         paginationInfo,

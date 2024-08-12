@@ -63,7 +63,7 @@ export class ViewportNavigator extends DestroyableClass {
   ) {
     super()
 
-    const settingsThatRequireLayout$ = settings.settings$.pipe(
+    const settingsThatRequireLayout$ = settings.values$.pipe(
       mapKeysTo([
         `computedPageTurnDirection`,
         `computedPageTurnMode`,
@@ -86,7 +86,7 @@ export class ViewportNavigator extends DestroyableClass {
     ).pipe(
       withLatestFrom(this.viewportElement$),
       tap(([, element]) => {
-        if (settings.settings.computedPageTurnMode === `scrollable`) {
+        if (settings.values.computedPageTurnMode === `scrollable`) {
           element.style.removeProperty(`transform`)
           element.style.removeProperty(`transition`)
           element.style.overflow = `scroll`
@@ -99,7 +99,7 @@ export class ViewportNavigator extends DestroyableClass {
 
     this.layout$ = updateElementOnSettingsChange$.pipe(
       tap(() => {
-        report.info(`layout`, settings.settings)
+        report.info(`layout`, settings.values)
       }),
       share(),
     )
@@ -115,7 +115,7 @@ export class ViewportNavigator extends DestroyableClass {
         const shouldAnimate = !(
           !animation ||
           (animation === `turn` &&
-            settings.settings.computedPageTurnAnimation === `none`)
+            settings.values.computedPageTurnAnimation === `none`)
         )
 
         return {
@@ -140,12 +140,12 @@ export class ViewportNavigator extends DestroyableClass {
 
               const animationDuration =
                 currentEvent.animation === `snap`
-                  ? settings.settings.snapAnimationDuration
-                  : settings.settings.computedPageTurnAnimationDuration
+                  ? settings.values.snapAnimationDuration
+                  : settings.values.computedPageTurnAnimationDuration
               const pageTurnAnimation =
                 currentEvent.animation === `snap`
                   ? (`slide` as const)
-                  : settings.settings.computedPageTurnAnimation
+                  : settings.values.computedPageTurnAnimation
 
               return of(currentEvent).pipe(
                 /**
@@ -243,7 +243,7 @@ export class ViewportNavigator extends DestroyableClass {
   protected setViewportPosition({ x, y }: ViewportPosition) {
     const element = this.viewportElement$.getValue()
 
-    if (this.settings.settings.computedPageTurnMode === `scrollable`) {
+    if (this.settings.values.computedPageTurnMode === `scrollable`) {
       this.scrollingSubject.next(true)
       // @todo use smooth later and adjust the class to avoid false positive
       // @todo see scrollend
@@ -275,7 +275,7 @@ export class ViewportNavigator extends DestroyableClass {
   public get viewportPosition() {
     const element = this.viewportElement$.getValue()
 
-    if (this.settings.settings.computedPageTurnMode === `scrollable`) {
+    if (this.settings.values.computedPageTurnMode === `scrollable`) {
       /**
        * We need to scale down cause a scrollbar might create inconsistency between navigation
        * element and spine.

@@ -14,14 +14,14 @@ export class PanNavigator {
     delta: { x: number; y: number } | undefined,
     { final, start }: { start?: boolean; final?: boolean } = {},
   ) {
-    if (this.reader.settings.settings.computedPageTurnMode === `scrollable`) {
+    if (this.reader.settings.values.computedPageTurnMode === `scrollable`) {
       Report.warn(`pan control is not available on free page turn mode`)
 
       return
     }
 
     const pageTurnDirection =
-      this.reader.settings.settings.computedPageTurnDirection
+      this.reader.settings.values.computedPageTurnDirection
 
     if (start) {
       this.unlock?.()

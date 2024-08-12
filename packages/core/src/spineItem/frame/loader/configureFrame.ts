@@ -45,7 +45,7 @@ export const configureFrame = ({
           // computedStyleAfterLoad = frame?.contentWindow?.getComputedStyle(body)
         }
 
-        if (settings.settings.computedPageTurnMode !== `scrollable`) {
+        if (settings.values.computedPageTurnMode !== `scrollable`) {
           // @todo see what's the impact
           frame.setAttribute(`tab-index`, `0`)
         }

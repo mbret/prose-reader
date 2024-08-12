@@ -27,14 +27,14 @@ export class ReaderSettingsManager
       context.manifest$,
     ]).pipe(
       tap(() => {
-        this.update(this.settings)
+        this.update(this.values)
       }),
     )
 
     /**
      * Update state based on settings
      */
-    const updateContextOnSettingsChanges$ = this.settings$.pipe(
+    const updateContextOnSettingsChanges$ = this.values$.pipe(
       tap(({ forceSinglePageMode }) => {
         context.update({ forceSinglePageMode })
       }),

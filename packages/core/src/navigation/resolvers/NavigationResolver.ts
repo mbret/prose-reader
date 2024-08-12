@@ -113,7 +113,7 @@ export const createNavigationResolver = ({
   const getMostPredominantNavigationForPosition = (
     viewportPosition: ViewportPosition,
   ): ViewportPosition => {
-    const pageTurnDirection = settings.settings.computedPageTurnDirection
+    const pageTurnDirection = settings.values.computedPageTurnDirection
     // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
     // const triggerPercentage = movingForward ? 0.7 : 0.3
@@ -151,7 +151,7 @@ export const createNavigationResolver = ({
     to: ViewportPosition,
     from: ViewportPosition,
   ) => {
-    const pageTurnDirection = settings.settings.computedPageTurnDirection
+    const pageTurnDirection = settings.values.computedPageTurnDirection
 
     if (pageTurnDirection === `vertical`) {
       return to.y > from.y

@@ -29,7 +29,7 @@ export const withSpineItemPosition =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     const getPosition = (navigation: N["navigation"]) => {
       const { navigationSnapThreshold, computedPageTurnMode } =
-        settings.settings
+        settings.values
       const spineItem = spineItemsManager.get(navigation.spineItem)
 
       if (!spineItem || !navigation.position) return undefined

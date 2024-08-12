@@ -69,7 +69,7 @@ export class UserNavigator extends DestroyableClass {
 
     const userScroll$ = element$.pipe(
       switchMap((element) =>
-        settings.settings$.pipe(
+        settings.values$.pipe(
           map(({ computedPageTurnMode }) => computedPageTurnMode),
           distinctUntilChanged(),
           filter(
@@ -118,7 +118,7 @@ export class UserNavigator extends DestroyableClass {
      * Keep it synchronized with scrolling. This should
      * not trigger viewport navigation, only update internal navigation.
      */
-    const navigateOnScroll$ = settings.settings$.pipe(
+    const navigateOnScroll$ = settings.values$.pipe(
       map(({ computedPageTurnMode }) => computedPageTurnMode),
       distinctUntilChanged(),
       filter((computedPageTurnMode) => computedPageTurnMode === "scrollable"),

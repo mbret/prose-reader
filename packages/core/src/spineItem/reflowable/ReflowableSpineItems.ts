@@ -140,7 +140,7 @@ export const createReflowableSpineItem = ({
               isScrollable:
                 context.manifest?.renditionFlow === `scrolled-continuous`,
               enableTouch:
-                settings.settings.computedPageTurnMode !== `scrollable`,
+                settings.values.computedPageTurnMode !== `scrollable`,
             })
           : buildStyleWithMultiColumn(
               commonSpineItem.getDimensionsForReflowableContent(

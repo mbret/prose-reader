@@ -172,13 +172,13 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     context.update({
       manifest,
       ...loadOptions,
-      forceSinglePageMode: settingsManager.settings.forceSinglePageMode,
+      forceSinglePageMode: settingsManager.values.forceSinglePageMode,
     })
 
     layout()
   }
 
-  merge(context.state$, settingsManager.settings$)
+  merge(context.state$, settingsManager.values$)
     .pipe(
       map(() => undefined),
       withLatestFrom(context.state$),
@@ -189,7 +189,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
           hasVerticalWriting,
           renditionFlow: manifest?.renditionFlow,
           renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settingsManager.settings.computedPageTurnMode,
+          computedPageTurnMode: settingsManager.values.computedPageTurnMode,
         }
       }),
       distinctUntilChanged(isShallowEqual),

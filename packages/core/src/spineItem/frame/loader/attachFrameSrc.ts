@@ -27,7 +27,7 @@ export const attachFrameSrc = ({
   return (stream: Observable<HTMLIFrameElement>) =>
     stream.pipe(
       switchMap((frameElement) => {
-        const { fetchResource } = settings.settings
+        const { fetchResource } = settings.values
 
         /**
          * Because of the bug with iframe and sw, we should not use srcdoc and sw together for

@@ -38,7 +38,7 @@ export class ManualNavigator {
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,
       computedPageTurnDirection:
-        this.reader.settings.settings.computedPageTurnDirection,
+        this.reader.settings.values.computedPageTurnDirection,
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
       spineLocator: this.reader.spine.locator,
@@ -60,7 +60,7 @@ export class ManualNavigator {
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,
       computedPageTurnDirection:
-        this.reader.settings.settings.computedPageTurnDirection,
+        this.reader.settings.values.computedPageTurnDirection,
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
       spineLocator: this.reader.spine.locator,
@@ -123,7 +123,7 @@ export class ManualNavigator {
 
   goToRightSpineItem() {
     if (
-      this.reader.settings.settings.computedPageTurnDirection === "vertical"
+      this.reader.settings.values.computedPageTurnDirection === "vertical"
     ) {
       Report.warn(
         `You cannot call this navigation method on vertical direction`,
@@ -141,7 +141,7 @@ export class ManualNavigator {
 
   goToLeftSpineItem() {
     if (
-      this.reader.settings.settings.computedPageTurnDirection === "vertical"
+      this.reader.settings.values.computedPageTurnDirection === "vertical"
     ) {
       Report.warn(
         `You cannot call this navigation method on vertical direction`,
@@ -159,7 +159,7 @@ export class ManualNavigator {
 
   goToTopSpineItem() {
     if (
-      this.reader.settings.settings.computedPageTurnDirection === "horizontal"
+      this.reader.settings.values.computedPageTurnDirection === "horizontal"
     ) {
       Report.warn(
         `You cannot call this navigation method on horizontal direction`,
@@ -173,7 +173,7 @@ export class ManualNavigator {
 
   goToBottomSpineItem() {
     if (
-      this.reader.settings.settings.computedPageTurnDirection === "horizontal"
+      this.reader.settings.values.computedPageTurnDirection === "horizontal"
     ) {
       Report.warn(
         `You cannot call this navigation method on horizontal direction`,

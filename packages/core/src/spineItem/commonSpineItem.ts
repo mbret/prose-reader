@@ -218,7 +218,7 @@ export const createCommonSpineItem = ({
   }
 
   const getResource = async () => {
-    const fetchResource = settings.settings.fetchResource
+    const fetchResource = settings.values.fetchResource
 
     const lastFetch = (_: Manifest[`spineItems`][number]) => {
       if (fetchResource) {

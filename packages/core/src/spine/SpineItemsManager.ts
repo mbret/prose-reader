@@ -143,7 +143,7 @@ export class SpineItemsManager extends DestroyableClass {
             : `none`,
         })
 
-        if (this.settings.settings.computedPageTurnDirection === `vertical`) {
+        if (this.settings.values.computedPageTurnDirection === `vertical`) {
           const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
             ? verticalOffset
             : verticalOffset - this.context.state.visibleAreaRect.height

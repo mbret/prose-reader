@@ -76,7 +76,7 @@ export const getOrGuessDirection = ({
   /**
    * From this point forward, we can only make assumptions
    */
-  if (settings.settings.computedPageTurnDirection === "vertical") {
+  if (settings.values.computedPageTurnDirection === "vertical") {
     if (navigation.position.y > previousNavigation.position.y) {
       return "forward"
     } else {

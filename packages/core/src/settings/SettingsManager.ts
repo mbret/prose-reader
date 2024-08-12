@@ -66,7 +66,7 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
     commit()
   }
 
-  get settings() {
+  get values() {
     if (!this.outputSettings) {
       const { commit } = this._prepareUpdate(this.inputSettings)
 
@@ -76,7 +76,7 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
     return this.outputSettings
   }
 
-  get settings$() {
+  get values$() {
     if (!this.outputSettings) {
       const { commit } = this._prepareUpdate(this.inputSettings)
 

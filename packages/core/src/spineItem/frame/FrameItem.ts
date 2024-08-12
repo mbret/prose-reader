@@ -150,7 +150,7 @@ export class FrameItem extends DestroyableClass {
       frame.style.width = `${size.width}px`
       frame.style.height = `${size.height}px`
 
-      if (this.settings.settings.computedPageTurnMode !== `scrollable`) {
+      if (this.settings.values.computedPageTurnMode !== `scrollable`) {
         // @todo see what's the impact
         frame.setAttribute(`tab-index`, `0`)
       }

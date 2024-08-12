@@ -14,7 +14,7 @@ export interface SettingsInterface<
 
   update(settings: Partial<InputSettings>): void
 
-  settings$: Observable<OutputSettings>
+  values$: Observable<OutputSettings>
 
-  settings: OutputSettings
+  values: OutputSettings
 }

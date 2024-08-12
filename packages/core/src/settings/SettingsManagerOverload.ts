@@ -23,7 +23,7 @@ export abstract class SettingsManagerOverload<
     ParentOutputSettings
   >
 
-  public settings$: Observable<ParentOutputSettings & OutputSettings>
+  public values$: Observable<ParentOutputSettings & OutputSettings>
 
   constructor(
     initialSettings: Partial<InputSettings>,
@@ -46,15 +46,15 @@ export abstract class SettingsManagerOverload<
     )
     this.outputSettingsUpdateSubject = new Subject()
 
-    this.settings$ = combineLatest([
-      this.settingsManager.settings$,
+    this.values$ = combineLatest([
+      this.settingsManager.values$,
       this.outputSettingsUpdateSubject.pipe(startWith(this.outputSettings)),
     ]).pipe(
       map(([parentSettings, settings]) => ({ ...parentSettings, ...settings })),
       shareReplay(1),
     )
 
-    this.settings$.subscribe()
+    this.values$.subscribe()
   }
 
   abstract getDefaultSettings(): InputSettings
@@ -110,9 +110,9 @@ export abstract class SettingsManagerOverload<
     commit()
   }
 
-  get settings(): ParentOutputSettings & OutputSettings {
+  get values(): ParentOutputSettings & OutputSettings {
     return {
-      ...this.settingsManager.settings,
+      ...this.settingsManager.values,
       ...this.outputSettings,
     }
   }

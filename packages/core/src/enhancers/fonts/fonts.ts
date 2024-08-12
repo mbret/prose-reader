@@ -75,10 +75,10 @@ export const fontsEnhancer =
     */ ``
     }
     body {
-      ${settingsManager.settings.fontScale !== 1 ? `font-size: ${settingsManager.settings.fontScale}em !important;` : ``}
-      ${settingsManager.settings.lineHeight !== `publisher` ? `line-height: ${settingsManager.settings.lineHeight} !important;` : ``}
-      ${settingsManager.settings.fontWeight !== `publisher` ? `font-weight: ${settingsManager.settings.fontWeight} !important;` : ``}
-      ${settingsManager.settings.fontJustification !== `publisher` ? `text-align: ${settingsManager.settings.fontJustification} !important;` : ``}
+      ${settingsManager.values.fontScale !== 1 ? `font-size: ${settingsManager.values.fontScale}em !important;` : ``}
+      ${settingsManager.values.lineHeight !== `publisher` ? `line-height: ${settingsManager.values.lineHeight} !important;` : ``}
+      ${settingsManager.values.fontWeight !== `publisher` ? `font-weight: ${settingsManager.values.fontWeight} !important;` : ``}
+      ${settingsManager.values.fontJustification !== `publisher` ? `text-align: ${settingsManager.values.fontJustification} !important;` : ``}
     }
   `
 
@@ -123,7 +123,7 @@ export const fontsEnhancer =
         }),
       )
 
-    settingsManager.settings$
+    settingsManager.values$
       .pipe(
         shouldRequireLayout,
         tap(applyChangeToSpineItems),

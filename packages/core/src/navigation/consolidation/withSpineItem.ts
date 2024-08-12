@@ -32,7 +32,7 @@ export const withSpineItem =
         directionFromLastNavigation: direction,
       } = navigation
       const { navigationSnapThreshold, computedPageTurnMode } =
-        settings.settings
+        settings.values
 
       /**
        * - valid given spine item
