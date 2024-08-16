@@ -1,25 +1,42 @@
-import { Reader } from "@prose-reader/core"
+import { LayoutPosition } from "@prose-reader/core/dist/spine/SpineLayout"
 import { Observable } from "rxjs"
 
-export type Bookmark = {
+export type SerializableBookmark = {
   cfi: string
-  pageIndex: number | undefined
-  spineItemIndex: number | undefined
 }
 
-export type Api = {
+export type PageBookmark = {
+  absolutePageIndex: number
+}
+
+export type RuntimeBookmark = {
+  cfi: string
+  itemIndex?: number
+  pageIndex?: number
+  absolutePageIndex?: number
+  node?: Node
+  offset?: number
+}
+
+export type EnhancerOutput = {
   bookmarks: {
-    isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
-    load: (bookmarks: ImportableBookmark[]) => void
-    removeAll: () => void
-    mapToImportable: (bookmarks: Bookmark[]) => ImportableBookmark[]
-    $: {
-      bookmarks$: Observable<Bookmark[]>
-      loaded$: Observable<void>
-    }
+    addBookmark: (params: { absolutePageIndex: number }) => void
+    addBookmarks: (bookmarks: SerializableBookmark[]) => void
+    removeBookmark: (params: { absolutePageIndex: number }) => void
+    removeAllBookmarks: () => void
+    bookmarks$: Observable<RuntimeBookmark[]>
+    pages$: Observable<
+      {
+        isBookmarkable: boolean | undefined
+        absolutePageIndex: number
+        itemIndex: number
+        absolutePosition: LayoutPosition
+      }[]
+    >
   }
 }
 
-export type ImportableBookmark = Pick<Bookmark, `cfi`>
-
-export type ReaderInstance = Reader & Api
+export type Command =
+  | { type: "add"; data: SerializableBookmark | PageBookmark }
+  | { type: "removeAll" }
+  | { type: "remove"; data: PageBookmark }

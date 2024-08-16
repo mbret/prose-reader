@@ -1,237 +1,142 @@
-import { Reader, Report } from "@prose-reader/core"
-import {
-  BehaviorSubject,
-  fromEvent,
-  ObservedValueOf,
-  switchMap,
-  Subject,
-  EMPTY,
-  Observable,
-  merge,
-  animationFrameScheduler,
-} from "rxjs"
-import { tap, map, takeUntil, withLatestFrom, filter, pairwise, startWith, mergeMap, share, debounceTime } from "rxjs/operators"
-import { mapBookmarkToImportableBookmark, mapImportableBookmarkToBookmark } from "./bookmarks"
-import { createRenderer } from "./renderer"
-import { Bookmark, ImportableBookmark } from "./types"
-
-const PACKAGE_NAME = `@prose-reader/enhancer-bookmarks`
-
-const logger = Report.namespace(PACKAGE_NAME)
+import { Reader, waitForSwitch } from "@prose-reader/core"
+import { animationFrameScheduler, BehaviorSubject, merge, Subject, timer } from "rxjs"
+import { filter, map, share, switchMap, takeUntil, tap, withLatestFrom } from "rxjs/operators"
+import { SerializableBookmark, EnhancerOutput, RuntimeBookmark, Command } from "./types"
+import { consolidateBookmark } from "./bookmarks/consolidateBookmark"
 
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
-  (
-    options: InheritOptions,
-  ): InheritOutput & {
-    bookmarks: {
-      isClickEventInsideBookmarkArea: (e: PointerEvent | MouseEvent) => boolean
-      load: (bookmarks: ImportableBookmark[]) => void
-      removeAll: () => void
-      mapToImportable: (bookmarks: Bookmark[]) => ImportableBookmark[]
-      $: {
-        bookmarks$: Observable<Bookmark[]>
-        loaded$: Observable<void>
-      }
-    }
-  } => {
-    type PaginationInfo = ObservedValueOf<Reader[`pagination`][`state$`]>
-
+  (options: InheritOptions): InheritOutput & EnhancerOutput => {
     const reader = next(options)
+    const commandSubject = new Subject<Command>()
+    const bookmarksSubject = new BehaviorSubject<RuntimeBookmark[]>([])
 
-    const bookmarksSubject$ = new BehaviorSubject<Bookmark[]>([])
-    const bookmarks$ = bookmarksSubject$.pipe(
-      startWith(undefined),
-      pairwise(),
-      filter(([old, current]) => !!current && !(old && old.length === 0 && current.length === 0)),
-      map(([, bookmarks = []]) => bookmarks),
-      share(),
-    )
-    const loadedSubject$ = new Subject<void>()
-    const settings = {
-      areaWidth: 50,
-      areaHeight: 30,
-    }
-    const renderer = createRenderer(reader, settings)
-
-    const getCfiInformation = (cfi: string) => {
-      const { node, offset = 0, spineItemIndex } = reader.cfi.resolveCfi({ cfi }) || {}
-
-      if (node && spineItemIndex !== undefined) {
-        const pageIndex = reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
-
-        return { cfi, pageIndex, spineItemIndex }
-      }
-
-      return { cfi, pageIndex: undefined, spineItemIndex }
+    const addBookmarks = (bookmarks: SerializableBookmark[]) => {
+      bookmarks.forEach((bookmark) => {
+        commandSubject.next({ data: bookmark, type: "add" })
+      })
     }
 
-    const createBookmarkFromCurrentPagination = ({ beginCfi }: PaginationInfo) => {
-      if (beginCfi) {
-        return getCfiInformation(beginCfi)
-      }
-
-      return undefined
+    const addBookmark = (data: { absolutePageIndex: number }) => {
+      commandSubject.next({ data, type: "add" })
     }
 
-    /**
-     * Bookmark area is top right corner
-     */
-    const isClickEventInsideBookmarkArea = (e: MouseEvent | PointerEvent) => {
-      const event = reader.events.normalizeEventForViewport(e)
-
-      const { width } = reader.context.state.visibleAreaRect
-
-      if ((event.x || 0) >= width - settings.areaWidth && (event.y || 0) <= settings.areaHeight) {
-        return true
-      }
-
-      return false
+    const removeAllBookmarks = () => {
+      commandSubject.next({ type: "removeAll" })
     }
 
-    const onDocumentClick = (e: MouseEvent, pagination: PaginationInfo) => {
-      if (isClickEventInsideBookmarkArea(e)) {
-        const newBookmark = createBookmarkFromCurrentPagination(pagination)
-
-        if (!newBookmark) {
-          logger.warn(
-            `Unable to retrieve cfi for bookmark. You might want to wait for the chapter to be ready before letting user create bookmark`,
-          )
-          return
-        }
-
-        if (bookmarksSubject$.value.find(({ cfi }) => newBookmark.cfi === cfi)) {
-          logger.warn(`A bookmark for this cfi already exist, skipping process!`)
-          return
-        }
-
-        e.stopPropagation()
-        e.preventDefault()
-
-        bookmarksSubject$.next([...bookmarksSubject$.value, newBookmark])
-
-        logger.log(`added new bookmark`, newBookmark)
-      }
+    const removeBookmark = (data: { absolutePageIndex: number }) => {
+      commandSubject.next({ type: "remove", data })
     }
 
-    const load = (bookmarks: ImportableBookmark[]) => {
-      bookmarksSubject$.next(bookmarks.map(mapImportableBookmarkToBookmark))
+    const pages$ = reader.spine.spineLayout.layout$.pipe(
+      map(({ pages }) => {
+        return pages.map((page) => {
+          const item = reader.spine.spineItemsManager.get(page.itemIndex)
 
-      loadedSubject$.next()
-    }
-
-    const createClickListener$ = (frameOrElement: HTMLIFrameElement | HTMLElement) => {
-      const windowOrElement = `contentWindow` in frameOrElement ? frameOrElement.contentWindow : frameOrElement
-
-      if (windowOrElement) {
-        return fromEvent(windowOrElement, `click`, { capture: true }).pipe(
-          withLatestFrom(reader.pagination.state$),
-          tap(([e, pagination]) => onDocumentClick(e as MouseEvent, pagination)),
-        )
-      }
-
-      return undefined
-    }
-
-    // @todo handle spread
-    const removeBookmarksOnCurrentPage = <T>(observer: Observable<T>) =>
-      observer.pipe(
-        withLatestFrom(reader.pagination.state$),
-        tap(([, pagination]) => {
-          if (pagination.beginSpineItemIndex !== undefined) {
-            bookmarksSubject$.next(
-              bookmarksSubject$.value.filter((bookmark) => bookmark.spineItemIndex !== pagination.beginSpineItemIndex),
-            )
+          return {
+            ...page,
+            isBookmarkable: item?.isReady(),
           }
-        }),
-      )
+        })
+      }),
+    )
 
-    const removeAll = () => {
-      bookmarksSubject$.next([])
-    }
+    const removeBookmark$ = commandSubject.pipe(
+      filter((command) => command.type === "remove"),
+      withLatestFrom(bookmarksSubject),
+      tap(
+        ([
+          {
+            data: { absolutePageIndex },
+          },
+          bookmarks,
+        ]) => {
+          const existingBookmark = bookmarks.find((bookmark) => bookmark.absolutePageIndex === absolutePageIndex)
 
-    const mapToImportable = (bookmarks: Bookmark[]) => bookmarks.map(mapBookmarkToImportableBookmark)
-
-    /**
-     * For each item we register the container to be clickable to add a new bookmark.
-     * This way it works even if the item is not loaded. It will be relative to first page
-     * anyway.
-     */
-    reader.spineItemsManager.items$
-      .pipe(
-        switchMap((items) => merge(items.map(({ element }) => createClickListener$(element)))),
-        takeUntil(reader.$.destroy$),
-      )
-      .subscribe()
-
-    /**
-     * For each item frame we register even on click to be able to click within
-     * the frame
-     */
-    reader.hookManager.register(`item.onLoad`, ({ frame }) => {
-      createClickListener$(frame)
-    })
-
-    renderer.$.element$
-      .pipe(
-        switchMap((element) => {
-          if (!element) return EMPTY
-
-          return fromEvent(element, `click`).pipe(removeBookmarksOnCurrentPage)
-        }),
-        takeUntil(reader.$.destroy$),
-      )
-      .subscribe()
-
-    merge(
-      bookmarks$,
-      reader.pagination.state$,
-      // It's important to force redraw and update bookmarkd on each layout
-      // this is because pagination itself is not always garanteed to be updated
-      // when the frame actually exists
-      reader.spine.layout$.pipe(
-        withLatestFrom(bookmarksSubject$),
-        map(([, bookmarks]) =>
-          bookmarks.map((bookmark) => {
-            const { pageIndex, spineItemIndex } = getCfiInformation(bookmark.cfi)
-
-            return {
-              ...bookmark,
-              pageIndex,
-              spineItemIndex,
-            }
-          }),
-        ),
-        mergeMap((newBookmarks) => {
-          // @todo optimize and not call next if bookmarks are the same
-          bookmarksSubject$.next(newBookmarks)
-
-          // Because we did not optimized above yet, the subject is always updated
-          // so we don't need to continue this and force a redraw
-          return EMPTY
-        }),
+          if (existingBookmark) {
+            bookmarksSubject.next(bookmarks.filter((bookmark) => bookmark !== existingBookmark))
+          }
+        },
       ),
     )
-      .pipe(
-        // since we trigger redraw from many scenario this is a good batch optimisation
-        debounceTime(100, animationFrameScheduler),
-        withLatestFrom(bookmarks$),
-        switchMap(([, bookmarks]) => renderer.redrawBookmarks$(bookmarks)),
-        takeUntil(reader.$.destroy$),
-      )
-      .subscribe()
+
+    const removeAll$ = commandSubject.pipe(
+      filter((command) => command.type === "removeAll"),
+      tap(() => {
+        bookmarksSubject.next([])
+      }),
+    )
+
+    /**
+     * @todo optimize to generate CFI only on viewport free
+     */
+    const addBookmark$ = commandSubject.pipe(
+      filter((command) => command.type === "add"),
+      withLatestFrom(bookmarksSubject),
+      map(([command, bookmarks]) => {
+        const givenCfi = "cfi" in command.data ? command.data.cfi : undefined
+        const givenAbsolutePageIndex = "absolutePageIndex" in command.data ? command.data.absolutePageIndex : undefined
+
+        if (givenCfi) {
+          if (!bookmarks.find((bookmark) => bookmark.cfi === givenCfi)) {
+            bookmarksSubject.next([...bookmarks, { cfi: givenCfi }])
+          }
+
+          return
+        }
+
+        if (givenAbsolutePageIndex !== undefined) {
+          const { pageIndex, spineItem } =
+            reader.spine.locator.getSpineInfoFromAbsolutePageIndex({ absolutePageIndex: givenAbsolutePageIndex }) ?? {}
+
+          if (pageIndex === undefined || !spineItem) return undefined
+
+          const cfi = reader.cfi.generateCfiForSpineItemPage({
+            pageIndex,
+            spineItem,
+          })
+
+          bookmarksSubject.next([...bookmarks, { cfi }])
+        }
+      }),
+      share(),
+    )
+
+    /**
+     * @todo optimize to only consolidate when needed
+     */
+    const consolidateBookmarksOnLayout$ = merge(addBookmark$, reader.layout$).pipe(
+      switchMap(() =>
+        timer(100, animationFrameScheduler).pipe(
+          waitForSwitch(reader.context.bridgeEvent.viewportFree$),
+          withLatestFrom(bookmarksSubject),
+          tap(([, bookmarks]) => {
+            bookmarksSubject.next(bookmarks.map((bookmark) => consolidateBookmark({ bookmark, reader })))
+          }),
+          takeUntil(commandSubject),
+        ),
+      ),
+    )
+
+    const bookmarks$ = bookmarksSubject.asObservable()
+
+    merge(addBookmark$, removeBookmark$, removeAll$, consolidateBookmarksOnLayout$).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
+      destroy: () => {
+        bookmarksSubject.complete()
+
+        reader.destroy()
+      },
       bookmarks: {
-        removeAll,
-        isClickEventInsideBookmarkArea,
-        mapToImportable,
-        load,
-        $: {
-          loaded$: loadedSubject$.asObservable(),
-          bookmarks$,
-        },
+        removeAllBookmarks,
+        addBookmarks,
+        removeBookmark,
+        pages$,
+        bookmarks$,
+        addBookmark,
       },
     }
   }
