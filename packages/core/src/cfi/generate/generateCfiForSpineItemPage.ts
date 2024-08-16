@@ -11,7 +11,7 @@ import { getRootCfi } from "./getRootCfi"
  *
  * @todo optimize
  */
-export const getCfi = Report.measurePerformance(
+export const generateCfiForSpineItemPage = Report.measurePerformance(
   `getCfi`,
   10,
   ({
@@ -30,6 +30,7 @@ export const getCfi = Report.measurePerformance(
     const doc = spineItem.frame.element?.contentWindow?.document
 
     const itemAnchor = getItemAnchor(spineItem)
+
     // because the current cfi library does not works well with offset we are just using custom
     // format and do it manually after resolving the node
     // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8

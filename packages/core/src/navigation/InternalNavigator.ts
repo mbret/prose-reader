@@ -24,8 +24,6 @@ import {
   ViewportPosition,
 } from "./viewport/ViewportNavigator"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
-import { SpineItemsManager } from "../spine/SpineItemsManager"
-import { SpineLocator } from "../spine/locator/SpineLocator"
 import { isShallowEqual } from "../utils/objects"
 import { Report } from "../report"
 import { DestroyableClass } from "../utils/DestroyableClass"
@@ -42,6 +40,7 @@ import { withPaginationInfo } from "./consolidation/withPaginationInfo"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { Locker } from "./Locker"
+import { Spine } from "../spine/Spine"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
@@ -150,8 +149,7 @@ export class InternalNavigator extends DestroyableClass {
     protected userNavigation$: Observable<UserNavigationEntry>,
     protected viewportController: ViewportNavigator,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
-    protected spineItemsManager: SpineItemsManager,
-    protected spineLocator: SpineLocator,
+    protected spine: Spine,
     protected element$: Observable<HTMLElement>,
     protected isUserLocked$: Observable<boolean>,
   ) {
@@ -159,7 +157,7 @@ export class InternalNavigator extends DestroyableClass {
 
     const layoutHasChanged$ = merge(
       viewportController.layout$,
-      spineItemsManager.layout$.pipe(filter((hasChanged) => hasChanged)),
+      spine.spineLayout.layout$.pipe(filter(({ hasChanged }) => hasChanged)),
     )
 
     const navigationFromUser$ = userNavigation$
@@ -185,24 +183,23 @@ export class InternalNavigator extends DestroyableClass {
           context,
           navigationResolver,
           settings,
-          spineItemsManager,
-          spineLocator,
+          spineItemsManager: spine.spineItemsManager,
+          spineLocator: spine.locator,
         }),
         withSpineItemPosition({
-          context,
           navigationResolver,
           settings,
-          spineItemsManager,
-          spineLocator,
+          spineItemsManager: spine.spineItemsManager,
+          spineLocator: spine.locator,
         }),
         withSpineItemLayoutInfo({
-          spineItemsManager,
+          spine,
         }),
       )
       .pipe(
         withFallbackPosition({
           navigationResolver,
-          spineItemsManager,
+          spineItemsManager: spine.spineItemsManager,
         }),
         withLatestFrom(isUserLocked$),
         switchMap(([params, isUserLocked]) => {
@@ -218,18 +215,15 @@ export class InternalNavigator extends DestroyableClass {
               : withRestoredPosition({
                   navigationResolver,
                   settings,
-                  spineItemsManager,
-                  spineLocator,
-                  spineItemLocator: spineLocator.spineItemLocator,
+                  spine,
                   context,
                 }),
           )
         }),
         withSpineItemPosition({
-          spineItemsManager,
-          spineLocator,
+          spineItemsManager: spine.spineItemsManager,
+          spineLocator: spine.locator,
           settings,
-          context,
           navigationResolver,
         }),
         map((params) => params.navigation),
@@ -305,10 +299,8 @@ export class InternalNavigator extends DestroyableClass {
       withRestoredPosition({
         navigationResolver,
         settings,
-        spineItemsManager,
-        spineLocator,
-        spineItemLocator: spineLocator.spineItemLocator,
         context,
+        spine,
       }),
       map((params) => {
         const navigation: InternalNavigationEntry = {
@@ -324,13 +316,12 @@ export class InternalNavigator extends DestroyableClass {
         }
       }),
       withSpineItemLayoutInfo({
-        spineItemsManager,
+        spine,
       }),
       withSpineItemPosition({
-        spineItemsManager,
-        spineLocator,
+        spineItemsManager: spine.spineItemsManager,
+        spineLocator: spine.locator,
         settings,
-        context,
         navigationResolver,
       }),
       map(({ navigation }) => navigation),

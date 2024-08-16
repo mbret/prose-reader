@@ -14,12 +14,12 @@ import { Pagination } from "./Pagination"
 import { SpineItemsManager } from "../spine/SpineItemsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { createSpineItemLocator } from "../spineItem/locationResolver"
-import { getCfi } from "../cfi/generate/getCfiForSpineItemPage"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
 import { Spine } from "../spine/Spine"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
+import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -47,7 +47,7 @@ export class PaginationController extends DestroyableClass {
      */
     const updatePagination$ = merge(
       this.context.bridgeEvent.navigation$,
-      spineItemsManager.layout$.pipe(filter((hasChanged) => hasChanged)),
+      spine.spineLayout.layout$.pipe(filter(({ hasChanged }) => hasChanged)),
     ).pipe(
       switchMap(() => {
         const getVisiblePagesFromViewportPosition = ({
@@ -198,12 +198,12 @@ export class PaginationController extends DestroyableClass {
 
         // @todo only update long cfi if the item layout change but specifically its content
         this.pagination.update({
-          beginCfi: getCfi({
+          beginCfi: generateCfiForSpineItemPage({
             pageIndex: beginPageIndexInSpineItem,
             spineItem: beginSpineItem,
             spineItemLocator,
           }),
-          endCfi: getCfi({
+          endCfi: generateCfiForSpineItemPage({
             pageIndex: endPageIndexInSpineItem,
             spineItem: endSpineItem,
             spineItemLocator,

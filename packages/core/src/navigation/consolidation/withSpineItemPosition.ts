@@ -3,7 +3,6 @@ import {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { NavigationResolver } from "../resolvers/NavigationResolver"
@@ -20,7 +19,6 @@ export const withSpineItemPosition =
     spineLocator,
     navigationResolver,
   }: {
-    context: Context
     settings: ReaderSettingsManager
     spineItemsManager: SpineItemsManager
     navigationResolver: NavigationResolver
@@ -28,8 +26,7 @@ export const withSpineItemPosition =
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     const getPosition = (navigation: N["navigation"]) => {
-      const { navigationSnapThreshold, computedPageTurnMode } =
-        settings.values
+      const { navigationSnapThreshold, computedPageTurnMode } = settings.values
       const spineItem = spineItemsManager.get(navigation.spineItem)
 
       if (!spineItem || !navigation.position) return undefined
@@ -92,10 +89,11 @@ export const withSpineItemPosition =
             : visiblePagesAtNavigablePosition?.endPageIndex) ?? 0
 
         const positionInSpineItem =
-          spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex(
-            beginPageIndexForDirection,
-            spineItem,
-          )
+          spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
+            pageIndex: beginPageIndexForDirection,
+            isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+            itemLayout: spineItem.getElementDimensions(),
+          })
 
         return positionInSpineItem
       }

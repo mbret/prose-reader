@@ -1,6 +1,7 @@
 import { isRootCfi } from "../../cfi/lookup/isRootCfi"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { SpineLayout } from "../../spine/SpineLayout"
 import { InternalNavigationEntry } from "../InternalNavigator"
 import { NavigationResolver } from "../resolvers/NavigationResolver"
 
@@ -9,11 +10,13 @@ export const restoreNavigationForControlledPageTurnMode = ({
   navigation,
   navigationResolver,
   spineItemsManager,
+  spineLayout,
 }: {
   navigation: InternalNavigationEntry
   spineLocator: SpineLocator
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
+  spineLayout: SpineLayout
 }) => {
   const spineItem = spineItemsManager.get(navigation.spineItem)
 
@@ -22,7 +25,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
   }
 
   const spineItemAbsolutePosition =
-    spineItemsManager.getAbsolutePositionOf(spineItem)
+  spineLayout.getAbsolutePositionOf(spineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,

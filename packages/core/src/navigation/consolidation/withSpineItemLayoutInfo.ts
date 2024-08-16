@@ -3,21 +3,21 @@ import {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { Spine } from "../../spine/Spine"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
 }
 
 export const withSpineItemLayoutInfo =
-  ({ spineItemsManager }: { spineItemsManager: SpineItemsManager }) =>
+  ({ spine }: { spine: Spine }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
       map(({ navigation, ...rest }) => {
-        const spineItemDimensions = spineItemsManager.getAbsolutePositionOf(
+        const spineItemDimensions = spine.spineLayout.getAbsolutePositionOf(
           navigation.spineItem,
         )
-        const spineItem = spineItemsManager.get(navigation.spineItem)
+        const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
         return {
           navigation: {

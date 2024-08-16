@@ -57,10 +57,10 @@ export const getNavigationForRightSinglePage = ({
     )
   } else {
     const readingOrderPosition =
-      spineLocator.getSpinePositionFromSpineItemPosition(
-        spineItemNavigationForRightPage,
+      spineLocator.getSpinePositionFromSpineItemPosition({
+        spineItemPosition: spineItemNavigationForRightPage,
         spineItem,
-      )
+      })
 
     return readingOrderPosition
   }

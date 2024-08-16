@@ -7,6 +7,7 @@ import { InternalNavigationEntry } from "../InternalNavigator"
 import { NavigationResolver } from "../resolvers/NavigationResolver"
 import { ViewportPosition } from "../viewport/ViewportNavigator"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
+import { SpineLayout } from "../../spine/SpineLayout"
 
 const restoreNavigationForScrollingPageTurnMode = ({
   navigation,
@@ -14,20 +15,21 @@ const restoreNavigationForScrollingPageTurnMode = ({
   spineItemsManager,
   settings,
   navigationResolver,
+  spineLayout,
 }: {
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
   settings: ReaderSettingsManager
   navigationResolver: NavigationResolver
   navigation: InternalNavigationEntry
+  spineLayout: SpineLayout
 }): InternalNavigationEntry["position"] => {
   const { spineItem } = navigation
   const foundSpineItem = spineItemsManager.get(spineItem)
 
   if (!foundSpineItem) return { x: 0, y: 0 }
 
-  const { height, top } =
-    spineItemsManager.getAbsolutePositionOf(foundSpineItem)
+  const { height, top } = spineLayout.getAbsolutePositionOf(foundSpineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,
@@ -92,10 +94,10 @@ const restoreNavigationForScrollingPageTurnMode = ({
           foundSpineItem,
         )
 
-      return spineLocator.getSpinePositionFromSpineItemPosition(
-        positionInSpineItem,
-        foundSpineItem,
-      )
+      return spineLocator.getSpinePositionFromSpineItemPosition({
+        spineItemPosition: positionInSpineItem,
+        spineItem: foundSpineItem,
+      })
     }
 
     /**
@@ -138,10 +140,10 @@ const restoreNavigationForScrollingPageTurnMode = ({
             foundSpineItem,
           )
 
-        return spineLocator.getSpinePositionFromSpineItemPosition(
-          positionInSpineItem,
-          foundSpineItem,
-        )
+        return spineLocator.getSpinePositionFromSpineItemPosition({
+          spineItemPosition: positionInSpineItem,
+          spineItem: foundSpineItem,
+        })
       }
 
       /**
@@ -155,13 +157,14 @@ const restoreNavigationForScrollingPageTurnMode = ({
             x: navigation.position.x,
           }
 
-          return spineLocator.getSpinePositionFromSpineItemPosition(
-            spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-              positionInItem,
-              foundSpineItem,
-            ),
-            foundSpineItem,
-          )
+          return spineLocator.getSpinePositionFromSpineItemPosition({
+            spineItemPosition:
+              spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
+                positionInItem,
+                foundSpineItem,
+              ),
+            spineItem: foundSpineItem,
+          })
         }
 
         if (
@@ -173,13 +176,14 @@ const restoreNavigationForScrollingPageTurnMode = ({
             x: navigation.position.x,
           }
 
-          return spineLocator.getSpinePositionFromSpineItemPosition(
-            spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-              positionInItem,
-              foundSpineItem,
-            ),
-            foundSpineItem,
-          )
+          return spineLocator.getSpinePositionFromSpineItemPosition({
+            spineItemPosition:
+              spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
+                positionInItem,
+                foundSpineItem,
+              ),
+            spineItem: foundSpineItem,
+          })
         }
 
         /**
@@ -199,6 +203,7 @@ export const restorePosition = ({
   settings,
   spineLocator,
   navigationResolver,
+  spineLayout,
 }: {
   spineLocator: SpineLocator
   settings: ReaderSettingsManager
@@ -207,6 +212,7 @@ export const restorePosition = ({
   spineItemsManager: SpineItemsManager
   spineItemLocator: SpineItemLocator
   context: Context
+  spineLayout: SpineLayout
 }): ViewportPosition => {
   if (settings.values.computedPageTurnMode === "scrollable") {
     return restoreNavigationForScrollingPageTurnMode({
@@ -215,6 +221,7 @@ export const restorePosition = ({
       navigationResolver,
       settings,
       spineItemsManager,
+      spineLayout,
     })
   }
 
@@ -223,5 +230,6 @@ export const restorePosition = ({
     spineLocator,
     navigationResolver,
     spineItemsManager,
+    spineLayout,
   })
 }

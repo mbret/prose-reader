@@ -2,11 +2,9 @@ import { map, Observable } from "rxjs"
 import { InternalNavigationEntry } from "../InternalNavigator"
 import { restorePosition } from "./restorePosition"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { NavigationResolver } from "../resolvers/NavigationResolver"
-import { SpineItemLocator } from "../../spineItem/locationResolver"
 import { Context } from "../../context/Context"
+import { Spine } from "../../spine/Spine"
 
 type Navigation = {
   navigation: InternalNavigationEntry
@@ -14,19 +12,15 @@ type Navigation = {
 
 export const withRestoredPosition =
   ({
-    spineItemsManager,
     settings,
-    spineLocator,
     navigationResolver,
-    spineItemLocator,
     context,
+    spine,
   }: {
-    spineLocator: SpineLocator
     navigationResolver: NavigationResolver
-    spineItemsManager: SpineItemsManager
     settings: ReaderSettingsManager
-    spineItemLocator: SpineItemLocator
     context: Context
+    spine: Spine
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> =>
     stream.pipe(
@@ -35,13 +29,14 @@ export const withRestoredPosition =
         navigation: {
           ...params.navigation,
           position: restorePosition({
-            spineLocator,
+            spineLocator: spine.locator,
             navigation: params.navigation,
             navigationResolver,
             settings,
-            spineItemsManager,
-            spineItemLocator,
+            spineItemsManager: spine.spineItemsManager,
+            spineItemLocator: spine.locator.spineItemLocator,
             context,
+            spineLayout: spine.spineLayout,
           }),
         },
       })),

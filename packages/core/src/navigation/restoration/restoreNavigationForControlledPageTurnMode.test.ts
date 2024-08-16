@@ -6,8 +6,12 @@ import { SpineItemsManagerMock } from "../tests/SpineItemsManagerMock"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { createSpineLocator } from "../../spine/locator/SpineLocator"
 import { generateItems } from "../tests/utils"
+import { Spine } from "../../spine/Spine"
+import { noopElement } from "../../utils/dom"
+import { Pagination } from "../../pagination/Pagination"
+import { HookManager } from "../../hooks/HookManager"
+import { of } from "rxjs"
 
 describe(`Given a backward navigation to a new item`, () => {
   describe(`when item was unloaded`, () => {
@@ -16,21 +20,24 @@ describe(`Given a backward navigation to a new item`, () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
-        const spineItemLocator = createSpineItemLocator({
+        const pagination = new Pagination(context, spineItemsManager as any)
+        const hooksManager = new HookManager()
+        const spineItemLocator = createSpineItemLocator({ context, settings })
+        const spine = new Spine(
+          of(noopElement()),
           context,
-          settings,
-        })
-        const spineLocator = createSpineLocator({
-          context,
-          settings,
+          pagination,
+          spineItemsManager as any,
           spineItemLocator,
-          spineItemsManager: spineItemsManager as any,
-        })
+          settings,
+          hooksManager,
+        )
         const navigationResolver = createNavigationResolver({
           context,
-          locator: spineLocator,
+          locator: spine.locator,
           settings,
           spineItemsManager: spineItemsManager as any,
+          spineLayout: spine.spineLayout,
         })
 
         // page of 50w
@@ -66,7 +73,8 @@ describe(`Given a backward navigation to a new item`, () => {
           },
           navigationResolver,
           spineItemsManager: spineItemsManager as any,
-          spineLocator,
+          spineLocator: spine.locator,
+          spineLayout: spine.spineLayout,
         })
 
         expect(position).toEqual({ x: 50, y: 0 })

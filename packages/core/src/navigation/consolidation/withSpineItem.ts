@@ -31,8 +31,7 @@ export const withSpineItem =
         cfi,
         directionFromLastNavigation: direction,
       } = navigation
-      const { navigationSnapThreshold, computedPageTurnMode } =
-        settings.values
+      const { navigationSnapThreshold, computedPageTurnMode } = settings.values
 
       /**
        * - valid given spine item
@@ -49,8 +48,8 @@ export const withSpineItem =
        * - number too low
        */
       if (typeof spineItem === "number") {
-        if (spineItem > spineItemsManager.getLength() - 1) {
-          return spineItemsManager.get(spineItemsManager.getLength() - 1)
+        if (spineItem > spineItemsManager.items.length - 1) {
+          return spineItemsManager.get(spineItemsManager.items.length - 1)
         }
 
         return spineItemsManager.get(0)

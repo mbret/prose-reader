@@ -29,17 +29,24 @@ export const resolveCfi = ({
     try {
       const { node, offset: resolvedOffset } = cfiHandler.resolve(doc, {})
 
-      return { node, offset: offset ?? resolvedOffset, spineItemIndex }
+      return {
+        node,
+        offset: offset ?? resolvedOffset,
+        spineItemIndex,
+        spineItem,
+      }
     } catch (e) {
       Report.error(e)
 
       return {
         spineItemIndex,
+        spineItem,
       }
     }
   }
 
   return {
     spineItemIndex,
+    spineItem,
   }
 }

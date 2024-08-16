@@ -27,11 +27,9 @@ import { ViewportNavigator } from "./viewport/ViewportNavigator"
 import { UserNavigator } from "./UserNavigator"
 import { InternalNavigator } from "./InternalNavigator"
 import { HTML_PREFIX } from "../constants"
-import { SpineItemsObserver } from "../spine/SpineItemsObserver"
 
 export const createNavigator = ({
   spineItemsManager,
-  spineItemsObserver,
   context,
   parentElement$,
   hookManager,
@@ -39,7 +37,6 @@ export const createNavigator = ({
   settings,
 }: {
   spineItemsManager: SpineItemsManager
-  spineItemsObserver: SpineItemsObserver
   context: Context
   parentElement$: BehaviorSubject<HTMLElement | undefined>
   hookManager: HookManager
@@ -52,6 +49,7 @@ export const createNavigator = ({
     settings,
     spineItemsManager,
     locator: spine.locator,
+    spineLayout: spine.spineLayout,
   })
 
   const viewportNavigator = new ViewportNavigator(
@@ -66,7 +64,7 @@ export const createNavigator = ({
   const isSpineScrolling$ = merge(
     spine.elementResize$,
     spine.element$.pipe(switchMap((element) => fromEvent(element, "scroll"))),
-    spineItemsObserver.itemResize$,
+    spine.spineItemsObserver.itemResize$,
   ).pipe(
     switchMap(() => merge(of(true), timer(5).pipe(map(() => false)))),
     startWith(false),
@@ -96,8 +94,7 @@ export const createNavigator = ({
     userNavigator.navigation$,
     viewportNavigator,
     navigationResolver,
-    spineItemsManager,
-    spine.locator,
+    spine,
     element$,
     userNavigator.locker.isLocked$,
   )
