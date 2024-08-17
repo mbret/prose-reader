@@ -1,11 +1,7 @@
 import { merge, Observable } from "rxjs"
 import { Manifest } from "../.."
 import { Context } from "../../context/Context"
-import {
-  createAddStyleHelper,
-  createRemoveStyleHelper,
-  getAttributeValueFromString,
-} from "../../frames"
+import { getAttributeValueFromString } from "../../utils/frames"
 import { map } from "rxjs/operators"
 import { createLoader } from "./loader/loader"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
@@ -160,16 +156,36 @@ export class FrameItem extends DestroyableClass {
   public addStyle(id: string, style: string, prepend?: boolean) {
     const frameElement = this.loader.element
 
-    if (frameElement) {
-      createAddStyleHelper(frameElement)(id, style, prepend)
+    if (
+      frameElement &&
+      frameElement.contentDocument &&
+      frameElement.contentDocument.head
+    ) {
+      const userStyle = document.createElement(`style`)
+      userStyle.id = id
+      userStyle.innerHTML = style
+
+      if (prepend) {
+        frameElement.contentDocument.head.prepend(userStyle)
+      } else {
+        frameElement.contentDocument.head.appendChild(userStyle)
+      }
     }
   }
 
   public removeStyle(id: string) {
     const frameElement = this.loader.element
 
-    if (frameElement) {
-      createRemoveStyleHelper(frameElement)(id)
+    if (
+      frameElement &&
+      frameElement.contentDocument &&
+      frameElement.contentDocument.head
+    ) {
+      const styleElement = frameElement.contentDocument.getElementById(id)
+
+      if (styleElement) {
+        styleElement.remove()
+      }
     }
   }
 
