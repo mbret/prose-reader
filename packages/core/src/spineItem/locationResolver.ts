@@ -3,11 +3,10 @@ import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import {
-  calculateNumberOfPagesForItem,
-  getItemOffsetFromPageIndex,
-  getClosestValidOffsetFromApproximateOffsetInPages,
-} from "./helpers"
+import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
+import { getSpineItemNumberOfPages } from "./locator/getSpineItemNumberOfPages"
+import { getSpineItemPositionFromPageIndex } from "./locator/getSpineItemPositionFromPageIndex"
+import { getSpineItemPagesPosition } from "./locator/getSpineItemPagesPosition"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
@@ -30,73 +29,6 @@ export const createSpineItemLocator = ({
     x: Math.min(itemWidth, Math.max(0, spineItemPosition.x)),
     y: Math.min(itemHeight, Math.max(0, spineItemPosition.y)),
   })
-
-  const getSpineItemNumberOfPages = ({
-    itemHeight,
-    itemWidth,
-    isUsingVerticalWriting,
-  }: {
-    itemWidth: number
-    itemHeight: number
-    isUsingVerticalWriting: boolean
-  }) => {
-    // pre-paginated always are only one page
-    // if (!spineItem.isReflowable) return 1
-
-    const { pageTurnDirection, pageTurnMode } = settings.values
-
-    if (pageTurnDirection === `vertical` && pageTurnMode === `scrollable`) {
-      return 1
-    }
-
-    if (isUsingVerticalWriting || pageTurnDirection === `vertical`) {
-      return calculateNumberOfPagesForItem(
-        itemHeight,
-        context.getPageSize().height,
-      )
-    }
-
-    return calculateNumberOfPagesForItem(itemWidth, context.getPageSize().width)
-  }
-
-  const getSpineItemPositionFromPageIndex = (
-    pageIndex: number,
-    spineItem: SpineItem,
-  ): SafeSpineItemPosition => {
-    const { width: itemWidth, height: itemHeight } =
-      spineItem.getElementDimensions()
-
-    if (spineItem.isUsingVerticalWriting()) {
-      const ltrRelativeOffset = getItemOffsetFromPageIndex(
-        context.getPageSize().height,
-        pageIndex,
-        itemHeight,
-      )
-
-      return {
-        x: 0,
-        y: ltrRelativeOffset,
-      }
-    }
-
-    const ltrRelativeOffset = getItemOffsetFromPageIndex(
-      context.getPageSize().width,
-      pageIndex,
-      itemWidth,
-    )
-
-    if (context.isRTL()) {
-      return {
-        x: itemWidth - ltrRelativeOffset - context.getPageSize().width,
-        y: 0,
-      }
-    }
-
-    return {
-      x: ltrRelativeOffset,
-      y: 0,
-    }
-  }
 
   /**
    * @important
@@ -131,6 +63,8 @@ export const createSpineItemLocator = ({
       isUsingVerticalWriting,
       itemHeight,
       itemWidth,
+      context,
+      settings,
     })
 
     if (isUsingVerticalWriting) {
@@ -164,7 +98,7 @@ export const createSpineItemLocator = ({
     const spineItemWidth = spineItem.getElementDimensions()?.width || 0
     const pageWidth = context.getPageSize().width
 
-    if (offsetOfNodeInSpineItem) {
+    if (offsetOfNodeInSpineItem !== undefined) {
       const val = getClosestValidOffsetFromApproximateOffsetInPages(
         offsetOfNodeInSpineItem,
         pageWidth,
@@ -195,10 +129,12 @@ export const createSpineItemLocator = ({
     ) {
       // @todo handle vertical jp
       // top seems ok but left is not, it should probably not be 0 or something
-      const { x: left, y: top } = getSpineItemPositionFromPageIndex(
+      const { x: left, y: top } = getSpineItemPositionFromPageIndex({
         pageIndex,
-        spineItem,
-      )
+        itemLayout: spineItem.getElementDimensions(),
+        context,
+        isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+      })
       const viewport = {
         left,
         right: left + pageSize.width,
@@ -276,11 +212,45 @@ export const createSpineItemLocator = ({
 
   return {
     getSpineItemPositionFromNode,
-    getSpineItemPositionFromPageIndex,
+    getSpineItemPositionFromPageIndex: ({
+      pageIndex,
+      itemLayout,
+      isUsingVerticalWriting,
+    }: {
+      pageIndex: number
+      itemLayout: {
+        width: number
+        height: number
+      }
+      isUsingVerticalWriting: boolean
+    }) =>
+      getSpineItemPositionFromPageIndex({
+        context,
+        isUsingVerticalWriting,
+        itemLayout,
+        pageIndex,
+      }),
     getSpineItemPageIndexFromPosition,
     getSpineItemPageIndexFromNode,
     getSpineItemClosestPositionFromUnsafePosition,
     getFirstNodeOrRangeAtPage,
-    getSpineItemNumberOfPages,
+    getSpineItemPagesPosition: ({ item }: { item: SpineItem }) => {
+      return getSpineItemPagesPosition({
+        context,
+        isUsingVerticalWriting: !!item.isUsingVerticalWriting(),
+        settings,
+        itemLayout: item.getElementDimensions(),
+      })
+    },
+    getSpineItemNumberOfPages: (params: {
+      itemWidth: number
+      itemHeight: number
+      isUsingVerticalWriting: boolean
+    }) =>
+      getSpineItemNumberOfPages({
+        context,
+        settings,
+        ...params,
+      }),
   }
 }

@@ -21,10 +21,11 @@ import { CoreInputSettings } from "./settings/types"
 import { PaginationController } from "./pagination/PaginationController"
 import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
 import { resolveCfi } from "./cfi/lookup/resolveCfi"
-import { SpineItemsObserver } from "./spine/SpineItemsObserver"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { SettingsInterface } from "./settings/SettingsInterface"
 import { Spine } from "./spine/Spine"
+import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
+import { SpineItem } from "./spineItem/createSpineItem"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -82,12 +83,9 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
   )
 
-  const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-
   const navigator = createNavigator({
     context,
     spineItemsManager,
-    spineItemsObserver,
     parentElement$: elementSubject$,
     hookManager,
     spine,
@@ -257,6 +255,14 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     cfi: {
       generateCfiFromRange,
+      generateCfiForSpineItemPage: (params: {
+        pageIndex: number
+        spineItem: SpineItem
+      }) =>
+        generateCfiForSpineItemPage({
+          ...params,
+          spineItemLocator,
+        }),
       resolveCfi: (
         params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,
       ) => resolveCfi({ ...params, spineItemsManager }),
@@ -274,7 +280,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       lock: navigator.lock.bind(navigator),
       navigationResolver: navigator.navigationResolver,
     },
-    spineItemsObserver,
+    spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
     layout,
     load,
@@ -288,6 +294,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       NonNullable<(typeof settingsManager)["outputSettings"]>
     >,
     element$,
+    layout$: spine.spineLayout.layout$,
     $: {
       state$: stateSubject$.asObservable(),
       /**

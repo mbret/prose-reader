@@ -31,10 +31,10 @@ export const getNavigationForPosition = ({
       )
 
     const viewportNavigation =
-      spineLocator.getSpinePositionFromSpineItemPosition(
-        spineItemValidPosition,
+      spineLocator.getSpinePositionFromSpineItemPosition({
+        spineItemPosition: spineItemValidPosition,
         spineItem,
-      )
+      })
 
     return getAdjustedPositionForSpread({
       position: viewportNavigation,

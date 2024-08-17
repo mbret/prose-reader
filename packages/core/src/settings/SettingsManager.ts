@@ -2,7 +2,7 @@
 import { Observable, Subject } from "rxjs"
 import { shareReplay } from "rxjs/operators"
 import { SettingsInterface } from "./SettingsInterface"
-import { isShallowEqual, shallowMergeIfDefined } from "../utils/objects"
+import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 
 export abstract class SettingsManager<InputSettings, OutputSettings>
   implements SettingsInterface<InputSettings, OutputSettings>

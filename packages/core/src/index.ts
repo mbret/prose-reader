@@ -16,4 +16,5 @@ export type ReaderSelection = ReturnType<typeof createSelection>
 
 export { Report } from "./report"
 
-export { groupBy, isShallowEqual } from "./utils/objects"
+export { isShallowEqual } from "./utils/objects"
+export { waitForSwitch } from "./utils/rxjs"

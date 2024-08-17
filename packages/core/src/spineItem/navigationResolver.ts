@@ -27,10 +27,11 @@ export const createNavigationResolver = ({
       itemWidth: width,
     })
 
-    return spineItemLocator.getSpineItemPositionFromPageIndex(
-      numberOfPages - 1,
-      spineItem,
-    )
+    return spineItemLocator.getSpineItemPositionFromPageIndex({
+      pageIndex: numberOfPages - 1,
+      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+      itemLayout: spineItem.getElementDimensions(),
+    })
   }
 
   const getNavigationFromNode = (

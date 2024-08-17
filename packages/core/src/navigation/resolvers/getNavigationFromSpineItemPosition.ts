@@ -24,10 +24,10 @@ export const getNavigationFromSpineItemPosition = ({
       spineItem,
     )
 
-  const spinePosition = spineLocator.getSpinePositionFromSpineItemPosition(
-    navigationInSpineItem,
+  const spinePosition = spineLocator.getSpinePositionFromSpineItemPosition({
+    spineItemPosition: navigationInSpineItem,
     spineItem,
-  )
+  })
 
   return getAdjustedPositionForSpread({
     position: spinePosition,

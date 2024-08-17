@@ -2,7 +2,7 @@ import { Observable, Subject, combineLatest } from "rxjs"
 import { map, shareReplay, startWith } from "rxjs/operators"
 import { SettingsInterface } from "./SettingsInterface"
 import { CoreInputSettings, CoreOutputSettings } from "./types"
-import { shallowMergeIfDefined } from "../utils/objects"
+import { shallowMergeIfDefined } from "@prose-reader/shared"
 
 export abstract class SettingsManagerOverload<
   InputSettings,

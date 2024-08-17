@@ -13,6 +13,8 @@ import { SpineItemsLoader } from "./loader/SpineItemsLoader"
 import { observeResize } from "../utils/rxjs"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { noopElement } from "../utils/dom"
+import { SpineItemsObserver } from "./SpineItemsObserver"
+import { SpineLayout } from "./SpineLayout"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
@@ -25,24 +27,30 @@ export class Spine extends DestroyableClass {
     share(),
   )
 
+  public spineItemsObserver: SpineItemsObserver
+  public spineLayout: SpineLayout
+
   public element$ = this.elementSubject.asObservable()
 
   constructor(
     protected parentElement$: Observable<HTMLElement>,
     protected context: Context,
     protected pagination: Pagination,
-    protected spineItemsManager: SpineItemsManager,
+    public spineItemsManager: SpineItemsManager,
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected hookManager: HookManager,
   ) {
     super()
 
+    this.spineLayout = new SpineLayout(spineItemsManager, context, settings)
+
     this.locator = createSpineLocator({
       context,
       spineItemsManager,
       spineItemLocator,
       settings,
+      spineLayout: this.spineLayout,
     })
 
     this.spineItemsLoader = new SpineItemsLoader(
@@ -50,6 +58,12 @@ export class Spine extends DestroyableClass {
       spineItemsManager,
       this.locator,
       settings,
+      this.spineLayout,
+    )
+
+    this.spineItemsObserver = new SpineItemsObserver(
+      spineItemsManager,
+      this.locator,
     )
 
     const reloadOnManifestChange$ = context.manifest$.pipe(
@@ -95,7 +109,7 @@ export class Spine extends DestroyableClass {
   }
 
   public layout() {
-    this.spineItemsManager.layout()
+    this.spineLayout.layout()
   }
 
   public isSelecting() {
@@ -108,10 +122,6 @@ export class Spine extends DestroyableClass {
     return this.spineItemsManager.items
       .find((item) => item.selectionTracker.getSelection())
       ?.selectionTracker.getSelection()
-  }
-
-  public get layout$() {
-    return this.spineItemsManager.layout$
   }
 
   public destroy() {

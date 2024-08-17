@@ -52,12 +52,14 @@ export const createNavigator = () => {
     settings,
     spineItemLocator,
     spineItemsManager: spineItemsManagerMock as any,
+    spineLayout: spine.spineLayout,
   })
   const navigationResolver = createNavigationResolver({
     context,
     locator: spineLocator,
     settings,
     spineItemsManager: spineItemsManagerMock as any,
+    spineLayout: spine.spineLayout,
   })
   const viewportController = new ViewportNavigator(
     settings,
@@ -82,8 +84,7 @@ export const createNavigator = () => {
     userNavigator.navigation$,
     viewportController,
     navigationResolver,
-    spineItemsManagerMock as any,
-    spineLocator,
+    spine,
     elementSubject,
     userNavigator.locker.isLocked$,
   )

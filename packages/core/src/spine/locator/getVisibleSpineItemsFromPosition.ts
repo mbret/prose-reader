@@ -3,6 +3,7 @@ import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItem } from "../../spineItem/createSpineItem"
 import { SpineItemsManager } from "../SpineItemsManager"
+import { SpineLayout } from "../SpineLayout"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 
@@ -13,6 +14,7 @@ export const getVisibleSpineItemsFromPosition = ({
   spineItemsManager,
   context,
   settings,
+  spineLayout,
 }: {
   position: ViewportPosition
   threshold: number
@@ -20,6 +22,7 @@ export const getVisibleSpineItemsFromPosition = ({
   spineItemsManager: SpineItemsManager
   context: Context
   settings: ReaderSettingsManager
+  spineLayout: SpineLayout
 }):
   | {
       beginIndex: number
@@ -29,12 +32,16 @@ export const getVisibleSpineItemsFromPosition = ({
     }
   | undefined => {
   const fallbackSpineItem =
-    getSpineItemFromPosition({ position, settings, spineItemsManager }) ||
-    spineItemsManager.get(0)
+    getSpineItemFromPosition({
+      position,
+      settings,
+      spineItemsManager,
+      spineLayout,
+    }) || spineItemsManager.get(0)
 
   const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
     (acc, spineItem) => {
-      const itemPosition = spineItemsManager.getAbsolutePositionOf(spineItem)
+      const itemPosition = spineLayout.getAbsolutePositionOf(spineItem)
 
       const { visible } = getItemVisibilityForPosition({
         itemPosition,

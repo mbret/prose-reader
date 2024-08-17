@@ -17,6 +17,7 @@ import { DestroyableClass } from "../../utils/DestroyableClass"
 import { loadItems } from "./loadItems"
 import { mapToItemsToLoad } from "./mapToItemsToLoad"
 import { waitForSwitch } from "../../utils/rxjs"
+import { SpineLayout } from "../SpineLayout"
 
 export class SpineItemsLoader extends DestroyableClass {
   constructor(
@@ -24,12 +25,13 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineItemsManager: SpineItemsManager,
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
+    protected spineLayout: SpineLayout,
   ) {
     super()
 
     const navigationUpdate$ = this.context.bridgeEvent.navigation$
-    const layoutHasChanged$ = spineItemsManager.layout$.pipe(
-      filter((hasChanged) => hasChanged),
+    const layoutHasChanged$ = this.spineLayout.layout$.pipe(
+      filter(({ hasChanged }) => hasChanged),
     )
     const numberOfAdjacentSpineItemToPreLoad$ = settings.values$.pipe(
       map(

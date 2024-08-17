@@ -17,6 +17,7 @@ import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItem
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { resolveCfi } from "../../cfi/lookup/resolveCfi"
+import { SpineLayout } from "../../spine/SpineLayout"
 
 export const NAMESPACE = `spineNavigator`
 
@@ -27,11 +28,13 @@ export const createNavigationResolver = ({
   spineItemsManager,
   locator,
   settings,
+  spineLayout,
 }: {
   context: Context
   spineItemsManager: SpineItemsManager
   locator: SpineLocator
   settings: ReaderSettingsManager
+  spineLayout: SpineLayout
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context, settings })
 
@@ -58,10 +61,10 @@ export const createNavigationResolver = ({
       const spineItemNavigation = node
         ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
         : ({ x: 0, y: 0 } as SafeSpineItemPosition)
-      const readingPosition = locator.getSpinePositionFromSpineItemPosition(
-        spineItemNavigation,
+      const readingPosition = locator.getSpinePositionFromSpineItemPosition({
+        spineItemPosition: spineItemNavigation,
         spineItem,
-      )
+      })
 
       return getAdjustedPositionForSpread({
         position: readingPosition,
@@ -76,10 +79,10 @@ export const createNavigationResolver = ({
   const getNavigationForLastPage = (spineItem: SpineItem): ViewportPosition => {
     const spineItemNavigation =
       spineItemNavigator.getNavigationForLastPage(spineItem)
-    const position = locator.getSpinePositionFromSpineItemPosition(
-      spineItemNavigation,
+    const position = locator.getSpinePositionFromSpineItemPosition({
+      spineItemPosition: spineItemNavigation,
       spineItem,
-    )
+    })
 
     return getAdjustedPositionForSpread({
       position,
@@ -137,6 +140,7 @@ export const createNavigationResolver = ({
       pageSizeHeight: context.getPageSize().height,
       visibleAreaRectWidth: context.state.visibleAreaRect.width,
       spineItemsManager,
+      spineLayout,
     })
 
     return getNavigationForPosition({
@@ -214,6 +218,7 @@ export const createNavigationResolver = ({
         pageSizeHeight: context.getPageSize().height,
         visibleAreaRectWidth: context.state.visibleAreaRect.width,
         spineItemsManager,
+        spineLayout,
       }),
     isNavigationGoingForwardFrom,
     areNavigationDifferent,

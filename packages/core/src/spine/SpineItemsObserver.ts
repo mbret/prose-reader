@@ -1,8 +1,15 @@
-import { map, merge, Observable, share, switchMap } from "rxjs"
+import {
+  map,
+  merge,
+  Observable,
+  share,
+  switchMap,
+} from "rxjs"
 import { SpineItemsManager } from "./SpineItemsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { SpineItem } from "../spineItem/createSpineItem"
 import { observeResize } from "../utils/rxjs"
+import { SpineLocator } from "./locator/SpineLocator"
 
 export class SpineItemsObserver extends DestroyableClass {
   /**
@@ -18,7 +25,10 @@ export class SpineItemsObserver extends DestroyableClass {
     entries: ResizeObserverEntry[]
   }>
 
-  constructor(protected spineItemsManager: SpineItemsManager) {
+  constructor(
+    protected spineItemsManager: SpineItemsManager,
+    protected spineLocator: SpineLocator,
+  ) {
     super()
 
     this.itemIsReady$ = this.spineItemsManager.items$.pipe(

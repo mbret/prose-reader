@@ -46,10 +46,10 @@ const getSpinePositionFromSpineItemAnchor = ({
     context,
   })
 
-  const position = spineLocator.getSpinePositionFromSpineItemPosition(
-    { x: spineItemOffset, y: 0 },
+  const position = spineLocator.getSpinePositionFromSpineItemPosition({
+    spineItemPosition: { x: spineItemOffset, y: 0 },
     spineItem,
-  )
+  })
 
   return position
 }

@@ -12,6 +12,10 @@ import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
+import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
+import { SpineLayout } from "../SpineLayout"
+import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
+import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
 
 export type SpineLocator = ReturnType<typeof createSpineLocator>
 
@@ -20,11 +24,13 @@ export const createSpineLocator = ({
   context,
   spineItemLocator,
   settings,
+  spineLayout,
 }: {
   spineItemsManager: SpineItemsManager
   context: Context
   spineItemLocator: ReturnType<typeof createSpineItemLocator>
   settings: ReaderSettingsManager
+  spineLayout: SpineLayout
 }) => {
   const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
     `getSpineItemPositionFromSpinePosition`,
@@ -33,7 +39,7 @@ export const createSpineLocator = ({
       position: ViewportPosition,
       spineItem: SpineItem,
     ): UnsafeSpineItemPosition => {
-      const { left, top } = spineItemsManager.getAbsolutePositionOf(spineItem)
+      const { left, top } = spineLayout.getAbsolutePositionOf(spineItem)
 
       /**
        * For this case the global offset move from right to left but this specific item
@@ -63,43 +69,11 @@ export const createSpineLocator = ({
     { disable: true },
   )
 
-  /**
-   * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when
-   * an item is not taking the entire spread. That way we always have a valid position for the given item. However you need to adjust it
-   * when on spread mode to be sure to position the viewport on the edge.
-   *
-   * @example
-   * [    item-a   |   item-a   ]
-   * 400          200           0
-   * will return 200, which probably needs to be adjusted as 0
-   */
-  const getSpinePositionFromSpineItemPosition = (
-    spineItemPosition: SafeSpineItemPosition,
-    spineItem: SpineItem,
-  ): ViewportPosition => {
-    const { left, top } = spineItemsManager.getAbsolutePositionOf(spineItem)
-
-    /**
-     * For this case the global offset move from right to left but this specific item
-     * reads from left to right. This means that when the offset is at the start of the item
-     * it is in fact at his end. This behavior can be observed in `haruko` about chapter.
-     * @example
-     * <---------------------------------------------------- global offset
-     * item offset ------------------>
-     * [item2 (page0 - page1 - page2)] [item1 (page1 - page0)] [item0 (page0)]
-     */
-    // if (context.isRTL() && itemReadingDirection === 'ltr') {
-    //   return (end - spineItemOffset) - context.getPageSize().width
-    // }
-
-    return {
-      x: left + spineItemPosition.x,
-      y: top + spineItemPosition.y,
-    }
-  }
-
   const getSpinePositionFromSpineItem = (spineItem: SpineItem) => {
-    return getSpinePositionFromSpineItemPosition({ x: 0, y: 0 }, spineItem)
+    return getSpinePositionFromSpineItemPosition({
+      spineItemPosition: { x: 0, y: 0 },
+      itemLayout: spineLayout.getAbsolutePositionOf(spineItem),
+    })
   }
 
   const getSpineItemFromIframe = (iframe: Element) => {
@@ -154,12 +128,16 @@ export const createSpineLocator = ({
 
     const pages = Array.from(Array(numberOfPages)).map((_, index) => {
       const spineItemPosition =
-        spineItemLocator.getSpineItemPositionFromPageIndex(index, spineItem)
+        spineItemLocator.getSpineItemPositionFromPageIndex({
+          pageIndex: index,
+          isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+          itemLayout: spineItem.getElementDimensions(),
+        })
 
-      const spinePosition = getSpinePositionFromSpineItemPosition(
+      const spinePosition = getSpinePositionFromSpineItemPosition({
         spineItemPosition,
-        spineItem,
-      )
+        itemLayout: spineLayout.getAbsolutePositionOf(spineItem),
+      })
 
       return {
         index,
@@ -210,7 +188,7 @@ export const createSpineLocator = ({
     spineItem: SpineItem,
   ) => {
     const { bottom, left, right, top } =
-      spineItemsManager.getAbsolutePositionOf(spineItem)
+      spineLayout.getAbsolutePositionOf(spineItem)
 
     return (
       position.x >= left &&
@@ -225,7 +203,7 @@ export const createSpineLocator = ({
     unsafePosition: UnsafeSpineItemPosition,
     spineItem: SpineItem,
   ): SafeSpineItemPosition => {
-    const { height, width } = spineItemsManager.getAbsolutePositionOf(spineItem)
+    const { height, width } = spineLayout.getAbsolutePositionOf(spineItem)
 
     return {
       x: Math.min(Math.max(0, unsafePosition.x), width),
@@ -234,7 +212,46 @@ export const createSpineLocator = ({
   }
 
   return {
-    getSpinePositionFromSpineItemPosition,
+    getSpinePositionFromSpineItemPosition: ({
+      spineItem,
+      spineItemPosition,
+    }: {
+      spineItemPosition: SafeSpineItemPosition
+      spineItem: SpineItem
+    }) => {
+      const itemLayout = spineLayout.getAbsolutePositionOf(spineItem)
+
+      return getSpinePositionFromSpineItemPosition({
+        itemLayout,
+        spineItemPosition,
+      })
+    },
+    getAbsolutePageIndexFromPageIndex: (
+      params: Omit<
+        Parameters<typeof getAbsolutePageIndexFromPageIndex>[0],
+        "context" | "settings" | "spineLayout" | "spineItemsManager"
+      >,
+    ) =>
+      getAbsolutePageIndexFromPageIndex({
+        ...params,
+        context,
+        settings,
+        spineItemsManager,
+        spineLayout,
+      }),
+    getSpineInfoFromAbsolutePageIndex: (
+      params: Omit<
+        Parameters<typeof getSpineInfoFromAbsolutePageIndex>[0],
+        "context" | "settings" | "spineLayout" | "spineItemsManager"
+      >,
+    ) =>
+      getSpineInfoFromAbsolutePageIndex({
+        ...params,
+        context,
+        settings,
+        spineItemsManager,
+        spineLayout,
+      }),
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,
     getSpineItemFromPosition: (position: ViewportPosition) =>
@@ -242,19 +259,21 @@ export const createSpineLocator = ({
         position,
         settings,
         spineItemsManager,
+        spineLayout,
       }),
     getSpineItemFromIframe,
     getSpineItemPageIndexFromNode,
     getVisibleSpineItemsFromPosition: (
       params: Omit<
         Parameters<typeof getVisibleSpineItemsFromPosition>[0],
-        "context" | "spineItemsManager" | "settings"
+        "context" | "spineItemsManager" | "settings" | "spineLayout"
       >,
     ) =>
       getVisibleSpineItemsFromPosition({
         context,
         settings,
         spineItemsManager,
+        spineLayout,
         ...params,
       }),
     getVisiblePagesFromViewportPosition,

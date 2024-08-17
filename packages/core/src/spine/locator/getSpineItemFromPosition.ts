@@ -1,6 +1,7 @@
 import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManager } from "../SpineItemsManager"
+import { SpineLayout } from "../SpineLayout"
 
 /**
  * This will retrieve the closest item to the x / y position edge relative to the reading direction.
@@ -8,15 +9,16 @@ import { SpineItemsManager } from "../SpineItemsManager"
 export const getSpineItemFromPosition = ({
   position,
   spineItemsManager,
+  spineLayout,
   settings,
 }: {
   position: ViewportPosition
   spineItemsManager: SpineItemsManager
+  spineLayout: SpineLayout
   settings: ReaderSettingsManager
 }) => {
   const spineItem = spineItemsManager.items.find((item) => {
-    const { left, right, bottom, top } =
-      spineItemsManager.getAbsolutePositionOf(item)
+    const { left, right, bottom, top } = spineLayout.getAbsolutePositionOf(item)
 
     const isWithinXAxis = position.x >= left && position.x < right
 
