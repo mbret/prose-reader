@@ -1,14 +1,15 @@
 {
-  "name": "@prose-reader/enhancer-hammer-gesture",
-  "version": "1.71.0",
+  "name": "@prose-reader/enhancer-gestures",
+  "version": "1.43.0",
   "type": "module",
-  "main": "./dist/prose-reader-enhancer-hammer.gesture.cjs",
-  "module": "./dist/prose-reader-enhancer-hammer-gesture.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "private": true,
   "exports": {
     ".": {
-      "import": "./dist/prose-reader-enhancer-hammer-gesture.js",
-      "require": "./dist/prose-reader-enhancer-hammer-gesture.umd.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
     }
   },
   "files": [
@@ -22,16 +23,14 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.71.0"
-  },
-  "peerDependencies": {
-    "@types/hammerjs": "*",
-    "hammerjs": "*",
-    "rxjs": "*"
+    "@prose-reader/core": "^1.43.0"
   },
   "devDependencies": {
-    "@types/hammerjs": "*",
-    "hammerjs": "*"
+    "gesturx": "^1.8.2"
+  },
+  "peerDependencies": {
+    "rxjs": "*",
+    "gesturx": "*"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
