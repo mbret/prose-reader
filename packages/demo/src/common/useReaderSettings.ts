@@ -1,14 +1,9 @@
-import { bind } from "@react-rxjs/core"
 import { of } from "rxjs"
-import { ReaderInstance } from "../types"
 import { useReader } from "../reader/useReader"
-
-const undefined$ = of(undefined)
-
-const [useSettings] = bind((reader?: ReaderInstance) => reader?.settings.settings$ ?? undefined$)
+import { useObserve } from "reactjrx"
 
 export const useReaderSettings = () => {
   const { reader } = useReader()
 
-  return useSettings(reader)
+  return useObserve(() => reader?.settings.values$ ?? of(undefined), [reader])
 }

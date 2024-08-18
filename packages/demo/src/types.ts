@@ -1,11 +1,11 @@
 import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { highlightsEnhancer } from "@prose-reader/enhancer-highlights"
-import { hammerGestureEnhancer } from "@prose-reader/enhancer-hammer-gesture"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { createReader } from "@prose-reader/core"
 import { Props as GenericReactReaderProps } from "@prose-reader/react"
 
-export const createAppReader = hammerGestureEnhancer(
+export const createAppReader = gesturesEnhancer(
   highlightsEnhancer(
     bookmarksEnhancer(
       searchEnhancer(

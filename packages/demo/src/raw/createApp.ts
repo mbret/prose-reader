@@ -43,7 +43,7 @@ const createHammerInteraction = (container: HTMLElement, reader: Reader) => {
   let movingHasStarted = false
 
   manager?.on("panmove panstart panend", function onPanMove(ev: HammerInput) {
-    const normalizedEvent = reader?.events.normalizeEventForViewport(ev.srcEvent)
+    const normalizedEvent = ev.srcEvent
 
     const deltaX = normalizedEvent && `x` in normalizedEvent ? normalizedEvent?.x - movingStartOffsets.x : ev.deltaX
     const deltaY = normalizedEvent && `y` in normalizedEvent ? normalizedEvent?.y - movingStartOffsets.y : ev.deltaY

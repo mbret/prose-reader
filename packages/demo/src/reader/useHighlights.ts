@@ -8,6 +8,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
   const setMenuOpenState = useSetRecoilState(isMenuOpenState)
   const setCurrentSelection = useSetRecoilState(currentHighlight)
 
+  // @todo
   // useEffect(() => {
   //   const readerSubscription = reader?.$.selection$
   //     .pipe(
@@ -58,8 +59,6 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
     if (!reader) return
 
     const storedHighlights = JSON.parse(localStorage.getItem(`highlights`) || `[]`)
-
-    console.log("FOOO", storedHighlights)
 
     reader.highlights.add(storedHighlights)
   }, [reader])

@@ -13,6 +13,10 @@ export const readerState = atom<ReaderInstance | undefined>({
 export const useReader = () => {
   const [reader, setReader] = useRecoilState(readerState)
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  window.reader = reader
+
   const reader$ = useMemo(() => of(reader).pipe(isNotNullOrUndefined()), [reader])
 
   return { reader, setReader, reader$ }

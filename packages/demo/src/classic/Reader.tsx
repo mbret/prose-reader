@@ -1,22 +1,14 @@
 import React, { useCallback, useState } from "react"
 import { useEffect } from "react"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
-import { useGestureHandler } from "./useGestureHandler"
 import { Reader as ReactReader } from "@prose-reader/react"
 import { Manifest } from "@prose-reader/core"
 import { QuickMenu } from "../reader/QuickMenu"
-import {
-  bookReadyState,
-  isHelpOpenState,
-  isMenuOpenState,
-  isSearchOpenState,
-  manifestState,
-  useResetStateOnUnMount
-} from "../state"
-import { ClassicSettings } from "./ClassicSettings"
+import { bookReadyState, isHelpOpenState, isMenuOpenState, isSearchOpenState, useResetStateOnUnMount } from "../state"
+import { SettingsDialog } from "../reader/settings/SettingsDialog"
 import { Loading } from "../reader/Loading"
 import { createAppReader, ReactReaderProps, ReaderInstance } from "../types"
-import { useBookmarks } from "../reader/useBookmarks"
+import { useBookmarks } from "../reader/bookmarks/useBookmarks"
 import { useParams } from "react-router"
 import { BookError } from "../reader/BookError"
 import { getEpubUrlFromLocation } from "../serviceWorker/utils"
@@ -25,6 +17,9 @@ import { SearchDialog } from "../reader/SearchDialog"
 import { HelpDialog } from "../reader/HelpDialog"
 import { useReader } from "../reader/useReader"
 import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../constants.shared"
+import { useGestureHandler } from "../reader/gestures/useGestureHandler"
+import { useLocalSettings } from "../reader/settings/useLocalSettings"
+import { useReaderOptions } from "../reader/settings/useReaderOptions"
 
 export const Reader = ({
   onReader,
@@ -37,30 +32,20 @@ export const Reader = ({
 }) => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
-  const setManifestState = useSetRecoilState(manifestState)
+  const [localSettings, setLocalSettings] = useLocalSettings({
+    enablePan: true
+  })
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   const [bookReady, setBookReady] = useRecoilState(bookReadyState)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const isMenuOpen = useRecoilValue(isMenuOpenState)
   const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
   const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
-  const [readerOptions] = useState<ReactReaderProps["options"] | undefined>({
-    // fontScale: parseFloat(localStorage.getItem(`fontScale`) || `1`),
-    // lineHeight: parseFloat(localStorage.getItem(`lineHeight`) || ``) || undefined,
-    // theme: undefined,
-    pageTurnAnimation: `fade`,
-    layoutAutoResize: `container`,
-    numberOfAdjacentSpineItemToPreLoad: 0,
-    hammerGesture: {
-      enableFontScalePinch: true,
-      fontScaleMax: FONT_SCALE_MAX,
-      fontScaleMin: FONT_SCALE_MIN
-    }
-  })
+  const {readerOptions} = useReaderOptions()
   const [readerLoadOptions, setReaderLoadOptions] = useState<ReactReaderProps["loadOptions"]>()
 
-  useGestureHandler(container)
   useBookmarks(reader, url)
+  useGestureHandler()
 
   const onReady = useCallback(() => {
     setBookReady(true)
@@ -86,12 +71,6 @@ export const Reader = ({
       linksSubscription?.unsubscribe()
     }
   }, [reader])
-
-  useEffect(() => {
-    if (!reader || !manifest) return
-
-    setManifestState(manifest)
-  }, [setManifestState, reader, manifest])
 
   useEffect(() => {
     if (manifest) {
@@ -144,8 +123,15 @@ export const Reader = ({
         {!bookReady && !manifestError && <Loading />}
       </div>
       <HighlightMenu />
-      <QuickMenu open={isMenuOpen} isComics={false} onSettingsClick={() => setIsSettingsOpen(true)} />
-      {reader && <ClassicSettings reader={reader} open={isSettingsOpen} onExit={onClassicSettingsExit} />}
+      <QuickMenu open={isMenuOpen} onSettingsClick={() => setIsSettingsOpen(true)} />
+      {reader && (
+        <SettingsDialog
+          localSettings={localSettings}
+          setLocalSettings={setLocalSettings}
+          open={isSettingsOpen}
+          onExit={onClassicSettingsExit}
+        />
+      )}
       <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
       <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />
     </>

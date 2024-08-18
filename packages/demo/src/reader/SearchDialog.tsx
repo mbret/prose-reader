@@ -2,9 +2,9 @@ import { Heading, Input, Text, Box } from "@chakra-ui/react"
 import React, { useCallback, useEffect, useState } from "react"
 import { tap } from "rxjs/operators"
 import { SearchResult } from "@prose-reader/enhancer-search"
-import { groupBy } from "@prose-reader/core"
 import { FullScreenModal } from "../common/FullScreenModal"
 import { useReader } from "./useReader"
+import { groupBy } from "@prose-reader/shared"
 
 export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const [text, setText] = useState("")
