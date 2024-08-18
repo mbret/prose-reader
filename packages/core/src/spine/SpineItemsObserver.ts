@@ -1,10 +1,4 @@
-import {
-  map,
-  merge,
-  Observable,
-  share,
-  switchMap,
-} from "rxjs"
+import { map, merge, Observable, share, switchMap } from "rxjs"
 import { SpineItemsManager } from "./SpineItemsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { SpineItem } from "../spineItem/createSpineItem"

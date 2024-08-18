@@ -289,7 +289,7 @@ export class ViewportNavigator extends DestroyableClass {
           x: element?.scrollLeft ?? 0,
           y: element?.scrollTop ?? 0,
         },
-        spine: this.spine,
+        spineElement: this.spine.element,
       })
     }
 

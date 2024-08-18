@@ -270,10 +270,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     navigation: {
       viewportFree$: context.bridgeEvent.viewportFree$,
       viewportBusy$: context.bridgeEvent.viewportBusy$,
-      // rest safe
-      get viewportPosition() {
-        return navigator.viewportNavigator.viewportPosition
-      },
+      getViewportPosition: () => navigator.viewportNavigator.viewportPosition,
       getNavigation: navigator.getNavigation.bind(navigator),
       getElement: navigator.getElement.bind(navigator),
       navigate: navigator.navigate.bind(navigator),
@@ -295,6 +292,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     >,
     element$,
     layout$: spine.spineLayout.layout$,
+    viewportState$: context.bridgeEvent.viewportState$,
     $: {
       state$: stateSubject$.asObservable(),
       /**

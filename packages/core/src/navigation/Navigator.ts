@@ -86,6 +86,7 @@ export const createNavigator = ({
     element$,
     context,
     scrollHappeningFromBrowser$,
+    spine,
   )
 
   const internalNavigator = new InternalNavigator(

@@ -13,7 +13,6 @@ export const getSpinePositionFromSpineItemPageIndex = ({
   context: Context
   itemLayout: { left: number; top: number; width: number; height: number }
 }) => {
-
   const spineItemPosition = getSpineItemPositionFromPageIndex({
     pageIndex,
     context,

@@ -1,18 +1,15 @@
-import { Spine } from "../../spine/Spine"
 import { getNewScaledOffset } from "../../utils/layout"
 import { ViewportPosition } from "./ViewportNavigator"
 
 export const getScaledDownPosition = ({
   position: { x, y },
-  spine,
+  spineElement,
   element,
 }: {
   position: ViewportPosition
-  spine: Spine
+  spineElement: HTMLElement
   element: HTMLElement
 }) => {
-  const spineElement = spine.element
-
   if (!spineElement) throw new Error("Invalid spine element")
 
   const spineScaleX =

@@ -76,6 +76,7 @@ export const createNavigator = () => {
     elementSubject,
     context,
     scrollHappeningFromBrowser$,
+    spine,
   )
 
   const internalNavigator = new InternalNavigator(

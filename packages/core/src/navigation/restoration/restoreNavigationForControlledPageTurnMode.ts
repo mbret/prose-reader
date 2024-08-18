@@ -24,8 +24,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
     return { x: 0, y: 0 }
   }
 
-  const spineItemAbsolutePosition =
-  spineLayout.getAbsolutePositionOf(spineItem)
+  const spineItemAbsolutePosition = spineLayout.getAbsolutePositionOf(spineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,

@@ -14,7 +14,6 @@ import {
   of,
   share,
   switchMap,
-  take,
   takeUntil,
   tap,
   withLatestFrom,
@@ -25,6 +24,8 @@ import { Context } from "../context/Context"
 import { Report } from "../report"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { Locker } from "./Locker"
+import { getScaledDownPosition } from "./viewport/getScaledDownPosition"
+import { Spine } from "../spine/Spine"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 const NAMESPACE = `navigation/UserNavigator`
@@ -64,6 +65,7 @@ export class UserNavigator extends DestroyableClass {
     protected element$: Observable<HTMLElement>,
     protected context: Context,
     protected scrollHappeningFromBrowser$: Observable<unknown>,
+    protected spine: Spine,
   ) {
     super()
 
@@ -87,31 +89,6 @@ export class UserNavigator extends DestroyableClass {
       share(),
     )
 
-    const userScrollEnd$ = userScroll$.pipe(
-      exhaustMap(() =>
-        userScroll$.pipe(
-          debounceTime(
-            SCROLL_FINISHED_DEBOUNCE_TIMEOUT,
-            animationFrameScheduler,
-          ),
-        ),
-      ),
-      share(),
-    )
-
-    const lockNavigationWhileScrolling$ = userScroll$.pipe(
-      exhaustMap(() => {
-        // const unlock = this.lock()
-
-        return userScrollEnd$.pipe(
-          take(1),
-          finalize(() => {
-            // unlock()
-          }),
-        )
-      }),
-    )
-
     /**
      * Update the navigation as the user scroll.
      *
@@ -122,7 +99,6 @@ export class UserNavigator extends DestroyableClass {
       map(({ computedPageTurnMode }) => computedPageTurnMode),
       distinctUntilChanged(),
       filter((computedPageTurnMode) => computedPageTurnMode === "scrollable"),
-      withLatestFrom(element$),
       switchMap(() => userScroll$),
       exhaustMap((event) => {
         const unlock = this.locker.lock()
@@ -134,15 +110,24 @@ export class UserNavigator extends DestroyableClass {
           ),
           first(),
           tap(() => {
-            const element = event.target as HTMLElement
+            const targetElement = event.target as HTMLElement
+
+            /**
+             * Make sure to scale position to stay agnostic to potential zoom
+             */
+            const scaledDownPosition = getScaledDownPosition({
+              element: targetElement,
+              position: {
+                x: targetElement.scrollLeft ?? 0,
+                y: targetElement.scrollTop ?? 0,
+              },
+              spineElement: this.spine.element,
+            })
 
             this.navigate({
               animation: false,
               type: "scroll",
-              position: {
-                x: element.scrollLeft ?? 0,
-                y: element.scrollTop ?? 0,
-              },
+              position: scaledDownPosition,
             })
           }),
           finalize(() => {
@@ -152,9 +137,7 @@ export class UserNavigator extends DestroyableClass {
       }),
     )
 
-    merge(lockNavigationWhileScrolling$, navigateOnScroll$)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe()
+    merge(navigateOnScroll$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   /**

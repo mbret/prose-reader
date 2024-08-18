@@ -122,9 +122,7 @@ export class ManualNavigator {
   }
 
   goToRightSpineItem() {
-    if (
-      this.reader.settings.values.computedPageTurnDirection === "vertical"
-    ) {
+    if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
       Report.warn(
         `You cannot call this navigation method on vertical direction`,
       )
@@ -140,9 +138,7 @@ export class ManualNavigator {
   }
 
   goToLeftSpineItem() {
-    if (
-      this.reader.settings.values.computedPageTurnDirection === "vertical"
-    ) {
+    if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
       Report.warn(
         `You cannot call this navigation method on vertical direction`,
       )

@@ -29,7 +29,7 @@ export class PanNavigator {
 
       // stateSubject$.next(`start`)
       this.lastDelta = { x: 0, y: 0 }
-      this.lastStartPosition = this.reader.navigation.viewportPosition
+      this.lastStartPosition = this.reader.navigation.getViewportPosition()
 
       this.lastPosition = this.lastStartPosition
     }

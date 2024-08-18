@@ -16,5 +16,6 @@ export type ReaderSelection = ReturnType<typeof createSelection>
 
 export { Report } from "./report"
 
+export { isHtmlElement } from "./utils/dom"
 export { isShallowEqual } from "./utils/objects"
 export { waitForSwitch } from "./utils/rxjs"
