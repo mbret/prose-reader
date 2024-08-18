@@ -190,7 +190,7 @@ export const highlightsEnhancer =
       )
       .subscribe()
 
-    const refreshHighlightsOnLayout$ = reader.spine.layout$.pipe(
+    const refreshHighlightsOnLayout$ = reader.layout$.pipe(
       tap(() => {
         reader.spineItemsManager.items.forEach((item, index) => {
           drawHighlightsForItem(item.overlayElement, index)
