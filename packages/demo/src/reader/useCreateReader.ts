@@ -1,7 +1,25 @@
 import { useEffect } from "react"
-import { createAppReader } from "../types"
 import { readerSignal } from "./useReader"
 import { SIGNAL_RESET } from "reactjrx"
+
+import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
+import { searchEnhancer } from "@prose-reader/enhancer-search"
+import { highlightsEnhancer } from "@prose-reader/enhancer-highlights"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import { createReader } from "@prose-reader/core"
+
+export type ReaderInstance = ReturnType<typeof createAppReader>
+
+export const createAppReader = gesturesEnhancer(
+  highlightsEnhancer(
+    bookmarksEnhancer(
+      searchEnhancer(
+        // __
+        createReader
+      )
+    )
+  )
+)
 
 export const useCreateReader = () => {
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { useEffect } from "react"
-import { ReaderInstance } from "../types"
 import { tap } from "rxjs/operators"
 import { currentHighlight, isMenuOpenState } from "./states"
+import { ReaderInstance } from "./useCreateReader"
 
 export const useHighlights = (reader: ReaderInstance | undefined) => {
 

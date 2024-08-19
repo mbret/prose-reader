@@ -1,9 +1,9 @@
 import { tap } from "rxjs/operators"
-import { ReaderInstance } from "../../types"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 import { SerializableBookmark } from "@prose-reader/enhancer-bookmarks/dist/types"
 import { useEffect, useState } from "react"
+import { ReaderInstance } from "../useCreateReader"
 
 const restore = (bookKey: string) => {
   const storedBookmarks = JSON.parse(localStorage.getItem(`bookmarks`) || `{}`)

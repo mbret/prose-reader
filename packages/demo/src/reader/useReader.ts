@@ -1,5 +1,5 @@
-import { ReaderInstance } from "../types"
 import { signal, useSignalValue } from "reactjrx"
+import { ReaderInstance } from "./useCreateReader"
 
 export const readerSignal = signal<ReaderInstance | undefined>({
   default: undefined
