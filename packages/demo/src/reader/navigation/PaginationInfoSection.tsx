@@ -7,8 +7,8 @@ import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
 export const PaginationInfoSection = () => {
-  const { reader$, reader } = useReader()
-  const pagination = usePagination(reader$)
+  const { reader } = useReader()
+  const pagination = usePagination()
   const settings = useObserve(reader?.settings.values$ ?? NEVER)
   const [pageIndex, endPageIndex] = [
     (pagination?.beginPageIndexInSpineItem || 0) + 1,

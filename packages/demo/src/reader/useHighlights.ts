@@ -1,12 +1,9 @@
 import { useEffect } from "react"
 import { ReaderInstance } from "../types"
 import { tap } from "rxjs/operators"
-import { useSetRecoilState } from "recoil"
 import { currentHighlight, isMenuOpenState } from "../state"
 
 export const useHighlights = (reader: ReaderInstance | undefined) => {
-  const setMenuOpenState = useSetRecoilState(isMenuOpenState)
-  const setCurrentSelection = useSetRecoilState(currentHighlight)
 
   // @todo
   // useEffect(() => {
@@ -38,8 +35,8 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
     const subscription = reader?.highlights.$.pipe(
       tap((event) => {
         if (event.type === `onHighlightClick`) {
-          setCurrentSelection(event.data)
-          setMenuOpenState(false)
+          currentHighlight.setValue(event.data)
+          isMenuOpenState.setValue(false)
         }
 
         if (event.type === `onUpdate`) {
@@ -52,7 +49,7 @@ export const useHighlights = (reader: ReaderInstance | undefined) => {
     return () => {
       subscription?.unsubscribe()
     }
-  }, [setCurrentSelection, setMenuOpenState, reader])
+  }, [reader])
 
   // create bookmarks enhancer and initialize with local storage bookmarks
   useEffect(() => {

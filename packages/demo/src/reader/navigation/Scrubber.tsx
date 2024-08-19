@@ -8,9 +8,9 @@ import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
 export const Scrubber = () => {
-  const { reader, reader$ } = useReader()
+  const { reader } = useReader()
   const isComic = useIsComics()
-  const pagination = usePagination(reader$)
+  const pagination = usePagination()
   const { manifest } = useObserve(reader?.context.state$ ?? NEVER) ?? {}
   const isUsingSpread = pagination?.isUsingSpread
   const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInSpineItem

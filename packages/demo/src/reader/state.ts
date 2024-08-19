@@ -1,8 +1,9 @@
-import { Reader } from "@prose-reader/core"
-import { bind } from "@react-rxjs/core"
-import { Observable, switchMap } from "rxjs"
+import { useObserve } from "reactjrx"
+import { NEVER } from "rxjs"
+import { useReader } from "./useReader"
 
-export const [usePagination] = bind(
-  (reader$: Observable<Reader>) => reader$.pipe(switchMap((reader) => reader.pagination.state$)),
-  undefined
-)
+export const usePagination = () => {
+  const { reader } = useReader()
+
+  return useObserve(() => reader?.pagination.state$ ?? NEVER, [reader])
+}

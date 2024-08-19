@@ -1,11 +1,11 @@
 import { Manifest } from "@prose-reader/core"
-import { useQuery } from "react-query"
 import { STREAMER_URL_PREFIX } from "../serviceWorker/constants"
+import { useQuery } from "reactjrx"
 
 export const useManifest = (epubUrl: string) =>
-  useQuery(
-    ["manifest", epubUrl],
-    async () => {
+  useQuery({
+    queryKey: ["manifest", epubUrl],
+    queryFn: async () => {
       const response = await fetch(`${window.location.origin}/${STREAMER_URL_PREFIX}/${epubUrl}/manifest`, {
         mode: `no-cors`
       })
@@ -13,10 +13,7 @@ export const useManifest = (epubUrl: string) =>
 
       return bookManifest
     },
-    {
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-      onError: console.error
-    }
-  )
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false
+  })

@@ -8,10 +8,10 @@ import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
-  const { reader$, reader } = useReader()
+  const { reader } = useReader()
   const { manifest } = useObserve(reader?.context.state$ ?? NEVER) ?? {}
   const { nav, renditionLayout } = manifest ?? {}
-  const pagination = usePagination(reader$)
+  const pagination = usePagination()
   const toc = nav?.toc || []
   const { beginSpineItemIndex, beginPageIndexInSpineItem } = pagination ?? {}
   const currentPage = (renditionLayout === "reflowable" ? beginPageIndexInSpineItem : beginSpineItemIndex) || 0

@@ -1,6 +1,5 @@
 import React from "react"
 import { useNavigate } from "react-router"
-import { useSetRecoilState } from "recoil"
 import { Box, IconButton, Stack } from "@chakra-ui/react"
 import { ArrowBackIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
 import { isHelpOpenState, isSearchOpenState, isTocOpenState } from "../state"
@@ -15,20 +14,17 @@ export const QuickMenu = ({ open, onSettingsClick }: { open: boolean; onSettings
   const { reader } = useReader()
   const { manifest } = useObserve(reader?.context.state$ ?? NEVER) || {}
   const { title: bookTitle } = manifest ?? {}
-  const setIsSearchOpen = useSetRecoilState(isSearchOpenState)
-  const setIsTocOpenState = useSetRecoilState(isTocOpenState)
-  const setIsHelpOpenState = useSetRecoilState(isHelpOpenState)
 
   const onSearchClick = () => {
-    setIsSearchOpen(true)
+    isSearchOpenState.setValue(true)
   }
 
   const onTocClick = () => {
-    setIsTocOpenState(true)
+    isTocOpenState.setValue(true)
   }
 
   const onHelpClick = () => {
-    setIsHelpOpenState(true)
+    isHelpOpenState.setValue(true)
   }
 
   return (

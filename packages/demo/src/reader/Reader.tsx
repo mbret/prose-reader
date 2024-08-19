@@ -2,7 +2,6 @@ import React, { memo, useEffect, useRef, useState } from "react"
 import { useManifest } from "./useManifest"
 import { useParams } from "react-router-dom"
 import { TocDialog } from "./TocDialog"
-import { useRecoilState, useRecoilValue } from "recoil"
 import { isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, useResetStateOnUnMount } from "../state"
 import { HighlightMenu } from "./HighlightMenu"
 import { Bookmarks } from "./bookmarks/Bookmarks"
@@ -19,25 +18,26 @@ import { useLocalSettings } from "./settings/useLocalSettings"
 import { useBookmarks } from "./bookmarks/useBookmarks"
 import { QuickMenu } from "./QuickMenu"
 import { SettingsDialog } from "./settings/SettingsDialog"
-import { useObserve } from "reactjrx"
+import { useObserve, useSignalValue } from "reactjrx"
 import { NEVER } from "rxjs"
 import { SearchDialog } from "./SearchDialog"
 import { HelpDialog } from "./HelpDialog"
 import { useLinks } from "./useLinks"
+import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 
 export const Reader = memo(() => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
   const { data: manifest, error: manifestError } = useManifest(url)
-  const [isTocOpen, setIsTocOpen] = useRecoilState(isTocOpenState)
+  const isTocOpen = useSignalValue(isTocOpenState)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useLocalSettings({
     enablePan: true
   })
-  const [isSearchOpen, setIsSearchOpen] = useRecoilState(isSearchOpenState)
-  const [isHelpOpen, setIsHelpOpen] = useRecoilState(isHelpOpenState)
-  const isMenuOpen = useRecoilValue(isMenuOpenState)
+  const isSearchOpen = useSignalValue(isSearchOpenState)
+  const isHelpOpen = useSignalValue(isHelpOpenState)
+  const isMenuOpen = useSignalValue(isMenuOpenState)
   const bookState = useObserve(() => reader?.state$ ?? NEVER, [reader])
 
   useCreateReader()
@@ -46,6 +46,7 @@ export const Reader = memo(() => {
   useUpdateReaderSettings({ localSettings, manifest })
   useBookmarks(reader, url)
   useLinks()
+  usePersistCurrentPagination()
 
   useResetStateOnUnMount()
 
@@ -75,9 +76,9 @@ export const Reader = memo(() => {
         open={isSettingsOpen}
         onExit={() => setIsSettingsOpen(false)}
       />
-      <TocDialog isOpen={isTocOpen} onExit={() => setIsTocOpen(false)} />
-      <SearchDialog isOpen={isSearchOpen} onExit={() => setIsSearchOpen(false)} />
-      <HelpDialog isOpen={isHelpOpen} onExit={() => setIsHelpOpen(false)} />
+      <TocDialog isOpen={isTocOpen} onExit={() => isTocOpenState.setValue(false)} />
+      <SearchDialog isOpen={isSearchOpen} onExit={() => isSearchOpenState.setValue(false)} />
+      <HelpDialog isOpen={isHelpOpen} onExit={() => isHelpOpenState.setValue(false)} />
       <HighlightMenu />
       <Bookmarks />
       <Notification />

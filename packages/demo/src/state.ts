@@ -1,26 +1,20 @@
-import { atom, selector, useRecoilCallback } from "recoil"
 import { useEffect } from "react"
 import { useReader } from "./reader/useReader"
-import { useObserve } from "reactjrx"
+import { signal, SIGNAL_RESET, useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
-export const isSearchOpenState = atom({
+export const isSearchOpenState = signal({
   key: `isSearchOpenState`,
   default: false
 })
 
-export const isTocOpenState = atom({
+export const isTocOpenState = signal({
   key: `isTocOpenState`,
   default: false
 })
 
-export const isHelpOpenState = atom({
+export const isHelpOpenState = signal({
   key: `isHelpOpenState`,
-  default: false
-})
-
-export const bookReadyState = atom({
-  key: `bookReadyState`,
   default: false
 })
 
@@ -38,35 +32,24 @@ export const useIsComics = () => {
   )
 }
 
-export const isMenuOpenState = atom({
+export const isMenuOpenState = signal({
   key: `isMenuOpenState`,
   default: false
 })
 
-export const currentHighlight = atom<{ anchorCfi: string; focusCfi: string; text?: string; id: string } | undefined>({
+export const currentHighlight = signal<{ anchorCfi: string; focusCfi: string; text?: string; id: string } | undefined>({
   key: `currentHighlightState`,
   default: undefined
 })
 
-export const hasCurrentHighlightState = selector({
-  key: `hasCurrentHighlightState`,
-  get: ({ get }) => {
-    return !!get(currentHighlight)
-  }
-})
-
-const statesToReset = [isMenuOpenState, bookReadyState, currentHighlight]
-
 export const useResetStateOnUnMount = () => {
-  const resetStates = useRecoilCallback(
-    ({ reset }) =>
-      () => {
-        statesToReset.forEach((state) => reset(state))
-      },
-    []
-  )
-
   useEffect(() => {
-    return () => resetStates()
-  }, [resetStates])
+    return () => {
+      isMenuOpenState.setValue(SIGNAL_RESET)
+      isSearchOpenState.setValue(SIGNAL_RESET)
+      isTocOpenState.setValue(SIGNAL_RESET)
+      isHelpOpenState.setValue(SIGNAL_RESET)
+      currentHighlight.setValue(SIGNAL_RESET)
+    }
+  }, [])
 }

@@ -1,27 +1,27 @@
 import React, { useCallback } from "react"
-import { useRecoilState } from "recoil"
 import { Button } from "../common/Button"
 import { currentHighlight } from "../state"
 import { useReader } from "./useReader"
+import { useSignalValue } from "reactjrx"
 
 export const HighlightMenu = () => {
   const { reader } = useReader()
-  const [currentSelection, setCurrentSelection] = useRecoilState(currentHighlight)
+  const currentSelection = useSignalValue(currentHighlight)
   const isCurrentSelectionSaved = currentSelection && reader?.highlights.has(currentSelection)
 
   const addHighlight = useCallback(() => {
     if (currentSelection) {
       reader?.highlights.add(currentSelection)
-      setCurrentSelection(undefined)
+      currentHighlight.setValue(undefined)
     }
-  }, [currentSelection, reader, setCurrentSelection])
+  }, [currentSelection, reader])
 
   const removeHighlight = useCallback(() => {
     if (currentSelection?.id !== undefined) {
       reader?.highlights.remove(currentSelection.id)
-      setCurrentSelection(undefined)
+      currentHighlight.setValue(undefined)
     }
-  }, [currentSelection, reader, setCurrentSelection])
+  }, [currentSelection, reader])
 
   return (
     <>
