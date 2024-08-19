@@ -26,9 +26,7 @@ export const getVisibleSpineItemsFromPosition = ({
 }):
   | {
       beginIndex: number
-      // beginPosition: ViewportPosition
       endIndex: number
-      // endPosition: ViewportPosition
     }
   | undefined => {
   const fallbackSpineItem =
@@ -70,8 +68,6 @@ export const getVisibleSpineItemsFromPosition = ({
 
   return {
     beginIndex: beginItemIndex ?? 0,
-    // beginPosition: position,
     endIndex: endItemIndex ?? 0,
-    // endPosition: position,
   }
 }

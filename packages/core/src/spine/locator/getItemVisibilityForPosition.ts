@@ -91,11 +91,15 @@ export const getItemVisibilityForPosition = ({
   context: Context
 }) => {
   const viewportLeft = viewportPosition.x
-  const viewportRight =
-    viewportPosition.x + (context.state.visibleAreaRect.width - 1)
+  const viewportRight = Math.max(
+    viewportPosition.x + (context.state.visibleAreaRect.width - 1),
+    0,
+  )
   const viewportTop = viewportPosition.y
-  const viewportBottom =
-    viewportPosition.y + (context.state.visibleAreaRect.height - 1)
+  const viewportBottom = Math.max(
+    viewportPosition.y + (context.state.visibleAreaRect.height - 1),
+    0,
+  )
   // const viewportWidth = context.state.visibleAreaRect.width
 
   const visibleWidthOfItem =

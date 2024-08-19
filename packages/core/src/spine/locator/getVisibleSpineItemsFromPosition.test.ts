@@ -49,8 +49,19 @@ describe("Given single page items and no spread", () => {
           settings,
         )
 
+        context.update({
+          visibleAreaRect: {
+            height: 100,
+            width: 100,
+            x: 0,
+            y: 0,
+          },
+        })
+
         spineItemsManager.load(singlePageItems)
 
+        spineLayout.layout()
+        
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             context: context,
@@ -78,7 +89,18 @@ describe("Given single page items and no spread", () => {
           settings,
         )
 
+        context.update({
+          visibleAreaRect: {
+            height: 100,
+            width: 100,
+            x: 0,
+            y: 0,
+          },
+        })
+
         spineItemsManager.load(singlePageItems)
+
+        spineLayout.layout()
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
@@ -107,7 +129,18 @@ describe("Given single page items and no spread", () => {
           settings,
         )
 
+        context.update({
+          visibleAreaRect: {
+            height: 100,
+            width: 100,
+            x: 0,
+            y: 0,
+          },
+        })
+
         spineItemsManager.load(singlePageItems)
+
+        spineLayout.layout()
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({

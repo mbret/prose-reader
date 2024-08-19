@@ -100,11 +100,13 @@ describe(`Given loaded book`, () => {
 
   describe("Given invalid positive navigation spine item", () => {
     it(`should fallback to length - 1`, async () => {
-      const { internalNavigator, userNavigator, spineItemsManagerMock } =
+      const { internalNavigator, userNavigator, spineItemsManagerMock, spine } =
         createNavigator()
       const navigations: InternalNavigationEntry[] = []
 
       spineItemsManagerMock.load(generateItems(100, 2))
+
+      spine.layout()
 
       const sub = internalNavigator.navigated$.subscribe((navigation) => {
         navigations.push(navigation)

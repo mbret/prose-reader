@@ -90,5 +90,5 @@ export const createNavigator = () => {
     userNavigator.locker.isLocked$,
   )
 
-  return { internalNavigator, userNavigator, context, spineItemsManagerMock }
+  return { internalNavigator, userNavigator, context, spineItemsManagerMock, spine }
 }

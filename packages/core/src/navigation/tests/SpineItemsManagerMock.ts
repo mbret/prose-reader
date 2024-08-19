@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Subject } from "rxjs"
+import { BehaviorSubject, NEVER, of, Subject } from "rxjs"
 
 export type Item = {
   left: number
@@ -15,6 +15,8 @@ export class SpineItemsManagerMock {
 
   public layout$ = new Subject()
 
+  public items$ = new BehaviorSubject<Item[]>([])
+
   load(
     items: {
       left: number
@@ -29,7 +31,15 @@ export class SpineItemsManagerMock {
       ...item,
       getElementDimensions: () => ({ width: item.width, height: item.height }),
       isUsingVerticalWriting: () => false,
+      adjustPositionOfElement: () => {},
+      layout: () => ({ width: item.width, height: item.height }),
+      $: {
+        contentLayout$: NEVER,
+        loaded$: of(true),
+      },
     }))
+
+    this.items$.next(this.items)
   }
 
   get(id: number) {

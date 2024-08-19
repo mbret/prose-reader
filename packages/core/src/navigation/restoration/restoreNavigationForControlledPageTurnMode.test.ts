@@ -53,6 +53,8 @@ describe(`Given a backward navigation to a new item`, () => {
         // items of 2 pages
         spineItemsManager.load(generateItems(100, 2))
 
+        spine.layout()
+
         const position = restoreNavigationForControlledPageTurnMode({
           navigation: {
             position: {
