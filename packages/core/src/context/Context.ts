@@ -8,9 +8,9 @@ import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { BridgeEvent } from "./BridgeEvent"
-import { type LoadOptions } from "../reader"
 
-export type State = Partial<Pick<LoadOptions, "containerElement">> & {
+export type ContextState = {
+  containerElement?: HTMLElement
   manifest?: Manifest
   hasVerticalWriting?: boolean
   isUsingSpreadMode?: boolean
@@ -30,7 +30,7 @@ export type State = Partial<Pick<LoadOptions, "containerElement">> & {
 
 export class Context {
   // @see https://github.com/microsoft/TypeScript/issues/17293
-  _stateSubject = new BehaviorSubject<State>({
+  _stateSubject = new BehaviorSubject<ContextState>({
     marginBottom: 0,
     marginTop: 0,
     calculatedInnerMargin: 0,
@@ -74,14 +74,7 @@ export class Context {
   /**
    * @todo optimize to not run if not necessary
    */
-  public update(newState: {
-    manifest?: Manifest
-    forceSinglePageMode?: boolean
-    visibleAreaRect?: State["visibleAreaRect"]
-    marginTop?: number
-    marginBottom?: number
-    hasVerticalWriting?: boolean
-  }) {
+  public update(newState: Partial<ContextState>) {
     // visibleAreaRect.width = width - horizontalMargin * 2
 
     const previousState = this._stateSubject.getValue()

@@ -1,8 +1,10 @@
+import { Reader } from "../../reader"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
 
 export type NavigationEnhancerOutput = {
+  load: (options: Parameters<Reader["load"]>[0] & { cfi?: string }) => void
   navigation: {
     state$: ReturnType<typeof observeState>
     moveTo: PanNavigator["moveTo"]

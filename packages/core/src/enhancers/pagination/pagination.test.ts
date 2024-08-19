@@ -45,8 +45,8 @@ describe("Given a book with one chapter", () => {
           error: reject,
         })
 
-        reader.load(
-          {
+        reader.load({
+          manifest: {
             ...BASE_MANIFEST,
             nav: {
               toc: [
@@ -69,10 +69,8 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
-          {
-            containerElement: document.getElementById("test-container")!,
-          },
-        )
+          containerElement: document.getElementById("test-container")!,
+        })
       })
 
       expect(value.beginChapterInfo).toEqual({
@@ -100,8 +98,8 @@ describe("Given a book with one chapter", () => {
           error: reject,
         })
 
-        reader.load(
-          {
+        reader.load({
+          manifest: {
             ...BASE_MANIFEST,
             nav: {
               toc: [
@@ -132,10 +130,8 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
-          {
-            containerElement: document.getElementById("test-container")!,
-          },
-        )
+          containerElement: document.getElementById("test-container")!,
+        })
 
         reader.navigation.goToSpineItem(1)
       })
@@ -167,8 +163,8 @@ describe("Given a book with one chapter", () => {
               error: reject,
             })
 
-            reader.load(
-              {
+            reader.load({
+              manifest: {
                 ...BASE_MANIFEST,
                 nav: {
                   toc: [
@@ -206,10 +202,8 @@ describe("Given a book with one chapter", () => {
                   },
                 ],
               },
-              {
-                containerElement: document.getElementById("test-container")!,
-              },
-            )
+              containerElement: document.getElementById("test-container")!,
+            })
 
             reader.navigation.goToSpineItem(1)
           })
@@ -244,8 +238,8 @@ describe("Given a book with two chapters", () => {
           error: reject,
         })
 
-        reader.load(
-          {
+        reader.load({
+          manifest: {
             ...BASE_MANIFEST,
             nav: {
               toc: [
@@ -282,10 +276,8 @@ describe("Given a book with two chapters", () => {
               },
             ],
           },
-          {
-            containerElement: document.getElementById("test-container")!,
-          },
-        )
+          containerElement: document.getElementById("test-container")!,
+        })
       })
 
       expect(value.beginChapterInfo).toEqual({

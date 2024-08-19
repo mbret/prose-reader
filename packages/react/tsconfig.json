@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.common.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "jsx": "react",
-    "moduleResolution": "Bundler",
-    "disableSizeLimit": true
-  }
-}

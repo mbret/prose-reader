@@ -1,6 +1,6 @@
 import { BehaviorSubject, merge, ObservedValueOf, Subject } from "rxjs"
 import { Report } from "./report"
-import { Context } from "./context/Context"
+import { Context, ContextState } from "./context/Context"
 import { Pagination } from "./pagination/Pagination"
 import { HTML_PREFIX } from "./constants"
 import {
@@ -13,7 +13,6 @@ import {
 import { isShallowEqual } from "./utils/objects"
 import { createNavigator } from "./navigation/Navigator"
 import { createSpineItemLocator as createSpineItemLocator } from "./spineItem/locationResolver"
-import { Manifest } from "@prose-reader/shared"
 import { isDefined } from "./utils/isDefined"
 import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
 import { HookManager } from "./hooks/HookManager"
@@ -32,11 +31,6 @@ export type CreateReaderOptions = Partial<CoreInputSettings>
 export type CreateReaderParameters = CreateReaderOptions
 
 export type ContextSettings = Partial<CoreInputSettings>
-
-export type LoadOptions = {
-  cfi?: string | null
-  containerElement: HTMLElement
-}
 
 export type ReaderInternal = ReturnType<typeof createReader>
 
@@ -147,29 +141,31 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spine.layout()
   }
 
-  const load = (manifest: Manifest, loadOptions: LoadOptions) => {
+  const load = (
+    options: Required<Pick<ContextState, "manifest" | "containerElement">>,
+  ) => {
+    const { containerElement, manifest } = options
+
     if (context.manifest) {
       Report.warn(`loading a new book is not supported yet`)
 
       return
     }
 
-    Report.log(`load`, { manifest, loadOptions })
+    Report.log(`load`, { options })
 
     // @todo hook
-    const element = createWrapperElement(loadOptions.containerElement)
+    const element = createWrapperElement(containerElement)
 
-    if (
-      loadOptions.containerElement !== elementSubject$.getValue()?.parentElement
-    ) {
+    if (containerElement !== elementSubject$.getValue()?.parentElement) {
       elementSubject$.next(element)
 
-      loadOptions.containerElement.appendChild(element)
+      containerElement.appendChild(element)
     }
 
     context.update({
       manifest,
-      ...loadOptions,
+      containerElement,
       forceSinglePageMode: settingsManager.values.forceSinglePageMode,
     })
 
@@ -293,17 +289,17 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     element$,
     layout$: spine.spineLayout.layout$,
     viewportState$: context.bridgeEvent.viewportState$,
+    /**
+     * Dispatched when the reader has loaded a book and is rendering a book.
+     * Using navigation API and getting information about current content will
+     * have an effect.
+     * It can typically be used to hide a loading indicator.
+     */
+    state$: context.manifest$.pipe(
+      map((manifest) => (manifest ? "ready" : "idle")),
+    ),
     $: {
       state$: stateSubject$.asObservable(),
-      /**
-       * Dispatched when the reader has loaded a book and is rendering a book.
-       * Using navigation API and getting information about current content will
-       * have an effect.
-       * It can typically be used to hide a loading indicator.
-       */
-      loadStatus$: context.manifest$.pipe(
-        map((manifest) => (manifest ? "ready" : "idle")),
-      ),
       destroy$,
     },
   }

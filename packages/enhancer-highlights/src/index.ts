@@ -170,7 +170,7 @@ export const highlightsEnhancer =
      * If the user has registered highlights before the reader was ready we want to
      * init them and draw them
      */
-    reader.$.loadStatus$
+    reader.state$
       .pipe(
         filter((state) => state === "ready"),
         tap(() => {

@@ -7,8 +7,6 @@ import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
 import { NavigationEnhancerOutput } from "./types"
-import { Manifest } from "@prose-reader/shared"
-import { type LoadOptions } from "../../reader"
 
 export const navigationEnhancer =
   <
@@ -17,7 +15,9 @@ export const navigationEnhancer =
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions): InheritOutput & NavigationEnhancerOutput => {
+  (
+    options: InheritOptions,
+  ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
     const reader = next(options)
 
     const state$ = observeState(reader)
@@ -25,11 +25,13 @@ export const navigationEnhancer =
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
 
-    const load = (manifest: Manifest, loadOptions: LoadOptions) => {
-      reader.load(manifest, loadOptions)
+    const load: NavigationEnhancerOutput["load"] = (options) => {
+      const { cfi, ...rest } = options
 
-      if (loadOptions.cfi) {
-        manualNavigator.goToCfi(loadOptions.cfi, { animate: false })
+      reader.load(rest)
+
+      if (cfi) {
+        manualNavigator.goToCfi(cfi, { animate: false })
       }
     }
 
