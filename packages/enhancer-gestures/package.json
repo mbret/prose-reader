@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-hammer-gesture",
-  "version": "1.72.0",
+  "version": "1.74.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -23,14 +23,14 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.72.0"
+    "@prose-reader/core": "^1.74.0"
   },
   "devDependencies": {
     "gesturx": "^1.8.2"
   },
   "peerDependencies": {
-    "rxjs": "*",
-    "gesturx": "*"
+    "gesturx": "*",
+    "rxjs": "*"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
