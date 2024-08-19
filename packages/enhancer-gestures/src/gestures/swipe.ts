@@ -1,5 +1,5 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { Subject, filter, switchMap, tap } from "rxjs"
+import { EMPTY, Subject, filter, switchMap, tap } from "rxjs"
 import { GestureEvent, GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 
@@ -15,30 +15,31 @@ export const registerSwipe = ({
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = settingsManager.values$.pipe(
-    filter(({ panNavigation }) => panNavigation === "swipe"),
-    switchMap(() =>
-      recognizable.events$.pipe(
-        filter((event) => event.type === "swipe"),
-        tap((event) => {
-          const { computedPageTurnDirection } = reader.settings.values
+    switchMap(({ panNavigation }) =>
+      panNavigation !== "swipe"
+        ? EMPTY
+        : recognizable.events$.pipe(
+            filter((event) => event.type === "swipe"),
+            tap((event) => {
+              const { computedPageTurnDirection } = reader.settings.values
 
-          if (computedPageTurnDirection === "vertical") {
-            if (event.velocityY < -0.5) {
-              reader?.navigation.turnRight()
-            }
-            if (event.velocityY > 0.5) {
-              reader?.navigation.turnLeft()
-            }
-          } else {
-            if (event.velocityX < -0.5) {
-              reader?.navigation.turnRight()
-            }
-            if (event.velocityX > 0.5) {
-              reader?.navigation.turnLeft()
-            }
-          }
-        }),
-      ),
+              if (computedPageTurnDirection === "vertical") {
+                if (event.velocityY < -0.5) {
+                  reader?.navigation.turnRight()
+                }
+                if (event.velocityY > 0.5) {
+                  reader?.navigation.turnLeft()
+                }
+              } else {
+                if (event.velocityX < -0.5) {
+                  reader?.navigation.turnRight()
+                }
+                if (event.velocityX > 0.5) {
+                  reader?.navigation.turnLeft()
+                }
+              }
+            }),
+          ),
     ),
   )
 
