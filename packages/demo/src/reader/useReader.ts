@@ -1,23 +1,24 @@
-import { useMemo } from "react"
-import { atom, useRecoilState } from "recoil"
-import { of } from "rxjs"
-import { isNotNullOrUndefined } from "../common/rxjs"
-import { ReaderInstance } from "../types"
+import { useCallback } from "react"
+import { createAppReader, ReaderInstance } from "../types"
+import { isDefined, signal, useSignalValue } from "reactjrx"
+import { filter } from "rxjs"
 
-export const readerState = atom<ReaderInstance | undefined>({
-  key: "readerState",
-  default: undefined,
-  dangerouslyAllowMutability: true
+export const readerSignal = signal<ReaderInstance | undefined>({
+  default: undefined
 })
 
+const reader$ = readerSignal.subject.pipe(filter(isDefined))
+
 export const useReader = () => {
-  const [reader, setReader] = useRecoilState(readerState)
+  const reader = useSignalValue(readerSignal)
+
+  const setReader = useCallback((readerInstance: ReturnType<typeof createAppReader>) => {
+    readerSignal.setValue(readerInstance)
+  }, [])
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
-
-  const reader$ = useMemo(() => of(reader).pipe(isNotNullOrUndefined()), [reader])
 
   return { reader, setReader, reader$ }
 }

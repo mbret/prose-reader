@@ -28,7 +28,6 @@
     "@prose-reader/enhancer-gestures": "*",
     "@prose-reader/enhancer-highlights": "*",
     "@prose-reader/enhancer-search": "*",
-    "@prose-reader/react": "*",
     "react-query": "^3.39.3",
     "@prose-reader/streamer": "*",
     "@react-rxjs/core": "^0.10.3",

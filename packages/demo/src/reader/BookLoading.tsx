@@ -1,8 +1,9 @@
+import { Stack, Text } from "@chakra-ui/react"
 import React from "react"
 
-export const Loading = () => {
+export const BookLoading = () => {
   return (
-    <div
+    <Stack
       style={{
         height: "100%",
         width: "100%",
@@ -10,12 +11,12 @@ export const Loading = () => {
         top: 0,
         left: 0,
         backgroundColor: "white",
-        display: "flex",
         alignItems: "center",
         justifyContent: "center"
       }}
+      color="black"
     >
-      <h5>Loading book</h5>
-    </div>
+      <Text fontSize="1xl">Loading book</Text>
+    </Stack>
   )
 }

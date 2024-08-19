@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "lerna run start --stream --ignore prose-reader-front",
-    "start:lib": "lerna run start --stream --scope @prose-reader/* --ignore @prose-reader/react-reader",
+    "start:lib": "lerna run start --stream --scope @prose-reader/*",
     "start:front": "lerna run dev --stream --scope prose-reader-front",
     "start:demo": "lerna run start --stream --scope demo",
     "build": "lerna run build --stream --ignore demo2",

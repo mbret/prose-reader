@@ -1,4 +1,4 @@
-import { ArrowBackIcon } from "@chakra-ui/icons"
+import { CloseIcon } from "@chakra-ui/icons"
 import { IconButton, Box, Modal, ModalContent, ModalOverlay } from "@chakra-ui/react"
 import React, { FC, ReactNode } from "react"
 import { AppBar } from "./AppBar"
@@ -21,10 +21,7 @@ export const FullScreenModal: FC<{ onClose: () => void; isOpen: boolean; title: 
             flexDirection: "column"
           }}
         >
-          <AppBar
-            leftElement={<IconButton icon={<ArrowBackIcon />} aria-label="back" onClick={onClose} />}
-            middleElement={title}
-          />
+          <AppBar leftElement={<IconButton icon={<CloseIcon />} aria-label="back" onClick={onClose} />} middleElement={title} />
           {children}
         </Box>
       </ModalContent>

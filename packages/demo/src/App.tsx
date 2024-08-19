@@ -15,7 +15,7 @@ import { QueryClient, QueryClientProvider } from "reactjrx"
 const queryClient = new QueryClient()
 
 export const App = memo(() => {
-  const { reader, setReader } = useReader()
+  const { reader } = useReader()
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -23,7 +23,7 @@ export const App = memo(() => {
         <ChakraProvider theme={theme}>
           <Router>
             <Routes>
-              <Route path="/reader/:url" element={<Reader onReader={setReader} />} />
+              <Route path="/reader/:url" element={<Reader />} />
               <Route path="/books" element={<ClassicHome />} />
               <Route path="/comics" element={<ComicsHome />} />
               <Route path="/" element={<Home />} />

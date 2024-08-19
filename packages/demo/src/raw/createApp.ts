@@ -19,7 +19,8 @@ export const createApp = async () => {
   })
   const bookManifest: Manifest = await response.json()
 
-  reader.load(bookManifest, {
+  reader.load({
+    manifest: bookManifest,
     containerElement: container
   })
 
