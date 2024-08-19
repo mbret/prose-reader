@@ -2,6 +2,7 @@ import { HookManager, Reader } from "@prose-reader/core"
 import { Subject, tap } from "rxjs"
 import { GestureEvent, GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
+import { filterNotLink } from "../utils"
 
 export const registerTaps = ({
   reader,
@@ -16,6 +17,7 @@ export const registerTaps = ({
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = recognizable.events$.pipe(
+    filterNotLink,
     tap((event) => {
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
