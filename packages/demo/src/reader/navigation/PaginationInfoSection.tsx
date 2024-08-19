@@ -1,7 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import React from "react"
-import { useIsComics } from "../../state"
-import { usePagination } from "../state"
+import { useIsComics, usePagination } from "../states"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"

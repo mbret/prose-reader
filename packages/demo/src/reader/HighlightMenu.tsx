@@ -1,6 +1,6 @@
 import React, { useCallback } from "react"
 import { Button } from "../common/Button"
-import { currentHighlight } from "../state"
+import { currentHighlight } from "./states"
 import { useReader } from "./useReader"
 import { useSignalValue } from "reactjrx"
 

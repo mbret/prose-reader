@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useReader } from "./reader/useReader"
+import { useReader } from "./useReader"
 import { signal, SIGNAL_RESET, useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
@@ -17,6 +17,12 @@ export const isHelpOpenState = signal({
   key: `isHelpOpenState`,
   default: false
 })
+
+export const usePagination = () => {
+  const { reader } = useReader()
+
+  return useObserve(() => reader?.pagination.state$ ?? NEVER, [reader])
+}
 
 export const useIsComics = () => {
   const { reader } = useReader()

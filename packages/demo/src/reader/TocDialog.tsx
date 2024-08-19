@@ -3,9 +3,9 @@ import { List, ListIcon, ListItem, Text } from "@chakra-ui/react"
 import React, { useEffect, useState } from "react"
 import { FullScreenModal } from "../common/FullScreenModal"
 import { useReader } from "./useReader"
-import { usePagination } from "./state"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
+import { usePagination } from "./states"
 
 export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   const { reader } = useReader()

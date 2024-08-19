@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
-import { useIsComics } from "../../state"
+import { useIsComics, usePagination } from "../states"
 import { useReader } from "../useReader"
-import { usePagination } from "../state"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
