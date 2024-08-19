@@ -208,8 +208,6 @@ describe("Given a book with one chapter", () => {
             reader.navigation.goToSpineItem(1)
           })
 
-          console.log({ value })
-
           expect(value.beginChapterInfo).toEqual({
             path: "OEBPS/part0006.xhtml",
             title: "Part 1",

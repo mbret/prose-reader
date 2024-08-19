@@ -161,7 +161,6 @@ export const layoutEnhancer =
     // @todo maybe increasing the hammer distance before triggering pan as well
     // reader.registerHook(`item.onLoad`, ({frame}) => {
     //   frame.contentDocument?.body.addEventListener(`contextmenu`, e => {
-    //     console.log(`ad`)
     //     e.preventDefault()
     //   })
     // })
