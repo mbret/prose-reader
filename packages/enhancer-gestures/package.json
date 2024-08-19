@@ -1,5 +1,5 @@
 {
-  "name": "@prose-reader/enhancer-hammer-gesture",
+  "name": "@prose-reader/enhancer-gestures",
   "version": "1.74.0",
   "type": "module",
   "main": "./dist/index.cjs",
