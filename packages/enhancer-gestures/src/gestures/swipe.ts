@@ -1,5 +1,5 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { Subject, filter, mergeMap, tap } from "rxjs"
+import { Subject, filter, switchMap, tap } from "rxjs"
 import { GestureEvent, GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 
@@ -16,7 +16,7 @@ export const registerSwipe = ({
 }) => {
   const gestures$ = settingsManager.values$.pipe(
     filter(({ panNavigation }) => panNavigation === "swipe"),
-    mergeMap(() =>
+    switchMap(() =>
       recognizable.events$.pipe(
         filter((event) => event.type === "swipe"),
         tap((event) => {
