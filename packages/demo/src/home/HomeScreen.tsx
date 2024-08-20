@@ -1,29 +1,18 @@
 import React from "react"
 import { Link } from "react-router-dom"
-import { Button as ChakraButton, Text, Box, Heading, Link as ChakraLink } from "@chakra-ui/react"
+import { Button as ChakraButton, Text, Box, Heading, Link as ChakraLink, Stack } from "@chakra-ui/react"
 import { OrDivider } from "../common/OrDivider"
 import { ExternalLinkIcon } from "@chakra-ui/icons"
 
-export const Home = () => {
+export const HomeScreen = () => {
   return (
-    <Box
-      style={{
-        display: `flex`,
-        height: `100%`
-      }}
-      flexDirection="column"
-    >
-      <div
+    <Stack height="100%">
+      <Stack
         style={{
           width: `100%`,
           margin: `auto`,
-          paddingTop: 10,
-          paddingBottom: 10,
           maxWidth: 320,
-          display: `flex`,
-          flexDirection: `column`,
-          alignItems: `center`,
-          justifyContent: "center"
+          alignItems: `center`
         }}
       >
         <Box position="relative">
@@ -63,7 +52,7 @@ export const Home = () => {
             landing page
           </ChakraButton>
         </Box>
-      </div>
+      </Stack>
       <Box as="footer" paddingBottom={8} textAlign="center">
         <Text>
           © Copyright{" "}
@@ -74,6 +63,6 @@ export const Home = () => {
           </b>
         </Text>
       </Box>
-    </Box>
+    </Stack>
   )
 }
