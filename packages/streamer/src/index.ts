@@ -16,3 +16,5 @@ export type { Manifest } from "@prose-reader/shared"
 export type { Archive } from "./archives/types"
 
 export { configure } from "./configure"
+export { Streamer } from "./Streamer"
+export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"

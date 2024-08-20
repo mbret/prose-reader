@@ -1,6 +1,6 @@
 import { Manifest } from "@prose-reader/core"
-import { STREAMER_URL_PREFIX } from "../serviceWorker/constants"
 import { useQuery } from "reactjrx"
+import { STREAMER_URL_PREFIX } from "../constants.shared"
 
 export const useManifest = (epubUrl: string) =>
   useQuery({

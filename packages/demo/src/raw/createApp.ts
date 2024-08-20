@@ -1,6 +1,6 @@
 import { createReader, Manifest, Reader } from "@prose-reader/core"
-import { STREAMER_URL_PREFIX } from "../serviceWorker/constants"
 import * as Hammer from "hammerjs"
+import { STREAMER_URL_PREFIX } from "../constants.shared"
 
 export const createApp = async () => {
   const epubUrl = window.location.pathname.substring(`/raw/`.length)

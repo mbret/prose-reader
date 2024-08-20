@@ -34,7 +34,7 @@ export const useCreateReader = () => {
       gestures: {
         fontScalePinchEnabled: true
       },
-      navigationSnapThreshold: 0.2
+      navigationSnapThreshold: 0.1
     }
 
     const instance = createAppReader(readerOptions)

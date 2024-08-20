@@ -2,6 +2,7 @@
 import { resolve } from "path"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
+import externals from "rollup-plugin-node-externals"
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -13,17 +14,16 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     minify: mode === "development" ? false : "esbuild",
     emptyOutDir: mode !== "development",
-    rollupOptions: {
-      external: ["xmldoc", "@prose-reader/shared"],
-      output: {
-        globals: {
-          xmldoc: "xmldoc",
-          "@prose-reader/shared": `@prose-reader/shared`,
-        },
-      },
-    },
   },
   plugins: [
+    {
+      enforce: `pre`,
+      ...externals({
+        peerDeps: true,
+        deps: true,
+        devDeps: true,
+      }),
+    },
     dts({
       entryRoot: "src",
     }),

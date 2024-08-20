@@ -11,7 +11,6 @@ import { useGestureHandler } from "./gestures/useGestureHandler"
 import { Box } from "@chakra-ui/react"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
-import { getEpubUrlFromLocation } from "../serviceWorker/utils"
 import { useReader } from "./useReader"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { useLocalSettings } from "./settings/useLocalSettings"
@@ -66,7 +65,7 @@ export const Reader = memo(() => {
     <>
       <Box height="100%" width="100%">
         <Box width="100%" height="100%" ref={readerContainerRef} />
-        {!!manifestError && <BookError url={getEpubUrlFromLocation(url)} />}
+        {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
       </Box>
       <QuickMenu open={isMenuOpen} onSettingsClick={() => setIsSettingsOpen(true)} />
