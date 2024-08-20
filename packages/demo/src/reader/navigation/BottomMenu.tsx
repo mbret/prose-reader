@@ -1,12 +1,12 @@
 import React from "react"
 import { IconButton, Box, Stack } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowDownIcon, ArrowForwardIcon, ArrowUpIcon } from "@chakra-ui/icons"
-import { Scrubber } from "./navigation/Scrubber"
-import { AppBar } from "../common/AppBar"
-import { useReader } from "./useReader"
+import { Scrubber } from "./Scrubber"
+import { AppBar } from "../../common/AppBar"
+import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
-import { PaginationInfoSection } from "./navigation/PaginationInfoSection"
+import { PaginationInfoSection } from "./PaginationInfoSection"
 
 export const BottomMenu = ({ open }: { open: boolean }) => {
   const { reader } = useReader()

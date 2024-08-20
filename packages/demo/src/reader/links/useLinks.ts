@@ -1,5 +1,5 @@
 import { useSubscribe } from "reactjrx"
-import { useReader } from "./useReader"
+import { useReader } from "../useReader"
 
 export const useLinks = () => {
   const { reader } = useReader()

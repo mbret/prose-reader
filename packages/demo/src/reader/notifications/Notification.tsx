@@ -1,7 +1,7 @@
 import { memo, useEffect } from "react"
 import { distinctUntilChanged, EMPTY, finalize, map, NEVER, skip, switchMap } from "rxjs"
 import { useObserve } from "reactjrx"
-import { useReader } from "./useReader"
+import { useReader } from "../useReader"
 import { useToast } from "@chakra-ui/react"
 
 type Notification = {

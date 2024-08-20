@@ -1,6 +1,6 @@
 import { List, ListIcon, ListItem } from "@chakra-ui/react"
 import React from "react"
-import { FullScreenModal } from "../common/FullScreenModal"
+import { FullScreenModal } from "../../common/FullScreenModal"
 
 export const HelpDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
   return (

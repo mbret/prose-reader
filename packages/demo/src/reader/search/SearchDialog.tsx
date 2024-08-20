@@ -2,8 +2,8 @@ import { Heading, Input, Text, Box } from "@chakra-ui/react"
 import React, { useCallback, useEffect, useState } from "react"
 import { tap } from "rxjs/operators"
 import { SearchResult } from "@prose-reader/enhancer-search"
-import { FullScreenModal } from "../common/FullScreenModal"
-import { useReader } from "./useReader"
+import { FullScreenModal } from "../../common/FullScreenModal"
+import { useReader } from "../useReader"
 import { groupBy } from "@prose-reader/shared"
 
 export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
