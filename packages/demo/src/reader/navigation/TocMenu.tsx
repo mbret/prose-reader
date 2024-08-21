@@ -1,13 +1,12 @@
 import { CheckCircleIcon } from "@chakra-ui/icons"
 import { List, ListIcon, ListItem, Text } from "@chakra-ui/react"
-import React, { useEffect, useState } from "react"
-import { FullScreenModal } from "../../common/FullScreenModal"
+import React from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 import { usePagination } from "../states"
 
-export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
+export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
   const { manifest } = useObserve(reader?.context.state$ ?? NEVER) ?? {}
   const { nav, renditionLayout } = manifest ?? {}
@@ -15,7 +14,12 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
   const toc = nav?.toc || []
   const { beginSpineItemIndex, beginPageIndexInSpineItem } = pagination ?? {}
   const currentPage = (renditionLayout === "reflowable" ? beginPageIndexInSpineItem : beginSpineItemIndex) || 0
-  const [currentSubChapter, setCurrentSubChapter] = useState<NonNullable<typeof pagination>["beginChapterInfo"] | undefined>()
+
+  let currentSubChapter = pagination?.beginChapterInfo
+
+  while (currentSubChapter?.subChapter) {
+    currentSubChapter = currentSubChapter?.subChapter
+  }
 
   const buildTocForItem = (tocItem: (typeof toc)[number], index: number, lvl: number) => (
     <React.Fragment key={index}>
@@ -26,7 +30,7 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
           alignItems: "center"
         }}
         onClick={() => {
-          onExit()
+          onNavigate()
           reader?.navigation.goToUrl(tocItem.href)
         }}
       >
@@ -50,25 +54,9 @@ export const TocDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: bool
     </React.Fragment>
   )
 
-  useEffect(() => {
-    if (isOpen) {
-      let currentSubChapter = pagination?.beginChapterInfo
-
-      while (currentSubChapter?.subChapter) {
-        currentSubChapter = currentSubChapter?.subChapter
-      }
-
-      setCurrentSubChapter(currentSubChapter)
-    } else {
-      setCurrentSubChapter(undefined)
-    }
-  }, [isOpen, pagination])
-
   return (
-    <FullScreenModal isOpen={isOpen} onClose={onExit} title="Table Of Content">
-      <List spacing={3} style={{ paddingTop: 10, paddingBottom: 10 }} overflowY="scroll" height="100%">
-        {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
-      </List>
-    </FullScreenModal>
+    <List spacing={3} overflowY="auto" py={4}>
+      {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
+    </List>
   )
 }

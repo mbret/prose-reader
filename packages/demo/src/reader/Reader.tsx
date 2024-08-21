@@ -1,8 +1,7 @@
-import React, { memo, useEffect, useRef, useState } from "react"
+import React, { memo, useEffect, useRef } from "react"
 import { useManifest } from "./useManifest"
 import { useParams } from "react-router-dom"
-import { TocDialog } from "./navigation/TocDialog"
-import { isHelpOpenState, isMenuOpenState, isSearchOpenState, isTocOpenState, useResetStateOnUnMount } from "./states"
+import { useResetStateOnUnMount } from "./states"
 import { HighlightMenu } from "./highlights/HighlightMenu"
 import { Bookmarks } from "./bookmarks/Bookmarks"
 import { Notification } from "./notifications/Notification"
@@ -16,27 +15,20 @@ import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { useLocalSettings } from "./settings/useLocalSettings"
 import { useBookmarks } from "./bookmarks/useBookmarks"
 import { QuickMenu } from "./navigation/QuickMenu"
-import { SettingsDialog } from "./settings/SettingsDialog"
-import { useObserve, useSignalValue } from "reactjrx"
+import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
-import { SearchDialog } from "./search/SearchDialog"
-import { HelpDialog } from "./help/HelpDialog"
 import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
+import { Menu } from "./navigation/Menu"
 
 export const Reader = memo(() => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
   const { data: manifest, error: manifestError } = useManifest(url)
-  const isTocOpen = useSignalValue(isTocOpenState)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useLocalSettings({
     enablePan: true
   })
-  const isSearchOpen = useSignalValue(isSearchOpenState)
-  const isHelpOpen = useSignalValue(isHelpOpenState)
-  const isMenuOpen = useSignalValue(isMenuOpenState)
   const bookState = useObserve(() => reader?.state$ ?? NEVER, [reader])
 
   useCreateReader()
@@ -68,16 +60,8 @@ export const Reader = memo(() => {
         {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
       </Box>
-      <QuickMenu open={isMenuOpen} onSettingsClick={() => setIsSettingsOpen(true)} />
-      <SettingsDialog
-        setLocalSettings={setLocalSettings}
-        localSettings={localSettings}
-        open={isSettingsOpen}
-        onExit={() => setIsSettingsOpen(false)}
-      />
-      <TocDialog isOpen={isTocOpen} onExit={() => isTocOpenState.setValue(false)} />
-      <SearchDialog isOpen={isSearchOpen} onExit={() => isSearchOpenState.setValue(false)} />
-      <HelpDialog isOpen={isHelpOpen} onExit={() => isHelpOpenState.setValue(false)} />
+      <QuickMenu />
+      <Menu localSettings={localSettings} setLocalSettings={setLocalSettings} />
       <HighlightMenu />
       <Bookmarks />
       <Notification />

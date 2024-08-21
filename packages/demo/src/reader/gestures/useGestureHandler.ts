@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { isMenuOpenState } from "../states"
+import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
 import { NEVER, tap } from "rxjs"
@@ -32,7 +32,7 @@ export const useGestureHandler = () => {
            * Toggle menu when tap is not navigating
            */
           if (event.type === "tap") {
-            isMenuOpenState.setValue((val) => !val)
+            isQuickMenuOpenSignal.setValue((val) => !val)
           }
         })
       ) ?? NEVER,

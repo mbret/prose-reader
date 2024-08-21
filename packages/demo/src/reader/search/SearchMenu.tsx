@@ -1,12 +1,11 @@
-import { Heading, Input, Text, Box } from "@chakra-ui/react"
+import { Heading, Input, Text, Box, Stack } from "@chakra-ui/react"
 import React, { useCallback, useEffect, useState } from "react"
 import { tap } from "rxjs/operators"
 import { SearchResult } from "@prose-reader/enhancer-search"
-import { FullScreenModal } from "../../common/FullScreenModal"
 import { useReader } from "../useReader"
 import { groupBy } from "@prose-reader/shared"
 
-export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: boolean }) => {
+export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const [text, setText] = useState("")
   const [results, setResults] = useState<SearchResult>([])
   const [searching, setSearching] = useState(false)
@@ -19,18 +18,11 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: b
 
   const onClick = useCallback(
     (cfi: string) => {
-      onExit()
+      onNavigate()
       reader?.navigation.goToCfi(cfi)
     },
-    [reader]
+    [reader, onNavigate]
   )
-
-  useEffect(() => {
-    if (!isOpen) {
-      setResults([])
-      setText(``)
-    }
-  }, [isOpen])
 
   useEffect(() => {
     const $ = reader?.search.$.search$
@@ -55,10 +47,8 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: b
 
   const groupedResults = groupBy(results, (item) => item.spineItemIndex)
 
-  // console.log(results)
-
   return (
-    <FullScreenModal isOpen={isOpen} onClose={onExit} title="Search">
+    <Stack>
       <Input placeholder="Type something..." value={text} onChange={onValueChange} borderRadius={0} size="lg" />
       <Box padding={2} pt={2} flex={1} style={{ overflow: "hidden", overflowY: "scroll" }}>
         {searching && <Text>Searching ...</Text>}
@@ -89,7 +79,7 @@ export const SearchDialog = ({ onExit, isOpen }: { onExit: () => void; isOpen: b
           </>
         )}
       </Box>
-    </FullScreenModal>
+    </Stack>
   )
 }
 

@@ -3,21 +3,6 @@ import { useReader } from "./useReader"
 import { signal, SIGNAL_RESET, useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 
-export const isSearchOpenState = signal({
-  key: `isSearchOpenState`,
-  default: false
-})
-
-export const isTocOpenState = signal({
-  key: `isTocOpenState`,
-  default: false
-})
-
-export const isHelpOpenState = signal({
-  key: `isHelpOpenState`,
-  default: false
-})
-
 export const usePagination = () => {
   const { reader } = useReader()
 
@@ -38,8 +23,8 @@ export const useIsComics = () => {
   )
 }
 
-export const isMenuOpenState = signal({
-  key: `isMenuOpenState`,
+export const isQuickMenuOpenSignal = signal({
+  key: `isQuickMenuOpenSignal`,
   default: false
 })
 
@@ -51,10 +36,7 @@ export const currentHighlight = signal<{ anchorCfi: string; focusCfi: string; te
 export const useResetStateOnUnMount = () => {
   useEffect(() => {
     return () => {
-      isMenuOpenState.setValue(SIGNAL_RESET)
-      isSearchOpenState.setValue(SIGNAL_RESET)
-      isTocOpenState.setValue(SIGNAL_RESET)
-      isHelpOpenState.setValue(SIGNAL_RESET)
+      isQuickMenuOpenSignal.setValue(SIGNAL_RESET)
       currentHighlight.setValue(SIGNAL_RESET)
     }
   }, [])

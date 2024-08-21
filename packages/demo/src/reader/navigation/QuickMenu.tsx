@@ -1,35 +1,25 @@
 import React from "react"
 import { useNavigate } from "react-router"
 import { Box, IconButton, Stack } from "@chakra-ui/react"
-import { ArrowBackIcon, SettingsIcon, SearchIcon, HamburgerIcon, QuestionOutlineIcon } from "@chakra-ui/icons"
-import { isHelpOpenState, isSearchOpenState, isTocOpenState } from "../states"
+import { ArrowBackIcon, HamburgerIcon } from "@chakra-ui/icons"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
-import { useObserve } from "reactjrx"
+import { useObserve, useSignalValue } from "reactjrx"
 import { NEVER } from "rxjs"
 import { BottomMenu } from "./BottomMenu"
+import { isMenuOpenSignal } from "./Menu"
+import { isQuickMenuOpenSignal } from "../states"
 
-export const QuickMenu = ({ open, onSettingsClick }: { open: boolean; onSettingsClick?: () => void }) => {
+export const QuickMenu = () => {
+  const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { reader } = useReader()
   const { manifest } = useObserve(reader?.context.state$ ?? NEVER) || {}
   const { title: bookTitle } = manifest ?? {}
 
-  const onSearchClick = () => {
-    isSearchOpenState.setValue(true)
-  }
-
-  const onTocClick = () => {
-    isTocOpenState.setValue(true)
-  }
-
-  const onHelpClick = () => {
-    isHelpOpenState.setValue(true)
-  }
-
   return (
     <>
-      {open && (
+      {isQuickMenuOpen && (
         <AppBar
           position="absolute"
           left={0}
@@ -51,10 +41,13 @@ export const QuickMenu = ({ open, onSettingsClick }: { open: boolean; onSettings
           }
           rightElement={
             <Stack direction="row" flex={1} justifyContent="flex-end">
-              <IconButton icon={<QuestionOutlineIcon />} aria-label="help" onClick={onHelpClick} marginRight={1} />
-              <IconButton icon={<HamburgerIcon />} aria-label="toc" onClick={onTocClick} marginRight={1} />
-              <IconButton icon={<SearchIcon />} aria-label="search" onClick={onSearchClick} marginRight={1} />
-              <IconButton icon={<SettingsIcon />} onClick={onSettingsClick} aria-label="settings" />
+              <IconButton
+                icon={<HamburgerIcon />}
+                onClick={() => {
+                  isMenuOpenSignal.setValue(true)
+                }}
+                aria-label="settings"
+              />
             </Stack>
           }
           middleElement={
@@ -64,7 +57,7 @@ export const QuickMenu = ({ open, onSettingsClick }: { open: boolean; onSettings
           }
         />
       )}
-      <BottomMenu open={open} />
+      <BottomMenu open={isQuickMenuOpen} />
     </>
   )
 }
