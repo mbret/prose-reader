@@ -15,7 +15,7 @@ import {
   switchMap,
   takeUntil,
   tap,
-  timer
+  timer,
 } from "rxjs"
 import { Archive } from "./types"
 
@@ -28,10 +28,10 @@ type ArchiveEntry = {
 
 export const createArchiveLoader = ({
   getArchive,
-  cleanAfter
+  cleanArchiveAfter,
 }: {
   getArchive: (key: string) => Promise<Archive>
-  cleanAfter: number
+  cleanArchiveAfter: number
 }) => {
   const loadSubject = new Subject<string>()
   const destroySubject = new Subject<void>()
@@ -41,11 +41,12 @@ export const createArchiveLoader = ({
     mergeMap((key) => {
       const archiveEntry = archives[key]
 
-      if (!archiveEntry || archiveEntry.getValue().status !== "idle") return EMPTY
+      if (!archiveEntry || archiveEntry.getValue().status !== "idle")
+        return EMPTY
 
       archiveEntry.next({
         ...archiveEntry.getValue(),
-        status: "loading"
+        status: "loading",
       })
 
       return from(getArchive(key)).pipe(
@@ -53,7 +54,7 @@ export const createArchiveLoader = ({
           archiveEntry.next({
             ...archiveEntry.getValue(),
             archive,
-            status: "success"
+            status: "success",
           })
 
           return { key, archiveEntry }
@@ -62,11 +63,11 @@ export const createArchiveLoader = ({
           archiveEntry.next({
             ...archiveEntry.getValue(),
             status: "error",
-            error
+            error,
           })
 
           throw error
-        })
+        }),
       )
     }),
     catchError((error) => {
@@ -74,7 +75,7 @@ export const createArchiveLoader = ({
 
       return NEVER
     }),
-    shareReplay()
+    shareReplay(),
   )
 
   const cleanup$ = archiveLoaded$.pipe(
@@ -83,26 +84,34 @@ export const createArchiveLoader = ({
       const isUnlocked$ = locks$.pipe(map((locks) => locks <= 0))
 
       return isUnlocked$.pipe(
-        switchMap((isUnlocked) => (!isUnlocked ? NEVER : timer(cleanAfter))),
+        switchMap((isUnlocked) =>
+          !isUnlocked ? NEVER : timer(cleanArchiveAfter),
+        ),
         tap(() => {
           delete archives[key]
           archiveEntry.getValue().archive?.close()
-        })
+        }),
       )
-    })
+    }),
   )
 
   const access = (key: string) => {
     let releaseCalled = false
 
     const archiveEntry =
-      archives[key] ?? new BehaviorSubject<ArchiveEntry>({ archive: undefined, status: "idle", locks: 0, error: undefined })
+      archives[key] ??
+      new BehaviorSubject<ArchiveEntry>({
+        archive: undefined,
+        status: "idle",
+        locks: 0,
+        error: undefined,
+      })
 
     archives[key] = archiveEntry
 
     archiveEntry.next({
       ...archiveEntry.getValue(),
-      locks: archiveEntry.getValue().locks + 1
+      locks: archiveEntry.getValue().locks + 1,
     })
 
     const release = () => {
@@ -112,7 +121,7 @@ export const createArchiveLoader = ({
 
       archiveEntry.next({
         ...archiveEntry.getValue(),
-        locks: archiveEntry.getValue().locks - 1
+        locks: archiveEntry.getValue().locks - 1,
       })
     }
 
@@ -120,7 +129,7 @@ export const createArchiveLoader = ({
 
     const archive$ = archiveEntry.pipe(
       map(({ archive }) => archive),
-      filter((archive) => !!archive)
+      filter((archive) => !!archive),
     )
 
     const error$ = archiveEntry.pipe(
@@ -129,7 +138,7 @@ export const createArchiveLoader = ({
           throw error
         }
       }),
-      ignoreElements()
+      ignoreElements(),
     )
 
     return merge(archive$, error$).pipe(
@@ -139,13 +148,13 @@ export const createArchiveLoader = ({
         release()
 
         throw error
-      })
+      }),
     )
   }
 
   merge(cleanup$, archiveLoaded$).pipe(takeUntil(destroySubject)).subscribe()
 
   return {
-    access
+    access,
   }
 }

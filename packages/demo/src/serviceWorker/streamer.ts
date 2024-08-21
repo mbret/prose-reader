@@ -4,16 +4,15 @@ import localforage from "localforage"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 
 export const streamer = new ServiceWorkerStreamer({
-  cleanAfter: 5 * 60 * 1000,
-  getStreamerUri: (event) => {
+  cleanArchiveAfter: 5 * 60 * 1000,
+  getUriInfo: (event) => {
     const url = new URL(event.request.url)
-    const pathname = url.pathname
 
     if (!url.pathname.startsWith(`/${STREAMER_URL_PREFIX}`)) {
       return undefined
     }
 
-    return pathname.substring(`/${STREAMER_URL_PREFIX}/`.length)
+    return { baseUrl: `${url.origin}/${STREAMER_URL_PREFIX}` }
   },
   getArchive: async (key) => {
     const demoEpubUrl = atob(key)

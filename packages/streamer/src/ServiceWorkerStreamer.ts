@@ -1,5 +1,6 @@
 import { createArchiveLoader } from "./archives/archiveLoader"
 import { Streamer } from "./Streamer"
+import { removeTrailingSlash } from "./utils/uri"
 
 type ConflictFreeWebWorkerFetchEvent = {
   readonly request: Request
@@ -7,59 +8,49 @@ type ConflictFreeWebWorkerFetchEvent = {
   respondWith(r: Response | PromiseLike<Response>): void
 }
 
-const extractKey = (path: string) => {
-  const nextSlashIndex = path.indexOf("/")
-
-  if (nextSlashIndex !== -1) {
-    return path.substring(0, path.indexOf("/"))
-  }
-
-  return path
-}
-
 export class ServiceWorkerStreamer extends Streamer {
-  protected getStreamerUri: (
-    event: ConflictFreeWebWorkerFetchEvent,
-  ) => string | undefined
+  protected getUriInfo: (event: ConflictFreeWebWorkerFetchEvent) =>
+    | {
+        baseUrl: string
+      }
+    | undefined
 
   constructor({
-    getStreamerUri,
+    getUriInfo,
     ...rest
   }: Parameters<typeof createArchiveLoader>[0] & {
-    getStreamerUri: (
-      event: ConflictFreeWebWorkerFetchEvent,
-    ) => string | undefined
+    getUriInfo: (event: ConflictFreeWebWorkerFetchEvent) =>
+      | {
+          baseUrl: string
+        }
+      | undefined
   }) {
     super(rest)
 
-    this.getStreamerUri = getStreamerUri
+    this.getUriInfo = getUriInfo
     this.fetchEventListener = this.fetchEventListener.bind(this)
   }
 
   fetchEventListener(event: ConflictFreeWebWorkerFetchEvent) {
     try {
-      const url = new URL(event.request.url)
+      const uriInfo = this.getUriInfo(event)
 
-      const streamerUri = this.getStreamerUri(event)
-      const streamerUriWithPreSlash = `/${streamerUri}`
+      if (!uriInfo) return
 
-      if (!streamerUri) return
-
-      const key = extractKey(streamerUri)
-      const baseUrl = url.href.substring(
-        0,
-        url.href.length - streamerUriWithPreSlash.length,
+      const baseUrl = removeTrailingSlash(uriInfo.baseUrl)
+      const streamerPath = event.request.url.substring(
+        baseUrl.length + `/`.length,
       )
-      const streamerBaseUrl = `${baseUrl}/${key}/`
+      const [key = ``] = streamerPath.split("/")
+      const resourcePath = removeTrailingSlash(
+        streamerPath.substring(key.length + `/`.length),
+      )
 
-      if (streamerUri.endsWith(`/manifest`)) {
-        event.respondWith(this.fetchManifest({ key, baseUrl: streamerBaseUrl }))
-      } else {
-        const resourcePath = streamerUri.substring(
-          key.length + `/`.length,
-          streamerUri.length,
+      if (streamerPath.endsWith(`/manifest`)) {
+        event.respondWith(
+          this.fetchManifest({ key, baseUrl: `${baseUrl}/${key}/` }),
         )
-
+      } else {
         event.respondWith(this.fetchResource({ key, resourcePath }))
       }
     } catch (e) {
