@@ -1,4 +1,3 @@
-import { createArchiveLoader } from "./archives/archiveLoader"
 import { Streamer } from "./Streamer"
 import { removeTrailingSlash } from "./utils/uri"
 
@@ -18,7 +17,7 @@ export class ServiceWorkerStreamer extends Streamer {
   constructor({
     getUriInfo,
     ...rest
-  }: Parameters<typeof createArchiveLoader>[0] & {
+  }: ConstructorParameters<typeof Streamer>[0] & {
     getUriInfo: (event: ConflictFreeWebWorkerFetchEvent) =>
       | {
           baseUrl: string

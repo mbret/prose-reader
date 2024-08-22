@@ -14,9 +14,19 @@ import { generateResourceFromArchive } from "./generators/resources"
 
 export class Streamer {
   epubLoader: ReturnType<typeof createArchiveLoader>
+  onError = (error: unknown) => {
+    return new Response(String(error), { status: 500 })
+  }
 
-  constructor(params: Parameters<typeof createArchiveLoader>[0]) {
-    this.epubLoader = createArchiveLoader(params)
+  constructor({
+    onError,
+    ...rest
+  }: Parameters<typeof createArchiveLoader>[0] & {
+    onError?: (error: unknown) => Response
+  }) {
+    this.epubLoader = createArchiveLoader(rest)
+
+    this.onError = onError ?? this.onError
   }
 
   public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {
@@ -39,7 +49,7 @@ export class Streamer {
         )
       }),
       catchError((error) => {
-        return of(new Response(String(error), { status: 500 }))
+        return of(this.onError(error))
       }),
     )
 
@@ -67,7 +77,7 @@ export class Streamer {
         )
       }),
       catchError((error) => {
-        return of(new Response(String(error), { status: 500 }))
+        return of(this.onError(error))
       }),
     )
 
