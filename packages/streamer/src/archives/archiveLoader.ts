@@ -1,6 +1,7 @@
 import {
   BehaviorSubject,
   catchError,
+  distinctUntilChanged,
   EMPTY,
   filter,
   first,
@@ -77,7 +78,10 @@ export const createArchiveLoader = ({
   const cleanup$ = archiveLoaded$.pipe(
     switchMap(({ archiveEntry, key }) => {
       const locks$ = archiveEntry.pipe(map(({ locks }) => locks))
-      const isUnlocked$ = locks$.pipe(map((locks) => locks <= 0))
+      const isUnlocked$ = locks$.pipe(
+        map((locks) => locks <= 0),
+        distinctUntilChanged(),
+      )
 
       return isUnlocked$.pipe(
         switchMap((isUnlocked) =>
@@ -85,6 +89,7 @@ export const createArchiveLoader = ({
         ),
         tap(() => {
           delete archives[key]
+
           archiveEntry.getValue().archive?.close()
         }),
       )
