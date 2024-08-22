@@ -41,8 +41,8 @@ export class ServiceWorkerStreamer extends Streamer {
         baseUrl.length + `/`.length,
       )
       const [key = ``] = streamerPath.split("/")
-      const resourcePath = removeTrailingSlash(
-        streamerPath.substring(key.length + `/`.length),
+      const resourcePath = decodeURIComponent(
+        removeTrailingSlash(streamerPath.substring(key.length + `/`.length)),
       )
 
       if (streamerPath.endsWith(`/manifest`)) {
