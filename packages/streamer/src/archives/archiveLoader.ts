@@ -70,11 +70,7 @@ export const createArchiveLoader = ({
         }),
       )
     }),
-    catchError((error) => {
-      console.error(error)
-
-      return NEVER
-    }),
+    catchError(() => NEVER),
     shareReplay(),
   )
 

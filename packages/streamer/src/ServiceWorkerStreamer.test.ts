@@ -14,6 +14,15 @@ const archive: Archive = {
       base64: async () => btoa(`bar/foo.jpg`),
       size: 0,
     },
+    {
+      dir: false,
+      basename: "unknown",
+      uri: `Creature Girls - A Hands-On Field Journal in Another World v04 (2020) (Digital) (SnS)/Creature Girls - A Hands-On Field Journal in Another World v04 000 (2020) (Digital) (SnS).jpg`,
+      blob: async () => new Blob([`bar/foo.jpg`]),
+      string: async () => `bar/foo.jpg`,
+      base64: async () => btoa(`bar/foo.jpg`),
+      size: 0,
+    },
   ],
   close: () => Promise.resolve(),
 }
@@ -90,5 +99,29 @@ describe("Given valid resource from archive", () => {
 
     expect(resource.status).toBe(200)
     expect(await resource.text()).toBe(`bar/foo.jpg`)
+  })
+
+  describe("and it contains encoded characters", () => {
+    it("should return response", async () => {
+      const streamer = new ServiceWorkerStreamer({
+        getUriInfo: () => {
+          return { baseUrl: "https://foo.bar/streamer/" }
+        },
+        cleanArchiveAfter: 1,
+        getArchive: async () => archive,
+      })
+
+      const resource = await new Promise<Response>((resolve) => {
+        streamer.fetchEventListener({
+          request: {
+            url: "https://foo.bar/streamer/foo/Creature%20Girls%20-%20A%20Hands-On%20Field%20Journal%20in%20Another%20World%20v04%20(2020)%20(Digital)%20(SnS)/Creature%20Girls%20-%20A%20Hands-On%20Field%20Journal%20in%20Another%20World%20v04%20000%20(2020)%20(Digital)%20(SnS).jpg",
+          } as any,
+          respondWith: resolve,
+        })
+      })
+
+      expect(resource.status).toBe(200)
+      expect(await resource.text()).toBe(`bar/foo.jpg`)
+    })
   })
 })
