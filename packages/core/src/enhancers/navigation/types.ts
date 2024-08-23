@@ -1,3 +1,4 @@
+import { Observable } from "rxjs"
 import { Reader } from "../../reader"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
@@ -7,6 +8,10 @@ export type NavigationEnhancerOutput = {
   load: (options: Parameters<Reader["load"]>[0] & { cfi?: string }) => void
   navigation: {
     state$: ReturnType<typeof observeState>
+    throttleLock: <T>(params: {
+      duration: number
+      trigger: Observable<T>
+    }) => Observable<T>
     moveTo: PanNavigator["moveTo"]
     turnTop: ManualNavigator["turnTop"]
     turnBottom: ManualNavigator["turnBottom"]

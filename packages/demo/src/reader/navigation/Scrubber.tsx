@@ -3,7 +3,7 @@ import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useIsComics, usePagination } from "../states"
 import { useReader } from "../useReader"
-import { useObserve } from "reactjrx"
+import { signal, useObserve, useSignalValue, useSubscribe } from "reactjrx"
 import { NEVER } from "rxjs"
 
 export const Scrubber = () => {
@@ -15,12 +15,17 @@ export const Scrubber = () => {
   const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInSpineItem
   const currentPage = isUsingSpread ? Math.floor((currentRealPage || 0) / 2) : currentRealPage
   const totalApproximatePages = (isComic ? pagination?.numberOfTotalPages : pagination?.beginNumberOfPagesInSpineItem || 1) || 0
-  const [value, setValue] = useState(currentPage || 0)
+  const [valueSignal] = useState(() =>
+    signal({
+      default: currentPage || 0
+    })
+  )
+  const value = useSignalValue(valueSignal)
   const max = (isUsingSpread ? totalApproximatePages / 2 : totalApproximatePages) - 1
   const step = 1
 
   useEffect(() => {
-    setValue(currentPage || 0)
+    valueSignal.setValue(currentPage || 0)
   }, [currentPage])
 
   const reverse = manifest?.readingDirection === "rtl"
@@ -30,7 +35,7 @@ export const Scrubber = () => {
   const onChange = useCallback(
     (value: number | number[]) => {
       if (typeof value === "number") {
-        setValue(value)
+        valueSignal.setValue(value)
 
         const pageIndex = isUsingSpread ? Math.floor(value) * 2 : Math.floor(value)
 
@@ -41,8 +46,17 @@ export const Scrubber = () => {
         }
       }
     },
-    [setValue, reader, isUsingSpread]
+    [reader, isUsingSpread]
   )
+
+  /**
+   * @note
+   * Scrubber can navigate fast and without lock we may end up with
+   * slowness due to the reader
+   * paginating and loading items in between.
+   * This is good practice (but not required) to throttle it.
+   */
+  useSubscribe(() => reader?.navigation.throttleLock({ duration: 200, trigger: valueSignal.subject }), [reader])
 
   if (totalApproximatePages === 1 || (isUsingSpread && totalApproximatePages === 2)) {
     return null

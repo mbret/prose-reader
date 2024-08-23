@@ -6,6 +6,7 @@ import {
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
+import { throttleLock } from "./throttleLock"
 import { NavigationEnhancerOutput } from "./types"
 
 export const navigationEnhancer =
@@ -41,6 +42,8 @@ export const navigationEnhancer =
       navigation: {
         ...reader.navigation,
         state$,
+        throttleLock: ({ duration, trigger }) =>
+          trigger.pipe(throttleLock({ duration, reader })),
         moveTo: panNavigator.moveTo.bind(panNavigator),
         turnBottom: manualNavigator.turnBottom.bind(manualNavigator),
         turnTop: manualNavigator.turnTop.bind(manualNavigator),

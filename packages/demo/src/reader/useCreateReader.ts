@@ -33,8 +33,7 @@ export const useCreateReader = () => {
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
       gestures: {
         fontScalePinchEnabled: true
-      },
-      navigationSnapThreshold: 0.1
+      }
     }
 
     const instance = createAppReader(readerOptions)
