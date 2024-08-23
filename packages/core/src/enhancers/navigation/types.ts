@@ -23,6 +23,8 @@ export type NavigationEnhancerOutput = {
     goToSpineItem: ManualNavigator["goToSpineItem"]
     goToLeftSpineItem: ManualNavigator["goToLeftSpineItem"]
     goToRightSpineItem: ManualNavigator["goToRightSpineItem"]
+    goToNextSpineItem: ManualNavigator["goToNextSpineItem"]
+    goToPreviousSpineItem: ManualNavigator["goToPreviousSpineItem"]
     goToTopSpineItem: ManualNavigator["goToTopSpineItem"]
     goToBottomSpineItem: ManualNavigator["goToBottomSpineItem"]
     goToUrl: ManualNavigator["goToUrl"]
