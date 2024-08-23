@@ -71,11 +71,10 @@ export const createArchiveLoader = ({
             error,
           })
 
-          throw error
+          return EMPTY
         }),
       )
     }),
-    catchError(() => NEVER),
     shareReplay(),
   )
 
@@ -98,7 +97,6 @@ export const createArchiveLoader = ({
           !isUnlocked ? NEVER : !isPurged ? timer(cleanArchiveAfter) : of(null),
         ),
         tap(() => {
-          console.log("ARCHIVE DELETED")
           delete archives[key]
 
           archiveEntry.getValue().archive?.close()
