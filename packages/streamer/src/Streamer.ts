@@ -13,30 +13,33 @@ import { createArchiveLoader } from "./archives/archiveLoader"
 import { Manifest } from "@prose-reader/shared"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
+import { Archive } from "./archives/types"
+
+type OnError = (error: unknown) => Response
+type OnManifestSuccess = (params: {
+  manifest: Manifest
+  archive: Archive
+}) => Observable<Manifest> | Promise<Manifest>
 
 export class Streamer {
   epubLoader: ReturnType<typeof createArchiveLoader>
-  onError = (error: unknown) => {
+  onError: OnError = (error) => {
     return new Response(String(error), { status: 500 })
   }
-  onManifestSuccess: (
-    manifest: Manifest,
-  ) => Observable<Manifest> | Promise<Manifest>
+  onManifestSuccess: OnManifestSuccess
 
   constructor({
     onError,
     onManifestSuccess,
     ...rest
   }: Parameters<typeof createArchiveLoader>[0] & {
-    onError?: (error: unknown) => Response
-    onManifestSuccess?: (
-      manifest: Manifest,
-    ) => Observable<Manifest> | Promise<Manifest>
+    onError?: OnError
+    onManifestSuccess?: OnManifestSuccess
   }) {
     this.epubLoader = createArchiveLoader(rest)
 
     this.onManifestSuccess =
-      onManifestSuccess ?? ((manifest) => Promise.resolve(manifest))
+      onManifestSuccess ?? (({ manifest }) => Promise.resolve(manifest))
     this.onError = onError ?? this.onError
   }
 
@@ -48,17 +51,14 @@ export class Streamer {
         )
 
         return manifest$.pipe(
-          switchMap((manifest) => from(this.onManifestSuccess(manifest))),
+          switchMap((manifest) =>
+            from(this.onManifestSuccess({ manifest, archive })),
+          ),
           map(
             (manifest) =>
-              new Response(
-                JSON.stringify(
-                  this.onManifestSuccess(manifest satisfies Manifest),
-                ),
-                {
-                  status: 200,
-                },
-              ),
+              new Response(JSON.stringify(manifest satisfies Manifest), {
+                status: 200,
+              }),
           ),
           finalize(() => {
             release()
