@@ -11,6 +11,7 @@ import {
   merge,
   mergeMap,
   NEVER,
+  of,
   shareReplay,
   startWith,
   Subject,
@@ -94,7 +95,7 @@ export const createArchiveLoader = ({
       return isUnlocked$.pipe(
         withLatestFrom(isPurged$),
         switchMap(([isUnlocked, isPurged]) =>
-          !isUnlocked ? NEVER : timer(isPurged ? 1 : cleanArchiveAfter),
+          !isUnlocked ? NEVER : !isPurged ? timer(cleanArchiveAfter) : of(null),
         ),
         tap(() => {
           console.log("ARCHIVE DELETED")
@@ -166,7 +167,14 @@ export const createArchiveLoader = ({
   /**
    * Will purge immediatly archives as soon as they are released
    */
-  const purge = () => purgeSubject.next()
+  const purge = () => {
+    // make sure we don't access anymore
+    Object.keys(archives).forEach((key) => {
+      delete archives[key]
+    })
+
+    purgeSubject.next()
+  }
 
   merge(cleanup$, archiveLoaded$).pipe(takeUntil(destroySubject)).subscribe()
 
