@@ -5,7 +5,9 @@ import {
   lastValueFrom,
   map,
   mergeMap,
+  Observable,
   of,
+  switchMap,
 } from "rxjs"
 import { createArchiveLoader } from "./archives/archiveLoader"
 import { Manifest } from "@prose-reader/shared"
@@ -17,15 +19,24 @@ export class Streamer {
   onError = (error: unknown) => {
     return new Response(String(error), { status: 500 })
   }
+  onManifestSuccess: (
+    manifest: Manifest,
+  ) => Observable<Manifest> | Promise<Manifest>
 
   constructor({
     onError,
+    onManifestSuccess,
     ...rest
   }: Parameters<typeof createArchiveLoader>[0] & {
     onError?: (error: unknown) => Response
+    onManifestSuccess?: (
+      manifest: Manifest,
+    ) => Observable<Manifest> | Promise<Manifest>
   }) {
     this.epubLoader = createArchiveLoader(rest)
 
+    this.onManifestSuccess =
+      onManifestSuccess ?? ((manifest) => Promise.resolve(manifest))
     this.onError = onError ?? this.onError
   }
 
@@ -37,11 +48,17 @@ export class Streamer {
         )
 
         return manifest$.pipe(
+          switchMap((manifest) => from(this.onManifestSuccess(manifest))),
           map(
             (manifest) =>
-              new Response(JSON.stringify(manifest satisfies Manifest), {
-                status: 200,
-              }),
+              new Response(
+                JSON.stringify(
+                  this.onManifestSuccess(manifest satisfies Manifest),
+                ),
+                {
+                  status: 200,
+                },
+              ),
           ),
           finalize(() => {
             release()
