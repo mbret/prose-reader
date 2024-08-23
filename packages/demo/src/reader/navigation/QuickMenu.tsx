@@ -5,7 +5,6 @@ import { ArrowBackIcon, HamburgerIcon } from "@chakra-ui/icons"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
 import { useObserve, useSignalValue } from "reactjrx"
-import { NEVER } from "rxjs"
 import { BottomMenu } from "./BottomMenu"
 import { isMenuOpenSignal } from "./Menu"
 import { isQuickMenuOpenSignal } from "../states"
@@ -14,7 +13,7 @@ export const QuickMenu = () => {
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const { reader } = useReader()
-  const { manifest } = useObserve(reader?.context.state$ ?? NEVER) || {}
+  const { manifest } = useObserve(() => reader?.context.state$, [reader]) || {}
   const { title: bookTitle } = manifest ?? {}
 
   return (

@@ -1,26 +1,22 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useIsComics, usePagination } from "../states"
 import { useReader } from "../useReader"
-import { signal, useObserve, useSignalValue, useSubscribe } from "reactjrx"
-import { NEVER } from "rxjs"
+import { useObserve, useSignal, useSubscribe } from "reactjrx"
 
 export const Scrubber = () => {
   const { reader } = useReader()
   const isComic = useIsComics()
   const pagination = usePagination()
-  const { manifest } = useObserve(reader?.context.state$ ?? NEVER) ?? {}
+  const { manifest } = useObserve(() => reader?.context.state$, []) ?? {}
   const isUsingSpread = pagination?.isUsingSpread
   const currentRealPage = isComic ? pagination?.endAbsolutePageIndex : pagination?.endPageIndexInSpineItem
   const currentPage = isUsingSpread ? Math.floor((currentRealPage || 0) / 2) : currentRealPage
   const totalApproximatePages = (isComic ? pagination?.numberOfTotalPages : pagination?.beginNumberOfPagesInSpineItem || 1) || 0
-  const [valueSignal] = useState(() =>
-    signal({
-      default: currentPage || 0
-    })
-  )
-  const value = useSignalValue(valueSignal)
+  const [value, valueSignal] = useSignal({
+    default: currentPage || 0
+  })
   const max = (isUsingSpread ? totalApproximatePages / 2 : totalApproximatePages) - 1
   const step = 1
 

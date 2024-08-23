@@ -4,7 +4,6 @@ import { useReaderSettings } from "./useReaderSettings"
 import { LocalSettings } from "../reader/settings/useLocalSettings"
 import { useReader } from "../reader/useReader"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 
 export const NavigationSettings = ({
   localSettings,
@@ -15,7 +14,7 @@ export const NavigationSettings = ({
 }) => {
   const settings = useReaderSettings()
   const { reader } = useReader()
-  const readerState = useObserve(() => reader?.$.state$ ?? NEVER, [reader])
+  const readerState = useObserve(() => reader?.$.state$, [reader])
   const onlySupportScrollableMode =
     readerState?.supportedPageTurnMode.length === 1 && readerState.supportedPageTurnMode[0] === `scrollable`
 

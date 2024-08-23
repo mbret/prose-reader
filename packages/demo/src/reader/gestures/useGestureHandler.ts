@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
-import { NEVER, tap } from "rxjs"
+import { tap } from "rxjs"
 import { isWithinBookmarkArea } from "../bookmarks/isWithinBookmarkArea"
 
 export const useGestureHandler = () => {
@@ -35,7 +35,7 @@ export const useGestureHandler = () => {
             isQuickMenuOpenSignal.setValue((val) => !val)
           }
         })
-      ) ?? NEVER,
+      ),
     [reader]
   )
 }

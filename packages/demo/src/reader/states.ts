@@ -1,17 +1,16 @@
 import { useEffect } from "react"
 import { useReader } from "./useReader"
 import { signal, SIGNAL_RESET, useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 
 export const usePagination = () => {
   const { reader } = useReader()
 
-  return useObserve(() => reader?.pagination.state$ ?? NEVER, [reader])
+  return useObserve(() => reader?.pagination.state$, [reader])
 }
 
 export const useIsComics = () => {
   const { reader } = useReader()
-  const manifest = useObserve(reader?.context.manifest$ ?? NEVER)
+  const manifest = useObserve(() => reader?.context.manifest$, [reader])
 
   return (
     manifest?.renditionLayout === "pre-paginated" ||

@@ -1,13 +1,12 @@
 import { useEffect } from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 import { LocalSettings } from "./useLocalSettings"
 import { Manifest } from "@prose-reader/core"
 
 export const useUpdateReaderSettings = ({ localSettings, manifest }: { localSettings: LocalSettings; manifest?: Manifest }) => {
   const { reader } = useReader()
-  const { computedPageTurnMode } = useObserve(() => reader?.settings.values$ ?? NEVER, [reader]) ?? {}
+  const { computedPageTurnMode } = useObserve(() => reader?.settings.values$, [reader]) ?? {}
   const renditionLayout = manifest?.renditionLayout
 
   useEffect(() => {

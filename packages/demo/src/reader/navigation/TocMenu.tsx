@@ -3,12 +3,11 @@ import { List, ListIcon, ListItem, Text } from "@chakra-ui/react"
 import React from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 import { usePagination } from "../states"
 
 export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
-  const { manifest } = useObserve(reader?.context.state$ ?? NEVER) ?? {}
+  const { manifest } = useObserve(() => reader?.context.state$, [reader]) ?? {}
   const { nav, renditionLayout } = manifest ?? {}
   const pagination = usePagination()
   const toc = nav?.toc || []

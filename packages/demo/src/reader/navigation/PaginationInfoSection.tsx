@@ -3,12 +3,11 @@ import React from "react"
 import { useIsComics, usePagination } from "../states"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 
 export const PaginationInfoSection = () => {
   const { reader } = useReader()
   const pagination = usePagination()
-  const settings = useObserve(reader?.settings.values$ ?? NEVER)
+  const settings = useObserve(() => reader?.settings.values$, [reader])
   const [pageIndex, endPageIndex] = [
     (pagination?.beginPageIndexInSpineItem || 0) + 1,
     (pagination?.endPageIndexInSpineItem || 0) + 1

@@ -1,17 +1,16 @@
 import React from "react"
-import { IconButton, Box, Stack } from "@chakra-ui/react"
+import { IconButton, Stack } from "@chakra-ui/react"
 import { ArrowBackIcon, ArrowDownIcon, ArrowForwardIcon, ArrowUpIcon } from "@chakra-ui/icons"
 import { Scrubber } from "./Scrubber"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 
 export const BottomMenu = ({ open }: { open: boolean }) => {
   const { reader } = useReader()
-  const navigation = useObserve(reader?.navigation.state$ ?? NEVER)
-  const settings = useObserve(reader?.settings.values$ ?? NEVER)
+  const navigation = useObserve(() => reader?.navigation.state$, [reader])
+  const settings = useObserve(() => reader?.settings.values$, [reader])
   const isVerticalDirection = settings?.computedPageTurnDirection === "vertical"
 
   return (

@@ -19,7 +19,7 @@ const useNotification = () => {
         distinctUntilChanged(),
         skip(1),
         map((fontScale): Notification => ({ type: "fontScaleChange", value: fontScale }))
-      ) ?? NEVER,
+      ),
     [reader]
   )
 }
@@ -66,7 +66,7 @@ export const Notification = memo(() => {
             })
           )
         })
-      ) ?? NEVER,
+      ),
     [reader, toast]
   )
 

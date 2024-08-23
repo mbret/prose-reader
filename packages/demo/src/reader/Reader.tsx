@@ -16,7 +16,6 @@ import { useLocalSettings } from "./settings/useLocalSettings"
 import { useBookmarks } from "./bookmarks/useBookmarks"
 import { QuickMenu } from "./navigation/QuickMenu"
 import { useObserve } from "reactjrx"
-import { NEVER } from "rxjs"
 import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { Menu } from "./navigation/Menu"
@@ -29,7 +28,7 @@ export const Reader = memo(() => {
   const [localSettings, setLocalSettings] = useLocalSettings({
     enablePan: true
   })
-  const bookState = useObserve(() => reader?.state$ ?? NEVER, [reader])
+  const bookState = useObserve(() => reader?.state$, [reader])
 
   useCreateReader()
 

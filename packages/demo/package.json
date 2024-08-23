@@ -44,7 +44,7 @@
     "react-icons": "^5.0.1",
     "react-router-dom": "^6.8.1",
     "react-use": "^17.4.0",
-    "reactjrx": "^1.81.0",
+    "reactjrx": "^1.97.0",
     "rxjs": "^7.8.0",
     "screenfull": "^6.0.1",
     "stream-browserify": "^3.0.0",
