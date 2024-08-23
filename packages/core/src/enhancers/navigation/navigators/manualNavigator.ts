@@ -137,6 +137,22 @@ export class ManualNavigator {
     return this.goToNextSpineItem()
   }
 
+  goToRightOrBottomSpineItem() {
+    if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
+      return this.goToBottomSpineItem()
+    }
+
+    return this.goToRightSpineItem()
+  }
+
+  goToLeftOrTopSpineItem() {
+    if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
+      return this.goToTopSpineItem()
+    }
+
+    return this.goToLeftSpineItem()
+  }
+
   goToLeftSpineItem() {
     if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
       Report.warn(

@@ -55,8 +55,14 @@ export const navigationEnhancer =
         goToCfi: manualNavigator.goToCfi.bind(manualNavigator),
         goToUrl: manualNavigator.goToUrl.bind(manualNavigator),
         goToSpineItem: manualNavigator.goToSpineItem.bind(manualNavigator),
-        goToNextSpineItem: manualNavigator.goToNextSpineItem.bind(manualNavigator),
-        goToPreviousSpineItem: manualNavigator.goToPreviousSpineItem.bind(manualNavigator),
+        goToNextSpineItem:
+          manualNavigator.goToNextSpineItem.bind(manualNavigator),
+        goToPreviousSpineItem:
+          manualNavigator.goToPreviousSpineItem.bind(manualNavigator),
+        goToLeftOrTopSpineItem:
+          manualNavigator.goToLeftOrTopSpineItem.bind(manualNavigator),
+        goToRightOrBottomSpineItem:
+          manualNavigator.goToRightOrBottomSpineItem.bind(manualNavigator),
         goToTopSpineItem:
           manualNavigator.goToTopSpineItem.bind(manualNavigator),
         goToBottomSpineItem:
