@@ -104,7 +104,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     const containerElement = elementSubject$.getValue()?.parentElement
     const element = elementSubject$.getValue()
 
-    if (!element || !containerElement) throw new Error("Invalid element")
+    if (!element || !containerElement) return
 
     const dimensions = {
       width: containerElement?.offsetWidth,
