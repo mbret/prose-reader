@@ -113,13 +113,13 @@ export class ReaderSettingsManager
   getDefaultSettings() {
     return {
       forceSinglePageMode: false,
-      pageTurnAnimation: `none` as const,
+      pageTurnAnimation: `slide`,
       pageTurnDirection: `horizontal` as const,
       pageTurnAnimationDuration: undefined,
       pageTurnMode: `controlled` as const,
       snapAnimationDuration: 300,
       navigationSnapThreshold: 0.3,
-      numberOfAdjacentSpineItemToPreLoad: 2,
-    }
+      numberOfAdjacentSpineItemToPreLoad: 3,
+    } satisfies CoreInputSettings
   }
 }

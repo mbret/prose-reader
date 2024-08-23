@@ -91,10 +91,9 @@ export const getItemVisibilityForPosition = ({
   context: Context
 }) => {
   const viewportLeft = viewportPosition.x
-  const viewportRight = Math.max(
-    viewportPosition.x + (context.state.visibleAreaRect.width - 1),
-    0,
-  )
+  const viewportRight =
+    viewportPosition.x + (context.state.visibleAreaRect.width - 1)
+
   const viewportTop = viewportPosition.y
   const viewportBottom = Math.max(
     viewportPosition.y + (context.state.visibleAreaRect.height - 1),
@@ -102,11 +101,15 @@ export const getItemVisibilityForPosition = ({
   )
   // const viewportWidth = context.state.visibleAreaRect.width
 
-  const visibleWidthOfItem =
-    Math.min(right, viewportRight) - Math.max(left, viewportLeft)
+  const visibleWidthOfItem = Math.max(
+    0,
+    Math.min(right, viewportRight) - Math.max(left, viewportLeft),
+  )
 
-  const visibleHeightOfItem =
-    Math.min(bottom, viewportBottom) - Math.max(top, viewportTop)
+  const visibleHeightOfItem = Math.max(
+    0,
+    Math.min(bottom, viewportBottom) - Math.max(top, viewportTop),
+  )
 
   const itemIsOnTheOuterEdge =
     visibleWidthOfItem <= 0 || visibleHeightOfItem <= 0
