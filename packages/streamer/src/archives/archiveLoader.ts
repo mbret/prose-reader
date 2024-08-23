@@ -12,11 +12,13 @@ import {
   mergeMap,
   NEVER,
   shareReplay,
+  startWith,
   Subject,
   switchMap,
   takeUntil,
   tap,
   timer,
+  withLatestFrom,
 } from "rxjs"
 import { Archive } from "./types"
 
@@ -36,6 +38,7 @@ export const createArchiveLoader = ({
 }) => {
   const loadSubject = new Subject<string>()
   const destroySubject = new Subject<void>()
+  const purgeSubject = new Subject<void>()
   const archives: Record<string, BehaviorSubject<ArchiveEntry>> = {}
 
   const archiveLoaded$ = loadSubject.pipe(
@@ -78,16 +81,23 @@ export const createArchiveLoader = ({
   const cleanup$ = archiveLoaded$.pipe(
     switchMap(({ archiveEntry, key }) => {
       const locks$ = archiveEntry.pipe(map(({ locks }) => locks))
+      const isPurged$ = purgeSubject.pipe(
+        map(() => true),
+        startWith(false),
+        shareReplay(),
+      )
       const isUnlocked$ = locks$.pipe(
         map((locks) => locks <= 0),
         distinctUntilChanged(),
       )
 
       return isUnlocked$.pipe(
-        switchMap((isUnlocked) =>
-          !isUnlocked ? NEVER : timer(cleanArchiveAfter),
+        withLatestFrom(isPurged$),
+        switchMap(([isUnlocked, isPurged]) =>
+          !isUnlocked ? NEVER : timer(isPurged ? 1 : cleanArchiveAfter),
         ),
         tap(() => {
+          console.log("ARCHIVE DELETED")
           delete archives[key]
 
           archiveEntry.getValue().archive?.close()
@@ -153,9 +163,15 @@ export const createArchiveLoader = ({
     )
   }
 
+  /**
+   * Will purge immediatly archives as soon as they are released
+   */
+  const purge = () => purgeSubject.next()
+
   merge(cleanup$, archiveLoaded$).pipe(takeUntil(destroySubject)).subscribe()
 
   return {
     access,
+    purge,
   }
 }

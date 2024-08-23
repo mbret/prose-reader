@@ -52,11 +52,11 @@ export const Scrubber = () => {
    * paginating and loading items in between.
    * This is good practice (but not required) to throttle it.
    */
-  useSubscribe(() => reader?.navigation.throttleLock({ duration: 200, trigger: valueSignal.subject }), [reader])
+  useSubscribe(() => reader?.navigation.throttleLock({ duration: 100, trigger: valueSignal.subject }), [reader])
 
   if (totalApproximatePages === 1 || (isUsingSpread && totalApproximatePages === 2)) {
     return null
   }
 
-  return <RcSlider value={value} max={max} min={0} onChange={onChange} reverse={reverse} step={step} />
+  return <RcSlider value={value} max={max} min={0} onChange={onChange} reverse={reverse} step={step} keyboard={false} />
 }

@@ -22,11 +22,12 @@ type OnManifestSuccess = (params: {
 }) => Observable<Manifest> | Promise<Manifest>
 
 export class Streamer {
-  epubLoader: ReturnType<typeof createArchiveLoader>
-  onError: OnError = (error) => {
+  protected epubLoader: ReturnType<typeof createArchiveLoader>
+  protected onError: OnError = (error) => {
     return new Response(String(error), { status: 500 })
   }
-  onManifestSuccess: OnManifestSuccess
+  protected onManifestSuccess: OnManifestSuccess
+  protected lastAccessedKey: string | undefined
 
   constructor({
     onError,
@@ -43,8 +44,18 @@ export class Streamer {
     this.onError = onError ?? this.onError
   }
 
+  protected accessArchive(key: string) {
+    if (this.lastAccessedKey !== key) {
+      this.epubLoader.purge()
+    }
+
+    this.lastAccessedKey = key
+
+    return this.epubLoader.access(key)
+  }
+
   public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {
-    const response$ = this.epubLoader.access(key).pipe(
+    const response$ = this.accessArchive(key).pipe(
       mergeMap(({ archive, release }) => {
         const manifest$ = from(
           generateManifestFromArchive(archive, { baseUrl }),
@@ -80,7 +91,7 @@ export class Streamer {
     key: string
     resourcePath: string
   }) {
-    const response$ = this.epubLoader.access(key).pipe(
+    const response$ = this.accessArchive(key).pipe(
       mergeMap(({ archive, release }) => {
         const manifest$ = from(
           generateResourceFromArchive(archive, resourcePath),
