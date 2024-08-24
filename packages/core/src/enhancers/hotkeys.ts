@@ -28,21 +28,21 @@ export const hotkeysEnhancer =
         map(([e, { pageTurnDirection }]) => {
           if (pageTurnDirection === "horizontal") {
             if (e.key === `ArrowRight`) {
-              reader.navigation.turnRight()
+              return reader.navigation.turnRight()
             }
 
             if (e.key === `ArrowLeft`) {
-              reader.navigation.turnLeft()
+              return reader.navigation.turnLeft()
             }
           }
 
           if (pageTurnDirection === "vertical") {
             if (e.key === `ArrowDown`) {
-              reader.navigation.turnRight()
+              return reader.navigation.turnRight()
             }
 
             if (e.key === `ArrowUp`) {
-              reader.navigation.turnLeft()
+              return reader.navigation.turnLeft()
             }
           }
 

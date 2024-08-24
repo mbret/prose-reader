@@ -1,7 +1,3 @@
-import {
-  __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY,
-  getOriginalFrameEventFromDocumentEvent,
-} from "./frames"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
 
@@ -9,17 +5,12 @@ export const normalizeEventForViewport = <
   E extends MouseEvent | TouchEvent | PointerEvent,
 >(
   event: E,
+  iframeOriginalEvent: E,
   locator: SpineLocator,
 ) => {
-  // const eventIsComingFromBridge = event.target === iframeEventBridgeElement$.getValue()
-  const eventIsComingFromBridge =
-    __UNSAFE_REFERENCE_ORIGINAL_IFRAME_EVENT_KEY in event
-
-  const iframeOriginalEvent = getOriginalFrameEventFromDocumentEvent(event)
   const originalFrame = iframeOriginalEvent?.view?.frameElement
 
-  if (!eventIsComingFromBridge || !iframeOriginalEvent || !originalFrame)
-    return event
+  if (!iframeOriginalEvent || !originalFrame) return event
 
   const spineItem = locator.getSpineItemFromIframe(originalFrame)
 

@@ -133,7 +133,7 @@ describe("Given a book with one chapter", () => {
           containerElement: document.getElementById("test-container")!,
         })
 
-        reader.navigation.goToSpineItem(1)
+        reader.navigation.goToSpineItem({ indexOrId: 1 })
       })
 
       expect(value.beginChapterInfo).toEqual({
@@ -205,7 +205,7 @@ describe("Given a book with one chapter", () => {
               containerElement: document.getElementById("test-container")!,
             })
 
-            reader.navigation.goToSpineItem(1)
+            reader.navigation.goToSpineItem({ indexOrId: 1 })
           })
 
           expect(value.beginChapterInfo).toEqual({

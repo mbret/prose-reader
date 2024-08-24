@@ -36,9 +36,13 @@ export const Scrubber = () => {
         const pageIndex = isUsingSpread ? Math.floor(value) * 2 : Math.floor(value)
 
         if (isComic) {
-          reader?.navigation.goToSpineItem(pageIndex)
+          reader?.navigation.goToSpineItem({ indexOrId: pageIndex, animation: false })
         } else {
-          reader?.navigation.goToPageOfSpineItem(pageIndex, pagination?.beginSpineItemIndex ?? 0)
+          reader?.navigation.goToPageOfSpineItem({
+            pageIndex,
+            spineItemId: pagination?.beginSpineItemIndex ?? 0,
+            animation: false
+          })
         }
       }
     },

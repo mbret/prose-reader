@@ -3,6 +3,7 @@ import { Report } from "../../../report"
 import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
+import { UserNavigationEntry } from "../../../navigation/UserNavigator"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
@@ -78,7 +79,10 @@ export class ManualNavigator {
     })
   }
 
-  goToSpineItem(indexOrId: number | string) {
+  goToSpineItem({
+    indexOrId,
+    ...rest
+  }: { indexOrId: number | string } & Pick<UserNavigationEntry, "animation">) {
     const spineItem = this.reader.spineItemsManager.get(indexOrId)
 
     if (spineItem === undefined) {
@@ -92,6 +96,7 @@ export class ManualNavigator {
 
     this.reader.navigation.navigate({
       spineItem: indexOrId,
+      ...rest,
     })
   }
 
@@ -102,7 +107,7 @@ export class ManualNavigator {
         threshold: 0.5,
       }) || {}
 
-    this.goToSpineItem(endIndex + 1)
+    this.goToSpineItem({ indexOrId: endIndex + 1 })
   }
 
   goToPreviousSpineItem() {
@@ -112,7 +117,7 @@ export class ManualNavigator {
         threshold: 0.5,
       }) ?? {}
 
-    this.goToSpineItem(beginIndex - 1)
+    this.goToSpineItem({ indexOrId: beginIndex - 1 })
   }
 
   goToUrl(url: string | URL) {
@@ -197,7 +202,14 @@ export class ManualNavigator {
     return this.goToNextSpineItem()
   }
 
-  goToPageOfSpineItem(pageIndex: number, spineItemId: string | number) {
+  goToPageOfSpineItem({
+    pageIndex,
+    spineItemId,
+    ...rest
+  }: {
+    pageIndex: number
+    spineItemId: string | number
+  } & Pick<UserNavigationEntry, "animation">) {
     const position =
       this.reader.navigation.navigationResolver.getNavigationForSpineItemPage({
         pageIndex,
@@ -206,6 +218,7 @@ export class ManualNavigator {
 
     this.reader.navigation.navigate({
       position,
+      ...rest,
     })
   }
 }

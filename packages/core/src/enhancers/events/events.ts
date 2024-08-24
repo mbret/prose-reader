@@ -1,6 +1,5 @@
 import { isPointerEvent } from "../../utils/dom"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { attachOriginalFrameEventToDocumentEvent } from "./frames"
 import { normalizeEventForViewport } from "./normalizeEventForViewport"
 
 const pointerEvents = [
@@ -35,7 +34,6 @@ export const eventsEnhancer =
       const unregister = passthroughEvents.map((event) => {
         const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
           let convertedEvent = e
-
           /**
            * We have to create a new fake event since the original one is already dispatched
            * on original frame.
@@ -47,10 +45,9 @@ export const eventsEnhancer =
           }
 
           if (convertedEvent !== e) {
-            attachOriginalFrameEventToDocumentEvent(convertedEvent, e)
-
             const normalizedEvent = normalizeEventForViewport(
               convertedEvent,
+              e,
               reader.spine.locator,
             )
 
