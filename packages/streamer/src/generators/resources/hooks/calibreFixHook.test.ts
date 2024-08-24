@@ -36,9 +36,7 @@ describe("Given a book from calibre", () => {
       archive,
       resourcePath: "foo.xhtml",
     })({
-      params: {
-        status: 200,
-      },
+      params: {},
     })
 
     expect(response.body?.replace(/>\s*/g, ">").replace(/\s*</g, "<")).toEqual(
