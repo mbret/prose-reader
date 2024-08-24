@@ -89,8 +89,15 @@ export const registerPinch = ({
                   trailing: true,
                 }),
                 tap((event) => {
+                  const newScale = parseFloat((lastFontScaleOnPinchStart + (event.scale - 1)).toFixed(2))
+
+                  const newMinMaxedFontScale = Math.max(
+                    Math.min(newScale, settingsManager.values.fontScaleMaxScale),
+                    settingsManager.values.fontScaleMinScale,
+                  )
+
                   reader.settings.update({
-                    fontScale: parseFloat((lastFontScaleOnPinchStart + (event.scale - 1)).toFixed(2)),
+                    fontScale: newMinMaxedFontScale,
                   })
                 }),
                 takeUntil(pinchEnd$),

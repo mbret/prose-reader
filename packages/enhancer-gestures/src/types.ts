@@ -15,6 +15,11 @@ export type GestureEvent = ObservedValueOf<GestureRecognizable["events$"]>
 export type InputSettings = {
   panNavigation: "pan" | "swipe" | false
   fontScalePinchEnabled: boolean
+  fontScaleMaxScale: number
+  fontScaleMinScale: number
+  // @todo default value
+  // @todo font scale max / min
+  // @todo cancel pan if selecting
   fontScalePinchThrottleTime: number
   pinchCancelPan: boolean
 }

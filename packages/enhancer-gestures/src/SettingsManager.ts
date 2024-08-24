@@ -9,9 +9,11 @@ export class GesturesSettingsManager extends SettingsManager<InputSettings, Outp
   getDefaultSettings(): InputSettings {
     return {
       panNavigation: "pan",
+      pinchCancelPan: true,
       fontScalePinchEnabled: true,
       fontScalePinchThrottleTime: 500,
-      pinchCancelPan: true,
+      fontScaleMaxScale: 5,
+      fontScaleMinScale: 0.2,
     }
   }
 }
