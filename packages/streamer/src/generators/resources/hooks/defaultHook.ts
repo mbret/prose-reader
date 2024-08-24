@@ -94,15 +94,12 @@ export const defaultHook =
       ...resource,
       params: {
         ...resource.params,
-        status: 200,
-        headers: {
-          ...(file?.encodingFormat && {
-            "Content-Type": file.encodingFormat,
-          }),
-          ...(metadata.mediaType && {
-            "Content-Type": metadata.mediaType,
-          }),
-        },
+        ...(file?.encodingFormat && {
+          contentType: file.encodingFormat,
+        }),
+        ...(metadata.mediaType && {
+          contentType: metadata.mediaType,
+        }),
       },
     }
   }

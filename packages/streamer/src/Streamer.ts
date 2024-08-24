@@ -98,7 +98,17 @@ export class Streamer {
         )
 
         return manifest$.pipe(
-          map((resource) => new Response(resource.body, { status: 200 })),
+          map(
+            (resource) =>
+              new Response(resource.body, {
+                status: 200,
+                headers: {
+                  ...(resource.params.contentType && {
+                    "Content-Type": resource.params.contentType,
+                  }),
+                },
+              }),
+          ),
           finalize(() => {
             release()
           }),
