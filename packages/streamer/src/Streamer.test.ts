@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest"
-import {
-  Streamer,
-} from "."
+import { Streamer } from "."
 
 describe("Given custom error on get Archive", () => {
   it("should return correct error", async () => {

@@ -61,7 +61,7 @@ describe("Given single page items and no spread", () => {
         spineItemsManager.load(singlePageItems)
 
         spineLayout.layout()
-        
+
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             context: context,
