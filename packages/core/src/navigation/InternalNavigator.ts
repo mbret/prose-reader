@@ -315,6 +315,18 @@ export class InternalNavigator extends DestroyableClass {
           navigation,
         }
       }),
+      /**
+       * The spine item may be undefined after a restoration.
+       * eg: after the reader load and the user has never navigated
+       * yet.
+       */
+      withSpineItem({
+        context,
+        navigationResolver,
+        settings,
+        spineItemsManager: spine.spineItemsManager,
+        spineLocator: spine.locator,
+      }),
       withSpineItemLayoutInfo({
         spine,
       }),

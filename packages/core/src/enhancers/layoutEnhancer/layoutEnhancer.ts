@@ -67,7 +67,8 @@ export const layoutEnhancer =
 
       /**
        * When adjusting the offset, there is a chance that pointer event being dispatched right after
-       * have a wrong `clientX` / `pageX` etc. This is because even if the iframe left value (once requested) is correct,
+       * have a wrong `clientX` / `pageX` etc. This is because even if the iframe
+       * left value (once requested) is correct,
        * it does not seem to have been correctly taken by the browser when creating the event.
        * What we do here is that after a viewport adjustment we immediately force a reflow on the engine.
        *
