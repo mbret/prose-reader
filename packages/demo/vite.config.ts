@@ -9,7 +9,13 @@ export default defineConfig(({ mode }) => ({
   build: {
     sourcemap: true,
     minify: mode !== "development",
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        raw: "raw.html"
+      }
+    }
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -18,7 +24,6 @@ export default defineConfig(({ mode }) => ({
       define: {
         global: "globalThis"
       }
-      // inject: [path.resolve(__dirname, "./stream-shim.js")]
     }
   },
   /**
