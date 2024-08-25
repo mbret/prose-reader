@@ -93,7 +93,7 @@ export const layoutEnhancer =
 
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
-          // void frame.getBoundingClientRect().left
+          void frame.getBoundingClientRect().left
           hasRedrawn = true
         }
       })

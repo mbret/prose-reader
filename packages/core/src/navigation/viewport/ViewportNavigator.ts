@@ -262,7 +262,8 @@ export class ViewportNavigator extends DestroyableClass {
        * @important
        * will work automatically with RTL since x will be negative.
        */
-      element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
+      // element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
+      element.style.transform = `translate(${-x}px, -${y}px)`
     }
 
     this.hookManager.execute("onViewportOffsetAdjust", undefined, {})

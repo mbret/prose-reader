@@ -27,26 +27,26 @@ export const webkitEnhancer =
      * we only use them on needed engine (webkit).
      */
     if (IS_SAFARI) {
-      reader.hookManager.register(
-        "navigator.onBeforeContainerCreated",
-        ({ element }) => {
-          element.style.cssText = `
-          ${element.style.cssText}
-          -webkit-transform-style: preserve-3d;
-        `
-        },
-      )
+      // reader.hookManager.register(
+      //   "navigator.onBeforeContainerCreated",
+      //   ({ element }) => {
+      //     element.style.cssText = `
+      //     ${element.style.cssText}
+      //     -webkit-transform-style: preserve-3d;
+      //   `
+      //   },
+      // )
 
-      reader.hookManager.register(
-        "item.onBeforeContainerCreated",
-        ({ element }) => {
-          element.style.cssText = `
-        ${element.style.cssText}
-        -webkit-transform-style: preserve-3d;
-        -webkit-backface-visibility: hidden;
-      `
-        },
-      )
+      // reader.hookManager.register(
+      //   "item.onBeforeContainerCreated",
+      //   ({ element }) => {
+      //     element.style.cssText = `
+      //   ${element.style.cssText}
+      //   -webkit-transform-style: preserve-3d;
+      //   -webkit-backface-visibility: hidden;
+      // `
+      //   },
+      // )
     }
 
     return reader
