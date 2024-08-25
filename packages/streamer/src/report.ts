@@ -81,6 +81,7 @@ export const Report = {
       }
 
       const t1 = performance.now()
+
       Report.metric({ name, duration: t1 - t0 }, targetDuration)
 
       return response

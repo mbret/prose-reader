@@ -20,7 +20,7 @@ import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { Menu } from "./navigation/Menu"
 
-export const Reader = memo(() => {
+export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
   const { data: manifest, error: manifestError } = useManifest(url)
