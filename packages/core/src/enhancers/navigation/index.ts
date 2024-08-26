@@ -73,6 +73,8 @@ export const navigationEnhancer =
           manualNavigator.goToRightSpineItem.bind(manualNavigator),
         goToPageOfSpineItem:
           manualNavigator.goToPageOfSpineItem.bind(manualNavigator),
+        goToAbsolutePageIndex:
+          manualNavigator.goToAbsolutePageIndex.bind(manualNavigator),
       },
     }
   }

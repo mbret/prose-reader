@@ -8,13 +8,23 @@ export const usePagination = () => {
   return useObserve(() => reader?.pagination.state$, [reader])
 }
 
-export const useIsComics = () => {
+export const useIsPrepaginated = () => {
   const { reader } = useReader()
   const manifest = useObserve(() => reader?.context.manifest$, [reader])
 
   return (
     manifest?.renditionLayout === "pre-paginated" ||
-    manifest?.spineItems.every((item) => item.renditionLayout === "pre-paginated") ||
+    manifest?.spineItems.every((item) => item.renditionLayout === "pre-paginated")
+  )
+}
+
+export const useIsComics = () => {
+  const { reader } = useReader()
+  const manifest = useObserve(() => reader?.context.manifest$, [reader])
+  const isPrepaginated = useIsPrepaginated()
+
+  return (
+    isPrepaginated ||
     // webtoon
     (manifest?.renditionFlow === `scrolled-continuous` &&
       manifest.renditionLayout === `reflowable` &&

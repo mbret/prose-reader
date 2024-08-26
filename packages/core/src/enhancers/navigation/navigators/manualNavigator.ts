@@ -221,4 +221,29 @@ export class ManualNavigator {
       ...rest,
     })
   }
+
+  goToAbsolutePageIndex({
+    absolutePageIndex,
+    ...rest
+  }: { absolutePageIndex: number } & Pick<UserNavigationEntry, "animation">) {
+    const foundInfo =
+      this.reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
+        absolutePageIndex,
+      })
+
+    if (foundInfo) {
+      const position =
+        this.reader.navigation.navigationResolver.getNavigationForSpineItemPage(
+          {
+            pageIndex: foundInfo.pageIndex,
+            spineItemId: foundInfo.itemIndex,
+          },
+        )
+
+      return this.reader.navigation.navigate({
+        position,
+        ...rest,
+      })
+    }
+  }
 }

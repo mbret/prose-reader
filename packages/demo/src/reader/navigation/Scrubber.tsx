@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
-import { useIsComics, usePagination } from "../states"
+import { useIsComics, useIsPrepaginated, usePagination } from "../states"
 import { useReader } from "../useReader"
 import { useObserve, useSignal, useSubscribe } from "reactjrx"
 
 export const Scrubber = () => {
   const { reader } = useReader()
   const isComic = useIsComics()
+  const isPrepaginated = useIsPrepaginated()
   const pagination = usePagination()
   const { manifest } = useObserve(() => reader?.context.state$, []) ?? {}
   const isUsingSpread = pagination?.isUsingSpread
@@ -17,7 +18,8 @@ export const Scrubber = () => {
   const [value, valueSignal] = useSignal({
     default: currentPage || 0
   })
-  const max = (isUsingSpread ? totalApproximatePages / 2 : totalApproximatePages) - 1
+  const min = 0
+  const max = isUsingSpread ? Math.floor((totalApproximatePages - 1) / 2) : totalApproximatePages - 1
   const step = 1
 
   useEffect(() => {
@@ -35,8 +37,8 @@ export const Scrubber = () => {
 
         const pageIndex = isUsingSpread ? Math.floor(value) * 2 : Math.floor(value)
 
-        if (isComic) {
-          reader?.navigation.goToSpineItem({ indexOrId: pageIndex, animation: false })
+        if (isPrepaginated) {
+          reader?.navigation.goToAbsolutePageIndex({ absolutePageIndex: pageIndex, animation: false })
         } else {
           reader?.navigation.goToPageOfSpineItem({
             pageIndex,
@@ -62,5 +64,5 @@ export const Scrubber = () => {
     return null
   }
 
-  return <RcSlider value={value} max={max} min={0} onChange={onChange} reverse={reverse} step={step} keyboard={false} />
+  return <RcSlider value={value} max={max} min={min} onChange={onChange} reverse={reverse} step={step} keyboard={false} />
 }

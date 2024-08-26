@@ -63,7 +63,14 @@ export const attachFrameSrc = ({
             mergeMap((response) => getHtmlFromResource(response)),
             tap((htmlDoc) => {
               if (htmlDoc) {
-                frameElement?.setAttribute(`srcdoc`, htmlDoc)
+                const blob = new Blob([htmlDoc], { type: "text/html" })
+                /**
+                 * The blob will be released once the document is destroyed.
+                 * No need to deal with it ourselves.
+                 */
+                const blobURL = URL.createObjectURL(blob)
+
+                frameElement?.setAttribute(`src`, blobURL)
               }
             }),
             map(() => frameElement),

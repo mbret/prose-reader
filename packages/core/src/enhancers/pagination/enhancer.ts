@@ -42,9 +42,7 @@ export const paginationEnhancer =
       ...reader,
       pagination: {
         ...reader.pagination,
-        get state() {
-          return getPaginationInfo()
-        },
+        getState: () => getPaginationInfo(),
         state$: paginationInfo$,
       } as unknown as PaginationOutput,
     }

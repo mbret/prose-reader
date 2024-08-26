@@ -75,7 +75,5 @@ export const createHtmlPageFromResource = async (
 
   const content = await resourceResponse.text()
 
-  // return content.replace(`<head>`, `<head><base xmlns href="${item.href}" />`)
-
   return content
 }
