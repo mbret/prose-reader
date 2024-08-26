@@ -279,7 +279,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     load,
     destroy,
     pagination: {
-      state: pagination.state,
+      getState: () => pagination.state,
       state$: pagination.state$,
     },
     settings: settingsManager as SettingsInterface<
