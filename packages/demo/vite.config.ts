@@ -38,22 +38,11 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       base: "/",
       minify: false,
-      injectRegister: null,
+      injectRegister: false,
       strategies: "injectManifest",
-      manifest: {
-        theme_color: "#ffffff"
-      },
+      manifest: false,
       injectManifest: {
-        rollupFormat: "iife",
-        // globPatterns: ["**\/*.{js,css,html,js.mem,ico,json}"],
-        // we need to pre-cache the entire assets as the app is fully offline
-        globPatterns: ["**/*"],
-        globIgnores: [
-          "**/node_modules/**/*",
-          // sourcemap will be uploaded on reporting service directly
-          "**/*.{js.map}"
-        ],
-        maximumFileSizeToCacheInBytes: 5e6
+        injectionPoint: undefined,
       },
       srcDir: "src/serviceWorker",
       filename: "service-worker.ts",
