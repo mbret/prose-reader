@@ -1,6 +1,6 @@
 <p align="center">
   <a 
-  href="https://github.com/mbret/oboku">
+  href="https://prose-reader.com/">
     <img src="https://user-images.githubusercontent.com/1911240/99893449-bca35e00-2cc3-11eb-88c1-80b3190eb620.png" alt="Logo" width="75" height="75">
   </a>
 
@@ -10,7 +10,7 @@
     Your free and open-source Reading System Engine.
     <br/>Build your reading system hassle free with a modern and easy to use SDK.
     <br>
-    <a href="https://prose-reader-doc.vercel.app/">Website</a>
+    <a href="https://prose-reader.com/">Website</a>
     ·
     <a href="https://github.com/mbret/prose-reader/issues/new">Report bug</a>
     ·
