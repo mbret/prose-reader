@@ -1,7 +1,7 @@
 <p align="center">
   <a 
-  href="https://github.com/mbret/oboku" style="background-color:white;display:inline-block;border-radius:10px;">
-    <img src="https://github.com/user-attachments/assets/eb8c0c42-743a-46db-bbc4-ce92795a80f5" alt="Logo" width="75" height="75">
+  href="https://github.com/mbret/oboku" >
+    <img src="https://github.com/user-attachments/assets/eb8c0c42-743a-46db-bbc4-ce92795a80f5" style="background-color:white;display:inline-block;border-radius:10px;" alt="Logo" width="75" height="75">
   </a>
 
   <h3 align="center">@prose-reader/core</h3>
