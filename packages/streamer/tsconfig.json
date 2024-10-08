@@ -13,7 +13,8 @@
     "noEmit": true,
     "declaration": true,
     "isolatedModules": true,
-    "stripInternal": true
+    "stripInternal": true,
+    "skipLibCheck": true
   },
   "exclude": ["dist", "node_modules"]
 }

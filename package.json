@@ -72,7 +72,7 @@
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
-    "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-replace": "^6.0.1",
     "framer-motion": "^11.0.22",
     "happy-dom": "^14.7.1",
     "reactjrx": "^1.81.0",

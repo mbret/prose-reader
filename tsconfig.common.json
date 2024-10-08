@@ -19,7 +19,8 @@
     "stripInternal": true,   
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "skipLibCheck": true
   },
   // important to avoid infinite build from resolved path
   "exclude": ["**/dist"]

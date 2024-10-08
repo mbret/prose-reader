@@ -19,7 +19,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "sourceMap": true,
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "**/*.spec.ts"]
