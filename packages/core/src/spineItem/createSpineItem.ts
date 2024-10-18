@@ -1,9 +1,9 @@
 import { Context } from "../context/Context"
 import { Manifest } from ".."
-import { createPrePaginatedSpineItem } from "./prePaginatedSpineItem"
-import { createReflowableSpineItem } from "./reflowable/ReflowableSpineItems"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
+import { SpineItemPrePaginated } from "./SpineItemPrePaginated"
+import { SpineItemReflowable } from "./SpineItemReflowable"
 
 export const createSpineItem = ({
   item,
@@ -21,24 +21,24 @@ export const createSpineItem = ({
   index: number
 }) => {
   if (item.renditionLayout === `pre-paginated`) {
-    return createPrePaginatedSpineItem({
+    return new SpineItemPrePaginated(
       item,
-      context,
       containerElement,
+      context,
       settings,
       hookManager,
       index,
-    })
+    )
   }
 
-  return createReflowableSpineItem({
+  return new SpineItemReflowable(
     item,
-    context,
     containerElement,
+    context,
     settings,
     hookManager,
     index,
-  })
+  )
 }
 
 export type SpineItem = ReturnType<typeof createSpineItem>

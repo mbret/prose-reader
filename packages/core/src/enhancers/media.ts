@@ -63,7 +63,7 @@ export const mediaEnhancer =
       },
     )
 
-    reader.hookManager.register(`item.onLoad`, ({ frame, destroy }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ frame, destroy }) => {
       frameObserver.observe(frame)
 
       const videos = frame.contentDocument?.body.getElementsByTagName(`video`)

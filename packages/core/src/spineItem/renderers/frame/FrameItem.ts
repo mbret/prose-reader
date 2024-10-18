@@ -1,13 +1,13 @@
 import { merge, Observable } from "rxjs"
-import { Manifest } from "../.."
-import { Context } from "../../context/Context"
-import { getAttributeValueFromString } from "../../utils/frames"
+import { Manifest } from "../../.."
+import { Context } from "../../../context/Context"
+import { getAttributeValueFromString } from "../../../utils/frames"
 import { map } from "rxjs/operators"
-import { createLoader } from "./loader/loader"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { type HookManager } from "../../hooks/HookManager"
-import { DestroyableClass } from "../../utils/DestroyableClass"
+import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
+import { type HookManager } from "../../../hooks/HookManager"
+import { DestroyableClass } from "../../../utils/DestroyableClass"
+import { createLoader } from "./loader/loader"
 
 export class FrameItem extends DestroyableClass {
   protected loader: ReturnType<typeof createLoader>
@@ -149,42 +149,6 @@ export class FrameItem extends DestroyableClass {
       if (this.settings.values.computedPageTurnMode !== `scrollable`) {
         // @todo see what's the impact
         frame.setAttribute(`tab-index`, `0`)
-      }
-    }
-  }
-
-  public addStyle(id: string, style: string, prepend?: boolean) {
-    const frameElement = this.loader.element
-
-    if (
-      frameElement &&
-      frameElement.contentDocument &&
-      frameElement.contentDocument.head
-    ) {
-      const userStyle = document.createElement(`style`)
-      userStyle.id = id
-      userStyle.innerHTML = style
-
-      if (prepend) {
-        frameElement.contentDocument.head.prepend(userStyle)
-      } else {
-        frameElement.contentDocument.head.appendChild(userStyle)
-      }
-    }
-  }
-
-  public removeStyle(id: string) {
-    const frameElement = this.loader.element
-
-    if (
-      frameElement &&
-      frameElement.contentDocument &&
-      frameElement.contentDocument.head
-    ) {
-      const styleElement = frameElement.contentDocument.getElementById(id)
-
-      if (styleElement) {
-        styleElement.remove()
       }
     }
   }

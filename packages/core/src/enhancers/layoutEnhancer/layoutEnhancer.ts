@@ -89,7 +89,7 @@ export const layoutEnhancer =
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
       reader.spineItemsManager.items.forEach((item) => {
-        const frame = item.frame.element
+        const frame = item.renderer.element
 
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
@@ -107,30 +107,29 @@ export const layoutEnhancer =
       `item.onLayoutBeforeMeasurement`,
       ({ itemIndex, minimumWidth, isImageType }) => {
         const item = reader.spineItemsManager.get(itemIndex)
-        const frame = item?.frame
+        const renderer = item?.renderer
         const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
           settingsManager.values
         const pageSize = reader.context.getPageSize()
 
         if (
           item?.item.renditionLayout === `reflowable` &&
-          frame?.isReady &&
+          item.isReady &&
           !isImageType() &&
-          !frame.getViewportDimensions()
+          !renderer?.frameItem.getViewportDimensions()
         ) {
           let columnWidth = pageSize.width - pageHorizontalMargin * 2
           const columnHeight = pageSize.height - pageVerticalMargin * 2
           let width = pageSize.width - pageHorizontalMargin * 2
           let columnGap = pageHorizontalMargin * 2
 
-          if (frame.isUsingVerticalWriting()) {
+          if (renderer?.frameItem.isUsingVerticalWriting()) {
             width = minimumWidth - pageHorizontalMargin * 2
             columnWidth = columnHeight
             columnGap = pageVerticalMargin * 2
           }
 
-          frame?.removeStyle(`prose-layout-enhancer-css`)
-          frame?.addStyle(
+          item?.upsertCSS(
             `prose-layout-enhancer-css`,
             `
           body {
@@ -160,7 +159,7 @@ export const layoutEnhancer =
 
     // @todo fix the panstart issue
     // @todo maybe increasing the hammer distance before triggering pan as well
-    // reader.registerHook(`item.onLoad`, ({frame}) => {
+    // reader.registerHook(`item.onDocumentLoad`, ({frame}) => {
     //   frame.contentDocument?.body.addEventListener(`contextmenu`, e => {
     //     e.preventDefault()
     //   })

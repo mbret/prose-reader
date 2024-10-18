@@ -16,13 +16,13 @@ import {
   shareReplay,
   defaultIfEmpty,
 } from "rxjs/operators"
-import { Context } from "../../../context/Context"
-import { Manifest } from "../../.."
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { HookManager } from "../../../hooks/HookManager"
 import { loadFrame } from "./loadFrame"
 import { unloadFrame } from "./unloadFrame"
 import { waitForFrameReady } from "./waitForFrameReady"
+import { ReaderSettingsManager } from "../../../../settings/ReaderSettingsManager"
+import { HookManager } from "../../../../hooks/HookManager"
+import { Context } from "../../../../context/Context"
+import { Manifest } from "@prose-reader/shared"
 
 export const createLoader = ({
   item,

@@ -3,10 +3,11 @@ import { attachFrameSrc } from "./attachFrameSrc"
 import { configureFrame } from "./configureFrame"
 import { createFrameElement } from "./createFrameElement"
 import { waitForFrameLoad } from "./waitForFrameLoad"
-import { HookManager, Manifest } from "../../.."
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { Context } from "../../../context/Context"
-import { waitForSwitch } from "../../../utils/rxjs"
+import { ReaderSettingsManager } from "../../../../settings/ReaderSettingsManager"
+import { Manifest } from "@prose-reader/shared"
+import { HookManager } from "../../../../hooks/HookManager"
+import { Context } from "../../../../context/Context"
+import { waitForSwitch } from "../../../../utils/rxjs"
 
 export const loadFrame = ({
   settings,

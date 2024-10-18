@@ -1,8 +1,8 @@
 import { combineLatest, EMPTY, map, mergeMap, Observable, of } from "rxjs"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { Report } from "../../../report"
 import { Manifest } from "@prose-reader/shared"
-import { HookManager } from "../../.."
+import { HookManager } from "../../../../hooks/HookManager"
+import { ReaderSettingsManager } from "../../../../settings/ReaderSettingsManager"
+import { Report } from "../../../../report"
 
 export const configureFrame = ({
   settings,
@@ -55,7 +55,7 @@ export const configureFrame = ({
         // domReadySubject$.next(frame)
 
         const hookResults = hookManager
-          .execute(`item.onLoad`, item.id, {
+          .execute(`item.onDocumentLoad`, item.id, {
             itemId: item.id,
             frame,
           })

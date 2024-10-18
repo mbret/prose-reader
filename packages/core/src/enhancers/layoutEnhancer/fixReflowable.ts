@@ -32,13 +32,17 @@ export const fixReflowable = (reader: Reader) => {
 
       const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
       const { width: pageWidth } = reader.context.getPageSize()
-      const frameElement = spineItem?.frame.element
+      const frameElement = spineItem?.renderer.element
 
       if (viewportDimensions) {
         const spineManagerWantAFullWidthItem = pageWidth < minimumWidth
         const noBlankPageAsked = blankPagePosition === `none`
 
-        if (noBlankPageAsked && spineManagerWantAFullWidthItem) {
+        if (
+          noBlankPageAsked &&
+          spineManagerWantAFullWidthItem &&
+          frameElement instanceof HTMLIFrameElement
+        ) {
           frameElement?.style.setProperty(
             `left`,
             reader.context.isRTL() ? `75%` : `25%`,

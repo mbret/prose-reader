@@ -88,8 +88,7 @@ export const fontsEnhancer =
     const applyChangeToSpineItems = (requireLayout: boolean) => {
       reader.spineItemsManager.items.forEach((item) => {
         if (item.item.renditionLayout !== `pre-paginated`) {
-          item.frame.removeStyle?.(`prose-reader-fonts`)
-          item.frame.addStyle?.(`prose-reader-fonts`, getStyle())
+          item.upsertCSS?.(`prose-reader-fonts`, getStyle())
         }
       })
 
@@ -101,12 +100,11 @@ export const fontsEnhancer =
     /**
      * Make sure we apply the style to any new item loaded.
      */
-    reader.hookManager.register(`item.onLoad`, ({ itemId }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
 
       if (item?.item.renditionLayout !== `pre-paginated`) {
-        item?.frame.removeStyle(`prose-reader-fonts`)
-        item?.frame.addStyle(`prose-reader-fonts`, getStyle())
+        item?.upsertCSS(`prose-reader-fonts`, getStyle())
       }
     })
 

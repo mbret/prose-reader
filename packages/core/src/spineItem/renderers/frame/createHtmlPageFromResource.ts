@@ -1,6 +1,6 @@
-import { Manifest } from "../.."
+import { Manifest } from "../../.."
 import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
-import { getBase64FromBlob } from "../../utils/objects"
+import { getBase64FromBlob } from "../../../utils/objects"
 
 const getIntrinsicDimensionsFromBase64Img = (data: string) =>
   new Promise<{ width: number; height: number }>((resolve, reject) => {

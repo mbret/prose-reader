@@ -54,7 +54,7 @@ export const chromeEnhancer =
         containerElement.addEventListener(`scroll`, onScroll)
       })
 
-    reader.hookManager.register(`item.onLoad`, ({ frame }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ frame }) => {
       /**
        * Disable touch to search on first text touch / click. This does not prevent
        * it when selecting text. It needs to be turned off by the user.

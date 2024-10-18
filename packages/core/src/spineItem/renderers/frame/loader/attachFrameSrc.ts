@@ -8,11 +8,11 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { Report } from "../../../report"
-import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
-import { createHtmlPageFromResource } from "../createHtmlPageFromResource"
 import { Manifest } from "@prose-reader/shared"
+import { ReaderSettingsManager } from "../../../../settings/ReaderSettingsManager"
+import { createHtmlPageFromResource } from "../createHtmlPageFromResource"
+import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../../constants"
+import { Report } from "../../../../report"
 
 export const attachFrameSrc = ({
   settings,

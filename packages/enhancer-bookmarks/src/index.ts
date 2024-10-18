@@ -36,7 +36,7 @@ export const bookmarksEnhancer =
 
           return {
             ...page,
-            isBookmarkable: item?.isReady(),
+            isBookmarkable: item?.isReady,
           }
         })
       }),

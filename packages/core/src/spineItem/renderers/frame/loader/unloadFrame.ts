@@ -1,7 +1,8 @@
 import { of, tap } from "rxjs"
-import { HookManager, Manifest } from "../../.."
-import { Context } from "../../../context/Context"
-import { waitForSwitch } from "../../../utils/rxjs"
+import { HookManager } from "../../../../hooks/HookManager"
+import { Manifest } from "@prose-reader/shared"
+import { Context } from "../../../../context/Context"
+import { waitForSwitch } from "../../../../utils/rxjs"
 
 export const unloadFrame = ({
   item,
@@ -17,7 +18,7 @@ export const unloadFrame = ({
   return of(null).pipe(
     waitForSwitch(context.bridgeEvent.viewportFree$),
     tap(() => {
-      hookManager.destroy(`item.onLoad`, item.id)
+      hookManager.destroy(`item.onDocumentLoad`, item.id)
 
       frameElement?.remove()
     }),

@@ -28,7 +28,7 @@ export class SpineItemsObserver extends DestroyableClass {
     this.itemIsReady$ = this.spineItemsManager.items$.pipe(
       switchMap((items) => {
         const itemsIsReady$ = items.map((item) =>
-          item.$.isReady$.pipe(map((isReady) => ({ item, isReady }))),
+          item.isReady$.pipe(map((isReady) => ({ item, isReady }))),
         )
 
         return merge(...itemsIsReady$)

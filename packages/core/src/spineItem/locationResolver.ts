@@ -120,9 +120,10 @@ export const createSpineItemLocator = ({
     spineItem: SpineItem,
   ) => {
     const pageSize = context.getPageSize()
-    const frame = spineItem.frame?.element
+    const frame = spineItem.renderer?.element
 
     if (
+      frame instanceof HTMLIFrameElement &&
       frame?.contentWindow?.document &&
       // very important because it is being used by next functions
       frame.contentWindow.document.body !== null

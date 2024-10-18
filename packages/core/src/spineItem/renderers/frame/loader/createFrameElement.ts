@@ -1,4 +1,4 @@
-import { Report } from "../../../report"
+import { Report } from "../../../../report"
 
 export const createFrameElement = Report.measurePerformance(
   `SpineItemFrame createFrame`,

@@ -57,7 +57,7 @@ export const hotkeysEnhancer =
         switchMap((spineItems) =>
           merge(
             ...spineItems.map((item) =>
-              item.$.loaded$.pipe(
+              item.loaded$.pipe(
                 switchMap((iframe) =>
                   iframe?.contentDocument
                     ? navigateOnKey(iframe.contentDocument)

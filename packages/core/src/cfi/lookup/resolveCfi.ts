@@ -23,24 +23,26 @@ export const resolveCfi = ({
   const { cleanedCfi, offset } = extractProseMetadataFromCfi(cfi)
   const cfiHandler = new CfiHandler(cleanedCfi, {})
 
-  const doc = spineItem.frame.element?.contentWindow?.document
+  if (spineItem.renderer.element instanceof HTMLIFrameElement) {
+    const doc = spineItem.renderer.element?.contentWindow?.document
 
-  if (doc) {
-    try {
-      const { node, offset: resolvedOffset } = cfiHandler.resolve(doc, {})
+    if (doc) {
+      try {
+        const { node, offset: resolvedOffset } = cfiHandler.resolve(doc, {})
 
-      return {
-        node,
-        offset: offset ?? resolvedOffset,
-        spineItemIndex,
-        spineItem,
-      }
-    } catch (e) {
-      Report.error(e)
+        return {
+          node,
+          offset: offset ?? resolvedOffset,
+          spineItemIndex,
+          spineItem,
+        }
+      } catch (e) {
+        Report.error(e)
 
-      return {
-        spineItemIndex,
-        spineItem,
+        return {
+          spineItemIndex,
+          spineItem,
+        }
       }
     }
   }

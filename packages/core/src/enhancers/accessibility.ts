@@ -20,12 +20,12 @@ export const accessibilityEnhancer =
       })
     }, {})
 
-    reader.hookManager.register(`item.onLoad`, ({ itemId, frame, destroy }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId, frame, destroy }) => {
       const item = reader.spineItemsManager.get(itemId)
 
       if (!item) return
 
-      item.frame.addStyle(
+      item.upsertCSS(
         `prose-reader-accessibility`,
         `
         :focus-visible {

@@ -77,7 +77,7 @@ export const createSpineLocator = ({
   }
 
   const getSpineItemFromIframe = (iframe: Element) => {
-    return spineItemsManager.items.find((item) => item.frame.element === iframe)
+    return spineItemsManager.items.find((item) => item.renderer.element === iframe)
   }
 
   const getSpineItemPageIndexFromNode = (

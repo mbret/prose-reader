@@ -76,7 +76,7 @@ export class SpineLayout extends DestroyableClass {
           // upstream change, meaning we need to layout again to both resize correctly each item but also to
           // adjust positions, etc
           const itemsLayout$ = items.map((spineItem) =>
-            spineItem.$.contentLayout$.pipe(
+            spineItem.contentLayout$.pipe(
               tap(() => {
                 this.layout()
               }),
@@ -84,7 +84,7 @@ export class SpineLayout extends DestroyableClass {
           )
 
           const writingModeUpdate$ = items.map((spineItem) =>
-            spineItem.$.loaded$.pipe(
+            spineItem.loaded$.pipe(
               tap(() => {
                 if (spineItem.isUsingVerticalWriting()) {
                   this.context.update({

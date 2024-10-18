@@ -22,7 +22,7 @@ export const eventsEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    reader.hookManager.register(`item.onLoad`, ({ destroy, frame, itemId }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ destroy, frame, itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
 
       if (!item) return

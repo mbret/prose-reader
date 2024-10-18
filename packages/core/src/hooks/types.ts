@@ -10,7 +10,7 @@ export interface Hook<Name, Params, Result> {
 
 export type CoreHook =
   | {
-      name: `item.onLoad`
+      name: `item.onDocumentLoad`
       runFn: (params: {
         destroy$: Observable<void>
         destroy: (fn: UserDestroyFn) => void

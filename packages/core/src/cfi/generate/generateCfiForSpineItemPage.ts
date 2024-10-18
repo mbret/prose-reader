@@ -27,7 +27,8 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
       pageIndex,
       spineItem,
     )
-    const doc = spineItem.frame.element?.contentWindow?.document
+
+    const rendererElement = spineItem.renderer.element
 
     const itemAnchor = getItemAnchor(spineItem)
 
@@ -36,7 +37,11 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
     // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
     const offset = `|[prose~offset~${nodeOrRange?.offset || 0}]`
 
-    if (nodeOrRange && doc) {
+    if (
+      nodeOrRange &&
+      rendererElement instanceof HTMLIFrameElement &&
+      rendererElement.contentWindow?.document
+    ) {
       const cfiString = CfiHandler.generate(
         nodeOrRange.node,
         0,

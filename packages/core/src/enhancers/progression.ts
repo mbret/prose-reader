@@ -57,7 +57,7 @@ export const progressionEnhancer =
       if (
         !isGloballyPrePaginated &&
         currentItem.item.renditionLayout === `reflowable` &&
-        !currentItem.isReady()
+        !currentItem.isReady
       ) {
         progressWithinThisItem = 0
       }
@@ -65,7 +65,7 @@ export const progressionEnhancer =
       let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
       if (context.manifest?.renditionFlow === `scrolled-continuous`) {
-        if (currentItem.isReady()) {
+        if (currentItem.isReady) {
           progressWithinThisItem = getScrollPercentageWithinItem(
             context,
             currentPosition,
