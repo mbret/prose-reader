@@ -1,8 +1,6 @@
-import { merge, Observable } from "rxjs"
 import { Manifest } from "../../.."
 import { Context } from "../../../context/Context"
 import { getAttributeValueFromString } from "../../../utils/frames"
-import { map } from "rxjs/operators"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { type HookManager } from "../../../hooks/HookManager"
@@ -12,9 +10,7 @@ import { createLoader } from "./loader/loader"
 export class FrameItem extends DestroyableClass {
   protected loader: ReturnType<typeof createLoader>
 
-  public contentLayoutChange$: Observable<{
-    isFirstLayout: boolean
-  }>
+
 
   constructor(
     protected parent: HTMLElement,
@@ -32,15 +28,6 @@ export class FrameItem extends DestroyableClass {
       parent,
       settings,
     })
-
-    /**
-     * This is used as upstream layout change. This event is being listened to by upper app
-     * in order to layout again and adjust every element based on the new content.
-     */
-    this.contentLayoutChange$ = merge(
-      this.loader.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
-      this.ready$.pipe(map(() => ({ isFirstLayout: true }))),
-    )
   }
 
   // @todo optimize

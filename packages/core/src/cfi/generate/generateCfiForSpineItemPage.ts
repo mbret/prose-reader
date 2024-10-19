@@ -28,7 +28,7 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
       spineItem,
     )
 
-    const rendererElement = spineItem.renderer.element
+    const rendererElement = spineItem.renderer.layers[0]?.element
 
     const itemAnchor = getItemAnchor(spineItem)
 

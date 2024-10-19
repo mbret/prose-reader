@@ -1,4 +1,5 @@
 import { Manifest } from "@prose-reader/shared"
+import { Renderer } from "../spineItem/renderers/Renderer"
 
 export type CoreInputSettings = {
   forceSinglePageMode: boolean
@@ -40,6 +41,10 @@ export type CoreInputSettings = {
    * not pass through the service worker.
    */
   fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+  getRenderer?: (
+    item: Manifest["spineItems"][number],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ) => { new (...args: any[]): Renderer }
 }
 
 /**

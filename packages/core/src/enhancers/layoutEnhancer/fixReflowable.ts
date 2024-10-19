@@ -32,7 +32,7 @@ export const fixReflowable = (reader: Reader) => {
 
       const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
       const { width: pageWidth } = reader.context.getPageSize()
-      const frameElement = spineItem?.renderer.element
+      const frameElement = spineItem?.renderer.layers[0]?.element
 
       if (viewportDimensions) {
         const spineManagerWantAFullWidthItem = pageWidth < minimumWidth

@@ -1,13 +1,13 @@
 import { Context } from "../context/Context"
 import { Manifest } from ".."
-import { Observable, Subject } from "rxjs"
+import { merge, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
 import { map, withLatestFrom } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
-import { upsertCSS } from "../utils/frames"
+import { Renderer } from "./renderers/Renderer"
 
 export class SpineItem {
   destroySubject$: Subject<void>
@@ -19,7 +19,7 @@ export class SpineItem {
     isFirstLayout: boolean
     isReady: boolean
   }>
-  public renderer: HtmlRenderer
+  public renderer: Renderer
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -42,7 +42,10 @@ export class SpineItem {
     this.containerElement.appendChild(this.overlayElement)
     parentElement.appendChild(this.containerElement)
 
-    this.renderer = new HtmlRenderer(
+    const RendererClass =
+      this.settings.values.getRenderer?.(item) ?? HtmlRenderer
+
+    this.renderer = new RendererClass(
       context,
       settings,
       hookManager,
@@ -50,8 +53,17 @@ export class SpineItem {
       this.containerElement,
     )
 
-    this.contentLayout$ = this.renderer.frameItem.contentLayoutChange$.pipe(
-      withLatestFrom(this.renderer.frameItem.isReady$),
+    /**
+     * This is used as upstream layout change. This event is being listened to by upper app
+     * in order to layout again and adjust every element based on the new content.
+     */
+    const contentLayoutChange$ = merge(
+      this.renderer.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
+      this.renderer.ready$.pipe(map(() => ({ isFirstLayout: true }))),
+    )
+
+    this.contentLayout$ = contentLayoutChange$.pipe(
+      withLatestFrom(this.renderer.isReady$),
       map(([data, isReady]) => ({
         isFirstLayout: data.isFirstLayout,
         isReady,
@@ -98,13 +110,15 @@ export class SpineItem {
   }
 
   getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frameElement = this.renderer.frameItem.element
-    if (frameElement && selector) {
+    const frameElement = this.renderer.layers[0]?.element
+
+    if (frameElement && frameElement instanceof HTMLIFrameElement && selector) {
       if (selector.startsWith(`#`)) {
         return frameElement.contentDocument
           ?.getElementById(selector.replace(`#`, ``))
           ?.getBoundingClientRect()
       }
+
       return frameElement.contentDocument
         ?.querySelector(selector)
         ?.getBoundingClientRect()
@@ -152,11 +166,12 @@ export class SpineItem {
     clientX: number
     clientY: number
   }) => {
+    const frameElement = this.renderer.layers[0]?.element
+
     // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
     // window (viewport). This is handy because we can easily get the translated x/y without any extra information
     // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
-    const { left = 0, top = 0 } =
-      this.renderer.frameItem.element?.getBoundingClientRect() || {}
+    const { left = 0, top = 0 } = frameElement?.getBoundingClientRect() || {}
     const computedScale = this.getViewPortInformation()?.computedScale ?? 1
     const adjustedX = position.clientX * computedScale + left
     const adjustedY = position.clientY * computedScale + top
@@ -179,21 +194,12 @@ export class SpineItem {
       return fetch(this.item.href)
     }
 
-    // const finalFetch = hooks$.getValue().reduce((acc, hook) => {
-    //   if (hook.name === `item.onGetResource`) {
-    //     return hook.fn(acc)
-    //   }
-
-    //   return acc
-    // }, lastFetch)
-
-    // return await finalFetch(item)
     return await lastFetch(this.item)
   }
 
-  load = () => this.renderer.frameItem.load()
+  load = () => this.renderer.load()
 
-  unload = () => this.renderer.frameItem.unload()
+  unload = () => this.renderer.unload()
 
   // @todo use spine item manager global layout reference if possible
   // @todo getAbsolutePositionOf (for width and height)
@@ -221,16 +227,12 @@ export class SpineItem {
     this.renderer.destroy()
   }
 
-  get getHtmlFromResource() {
-    return this.renderer.frameItem.getHtmlFromResource
-  }
-
   get element() {
     return this.containerElement
   }
 
   get isReady() {
-    return this.renderer.frameItem.isReady
+    return this.renderer.isReady
   }
 
   /**
@@ -254,15 +256,14 @@ export class SpineItem {
     return undefined
   }
 
-  isUsingVerticalWriting = () =>
-    this.renderer.frameItem.getWritingMode()?.startsWith(`vertical`)
+  isUsingVerticalWriting = () => this.renderer.isUsingVerticalWriting()
 
   get loaded$() {
-    return this.renderer.frameItem.loaded$
+    return this.renderer.loaded$
   }
 
   get isReady$() {
-    return this.renderer.frameItem.isReady$
+    return this.renderer.isReady$
   }
 
   /**
@@ -272,9 +273,7 @@ export class SpineItem {
    * The document needs to be detected as a frame.
    */
   upsertCSS(id: string, style: string, prepend?: boolean) {
-    if (this.renderer.frameItem.element) {
-      upsertCSS(this.renderer.frameItem.element, id, style, prepend)
-    }
+    this.renderer.upsertCSS(id, style, prepend)
   }
 }
 

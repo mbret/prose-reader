@@ -88,7 +88,7 @@ export const layoutEnhancer =
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
       reader.spineItemsManager.items.forEach((item) => {
-        const frame = item.renderer.element
+        const frame = item.renderer.layers[0]?.element
 
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
@@ -115,7 +115,7 @@ export const layoutEnhancer =
         let width = pageSize.width - pageHorizontalMargin * 2
         let columnGap = pageHorizontalMargin * 2
 
-        if (renderer?.frameItem.isUsingVerticalWriting()) {
+        if (renderer?.isUsingVerticalWriting()) {
           width = pageSize.width - pageHorizontalMargin * 2
           columnWidth = columnHeight
           columnGap = pageVerticalMargin * 2

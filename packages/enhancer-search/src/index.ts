@@ -3,13 +3,17 @@ import { Reader } from "@prose-reader/core"
 import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
 import { map, share, switchMap, takeUntil } from "rxjs/operators"
 
-const supportedContentType = [
-  `application/xhtml+xml` as const,
-  `application/xml` as const,
-  `image/svg+xml` as const,
-  `text/html` as const,
-  `text/xml` as const,
+const supportedContentType: DOMParserSupportedType[] = [
+  `application/xhtml+xml`,
+  `application/xml`,
+  `image/svg+xml`,
+  `text/html`,
+  `text/xml`,
 ]
+
+const isSupportedContentType = (contentType: string): contentType is DOMParserSupportedType => {
+  return supportedContentType.includes(contentType as DOMParserSupportedType)
+}
 
 type ResultItem = {
   spineItemIndex: number
@@ -99,17 +103,20 @@ export const searchEnhancer =
 
       return from(item.getResource()).pipe(
         switchMap((response) => {
+          const contentType = response?.headers.get(`Content-Type`) ?? ``
+
           // small optimization since we already know DOMParser only accept some documents only
           // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
           // however we can still avoid doing unnecessary HTML generation for images resources, etc.
-          if (!supportedContentType.includes(response?.headers.get(`Content-Type`) || (`` as any))) return of([])
+          if (!isSupportedContentType(contentType)) return of([])
 
-          return from(item.getHtmlFromResource(response)).pipe(
-            map((html) => {
+          return from(response.text()).pipe(
+            map((responseText) => {
               const parser = new DOMParser()
-              const doc = parser.parseFromString(html, `application/xhtml+xml`)
+              const doc = parser.parseFromString(responseText, contentType)
 
               const ranges = searchNodeContainingText(doc, text)
+
               const newResults = ranges.map((range) => {
                 const { end, start } = reader.cfi.generateCfiFromRange(range, item.item)
                 const { node, offset, spineItemIndex } = reader.cfi.resolveCfi({ cfi: start }) || {}
