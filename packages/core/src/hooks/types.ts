@@ -19,6 +19,14 @@ export type CoreHook =
       }) => Observable<void> | void
     }
   | {
+      name: "item.onBeforeLayout"
+      runFn: (params: {
+        blankPagePosition: "before" | "after" | "none"
+        item: Manifest["spineItems"][number]
+        minimumWidth: number
+      }) => void
+    }
+  | {
       name: "item.onAfterLayout"
       runFn: (params: {
         blankPagePosition: "before" | "after" | "none"

@@ -102,8 +102,8 @@ export const layoutEnhancer =
     /**
      * @todo move to theming
      */
-    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
-      const spineItem = reader.spineItemsManager.get(itemId)
+    reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
+      const spineItem = reader.spineItemsManager.get(item.id)
       const isImageType = spineItem?.isImageType()
       const renderer = spineItem?.renderer
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =

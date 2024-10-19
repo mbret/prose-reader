@@ -120,6 +120,12 @@ export class SpineItem {
     minimumWidth: number
     spreadPosition: `left` | `right` | `none`
   }) => {
+    this.hookManager.execute(`item.onBeforeLayout`, undefined, {
+      blankPagePosition,
+      item: this.item,
+      minimumWidth,
+    })
+
     const { height, width } = this.renderer.render({
       blankPagePosition,
       minPageSpread: minimumWidth / this.context.getPageSize().width,
