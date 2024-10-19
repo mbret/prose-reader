@@ -36,19 +36,11 @@ export class MediaRenderer extends Renderer {
     throw new Error("Method not implemented.")
   }
 
-  getComputedStyleAfterLoad(): CSSStyleDeclaration | undefined {
-    throw new Error("Method not implemented.")
-  }
-
   destroy(): void {
     throw new Error("Method not implemented.")
   }
 
   upsertCSS(id: string, style: string, prepend?: boolean): void {
-    throw new Error("Method not implemented.")
-  }
-
-  isUsingVerticalWriting(): boolean | undefined {
     throw new Error("Method not implemented.")
   }
 
@@ -74,5 +66,13 @@ export class MediaRenderer extends Renderer {
 
   get layers(): { element: Element }[] {
     throw new Error("Method not implemented.")
+  }
+
+  get writingMode() {
+    return undefined
+  }
+
+  get readingDirection() {
+    return undefined
   }
 }

@@ -6,8 +6,8 @@ import { map, withLatestFrom } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
 import { Renderer } from "./renderers/Renderer"
+import { MediaRenderer } from "./renderers/media/MediaRenderer"
 
 export class SpineItem {
   destroySubject$: Subject<void>
@@ -43,7 +43,8 @@ export class SpineItem {
     parentElement.appendChild(this.containerElement)
 
     const RendererClass =
-      this.settings.values.getRenderer?.(item) ?? HtmlRenderer
+      // this.settings.values.getRenderer?.(item) ?? HtmlRenderer
+      this.settings.values.getRenderer?.(item) ?? MediaRenderer
 
     this.renderer = new RendererClass(
       context,
@@ -243,20 +244,12 @@ export class SpineItem {
    * For example an english page in a japanese manga. That's expected and will
    * be confined to a single page.
    */
-  get readingDirection(): `ltr` | `rtl` | undefined {
-    const writingMode = this.renderer.getWritingMode()
-    if (writingMode === `vertical-rl`) {
-      return `rtl`
-    }
-
-    const direction = this.renderer.getComputedStyleAfterLoad()?.direction
-    if ([`ltr`, `rtl`].includes(direction || ``))
-      return direction as `ltr` | `rtl`
-
-    return undefined
+  get readingDirection() {
+    return this.renderer.readingDirection
   }
 
-  isUsingVerticalWriting = () => this.renderer.isUsingVerticalWriting()
+  isUsingVerticalWriting = () =>
+    this.renderer.writingMode?.startsWith(`vertical`)
 
   get loaded$() {
     return this.renderer.loaded$

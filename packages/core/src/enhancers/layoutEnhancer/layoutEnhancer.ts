@@ -104,7 +104,6 @@ export const layoutEnhancer =
     reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
       const isImageType = spineItem?.isImageType()
-      const renderer = spineItem?.renderer
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
         settingsManager.values
       const pageSize = reader.context.getPageSize()
@@ -115,7 +114,7 @@ export const layoutEnhancer =
         let width = pageSize.width - pageHorizontalMargin * 2
         let columnGap = pageHorizontalMargin * 2
 
-        if (renderer?.isUsingVerticalWriting()) {
+        if (spineItem.isUsingVerticalWriting()) {
           width = pageSize.width - pageHorizontalMargin * 2
           columnWidth = columnHeight
           columnGap = pageVerticalMargin * 2

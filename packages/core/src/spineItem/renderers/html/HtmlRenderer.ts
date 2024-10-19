@@ -10,7 +10,6 @@ import {
 import { renderReflowable } from "./reflowable/renderReflowable"
 import { Renderer } from "../Renderer"
 import { upsertCSS } from "../../../utils/frames"
-import { Observable } from "rxjs"
 
 export class HtmlRenderer extends Renderer {
   public frameItem: FrameItem
@@ -104,10 +103,6 @@ export class HtmlRenderer extends Renderer {
     })
   }
 
-  getComputedStyleAfterLoad() {
-    return this.frameItem.getComputedStyleAfterLoad()
-  }
-
   get element() {
     return this.frameItem.element
   }
@@ -128,8 +123,33 @@ export class HtmlRenderer extends Renderer {
     return this.frameItem.unloaded$
   }
 
-  isUsingVerticalWriting = () =>
-    this.frameItem.getWritingMode()?.startsWith(`vertical`)
+  get writingMode() {
+    return this.frameItem.getWritingMode()
+  }
+
+  get readingDirection() {
+    const writingMode = this.writingMode
+
+    if (writingMode === `vertical-rl`) {
+      return `rtl`
+    }
+
+    const direction = this.frameItem.getComputedStyleAfterLoad()?.direction
+
+    switch (direction) {
+      case `ltr`:
+      case `inherit`:
+      case `initial`: {
+        return `ltr`
+      }
+
+      case `rtl`:
+        return `rtl`
+
+      default:
+        return undefined
+    }
+  }
 
   get isReady$() {
     return this.frameItem.isReady$

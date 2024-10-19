@@ -9,25 +9,19 @@ type Layer = {
 }
 
 export abstract class Renderer {
-
-
   constructor(
     protected context: Context,
     protected settings: ReaderSettingsManager,
     protected hookManager: HookManager,
     protected item: Manifest[`spineItems`][number],
     protected containerElement: HTMLElement,
-  ) {
-
-  }
+  ) {}
 
   abstract render(params: {
     minPageSpread: number
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`
   }): { width: number; height: number }
-
-  abstract getWritingMode(): "vertical-rl" | "horizontal-tb" | undefined
 
   /**
    * Detect the type of resource (independently of rendition flow).
@@ -50,13 +44,12 @@ export abstract class Renderer {
       }
     | undefined
 
-  abstract getComputedStyleAfterLoad(): CSSStyleDeclaration | undefined
-
   abstract destroy(): void
 
   abstract upsertCSS(id: string, style: string, prepend?: boolean): void
 
-  abstract isUsingVerticalWriting(): boolean | undefined
+  abstract get writingMode(): `vertical-rl` | `horizontal-tb` | undefined
+  abstract get readingDirection(): `rtl` | `ltr` | undefined
 
   abstract get isReady(): boolean
 
