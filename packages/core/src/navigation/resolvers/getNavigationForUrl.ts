@@ -2,7 +2,7 @@ import { Context } from "../../context/Context"
 import { ViewportPosition } from "../viewport/ViewportNavigator"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 

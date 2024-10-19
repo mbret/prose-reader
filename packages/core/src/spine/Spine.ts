@@ -2,7 +2,6 @@ import { BehaviorSubject, merge, Observable } from "rxjs"
 import { share, switchMap, takeUntil, tap } from "rxjs/operators"
 import { Context } from "../context/Context"
 import { Pagination } from "../pagination/Pagination"
-import { createSpineItem } from "../spineItem/createSpineItem"
 import { SpineItemsManager } from "./SpineItemsManager"
 import { createSpineLocator, SpineLocator } from "./locator/SpineLocator"
 import { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
@@ -15,6 +14,7 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import { noopElement } from "../utils/dom"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout } from "./SpineLayout"
+import { SpineItem } from "../spineItem/SpineItem"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
@@ -70,15 +70,16 @@ export class Spine extends DestroyableClass {
       tap((manifest) => {
         this.spineItemsManager.destroyItems()
 
-        const spineItems = manifest.spineItems.map((resource, index) =>
-          createSpineItem({
-            item: resource,
-            containerElement: this.elementSubject.getValue(),
-            context: this.context,
-            settings: this.settings,
-            hookManager: this.hookManager,
-            index,
-          }),
+        const spineItems = manifest.spineItems.map(
+          (resource, index) =>
+            new SpineItem(
+              resource,
+              this.elementSubject.getValue(),
+              this.context,
+              this.settings,
+              this.hookManager,
+              index,
+            ),
         )
 
         this.spineItemsManager.addMany(spineItems)

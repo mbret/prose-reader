@@ -1,7 +1,7 @@
 import { Context } from "../../context/Context"
 import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"

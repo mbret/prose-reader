@@ -1,6 +1,6 @@
 import { Context } from "../../context/Context"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { ViewportPosition } from "../viewport/ViewportNavigator"

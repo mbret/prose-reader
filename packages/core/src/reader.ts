@@ -24,7 +24,7 @@ import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { SettingsInterface } from "./settings/SettingsInterface"
 import { Spine } from "./spine/Spine"
 import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
-import { SpineItem } from "./spineItem/createSpineItem"
+import { SpineItem } from "./spineItem/SpineItem"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 

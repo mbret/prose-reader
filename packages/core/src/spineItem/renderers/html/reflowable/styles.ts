@@ -1,4 +1,4 @@
-import { getStyleForViewportDocument } from "../styles/getStyleForViewportDocument"
+import { getStyleForViewportDocument } from "../prePaginated/renderPrePaginated"
 
 /**
  * Item is:

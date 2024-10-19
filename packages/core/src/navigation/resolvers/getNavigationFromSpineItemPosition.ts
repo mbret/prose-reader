@@ -1,6 +1,6 @@
 import { Context } from "../../context/Context"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemLocator } from "../../spineItem/locationResolver"
 import { UnsafeSpineItemPosition } from "../../spineItem/types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"

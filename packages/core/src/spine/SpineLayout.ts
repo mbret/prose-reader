@@ -14,12 +14,12 @@ import { Report } from "../report"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { SpineItemsManager } from "./SpineItemsManager"
-import { SpineItem } from "../spineItem/createSpineItem"
 import { isShallowEqual } from "../utils/objects"
 import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
 import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
+import { SpineItem } from "../spineItem/SpineItem"
 
 const NAMESPACE = `SpineLayout`
 

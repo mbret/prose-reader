@@ -1,5 +1,4 @@
 import { Context } from "../context/Context"
-import { SpineItem } from "./createSpineItem"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -7,6 +6,7 @@ import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
 import { getSpineItemNumberOfPages } from "./locator/getSpineItemNumberOfPages"
 import { getSpineItemPositionFromPageIndex } from "./locator/getSpineItemPositionFromPageIndex"
 import { getSpineItemPagesPosition } from "./locator/getSpineItemPagesPosition"
+import { SpineItem } from "./SpineItem"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 

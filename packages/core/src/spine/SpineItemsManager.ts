@@ -1,9 +1,9 @@
 import { Context } from "../context/Context"
-import { SpineItem } from "../spineItem/createSpineItem"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { extractProseMetadataFromCfi } from "../cfi/lookup/extractProseMetadataFromCfi"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { BehaviorSubject } from "rxjs"
+import { SpineItem } from "../spineItem/SpineItem"
 
 export class SpineItemsManager extends DestroyableClass {
   constructor(

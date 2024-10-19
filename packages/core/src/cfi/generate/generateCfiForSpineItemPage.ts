@@ -1,6 +1,6 @@
 import { Report } from "../../report"
-import { SpineItem } from "../../spineItem/createSpineItem"
 import { SpineItemLocator } from "../../spineItem/locationResolver"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { CfiHandler } from "../CfiHandler"
 import { getItemAnchor } from "./getItemAnchor"
 import { getRootCfi } from "./getRootCfi"

@@ -1,5 +1,5 @@
-import { SpineItem } from "../../../spineItem/createSpineItem"
 import { SpineItemLocator } from "../../../spineItem/locationResolver"
+import { SpineItem } from "../../../spineItem/SpineItem"
 import {
   SafeSpineItemPosition,
   UnsafeSpineItemPosition,

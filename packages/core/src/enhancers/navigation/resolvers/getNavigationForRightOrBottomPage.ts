@@ -2,8 +2,8 @@ import { Context } from "../../../context/Context"
 import { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
 import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import { SpineLocator } from "../../../spine/locator/SpineLocator"
-import { SpineItem } from "../../../spineItem/createSpineItem"
 import { SpineItemsManager } from "../../../spine/SpineItemsManager"
+import { SpineItem } from "../../../spineItem/SpineItem"
 import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
 
 /**

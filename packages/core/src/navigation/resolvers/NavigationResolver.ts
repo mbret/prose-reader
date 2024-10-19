@@ -1,7 +1,6 @@
 import { Report } from "../../report"
 import { Context } from "../../context/Context"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpineItem } from "../../spineItem/createSpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -18,6 +17,7 @@ import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { resolveCfi } from "../../cfi/lookup/resolveCfi"
 import { SpineLayout } from "../../spine/SpineLayout"
+import { SpineItem } from "../../spineItem/SpineItem"
 
 export const NAMESPACE = `spineNavigator`
 

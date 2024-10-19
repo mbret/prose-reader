@@ -1,6 +1,6 @@
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { getSpineItemNumberOfPages } from "../../spineItem/locator/getSpineItemNumberOfPages"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"

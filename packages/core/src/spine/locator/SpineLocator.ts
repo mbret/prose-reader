@@ -1,5 +1,5 @@
 import { Context } from "../../context/Context"
-import { SpineItem } from "../../spineItem/createSpineItem"
+import { SpineItem } from "../../spineItem/SpineItem"
 import { createSpineItemLocator as createSpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { Report } from "../../report"

@@ -33,19 +33,6 @@ export type CoreHook =
       name: "item.onBeforeContainerCreated"
       runFn: (params: { element: HTMLElement }) => void
     }
-  /**
-   * Ideal when your logic needs to apply something to the item chich requires
-   * current layout information or is heavily sensitive to context changes.
-   * Your logic will run everytime there is a layout triggered.
-   */
-  | {
-      name: "item.onLayoutBeforeMeasurement"
-      runFn: (params: {
-        itemIndex: number
-        minimumWidth: number
-        isImageType: () => boolean | undefined
-      }) => void
-    }
   | {
       name: "onViewportOffsetAdjust"
       runFn: (params: void) => void

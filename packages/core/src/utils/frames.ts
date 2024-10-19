@@ -42,3 +42,15 @@ export const removeCSS = (frameElement: HTMLIFrameElement, id: string) => {
     }
   }
 }
+
+export const upsertCSS = (
+  frameElement: HTMLIFrameElement | undefined,
+  id: string,
+  style: string,
+  prepend?: boolean,
+) => {
+  if (!frameElement) return
+
+  removeCSS(frameElement, id)
+  injectCSS(frameElement, id, style, prepend)
+}

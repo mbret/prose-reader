@@ -6,9 +6,10 @@ import { map, withLatestFrom } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { FrameRenderer } from "./renderers/frame/FrameRenderer"
+import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
+import { upsertCSS } from "../utils/frames"
 
-export abstract class SpineItem {
+export class SpineItem {
   destroySubject$: Subject<void>
   containerElement: HTMLElement
   overlayElement: HTMLElement
@@ -18,7 +19,7 @@ export abstract class SpineItem {
     isFirstLayout: boolean
     isReady: boolean
   }>
-  public renderer: FrameRenderer
+  public renderer: HtmlRenderer
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -41,7 +42,7 @@ export abstract class SpineItem {
     this.containerElement.appendChild(this.overlayElement)
     parentElement.appendChild(this.containerElement)
 
-    this.renderer = new FrameRenderer(
+    this.renderer = new HtmlRenderer(
       context,
       settings,
       hookManager,
@@ -63,19 +64,12 @@ export abstract class SpineItem {
    * If an image is detected for reflowable for example we may want to display
    * things accordingly.
    */
-  protected isImageType = () => {
+  public isImageType = () => {
     const mimeType =
       this.item.mediaType ?? detectMimeTypeFromName(this.item.href)
 
     return !!mimeType?.startsWith(`image/`)
   }
-
-  executeOnLayoutBeforeMeasurementHook = (options: { minimumWidth: number }) =>
-    this.hookManager.execute("item.onLayoutBeforeMeasurement", undefined, {
-      itemIndex: this.index,
-      isImageType: this.isImageType,
-      ...options,
-    })
 
   adjustPositionOfElement = ({
     right,
@@ -117,42 +111,21 @@ export abstract class SpineItem {
     }
   }
 
-  getDimensionsForReflowableContent = (
-    isUsingVerticalWriting: boolean,
-    minimumWidth: number,
-  ) => {
-    const pageSize = this.context.getPageSize()
-    const horizontalMargin = 0
-    const verticalMargin = 0
-    let columnWidth = pageSize.width - horizontalMargin * 2
-    const columnHeight = pageSize.height - verticalMargin * 2
-    let width = pageSize.width - horizontalMargin * 2
-
-    if (isUsingVerticalWriting) {
-      width = minimumWidth - horizontalMargin * 2
-      columnWidth = columnHeight
-    }
-
-    return {
-      columnHeight,
-      columnWidth,
-      // horizontalMargin,
-      // verticalMargin,
-      width,
-    }
-  }
-
-  protected _layout = ({
-    height,
-    width,
+  public layout = ({
     blankPagePosition,
     minimumWidth,
+    spreadPosition,
   }: {
-    height: number
-    width: number
     blankPagePosition: `before` | `after` | `none`
     minimumWidth: number
+    spreadPosition: `left` | `right` | `none`
   }) => {
+    const { height, width } = this.renderer.render({
+      blankPagePosition,
+      minPageSpread: minimumWidth / this.context.getPageSize().width,
+      spreadPosition,
+    })
+
     this.containerElement.style.width = `${width}px`
     this.containerElement.style.height = `${height}px`
 
@@ -161,27 +134,12 @@ export abstract class SpineItem {
       item: this.item,
       minimumWidth,
     })
+
+    return { width, height }
   }
 
   getViewPortInformation = () => {
-    const { width: pageWidth, height: pageHeight } = this.context.getPageSize()
-    const viewportDimensions = this.renderer.frameItem.getViewportDimensions()
-    const frameElement = this.renderer.frameItem.element
-
-    if (
-      this.containerElement &&
-      frameElement?.contentDocument &&
-      frameElement?.contentWindow &&
-      viewportDimensions
-    ) {
-      const computedWidthScale = pageWidth / viewportDimensions.width
-      const computedScale = Math.min(
-        computedWidthScale,
-        pageHeight / viewportDimensions.height,
-      )
-
-      return { computedScale, computedWidthScale, viewportDimensions }
-    }
+    return this.renderer.getViewPortInformation()
   }
 
   translateFramePositionIntoPage = (position: {
@@ -308,7 +266,9 @@ export abstract class SpineItem {
    * The document needs to be detected as a frame.
    */
   upsertCSS(id: string, style: string, prepend?: boolean) {
-    this.renderer.upsertCSS(id, style, prepend)
+    if (this.renderer.frameItem.element) {
+      upsertCSS(this.renderer.frameItem.element, id, style, prepend)
+    }
   }
 }
 

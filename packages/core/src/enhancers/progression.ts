@@ -1,6 +1,6 @@
 import { Context } from "../context/Context"
-import { SpineItem } from "../spineItem/createSpineItem"
 import { Reader } from "../reader"
+import { SpineItem } from "../spineItem/SpineItem"
 
 /**
  * Help dealing with progression through the book

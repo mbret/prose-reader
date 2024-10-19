@@ -100,60 +100,52 @@ export const layoutEnhancer =
     })
 
     /**
-     * Apply margins to frame item
-     * @todo memoize
+     * @todo move to theming
      */
-    reader.hookManager.register(
-      `item.onLayoutBeforeMeasurement`,
-      ({ itemIndex, minimumWidth, isImageType }) => {
-        const item = reader.spineItemsManager.get(itemIndex)
-        const renderer = item?.renderer
-        const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
-          settingsManager.values
-        const pageSize = reader.context.getPageSize()
+    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+      const spineItem = reader.spineItemsManager.get(itemId)
+      const isImageType = spineItem?.isImageType()
+      const renderer = spineItem?.renderer
+      const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
+        settingsManager.values
+      const pageSize = reader.context.getPageSize()
 
-        if (
-          item?.item.renditionLayout === `reflowable` &&
-          item.isReady &&
-          !isImageType() &&
-          !renderer?.frameItem.getViewportDimensions()
-        ) {
-          let columnWidth = pageSize.width - pageHorizontalMargin * 2
-          const columnHeight = pageSize.height - pageVerticalMargin * 2
-          let width = pageSize.width - pageHorizontalMargin * 2
-          let columnGap = pageHorizontalMargin * 2
+      if (spineItem?.item.renditionLayout === `reflowable` && !isImageType) {
+        let columnWidth = pageSize.width - pageHorizontalMargin * 2
+        const columnHeight = pageSize.height - pageVerticalMargin * 2
+        let width = pageSize.width - pageHorizontalMargin * 2
+        let columnGap = pageHorizontalMargin * 2
 
-          if (renderer?.frameItem.isUsingVerticalWriting()) {
-            width = minimumWidth - pageHorizontalMargin * 2
-            columnWidth = columnHeight
-            columnGap = pageVerticalMargin * 2
-          }
-
-          item?.upsertCSS(
-            `prose-layout-enhancer-css`,
-            `
-          body {
-            width: ${width}px !important;
-            margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
-            column-gap: ${columnGap}px !important;
-            column-width: ${columnWidth}px !important;
-            height: ${columnHeight}px !important;
-          }
-          img, video, audio, object, svg {
-            max-width: ${columnWidth}px !important;
-            max-height: ${columnHeight}px !important;
-          }
-          table {
-            max-width: ${columnWidth}px !important;
-          }
-          td {
-            max-width: ${columnWidth}px;
-          }
-        `,
-          )
+        if (renderer?.frameItem.isUsingVerticalWriting()) {
+          width = pageSize.width - pageHorizontalMargin * 2
+          columnWidth = columnHeight
+          columnGap = pageVerticalMargin * 2
         }
-      },
-    )
+
+        spineItem?.upsertCSS(
+          `prose-layout-enhancer-css`,
+          `
+        body {
+          width: ${width}px !important;
+          margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
+          column-gap: ${columnGap}px !important;
+          column-width: ${columnWidth}px !important;
+          height: ${columnHeight}px !important;
+        }
+        img, video, audio, object, svg {
+          max-width: ${columnWidth}px !important;
+          max-height: ${columnHeight}px !important;
+        }
+        table {
+          max-width: ${columnWidth}px !important;
+        }
+        td {
+          max-width: ${columnWidth}px;
+        }
+      `,
+        )
+      }
+    })
 
     fixReflowable(reader)
 

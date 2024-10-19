@@ -17,9 +17,9 @@ import { createSpineItemLocator } from "../spineItem/locationResolver"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
 import { Spine } from "../spine/Spine"
-import { SpineItem } from "../spineItem/createSpineItem"
 import { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
 import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
+import { SpineItem } from "../spineItem/SpineItem"
 
 export class PaginationController extends DestroyableClass {
   constructor(
