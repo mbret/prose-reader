@@ -173,14 +173,6 @@ export const renderPrePaginated = ({
   const frameElement = frameItem.element
   const minimumWidth = minPageSpread * pageWidth
 
-  console.log({
-    minPageSpread,
-    blankPagePosition,
-    spreadPosition,
-    minimumWidth,
-    frameElement,
-  })
-
   if (
     frameItem?.isLoaded &&
     frameElement?.contentDocument &&
