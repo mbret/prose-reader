@@ -2,17 +2,24 @@ import { Context } from "../context/Context"
 import { Manifest } from ".."
 import { merge, Observable, Subject } from "rxjs"
 import { createFingerTracker, createSelectionTracker } from "./trackers"
-import { map, withLatestFrom } from "rxjs/operators"
+import {
+  distinctUntilChanged,
+  filter,
+  first,
+  map,
+  switchMap,
+  withLatestFrom,
+} from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Renderer } from "./renderers/Renderer"
-import { MediaRenderer } from "./renderers/media/MediaRenderer"
+import { upsertCSS } from "../utils/frames"
+import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
 
 export class SpineItem {
   destroySubject$: Subject<void>
   containerElement: HTMLElement
-  overlayElement: HTMLElement
   fingerTracker: ReturnType<typeof createFingerTracker>
   selectionTracker: ReturnType<typeof createSelectionTracker>
   contentLayout$: Observable<{
@@ -35,16 +42,14 @@ export class SpineItem {
       item,
       hookManager,
     )
-    this.overlayElement = createOverlayElement(parentElement, item)
     this.fingerTracker = createFingerTracker()
     this.selectionTracker = createSelectionTracker()
 
-    this.containerElement.appendChild(this.overlayElement)
     parentElement.appendChild(this.containerElement)
 
     const RendererClass =
-      // this.settings.values.getRenderer?.(item) ?? HtmlRenderer
-      this.settings.values.getRenderer?.(item) ?? MediaRenderer
+      this.settings.values.getRenderer?.(item) ?? HtmlRenderer
+    // this.settings.values.getRenderer?.(item) ?? MediaRenderer
 
     this.renderer = new RendererClass(
       context,
@@ -59,12 +64,12 @@ export class SpineItem {
      * in order to layout again and adjust every element based on the new content.
      */
     const contentLayoutChange$ = merge(
-      this.renderer.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
-      this.renderer.ready$.pipe(map(() => ({ isFirstLayout: true }))),
+      this.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
+      this.ready$.pipe(map(() => ({ isFirstLayout: true }))),
     )
 
     this.contentLayout$ = contentLayoutChange$.pipe(
-      withLatestFrom(this.renderer.isReady$),
+      withLatestFrom(this.isReady$),
       map(([data, isReady]) => ({
         isFirstLayout: data.isFirstLayout,
         isReady,
@@ -232,10 +237,6 @@ export class SpineItem {
     return this.containerElement
   }
 
-  get isReady() {
-    return this.renderer.isReady
-  }
-
   /**
    * @important
    * Do not use this value for layout and navigation. It will be in possible conflict
@@ -251,12 +252,39 @@ export class SpineItem {
   isUsingVerticalWriting = () =>
     this.renderer.writingMode?.startsWith(`vertical`)
 
+  get isReady() {
+    return this.renderer.state$.getValue() === "ready"
+  }
+
+  get ready$() {
+    return this.renderer.state$.pipe(
+      distinctUntilChanged(),
+      filter((state) => state === "ready"),
+    )
+  }
+
   get loaded$() {
-    return this.renderer.loaded$
+    return this.renderer.state$.pipe(
+      distinctUntilChanged(),
+      filter((state) => state === "loaded"),
+    )
+  }
+
+  get unloaded$() {
+    return this.renderer.state$.pipe(
+      distinctUntilChanged(),
+      filter((state) => state !== "idle"),
+      switchMap(() =>
+        this.renderer.state$.pipe(
+          filter((state) => state === `idle`),
+          first(),
+        ),
+      ),
+    )
   }
 
   get isReady$() {
-    return this.renderer.isReady$
+    return this.renderer.state$.pipe(map((state) => state === "ready"))
   }
 
   /**
@@ -266,7 +294,11 @@ export class SpineItem {
    * The document needs to be detected as a frame.
    */
   upsertCSS(id: string, style: string, prepend?: boolean) {
-    this.renderer.upsertCSS(id, style, prepend)
+    this.renderer.layers.forEach((layer) => {
+      if (layer.element instanceof HTMLIFrameElement) {
+        upsertCSS(layer.element, id, style, prepend)
+      }
+    })
   }
 }
 
@@ -285,24 +317,6 @@ const createContainerElement = (
   `
 
   hookManager.execute("item.onBeforeContainerCreated", undefined, { element })
-
-  return element
-}
-
-const createOverlayElement = (
-  containerElement: HTMLElement,
-  item: Manifest[`spineItems`][number],
-) => {
-  const element = containerElement.ownerDocument.createElement(`div`)
-  element.classList.add(`spineItemOverlay`)
-  element.classList.add(`spineItemOverlay-${item.renditionLayout}`)
-  element.style.cssText = `
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background-color: transparent;
-  `
 
   return element
 }

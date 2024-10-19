@@ -1,4 +1,3 @@
-import { Observable } from "rxjs"
 import { Renderer } from "../Renderer"
 
 export class MediaRenderer extends Renderer {
@@ -40,32 +39,8 @@ export class MediaRenderer extends Renderer {
     throw new Error("Method not implemented.")
   }
 
-  upsertCSS(id: string, style: string, prepend?: boolean): void {
-    throw new Error("Method not implemented.")
-  }
-
-  get isReady(): boolean {
-    throw new Error("Method not implemented.")
-  }
-
-  get loaded$(): Observable<Element> {
-    throw new Error("Method not implemented.")
-  }
-
-  get isReady$(): Observable<boolean> {
-    throw new Error("Method not implemented.")
-  }
-
-  get ready$(): Observable<unknown> {
-    throw new Error("Method not implemented.")
-  }
-
-  get unloaded$(): Observable<unknown> {
-    throw new Error("Method not implemented.")
-  }
-
   get layers(): { element: Element }[] {
-    throw new Error("Method not implemented.")
+    return []
   }
 
   get writingMode() {

@@ -65,6 +65,7 @@ export const renderReflowable = ({
   const continuousScrollableReflowableItem =
     manifest?.renditionLayout === "reflowable" &&
     manifest?.renditionFlow === "scrolled-continuous"
+  const frameElement = frameItem.loader.element
 
   /**
    * In case of reflowable with continous scrolling, we don't know if the content is
@@ -82,14 +83,14 @@ export const renderReflowable = ({
     : pageSizeHeight
 
   // reset width of iframe to be able to retrieve real size later
-  frameItem.element?.style.setProperty(`width`, `${pageWidth}px`)
+  frameElement?.style.setProperty(`width`, `${pageWidth}px`)
 
   /**
    * In case of reflowable with continous scrolling, we let the frame takes whatever height
    * it needs since it could be less or more than page size and we want a continous reading
    */
   if (!continuousScrollableReflowableItem) {
-    frameItem.element?.style.setProperty(`height`, `${pageHeight}px`)
+    frameElement?.style.setProperty(`height`, `${pageHeight}px`)
   }
 
   const { viewportDimensions, computedScale = 1 } =
@@ -98,7 +99,6 @@ export const renderReflowable = ({
       pageHeight,
       pageWidth,
     }) ?? {}
-  const frameElement = frameItem.element
   const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
 
   // @todo simplify ? should be from common spine item
@@ -115,7 +115,7 @@ export const renderReflowable = ({
 
     if (viewportDimensions) {
       upsertCSS(
-        frameItem.element,
+        frameElement,
         `prose-reader-html-renderer-framce-css`,
         buildStyleForViewportFrame(),
       )
@@ -160,7 +160,7 @@ export const renderReflowable = ({
             }),
           )
 
-      upsertCSS(frameItem.element, `prose-reader-css`, frameStyle, true)
+      upsertCSS(frameElement, `prose-reader-css`, frameStyle, true)
 
       if (frameItem.isUsingVerticalWriting()) {
         const pages = Math.ceil(

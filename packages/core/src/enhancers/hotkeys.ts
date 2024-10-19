@@ -58,12 +58,14 @@ export const hotkeysEnhancer =
           merge(
             ...spineItems.map((item) =>
               item.loaded$.pipe(
-                switchMap((element) =>
-                  element instanceof HTMLIFrameElement &&
-                  element?.contentDocument
+                switchMap(() => {
+                  const element = item.renderer.layers[0]?.element
+
+                  return element instanceof HTMLIFrameElement &&
+                    element?.contentDocument
                     ? navigateOnKey(element.contentDocument)
-                    : EMPTY,
-                ),
+                    : EMPTY
+                }),
               ),
             ),
           ),

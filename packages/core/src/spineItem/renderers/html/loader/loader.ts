@@ -13,7 +13,6 @@ import {
   endWith,
   ignoreElements,
   startWith,
-  shareReplay,
   defaultIfEmpty,
 } from "rxjs/operators"
 import { loadFrame } from "./loadFrame"
@@ -30,17 +29,18 @@ export const createLoader = ({
   context,
   settings,
   hookManager,
+  stateSubject,
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
   context: Context
   settings: ReaderSettingsManager
   hookManager: HookManager
+  stateSubject: BehaviorSubject<
+    "unloading" | "idle" | "loading" | "loaded" | "ready"
+  >
 }) => {
   const destroySubject$ = new Subject<void>()
-  const stateSubject = new BehaviorSubject<
-    "idle" | "loading" | "loaded" | "unloading" | "ready"
-  >("idle")
   const loadSubject = new Subject<void>()
   const unloadSubject = new Subject<void>()
   const frameElementSubject = new BehaviorSubject<
@@ -121,23 +121,15 @@ export const createLoader = ({
     share(),
   )
 
-  const ready$ = frameIsReady$
-
   const state$ = merge(
     unloaded$.pipe(map(() => "idle" as const)),
     unloading$.pipe(map(() => "unloading" as const)),
     loaded$.pipe(map(() => "loaded" as const)),
     loading$.pipe(map(() => "loading" as const)),
-    ready$.pipe(map(() => "ready" as const)),
-  ).pipe(
-    startWith("idle" as const),
-    tap((state) => stateSubject.next(state)),
-    shareReplay(1),
-  )
+    frameIsReady$.pipe(map(() => "ready" as const)),
+  ).pipe(tap((state) => stateSubject.next(state)))
 
-  const isReady$ = state$.pipe(map((state) => state === "ready"))
-
-  state$.pipe(takeUntil(destroySubject$)).subscribe()
+  const stateSub = state$.pipe(takeUntil(destroySubject$)).subscribe()
 
   return {
     load: () => loadSubject.next(),
@@ -149,18 +141,11 @@ export const createLoader = ({
       frameElementSubject.complete()
       destroySubject$.next()
       destroySubject$.complete()
-      stateSubject.complete()
-    },
-    get state() {
-      return stateSubject.getValue()
+      stateSub.unsubscribe()
     },
     get element() {
       return frameElementSubject.getValue()
     },
-    isReady$,
-    ready$,
-    loaded$,
-    unloaded$,
     element$: frameElementSubject.asObservable(),
   }
 }

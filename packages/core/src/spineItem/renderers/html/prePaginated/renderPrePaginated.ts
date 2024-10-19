@@ -20,7 +20,7 @@ export const getViewPortInformation = ({
   frameItem: FrameItem
 }) => {
   const viewportDimensions = frameItem.getViewportDimensions()
-  const frameElement = frameItem.element
+  const frameElement = frameItem.loader.element
 
   if (
     frameElement?.contentDocument &&
@@ -170,7 +170,7 @@ export const renderPrePaginated = ({
 }) => {
   const { viewportDimensions, computedScale = 1 } =
     getViewPortInformation({ frameItem, pageHeight, pageWidth }) ?? {}
-  const frameElement = frameItem.element
+  const frameElement = frameItem.loader.element
   const minimumWidth = minPageSpread * pageWidth
 
   if (

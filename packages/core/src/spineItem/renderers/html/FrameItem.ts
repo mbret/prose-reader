@@ -6,11 +6,10 @@ import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { type HookManager } from "../../../hooks/HookManager"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 import { createLoader } from "./loader/loader"
+import { BehaviorSubject } from "rxjs"
 
 export class FrameItem extends DestroyableClass {
-  protected loader: ReturnType<typeof createLoader>
-
-
+  public loader: ReturnType<typeof createLoader>
 
   constructor(
     protected parent: HTMLElement,
@@ -18,6 +17,9 @@ export class FrameItem extends DestroyableClass {
     protected context: Context,
     protected settings: ReaderSettingsManager,
     protected hookManager: HookManager,
+    protected stateSubject: BehaviorSubject<
+      "unloading" | "idle" | "loading" | "loaded" | "ready"
+    >,
   ) {
     super()
 
@@ -27,6 +29,7 @@ export class FrameItem extends DestroyableClass {
       item,
       parent,
       settings,
+      stateSubject,
     })
   }
 
@@ -85,32 +88,11 @@ export class FrameItem extends DestroyableClass {
     return createHtmlPageFromResource(response, this.item)
   }
 
-  public get element() {
-    return this.loader.element
-  }
-
-  public get unloaded$() {
-    return this.loader.unloaded$
-  }
-
-  public get loaded$() {
-    return this.loader.loaded$
-  }
-
-  public get ready$() {
-    return this.loader.ready$
-  }
-
-  public get isReady$() {
-    return this.loader.isReady$
-  }
-
   public get isLoaded() {
-    return this.loader.state === "loaded" || this.loader.state === "ready"
-  }
-
-  public get isReady() {
-    return this.loader.state === "ready"
+    return (
+      this.stateSubject.getValue() === "loaded" ||
+      this.stateSubject.getValue() === "ready"
+    )
   }
 
   public load() {

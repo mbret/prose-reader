@@ -9,10 +9,10 @@ import {
 } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
 import { Renderer } from "../Renderer"
-import { upsertCSS } from "../../../utils/frames"
 
 export class HtmlRenderer extends Renderer {
   public frameItem: FrameItem
+
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
    * the content has been loaded.
@@ -39,6 +39,7 @@ export class HtmlRenderer extends Renderer {
       context,
       settings,
       hookManager,
+      this.stateSubject,
     )
   }
 
@@ -104,23 +105,7 @@ export class HtmlRenderer extends Renderer {
   }
 
   get element() {
-    return this.frameItem.element
-  }
-
-  get isReady() {
-    return this.frameItem.isReady
-  }
-
-  get loaded$() {
-    return this.frameItem.loaded$
-  }
-
-  get ready$() {
-    return this.frameItem.ready$
-  }
-
-  get unloaded$() {
-    return this.frameItem.unloaded$
+    return this.frameItem.loader.element
   }
 
   get writingMode() {
@@ -151,34 +136,18 @@ export class HtmlRenderer extends Renderer {
     }
   }
 
-  get isReady$() {
-    return this.frameItem.isReady$
-  }
-
   load = () => this.frameItem.load()
 
   unload = () => this.frameItem.unload()
 
   get layers() {
-    if (!this.frameItem.element) return []
+    if (!this.frameItem.loader.element) return []
 
     return [
       {
-        element: this.frameItem.element,
+        element: this.frameItem.loader.element,
       },
     ]
-  }
-
-  /**
-   * Helper that will inject CSS into the document frame.
-   *
-   * @important
-   * The document needs to be detected as a frame.
-   */
-  upsertCSS(id: string, style: string, prepend?: boolean) {
-    if (this.frameItem.element) {
-      upsertCSS(this.frameItem.element, id, style, prepend)
-    }
   }
 
   destroy() {

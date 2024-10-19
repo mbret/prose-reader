@@ -2,13 +2,17 @@ import { Manifest } from "@prose-reader/shared"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { Observable } from "rxjs"
+import { BehaviorSubject } from "rxjs"
 
 type Layer = {
   element: Element
 }
 
 export abstract class Renderer {
+  protected stateSubject = new BehaviorSubject<
+    `idle` | `loading` | `loaded` | `unloading` | `ready`
+  >(`idle`)
+
   constructor(
     protected context: Context,
     protected settings: ReaderSettingsManager,
@@ -46,20 +50,12 @@ export abstract class Renderer {
 
   abstract destroy(): void
 
-  abstract upsertCSS(id: string, style: string, prepend?: boolean): void
-
   abstract get writingMode(): `vertical-rl` | `horizontal-tb` | undefined
   abstract get readingDirection(): `rtl` | `ltr` | undefined
 
-  abstract get isReady(): boolean
-
-  abstract get loaded$(): Observable<Element>
-
-  abstract get isReady$(): Observable<boolean>
-
-  abstract get ready$(): Observable<unknown>
-
-  abstract get unloaded$(): Observable<unknown>
+  public get state$() {
+    return this.stateSubject
+  }
 
   abstract get layers(): Layer[]
 }
