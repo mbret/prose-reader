@@ -151,30 +151,6 @@ export class SpineItem {
     return { width, height }
   }
 
-  getViewPortInformation = () => {
-    return this.renderer.getViewPortInformation()
-  }
-
-  translateFramePositionIntoPage = (position: {
-    clientX: number
-    clientY: number
-  }) => {
-    const frameElement = this.renderer.layers[0]?.element
-
-    // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
-    // window (viewport). This is handy because we can easily get the translated x/y without any extra information
-    // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
-    const { left = 0, top = 0 } = frameElement?.getBoundingClientRect() || {}
-    const computedScale = this.getViewPortInformation()?.computedScale ?? 1
-    const adjustedX = position.clientX * computedScale + left
-    const adjustedY = position.clientY * computedScale + top
-
-    return {
-      clientX: adjustedX,
-      clientY: adjustedY,
-    }
-  }
-
   getResource = async () => {
     const fetchResource = this.settings.values.fetchResource
 

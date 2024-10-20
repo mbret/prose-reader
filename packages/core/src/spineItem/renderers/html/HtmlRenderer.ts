@@ -3,10 +3,7 @@ import { Context } from "../../../context/Context"
 import { FrameItem } from "./FrameItem"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { HookManager } from "../../../hooks/HookManager"
-import {
-  getViewPortInformation,
-  renderPrePaginated,
-} from "./prePaginated/renderPrePaginated"
+import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
 import { Renderer } from "../Renderer"
 
@@ -90,18 +87,6 @@ export class HtmlRenderer extends Renderer {
       this.item.mediaType ?? detectMimeTypeFromName(this.item.href)
 
     return !!mimeType?.startsWith(`image/`)
-  }
-
-  getWritingMode() {
-    return this.frameItem.getWritingMode()
-  }
-
-  getViewPortInformation() {
-    return getViewPortInformation({
-      frameItem: this.frameItem,
-      pageHeight: this.context.getPageSize().height,
-      pageWidth: this.context.getPageSize().width,
-    })
   }
 
   get element() {

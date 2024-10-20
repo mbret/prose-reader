@@ -1,5 +1,7 @@
+import { Context } from "../../context/Context"
 import { SpineLocator } from "../../spine/locator/SpineLocator"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
+import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage"
 
 export const normalizeEventForViewport = <
   E extends MouseEvent | TouchEvent | PointerEvent,
@@ -7,17 +9,25 @@ export const normalizeEventForViewport = <
   event: E,
   iframeOriginalEvent: E,
   locator: SpineLocator,
+  context: Context,
 ) => {
   const originalFrame = iframeOriginalEvent?.view?.frameElement
 
   if (!iframeOriginalEvent || !originalFrame) return event
 
   const spineItem = locator.getSpineItemFromIframe(originalFrame)
+  const frameElement = spineItem?.renderer.layers[0]?.element
+  const { height: pageHeight, width: pageWidth } = context.getPageSize()
 
-  if (!spineItem) return event
+  if (!spineItem || !(frameElement instanceof HTMLIFrameElement)) return event
 
   if (isPointerEvent(event)) {
-    const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
+    const { clientX, clientY } = translateFramePositionIntoPage({
+      position: event,
+      frameElement,
+      pageHeight,
+      pageWidth,
+    })
 
     const newEvent = new PointerEvent(event.type, {
       ...event,
@@ -35,7 +45,12 @@ export const normalizeEventForViewport = <
   }
 
   if (isMouseEvent(event)) {
-    const { clientX, clientY } = spineItem.translateFramePositionIntoPage(event)
+    const { clientX, clientY } = translateFramePositionIntoPage({
+      position: event,
+      frameElement,
+      pageHeight,
+      pageWidth,
+    })
 
     const newEvent = new MouseEvent(event.type, {
       ...event,
@@ -53,8 +68,12 @@ export const normalizeEventForViewport = <
 
   if (isTouchEvent(event)) {
     const touches = Array.from(event.touches).map((touch) => {
-      const { clientX, clientY } =
-        spineItem.translateFramePositionIntoPage(touch)
+      const { clientX, clientY } = translateFramePositionIntoPage({
+        position: touch,
+        frameElement,
+        pageHeight,
+        pageWidth,
+      })
 
       return new Touch({
         identifier: touch.identifier,

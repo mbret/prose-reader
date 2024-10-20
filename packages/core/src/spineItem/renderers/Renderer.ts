@@ -29,18 +29,6 @@ export abstract class Renderer {
 
   abstract load(): void
   abstract unload(): void
-
-  abstract getViewPortInformation():
-    | {
-        computedScale: number
-        computedWidthScale: number
-        viewportDimensions: {
-          width: number
-          height: number
-        }
-      }
-    | undefined
-
   abstract destroy(): void
 
   abstract get writingMode(): `vertical-rl` | `horizontal-tb` | undefined

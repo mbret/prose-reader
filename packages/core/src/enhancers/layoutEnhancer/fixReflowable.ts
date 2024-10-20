@@ -1,4 +1,5 @@
 import { Reader } from "../../reader"
+import { getFrameViewportInfo } from "../../utils/frames"
 
 export const fixReflowable = (reader: Reader) => {
   /**
@@ -27,14 +28,19 @@ export const fixReflowable = (reader: Reader) => {
     `item.onAfterLayout`,
     ({ item, blankPagePosition, minimumWidth }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
+      const element = spineItem?.renderer.layers[0]?.element
 
-      if (!(spineItem?.item.renditionLayout === `reflowable`)) return
+      if (
+        !(spineItem?.item.renditionLayout === `reflowable`) ||
+        !(element instanceof HTMLIFrameElement)
+      )
+        return
 
-      const { viewportDimensions } = spineItem?.getViewPortInformation() ?? {}
+      const { hasViewport } = getFrameViewportInfo(element)
       const { width: pageWidth } = reader.context.getPageSize()
       const frameElement = spineItem?.renderer.layers[0]?.element
 
-      if (viewportDimensions) {
+      if (hasViewport) {
         const spineManagerWantAFullWidthItem = pageWidth < minimumWidth
         const noBlankPageAsked = blankPagePosition === `none`
 

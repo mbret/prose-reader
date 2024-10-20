@@ -54,3 +54,31 @@ export const upsertCSS = (
   removeCSS(frameElement, id)
   injectCSS(frameElement, id, style, prepend)
 }
+
+export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
+  if (frame && frame?.contentDocument) {
+    const doc = frame.contentDocument
+    const viewportMetaElement = doc.querySelector(`meta[name='viewport']`)
+
+    if (viewportMetaElement) {
+      const viewportContent = viewportMetaElement.getAttribute(`content`)
+
+      if (viewportContent) {
+        const width = getAttributeValueFromString(viewportContent, `width`)
+        const height = getAttributeValueFromString(viewportContent, `height`)
+
+        if (width > 0 && height > 0) {
+          return {
+            hasViewport: true,
+            width: width,
+            height: height,
+          }
+        } else {
+          return { hasViewport: true }
+        }
+      }
+    }
+  }
+
+  return { hasViewport: false }
+}

@@ -27,10 +27,10 @@ export const getViewPortInformation = ({
     frameElement.contentWindow &&
     viewportDimensions
   ) {
-    const computedWidthScale = pageWidth / viewportDimensions.width
+    const computedWidthScale = pageWidth / (viewportDimensions.width ?? 1)
     const computedScale = Math.min(
       computedWidthScale,
-      pageHeight / viewportDimensions.height,
+      pageHeight / (viewportDimensions.height ?? 1),
     )
 
     return { computedScale, computedWidthScale, viewportDimensions }
@@ -48,7 +48,7 @@ const buildDocumentStyle = (
     enableTouch: boolean
     spreadPosition: `none` | `left` | `right`
   },
-  viewportDimensions: { height: number; width: number } | undefined,
+  viewportDimensions: { height?: number; width?: number } | undefined,
 ) => {
   return `
       ${getStyleForViewportDocument()}
@@ -197,8 +197,8 @@ export const renderPrePaginated = ({
 
     if (viewportDimensions) {
       frameItem.staticLayout({
-        width: viewportDimensions.width,
-        height: viewportDimensions.height,
+        width: viewportDimensions.width ?? 1,
+        height: viewportDimensions.height ?? 1,
       })
     } else {
       frameItem.staticLayout({

@@ -22,55 +22,59 @@ export const eventsEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ destroy, frame, itemId }) => {
-      const item = reader.spineItemsManager.get(itemId)
+    reader.hookManager.register(
+      `item.onDocumentLoad`,
+      ({ destroy, frame, itemId }) => {
+        const item = reader.spineItemsManager.get(itemId)
 
-      if (!item) return
+        if (!item) return
 
-      /**
-       * Register event listener for all mouse/pointer event in order to
-       * passthrough events to main document
-       */
-      const unregister = passthroughEvents.map((event) => {
-        const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
-          let convertedEvent = e
-          /**
-           * We have to create a new fake event since the original one is already dispatched
-           * on original frame.
-           *
-           * @see Failed to execute 'dispatchEvent' on 'EventTarget': The event is already being dispatched.
-           */
-          if (isPointerEvent(e)) {
-            convertedEvent = new PointerEvent(e.type, e)
+        /**
+         * Register event listener for all mouse/pointer event in order to
+         * passthrough events to main document
+         */
+        const unregister = passthroughEvents.map((event) => {
+          const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
+            let convertedEvent = e
+            /**
+             * We have to create a new fake event since the original one is already dispatched
+             * on original frame.
+             *
+             * @see Failed to execute 'dispatchEvent' on 'EventTarget': The event is already being dispatched.
+             */
+            if (isPointerEvent(e)) {
+              convertedEvent = new PointerEvent(e.type, e)
+            }
+
+            if (convertedEvent !== e) {
+              const normalizedEvent = normalizeEventForViewport(
+                convertedEvent,
+                e,
+                reader.spine.locator,
+                reader.context,
+              )
+
+              reader.context.state.containerElement?.dispatchEvent(
+                normalizedEvent,
+              )
+            }
           }
 
-          if (convertedEvent !== e) {
-            const normalizedEvent = normalizeEventForViewport(
-              convertedEvent,
-              e,
-              reader.spine.locator,
-            )
+          frame.contentDocument?.addEventListener(event, listener)
 
-            reader.context.state.containerElement?.dispatchEvent(
-              normalizedEvent,
-            )
+          return () => {
+            frame.contentDocument?.removeEventListener(event, listener)
           }
-        }
+        })
 
-        frame.contentDocument?.addEventListener(event, listener)
+        item.selectionTracker.track(frame)
+        item.fingerTracker.track(frame)
 
-        return () => {
-          frame.contentDocument?.removeEventListener(event, listener)
-        }
-      })
-
-      item.selectionTracker.track(frame)
-      item.fingerTracker.track(frame)
-
-      destroy(() => {
-        unregister.forEach((cb) => cb())
-      })
-    })
+        destroy(() => {
+          unregister.forEach((cb) => cb())
+        })
+      },
+    )
 
     return reader
   }

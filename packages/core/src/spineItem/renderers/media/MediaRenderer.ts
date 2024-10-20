@@ -9,29 +9,11 @@ export class MediaRenderer extends Renderer {
     throw new Error("Method not implemented.")
   }
 
-  getWritingMode(): "vertical-rl" | "horizontal-tb" | undefined {
-    throw new Error("Method not implemented.")
-  }
-
   load(): void {
     throw new Error("Method not implemented.")
   }
 
   unload(): void {
-    throw new Error("Method not implemented.")
-  }
-
-  getViewPortInformation():
-    | {
-        computedScale: number
-        computedWidthScale: number
-        viewportDimensions: { width: number; height: number }
-      }
-    | undefined {
-    throw new Error("Method not implemented.")
-  }
-
-  destroy(): void {
     throw new Error("Method not implemented.")
   }
 
@@ -46,4 +28,6 @@ export class MediaRenderer extends Renderer {
   get readingDirection() {
     return undefined
   }
+
+  destroy(): void {}
 }

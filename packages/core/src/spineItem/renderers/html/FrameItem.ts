@@ -1,6 +1,6 @@
 import { Manifest } from "../../.."
 import { Context } from "../../../context/Context"
-import { getAttributeValueFromString } from "../../../utils/frames"
+import { getFrameViewportInfo } from "../../../utils/frames"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { type HookManager } from "../../../hooks/HookManager"
@@ -43,34 +43,10 @@ export class FrameItem extends DestroyableClass {
     }
   }
 
-  // @todo memoize
   public getViewportDimensions = () => {
     const frame = this.loader.element
 
-    if (frame && frame?.contentDocument) {
-      const doc = frame.contentDocument
-      const viewPortMeta = doc.querySelector(`meta[name='viewport']`)
-      if (viewPortMeta) {
-        const viewPortMetaInfos = viewPortMeta.getAttribute(`content`)
-        if (viewPortMetaInfos) {
-          const width = getAttributeValueFromString(viewPortMetaInfos, `width`)
-          const height = getAttributeValueFromString(
-            viewPortMetaInfos,
-            `height`,
-          )
-          if (width > 0 && height > 0) {
-            return {
-              width: width,
-              height: height,
-            }
-          } else {
-            return undefined
-          }
-        }
-      }
-    }
-
-    return undefined
+    return getFrameViewportInfo(frame)
   }
 
   public getWritingMode = () => {

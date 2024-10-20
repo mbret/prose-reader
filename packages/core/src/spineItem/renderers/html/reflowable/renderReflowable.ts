@@ -121,8 +121,8 @@ export const renderReflowable = ({
       )
 
       frameItem.staticLayout({
-        width: viewportDimensions.width,
-        height: viewportDimensions.height,
+        width: viewportDimensions.width ?? 1,
+        height: viewportDimensions.height ?? 1,
       })
 
       frameElement?.style.setProperty(`position`, `absolute`)
