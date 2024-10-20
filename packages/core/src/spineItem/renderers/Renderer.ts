@@ -27,13 +27,6 @@ export abstract class Renderer {
     spreadPosition: `none` | `left` | `right`
   }): { width: number; height: number }
 
-  /**
-   * Detect the type of resource (independently of rendition flow).
-   * If an image is detected for reflowable for example we may want to display
-   * things accordingly.
-   */
-  abstract isImageType(): boolean
-
   abstract load(): void
   abstract unload(): void
 

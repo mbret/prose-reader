@@ -13,10 +13,6 @@ export class MediaRenderer extends Renderer {
     throw new Error("Method not implemented.")
   }
 
-  isImageType(): boolean {
-    throw new Error("Method not implemented.")
-  }
-
   load(): void {
     throw new Error("Method not implemented.")
   }

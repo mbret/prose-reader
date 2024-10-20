@@ -21,6 +21,7 @@ import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
 import { merge, Observable } from "rxjs"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 
 export const layoutEnhancer =
   <
@@ -103,7 +104,9 @@ export const layoutEnhancer =
      */
     reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
-      const isImageType = spineItem?.isImageType()
+      const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
+      const isImageType = !!mimeType?.startsWith(`image/`)
+
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
         settingsManager.values
       const pageSize = reader.context.getPageSize()

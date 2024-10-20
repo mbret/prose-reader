@@ -85,7 +85,7 @@ export class HtmlRenderer extends Renderer {
     return rest
   }
 
-  isImageType = () => {
+  private isImageType = () => {
     const mimeType =
       this.item.mediaType ?? detectMimeTypeFromName(this.item.href)
 

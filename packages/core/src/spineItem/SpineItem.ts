@@ -12,7 +12,6 @@ import {
 } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
-import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Renderer } from "./renderers/Renderer"
 import { upsertCSS } from "../utils/frames"
 import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
@@ -75,18 +74,6 @@ export class SpineItem {
         isReady,
       })),
     )
-  }
-
-  /**
-   * Detect the type of resource (independently of rendition flow).
-   * If an image is detected for reflowable for example we may want to display
-   * things accordingly.
-   */
-  public isImageType = () => {
-    const mimeType =
-      this.item.mediaType ?? detectMimeTypeFromName(this.item.href)
-
-    return !!mimeType?.startsWith(`image/`)
   }
 
   adjustPositionOfElement = ({
