@@ -11,6 +11,8 @@ export class SpineItemsObserver extends DestroyableClass {
    */
   public itemIsReady$: Observable<{ item: SpineItem; isReady: boolean }>
 
+  public itemLoaded$: Observable<SpineItem>
+
   /**
    * Observable directly plugged to ResizeObserver for each item.
    */
@@ -47,6 +49,16 @@ export class SpineItemsObserver extends DestroyableClass {
         return merge(...resize$)
       }),
       share(),
+    )
+
+    this.itemLoaded$ = this.spineItemsManager.items$.pipe(
+      switchMap((items) => {
+        const itemsIsReady$ = items.map((item) =>
+          item.loaded$.pipe(map(() => item)),
+        )
+
+        return merge(...itemsIsReady$)
+      }),
     )
   }
 }

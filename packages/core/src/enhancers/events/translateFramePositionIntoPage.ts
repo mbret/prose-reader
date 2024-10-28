@@ -14,8 +14,10 @@ export const translateFramePositionIntoPage = ({
   pageWidth: number
   pageHeight: number
 }) => {
-  const { height: viewportHeight = 1, width: viewportWidth = 1 } =
-    getFrameViewportInfo(frameElement)
+  const {
+    height: viewportHeight = pageHeight,
+    width: viewportWidth = pageWidth,
+  } = getFrameViewportInfo(frameElement)
   const computedWidthScale = pageWidth / viewportWidth
   const computedScale = Math.min(
     computedWidthScale,
