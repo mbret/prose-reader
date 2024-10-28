@@ -8,6 +8,7 @@ import { Manifest } from "@prose-reader/shared"
 import { HookManager } from "../../../../hooks/HookManager"
 import { Context } from "../../../../context/Context"
 import { waitForSwitch } from "../../../../utils/rxjs"
+import { ResourceHandler } from "../../../ResourceHandler"
 
 export const loadFrame = ({
   settings,
@@ -16,6 +17,7 @@ export const loadFrame = ({
   element,
   onFrameElement,
   context,
+  resourcesHandler,
 }: {
   settings: ReaderSettingsManager
   item: Manifest[`spineItems`][number]
@@ -23,6 +25,7 @@ export const loadFrame = ({
   element: HTMLElement
   onFrameElement: (element: HTMLIFrameElement) => void
   context: Context
+  resourcesHandler: ResourceHandler
 }) => {
   const frameElement = createFrameElement()
 
@@ -32,7 +35,7 @@ export const loadFrame = ({
 
       onFrameElement(frame)
     }),
-    attachFrameSrc({ settings, item }),
+    attachFrameSrc({ settings, item, resourcesHandler }),
     waitForSwitch(context.bridgeEvent.viewportFree$),
     waitForFrameLoad,
     waitForSwitch(context.bridgeEvent.viewportFree$),

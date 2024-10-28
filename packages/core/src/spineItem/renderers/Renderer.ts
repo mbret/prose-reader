@@ -3,6 +3,7 @@ import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { BehaviorSubject } from "rxjs"
+import { ResourceHandler } from "../ResourceHandler"
 
 type Layer = {
   element: Element
@@ -19,6 +20,7 @@ export abstract class Renderer {
     protected hookManager: HookManager,
     protected item: Manifest[`spineItems`][number],
     protected containerElement: HTMLElement,
+    protected resourcesHandler: ResourceHandler
   ) {}
 
   abstract render(params: {

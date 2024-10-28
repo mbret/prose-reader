@@ -113,7 +113,7 @@ export const renderReflowable = ({
     frameElement?.style.setProperty(`visibility`, `visible`)
     frameElement?.style.setProperty(`opacity`, `1`)
 
-    if (viewportDimensions) {
+    if (viewportDimensions?.hasViewport) {
       upsertCSS(
         frameElement,
         `prose-reader-html-renderer-framce-css`,

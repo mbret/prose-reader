@@ -15,6 +15,7 @@ import { HookManager } from "../hooks/HookManager"
 import { Renderer } from "./renderers/Renderer"
 import { upsertCSS } from "../utils/frames"
 import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
+import { ResourceHandler } from "./ResourceHandler"
 
 export class SpineItem {
   destroySubject$: Subject<void>
@@ -26,6 +27,7 @@ export class SpineItem {
     isReady: boolean
   }>
   public renderer: Renderer
+  public resourcesHandler: ResourceHandler
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -46,16 +48,20 @@ export class SpineItem {
 
     parentElement.appendChild(this.containerElement)
 
+    const ResourcesHandlerClass =
+      this.settings.values.getResourcesHandler?.(item) ?? ResourceHandler
     const RendererClass =
       this.settings.values.getRenderer?.(item) ?? HtmlRenderer
     // this.settings.values.getRenderer?.(item) ?? MediaRenderer
 
+    this.resourcesHandler = new ResourcesHandlerClass(item, this.settings)
     this.renderer = new RendererClass(
       context,
       settings,
       hookManager,
       item,
       this.containerElement,
+      this.resourcesHandler,
     )
 
     /**
@@ -149,21 +155,6 @@ export class SpineItem {
     })
 
     return { width, height }
-  }
-
-  getResource = async () => {
-    const fetchResource = this.settings.values.fetchResource
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const lastFetch = (_: Manifest[`spineItems`][number]) => {
-      if (fetchResource) {
-        return fetchResource(this.item)
-      }
-
-      return fetch(this.item.href)
-    }
-
-    return await lastFetch(this.item)
   }
 
   load = () => this.renderer.load()

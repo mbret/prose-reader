@@ -7,6 +7,7 @@ import { type HookManager } from "../../../hooks/HookManager"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 import { createLoader } from "./loader/loader"
 import { BehaviorSubject } from "rxjs"
+import { ResourceHandler } from "../../ResourceHandler"
 
 export class FrameItem extends DestroyableClass {
   public loader: ReturnType<typeof createLoader>
@@ -20,6 +21,7 @@ export class FrameItem extends DestroyableClass {
     protected stateSubject: BehaviorSubject<
       "unloading" | "idle" | "loading" | "loaded" | "ready"
     >,
+    resourcesHandler: ResourceHandler
   ) {
     super()
 
@@ -30,6 +32,7 @@ export class FrameItem extends DestroyableClass {
       parent,
       settings,
       stateSubject,
+      resourcesHandler
     })
   }
 

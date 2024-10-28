@@ -1,5 +1,6 @@
 import { Manifest } from "@prose-reader/shared"
 import { Renderer } from "../spineItem/renderers/Renderer"
+import { ResourceHandler } from "../spineItem/ResourceHandler"
 
 export type CoreInputSettings = {
   forceSinglePageMode: boolean
@@ -40,7 +41,10 @@ export type CoreInputSettings = {
    * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
    * not pass through the service worker.
    */
-  fetchResource?: (item: Manifest[`spineItems`][number]) => Promise<Response>
+  getResourcesHandler?: (
+    item: Manifest["spineItems"][number],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ) => new (...args: any[]) => ResourceHandler
   getRenderer?: (
     item: Manifest["spineItems"][number],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

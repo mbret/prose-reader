@@ -101,7 +101,7 @@ export const searchEnhancer =
         return of([])
       }
 
-      return from(item.getResource()).pipe(
+      return from(item.resourcesHandler.fetchResource()).pipe(
         switchMap((response) => {
           const contentType = response?.headers.get(`Content-Type`) ?? ``
 

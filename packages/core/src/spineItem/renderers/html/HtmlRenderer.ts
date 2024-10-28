@@ -6,6 +6,7 @@ import { HookManager } from "../../../hooks/HookManager"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
 import { Renderer } from "../Renderer"
+import { ResourceHandler } from "../../ResourceHandler"
 
 export class HtmlRenderer extends Renderer {
   public frameItem: FrameItem
@@ -28,8 +29,9 @@ export class HtmlRenderer extends Renderer {
     hookManager: HookManager,
     item: Manifest[`spineItems`][number],
     containerElement: HTMLElement,
+    resourcesHandler: ResourceHandler
   ) {
-    super(context, settings, hookManager, item, containerElement)
+    super(context, settings, hookManager, item, containerElement, resourcesHandler)
     this.frameItem = new FrameItem(
       containerElement,
       item,
@@ -37,6 +39,7 @@ export class HtmlRenderer extends Renderer {
       settings,
       hookManager,
       this.stateSubject,
+      resourcesHandler
     )
   }
 

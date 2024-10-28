@@ -22,6 +22,7 @@ import { ReaderSettingsManager } from "../../../../settings/ReaderSettingsManage
 import { HookManager } from "../../../../hooks/HookManager"
 import { Context } from "../../../../context/Context"
 import { Manifest } from "@prose-reader/shared"
+import { ResourceHandler } from "../../../ResourceHandler"
 
 export const createLoader = ({
   item,
@@ -30,6 +31,7 @@ export const createLoader = ({
   settings,
   hookManager,
   stateSubject,
+  resourcesHandler,
 }: {
   item: Manifest[`spineItems`][number]
   parent: HTMLElement
@@ -39,6 +41,7 @@ export const createLoader = ({
   stateSubject: BehaviorSubject<
     "unloading" | "idle" | "loading" | "loaded" | "ready"
   >
+  resourcesHandler: ResourceHandler
 }) => {
   const destroySubject$ = new Subject<void>()
   const loadSubject = new Subject<void>()
@@ -96,6 +99,7 @@ export const createLoader = ({
               },
               settings,
               context,
+              resourcesHandler
             }),
           ),
           map((frame) => ({ state: "success" as const, frame })),
