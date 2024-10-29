@@ -7,12 +7,12 @@ import {
   distinctUntilChanged,
   shareReplay,
 } from "rxjs/operators"
-import { isShallowEqual } from "../utils/objects"
-import { Context } from "../context/Context"
-import { Manifest } from ".."
-import { HTML_PREFIX as HTML_PREFIX_CORE } from "../constants"
-import { EnhancerOutput } from "./types/enhancer"
-import { themeEnhancer } from "./theme"
+import { isShallowEqual } from "../../utils/objects"
+import { Context } from "../../context/Context"
+import { Manifest } from "../.."
+import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
+import { EnhancerOutput } from "../types/enhancer"
+import { themeEnhancer } from "../theme"
 
 type Entries = { [key: string]: HTMLElement }
 type Item = Manifest[`spineItems`][number]

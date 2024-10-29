@@ -14,7 +14,7 @@ import { mediaEnhancer } from "./enhancers/media"
 import { progressionEnhancer } from "./enhancers/progression"
 import { accessibilityEnhancer } from "./enhancers/accessibility"
 import { webkitEnhancer } from "./enhancers/webkit"
-import { loadingEnhancer } from "./enhancers/loadingEnhancer"
+import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
 import { eventsEnhancer } from "./enhancers/events/events"
 
 export const createReaderWithEnhancers = //__
