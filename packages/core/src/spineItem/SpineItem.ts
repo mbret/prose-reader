@@ -16,6 +16,7 @@ import { Renderer } from "./renderers/Renderer"
 import { upsertCSS } from "../utils/frames"
 import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
 import { ResourceHandler } from "./ResourceHandler"
+import { MediaRenderer } from "./renderers/media/MediaRenderer"
 
 export class SpineItem {
   destroySubject$: Subject<void>
@@ -145,8 +146,11 @@ export class SpineItem {
       spreadPosition,
     })
 
-    this.containerElement.style.width = `${width}px`
-    this.containerElement.style.height = `${height}px`
+    const minHeight = Math.max(height, this.context.getPageSize().height)
+    const minWidth = Math.max(width, minimumWidth)
+
+    this.containerElement.style.width = `${minWidth}px`
+    this.containerElement.style.height = `${minHeight}px`
 
     this.hookManager.execute(`item.onAfterLayout`, undefined, {
       blankPagePosition,
@@ -154,12 +158,14 @@ export class SpineItem {
       minimumWidth,
     })
 
-    return { width, height }
+    return { width: minWidth, height: minHeight }
   }
 
   load = () => this.renderer.load()
 
-  unload = () => this.renderer.unload()
+  unload = () => {
+    this.renderer.unload()
+  }
 
   // @todo use spine item manager global layout reference if possible
   // @todo getAbsolutePositionOf (for width and height)
@@ -204,7 +210,7 @@ export class SpineItem {
   }
 
   isUsingVerticalWriting = () =>
-    this.renderer.writingMode?.startsWith(`vertical`)
+    !!this.renderer.writingMode?.startsWith(`vertical`)
 
   get isReady() {
     return this.renderer.state$.getValue() === "ready"

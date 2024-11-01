@@ -1,16 +1,28 @@
 import { detectMimeTypeFromName, Manifest } from "@prose-reader/shared"
 import { Context } from "../../../context/Context"
-import { FrameItem } from "./FrameItem"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { HookManager } from "../../../hooks/HookManager"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
-import { renderReflowable } from "./reflowable/renderReflowable"
 import { Renderer } from "../Renderer"
 import { ResourceHandler } from "../../ResourceHandler"
+import {
+  combineLatest,
+  first,
+  map,
+  merge,
+  Observable,
+  of,
+  switchMap,
+  takeUntil,
+  tap,
+} from "rxjs"
+import { createFrameElement } from "./createFrameElement"
+import { attachFrameSrc } from "./attachFrameSrc"
+import { waitForSwitch } from "../../../utils/rxjs"
+import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
+import { renderReflowable } from "./reflowable/renderReflowable"
 
 export class HtmlRenderer extends Renderer {
-  public frameItem: FrameItem
-
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
    * the content has been loaded.
@@ -29,18 +41,94 @@ export class HtmlRenderer extends Renderer {
     hookManager: HookManager,
     item: Manifest[`spineItems`][number],
     containerElement: HTMLElement,
-    resourcesHandler: ResourceHandler
+    resourcesHandler: ResourceHandler,
   ) {
-    super(context, settings, hookManager, item, containerElement, resourcesHandler)
-    this.frameItem = new FrameItem(
-      containerElement,
-      item,
+    super(
       context,
       settings,
       hookManager,
-      this.stateSubject,
-      resourcesHandler
+      item,
+      containerElement,
+      resourcesHandler,
     )
+
+    this.load$
+      .pipe(
+        switchMap(() => {
+          this.stateSubject.next(`loading`)
+
+          return of(createFrameElement()).pipe(
+            tap((frameElement) => {
+              this.layers = [
+                {
+                  element: frameElement,
+                },
+              ]
+
+              this.hookManager.execute(`item.onDocumentCreated`, item.id, {
+                itemId: this.item.id,
+                layers: this.layers,
+              })
+            }),
+            attachFrameSrc({
+              item: this.item,
+              resourcesHandler: this.resourcesHandler,
+              settings: this.settings,
+            }),
+            waitForSwitch(context.bridgeEvent.viewportFree$),
+            tap((frameElement) => {
+              containerElement.appendChild(frameElement)
+            }),
+            waitForFrameLoad,
+            waitForSwitch(context.bridgeEvent.viewportFree$),
+            switchMap((frameElement) => {
+              const hookResults = hookManager
+                .execute(`item.onDocumentLoad`, item.id, {
+                  itemId: item.id,
+                  frame: frameElement,
+                })
+                .filter(
+                  (result): result is Observable<void> =>
+                    result instanceof Observable,
+                )
+
+              return combineLatest([of(null), ...hookResults]).pipe(
+                map(() => frameElement),
+              )
+            }),
+            tap(() => {
+              this.stateSubject.next(`loaded`)
+            }),
+            waitForFrameReady,
+            tap(() => {
+              this.stateSubject.next(`ready`)
+            }),
+            takeUntil(merge(this.destroy$, this.unload$)),
+          )
+        }),
+      )
+      .subscribe()
+
+    this.unload$
+      .pipe(
+        switchMap(() => {
+          this.stateSubject.next(`unloading`)
+
+          return this.context.bridgeEvent.viewportFree$.pipe(
+            first(),
+            tap(() => {
+              hookManager.destroy(`item.onDocumentLoad`, item.id)
+
+              this.layers.forEach((layer) => layer.element.remove())
+              this.layers = []
+
+              this.stateSubject.next(`idle`)
+            }),
+            takeUntil(merge(this.destroy$, this.load$)),
+          )
+        }),
+      )
+      .subscribe()
   }
 
   render({
@@ -53,12 +141,17 @@ export class HtmlRenderer extends Renderer {
     spreadPosition: `none` | `left` | `right`
   }) {
     const { width: pageWidth, height: pageHeight } = this.context.getPageSize()
+    const frameElement = this.getFrameElement()
+
+    if (!frameElement) return { width: pageWidth, height: pageHeight }
+
+    const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 
     if (this.item.renditionLayout === `pre-paginated`) {
       return renderPrePaginated({
         blankPagePosition,
         enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
-        frameItem: this.frameItem,
+        frameElement,
         isRTL: this.context.isRTL(),
         minPageSpread,
         pageHeight,
@@ -70,9 +163,10 @@ export class HtmlRenderer extends Renderer {
     const { latestContentHeightWhenLoaded, ...rest } = renderReflowable({
       pageHeight,
       pageWidth,
-      frameItem: this.frameItem,
+      frameElement,
       manifest: this.context.manifest,
       blankPagePosition,
+      isUsingVerticalWriting,
       isRTL: this.context.isRTL(),
       latestContentHeightWhenLoaded: this.latestContentHeightWhenLoaded,
       minPageSpread,
@@ -92,12 +186,30 @@ export class HtmlRenderer extends Renderer {
     return !!mimeType?.startsWith(`image/`)
   }
 
-  get element() {
-    return this.frameItem.loader.element
+  private getFrameElement() {
+    const frame = this.layers[0]?.element
+
+    if (!(frame instanceof HTMLIFrameElement)) return
+
+    return frame
+  }
+
+  // @todo optimize
+  public getComputedStyleAfterLoad() {
+    const frame = this.getFrameElement()
+
+    const body = frame?.contentDocument?.body
+
+    if (body) {
+      return frame?.contentWindow?.getComputedStyle(body)
+    }
   }
 
   get writingMode() {
-    return this.frameItem.getWritingMode()
+    return this.getComputedStyleAfterLoad()?.writingMode as
+      | `vertical-rl`
+      | `horizontal-tb`
+      | undefined
   }
 
   get readingDirection() {
@@ -107,7 +219,7 @@ export class HtmlRenderer extends Renderer {
       return `rtl`
     }
 
-    const direction = this.frameItem.getComputedStyleAfterLoad()?.direction
+    const direction = this.getComputedStyleAfterLoad()?.direction
 
     switch (direction) {
       case `ltr`:
@@ -122,23 +234,5 @@ export class HtmlRenderer extends Renderer {
       default:
         return undefined
     }
-  }
-
-  load = () => this.frameItem.load()
-
-  unload = () => this.frameItem.unload()
-
-  get layers() {
-    if (!this.frameItem.loader.element) return []
-
-    return [
-      {
-        element: this.frameItem.loader.element,
-      },
-    ]
-  }
-
-  destroy() {
-    this.frameItem.destroy()
   }
 }

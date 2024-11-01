@@ -10,6 +10,21 @@ export interface Hook<Name, Params, Result> {
 
 export type CoreHook =
   | {
+      /**
+       * Hook called as soon as the renderer document is created. Not attached to the
+       * dom. You can take advantage of this hook to manipulate the document, prepare
+       * styles, do some operations, etc.
+       */
+      name: `item.onDocumentCreated`
+      runFn: (params: {
+        itemId: string
+        layers: { element: HTMLElement }[]
+      }) => void
+    }
+  | {
+      /**
+       *
+       */
       name: `item.onDocumentLoad`
       runFn: (params: {
         destroy$: Observable<void>

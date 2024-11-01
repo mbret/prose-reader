@@ -1,5 +1,4 @@
 import { Manifest } from "@prose-reader/shared"
-import { FrameItem } from "../FrameItem"
 import { upsertCSS } from "../../../../utils/frames"
 import {
   buildStyleForReflowableImageOnly,
@@ -37,10 +36,24 @@ const getDimensionsForReflowableContent = ({
   }
 }
 
+/**
+ * Upward layout is used when the parent wants to manipulate the iframe without triggering
+ * `layout` event. This is a particular case needed for iframe because the parent can layout following
+ * an iframe `layout` event. Because the parent `layout` may change some of iframe properties we do not
+ * want the iframe to trigger a new `layout` even and have infinite loop.
+ */
+const staticLayout = (
+  frameElement: HTMLIFrameElement,
+  size: { width: number; height: number },
+) => {
+  frameElement.style.width = `${size.width}px`
+  frameElement.style.height = `${size.height}px`
+}
+
 export const renderReflowable = ({
   pageHeight: pageSizeHeight,
   pageWidth,
-  frameItem,
+  frameElement,
   manifest,
   latestContentHeightWhenLoaded,
   minPageSpread,
@@ -48,24 +61,25 @@ export const renderReflowable = ({
   blankPagePosition,
   isImageType,
   enableTouch,
+  isUsingVerticalWriting,
 }: {
   blankPagePosition: `before` | `after` | `none`
   pageWidth: number
   pageHeight: number
-  frameItem: FrameItem
+  frameElement: HTMLIFrameElement
   manifest?: Manifest
   minPageSpread: number
   latestContentHeightWhenLoaded: number | undefined
   isRTL: boolean
   isImageType: boolean
   enableTouch: boolean
+  isUsingVerticalWriting: boolean
 }) => {
   const minimumWidth = minPageSpread * pageWidth
   let newLatestContentHeightWhenLoaded = latestContentHeightWhenLoaded
   const continuousScrollableReflowableItem =
     manifest?.renditionLayout === "reflowable" &&
     manifest?.renditionFlow === "scrolled-continuous"
-  const frameElement = frameItem.loader.element
 
   /**
    * In case of reflowable with continous scrolling, we don't know if the content is
@@ -95,18 +109,14 @@ export const renderReflowable = ({
 
   const { viewportDimensions, computedScale = 1 } =
     getViewPortInformation({
-      frameItem,
+      frameElement,
       pageHeight,
       pageWidth,
     }) ?? {}
   const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
 
   // @todo simplify ? should be from common spine item
-  if (
-    frameItem.isLoaded &&
-    frameElement?.contentDocument &&
-    frameElement?.contentWindow
-  ) {
+  if (frameElement?.contentDocument && frameElement?.contentWindow) {
     let contentWidth = pageWidth
     let contentHeight = pageHeight
 
@@ -120,10 +130,13 @@ export const renderReflowable = ({
         buildStyleForViewportFrame(),
       )
 
-      frameItem.staticLayout({
-        width: viewportDimensions.width ?? 1,
-        height: viewportDimensions.height ?? 1,
-      })
+      staticLayout(
+        frameElement,
+        {
+          width: viewportDimensions.width ?? 1,
+          height: viewportDimensions.height ?? 1,
+        },
+      )
 
       frameElement?.style.setProperty(`position`, `absolute`)
       frameElement?.style.setProperty(`top`, `50%`)
@@ -153,7 +166,7 @@ export const renderReflowable = ({
           })
         : buildStyleWithMultiColumn(
             getDimensionsForReflowableContent({
-              isUsingVerticalWriting: frameItem.isUsingVerticalWriting(),
+              isUsingVerticalWriting: isUsingVerticalWriting,
               minimumWidth,
               pageHeight,
               pageWidth,
@@ -162,17 +175,20 @@ export const renderReflowable = ({
 
       upsertCSS(frameElement, `prose-reader-css`, frameStyle, true)
 
-      if (frameItem.isUsingVerticalWriting()) {
+      if (isUsingVerticalWriting) {
         const pages = Math.ceil(
           frameElement.contentDocument.documentElement.scrollHeight /
             pageHeight,
         )
         contentHeight = pages * pageHeight
 
-        frameItem.staticLayout({
-          width: minimumWidth,
-          height: contentHeight,
-        })
+        staticLayout(
+          frameElement,
+          {
+            width: minimumWidth,
+            height: contentHeight,
+          },
+        )
       } else if (manifest?.renditionFlow === `scrolled-continuous`) {
         /**
          * We take body content here because the frame body might be smaller after
@@ -183,10 +199,13 @@ export const renderReflowable = ({
         contentHeight = frameElement.contentDocument.body.scrollHeight
         newLatestContentHeightWhenLoaded = contentHeight
 
-        frameItem.staticLayout({
-          width: minimumWidth,
-          height: contentHeight,
-        })
+        staticLayout(
+          frameElement,
+          {
+            width: minimumWidth,
+            height: contentHeight,
+          },
+        )
       } else {
         const pages = Math.ceil(
           frameElement.contentDocument.documentElement.scrollWidth / pageWidth,
@@ -205,10 +224,13 @@ export const renderReflowable = ({
           contentWidth = pages * pageWidth
         }
 
-        frameItem.staticLayout({
-          width: contentWidth,
-          height: contentHeight,
-        })
+        staticLayout(
+          frameElement,
+          {
+            width: contentWidth,
+            height: contentHeight,
+          },
+        )
       }
     }
 
@@ -218,7 +240,7 @@ export const renderReflowable = ({
     // enlarge the container to make sure no other reflow item starts on the same screen
     if (!isFillingAllScreen) {
       contentWidth = contentWidth + pageWidth
-      if (isRTL && !frameItem.isUsingVerticalWriting()) {
+      if (isRTL && !isUsingVerticalWriting) {
         frameElement?.style.setProperty(`margin-left`, `${pageWidth}px`)
       }
     } else {

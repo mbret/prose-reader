@@ -150,6 +150,42 @@ export const layoutEnhancer =
 
     fixReflowable(reader)
 
+    reader.hookManager.register(`item.onDocumentCreated`, ({ layers }) => {
+      layers.forEach(({ element }) => {
+        /**
+         * Hide document until it's ready
+         */
+        element.style.opacity = `0`
+        element.style.transition = `opacity 300ms`
+      })
+    })
+
+    reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
+      const spineItem = reader.spineItemsManager.get(item.id)
+
+      spineItem?.renderer.layers.forEach(({ element }) => {
+        // @todo dont remember why i did this but there should be a reason. If i get time to explain
+        if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
+          // @todo see what's the impact
+          element.setAttribute(`tab-index`, `0`)
+        }
+      })
+    })
+
+    /**
+     * Reveal document after it's ready and have had a layout.
+     * We can assume the document is okay to be displayed now
+     */
+    reader.hookManager.register(`item.onAfterLayout`, ({ item }) => {
+      const spineItem = reader.spineItemsManager.get(item.id)
+
+      if (spineItem?.isReady) {
+        spineItem?.renderer.layers.forEach(({ element }) => {
+          element.style.opacity = `1`
+        })
+      }
+    })
+
     // @todo fix the panstart issue
     // @todo maybe increasing the hammer distance before triggering pan as well
     // reader.registerHook(`item.onDocumentLoad`, ({frame}) => {

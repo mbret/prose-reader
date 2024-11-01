@@ -1,4 +1,4 @@
-import { Report } from "../../../../report"
+import { Report } from "../../../report"
 
 export const createFrameElement = Report.measurePerformance(
   `SpineItemFrame createFrame`,
@@ -19,14 +19,13 @@ export const createFrameElement = Report.measurePerformance(
     )
     frame.scrolling = `no`
     frame.style.cssText = `
-    visibility: hidden;
     overflow: hidden;
     background-color: transparent;
     border: 0px none transparent;
     padding: 0px;
-    transition: opacity 300ms;
-    opacity: 0;
   `
+
+    frame.setAttribute(`role`, `main`)
 
     return frame
   },

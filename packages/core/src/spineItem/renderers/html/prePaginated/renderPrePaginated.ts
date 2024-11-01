@@ -1,5 +1,4 @@
-import { upsertCSS } from "../../../../utils/frames"
-import { FrameItem } from "../FrameItem"
+import { getFrameViewportInfo, upsertCSS } from "../../../../utils/frames"
 
 export const getStyleForViewportDocument = () => {
   return `
@@ -13,14 +12,13 @@ export const getStyleForViewportDocument = () => {
 export const getViewPortInformation = ({
   pageHeight,
   pageWidth,
-  frameItem,
+  frameElement,
 }: {
   pageWidth: number
   pageHeight: number
-  frameItem: FrameItem
+  frameElement: HTMLIFrameElement
 }) => {
-  const viewportDimensions = frameItem.getViewportDimensions()
-  const frameElement = frameItem.loader.element
+  const viewportDimensions = getFrameViewportInfo(frameElement)
 
   if (
     frameElement?.contentDocument &&
@@ -149,13 +147,27 @@ const getDimensionsForPaginatedContent = ({
   return { columnHeight, columnWidth }
 }
 
+/**
+ * Upward layout is used when the parent wants to manipulate the iframe without triggering
+ * `layout` event. This is a particular case needed for iframe because the parent can layout following
+ * an iframe `layout` event. Because the parent `layout` may change some of iframe properties we do not
+ * want the iframe to trigger a new `layout` even and have infinite loop.
+ */
+const staticLayout = (
+  frameElement: HTMLIFrameElement,
+  size: { width: number; height: number },
+) => {
+  frameElement.style.width = `${size.width}px`
+  frameElement.style.height = `${size.height}px`
+}
+
 export const renderPrePaginated = ({
   minPageSpread,
   blankPagePosition,
   spreadPosition,
   pageHeight,
   pageWidth,
-  frameItem,
+  frameElement,
   isRTL,
   enableTouch,
 }: {
@@ -164,20 +176,16 @@ export const renderPrePaginated = ({
   spreadPosition: `none` | `left` | `right`
   pageWidth: number
   pageHeight: number
-  frameItem: FrameItem
+  frameElement?: HTMLIFrameElement
   isRTL: boolean
   enableTouch: boolean
 }) => {
-  const { viewportDimensions, computedScale = 1 } =
-    getViewPortInformation({ frameItem, pageHeight, pageWidth }) ?? {}
-  const frameElement = frameItem.loader.element
   const minimumWidth = minPageSpread * pageWidth
 
-  if (
-    frameItem?.isLoaded &&
-    frameElement?.contentDocument &&
-    frameElement?.contentWindow
-  ) {
+  if (frameElement?.contentDocument && frameElement?.contentWindow) {
+    const { viewportDimensions, computedScale = 1 } =
+      getViewPortInformation({ frameElement, pageHeight, pageWidth }) ?? {}
+
     const contentWidth = pageWidth
     const contentHeight = pageHeight
 
@@ -190,18 +198,18 @@ export const renderPrePaginated = ({
       viewportDimensions,
     )
 
-    frameElement?.style.setProperty(`visibility`, `visible`)
-    frameElement?.style.setProperty(`opacity`, `1`)
+    // frameElement?.style.setProperty(`visibility`, `visible`)
+    // frameElement?.style.setProperty(`opacity`, `1`)
 
     upsertCSS(frameElement, `prose-reader-css`, cssLink)
 
     if (viewportDimensions) {
-      frameItem.staticLayout({
+      staticLayout(frameElement, {
         width: viewportDimensions.width ?? 1,
         height: viewportDimensions.height ?? 1,
       })
     } else {
-      frameItem.staticLayout({
+      staticLayout(frameElement, {
         width: contentWidth,
         height: contentHeight,
       })
