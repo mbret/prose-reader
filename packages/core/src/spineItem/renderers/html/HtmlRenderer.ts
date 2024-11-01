@@ -86,7 +86,7 @@ export class HtmlRenderer extends Renderer {
     return EMPTY
   }
 
-  render({
+  layout({
     minPageSpread,
     blankPagePosition,
     spreadPosition,

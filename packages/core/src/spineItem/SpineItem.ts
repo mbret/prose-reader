@@ -138,7 +138,7 @@ export class SpineItem {
       minimumWidth,
     })
 
-    const { height, width } = this.renderer.render({
+    const { height, width } = this.renderer.layout({
       blankPagePosition,
       minPageSpread: minimumWidth / this.context.getPageSize().width,
       spreadPosition,

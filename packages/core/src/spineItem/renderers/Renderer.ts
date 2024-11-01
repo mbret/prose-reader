@@ -189,7 +189,7 @@ export abstract class Renderer {
    */
   abstract onLoadDocument(): Observable<unknown>
 
-  abstract render(params: {
+  abstract layout(params: {
     minPageSpread: number
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`

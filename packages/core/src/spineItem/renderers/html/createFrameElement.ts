@@ -17,7 +17,6 @@ export const createFrameElement = Report.measurePerformance(
     allow-top-navigation-to-custom-protocols
   `,
     )
-    frame.scrolling = `no`
     frame.style.cssText = `
     overflow: hidden;
     background-color: transparent;
