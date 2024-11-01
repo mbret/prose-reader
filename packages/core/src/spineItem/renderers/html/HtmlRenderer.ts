@@ -6,14 +6,8 @@ import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { Renderer } from "../Renderer"
 import { ResourceHandler } from "../../ResourceHandler"
 import {
-  combineLatest,
-  first,
-  map,
-  merge,
-  Observable,
+  EMPTY,
   of,
-  switchMap,
-  takeUntil,
   tap,
 } from "rxjs"
 import { createFrameElement } from "./createFrameElement"
@@ -51,84 +45,45 @@ export class HtmlRenderer extends Renderer {
       containerElement,
       resourcesHandler,
     )
+  }
 
-    this.load$
-      .pipe(
-        switchMap(() => {
-          this.stateSubject.next(`loading`)
+  onCreateDocument() {
+    const frameElement = createFrameElement()
 
-          return of(createFrameElement()).pipe(
-            tap((frameElement) => {
-              this.layers = [
-                {
-                  element: frameElement,
-                },
-              ]
+    this.layers = [
+      {
+        element: frameElement,
+      },
+    ]
 
-              this.hookManager.execute(`item.onDocumentCreated`, item.id, {
-                itemId: this.item.id,
-                layers: this.layers,
-              })
-            }),
-            attachFrameSrc({
-              item: this.item,
-              resourcesHandler: this.resourcesHandler,
-              settings: this.settings,
-            }),
-            waitForSwitch(context.bridgeEvent.viewportFree$),
-            tap((frameElement) => {
-              containerElement.appendChild(frameElement)
-            }),
-            waitForFrameLoad,
-            waitForSwitch(context.bridgeEvent.viewportFree$),
-            switchMap((frameElement) => {
-              const hookResults = hookManager
-                .execute(`item.onDocumentLoad`, item.id, {
-                  itemId: item.id,
-                  frame: frameElement,
-                })
-                .filter(
-                  (result): result is Observable<void> =>
-                    result instanceof Observable,
-                )
+    return EMPTY
+  }
 
-              return combineLatest([of(null), ...hookResults]).pipe(
-                map(() => frameElement),
-              )
-            }),
-            tap(() => {
-              this.stateSubject.next(`loaded`)
-            }),
-            waitForFrameReady,
-            tap(() => {
-              this.stateSubject.next(`ready`)
-            }),
-            takeUntil(merge(this.destroy$, this.unload$)),
-          )
-        }),
-      )
-      .subscribe()
+  onLoadDocument() {
+    const frameElement = this.getFrameElement()
 
-    this.unload$
-      .pipe(
-        switchMap(() => {
-          this.stateSubject.next(`unloading`)
+    if (!frameElement) throw new Error(`invalid frame`)
 
-          return this.context.bridgeEvent.viewportFree$.pipe(
-            first(),
-            tap(() => {
-              hookManager.destroy(`item.onDocumentLoad`, item.id)
+    return of(frameElement).pipe(
+      attachFrameSrc({
+        item: this.item,
+        resourcesHandler: this.resourcesHandler,
+        settings: this.settings,
+      }),
+      waitForSwitch(this.context.bridgeEvent.viewportFree$),
+      tap((frameElement) => {
+        this.containerElement.appendChild(frameElement)
+      }),
+      waitForFrameLoad,
+      waitForFrameReady
+    )
+  }
 
-              this.layers.forEach((layer) => layer.element.remove())
-              this.layers = []
+  onUnload() {
+    this.layers.forEach((layer) => layer.element.remove())
+    this.layers = []
 
-              this.stateSubject.next(`idle`)
-            }),
-            takeUntil(merge(this.destroy$, this.load$)),
-          )
-        }),
-      )
-      .subscribe()
+    return EMPTY
   }
 
   render({

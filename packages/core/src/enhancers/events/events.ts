@@ -24,7 +24,11 @@ export const eventsEnhancer =
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ destroy, frame, itemId }) => {
+      ({ destroy, layers, itemId }) => {
+        const frame = layers[0]?.element
+
+        if (!(frame instanceof HTMLIFrameElement)) return
+
         const item = reader.spineItemsManager.get(itemId)
 
         if (!item) return

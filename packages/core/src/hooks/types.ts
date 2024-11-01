@@ -30,7 +30,7 @@ export type CoreHook =
         destroy$: Observable<void>
         destroy: (fn: UserDestroyFn) => void
         itemId: string
-        frame: HTMLIFrameElement
+        layers: { element: HTMLElement }[]
       }) => Observable<void> | void
     }
   | {

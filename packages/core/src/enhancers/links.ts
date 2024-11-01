@@ -45,7 +45,11 @@ export const linksEnhancer =
       return false
     }
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ frame }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, ({ layers }) => {
+      const frame = layers[0]?.element
+
+      if (!(frame instanceof HTMLIFrameElement)) return
+
       if (frame?.contentDocument) {
         Array.from(frame.contentDocument.querySelectorAll(`a`)).forEach(
           (element) =>

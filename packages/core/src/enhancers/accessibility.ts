@@ -20,14 +20,20 @@ export const accessibilityEnhancer =
       })
     }, {})
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId, frame, destroy }) => {
-      const item = reader.spineItemsManager.get(itemId)
+    reader.hookManager.register(
+      `item.onDocumentLoad`,
+      ({ itemId, layers, destroy }) => {
+        const frame = layers[0]?.element
 
-      if (!item) return
+        if (!(frame instanceof HTMLIFrameElement)) return
+        
+        const item = reader.spineItemsManager.get(itemId)
 
-      item.upsertCSS(
-        `prose-reader-accessibility`,
-        `
+        if (!item) return
+
+        item.upsertCSS(
+          `prose-reader-accessibility`,
+          `
         :focus-visible {
           ${
             /*
@@ -38,20 +44,21 @@ export const accessibilityEnhancer =
           outline: -webkit-focus-ring-color auto 1px;
         }
       `,
-      )
+        )
 
-      const links = frame.contentDocument?.body.querySelectorAll(`a`)
+        const links = frame.contentDocument?.body.querySelectorAll(`a`)
 
-      links?.forEach((link) => {
-        observer.observe(link)
-      })
-
-      destroy(() => {
         links?.forEach((link) => {
-          observer.unobserve(link)
+          observer.observe(link)
         })
-      })
-    })
+
+        destroy(() => {
+          links?.forEach((link) => {
+            observer.unobserve(link)
+          })
+        })
+      },
+    )
 
     return {
       ...reader,
