@@ -1,11 +1,33 @@
-import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
+import {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "../types/enhancer"
+import { ImageRenderer } from "./ImageRenderer"
 
 export const mediaEnhancer =
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
+  <
+    InheritOptions extends EnhancerOptions<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
+  >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {
-    const reader = next(options)
+    const reader = next({
+      ...options,
+      getRenderer(item) {
+        const MaybeRenderer = options.getRenderer?.(item)
+        const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
+        const isImageType = !!mimeType?.startsWith(`image/`)
+
+        if (!MaybeRenderer && isImageType) {
+          return ImageRenderer
+        }
+
+        return MaybeRenderer
+      },
+    })
 
     const frameObserver = new IntersectionObserver(
       (entries) => {
@@ -63,26 +85,29 @@ export const mediaEnhancer =
       },
     )
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ layers, destroy }) => {
-      const frame = layers[0]?.element
+    reader.hookManager.register(
+      `item.onDocumentLoad`,
+      ({ layers, destroy }) => {
+        const frame = layers[0]?.element
 
-      if (!(frame instanceof HTMLIFrameElement)) return
+        if (!(frame instanceof HTMLIFrameElement)) return
 
-      frameObserver.observe(frame)
+        frameObserver.observe(frame)
 
-      const videos = frame.contentDocument?.body.getElementsByTagName(`video`)
+        const videos = frame.contentDocument?.body.getElementsByTagName(`video`)
 
-      const unobserveElements = Array.from(videos || []).map((element) => {
-        elementObserver.observe(element)
+        const unobserveElements = Array.from(videos || []).map((element) => {
+          elementObserver.observe(element)
 
-        return () => elementObserver.unobserve(element)
-      })
+          return () => elementObserver.unobserve(element)
+        })
 
-      destroy(() => {
-        frameObserver.unobserve(frame)
-        unobserveElements.forEach((unobserve) => unobserve())
-      })
-    })
+        destroy(() => {
+          frameObserver.unobserve(frame)
+          unobserveElements.forEach((unobserve) => unobserve())
+        })
+      },
+    )
 
     const destroy = () => {
       frameObserver.disconnect()

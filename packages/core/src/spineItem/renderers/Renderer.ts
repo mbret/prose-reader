@@ -85,10 +85,6 @@ export abstract class Renderer {
             endWith(null),
             first(),
           )
-          const loadDocument$ = this.onLoadDocument().pipe(
-            endWith(null),
-            first(),
-          )
 
           return createDocument$.pipe(
             tap(() => {
@@ -97,7 +93,14 @@ export abstract class Renderer {
                 layers: this.layers,
               })
             }),
-            switchMap(() => loadDocument$),
+            switchMap(() => {
+              const loadDocument$ = this.onLoadDocument().pipe(
+                endWith(null),
+                first(),
+              )
+
+              return loadDocument$
+            }),
             waitForSwitch(this.context.bridgeEvent.viewportFree$),
             switchMap(() => {
               const hookResults = this.hookManager
@@ -127,14 +130,16 @@ export abstract class Renderer {
         switchMap(() => {
           this.stateSubject.next(`unloading`)
 
-          const unload$ = this.onUnload().pipe(endWith(null), first())
-
           return this.context.bridgeEvent.viewportFree$.pipe(
             first(),
             tap(() => {
               this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
             }),
-            switchMap(() => unload$),
+            switchMap(() => {
+              const unload$ = this.onUnload().pipe(endWith(null), first())
+
+              return unload$
+            }),
             tap(() => {
               this.stateSubject.next(`idle`)
             }),
@@ -190,7 +195,11 @@ export abstract class Renderer {
     spreadPosition: `none` | `left` | `right`
   }): { width: number; height: number }
 
-  abstract get writingMode(): `vertical-rl` | `horizontal-tb` | undefined
+  get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {
+    return undefined
+  }
 
-  abstract get readingDirection(): `rtl` | `ltr` | undefined
+  get readingDirection(): `rtl` | `ltr` | undefined {
+    return undefined
+  }
 }

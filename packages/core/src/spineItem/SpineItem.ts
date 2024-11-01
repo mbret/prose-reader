@@ -16,7 +16,6 @@ import { Renderer } from "./renderers/Renderer"
 import { upsertCSS } from "../utils/frames"
 import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
 import { ResourceHandler } from "./ResourceHandler"
-import { MediaRenderer } from "./renderers/media/MediaRenderer"
 
 export class SpineItem {
   destroySubject$: Subject<void>
@@ -53,7 +52,6 @@ export class SpineItem {
       this.settings.values.getResourcesHandler?.(item) ?? ResourceHandler
     const RendererClass =
       this.settings.values.getRenderer?.(item) ?? HtmlRenderer
-    // this.settings.values.getRenderer?.(item) ?? MediaRenderer
 
     this.resourcesHandler = new ResourcesHandlerClass(item, this.settings)
     this.renderer = new RendererClass(
