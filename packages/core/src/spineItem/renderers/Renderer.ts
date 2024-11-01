@@ -127,12 +127,14 @@ export abstract class Renderer {
         switchMap(() => {
           this.stateSubject.next(`unloading`)
 
+          const unload$ = this.onUnload().pipe(endWith(null), first())
+
           return this.context.bridgeEvent.viewportFree$.pipe(
             first(),
             tap(() => {
               this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
             }),
-            switchMap(() => this.onUnload().pipe(endWith(null))),
+            switchMap(() => unload$),
             tap(() => {
               this.stateSubject.next(`idle`)
             }),
