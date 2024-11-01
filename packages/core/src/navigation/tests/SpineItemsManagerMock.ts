@@ -31,12 +31,11 @@ export class SpineItemsManagerMock {
       ...item,
       getElementDimensions: () => ({ width: item.width, height: item.height }),
       isUsingVerticalWriting: () => false,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       adjustPositionOfElement: () => {},
       layout: () => ({ width: item.width, height: item.height }),
-      $: {
-        contentLayout$: NEVER,
-        loaded$: of(true),
-      },
+      contentLayout$: NEVER,
+      loaded$: of(true),
     }))
 
     this.items$.next(this.items)

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.common.json",
+  "compilerOptions": {
+    "outDir": "dist",
+
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true
+  }
+}
