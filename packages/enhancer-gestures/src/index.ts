@@ -19,7 +19,7 @@ export const gesturesEnhancer =
     const { gestures = {}, ...rest } = options
     const reader = next(rest as InheritOptions)
 
-    const settingsManager = new GesturesSettingsManager(gestures)
+    const settingsManager = new GesturesSettingsManager(gestures, reader)
 
     const hookManager = new HookManager<Hook>()
 
