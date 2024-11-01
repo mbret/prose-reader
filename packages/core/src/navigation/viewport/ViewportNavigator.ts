@@ -89,7 +89,10 @@ export class ViewportNavigator extends DestroyableClass {
         if (settings.values.computedPageTurnMode === `scrollable`) {
           element.style.removeProperty(`transform`)
           element.style.removeProperty(`transition`)
-          element.style.overflow = `scroll`
+          element.style.overflowY = `scroll`
+          // prevent the scroll bar on the bottom, effectively
+          // hiden a small x part on non mobile device.
+          element.style.overflowX = `hidden`
         } else {
           element.style.removeProperty(`overflow`)
           element.style.removeProperty(`overflowY`)
