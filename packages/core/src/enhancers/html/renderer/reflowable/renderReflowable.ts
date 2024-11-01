@@ -1,11 +1,11 @@
 import { Manifest } from "@prose-reader/shared"
-import { upsertCSS } from "../../../../utils/frames"
 import {
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,
   buildStyleWithMultiColumn,
 } from "./styles"
 import { getViewPortInformation } from "../prePaginated/renderPrePaginated"
+import { upsertCSS } from "../../../../utils/frames"
 
 const getDimensionsForReflowableContent = ({
   isUsingVerticalWriting,

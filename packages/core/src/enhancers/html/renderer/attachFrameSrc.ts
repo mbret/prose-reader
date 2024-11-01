@@ -3,7 +3,7 @@ import { Manifest } from "@prose-reader/shared"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { Report } from "../../../report"
-import { ResourceHandler } from "../../ResourceHandler"
+import { ResourceHandler } from "../../../spineItem/ResourceHandler"
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
 
 export const attachFrameSrc = ({

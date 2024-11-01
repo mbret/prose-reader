@@ -1,5 +1,5 @@
 import { Manifest } from "@prose-reader/shared"
-import { Renderer } from "../spineItem/renderers/Renderer"
+import { DocumentRenderer } from "../spineItem/DocumentRenderer"
 import { ResourceHandler } from "../spineItem/ResourceHandler"
 
 export type CoreInputSettings = {
@@ -48,7 +48,7 @@ export type CoreInputSettings = {
   getRenderer?: (
     item: Manifest["spineItems"][number],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) => { new (...args: any[]): Renderer }
+  ) => { new (...args: any[]): DocumentRenderer }
 }
 
 /**

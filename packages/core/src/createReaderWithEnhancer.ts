@@ -16,6 +16,7 @@ import { accessibilityEnhancer } from "./enhancers/accessibility"
 import { webkitEnhancer } from "./enhancers/webkit"
 import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
 import { eventsEnhancer } from "./enhancers/events/events"
+import { htmlEnhancer } from "./enhancers/html/enhancer"
 
 export const createReaderWithEnhancers = //__
   hotkeysEnhancer(
@@ -35,8 +36,10 @@ export const createReaderWithEnhancers = //__
                               paginationEnhancer(
                                 progressionEnhancer(
                                   eventsEnhancer(
-                                    // __
-                                    createInternalReader,
+                                    htmlEnhancer(
+                                      // __
+                                      createInternalReader,
+                                    ),
                                   ),
                                 ),
                               ),

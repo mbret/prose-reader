@@ -1,10 +1,11 @@
 import { Manifest } from "@prose-reader/shared"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { Context } from "../context/Context"
+import { HookManager } from "../hooks/HookManager"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import {
   BehaviorSubject,
   combineLatest,
+  EMPTY,
   endWith,
   filter,
   first,
@@ -19,14 +20,14 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ResourceHandler } from "../ResourceHandler"
-import { waitForSwitch } from "../../utils/rxjs"
+import { ResourceHandler } from "./ResourceHandler"
+import { waitForSwitch } from "../utils/rxjs"
 
 type Layer = {
   element: HTMLElement
 }
 
-export abstract class Renderer {
+export abstract class DocumentRenderer {
   protected stateSubject = new BehaviorSubject<
     `idle` | `loading` | `loaded` | `unloading` | `ready`
   >(`idle`)
@@ -193,13 +194,31 @@ export abstract class Renderer {
     minPageSpread: number
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`
-  }): { width: number; height: number }
+  }): { width: number; height: number } | undefined
 
   get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {
     return undefined
   }
 
   get readingDirection(): `rtl` | `ltr` | undefined {
+    return undefined
+  }
+}
+
+export class DefaultRenderer extends DocumentRenderer {
+  onUnload(): Observable<unknown> {
+    return EMPTY
+  }
+
+  onCreateDocument(): Observable<unknown> {
+    return EMPTY
+  }
+  
+  onLoadDocument(): Observable<unknown> {
+    return EMPTY
+  }
+
+  layout() {
     return undefined
   }
 }

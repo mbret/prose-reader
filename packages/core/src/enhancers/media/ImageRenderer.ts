@@ -1,7 +1,7 @@
 import { EMPTY, from, fromEvent, tap } from "rxjs"
-import { Renderer } from "../../spineItem/renderers/Renderer"
+import { DocumentRenderer } from "../../spineItem/DocumentRenderer"
 
-export class ImageRenderer extends Renderer {
+export class ImageRenderer extends DocumentRenderer {
   private getImageElement() {
     const element = this.layers[0]?.element
 

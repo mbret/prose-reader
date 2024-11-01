@@ -2,9 +2,8 @@ import { detectMimeTypeFromName, Manifest } from "@prose-reader/shared"
 import { Context } from "../../../context/Context"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { HookManager } from "../../../hooks/HookManager"
-import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
-import { Renderer } from "../Renderer"
-import { ResourceHandler } from "../../ResourceHandler"
+import { DocumentRenderer } from "../../../spineItem/DocumentRenderer"
+import { ResourceHandler } from "../../../spineItem/ResourceHandler"
 import {
   EMPTY,
   of,
@@ -14,9 +13,10 @@ import { createFrameElement } from "./createFrameElement"
 import { attachFrameSrc } from "./attachFrameSrc"
 import { waitForSwitch } from "../../../utils/rxjs"
 import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
+import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
 
-export class HtmlRenderer extends Renderer {
+export class HtmlRenderer extends DocumentRenderer {
   /**
    * This value is being used to avoid item to shrink back to smaller size when getting a layout after
    * the content has been loaded.

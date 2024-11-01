@@ -12,9 +12,8 @@ import {
 } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
-import { Renderer } from "./renderers/Renderer"
+import { DefaultRenderer, DocumentRenderer } from "./DocumentRenderer"
 import { upsertCSS } from "../utils/frames"
-import { HtmlRenderer } from "./renderers/html/HtmlRenderer"
 import { ResourceHandler } from "./ResourceHandler"
 
 export class SpineItem {
@@ -26,7 +25,7 @@ export class SpineItem {
     isFirstLayout: boolean
     isReady: boolean
   }>
-  public renderer: Renderer
+  public renderer: DocumentRenderer
   public resourcesHandler: ResourceHandler
 
   constructor(
@@ -51,7 +50,7 @@ export class SpineItem {
     const ResourcesHandlerClass =
       this.settings.values.getResourcesHandler?.(item) ?? ResourceHandler
     const RendererClass =
-      this.settings.values.getRenderer?.(item) ?? HtmlRenderer
+      this.settings.values.getRenderer?.(item) ?? DefaultRenderer
 
     this.resourcesHandler = new ResourcesHandlerClass(item, this.settings)
     this.renderer = new RendererClass(
@@ -142,7 +141,7 @@ export class SpineItem {
       blankPagePosition,
       minPageSpread: minimumWidth / this.context.getPageSize().width,
       spreadPosition,
-    })
+    }) ?? { width: 0, height: 0 }
 
     const minHeight = Math.max(height, this.context.getPageSize().height)
     const minWidth = Math.max(width, minimumWidth)
