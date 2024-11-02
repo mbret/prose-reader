@@ -1,4 +1,4 @@
-import { EMPTY, from, fromEvent, tap } from "rxjs"
+import { EMPTY, from, fromEvent, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../spineItem/DocumentRenderer"
 
 export class ImageRenderer extends DocumentRenderer {
@@ -12,17 +12,31 @@ export class ImageRenderer extends DocumentRenderer {
 
   onCreateDocument() {
     return from(this.resourcesHandler.getResource()).pipe(
-      tap((responseOrUrl) => {
+      switchMap((responseOrUrl) => {
         const imgElement =
           this.containerElement.ownerDocument.createElement(`img`)
 
+        this.layers = [{ element: imgElement }]
+
         imgElement.style.objectFit = `contain`
+        imgElement.style.userSelect = `none`
 
         if (responseOrUrl instanceof URL) {
-          imgElement.src = responseOrUrl.href
+          return of(responseOrUrl.href)
+        } else {
+          return from(responseOrUrl.blob()).pipe(
+            map((blob) => {
+              return URL.createObjectURL(blob)
+            }),
+          )
         }
+      }),
+      tap((src) => {
+        const element = this.getImageElement()
 
-        this.layers = [{ element: imgElement }]
+        if (element) {
+          element.src = src
+        }
       }),
     )
   }
@@ -38,6 +52,12 @@ export class ImageRenderer extends DocumentRenderer {
   }
 
   onUnload() {
+    const imageElement = this.getImageElement()
+
+    if (imageElement) {
+      URL.revokeObjectURL(imageElement.src)
+    }
+
     this.layers.forEach(({ element }) => {
       element.remove()
     })
