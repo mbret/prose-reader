@@ -38,7 +38,11 @@ export const createArchiveFromUrls = async (
     uri: url,
     size: 100 / urls.length,
     base64: async () => ``,
-    blob: async () => new Blob(),
+    blob: async () => {
+      const response = await fetch(url)
+
+      return response.blob()
+    },
     string: async () => ``,
   }))
 
