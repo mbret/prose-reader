@@ -1,5 +1,6 @@
 import { Reader, SettingsManager } from "@prose-reader/core"
 import { InputSettings, OutputSettings } from "./types"
+import { takeUntil, tap } from "rxjs"
 
 export class GesturesSettingsManager extends SettingsManager<InputSettings, OutputSettings> {
   constructor(
@@ -7,6 +8,19 @@ export class GesturesSettingsManager extends SettingsManager<InputSettings, Outp
     private reader: Reader,
   ) {
     super(initialSettings)
+
+    /**
+     * Since we have settings that may be locked due to some reader settings
+     * we need to update as soon as they update as well.
+     */
+    reader.settings.values$
+      .pipe(
+        tap(() => {
+          this.update({})
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe()
   }
 
   getOutputSettings(inputSettings: InputSettings): OutputSettings {

@@ -136,6 +136,10 @@ export const gesturesEnhancer =
 
     return {
       ...reader,
+      destroy: () => {
+        reader.destroy()
+        settingsManager.destroy()
+      },
       gestures: {
         settings: settingsManager,
         unhandledEvent$: unhandledEvent$.asObservable(),
