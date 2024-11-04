@@ -1,11 +1,10 @@
 import { Manifest } from "@prose-reader/shared"
-import { ObservedValueOf, skip } from "rxjs"
+import { ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
 import { paginationEnhancer } from "./enhancer"
 import { progressionEnhancer } from "../progression"
 import { navigationEnhancer } from "../navigation"
-import { ResourceHandler } from "../../spineItem/ResourceHandler"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -33,12 +32,7 @@ describe("Given a book with one chapter", () => {
   describe(`when we navigate to first page`, () => {
     it(`should return first chapter`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({
-        getResourcesHandler: () =>
-          class FakeResourceHandler extends ResourceHandler {
-            public async getResource() {
-              return new Response("", { status: 200 })
-            }
-          },
+        getResource: () => of(new Response("", { status: 200 })),
       })
 
       const value = await new Promise<
@@ -89,12 +83,7 @@ describe("Given a book with one chapter", () => {
       const reader = navigationEnhancer(
         paginationEnhancer(progressionEnhancer(createReader)),
       )({
-        getResourcesHandler: () =>
-          class FakeResourceHandler extends ResourceHandler {
-            public async getResource() {
-              return new Response("", { status: 200 })
-            }
-          },
+        getResource: () => of(new Response("", { status: 200 })),
       })
 
       const value = await new Promise<
@@ -157,12 +146,7 @@ describe("Given a book with one chapter", () => {
           const reader = navigationEnhancer(
             paginationEnhancer(progressionEnhancer(createReader)),
           )({
-            getResourcesHandler: () =>
-              class FakeResourceHandler extends ResourceHandler {
-                public async getResource() {
-                  return new Response("", { status: 200 })
-                }
-              },
+            getResource: () => of(new Response("", { status: 200 })),
           })
 
           const value = await new Promise<
@@ -233,12 +217,7 @@ describe("Given a book with two chapters", () => {
   describe("when we navigate to the first page which is in first chapter", () => {
     it(`should return chapter 1`, async () => {
       const reader = paginationEnhancer(progressionEnhancer(createReader))({
-        getResourcesHandler: () =>
-          class FakeResourceHandler extends ResourceHandler {
-            public async getResource() {
-              return new Response("", { status: 200 })
-            }
-          },
+        getResource: () => of(new Response("", { status: 200 })),
       })
 
       const value = await new Promise<

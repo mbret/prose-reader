@@ -23,13 +23,15 @@ export class ImageRenderer extends DocumentRenderer {
 
         if (responseOrUrl instanceof URL) {
           return of(responseOrUrl.href)
-        } else {
+        } else if (responseOrUrl instanceof Response) {
           return from(responseOrUrl.blob()).pipe(
             map((blob) => {
               return URL.createObjectURL(blob)
             }),
           )
         }
+
+        throw new Error(`Invalid resource`)
       }),
       tap((src) => {
         const element = this.getImageElement()

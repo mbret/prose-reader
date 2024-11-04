@@ -1,5 +1,8 @@
 import { Manifest } from "@prose-reader/shared"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { lastValueFrom, of } from "rxjs"
+
+const defaultGetResource = (item: Manifest["items"][0]) => new URL(item.href)
 
 export class ResourceHandler {
   constructor(
@@ -7,8 +10,12 @@ export class ResourceHandler {
     protected settings: ReaderSettingsManager,
   ) {}
 
-  public async getResource(): Promise<URL | Response> {
-    return new URL(this.item.href)
+  public async getResource() {
+    const resource = await lastValueFrom(
+      this.settings.values.getResource?.(this.item) ?? of(undefined),
+    )
+
+    return resource ?? defaultGetResource(this.item)
   }
 
   public async fetchResource() {
@@ -16,6 +23,8 @@ export class ResourceHandler {
 
     if (resource instanceof Response) return resource
 
-    return fetch(resource)
+    if (resource instanceof URL) return fetch(resource)
+
+    return resource
   }
 }

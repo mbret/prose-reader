@@ -1,4 +1,14 @@
-import { catchError, from, map, Observable, of, switchMap, tap } from "rxjs"
+import {
+  catchError,
+  EMPTY,
+  filter,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from "rxjs"
 import { Manifest } from "@prose-reader/shared"
 import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
@@ -50,12 +60,15 @@ export const attachFrameSrc = ({
 
               return of(frameElement)
             } else {
-              const resourceResponse =
+              const resourceResponse$ =
                 resource instanceof URL
-                  ? resourcesHandler.fetchResource()
-                  : Promise.resolve(resource)
+                  ? from(resourcesHandler.fetchResource())
+                  : resource instanceof Response
+                    ? of(resource)
+                    : EMPTY
 
-              return from(resourceResponse).pipe(
+              return resourceResponse$.pipe(
+                filter((response) => response instanceof Response),
                 switchMap((response) => from(getHtmlFromResource(response))),
                 tap((htmlDoc) => {
                   if (htmlDoc) {

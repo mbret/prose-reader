@@ -1,6 +1,6 @@
 import { Manifest } from "@prose-reader/shared"
 import { DocumentRenderer } from "../spineItem/DocumentRenderer"
-import { ResourceHandler } from "../spineItem/ResourceHandler"
+import { Observable } from "rxjs"
 
 export type CoreInputSettings = {
   forceSinglePageMode: boolean
@@ -41,10 +41,11 @@ export type CoreInputSettings = {
    * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
    * not pass through the service worker.
    */
-  getResourcesHandler?: (
+  getResource?: (
     item: Manifest["spineItems"][number],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) => new (...args: any[]) => ResourceHandler
+  ) =>
+    | Observable<URL | Response | { custom: true; data: unknown } | undefined>
+    | undefined
   getRenderer?: (
     item: Manifest["spineItems"][number],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

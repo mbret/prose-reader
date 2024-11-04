@@ -3,8 +3,10 @@ import { Observable, Subject } from "rxjs"
 import { shareReplay } from "rxjs/operators"
 import { SettingsInterface } from "./SettingsInterface"
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
+import { DestroyableClass } from "../utils/DestroyableClass"
 
 export abstract class SettingsManager<InputSettings, OutputSettings>
+  extends DestroyableClass
   implements SettingsInterface<InputSettings, OutputSettings>
 {
   protected inputSettings: InputSettings
@@ -14,6 +16,8 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
   public _settings$: Observable<OutputSettings>
 
   constructor(initialSettings: Partial<InputSettings>) {
+    super()
+
     const settingsWithDefaults: InputSettings = {
       ...this.getDefaultSettings(),
       ...initialSettings,
@@ -87,6 +91,7 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
   }
 
   public destroy() {
+    super.destroy()
     this.outputSettingsUpdateSubject.complete()
   }
 }

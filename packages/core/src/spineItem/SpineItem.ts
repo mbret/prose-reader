@@ -47,12 +47,10 @@ export class SpineItem {
 
     parentElement.appendChild(this.containerElement)
 
-    const ResourcesHandlerClass =
-      this.settings.values.getResourcesHandler?.(item) ?? ResourceHandler
     const RendererClass =
       this.settings.values.getRenderer?.(item) ?? DefaultRenderer
 
-    this.resourcesHandler = new ResourcesHandlerClass(item, this.settings)
+    this.resourcesHandler = new ResourceHandler(item, this.settings)
     this.renderer = new RendererClass(
       context,
       settings,
