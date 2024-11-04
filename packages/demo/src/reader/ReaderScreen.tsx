@@ -41,6 +41,8 @@ export const ReaderScreen = memo(() => {
   useResetStateOnUnMount()
 
   useEffect(() => {
+    console.debug(`manifest`, manifest)
+
     const containerElement = readerContainerRef.current
 
     if (reader && manifest && containerElement) {
