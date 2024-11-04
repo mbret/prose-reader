@@ -1,12 +1,15 @@
 import { createReader, Reader } from "@prose-reader/core"
 import { PdfRenderer } from "./PdfRenderer"
+import { EnhancerOptions } from "./types"
+import { from, map, mergeMap, of } from "rxjs"
+import { isPdfJsArchive } from "./createArchiveFromPdf"
 
 type CreateReader = typeof createReader
 type CreateReaderOptions = Parameters<CreateReader>[0]
 
 export const pdfEnhancer =
   <InheritOptions extends CreateReaderOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
-  (options: InheritOptions): InheritOutput => {
+  (options: InheritOptions & EnhancerOptions): InheritOutput => {
     const reader = next({
       ...options,
       /**
@@ -27,6 +30,27 @@ export const pdfEnhancer =
 
         return MaybeRenderer
       },
+      getResource: (item) =>
+        options.pdf.getArchiveForItem(item).pipe(
+          mergeMap((archive) => {
+            if (!archive) return of(undefined)
+
+            if (!isPdfJsArchive(archive)) {
+              console.warn(`You provided an invalid pdf archive`)
+
+              return of(undefined)
+            }
+
+            const fileIndex = archive.files.findIndex((file) => item.href.endsWith(file.uri))
+
+            return from(archive.proxyDocument.getPage(fileIndex + 1)).pipe(
+              map((pageProxy) => ({
+                custom: true as const,
+                data: pageProxy,
+              })),
+            )
+          }),
+        ),
     })
 
     return reader
