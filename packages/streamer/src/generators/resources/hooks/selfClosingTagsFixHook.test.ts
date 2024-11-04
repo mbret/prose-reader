@@ -8,7 +8,6 @@ describe("Given a book with invalid self closing tag", () => {
       filename: "",
       files: [
         {
-          base64: () => Promise.resolve(""),
           blob: () => Promise.resolve(new Blob([])),
           string: () =>
             Promise.resolve(`

@@ -31,10 +31,6 @@ export const createArchiveFromArrayBufferList = async (
           Array.from(new Uint16Array(data)),
         )
       },
-      base64: async () => {
-        // @todo not used for now, lets implement it later if needed
-        return ``
-      },
       size: file.size,
     })),
     close: () => Promise.resolve(),

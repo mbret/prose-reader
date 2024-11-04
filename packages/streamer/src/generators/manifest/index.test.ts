@@ -5,7 +5,6 @@ import { Archive } from "../../archives/types"
 import { Manifest } from "@prose-reader/shared"
 
 const fakeContent = {
-  base64: () => Promise.resolve(""),
   blob: () => Promise.resolve(new Blob([])),
   string: () => Promise.resolve(""),
 }
@@ -97,7 +96,6 @@ describe(`Given a list of urls with rendition flow archive`, () => {
 
 describe("Given archive with a folder containing a space", () => {
   const fakeContent = {
-    base64: () => Promise.resolve(""),
     blob: () => Promise.resolve(new Blob([])),
     string: () => Promise.resolve(""),
   }

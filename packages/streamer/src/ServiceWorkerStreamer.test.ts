@@ -11,7 +11,6 @@ const archive: Archive = {
       uri: `bar/foo.jpg`,
       blob: async () => new Blob([`bar/foo.jpg`]),
       string: async () => `bar/foo.jpg`,
-      base64: async () => btoa(`bar/foo.jpg`),
       size: 0,
     },
     {
@@ -20,7 +19,6 @@ const archive: Archive = {
       uri: `Creature Girls - A Hands-On Field Journal in Another World v04 (2020) (Digital) (SnS)/Creature Girls - A Hands-On Field Journal in Another World v04 000 (2020) (Digital) (SnS).jpg`,
       blob: async () => new Blob([`bar/foo.jpg`]),
       string: async () => `bar/foo.jpg`,
-      base64: async () => btoa(`bar/foo.jpg`),
       size: 0,
     },
   ],

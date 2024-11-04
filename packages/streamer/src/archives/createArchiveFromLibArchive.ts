@@ -50,9 +50,6 @@ export const createArchiveFromLibArchive = async (
       basename: item.file.name,
       size: item.file.size,
       uri: `${item.path}${item.file.name}`,
-      base64: async () => {
-        return ``
-      },
       blob: async () => {
         const file = await (item.file.extract() as Promise<File>)
 

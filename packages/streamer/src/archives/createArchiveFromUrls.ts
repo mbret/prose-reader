@@ -37,7 +37,6 @@ export const createArchiveFromUrls = async (
     encodingFormat: detectMimeTypeFromName(url),
     uri: url,
     size: 100 / urls.length,
-    base64: async () => ``,
     blob: async () => {
       const response = await fetch(url)
 
@@ -51,7 +50,6 @@ export const createArchiveFromUrls = async (
     basename: `content.opf`,
     uri: `content.opf`,
     size: 0,
-    base64: async () => opfFileData,
     blob: async () => new Blob(),
     string: async () => opfFileData,
   }

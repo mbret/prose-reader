@@ -34,7 +34,6 @@ describe(`Given ncx toc with prefix`, () => {
           uri: `OEBPS/content.opf`,
           blob: async () => new Blob([``]),
           string: async () => ``,
-          base64: async () => ``,
           size: 0,
         },
         {
@@ -43,7 +42,6 @@ describe(`Given ncx toc with prefix`, () => {
           uri: `OEBPS/toc.ncx`,
           blob: async () => new Blob([toc]),
           string: async () => toc,
-          base64: async () => btoa(toc),
           size: 0,
         },
       ],
@@ -82,7 +80,6 @@ describe("Given a base url with a slash at the end", () => {
           uri: `OEBPS/content.opf`,
           blob: async () => new Blob([``]),
           string: async () => ``,
-          base64: async () => ``,
           size: 0,
         },
         {
@@ -91,7 +88,6 @@ describe("Given a base url with a slash at the end", () => {
           uri: `OEBPS/toc.ncx`,
           blob: async () => new Blob([toc]),
           string: async () => toc,
-          base64: async () => btoa(toc),
           size: 0,
         },
       ],

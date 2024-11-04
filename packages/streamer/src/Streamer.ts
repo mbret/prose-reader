@@ -24,6 +24,8 @@ type OnManifestSuccess = (params: {
 export class Streamer {
   protected epubLoader: ReturnType<typeof createArchiveLoader>
   protected onError: OnError = (error) => {
+    console.error(error)
+
     return new Response(String(error), { status: 500 })
   }
   protected onManifestSuccess: OnManifestSuccess
@@ -44,14 +46,28 @@ export class Streamer {
     this.onError = onError ?? this.onError
   }
 
-  protected accessArchive(key: string) {
-    if (this.lastAccessedKey !== key) {
+  public prune() {
+    this.epubLoader.purge()
+  }
+
+  public accessArchive(key: string) {
+    if (this.lastAccessedKey !== undefined && this.lastAccessedKey !== key) {
       this.epubLoader.purge()
     }
 
     this.lastAccessedKey = key
 
     return this.epubLoader.access(key)
+  }
+
+  public accessArchiveWithoutLock(key: string) {
+    return this.accessArchive(key).pipe(
+      map(({ archive, release }) => {
+        release()
+
+        return archive
+      }),
+    )
   }
 
   public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {

@@ -13,7 +13,6 @@ export type Archive = {
     uri: string
     blob: () => Promise<Blob>
     string: () => Promise<string>
-    base64: () => Promise<string>
     stream?: () => StreamResult
     size: number
     // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types

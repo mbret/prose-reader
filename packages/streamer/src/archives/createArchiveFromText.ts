@@ -1,4 +1,3 @@
-import { blobToBase64 } from "../utils/blobToBAse64"
 import { getUriBasename } from "../utils/uri"
 import { Archive } from "./types"
 
@@ -41,7 +40,6 @@ export const createArchiveFromText = async (
         uri: `generated.opf`,
         blob: async () => new Blob([txtOpfContent]),
         string: async () => txtOpfContent,
-        base64: async () => btoa(txtOpfContent),
         size: 0,
       },
       {
@@ -55,10 +53,6 @@ export const createArchiveFromText = async (
         string: async () => {
           if (typeof content === `string`) return content
           return content.text()
-        },
-        base64: async () => {
-          if (typeof content === `string`) return btoa(content)
-          return blobToBase64(content)
         },
         size: typeof content === `string` ? content.length : content.size,
         encodingFormat: mimeType,

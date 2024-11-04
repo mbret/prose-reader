@@ -9,7 +9,6 @@ it("should create valid toc", async () => {
       close: async () => {},
       files: [
         {
-          base64: async () => ``,
           basename: "2.jpg",
           blob: () => Promise.resolve({} as any),
           dir: false,
@@ -18,7 +17,6 @@ it("should create valid toc", async () => {
           uri: "folder c/2.jpg",
         },
         {
-          base64: async () => ``,
           basename: "1.jpg",
           blob: () => Promise.resolve({} as any),
           dir: false,
@@ -27,7 +25,6 @@ it("should create valid toc", async () => {
           uri: "folder c/1.jpg",
         },
         {
-          base64: async () => ``,
           basename: "1.jpg",
           blob: () => Promise.resolve({} as any),
           dir: false,
@@ -36,7 +33,6 @@ it("should create valid toc", async () => {
           uri: "folder a/folder b/1.jpg",
         },
         {
-          base64: async () => ``,
           basename: "Screenshot from 2024-08-28 13-21-11.png",
           blob: () => Promise.resolve({} as any),
           dir: false,
@@ -45,7 +41,6 @@ it("should create valid toc", async () => {
           uri: "folder a/Screenshot from 2024-08-28 13-21-11.png",
         },
         {
-          base64: async () => ``,
           basename: "4.jpg",
           blob: () => Promise.resolve({} as any),
           dir: false,

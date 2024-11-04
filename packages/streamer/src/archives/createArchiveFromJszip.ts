@@ -16,6 +16,7 @@ interface OutputByType {
 }
 
 type OutputType = keyof OutputByType
+
 interface JSZipObject {
   name: string
   dir: boolean
@@ -50,7 +51,6 @@ export const createArchiveFromJszip = async (
       uri: file.name,
       blob: () => file.async(`blob`),
       string: () => file.async(`string`),
-      base64: () => file.async(`base64`),
       ...(file.internalStream && {
         stream: file.internalStream,
       }),
