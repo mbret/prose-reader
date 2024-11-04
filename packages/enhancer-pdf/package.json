@@ -1,0 +1,25 @@
+{
+  "name": "@prose-reader/enhancer-pdf",
+  "version": "1.117.0",
+  "type": "module",
+  "main": "./dist/prose-reader-enhancer-pdf.umd.cjs",
+  "module": "./dist/prose-reader-enhancer-pdf.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/prose-reader-enhancer-pdf.js",
+      "require": "./dist/prose-reader-enhancer-pdf.umd.cjs"
+    }
+  },
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "lint:read": "prettier --check . && eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:write": "prettier --write . && eslint --fix . --ext .ts,.tsx,.js,.jsx"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "^1.117.0",
+    "pdfjs-dist": "^4.8.69",
+    "rxjs": "*"
+  }
+}
