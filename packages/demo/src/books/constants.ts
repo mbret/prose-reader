@@ -26,6 +26,14 @@ export const COMICS = [
   }
 ]
 
+export const PDFS = [
+  {
+    name: `sample-3.pdf`,
+    type: `EN - LTR - FXL`,
+    link: `/reader/${btoa(`${window.location.origin}/epubs/sample-3.pdf`)}`
+  }
+]
+
 export const EPUBS = [
   {
     name: `accessible_epub_3.epub`,

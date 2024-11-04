@@ -7,7 +7,7 @@ import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
 import { Glossary } from "./Glossary"
 import { UploadBook } from "./UploadBook"
 import { useUploadedBooks } from "./useUploadedBooks"
-import { COMICS, EPUBS } from "./constants"
+import { COMICS, EPUBS, PDFS } from "./constants"
 import { BookTable } from "./BookTable"
 
 export const BooksScreen = () => {
@@ -71,6 +71,7 @@ export const BooksScreen = () => {
             </Table>
           </Box>
           <BookTable items={COMICS} title="Comics" />
+          <BookTable items={PDFS} title="PDF" />
           <BookTable items={EPUBS} title="Epubs" />
         </Stack>
       </Stack>

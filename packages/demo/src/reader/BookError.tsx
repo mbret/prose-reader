@@ -1,8 +1,9 @@
+import { Container, Text } from "@chakra-ui/react"
 import React from "react"
 
 export const BookError = ({ url }: { url: string }) => {
   return (
-    <div
+    <Container
       style={{
         height: "100%",
         width: "100%",
@@ -14,11 +15,12 @@ export const BookError = ({ url }: { url: string }) => {
         alignItems: "center",
         justifyContent: "center",
         flexDirection: `column`,
-        textAlign: `center`
+        textAlign: `center`,
+        color: "black"
       }}
     >
-      <p>Unable to load your book {url}</p>
-      <p>Make sure to have CORS enabled if you are linking to an external resource</p>
-    </div>
+      <Text wordBreak="break-word">Unable to load your book {url}</Text>
+      <Text>Make sure to have CORS enabled if you are linking to an external resource</Text>
+    </Container>
   )
 }

@@ -18,9 +18,9 @@ export const webStreamer = new Streamer({
    */
   cleanArchiveAfter: Infinity,
   getArchive: async (key: string) => {
-    const { blob } = await getBlobFromKey(key)
+    const { blob, url } = await getBlobFromKey(key)
 
-    if (!blob.name.endsWith(`.pdf`)) {
+    if (!url.endsWith(`.pdf`)) {
       throw new Error(`Please use sw streamer`)
     }
 

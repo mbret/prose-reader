@@ -5,11 +5,15 @@ import { ChakraProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"
 import { BooksScreen } from "./books/BooksScreen"
 import { ReaderScreen } from "./reader/ReaderScreen"
-import { QueryClient, QueryClientProvider } from "reactjrx"
+import { QueryCache, QueryClient, QueryClientProvider } from "reactjrx"
 
 import "@fontsource/dancing-script/400.css"
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => console.error(error)
+  })
+})
 
 export const App = memo(() => {
   return (

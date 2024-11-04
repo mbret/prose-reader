@@ -7,6 +7,7 @@ import { getStreamerBaseUrl } from "../streamer/utils.shared"
 export const useManifest = (epubKey: string) =>
   useQuery({
     queryKey: ["manifest", epubKey],
+    retry: false,
     queryFn: async () => {
       const demoEpubUrl = atob(epubKey)
 
@@ -21,6 +22,10 @@ export const useManifest = (epubKey: string) =>
           key: epubKey,
           baseUrl: `${getStreamerBaseUrl(new URL(window.location.href))}/${epubKey}/`
         })
+
+        if (response.status >= 400) {
+          throw response
+        }
 
         const bookManifest: Manifest = await response.json()
 
