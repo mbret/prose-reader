@@ -11,7 +11,7 @@ import {
   merge,
   mergeMap,
   NEVER,
-  of,
+  pairwise,
   shareReplay,
   startWith,
   Subject,
@@ -19,109 +19,145 @@ import {
   takeUntil,
   tap,
   timer,
-  withLatestFrom,
+  ObservedValueOf,
 } from "rxjs"
 import { Archive } from "./types"
 
-type ArchiveEntry = {
-  status: "idle" | "loading" | "success" | "error"
-  error: unknown
-  archive: undefined | Archive
-  locks: number
+class ArchiveEntry {
+  state$ = new BehaviorSubject<{
+    status: "idle" | "loading" | "success" | "error"
+    error?: unknown | undefined
+    archive?: undefined | Archive
+    locks: number
+  }>({
+    status: `idle`,
+    locks: 0,
+  })
+
+  constructor(private cleanArchiveAfter: number) {}
+
+  update(update: Partial<ObservedValueOf<typeof this.state$>>) {
+    this.state$.next({ ...this.state$.getValue(), ...update })
+  }
+
+  get locks$() {
+    return this.state$.pipe(map(({ locks }) => locks))
+  }
+
+  get state() {
+    return this.state$.getValue()
+  }
+
+  get isUnlocked$() {
+    return this.locks$.pipe(
+      map((locks) => locks <= 0),
+      distinctUntilChanged(),
+      shareReplay(),
+    )
+  }
+
+  get overTTL$() {
+    return this.isUnlocked$.pipe(
+      switchMap((isUnlocked) =>
+        !isUnlocked
+          ? NEVER
+          : this.cleanArchiveAfter === Infinity
+            ? NEVER
+            : timer(this.cleanArchiveAfter),
+      ),
+    )
+  }
 }
 
 export const createArchiveLoader = ({
   getArchive,
-  cleanArchiveAfter,
+  cleanArchiveAfter = 5 * 60 * 1000, // 5mn
 }: {
   getArchive: (key: string) => Promise<Archive>
-  cleanArchiveAfter: number
+  cleanArchiveAfter?: number
 }) => {
   const loadSubject = new Subject<string>()
   const destroySubject = new Subject<void>()
   const purgeSubject = new Subject<void>()
-  const archives: Record<string, BehaviorSubject<ArchiveEntry>> = {}
+  const archives: Record<string, ArchiveEntry> = {}
 
-  const archiveLoaded$ = loadSubject.pipe(
+  const loadArchive$ = loadSubject.pipe(
     mergeMap((key) => {
       const archiveEntry = archives[key]
 
-      if (!archiveEntry || archiveEntry.getValue().status !== "idle")
-        return EMPTY
+      if (!archiveEntry || archiveEntry.state.status !== "idle") return EMPTY
 
-      archiveEntry.next({
-        ...archiveEntry.getValue(),
+      let isClosed = false
+
+      const cleanupArchive = (key: string) => {
+        const entry = archives[key]
+
+        delete archives[key]
+
+        if (!isClosed) {
+          entry?.state.archive?.close()
+          isClosed = true
+        }
+      }
+
+      archiveEntry.update({
         status: "loading",
       })
 
-      return from(getArchive(key)).pipe(
-        map((archive) => {
-          archiveEntry.next({
-            ...archiveEntry.getValue(),
+      const locks$ = archiveEntry.locks$
+      const isUnlocked$ = archiveEntry.isUnlocked$
+
+      const newAccess$ = locks$.pipe(
+        pairwise(),
+        filter(([prev, curent]) => curent > prev),
+        startWith(true),
+      )
+
+      const archive$ = from(getArchive(key))
+
+      return archive$.pipe(
+        tap((archive) => {
+          archiveEntry.update({
             archive,
             status: "success",
           })
-
-          return { key, archiveEntry }
         }),
         catchError((error) => {
-          archiveEntry.next({
-            ...archiveEntry.getValue(),
+          cleanupArchive(key)
+
+          archiveEntry.update({
             status: "error",
             error,
           })
 
           return EMPTY
         }),
-      )
-    }),
-    shareReplay(),
-  )
+        switchMap(() => {
+          const readyForPurge$ = newAccess$.pipe(
+            switchMap(() => purgeSubject),
+            switchMap(() => isUnlocked$),
+            filter((isUnlocked) => isUnlocked),
+          )
 
-  const cleanup$ = archiveLoaded$.pipe(
-    switchMap(({ archiveEntry, key }) => {
-      const locks$ = archiveEntry.pipe(map(({ locks }) => locks))
-      const isPurged$ = purgeSubject.pipe(
-        map(() => true),
-        startWith(false),
-        shareReplay(),
-      )
-      const isUnlocked$ = locks$.pipe(
-        map((locks) => locks <= 0),
-        distinctUntilChanged(),
-      )
-
-      return isUnlocked$.pipe(
-        withLatestFrom(isPurged$),
-        switchMap(([isUnlocked, isPurged]) =>
-          !isUnlocked ? NEVER : !isPurged ? timer(cleanArchiveAfter) : of(null),
-        ),
+          return merge(readyForPurge$, archiveEntry.overTTL$)
+        }),
         tap(() => {
-          delete archives[key]
-
-          archiveEntry.getValue().archive?.close()
+          cleanupArchive(key)
         }),
       )
     }),
+    takeUntil(destroySubject),
   )
 
   const access = (key: string) => {
     let releaseCalled = false
 
-    const archiveEntry =
-      archives[key] ??
-      new BehaviorSubject<ArchiveEntry>({
-        archive: undefined,
-        status: "idle",
-        locks: 0,
-        error: undefined,
-      })
+    const archiveEntry = archives[key] ?? new ArchiveEntry(cleanArchiveAfter)
 
     archives[key] = archiveEntry
 
-    archiveEntry.next({
-      ...archiveEntry.getValue(),
-      locks: archiveEntry.getValue().locks + 1,
+    archiveEntry.update({
+      locks: archiveEntry.state.locks + 1,
     })
 
     const release = () => {
@@ -129,20 +165,19 @@ export const createArchiveLoader = ({
 
       releaseCalled = true
 
-      archiveEntry.next({
-        ...archiveEntry.getValue(),
-        locks: archiveEntry.getValue().locks - 1,
+      archiveEntry.update({
+        locks: archiveEntry.state.locks - 1,
       })
     }
 
     loadSubject.next(key)
 
-    const archive$ = archiveEntry.pipe(
+    const archive$ = archiveEntry.state$.pipe(
       map(({ archive }) => archive),
       filter((archive) => !!archive),
     )
 
-    const error$ = archiveEntry.pipe(
+    const error$ = archiveEntry.state$.pipe(
       tap(({ error }) => {
         if (error) {
           throw error
@@ -166,18 +201,14 @@ export const createArchiveLoader = ({
    * Will purge immediatly archives as soon as they are released
    */
   const purge = () => {
-    // make sure we don't access anymore
-    Object.keys(archives).forEach((key) => {
-      delete archives[key]
-    })
-
     purgeSubject.next()
   }
 
-  merge(cleanup$, archiveLoaded$).pipe(takeUntil(destroySubject)).subscribe()
+  loadArchive$.subscribe()
 
   return {
     access,
     purge,
+    archives,
   }
 }
