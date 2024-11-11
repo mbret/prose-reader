@@ -9,5 +9,5 @@ import { getItemAnchor } from "./getItemAnchor"
 export const getRootCfi = (spineItem: SpineItem) => {
   const itemAnchor = getItemAnchor(spineItem)
 
-  return `epubcfi(/0${itemAnchor}) `
+  return `epubcfi(/0${itemAnchor})`
 }

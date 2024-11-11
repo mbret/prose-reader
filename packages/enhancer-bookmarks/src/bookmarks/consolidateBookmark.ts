@@ -18,16 +18,25 @@ export const consolidateBookmark = ({ bookmark, reader }: { reader: Reader; book
   const { itemIndex, node, offset } = consolidateCfiInfo({ reader, bookmark })
   const spineItem = reader.spineItemsManager.get(itemIndex)
 
-  if (!node || offset === undefined || !spineItem) return bookmark
+  let spineItemPageIndex = bookmark.pageIndex
 
-  const spineItemPageIndex = reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(node, offset, spineItem)
+  if (!spineItem) return bookmark
 
-  if (spineItemPageIndex === undefined) return bookmark
+  if (spineItem.item.renditionLayout === `pre-paginated`) {
+    // prepaginated items only have one page. They cannot spread
+    spineItemPageIndex = 0
+  } else if (node !== undefined && offset !== undefined) {
+    spineItemPageIndex = reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(node, offset, spineItem)
+  }
 
-  const absolutePageIndex = reader.spine.locator.getAbsolutePageIndexFromPageIndex({
-    pageIndex: spineItemPageIndex,
-    spineItemOrId: spineItem,
-  })
+  let absolutePageIndex = bookmark.absolutePageIndex
+
+  if (spineItemPageIndex !== undefined) {
+    absolutePageIndex = reader.spine.locator.getAbsolutePageIndexFromPageIndex({
+      pageIndex: spineItemPageIndex,
+      spineItemOrId: spineItem,
+    })
+  }
 
   return {
     ...bookmark,

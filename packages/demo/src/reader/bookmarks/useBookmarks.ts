@@ -13,7 +13,7 @@ const restore = (bookKey: string) => {
 }
 
 const persist = (bookKey: string, bookmarks: SerializableBookmark[]) => {
-  const existing = restore(bookKey)
+  const existing = JSON.parse(localStorage.getItem(`bookmarks`) || `{}`)
 
   localStorage.setItem(
     `bookmarks`,
@@ -46,6 +46,6 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
             })
           )
         : NEVER,
-    [reader, isHydrated]
+    [reader, isHydrated, bookKey]
   )
 }

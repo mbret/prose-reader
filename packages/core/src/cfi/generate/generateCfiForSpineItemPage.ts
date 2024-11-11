@@ -48,7 +48,7 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
         `${itemAnchor}${offset}`,
       )
 
-      return cfiString
+      return cfiString.trim()
     }
 
     return getRootCfi(spineItem)

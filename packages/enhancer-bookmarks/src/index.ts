@@ -3,6 +3,7 @@ import { animationFrameScheduler, BehaviorSubject, merge, Subject, timer } from 
 import { filter, map, share, switchMap, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { SerializableBookmark, EnhancerOutput, RuntimeBookmark, Command } from "./types"
 import { consolidateBookmark } from "./bookmarks/consolidateBookmark"
+import { report } from "./report"
 
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
@@ -75,6 +76,8 @@ export const bookmarksEnhancer =
       filter((command) => command.type === "add"),
       withLatestFrom(bookmarksSubject),
       map(([command, bookmarks]) => {
+        report.debug("addBookmark", { command, bookmarks })
+
         const givenCfi = "cfi" in command.data ? command.data.cfi : undefined
         const givenAbsolutePageIndex = "absolutePageIndex" in command.data ? command.data.absolutePageIndex : undefined
 
@@ -96,6 +99,12 @@ export const bookmarksEnhancer =
             pageIndex,
             spineItem,
           })
+
+          if (bookmarks.find((bookmark) => bookmark.cfi === cfi)) {
+            report.debug(`Bookmark for cfi ${cfi} already exists`)
+
+            return
+          }
 
           bookmarksSubject.next([...bookmarks, { cfi }])
         }
@@ -121,7 +130,19 @@ export const bookmarksEnhancer =
 
     const bookmarks$ = bookmarksSubject.asObservable()
 
-    merge(addBookmark$, removeBookmark$, removeAll$, consolidateBookmarksOnLayout$).pipe(takeUntil(reader.$.destroy$)).subscribe()
+    merge(
+      addBookmark$,
+      removeBookmark$,
+      removeAll$,
+      consolidateBookmarksOnLayout$,
+      bookmarks$.pipe(
+        tap((bookmarks) => {
+          report.debug("bookmarks", bookmarks)
+        }),
+      ),
+    )
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
 
     return {
       ...reader,
