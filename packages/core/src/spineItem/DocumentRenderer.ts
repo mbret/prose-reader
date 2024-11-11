@@ -43,9 +43,6 @@ export abstract class DocumentRenderer {
         trigger === `unload` && state !== "idle" && state !== "unloading",
     ),
     map(() => undefined),
-    tap(() => {
-      console.log(`FOOO`, this.item.id, `unload`)
-    }),
     share(),
   )
 
@@ -59,9 +56,6 @@ export abstract class DocumentRenderer {
         state !== "loading",
     ),
     map(() => undefined),
-    tap(() => {
-      console.log(`FOOO`, this.item.id, `load`)
-    }),
     share(),
   )
 

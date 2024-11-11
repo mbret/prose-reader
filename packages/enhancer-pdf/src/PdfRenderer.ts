@@ -1,9 +1,5 @@
 import { EMPTY, from, Observable, switchMap } from "rxjs"
-import {
-  PDFPageProxy,
-  RenderingCancelledException,
-  RenderTask,
-} from "pdfjs-dist"
+import { PDFPageProxy, RenderingCancelledException, RenderTask } from "pdfjs-dist"
 import { DocumentRenderer } from "@prose-reader/core"
 
 export class PdfRenderer extends DocumentRenderer {
@@ -11,7 +7,7 @@ export class PdfRenderer extends DocumentRenderer {
   private renderTask: RenderTask | undefined
 
   getCanvas() {
-    const element = this.layers[0]?.element
+    const element = this.layers[0]?.element.children[0]
 
     if (element instanceof HTMLCanvasElement) return element
 
@@ -31,11 +27,22 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   onCreateDocument(): Observable<unknown> {
+    const canvasContainer = this.containerElement.ownerDocument.createElement(`div`)
+    canvasContainer.style.cssText = `
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `
+
     const canvas = this.containerElement.ownerDocument.createElement(`canvas`)
+
+    canvasContainer.appendChild(canvas)
 
     this.layers = [
       {
-        element: canvas,
+        element: canvasContainer,
       },
     ]
 
@@ -51,10 +58,10 @@ export class PdfRenderer extends DocumentRenderer {
 
         this.pageProxy = pageProxy
 
-        const canvas = this.getCanvas()
+        const container = this.layers[0]?.element
 
-        if (canvas) {
-          this.containerElement.appendChild(canvas)
+        if (container) {
+          this.containerElement.appendChild(container)
         }
 
         return EMPTY
@@ -70,27 +77,41 @@ export class PdfRenderer extends DocumentRenderer {
   }): { width: number; height: number } | undefined {
     const canvas = this.getCanvas()
     const context = canvas?.getContext("2d")
+    // Support HiDPI-screens.
+    const pixelRatioScale = window.devicePixelRatio || 1
 
     if (!canvas || !this.pageProxy || !context) return undefined
 
-    const { height, width } = this.context.getPageSize()
+    // first we try to get the desired viewport for a confortable reading based on theh current page size
+    const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
+    const { width: viewportWidth, height: viewportHeight } = this.pageProxy.getViewport({ scale: 1 })
+    const pageScale = Math.max(pageWidth / viewportWidth, pageHeight / viewportHeight)
 
-    canvas.width = width
-    canvas.height = height
-    canvas.style.width = Math.floor(width) + "px"
-    canvas.style.height = Math.floor(height) + "px"
+    // then we generate the viewport for the canvas based on the page scale
+    const viewport = this.pageProxy.getViewport({ scale: pageScale })
 
-    const viewport = this.pageProxy.getViewport({ scale: 1 })
-    const scale = Math.min(width / viewport.width, height / viewport.height)
-    const scaledViewport = this.pageProxy.getViewport({ scale: scale })
+    // Then wedefine which axis should stretch or shrink to ratio
+    const viewportRatio = viewport.width / viewport.height
+    const pageRatio = pageWidth / pageHeight
+    const isWiderThanPage = viewportRatio > pageRatio
+    const canvasWidth = isWiderThanPage ? pageWidth : pageHeight * viewportRatio
+    const canvasHeight = viewportRatio > pageRatio ? pageWidth / viewportRatio : pageHeight
+
+    canvas.width = Math.floor(viewport.width * pixelRatioScale)
+    canvas.height = Math.floor(viewport.height * pixelRatioScale)
+    canvas.style.width = Math.floor(canvasWidth) + "px"
+    canvas.style.height = Math.floor(canvasHeight) + "px"
 
     if (this.renderTask) {
       this.renderTask.cancel()
     }
 
+    const transform = pixelRatioScale !== 1 ? [pixelRatioScale, 0, 0, pixelRatioScale, 0, 0] : null
+
     this.renderTask = this.pageProxy?.render({
+      ...(transform && { transform }),
       canvasContext: context,
-      viewport: scaledViewport,
+      viewport,
     })
 
     this.renderTask?.promise
