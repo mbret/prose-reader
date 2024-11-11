@@ -5,6 +5,8 @@ import { SerializableBookmark, EnhancerOutput, RuntimeBookmark, Command } from "
 import { consolidateBookmark } from "./bookmarks/consolidateBookmark"
 import { report } from "./report"
 
+export { type SerializableBookmark, type RuntimeBookmark }
+
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
   (options: InheritOptions): InheritOutput & EnhancerOutput => {

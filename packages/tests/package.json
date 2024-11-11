@@ -11,13 +11,20 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
-    "@prose-reader/core": "1.117.0",
-    "@prose-reader/enhancer-bookmarks": "1.117.0",
-    "@prose-reader/enhancer-gestures": "1.117.0",
-    "@prose-reader/enhancer-highlights": "1.117.0",
-    "@prose-reader/enhancer-search": "1.117.0",
-    "@prose-reader/streamer": "1.117.0",
+    "@prose-reader/core": "^1.117.0",
+    "@prose-reader/enhancer-bookmarks": "^1.117.0",
+    "@prose-reader/enhancer-gestures": "^1.117.0",
+    "@prose-reader/enhancer-highlights": "^1.117.0",
+    "@prose-reader/enhancer-pdf": "^1.117.0",
+    "@prose-reader/enhancer-search": "^1.117.0",
+    "@prose-reader/streamer": "^1.117.0",
     "@types/node": "^22.8.6",
+    "pdfjs-dist": "^4.7.76",
     "xmldoc": "^1.2.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

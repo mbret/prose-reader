@@ -1,7 +1,7 @@
 import { tap } from "rxjs/operators"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
-import { SerializableBookmark } from "@prose-reader/enhancer-bookmarks/dist/types"
+import { SerializableBookmark } from "@prose-reader/enhancer-bookmarks"
 import { useEffect, useState } from "react"
 import { ReaderInstance } from "../useCreateReader"
 
