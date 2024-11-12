@@ -103,6 +103,10 @@ export const searchEnhancer =
 
       return from(item.resourcesHandler.fetchResource()).pipe(
         switchMap((response) => {
+          if (!(response instanceof Response)) {
+            return of([])
+          }
+
           const contentType = response?.headers.get(`Content-Type`) ?? ``
 
           // small optimization since we already know DOMParser only accept some documents only
