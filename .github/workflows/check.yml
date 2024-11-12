@@ -37,6 +37,9 @@ jobs:
         run: |
           npx lerna run build --stream --scope @prose-reader/*
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
       - name: Test
         run: |
           npm test
