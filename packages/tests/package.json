@@ -1,6 +1,6 @@
 {
-  "name": "@prose-reader/tests",
   "version": "1.119.0",
+  "name": "prose-reader-tests",
   "type": "module",
   "license": "MIT",
   "scripts": {
