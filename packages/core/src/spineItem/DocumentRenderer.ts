@@ -67,9 +67,9 @@ export abstract class DocumentRenderer {
     protected containerElement: HTMLElement,
     protected resourcesHandler: ResourceHandler,
   ) {
-    this.stateSubject.subscribe((state) => {
-      console.log(`FOOO`, item.id, `state`, state)
-    })
+    // this.stateSubject.subscribe((state) => {
+    //   console.log(`FOOO`, item.id, `state`, state)
+    // })
 
     this.load$
       .pipe(
@@ -207,7 +207,7 @@ export class DefaultRenderer extends DocumentRenderer {
   onCreateDocument(): Observable<unknown> {
     return EMPTY
   }
-  
+
   onLoadDocument(): Observable<unknown> {
     return EMPTY
   }

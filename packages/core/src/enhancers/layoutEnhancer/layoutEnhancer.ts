@@ -6,6 +6,7 @@ import {
   filter,
   switchMap,
   debounceTime,
+  delay,
 } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
@@ -20,7 +21,7 @@ import { isDefined } from "../../utils/isDefined"
 import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
-import { merge, Observable } from "rxjs"
+import { animationFrameScheduler, merge, Observable } from "rxjs"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 
 export const layoutEnhancer =
@@ -172,19 +173,19 @@ export const layoutEnhancer =
       })
     })
 
-    /**
-     * Reveal document after it's ready and have had a layout.
-     * We can assume the document is okay to be displayed now
-     */
-    reader.hookManager.register(`item.onAfterLayout`, ({ item }) => {
-      const spineItem = reader.spineItemsManager.get(item.id)
-
-      if (spineItem?.isReady) {
-        spineItem?.renderer.layers.forEach(({ element }) => {
+    const revealItemOnReady$ = reader.spineItemsObserver.itemIsReady$.pipe(
+      filter(({ isReady }) => isReady),
+      /**
+       * Make sure that even if the document was loaded instantly, the layout is applied first
+       * and therefore the transition played. eg: pdf are loaded before attached to the dom.
+       */
+      delay(1, animationFrameScheduler),
+      tap(({ item }) => {
+        item.renderer.layers.forEach(({ element }) => {
           element.style.opacity = `1`
         })
-      }
-    })
+      }),
+    )
 
     // @todo fix the panstart issue
     // @todo maybe increasing the hammer distance before triggering pan as well
@@ -220,8 +221,6 @@ export const layoutEnhancer =
 
     const movingSafePan$ = createMovingSafePan$(reader)
 
-    movingSafePan$.subscribe()
-
     settingsManager.values$
       .pipe(
         mapKeysTo([`pageHorizontalMargin`, `pageVerticalMargin`]),
@@ -234,7 +233,7 @@ export const layoutEnhancer =
       )
       .subscribe()
 
-    merge(layoutOnContainerResize$)
+    merge(revealItemOnReady$, movingSafePan$, layoutOnContainerResize$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
