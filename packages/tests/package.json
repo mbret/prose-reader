@@ -1,5 +1,5 @@
 {
-  "version": "1.119.0",
+  "version": "1.120.0",
   "name": "prose-reader-tests",
   "type": "module",
   "license": "MIT",
@@ -11,13 +11,13 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
-    "@prose-reader/core": "^1.119.0",
-    "@prose-reader/enhancer-bookmarks": "^1.119.0",
-    "@prose-reader/enhancer-gestures": "^1.119.0",
-    "@prose-reader/enhancer-highlights": "^1.119.0",
-    "@prose-reader/enhancer-pdf": "^1.119.0",
-    "@prose-reader/enhancer-search": "^1.119.0",
-    "@prose-reader/streamer": "^1.119.0",
+    "@prose-reader/core": "^1.120.0",
+    "@prose-reader/enhancer-bookmarks": "^1.120.0",
+    "@prose-reader/enhancer-gestures": "^1.120.0",
+    "@prose-reader/enhancer-highlights": "^1.120.0",
+    "@prose-reader/enhancer-pdf": "^1.120.0",
+    "@prose-reader/enhancer-search": "^1.120.0",
+    "@prose-reader/streamer": "^1.120.0",
     "@types/node": "^22.8.6",
     "pdfjs-dist": "^4.7.76",
     "xmldoc": "^1.2.0"
