@@ -1,5 +1,5 @@
 import { Observable, Subject } from "rxjs"
-import { Reader, Report } from "@prose-reader/core"
+import { Reader } from "@prose-reader/core"
 import { filter, takeUntil, tap } from "rxjs/operators"
 
 type Highlight = {
@@ -40,77 +40,77 @@ export const highlightsEnhancer =
     const highlights$ = new Subject<SubjectType>()
     let highlights: Highlight[] = []
 
-    const getRangeForHighlight = (
-      overlayElement: HTMLElement,
-      anchor: { node: Node; offset?: number },
-      focus: { node: Node; offset?: number },
-    ) => {
-      const range = overlayElement.ownerDocument.createRange()
-      try {
-        range.setStart(anchor.node, anchor.offset || 0)
-        range.setEnd(focus.node, focus.offset || 0)
-      } catch (e) {
-        Report.error(e)
-      }
+    // const getRangeForHighlight = (
+    //   overlayElement: HTMLElement,
+    //   anchor: { node: Node; offset?: number },
+    //   focus: { node: Node; offset?: number },
+    // ) => {
+    //   const range = overlayElement.ownerDocument.createRange()
+    //   try {
+    //     range.setStart(anchor.node, anchor.offset || 0)
+    //     range.setEnd(focus.node, focus.offset || 0)
+    //   } catch (e) {
+    //     Report.error(e)
+    //   }
 
-      return range
-    }
+    //   return range
+    // }
 
-    const drawHighlight = (overlayElement: HTMLElement, highlight: Highlight) => {
-      const { node: anchorNode, offset: anchorOffset } = reader.cfi.resolveCfi({ cfi: highlight.anchorCfi }) || {}
-      const { node: focusNode, offset: focusOffset } = reader.cfi.resolveCfi({ cfi: highlight.focusCfi }) || {}
+    // const drawHighlight = (overlayElement: HTMLElement, highlight: Highlight) => {
+    //   const { node: anchorNode, offset: anchorOffset } = reader.cfi.resolveCfi({ cfi: highlight.anchorCfi }) || {}
+    //   const { node: focusNode, offset: focusOffset } = reader.cfi.resolveCfi({ cfi: highlight.focusCfi }) || {}
 
-      if (anchorNode && focusNode) {
-        // remove old previous highlight
-        highlight.element?.remove()
+    //   if (anchorNode && focusNode) {
+    //     // remove old previous highlight
+    //     highlight.element?.remove()
 
-        const range = getRangeForHighlight(
-          overlayElement,
-          { node: anchorNode, offset: anchorOffset },
-          { node: focusNode, offset: focusOffset },
-        )
+    //     const range = getRangeForHighlight(
+    //       overlayElement,
+    //       { node: anchorNode, offset: anchorOffset },
+    //       { node: focusNode, offset: focusOffset },
+    //     )
 
-        highlight.text = range.toString()
+    //     highlight.text = range.toString()
 
-        const rectElements = Array.from(range.getClientRects()).map((domRect) => {
-          const rectElt = overlayElement.ownerDocument.createElement(`div`)
-          rectElt.style.cssText = `
-            position: absolute;
-            width: ${domRect.width}px;
-            height: ${domRect.height}px;
-            top: ${domRect.top}px;
-            left: ${domRect.left}px;
-            background-color: green;
-            opacity: 50%;
-          `
-          rectElt.setAttribute(`data-${HIGHLIGHT_ID_PREFIX}`, ``)
+    //     const rectElements = Array.from(range.getClientRects()).map((domRect) => {
+    //       const rectElt = overlayElement.ownerDocument.createElement(`div`)
+    //       rectElt.style.cssText = `
+    //         position: absolute;
+    //         width: ${domRect.width}px;
+    //         height: ${domRect.height}px;
+    //         top: ${domRect.top}px;
+    //         left: ${domRect.left}px;
+    //         background-color: green;
+    //         opacity: 50%;
+    //       `
+    //       rectElt.setAttribute(`data-${HIGHLIGHT_ID_PREFIX}`, ``)
 
-          return rectElt
-        })
+    //       return rectElt
+    //     })
 
-        const containerElement = overlayElement.ownerDocument.createElement(`div`)
-        containerElement.style.cssText = `
-          pointer-events: auto;
-        `
+    //     const containerElement = overlayElement.ownerDocument.createElement(`div`)
+    //     containerElement.style.cssText = `
+    //       pointer-events: auto;
+    //     `
 
-        highlight.element = containerElement
+    //     highlight.element = containerElement
 
-        rectElements.forEach((el) => containerElement.appendChild(el))
-        overlayElement.appendChild(containerElement)
+    //     rectElements.forEach((el) => containerElement.appendChild(el))
+    //     overlayElement.appendChild(containerElement)
 
-        containerElement.addEventListener(`click`, () => {
-          highlights$.next({ type: `onHighlightClick`, data: highlight })
-        })
-      }
-    }
+    //     containerElement.addEventListener(`click`, () => {
+    //       highlights$.next({ type: `onHighlightClick`, data: highlight })
+    //     })
+    //   }
+    // }
 
-    const drawHighlightsForItem = (overlayElement: HTMLElement, itemIndex: number) => {
-      highlights.forEach((highlight) => {
-        if (highlight.spineItemIndex === itemIndex) {
-          drawHighlight(overlayElement, highlight)
-        }
-      })
-    }
+    // const drawHighlightsForItem = (overlayElement: HTMLElement, itemIndex: number) => {
+    //   highlights.forEach((highlight) => {
+    //     if (highlight.spineItemIndex === itemIndex) {
+    //       drawHighlight(overlayElement, highlight)
+    //     }
+    //   })
+    // }
 
     const enrichHighlight = (highlight: Highlight) => {
       const spineItem = reader.spineItemsManager.getSpineItemFromCfi(highlight.anchorCfi)
@@ -128,11 +128,10 @@ export const highlightsEnhancer =
       highlights.push(newHighlight)
 
       if (newHighlight.spineItemIndex !== undefined) {
-        reader.spineItemsManager.items.forEach((item, index) => {
-          if (index !== newHighlight.spineItemIndex) return
-
-          drawHighlight(item.overlayElement, newHighlight)
-        })
+        // reader.spineItemsManager.items.forEach((item, index) => {
+        //   if (index !== newHighlight.spineItemIndex) return
+        //   drawHighlight(item.overlayElement, newHighlight)
+        // })
       }
 
       return highlight
@@ -182,9 +181,9 @@ export const highlightsEnhancer =
 
           highlights$.next({ type: `onUpdate`, data: highlights })
 
-          reader.spineItemsManager.items.forEach((item, index) => {
-            drawHighlightsForItem(item.overlayElement, index)
-          })
+          // reader.spineItemsManager.items.forEach((item, index) => {
+          //   drawHighlightsForItem(item.overlayElement, index)
+          // })
         }),
         takeUntil(reader.$.destroy$),
       )
@@ -192,9 +191,9 @@ export const highlightsEnhancer =
 
     const refreshHighlightsOnLayout$ = reader.layout$.pipe(
       tap(() => {
-        reader.spineItemsManager.items.forEach((item, index) => {
-          drawHighlightsForItem(item.overlayElement, index)
-        })
+        // reader.spineItemsManager.items.forEach((item, index) => {
+        //   drawHighlightsForItem(item.overlayElement, index)
+        // })
       }),
     )
 
