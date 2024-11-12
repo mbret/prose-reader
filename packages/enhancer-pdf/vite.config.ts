@@ -9,6 +9,7 @@ const libName = name.replace(`@`, ``).replace(`/`, `-`)
 export default defineConfig(({ mode }) => ({
   build: {
     minify: false,
+    target: "esnext",
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
       name: libName,
