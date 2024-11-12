@@ -55,6 +55,7 @@ export const gesturesEnhancer =
 
     const recognizable = new Recognizable({
       recognizers: [tapRecognizer, panRecognizer, swipeRecognizer, pinchRecognizer, zoomPanRecognizer],
+      disableTextSelection: false,
     })
 
     const unhandledEvent$ = new Subject<ObservedValueOf<typeof recognizable.events$>>()

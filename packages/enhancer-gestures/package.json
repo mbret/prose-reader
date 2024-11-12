@@ -30,7 +30,7 @@
     "@prose-reader/core": "^1.120.0"
   },
   "devDependencies": {
-    "gesturx": "^1.8.2"
+    "gesturx": "^1.8.4"
   },
   "peerDependencies": {
     "gesturx": "*",
