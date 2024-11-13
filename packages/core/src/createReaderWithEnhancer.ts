@@ -17,28 +17,31 @@ import { webkitEnhancer } from "./enhancers/webkit"
 import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
 import { eventsEnhancer } from "./enhancers/events/events"
 import { htmlEnhancer } from "./enhancers/html/enhancer"
+import { selectionEnhancer } from "./enhancers/selection/selectionEnhancer"
 
 export const createReaderWithEnhancers = //__
-  hotkeysEnhancer(
-    loadingEnhancer(
-      webkitEnhancer(
-        fontsEnhancer(
-          linksEnhancer(
-            accessibilityEnhancer(
-              resourcesEnhancer(
-                utilsEnhancer(
-                  layoutEnhancer(
-                    zoomEnhancer(
-                      mediaEnhancer(
-                        chromeEnhancer(
-                          navigationEnhancer(
-                            themeEnhancer(
-                              paginationEnhancer(
-                                progressionEnhancer(
-                                  eventsEnhancer(
-                                    htmlEnhancer(
-                                      // __
-                                      createInternalReader,
+  selectionEnhancer(
+    hotkeysEnhancer(
+      loadingEnhancer(
+        webkitEnhancer(
+          fontsEnhancer(
+            linksEnhancer(
+              accessibilityEnhancer(
+                resourcesEnhancer(
+                  utilsEnhancer(
+                    layoutEnhancer(
+                      zoomEnhancer(
+                        mediaEnhancer(
+                          chromeEnhancer(
+                            navigationEnhancer(
+                              themeEnhancer(
+                                paginationEnhancer(
+                                  progressionEnhancer(
+                                    eventsEnhancer(
+                                      htmlEnhancer(
+                                        // __
+                                        createInternalReader,
+                                      ),
                                     ),
                                   ),
                                 ),
