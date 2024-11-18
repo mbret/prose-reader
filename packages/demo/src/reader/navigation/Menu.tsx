@@ -52,7 +52,7 @@ export const Menu = memo(
             <TabPanel p={4}>
               <HelpMenu />
             </TabPanel>
-            <TabPanel p={0} display="flex">
+            <TabPanel p={0} display="flex" flex={1}>
               <TocMenu
                 onNavigate={() => {
                   isMenuOpenSignal.setValue(false)
@@ -60,7 +60,7 @@ export const Menu = memo(
                 }}
               />
             </TabPanel>
-            <TabPanel>
+            <TabPanel display="flex" flex={1}>
               {tabIndex === 3 && (
                 <SearchMenu
                   onNavigate={() => {
