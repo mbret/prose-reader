@@ -48,9 +48,9 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const groupedResults = groupBy(results, (item) => item.spineItemIndex)
 
   return (
-    <Stack>
+    <Stack flex={1}>
       <Input placeholder="Type something..." value={text} onChange={onValueChange} borderRadius={0} size="lg" />
-      <Box padding={2} pt={2} flex={1} style={{ overflow: "hidden", overflowY: "scroll" }}>
+      <Box padding={2} pt={2} flex={1} style={{ overflow: "hidden", overflowY: "auto" }}>
         {searching && <Text>Searching ...</Text>}
         {!searching && results.length === 0 && <p>There are no results</p>}
         {!searching && results.length >= 0 && (
