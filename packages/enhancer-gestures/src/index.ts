@@ -33,8 +33,13 @@ export const gesturesEnhancer =
       },
     })
 
+    const failWithSelection = {
+      start$: reader.selection.selectionStart$,
+      end$: reader.selection.selectionEnd$,
+    }
+
     const panRecognizer = new PanRecognizer({
-      failWith: [pinchRecognizer],
+      failWith: [pinchRecognizer, failWithSelection],
       options: {
         // we want to have some margin to trigger zoom
         posThreshold: 30,

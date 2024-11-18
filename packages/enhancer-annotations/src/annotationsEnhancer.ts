@@ -1,18 +1,10 @@
 import { Reader } from "@prose-reader/core"
-import { BehaviorSubject, filter, merge, Subject, takeUntil, tap, withLatestFrom } from "rxjs"
+import { BehaviorSubject, filter, merge, Observable, Subject, takeUntil, tap, withLatestFrom } from "rxjs"
 import { report } from "./report"
+import { Highlight, RuntimeHighlight } from "./types"
+import { AnnotationLayers } from "./layers/AnnotationLayers"
 
-type Command = { type: "save" }
-type RuntimeAnnotation = {
-  anchorCfi: string | undefined
-  focusCfi: string | undefined
-  itemId: string
-  /**
-   * Unique local ID. This is to ensure unicity
-   * for duplicate selections
-   */
-  id: string
-}
+type Command = { type: "save" } | { type: "add"; data: Highlight | Highlight[] }
 
 export const annotationsEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
@@ -20,12 +12,15 @@ export const annotationsEnhancer =
     options: InheritOptions,
   ): InheritOutput & {
     annotations: {
+      annotations$: Observable<RuntimeHighlight[]>
       save: () => void
+      add: (data: Highlight | Highlight[]) => void
+      getHighlightsForTarget: (target: EventTarget) => RuntimeHighlight[]
     }
   } => {
     const reader = next(options)
     const commandSubject = new Subject<Command>()
-    const bookmarksSubject = new BehaviorSubject<RuntimeAnnotation[]>([])
+    const annotationsSubject = new BehaviorSubject<RuntimeHighlight[]>([])
 
     const save$ = commandSubject.pipe(
       filter((command) => command.type === "save"),
@@ -36,15 +31,27 @@ export const annotationsEnhancer =
 
           const annotation = { anchorCfi, focusCfi, itemId: selection.itemId, id: window.crypto.randomUUID() }
 
-          bookmarksSubject.next([...bookmarksSubject.getValue(), annotation])
+          annotationsSubject.next([...annotationsSubject.getValue(), annotation])
         }
       }),
     )
 
-    const annotations$ = bookmarksSubject.asObservable()
+    const add$ = commandSubject.pipe(
+      filter((command) => command.type === "add"),
+      tap(({ data }) => {
+        const annotations = Array.isArray(data) ? data : [data]
+
+        annotationsSubject.next([...annotationsSubject.getValue(), ...annotations])
+      }),
+    )
+
+    const annotations$ = annotationsSubject.asObservable()
+
+    const annotationLayers = new AnnotationLayers(reader, annotationsSubject)
 
     merge(
       save$,
+      add$,
       annotations$.pipe(
         tap((annotations) => {
           report.debug("annotations", annotations)
@@ -57,14 +64,21 @@ export const annotationsEnhancer =
     return {
       ...reader,
       destroy: () => {
-        bookmarksSubject.complete()
+        annotationsSubject.complete()
         commandSubject.complete()
-
+        annotationLayers.destroy()
         reader.destroy()
       },
       annotations: {
+        annotations$,
+        getHighlightsForTarget: (target: EventTarget) => {
+          return annotationLayers.getHighlightsForTarget(target)
+        },
         save: () => {
           commandSubject.next({ type: "save" })
+        },
+        add: (data: Highlight | Highlight[]) => {
+          commandSubject.next({ type: "add", data })
         },
       },
     }
