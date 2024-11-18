@@ -1,6 +1,6 @@
 import { getArchiveOpfInfo } from "../../../archives/getArchiveOpfInfo"
 import { Archive } from "../../../archives/types"
-import { getItemsFromDoc } from "../../manifest/hooks/epub"
+import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import xmldoc from "xmldoc"
 import { HookResource } from "./types"
 

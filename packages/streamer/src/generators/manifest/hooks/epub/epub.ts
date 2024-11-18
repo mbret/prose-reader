@@ -1,11 +1,11 @@
 import xmldoc from "xmldoc"
-import { parseToc } from "../../../parsers/nav"
+import { parseToc } from "../../../../parsers/nav"
 import type { Manifest } from "@prose-reader/shared"
-import { extractKoboInformationFromArchive } from "../../../parsers/kobo"
-import { Report } from "../../../report"
-import { Archive } from "../../../archives/types"
-import { getArchiveOpfInfo } from "../../../archives/getArchiveOpfInfo"
-import { getSpineItemFilesFromArchive } from "../../../epub/getSpineItemFilesFromArchive"
+import { extractKoboInformationFromArchive } from "../../../../parsers/kobo"
+import { Report } from "../../../../report"
+import { Archive } from "../../../../archives/types"
+import { getArchiveOpfInfo } from "../../../../archives/getArchiveOpfInfo"
+import { getSpineItemFilesFromArchive } from "../../../../epub/getSpineItemFilesFromArchive"
 
 type SpineItemProperties =
   | `rendition:layout-reflowable`

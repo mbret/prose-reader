@@ -2,13 +2,18 @@ import xmldoc, { XmlElement } from "xmldoc"
 import type { Manifest } from "@prose-reader/shared"
 import { Archive, getArchiveOpfInfo } from ".."
 import { urlJoin } from "@prose-reader/shared"
+import { getXmlElementInnerText } from "./xml"
+import { getUriBasePath } from "../utils/uri"
 
 type Toc = NonNullable<Manifest[`nav`]>[`toc`]
 type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
 
+/**
+ * @see https://www.w3.org/TR/epub-33/#sec-nav-def-model
+ */
 const extractNavChapter = (
   li: XmlElement,
-  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+  { basePath, baseUrl }: { basePath: string; baseUrl: string },
 ) => {
   const chp: TocItem = {
     contents: [],
@@ -16,25 +21,34 @@ const extractNavChapter = (
     href: ``,
     title: ``,
   }
+
   let contentNode = li.childNamed(`span`) || li.childNamed(`a`)
-  chp.title = contentNode?.attr.title || contentNode?.val.trim() || chp.title
+
+  chp.title =
+    (contentNode?.attr.title ||
+      contentNode?.val.trim() ||
+      getXmlElementInnerText(contentNode)) ??
+    ``
+
   let node = contentNode?.name
+
   if (node !== `a`) {
     contentNode = li.descendantWithPath(`${node}.a`)
     if (contentNode) {
       node = contentNode.name.toLowerCase()
     }
   }
+
   if (node === `a` && contentNode?.attr.href) {
-    chp.path = urlJoin(opfBasePath, contentNode.attr.href)
-    chp.href = urlJoin(baseUrl, opfBasePath, contentNode.attr.href)
+    chp.path = urlJoin(basePath, contentNode.attr.href)
+    chp.href = urlJoin(baseUrl, basePath, contentNode.attr.href)
   }
   const sublistNode = li.childNamed(`ol`)
   if (sublistNode) {
     const children = sublistNode.childrenNamed(`li`)
     if (children && children.length > 0) {
       chp.contents = children.map((child) =>
-        extractNavChapter(child, { opfBasePath, baseUrl }),
+        extractNavChapter(child, { basePath, baseUrl }),
       )
     }
   }
@@ -44,11 +58,12 @@ const extractNavChapter = (
 
 const buildTOCFromNav = (
   doc: xmldoc.XmlDocument,
-  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+  { basePath, baseUrl }: { basePath: string; baseUrl: string },
 ) => {
   const toc: Toc = []
 
   let navDataChildren
+
   if (doc.descendantWithPath(`body.nav.ol`)) {
     navDataChildren = doc.descendantWithPath(`body.nav.ol`)?.children
   } else if (doc.descendantWithPath(`body.section.nav.ol`)) {
@@ -59,7 +74,7 @@ const buildTOCFromNav = (
     navDataChildren
       .filter((li) => (li as XmlElement).name === `li`)
       .forEach((li) =>
-        toc.push(extractNavChapter(li as XmlElement, { opfBasePath, baseUrl })),
+        toc.push(extractNavChapter(li as XmlElement, { basePath, baseUrl })),
       )
   }
 
@@ -69,7 +84,7 @@ const buildTOCFromNav = (
 const parseTocFromNavPath = async (
   opfXmlDoc: xmldoc.XmlDocument,
   archive: Archive,
-  { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
+  { baseUrl }: { opfBasePath: string; baseUrl: string },
 ) => {
   // Try to detect if there is a nav item
   const navItem = opfXmlDoc
@@ -81,9 +96,17 @@ const parseTocFromNavPath = async (
     const tocFile = Object.values(archive.files).find((item) =>
       item.uri.endsWith(navItem.attr.href || ``),
     )
+
     if (tocFile) {
       const doc = new xmldoc.XmlDocument(await tocFile.string())
-      return buildTOCFromNav(doc, { opfBasePath, baseUrl })
+
+      const tocFileBasePath = getUriBasePath(tocFile.uri)
+
+      /**
+       * links inside toc.xhtml are relative to the toc.xhtml file,
+       * not the opf file anymore
+       */
+      return buildTOCFromNav(doc, { basePath: tocFileBasePath, baseUrl })
     }
   }
 }
