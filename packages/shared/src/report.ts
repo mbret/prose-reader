@@ -23,6 +23,12 @@ const createReport = (namespace?: string, enabled?: boolean) => {
         : namespace
           ? Function.prototype.bind.call(console.info, console, wrap(`${ROOT_NAMESPACE}`), wrap(namespace))
           : Function.prototype.bind.call(console.info, console, wrap(`${ROOT_NAMESPACE}`)),
+    error:
+      !enabled || window?.__PROSE_READER_DEBUG !== true
+        ? () => {}
+        : namespace
+          ? Function.prototype.bind.call(console.error, console, wrap(`${ROOT_NAMESPACE}`), wrap(namespace))
+          : Function.prototype.bind.call(console.error, console, wrap(`${ROOT_NAMESPACE}`)),
   }
 }
 
