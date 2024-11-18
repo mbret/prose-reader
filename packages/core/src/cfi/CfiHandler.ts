@@ -727,7 +727,6 @@ export class CfiHandler {
     index: number,
     offset: number,
   ) {
-    // console.log(`getChildNodeByCFIIndex`, { parentNode, index, offset })
     const children = parentNode.childNodes
     if (!children.length) return { node: parentNode, offset: 0 }
 
@@ -744,8 +743,8 @@ export class CfiHandler {
     // console.log(children, children.length)
     for (i = 0; i < children.length; i++) {
       child = children[i]
-      // @ts-ignore
-      switch (child.nodeType) {
+
+      switch (child?.nodeType) {
         case ELEMENT_NODE:
           // If the previous node was also an element node
           // then we have to pretend there was a text node in between
@@ -790,7 +789,6 @@ export class CfiHandler {
           break
         case TEXT_NODE:
         case CDATA_SECTION_NODE:
-          // console.log('TEXT')
           // If this is the first node or the previous node was an element node
           if (cfiCount === 0 || cfiCount % 2 === 0) {
             cfiCount += 1
@@ -800,17 +798,17 @@ export class CfiHandler {
           }
 
           if (cfiCount === index) {
-            // If offset is greater than the length of the current text node
-            // then we assume that the next node will also be a text node
-            // and that we'll be combining them with the current node
-            // @ts-ignore
-            const trueLength = this.trueLength(dom, child.textContent)
+            // Get the true length of the text content
+            const trueLength = this.trueLength(dom, child.textContent || "")
 
-            if (offset >= trueLength) {
-              offset -= trueLength
-            } else {
-              return { node: child, offset: offset }
+            // If the offset is equal to or less than the length, return this node
+            // This ensures we return the correct node even when targeting the last position
+            if (offset <= trueLength) {
+              return { node: child, offset }
             }
+
+            // If offset is greater, subtract this node's length and continue
+            offset -= trueLength
           }
           lastChild = child
           break
@@ -819,7 +817,18 @@ export class CfiHandler {
       }
     }
 
-    // console.log(lastChild, index, cfiCount)
+    // If we've reached the end and haven't returned,
+    // and lastChild is a text node, return it with the offset
+    // This ensures we return the correct node even when targeting the end position
+    // offset or a potential invalid greater offset.
+    if (
+      lastChild &&
+      (lastChild.nodeType === TEXT_NODE ||
+        lastChild.nodeType === CDATA_SECTION_NODE)
+    ) {
+      const trueLength = this.trueLength(dom, lastChild.textContent || "")
+      return { node: lastChild, offset: Math.min(offset, trueLength) }
+    }
 
     // index is pointing to the virtual node after the last child
     // as defined in the CFI spec
