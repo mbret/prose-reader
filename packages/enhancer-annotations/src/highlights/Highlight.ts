@@ -14,6 +14,8 @@ export class Highlight extends DestroyableClass {
   ) {
     super()
 
+    void this.spineItem
+
     this.container = this.containerElement.ownerDocument.createElement("div")
 
     this.render()
