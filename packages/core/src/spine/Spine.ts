@@ -113,18 +113,6 @@ export class Spine extends DestroyableClass {
     this.spineLayout.layout()
   }
 
-  public isSelecting() {
-    return this.spineItemsManager.items.some((item) =>
-      item.selectionTracker.isSelecting(),
-    )
-  }
-
-  public getSelection() {
-    return this.spineItemsManager.items
-      .find((item) => item.selectionTracker.getSelection())
-      ?.selectionTracker.getSelection()
-  }
-
   public destroy() {
     super.destroy()
 

@@ -51,4 +51,8 @@ export class ReaderHighlights extends DestroyableClass {
       .flatMap((layer) => layer.getHighlightsForTarget(target))
       .map((annotation) => annotation.highlight)
   }
+
+  isTargetWithinHighlight = (target: EventTarget) => {
+    return !!this.getHighlightsForTarget(target).length
+  }
 }

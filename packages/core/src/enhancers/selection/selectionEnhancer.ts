@@ -10,6 +10,7 @@ import {
   Observable,
   share,
   shareReplay,
+  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -26,9 +27,6 @@ type SelectionValue =
     }
   | undefined
 
-/**
- *
- */
 export const selectionEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
     next: (options: InheritOptions) => InheritOutput,
@@ -37,10 +35,32 @@ export const selectionEnhancer =
     options: InheritOptions,
   ): InheritOutput & {
     selection: {
+      /**
+       * Emits the current selection.
+       */
       selection$: Observable<SelectionValue>
+      /**
+       * Emits when user starts a selection.
+       */
       selectionStart$: Observable<boolean>
+      /**
+       * Emits when user ends a selection.
+       */
       selectionEnd$: Observable<void>
+      /**
+       * Emits when user releases the pointer after a selection.
+       */
       selectionUp$: Observable<[Event, SelectionValue]>
+      /**
+       * Usefull to know about the last selection before a pointerdown event.
+       * For example if you want to prevent certain action on click if user is discarding a selection.
+       * A good example is delaying the opening of a reader menu.
+       */
+      lastSelectionOnPointerdown$: Observable<SelectionValue | undefined>
+      /**
+       * Generate CFIs from a selection.
+       * It can come handy when you want to store selections (eg: highlights).
+       */
       generateCfis: (params: { itemId: string; selection: Selection }) => {
         anchorCfi: string | undefined
         focusCfi: string | undefined
@@ -127,6 +147,13 @@ export const selectionEnhancer =
       ),
     )
 
+    const lastSelectionOnPointerdown$ = reader.context.containerElement$.pipe(
+      switchMap((container) => fromEvent(container, "pointerdown")),
+      withLatestFrom(selection$),
+      map(([, selection]) => selection),
+      startWith(undefined),
+    )
+
     return {
       ...reader,
       selection: {
@@ -134,6 +161,7 @@ export const selectionEnhancer =
         selectionStart$,
         selectionEnd$,
         selectionUp$,
+        lastSelectionOnPointerdown$,
         generateCfis,
       },
       destroy: () => {

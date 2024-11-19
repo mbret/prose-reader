@@ -1,5 +1,5 @@
 import { Reader } from "@prose-reader/core"
-import { BehaviorSubject, merge, Observable, takeUntil, tap } from "rxjs"
+import { BehaviorSubject, merge, takeUntil, tap, Observable } from "rxjs"
 import { report } from "./report"
 import { RuntimeHighlight } from "./types"
 import { ReaderHighlights } from "./highlights/ReaderHighlights"
@@ -17,7 +17,7 @@ export const annotationsEnhancer =
       add: Commands["add"]
       delete: Commands["delete"]
       update: Commands["update"]
-      getHighlightsForTarget: (target: EventTarget) => RuntimeHighlight[]
+      isTargetWithinHighlight: (target: EventTarget) => boolean
     }
   } => {
     const reader = next(options)
@@ -50,9 +50,11 @@ export const annotationsEnhancer =
 
     const update$ = commands.update$.pipe(
       tap(({ id, data }) => {
-        highlightsSubject.next(highlightsSubject.getValue().map((highlight) => (highlight.id === id ? { ...highlight, ...data } : highlight)))
+        highlightsSubject.next(
+          highlightsSubject.getValue().map((highlight) => (highlight.id === id ? { ...highlight, ...data } : highlight)),
+        )
       }),
-    ) 
+    )
 
     const annotations$ = highlightsSubject.asObservable()
 
@@ -83,7 +85,7 @@ export const annotationsEnhancer =
       annotations: {
         annotations$,
         highlightTap$: readerHighlights.tap$,
-        getHighlightsForTarget: readerHighlights.getHighlightsForTarget,
+        isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         highlight: commands.highlight,
         add: commands.add,
         delete: commands.delete,

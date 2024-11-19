@@ -71,9 +71,6 @@ export const eventsEnhancer =
           }
         })
 
-        item.selectionTracker.track(frame)
-        item.fingerTracker.track(frame)
-
         destroy(() => {
           unregister.forEach((cb) => cb())
         })

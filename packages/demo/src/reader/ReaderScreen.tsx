@@ -2,7 +2,7 @@ import React, { memo, useEffect, useRef } from "react"
 import { useManifest } from "./useManifest"
 import { useParams } from "react-router-dom"
 import { useResetStateOnUnMount } from "./states"
-import { HighlightMenu } from "./highlights/HighlightMenu"
+import { HighlightMenu } from "./annotations/HighlightMenu"
 import { Bookmarks } from "./bookmarks/Bookmarks"
 import { Notification } from "./notifications/Notification"
 import { useCreateReader } from "./useCreateReader"
@@ -19,6 +19,7 @@ import { useObserve } from "reactjrx"
 import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { Menu } from "./navigation/Menu"
+import { useAnnotations } from "./annotations/useAnnotations"
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -35,6 +36,7 @@ export const ReaderScreen = memo(() => {
   useGestureHandler()
   useUpdateReaderSettings({ localSettings, manifest })
   useBookmarks(reader, url)
+  useAnnotations(reader, url)
   useLinks()
   usePersistCurrentPagination()
 

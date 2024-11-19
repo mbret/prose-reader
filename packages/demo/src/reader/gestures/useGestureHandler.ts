@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
-import { tap } from "rxjs"
+import { tap, withLatestFrom } from "rxjs"
 import { isWithinBookmarkArea } from "../bookmarks/isWithinBookmarkArea"
 
 export const useGestureHandler = () => {
@@ -16,6 +16,10 @@ export const useGestureHandler = () => {
         return false
       }
 
+      if (target && reader.annotations.isTargetWithinHighlight(target)) {
+        return false
+      }
+
       return true
     })
 
@@ -24,18 +28,28 @@ export const useGestureHandler = () => {
     }
   }, [reader])
 
-  useSubscribe(
-    () =>
-      reader?.gestures.unhandledEvent$.pipe(
-        tap((event) => {
+  /**
+   * Subscribe to all unhandled events from gesture manager.
+   *
+   * These are "app" specific behavior that the enhancer would usually not
+   * know about such as triggering the quick menu.
+   */
+  useSubscribe(() => {
+    return reader?.gestures.unhandledEvent$.pipe(
+      withLatestFrom(reader.selection.selection$, reader.selection.lastSelectionOnPointerdown$),
+      tap(([event, selection, selectionOnPointerdown]) => {
+        if (event?.type === "tap") {
           /**
-           * Toggle menu when tap is not navigating
+           * Where there is or was a selection before or during the tap, we want to avoid
+           * showing the quick menu.
            */
-          if (event.type === "tap") {
+          if (selection || selectionOnPointerdown) {
+            isQuickMenuOpenSignal.setValue(false)
+          } else {
             isQuickMenuOpenSignal.setValue((val) => !val)
           }
-        })
-      ),
-    [reader]
-  )
+        }
+      })
+    )
+  }, [reader])
 }

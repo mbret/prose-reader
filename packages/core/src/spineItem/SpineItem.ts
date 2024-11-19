@@ -1,7 +1,6 @@
 import { Context } from "../context/Context"
 import { Manifest } from ".."
 import { merge, Observable, Subject } from "rxjs"
-import { createFingerTracker, createSelectionTracker } from "./trackers"
 import {
   distinctUntilChanged,
   filter,
@@ -19,8 +18,6 @@ import { ResourceHandler } from "./ResourceHandler"
 export class SpineItem {
   destroySubject$: Subject<void>
   containerElement: HTMLElement
-  fingerTracker: ReturnType<typeof createFingerTracker>
-  selectionTracker: ReturnType<typeof createSelectionTracker>
   contentLayout$: Observable<{
     isFirstLayout: boolean
     isReady: boolean
@@ -42,8 +39,6 @@ export class SpineItem {
       item,
       hookManager,
     )
-    this.fingerTracker = createFingerTracker()
-    this.selectionTracker = createSelectionTracker()
 
     parentElement.appendChild(this.containerElement)
 
@@ -182,8 +177,6 @@ export class SpineItem {
   public destroy = () => {
     this.destroySubject$.next()
     this.containerElement.remove()
-    this.fingerTracker.destroy()
-    this.selectionTracker.destroy()
     this.destroySubject$.complete()
     this.renderer.destroy()
   }
