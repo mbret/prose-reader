@@ -16,6 +16,7 @@ export const annotationsEnhancer =
       highlight: Commands["highlight"]
       add: Commands["add"]
       delete: Commands["delete"]
+      update: Commands["update"]
       getHighlightsForTarget: (target: EventTarget) => RuntimeHighlight[]
     }
   } => {
@@ -47,6 +48,12 @@ export const annotationsEnhancer =
       }),
     )
 
+    const update$ = commands.update$.pipe(
+      tap(({ id, data }) => {
+        highlightsSubject.next(highlightsSubject.getValue().map((highlight) => (highlight.id === id ? { ...highlight, ...data } : highlight)))
+      }),
+    ) 
+
     const annotations$ = highlightsSubject.asObservable()
 
     const readerHighlights = new ReaderHighlights(reader, highlightsSubject)
@@ -55,6 +62,7 @@ export const annotationsEnhancer =
       highlight$,
       add$,
       delete$,
+      update$,
       annotations$.pipe(
         tap((annotations) => {
           report.debug("annotations", annotations)
@@ -79,6 +87,7 @@ export const annotationsEnhancer =
         highlight: commands.highlight,
         add: commands.add,
         delete: commands.delete,
+        update: commands.update,
       },
     }
   }
