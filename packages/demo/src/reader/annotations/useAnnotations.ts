@@ -60,7 +60,7 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
    */
   useSubscribe(
     () =>
-      reader?.selection.selectionUp$.pipe(
+      reader?.selection.selectionAfterPointerUp$.pipe(
         tap(([, selection]) => {
           isQuickMenuOpenSignal.setValue(false)
           selectedHighlightSignal.setValue({ selection })

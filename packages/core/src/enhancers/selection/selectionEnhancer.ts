@@ -2,15 +2,14 @@ import {
   BehaviorSubject,
   distinctUntilChanged,
   filter,
-  first,
   fromEvent,
-  ignoreElements,
   map,
   merge,
   Observable,
   share,
   shareReplay,
   startWith,
+  Subject,
   switchMap,
   takeUntil,
   tap,
@@ -18,6 +17,7 @@ import {
 } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { generateCfis } from "./selection"
+import { SelectionTracker } from "./SelectionTracker"
 
 type SelectionValue =
   | {
@@ -50,7 +50,7 @@ export const selectionEnhancer =
       /**
        * Emits when user releases the pointer after a selection.
        */
-      selectionUp$: Observable<[Event, SelectionValue]>
+      selectionAfterPointerUp$: Observable<[Event, SelectionValue]>
       /**
        * Usefull to know about the last selection before a pointerdown event.
        * For example if you want to prevent certain action on click if user is discarding a selection.
@@ -68,12 +68,14 @@ export const selectionEnhancer =
     }
   } => {
     const reader = next(options)
-
-    const selectionSubject = new BehaviorSubject<SelectionValue>(undefined)
+    const selectionSubject = new BehaviorSubject<SelectionValue | undefined>(
+      undefined,
+    )
+    const selectionWithPointerUpSubject = new Subject<[Event, SelectionValue]>()
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ itemId, layers, destroy$ }) => {
+      ({ itemId, layers, destroy$, destroy }) => {
         const frame = layers[0]?.element
 
         if (frame instanceof HTMLIFrameElement) {
@@ -81,23 +83,10 @@ export const selectionEnhancer =
             frame.contentDocument || frame.contentWindow?.document
 
           if (frameDoc) {
-            const pointerUp$ = fromEvent(frameDoc, "pointerup").pipe(
-              tap(() => {
-                const selection = frameDoc.getSelection()
-                if (selection && selection.toString()) {
-                  console.log("Selection finished:", selection.toString())
-                }
-              }),
-              ignoreElements(),
-            )
+            const selectionTracker = new SelectionTracker(frameDoc)
 
-            const selectionChange$ = fromEvent(
-              frameDoc,
-              "selectionchange",
-            ).pipe(map(() => frameDoc.getSelection()))
-
-            merge(pointerUp$, selectionChange$)
-              .pipe(
+            merge(
+              selectionTracker.selectionChange$.pipe(
                 tap((selection) => {
                   if (selection?.toString()) {
                     selectionSubject.next({
@@ -109,9 +98,26 @@ export const selectionEnhancer =
                     selectionSubject.next(undefined)
                   }
                 }),
-                takeUntil(destroy$),
-              )
+              ),
+              selectionTracker.selectionAfterPointerUp$.pipe(
+                tap(([event, selection]) => {
+                  selectionWithPointerUpSubject.next([
+                    event,
+                    {
+                      document: frameDoc,
+                      selection,
+                      itemId,
+                    },
+                  ])
+                }),
+              ),
+            )
+              .pipe(takeUntil(destroy$))
               .subscribe()
+
+            destroy(() => {
+              selectionTracker.destroy()
+            })
           }
         }
       },
@@ -134,18 +140,11 @@ export const selectionEnhancer =
       switchMap(() => selection$),
       distinctUntilChanged(),
       filter((selection) => !selection),
+      share(),
     )
 
-    const selectionUp$ = selectionStart$.pipe(
-      withLatestFrom(reader.context.containerElement$),
-      switchMap(([, container]) =>
-        fromEvent(container, "pointerup").pipe(
-          first(),
-          withLatestFrom(selection$),
-          filter((selection) => !!selection),
-        ),
-      ),
-    )
+    const selectionAfterPointerUp$ =
+      selectionWithPointerUpSubject.asObservable()
 
     const lastSelectionOnPointerdown$ = reader.context.containerElement$.pipe(
       switchMap((container) => fromEvent(container, "pointerdown")),
@@ -160,7 +159,7 @@ export const selectionEnhancer =
         selection$,
         selectionStart$,
         selectionEnd$,
-        selectionUp$,
+        selectionAfterPointerUp$,
         lastSelectionOnPointerdown$,
         generateCfis,
       },
