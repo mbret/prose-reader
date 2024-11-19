@@ -3,6 +3,7 @@
   "name": "prose-reader-tests",
   "type": "module",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "tsc": "tsc",
@@ -14,7 +15,6 @@
     "@prose-reader/core": "^1.120.0",
     "@prose-reader/enhancer-bookmarks": "^1.120.0",
     "@prose-reader/enhancer-gestures": "^1.120.0",
-    "@prose-reader/enhancer-highlights": "^1.120.0",
     "@prose-reader/enhancer-pdf": "^1.120.0",
     "@prose-reader/enhancer-search": "^1.120.0",
     "@prose-reader/streamer": "^1.120.0",
