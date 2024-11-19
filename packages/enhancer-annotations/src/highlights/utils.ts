@@ -89,7 +89,7 @@ export const layoutAnnotationLayer = (layer: HTMLElement, annotationLayer: HTMLE
     annotationLayer.style.top = "0"
   }
 
-  annotationLayer.style.backgroundColor = "red"
-  annotationLayer.style.opacity = "0.5"
+//   annotationLayer.style.backgroundColor = "red"
+  annotationLayer.style.opacity = "1"
   annotationLayer.style.pointerEvents = "none"
 }
