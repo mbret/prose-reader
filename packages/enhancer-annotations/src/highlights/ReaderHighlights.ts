@@ -1,5 +1,5 @@
 import { DestroyableClass, Reader } from "@prose-reader/core"
-import { BehaviorSubject, merge, switchMap } from "rxjs"
+import { BehaviorSubject, map, merge, switchMap } from "rxjs"
 import { Highlight } from "../types"
 import { SpineItemHighlights } from "./SpineItemHighlights"
 
@@ -10,7 +10,7 @@ export class ReaderHighlights extends DestroyableClass {
 
   constructor(
     private reader: Reader,
-    private annotations: BehaviorSubject<Highlight[]>,
+    private highlights: BehaviorSubject<Highlight[]>,
   ) {
     super()
 
@@ -19,20 +19,24 @@ export class ReaderHighlights extends DestroyableClass {
 
       if (!spineItem) return
 
-      const annotationLayer = new SpineItemHighlights(this.annotations, spineItem, reader)
+      const spineItemHighlights$ = this.highlights.pipe(
+        map((highlights) => highlights.filter((highlight) => highlight.itemId === itemId)),
+      )
 
-      this.spineItemHighlights.next([...this.spineItemHighlights.getValue(), annotationLayer])
+      const spineItemHighlights = new SpineItemHighlights(spineItemHighlights$, spineItem, reader)
+
+      this.spineItemHighlights.next([...this.spineItemHighlights.getValue(), spineItemHighlights])
 
       const deregister = reader.hookManager.register("item.onAfterLayout", ({ item }) => {
         if (item.id !== itemId) return
 
-        annotationLayer.layout()
+        spineItemHighlights.layout()
       })
 
       destroy(() => {
-        this.spineItemHighlights.next(this.spineItemHighlights.getValue().filter((layer) => layer !== annotationLayer))
+        this.spineItemHighlights.next(this.spineItemHighlights.getValue().filter((layer) => layer !== spineItemHighlights))
 
-        annotationLayer.destroy()
+        spineItemHighlights.destroy()
 
         deregister()
       })
