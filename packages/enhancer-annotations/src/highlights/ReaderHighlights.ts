@@ -11,6 +11,7 @@ export class ReaderHighlights extends DestroyableClass {
   constructor(
     private reader: Reader,
     private highlights: BehaviorSubject<Highlight[]>,
+    private selectedHighlight: BehaviorSubject<string | undefined>,
   ) {
     super()
 
@@ -23,7 +24,7 @@ export class ReaderHighlights extends DestroyableClass {
         map((highlights) => highlights.filter((highlight) => highlight.itemId === itemId)),
       )
 
-      const spineItemHighlights = new SpineItemHighlights(spineItemHighlights$, spineItem, reader)
+      const spineItemHighlights = new SpineItemHighlights(spineItemHighlights$, spineItem, reader, this.selectedHighlight)
 
       this.spineItemHighlights.next([...this.spineItemHighlights.getValue(), spineItemHighlights])
 

@@ -17,12 +17,16 @@ export const annotationsEnhancer =
       add: Commands["add"]
       delete: Commands["delete"]
       update: Commands["update"]
+      select: Commands["select"]
       isTargetWithinHighlight: (target: EventTarget) => boolean
     }
   } => {
     const reader = next(options)
     const commands = new Commands()
     const highlightsSubject = new BehaviorSubject<RuntimeHighlight[]>([])
+    const selectedHighlightSubject = new BehaviorSubject<string | undefined>(undefined)
+
+    const readerHighlights = new ReaderHighlights(reader, highlightsSubject, selectedHighlightSubject)
 
     const highlight$ = commands.highlight$.pipe(
       tap(({ data: { itemId, selection, ...rest } }) => {
@@ -56,15 +60,20 @@ export const annotationsEnhancer =
       }),
     )
 
-    const annotations$ = highlightsSubject.asObservable()
+    const select$ = commands.select$.pipe(
+      tap(({ id }) => {
+        selectedHighlightSubject.next(id)
+      }),
+    )
 
-    const readerHighlights = new ReaderHighlights(reader, highlightsSubject)
+    const annotations$ = highlightsSubject.asObservable()
 
     merge(
       highlight$,
       add$,
       delete$,
       update$,
+      select$,
       annotations$.pipe(
         tap((annotations) => {
           report.debug("annotations", annotations)
@@ -90,6 +99,7 @@ export const annotationsEnhancer =
         add: commands.add,
         delete: commands.delete,
         update: commands.update,
+        select: commands.select,
       },
     }
   }

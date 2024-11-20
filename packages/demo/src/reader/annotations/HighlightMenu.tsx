@@ -52,6 +52,16 @@ export const HighlightMenu = memo(() => {
     }
   }, [highlightColor])
 
+  useEffect(() => {
+    if (reader && highlight) {
+      reader.annotations.select(highlight.id)
+
+      return () => {
+        reader.annotations.select(undefined)
+      }
+    }
+  }, [reader, highlight])
+
   return (
     <Drawer placement="bottom" onClose={onClose} isOpen={isOpen}>
       <DrawerOverlay />

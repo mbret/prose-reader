@@ -2,7 +2,7 @@ import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
 import { RuntimeHighlight } from "../types"
 import { getElementsForRange, getRangeFromSelection } from "./utils"
 import { report } from "../report"
-import { fromEvent, map, Observable, share } from "rxjs"
+import { fromEvent, map, Observable, share, skip, takeUntil, tap } from "rxjs"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
@@ -14,6 +14,7 @@ export class SpineItemHighlight extends DestroyableClass {
     private containerElement: HTMLElement,
     private reader: Reader,
     public readonly highlight: RuntimeHighlight,
+    private isSelected: Observable<boolean>,
   ) {
     super()
 
@@ -29,6 +30,20 @@ export class SpineItemHighlight extends DestroyableClass {
     )
 
     this.render()
+
+    this.isSelected
+      .pipe(
+        skip(1),
+        tap((isSelected) => {
+          Array.from(this.container.children).forEach((child) => {
+            if (child instanceof HTMLElement) {
+              child.style.border = isSelected ? "2px dashed red" : "none"
+            }
+          })
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe()
   }
 
   public render() {

@@ -1,4 +1,4 @@
-import { merge, Observable, of, shareReplay, switchMap, takeUntil } from "rxjs"
+import { distinctUntilChanged, map, merge, Observable, of, shareReplay, switchMap, takeUntil } from "rxjs"
 import { RuntimeHighlight } from "../types"
 import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
 import { SpineItemHighlight } from "./SpineItemHighlight"
@@ -14,6 +14,7 @@ export class SpineItemHighlights extends DestroyableClass {
     private annotations$: Observable<RuntimeHighlight[]>,
     private spineItem: SpineItem,
     private reader: Reader,
+    private selectedHighlight: Observable<string | undefined>,
   ) {
     super()
 
@@ -29,7 +30,14 @@ export class SpineItemHighlights extends DestroyableClass {
         annotations.forEach((annotation) => {
           if (annotation.itemId !== this.spineItem.item.id) return
 
-          this.highlights.push(new SpineItemHighlight(this.spineItem, this.layer, this.reader, annotation))
+          const isSelected$ = this.selectedHighlight.pipe(
+            map((id) => id === annotation.id),
+            distinctUntilChanged(),
+          )
+
+          const spineItemHighlight = new SpineItemHighlight(this.spineItem, this.layer, this.reader, annotation, isSelected$)
+
+          this.highlights.push(spineItemHighlight)
         })
 
         return of(this.highlights)
