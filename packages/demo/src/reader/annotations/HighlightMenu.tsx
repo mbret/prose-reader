@@ -1,7 +1,18 @@
 import React, { memo, useEffect, useState } from "react"
 import { useReader } from "../useReader"
 import { SIGNAL_RESET, useSignalValue } from "reactjrx"
-import { Box, Button, Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, Stack } from "@chakra-ui/react"
+import {
+  Box,
+  Button,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  Stack,
+  Text,
+  Textarea
+} from "@chakra-ui/react"
 import { truncateText } from "../../common/utils"
 import { selectedHighlightSignal } from "./states"
 
@@ -17,6 +28,7 @@ export const HighlightMenu = memo(() => {
   const { reader } = useReader()
   const { highlight, selection } = useSignalValue(selectedHighlightSignal)
   const [selectedColor, setSelectedColor] = useState<string>(HIGHLIGHT_COLORS[0])
+  const [contents, setContents] = useState<string>("")
   const isOpen = !!(selection ?? highlight)
 
   const onClose = () => {
@@ -24,6 +36,15 @@ export const HighlightMenu = memo(() => {
   }
 
   const highlightColor = highlight?.color
+  const highlightContent = (highlight?.contents ?? [])[0]
+
+  useEffect(() => {
+    setContents("")
+  }, [isOpen])
+
+  useEffect(() => {
+    setContents(highlightContent ?? "")
+  }, [highlightContent])
 
   useEffect(() => {
     if (highlightColor) {
@@ -38,28 +59,32 @@ export const HighlightMenu = memo(() => {
         <DrawerHeader borderBottomWidth="1px">
           {highlight ? "Highlight" : `Selection: "${truncateText(selection?.selection?.toString() ?? "", 10)}"`}
         </DrawerHeader>
-        <DrawerBody gap={4} display="flex" flexDirection="column">
-          <Stack gap={2} flexDirection="row">
-            {HIGHLIGHT_COLORS.map((color) => (
-              <Box
-                bgColor={color}
-                height={10}
-                width={10}
-                key={color}
-                borderRadius="50%"
-                cursor="pointer"
-                {...(selectedColor === color && {
-                  border: "4px solid white"
-                })}
-                onClick={() => setSelectedColor(color)}
-              />
-            ))}
+        <DrawerBody gap={4} display="flex" flexDirection="column" pb={4}>
+          <Stack>
+            <Stack gap={2} flexDirection="row">
+              {HIGHLIGHT_COLORS.map((color) => (
+                <Box
+                  bgColor={color}
+                  height={10}
+                  width={10}
+                  key={color}
+                  borderRadius="50%"
+                  cursor="pointer"
+                  {...(selectedColor === color && {
+                    border: "4px solid white"
+                  })}
+                  onClick={() => setSelectedColor(color)}
+                />
+              ))}
+            </Stack>
+            <Text>Annotation:</Text>
+            <Textarea value={contents} onChange={(event) => setContents(event.target.value)} />
           </Stack>
           {!!selection && (
             <Button
               onClick={() => {
                 onClose()
-                reader?.annotations.highlight({ ...selection, color: selectedColor })
+                reader?.annotations.highlight({ ...selection, color: selectedColor, contents: [contents] })
               }}
             >
               Highlight
@@ -71,7 +96,7 @@ export const HighlightMenu = memo(() => {
                 flex={1}
                 onClick={() => {
                   onClose()
-                  reader?.annotations.update(highlight.id, { color: selectedColor })
+                  reader?.annotations.update(highlight.id, { color: selectedColor, contents: [contents] })
                 }}
               >
                 Update

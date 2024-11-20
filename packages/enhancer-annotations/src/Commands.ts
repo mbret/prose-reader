@@ -17,6 +17,7 @@ export class Commands extends DestroyableClass {
   public readonly add$ = this.commandSubject.pipe(filter((command) => command.type === "add"))
   public readonly delete$ = this.commandSubject.pipe(filter((command) => command.type === "delete"))
   public readonly update$ = this.commandSubject.pipe(filter((command) => command.type === "update"))
+
   highlight = (params: HighlightParams) => {
     this.commandSubject.next({ type: "highlight", data: params })
   }
