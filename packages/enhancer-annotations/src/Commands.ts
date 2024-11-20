@@ -1,12 +1,12 @@
 import { DestroyableClass } from "@prose-reader/core"
 import { filter, Subject } from "rxjs"
-import { Highlight } from "./types"
+import { SerializableHighlight } from "./types"
 
 type HighlightParams = { document: Document; selection: Selection; itemId: string; color?: string; contents?: string[] }
 
 type Command =
   | { type: "highlight"; data: HighlightParams }
-  | { type: "add"; data: Highlight | Highlight[] }
+  | { type: "add"; data: SerializableHighlight | SerializableHighlight[] }
   | { type: "delete"; id: string }
   | { type: "update"; id: string; data: Pick<HighlightParams, "color" | "contents"> }
   | { type: "select"; id: string | undefined }
@@ -24,7 +24,7 @@ export class Commands extends DestroyableClass {
     this.commandSubject.next({ type: "highlight", data: params })
   }
 
-  add = (data: Highlight | Highlight[]) => {
+  add = (data: SerializableHighlight | SerializableHighlight[]) => {
     this.commandSubject.next({ type: "add", data })
   }
 

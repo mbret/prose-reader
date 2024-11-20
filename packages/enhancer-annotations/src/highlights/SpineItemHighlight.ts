@@ -1,18 +1,19 @@
 import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
-import { RuntimeHighlight } from "../types"
+import { SerializableHighlight } from "../types"
 import { createElementForRange, getRangeFromSelection } from "./utils"
 import { fromEvent, map, Observable, share, skip, takeUntil, tap } from "rxjs"
+import { Highlight } from "./Highlight"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
 
-  public readonly tap$: Observable<{ event: Event; highlight: RuntimeHighlight }>
+  public readonly tap$: Observable<{ event: Event; highlight: SerializableHighlight }>
 
   constructor(
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    public readonly highlight: RuntimeHighlight,
+    public readonly highlight: Highlight,
     private isSelected: Observable<boolean>,
   ) {
     super()

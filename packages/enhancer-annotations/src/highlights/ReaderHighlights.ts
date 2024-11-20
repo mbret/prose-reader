@@ -1,7 +1,7 @@
 import { DestroyableClass, Reader } from "@prose-reader/core"
 import { BehaviorSubject, map, merge, switchMap } from "rxjs"
-import { Highlight } from "../types"
 import { SpineItemHighlights } from "./SpineItemHighlights"
+import { Highlight } from "./Highlight"
 
 export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])

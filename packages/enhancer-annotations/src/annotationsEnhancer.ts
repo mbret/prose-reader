@@ -1,9 +1,9 @@
 import { Reader } from "@prose-reader/core"
 import { BehaviorSubject, merge, takeUntil, tap, Observable } from "rxjs"
 import { report } from "./report"
-import { RuntimeHighlight } from "./types"
 import { ReaderHighlights } from "./highlights/ReaderHighlights"
 import { Commands } from "./Commands"
+import { Highlight } from "./highlights/Highlight"
 
 export const annotationsEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
@@ -11,7 +11,7 @@ export const annotationsEnhancer =
     options: InheritOptions,
   ): InheritOutput & {
     annotations: {
-      annotations$: Observable<RuntimeHighlight[]>
+      highlights$: Observable<Highlight[]>
       highlightTap$: ReaderHighlights["tap$"]
       highlight: Commands["highlight"]
       add: Commands["add"]
@@ -23,18 +23,17 @@ export const annotationsEnhancer =
   } => {
     const reader = next(options)
     const commands = new Commands()
-    const highlightsSubject = new BehaviorSubject<RuntimeHighlight[]>([])
+    const highlightsSubject = new BehaviorSubject<Highlight[]>([])
     const selectedHighlightSubject = new BehaviorSubject<string | undefined>(undefined)
-
     const readerHighlights = new ReaderHighlights(reader, highlightsSubject, selectedHighlightSubject)
 
     const highlight$ = commands.highlight$.pipe(
       tap(({ data: { itemId, selection, ...rest } }) => {
         const { anchorCfi, focusCfi } = reader.selection.generateCfis({ itemId, selection })
 
-        const annotation = { anchorCfi, focusCfi, itemId, id: window.crypto.randomUUID(), ...rest }
+        const highlight = new Highlight({ anchorCfi, focusCfi, itemId, id: window.crypto.randomUUID(), ...rest })
 
-        highlightsSubject.next([...highlightsSubject.getValue(), annotation])
+        highlightsSubject.next([...highlightsSubject.getValue(), highlight])
       }),
     )
 
@@ -42,7 +41,7 @@ export const annotationsEnhancer =
       tap(({ data }) => {
         const annotations = Array.isArray(data) ? data : [data]
 
-        highlightsSubject.next([...highlightsSubject.getValue(), ...annotations])
+        highlightsSubject.next([...highlightsSubject.getValue(), ...annotations.map((annotation) => new Highlight(annotation))])
       }),
     )
 
@@ -55,7 +54,9 @@ export const annotationsEnhancer =
     const update$ = commands.update$.pipe(
       tap(({ id, data }) => {
         highlightsSubject.next(
-          highlightsSubject.getValue().map((highlight) => (highlight.id === id ? { ...highlight, ...data } : highlight)),
+          highlightsSubject
+            .getValue()
+            .map((highlight) => (highlight.id === id ? new Highlight({ ...highlight, ...data }) : highlight)),
         )
       }),
     )
@@ -66,7 +67,7 @@ export const annotationsEnhancer =
       }),
     )
 
-    const annotations$ = highlightsSubject.asObservable()
+    const highlights$ = highlightsSubject.asObservable()
 
     merge(
       highlight$,
@@ -74,9 +75,9 @@ export const annotationsEnhancer =
       delete$,
       update$,
       select$,
-      annotations$.pipe(
+      highlights$.pipe(
         tap((annotations) => {
-          report.debug("annotations", annotations)
+          report.debug("highlights", annotations)
         }),
       ),
     )
@@ -92,7 +93,7 @@ export const annotationsEnhancer =
         reader.destroy()
       },
       annotations: {
-        annotations$,
+        highlights$,
         highlightTap$: readerHighlights.tap$,
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         highlight: commands.highlight,

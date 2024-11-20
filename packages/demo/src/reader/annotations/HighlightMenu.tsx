@@ -49,8 +49,10 @@ export const HighlightMenu = memo(() => {
   useEffect(() => {
     if (highlightColor) {
       setSelectedColor(highlightColor)
+    } else {
+      setSelectedColor(HIGHLIGHT_COLORS[0])
     }
-  }, [highlightColor])
+  }, [highlightColor, isOpen])
 
   useEffect(() => {
     if (reader && highlight) {
@@ -94,7 +96,7 @@ export const HighlightMenu = memo(() => {
             <Button
               onClick={() => {
                 onClose()
-                reader?.annotations.highlight({ ...selection, color: selectedColor, contents: [contents] })
+                reader?.annotations.highlight({ ...selection, color: selectedColor, contents: contents ? [contents] : undefined })
               }}
             >
               Highlight
@@ -106,7 +108,7 @@ export const HighlightMenu = memo(() => {
                 flex={1}
                 onClick={() => {
                   onClose()
-                  reader?.annotations.update(highlight.id, { color: selectedColor, contents: [contents] })
+                  reader?.annotations.update(highlight.id, { color: selectedColor, contents: contents ? [contents] : undefined })
                 }}
               >
                 Update

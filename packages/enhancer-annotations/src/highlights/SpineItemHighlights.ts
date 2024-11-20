@@ -1,8 +1,8 @@
 import { distinctUntilChanged, map, merge, Observable, of, shareReplay, switchMap, takeUntil } from "rxjs"
-import { RuntimeHighlight } from "../types"
 import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
 import { SpineItemHighlight } from "./SpineItemHighlight"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils"
+import { Highlight } from "./Highlight"
 
 export class SpineItemHighlights extends DestroyableClass {
   private layer: HTMLElement
@@ -11,7 +11,7 @@ export class SpineItemHighlights extends DestroyableClass {
   public readonly tap$: SpineItemHighlight["tap$"]
 
   constructor(
-    private annotations$: Observable<RuntimeHighlight[]>,
+    private highlights$: Observable<Highlight[]>,
     private spineItem: SpineItem,
     private reader: Reader,
     private selectedHighlight: Observable<string | undefined>,
@@ -22,7 +22,7 @@ export class SpineItemHighlights extends DestroyableClass {
 
     this.layer = createAnnotationLayer(this.spineItem.containerElement, firstLayerElement)
 
-    const highlights$ = this.annotations$.pipe(
+    const highlights$ = this.highlights$.pipe(
       switchMap((annotations) => {
         this.highlights.forEach((highlight) => highlight.destroy())
         this.highlights = []

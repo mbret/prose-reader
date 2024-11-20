@@ -1,6 +1,6 @@
 import { ReaderInstance } from "../useCreateReader"
 import { useObserve, useSubscribe } from "reactjrx"
-import { EMPTY, of, skip, tap, withLatestFrom } from "rxjs"
+import { EMPTY, of, skip, tap } from "rxjs"
 import { isQuickMenuOpenSignal } from "../states"
 import { Highlight } from "@prose-reader/enhancer-annotations"
 import { selectedHighlightSignal } from "./states"
@@ -47,7 +47,7 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
     () =>
       !isRestored
         ? EMPTY
-        : reader?.annotations.annotations$.pipe(
+        : reader?.annotations.highlights$.pipe(
             skip(1),
             tap((annotations) => persist(bookKey, annotations))
           ),

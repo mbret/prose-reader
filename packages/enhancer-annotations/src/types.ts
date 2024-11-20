@@ -1,4 +1,4 @@
-export type RuntimeHighlight = {
+export type SerializableHighlight = {
   anchorCfi: string | undefined
   focusCfi: string | undefined
   itemId: string
@@ -10,5 +10,3 @@ export type RuntimeHighlight = {
    */
   id: string
 }
-
-export type Highlight = RuntimeHighlight
