@@ -1,6 +1,6 @@
 import { report } from "../report"
 
-export const getElementsForRange = (range: Range, container: HTMLElement) => {
+export const createElementForRange = (range: Range, container: HTMLElement, color: string) => {
   // Get all rects and group them by line (based on vertical position)
   const rects = Array.from(range.getClientRects())
   const lineGroups = new Map<number, DOMRect[]>()
@@ -21,17 +21,27 @@ export const getElementsForRange = (range: Range, container: HTMLElement) => {
     const top = lineRects[0]?.top
     const height = lineRects[0]?.height
 
+    const rectEltContainer = container.ownerDocument.createElement("div")
     const rectElt = container.ownerDocument.createElement("div")
-    rectElt.style.cssText = `
+    rectEltContainer.style.cssText = `
         position: absolute;
         width: ${right - left}px;
         height: ${height}px;
         top: ${top}px;
         left: ${left}px;
+        box-sizing: border-box;
+        border: 3px dashed transparent;
+    `
+    rectElt.style.cssText = `
+        height: 100%;
+        width: 100%;
         opacity: 50%;
+        background-color: ${color}
     `
 
-    return rectElt
+    rectEltContainer.appendChild(rectElt)
+
+    return rectEltContainer
   })
 }
 
@@ -89,7 +99,7 @@ export const layoutAnnotationLayer = (layer: HTMLElement, annotationLayer: HTMLE
     annotationLayer.style.top = "0"
   }
 
-//   annotationLayer.style.backgroundColor = "red"
+  //   annotationLayer.style.backgroundColor = "red"
   annotationLayer.style.opacity = "1"
   annotationLayer.style.pointerEvents = "none"
 }

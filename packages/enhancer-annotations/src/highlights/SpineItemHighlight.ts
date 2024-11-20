@@ -1,7 +1,6 @@
 import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
 import { RuntimeHighlight } from "../types"
-import { getElementsForRange, getRangeFromSelection } from "./utils"
-import { report } from "../report"
+import { createElementForRange, getRangeFromSelection } from "./utils"
 import { fromEvent, map, Observable, share, skip, takeUntil, tap } from "rxjs"
 
 export class SpineItemHighlight extends DestroyableClass {
@@ -37,7 +36,7 @@ export class SpineItemHighlight extends DestroyableClass {
         tap((isSelected) => {
           Array.from(this.container.children).forEach((child) => {
             if (child instanceof HTMLElement) {
-              child.style.border = isSelected ? "3px dashed red" : "none"
+              child.style.border = isSelected ? "3px dashed red" : "3px dashed transparent"
             }
           })
         }),
@@ -52,9 +51,12 @@ export class SpineItemHighlight extends DestroyableClass {
     const { node: anchorNode, offset: anchorOffset } = this.reader.cfi.resolveCfi({ cfi: this.highlight.anchorCfi ?? `` }) ?? {}
     const { node: focusNode, offset: focusOffset } = this.reader.cfi.resolveCfi({ cfi: this.highlight.focusCfi ?? `` }) ?? {}
 
+    /**
+     * The nodes can be undefined if the cfi is not found.
+     * This can happens if the item is not loaded (legit) or if the cfi
+     * are just invalid.
+     */
     if (!anchorNode || !focusNode) {
-      report.error(`Unable to resolve anchor cfi: ${this.highlight.anchorCfi}`)
-
       return
     }
 
@@ -64,16 +66,28 @@ export class SpineItemHighlight extends DestroyableClass {
       { node: focusNode, offset: focusOffset },
     )
 
-    const rectElements = getElementsForRange(range, this.container)
+    const rectElements = createElementForRange(range, this.container, this.highlight.color ?? "yellow")
 
     rectElements.forEach((elt) => {
       elt.style.pointerEvents = "initial"
       elt.style.cursor = "pointer"
-      elt.style.backgroundColor = this.highlight.color ?? "yellow"
       elt.dataset["highlightRect"] = this.highlight.id
 
       this.container.appendChild(elt)
     })
+
+    const firstElement = rectElements[0]
+
+    if (firstElement && this.highlight.contents?.length) {
+      const noteIcon = document.createElement("span")
+      noteIcon.textContent = "📝"
+      noteIcon.style.position = "absolute"
+      noteIcon.style.top = "0"
+      noteIcon.style.left = "0"
+      noteIcon.style.transform = "translate(-0%, -50%)"
+      noteIcon.style.fontSize = "28px"
+      firstElement.appendChild(noteIcon)
+    }
   }
 
   isWithinTarget(target: Node) {
