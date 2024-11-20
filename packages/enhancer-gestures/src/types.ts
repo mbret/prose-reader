@@ -5,7 +5,7 @@ import { GesturesSettingsManager } from "./SettingsManager"
 
 export type Hook = {
   name: "beforeTap"
-  runFn: (params: { event: TapEvent }) => boolean
+  runFn: (params: { event: TapEvent }) => Observable<boolean>
 }
 
 export type GestureRecognizable = Recognizable<(TapRecognizer | PanRecognizer | SwipeRecognizer | PinchRecognizer)[]>

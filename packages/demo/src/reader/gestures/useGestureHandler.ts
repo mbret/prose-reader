@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
-import { tap, withLatestFrom } from "rxjs"
+import { map, tap, withLatestFrom } from "rxjs"
 import { isWithinBookmarkArea } from "../bookmarks/isWithinBookmarkArea"
 
 export const useGestureHandler = () => {
@@ -12,15 +12,17 @@ export const useGestureHandler = () => {
     const deregister = reader?.gestures.hookManager.register("beforeTap", ({ event }) => {
       const target = event.event.target
 
-      if (isWithinBookmarkArea(target)) {
-        return false
-      }
+      return reader.selection.lastSelectionOnPointerdown$.pipe(
+        map((lastSelectionOnPointerdown) => {
+          if (isWithinBookmarkArea(target)) {
+            return false
+          }
 
-      if (target && reader.annotations.isTargetWithinHighlight(target)) {
-        return false
-      }
+          const wasOrIsOnSelection = (target && reader.annotations.isTargetWithinHighlight(target)) || lastSelectionOnPointerdown
 
-      return true
+          return !wasOrIsOnSelection
+        })
+      )
     })
 
     return () => {

@@ -37,7 +37,7 @@ export class SpineItemHighlight extends DestroyableClass {
         tap((isSelected) => {
           Array.from(this.container.children).forEach((child) => {
             if (child instanceof HTMLElement) {
-              child.style.border = isSelected ? "2px dashed red" : "none"
+              child.style.border = isSelected ? "3px dashed red" : "none"
             }
           })
         }),

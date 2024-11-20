@@ -52,7 +52,7 @@ export const selectionEnhancer =
        */
       selectionAfterPointerUp$: Observable<[Event, SelectionValue]>
       /**
-       * Usefull to know about the last selection before a pointerdown event.
+       * Usefull to know about the selection state before a pointerdown event.
        * For example if you want to prevent certain action on click if user is discarding a selection.
        * A good example is delaying the opening of a reader menu.
        */
@@ -65,6 +65,7 @@ export const selectionEnhancer =
         anchorCfi: string | undefined
         focusCfi: string | undefined
       }
+      getSelection: () => SelectionValue | undefined
     }
   } => {
     const reader = next(options)
@@ -151,6 +152,8 @@ export const selectionEnhancer =
       withLatestFrom(selection$),
       map(([, selection]) => selection),
       startWith(undefined),
+      shareReplay(1),
+      takeUntil(reader.$.destroy$),
     )
 
     return {
@@ -162,6 +165,7 @@ export const selectionEnhancer =
         selectionAfterPointerUp$,
         lastSelectionOnPointerdown$,
         generateCfis,
+        getSelection: () => selectionSubject.getValue(),
       },
       destroy: () => {
         selectionSubject.complete()

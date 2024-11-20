@@ -1,5 +1,5 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { Subject, tap } from "rxjs"
+import { combineLatest, EMPTY, first, of, Subject, switchMap, tap } from "rxjs"
 import { GestureEvent, GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 import { filterNotLink } from "../utils"
@@ -18,7 +18,7 @@ export const registerTaps = ({
 }) => {
   const gestures$ = recognizable.events$.pipe(
     filterNotLink,
-    tap((event) => {
+    switchMap((event) => {
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
@@ -30,30 +30,37 @@ export const registerTaps = ({
         if (`x` in normalizedEvent) {
           const { x = 0, y } = normalizedEvent
 
-          const beforeTapResults = hookManager.execute("beforeTap", undefined, { event })
+          const beforeTapResults$ = hookManager.execute("beforeTap", undefined, { event })
 
-          if (beforeTapResults.some((result) => result === false)) {
-            return
-          }
+          return combineLatest([...beforeTapResults$, of(true)]).pipe(
+            first(),
+            tap((results) => {
+              if (results.some((result) => result === false)) {
+                return
+              }
 
-          const isTopArea = y < height * pageTurnMargin
-          const isBottomArea = y > height * (1 - pageTurnMargin)
-          const isLeftArea = x < width * pageTurnMargin
-          const isRightArea = x > width * (1 - pageTurnMargin)
+              const isTopArea = y < height * pageTurnMargin
+              const isBottomArea = y > height * (1 - pageTurnMargin)
+              const isLeftArea = x < width * pageTurnMargin
+              const isRightArea = x > width * (1 - pageTurnMargin)
 
-          if (isLeftArea && computedPageTurnDirection === "horizontal") {
-            reader.navigation.turnLeftOrTop()
-          } else if (isTopArea && computedPageTurnDirection === "vertical") {
-            reader.navigation.turnLeftOrTop()
-          } else if (isBottomArea && computedPageTurnDirection === "vertical") {
-            reader.navigation.turnRightOrBottom()
-          } else if (isRightArea && computedPageTurnDirection === "horizontal") {
-            reader.navigation.turnRightOrBottom()
-          } else {
-            unhandledEvent$.next(event)
-          }
+              if (isLeftArea && computedPageTurnDirection === "horizontal") {
+                reader.navigation.turnLeftOrTop()
+              } else if (isTopArea && computedPageTurnDirection === "vertical") {
+                reader.navigation.turnLeftOrTop()
+              } else if (isBottomArea && computedPageTurnDirection === "vertical") {
+                reader.navigation.turnRightOrBottom()
+              } else if (isRightArea && computedPageTurnDirection === "horizontal") {
+                reader.navigation.turnRightOrBottom()
+              } else {
+                unhandledEvent$.next(event)
+              }
+            }),
+          )
         }
       }
+
+      return EMPTY
     }),
   )
 
