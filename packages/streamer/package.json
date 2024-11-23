@@ -21,6 +21,7 @@
     "lint:read": "prettier --check . && eslint .",
     "lint:write": "prettier --write . && eslint --fix .",
     "test": "vitest run --coverage",
+    "tsc": "tsc",
     "test:watch": "vitest watch"
   },
   "dependencies": {

@@ -7,7 +7,7 @@ import { getItemAnchor } from "./getItemAnchor"
  * is loaded for example.
  */
 export const getRootCfi = (spineItem: SpineItem) => {
-  const itemAnchor = getItemAnchor(spineItem)
+  const itemAnchor = getItemAnchor(spineItem.item)
 
   return `epubcfi(/0${itemAnchor})`
 }

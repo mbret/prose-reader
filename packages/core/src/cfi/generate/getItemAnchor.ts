@@ -1,4 +1,4 @@
-import { SpineItem } from "../../spineItem/SpineItem"
+import { Manifest } from "@prose-reader/shared"
 
-export const getItemAnchor = (spineItem: SpineItem) =>
-  `|[prose~anchor~${encodeURIComponent(spineItem.item.id)}]`
+export const getItemAnchor = (item: Manifest["spineItems"][number]) =>
+  `|[prose~anchor~${encodeURIComponent(item.index)}]`

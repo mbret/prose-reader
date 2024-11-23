@@ -25,6 +25,7 @@ import { SettingsInterface } from "./settings/SettingsInterface"
 import { Spine } from "./spine/Spine"
 import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
 import { SpineItem } from "./spineItem/SpineItem"
+import { parseCfi } from "./cfi/lookup/parseCfi"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -251,6 +252,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     cfi: {
       generateCfiFromRange,
+      parseCfi,
       generateCfiForSpineItemPage: (params: {
         pageIndex: number
         spineItem: SpineItem

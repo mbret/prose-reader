@@ -4,11 +4,12 @@ import { RuntimeBookmark } from "../types"
 const consolidateCfiInfo = ({ bookmark, reader }: { reader: Reader; bookmark: RuntimeBookmark }): RuntimeBookmark => {
   if (bookmark.offset !== undefined && bookmark.node !== undefined && bookmark.itemIndex !== undefined) return bookmark
 
-  const { spineItemIndex, node, offset } = reader.cfi.resolveCfi({ cfi: bookmark.cfi }) ?? {}
+  const { itemIndex } = reader.cfi.parseCfi(bookmark.cfi)
+  const { node, offset } = reader.cfi.resolveCfi({ cfi: bookmark.cfi }) ?? {}
 
   return {
     ...bookmark,
-    itemIndex: spineItemIndex,
+    itemIndex,
     node,
     offset,
   }

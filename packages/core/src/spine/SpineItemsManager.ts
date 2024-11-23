@@ -1,6 +1,6 @@
 import { Context } from "../context/Context"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { extractProseMetadataFromCfi } from "../cfi/lookup/extractProseMetadataFromCfi"
+import { parseCfi } from "../cfi/lookup/parseCfi"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { BehaviorSubject } from "rxjs"
 import { SpineItem } from "../spineItem/SpineItem"
@@ -41,8 +41,14 @@ export class SpineItemsManager extends DestroyableClass {
         : `before`
   }
 
-  getSpineItemIndex(spineItem: SpineItem | undefined) {
+  getSpineItemIndex(spineItemOrId: SpineItem | string | undefined) {
+    const spineItem =
+      spineItemOrId instanceof SpineItem
+        ? spineItemOrId
+        : this.get(spineItemOrId)
+
     if (!spineItem) return undefined
+
     const index = this.orderedSpineItemsSubject.value.indexOf(spineItem)
 
     return index < 0 ? undefined : index
@@ -57,13 +63,10 @@ export class SpineItemsManager extends DestroyableClass {
 
   // @todo move
   getSpineItemFromCfi(cfi: string) {
-    const { itemId } = extractProseMetadataFromCfi(cfi)
+    const { itemIndex } = parseCfi(cfi)
 
-    if (itemId) {
-      const { itemId } = extractProseMetadataFromCfi(cfi)
-      const spineItem = (itemId ? this.get(itemId) : undefined) || this.get(0)
-
-      return spineItem
+    if (itemIndex !== undefined) {
+      return this.get(itemIndex)
     }
 
     return undefined

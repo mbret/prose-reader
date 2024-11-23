@@ -20,6 +20,7 @@ export const defaultHook =
           // we need to make sure to have unique index
           // /chap01/01.png, /chap02/01.png, etc
           id: `${index}.${file.basename}`,
+          index,
           href: encodeURI(`${baseUrl}${file.uri}`),
           renditionLayout: `pre-paginated`,
           progressionWeight: 1 / files.length,

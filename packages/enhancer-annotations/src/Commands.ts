@@ -1,8 +1,8 @@
-import { DestroyableClass } from "@prose-reader/core"
-import { filter, Subject } from "rxjs"
+import { DestroyableClass, Reader } from "@prose-reader/core"
+import { filter, ObservedValueOf, Subject } from "rxjs"
 import { SerializableHighlight } from "./types"
 
-type HighlightParams = { document: Document; selection: Selection; itemId: string; color?: string; contents?: string[] }
+type HighlightParams = ObservedValueOf<Reader["selection"]["selection$"]> & { color?: string; contents?: string[] }
 
 type Command =
   | { type: "highlight"; data: HighlightParams }

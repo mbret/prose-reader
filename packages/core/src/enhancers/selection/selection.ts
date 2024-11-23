@@ -1,26 +1,19 @@
-import { CfiHandler } from "../../cfi/CfiHandler"
+import { Manifest } from "@prose-reader/shared"
+import { generateCfi } from "../../cfi/generate/generateCfi"
 
 export const generateCfis = ({
-  itemId,
+  item,
   selection,
 }: {
   selection: Selection
-  itemId: string
+  item: Manifest["spineItems"][number]
 }) => {
   const anchorCfi = selection.anchorNode
-    ? CfiHandler.generate(
-        selection.anchorNode,
-        selection.anchorOffset,
-        `|[prose~anchor~${encodeURIComponent(itemId)}]`,
-      )
+    ? generateCfi(selection.anchorNode, selection.anchorOffset, item)
     : undefined
 
   const focusCfi = selection.focusNode
-    ? CfiHandler.generate(
-        selection.focusNode,
-        selection.focusOffset,
-        `|[prose~anchor~${encodeURIComponent(itemId)}]`,
-      )
+    ? generateCfi(selection.focusNode, selection.focusOffset, item)
     : undefined
 
   return {

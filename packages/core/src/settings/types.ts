@@ -42,7 +42,7 @@ export type CoreInputSettings = {
    * not pass through the service worker.
    */
   getResource?: (
-    item: Manifest["spineItems"][number],
+    item: Manifest["items"][number],
   ) =>
     | Observable<URL | Response | { custom: true; data: unknown } | undefined>
     | undefined

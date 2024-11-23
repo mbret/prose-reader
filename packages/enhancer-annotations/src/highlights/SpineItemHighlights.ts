@@ -22,13 +22,13 @@ export class SpineItemHighlights extends DestroyableClass {
 
     this.layer = createAnnotationLayer(this.spineItem.containerElement, firstLayerElement)
 
-    const highlights$ = this.highlights$.pipe(
+    const itemHighlights$ = this.highlights$.pipe(
       switchMap((annotations) => {
         this.highlights.forEach((highlight) => highlight.destroy())
         this.highlights = []
 
         annotations.forEach((annotation) => {
-          if (annotation.itemId !== this.spineItem.item.id) return
+          if (annotation.itemIndex !== this.spineItem.item.index) return
 
           const isSelected$ = this.selectedHighlight.pipe(
             map((id) => id === annotation.id),
@@ -46,7 +46,7 @@ export class SpineItemHighlights extends DestroyableClass {
       takeUntil(this.destroy$),
     )
 
-    this.tap$ = highlights$.pipe(switchMap((highlights) => merge(...highlights.map((highlight) => highlight.tap$))))
+    this.tap$ = itemHighlights$.pipe(switchMap((highlights) => merge(...highlights.map((highlight) => highlight.tap$))))
 
     highlights$.subscribe()
   }

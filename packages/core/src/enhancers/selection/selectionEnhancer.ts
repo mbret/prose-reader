@@ -23,7 +23,7 @@ type SelectionValue =
   | {
       document: Document
       selection: Selection
-      itemId: string
+      itemIndex: number
     }
   | undefined
 
@@ -61,7 +61,7 @@ export const selectionEnhancer =
        * Generate CFIs from a selection.
        * It can come handy when you want to store selections (eg: highlights).
        */
-      generateCfis: (params: { itemId: string; selection: Selection }) => {
+      generateCfis: (params: { itemIndex: number; selection: Selection }) => {
         anchorCfi: string | undefined
         focusCfi: string | undefined
       }
@@ -79,6 +79,9 @@ export const selectionEnhancer =
       ({ itemId, layers, destroy$, destroy }) => {
         const frame = layers[0]?.element
 
+        const itemIndex =
+          reader.spineItemsManager.getSpineItemIndex(itemId) ?? 0
+
         if (frame instanceof HTMLIFrameElement) {
           const frameDoc =
             frame.contentDocument || frame.contentWindow?.document
@@ -93,7 +96,7 @@ export const selectionEnhancer =
                     selectionSubject.next({
                       document: frameDoc,
                       selection,
-                      itemId,
+                      itemIndex,
                     })
                   } else {
                     selectionSubject.next(undefined)
@@ -107,7 +110,7 @@ export const selectionEnhancer =
                     {
                       document: frameDoc,
                       selection,
-                      itemId,
+                      itemIndex,
                     },
                   ])
                 }),
@@ -164,7 +167,23 @@ export const selectionEnhancer =
         selectionEnd$,
         selectionAfterPointerUp$,
         lastSelectionOnPointerdown$,
-        generateCfis,
+        generateCfis: ({
+          itemIndex,
+          selection,
+        }: {
+          itemIndex: number
+          selection: Selection
+        }) => {
+          const item = reader.spineItemsManager.get(itemIndex)?.item
+
+          if (!item)
+            return {
+              anchorCfi: undefined,
+              focusCfi: undefined,
+            }
+
+          return generateCfis({ item, selection })
+        },
         getSelection: () => selectionSubject.getValue(),
       },
       destroy: () => {

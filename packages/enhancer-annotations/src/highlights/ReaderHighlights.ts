@@ -21,7 +21,7 @@ export class ReaderHighlights extends DestroyableClass {
       if (!spineItem) return
 
       const spineItemHighlights$ = this.highlights.pipe(
-        map((highlights) => highlights.filter((highlight) => highlight.itemId === itemId)),
+        map((highlights) => highlights.filter((highlight) => highlight.itemIndex === spineItem.item.index)),
       )
 
       const spineItemHighlights = new SpineItemHighlights(spineItemHighlights$, spineItem, reader, this.selectedHighlight)

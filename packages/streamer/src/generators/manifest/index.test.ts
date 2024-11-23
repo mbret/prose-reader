@@ -41,6 +41,7 @@ describe(`Given a list of urls archive`, () => {
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
           pageSpreadRight: undefined,
+          index: 0
         },
       ],
       title: "",
@@ -86,6 +87,7 @@ describe(`Given a list of urls with rendition flow archive`, () => {
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
           pageSpreadRight: undefined,
+          index: 0
         },
       ],
       title: "",

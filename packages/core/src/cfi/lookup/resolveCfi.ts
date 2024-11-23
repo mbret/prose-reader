@@ -1,10 +1,12 @@
 import { Report } from "../../report"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { CfiHandler } from "../CfiHandler"
-import { extractProseMetadataFromCfi } from "./extractProseMetadataFromCfi"
+import { parseCfi } from "./parseCfi"
 
 /**
  * Returns the node and offset for the given cfi.
+ * 
+ * A CFI can only resolve if the item is loaded.
  */
 export const resolveCfi = ({
   cfi,
@@ -16,11 +18,10 @@ export const resolveCfi = ({
   if (!cfi) return undefined
 
   const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
-  const spineItemIndex = spineItemsManager.getSpineItemIndex(spineItem) || 0
 
   if (!spineItem) return undefined
 
-  const { cleanedCfi, offset } = extractProseMetadataFromCfi(cfi)
+  const { cleanedCfi, offset } = parseCfi(cfi)
   const cfiHandler = new CfiHandler(cleanedCfi, {})
 
   const rendererElement = spineItem.renderer.layers[0]?.element
@@ -35,14 +36,12 @@ export const resolveCfi = ({
         return {
           node,
           offset: offset ?? resolvedOffset,
-          spineItemIndex,
           spineItem,
         }
       } catch (e) {
         Report.error(e)
 
         return {
-          spineItemIndex,
           spineItem,
         }
       }
@@ -50,7 +49,6 @@ export const resolveCfi = ({
   }
 
   return {
-    spineItemIndex,
     spineItem,
   }
 }

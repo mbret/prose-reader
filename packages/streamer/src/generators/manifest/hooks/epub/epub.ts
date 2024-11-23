@@ -100,7 +100,7 @@ export const epubHook =
       title,
       readingDirection: pageProgressionDirection || `ltr`,
       spineItems:
-        spineElm?.childrenNamed(`itemref`).map((itemrefElm) => {
+        spineElm?.childrenNamed(`itemref`).map((itemrefElm, index) => {
           const manifestItem = manifestElm
             ?.childrenNamed(`item`)
             .find((item) => item.attr.id === itemrefElm?.attr.idref)
@@ -115,6 +115,7 @@ export const epubHook =
 
           return {
             id: manifestItem?.attr.id || ``,
+            index,
             href: manifestItem?.attr.href?.startsWith(`https://`)
               ? manifestItem?.attr.href
               : opfBasePath

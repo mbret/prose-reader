@@ -1,5 +1,5 @@
 import { Manifest } from "@prose-reader/shared"
-import { CfiHandler } from "../CfiHandler"
+import { generateCfi } from "./generateCfi"
 
 /**
  * @todo the package does not support creating for range at the moment @see https://github.com/fread-ink/epub-cfi-resolver/issues/3
@@ -14,16 +14,8 @@ export const generateCfiFromRange = (
   }: { startNode: Node; start: number; endNode: Node; end: number },
   item: Manifest[`spineItems`][number],
 ) => {
-  const startCFI = CfiHandler.generate(
-    startNode,
-    start,
-    `|[prose~anchor~${encodeURIComponent(item.id)}]`,
-  )
-  const endCFI = CfiHandler.generate(
-    endNode,
-    end,
-    `|[prose~anchor~${encodeURIComponent(item.id)}]`,
-  )
+  const startCFI = generateCfi(startNode, start, item)
+  const endCFI = generateCfi(endNode, end, item)
 
   return { start: startCFI, end: endCFI }
 }

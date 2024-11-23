@@ -6,7 +6,7 @@ export const selectedHighlightSignal = signal<{
   selection?: {
     document: Document
     selection: Selection
-    itemId: string
+    itemIndex: number
   }
 }>({
   key: `selectedHighlightSignal`,

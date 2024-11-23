@@ -29,6 +29,7 @@ export type Manifest = {
   }[]
   spineItems: {
     id: string
+    index: number
     /**
      * IRI https://www.rfc-editor.org/rfc/rfc3987
      *

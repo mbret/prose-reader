@@ -1,8 +1,7 @@
 import { Report } from "../../report"
 import { SpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItem } from "../../spineItem/SpineItem"
-import { CfiHandler } from "../CfiHandler"
-import { getItemAnchor } from "./getItemAnchor"
+import { generateCfi } from "./generateCfi"
 import { getRootCfi } from "./getRootCfi"
 
 /**
@@ -30,22 +29,15 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
 
     const rendererElement = spineItem.renderer.layers[0]?.element
 
-    const itemAnchor = getItemAnchor(spineItem)
-
-    // because the current cfi library does not works well with offset we are just using custom
-    // format and do it manually after resolving the node
-    // @see https://github.com/fread-ink/epub-cfi-resolver/issues/8
-    const offset = `|[prose~offset~${nodeOrRange?.offset || 0}]`
-
     if (
       nodeOrRange &&
       rendererElement instanceof HTMLIFrameElement &&
       rendererElement.contentWindow?.document
     ) {
-      const cfiString = CfiHandler.generate(
+      const cfiString = generateCfi(
         nodeOrRange.node,
-        0,
-        `${itemAnchor}${offset}`,
+        nodeOrRange.offset,
+        spineItem.item,
       )
 
       return cfiString.trim()
