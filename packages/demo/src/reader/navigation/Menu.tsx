@@ -9,6 +9,7 @@ import { SearchMenu } from "../search/SearchMenu"
 import { isQuickMenuOpenSignal } from "../states"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import { LocalSettings } from "../settings/useLocalSettings"
+import { AnnotationsMenu } from "./AnnotationsMenu"
 
 export const isMenuOpenSignal = signal({
   default: false
@@ -29,6 +30,11 @@ export const Menu = memo(
       setTabIndex(index)
     }
 
+    const onNavigate = () => {
+      isMenuOpenSignal.setValue(false)
+      isQuickMenuOpenSignal.setValue(false)
+    }
+
     return (
       <FullScreenModal
         isOpen={isMenuOpen}
@@ -42,6 +48,7 @@ export const Menu = memo(
             <Tab>Settings</Tab>
             <Tab>Help</Tab>
             <Tab>TOC</Tab>
+            <Tab>Annotations</Tab>
             <Tab>Search</Tab>
           </TabList>
 
@@ -53,22 +60,13 @@ export const Menu = memo(
               <HelpMenu />
             </TabPanel>
             <TabPanel p={0} display="flex" flex={1}>
-              <TocMenu
-                onNavigate={() => {
-                  isMenuOpenSignal.setValue(false)
-                  isQuickMenuOpenSignal.setValue(false)
-                }}
-              />
+              <TocMenu onNavigate={onNavigate} />
+            </TabPanel>
+            <TabPanel p={0} display="flex" flex={1}>
+              <AnnotationsMenu onNavigate={onNavigate} />
             </TabPanel>
             <TabPanel display="flex" flex={1}>
-              {tabIndex === 3 && (
-                <SearchMenu
-                  onNavigate={() => {
-                    isMenuOpenSignal.setValue(false)
-                    isQuickMenuOpenSignal.setValue(false)
-                  }}
-                />
-              )}
+              {tabIndex === 3 && <SearchMenu onNavigate={onNavigate} />}
             </TabPanel>
           </TabPanels>
         </Tabs>
