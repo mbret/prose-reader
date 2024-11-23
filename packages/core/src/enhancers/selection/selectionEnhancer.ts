@@ -16,7 +16,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { createRangeFromSelection, generateCfis } from "./selection"
+import { createRangeFromSelection } from "./selection"
 import { SelectionTracker } from "./SelectionTracker"
 import { SpineItem } from "../.."
 
@@ -58,14 +58,6 @@ export const selectionEnhancer =
        * A good example is delaying the opening of a reader menu.
        */
       lastSelectionOnPointerdown$: Observable<SelectionValue | undefined>
-      /**
-       * Generate CFIs from a selection.
-       * It can come handy when you want to store selections (eg: highlights).
-       */
-      generateCfis: (params: { itemIndex: number; selection: Selection }) => {
-        anchorCfi: string | undefined
-        focusCfi: string | undefined
-      }
       getSelection: () => SelectionValue | undefined
       createRangeFromSelection: (params: {
         selection: {
@@ -177,23 +169,6 @@ export const selectionEnhancer =
         selectionEnd$,
         selectionAfterPointerUp$,
         lastSelectionOnPointerdown$,
-        generateCfis: ({
-          itemIndex,
-          selection,
-        }: {
-          itemIndex: number
-          selection: Selection
-        }) => {
-          const item = reader.spineItemsManager.get(itemIndex)?.item
-
-          if (!item)
-            return {
-              anchorCfi: undefined,
-              focusCfi: undefined,
-            }
-
-          return generateCfis({ item, selection })
-        },
         getSelection: () => selectionSubject.getValue(),
         createRangeFromSelection,
       },

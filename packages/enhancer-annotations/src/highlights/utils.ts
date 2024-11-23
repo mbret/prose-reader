@@ -1,5 +1,3 @@
-import { report } from "../report"
-
 export const createElementForRange = (range: Range, container: HTMLElement, color: string) => {
   // Get all rects and group them by line (based on vertical position)
   const rects = Array.from(range.getClientRects())
@@ -43,38 +41,6 @@ export const createElementForRange = (range: Range, container: HTMLElement, colo
 
     return rectEltContainer
   })
-}
-
-export const getRangeFromSelection = (
-  overlayElement: HTMLElement,
-  anchor: { node: Node; offset?: number },
-  focus: { node: Node; offset?: number },
-) => {
-  const range = overlayElement.ownerDocument.createRange()
-  const comparison = anchor.node.compareDocumentPosition(focus.node)
-
-  try {
-    // If focus comes before anchor in the document
-    if (comparison & Node.DOCUMENT_POSITION_PRECEDING) {
-      range.setStart(focus.node, focus.offset || 0)
-      range.setEnd(anchor.node, anchor.offset || 0)
-      // If focus comes after anchor in the document
-    } else if (comparison & Node.DOCUMENT_POSITION_FOLLOWING) {
-      range.setStart(anchor.node, anchor.offset || 0)
-      range.setEnd(focus.node, focus.offset || 0)
-    }
-    // If they're the same node
-    else {
-      const startOffset = Math.min(anchor.offset || 0, focus.offset || 0)
-      const endOffset = Math.max(anchor.offset || 0, focus.offset || 0)
-      range.setStart(anchor.node, startOffset)
-      range.setEnd(anchor.node, endOffset)
-    }
-  } catch (e) {
-    report.error(e)
-  }
-
-  return range
 }
 
 export const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {

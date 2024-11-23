@@ -26,6 +26,7 @@ import { Spine } from "./spine/Spine"
 import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
 import { SpineItem } from "./spineItem/SpineItem"
 import { parseCfi } from "./cfi/lookup/parseCfi"
+import { generateCfiFromSelection } from "./cfi/generate/generateCfiFronSelection"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -252,6 +253,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     cfi: {
       generateCfiFromRange,
+      generateCfiFromSelection,
       parseCfi,
       generateCfiForSpineItemPage: (params: {
         pageIndex: number
@@ -266,7 +268,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       ) => resolveCfi({ ...params, spineItemsManager }),
     },
     navigation: {
-      viewportFree$: context.bridgeEvent.viewportFree$,
       viewportBusy$: context.bridgeEvent.viewportBusy$,
       getViewportPosition: () => navigator.viewportNavigator.viewportPosition,
       getNavigation: navigator.getNavigation.bind(navigator),
@@ -291,6 +292,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     element$,
     layout$: spine.spineLayout.layout$,
     viewportState$: context.bridgeEvent.viewportState$,
+    viewportFree$: context.bridgeEvent.viewportFree$,
     /**
      * Dispatched when the reader has loaded a book and is rendering a book.
      * Using navigation API and getting information about current content will

@@ -28,18 +28,10 @@ export class ReaderHighlights extends DestroyableClass {
 
       this.spineItemHighlights.next([...this.spineItemHighlights.getValue(), spineItemHighlights])
 
-      const deregister = reader.hookManager.register("item.onAfterLayout", ({ item }) => {
-        if (item.id !== itemId) return
-
-        spineItemHighlights.layout()
-      })
-
       destroy(() => {
         this.spineItemHighlights.next(this.spineItemHighlights.getValue().filter((layer) => layer !== spineItemHighlights))
 
         spineItemHighlights.destroy()
-
-        deregister()
       })
     })
 
@@ -55,5 +47,9 @@ export class ReaderHighlights extends DestroyableClass {
 
   isTargetWithinHighlight = (target: EventTarget) => {
     return !!this.getHighlightsForTarget(target).length
+  }
+
+  public layout() {
+    this.spineItemHighlights.getValue().forEach((item) => item.layout())
   }
 }

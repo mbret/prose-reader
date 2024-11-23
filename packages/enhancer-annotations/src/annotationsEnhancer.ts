@@ -1,5 +1,5 @@
-import { Reader } from "@prose-reader/core"
-import { BehaviorSubject, merge, takeUntil, tap, Observable, withLatestFrom } from "rxjs"
+import { Reader, waitForSwitch } from "@prose-reader/core"
+import { BehaviorSubject, merge, takeUntil, tap, Observable, withLatestFrom, debounceTime } from "rxjs"
 import { report } from "./report"
 import { ReaderHighlights } from "./highlights/ReaderHighlights"
 import { Commands } from "./Commands"
@@ -30,7 +30,11 @@ export const annotationsEnhancer =
 
     const highlight$ = commands.highlight$.pipe(
       tap(({ data: { itemIndex, selection, ...rest } }) => {
-        const { anchorCfi, focusCfi } = reader.selection.generateCfis({ itemIndex, selection })
+        const item = reader.spineItemsManager.get(itemIndex)?.item
+
+        if (!item) return
+
+        const { anchorCfi, focusCfi } = reader.cfi.generateCfiFromSelection({ item, selection })
 
         const highlight = new Highlight({ anchorCfi, focusCfi, itemIndex, id: window.crypto.randomUUID(), ...rest })
 
@@ -87,11 +91,13 @@ export const annotationsEnhancer =
      * @todo consolidation should be more optimized
      */
     const highlightsConsolidation$ = reader.layout$.pipe(
+      debounceTime(50),
+      waitForSwitch(reader.viewportFree$),
       withLatestFrom(highlights$),
       tap(([, highlights]) => {
         highlights.forEach((highlight) => consolidate(highlight, reader))
-
         highlightsSubject.next(highlights)
+        readerHighlights.layout()
       }),
     )
 

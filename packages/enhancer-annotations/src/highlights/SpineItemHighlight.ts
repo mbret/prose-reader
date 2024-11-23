@@ -1,13 +1,12 @@
 import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
-import { SerializableHighlight } from "../types"
-import { createElementForRange, getRangeFromSelection } from "./utils"
+import { createElementForRange } from "./utils"
 import { fromEvent, map, Observable, share, skip, takeUntil, tap } from "rxjs"
 import { Highlight } from "./Highlight"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
 
-  public readonly tap$: Observable<{ event: Event; highlight: SerializableHighlight }>
+  public readonly tap$: Observable<{ event: Event; highlight: Highlight }>
 
   constructor(
     private spineItem: SpineItem,
@@ -19,6 +18,7 @@ export class SpineItemHighlight extends DestroyableClass {
     super()
 
     void this.spineItem
+    void this.reader
 
     this.container = this.containerElement.ownerDocument.createElement("div")
     this.container.dataset["highlightContainer"] = this.highlight.id
@@ -49,23 +49,16 @@ export class SpineItemHighlight extends DestroyableClass {
   public render() {
     this.container.innerHTML = ""
 
-    const { node: anchorNode, offset: anchorOffset } = this.reader.cfi.resolveCfi({ cfi: this.highlight.anchorCfi ?? `` }) ?? {}
-    const { node: focusNode, offset: focusOffset } = this.reader.cfi.resolveCfi({ cfi: this.highlight.focusCfi ?? `` }) ?? {}
+    const range = this.highlight.range
 
     /**
      * The nodes can be undefined if the cfi is not found.
      * This can happens if the item is not loaded (legit) or if the cfi
      * are just invalid.
      */
-    if (!anchorNode || !focusNode) {
+    if (!range) {
       return
     }
-
-    const range = getRangeFromSelection(
-      this.containerElement,
-      { node: anchorNode, offset: anchorOffset },
-      { node: focusNode, offset: focusOffset },
-    )
 
     const rectElements = createElementForRange(range, this.container, this.highlight.color ?? "yellow")
 
