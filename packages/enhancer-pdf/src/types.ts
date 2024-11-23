@@ -4,6 +4,6 @@ import { Observable } from "rxjs"
 
 export type EnhancerOptions = {
   pdf: {
-    getArchiveForItem: (item: Manifest["spineItems"][number]) => Observable<Archive | undefined>
+    getArchiveForItem: (item: Manifest["items"][number]) => Observable<Archive | undefined>
   }
 }
