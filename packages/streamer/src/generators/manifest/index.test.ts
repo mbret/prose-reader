@@ -41,7 +41,7 @@ describe(`Given a list of urls archive`, () => {
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
           pageSpreadRight: undefined,
-          index: 0
+          index: 0,
         },
       ],
       title: "",
@@ -87,7 +87,7 @@ describe(`Given a list of urls with rendition flow archive`, () => {
           mediaType: `image/jpg`,
           pageSpreadLeft: undefined,
           pageSpreadRight: undefined,
-          index: 0
+          index: 0,
         },
       ],
       title: "",
@@ -130,6 +130,7 @@ describe("Given archive with a folder containing a space", () => {
       {
         href: "Chapter%201/page_1.jpg",
         id: "0.page_1.jpg",
+        index: 0,
         mediaType: undefined,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
