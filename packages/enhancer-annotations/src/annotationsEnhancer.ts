@@ -83,10 +83,15 @@ export const annotationsEnhancer =
 
     const highlights$ = highlightsSubject.asObservable()
 
+    /**
+     * @todo consolidation should be more optimized
+     */
     const highlightsConsolidation$ = reader.layout$.pipe(
       withLatestFrom(highlights$),
       tap(([, highlights]) => {
         highlights.forEach((highlight) => consolidate(highlight, reader))
+
+        highlightsSubject.next(highlights)
       }),
     )
 

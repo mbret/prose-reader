@@ -16,8 +16,9 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { generateCfis } from "./selection"
+import { createRangeFromSelection, generateCfis } from "./selection"
 import { SelectionTracker } from "./SelectionTracker"
+import { SpineItem } from "../.."
 
 type SelectionValue =
   | {
@@ -66,6 +67,15 @@ export const selectionEnhancer =
         focusCfi: string | undefined
       }
       getSelection: () => SelectionValue | undefined
+      createRangeFromSelection: (params: {
+        selection: {
+          anchorNode?: Node
+          anchorOffset?: number
+          focusNode?: Node
+          focusOffset?: number
+        }
+        spineItem: SpineItem
+      }) => Range | undefined
     }
   } => {
     const reader = next(options)
@@ -185,6 +195,7 @@ export const selectionEnhancer =
           return generateCfis({ item, selection })
         },
         getSelection: () => selectionSubject.getValue(),
+        createRangeFromSelection,
       },
       destroy: () => {
         selectionSubject.complete()

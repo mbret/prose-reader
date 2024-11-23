@@ -123,10 +123,10 @@ export const searchEnhancer =
 
               const newResults = ranges.map((range) => {
                 const { end, start } = reader.cfi.generateCfiFromRange(range, item.item)
-                const { node, offset, spineItemIndex } = reader.cfi.resolveCfi({ cfi: start }) || {}
+                const { node, offset, spineItem } = reader.cfi.resolveCfi({ cfi: start }) || {}
                 const pageIndex =
-                  node && spineItemIndex !== undefined
-                    ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItemIndex)
+                  node && spineItem !== undefined
+                    ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItem.item.index)
                     : undefined
 
                 return {

@@ -4,6 +4,7 @@ import React from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { SlNote } from "react-icons/sl"
+import { truncateText } from "../../common/utils"
 
 export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
@@ -17,7 +18,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
           as="a"
           href="#"
           alignItems="center"
-          pl={4}
+          px={4}
           onClick={() => {
             onNavigate()
 
@@ -30,7 +31,15 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
             <ListIcon as={CheckCircleIcon} style={{ visibility: "hidden" }} />
           )}
           <Stack gap={0}>
-            <Text>{item.id}</Text>
+            <Text>
+              {item.lastSelectionText ? (
+                truncateText(item.lastSelectionText ?? "", 100)
+              ) : (
+                <i>
+                  <b>unknown (not loaded)</b>
+                </i>
+              )}
+            </Text>
             <Text
               fontStyle="italic"
               fontWeight="bold"
