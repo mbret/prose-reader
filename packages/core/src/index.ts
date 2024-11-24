@@ -19,3 +19,5 @@ export { isShallowEqual } from "./utils/objects"
 export { waitForSwitch } from "./utils/rxjs"
 export { SpineItem } from "./spineItem/SpineItem"
 export * from "./utils/DestroyableClass"
+
+export * from "./utils/frames"

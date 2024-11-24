@@ -25,7 +25,9 @@ export const eventsEnhancer =
     reader.hookManager.register(
       `item.onDocumentLoad`,
       ({ destroy, layers, itemId }) => {
-        const frame = layers[0]?.element
+        const frame = layers.find(
+          (layer) => layer.element instanceof HTMLIFrameElement,
+        )?.element
 
         if (!(frame instanceof HTMLIFrameElement)) return
 
