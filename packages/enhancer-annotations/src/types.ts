@@ -6,7 +6,7 @@ export type SerializableHighlight = {
   /**
    * Not required, only used for display purposes
    */
-  lastSelectionText?: string
+  selectionAsText?: string
   /**
    * Unique local ID. This is to ensure unicity
    * for duplicate selections

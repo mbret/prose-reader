@@ -33,7 +33,7 @@ export const consolidate = (highlight: Highlight, reader: Reader) => {
     })
 
     highlight.range = range
-    highlight.lastSelectionText = range?.toString()
+    highlight.selectionAsText = range?.toString()
   } else {
     highlight.range = undefined
   }

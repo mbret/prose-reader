@@ -32,8 +32,8 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
           )}
           <Stack gap={0}>
             <Text>
-              {item.lastSelectionText ? (
-                truncateText(item.lastSelectionText ?? "", 100)
+              {item.selectionAsText ? (
+                truncateText(item.selectionAsText ?? "", 100)
               ) : (
                 <i>
                   <b>unknown (not loaded)</b>

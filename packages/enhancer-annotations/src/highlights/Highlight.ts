@@ -9,7 +9,7 @@ export class Highlight {
   public spineItemPageIndex?: number
   public absolutePageIndex?: number
   public range?: Range
-  public lastSelectionText?: string
+  public selectionAsText?: string
   /**
    * Unique local ID. This is to ensure unicity
    * for duplicate selections
@@ -23,7 +23,7 @@ export class Highlight {
     this.color = params.color
     this.contents = params.contents
     this.id = params.id
-    this.lastSelectionText = params.lastSelectionText
+    this.selectionAsText = params.selectionAsText
   }
 
   toJSON(): SerializableHighlight {
@@ -33,7 +33,7 @@ export class Highlight {
       color: this.color,
       contents: this.contents,
       id: this.id,
-      lastSelectionText: this.lastSelectionText,
+      selectionAsText: this.selectionAsText,
     }
   }
 }
