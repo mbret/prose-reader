@@ -1,5 +1,8 @@
 import { Manifest } from "@prose-reader/shared"
-import { DocumentRenderer } from "../spineItem/DocumentRenderer"
+import {
+  DocumentRenderer,
+  DocumentRendererParams,
+} from "../spineItem/DocumentRenderer"
 import { Observable } from "rxjs"
 
 export type CoreInputSettings = {
@@ -48,8 +51,7 @@ export type CoreInputSettings = {
     | undefined
   getRenderer?: (
     item: Manifest["spineItems"][number],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) => { new (...args: any[]): DocumentRenderer }
+  ) => undefined | ((props: DocumentRendererParams) => DocumentRenderer)
 }
 
 /**

@@ -1,5 +1,5 @@
 import { createReader, Reader } from "@prose-reader/core"
-import { PdfRenderer } from "./PdfRenderer"
+import { PdfRenderer } from "./renderer/PdfRenderer"
 import { EnhancerOptions } from "./types"
 import { from, map, mergeMap, of } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
@@ -22,13 +22,13 @@ export const pdfEnhancer =
        * setup we should return it.
        */
       getRenderer(item) {
-        const MaybeRenderer = options.getRenderer?.(item)
+        const maybeFactory = options.getRenderer?.(item)
 
-        if (!MaybeRenderer && item.href.endsWith(`.pdf`)) {
-          return PdfRenderer
+        if (!maybeFactory && item.href.endsWith(`.pdf`)) {
+          return (params) => new PdfRenderer(options.pdf.pdfjsViewerInlineCss, params)
         }
 
-        return MaybeRenderer
+        return maybeFactory
       },
       getResource: (item) =>
         options.pdf.getArchiveForItem(item).pipe(

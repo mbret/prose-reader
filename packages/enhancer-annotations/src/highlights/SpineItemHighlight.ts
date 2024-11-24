@@ -78,8 +78,9 @@ export class SpineItemHighlight extends DestroyableClass {
       noteIcon.style.position = "absolute"
       noteIcon.style.top = "0"
       noteIcon.style.left = "0"
-      noteIcon.style.transform = "translate(-0%, -50%)"
-      noteIcon.style.fontSize = "28px"
+      noteIcon.style.transform = "translate(-0%, -80%)"
+      noteIcon.style.fontSize = "18px"
+      noteIcon.style.opacity = "50%"
       firstElement.appendChild(noteIcon)
     }
   }

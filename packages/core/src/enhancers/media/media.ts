@@ -17,15 +17,15 @@ export const mediaEnhancer =
     const reader = next({
       ...options,
       getRenderer(item) {
-        const MaybeRenderer = options.getRenderer?.(item)
+        const maybeFactory = options.getRenderer?.(item)
         const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
         const isImageType = !!mimeType?.startsWith(`image/`)
 
-        if (!MaybeRenderer && isImageType) {
-          return ImageRenderer
+        if (!maybeFactory && isImageType) {
+          return (props) => new ImageRenderer(props)
         }
 
-        return MaybeRenderer
+        return maybeFactory
       },
     })
 

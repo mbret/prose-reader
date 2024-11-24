@@ -27,14 +27,27 @@ type Layer = {
   element: HTMLElement
 }
 
+export type DocumentRendererParams = {
+  context: Context
+  settings: ReaderSettingsManager
+  hookManager: HookManager
+  item: Manifest[`spineItems`][number]
+  containerElement: HTMLElement
+  resourcesHandler: ResourceHandler
+}
+
 export abstract class DocumentRenderer {
+  private triggerSubject = new Subject<`load` | `unload` | `destroy`>()
+
+  protected context: Context
+  protected settings: ReaderSettingsManager
+  protected hookManager: HookManager
+  protected item: Manifest[`spineItems`][number]
+  protected containerElement: HTMLElement
+  protected resourcesHandler: ResourceHandler
   protected stateSubject = new BehaviorSubject<
     `idle` | `loading` | `loaded` | `unloading` | `ready`
   >(`idle`)
-
-  private triggerSubject = new Subject<`load` | `unload` | `destroy`>()
-
-  public layers: Layer[] = []
 
   protected unload$ = this.triggerSubject.pipe(
     withLatestFrom(this.stateSubject),
@@ -59,14 +72,23 @@ export abstract class DocumentRenderer {
     share(),
   )
 
-  constructor(
-    protected context: Context,
-    protected settings: ReaderSettingsManager,
-    protected hookManager: HookManager,
-    protected item: Manifest[`spineItems`][number],
-    protected containerElement: HTMLElement,
-    protected resourcesHandler: ResourceHandler,
-  ) {
+  public layers: Layer[] = []
+
+  constructor(params: {
+    context: Context
+    settings: ReaderSettingsManager
+    hookManager: HookManager
+    item: Manifest[`spineItems`][number]
+    containerElement: HTMLElement
+    resourcesHandler: ResourceHandler
+  }) {
+    this.context = params.context
+    this.settings = params.settings
+    this.hookManager = params.hookManager
+    this.item = params.item
+    this.containerElement = params.containerElement
+    this.resourcesHandler = params.resourcesHandler
+
     // this.stateSubject.subscribe((state) => {
     //   console.log(`FOOO`, item.id, `state`, state)
     // })

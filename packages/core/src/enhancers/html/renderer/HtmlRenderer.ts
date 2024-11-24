@@ -1,14 +1,6 @@
-import { detectMimeTypeFromName, Manifest } from "@prose-reader/shared"
-import { Context } from "../../../context/Context"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { HookManager } from "../../../hooks/HookManager"
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { DocumentRenderer } from "../../../spineItem/DocumentRenderer"
-import { ResourceHandler } from "../../../spineItem/ResourceHandler"
-import {
-  EMPTY,
-  of,
-  tap,
-} from "rxjs"
+import { EMPTY, of, tap } from "rxjs"
 import { createFrameElement } from "./createFrameElement"
 import { attachFrameSrc } from "./attachFrameSrc"
 import { waitForSwitch } from "../../../utils/rxjs"
@@ -28,24 +20,6 @@ export class HtmlRenderer extends DocumentRenderer {
    * issue with reflow content as wel.
    */
   latestContentHeightWhenLoaded: number | undefined
-
-  constructor(
-    context: Context,
-    settings: ReaderSettingsManager,
-    hookManager: HookManager,
-    item: Manifest[`spineItems`][number],
-    containerElement: HTMLElement,
-    resourcesHandler: ResourceHandler,
-  ) {
-    super(
-      context,
-      settings,
-      hookManager,
-      item,
-      containerElement,
-      resourcesHandler,
-    )
-  }
 
   onCreateDocument() {
     const frameElement = createFrameElement()
@@ -75,7 +49,7 @@ export class HtmlRenderer extends DocumentRenderer {
         this.containerElement.appendChild(frameElement)
       }),
       waitForFrameLoad,
-      waitForFrameReady
+      waitForFrameReady,
     )
   }
 

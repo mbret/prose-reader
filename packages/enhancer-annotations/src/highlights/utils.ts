@@ -33,7 +33,7 @@ export const createElementForRange = (range: Range, container: HTMLElement, colo
     rectElt.style.cssText = `
         height: 100%;
         width: 100%;
-        opacity: 50%;
+        opacity: 25%;
         background-color: ${color}
     `
 

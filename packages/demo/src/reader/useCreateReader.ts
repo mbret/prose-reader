@@ -10,6 +10,7 @@ import { webStreamer } from "../streamer/webStreamer"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
 import { of } from "rxjs"
 import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
+import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 
 export type ReaderInstance = ReturnType<typeof createAppReader>
 
@@ -39,6 +40,7 @@ export const useCreateReader = () => {
         fontScalePinchEnabled: true
       },
       pdf: {
+        pdfjsViewerInlineCss,
         getArchiveForItem: (item) => {
           if (!item.href.endsWith(`pdf`)) {
             return of(undefined)

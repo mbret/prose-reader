@@ -42,18 +42,22 @@ export class SpineItem {
 
     parentElement.appendChild(this.containerElement)
 
-    const RendererClass =
-      this.settings.values.getRenderer?.(item) ?? DefaultRenderer
+    const rendererFactory = this.settings.values.getRenderer?.(item)
 
     this.resourcesHandler = new ResourceHandler(item, this.settings)
-    this.renderer = new RendererClass(
+
+    const rendererParams = {
       context,
       settings,
       hookManager,
       item,
-      this.containerElement,
-      this.resourcesHandler,
-    )
+      containerElement: this.containerElement,
+      resourcesHandler: this.resourcesHandler,
+    }
+
+    this.renderer = rendererFactory
+      ? rendererFactory(rendererParams)
+      : new DefaultRenderer(rendererParams)
 
     /**
      * This is used as upstream layout change. This event is being listened to by upper app

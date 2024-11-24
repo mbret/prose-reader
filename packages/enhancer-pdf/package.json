@@ -20,6 +20,9 @@
     "lint:read": "prettier --check . && eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:write": "prettier --write . && eslint --fix . --ext .ts,.tsx,.js,.jsx"
   },
+  "devDependencies": {
+    "pdfjs-dist": "^4.8.69"
+  },
   "peerDependencies": {
     "@prose-reader/core": "^1.117.0",
     "pdfjs-dist": "^4.8.69",

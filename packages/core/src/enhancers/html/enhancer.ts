@@ -16,9 +16,9 @@ export const htmlEnhancer =
     const reader = next({
       ...options,
       getRenderer(item) {
-        const MaybeRenderer = options.getRenderer?.(item)
+        const maybeFactory = options.getRenderer?.(item)
 
-        return MaybeRenderer ?? HtmlRenderer
+        return maybeFactory ?? ((props) => new HtmlRenderer(props))
       },
     })
 
