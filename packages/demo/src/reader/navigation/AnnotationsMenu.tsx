@@ -44,7 +44,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
               fontStyle="italic"
               fontWeight="bold"
               fontSize="xs"
-            >{`Book page: ${item.absolutePageIndex ? item.absolutePageIndex + 1 : "unknown (not loaded)"}`}</Text>
+            >{`Book page: ${item.absolutePageIndex !== undefined ? item.absolutePageIndex + 1 : "unknown (not loaded)"}`}</Text>
           </Stack>
         </Stack>
       </ListItem>

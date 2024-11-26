@@ -1,4 +1,4 @@
-import { EMPTY, from, Observable, of, switchMap, tap } from "rxjs"
+import { catchError, delay, EMPTY, finalize, from, map, mergeMap, Observable, of, switchMap, tap } from "rxjs"
 import { PDFPageProxy, RenderingCancelledException, RenderTask, TextLayer } from "pdfjs-dist"
 import { DocumentRenderer, injectCSS, removeCSS, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
 import { copyCanvasToFrame, createPdfFrameElement } from "./frames"
@@ -90,11 +90,15 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  layout(_: {
+  onLayout(_: {
     minPageSpread: number
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`
-  }): { width: number; height: number } | undefined {
+  }) {
+    const frameElement = this.getFrameElement()
+
+    if (!frameElement) return of(undefined)
+
     /**
      * The canvas is never attached to the DOM and will be used for offscreen rendering
      * then copied into the frame.
@@ -104,7 +108,7 @@ export class PdfRenderer extends DocumentRenderer {
     // Support HiDPI-screens.
     const pixelRatioScale = window.devicePixelRatio || 1
 
-    if (!this.pageProxy || !context) return undefined
+    if (!this.pageProxy || !context) return of(undefined)
 
     if (this.renderTask) {
       this.renderTask.cancel()
@@ -113,6 +117,10 @@ export class PdfRenderer extends DocumentRenderer {
 
     // first we try to get the desired viewport for a confortable reading based on theh current page size
     const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
+
+    frameElement.style.height = `${pageHeight}px`
+    frameElement.style.width = `${pageWidth}px`
+
     const { width: viewportWidth, height: viewportHeight } = this.pageProxy.getViewport({ scale: 1 })
     const pageScale = Math.max(pageWidth / viewportWidth, pageHeight / viewportHeight)
 
@@ -139,17 +147,22 @@ export class PdfRenderer extends DocumentRenderer {
       viewport,
     })
 
-    this.renderTask?.promise
-      .then(() => {
+    return from(this.renderTask?.promise).pipe(
+      map(() => {
         const frameElement = this.getFrameElement()
         const frameDoc = frameElement?.contentDocument
+
         if (!frameDoc || !frameElement) {
-          return
+          return undefined
         }
+
         frameDoc.body.innerHTML = ``
+
         const frameCanvas = copyCanvasToFrame(canvas, frameDoc)
         const pdfPage = this.pageProxy
-        if (!pdfPage) return
+
+        if (!pdfPage) return undefined
+
         const textLayerElement = frameDoc.createElement(`div`)
         // Set it's class to textLayer which have required CSS styles
         textLayerElement.setAttribute("class", "textLayer")
@@ -172,17 +185,19 @@ export class PdfRenderer extends DocumentRenderer {
           viewport,
         })
 
-        this.textLayer.render()
-      })
-      .catch((e) => {
+        return from(this.textLayer.render())
+      }),
+      map(() => undefined),
+      catchError((e) => {
         if (!(e instanceof RenderingCancelledException)) console.error(e)
-      })
-      .finally(() => {
+
+        return of(undefined)
+      }),
+      finalize(() => {
         this.renderTask = undefined
 
         canvas.remove()
-      })
-
-    return undefined
+      }),
+    )
   }
 }
