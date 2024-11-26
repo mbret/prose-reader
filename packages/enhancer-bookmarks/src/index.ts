@@ -1,5 +1,5 @@
 import { Reader, waitForSwitch } from "@prose-reader/core"
-import { animationFrameScheduler, BehaviorSubject, merge, Subject, timer } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, combineLatest, merge, of, Subject, timer } from "rxjs"
 import { filter, map, share, switchMap, takeUntil, tap, withLatestFrom } from "rxjs/operators"
 import { SerializableBookmark, EnhancerOutput, RuntimeBookmark, Command } from "./types"
 import { consolidateBookmark } from "./bookmarks/consolidateBookmark"
@@ -33,16 +33,22 @@ export const bookmarksEnhancer =
     }
 
     const pages$ = reader.spine.spineLayout.layout$.pipe(
-      map(({ pages }) => {
-        return pages.map((page) => {
-          const item = reader.spine.spineItemsManager.get(page.itemIndex)
+      switchMap(({ pages }) =>
+        combineLatest(
+          pages.map((page) => {
+            const item = reader.spine.spineItemsManager.get(page.itemIndex)
 
-          return {
-            ...page,
-            isBookmarkable: item?.isReady,
-          }
-        })
-      }),
+            const isReady$ = item ? item.isReady$ : of(false)
+
+            return isReady$.pipe(
+              map((isReady) => ({
+                ...page,
+                isBookmarkable: isReady,
+              })),
+            )
+          }),
+        ),
+      ),
     )
 
     const removeBookmark$ = commandSubject.pipe(

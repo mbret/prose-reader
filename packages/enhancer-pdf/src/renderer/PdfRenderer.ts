@@ -1,4 +1,4 @@
-import { catchError, delay, EMPTY, finalize, from, map, mergeMap, Observable, of, switchMap, tap } from "rxjs"
+import { catchError, EMPTY, finalize, from, map, Observable, of, switchMap, tap } from "rxjs"
 import { PDFPageProxy, RenderingCancelledException, RenderTask, TextLayer } from "pdfjs-dist"
 import { DocumentRenderer, injectCSS, removeCSS, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
 import { copyCanvasToFrame, createPdfFrameElement } from "./frames"
