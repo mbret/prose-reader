@@ -1,3 +1,4 @@
+import { upsertCSS } from "../utils/frames"
 import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
@@ -26,25 +27,30 @@ export const accessibilityEnhancer =
         const frame = layers[0]?.element
 
         if (!(frame instanceof HTMLIFrameElement)) return
-        
+
         const item = reader.spineItemsManager.get(itemId)
 
         if (!item) return
 
-        item.upsertCSS(
-          `prose-reader-accessibility`,
-          `
-        :focus-visible {
-          ${
-            /*
-            Some epubs remove the outline, this is not good practice since it reduce accessibility.
-            We will try to restore it by force.
-          */ ``
+        item.renderer.layers.forEach((layer) => {
+          if (layer.element instanceof HTMLIFrameElement) {
+            upsertCSS(
+              layer.element,
+              `prose-reader-accessibility`,
+              `
+              :focus-visible {
+                ${
+                  /*
+                  Some epubs remove the outline, this is not good practice since it reduce accessibility.
+                  We will try to restore it by force.
+                */ ``
+                }
+                outline: -webkit-focus-ring-color auto 1px;
+              }
+            `,
+            )
           }
-          outline: -webkit-focus-ring-color auto 1px;
-        }
-      `,
-        )
+        })
 
         const links = frame.contentDocument?.body.querySelectorAll(`a`)
 

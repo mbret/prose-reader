@@ -1,11 +1,10 @@
 import { Manifest } from "@prose-reader/shared"
-import { Context } from "../context/Context"
-import { HookManager } from "../hooks/HookManager"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { Context } from "../../context/Context"
+import { HookManager } from "../../hooks/HookManager"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import {
   BehaviorSubject,
   combineLatest,
-  EMPTY,
   endWith,
   filter,
   first,
@@ -20,8 +19,9 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ResourceHandler } from "./ResourceHandler"
-import { waitForSwitch } from "../utils/rxjs"
+import { ResourceHandler } from "../ResourceHandler"
+import { waitForSwitch } from "../../utils/rxjs"
+import { DestroyableClass } from "../../utils/DestroyableClass"
 
 type Layer = {
   element: HTMLElement
@@ -36,8 +36,15 @@ export type DocumentRendererParams = {
   resourcesHandler: ResourceHandler
 }
 
-export abstract class DocumentRenderer {
-  private triggerSubject = new Subject<`load` | `unload` | `destroy`>()
+type LayoutParams = {
+  minPageSpread: number
+  blankPagePosition: `before` | `after` | `none`
+  spreadPosition: `none` | `left` | `right`
+  minimumWidth: number
+}
+
+export abstract class DocumentRenderer extends DestroyableClass {
+  private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
 
   protected context: Context
   protected settings: ReaderSettingsManager
@@ -46,14 +53,14 @@ export abstract class DocumentRenderer {
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
   protected stateSubject = new BehaviorSubject<
-    `idle` | `loading` | `loaded` | `unloading` | `ready`
+    `idle` | `loading` | `loaded` | `unloading`
   >(`idle`)
 
   protected unload$ = this.triggerSubject.pipe(
     withLatestFrom(this.stateSubject),
     filter(
       ([trigger, state]) =>
-        trigger === `unload` && state !== "idle" && state !== "unloading",
+        trigger.type === `unload` && state !== "idle" && state !== "unloading",
     ),
     map(() => undefined),
     share(),
@@ -63,10 +70,7 @@ export abstract class DocumentRenderer {
     withLatestFrom(this.stateSubject),
     filter(
       ([trigger, state]) =>
-        trigger === `load` &&
-        state !== "ready" &&
-        state !== "loaded" &&
-        state !== "loading",
+        trigger.type === `load` && state !== "loaded" && state !== "loading",
     ),
     map(() => undefined),
     share(),
@@ -82,6 +86,8 @@ export abstract class DocumentRenderer {
     containerElement: HTMLElement
     resourcesHandler: ResourceHandler
   }) {
+    super()
+
     this.context = params.context
     this.settings = params.settings
     this.hookManager = params.hookManager
@@ -89,9 +95,21 @@ export abstract class DocumentRenderer {
     this.containerElement = params.containerElement
     this.resourcesHandler = params.resourcesHandler
 
-    // this.stateSubject.subscribe((state) => {
-    //   console.log(`FOOO`, item.id, `state`, state)
-    // })
+    this.stateSubject.subscribe((state) => {
+      console.log(`FOOO renderer state`, params.item.id, `state`, state)
+    })
+
+    const unloadTrigger$ = this.triggerSubject.pipe(
+      withLatestFrom(this.stateSubject),
+      filter(
+        ([trigger, state]) =>
+          trigger.type === `unload` &&
+          state !== "idle" &&
+          state !== "unloading",
+      ),
+      map(() => undefined),
+      share(),
+    )
 
     this.load$
       .pipe(
@@ -134,62 +152,61 @@ export abstract class DocumentRenderer {
             }),
             tap(() => {
               this.stateSubject.next(`loaded`)
-              this.stateSubject.next(`ready`)
             }),
-            takeUntil(merge(this.destroy$, this.unload$)),
+            takeUntil(merge(this.destroy$, unloadTrigger$)),
           )
         }),
       )
       .subscribe()
 
-    this.unload$
-      .pipe(
-        switchMap(() => {
-          this.stateSubject.next(`unloading`)
+    const unload$ = unloadTrigger$.pipe(
+      switchMap(() => {
+        this.stateSubject.next(`unloading`)
 
-          return this.context.bridgeEvent.viewportFree$.pipe(
-            first(),
-            tap(() => {
-              this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
-            }),
-            switchMap(() => {
-              const unload$ = this.onUnload().pipe(endWith(null), first())
+        return this.context.bridgeEvent.viewportFree$.pipe(
+          first(),
+          tap(() => {
+            this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
+          }),
+          switchMap(() => {
+            const onUnload$ = this.onUnload().pipe(endWith(null), first())
 
-              return unload$
-            }),
-            tap(() => {
-              this.stateSubject.next(`idle`)
-            }),
-            takeUntil(merge(this.destroy$, this.load$)),
-          )
-        }),
-      )
-      .subscribe()
+            return onUnload$
+          }),
+          tap(() => {
+            this.stateSubject.next(`idle`)
+          }),
+          takeUntil(this.load$),
+        )
+      }),
+    )
+
+    merge(unload$).pipe(takeUntil(this.destroy$)).subscribe()
   }
-
-  protected destroy$ = this.triggerSubject.pipe(
-    filter((trigger) => trigger === `destroy`),
-  )
 
   public get state$() {
     return this.stateSubject
   }
 
+  public get isLoaded$() {
+    return this.state$.pipe(map((state) => state === `loaded`))
+  }
+
   public load() {
-    this.triggerSubject.next(`load`)
+    this.triggerSubject.next({ type: `load` })
   }
 
   public unload() {
-    this.triggerSubject.next(`unload`)
+    this.triggerSubject.next({ type: `unload` })
   }
 
   public destroy() {
-    this.triggerSubject.next(`destroy`)
-    this.triggerSubject.complete()
+    super.destroy()
     this.stateSubject.complete()
   }
 
   abstract onUnload(): Observable<unknown>
+
   /**
    * This lifecycle lets you fetch your resource and create the document.
    * You can fill the layers with your document(s). You can also preload or
@@ -198,6 +215,7 @@ export abstract class DocumentRenderer {
    * @important Do not attach anything to the dom yet.
    */
   abstract onCreateDocument(): Observable<unknown>
+
   /**
    * This lifecycle lets you load whatever you need once the document is attached to
    * the dom. Some operations can only be done at this stage (eg: loading iframe).
@@ -206,35 +224,15 @@ export abstract class DocumentRenderer {
    */
   abstract onLoadDocument(): Observable<unknown>
 
-  abstract layout(params: {
-    minPageSpread: number
-    blankPagePosition: `before` | `after` | `none`
-    spreadPosition: `none` | `left` | `right`
-  }): { width: number; height: number } | undefined
+  abstract onLayout(
+    params: LayoutParams,
+  ): Observable<{ width: number; height: number } | undefined>
 
   get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {
     return undefined
   }
 
   get readingDirection(): `rtl` | `ltr` | undefined {
-    return undefined
-  }
-}
-
-export class DefaultRenderer extends DocumentRenderer {
-  onUnload(): Observable<unknown> {
-    return EMPTY
-  }
-
-  onCreateDocument(): Observable<unknown> {
-    return EMPTY
-  }
-
-  onLoadDocument(): Observable<unknown> {
-    return EMPTY
-  }
-
-  layout() {
     return undefined
   }
 }

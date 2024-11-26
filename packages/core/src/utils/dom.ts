@@ -73,7 +73,7 @@ function createRangeOrCaretFromPoint(
   // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   if (`caretPositionFromPoint` in doc) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
-    // @ts-expect-error
+    // @ts-expect-error limited availability
     return doc.caretPositionFromPoint(startX, startY) as {
       offsetNode: Node
       offset: number

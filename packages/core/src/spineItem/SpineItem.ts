@@ -1,29 +1,41 @@
 import { Context } from "../context/Context"
-import { Manifest } from ".."
-import { merge, Observable, Subject } from "rxjs"
+import { DestroyableClass, Manifest } from ".."
+import { defer, merge, Observable, ObservedValueOf, of, Subject } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
   first,
   map,
+  share,
+  shareReplay,
+  startWith,
   switchMap,
+  takeUntil,
   withLatestFrom,
 } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
-import { DefaultRenderer, DocumentRenderer } from "./DocumentRenderer"
-import { upsertCSS } from "../utils/frames"
+import { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./ResourceHandler"
+import { DefaultRenderer } from "./renderer/DefaultRenderer"
+import { deferNextResult } from "../utils/rxjs"
 
-export class SpineItem {
-  destroySubject$: Subject<void>
-  containerElement: HTMLElement
-  contentLayout$: Observable<{
-    isFirstLayout: boolean
-    isReady: boolean
-  }>
+export class SpineItem extends DestroyableClass {
+  private layoutTriggerSubject = new Subject<{
+    blankPagePosition: `before` | `after` | `none`
+    minimumWidth: number
+    spreadPosition: `left` | `right` | `none`
+  }>()
+
+  public readonly containerElement: HTMLElement
+  public needsLayout$: Observable<unknown>
   public renderer: DocumentRenderer
   public resourcesHandler: ResourceHandler
+  public layout$: Observable<{ width: number; height: number }>
+  /**
+   * Renderer loaded + spine item layout done
+   */
+  public readonly isReady$: Observable<boolean>
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -33,7 +45,8 @@ export class SpineItem {
     public hookManager: HookManager,
     public index: number,
   ) {
-    this.destroySubject$ = new Subject<void>()
+    super()
+
     this.containerElement = createContainerElement(
       parentElement,
       item,
@@ -59,22 +72,73 @@ export class SpineItem {
       ? rendererFactory(rendererParams)
       : new DefaultRenderer(rendererParams)
 
-    /**
-     * This is used as upstream layout change. This event is being listened to by upper app
-     * in order to layout again and adjust every element based on the new content.
-     */
-    const contentLayoutChange$ = merge(
-      this.unloaded$.pipe(map(() => ({ isFirstLayout: false }))),
-      this.ready$.pipe(map(() => ({ isFirstLayout: true }))),
+    const layoutProcess$ = this.layoutTriggerSubject.pipe(
+      switchMap(({ blankPagePosition, minimumWidth, spreadPosition }) => {
+        this.hookManager.execute(`item.onBeforeLayout`, undefined, {
+          blankPagePosition,
+          item: this.item,
+          minimumWidth,
+        })
+
+        const layout$ = defer(() =>
+          this.renderer.onLayout({
+            blankPagePosition,
+            minPageSpread: minimumWidth / this.context.getPageSize().width,
+            minimumWidth,
+            spreadPosition,
+          }),
+        )
+
+        return merge(
+          of({ type: "start" } as const),
+          layout$.pipe(
+            map((dims) => {
+              const { height, width } = dims ?? { height: 0, width: 0 }
+              const minHeight = Math.max(
+                height,
+                this.context.getPageSize().height,
+              )
+              const minWidth = Math.max(width, minimumWidth)
+
+              this.containerElement.style.width = `${minWidth}px`
+              this.containerElement.style.height = `${minHeight}px`
+
+              this.hookManager.execute(`item.onAfterLayout`, undefined, {
+                blankPagePosition,
+                item: this.item,
+                minimumWidth,
+              })
+
+              return {
+                type: "end",
+                data: { width: minWidth, height: minHeight },
+              } as const
+            }),
+          ),
+        )
+      }),
+      share(),
     )
 
-    this.contentLayout$ = contentLayoutChange$.pipe(
-      withLatestFrom(this.isReady$),
-      map(([data, isReady]) => ({
-        isFirstLayout: data.isFirstLayout,
-        isReady,
-      })),
+    this.layout$ = layoutProcess$.pipe(
+      filter((event) => event.type === `end`),
+      map((event) => event.data),
+      share(),
     )
+
+    this.isReady$ = layoutProcess$.pipe(
+      withLatestFrom(this.renderer.isLoaded$),
+      map(([event, loaded]) => !!(event.type === `end` && loaded)),
+      startWith(false),
+      distinctUntilChanged(),
+      shareReplay({ refCount: true }),
+    )
+
+    this.needsLayout$ = merge(this.unloaded$, this.loaded$)
+
+    merge(this.layout$, this.isReady$)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe()
   }
 
   adjustPositionOfElement = ({
@@ -119,40 +183,14 @@ export class SpineItem {
     }
   }
 
-  public layout = ({
-    blankPagePosition,
-    minimumWidth,
-    spreadPosition,
-  }: {
-    blankPagePosition: `before` | `after` | `none`
-    minimumWidth: number
-    spreadPosition: `left` | `right` | `none`
-  }) => {
-    this.hookManager.execute(`item.onBeforeLayout`, undefined, {
-      blankPagePosition,
-      item: this.item,
-      minimumWidth,
-    })
+  public layout = (
+    params: ObservedValueOf<typeof this.layoutTriggerSubject>,
+  ) => {
+    const nextResult = deferNextResult(this.layout$.pipe(first()))
 
-    const { height, width } = this.renderer.layout({
-      blankPagePosition,
-      minPageSpread: minimumWidth / this.context.getPageSize().width,
-      spreadPosition,
-    }) ?? { width: 0, height: 0 }
+    this.layoutTriggerSubject.next(params)
 
-    const minHeight = Math.max(height, this.context.getPageSize().height)
-    const minWidth = Math.max(width, minimumWidth)
-
-    this.containerElement.style.width = `${minWidth}px`
-    this.containerElement.style.height = `${minHeight}px`
-
-    this.hookManager.execute(`item.onAfterLayout`, undefined, {
-      blankPagePosition,
-      item: this.item,
-      minimumWidth,
-    })
-
-    return { width: minWidth, height: minHeight }
+    return nextResult()
   }
 
   load = () => this.renderer.load()
@@ -179,9 +217,9 @@ export class SpineItem {
   }
 
   public destroy = () => {
-    this.destroySubject$.next()
+    super.destroy()
+
     this.containerElement.remove()
-    this.destroySubject$.complete()
     this.renderer.destroy()
   }
 
@@ -204,17 +242,6 @@ export class SpineItem {
   isUsingVerticalWriting = () =>
     !!this.renderer.writingMode?.startsWith(`vertical`)
 
-  get isReady() {
-    return this.renderer.state$.getValue() === "ready"
-  }
-
-  get ready$() {
-    return this.renderer.state$.pipe(
-      distinctUntilChanged(),
-      filter((state) => state === "ready"),
-    )
-  }
-
   get loaded$() {
     return this.renderer.state$.pipe(
       distinctUntilChanged(),
@@ -233,24 +260,6 @@ export class SpineItem {
         ),
       ),
     )
-  }
-
-  get isReady$() {
-    return this.renderer.state$.pipe(map((state) => state === "ready"))
-  }
-
-  /**
-   * Helper that will inject CSS into the document frame.
-   *
-   * @important
-   * The document needs to be detected as a frame.
-   */
-  upsertCSS(id: string, style: string, prepend?: boolean) {
-    this.renderer.layers.forEach((layer) => {
-      if (layer.element instanceof HTMLIFrameElement) {
-        upsertCSS(layer.element, id, style, prepend)
-      }
-    })
   }
 }
 

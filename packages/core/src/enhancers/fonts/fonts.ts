@@ -9,6 +9,7 @@ import {
 import { InputSettings } from "./types"
 import { SettingsManager } from "./SettingsManager"
 import { SettingsInterface } from "../../settings/SettingsInterface"
+import { upsertCSS } from "../../utils/frames"
 
 type OutputOptions = Required<InputSettings>
 
@@ -88,7 +89,11 @@ export const fontsEnhancer =
     const applyChangeToSpineItems = (requireLayout: boolean) => {
       reader.spineItemsManager.items.forEach((item) => {
         if (item.item.renditionLayout !== `pre-paginated`) {
-          item.upsertCSS?.(`prose-reader-fonts`, getStyle())
+          item.renderer.layers.forEach((layer) => {
+            if (layer.element instanceof HTMLIFrameElement) {
+              upsertCSS(layer.element, `prose-reader-fonts`, getStyle())
+            }
+          })
         }
       })
 
@@ -104,7 +109,11 @@ export const fontsEnhancer =
       const item = reader.spineItemsManager.get(itemId)
 
       if (item?.item.renditionLayout !== `pre-paginated`) {
-        item?.upsertCSS(`prose-reader-fonts`, getStyle())
+        item?.renderer.layers.forEach((layer) => {
+          if (layer.element instanceof HTMLIFrameElement) {
+            upsertCSS(layer.element, `prose-reader-fonts`, getStyle())
+          }
+        })
       }
     })
 

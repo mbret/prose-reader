@@ -48,8 +48,6 @@ export const createRangeFromSelection = ({
   }
   spineItem: SpineItem
 }) => {
-  if (!spineItem.isReady) return undefined
-
   const { anchorNode, anchorOffset, focusNode, focusOffset } = selection
 
   if (!anchorNode || !focusNode) {

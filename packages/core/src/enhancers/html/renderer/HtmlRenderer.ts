@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { DocumentRenderer } from "../../../spineItem/DocumentRenderer"
+import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { EMPTY, of, tap } from "rxjs"
 import { createFrameElement } from "./createFrameElement"
 import { attachFrameSrc } from "./attachFrameSrc"
@@ -60,7 +60,7 @@ export class HtmlRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  layout({
+  onLayout({
     minPageSpread,
     blankPagePosition,
     spreadPosition,
@@ -72,12 +72,12 @@ export class HtmlRenderer extends DocumentRenderer {
     const { width: pageWidth, height: pageHeight } = this.context.getPageSize()
     const frameElement = this.getFrameElement()
 
-    if (!frameElement) return { width: pageWidth, height: pageHeight }
+    if (!frameElement) return of({ width: pageWidth, height: pageHeight })
 
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 
     if (this.item.renditionLayout === `pre-paginated`) {
-      return renderPrePaginated({
+      const dims = renderPrePaginated({
         blankPagePosition,
         enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
         frameElement,
@@ -87,6 +87,8 @@ export class HtmlRenderer extends DocumentRenderer {
         pageWidth,
         spreadPosition,
       })
+
+      return of(dims)
     }
 
     const { latestContentHeightWhenLoaded, ...rest } = renderReflowable({
@@ -105,7 +107,7 @@ export class HtmlRenderer extends DocumentRenderer {
 
     this.latestContentHeightWhenLoaded = latestContentHeightWhenLoaded
 
-    return rest
+    return of(rest)
   }
 
   private isImageType = () => {

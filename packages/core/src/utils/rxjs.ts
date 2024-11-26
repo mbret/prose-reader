@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Observable, OperatorFunction } from "rxjs"
+import { Observable, of, OperatorFunction } from "rxjs"
 import { first, map, switchMap } from "rxjs/operators"
 
 export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
@@ -49,3 +49,21 @@ export const waitForSwitch =
         ),
       ),
     )
+
+export const deferNextResult = <T>(stream: Observable<T>) => {
+  let value: { result: T } | undefined
+
+  const sub = stream.subscribe((result) => {
+    value = { result: result }
+  })
+
+  return () => {
+    sub.unsubscribe()
+
+    if (value) {
+      return of(value.result)
+    }
+
+    return stream
+  }
+}

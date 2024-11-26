@@ -1,3 +1,4 @@
+import { first, map, Observable } from "rxjs"
 import { Context } from "../context/Context"
 import { Reader } from "../reader"
 import { SpineItem } from "../spineItem/SpineItem"
@@ -20,7 +21,7 @@ export const progressionEnhancer =
         pageIndex: number,
         currentPosition: { x: number; y: number },
         currentItem: SpineItem,
-      ) => number
+      ) => Observable<number>
       getScrollPercentageWithinItem: (
         context: Context,
         currentPosition: { x: number; y: number },
@@ -38,62 +39,69 @@ export const progressionEnhancer =
       currentPosition: { x: number; y: number },
       currentItem: SpineItem,
     ) => {
-      const isGloballyPrePaginated =
-        context.manifest?.renditionLayout === `pre-paginated`
-      const readingOrderLength = context.manifest?.spineItems.length || 0
-      const estimateBeforeThisItem =
-        context.manifest?.spineItems
-          .slice(0, currentSpineIndex)
-          .reduce((acc, item) => acc + (item.progressionWeight ?? 0), 0) || 0
-      const currentItemWeight =
-        context.manifest?.spineItems[currentSpineIndex]?.progressionWeight || 0
-      // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
-      // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
-      // const progressWeightGap = (currentItemWeight + estimateBeforeThisItem) - estimateBeforeThisItem
+      return currentItem.isReady$.pipe(
+        first(),
+        map((itemIsReady) => {
+          const isGloballyPrePaginated =
+            context.manifest?.renditionLayout === `pre-paginated`
+          const readingOrderLength = context.manifest?.spineItems.length || 0
+          const estimateBeforeThisItem =
+            context.manifest?.spineItems
+              .slice(0, currentSpineIndex)
+              .reduce((acc, item) => acc + (item.progressionWeight ?? 0), 0) ||
+            0
+          const currentItemWeight =
+            context.manifest?.spineItems[currentSpineIndex]
+              ?.progressionWeight || 0
+          // const nextItem = context.manifest.readingOrder[currentSpineIndex + 1]
+          // const nextItemWeight = nextItem ? nextItem.progressionWeight : 1
+          // const progressWeightGap = (currentItemWeight + estimateBeforeThisItem) - estimateBeforeThisItem
 
-      let progressWithinThisItem =
-        (pageIndex + 1) * (currentItemWeight / numberOfPages)
+          let progressWithinThisItem =
+            (pageIndex + 1) * (currentItemWeight / numberOfPages)
 
-      if (
-        !isGloballyPrePaginated &&
-        currentItem.item.renditionLayout === `reflowable` &&
-        !currentItem.isReady
-      ) {
-        progressWithinThisItem = 0
-      }
+          if (
+            !isGloballyPrePaginated &&
+            currentItem.item.renditionLayout === `reflowable` &&
+            !itemIsReady
+          ) {
+            progressWithinThisItem = 0
+          }
 
-      let totalProgress = estimateBeforeThisItem + progressWithinThisItem
+          let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
-      if (context.manifest?.renditionFlow === `scrolled-continuous`) {
-        if (currentItem.isReady) {
-          progressWithinThisItem = getScrollPercentageWithinItem(
-            context,
-            currentPosition,
-            currentItem,
-          )
-        } else {
-          // that way we avoid having a progress of 1 just because the item is not loaded and cover all screen due to smaller size.
-          // Therefore it effectively prevent jump from 30% to 25% for example.
-          progressWithinThisItem = 0
-        }
-        totalProgress = getTotalProgressFromPercentages(
-          estimateBeforeThisItem,
-          currentItemWeight,
-          progressWithinThisItem,
-        )
-      }
+          if (context.manifest?.renditionFlow === `scrolled-continuous`) {
+            if (itemIsReady) {
+              progressWithinThisItem = getScrollPercentageWithinItem(
+                context,
+                currentPosition,
+                currentItem,
+              )
+            } else {
+              // that way we avoid having a progress of 1 just because the item is not loaded and cover all screen due to smaller size.
+              // Therefore it effectively prevent jump from 30% to 25% for example.
+              progressWithinThisItem = 0
+            }
+            totalProgress = getTotalProgressFromPercentages(
+              estimateBeforeThisItem,
+              currentItemWeight,
+              progressWithinThisItem,
+            )
+          }
 
-      // because the rounding of weight use a lot of decimals we will end up with
-      // something like 0.999878 for the last page
-      if (
-        currentSpineIndex === readingOrderLength - 1 &&
-        pageIndex === numberOfPages - 1 &&
-        totalProgress > 0.99
-      ) {
-        return 1
-      }
+          // because the rounding of weight use a lot of decimals we will end up with
+          // something like 0.999878 for the last page
+          if (
+            currentSpineIndex === readingOrderLength - 1 &&
+            pageIndex === numberOfPages - 1 &&
+            totalProgress > 0.99
+          ) {
+            return 1
+          }
 
-      return totalProgress
+          return totalProgress
+        }),
+      )
     }
 
     const getTotalProgressFromPercentages = (

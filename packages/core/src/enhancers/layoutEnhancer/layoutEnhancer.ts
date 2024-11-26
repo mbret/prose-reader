@@ -23,6 +23,7 @@ import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
 import { animationFrameScheduler, merge, Observable } from "rxjs"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
+import { upsertCSS } from "../../utils/frames"
 
 export const layoutEnhancer =
   <
@@ -124,28 +125,33 @@ export const layoutEnhancer =
           columnGap = pageVerticalMargin * 2
         }
 
-        spineItem?.upsertCSS(
-          `prose-layout-enhancer-css`,
-          `
-        body {
-          width: ${width}px !important;
-          margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
-          column-gap: ${columnGap}px !important;
-          column-width: ${columnWidth}px !important;
-          height: ${columnHeight}px !important;
-        }
-        img, video, audio, object, svg {
-          max-width: ${columnWidth}px !important;
-          max-height: ${columnHeight}px !important;
-        }
-        table {
-          max-width: ${columnWidth}px !important;
-        }
-        td {
-          max-width: ${columnWidth}px;
-        }
-      `,
-        )
+        spineItem?.renderer.layers.forEach((layer) => {
+          if (layer.element instanceof HTMLIFrameElement) {
+            upsertCSS(
+              layer.element,
+              `prose-layout-enhancer-css`,
+              `
+              body {
+                width: ${width}px !important;
+                margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
+                column-gap: ${columnGap}px !important;
+                column-width: ${columnWidth}px !important;
+                height: ${columnHeight}px !important;
+              }
+              img, video, audio, object, svg {
+                max-width: ${columnWidth}px !important;
+                max-height: ${columnHeight}px !important;
+              }
+              table {
+                max-width: ${columnWidth}px !important;
+              }
+              td {
+                max-width: ${columnWidth}px;
+              }
+            `,
+            )
+          }
+        })
       }
     })
 

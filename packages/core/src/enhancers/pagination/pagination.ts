@@ -6,10 +6,12 @@ import {
   combineLatestWith,
   distinctUntilChanged,
   map,
+  of,
   shareReplay,
+  switchMap,
   tap,
 } from "rxjs"
-import { getChaptersInfo, trackChapterInfo } from "./chapters"
+import { trackChapterInfo } from "./chapters"
 import {
   EnhancerPaginationInto,
   ExtraPaginationInfo,
@@ -19,29 +21,42 @@ import { isShallowEqual } from "../../utils/objects"
 import { trackTotalPages } from "./spine"
 import { PaginationInfo } from "../../pagination/Pagination"
 
-export const mapPaginationInfoToExtendedInfo =
-  (reader: ReaderWithProgression) =>
-  (
-    paginationInfo: PaginationInfo,
-    chaptersInfo: ObservedValueOf<ReturnType<typeof trackChapterInfo>>,
-  ): Omit<
+export const mapPaginationInfoToExtendedInfo = (
+  reader: ReaderWithProgression,
+  paginationInfo: PaginationInfo,
+  chaptersInfo: ObservedValueOf<ReturnType<typeof trackChapterInfo>>,
+): Observable<
+  Omit<
     ExtraPaginationInfo,
     | "beginAbsolutePageIndex"
     | "endAbsolutePageIndex"
     | "beginAbsolutePageIndex"
     | "numberOfTotalPages"
-  > => {
-    const context = reader.context
-    const beginItem =
-      paginationInfo.beginSpineItemIndex !== undefined
-        ? reader.spineItemsManager.get(paginationInfo.beginSpineItemIndex)
-        : undefined
-    const endItem =
-      paginationInfo.endSpineItemIndex !== undefined
-        ? reader.spineItemsManager.get(paginationInfo.endSpineItemIndex)
-        : undefined
+  >
+> => {
+  const context = reader.context
+  const beginItem =
+    paginationInfo.beginSpineItemIndex !== undefined
+      ? reader.spineItemsManager.get(paginationInfo.beginSpineItemIndex)
+      : undefined
+  const endItem =
+    paginationInfo.endSpineItemIndex !== undefined
+      ? reader.spineItemsManager.get(paginationInfo.endSpineItemIndex)
+      : undefined
 
-    return {
+  const endItemProgression$ = endItem
+    ? reader.progression.getPercentageEstimate(
+        context,
+        paginationInfo.endSpineItemIndex ?? 0,
+        paginationInfo.endNumberOfPagesInSpineItem,
+        paginationInfo.endPageIndexInSpineItem || 0,
+        reader.navigation.getNavigation().position,
+        endItem,
+      )
+    : of(0)
+
+  return endItemProgression$.pipe(
+    map((percentageEstimateOfBook) => ({
       ...paginationInfo,
       beginChapterInfo: beginItem ? chaptersInfo[beginItem.item.id] : undefined,
       // chapterIndex: number;
@@ -64,43 +79,46 @@ export const mapPaginationInfoToExtendedInfo =
        * It is recommended to use this progress only for reflow books. For pre-paginated books
        * the number of pages and current index can be used instead since 1 page = 1 chapter.
        */
-      percentageEstimateOfBook: endItem
-        ? reader.progression.getPercentageEstimate(
-            context,
-            paginationInfo.endSpineItemIndex ?? 0,
-            paginationInfo.endNumberOfPagesInSpineItem,
-            paginationInfo.endPageIndexInSpineItem || 0,
-            reader.navigation.getNavigation().position,
-            endItem,
-          )
-        : 0,
+      percentageEstimateOfBook,
       isUsingSpread: context.state.isUsingSpreadMode ?? false,
       // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
       // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
       // numberOfSpineItems: context.manifest?.readingOrder.length,
-    }
-  }
+    })),
+  )
+}
 
 export const trackPaginationInfo = (reader: ReaderWithProgression) => {
   const chaptersInfo$ = trackChapterInfo(reader)
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({
     ...reader.pagination.getState(),
-    ...mapPaginationInfoToExtendedInfo(reader)(
-      reader.pagination.getState(),
-      getChaptersInfo(reader),
-    ),
+    beginChapterInfo: undefined,
+    beginCfi: undefined,
+    beginPageIndexInSpineItem: undefined,
+    isUsingSpread: false,
     beginAbsolutePageIndex: 0,
     endAbsolutePageIndex: 0,
     numberOfTotalPages: 0,
+    beginSpineItemReadingDirection: undefined,
+    beginSpineItemIndex: undefined,
+    endCfi: undefined,
+    endChapterInfo: undefined,
+    endSpineItemReadingDirection: undefined,
+    percentageEstimateOfBook: 0,
   })
 
   const extandedBasePagination$ = reader.pagination.state$.pipe(
     combineLatestWith(chaptersInfo$),
-    map(([info, chaptersInfo]) => ({
-      ...info,
-      ...mapPaginationInfoToExtendedInfo(reader)(info, chaptersInfo),
-    })),
+
+    switchMap(([info, chaptersInfo]) =>
+      mapPaginationInfoToExtendedInfo(reader, info, chaptersInfo).pipe(
+        map((extendedInfo) => ({
+          ...info,
+          ...extendedInfo,
+        })),
+      ),
+    ),
     distinctUntilChanged(isShallowEqual),
   )
 

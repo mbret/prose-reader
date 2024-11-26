@@ -1,5 +1,5 @@
 import { EMPTY, from, fromEvent, map, of, switchMap, tap } from "rxjs"
-import { DocumentRenderer } from "../../spineItem/DocumentRenderer"
+import { DocumentRenderer } from "../../spineItem/renderer/DocumentRenderer"
 
 export class ImageRenderer extends DocumentRenderer {
   private getImageElement() {
@@ -69,7 +69,7 @@ export class ImageRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  layout({
+  onLayout({
     spreadPosition,
   }: {
     minPageSpread: number
@@ -83,6 +83,7 @@ export class ImageRenderer extends DocumentRenderer {
     const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
 
     let height = pageHeight
+
     const width = pageWidth
 
     if (element) {
@@ -108,9 +109,9 @@ export class ImageRenderer extends DocumentRenderer {
             : `center`
     }
 
-    return {
+    return of({
       width,
       height,
-    }
+    })
   }
 }

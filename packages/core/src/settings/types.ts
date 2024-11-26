@@ -2,7 +2,7 @@ import { Manifest } from "@prose-reader/shared"
 import {
   DocumentRenderer,
   DocumentRendererParams,
-} from "../spineItem/DocumentRenderer"
+} from "../spineItem/renderer/DocumentRenderer"
 import { Observable } from "rxjs"
 
 export type CoreInputSettings = {
