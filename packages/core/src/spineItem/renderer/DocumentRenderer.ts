@@ -95,9 +95,9 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.containerElement = params.containerElement
     this.resourcesHandler = params.resourcesHandler
 
-    this.stateSubject.subscribe((state) => {
-      console.log(`FOOO renderer state`, params.item.id, `state`, state)
-    })
+    // this.stateSubject.subscribe((state) => {
+    //   console.log(`FOOO renderer state`, params.item.id, `state`, state)
+    // })
 
     const unloadTrigger$ = this.triggerSubject.pipe(
       withLatestFrom(this.stateSubject),
