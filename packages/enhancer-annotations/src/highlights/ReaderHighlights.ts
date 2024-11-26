@@ -50,6 +50,6 @@ export class ReaderHighlights extends DestroyableClass {
   }
 
   public layout() {
-    this.spineItemHighlights.getValue().forEach((item) => item.layout())
+    this.spineItemHighlights.value.forEach((item) => item.layout())
   }
 }

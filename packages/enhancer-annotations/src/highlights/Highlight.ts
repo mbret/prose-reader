@@ -1,3 +1,4 @@
+import { Commands } from "../Commands"
 import { SerializableHighlight } from "../types"
 
 export class Highlight {
@@ -24,6 +25,12 @@ export class Highlight {
     this.contents = params.contents
     this.id = params.id
     this.selectionAsText = params.selectionAsText
+  }
+
+  update(params: Parameters<Commands["update"]>[1]) {
+    Object.assign(this, params)
+
+    return this
   }
 
   toJSON(): SerializableHighlight {
