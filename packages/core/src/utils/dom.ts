@@ -73,12 +73,16 @@ function createRangeOrCaretFromPoint(
   // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   if (`caretPositionFromPoint` in doc) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/CaretPosition
-    // @ts-expect-error limited availability
     return doc.caretPositionFromPoint(startX, startY) as {
       offsetNode: Node
       offset: number
     }
-  } else if (typeof doc.caretRangeFromPoint !== `undefined`) {
+  } else if (
+    "caretRangeFromPoint" in doc &&
+    // @ts-expect-error limited availability
+    typeof doc.caretRangeFromPoint !== `undefined`
+  ) {
+    // @ts-expect-error limited availability
     return doc.caretRangeFromPoint(startX, startY)
   }
 }
