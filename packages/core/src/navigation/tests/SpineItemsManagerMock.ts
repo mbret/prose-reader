@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BehaviorSubject, NEVER, of, Subject } from "rxjs"
+import { layout } from "@chakra-ui/react"
+import { BehaviorSubject, first, NEVER, of, Subject } from "rxjs"
 
 export type Item = {
   left: number
@@ -13,7 +14,7 @@ export type Item = {
 export class SpineItemsManagerMock {
   public items: Item[] = []
 
-  public layout$ = new Subject()
+  public layout$ = new Subject<{ width: number; height: number }>()
 
   public items$ = new BehaviorSubject<Item[]>([])
 
@@ -27,16 +28,30 @@ export class SpineItemsManagerMock {
       height: number
     }[],
   ) {
-    this.items = items.map((item) => ({
-      ...item,
-      getElementDimensions: () => ({ width: item.width, height: item.height }),
-      isUsingVerticalWriting: () => false,
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      adjustPositionOfElement: () => {},
-      layout: () => ({ width: item.width, height: item.height }),
-      contentLayout$: NEVER,
-      loaded$: of(true),
-    }))
+    this.items = items.map((item) => {
+      const layoutSubject = new Subject<{ width: number; height: number }>()
+      return {
+        ...item,
+        getElementDimensions: () => ({
+          width: item.width,
+          height: item.height,
+        }),
+        isUsingVerticalWriting: () => false,
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        adjustPositionOfElement: () => {},
+        layout$: layoutSubject,
+        layout: () => {
+          setTimeout(() => {
+            layoutSubject.next({ width: item.width, height: item.height })
+          }, 1)
+
+          return layoutSubject.pipe(first())
+        },
+        contentLayout$: NEVER,
+        loaded$: of(true),
+        needsLayout$: NEVER,
+      }
+    })
 
     this.items$.next(this.items)
   }

@@ -12,8 +12,8 @@ import {
   Observable,
   of,
   reduce,
+  share,
   shareReplay,
-  startWith,
   Subject,
   switchMap,
   takeUntil,
@@ -52,6 +52,13 @@ export type PageLayoutInformation = {
   absolutePosition: LayoutPosition
 }
 
+export type LayoutInfo = {
+  hasChanged: boolean
+  spineItemsAbsolutePositions: LayoutPosition[]
+  spineItemsPagesAbsolutePositions: LayoutPosition[][]
+  pages: PageLayoutInformation[]
+}
+
 export class SpineLayout extends DestroyableClass {
   /**
    * This contains every item dimension / position on the viewport.
@@ -64,15 +71,13 @@ export class SpineLayout extends DestroyableClass {
   protected layoutSubject = new Subject()
 
   /**
-   * Emit current layout information. Useful to observe layout changes
-   * and get information about layout (positions, pages, etc).
+   * Emit layout info after each layout is done.
    */
-  public layout$: Observable<{
-    hasChanged: boolean
-    spineItemsAbsolutePositions: LayoutPosition[]
-    spineItemsPagesAbsolutePositions: LayoutPosition[][]
-    pages: PageLayoutInformation[]
-  }>
+  public readonly layout$: Observable<LayoutInfo>
+  /**
+   * Emit current layout information on subscription.
+   */
+  public readonly info$: Observable<LayoutInfo>
 
   constructor(
     protected spineItemsManager: SpineItemsManager,
@@ -118,7 +123,7 @@ export class SpineLayout extends DestroyableClass {
 
     const layoutInProgress = new BehaviorSubject<boolean>(false)
 
-    const layoutItems = this.layoutSubject.pipe(
+    this.layout$ = this.layoutSubject.pipe(
       debounceTime(50),
       // queue layout until previous layout is done
       exhaustMap(() =>
@@ -157,7 +162,7 @@ export class SpineLayout extends DestroyableClass {
           ),
           concatMap((layout$) => layout$),
           map(() => {
-            const hasLayoutChanges =
+            const hasChanged =
               this.itemLayoutInformation.length !==
                 newItemLayoutInformation.length ||
               this.itemLayoutInformation.some(
@@ -168,22 +173,18 @@ export class SpineLayout extends DestroyableClass {
             this.itemLayoutInformation = newItemLayoutInformation
 
             Report.log(NAMESPACE, `layout`, {
-              hasLayoutChanges,
+              hasChanged,
               itemLayoutInformation: this.itemLayoutInformation,
             })
 
-            return { hasLayoutChanges }
+            return { hasChanged }
           }),
           finalize(() => {
             layoutInProgress.next(false)
           }),
         )
       }),
-    )
-
-    this.layout$ = layoutItems.pipe(
-      startWith({ hasLayoutChanges: true }),
-      map(({ hasLayoutChanges }) => {
+      map(({ hasChanged }) => {
         const items = spineItemsManager.items
 
         const spineItemsPagesAbsolutePositions = items.map((item) => {
@@ -231,7 +232,7 @@ export class SpineLayout extends DestroyableClass {
         )
 
         return {
-          hasChanged: hasLayoutChanges,
+          hasChanged,
           spineItemsAbsolutePositions: items.map((item) =>
             this.getAbsolutePositionOf(item),
           ),
@@ -239,9 +240,12 @@ export class SpineLayout extends DestroyableClass {
           pages,
         }
       }),
-      shareReplay(1),
-      takeUntil(this.destroy$),
+      share(),
     )
+
+    this.info$ = this.layout$.pipe(shareReplay({ refCount: true }))
+
+    merge(this.layout$, this.info$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   layout() {

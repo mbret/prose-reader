@@ -1,4 +1,4 @@
-import { first, map, Observable } from "rxjs"
+import { map, Observable } from "rxjs"
 import { SpineItem } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"

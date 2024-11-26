@@ -11,12 +11,12 @@ import { Spine } from "../../spine/Spine"
 import { noopElement } from "../../utils/dom"
 import { Pagination } from "../../pagination/Pagination"
 import { HookManager } from "../../hooks/HookManager"
-import { of } from "rxjs"
+import { firstValueFrom, of } from "rxjs"
 
 describe(`Given a backward navigation to a new item`, () => {
   describe(`when item was unloaded`, () => {
     describe(`and item is bigger once loaded`, () => {
-      it(`should restore position at the last page`, () => {
+      it(`should restore position at the last page`, async () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
@@ -54,6 +54,8 @@ describe(`Given a backward navigation to a new item`, () => {
         spineItemsManager.load(generateItems(100, 2))
 
         spine.layout()
+
+        await firstValueFrom(spine.spineLayout.layout$)
 
         const position = restoreNavigationForControlledPageTurnMode({
           navigation: {

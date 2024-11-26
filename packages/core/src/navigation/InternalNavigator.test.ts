@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { InternalNavigationEntry } from "./InternalNavigator"
 import { createNavigator, generateItems } from "./tests/utils"
 import { waitFor } from "../tests/utils"
+import { firstValueFrom } from "rxjs"
 
 describe(`Given unloaded book`, () => {
   describe("Given invalid navigation position", () => {
@@ -107,6 +108,8 @@ describe(`Given loaded book`, () => {
       spineItemsManagerMock.load(generateItems(100, 2))
 
       spine.layout()
+
+      await firstValueFrom(spine.spineLayout.layout$)
 
       const sub = internalNavigator.navigated$.subscribe((navigation) => {
         navigations.push(navigation)

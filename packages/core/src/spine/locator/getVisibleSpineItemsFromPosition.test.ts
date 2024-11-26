@@ -5,6 +5,8 @@ import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManagerMock } from "../../navigation/tests/SpineItemsManagerMock"
 import { SpineLayout } from "../SpineLayout"
+import { waitFor } from "../../tests/utils"
+import { firstValueFrom } from "rxjs"
 
 const context = new Context()
 
@@ -119,7 +121,7 @@ describe("Given single page items and no spread", () => {
     })
 
     describe("and threshold of 0.49", () => {
-      it("should recognize second item", () => {
+      it("should recognize second item", async () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
@@ -141,6 +143,8 @@ describe("Given single page items and no spread", () => {
         spineItemsManager.load(singlePageItems)
 
         spineLayout.layout()
+
+        await firstValueFrom(spineLayout.layout$)
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({

@@ -32,7 +32,7 @@ export const bookmarksEnhancer =
       commandSubject.next({ type: "remove", data })
     }
 
-    const pages$ = reader.spine.spineLayout.layout$.pipe(
+    const pages$ = reader.spine.spineLayout.info$.pipe(
       switchMap(({ pages }) =>
         combineLatest(
           pages.map((page) => {
