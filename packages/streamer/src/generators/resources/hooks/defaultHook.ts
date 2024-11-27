@@ -4,17 +4,31 @@ import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import xmldoc from "xmldoc"
 import { HookResource } from "./types"
 
+/**
+ * We are trying to metadata from opf file in epub archive.
+ *
+ * Otherwise we fallback on what we can know from the archive.
+ */
 const getMetadata = async (archive: Archive, resourcePath: string) => {
   const opfInfo = getArchiveOpfInfo(archive)
   const data = await opfInfo.data?.string()
 
   if (data) {
     const opfXmlDoc = new xmldoc.XmlDocument(data)
-    const items = getItemsFromDoc(opfXmlDoc)
+    const items = getItemsFromDoc(opfXmlDoc, archive, "")
 
-    return {
-      mediaType: items.find((item) => resourcePath.endsWith(item.href))
-        ?.mediaType,
+    // we are comparing opf items relative absolute path in epub archive
+    // against resourcePatch (which are absolute path in archive).
+    // They should in theory match.
+    const foundMediaType = items.find((item) =>
+      resourcePath.endsWith(item.href),
+    )?.mediaType
+
+    if (foundMediaType) {
+      return {
+        mediaType: items.find((item) => resourcePath.endsWith(item.href))
+          ?.mediaType,
+      }
     }
   }
 

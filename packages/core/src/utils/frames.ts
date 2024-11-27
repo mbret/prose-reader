@@ -1,4 +1,14 @@
-import { from, fromEvent, map, Observable, of, switchMap, take } from "rxjs"
+import {
+  from,
+  fromEvent,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+  tap,
+} from "rxjs"
 
 export const getAttributeValueFromString = (string: string, key: string) => {
   const regExp = new RegExp(key + `\\s*=\\s*([0-9.]+)`, `i`)

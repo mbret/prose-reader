@@ -30,7 +30,7 @@ export const defaultHook =
         })),
       items: files.map((file, index) => ({
         id: `${index}.${file.basename}`,
-        href: `${baseUrl}${file.uri}`,
+        href: encodeURI(`${baseUrl}${file.uri}`),
       })),
     }
   }

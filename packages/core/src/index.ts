@@ -2,7 +2,7 @@ export type { Manifest } from "@prose-reader/shared"
 
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 export { DocumentRenderer } from "./spineItem/renderer/DocumentRenderer"
-export { ResourceHandler } from "./spineItem/ResourceHandler"
+export { ResourceHandler } from "./spineItem/resources/ResourceHandler"
 
 export { HookManager } from "./hooks/HookManager"
 

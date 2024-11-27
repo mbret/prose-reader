@@ -19,7 +19,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ResourceHandler } from "../ResourceHandler"
+import { ResourceHandler } from "../resources/ResourceHandler"
 import { waitForSwitch } from "../../utils/rxjs"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 

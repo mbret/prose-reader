@@ -68,3 +68,11 @@ export function urlJoin(...args: (string | string[])[]) {
 
   return normalize(parts)
 }
+
+export function getParentPath(uri: string): string {
+  const parts = uri.split("/")
+
+  parts.pop() // Remove the last segment
+
+  return parts.join("/")
+}

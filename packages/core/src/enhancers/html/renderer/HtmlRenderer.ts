@@ -7,6 +7,7 @@ import { waitForSwitch } from "../../../utils/rxjs"
 import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
+import { loadMedias, unloadMedias } from "./medias"
 
 export class HtmlRenderer extends DocumentRenderer {
   /**
@@ -49,11 +50,18 @@ export class HtmlRenderer extends DocumentRenderer {
         this.containerElement.appendChild(frameElement)
       }),
       waitForFrameLoad,
+      loadMedias({
+        context: this.context,
+        item: this.item,
+        settings: this.settings,
+      }),
       waitForFrameReady,
     )
   }
 
   onUnload() {
+    unloadMedias(this.getFrameElement())
+
     this.layers.forEach((layer) => layer.element.remove())
     this.layers = []
 

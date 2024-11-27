@@ -16,7 +16,7 @@ import {
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { DocumentRenderer } from "./renderer/DocumentRenderer"
-import { ResourceHandler } from "./ResourceHandler"
+import { ResourceHandler } from "./resources/ResourceHandler"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import { deferNextResult } from "../utils/rxjs"
 

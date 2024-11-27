@@ -72,12 +72,6 @@ export type CoreHook =
       name: `navigator.onBeforeContainerCreated`
       runFn: (params: { element: HTMLElement }) => void
     }
-// | {
-//     name: `item.onGetResource`
-//     runFn: (
-//       fetchResource: (item: Manifest[`spineItems`][number]) => Promise<Response>,
-//     ) => (item: Manifest[`spineItems`][number]) => Promise<Response>
-//   }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HookExecution<H extends Hook<any, any, any>> = {
