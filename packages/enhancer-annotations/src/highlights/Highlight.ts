@@ -1,4 +1,4 @@
-import { Commands } from "../Commands"
+import { Commands } from "../cCommands"
 import { SerializableHighlight } from "../types"
 
 export class Highlight {
