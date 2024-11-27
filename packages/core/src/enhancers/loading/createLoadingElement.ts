@@ -26,6 +26,7 @@ export const createLoadingElementContainer = (
       top: 0;
       color: rgb(202, 202, 202);
       background-color: white;
+      z-index: 1;
     `
 
   return loadingElement

@@ -102,6 +102,10 @@ export const loadingEnhancer =
             `visibility`,
             isReady ? `hidden` : `visible`,
           )
+          entries[item.item.id]?.style.setProperty(
+            `z-index`,
+            isReady ? `0` : `1`,
+          )
         }),
       )
 

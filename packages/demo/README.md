@@ -9,7 +9,7 @@ It is made with React and can be used as an example of how to integrate the engi
 - engine https://github.com/mbret/prose-reader
 - demo website https://demo.prose-reader.com/
 - official documentation https://docs.prose-reader.com/
-- official discord https://discord.gg/avcf3Hf6hx
+- official discord https://discord.gg/dffDEgwNc5
 
 ## Installation
 
