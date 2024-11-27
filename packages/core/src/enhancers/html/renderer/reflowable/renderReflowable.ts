@@ -120,9 +120,6 @@ export const renderReflowable = ({
     let contentWidth = pageWidth
     let contentHeight = pageHeight
 
-    frameElement?.style.setProperty(`visibility`, `visible`)
-    frameElement?.style.setProperty(`opacity`, `1`)
-
     if (viewportDimensions?.hasViewport) {
       upsertCSS(
         frameElement,

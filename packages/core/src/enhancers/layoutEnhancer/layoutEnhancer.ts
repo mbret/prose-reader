@@ -181,11 +181,6 @@ export const layoutEnhancer =
 
     const revealItemOnReady$ = reader.spineItemsObserver.itemIsReady$.pipe(
       filter(({ isReady }) => isReady),
-      /**
-       * Make sure that even if the document was loaded instantly, the layout is applied first
-       * and therefore the transition played. eg: pdf are loaded before attached to the dom.
-       */
-      delay(1, animationFrameScheduler),
       tap(({ item }) => {
         item.renderer.layers.forEach(({ element }) => {
           element.style.opacity = `1`
