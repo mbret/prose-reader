@@ -16,7 +16,7 @@ import {
 } from "rxjs"
 import { report } from "./report"
 import { ReaderHighlights } from "./highlights/ReaderHighlights"
-import { Commands } from "./cCommands"
+import { Commands } from "./Commands"
 import { Highlight } from "./highlights/Highlight"
 import { consolidate } from "./highlights/consolidate"
 import { isDefined } from "reactjrx"
