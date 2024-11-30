@@ -70,12 +70,22 @@ export const deferNextResult = <T>(stream: Observable<T>) => {
 
 export function idle(): Observable<void> {
   return new Observable<void>((observer) => {
-    const handle = requestIdleCallback(() => {
+    // webkit does not support requestIdleCallback yet
+    if (window.requestIdleCallback) {
+      const handle = window.requestIdleCallback(() => {
+        observer.next()
+        observer.complete()
+      })
+
+      return () => cancelIdleCallback(handle)
+    }
+
+    const timeout = setTimeout(() => {
       observer.next()
       observer.complete()
-    })
+    }, 1)
 
-    return () => cancelIdleCallback(handle)
+    return () => clearTimeout(timeout)
   })
 }
 
