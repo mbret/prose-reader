@@ -15,7 +15,7 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
 
   if (data) {
     const opfXmlDoc = new xmldoc.XmlDocument(data)
-    const items = getItemsFromDoc(opfXmlDoc, archive, "")
+    const items = getItemsFromDoc(opfXmlDoc, archive, () => "")
 
     // we are comparing opf items relative absolute path in epub archive
     // against resourcePatch (which are absolute path in archive).
