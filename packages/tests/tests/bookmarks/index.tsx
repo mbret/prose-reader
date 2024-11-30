@@ -4,10 +4,11 @@ import { bookmarksEnhancer, RuntimeBookmark } from "@prose-reader/enhancer-bookm
 import { createArchiveFromPdf, pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
-import { of } from "rxjs"
+import { of, switchMap } from "rxjs"
 import { createRoot } from "react-dom/client"
 import { useEffect, useState } from "react"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
+import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, import.meta.url).toString()
 
@@ -15,7 +16,6 @@ async function run() {
   const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")
   const pdfBlob = await response.blob()
   const archive = await createArchiveFromPdf(pdfBlob)
-
   const manifest = await generateManifestFromArchive(archive)
 
   const createReaderWithEnhancers = gesturesEnhancer(pdfEnhancer(bookmarksEnhancer(createReader)))
@@ -23,6 +23,7 @@ async function run() {
   const reader = createReaderWithEnhancers({
     pageTurnAnimation: "none",
     pdf: {
+      pdfjsViewerInlineCss,
       getArchiveForItem: () => {
         return of(archive)
       },
@@ -30,7 +31,7 @@ async function run() {
   })
 
   const Bookmarks = () => {
-    const [bookmarks, setBookmarks] = useState<RuntimeBookmark[]>([])
+    const [bookmarks, setBookmarks] = useState<{ meta?: { absolutePageIndex?: number | undefined } }[]>([])
     const [pagination, setPagination] = useState<{ beginAbsolutePageIndex?: number }>({ beginAbsolutePageIndex: 0 })
 
     useEffect(() => {
@@ -40,12 +41,12 @@ async function run() {
     }, [])
 
     useEffect(() => {
-      reader.bookmarks.bookmarks$.subscribe((bookmarks) => {
-        setBookmarks(bookmarks)
+      reader.bookmarks.bookmarks$.pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks))).subscribe(({ data }) => {
+        setBookmarks(data)
       })
-    }, [])
+    }, [reader])
 
-    const bookmarkForPage = bookmarks?.find((bookmark) => bookmark.absolutePageIndex === pagination.beginAbsolutePageIndex)
+    const bookmarkForPage = bookmarks?.find((bookmark) => bookmark.meta?.absolutePageIndex === pagination.beginAbsolutePageIndex)
 
     return (
       <button
@@ -61,7 +62,7 @@ async function run() {
           color: "white",
         }}
         onClick={() => {
-          reader.bookmarks.addBookmark({ absolutePageIndex: pagination.beginAbsolutePageIndex ?? 0 })
+          reader.bookmarks.bookmark(pagination.beginAbsolutePageIndex ?? 0)
         }}
       >
         Page {pagination.beginAbsolutePageIndex}

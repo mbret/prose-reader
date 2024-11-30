@@ -8,7 +8,7 @@ test("should display basic text", async ({ page }) => {
 
   await page.goto("http://localhost:3333/tests/text/index.html")
 
-  await page.waitForTimeout(500)
+  await page.waitForTimeout(1000)
 
   expect(await page.screenshot()).toMatchSnapshot(`text.png`)
 })
