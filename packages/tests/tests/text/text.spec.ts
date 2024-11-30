@@ -8,7 +8,8 @@ test("should display basic text", async ({ page }) => {
 
   await page.goto("http://localhost:3333/tests/text/index.html")
 
-  await page.waitForTimeout(1000)
+  // wait for first item to be ready
+  await page.waitForSelector(".prose-spineItem-ready")
 
   expect(await page.screenshot()).toMatchSnapshot(`text.png`)
 })

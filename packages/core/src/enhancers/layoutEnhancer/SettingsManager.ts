@@ -30,6 +30,8 @@ export class SettingsManager<
       pageHorizontalMargin,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       pageVerticalMargin,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      layoutLayerTransition,
       ...rest
     } = settings
 
@@ -41,6 +43,7 @@ export class SettingsManager<
       layoutAutoResize: "container",
       pageHorizontalMargin: 24,
       pageVerticalMargin: 24,
+      layoutLayerTransition: true
     }
   }
 }

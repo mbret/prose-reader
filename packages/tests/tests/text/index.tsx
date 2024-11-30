@@ -16,6 +16,7 @@ async function run() {
   const reader = createReaderWithEnhancers({
     pageTurnAnimation: "none",
     getResource: (item) => from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
+    layoutLayerTransition: false
   })
 
   reader.load({

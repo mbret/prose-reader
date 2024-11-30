@@ -6,7 +6,6 @@ import {
   filter,
   switchMap,
   debounceTime,
-  delay,
 } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { mapKeysTo } from "../../utils/rxjs"
@@ -21,7 +20,7 @@ import { isDefined } from "../../utils/isDefined"
 import { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
-import { animationFrameScheduler, merge, Observable } from "rxjs"
+import { merge, Observable } from "rxjs"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { upsertCSS } from "../../utils/frames"
 
@@ -45,8 +44,12 @@ export const layoutEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions & Partial<InputSettings>): Output => {
-    const { pageHorizontalMargin, pageVerticalMargin, layoutAutoResize } =
-      options
+    const {
+      pageHorizontalMargin,
+      pageVerticalMargin,
+      layoutAutoResize,
+      layoutLayerTransition,
+    } = options
     const reader = next(options)
 
     const settingsManager = new SettingsManager<
@@ -57,6 +60,7 @@ export const layoutEnhancer =
         pageHorizontalMargin,
         pageVerticalMargin,
         layoutAutoResize,
+        layoutLayerTransition,
       },
       reader.settings as SettingsInterface<
         InheritSettings,
@@ -163,7 +167,9 @@ export const layoutEnhancer =
          * Hide document until it's ready
          */
         element.style.opacity = `0`
-        element.style.transition = `opacity 300ms`
+        if (settingsManager.values.layoutLayerTransition) {
+          element.style.transition = `opacity 300ms`
+        }
       })
     })
 
@@ -234,7 +240,29 @@ export const layoutEnhancer =
       )
       .subscribe()
 
-    merge(revealItemOnReady$, movingSafePan$, layoutOnContainerResize$)
+    /**
+     * Apply some extra classes to spine item to help debugging,
+     * styling, testing, etc.
+     */
+    const updateSpineItemClassName$ =
+      reader.spineItemsObserver.itemIsReady$.pipe(
+        tap(({ item, isReady }) => {
+          const className = `prose-spineItem-ready`
+
+          if (isReady) {
+            item.containerElement.classList.add(className)
+          } else {
+            item.containerElement.classList.remove(className)
+          }
+        }),
+      )
+
+    merge(
+      updateSpineItemClassName$,
+      revealItemOnReady$,
+      movingSafePan$,
+      layoutOnContainerResize$,
+    )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 

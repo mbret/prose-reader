@@ -8,7 +8,8 @@ test("should be able to mark bookmarks on pdf (no nodes)", async ({ page }) => {
 
   await page.goto("http://localhost:3333/tests/bookmarks/index.html")
 
-  await page.waitForTimeout(500)
+  // wait for first item to be ready
+  await page.waitForSelector(".prose-spineItem-ready")
 
   await page.keyboard.press("ArrowRight")
 

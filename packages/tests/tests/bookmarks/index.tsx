@@ -22,6 +22,7 @@ async function run() {
 
   const reader = createReaderWithEnhancers({
     pageTurnAnimation: "none",
+    layoutLayerTransition: false,
     pdf: {
       pdfjsViewerInlineCss,
       getArchiveForItem: () => {

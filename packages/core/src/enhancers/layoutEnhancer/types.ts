@@ -7,6 +7,10 @@ export type InputSettings = {
    * `false`: do not automatically resize.
    */
   layoutAutoResize: `container` | false
+  /**
+   * Whether to use a CSS transition when spine item is ready.
+   */
+  layoutLayerTransition: boolean
 }
 
 export type OutputSettings = InputSettings
