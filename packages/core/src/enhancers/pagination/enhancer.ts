@@ -6,6 +6,11 @@ import { PaginationInfo } from "../../pagination/Pagination"
 import { ExtraPaginationInfo } from "./types"
 import { trackPaginationInfo } from "./pagination"
 import { NAMESPACE } from "./constants"
+import {
+  ConsolidatedResource,
+  createLocator,
+  LocatableResource,
+} from "./locate"
 
 type ProgressionEnhancer = typeof progressionEnhancer
 
@@ -30,7 +35,11 @@ export const paginationEnhancer =
   (
     options: InheritOptions,
   ): Omit<InheritOutput, "pagination"> & {
-    pagination: PaginationOutput
+    pagination: PaginationOutput & {
+      locate: <T extends LocatableResource>(
+        resources: T[],
+      ) => Observable<{ isStale: boolean; data: (ConsolidatedResource & T)[] }>
+    }
   } => {
     const reader = next(options)
 
@@ -38,12 +47,22 @@ export const paginationEnhancer =
 
     paginationInfo$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
+    const locate = createLocator(reader)
+
     return {
       ...reader,
       pagination: {
         ...reader.pagination,
         getState: () => getPaginationInfo(),
         state$: paginationInfo$,
-      } as unknown as PaginationOutput,
+        locate,
+      } as unknown as PaginationOutput & {
+        locate: <T extends LocatableResource>(
+          resources: T[],
+        ) => Observable<{
+          isStale: boolean
+          data: (ConsolidatedResource & T)[]
+        }>
+      },
     }
   }

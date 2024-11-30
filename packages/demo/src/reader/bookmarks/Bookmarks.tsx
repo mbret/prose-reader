@@ -11,7 +11,7 @@ export const Bookmarks = () => {
   const spineElement = useObserve(() => reader?.spine.element$, [reader])
   const pages = useObserve(() => reader?.bookmarks.pages$, [reader])
   const bookmarks = useObserve(() => reader?.bookmarks.bookmarks$, [reader])
-  const consolidatedBookmarks = useObserve(() => reader?.locations.locate(bookmarks ?? []), [reader, bookmarks])
+  const consolidatedBookmarks = useObserve(() => reader?.pagination.locate(bookmarks ?? []), [reader, bookmarks])
 
   if (!spineElement) return null
 

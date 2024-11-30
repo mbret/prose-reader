@@ -9,7 +9,7 @@ import { truncateText } from "../../common/utils"
 export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
   const highlights = useObserve(() => reader?.annotations.highlights$, []) ?? []
-  const consolidatedHighlights = useObserve(() => reader?.locations.locate(highlights), [reader, highlights])
+  const consolidatedHighlights = useObserve(() => reader?.pagination.locate(highlights), [reader, highlights])
 
   const mapItemToListEntry = (item: NonNullable<typeof consolidatedHighlights>["data"][number], index: number) => (
     <React.Fragment key={index}>
