@@ -1,6 +1,6 @@
 import { createReader } from "@prose-reader/core"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
-import { bookmarksEnhancer, RuntimeBookmark } from "@prose-reader/enhancer-bookmarks"
+import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { createArchiveFromPdf, pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
