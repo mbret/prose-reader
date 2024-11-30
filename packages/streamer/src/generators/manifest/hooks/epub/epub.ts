@@ -12,26 +12,35 @@ type SpineItemProperties =
   | `page-spread-left`
   | `page-spread-right`
 
+const getItemFromElement = (
+  element: xmldoc.XmlElement,
+  opfBasePath: string,
+  getBaseUrl?: (element: xmldoc.XmlElement) => string,
+) => {
+  const href = element.attr.href || ``
+  const baseUrl = getBaseUrl?.(element)
+
+  return {
+    href: opfBasePath
+      ? `${baseUrl}${opfBasePath}/${href}`
+      : `${baseUrl}${href}`,
+    id: element.attr.id || ``,
+    mediaType: element.attr[`media-type`],
+  }
+}
+
 export const getItemsFromDoc = (
   doc: xmldoc.XmlDocument,
   archive: Archive,
-  baseUrl?: string,
+  getBaseUrl?: (element: xmldoc.XmlElement) => string,
 ) => {
   const manifestElm = doc.childNamed(`manifest`)
   const { basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
 
   return (
-    manifestElm?.childrenNamed(`item`)?.map((el) => {
-      const href = el.attr.href || ``
-
-      return {
-        href: opfBasePath
-          ? `${baseUrl}${opfBasePath}/${href}`
-          : `${baseUrl}${href}`,
-        id: el.attr.id || ``,
-        mediaType: el.attr[`media-type`],
-      }
-    }) || []
+    manifestElm
+      ?.childrenNamed(`item`)
+      ?.map((el) => getItemFromElement(el, opfBasePath, getBaseUrl)) || []
   )
 }
 
@@ -97,8 +106,6 @@ export const epubHook =
       0,
     )
 
-    const hrefBaseUri = baseUrl || "file://"
-
     return {
       filename: archive.filename,
       nav: {
@@ -122,6 +129,12 @@ export const epubHook =
             []) as SpineItemProperties[]
           const itemSize =
             archive.files.find((file) => file.uri.endsWith(href))?.size || 0
+
+          const hrefBaseUri = baseUrl
+            ? baseUrl
+            : /^https?:\/\//.test(href)
+              ? ""
+              : "file://"
 
           return {
             id: manifestItem?.attr.id || ``,
@@ -148,7 +161,15 @@ export const epubHook =
             mediaType: manifestItem?.attr[`media-type`],
           }
         }) || [],
-      items: getItemsFromDoc(opfXmlDoc, archive, hrefBaseUri),
+      items: getItemsFromDoc(opfXmlDoc, archive, (element) => {
+        const href = element.attr.href || ``
+
+        if (/^https?:\/\//.test(href)) {
+          return ""
+        }
+
+        return baseUrl || "file://"
+      }),
       guide: guideElm?.childrenNamed(`reference`).map((elm) => {
         return {
           href: elm.attr.href || ``,
