@@ -38,14 +38,6 @@ export const searchEnhancer =
           if (!doc) return of([])
 
           return deferIdle(() => searchInDocument(reader, item, doc, text)).pipe(
-            switchMap((results) => {
-              return of(results)
-              // if (!results.length) return of(results)
-
-              // const results$ = results.map((item) => consolidate(item, reader))
-
-              // return forkJoin(results$)
-            }),
             finalize(() => {
               release?.()
             }),
