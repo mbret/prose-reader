@@ -243,7 +243,9 @@ export class SpineLayout extends DestroyableClass {
       share(),
     )
 
-    this.info$ = this.layout$.pipe(shareReplay({ refCount: true }))
+    this.info$ = this.layout$.pipe(
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    )
 
     merge(this.layout$, this.info$).pipe(takeUntil(this.destroy$)).subscribe()
   }

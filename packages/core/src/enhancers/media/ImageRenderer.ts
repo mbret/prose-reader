@@ -114,4 +114,8 @@ export class ImageRenderer extends DocumentRenderer {
       height,
     })
   }
+
+  onRenderHeadless() {
+    return EMPTY
+  }
 }

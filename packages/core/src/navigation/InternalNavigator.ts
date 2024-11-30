@@ -36,11 +36,11 @@ import { withFallbackPosition } from "./consolidation/withFallbackPosition"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
 import { UnsafeSpineItemPosition } from "../spineItem/types"
-import { withPaginationInfo } from "./consolidation/withPaginationInfo"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { Locker } from "./Locker"
 import { Spine } from "../spine/Spine"
+import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
@@ -272,7 +272,12 @@ export class InternalNavigator extends DestroyableClass {
     const navigationUpateFromLayout$ = layoutHasChanged$.pipe(
       switchMap(() => {
         return of(null).pipe(
-          switchMap(() => isUserLocked$.pipe(filter((isLocked) => !isLocked))),
+          switchMap(() =>
+            isUserLocked$.pipe(
+              filter((isLocked) => !isLocked),
+              first(),
+            ),
+          ),
           map(
             (): InternalNavigationEntry => ({
               ...this.navigationSubject.getValue(),
@@ -343,37 +348,13 @@ export class InternalNavigator extends DestroyableClass {
     // @todo export
     // @todo we should only update the cfi if the content of the
     // item change, because otherwise everytime the viewport get bigger
-    // the pagination cfi will change and thus this one too, indfinitely
+    // the pagination cfi will change and thus this one too, indefintely
     // pulling the user baack since we always use the first visible node
-    const navigationUpdateOnPaginationUpdate$ =
-      context.bridgeEvent.pagination$.pipe(
-        withLatestFrom(this.navigationSubject),
-        filter(
-          ([pagination, navigation]) =>
-            pagination.navigationId === navigation.id,
-        ),
-        map(([pagination, navigation]) => ({
-          pagination,
-          navigation: {
-            ...navigation,
-          } satisfies InternalNavigationEntry,
-        })),
-        withPaginationInfo(),
-        distinctUntilChanged(
-          (prev, curr) =>
-            prev.navigation.paginationBeginCfi ===
-            curr.navigation.paginationBeginCfi,
-        ),
-        map(
-          ({ navigation }) =>
-            ({
-              ...navigation,
-              meta: {
-                triggeredBy: "pagination",
-              },
-            }) satisfies InternalNavigationEntry,
-        ),
-      )
+    const navigationUpdateOnPaginationUpdate$ = consolidateWithPagination(
+      context,
+      this.navigationSubject,
+      spine,
+    )
 
     const navigationUpdate$ = merge(
       navigationRestored$,

@@ -6,13 +6,13 @@ import {
   tap,
   Observable,
   debounceTime,
-  combineLatest,
   filter,
   mergeMap,
   map,
   share,
-  buffer,
   distinctUntilChanged,
+  withLatestFrom,
+  forkJoin,
 } from "rxjs"
 import { report } from "./report"
 import { ReaderHighlights } from "./highlights/ReaderHighlights"
@@ -41,17 +41,30 @@ export const annotationsEnhancer =
     const commands = new Commands()
     const highlightsSubject = new BehaviorSubject<Highlight[]>([])
     const selectedHighlightSubject = new BehaviorSubject<string | undefined>(undefined)
+
+    const highlights$ = highlightsSubject.asObservable().pipe(distinctUntilChanged())
+
     const readerHighlights = new ReaderHighlights(reader, highlightsSubject, selectedHighlightSubject)
 
-    const highlight$ = commands.highlight$.pipe(
+    const highlighted$ = commands.highlight$.pipe(
       map(({ data: { itemIndex, selection, ...rest } }) => {
-        const item = reader.spineItemsManager.get(itemIndex)?.item
+        const spineItem = reader.spineItemsManager.get(itemIndex)
 
-        if (!item) return undefined
+        if (!spineItem) return undefined
 
-        const { anchorCfi, focusCfi } = reader.cfi.generateCfiFromSelection({ item, selection })
+        const range = reader.selection.createOrderedRangeFromSelection({ selection, spineItem })
 
-        const highlight = new Highlight({ anchorCfi, focusCfi, itemIndex, id: window.crypto.randomUUID(), ...rest })
+        if (!range) return undefined
+
+        const { start: startCfi, end: endCfi } = reader.cfi.generateCfiFromRange(range, spineItem.item)
+
+        const highlight = new Highlight({
+          cfi: startCfi,
+          endCfi,
+          itemIndex,
+          id: window.crypto.randomUUID(),
+          ...rest,
+        })
 
         highlightsSubject.next([...highlightsSubject.getValue(), highlight])
 
@@ -66,7 +79,7 @@ export const annotationsEnhancer =
         const annotations = Array.isArray(data) ? data : [data]
 
         const addedHighlights = annotations.map((annotation) => {
-          const { itemIndex } = reader.cfi.parseCfi(annotation.anchorCfi ?? "")
+          const { itemIndex } = reader.cfi.parseCfi(annotation.cfi ?? "")
 
           const highlight = new Highlight({ ...annotation, itemIndex })
 
@@ -74,10 +87,7 @@ export const annotationsEnhancer =
         })
 
         highlightsSubject.next([...highlightsSubject.getValue(), ...addedHighlights])
-
-        return addedHighlights.map((highlight) => highlight.id)
       }),
-      share(),
     )
 
     const delete$ = commands.delete$.pipe(
@@ -102,28 +112,10 @@ export const annotationsEnhancer =
       }),
     )
 
-    const highlights$ = highlightsSubject.asObservable().pipe(
-      distinctUntilChanged()
-    )
-
-    const highlightsToConsolidate$ = merge(
-      add$,
-      highlight$,
-      reader.layout$.pipe(map(() => highlightsSubject.value.map(({ id }) => id))),
-    ).pipe(share())
-
-    const highlightsConsolidation$ = highlightsToConsolidate$.pipe(
-      buffer(highlightsToConsolidate$.pipe(debounceTime(100))),
-      map((arrays) => {
-        const ids = Array.from(new Set(arrays.flat()))
-
-        return highlightsSubject.value.filter((highlight) => ids.includes(highlight.id))
-      }),
-      mergeMap((highlightsToConsolidate) => {
-        report.debug("consolidating", highlightsToConsolidate)
-
-        return combineLatest(highlightsToConsolidate.map((highlight) => consolidate(highlight, reader)))
-      }),
+    const highlightsConsolidation$ = merge(highlighted$, reader.layout$).pipe(
+      debounceTime(50),
+      withLatestFrom(highlights$),
+      mergeMap(() => forkJoin(highlightsSubject.value.map((highlight) => consolidate(highlight, reader)))),
       tap((consolidatedHighlights) => {
         const consolidatedExistingHighlights = highlightsSubject.value.map(
           (highlight) => consolidatedHighlights.find((c) => c.id === highlight.id) ?? highlight,
@@ -136,7 +128,7 @@ export const annotationsEnhancer =
     )
 
     merge(
-      highlight$,
+      highlighted$,
       add$,
       delete$,
       update$,

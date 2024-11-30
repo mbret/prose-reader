@@ -1,4 +1,4 @@
-import { tap } from "rxjs/operators"
+import { skip, tap } from "rxjs"
 import { useObserve } from "reactjrx"
 import { NEVER } from "rxjs"
 import { SerializableBookmark } from "@prose-reader/enhancer-bookmarks"
@@ -32,7 +32,7 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
 
     const restoredBookmarks = restore(bookKey)
 
-    reader.bookmarks.addBookmarks(restoredBookmarks)
+    reader.bookmarks.add(restoredBookmarks)
 
     setIsHydrated(true)
   }, [reader, isHydrated])
@@ -41,6 +41,7 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
     () =>
       reader && isHydrated
         ? reader.bookmarks.bookmarks$.pipe(
+            skip(1),
             tap((bookmarks) => {
               persist(bookKey, bookmarks)
             })

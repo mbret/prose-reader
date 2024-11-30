@@ -8,9 +8,10 @@ import { truncateText } from "../../common/utils"
 
 export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
-  const highlights = useObserve(() => reader?.annotations.highlights$, [])
+  const highlights = useObserve(() => reader?.annotations.highlights$, []) ?? []
+  const consolidatedHighlights = useObserve(() => reader?.locations.locate(highlights), [reader, highlights])
 
-  const mapItemToListEntry = (item: NonNullable<typeof highlights>[number], index: number) => (
+  const mapItemToListEntry = (item: NonNullable<typeof consolidatedHighlights>["data"][number], index: number) => (
     <React.Fragment key={index}>
       <ListItem>
         <Stack
@@ -22,7 +23,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
           onClick={() => {
             onNavigate()
 
-            reader?.navigation.goToCfi(item.anchorCfi ?? "")
+            reader?.navigation.goToCfi(item.cfi ?? "")
           }}
         >
           {(item.contents ?? [])[0] ? (
@@ -44,7 +45,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
               fontStyle="italic"
               fontWeight="bold"
               fontSize="xs"
-            >{`Book page: ${item.absolutePageIndex !== undefined ? item.absolutePageIndex + 1 : "unknown (not loaded)"}`}</Text>
+            >{`Book page: ${item.meta?.absolutePageIndex !== undefined ? item.meta.absolutePageIndex + 1 : "unknown (not loaded)"}`}</Text>
           </Stack>
         </Stack>
       </ListItem>
@@ -53,7 +54,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
 
   return (
     <List spacing={3} overflowY="auto" py={4} flex={1}>
-      {highlights?.map((item, index) => mapItemToListEntry(item, index))}
+      {consolidatedHighlights?.data?.map((item, index) => mapItemToListEntry(item, index))}
     </List>
   )
 }

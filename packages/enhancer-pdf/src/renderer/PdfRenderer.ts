@@ -8,6 +8,14 @@ export class PdfRenderer extends DocumentRenderer {
   private pageProxy: PDFPageProxy | undefined
   private renderTask: RenderTask | undefined
   private textLayer: TextLayer | undefined
+
+  constructor(
+    private pdfViewerStyle: string,
+    params: ConstructorParameters<typeof DocumentRenderer>[0],
+  ) {
+    super(params)
+  }
+
   private getFrameElement() {
     const frame = this.layers[0]?.element
 
@@ -16,11 +24,18 @@ export class PdfRenderer extends DocumentRenderer {
     return frame
   }
 
-  constructor(
-    private pdfViewerStyle: string,
-    params: ConstructorParameters<typeof DocumentRenderer>[0],
-  ) {
-    super(params)
+  private getPageProxy() {
+    if (this.pageProxy) return of(this.pageProxy)
+
+    return from(this.resourcesHandler.fetchResource()).pipe(
+      switchMap((resource) => {
+        if (!("custom" in resource)) return EMPTY
+
+        this.pageProxy = resource.data as PDFPageProxy
+
+        return of(this.pageProxy)
+      }),
+    )
   }
 
   onUnload(): Observable<unknown> {
@@ -33,6 +48,7 @@ export class PdfRenderer extends DocumentRenderer {
     if (this.renderTask) {
       this.renderTask.cancel()
     }
+
     this.textLayer?.cancel()
     this.pageProxy?.cleanup()
 
@@ -54,14 +70,8 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   onLoadDocument(): Observable<unknown> {
-    return from(this.resourcesHandler.fetchResource()).pipe(
-      switchMap((resource) => {
-        if (!("custom" in resource)) return EMPTY
-
-        const pageProxy = resource.data as PDFPageProxy
-
-        this.pageProxy = pageProxy
-
+    return this.getPageProxy().pipe(
+      switchMap(() => {
         const frameElement = this.getFrameElement()
 
         if (!frameElement) return EMPTY
@@ -197,6 +207,31 @@ export class PdfRenderer extends DocumentRenderer {
         this.renderTask = undefined
 
         canvas.remove()
+      }),
+    )
+  }
+
+  /**
+   * @important
+   * We should keep the same node structure to preserve CFI integrity.
+   */
+  onRenderHeadless() {
+    return this.getPageProxy().pipe(
+      switchMap((pageProxy) => {
+        const headlessDocument = document.implementation.createHTMLDocument()
+        const canvas = headlessDocument.createElement("canvas")
+        const textLayerElement = headlessDocument.createElement("div")
+
+        headlessDocument.body.appendChild(canvas)
+        headlessDocument.body.appendChild(textLayerElement)
+
+        const textLayer = new TextLayer({
+          container: textLayerElement,
+          textContentSource: pageProxy.streamTextContent(),
+          viewport: pageProxy.getViewport({ scale: 1 }),
+        })
+
+        return from(textLayer.render()).pipe(map(() => headlessDocument))
       }),
     )
   }

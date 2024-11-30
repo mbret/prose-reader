@@ -28,7 +28,7 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
   /**
    * Restore annotations from local storage
    */
-  const isRestored = useObserve(
+  const isHydrated = useObserve(
     () => {
       const restoredAnnotations = restore(bookKey)
 
@@ -45,28 +45,13 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
    */
   useSubscribe(
     () =>
-      !isRestored
+      !isHydrated
         ? EMPTY
         : reader?.annotations.highlights$.pipe(
             skip(1),
             tap((annotations) => persist(bookKey, annotations))
           ),
-    [isRestored, reader, bookKey]
-  )
-
-  /**
-   * Trigger the highlight menu when user releases its finger
-   * after a selection. Discard quick menu if its shown
-   */
-  useSubscribe(
-    () =>
-      reader?.selection.selectionAfterPointerUp$.pipe(
-        tap(([, selection]) => {
-          isQuickMenuOpenSignal.setValue(false)
-          selectedHighlightSignal.setValue({ selection })
-        })
-      ),
-    [reader]
+    [isHydrated, reader, bookKey]
   )
 
   useSubscribe(

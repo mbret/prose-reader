@@ -97,7 +97,7 @@ export const epubHook =
       0,
     )
 
-    const hrefBaseUri = baseUrl ?? "file://"
+    const hrefBaseUri = baseUrl || "file://"
 
     return {
       filename: archive.filename,

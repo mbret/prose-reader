@@ -36,14 +36,14 @@ export const getRangeFromSelection = (
   return range
 }
 
-export const createRangeFromSelection = ({
+export const createOrderedRangeFromSelection = ({
   selection,
   spineItem,
 }: {
   selection: {
-    anchorNode?: Node
+    anchorNode?: Node | null
     anchorOffset?: number
-    focusNode?: Node
+    focusNode?: Node | null
     focusOffset?: number
   }
   spineItem: SpineItem

@@ -2,13 +2,11 @@ import { Commands } from "../Commands"
 import { SerializableHighlight } from "../types"
 
 export class Highlight {
-  public anchorCfi: string | undefined
-  public focusCfi: string | undefined
+  public cfi: string
+  public endCfi: string | undefined
   public itemIndex?: number
   public color?: string
   public contents?: string[]
-  public spineItemPageIndex?: number
-  public absolutePageIndex?: number
   public range?: Range
   public selectionAsText?: string
   /**
@@ -18,8 +16,8 @@ export class Highlight {
   public id: string
 
   constructor(params: SerializableHighlight & { itemIndex?: number }) {
-    this.anchorCfi = params.anchorCfi
-    this.focusCfi = params.focusCfi
+    this.cfi = params.cfi
+    this.endCfi = params.endCfi
     this.itemIndex = params.itemIndex
     this.color = params.color
     this.contents = params.contents
@@ -35,8 +33,8 @@ export class Highlight {
 
   toJSON(): SerializableHighlight {
     return {
-      anchorCfi: this.anchorCfi,
-      focusCfi: this.focusCfi,
+      cfi: this.cfi,
+      endCfi: this.endCfi,
       color: this.color,
       contents: this.contents,
       id: this.id,

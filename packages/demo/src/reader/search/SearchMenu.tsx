@@ -1,19 +1,15 @@
-import { Heading, Input, Text, Box, Stack } from "@chakra-ui/react"
-import React, { useCallback, useEffect, useState } from "react"
-import { tap } from "rxjs/operators"
-import { SearchResult } from "@prose-reader/enhancer-search"
+import { Heading, Input, Text, Box, Stack, Link } from "@chakra-ui/react"
+import React, { useCallback, useState } from "react"
 import { useReader } from "../useReader"
-import { groupBy } from "@prose-reader/shared"
+import { useObserve } from "reactjrx"
+import { map, startWith } from "rxjs"
 
 export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const [text, setText] = useState("")
-  const [results, setResults] = useState<SearchResult>([])
-  const [searching, setSearching] = useState(false)
   const { reader } = useReader()
 
   const onValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value)
-    reader?.search.search(e.target.value)
   }
 
   const onClick = useCallback(
@@ -24,28 +20,17 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
     [reader, onNavigate]
   )
 
-  useEffect(() => {
-    const $ = reader?.search.$.search$
-      .pipe(
-        tap((event) => {
-          if (event.type === "start") {
-            setResults([])
-            setSearching(true)
-          }
-          if (event.type === "end") {
-            setResults(event.data)
-            setSearching(false)
-          }
-        })
-      )
-      .subscribe()
-
-    return () => {
-      $?.unsubscribe()
-    }
-  }, [reader])
-
-  const groupedResults = groupBy(results, (item) => item.spineItemIndex)
+  const search = useObserve(
+    () =>
+      reader?.search.search(text).pipe(
+        map((data) => ({ type: `end` as const, data })),
+        startWith({ type: `start` as const })
+      ),
+    [reader, text]
+  )
+  const searching = search?.type === "start"
+  const results = search?.type === "end" ? search.data : []
+  const consolidatedResults = useObserve(() => reader?.locations.locate(results), [results])
 
   return (
     <Stack flex={1}>
@@ -54,29 +39,27 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
         {searching && <Text>Searching ...</Text>}
         {!searching && results.length === 0 && <p>There are no results</p>}
         {!searching && results.length >= 0 && (
-          <>
-            {Object.values(groupedResults).map((itemResults, i) => (
-              <Box key={i} pt={2}>
-                <Heading as="h2" size="sm">
-                  Chapter {(itemResults[0]?.spineItemIndex || 0) + 1}
-                </Heading>
-                <Text fontSize="md" color="gray.500">
-                  {itemResults.length} result(s)
-                </Text>
-                {itemResults.map((result, j) => (
+          <Stack>
+            <Heading as="h2" size="sm">
+              {results.length} result(s)
+            </Heading>
+            <Stack gap={0}>
+              {consolidatedResults?.data.slice(0, 100).map((result, j) => {
+                return (
                   <Item
                     key={j}
-                    contextText={result.contextText}
-                    pageIndex={result.pageIndex}
-                    startOffset={result.startOffset}
+                    contextText={result.meta?.range?.startContainer.parentElement?.textContent ?? ""}
+                    pageIndex={result.meta?.itemPageIndex}
+                    startOffset={result.meta?.range?.startOffset ?? 0}
                     text={text}
-                    cfi={result.startCfi}
+                    cfi={result.cfi}
                     onClick={onClick}
+                    absolutePageIndex={result.meta?.absolutePageIndex}
                   />
-                ))}
-              </Box>
-            ))}
-          </>
+                )
+              })}
+            </Stack>
+          </Stack>
         )}
       </Box>
     </Stack>
@@ -84,18 +67,19 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
 }
 
 const Item = ({
-  pageIndex,
-  contextText,
-  startOffset,
+  contextText = "",
+  startOffset = 0,
   text,
-  cfi,
-  onClick
+  cfi = "#",
+  onClick,
+  absolutePageIndex
 }: {
   pageIndex: number | undefined
-  contextText: string
-  startOffset: number
+  absolutePageIndex?: number
+  contextText?: string
+  startOffset?: number
   text: string
-  cfi: string
+  cfi?: string
   onClick: (cfi: string) => void
 }) => {
   const charsAroundText = 15
@@ -106,18 +90,23 @@ const Item = ({
   )
 
   return (
-    <div style={{ margin: 5, overflow: "hidden" }} onClick={() => onClick(cfi)}>
-      <Text noOfLines={1} as="cite" style={{ display: "block" }}>
+    <Link
+      href={cfi}
+      style={{ margin: 5, overflow: "hidden" }}
+      onClick={(e) => {
+        e.preventDefault()
+
+        onClick(cfi)
+      }}
+    >
+      <Link noOfLines={1} as="cite" style={{ display: "block" }}>
         "{before}
         <b>{text}</b>
         {after}"
+      </Link>
+      <Text size="xs" color="gray.500" style={{ textDecoration: "none" }}>
+        {`Book page: ${absolutePageIndex !== undefined ? absolutePageIndex + 1 : "unknown (not loaded)"}`}
       </Text>
-      {pageIndex !== undefined && <Text color="gray.500">Page: {(pageIndex || 0) + 1}</Text>}
-      {pageIndex === undefined && (
-        <Text size="xs" color="gray.500">
-          Chapter not loaded, click to navigate
-        </Text>
-      )}
-    </div>
+    </Link>
   )
 }

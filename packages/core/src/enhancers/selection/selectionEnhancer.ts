@@ -16,7 +16,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { createRangeFromSelection } from "./selection"
+import { createOrderedRangeFromSelection } from "./selection"
 import { SelectionTracker } from "./SelectionTracker"
 import { SpineItem } from "../.."
 
@@ -59,11 +59,17 @@ export const selectionEnhancer =
        */
       lastSelectionOnPointerdown$: Observable<SelectionValue | undefined>
       getSelection: () => SelectionValue | undefined
-      createRangeFromSelection: (params: {
+      /**
+       * Create an ordered range from a selection.
+       *
+       * This means the start and end nodes will be ordered to maintain natural
+       * order in the document.
+       */
+      createOrderedRangeFromSelection: (params: {
         selection: {
-          anchorNode?: Node
+          anchorNode?: Node | null
           anchorOffset?: number
-          focusNode?: Node
+          focusNode?: Node | null
           focusOffset?: number
         }
         spineItem: SpineItem
@@ -170,7 +176,7 @@ export const selectionEnhancer =
         selectionAfterPointerUp$,
         lastSelectionOnPointerdown$,
         getSelection: () => selectionSubject.getValue(),
-        createRangeFromSelection,
+        createOrderedRangeFromSelection,
       },
       destroy: () => {
         selectionSubject.complete()

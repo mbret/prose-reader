@@ -65,7 +65,7 @@ export const Menu = memo(
             <TabPanel p={0} display="flex" flex={1}>
               <AnnotationsMenu onNavigate={onNavigate} />
             </TabPanel>
-            <TabPanel display="flex" flex={1}>
+            <TabPanel pb={0} display="flex" flex={1}>
               <SearchMenu onNavigate={onNavigate} />
             </TabPanel>
           </TabPanels>

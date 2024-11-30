@@ -3,7 +3,7 @@ import { Highlight } from "./Highlight"
 import { map, of, tap, withLatestFrom } from "rxjs"
 
 export const consolidate = (highlight: Highlight, reader: Reader) => {
-  const { itemIndex } = reader.cfi.parseCfi(highlight.anchorCfi ?? "")
+  const { itemIndex } = reader.cfi.parseCfi(highlight.cfi ?? "")
   const spineItem = reader.spineItemsManager.get(itemIndex)
 
   if (!spineItem) return of(highlight)
@@ -11,43 +11,18 @@ export const consolidate = (highlight: Highlight, reader: Reader) => {
   return of(highlight).pipe(
     withLatestFrom(spineItem.isReady$),
     tap(([, isItemReady]) => {
-      const resolvedAnchorCfi = reader.cfi.resolveCfi({ cfi: highlight.anchorCfi ?? "" })
-      const resolvedFocusCfi = reader.cfi.resolveCfi({ cfi: highlight.focusCfi ?? "" })
+      const startCfi = reader.cfi.resolveCfi({ cfi: highlight.cfi ?? "" })
+      const resolvedFocusCfi = reader.cfi.resolveCfi({ cfi: highlight.endCfi ?? "" })
 
-      if (spineItem.item.renditionLayout === `pre-paginated`) {
-        highlight.spineItemPageIndex = 0
-      } else {
-        if (resolvedAnchorCfi?.node) {
-          highlight.spineItemPageIndex = reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
-            resolvedAnchorCfi.node,
-            resolvedAnchorCfi.offset ?? 0,
-            spineItem,
-          )
-        }
-      }
-
-      if (resolvedAnchorCfi?.node && resolvedFocusCfi?.node && isItemReady) {
-        const range = reader.selection.createRangeFromSelection({
-          selection: {
-            anchorNode: resolvedAnchorCfi.node,
-            anchorOffset: resolvedAnchorCfi.offset ?? 0,
-            focusNode: resolvedFocusCfi.node,
-            focusOffset: resolvedFocusCfi.offset ?? 0,
-          },
-          spineItem,
-        })
+      if (startCfi?.node && resolvedFocusCfi?.node && isItemReady) {
+        const range = startCfi?.node.ownerDocument?.createRange()
+        range?.setStart(startCfi?.node, startCfi.offset ?? 0)
+        range?.setEnd(resolvedFocusCfi?.node, resolvedFocusCfi.offset ?? 0)
 
         highlight.range = range
         highlight.selectionAsText = range?.toString()
       } else {
         highlight.range = undefined
-      }
-
-      if (highlight.spineItemPageIndex !== undefined) {
-        highlight.absolutePageIndex = reader.spine.locator.getAbsolutePageIndexFromPageIndex({
-          pageIndex: highlight.spineItemPageIndex,
-          spineItemOrId: spineItem,
-        })
       }
     }),
     map(() => highlight),

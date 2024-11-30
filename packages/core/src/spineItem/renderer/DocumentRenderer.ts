@@ -4,9 +4,12 @@ import { HookManager } from "../../hooks/HookManager"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import {
   BehaviorSubject,
+  catchError,
   combineLatest,
+  defer,
   endWith,
   filter,
+  finalize,
   first,
   map,
   merge,
@@ -22,6 +25,7 @@ import {
 import { ResourceHandler } from "../resources/ResourceHandler"
 import { waitForSwitch } from "../../utils/rxjs"
 import { DestroyableClass } from "../../utils/DestroyableClass"
+import { Report } from "../../report"
 
 type Layer = {
   element: HTMLElement
@@ -200,10 +204,43 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.triggerSubject.next({ type: `unload` })
   }
 
+  public renderHeadless(): Observable<
+    { doc: Document; release: () => void } | undefined
+  > {
+    const releaseSubject = new Subject<void>()
+
+    return defer(() => this.onRenderHeadless({ release: releaseSubject })).pipe(
+      endWith(undefined),
+      first(),
+      map((doc) => {
+        if (!doc) return undefined
+
+        return {
+          doc,
+          release: () => {
+            releaseSubject.next(undefined)
+          },
+        }
+      }),
+      finalize(() => {
+        releaseSubject.complete()
+      }),
+      catchError((e) => {
+        Report.error(e)
+
+        return of(undefined)
+      }),
+    )
+  }
+
   public destroy() {
     super.destroy()
     this.stateSubject.complete()
   }
+
+  abstract onRenderHeadless(params: {
+    release: Observable<void>
+  }): Observable<Document | undefined>
 
   abstract onUnload(): Observable<unknown>
 

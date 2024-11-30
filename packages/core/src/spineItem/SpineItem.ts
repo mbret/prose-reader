@@ -11,6 +11,7 @@ import {
   startWith,
   switchMap,
   takeUntil,
+  tap,
   withLatestFrom,
 } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -131,7 +132,7 @@ export class SpineItem extends DestroyableClass {
       map(([event, loaded]) => !!(event.type === `end` && loaded)),
       startWith(false),
       distinctUntilChanged(),
-      shareReplay({ refCount: true }),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
     this.needsLayout$ = merge(this.unloaded$, this.loaded$)

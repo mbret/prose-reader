@@ -17,4 +17,8 @@ export class DefaultRenderer extends DocumentRenderer {
   onLayout() {
     return of(undefined)
   }
+
+  onRenderHeadless() {
+    return EMPTY
+  }
 }

@@ -6,8 +6,6 @@ import {
   of,
   switchMap,
   take,
-  tap,
-  tap,
 } from "rxjs"
 
 export const getAttributeValueFromString = (string: string, key: string) => {

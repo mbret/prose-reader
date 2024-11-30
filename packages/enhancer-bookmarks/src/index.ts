@@ -1,148 +1,99 @@
-import { Reader, waitForSwitch } from "@prose-reader/core"
-import { animationFrameScheduler, BehaviorSubject, combineLatest, merge, of, Subject, timer } from "rxjs"
-import { filter, map, share, switchMap, takeUntil, tap, withLatestFrom } from "rxjs/operators"
-import { SerializableBookmark, EnhancerOutput, RuntimeBookmark, Command } from "./types"
-import { consolidateBookmark } from "./bookmarks/consolidateBookmark"
+import { Reader } from "@prose-reader/core"
+import { BehaviorSubject, first, map, share, switchMap, takeUntil, tap, forkJoin, merge, of, Observable, ObservedValueOf } from "rxjs"
+import { SerializableBookmark, RuntimeBookmark } from "./types"
 import { report } from "./report"
+import { Commands } from "./Commands"
 
 export { type SerializableBookmark, type RuntimeBookmark }
 
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
-  (options: InheritOptions): InheritOutput & EnhancerOutput => {
+  (
+    options: InheritOptions,
+  ): InheritOutput & {
+    bookmarks: {
+      bookmark: Commands["bookmark"]
+      delete: Commands["delete"]
+      add: Commands["add"]
+      bookmarks$: Observable<RuntimeBookmark[]>
+      /**
+       * Make it conveniant for users to observes pages with bookmarkable status.
+       */
+      pages$: Observable<
+        (ObservedValueOf<Reader["spine"]["spineLayout"]["info$"]>["pages"][number] & {
+          isBookmarkable: boolean | undefined
+        })[]
+      >
+    }
+  } => {
     const reader = next(options)
-    const commandSubject = new Subject<Command>()
     const bookmarksSubject = new BehaviorSubject<RuntimeBookmark[]>([])
+    const commands = new Commands()
 
-    const addBookmarks = (bookmarks: SerializableBookmark[]) => {
-      bookmarks.forEach((bookmark) => {
-        commandSubject.next({ data: bookmark, type: "add" })
-      })
-    }
+    const add$ = commands.add$.pipe(
+      map(({ data }) => {
+        const items = Array.isArray(data) ? data : [data]
 
-    const addBookmark = (data: { absolutePageIndex: number }) => {
-      commandSubject.next({ data, type: "add" })
-    }
+        bookmarksSubject.next([...bookmarksSubject.value, ...items])
+      }),
+    )
 
-    const removeAllBookmarks = () => {
-      commandSubject.next({ type: "removeAll" })
-    }
+    const delete$ = commands.delete$.pipe(
+      tap(({ id }) => {
+        bookmarksSubject.next(bookmarksSubject.value.filter((item) => item.id !== id))
+      }),
+    )
 
-    const removeBookmark = (data: { absolutePageIndex: number }) => {
-      commandSubject.next({ type: "remove", data })
-    }
+    const bookmark$ = commands.bookmark$.pipe(
+      map(({ absolutePageIndex }) => {
+        const {
+          // if we can't find a page index we just fallback to 0
+          pageIndex = 0,
+          spineItem,
+        } = reader.spine.locator.getSpineInfoFromAbsolutePageIndex({ absolutePageIndex }) ?? {}
+
+        if (!spineItem) return
+
+        const cfi = reader.cfi.generateCfiForSpineItemPage({
+          pageIndex,
+          spineItem,
+        })
+
+        if (!bookmarksSubject.value.find((bookmark) => bookmark.cfi === cfi)) {
+          bookmarksSubject.next([...bookmarksSubject.value, { cfi, id: window.crypto.randomUUID() }])
+        }
+      }),
+    )
+
+    const bookmarks$ = bookmarksSubject.asObservable()
 
     const pages$ = reader.spine.spineLayout.info$.pipe(
       switchMap(({ pages }) =>
-        combineLatest(
+        forkJoin(
           pages.map((page) => {
             const item = reader.spine.spineItemsManager.get(page.itemIndex)
 
             const isReady$ = item ? item.isReady$ : of(false)
 
             return isReady$.pipe(
-              map((isReady) => ({
-                ...page,
-                isBookmarkable: isReady,
-              })),
+              first(),
+              map((isReady) => {
+                return {
+                  ...page,
+                  isBookmarkable: isReady,
+                }
+              }),
             )
           }),
         ),
       ),
-    )
-
-    const removeBookmark$ = commandSubject.pipe(
-      filter((command) => command.type === "remove"),
-      withLatestFrom(bookmarksSubject),
-      tap(
-        ([
-          {
-            data: { absolutePageIndex },
-          },
-          bookmarks,
-        ]) => {
-          const existingBookmark = bookmarks.find((bookmark) => bookmark.absolutePageIndex === absolutePageIndex)
-
-          if (existingBookmark) {
-            bookmarksSubject.next(bookmarks.filter((bookmark) => bookmark !== existingBookmark))
-          }
-        },
-      ),
-    )
-
-    const removeAll$ = commandSubject.pipe(
-      filter((command) => command.type === "removeAll"),
-      tap(() => {
-        bookmarksSubject.next([])
-      }),
-    )
-
-    /**
-     * @todo optimize to generate CFI only on viewport free
-     */
-    const addBookmark$ = commandSubject.pipe(
-      filter((command) => command.type === "add"),
-      withLatestFrom(bookmarksSubject),
-      map(([command, bookmarks]) => {
-        report.debug("addBookmark", { command, bookmarks })
-
-        const givenCfi = "cfi" in command.data ? command.data.cfi : undefined
-        const givenAbsolutePageIndex = "absolutePageIndex" in command.data ? command.data.absolutePageIndex : undefined
-
-        if (givenCfi) {
-          if (!bookmarks.find((bookmark) => bookmark.cfi === givenCfi)) {
-            bookmarksSubject.next([...bookmarks, { cfi: givenCfi }])
-          }
-
-          return
-        }
-
-        if (givenAbsolutePageIndex !== undefined) {
-          const { pageIndex, spineItem } =
-            reader.spine.locator.getSpineInfoFromAbsolutePageIndex({ absolutePageIndex: givenAbsolutePageIndex }) ?? {}
-
-          if (pageIndex === undefined || !spineItem) return undefined
-
-          const cfi = reader.cfi.generateCfiForSpineItemPage({
-            pageIndex,
-            spineItem,
-          })
-
-          if (bookmarks.find((bookmark) => bookmark.cfi === cfi)) {
-            report.debug(`Bookmark for cfi ${cfi} already exists`)
-
-            return
-          }
-
-          bookmarksSubject.next([...bookmarks, { cfi }])
-        }
-      }),
       share(),
     )
 
-    /**
-     * @todo optimize to only consolidate when needed
-     */
-    const consolidateBookmarksOnLayout$ = merge(addBookmark$, reader.layout$).pipe(
-      switchMap(() =>
-        timer(100, animationFrameScheduler).pipe(
-          waitForSwitch(reader.context.bridgeEvent.viewportFree$),
-          withLatestFrom(bookmarksSubject),
-          tap(([, bookmarks]) => {
-            bookmarksSubject.next(bookmarks.map((bookmark) => consolidateBookmark({ bookmark, reader })))
-          }),
-          takeUntil(commandSubject),
-        ),
-      ),
-    )
-
-    const bookmarks$ = bookmarksSubject.asObservable()
-
     merge(
-      addBookmark$,
-      removeBookmark$,
-      removeAll$,
-      consolidateBookmarksOnLayout$,
+      add$,
+      delete$,
+      bookmark$,
       bookmarks$.pipe(
         tap((bookmarks) => {
           report.debug("bookmarks", bookmarks)
@@ -155,17 +106,17 @@ export const bookmarksEnhancer =
     return {
       ...reader,
       destroy: () => {
+        commands.destroy()
         bookmarksSubject.complete()
 
         reader.destroy()
       },
       bookmarks: {
-        removeAllBookmarks,
-        addBookmarks,
-        removeBookmark,
+        bookmark: commands.bookmark,
+        delete: commands.delete,
+        add: commands.add,
         pages$,
         bookmarks$,
-        addBookmark,
       },
     }
   }

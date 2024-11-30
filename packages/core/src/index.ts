@@ -21,3 +21,4 @@ export { SpineItem } from "./spineItem/SpineItem"
 export * from "./utils/DestroyableClass"
 
 export * from "./utils/frames"
+export * from "./utils/rxjs"

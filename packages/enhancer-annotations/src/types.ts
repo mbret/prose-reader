@@ -1,6 +1,6 @@
 export type SerializableHighlight = {
-  anchorCfi: string | undefined
-  focusCfi: string | undefined
+  cfi: string
+  endCfi: string | undefined
   color?: string
   contents?: string[]
   /**

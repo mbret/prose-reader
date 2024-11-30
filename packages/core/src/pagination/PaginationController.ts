@@ -1,12 +1,10 @@
 import {
-  animationFrameScheduler,
   filter,
   merge,
   switchMap,
   take,
   takeUntil,
   tap,
-  timer,
   withLatestFrom,
 } from "rxjs"
 import { Context } from "../context/Context"
@@ -20,6 +18,7 @@ import { Spine } from "../spine/Spine"
 import { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
 import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
 import { SpineItem } from "../spineItem/SpineItem"
+import { waitForSwitch } from "../utils/rxjs"
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -172,9 +171,7 @@ export class PaginationController extends DestroyableClass {
      * @todo add more optimisation, comparing item before, after with position, etc
      */
     const updateCfi$ = updatePagination$.pipe(
-      switchMap(() => this.context.bridgeEvent.viewportState$),
-      filter((state) => state === "free"),
-      switchMap(() => timer(500, animationFrameScheduler)),
+      waitForSwitch(this.context.bridgeEvent.viewportFree$),
       tap(() => {
         const {
           beginSpineItemIndex,

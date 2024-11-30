@@ -6,16 +6,11 @@ import { generateCfi } from "./generateCfi"
  * so we use two cfi for start and end.
  */
 export const generateCfiFromRange = (
-  {
-    startNode,
-    start,
-    end,
-    endNode,
-  }: { startNode: Node; start: number; endNode: Node; end: number },
+  range: Range,
   item: Manifest[`spineItems`][number],
 ) => {
-  const startCFI = generateCfi(startNode, start, item)
-  const endCFI = generateCfi(endNode, end, item)
+  const startCFI = generateCfi(range.startContainer, range.startOffset, item)
+  const endCFI = generateCfi(range.endContainer, range.endOffset, item)
 
   return { start: startCFI, end: endCFI }
 }

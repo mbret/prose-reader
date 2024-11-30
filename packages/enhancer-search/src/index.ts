@@ -1,34 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Reader } from "@prose-reader/core"
-import { forkJoin, from, merge, Observable, of, Subject } from "rxjs"
-import { map, share, switchMap, takeUntil } from "rxjs/operators"
-
-const supportedContentType: DOMParserSupportedType[] = [
-  `application/xhtml+xml`,
-  `application/xml`,
-  `image/svg+xml`,
-  `text/html`,
-  `text/xml`,
-]
-
-const isSupportedContentType = (contentType: string): contentType is DOMParserSupportedType => {
-  return supportedContentType.includes(contentType as DOMParserSupportedType)
-}
-
-type ResultItem = {
-  spineItemIndex: number
-  startCfi: string
-  endCfi: string
-  pageIndex?: number
-  contextText: string
-  startOffset: number
-  endOffset: number
-}
-
-export type SearchResult = ResultItem[]
+import { deferIdle, Reader } from "@prose-reader/core"
+import { defer, forkJoin, Observable, of } from "rxjs"
+import { catchError, finalize, map, switchMap } from "rxjs/operators"
+import { searchInDocument, SearchResult } from "./search"
+import { report } from "./report"
 
 /**
+ * Contract of search enhancer.
  *
+ * - At best a result match should be navigable. It means the search needs to
+ * be done on a rendered document. This is because rendering can differ from the original
+ * item resource. A resource can be something indigest and very specific (.pdf). The search
+ * enhancer is agnostic and can only search into documents.
  */
 export const searchEnhancer =
   <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
@@ -36,63 +19,10 @@ export const searchEnhancer =
     options: InheritOptions,
   ): InheritOutput & {
     search: {
-      search: (text: string) => void
-      $: {
-        search$: Observable<{ type: `start` } | { type: `end`; data: SearchResult }>
-      }
+      search: (text: string) => Observable<SearchResult>
     }
   } => {
     const reader = next(options)
-
-    const searchSubject$ = new Subject<string>()
-
-    const searchNodeContainingText = (node: Node, text: string) => {
-      const nodeList = node.childNodes
-
-      if (node.nodeName === `head`) return []
-
-      const rangeList: {
-        startNode: Node
-        start: number
-        endNode: Node
-        end: number
-      }[] = []
-      for (let i = 0; i < nodeList.length; i++) {
-        const subNode = nodeList[i]
-
-        if (!subNode) {
-          continue
-        }
-
-        if (subNode?.hasChildNodes()) {
-          rangeList.push(...searchNodeContainingText(subNode, text))
-        }
-
-        if (subNode.nodeType === 3) {
-          const content = (subNode as Text).data.toLowerCase()
-          if (content) {
-            let match
-            const regexp = RegExp(`(${text})`, `g`)
-
-            while ((match = regexp.exec(content)) !== null) {
-              if (match.index >= 0 && subNode.ownerDocument) {
-                const range = subNode.ownerDocument.createRange()
-                range.setStart(subNode, match.index)
-                range.setEnd(subNode, match.index + text.length)
-                rangeList.push({
-                  startNode: subNode,
-                  start: match.index,
-                  endNode: subNode,
-                  end: match.index + text.length,
-                })
-              }
-            }
-          }
-        }
-      }
-
-      return rangeList
-    }
 
     const searchForItem = (index: number, text: string) => {
       const item = reader.spineItemsManager.get(index)
@@ -101,92 +31,57 @@ export const searchEnhancer =
         return of([])
       }
 
-      return from(item.resourcesHandler.fetchResource()).pipe(
-        switchMap((response) => {
-          if (!(response instanceof Response)) {
-            return of([])
-          }
+      return deferIdle(() => item.renderer.renderHeadless()).pipe(
+        switchMap((result) => {
+          const { doc, release } = result || {}
 
-          const contentType = response?.headers.get(`Content-Type`) ?? ``
+          if (!doc) return of([])
 
-          // small optimization since we already know DOMParser only accept some documents only
-          // the reader returns us a valid HTML document anyway so it is not ultimately necessary.
-          // however we can still avoid doing unnecessary HTML generation for images resources, etc.
-          if (!isSupportedContentType(contentType)) return of([])
+          return deferIdle(() => searchInDocument(reader, item, doc, text)).pipe(
+            switchMap((results) => {
+              return of(results)
+              // if (!results.length) return of(results)
 
-          return from(response.text()).pipe(
-            map((responseText) => {
-              const parser = new DOMParser()
-              const doc = parser.parseFromString(responseText, contentType)
+              // const results$ = results.map((item) => consolidate(item, reader))
 
-              const ranges = searchNodeContainingText(doc, text)
+              // return forkJoin(results$)
+            }),
+            finalize(() => {
+              release?.()
+            }),
+            catchError((e) => {
+              report.error(e)
 
-              const newResults = ranges.map((range) => {
-                const { end, start } = reader.cfi.generateCfiFromRange(range, item.item)
-                const { node, offset, spineItem } = reader.cfi.resolveCfi({ cfi: start }) || {}
-                const pageIndex =
-                  node && spineItem !== undefined
-                    ? reader.spine.locator.getSpineItemPageIndexFromNode(node, offset, spineItem.item.index)
-                    : undefined
-
-                return {
-                  spineItemIndex: index,
-                  startCfi: start,
-                  endCfi: end,
-                  pageIndex,
-                  contextText: range.startNode.parentElement?.textContent || ``,
-                  startOffset: range.start,
-                  endOffset: range.end,
-                }
-              })
-
-              return newResults
+              return of([])
             }),
           )
         }),
       )
     }
 
-    const search = (text: string) => {
-      searchSubject$.next(text)
-    }
+    const search = (text: string) =>
+      defer(() => {
+        if (text === ``) {
+          return of([])
+        }
 
-    /**
-     * Main search process stream
-     */
-    const search$ = merge(
-      searchSubject$.asObservable().pipe(map(() => ({ type: `start` as const }))),
-      searchSubject$.asObservable().pipe(
-        switchMap((text) => {
-          if (text === ``) {
-            return of([])
-          }
+        const searches$ = reader.context.manifest?.spineItems.map((_, index) => searchForItem(index, text)) || []
 
-          const searches$ = reader.context.manifest?.spineItems.map((_, index) => searchForItem(index, text)) || []
+        return forkJoin([...searches$, of([])])
+      }).pipe(
+        map((results) => {
+          const flattenedResults = results.flat()
 
-          return forkJoin(searches$).pipe(
-            map((results) => {
-              return results.reduce((acc, value) => [...acc, ...value], [])
-            }),
-          )
+          report.debug("results", flattenedResults)
+
+          return flattenedResults
         }),
-        map((data) => ({ type: `end` as const, data })),
-      ),
-    ).pipe(share(), takeUntil(reader.$.destroy$))
-
-    const destroy = () => {
-      searchSubject$.complete()
-      reader.destroy()
-    }
+      )
 
     return {
       ...reader,
-      destroy,
       search: {
         search,
-        $: {
-          search$,
-        },
       },
     }
   }

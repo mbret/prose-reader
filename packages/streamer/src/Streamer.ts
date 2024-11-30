@@ -109,8 +109,16 @@ export class Streamer {
   }) {
     const response$ = this.accessArchive(key).pipe(
       mergeMap(({ archive, release }) => {
+        /**
+         * We commonly use file:// for manifest without baseUrl. This ensure we
+         * have valid URL for the reader while flagging them as local.
+         * 
+         * However, we obviously don't have the file:// prefix on the archive.
+         */
+        const cleanedResourcePath = resourcePath.replaceAll(`file://`, ``)
+
         const manifest$ = from(
-          generateResourceFromArchive(archive, resourcePath),
+          generateResourceFromArchive(archive, cleanedResourcePath),
         )
 
         return manifest$.pipe(

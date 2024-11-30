@@ -1,6 +1,6 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
-import { EMPTY, of, tap } from "rxjs"
+import { EMPTY, from, map, of, switchMap, tap } from "rxjs"
 import { createFrameElement } from "./createFrameElement"
 import { attachFrameSrc } from "./attachFrameSrc"
 import { waitForSwitch } from "../../../utils/rxjs"
@@ -116,6 +116,40 @@ export class HtmlRenderer extends DocumentRenderer {
     this.latestContentHeightWhenLoaded = latestContentHeightWhenLoaded
 
     return of(rest)
+  }
+
+  onRenderHeadless() {
+    return from(this.resourcesHandler.fetchResource()).pipe(
+      switchMap((resource) => {
+        if (resource instanceof Response) {
+          const contentType = resource.headers.get("content-type") ?? ""
+          const parsableContentTypes: DOMParserSupportedType[] = [
+            `application/xhtml+xml`,
+            `application/xml`,
+            `text/html`,
+            `text/xml`,
+          ]
+
+          if (
+            parsableContentTypes.includes(contentType as DOMParserSupportedType)
+          ) {
+            return from(resource.text()).pipe(
+              map((text) => {
+                const domParser = new DOMParser()
+                const doc = domParser.parseFromString(
+                  text,
+                  contentType as DOMParserSupportedType,
+                )
+
+                return doc
+              }),
+            )
+          }
+        }
+
+        return of(undefined)
+      }),
+    )
   }
 
   private isImageType = () => {

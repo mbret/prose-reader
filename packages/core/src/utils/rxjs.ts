@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Observable, of, OperatorFunction } from "rxjs"
+import { defer, Observable, of, OperatorFunction } from "rxjs"
 import { first, map, switchMap } from "rxjs/operators"
 
 export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
@@ -66,4 +66,19 @@ export const deferNextResult = <T>(stream: Observable<T>) => {
 
     return stream
   }
+}
+
+export function idle(): Observable<void> {
+  return new Observable<void>((observer) => {
+    const handle = requestIdleCallback(() => {
+      observer.next()
+      observer.complete()
+    })
+
+    return () => cancelIdleCallback(handle)
+  })
+}
+
+export function deferIdle<T>(callback: () => Observable<T>) {
+  return defer(() => idle().pipe(switchMap(callback)))
 }
