@@ -143,8 +143,8 @@ export const layoutEnhancer =
                 height: ${columnHeight}px !important;
               }
               img, video, audio, object, svg {
-                max-width: ${columnWidth}px !important;
-                max-height: ${columnHeight}px !important;
+                -max-width: ${columnWidth}px !important;
+                -max-height: ${columnHeight}px !important;
               }
               table {
                 max-width: ${columnWidth}px !important;

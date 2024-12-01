@@ -197,8 +197,8 @@ export const buildStyleWithMultiColumn = ({
       }
       img, video, audio, object, svg {
         max-width: 100%;
-        max-width: ${columnWidth}px !important;
-        max-height: ${columnHeight}px !important;
+        -max-width: ${columnWidth}px !important;
+        -max-height: ${columnHeight}px !important;
         -pointer-events: none;
         -webkit-column-break-inside: avoid;
         page-break-inside: avoid;
