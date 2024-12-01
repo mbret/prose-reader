@@ -29,10 +29,10 @@ export class SpineItem extends DestroyableClass {
   }>()
 
   public readonly containerElement: HTMLElement
-  public needsLayout$: Observable<unknown>
-  public renderer: DocumentRenderer
-  public resourcesHandler: ResourceHandler
-  public layout$: Observable<{ width: number; height: number }>
+  public readonly needsLayout$: Observable<unknown>
+  public readonly renderer: DocumentRenderer
+  public readonly resourcesHandler: ResourceHandler
+  public readonly layout$: Observable<{ width: number; height: number }>
   /**
    * Renderer loaded + spine item layout done
    */
@@ -121,12 +121,6 @@ export class SpineItem extends DestroyableClass {
       share(),
     )
 
-    this.layout$ = layoutProcess$.pipe(
-      filter((event) => event.type === `end`),
-      map((event) => event.data),
-      share(),
-    )
-
     this.isReady$ = layoutProcess$.pipe(
       withLatestFrom(this.renderer.isLoaded$),
       map(([event, loaded]) => !!(event.type === `end` && loaded)),
@@ -135,9 +129,24 @@ export class SpineItem extends DestroyableClass {
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
+    this.layout$ = layoutProcess$.pipe(
+      filter((event) => event.type === `end`),
+      map((event) => event.data),
+      share(),
+    )
+
     this.needsLayout$ = merge(this.unloaded$, this.loaded$)
 
-    merge(this.layout$, this.isReady$)
+    merge(
+      /**
+       * @important
+       * The order is important here. We want to ensure the isReady value
+       * is set before dispatching the layout event. Elements reacting
+       * to layout changes may rely on the isReady value.
+       */
+      this.isReady$,
+      this.layout$,
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }
