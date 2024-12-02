@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
 import { useIsComics, useIsPrepaginated, usePagination } from "../states"
@@ -42,7 +42,7 @@ export const Scrubber = () => {
         } else {
           reader?.navigation.goToPageOfSpineItem({
             pageIndex,
-            spineItemId: pagination?.beginSpineItemIndex ?? 0,
+            spineItemId: reader.pagination.getState().beginSpineItemIndex ?? 0,
             animation: false
           })
         }
