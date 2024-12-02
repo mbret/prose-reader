@@ -141,6 +141,10 @@ export class CfiHandler {
   opts: {}
   cfi: string
 
+  // Single static instances that will be reused
+  private static tempDocument: Document | null = null
+  private static tempTextArea: HTMLTextAreaElement | null = null
+
   constructor(str: string, opts: {}) {
     this.opts = Object.assign(
       {
@@ -258,6 +262,17 @@ export class CfiHandler {
         delete subpart.textLocationAssertion
       }
     }
+  }
+
+  private static getTextArea(): HTMLTextAreaElement {
+    if (!CfiHandler.tempTextArea) {
+      if (!CfiHandler.tempDocument) {
+        CfiHandler.tempDocument = document.implementation.createHTMLDocument()
+      }
+      CfiHandler.tempTextArea =
+        CfiHandler.tempDocument.createElement("textarea")
+    }
+    return CfiHandler.tempTextArea
   }
 
   static generatePart(node: Element | Node, offset?: number, extra?: {}) {
@@ -394,11 +409,41 @@ export class CfiHandler {
     return 0
   }
 
-  decodeEntities(dom: Document, str: string) {
+  /**
+   * Could be even faster by checking if there would be some potentially
+   * problematic characters creating unwanted resources trigger.
+   * @see https://github.com/fread-ink/epub-cfi-resolver/issues/25
+   * @todo check if we really need to do this anyway.
+   */
+  decodeEntities(_: Document, str: string) {
     try {
-      const el = dom.createElement(`textarea`)
+      /**
+       * Original version, has problem when parsing actual html.
+       * @see https://github.com/fread-ink/epub-cfi-resolver/issues/25
+       */
+      // const el = dom.createElement(`textarea`)
+      // el.innerHTML = str
+      // return el.value || ``
+      /**
+       * Other altenative that could be faster.
+       */
+      const el = CfiHandler.getTextArea()
       el.innerHTML = str
       return el.value || ``
+
+      /**
+       * Alternative suggested by LLM which prevent
+       * triggering the html, resources, etc as a side effect
+       * of parsing the content.
+       *
+       * @see https://github.com/fread-ink/epub-cfi-resolver/issues/25
+       */
+      // const parser = new DOMParser()
+      // const doc = parser.parseFromString(
+      //   `<!DOCTYPE html><text>${str}</text>`,
+      //   "text/html",
+      // )
+      // return doc.querySelector("text")?.textContent || str
     } catch (err) {
       // TODO fall back to simpler decode?
       // e.g. regex match for stuff like &#160; and &nbsp;

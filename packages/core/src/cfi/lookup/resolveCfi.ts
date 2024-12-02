@@ -5,7 +5,7 @@ import { parseCfi } from "./parseCfi"
 
 /**
  * Returns the node and offset for the given cfi.
- * 
+ *
  * A CFI can only resolve if the item is loaded.
  */
 export const resolveCfi = ({
