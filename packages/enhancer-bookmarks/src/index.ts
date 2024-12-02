@@ -1,5 +1,18 @@
 import { Reader } from "@prose-reader/core"
-import { BehaviorSubject, first, map, share, switchMap, takeUntil, tap, forkJoin, merge, of, Observable, ObservedValueOf } from "rxjs"
+import {
+  BehaviorSubject,
+  first,
+  map,
+  share,
+  switchMap,
+  takeUntil,
+  tap,
+  forkJoin,
+  merge,
+  of,
+  Observable,
+  ObservedValueOf,
+} from "rxjs"
 import { SerializableBookmark, RuntimeBookmark } from "./types"
 import { report } from "./report"
 import { Commands } from "./Commands"
