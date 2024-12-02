@@ -30,7 +30,7 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   )
   const searching = search?.type === "start"
   const results = search?.type === "end" ? search.data : []
-  const consolidatedResults = useObserve(() => reader?.pagination.locate(results), [results])
+  const consolidatedResults = useObserve(() => reader?.pagination.locate(results.slice(0, 100)), [results])
 
   return (
     <Stack flex={1}>
@@ -44,7 +44,7 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
               {results.length} result(s)
             </Heading>
             <Stack gap={0}>
-              {consolidatedResults?.slice(0, 100).map((result, j) => {
+              {consolidatedResults?.map((result, j) => {
                 return (
                   <Item
                     key={j}

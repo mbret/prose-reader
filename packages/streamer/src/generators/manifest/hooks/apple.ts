@@ -17,7 +17,6 @@ export const apple =
     const content = await (await infoFile.blob()).text()
 
     try {
-      console.log(`FOOO`, content)
       const xmlDoc = new xmldoc.XmlDocument(content)
       const platformElement = xmlDoc.childNamed(`platform`)
       const fixedLayoutOption =
