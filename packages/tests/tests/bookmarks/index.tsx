@@ -42,7 +42,7 @@ async function run() {
     }, [])
 
     useEffect(() => {
-      reader.bookmarks.bookmarks$.pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks))).subscribe(({ data }) => {
+      reader.bookmarks.bookmarks$.pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks))).subscribe((data) => {
         setBookmarks(data)
       })
     }, [reader])
