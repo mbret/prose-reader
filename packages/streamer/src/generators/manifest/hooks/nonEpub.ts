@@ -21,7 +21,7 @@ export const nonEpub =
       ...manifest,
       spineItems: manifest.spineItems.map((spineItem) => {
         const archiveItem = archive.files.find((item) =>
-          spineItem.href.endsWith(item.uri),
+          decodeURI(spineItem.href).endsWith(item.uri),
         )
 
         const mimeType =
