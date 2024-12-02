@@ -7,6 +7,7 @@ import { epubOptimizerHook } from "./hooks/epubOptimizer"
 import { navigationFallbackHook } from "./hooks/navigationFallback"
 import { kobo } from "./hooks/kobo"
 import { nonEpub } from "./hooks/nonEpub"
+import { apple } from "./hooks/apple"
 
 export const generateManifestFromArchive = async (
   archive: Archive,
@@ -15,6 +16,7 @@ export const generateManifestFromArchive = async (
   const hooks = [
     epubHook({ archive, baseUrl }),
     kobo({ archive, baseUrl }),
+    apple({ archive, baseUrl }),
     nonEpub({ archive, baseUrl }),
     epubOptimizerHook({ archive, baseUrl }),
     comicInfoHook({ archive, baseUrl }),

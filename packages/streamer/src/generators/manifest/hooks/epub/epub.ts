@@ -51,6 +51,8 @@ export const epubHook =
 
     const data = await opsFile.string()
 
+    Report.log(`data`, data)
+
     const opfXmlDoc = new xmldoc.XmlDocument(data)
 
     const toc = (await parseToc(opfXmlDoc, archive, { baseUrl })) || []
