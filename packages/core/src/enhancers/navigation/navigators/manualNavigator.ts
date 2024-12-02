@@ -4,6 +4,7 @@ import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
 import { UserNavigationEntry } from "../../../navigation/UserNavigator"
+import { report } from "../report"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
@@ -216,6 +217,13 @@ export class ManualNavigator {
         spineItemId,
       })
 
+    report.debug(`.goToPageOfSpineItem()`, {
+      pageIndex,
+      spineItemId,
+      ...rest,
+      position,
+    })
+
     this.reader.navigation.navigate({
       position,
       ...rest,
@@ -230,6 +238,12 @@ export class ManualNavigator {
       this.reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
         absolutePageIndex,
       })
+
+    report.debug(`.goToAbsolutePageIndex()`, {
+      absolutePageIndex,
+      ...rest,
+      foundInfo,
+    })
 
     if (foundInfo) {
       const position =
