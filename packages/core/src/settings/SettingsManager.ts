@@ -1,11 +1,18 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-import { Observable, Subject } from "rxjs"
-import { shareReplay } from "rxjs/operators"
+import {
+  Observable,
+  Subject,
+  distinctUntilChanged,
+  shareReplay,
+} from "rxjs"
 import { SettingsInterface } from "./SettingsInterface"
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { mapKeysTo } from "../utils/rxjs"
 
-export abstract class SettingsManager<InputSettings, OutputSettings>
+export abstract class SettingsManager<
+    InputSettings,
+    OutputSettings extends Record<string, unknown>,
+  >
   extends DestroyableClass
   implements SettingsInterface<InputSettings, OutputSettings>
 {
@@ -88,6 +95,13 @@ export abstract class SettingsManager<InputSettings, OutputSettings>
     }
 
     return this._settings$
+  }
+
+  public watch<K extends keyof OutputSettings>(keys: K[]) {
+    return this.values$.pipe(
+      mapKeysTo(keys),
+      distinctUntilChanged(isShallowEqual),
+    )
   }
 
   public destroy() {

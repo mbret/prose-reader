@@ -4,7 +4,6 @@ import {
   Subject,
   animationFrameScheduler,
   delay,
-  distinctUntilChanged,
   identity,
   map,
   merge,
@@ -23,8 +22,6 @@ import {
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { HookManager } from "../../hooks/HookManager"
 import { Context } from "../../context/Context"
-import { mapKeysTo } from "../../utils/rxjs"
-import { isShallowEqual } from "../../utils/objects"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { Report } from "../../report"
 import { Spine } from "../../spine/Spine"
@@ -63,14 +60,11 @@ export class ViewportNavigator extends DestroyableClass {
   ) {
     super()
 
-    const settingsThatRequireLayout$ = settings.values$.pipe(
-      mapKeysTo([
-        `computedPageTurnDirection`,
-        `computedPageTurnMode`,
-        `numberOfAdjacentSpineItemToPreLoad`,
-      ]),
-      distinctUntilChanged(isShallowEqual),
-    )
+    const settingsThatRequireLayout$ = settings.watch([
+      `computedPageTurnDirection`,
+      `computedPageTurnMode`,
+      `numberOfAdjacentSpineItemToPreLoad`,
+    ])
 
     /**
      * Watch for settings update that require changes

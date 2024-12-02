@@ -2,7 +2,7 @@
 import { defer, Observable, of, OperatorFunction } from "rxjs"
 import { first, map, switchMap } from "rxjs/operators"
 
-export const mapKeysTo = <R extends { [key: string]: any }, K extends keyof R>(
+export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
   keys: K[],
 ): OperatorFunction<R, Pick<R, K>> => {
   return map((obj) => {

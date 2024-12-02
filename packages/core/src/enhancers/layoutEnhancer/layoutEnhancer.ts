@@ -1,5 +1,4 @@
 import {
-  distinctUntilChanged,
   takeUntil,
   tap,
   skip,
@@ -8,8 +7,6 @@ import {
   debounceTime,
 } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
-import { mapKeysTo } from "../../utils/rxjs"
-import { isShallowEqual } from "../../utils/objects"
 import { fixReflowable } from "./fixReflowable"
 import {
   EnhancerOptions,
@@ -228,10 +225,9 @@ export const layoutEnhancer =
 
     const movingSafePan$ = createMovingSafePan$(reader)
 
-    settingsManager.values$
+    settingsManager
+      .watch([`pageHorizontalMargin`, `pageVerticalMargin`])
       .pipe(
-        mapKeysTo([`pageHorizontalMargin`, `pageVerticalMargin`]),
-        distinctUntilChanged(isShallowEqual),
         skip(1),
         tap(() => {
           reader.layout()

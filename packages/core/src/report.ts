@@ -55,6 +55,18 @@ const createReport = (namespace?: string) => ({
       else console.info(wrap(ROOT_NAMESPACE), ...data)
     }
   },
+  debug: namespace
+    ? Function.prototype.bind.call(
+        console.debug,
+        console,
+        wrap(`${ROOT_NAMESPACE}`),
+        wrap(namespace),
+      )
+    : Function.prototype.bind.call(
+        console.debug,
+        console,
+        wrap(`${ROOT_NAMESPACE}`),
+      ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: (...data: any[]) => {
     // eslint-disable-next-line no-console

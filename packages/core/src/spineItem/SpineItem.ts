@@ -1,6 +1,6 @@
 import { Context } from "../context/Context"
 import { DestroyableClass, Manifest } from ".."
-import { defer, merge, Observable, ObservedValueOf, of, Subject } from "rxjs"
+import { merge, Observable, ObservedValueOf, of, Subject } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
@@ -193,7 +193,9 @@ export class SpineItem extends DestroyableClass {
     return nextResult()
   }
 
-  load = () => this.renderer.load()
+  load = () => {
+    this.renderer.load()
+  }
 
   unload = () => {
     this.renderer.unload()

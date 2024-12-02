@@ -1,16 +1,13 @@
 import {
   of,
-  Observable,
   startWith,
   map,
   debounceTime,
   switchScan,
   forkJoin,
-  merge,
-  scan,
   withLatestFrom,
-  defer,
   finalize,
+  tap,
 } from "rxjs"
 import { deferIdle, idle } from "../../utils/rxjs"
 import { Reader } from "../../reader"
@@ -102,15 +99,7 @@ export const createLocator =
   (reader: Reader) =>
   <T extends LocatableResource>(resources: T[]) => {
     return deferIdle(() => {
-      if (!resources.length)
-        return of({ isStale: false as boolean, data: resources })
-
-      const StaleSymbol = Symbol("stale")
-
-      const markStale$: Observable<typeof StaleSymbol> = reader.layout$.pipe(
-        startWith(null),
-        map(() => StaleSymbol),
-      )
+      if (!resources.length) return of(resources)
 
       const consolidate$ = reader.layout$.pipe(
         debounceTime(10),
@@ -126,28 +115,36 @@ export const createLocator =
         }, resources),
       )
 
-      const run$ = merge(markStale$, consolidate$).pipe(
-        scan(
-          (acc, value) => {
-            if (value === StaleSymbol) {
-              return {
-                ...acc,
-                isStale: true,
-              }
-            }
+      /**
+       * We only force open reflowable spine items.
+       * This is because page index and absolute pages can be retrieved on
+       * a pre-paginated content without having to load it.
+       */
+      const reflowableItemIndexes = resources
+        .map((item) => reader.cfi.parseCfi(item.cfi).itemIndex)
+        .filter(isDefined)
+        .filter((index) => {
+          return (
+            reader.spineItemsManager.get(index)?.renditionLayout ===
+            `reflowable`
+          )
+        })
 
-            return {
-              isStale: false,
-              data: value,
-            }
-          },
-          {
-            isStale: true,
-            data: resources as (ConsolidatedResource & T)[],
-          },
-        ),
+      const release = reader.spine.spineItemsLoader.forceOpen(
+        reflowableItemIndexes,
       )
 
-      return run$
+      return consolidate$.pipe(
+        finalize(() => {
+          /**
+           * Make sure we wait a bit so if the user re-locate right after
+           * we don't have a flicker of unload/load. It helps stabilize
+           * resubscribing.
+           */
+          setTimeout(() => {
+            release()
+          }, 1000)
+        }),
+      )
     })
   }

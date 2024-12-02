@@ -1,17 +1,20 @@
 import { CheckCircleIcon } from "@chakra-ui/icons"
 import { List, ListIcon, ListItem, Stack, Text } from "@chakra-ui/react"
-import React from "react"
+import React, { memo } from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { SlNote } from "react-icons/sl"
 import { truncateText } from "../../common/utils"
+import { switchMap } from "rxjs"
 
-export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
+export const AnnotationsMenu = memo(({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
-  const highlights = useObserve(() => reader?.annotations.highlights$, []) ?? []
-  const consolidatedHighlights = useObserve(() => reader?.pagination.locate(highlights), [reader, highlights])
+  const consolidatedHighlights = useObserve(
+    () => reader?.annotations.highlights$.pipe(switchMap((highlights) => reader.pagination.locate(highlights))),
+    [reader]
+  )
 
-  const mapItemToListEntry = (item: NonNullable<typeof consolidatedHighlights>["data"][number], index: number) => (
+  const mapItemToListEntry = (item: NonNullable<typeof consolidatedHighlights>[number], index: number) => (
     <React.Fragment key={index}>
       <ListItem>
         <Stack
@@ -54,7 +57,7 @@ export const AnnotationsMenu = ({ onNavigate }: { onNavigate: () => void }) => {
 
   return (
     <List spacing={3} overflowY="auto" py={4} flex={1}>
-      {consolidatedHighlights?.data?.map((item, index) => mapItemToListEntry(item, index))}
+      {consolidatedHighlights?.map((item, index) => mapItemToListEntry(item, index))}
     </List>
   )
-}
+})

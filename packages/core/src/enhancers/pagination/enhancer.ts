@@ -38,7 +38,7 @@ export const paginationEnhancer =
     pagination: PaginationOutput & {
       locate: <T extends LocatableResource>(
         resources: T[],
-      ) => Observable<{ isStale: boolean; data: (ConsolidatedResource & T)[] }>
+      ) => Observable<(ConsolidatedResource & T)[]>
     }
   } => {
     const reader = next(options)
@@ -59,10 +59,7 @@ export const paginationEnhancer =
       } as unknown as PaginationOutput & {
         locate: <T extends LocatableResource>(
           resources: T[],
-        ) => Observable<{
-          isStale: boolean
-          data: (ConsolidatedResource & T)[]
-        }>
+        ) => Observable<(ConsolidatedResource & T)[]>
       },
     }
   }

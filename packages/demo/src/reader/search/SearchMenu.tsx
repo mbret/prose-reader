@@ -44,7 +44,7 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
               {results.length} result(s)
             </Heading>
             <Stack gap={0}>
-              {consolidatedResults?.data.slice(0, 100).map((result, j) => {
+              {consolidatedResults?.slice(0, 100).map((result, j) => {
                 return (
                   <Item
                     key={j}

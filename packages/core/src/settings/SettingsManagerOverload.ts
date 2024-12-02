@@ -1,8 +1,14 @@
-import { Observable, Subject, combineLatest } from "rxjs"
-import { map, shareReplay, startWith } from "rxjs/operators"
+import { Observable, ObservedValueOf, Subject, combineLatest } from "rxjs"
+import {
+  distinctUntilChanged,
+  map,
+  shareReplay,
+  startWith,
+} from "rxjs/operators"
 import { SettingsInterface } from "./SettingsInterface"
 import { CoreInputSettings, CoreOutputSettings } from "./types"
-import { shallowMergeIfDefined } from "@prose-reader/shared"
+import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
+import { mapKeysTo } from "../utils/rxjs"
 
 export abstract class SettingsManagerOverload<
   InputSettings,
@@ -115,6 +121,15 @@ export abstract class SettingsManagerOverload<
       ...this.settingsManager.values,
       ...this.outputSettings,
     }
+  }
+
+  public watch<K extends keyof ObservedValueOf<typeof this.values$>>(
+    keys: K[],
+  ) {
+    return this.values$.pipe(
+      mapKeysTo(keys),
+      distinctUntilChanged(isShallowEqual),
+    )
   }
 
   public destroy() {

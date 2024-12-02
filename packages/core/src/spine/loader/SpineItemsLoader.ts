@@ -1,25 +1,26 @@
 import {
   merge,
-  filter,
   withLatestFrom,
   map,
   debounceTime,
   animationFrameScheduler,
   takeUntil,
-  skip,
   distinctUntilChanged,
+  BehaviorSubject,
+  shareReplay,
 } from "rxjs"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLocator } from "../locator/SpineLocator"
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
-import { loadItems } from "./loadItems"
-import { mapToItemsToLoad } from "./mapToItemsToLoad"
 import { waitForSwitch } from "../../utils/rxjs"
 import { SpineLayout } from "../SpineLayout"
+import { arrayEqual } from "@prose-reader/shared"
 
 export class SpineItemsLoader extends DestroyableClass {
+  private forcedOpenSubject = new BehaviorSubject<number[][]>([])
+
   constructor(
     protected context: Context,
     protected spineItemsManager: SpineItemsManager,
@@ -29,17 +30,17 @@ export class SpineItemsLoader extends DestroyableClass {
   ) {
     super()
 
-    const navigationUpdate$ = this.context.bridgeEvent.navigation$
-    const layoutHasChanged$ = this.spineLayout.layout$.pipe(
-      filter(({ hasChanged }) => hasChanged),
+    const forcedOpen$ = this.forcedOpenSubject.pipe(
+      map((v) => [...new Set(v.flat())].sort()),
+      distinctUntilChanged(arrayEqual),
+      shareReplay({ bufferSize: 1, refCount: true }),
     )
-    const numberOfAdjacentSpineItemToPreLoad$ = settings.values$.pipe(
-      map(
-        ({ numberOfAdjacentSpineItemToPreLoad }) =>
-          numberOfAdjacentSpineItemToPreLoad,
-      ),
-      skip(1),
-      distinctUntilChanged(),
+
+    const shouldReloadSpineItems$ = merge(
+      this.context.bridgeEvent.navigation$,
+      this.spineLayout.layout$,
+      forcedOpen$,
+      settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
     )
 
     /**
@@ -57,22 +58,63 @@ export class SpineItemsLoader extends DestroyableClass {
      * It would ne nice to be able to load/unload without having to worry about viewport mis-adjustment but due to the current iframe and viewport
      * layout method we have to take it into consideration.
      */
-    const loadSpineItems$ = merge(
-      navigationUpdate$,
-      layoutHasChanged$,
-      numberOfAdjacentSpineItemToPreLoad$,
-    ).pipe(
+    const loadSpineItems$ = shouldReloadSpineItems$.pipe(
       // this can be changed by whatever we want and SHOULD not break navigation.
       // Ideally loading faster is better but loading too close to user navigating can
       // be dangerous.
       debounceTime(100, animationFrameScheduler),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      withLatestFrom(this.context.bridgeEvent.navigation$),
-      map(([, navigation]) => navigation.position),
-      mapToItemsToLoad({ spineLocator }),
-      loadItems({ spineItemsManager, settings }),
+      withLatestFrom(this.context.bridgeEvent.navigation$, forcedOpen$),
+      map(([, navigation, forcedOpenIndexes]) => {
+        const { numberOfAdjacentSpineItemToPreLoad } = settings.values
+        // these are real visible items to load
+        const { beginIndex = 0, endIndex = 0 } =
+          spineLocator.getVisibleSpineItemsFromPosition({
+            position: navigation.position,
+            threshold: 0,
+          }) || {}
+
+        // we increase the range based on settings
+        const beginMaximumIndex =
+          beginIndex - numberOfAdjacentSpineItemToPreLoad
+        const endMaximumIndex = endIndex + numberOfAdjacentSpineItemToPreLoad
+
+        const visibleIndexes = Array.from(
+          { length: endMaximumIndex - beginMaximumIndex + 1 },
+          (_, i) => beginMaximumIndex + i,
+        )
+
+        // we combine with forced open to ensure we load the forced open items
+        const indexesToLoad = [...forcedOpenIndexes, ...visibleIndexes]
+
+        spineItemsManager.items.forEach((orderedSpineItem, index) => {
+          if (indexesToLoad.includes(index)) {
+            orderedSpineItem.load()
+          } else {
+            orderedSpineItem.unload()
+          }
+        })
+      }),
     )
 
     loadSpineItems$.pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  forceOpen(spineItems: number[]) {
+    this.forcedOpenSubject.next([...this.forcedOpenSubject.value, spineItems])
+
+    return () => {
+      if (this.isDestroyed) return
+
+      this.forcedOpenSubject.next(
+        this.forcedOpenSubject.value.filter((item) => item !== spineItems),
+      )
+    }
+  }
+
+  public destroy(): void {
+    super.destroy()
+
+    this.forcedOpenSubject.complete()
   }
 }
