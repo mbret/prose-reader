@@ -80,7 +80,7 @@ export class HtmlRenderer extends DocumentRenderer {
     const { width: pageWidth, height: pageHeight } = this.context.getPageSize()
     const frameElement = this.getFrameElement()
 
-    if (!frameElement) return of({ width: pageWidth, height: pageHeight })
+    if (!frameElement) return of(undefined)
 
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 

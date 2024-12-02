@@ -49,6 +49,8 @@ type LayoutParams = {
 
 export abstract class DocumentRenderer extends DestroyableClass {
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
+  private lastLayoutDims: { width: number; height: number } | undefined =
+    undefined
 
   protected context: Context
   protected settings: ReaderSettingsManager
@@ -229,6 +231,29 @@ export abstract class DocumentRenderer extends DestroyableClass {
         Report.error(e)
 
         return of(undefined)
+      }),
+    )
+  }
+
+  /**
+   * @important
+   *
+   * If renderer returns undefined as dimensions we will use the previous
+   * layout dimensions as fallback. This ensure minmum layout shift during
+   * load / unload of items and improve stability..
+   */
+  public layout(params: LayoutParams) {
+    return defer(() => this.onLayout(params)).pipe(
+      map((dims) => {
+        const { height, width } = dims ??
+          this.lastLayoutDims ?? { height: 0, width: 0 }
+
+        const minHeight = Math.max(height, this.context.getPageSize().height)
+        const minWidth = Math.max(width, params.minimumWidth)
+
+        this.lastLayoutDims = { height: minHeight, width: minWidth }
+
+        return this.lastLayoutDims
       }),
     )
   }

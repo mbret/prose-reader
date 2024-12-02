@@ -80,28 +80,19 @@ export class SpineItem extends DestroyableClass {
           minimumWidth,
         })
 
-        const layout$ = defer(() =>
-          this.renderer.onLayout({
-            blankPagePosition,
-            minPageSpread: minimumWidth / this.context.getPageSize().width,
-            minimumWidth,
-            spreadPosition,
-          }),
-        )
+        const layout$ = this.renderer.layout({
+          blankPagePosition,
+          minPageSpread: minimumWidth / this.context.getPageSize().width,
+          minimumWidth,
+          spreadPosition,
+        })
 
         return merge(
           of({ type: "start" } as const),
           layout$.pipe(
-            map((dims) => {
-              const { height, width } = dims ?? { height: 0, width: 0 }
-              const minHeight = Math.max(
-                height,
-                this.context.getPageSize().height,
-              )
-              const minWidth = Math.max(width, minimumWidth)
-
-              this.containerElement.style.width = `${minWidth}px`
-              this.containerElement.style.height = `${minHeight}px`
+            map(({ height, width }) => {
+              this.containerElement.style.width = `${width}px`
+              this.containerElement.style.height = `${height}px`
 
               this.hookManager.execute(`item.onAfterLayout`, undefined, {
                 blankPagePosition,
@@ -111,7 +102,7 @@ export class SpineItem extends DestroyableClass {
 
               return {
                 type: "end",
-                data: { width: minWidth, height: minHeight },
+                data: { width, height },
               } as const
             }),
           ),
