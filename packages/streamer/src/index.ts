@@ -1,7 +1,7 @@
 export { generateResourceFromArchive } from "./generators/resources"
 export { generateManifestFromArchive } from "./generators/manifest"
 
-export { getArchiveOpfInfo } from "./archives/getArchiveOpfInfo"
+export { getArchiveOpfInfo } from "./epubs/getArchiveOpfInfo"
 
 export { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
 export { createArchiveFromText } from "./archives/createArchiveFromText"

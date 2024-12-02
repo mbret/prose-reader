@@ -1,6 +1,6 @@
 import xmldoc from "xmldoc"
-import { getArchiveOpfInfo } from "../archives/getArchiveOpfInfo"
 import { Archive } from "../archives/types"
+import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
 
 export const getSpineItemFilesFromArchive = async ({
   archive,

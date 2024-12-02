@@ -1,4 +1,4 @@
-import { Archive } from "./types"
+import { Archive } from "../archives/types"
 
 export const getArchiveOpfInfo = (archive: Archive) => {
   const filesAsArray = Object.values(archive.files).filter((file) => !file.dir)

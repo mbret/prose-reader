@@ -1,4 +1,3 @@
-import type { Manifest } from "@prose-reader/shared"
 import { Report } from "../../report"
 import { Archive } from "../../archives/types"
 import { defaultHook } from "./hooks/default"
@@ -6,36 +5,28 @@ import { epubHook } from "./hooks/epub/epub"
 import { comicInfoHook } from "./hooks/comicInfo"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
 import { navigationFallbackHook } from "./hooks/navigationFallback"
-
-const baseManifest: Manifest = {
-  filename: ``,
-  items: [],
-  nav: {
-    toc: [],
-  },
-  readingDirection: `ltr`,
-  renditionLayout: `pre-paginated`,
-  renditionSpread: `auto`,
-  spineItems: [],
-  title: ``,
-}
+import { kobo } from "./hooks/kobo"
+import { nonEpub } from "./hooks/nonEpub"
 
 export const generateManifestFromArchive = async (
   archive: Archive,
   { baseUrl = `` }: { baseUrl?: string } = {},
 ) => {
   const hooks = [
-    defaultHook({ archive, baseUrl }),
     epubHook({ archive, baseUrl }),
+    kobo({ archive, baseUrl }),
+    nonEpub({ archive, baseUrl }),
     epubOptimizerHook({ archive, baseUrl }),
     comicInfoHook({ archive, baseUrl }),
     navigationFallbackHook({ archive, baseUrl }),
   ]
 
   try {
+    const baseManifestPromise = defaultHook({ archive, baseUrl })()
+
     const manifest = await hooks.reduce(async (manifest, gen) => {
       return await gen(await manifest)
-    }, Promise.resolve(baseManifest))
+    }, baseManifestPromise)
 
     Report.log("Generated manifest", manifest)
 

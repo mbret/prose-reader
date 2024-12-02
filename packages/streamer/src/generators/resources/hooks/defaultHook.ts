@@ -1,8 +1,8 @@
-import { getArchiveOpfInfo } from "../../../archives/getArchiveOpfInfo"
 import { Archive } from "../../../archives/types"
 import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import xmldoc from "xmldoc"
 import { HookResource } from "./types"
+import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
 
 /**
  * We are trying to metadata from opf file in epub archive.

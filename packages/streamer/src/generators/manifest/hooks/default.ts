@@ -10,7 +10,7 @@ export const defaultHook =
       filename: archive.filename,
       title:
         archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
-      renditionLayout: `pre-paginated`,
+      renditionLayout: undefined,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
       spineItems: files
@@ -22,7 +22,7 @@ export const defaultHook =
           id: `${index}.${file.basename}`,
           index,
           href: encodeURI(`${baseUrl}${file.uri}`),
-          renditionLayout: `pre-paginated`,
+          renditionLayout: undefined,
           progressionWeight: 1 / files.length,
           pageSpreadLeft: undefined,
           pageSpreadRight: undefined,

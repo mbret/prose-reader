@@ -1,16 +1,11 @@
 import xmldoc from "xmldoc"
 import { parseToc } from "../../../../parsers/nav"
 import type { Manifest } from "@prose-reader/shared"
-import { extractKoboInformationFromArchive } from "../../../../parsers/kobo"
 import { Report } from "../../../../report"
 import { Archive } from "../../../../archives/types"
-import { getArchiveOpfInfo } from "../../../../archives/getArchiveOpfInfo"
-import { getSpineItemFilesFromArchive } from "../../../../epub/getSpineItemFilesFromArchive"
-
-type SpineItemProperties =
-  | `rendition:layout-reflowable`
-  | `page-spread-left`
-  | `page-spread-right`
+import { getSpineItemInfo } from "./spineItems"
+import { getArchiveOpfInfo } from "../../../../epubs/getArchiveOpfInfo"
+import { getSpineItemFilesFromArchive } from "../../../../epubs/getSpineItemFilesFromArchive"
 
 const getItemFromElement = (
   element: xmldoc.XmlElement,
@@ -49,15 +44,12 @@ export const epubHook =
   async (manifest: Manifest): Promise<Manifest> => {
     const { data: opsFile, basePath: opfBasePath } =
       getArchiveOpfInfo(archive) || {}
-    const koboInformation = await extractKoboInformationFromArchive(archive)
 
     if (!opsFile) {
       return manifest
     }
 
     const data = await opsFile.string()
-
-    Report.log(data, koboInformation)
 
     const opfXmlDoc = new xmldoc.XmlDocument(data)
 
@@ -111,22 +103,20 @@ export const epubHook =
       nav: {
         toc,
       },
-      renditionLayout:
-        publisherRenditionLayout ||
-        koboInformation.renditionLayout ||
-        `reflowable`,
+      renditionLayout: publisherRenditionLayout,
       renditionFlow: publisherRenditionFlow || `auto`,
       renditionSpread,
       title,
       readingDirection: pageProgressionDirection || `ltr`,
+      /**
+       * @see https://www.w3.org/TR/epub/#sec-itemref-elem
+       */
       spineItems:
         spineElm?.childrenNamed(`itemref`).map((itemrefElm, index) => {
           const manifestItem = manifestElm
             ?.childrenNamed(`item`)
             .find((item) => item.attr.id === itemrefElm?.attr.idref)
           const href = manifestItem?.attr.href || ``
-          const properties = (itemrefElm?.attr.properties?.split(` `) ||
-            []) as SpineItemProperties[]
           const itemSize =
             archive.files.find((file) => file.uri.endsWith(href))?.size || 0
 
@@ -136,7 +126,10 @@ export const epubHook =
               ? ""
               : "file://"
 
+          const spineItemInfo = getSpineItemInfo(itemrefElm)
+
           return {
+            ...spineItemInfo,
             id: manifestItem?.attr.id || ``,
             index,
             href: manifestItem?.attr.href?.startsWith(`https://`)
@@ -144,19 +137,9 @@ export const epubHook =
               : opfBasePath
                 ? `${hrefBaseUri}${opfBasePath}/${manifestItem?.attr.href}`
                 : `${hrefBaseUri}${manifestItem?.attr.href}`,
-            renditionLayout: publisherRenditionLayout || `reflowable`,
-            ...(properties.find(
-              (property) => property === `rendition:layout-reflowable`,
-            ) && {
-              renditionLayout: `reflowable`,
-            }),
+            renditionLayout:
+              spineItemInfo.renditionLayout ?? publisherRenditionLayout,
             progressionWeight: itemSize / totalSize,
-            pageSpreadLeft:
-              properties.some((property) => property === `page-spread-left`) ||
-              undefined,
-            pageSpreadRight:
-              properties.some((property) => property === `page-spread-right`) ||
-              undefined,
             // size: itemSize
             mediaType: manifestItem?.attr[`media-type`],
           }
