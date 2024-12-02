@@ -1,18 +1,6 @@
-.textLayer {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  color: black;
-  overflow: hidden;
-  line-height: 1;
-}
-
 body {
   width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   margin: 0;
   padding: 0;
   /* This will prevent scrollbars and wrong offset of annotation layer */

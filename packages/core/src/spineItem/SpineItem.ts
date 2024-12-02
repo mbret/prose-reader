@@ -11,7 +11,6 @@ import {
   startWith,
   switchMap,
   takeUntil,
-  tap,
   withLatestFrom,
 } from "rxjs/operators"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -178,7 +177,7 @@ export class SpineItem extends DestroyableClass {
   }
 
   getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frameElement = this.renderer.layers[0]?.element
+    const frameElement = this.renderer.getDocumentFrame()
 
     if (frameElement && frameElement instanceof HTMLIFrameElement && selector) {
       if (selector.startsWith(`#`)) {
@@ -270,6 +269,14 @@ export class SpineItem extends DestroyableClass {
         ),
       ),
     )
+  }
+
+  get renditionLayout() {
+    const itemRenditionLayout = this.item.renditionLayout
+
+    if (itemRenditionLayout) return itemRenditionLayout
+
+    return this.context.manifest?.renditionLayout ?? "reflowable"
   }
 }
 

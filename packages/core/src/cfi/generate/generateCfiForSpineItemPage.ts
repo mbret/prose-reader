@@ -27,7 +27,7 @@ export const generateCfiForSpineItemPage = Report.measurePerformance(
       spineItem,
     )
 
-    const rendererElement = spineItem.renderer.layers[0]?.element
+    const rendererElement = spineItem.renderer.getDocumentFrame()
 
     if (
       nodeOrRange &&

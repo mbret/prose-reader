@@ -84,13 +84,15 @@ export const selectionEnhancer =
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ itemId, layers, destroy$, destroy }) => {
-        const frame = layers[0]?.element
+      ({ itemId, destroy$, destroy }) => {
+        const item = reader.spineItemsManager.get(itemId)
+
+        const frame = item?.renderer.getDocumentFrame()
 
         const itemIndex =
           reader.spineItemsManager.getSpineItemIndex(itemId) ?? 0
 
-        if (frame instanceof HTMLIFrameElement) {
+        if (frame) {
           const frameDoc =
             frame.contentDocument || frame.contentWindow?.document
 

@@ -274,7 +274,6 @@ export class CfiHandler {
         // @ts-ignore
         `/` + o.count + (node.id ? `[` + cfiEscape(node.id) + `]` : ``) + cfi
 
-      // debugger
       node = node.parentNode
     }
 
@@ -959,7 +958,6 @@ export class CfiHandler {
     // custom
     startNode = dom
 
-    // debugger
     if (!startNode) throw new Error(`Document incompatible with CFIs`)
 
     let node = startNode
@@ -1043,7 +1041,6 @@ export class CfiHandler {
 
     // @ts-ignore
     const o = this.resolveNode(index, subparts, dom, opts)
-    // debugger
     let node = o.node
 
     // @ts-ignore

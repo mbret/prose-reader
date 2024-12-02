@@ -24,16 +24,12 @@ export const eventsEnhancer =
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ destroy, layers, itemId }) => {
-        const frame = layers.find(
-          (layer) => layer.element instanceof HTMLIFrameElement,
-        )?.element
-
-        if (!(frame instanceof HTMLIFrameElement)) return
-
+      ({ destroy, itemId }) => {
         const item = reader.spineItemsManager.get(itemId)
 
-        if (!item) return
+        const frame = item?.renderer.getDocumentFrame()
+
+        if (!frame || !item) return
 
         /**
          * Register event listener for all mouse/pointer event in order to

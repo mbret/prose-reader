@@ -28,17 +28,17 @@ export const fixReflowable = (reader: Reader) => {
     `item.onAfterLayout`,
     ({ item, blankPagePosition, minimumWidth }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
-      const element = spineItem?.renderer.layers[0]?.element
+      const element = spineItem?.renderer.getDocumentFrame()
 
       if (
-        !(spineItem?.item.renditionLayout === `reflowable`) ||
+        !(spineItem?.renditionLayout === `reflowable`) ||
         !(element instanceof HTMLIFrameElement)
       )
         return
 
       const { hasViewport } = getFrameViewportInfo(element)
       const { width: pageWidth } = reader.context.getPageSize()
-      const frameElement = spineItem?.renderer.layers[0]?.element
+      const frameElement = spineItem?.renderer.getDocumentFrame()
 
       if (hasViewport) {
         const spineManagerWantAFullWidthItem = pageWidth < minimumWidth

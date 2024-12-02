@@ -1,8 +1,8 @@
 import { catchError, EMPTY, finalize, from, map, Observable, of, switchMap, tap } from "rxjs"
 import { PDFPageProxy, RenderingCancelledException, RenderTask, TextLayer } from "pdfjs-dist"
 import { DocumentRenderer, injectCSS, removeCSS, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
-import { copyCanvasToFrame, createPdfFrameElement } from "./frames"
 import pdfFrameStyle from "./frame.css?inline"
+import { layoutCanvas, layoutLayers } from "./layout"
 
 export class PdfRenderer extends DocumentRenderer {
   private pageProxy: PDFPageProxy | undefined
@@ -16,8 +16,16 @@ export class PdfRenderer extends DocumentRenderer {
     super(params)
   }
 
+  private getCanvas() {
+    const element = this.layers[0]?.element.children[0]
+
+    if (!(element instanceof HTMLCanvasElement)) return
+
+    return element
+  }
+
   private getFrameElement() {
-    const frame = this.layers[0]?.element
+    const frame = this.layers[1]?.element.children[0]
 
     if (!(frame instanceof HTMLIFrameElement)) return
 
@@ -56,13 +64,52 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   onCreateDocument(): Observable<unknown> {
-    const frameElement = createPdfFrameElement()
+    const frameElement = document.createElement(`iframe`)
+    frameElement.style.cssText = `
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    `
 
+    frameElement.setAttribute("tabIndex", "0")
+    frameElement.setAttribute("frameBorder", "0")
     frameElement.setAttribute(`src`, "about:blank")
+
+    const frameContainer = this.containerElement.ownerDocument.createElement("div")
+    frameContainer.style.cssText = `
+      mix-blend-mode: multiply;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      top: 0;
+    `
+
+    /**
+     * The canvas is never attached to the DOM and will be used for offscreen rendering
+     * then copied into the frame.
+     */
+    const canvas = this.containerElement.ownerDocument.createElement("canvas")
+    const canvasContainer = this.containerElement.ownerDocument.createElement("div")
+    canvasContainer.style.cssText = `
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: clip;
+    `
+
+    frameContainer.appendChild(frameElement)
+    canvasContainer.appendChild(canvas)
 
     this.layers = [
       {
-        element: frameElement,
+        element: canvasContainer,
+      },
+      {
+        element: frameContainer,
       },
     ]
 
@@ -79,7 +126,9 @@ export class PdfRenderer extends DocumentRenderer {
         return of(frameElement).pipe(
           waitForSwitch(this.context.bridgeEvent.viewportFree$),
           tap(() => {
-            this.containerElement.appendChild(frameElement)
+            this.layers.forEach(({ element }) => {
+              this.containerElement.appendChild(element)
+            })
             // frame will instantly load, no need to wait for event
 
             injectCSS(frameElement, "pdfjs-viewer-style", this.pdfViewerStyle)
@@ -100,20 +149,23 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onLayout(_: {
+  onLayout({
+    spreadPosition,
+  }: {
     minPageSpread: number
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`
   }) {
     const frameElement = this.getFrameElement()
+    const canvas = this.getCanvas()
 
-    if (!frameElement) return of(undefined)
+    if (!frameElement || !canvas) return of(undefined)
 
-    /**
-     * The canvas is never attached to the DOM and will be used for offscreen rendering
-     * then copied into the frame.
-     */
-    const canvas = this.containerElement.ownerDocument.createElement("canvas")
+    // first we try to get the desired viewport for a confortable reading based on theh current page size
+    const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
+
+    layoutLayers(this.layers, this.context, spreadPosition)
+
     const context = canvas?.getContext("2d")
     // Support HiDPI-screens.
     const pixelRatioScale = window.devicePixelRatio || 1
@@ -125,29 +177,13 @@ export class PdfRenderer extends DocumentRenderer {
       this.renderTask = undefined
     }
 
-    // first we try to get the desired viewport for a confortable reading based on theh current page size
-    const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
-
-    frameElement.style.height = `${pageHeight}px`
-    frameElement.style.width = `${pageWidth}px`
+    layoutCanvas(this.pageProxy, canvas, this.context)
 
     const { width: viewportWidth, height: viewportHeight } = this.pageProxy.getViewport({ scale: 1 })
     const pageScale = Math.max(pageWidth / viewportWidth, pageHeight / viewportHeight)
 
     // then we generate the viewport for the canvas based on the page scale
     const viewport = this.pageProxy.getViewport({ scale: pageScale })
-
-    // Then wedefine which axis should stretch or shrink to ratio
-    const viewportRatio = viewport.width / viewport.height
-    const pageRatio = pageWidth / pageHeight
-    const isWiderThanPage = viewportRatio > pageRatio
-    const canvasWidth = isWiderThanPage ? pageWidth : pageHeight * viewportRatio
-    const canvasHeight = viewportRatio > pageRatio ? pageWidth / viewportRatio : pageHeight
-
-    canvas.width = Math.floor(viewport.width * pixelRatioScale)
-    canvas.height = Math.floor(viewport.height * pixelRatioScale)
-    canvas.style.width = Math.floor(canvasWidth) + "px"
-    canvas.style.height = Math.floor(canvasHeight) + "px"
 
     const transform = pixelRatioScale !== 1 ? [pixelRatioScale, 0, 0, pixelRatioScale, 0, 0] : null
 
@@ -159,7 +195,6 @@ export class PdfRenderer extends DocumentRenderer {
 
     return from(this.renderTask?.promise).pipe(
       map(() => {
-        const frameElement = this.getFrameElement()
         const frameDoc = frameElement?.contentDocument
 
         if (!frameDoc || !frameElement) {
@@ -168,7 +203,7 @@ export class PdfRenderer extends DocumentRenderer {
 
         frameDoc.body.innerHTML = ``
 
-        const frameCanvas = copyCanvasToFrame(canvas, frameDoc)
+        // const frameCanvas = copyCanvasToFrame(canvas, frameDoc)
         const pdfPage = this.pageProxy
 
         if (!pdfPage) return undefined
@@ -177,10 +212,13 @@ export class PdfRenderer extends DocumentRenderer {
         // Set it's class to textLayer which have required CSS styles
         textLayerElement.setAttribute("class", "textLayer")
         frameDoc.body.appendChild(textLayerElement)
-        // scale between original viewport size and the rendererd canvas size. (not the rendering scale)
-        const canvasScale = canvasWidth / viewportWidth
-        textLayerElement.style.top = frameCanvas.offsetTop + "px"
-        textLayerElement.style.left = frameCanvas.offsetLeft + "px"
+
+        const canvasScale = canvas.clientWidth / viewportWidth
+
+        textLayerElement.style.top = canvas.offsetTop + "px"
+        textLayerElement.style.left = canvas.offsetLeft + "px"
+        textLayerElement.style.height = canvas.style.height
+        textLayerElement.style.width = canvas.style.width
 
         removeCSS(frameElement, "pdf-scale-scale")
         injectCSS(frameElement, "pdf-scale-scale", `:root { --scale-factor: ${canvasScale}; }`)
@@ -205,8 +243,6 @@ export class PdfRenderer extends DocumentRenderer {
       }),
       finalize(() => {
         this.renderTask = undefined
-
-        canvas.remove()
       }),
     )
   }
@@ -219,10 +255,8 @@ export class PdfRenderer extends DocumentRenderer {
     return this.getPageProxy().pipe(
       switchMap((pageProxy) => {
         const headlessDocument = document.implementation.createHTMLDocument()
-        const canvas = headlessDocument.createElement("canvas")
         const textLayerElement = headlessDocument.createElement("div")
 
-        headlessDocument.body.appendChild(canvas)
         headlessDocument.body.appendChild(textLayerElement)
 
         const textLayer = new TextLayer({
@@ -234,5 +268,9 @@ export class PdfRenderer extends DocumentRenderer {
         return from(textLayer.render()).pipe(map(() => headlessDocument))
       }),
     )
+  }
+
+  getDocumentFrame() {
+    return this.getFrameElement()
   }
 }

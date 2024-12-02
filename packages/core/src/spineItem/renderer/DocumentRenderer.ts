@@ -265,6 +265,11 @@ export abstract class DocumentRenderer extends DestroyableClass {
     params: LayoutParams,
   ): Observable<{ width: number; height: number } | undefined>
 
+  /**
+   * Return the main document iframe.
+   */
+  abstract getDocumentFrame(): HTMLIFrameElement | undefined
+
   get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {
     return undefined
   }

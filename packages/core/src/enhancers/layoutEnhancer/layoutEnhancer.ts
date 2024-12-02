@@ -95,7 +95,7 @@ export const layoutEnhancer =
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
       reader.spineItemsManager.items.forEach((item) => {
-        const frame = item.renderer.layers[0]?.element
+        const frame = item.renderer.getDocumentFrame()
 
         if (!hasRedrawn && frame) {
           /* eslint-disable-next-line no-void */
@@ -117,7 +117,7 @@ export const layoutEnhancer =
         settingsManager.values
       const pageSize = reader.context.getPageSize()
 
-      if (spineItem?.item.renditionLayout === `reflowable` && !isImageType) {
+      if (spineItem?.renditionLayout === `reflowable` && !isImageType) {
         let columnWidth = pageSize.width - pageHorizontalMargin * 2
         const columnHeight = pageSize.height - pageVerticalMargin * 2
         let width = pageSize.width - pageHorizontalMargin * 2
@@ -129,12 +129,13 @@ export const layoutEnhancer =
           columnGap = pageVerticalMargin * 2
         }
 
-        spineItem?.renderer.layers.forEach((layer) => {
-          if (layer.element instanceof HTMLIFrameElement) {
-            upsertCSS(
-              layer.element,
-              `prose-layout-enhancer-css`,
-              `
+        const frame = spineItem?.renderer.getDocumentFrame()
+
+        if (frame) {
+          upsertCSS(
+            frame,
+            `prose-layout-enhancer-css`,
+            `
               body {
                 width: ${width}px !important;
                 margin: ${pageVerticalMargin}px ${pageHorizontalMargin}px !important;
@@ -153,9 +154,8 @@ export const layoutEnhancer =
                 max-width: ${columnWidth}px;
               }
             `,
-            )
-          }
-        })
+          )
+        }
       }
     })
 

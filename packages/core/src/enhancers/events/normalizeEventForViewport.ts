@@ -16,7 +16,7 @@ export const normalizeEventForViewport = <
   if (!iframeOriginalEvent || !originalFrame) return event
 
   const spineItem = locator.getSpineItemFromIframe(originalFrame)
-  const frameElement = spineItem?.renderer.layers[0]?.element
+  const frameElement = originalFrame
   const { height: pageHeight, width: pageWidth } = context.getPageSize()
 
   if (!spineItem || !(frameElement instanceof HTMLIFrameElement)) return event

@@ -59,7 +59,7 @@ export const hotkeysEnhancer =
             ...spineItems.map((item) =>
               item.loaded$.pipe(
                 switchMap(() => {
-                  const element = item.renderer.layers[0]?.element
+                  const element = item.renderer.getDocumentFrame()
 
                   return element instanceof HTMLIFrameElement &&
                     element?.contentDocument

@@ -84,7 +84,11 @@ export class HtmlRenderer extends DocumentRenderer {
 
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 
-    if (this.item.renditionLayout === `pre-paginated`) {
+    if (
+      this.item.renditionLayout === `pre-paginated` ||
+      (!this.item.renditionLayout &&
+        this.context.manifest?.renditionLayout === `pre-paginated`)
+    ) {
       const dims = renderPrePaginated({
         blankPagePosition,
         enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
@@ -207,5 +211,9 @@ export class HtmlRenderer extends DocumentRenderer {
       default:
         return undefined
     }
+  }
+
+  getDocumentFrame() {
+    return this.getFrameElement()
   }
 }

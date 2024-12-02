@@ -18,7 +18,7 @@ import { SpineItem } from "../spineItem/SpineItem"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
-  protected spineItemsLoader: SpineItemsLoader
+  public readonly spineItemsLoader: SpineItemsLoader
 
   public locator: SpineLocator
 

@@ -23,21 +23,19 @@ export const accessibilityEnhancer =
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ itemId, layers, destroy }) => {
-        const frame = layers[0]?.element
-
-        if (!(frame instanceof HTMLIFrameElement)) return
-
+      ({ itemId, destroy }) => {
         const item = reader.spineItemsManager.get(itemId)
 
         if (!item) return
 
-        item.renderer.layers.forEach((layer) => {
-          if (layer.element instanceof HTMLIFrameElement) {
-            upsertCSS(
-              layer.element,
-              `prose-reader-accessibility`,
-              `
+        const frame = item.renderer.getDocumentFrame()
+
+        if (!frame) return
+
+        upsertCSS(
+          frame,
+          `prose-reader-accessibility`,
+          `
               :focus-visible {
                 ${
                   /*
@@ -48,9 +46,7 @@ export const accessibilityEnhancer =
                 outline: -webkit-focus-ring-color auto 1px;
               }
             `,
-            )
-          }
-        })
+        )
 
         const links = frame.contentDocument?.body.querySelectorAll(`a`)
 

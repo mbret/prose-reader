@@ -87,10 +87,12 @@ export const mediaEnhancer =
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
-      ({ layers, destroy }) => {
-        const frame = layers[0]?.element
+      ({ destroy, itemId }) => {
+        const frame = reader.spineItemsManager
+          .get(itemId)
+          ?.renderer.getDocumentFrame()
 
-        if (!(frame instanceof HTMLIFrameElement)) return
+        if (!frame) return
 
         frameObserver.observe(frame)
 

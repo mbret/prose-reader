@@ -9,9 +9,12 @@ import {
   merge,
   scan,
   withLatestFrom,
+  defer,
+  finalize,
 } from "rxjs"
 import { deferIdle, idle } from "../../utils/rxjs"
 import { Reader } from "../../reader"
+import { isDefined } from "../../utils/isDefined"
 
 export type LocatableResource = {
   cfi: string
@@ -37,7 +40,7 @@ export const consolidate = (item: ConsolidatedResource, reader: Reader) => {
 
   if (!spineItem) return of({ ...item, meta: { ...item.meta, itemIndex } })
 
-  if (spineItem.item.renditionLayout === `pre-paginated`) {
+  if (spineItem.renditionLayout === `pre-paginated`) {
     itemPageIndex = 0
   }
 
@@ -49,7 +52,7 @@ export const consolidate = (item: ConsolidatedResource, reader: Reader) => {
       const { node: startNode, offset: startOffset } =
         reader.cfi.resolveCfi({ cfi: item.cfi }) ?? {}
 
-      if (spineItem.item.renditionLayout !== `pre-paginated` && startNode) {
+      if (spineItem.renditionLayout !== `pre-paginated` && startNode) {
         itemPageIndex =
           reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
             startNode,

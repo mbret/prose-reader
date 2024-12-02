@@ -88,12 +88,12 @@ export const fontsEnhancer =
      */
     const applyChangeToSpineItems = (requireLayout: boolean) => {
       reader.spineItemsManager.items.forEach((item) => {
-        if (item.item.renditionLayout !== `pre-paginated`) {
-          item.renderer.layers.forEach((layer) => {
-            if (layer.element instanceof HTMLIFrameElement) {
-              upsertCSS(layer.element, `prose-reader-fonts`, getStyle())
-            }
-          })
+        if (item.renditionLayout !== `pre-paginated`) {
+          const frame = item.renderer.getDocumentFrame()
+
+          if (frame) {
+            upsertCSS(frame, `prose-reader-fonts`, getStyle())
+          }
         }
       })
 
@@ -108,12 +108,12 @@ export const fontsEnhancer =
     reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
 
-      if (item?.item.renditionLayout !== `pre-paginated`) {
-        item?.renderer.layers.forEach((layer) => {
-          if (layer.element instanceof HTMLIFrameElement) {
-            upsertCSS(layer.element, `prose-reader-fonts`, getStyle())
-          }
-        })
+      if (item?.renditionLayout !== `pre-paginated`) {
+        const frame = item?.renderer.getDocumentFrame()
+
+        if (frame) {
+          upsertCSS(frame, `prose-reader-fonts`, getStyle())
+        }
       }
     })
 

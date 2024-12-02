@@ -21,4 +21,8 @@ export class DefaultRenderer extends DocumentRenderer {
   onRenderHeadless() {
     return EMPTY
   }
+
+  getDocumentFrame() {
+    return undefined
+  }
 }

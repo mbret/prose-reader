@@ -2,7 +2,6 @@ import { Box } from "@chakra-ui/react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { createPortal } from "react-dom"
-import React from "react"
 import { BookmarkAddButton } from "./BookmarkAddButton"
 import { BookmarkRemoveButton } from "./BookmarkRemoveButton"
 

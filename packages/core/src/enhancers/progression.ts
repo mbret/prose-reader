@@ -62,7 +62,7 @@ export const progressionEnhancer =
 
           if (
             !isGloballyPrePaginated &&
-            currentItem.item.renditionLayout === `reflowable` &&
+            currentItem.renditionLayout === `reflowable` &&
             !itemIsReady
           ) {
             progressWithinThisItem = 0

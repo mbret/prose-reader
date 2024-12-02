@@ -24,7 +24,7 @@ export const resolveCfi = ({
   const { cleanedCfi, offset } = parseCfi(cfi)
   const cfiHandler = new CfiHandler(cleanedCfi, {})
 
-  const rendererElement = spineItem.renderer.layers[0]?.element
+  const rendererElement = spineItem.renderer.getDocumentFrame()
 
   if (rendererElement instanceof HTMLIFrameElement) {
     const doc = rendererElement.contentWindow?.document

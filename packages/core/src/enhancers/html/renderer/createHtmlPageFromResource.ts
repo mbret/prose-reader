@@ -39,7 +39,7 @@ export const createHtmlPageFromResource = async (
     return `
       <html>
         <head>
-          ${item.renditionLayout !== `reflowable` ? `<meta name="viewport" content="width=${width}, height=${height}">` : ``}
+          ${item.renditionLayout === `pre-paginated` ? `<meta name="viewport" content="width=${width}, height=${height}">` : ``}
         </head>
         <body style="margin: 0px;" tab-index="-1;">
           <img

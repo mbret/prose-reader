@@ -118,4 +118,8 @@ export class ImageRenderer extends DocumentRenderer {
   onRenderHeadless() {
     return EMPTY
   }
+
+  getDocumentFrame() {
+    return undefined
+  }
 }

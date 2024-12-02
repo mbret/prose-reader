@@ -53,7 +53,7 @@ export const layoutItem = ({
      */
     if (
       !isGloballyPrePaginated &&
-      item.item.renditionLayout === `reflowable` &&
+      item.renditionLayout === `reflowable` &&
       !isLastItem
     ) {
       minimumWidth = context.getPageSize().width * 2
@@ -62,7 +62,7 @@ export const layoutItem = ({
     // mainly to make loading screen looks good
     if (
       !isGloballyPrePaginated &&
-      item.item.renditionLayout === `reflowable` &&
+      item.renditionLayout === `reflowable` &&
       isLastItem &&
       itemStartOnNewScreen
     ) {

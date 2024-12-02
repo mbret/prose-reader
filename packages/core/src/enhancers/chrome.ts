@@ -54,10 +54,11 @@ export const chromeEnhancer =
         containerElement.addEventListener(`scroll`, onScroll)
       })
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ layers }) => {
-      const frame = layers[0]?.element
+    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+      const item = reader.spineItemsManager.get(itemId)
+      const frame = item?.renderer.getDocumentFrame()
 
-      if (!(frame instanceof HTMLIFrameElement)) return
+      if (!frame) return
 
       /**
        * Disable touch to search on first text touch / click. This does not prevent

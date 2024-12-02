@@ -73,7 +73,7 @@ export const bookmarksEnhancer =
           pages.map((page) => {
             const item = reader.spine.spineItemsManager.get(page.itemIndex)
 
-            const isReady$ = item ? item.isReady$ : of(false)
+            const isReady$ = item?.isReady$ ?? of(false)
 
             return isReady$.pipe(
               first(),
