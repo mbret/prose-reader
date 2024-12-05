@@ -51,7 +51,7 @@ export const selectionEnhancer =
       /**
        * Emits when user releases the pointer after a selection.
        */
-      selectionAfterPointerUp$: Observable<[Event, SelectionValue]>
+      selectionOver$: Observable<[Event, SelectionValue]>
       /**
        * Usefull to know about the selection state before a pointerdown event.
        * For example if you want to prevent certain action on click if user is discarding a selection.
@@ -80,7 +80,7 @@ export const selectionEnhancer =
     const selectionSubject = new BehaviorSubject<SelectionValue | undefined>(
       undefined,
     )
-    const selectionWithPointerUpSubject = new Subject<[Event, SelectionValue]>()
+    const selectionOverSubject = new Subject<[Event, SelectionValue]>()
 
     reader.hookManager.register(
       `item.onDocumentLoad`,
@@ -113,9 +113,9 @@ export const selectionEnhancer =
                   }
                 }),
               ),
-              selectionTracker.selectionAfterPointerUp$.pipe(
+              selectionTracker.selectionOver$.pipe(
                 tap(([event, selection]) => {
-                  selectionWithPointerUpSubject.next([
+                  selectionOverSubject.next([
                     event,
                     {
                       document: frameDoc,
@@ -157,8 +157,8 @@ export const selectionEnhancer =
       share(),
     )
 
-    const selectionAfterPointerUp$ =
-      selectionWithPointerUpSubject.asObservable()
+    const selectionOver$ =
+      selectionOverSubject.asObservable()
 
     const lastSelectionOnPointerdown$ = reader.context.containerElement$.pipe(
       switchMap((container) => fromEvent(container, "pointerdown")),
@@ -175,7 +175,7 @@ export const selectionEnhancer =
         selection$,
         selectionStart$,
         selectionEnd$,
-        selectionAfterPointerUp$,
+        selectionOver$,
         lastSelectionOnPointerdown$,
         getSelection: () => selectionSubject.getValue(),
         createOrderedRangeFromSelection,

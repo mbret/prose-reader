@@ -72,7 +72,7 @@ export const HighlightMenu = memo(() => {
    */
   useSubscribe(
     () =>
-      reader?.selection.selectionAfterPointerUp$.pipe(
+      reader?.selection.selectionOver$.pipe(
         tap(([, selection]) => {
           isQuickMenuOpenSignal.setValue(false)
           selectedHighlightSignal.setValue({ selection })
