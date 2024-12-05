@@ -56,7 +56,9 @@ export const gesturesEnhancer =
       failWith: [panRecognizer],
     })
 
-    const swipeRecognizer = new SwipeRecognizer()
+    const swipeRecognizer = new SwipeRecognizer({
+      failWith: [failWithSelection],
+    })
 
     const recognizable = new Recognizable({
       recognizers: [tapRecognizer, panRecognizer, swipeRecognizer, pinchRecognizer, zoomPanRecognizer],
