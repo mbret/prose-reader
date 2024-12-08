@@ -21,22 +21,50 @@ export const createArchiveFromPdf = async (file: Blob): Promise<Archive> => {
 
   const pdf = await loadingTask.promise
 
+  const pages = Array.from({ length: pdf.numPages })
+
+  const opfFileData = `
+    <?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
+      <metadata>
+        <meta property="rendition:layout">pre-paginated</meta>
+      </metadata>
+      <manifest>
+        ${pages.map((_, index) => `<item id="${index}" href="${index}.pdf" />`).join(`\n`)}
+      </manifest>
+      <spine>
+        ${pages.map((_, index) => `<itemref idref="${index}" />`).join(`\n`)}
+      </spine>
+    </package>
+  `
+
+  const opfFile: Archive[`files`][number] = {
+    dir: false,
+    basename: `content.opf`,
+    uri: `content.opf`,
+    size: 0,
+    blob: async () => new Blob(),
+    string: async () => opfFileData,
+  }
+
   const archive = {
     filename: file.name,
     proxyDocument: pdf,
     _symbol: PDF_SYMBOL,
-    files: Array.from(Array(pdf.numPages)).map((_, index) => ({
-      dir: false,
-      blob: async () => {
-        throw new Error("Unable to get blob from pdf")
-      },
-      basename: `${index}.pdf`,
-      size: 0,
-      string: () => {
-        throw new Error("Unable to get blob from pdf")
-      },
-      uri: `${index}.pdf`,
-    })),
+    files: [
+      opfFile,
+      ...pages.map((_, index) => ({
+        dir: false,
+        blob: async () => {
+          throw new Error("Unable to get blob from pdf")
+        },
+        basename: `${index}.pdf`,
+        size: 0,
+        string: () => {
+          throw new Error("Unable to get blob from pdf")
+        },
+        uri: `${index}.pdf`,
+      })),
+    ],
     close: () => {
       return pdf.cleanup()
     },

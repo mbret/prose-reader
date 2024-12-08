@@ -41,7 +41,8 @@ export const pdfEnhancer =
               return of(undefined)
             }
 
-            const fileIndex = archive.files.findIndex((file) => item.href.endsWith(file.uri))
+            // we account for opf file
+            const fileIndex = archive.files.findIndex((file) => item.href.endsWith(file.uri)) - 1
 
             return from(archive.proxyDocument.getPage(fileIndex + 1)).pipe(
               map((pageProxy) => ({
