@@ -1,4 +1,4 @@
-import React, { memo } from "react"
+import { memo } from "react"
 import { useNavigate } from "react-router"
 import { Box, IconButton, Stack } from "@chakra-ui/react"
 import { ArrowBackIcon, HamburgerIcon } from "@chakra-ui/icons"
