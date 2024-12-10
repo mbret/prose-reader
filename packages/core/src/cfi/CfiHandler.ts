@@ -144,6 +144,16 @@ export class CfiHandler {
   // Single static instances that will be reused
   private static tempDocument: Document | null = null
   private static tempTextArea: HTMLTextAreaElement | null = null
+  private static getTextArea(): HTMLTextAreaElement {
+    if (!CfiHandler.tempTextArea) {
+      if (!CfiHandler.tempDocument) {
+        CfiHandler.tempDocument = document.implementation.createHTMLDocument()
+      }
+      CfiHandler.tempTextArea =
+        CfiHandler.tempDocument.createElement("textarea")
+    }
+    return CfiHandler.tempTextArea
+  }
 
   constructor(str: string, opts: {}) {
     this.opts = Object.assign(
@@ -236,6 +246,10 @@ export class CfiHandler {
     }
   }
 
+  public destroy() {
+    CfiHandler.tempTextArea = null
+  }
+
   removeIllegalOpts(parts: any[]) {
     if (!parts) {
       // @ts-ignore
@@ -262,17 +276,6 @@ export class CfiHandler {
         delete subpart.textLocationAssertion
       }
     }
-  }
-
-  private static getTextArea(): HTMLTextAreaElement {
-    if (!CfiHandler.tempTextArea) {
-      if (!CfiHandler.tempDocument) {
-        CfiHandler.tempDocument = document.implementation.createHTMLDocument()
-      }
-      CfiHandler.tempTextArea =
-        CfiHandler.tempDocument.createElement("textarea")
-    }
-    return CfiHandler.tempTextArea
   }
 
   static generatePart(node: Element | Node, offset?: number, extra?: {}) {

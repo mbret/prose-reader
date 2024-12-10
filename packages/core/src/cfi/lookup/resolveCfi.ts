@@ -33,6 +33,8 @@ export const resolveCfi = ({
       try {
         const { node, offset: resolvedOffset } = cfiHandler.resolve(doc, {})
 
+        cfiHandler.destroy()
+
         return {
           node,
           offset: offset ?? resolvedOffset,
