@@ -41,35 +41,12 @@ export const selectionEnhancer =
     options: InheritOptions,
   ): InheritOutput & {
     selection: {
-      /**
-       * Emits the current selection.
-       */
       selection$: Observable<SelectionValue>
-      /**
-       * Emits when user starts a selection.
-       */
       selectionStart$: Observable<boolean>
-      /**
-       * Emits when user ends a selection.
-       */
       selectionEnd$: Observable<void>
-      /**
-       * Emits when user releases the pointer after a selection.
-       */
       selectionOver$: Observable<SelectionOver>
-      /**
-       * Usefull to know about the selection state before a pointerdown event.
-       * For example if you want to prevent certain action on click if user is discarding a selection.
-       * A good example is delaying the opening of a reader menu.
-       */
       lastSelectionOnPointerdown$: Observable<SelectionValue>
       getSelection: () => SelectionValue
-      /**
-       * Create an ordered range from a selection.
-       *
-       * This means the start and end nodes will be ordered to maintain natural
-       * order in the document.
-       */
       createOrderedRangeFromSelection: (params: {
         selection: {
           anchorNode?: Node | null
@@ -140,10 +117,12 @@ export const selectionEnhancer =
       withLatestFrom(selection$),
       map(([, selection]) => selection),
       startWith(undefined),
-      shareReplay(1),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    selection$.pipe(takeUntil(reader.$.destroy$)).subscribe()
+    merge(selection$, lastSelectionOnPointerdown$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
 
     return {
       ...reader,
