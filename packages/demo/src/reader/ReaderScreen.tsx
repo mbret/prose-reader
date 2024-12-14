@@ -20,6 +20,7 @@ import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { Menu } from "./navigation/Menu"
 import { useAnnotations } from "./annotations/useAnnotations"
+import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -63,6 +64,7 @@ export const ReaderScreen = memo(() => {
         {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
       </Box>
+      <QuickActionsMenu />
       <QuickMenu />
       <Menu localSettings={localSettings} setLocalSettings={setLocalSettings} />
       <HighlightMenu />

@@ -1,4 +1,4 @@
-import { getFrameViewportInfo, upsertCSS } from "../../../../utils/frames"
+import { getFrameViewportInfo, upsertCSSToFrame } from "../../../../utils/frames"
 
 export const getStyleForViewportDocument = () => {
   return `
@@ -201,7 +201,7 @@ export const renderPrePaginated = ({
     // frameElement?.style.setProperty(`visibility`, `visible`)
     // frameElement?.style.setProperty(`opacity`, `1`)
 
-    upsertCSS(frameElement, `prose-reader-css`, cssLink)
+    upsertCSSToFrame(frameElement, `prose-reader-css`, cssLink)
 
     if (viewportDimensions) {
       staticLayout(frameElement, {

@@ -92,3 +92,18 @@ export function idle(): Observable<void> {
 export function deferIdle<T>(callback: () => Observable<T>) {
   return defer(() => idle().pipe(switchMap(callback)))
 }
+
+export const observeMutation = (
+  target: Node,
+  options?: MutationObserverInit,
+) => {
+  return new Observable<MutationRecord[]>((subscriber) => {
+    const observer = new MutationObserver((mutations) => {
+      subscriber.next(mutations)
+    })
+
+    observer.observe(target, options)
+
+    return () => observer.disconnect()
+  })
+}

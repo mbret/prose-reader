@@ -5,7 +5,7 @@ import {
   buildStyleWithMultiColumn,
 } from "./styles"
 import { getViewPortInformation } from "../prePaginated/renderPrePaginated"
-import { upsertCSS } from "../../../../utils/frames"
+import { upsertCSSToFrame } from "../../../../utils/frames"
 
 const getDimensionsForReflowableContent = ({
   isUsingVerticalWriting,
@@ -121,7 +121,7 @@ export const renderReflowable = ({
     let contentHeight = pageHeight
 
     if (viewportDimensions?.hasViewport) {
-      upsertCSS(
+      upsertCSSToFrame(
         frameElement,
         `prose-reader-html-renderer-framce-css`,
         buildStyleForViewportFrame(),
@@ -170,7 +170,7 @@ export const renderReflowable = ({
             }),
           )
 
-      upsertCSS(frameElement, `prose-reader-css`, frameStyle, true)
+      upsertCSSToFrame(frameElement, `prose-reader-css`, frameStyle, true)
 
       if (isUsingVerticalWriting) {
         const pages = Math.ceil(

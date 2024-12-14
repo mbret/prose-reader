@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
 import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
-import { upsertCSS } from "../utils/frames"
+import { upsertCSSToFrame } from "../utils/frames"
 
 const defaultThemes = [
   {
@@ -98,7 +98,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
       const frame = item.renderer.getDocumentFrame()
 
       if (frame) {
-        upsertCSS(frame, `prose-reader-theme`, getStyle())
+        upsertCSSToFrame(frame, `prose-reader-theme`, getStyle())
       }
 
       applyChangeToSpineItemElement({ container: item.element })
@@ -122,7 +122,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
       const frame = item?.renderer.getDocumentFrame()
 
       if (frame) {
-        upsertCSS(frame, `prose-reader-theme`, getStyle())
+        upsertCSSToFrame(frame, `prose-reader-theme`, getStyle())
       }
     }
   })

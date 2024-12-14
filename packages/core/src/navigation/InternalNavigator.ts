@@ -220,6 +220,7 @@ export class InternalNavigator extends DestroyableClass {
                 }),
           )
         }),
+
         withSpineItemPosition({
           spineItemsManager: spine.spineItemsManager,
           spineLocator: spine.locator,
@@ -227,6 +228,7 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
         }),
         map((params) => params.navigation),
+
         share(),
       )
 

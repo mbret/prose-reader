@@ -1,4 +1,4 @@
-import { upsertCSS } from "../utils/frames"
+import { upsertCSSToFrame } from "../utils/frames"
 import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
@@ -32,7 +32,7 @@ export const accessibilityEnhancer =
 
         if (!frame) return
 
-        upsertCSS(
+        upsertCSSToFrame(
           frame,
           `prose-reader-accessibility`,
           `

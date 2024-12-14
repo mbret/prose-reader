@@ -31,6 +31,7 @@ import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpine
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import { SpineItem } from "../spineItem/SpineItem"
 import { layoutItem } from "./layout/layoutItem"
+import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 
 const NAMESPACE = `SpineLayout`
 
@@ -137,8 +138,7 @@ export class SpineLayout extends DestroyableClass {
 
         const manifest = this.context.manifest
         const newItemLayoutInformation: typeof this.itemLayoutInformation = []
-        const isGloballyPrePaginated =
-          manifest?.renditionLayout === `pre-paginated`
+        const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
 
         return from(this.spineItemsManager.items).pipe(
           reduce(

@@ -4,7 +4,6 @@ import { signal } from "reactjrx"
 export const selectedHighlightSignal = signal<{
   highlight?: Highlight
   selection?: {
-    document: Document
     selection: Selection
     itemIndex: number
   }

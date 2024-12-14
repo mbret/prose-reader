@@ -19,7 +19,7 @@ import { SettingsManager } from "./SettingsManager"
 import { InputSettings, OutputSettings } from "./types"
 import { merge, Observable } from "rxjs"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { upsertCSS } from "../../utils/frames"
+import { upsertCSSToFrame } from "../../utils/frames"
 
 export const layoutEnhancer =
   <
@@ -129,7 +129,7 @@ export const layoutEnhancer =
         const frame = spineItem?.renderer.getDocumentFrame()
 
         if (frame) {
-          upsertCSS(
+          upsertCSSToFrame(
             frame,
             `prose-layout-enhancer-css`,
             `

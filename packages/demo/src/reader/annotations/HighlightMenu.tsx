@@ -1,6 +1,6 @@
-import React, { memo, useEffect, useState } from "react"
+import { memo, useEffect, useState } from "react"
 import { useReader } from "../useReader"
-import { SIGNAL_RESET, useSignalValue, useSubscribe } from "reactjrx"
+import { SIGNAL_RESET, useSignalValue } from "reactjrx"
 import {
   Box,
   Button,
@@ -15,8 +15,6 @@ import {
 } from "@chakra-ui/react"
 import { truncateText } from "../../common/utils"
 import { selectedHighlightSignal } from "./states"
-import { tap } from "rxjs"
-import { isQuickMenuOpenSignal } from "../states"
 
 const HIGHLIGHT_COLORS = [
   "rgba(216, 191, 216, 1)", // Light purple
@@ -65,21 +63,6 @@ export const HighlightMenu = memo(() => {
       }
     }
   }, [reader, highlight])
-
-  /**
-   * Trigger the highlight menu when user releases its finger
-   * after a selection. Discard quick menu if its shown
-   */
-  useSubscribe(
-    () =>
-      reader?.selection.selectionOver$.pipe(
-        tap(([, selection]) => {
-          isQuickMenuOpenSignal.setValue(false)
-          selectedHighlightSignal.setValue({ selection })
-        })
-      ),
-    [reader]
-  )
 
   return (
     <Drawer placement="bottom" onClose={onClose} isOpen={isOpen}>

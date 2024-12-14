@@ -1,5 +1,4 @@
 import {
-  BehaviorSubject,
   distinctUntilChanged,
   filter,
   fromEvent,
@@ -9,7 +8,6 @@ import {
   share,
   shareReplay,
   startWith,
-  Subject,
   switchMap,
   takeUntil,
   tap,
@@ -17,16 +15,23 @@ import {
 } from "rxjs"
 import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createOrderedRangeFromSelection } from "./selection"
-import { SelectionTracker } from "./SelectionTracker"
 import { SpineItem } from "../.."
+import { trackSpineItemSelection } from "./trackSpineItemSelection"
 
-type SelectionValue =
-  | {
-      document: Document
-      selection: Selection
-      itemIndex: number
-    }
-  | undefined
+type SelectionChange = {
+  itemIndex: number
+  type: "change"
+  selection: Selection
+}
+
+type SelectionOver = {
+  itemIndex: number
+  type: "over"
+  event: Event
+  selection: Selection
+}
+
+type SelectionValue = SelectionChange | SelectionOver | undefined
 
 export const selectionEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
@@ -51,14 +56,14 @@ export const selectionEnhancer =
       /**
        * Emits when user releases the pointer after a selection.
        */
-      selectionOver$: Observable<[Event, SelectionValue]>
+      selectionOver$: Observable<SelectionOver>
       /**
        * Usefull to know about the selection state before a pointerdown event.
        * For example if you want to prevent certain action on click if user is discarding a selection.
        * A good example is delaying the opening of a reader menu.
        */
-      lastSelectionOnPointerdown$: Observable<SelectionValue | undefined>
-      getSelection: () => SelectionValue | undefined
+      lastSelectionOnPointerdown$: Observable<SelectionValue>
+      getSelection: () => SelectionValue
       /**
        * Create an ordered range from a selection.
        *
@@ -77,73 +82,41 @@ export const selectionEnhancer =
     }
   } => {
     const reader = next(options)
-    const selectionSubject = new BehaviorSubject<SelectionValue | undefined>(
-      undefined,
-    )
-    const selectionOverSubject = new Subject<[Event, SelectionValue]>()
+    let lasSelection: SelectionValue = undefined
 
-    reader.hookManager.register(
-      `item.onDocumentLoad`,
-      ({ itemId, destroy$, destroy }) => {
-        const item = reader.spineItemsManager.get(itemId)
+    const trackedSelection$ = reader.spineItemsManager.items$.pipe(
+      switchMap((spineItems) => {
+        const instances = spineItems.map((spineItem) => {
+          const itemIndex =
+            reader.spineItemsManager.getSpineItemIndex(spineItem) ?? 0
 
-        const frame = item?.renderer.getDocumentFrame()
+          return trackSpineItemSelection(spineItem).pipe(
+            map((entry) => {
+              if (!entry) return undefined
 
-        const itemIndex =
-          reader.spineItemsManager.getSpineItemIndex(itemId) ?? 0
+              return {
+                ...entry,
+                itemIndex,
+              }
+            }),
+          )
+        })
 
-        if (frame) {
-          const frameDoc =
-            frame.contentDocument || frame.contentWindow?.document
-
-          if (frameDoc) {
-            const selectionTracker = new SelectionTracker(frameDoc)
-
-            merge(
-              selectionTracker.selectionChange$.pipe(
-                tap((selection) => {
-                  if (selection?.toString()) {
-                    selectionSubject.next({
-                      document: frameDoc,
-                      selection,
-                      itemIndex,
-                    })
-                  } else {
-                    selectionSubject.next(undefined)
-                  }
-                }),
-              ),
-              selectionTracker.selectionOver$.pipe(
-                tap(([event, selection]) => {
-                  selectionOverSubject.next([
-                    event,
-                    {
-                      document: frameDoc,
-                      selection,
-                      itemIndex,
-                    },
-                  ])
-                }),
-              ),
-            )
-              .pipe(takeUntil(destroy$))
-              .subscribe()
-
-            destroy(() => {
-              selectionTracker.destroy()
-            })
-          }
-        }
-      },
-    )
-
-    const selection$ = selectionSubject.pipe(
+        return merge(...instances)
+      }),
       distinctUntilChanged(),
-      shareReplay(1),
-      takeUntil(reader.$.destroy$),
+      tap((value) => {
+        lasSelection = value
+      }),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    const selectionStart$ = selectionSubject.pipe(
+    const selection$ = trackedSelection$.pipe(
+      filter((selection) => selection?.type === "change" || !selection),
+      share(),
+    )
+
+    const selectionStart$ = trackedSelection$.pipe(
       map((selection) => !!selection),
       distinctUntilChanged(),
       filter((isSelecting) => isSelecting),
@@ -157,8 +130,10 @@ export const selectionEnhancer =
       share(),
     )
 
-    const selectionOver$ =
-      selectionOverSubject.asObservable()
+    const selectionOver$ = trackedSelection$.pipe(
+      filter((selection) => selection?.type === "over"),
+      share(),
+    )
 
     const lastSelectionOnPointerdown$ = reader.context.containerElement$.pipe(
       switchMap((container) => fromEvent(container, "pointerdown")),
@@ -166,8 +141,9 @@ export const selectionEnhancer =
       map(([, selection]) => selection),
       startWith(undefined),
       shareReplay(1),
-      takeUntil(reader.$.destroy$),
     )
+
+    selection$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
@@ -177,13 +153,8 @@ export const selectionEnhancer =
         selectionEnd$,
         selectionOver$,
         lastSelectionOnPointerdown$,
-        getSelection: () => selectionSubject.getValue(),
+        getSelection: () => lasSelection,
         createOrderedRangeFromSelection,
-      },
-      destroy: () => {
-        selectionSubject.complete()
-
-        reader.destroy()
       },
     }
   }

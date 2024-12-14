@@ -245,13 +245,31 @@ export abstract class DocumentRenderer extends DestroyableClass {
   public layout(params: LayoutParams) {
     return defer(() => this.onLayout(params)).pipe(
       map((dims) => {
-        const { height, width } = dims ??
-          this.lastLayoutDims ?? { height: 0, width: 0 }
+        const isPrepaginated =
+          this.item.renditionLayout === `pre-paginated` ||
+          (!this.context.manifest?.renditionLayout &&
+            this.context.manifest?.renditionLayout === `pre-paginated`)
 
-        const minHeight = Math.max(height, this.context.getPageSize().height)
-        const minWidth = Math.max(width, params.minimumWidth)
+        if (dims) {
+          const { height, width } = dims
 
-        this.lastLayoutDims = { height: minHeight, width: minWidth }
+          this.lastLayoutDims = { height: height, width: width }
+
+          return this.lastLayoutDims
+        }
+
+        if (isPrepaginated) {
+          this.lastLayoutDims = {
+            height: this.context.getPageSize().height,
+            width: this.context.getPageSize().width,
+          }
+        } else {
+          this.lastLayoutDims = {
+            height: this.context.getPageSize().height,
+            width: this.context.getPageSize().width,
+            ...this.lastLayoutDims,
+          }
+        }
 
         return this.lastLayoutDims
       }),

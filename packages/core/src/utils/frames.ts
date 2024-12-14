@@ -1,12 +1,4 @@
-import {
-  from,
-  fromEvent,
-  map,
-  Observable,
-  of,
-  switchMap,
-  take,
-} from "rxjs"
+import { from, fromEvent, map, Observable, of, switchMap, take } from "rxjs"
 
 export const getAttributeValueFromString = (string: string, key: string) => {
   const regExp = new RegExp(key + `\\s*=\\s*([0-9.]+)`, `i`)
@@ -27,7 +19,7 @@ export const injectCSS = (
     frameElement.contentDocument &&
     frameElement.contentDocument.head
   ) {
-    const userStyle = document.createElement(`style`)
+    const userStyle = frameElement.contentDocument.createElement(`style`)
     userStyle.id = id
     userStyle.innerHTML = style
 
@@ -53,7 +45,7 @@ export const removeCSS = (frameElement: HTMLIFrameElement, id: string) => {
   }
 }
 
-export const upsertCSS = (
+export const upsertCSSToFrame = (
   frameElement: HTMLIFrameElement | undefined,
   id: string,
   style: string,

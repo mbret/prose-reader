@@ -34,6 +34,7 @@ export const getNavigationForRightSinglePage = ({
     position,
     spineItem,
   )
+
   // get reading item local position for right page
   const spineItemNavigationForRightPage = getSpineItemPositionForRightPage({
     position: spineItemPosition,

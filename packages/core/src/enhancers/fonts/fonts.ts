@@ -9,7 +9,7 @@ import {
 import { InputSettings } from "./types"
 import { SettingsManager } from "./SettingsManager"
 import { SettingsInterface } from "../../settings/SettingsInterface"
-import { upsertCSS } from "../../utils/frames"
+import { upsertCSSToFrame } from "../../utils/frames"
 
 type OutputOptions = Required<InputSettings>
 
@@ -92,7 +92,7 @@ export const fontsEnhancer =
           const frame = item.renderer.getDocumentFrame()
 
           if (frame) {
-            upsertCSS(frame, `prose-reader-fonts`, getStyle())
+            upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
           }
         }
       })
@@ -112,7 +112,7 @@ export const fontsEnhancer =
         const frame = item?.renderer.getDocumentFrame()
 
         if (frame) {
-          upsertCSS(frame, `prose-reader-fonts`, getStyle())
+          upsertCSSToFrame(frame, `prose-reader-fonts`, getStyle())
         }
       }
     })
