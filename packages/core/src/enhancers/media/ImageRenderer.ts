@@ -77,37 +77,38 @@ export class ImageRenderer extends DocumentRenderer {
     spreadPosition: `none` | `left` | `right`
   }) {
     const element = this.getImageElement()
-    const continuousScrollableReflowableItem =
-      this.context.manifest?.renditionLayout === "reflowable" &&
-      this.context.manifest?.renditionFlow === "scrolled-continuous"
     const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
 
     let height = pageHeight
 
     const width = pageWidth
 
-    if (element) {
-      const naturalWidth = element.naturalWidth
-      const naturalHeight = element.naturalHeight
-      const ratio = naturalWidth / naturalHeight
+    if (!element) return of(undefined)
 
-      /**
-       * In case of continous scroll, we scale up/down the height
-       * to match the page width.
-       */
-      if (continuousScrollableReflowableItem) {
-        height = pageWidth / ratio
-      }
+    const naturalWidth = element.naturalWidth || 1
+    const naturalHeight = element.naturalHeight || 1
+    const ratio = naturalWidth / naturalHeight
 
-      element.style.height = `${height}px`
-      element.style.width = `${width}px`
-      element.style.objectPosition =
-        spreadPosition === "left"
-          ? `right`
-          : spreadPosition === `right`
-            ? `left`
-            : `center`
+    /**
+     * In case of continous scroll, we scale up/down the height
+     * to match the page width.
+     */
+    if (
+      this.settings.values.computedPageTurnDirection === "vertical" &&
+      this.settings.values.computedPageTurnMode === "scrollable" &&
+      !this.context.state.isUsingSpreadMode
+    ) {
+      height = pageWidth / ratio
     }
+
+    element.style.height = `${height}px`
+    element.style.width = `${width}px`
+    element.style.objectPosition =
+      spreadPosition === "left"
+        ? `right`
+        : spreadPosition === `right`
+          ? `left`
+          : `center`
 
     return of({
       width,
