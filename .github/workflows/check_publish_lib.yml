@@ -52,6 +52,11 @@ jobs:
           path: packages/tests/playwright-report/
           retention-days: 30
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: packages/tests/playwright-report/
+
       - name: Publish
         run: |
           git config --global user.email "bret.maxime@gmail.com"
