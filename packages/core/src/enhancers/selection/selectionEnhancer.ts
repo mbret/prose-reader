@@ -81,6 +81,7 @@ export const selectionEnhancer =
 
         return merge(...instances)
       }),
+      startWith(undefined),
       distinctUntilChanged(),
       tap((value) => {
         lasSelection = value
@@ -88,10 +89,7 @@ export const selectionEnhancer =
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    const selection$ = trackedSelection$.pipe(
-      filter((selection) => selection?.type === "change" || !selection),
-      share(),
-    )
+    const selection$ = trackedSelection$
 
     const selectionStart$ = trackedSelection$.pipe(
       map((selection) => !!selection),
