@@ -53,6 +53,10 @@ export const loadingEnhancer =
     ) =>
       of(
         items.reduce((acc, { item, element }) => {
+          // since we will use z-index for the loading element, we need to set the parent
+          // to 0 to have it work as relative reference.
+          element.style.zIndex = `0`
+
           const alreadyExistingElement = element.querySelector(
             `.${CONTAINER_HTML_PREFIX}`,
           )

@@ -201,9 +201,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
             supportedPageTurnMode:
               renditionFlow === `scrolled-continuous`
                 ? [`scrollable`]
-                : !context.state.areAllItemsPrePaginated
-                  ? [`controlled`]
-                  : [`controlled`, `scrollable`],
+                : [`controlled`, `scrollable`],
             supportedPageTurnAnimation:
               renditionFlow === `scrolled-continuous` ||
               computedPageTurnMode === `scrollable`

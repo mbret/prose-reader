@@ -7,7 +7,6 @@ import {
   CoreOutputSettings,
 } from "./types"
 import { Context } from "../context/Context"
-import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { Report } from "../report"
 import { SettingsManager } from "./SettingsManager"
 import { SettingsInterface } from "./SettingsInterface"

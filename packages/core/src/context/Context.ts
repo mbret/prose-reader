@@ -6,7 +6,6 @@ import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { areAllItemsPrePaginated } from "../manifest/areAllItemsPrePaginated"
 import { BridgeEvent } from "./BridgeEvent"
 
 export type ContextState = {
@@ -16,7 +15,6 @@ export type ContextState = {
   isUsingSpreadMode?: boolean
   isFullyPrePaginated?: boolean
   forceSinglePageMode?: boolean
-  areAllItemsPrePaginated?: boolean
   calculatedInnerMargin: number
   marginTop: number
   marginBottom: number
@@ -99,7 +97,6 @@ export class Context {
         height: newState.visibleAreaRect.height - marginTop - marginBottom,
       }),
       ...(newState.manifest && {
-        areAllItemsPrePaginated: areAllItemsPrePaginated(manifest),
         isFullyPrePaginated: isFullyPrePaginated(manifest),
       }),
       isUsingSpreadMode: isUsingSpreadMode({
