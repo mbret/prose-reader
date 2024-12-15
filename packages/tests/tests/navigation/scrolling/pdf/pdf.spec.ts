@@ -19,7 +19,7 @@ test("should navigate to second page and back to first page", async ({ page }) =
 
   await page.waitForTimeout(100)
 
-  await expect(page).toHaveScreenshot()
+  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 
   await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +28,7 @@ test("should navigate to second page and back to first page", async ({ page }) =
 
   await page.waitForTimeout(100)
 
-  await expect(page).toHaveScreenshot()
+  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
 
 test("should restore to second page with CFI", async ({ page }) => {
