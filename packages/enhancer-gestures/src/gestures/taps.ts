@@ -33,7 +33,7 @@ export const registerTaps = ({
             first(),
             map((results) => {
               if (results.some((result) => result === false)) {
-                return { event, handled: false }
+                return EMPTY
               }
 
               const isTopArea = y < height * pageTurnMargin
