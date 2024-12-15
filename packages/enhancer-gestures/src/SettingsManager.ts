@@ -27,7 +27,7 @@ export class GesturesSettingsManager extends SettingsManager<InputSettings, Outp
     return {
       ...inputSettings,
       panNavigation:
-        this.reader.settings.values.computedPageTurnMode === `scrollable` ? `pan` : inputSettings.panNavigation,
+        this.reader.settings.values.computedPageTurnMode === `scrollable` ? false : inputSettings.panNavigation,
     }
   }
 
