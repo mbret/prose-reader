@@ -28,14 +28,13 @@ async function run() {
     },
   })
 
+  const query = new URLSearchParams(window.location.search)
+  const cfi = query.get("cfi") || undefined
+
   reader.load({
     containerElement: document.getElementById(`app`)!,
     manifest,
-    cfi: localStorage.getItem(`cfi`) || undefined,
-  })
-
-  reader.pagination.state$.subscribe((state) => {
-    localStorage.setItem("cfi", state.beginCfi ?? ``)
+    cfi,
   })
 
   // @ts-expect-error export for debug
