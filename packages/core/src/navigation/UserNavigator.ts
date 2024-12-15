@@ -71,19 +71,21 @@ export class UserNavigator extends DestroyableClass {
 
     const userScroll$ = element$.pipe(
       switchMap((element) =>
-        settings.values$.pipe(
-          map(({ computedPageTurnMode }) => computedPageTurnMode),
-          distinctUntilChanged(),
-          filter(
-            (computedPageTurnMode) => computedPageTurnMode === "scrollable",
+        settings.watch(["computedPageTurnMode"]).pipe(
+          switchMap(({ computedPageTurnMode }) =>
+            computedPageTurnMode === "controlled"
+              ? NEVER
+              : fromEvent(element, `scroll`).pipe(
+                  withLatestFrom(scrollHappeningFromBrowser$),
+                  tap(([, scrollHappeningFromBrowser]) => {
+                    // console.log("FOOO SCROLL", { scrollHappeningFromBrowser })
+                  }),
+                  filter(
+                    ([, shouldAvoidScrollEvent]) => !shouldAvoidScrollEvent,
+                  ),
+                  map(([event]) => event),
+                ),
           ),
-          switchMap(() => {
-            return fromEvent(element, `scroll`).pipe(
-              withLatestFrom(scrollHappeningFromBrowser$),
-              filter(([, shouldAvoidScrollEvent]) => !shouldAvoidScrollEvent),
-              map(([event]) => event),
-            )
-          }),
         ),
       ),
       share(),
