@@ -1,5 +1,5 @@
 import { BehaviorSubject, merge, Observable } from "rxjs"
-import { share, switchMap, takeUntil, tap } from "rxjs/operators"
+import { takeUntil, tap } from "rxjs/operators"
 import { Context } from "../context/Context"
 import { Pagination } from "../pagination/Pagination"
 import { SpineItemsManager } from "./SpineItemsManager"
@@ -9,7 +9,6 @@ import { HTML_PREFIX } from "../constants"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { HookManager } from "../hooks/HookManager"
 import { SpineItemsLoader } from "./loader/SpineItemsLoader"
-import { observeResize } from "../utils/rxjs"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { noopElement } from "../utils/dom"
 import { SpineItemsObserver } from "./SpineItemsObserver"
@@ -21,11 +20,6 @@ export class Spine extends DestroyableClass {
   public readonly spineItemsLoader: SpineItemsLoader
 
   public locator: SpineLocator
-
-  public elementResize$ = this.elementSubject.pipe(
-    switchMap((element) => observeResize(element)),
-    share(),
-  )
 
   public spineItemsObserver: SpineItemsObserver
   public spineLayout: SpineLayout

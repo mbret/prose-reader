@@ -148,29 +148,21 @@ const restoreNavigationForScrollingPageTurnMode = ({
 
       /**
        * - position not within item anymore
-       * - we are too far down
        */
       if (!isPositionWithinSpineItem) {
-        if (navigation.directionFromLastNavigation === "backward") {
-          const positionInItem = {
-            y: height - positionYfromBottomPreviousNavigation,
-            x: navigation.position.x,
-          }
+        const positionIsBeforeItem = navigation.position.y < top
 
-          return spineLocator.getSpinePositionFromSpineItemPosition({
-            spineItemPosition:
-              spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-                positionInItem,
-                foundSpineItem,
-              ),
-            spineItem: foundSpineItem,
-          })
-        }
-
-        if (
-          navigation.directionFromLastNavigation === "forward" ||
-          navigation.directionFromLastNavigation === "anchor"
-        ) {
+        /**
+         * In case the navigation is too far down, we try to anchor back to
+         * the spine item but we also try to keep the same previous offset
+         * we had, the point is not to just anchor back to the begining or the
+         * exact end of the spine item.
+         * example:
+         * - we are at 100px from bottom of a 300px height item
+         * - layout happens and item becomes 200px height
+         * - we are now at the end of item, we need to go back by 100px
+         */
+        if (!positionIsBeforeItem) {
           const positionInItem = {
             y: height - positionYfromBottomPreviousNavigation,
             x: navigation.position.x,

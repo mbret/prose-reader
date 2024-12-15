@@ -6,7 +6,6 @@ import {
   combineLatest,
   fromEvent,
   merge,
-  of,
   timer,
 } from "rxjs"
 import {
@@ -27,6 +26,7 @@ import { ViewportNavigator } from "./viewport/ViewportNavigator"
 import { UserNavigator } from "./UserNavigator"
 import { InternalNavigator } from "./InternalNavigator"
 import { HTML_PREFIX } from "../constants"
+import { observeResize } from "../utils/rxjs"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -62,11 +62,17 @@ export const createNavigator = ({
 
   // might be a bit overkill but we want to be sure of sure
   const isSpineScrolling$ = merge(
-    spine.elementResize$,
+    spine.element$.pipe(switchMap((element) => observeResize(element))),
     spine.element$.pipe(switchMap((element) => fromEvent(element, "scroll"))),
     spine.spineItemsObserver.itemResize$,
   ).pipe(
-    switchMap(() => merge(of(true), timer(5).pipe(map(() => false)))),
+    switchMap(() =>
+      timer(10).pipe(
+        map(() => false),
+        startWith(true),
+      ),
+    ),
+    distinctUntilChanged(),
     startWith(false),
   )
 
