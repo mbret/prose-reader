@@ -1,9 +1,9 @@
 import {
+  NEVER,
   Observable,
   Subject,
   animationFrameScheduler,
   debounceTime,
-  distinctUntilChanged,
   exhaustMap,
   filter,
   finalize,
@@ -77,9 +77,6 @@ export class UserNavigator extends DestroyableClass {
               ? NEVER
               : fromEvent(element, `scroll`).pipe(
                   withLatestFrom(scrollHappeningFromBrowser$),
-                  tap(([, scrollHappeningFromBrowser]) => {
-                    // console.log("FOOO SCROLL", { scrollHappeningFromBrowser })
-                  }),
                   filter(
                     ([, shouldAvoidScrollEvent]) => !shouldAvoidScrollEvent,
                   ),
@@ -97,11 +94,7 @@ export class UserNavigator extends DestroyableClass {
      * Keep it synchronized with scrolling. This should
      * not trigger viewport navigation, only update internal navigation.
      */
-    const navigateOnScroll$ = settings.values$.pipe(
-      map(({ computedPageTurnMode }) => computedPageTurnMode),
-      distinctUntilChanged(),
-      filter((computedPageTurnMode) => computedPageTurnMode === "scrollable"),
-      switchMap(() => userScroll$),
+    const navigateOnScroll$ = userScroll$.pipe(
       exhaustMap((event) => {
         const unlock = this.locker.lock()
 
