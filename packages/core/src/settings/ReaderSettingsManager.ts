@@ -53,27 +53,15 @@ export class ReaderSettingsManager
     const computedSettings: ComputedCoreSettings = {
       computedPageTurnDirection: settings.pageTurnDirection,
       computedPageTurnAnimation: settings.pageTurnAnimation,
-      computedPageTurnMode: `controlled`,
+      computedPageTurnMode: settings.pageTurnMode,
       computedPageTurnAnimationDuration: 0,
     }
 
     // We force scroll mode for some books
     if (manifest?.renditionFlow === `scrolled-continuous`) {
       computedSettings.computedPageTurnMode = `scrollable`
-      computedSettings.computedPageTurnDirection = `vertical`
-    } else if (
-      manifest &&
-      settings.pageTurnMode === `scrollable` &&
-      (manifest.renditionLayout !== `pre-paginated` ||
-        !areAllItemsPrePaginated(manifest))
-    ) {
-      Report.warn(
-        `pageTurnMode ${settings.pageTurnMode} incompatible with current book, switching back to default`,
-      )
-      computedSettings.computedPageTurnAnimation = `none`
-      computedSettings.computedPageTurnMode = `controlled`
-    } else if (settings.pageTurnMode === `scrollable`) {
-      computedSettings.computedPageTurnMode = `scrollable`
+    }
+    if (computedSettings.computedPageTurnMode === "scrollable") {
       computedSettings.computedPageTurnDirection = `vertical`
     }
 
