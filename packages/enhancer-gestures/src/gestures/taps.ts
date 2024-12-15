@@ -1,5 +1,5 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { combineLatest, EMPTY, first, map, of, switchMap } from "rxjs"
+import { combineLatest, EMPTY, filter, first, map, of, switchMap } from "rxjs"
 import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 import { isNotLink, istMatchingSelectors } from "../utils"
@@ -28,15 +28,12 @@ export const registerTaps = ({
         if (`x` in normalizedEvent) {
           const { x = 0, y } = normalizedEvent
 
-          const beforeTapResults$ = hookManager.execute("beforeTap", undefined, { event })
+          const beforeTapResults$ = hookManager.execute("beforeGesture", undefined, { event$: of(event) })
 
           return combineLatest([...beforeTapResults$, of(true)]).pipe(
             first(),
-            map((results) => {
-              if (results.some((result) => result === false)) {
-                return EMPTY
-              }
-
+            filter((results) => !results.some((result) => result === false)),
+            map(() => {
               const isTopArea = y < height * pageTurnMargin
               const isBottomArea = y > height * (1 - pageTurnMargin)
               const isLeftArea = x < width * pageTurnMargin

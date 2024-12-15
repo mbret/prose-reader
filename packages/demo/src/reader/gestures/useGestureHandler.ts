@@ -8,18 +8,26 @@ export const useGestureHandler = () => {
 
   useSubscribe(
     () =>
-      reader?.gestures.hookManager.register("beforeTap", ({ event }) => {
-        const target = event.event.target
+      /**
+       * Hook used to prevent some gestures from being handled.
+       */
+      reader?.gestures.hookManager.register("beforeGesture", ({ event$ }) =>
+        event$.pipe(
+          withLatestFrom(reader.selection.lastSelectionOnPointerdown$),
+          map(([event, lastSelectionOnPointerdown]) => {
+            const target = event.event.target
 
-        return reader.selection.lastSelectionOnPointerdown$.pipe(
-          map((lastSelectionOnPointerdown) => {
+            /**
+             * In this case if we have a gesture on an annotation, we want to prevent
+             * it.
+             */
             const wasOrIsOnSelection =
               (target && reader.annotations.isTargetWithinHighlight(target)) || lastSelectionOnPointerdown
 
             return !wasOrIsOnSelection
           })
         )
-      }),
+      ),
     [reader]
   )
 
