@@ -87,12 +87,14 @@ export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
 
 export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
   stream.pipe(
-    switchMap((frame) =>
-      fromEvent(frame, `load`).pipe(
+    switchMap((frame) => {
+      if (frame.contentDocument?.readyState === "complete") return of(frame)
+
+      return fromEvent(frame, `load`).pipe(
         take(1),
         map(() => frame),
-      ),
-    ),
+      )
+    }),
   )
 
 export const waitForFrameReady = (stream: Observable<HTMLIFrameElement>) =>
