@@ -1,34 +1,27 @@
-import { useEffect } from "react"
 import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
 import { filter, map, tap, withLatestFrom } from "rxjs"
-import { isWithinBookmarkArea } from "../bookmarks/isWithinBookmarkArea"
 
 export const useGestureHandler = () => {
   const { reader } = useReader()
 
-  useEffect(() => {
-    const deregister = reader?.gestures.hookManager.register("beforeTap", ({ event }) => {
-      const target = event.event.target
+  useSubscribe(
+    () =>
+      reader?.gestures.hookManager.register("beforeTap", ({ event }) => {
+        const target = event.event.target
 
-      return reader.selection.lastSelectionOnPointerdown$.pipe(
-        map((lastSelectionOnPointerdown) => {
-          if (isWithinBookmarkArea(target)) {
-            return false
-          }
+        return reader.selection.lastSelectionOnPointerdown$.pipe(
+          map((lastSelectionOnPointerdown) => {
+            const wasOrIsOnSelection =
+              (target && reader.annotations.isTargetWithinHighlight(target)) || lastSelectionOnPointerdown
 
-          const wasOrIsOnSelection = (target && reader.annotations.isTargetWithinHighlight(target)) || lastSelectionOnPointerdown
-
-          return !wasOrIsOnSelection
-        })
-      )
-    })
-
-    return () => {
-      deregister?.()
-    }
-  }, [reader])
+            return !wasOrIsOnSelection
+          })
+        )
+      }),
+    [reader]
+  )
 
   /**
    * Subscribe to all unhandled events from gesture manager.

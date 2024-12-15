@@ -37,7 +37,11 @@ export const useCreateReader = () => {
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
       gestures: {
-        fontScalePinchEnabled: true
+        fontScalePinchEnabled: true,
+        ignore: [
+          // ignore gestures within the bookmark area
+          `[data-bookmark-area]`
+        ]
       },
       pdf: {
         pdfjsViewerInlineCss,

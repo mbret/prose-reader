@@ -2,12 +2,13 @@ import { HookManager, Reader } from "@prose-reader/core"
 import { combineLatest, EMPTY, first, map, of, switchMap } from "rxjs"
 import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
-import { isNotLink } from "../utils"
+import { isNotLink, istMatchingSelectors } from "../utils"
 
 export const registerTaps = ({
   reader,
   recognizable,
   hookManager,
+  settingsManager,
 }: {
   recognizable: GestureRecognizable
   reader: Reader
@@ -19,7 +20,7 @@ export const registerTaps = ({
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
-      if (event.type === "tap" && isNotLink(event)) {
+      if (event.type === "tap" && isNotLink(event) && !istMatchingSelectors(settingsManager.values.ignore, event)) {
         const width = window.innerWidth
         const height = window.innerHeight
         const pageTurnMargin = 0.15

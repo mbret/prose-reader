@@ -39,6 +39,7 @@ export class GesturesSettingsManager extends SettingsManager<InputSettings, Outp
       fontScalePinchThrottleTime: 500,
       fontScaleMaxScale: 5,
       fontScaleMinScale: 0.2,
+      ignore: [],
     }
   }
 }

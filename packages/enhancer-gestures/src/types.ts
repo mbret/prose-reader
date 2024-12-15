@@ -32,6 +32,7 @@ export type InputSettings = {
   // @todo cancel pan if selecting
   fontScalePinchThrottleTime: number
   pinchCancelPan: boolean
+  ignore: string[]
 }
 
 export type OutputSettings = InputSettings
