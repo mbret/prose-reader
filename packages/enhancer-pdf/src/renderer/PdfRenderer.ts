@@ -1,6 +1,6 @@
 import { catchError, EMPTY, finalize, from, map, Observable, of, switchMap, tap } from "rxjs"
 import { PDFPageProxy, RenderingCancelledException, RenderTask, TextLayer } from "pdfjs-dist"
-import { DocumentRenderer, injectCSS, removeCSS, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
+import { DocumentRenderer, injectCSS, removeCSS, waitForFrameLoad, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
 import pdfFrameStyle from "./frame.css?inline"
 import { layoutCanvas, layoutLayers } from "./layout"
 
@@ -129,8 +129,9 @@ export class PdfRenderer extends DocumentRenderer {
             this.layers.forEach(({ element }) => {
               this.containerElement.appendChild(element)
             })
-            // frame will instantly load, no need to wait for event
-
+          }),
+          waitForFrameLoad,
+          tap(() => {
             injectCSS(frameElement, "pdfjs-viewer-style", this.pdfViewerStyle)
             injectCSS(frameElement, "enhancer-pdf-style", pdfFrameStyle)
 
