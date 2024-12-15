@@ -96,7 +96,11 @@ export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
 export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
   stream.pipe(
     switchMap((frame) => {
-      if (frame.src === "about:blank") {
+      if (
+        frame.src === "about:blank" &&
+        frame.contentDocument?.readyState === "complete" &&
+        frame.contentDocument.body
+      ) {
         return of(frame)
       }
 
