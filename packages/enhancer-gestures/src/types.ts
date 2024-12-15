@@ -40,7 +40,7 @@ export type OutputSettings = InputSettings
 export type EnhancerAPI = {
   gestures: {
     settings: GesturesSettingsManager
-    hookManager: HookManager<Hook>
+    hooks: HookManager<Hook>
     gestures$: Observable<{ event: TapEvent | PanEvent | SwipeEvent | PinchEvent; handled: boolean }>
   }
 }

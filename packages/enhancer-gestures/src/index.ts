@@ -139,7 +139,7 @@ export const gesturesEnhancer =
       gestures: {
         settings: settingsManager,
         gestures$,
-        hookManager,
+        hooks: hookManager,
       },
     }
   }
