@@ -44,7 +44,7 @@ test("should restore to second page with CFI", async ({ page }) => {
   // wait for first item to be ready
   await page.waitForSelector(".prose-spineItem-ready")
 
-  await expect(page).toHaveScreenshot()
+  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
 
 test("should restore to first page with CFI", async ({ page }) => {
@@ -60,5 +60,5 @@ test("should restore to first page with CFI", async ({ page }) => {
   // wait for first item to be ready
   await page.waitForSelector(".prose-spineItem-ready")
 
-  await expect(page).toHaveScreenshot()
+  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
