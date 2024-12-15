@@ -98,7 +98,7 @@ export class ImageRenderer extends DocumentRenderer {
       this.settings.values.computedPageTurnMode === "scrollable" &&
       !this.context.state.isUsingSpreadMode
     ) {
-      height = pageWidth / ratio
+      height = Math.ceil(pageWidth / ratio)
     }
 
     element.style.height = `${height}px`
