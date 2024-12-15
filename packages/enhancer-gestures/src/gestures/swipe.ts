@@ -1,6 +1,6 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { EMPTY, Subject, filter, switchMap, tap } from "rxjs"
-import { GestureEvent, GestureRecognizable, Hook } from "../types"
+import { EMPTY, filter, map, switchMap, tap } from "rxjs"
+import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 
 export const registerSwipe = ({
@@ -11,7 +11,6 @@ export const registerSwipe = ({
   recognizable: GestureRecognizable
   reader: Reader
   hookManager: HookManager<Hook>
-  unhandledEvent$: Subject<GestureEvent>
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = settingsManager.values$.pipe(
@@ -39,6 +38,7 @@ export const registerSwipe = ({
                 }
               }
             }),
+            map((event) => ({ event, handled: true })),
           ),
     ),
   )

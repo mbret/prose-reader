@@ -1,9 +1,9 @@
 import { HookManager, isHtmlElement, Reader } from "@prose-reader/core"
 import {
   EMPTY,
-  Subject,
   animationFrameScheduler,
   filter,
+  map,
   merge,
   switchMap,
   takeUntil,
@@ -11,7 +11,7 @@ import {
   throttleTime,
   withLatestFrom,
 } from "rxjs"
-import { GestureEvent, GestureRecognizable, Hook } from "../types"
+import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 import { PinchEvent } from "gesturx"
 
@@ -28,7 +28,6 @@ export const registerPinch = ({
   recognizable: GestureRecognizable
   reader: Reader
   hookManager: HookManager<Hook>
-  unhandledEvent$: Subject<GestureEvent>
   settingsManager: GesturesSettingsManager
 }) => {
   const pinchStart$ = recognizable.events$.pipe(filter((event): event is PinchEvent => event.type === "pinchStart"))
@@ -105,7 +104,7 @@ export const registerPinch = ({
             }),
           )
 
-      return merge(zoomGestures$, watchForFontScaleChange$)
+      return merge(zoomGestures$, watchForFontScaleChange$).pipe(map((event) => ({ event, handled: true })))
     }),
   )
 }

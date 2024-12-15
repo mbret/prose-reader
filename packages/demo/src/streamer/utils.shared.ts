@@ -18,7 +18,7 @@ export const getFileKeyFromUrl = (url: string) => {
 }
 
 export const getBlobFromKey = async (key: string) => {
-  const demoEpubUrl = atob(key)
+  const demoEpubUrl = decodeURIComponent(atob(key))
   const epubFilenameFromUrl = demoEpubUrl.substring(demoEpubUrl.lastIndexOf("/") + 1)
 
   const responseOrFile = demoEpubUrl.startsWith(`file://`)

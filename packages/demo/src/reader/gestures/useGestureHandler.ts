@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { isQuickMenuOpenSignal } from "../states"
 import { useReader } from "../useReader"
 import { useSubscribe } from "reactjrx"
-import { map, tap, withLatestFrom } from "rxjs"
+import { filter, map, tap, withLatestFrom } from "rxjs"
 import { isWithinBookmarkArea } from "../bookmarks/isWithinBookmarkArea"
 
 export const useGestureHandler = () => {
@@ -37,19 +37,18 @@ export const useGestureHandler = () => {
    * know about such as triggering the quick menu.
    */
   useSubscribe(() => {
-    return reader?.gestures.unhandledEvent$.pipe(
+    return reader?.gestures.gestures$.pipe(
+      filter(({ handled, event }) => !handled && event?.type === "tap"),
       withLatestFrom(reader.selection.selection$, reader.selection.lastSelectionOnPointerdown$),
-      tap(([event, selection, selectionOnPointerdown]) => {
-        if (event?.type === "tap") {
-          /**
-           * Where there is or was a selection before or during the tap, we want to avoid
-           * showing the quick menu.
-           */
-          if (selection || selectionOnPointerdown) {
-            isQuickMenuOpenSignal.setValue(false)
-          } else {
-            isQuickMenuOpenSignal.setValue((val) => !val)
-          }
+      tap(([, selection, selectionOnPointerdown]) => {
+        /**
+         * Where there is or was a selection before or during the tap, we want to avoid
+         * showing the quick menu.
+         */
+        if (selection || selectionOnPointerdown) {
+          isQuickMenuOpenSignal.setValue(false)
+        } else {
+          isQuickMenuOpenSignal.setValue((val) => !val)
         }
       })
     )

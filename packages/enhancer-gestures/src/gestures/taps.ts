@@ -1,28 +1,25 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { combineLatest, EMPTY, first, of, Subject, switchMap, tap } from "rxjs"
-import { GestureEvent, GestureRecognizable, Hook } from "../types"
+import { combineLatest, EMPTY, first, map, of, switchMap } from "rxjs"
+import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
-import { filterNotLink } from "../utils"
+import { isNotLink } from "../utils"
 
 export const registerTaps = ({
   reader,
   recognizable,
-  unhandledEvent$,
   hookManager,
 }: {
   recognizable: GestureRecognizable
   reader: Reader
   hookManager: HookManager<Hook>
-  unhandledEvent$: Subject<GestureEvent>
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = recognizable.events$.pipe(
-    filterNotLink,
     switchMap((event) => {
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
-      if (event.type === "tap") {
+      if (event.type === "tap" && isNotLink(event)) {
         const width = window.innerWidth
         const height = window.innerHeight
         const pageTurnMargin = 0.15
@@ -34,9 +31,9 @@ export const registerTaps = ({
 
           return combineLatest([...beforeTapResults$, of(true)]).pipe(
             first(),
-            tap((results) => {
+            map((results) => {
               if (results.some((result) => result === false)) {
-                return
+                return { event, handled: false }
               }
 
               const isTopArea = y < height * pageTurnMargin
@@ -53,8 +50,10 @@ export const registerTaps = ({
               } else if (isRightArea && computedPageTurnDirection === "horizontal") {
                 reader.navigation.turnRightOrBottom()
               } else {
-                unhandledEvent$.next(event)
+                return { event, handled: false }
               }
+
+              return { event, handled: true }
             }),
           )
         }

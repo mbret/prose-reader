@@ -1,5 +1,15 @@
 import { Observable, ObservedValueOf } from "rxjs"
-import { PanRecognizer, PinchRecognizer, Recognizable, SwipeRecognizer, TapRecognizer, type TapEvent } from "gesturx"
+import {
+  PanEvent,
+  PanRecognizer,
+  PinchEvent,
+  PinchRecognizer,
+  Recognizable,
+  SwipeEvent,
+  SwipeRecognizer,
+  TapRecognizer,
+  type TapEvent,
+} from "gesturx"
 import { HookManager } from "../../core/dist/hooks/HookManager"
 import { GesturesSettingsManager } from "./SettingsManager"
 
@@ -29,7 +39,7 @@ export type OutputSettings = InputSettings
 export type EnhancerAPI = {
   gestures: {
     settings: GesturesSettingsManager
-    unhandledEvent$: Observable<GestureEvent>
     hookManager: HookManager<Hook>
+    gestures$: Observable<{ event: TapEvent | PanEvent | SwipeEvent | PinchEvent; handled: boolean }>
   }
 }

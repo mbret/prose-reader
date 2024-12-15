@@ -12,8 +12,7 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: "index.html",
-        raw: "raw.html"
+        main: "index.html"
       }
     }
   },
@@ -42,7 +41,7 @@ export default defineConfig(({ mode }) => ({
       strategies: "injectManifest",
       manifest: false,
       injectManifest: {
-        injectionPoint: undefined,
+        injectionPoint: undefined
       },
       srcDir: "src/serviceWorker",
       filename: "service-worker.ts",

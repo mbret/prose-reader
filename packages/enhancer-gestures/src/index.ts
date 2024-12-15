@@ -1,5 +1,5 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { ObservedValueOf, Subject, combineLatest, merge, takeUntil, tap } from "rxjs"
+import {  combineLatest, merge, share, takeUntil, tap } from "rxjs"
 import { PanRecognizer, PinchRecognizer, Recognizable, SwipeRecognizer, TapRecognizer } from "gesturx"
 import { EnhancerAPI, InputSettings, Hook } from "./types"
 import { registerTaps } from "./gestures/taps"
@@ -65,13 +65,10 @@ export const gesturesEnhancer =
       disableTextSelection: false,
     })
 
-    const unhandledEvent$ = new Subject<ObservedValueOf<typeof recognizable.events$>>()
-
     const tapGestures$ = registerTaps({
       hookManager,
       reader,
       recognizable,
-      unhandledEvent$,
       settingsManager,
     })
 
@@ -79,7 +76,6 @@ export const gesturesEnhancer =
       hookManager,
       reader,
       recognizer: panRecognizer,
-      unhandledEvent$,
       settingsManager,
     })
 
@@ -87,7 +83,6 @@ export const gesturesEnhancer =
       hookManager,
       reader,
       recognizable,
-      unhandledEvent$,
       settingsManager,
     })
 
@@ -96,7 +91,6 @@ export const gesturesEnhancer =
       reader,
       recognizable,
       settingsManager,
-      unhandledEvent$,
     })
 
     const zoomPanGestures$ = registerZoomPan({
@@ -130,17 +124,11 @@ export const gesturesEnhancer =
       }),
     )
 
-    merge(
-      containerUpdate$,
-      watchSettings$,
-      zoomPanGestures$,
-      pinchGestures$,
-      tapGestures$,
-      swipeGestures$,
-      panGestures$,
+    const gestures$ = merge(pinchGestures$, tapGestures$, swipeGestures$, panGestures$).pipe(
+      share()
     )
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe()
+
+    merge(containerUpdate$, watchSettings$, zoomPanGestures$, gestures$).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,
@@ -150,7 +138,7 @@ export const gesturesEnhancer =
       },
       gestures: {
         settings: settingsManager,
-        unhandledEvent$: unhandledEvent$.asObservable(),
+        gestures$,
         hookManager,
       },
     }

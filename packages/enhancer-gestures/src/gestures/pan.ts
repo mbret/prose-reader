@@ -1,6 +1,6 @@
 import { HookManager, Reader } from "@prose-reader/core"
-import { EMPTY, Subject, switchMap, tap } from "rxjs"
-import { GestureEvent, Hook } from "../types"
+import { EMPTY, map, switchMap, tap } from "rxjs"
+import { Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 import { PanRecognizer } from "gesturx"
 
@@ -14,7 +14,6 @@ export const registerPan = ({
   recognizer: PanRecognizer
   reader: Reader
   hookManager: HookManager<Hook>
-  unhandledEvent$: Subject<GestureEvent>
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = settingsManager.values$.pipe(
@@ -42,6 +41,7 @@ export const registerPan = ({
             reader?.navigation.moveTo({ x: event.deltaX, y: event.deltaY }, { final: true })
           }
         }),
+        map((event) => ({ event, handled: true })),
       )
     }),
   )
