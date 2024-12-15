@@ -281,7 +281,7 @@ const createContainerElement = (
   const element: HTMLElement =
     containerElement.ownerDocument.createElement(`div`)
   element.classList.add(`spineItem`)
-  element.classList.add(`spineItem-${item.renditionLayout}`)
+  element.classList.add(`spineItem-${item.renditionLayout ?? "reflowable"}`)
   element.style.cssText = `
     position: absolute;
     overflow: hidden;

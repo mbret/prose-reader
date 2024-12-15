@@ -1,4 +1,12 @@
-import { from, fromEvent, map, Observable, of, switchMap, take } from "rxjs"
+import {
+  from,
+  fromEvent,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+} from "rxjs"
 
 export const getAttributeValueFromString = (string: string, key: string) => {
   const regExp = new RegExp(key + `\\s*=\\s*([0-9.]+)`, `i`)
@@ -88,7 +96,9 @@ export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
 export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
   stream.pipe(
     switchMap((frame) => {
-      if (frame.contentDocument?.readyState === "complete") return of(frame)
+      if (frame.src === "about:blank") {
+        return of(frame)
+      }
 
       return fromEvent(frame, `load`).pipe(
         take(1),
