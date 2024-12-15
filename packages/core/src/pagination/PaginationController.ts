@@ -46,7 +46,7 @@ export class PaginationController extends DestroyableClass {
      */
     const updatePagination$ = merge(
       this.context.bridgeEvent.navigation$,
-      spine.spineLayout.layout$.pipe(filter(({ hasChanged }) => hasChanged)),
+      spine.spineLayout.layout$,
     ).pipe(
       switchMap(() => {
         const getVisiblePagesFromViewportPosition = ({
