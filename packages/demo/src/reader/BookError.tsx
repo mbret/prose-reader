@@ -1,9 +1,9 @@
-import { Container, Text } from "@chakra-ui/react"
-import React from "react"
+import { Box, Text } from "@chakra-ui/react"
 
 export const BookError = ({ url }: { url: string }) => {
   return (
-    <Container
+    <Box
+      p={4}
       style={{
         height: "100%",
         width: "100%",
@@ -21,6 +21,6 @@ export const BookError = ({ url }: { url: string }) => {
     >
       <Text wordBreak="break-word">Unable to load your book {url}</Text>
       <Text>Make sure to have CORS enabled if you are linking to an external resource</Text>
-    </Container>
+    </Box>
   )
 }

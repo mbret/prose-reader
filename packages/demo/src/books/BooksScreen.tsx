@@ -1,4 +1,3 @@
-import React from "react"
 import { Link as RouterLink } from "react-router-dom"
 import { Table, Tr, Th, Thead, Tbody, Link, Td, Box, Text, IconButton, Stack, Container, Heading } from "@chakra-ui/react"
 import { DeleteIcon } from "@chakra-ui/icons"
@@ -47,10 +46,10 @@ export const BooksScreen = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {uploadedBooks?.map(({ name }) => (
+                {uploadedBooks?.map(({ name, base64Uri }) => (
                   <Tr key={name}>
                     <Td>
-                      <Link to={`/reader/${btoa(`file://epubs/${name}`)}`} as={RouterLink}>
+                      <Link to={`/reader/${base64Uri}`} as={RouterLink}>
                         {name}
                       </Link>
                     </Td>

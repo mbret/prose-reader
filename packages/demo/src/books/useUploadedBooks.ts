@@ -7,7 +7,9 @@ export const useUploadedBooks = () => {
     queryFn: async () => {
       const keys = await localforage.keys()
 
-      return keys.map((name) => ({ name }))
+      return keys.map((name) => {
+        return { name, base64Uri: btoa(`${encodeURIComponent(`file://epubs/${name}`)}`) }
+      })
     }
   })
 }

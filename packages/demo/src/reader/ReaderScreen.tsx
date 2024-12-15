@@ -59,7 +59,7 @@ export const ReaderScreen = memo(() => {
 
   return (
     <>
-      <Box height="100%" width="100%">
+      <Box height="100%" width="100%" position="relative">
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
