@@ -26,7 +26,7 @@ const searchNodeContainingText = (node: Node, text: string) => {
       const content = (subNode as Text).data.toLowerCase()
       if (content) {
         let match
-        const regexp = RegExp(`(${text})`, `g`)
+        const regexp = RegExp(`(${text})`, `gi`)
 
         while ((match = regexp.exec(content)) !== null) {
           if (match.index >= 0 && subNode.ownerDocument) {
