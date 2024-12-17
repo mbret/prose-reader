@@ -60,8 +60,7 @@ export const isHtmlElement = (
     typeof element === `object` &&
     !!element &&
     `nodeType` in element &&
-    element?.nodeType === Node.ELEMENT_NODE &&
-    `innerText` in (element as HTMLElement)
+    element?.nodeType === Node.ELEMENT_NODE
   )
 }
 
