@@ -44,7 +44,7 @@ export const Menu = memo(
         title="Menu"
       >
         <Tabs index={tabIndex} onChange={handleTabsChange} overflow="hidden" flex={1} display="flex" flexDirection="column">
-          <TabList>
+          <TabList overflow="hidden" overflowX="auto">
             <Tab>Settings</Tab>
             <Tab>Help</Tab>
             <Tab>TOC</Tab>
