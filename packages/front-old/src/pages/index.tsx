@@ -2,7 +2,7 @@ import { Box, Button, Heading, Link } from "@chakra-ui/react"
 import { Text } from "@chakra-ui/react"
 import Image from "next/image"
 import { ExternalLinkIcon } from "@chakra-ui/icons"
-import headerLogo from "../public/header_logo.svg"
+// import headerLogo from "../public/header_logo.svg"
 import { GithubIcon } from "../lib/assets/GithubIcon"
 import { DiscordMarkBlueIcon } from "../lib/assets/DiscordMarkBlueIcon"
 import { OrDivider } from "../lib/OrDivider"
@@ -26,7 +26,7 @@ export default function Index() {
           prose
         </Heading>
         <Box maxW={[200, 300]}>
-          <Image src={headerLogo} alt="logo" />
+          {/* <Image src={headerLogo} alt="logo" /> */}
         </Box>
         <Box display="flex" maxW={[400]} flexDirection="column" gap={2}>
           <Text paddingTop={10} textAlign="center">
