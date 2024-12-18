@@ -1,5 +1,5 @@
 {
-  "name": "front",
+  "name": "prose-reader-front",
   "version": "0.1.0",
   "private": true,
   "scripts": {
