@@ -37,7 +37,9 @@ export function ColorModeIcon() {
   return colorMode === "light" ? <LuSun /> : <LuMoon />
 }
 
-interface ColorModeButtonProps extends Omit<IconButtonProps, "aria-label"> {}
+interface ColorModeButtonProps extends Omit<IconButtonProps, "aria-label"> {
+  _foo?: string
+}
 
 export const ColorModeButton = React.forwardRef<HTMLButtonElement, ColorModeButtonProps>(function ColorModeButton(props, ref) {
   const { toggleColorMode } = useColorMode()
