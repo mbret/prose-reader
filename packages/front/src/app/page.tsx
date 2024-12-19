@@ -6,6 +6,8 @@ import { FaDiscord, FaGithub } from "react-icons/fa"
 import { LuExternalLink } from "react-icons/lu"
 import { OrDivider } from "@/components/OrDivider"
 import headerLogo from "@/assets/header_logo.svg"
+import { DeveloperFriendlySection } from "./DeveloperFriendlySection"
+import { ThemingSection } from "./ThemingSection"
 
 export default function Home() {
   return (
@@ -30,7 +32,7 @@ export default function Home() {
             extensive functionalities.
           </Text>
           <Text paddingY={5} textAlign="center">
-            prose is a library licensed under <b>MIT license</b>. It's{" "}
+            prose is a library licensed under <b>MIT license</b>. It&apos;s{" "}
             <Link variant="underline" href="https://github.com/mbret/prose-reader/blob/master/LICENCE">
               free of use <LuExternalLink />
             </Link>{" "}
@@ -60,18 +62,21 @@ export default function Home() {
             </Link>
           </Button>
         </Box>
-        <Box as="footer" marginTop={16} paddingBottom={8} textAlign="center">
-          <Text>
-            © Copyright{" "}
-            <b>
-              <Link href="https://www.linkedin.com/in/maxime-bret/" rel="nofollow noopener noreferrer">
-                Maxime Bret
-              </Link>
-            </b>
-          </Text>
+        <Box display="flex" flexDirection="column" gap={[8, null, 12]} mt={14}>
+          <ThemingSection />
+          <DeveloperFriendlySection />
         </Box>
       </Box>
-      <footer></footer>
+      <Box as="footer" marginTop={16} paddingBottom={8} textAlign="center">
+        <Text>
+          © Copyright{" "}
+          <b>
+            <Link href="https://www.linkedin.com/in/maxime-bret/" rel="nofollow noopener noreferrer">
+              Maxime Bret
+            </Link>
+          </b>
+        </Text>
+      </Box>
     </Box>
   )
 }

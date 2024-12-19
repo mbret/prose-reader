@@ -6,7 +6,6 @@ import { Dancing_Script, Roboto } from "next/font/google"
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   variable: "--font-dancing-script",
-  // weight: ["400"],
 })
 
 const roboto = Roboto({
@@ -15,16 +14,6 @@ const roboto = Roboto({
   style: ["normal"],
   variable: "--font-roboto",
 })
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// })
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// })
 
 export const metadata: Metadata = {
   title: "Prose",
