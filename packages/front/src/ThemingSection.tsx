@@ -1,6 +1,5 @@
-import { Container, Heading, Text, Box, Button, Link } from "@chakra-ui/react"
-import Image from "next/image"
-import makeItYours from "@/assets/make-it-yours.png"
+import { Container, Heading, Text, Box, Button, Link, Image } from "@chakra-ui/react"
+import makeItYours from "./assets/make-it-yours.png"
 import { FaExternalLinkAlt } from "react-icons/fa"
 
 export const ThemingSection = () => {
@@ -27,7 +26,11 @@ export const ThemingSection = () => {
         <Image
           src={makeItYours}
           alt="Make it yours image"
-          style={{ width: "100%", maxWidth: 300, boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.1)" }}
+          height={[300, 400, 450]}
+          objectFit="contain"
+          aspectRatio={1024 / 1248}
+          rounded="md"
+          boxShadow="md"
         />
       </Box>
     </Container>

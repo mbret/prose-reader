@@ -1,15 +1,15 @@
-import Image from "next/image"
-import { Heading, Link, Text } from "@chakra-ui/react"
+import { Heading, Link, Text, Image } from "@chakra-ui/react"
 import { Box } from "@chakra-ui/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "./components/ui/button"
 import { FaDiscord, FaGithub } from "react-icons/fa"
 import { LuExternalLink } from "react-icons/lu"
-import { OrDivider } from "@/components/OrDivider"
-import headerLogo from "@/assets/header_logo.svg"
+import { OrDivider } from "./components/OrDivider"
+import headerLogo from "./assets/header_logo.svg"
 import { DeveloperFriendlySection } from "./DeveloperFriendlySection"
 import { ThemingSection } from "./ThemingSection"
+import "./App.css"
 
-export default function Home() {
+function App() {
   return (
     <Box pt={10} pb={10}>
       <Box
@@ -22,10 +22,10 @@ export default function Home() {
           alignItems: "center",
         }}
       >
-        <Heading as="h1" fontFamily="var(--font-dancing-script)" size="6xl" mb={8}>
+        <Heading as="h1" fontFamily={`"Dancing Script", serif;`} size="6xl" mb={8}>
           prose
         </Heading>
-        <Box maxW={[200, 300]}>{<Image src={headerLogo} alt="logo" priority />}</Box>
+        {<Image src={headerLogo} alt="logo" height={[150, 200, 250]} />}
         <Box display="flex" maxW={[400]} flexDirection="column" gap={2}>
           <Text paddingTop={10} textAlign="center" fontFamily="body">
             Next generation reading engine. Build your reading app for any platforms, any formats and any languages with ease and
@@ -80,3 +80,5 @@ export default function Home() {
     </Box>
   )
 }
+
+export default App
