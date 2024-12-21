@@ -4,6 +4,11 @@ import { ChakraProvider, createSystem, defaultConfig, defineConfig } from "@chak
 import { ColorModeProvider, type ColorModeProviderProps } from "./color-mode"
 
 const config = defineConfig({
+  globalCss: {
+    html: {
+      colorPalette: "red",
+    },
+  },
   theme: {
     tokens: {
       fonts: {

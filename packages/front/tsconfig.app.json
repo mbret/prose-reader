@@ -20,7 +20,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "paths": {
+      // we need this for now because of other version of react in the monorepo
+      "react": ["./node_modules/@types/react"]
+    }
   },
   "include": ["src"]
 }

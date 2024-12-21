@@ -7,7 +7,6 @@ import {
   forkJoin,
   withLatestFrom,
   finalize,
-  tap,
 } from "rxjs"
 import { deferIdle, idle } from "../../utils/rxjs"
 import { Reader } from "../../reader"
