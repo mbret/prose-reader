@@ -246,13 +246,13 @@ export abstract class DocumentRenderer extends DestroyableClass {
   public layout(params: LayoutParams) {
     return defer(() => this.onLayout(params)).pipe(
       map((dims) => {
+        const { height: defaultHeight, width: defaultWidth } =
+          this.context.getPageSize()
+
         if (dims) {
           const { height, width } = dims
 
-          if (
-            height < this.context.getPageSize().height ||
-            width < this.context.getPageSize().width
-          ) {
+          if (height < defaultHeight || width < defaultWidth) {
             Report.warn(
               `Your height or width is smaller than the page size. Please check your rendering.`,
             )
@@ -270,9 +270,14 @@ export abstract class DocumentRenderer extends DestroyableClass {
           }
         } else {
           this.lastLayoutDims = {
-            height: this.context.getPageSize().height,
-            width: this.context.getPageSize().width,
-            ...this.lastLayoutDims,
+            height: Math.max(
+              defaultHeight,
+              this.lastLayoutDims?.height ?? defaultHeight,
+            ),
+            width: Math.max(
+              defaultWidth,
+              this.lastLayoutDims?.width ?? defaultWidth,
+            ),
           }
         }
 
