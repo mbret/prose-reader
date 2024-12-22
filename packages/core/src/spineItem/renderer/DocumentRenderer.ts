@@ -26,6 +26,7 @@ import { ResourceHandler } from "../resources/ResourceHandler"
 import { waitForSwitch } from "../../utils/rxjs"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { Report } from "../../report"
+import { getFrameViewportInfo } from "../../utils/frames"
 
 type Layer = {
   element: HTMLElement
@@ -245,20 +246,24 @@ export abstract class DocumentRenderer extends DestroyableClass {
   public layout(params: LayoutParams) {
     return defer(() => this.onLayout(params)).pipe(
       map((dims) => {
-        const isPrepaginated =
-          this.item.renditionLayout === `pre-paginated` ||
-          (!this.context.manifest?.renditionLayout &&
-            this.context.manifest?.renditionLayout === `pre-paginated`)
-
         if (dims) {
           const { height, width } = dims
+
+          if (
+            height < this.context.getPageSize().height ||
+            width < this.context.getPageSize().width
+          ) {
+            Report.warn(
+              `Your height or width is smaller than the page size. Please check your rendering.`,
+            )
+          }
 
           this.lastLayoutDims = { height: height, width: width }
 
           return this.lastLayoutDims
         }
 
-        if (isPrepaginated) {
+        if (this.renditionLayout === `pre-paginated`) {
           this.lastLayoutDims = {
             height: this.context.getPageSize().height,
             width: this.context.getPageSize().width,
@@ -319,5 +324,21 @@ export abstract class DocumentRenderer extends DestroyableClass {
 
   get readingDirection(): `rtl` | `ltr` | undefined {
     return undefined
+  }
+
+  get renditionLayout() {
+    const itemRenditionLayout = this.item.renditionLayout
+
+    if (itemRenditionLayout) return itemRenditionLayout
+
+    const iframe = this.getDocumentFrame()
+
+    if (iframe) {
+      const { hasViewport } = getFrameViewportInfo(iframe)
+
+      if (hasViewport) return "pre-paginated"
+    }
+
+    return this.context.manifest?.renditionLayout ?? "reflowable"
   }
 }

@@ -265,11 +265,7 @@ export class SpineItem extends DestroyableClass {
   }
 
   get renditionLayout() {
-    const itemRenditionLayout = this.item.renditionLayout
-
-    if (itemRenditionLayout) return itemRenditionLayout
-
-    return this.context.manifest?.renditionLayout ?? "reflowable"
+    return this.renderer.renditionLayout
   }
 }
 
