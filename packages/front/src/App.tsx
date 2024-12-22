@@ -5,9 +5,10 @@ import { FaDiscord, FaGithub } from "react-icons/fa"
 import { LuExternalLink } from "react-icons/lu"
 import { OrDivider } from "./components/OrDivider"
 import headerLogo from "./assets/header_logo.svg"
-import { DeveloperFriendlySection } from "./DeveloperFriendlySection"
-import { ThemingSection } from "./ThemingSection"
+import { DeveloperFriendlySection } from "./sections/DeveloperFriendlySection"
+import { ThemingSection } from "./sections/ThemingSection"
 import "./App.css"
+import { ReadAnythingSection } from "./sections/ReadAnythingSection"
 
 function App() {
   return (
@@ -62,7 +63,8 @@ function App() {
             </Link>
           </Button>
         </Box>
-        <Box display="flex" flexDirection="column" gap={[8, null, 12]} mt={14}>
+        <Box display="flex" flexDirection="column" gap={[8, null, 14]} mt={14}>
+          <ReadAnythingSection />
           <ThemingSection />
           <DeveloperFriendlySection />
         </Box>

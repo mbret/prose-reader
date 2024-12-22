@@ -1,14 +1,13 @@
-import { Container, Button, Heading, Link, Text, Box, Icon } from "@chakra-ui/react"
+import { Button, Link, Text, Box, Icon } from "@chakra-ui/react"
 import { FaExternalLinkAlt } from "react-icons/fa"
 import { SiTypescript } from "react-icons/si"
 import { SiReactiveresume } from "react-icons/si"
+import { Section, SectionTitle } from "./Section"
 
 export const DeveloperFriendlySection = () => {
   return (
-    <Container maxW="3xl" display="flex" gap={2} flexDirection="column">
-      <Heading as="h2" size="2xl">
-        Developer friendly
-      </Heading>
+    <Section>
+      <SectionTitle>Developer friendly</SectionTitle>
       <Box display="flex" gap={4} mt={2}>
         <Icon fontSize="2xl" color="blue.600">
           <SiTypescript size="" />
@@ -26,6 +25,6 @@ export const DeveloperFriendlySection = () => {
           Explore the documentation <FaExternalLinkAlt />
         </Link>
       </Button>
-    </Container>
+    </Section>
   )
 }

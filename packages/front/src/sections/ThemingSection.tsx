@@ -1,15 +1,16 @@
-import { Container, Heading, Text, Box, Button, Link, Image } from "@chakra-ui/react"
-import makeItYours from "./assets/make-it-yours.png"
+import { Text, Box, Button, Link, Image } from "@chakra-ui/react"
+import makeItYours from "../assets/make-it-yours.png"
 import { FaExternalLinkAlt } from "react-icons/fa"
+import { Section, SectionTitle } from "./Section"
 
 export const ThemingSection = () => {
   return (
-    <Container maxW="3xl" display="flex" gap={2} flexDirection="column">
+    <Section>
       <Box flexDirection={["column", null, "row"]} display="flex" gap={[4, null, 8]} alignItems={["flex-start"]}>
         <Box flexDirection="column" gap={2} display="flex">
-          <Heading as="h2" size="2xl">
+          <SectionTitle>
             Make it yours
-          </Heading>
+          </SectionTitle>
           <Box flexDirection="column" gap={2} display="flex" mt={2}>
             <Text>
               Prose handle the complex functionality like rendering and pagination, while giving you complete creative freedom
@@ -33,6 +34,6 @@ export const ThemingSection = () => {
           boxShadow="md"
         />
       </Box>
-    </Container>
+    </Section>
   )
 }
