@@ -13,8 +13,19 @@ import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { getParentPath, Manifest } from "@prose-reader/shared"
 import { Context } from "../../../context/Context"
 
+/**
+ * @important Firefox handles file protocol weirdly and will not
+ * go up one directory when using "../". We temporarily replace to http://
+ * to keep our behavior.
+ */
 const joinPath = (base: string, path: string) => {
-  return new URL(path, base).toString()
+  // Temporarily replace file:// with http:// for consistent URL handling
+  const isFileProtocol = base.startsWith("file://")
+  const tempBase = isFileProtocol ? base.replace("file://", "http://") : base
+  const result = new URL(path, tempBase).toString()
+
+  // Convert back to file:// if needed
+  return isFileProtocol ? result.replace("http://", "file://") : result
 }
 
 const getElementsWithAssets = (document: Document | null | undefined) => {
