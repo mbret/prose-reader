@@ -7,7 +7,7 @@ import { waitForSwitch } from "../../../utils/rxjs"
 import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
-import { loadMedias, unloadMedias } from "./medias"
+import { loadAssets, unloadMedias } from "./assets"
 
 export class HtmlRenderer extends DocumentRenderer {
   /**
@@ -50,7 +50,7 @@ export class HtmlRenderer extends DocumentRenderer {
         this.containerElement.appendChild(frameElement)
       }),
       waitForFrameLoad,
-      loadMedias({
+      loadAssets({
         context: this.context,
         item: this.item,
         settings: this.settings,

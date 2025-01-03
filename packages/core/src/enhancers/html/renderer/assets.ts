@@ -13,7 +13,11 @@ import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { getParentPath, Manifest } from "@prose-reader/shared"
 import { Context } from "../../../context/Context"
 
-export const loadMedias =
+const joinPath = (base: string, path: string) => {
+  return new URL(path, base).toString()
+}
+
+export const loadAssets =
   ({
     settings,
     item,
@@ -26,19 +30,35 @@ export const loadMedias =
   (stream: Observable<HTMLIFrameElement>) =>
     stream.pipe(
       switchMap((frameElement) => {
-        const images =
-          frameElement.contentDocument?.getElementsByTagName("img") || []
+        const RESOURCE_ELEMENTS = [
+          "img", // Images
+          "video", // Video files
+          "audio", // Audio files
+          "source", // Source elements within video/audio
+          "link", // Stylesheets and other linked resources
+          "script", // JavaScript files
+        ].join(",")
 
-        const imageObservables = Array.from(images).map((img) => {
-          const originalSrc = img.getAttribute("src")
+        const elementsWithAsset = [
+          ...(frameElement.contentDocument?.querySelectorAll(
+            RESOURCE_ELEMENTS,
+          ) || []),
+        ]
+
+        const assetsLoad$ = Array.from(elementsWithAsset).map((element) => {
+          const originalSrc =
+            element.getAttribute("src") || element.getAttribute("href")
+
+          if (!originalSrc) return of(null)
 
           // EPUB/cover.html -> EPUB/
           const spineItemUriParentPath = getParentPath(item.href)
 
           // EPUB/image.png needs to match frame relative src /image.png
           const foundItem = context.manifest?.items.find(({ href }) => {
-            return `${spineItemUriParentPath}/${originalSrc}`.endsWith(
-              `${href}`,
+            // this will remove things like "../.." and have a normal relative path
+            return `${joinPath(spineItemUriParentPath, originalSrc).toLowerCase()}`.endsWith(
+              `${href.toLowerCase()}`,
             )
           })
 
@@ -59,14 +79,17 @@ export const loadMedias =
             tap((blob) => {
               if (blob) {
                 const blobUrl = URL.createObjectURL(blob)
-
-                img.src = blobUrl
+                if (element.hasAttribute("src")) {
+                  element.setAttribute("src", blobUrl)
+                } else if (element.hasAttribute("href")) {
+                  element.setAttribute("href", blobUrl)
+                }
               }
             }),
           )
         })
 
-        return combineLatest(imageObservables).pipe(map(() => frameElement))
+        return combineLatest(assetsLoad$).pipe(map(() => frameElement))
       }),
     )
 
