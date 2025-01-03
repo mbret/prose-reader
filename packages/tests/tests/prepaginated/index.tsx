@@ -3,6 +3,8 @@ import { createArchiveFromJszip, Streamer } from "@prose-reader/streamer"
 import { from } from "rxjs"
 import { loadAsync } from "jszip"
 
+window.__PROSE_READER_DEBUG = true
+
 async function createStreamer() {
   const streamer = new Streamer({
     getArchive: async () => {
@@ -29,8 +31,10 @@ async function run() {
   const manifest = await manifestResponse.json()
 
   console.log(manifest)
-  
+
   const reader = createReader({
+    numberOfAdjacentSpineItemToPreLoad: 0,
+    pageTurnAnimation: "none",
     layoutLayerTransition: false,
     getResource: (item) => {
       return from(streamer.fetchResource({ key: `_`, resourcePath: item.href }))
@@ -43,6 +47,16 @@ async function run() {
   reader.load({
     containerElement: document.getElementById(`app`)!,
     manifest,
+  })
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  window.reader = reader
+
+  reader.layout$.subscribe(() => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    window.layoutNumber = (window.layoutNumber ?? 0) + 1
   })
 }
 
