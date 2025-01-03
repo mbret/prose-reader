@@ -112,7 +112,8 @@ export const unloadMedias = (frameElement?: HTMLIFrameElement) => {
 
   elementsWithAsset.forEach((element) => {
     const url = element.getAttribute("src") || element.getAttribute("href")
-    if (url.startsWith("blob:")) {
+
+    if (url?.startsWith("blob:")) {
       URL.revokeObjectURL(url)
     }
   })
