@@ -13,7 +13,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.waitForSelector(".prose-spineItem-ready")
 
-      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, { threshold: 0.03 }))
+      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, { threshold: 0.03 })
     })
 
     /**
