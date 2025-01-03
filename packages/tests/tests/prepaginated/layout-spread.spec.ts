@@ -13,7 +13,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.waitForSelector(".prose-spineItem-ready")
 
-      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, { threshold: 0.03 })
+      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, {})
     })
 
     /**
@@ -34,7 +34,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await waitForSpineItemReady(page, [1, 2])
 
-      expect(await page.screenshot()).toMatchSnapshot(`right-navigation-layout.png`, { threshold: 0.03 })
+      expect(await page.screenshot()).toMatchSnapshot(`right-navigation-layout.png`, {})
 
       const numberOfLayout = await page.evaluate(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
