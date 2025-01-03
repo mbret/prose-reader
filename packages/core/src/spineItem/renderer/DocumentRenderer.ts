@@ -266,7 +266,8 @@ export abstract class DocumentRenderer extends DestroyableClass {
         if (this.renditionLayout === `pre-paginated`) {
           this.lastLayoutDims = {
             height: this.context.getPageSize().height,
-            width: params.minimumWidth,
+            // width: params.minimumWidth,
+            width: this.context.getPageSize().width,
           }
         } else {
           this.lastLayoutDims = {
