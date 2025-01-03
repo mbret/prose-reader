@@ -17,6 +17,19 @@ const joinPath = (base: string, path: string) => {
   return new URL(path, base).toString()
 }
 
+const getElementsWithAssets = (document: Document | null | undefined) => {
+  const RESOURCE_ELEMENTS = [
+    "img", // Images
+    "video", // Video files
+    "audio", // Audio files
+    "source", // Source elements within video/audio
+    "link", // Stylesheets and other linked resources
+    "script", // JavaScript files
+  ].join(",")
+
+  return Array.from(document?.querySelectorAll(RESOURCE_ELEMENTS) || [])
+}
+
 export const loadAssets =
   ({
     settings,
@@ -30,20 +43,9 @@ export const loadAssets =
   (stream: Observable<HTMLIFrameElement>) =>
     stream.pipe(
       switchMap((frameElement) => {
-        const RESOURCE_ELEMENTS = [
-          "img", // Images
-          "video", // Video files
-          "audio", // Audio files
-          "source", // Source elements within video/audio
-          "link", // Stylesheets and other linked resources
-          "script", // JavaScript files
-        ].join(",")
-
-        const elementsWithAsset = [
-          ...(frameElement.contentDocument?.querySelectorAll(
-            RESOURCE_ELEMENTS,
-          ) || []),
-        ]
+        const elementsWithAsset = getElementsWithAssets(
+          frameElement.contentDocument,
+        )
 
         const assetsLoad$ = Array.from(elementsWithAsset).map((element) => {
           const originalSrc =
@@ -79,6 +81,7 @@ export const loadAssets =
             tap((blob) => {
               if (blob) {
                 const blobUrl = URL.createObjectURL(blob)
+
                 if (element.hasAttribute("src")) {
                   element.setAttribute("src", blobUrl)
                 } else if (element.hasAttribute("href")) {
@@ -94,14 +97,12 @@ export const loadAssets =
     )
 
 export const unloadMedias = (frameElement?: HTMLIFrameElement) => {
-  const images = Array.from(
-    frameElement?.contentDocument?.getElementsByTagName("img") || [],
-  )
+  const elementsWithAsset = getElementsWithAssets(frameElement?.contentDocument)
 
-  images.forEach((img) => {
-    // Revoke blob URLs to prevent memory leaks
-    if (img.src.startsWith("blob:")) {
-      URL.revokeObjectURL(img.src)
+  elementsWithAsset.forEach((element) => {
+    const url = element.getAttribute("src") || element.getAttribute("href")
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url)
     }
   })
 }
