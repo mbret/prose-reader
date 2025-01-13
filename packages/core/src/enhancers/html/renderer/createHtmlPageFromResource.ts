@@ -22,7 +22,7 @@ export const createHtmlPageFromResource = async (
   resourceResponse: Response | string,
   item: Manifest[`spineItems`][number],
 ) => {
-  if (typeof resourceResponse === `string`) return resourceResponse
+  if (typeof resourceResponse === "string") return resourceResponse
 
   const contentType =
     parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) ||

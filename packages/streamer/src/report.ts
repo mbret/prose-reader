@@ -37,7 +37,7 @@ export const Report = {
   ) => {
     const duration =
       // biome-ignore lint/suspicious/useValidTypeof: <explanation>
-      typeof performanceEntry === `number`
+      typeof performanceEntry === "number"
         ? performanceEntry
         : performanceEntry.duration
     if (enabled) {

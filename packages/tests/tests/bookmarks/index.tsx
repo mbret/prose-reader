@@ -56,7 +56,7 @@ async function run() {
         .subscribe((data) => {
           setBookmarks(data)
         })
-    }, [reader])
+    }, [])
 
     const bookmarkForPage = bookmarks?.find(
       (bookmark) =>
@@ -65,6 +65,7 @@ async function run() {
 
     return (
       <button
+        type="button"
         id="mark"
         style={{
           position: "absolute",
@@ -85,9 +86,11 @@ async function run() {
     )
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: <explanation>
   createRoot(document.getElementById("bookmarks")!).render(<Bookmarks />)
 
   reader.load({
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
     containerElement: document.getElementById(`app`)!,
     manifest,
   })

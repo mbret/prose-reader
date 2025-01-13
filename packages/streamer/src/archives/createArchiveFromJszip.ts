@@ -50,7 +50,7 @@ export const createArchiveFromJszip = async (
       basename: getUriBasename(file.name),
       uri: file.name,
       blob: () => file.async(`blob`),
-      string: () => file.async(`string`),
+      string: () => file.async("string"),
       ...(file.internalStream && {
         stream: file.internalStream,
       }),

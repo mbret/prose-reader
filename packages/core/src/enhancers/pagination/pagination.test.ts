@@ -68,6 +68,7 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
+          // biome-ignore lint/style/noNonNullAssertion: <explanation>
           containerElement: document.getElementById("test-container")!,
         })
       })
@@ -129,6 +130,7 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
+          // biome-ignore lint/style/noNonNullAssertion: <explanation>
           containerElement: document.getElementById("test-container")!,
         })
 
@@ -201,6 +203,7 @@ describe("Given a book with one chapter", () => {
                   },
                 ],
               },
+              // biome-ignore lint/style/noNonNullAssertion: <explanation>
               containerElement: document.getElementById("test-container")!,
             })
 
@@ -273,6 +276,7 @@ describe("Given a book with two chapters", () => {
               },
             ],
           },
+          // biome-ignore lint/style/noNonNullAssertion: <explanation>
           containerElement: document.getElementById("test-container")!,
         })
       })

@@ -67,11 +67,11 @@ export const loadingEnhancer =
             `.${CONTAINER_HTML_PREFIX}`,
           )
 
-          if (alreadyExistingElement instanceof HTMLElement)
-            return {
-              ...acc,
-              [item.id]: alreadyExistingElement,
-            }
+          if (alreadyExistingElement instanceof HTMLElement) {
+            acc[item.id] = alreadyExistingElement
+
+            return acc
+          }
 
           const loadingElementContainer = loadingElementCreate({
             container: createLoadingElementContainer(element, reader.context),
@@ -80,10 +80,9 @@ export const loadingEnhancer =
 
           element.appendChild(loadingElementContainer)
 
-          return {
-            ...acc,
-            [item.id]: loadingElementContainer,
-          }
+          acc[item.id] = loadingElementContainer
+
+          return acc
         }, {} as Entries),
       )
 

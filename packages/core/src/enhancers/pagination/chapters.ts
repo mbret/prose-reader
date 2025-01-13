@@ -115,10 +115,9 @@ export const getChaptersInfo = (
 
   return items.reduce(
     (acc, { item }) => {
-      return {
-        ...acc,
-        [item.id]: buildChapterInfoFromSpineItem(manifest, item),
-      }
+      acc[item.id] = buildChapterInfoFromSpineItem(manifest, item)
+
+      return acc
     },
     {} as { [key: string]: ChapterInfo | undefined },
   )

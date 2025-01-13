@@ -17,6 +17,7 @@ test("should navigate to second page and back to first page", async ({
   await page.waitForSelector(".prose-spineItem-ready")
 
   await page.evaluate(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     ;((window as any).reader as Reader).navigation.goToNextSpineItem()
   })
 
@@ -25,6 +26,7 @@ test("should navigate to second page and back to first page", async ({
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 
   await page.evaluate(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     ;((window as any).reader as Reader).navigation.goToTopSpineItem()
   })
 

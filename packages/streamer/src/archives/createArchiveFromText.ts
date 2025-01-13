@@ -47,14 +47,14 @@ export const createArchiveFromText = async (
         basename: getUriBasename(`p01.txt`),
         uri: `p01.txt`,
         blob: async () => {
-          if (typeof content === `string`) return new Blob([content])
+          if (typeof content === "string") return new Blob([content])
           return content
         },
         string: async () => {
-          if (typeof content === `string`) return content
+          if (typeof content === "string") return content
           return content.text()
         },
-        size: typeof content === `string` ? content.length : content.size,
+        size: typeof content === "string" ? content.length : content.size,
         encodingFormat: mimeType,
       },
     ],

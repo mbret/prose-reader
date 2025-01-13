@@ -33,10 +33,10 @@ export const isShallowEqual = <T = any, R = any>(
   if (objectA === objectB) {
     return true
   }
-  if (typeof objectA !== `object` || objectA === null) {
+  if (typeof objectA !== "object" || objectA === null) {
     return false
   }
-  if (typeof objectB !== `object` || objectB === null) {
+  if (typeof objectB !== "object" || objectB === null) {
     return false
   }
 

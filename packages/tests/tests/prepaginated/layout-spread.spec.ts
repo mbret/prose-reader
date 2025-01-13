@@ -44,6 +44,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       )
 
       const numberOfLayout = await page.evaluate(() => {
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         return (window as any).layoutNumber as number
       })
 
@@ -51,6 +52,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       await page.waitForTimeout(1000)
 
       const numberOfLayoutAfterAWhile = await page.evaluate(() => {
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         return (window as any).layoutNumber as number
       })
 

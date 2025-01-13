@@ -24,7 +24,7 @@ export const AppBar = memo(
       {...rest}
     >
       {leftElement}
-      {typeof middleElement === `string` ? (
+      {typeof middleElement === "string" ? (
         <Text as="h1" noOfLines={1}>
           {middleElement}
         </Text>

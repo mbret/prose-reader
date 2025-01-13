@@ -4,6 +4,7 @@ import type { Reader } from "@prose-reader/core"
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   await page.evaluate(
     (args) => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       const reader = (window as any).reader as Reader
 
       return new Promise((resolve) => {

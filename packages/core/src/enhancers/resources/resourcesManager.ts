@@ -23,16 +23,17 @@ export const createResourcesManager = (context: Context) => {
   }>()
 
   const retrieveItem = (
-    itemIndexOrId: number | Pick<Manifest[`spineItems`][number], `id`>,
+    itemIndexOrId: number | string | Pick<Manifest[`spineItems`][number], `id`>,
   ) => {
     if (
-      typeof itemIndexOrId === `string` ||
-      typeof itemIndexOrId === `object`
+      typeof itemIndexOrId === "string" ||
+      typeof itemIndexOrId === "object"
     ) {
       const id =
-        typeof itemIndexOrId === `object` ? itemIndexOrId.id : undefined
+        typeof itemIndexOrId === "object" ? itemIndexOrId.id : itemIndexOrId
       return context.manifest?.spineItems.find((entry) => entry.id === id)
     }
+
     return context.manifest?.spineItems[itemIndexOrId]
   }
 
