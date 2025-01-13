@@ -4,7 +4,6 @@
     "**/dist": false,
     "**/build": true
   },
-  "eslint.format.enable": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit"
   },

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { deferIdle, type Reader } from "@prose-reader/core"
 import { defer, forkJoin, type Observable, of } from "rxjs"
 import { catchError, finalize, map, switchMap } from "rxjs/operators"

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import { BehaviorSubject, Subject } from "rxjs"
 import { distinctUntilChanged, map, filter } from "rxjs/operators"
 import type { Manifest } from "@prose-reader/shared"

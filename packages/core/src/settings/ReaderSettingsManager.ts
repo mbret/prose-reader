@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { combineLatest, merge } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
 import type {

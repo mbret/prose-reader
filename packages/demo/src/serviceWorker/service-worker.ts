@@ -1,5 +1,4 @@
 /// <reference lib="webworker" />
-/* eslint-disable no-restricted-globals */
 import { configure } from "@prose-reader/streamer"
 import { swStreamer } from "../streamer/streamer.sw"
 

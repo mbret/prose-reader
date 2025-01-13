@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subject, combineLatest, of } from "rxjs"
 import type { CoreHook, Hook, HookExecution, HookFrom } from "./types"
 import type { UserDestroyFn } from "./types"

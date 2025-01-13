@@ -3,8 +3,6 @@
  *
  * Does not work in service worker due to usage of web worker.
  */
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Report } from "../report"
 import type { Archive } from "./types"
 

@@ -31,7 +31,7 @@ jobs:
       - name: Check
         run: |
           npm run format
-          npx lerna run lint --stream --scope @prose-reader/*
+          npx run lint
 
       # We only build library on this pipe
       - name: Build

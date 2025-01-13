@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BehaviorSubject, Observable } from "rxjs"
 import { getNewScaledOffset } from "../../utils/layout"
 import { Zoomer } from "./Zoomer"

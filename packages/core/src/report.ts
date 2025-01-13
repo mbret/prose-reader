@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const ROOT_NAMESPACE = `@prose-reader/core`
 
 const getWindow = () => {

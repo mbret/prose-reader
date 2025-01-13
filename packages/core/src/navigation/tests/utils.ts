@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BehaviorSubject, of, Subject } from "rxjs"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { CreateReaderParameters, ReaderInternal } from "../../reader"
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
