@@ -1,8 +1,8 @@
 import { useEffect } from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { LocalSettings } from "./useLocalSettings"
-import { Manifest } from "@prose-reader/core"
+import type { LocalSettings } from "./useLocalSettings"
+import type { Manifest } from "@prose-reader/core"
 
 export const useUpdateReaderSettings = ({
   localSettings,

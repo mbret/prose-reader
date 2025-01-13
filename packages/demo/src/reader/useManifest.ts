@@ -1,4 +1,4 @@
-import { Manifest } from "@prose-reader/core"
+import type { Manifest } from "@prose-reader/core"
 import { useQuery } from "reactjrx"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { webStreamer } from "../streamer/webStreamer"

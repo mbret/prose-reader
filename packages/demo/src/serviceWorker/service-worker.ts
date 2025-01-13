@@ -14,7 +14,7 @@ configure({
 console.log(self.__WB_MANIFEST)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-self.addEventListener("install", function (e: ExtendableEvent & any) {
+self.addEventListener("install", (e: ExtendableEvent & any) => {
   console.log("service worker install")
   e.waitUntil(self.skipWaiting()) // Activate worker immediately
 
@@ -30,7 +30,7 @@ self.addEventListener("install", function (e: ExtendableEvent & any) {
   })
 })
 
-self.addEventListener("activate", function (event) {
+self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim()) // Become available to all pages
 })
 

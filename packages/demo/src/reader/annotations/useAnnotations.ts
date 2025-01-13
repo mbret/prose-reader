@@ -1,8 +1,8 @@
-import { ReaderInstance } from "../useCreateReader"
+import type { ReaderInstance } from "../useCreateReader"
 import { useObserve, useSubscribe } from "reactjrx"
 import { EMPTY, of, skip, tap } from "rxjs"
 import { isQuickMenuOpenSignal } from "../states"
-import { Highlight } from "@prose-reader/enhancer-annotations"
+import type { Highlight } from "@prose-reader/enhancer-annotations"
 import { selectedHighlightSignal } from "./states"
 
 const restore = (bookKey: string) => {

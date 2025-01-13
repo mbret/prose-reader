@@ -1,5 +1,6 @@
 import { Heading, Input, Text, Box, Stack, Link } from "@chakra-ui/react"
-import React, { useCallback, useState } from "react"
+import type React from "react"
+import { useCallback, useState } from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { map, startWith } from "rxjs"

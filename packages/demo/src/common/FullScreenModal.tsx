@@ -6,7 +6,7 @@ import {
   ModalContent,
   ModalOverlay,
 } from "@chakra-ui/react"
-import React, { FC, ReactNode } from "react"
+import React, { type FC, type ReactNode } from "react"
 import { AppBar } from "./AppBar"
 
 export const FullScreenModal: FC<{

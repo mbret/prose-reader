@@ -1,5 +1,6 @@
-import React, { ComponentProps, memo } from "react"
-import { Box, Stack, Text } from "@chakra-ui/react"
+import type React from "react"
+import { type ComponentProps, memo } from "react"
+import { type Box, Stack, Text } from "@chakra-ui/react"
 
 export const AppBar = memo(
   ({

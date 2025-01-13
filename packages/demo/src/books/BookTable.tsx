@@ -28,7 +28,7 @@ export const BookTable = ({
       <Thead>
         <Tr>
           <Th width="70%">{title}</Th>
-          <Th></Th>
+          <Th />
         </Tr>
       </Thead>
       <Tbody>

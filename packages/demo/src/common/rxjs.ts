@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { filter, Observable, Subject } from "rxjs"
+import { filter, type Observable, Subject } from "rxjs"
 
 export const useUnMount$ = () => {
   const unMount$ = useRef(new Subject<void>())

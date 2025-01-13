@@ -23,11 +23,10 @@ export const swStreamer = new ServiceWorkerStreamer({
 
     if (url.endsWith(`.txt`)) {
       return await createArchiveFromText(blob)
-    } else {
+    }
       const name = blob.name
       const jszip = await loadAsync(blob)
 
       return await createArchiveFromJszip(jszip, { orderByAlpha: true, name })
-    }
   },
 })

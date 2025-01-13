@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 
 test("should navigate to second page and back to first page", async ({
   page,

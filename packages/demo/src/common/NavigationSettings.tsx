@@ -1,4 +1,4 @@
-import React from "react"
+import type React from "react"
 import {
   FormControl,
   FormHelperText,
@@ -10,7 +10,7 @@ import {
   Checkbox,
 } from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
-import { LocalSettings } from "../reader/settings/useLocalSettings"
+import type { LocalSettings } from "../reader/settings/useLocalSettings"
 import { useReader } from "../reader/useReader"
 import { useObserve } from "reactjrx"
 

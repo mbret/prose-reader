@@ -20,8 +20,7 @@ export const Bookmarks = () => {
   return (
     <>
       {createPortal(
-        <>
-          {pages?.map(
+        pages?.map(
             (
               { isBookmarkable, absolutePosition: { left, top, width } },
               index,
@@ -65,8 +64,7 @@ export const Bookmarks = () => {
                 </Box>
               )
             },
-          )}
-        </>,
+          ),
         spineElement,
       )}
     </>

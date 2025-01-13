@@ -1,5 +1,6 @@
-import { Box, BoxProps, Text } from "@chakra-ui/react"
-import React, { FC } from "react"
+import { Box, type BoxProps, Text } from "@chakra-ui/react"
+import type React from "react"
+import type { FC } from "react"
 
 export const OrDivider: FC<
   { title?: string; style?: React.CSSProperties } & BoxProps
@@ -21,7 +22,7 @@ export const OrDivider: FC<
           borderBottom: "1px solid white",
           opacity: "30%",
         }}
-      ></Box>
+      />
       <Box marginX={2}>
         <Text sx={{ textTransform: "uppercase" }}>{title}</Text>
       </Box>
@@ -31,7 +32,7 @@ export const OrDivider: FC<
           borderBottom: "1px solid white",
           opacity: "30%",
         }}
-      ></Box>
+      />
     </Box>
   )
 }

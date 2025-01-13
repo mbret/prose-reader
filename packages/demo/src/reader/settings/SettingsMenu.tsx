@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState } from "react"
 import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
 import RcSlider from "rc-slider"
@@ -26,8 +27,8 @@ import { OtherSettings } from "../../common/OtherSettings"
 import { useReaderSettings } from "../../common/useReaderSettings"
 import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
 import { useReader } from "../useReader"
-import { LocalSettings } from "./useLocalSettings"
-import { Theme } from "@prose-reader/core/dist/enhancers/theme"
+import type { LocalSettings } from "./useLocalSettings"
+import type { Theme } from "@prose-reader/core/dist/enhancers/theme"
 
 export const SettingsMenu = ({
   open,
@@ -148,7 +149,7 @@ export const SettingsMenu = ({
           defaultValue="publisher"
           onChange={(value) => {
             reader.settings.update({
-              lineHeight: value === `publisher` ? `publisher` : parseInt(value),
+              lineHeight: value === `publisher` ? `publisher` : Number.parseInt(value),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
@@ -168,7 +169,7 @@ export const SettingsMenu = ({
           onChange={(value) => {
             reader.settings.update({
               fontWeight:
-                value === `publisher` ? `publisher` : (parseInt(value) as 100),
+                value === `publisher` ? `publisher` : (Number.parseInt(value) as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}
