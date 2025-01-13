@@ -62,7 +62,7 @@ const buildTOCFromNav = (
 ) => {
   const toc: Toc = []
 
-  let navDataChildren
+  let navDataChildren: xmldoc.XmlNode[] | undefined
 
   if (doc.descendantWithPath(`body.nav.ol`)) {
     navDataChildren = doc.descendantWithPath(`body.nav.ol`)?.children

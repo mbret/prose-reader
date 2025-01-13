@@ -33,7 +33,7 @@ export const Scrubber = () => {
 
   useEffect(() => {
     valueSignal.setValue(currentPage || 0)
-  }, [currentPage])
+  }, [currentPage, valueSignal])
 
   const reverse = manifest?.readingDirection === "rtl"
 
@@ -62,7 +62,7 @@ export const Scrubber = () => {
         }
       }
     },
-    [reader, isUsingSpread],
+    [reader, isUsingSpread, valueSignal, isPrepaginated],
   )
 
   /**

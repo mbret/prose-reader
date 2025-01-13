@@ -12,6 +12,7 @@ configure({
 // @ts-expect-error self.__WB_MANIFEST not typed
 console.log(self.__WB_MANIFEST)
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 self.addEventListener("install", (e: ExtendableEvent & any) => {
   console.log("service worker install")
   e.waitUntil(self.skipWaiting()) // Activate worker immediately

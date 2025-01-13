@@ -14,8 +14,6 @@
   "license": "MIT",
   "files": ["/dist"],
   "scripts": {
-    "lint:check": "eslint .",
-    "lint:write": "eslint --fix .",
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
     "test": "vitest run --coverage"

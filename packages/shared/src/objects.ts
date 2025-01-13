@@ -4,6 +4,7 @@
 const hasOwn = Object.prototype.hasOwnProperty
 
 // Object.is polyfill
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const is = (x: any, y: any): boolean => {
   if (x === y) {
     return x !== 0 || y !== 0 || 1 / x === 1 / y
@@ -22,6 +23,8 @@ export const is = (x: any, y: any): boolean => {
  * - `customEqual`: function should return true if the `a` value is equal to `b` value.
  * - `debug`: enable debug info to console log. This log will be disable in production build
  */
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const isShallowEqual = <T = any, R = any>(
   objectA: T,
   objectB: R,
@@ -48,7 +51,7 @@ export const isShallowEqual = <T = any, R = any>(
   }
 
   const isEqual =
-    options && typeof options.customEqual === `function`
+    options && typeof options.customEqual === "function"
       ? options.customEqual
       : is
 
@@ -63,6 +66,7 @@ export const isShallowEqual = <T = any, R = any>(
   return true
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const groupBy = <T, K extends keyof any>(
   list: T[],
   getKey: (item: T) => K,
@@ -82,9 +86,11 @@ export function shallowMergeIfDefined<T, U>(obj1: T, obj2: U): T & U {
 
   for (const key in obj2) {
     if (Object.prototype.hasOwnProperty.call(obj2, key)) {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       const value = (obj2 as any)[key]
       // @ts-ignore
       if (value !== undefined || !(key in obj1)) {
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         ;(result as any)[key] = value
       }
     }

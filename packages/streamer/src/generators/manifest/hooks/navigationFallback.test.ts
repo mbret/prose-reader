@@ -10,6 +10,7 @@ it("should create valid toc", async () => {
       files: [
         {
           basename: "2.jpg",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           blob: () => Promise.resolve({} as any),
           dir: false,
           size: 0,
@@ -18,6 +19,7 @@ it("should create valid toc", async () => {
         },
         {
           basename: "1.jpg",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           blob: () => Promise.resolve({} as any),
           dir: false,
           size: 0,
@@ -26,6 +28,7 @@ it("should create valid toc", async () => {
         },
         {
           basename: "1.jpg",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           blob: () => Promise.resolve({} as any),
           dir: false,
           size: 0,
@@ -34,6 +37,7 @@ it("should create valid toc", async () => {
         },
         {
           basename: "Screenshot from 2024-08-28 13-21-11.png",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           blob: () => Promise.resolve({} as any),
           dir: false,
           size: 0,
@@ -42,6 +46,7 @@ it("should create valid toc", async () => {
         },
         {
           basename: "4.jpg",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           blob: () => Promise.resolve({} as any),
           dir: false,
           size: 0,

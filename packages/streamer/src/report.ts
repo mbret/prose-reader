@@ -36,7 +36,6 @@ export const Report = {
     targetDuration = Infinity,
   ) => {
     const duration =
-      // biome-ignore lint/suspicious/useValidTypeof: <explanation>
       typeof performanceEntry === "number"
         ? performanceEntry
         : performanceEntry.duration

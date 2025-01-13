@@ -16,8 +16,6 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "lint:check": "eslint .",
-    "lint:write": "eslint --fix .",
     "test": "vitest run --coverage",
     "tsc": "tsc",
     "test:watch": "vitest watch"

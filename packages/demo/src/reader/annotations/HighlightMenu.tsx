@@ -40,6 +40,7 @@ export const HighlightMenu = memo(() => {
   const highlightColor = highlight?.color
   const highlightContent = (highlight?.contents ?? [])[0]
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setContents("")
   }, [isOpen])
@@ -48,6 +49,7 @@ export const HighlightMenu = memo(() => {
     setContents(highlightContent ?? "")
   }, [highlightContent])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (highlightColor) {
       setSelectedColor(highlightColor)

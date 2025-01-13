@@ -43,6 +43,7 @@ describe("Given no resource specified", () => {
       streamer.fetchEventListener({
         request: {
           url: "https://foo.bar/streamer/foo",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         } as any,
         respondWith: resolve,
       })
@@ -66,6 +67,7 @@ describe("Given resource is manifest", () => {
       streamer.fetchEventListener({
         request: {
           url: "https://foo.bar/streamer/foo/manifest",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         } as any,
         respondWith: resolve,
       })
@@ -94,6 +96,7 @@ describe("Given valid resource from archive", () => {
       streamer.fetchEventListener({
         request: {
           url: "https://foo.bar/streamer/foo/bar/foo.jpg",
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         } as any,
         respondWith: resolve,
       })
@@ -117,6 +120,7 @@ describe("Given valid resource from archive", () => {
         streamer.fetchEventListener({
           request: {
             url: "https://foo.bar/streamer/foo/Creature%20Girls%20-%20A%20Hands-On%20Field%20Journal%20in%20Another%20World%20v04%20(2020)%20(Digital)%20(SnS)/Creature%20Girls%20-%20A%20Hands-On%20Field%20Journal%20in%20Another%20World%20v04%20000%20(2020)%20(Digital)%20(SnS).jpg",
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           } as any,
           respondWith: resolve,
         })

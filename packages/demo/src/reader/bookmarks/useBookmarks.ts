@@ -38,7 +38,7 @@ export const useBookmarks = (
     reader.bookmarks.add(restoredBookmarks)
 
     setIsHydrated(true)
-  }, [reader, isHydrated])
+  }, [reader, isHydrated, bookKey])
 
   useObserve(
     () =>

@@ -9,7 +9,7 @@ export const useUnMount$ = () => {
       unMount$.current.next()
       unMount$.current.complete()
     }
-  }, [unMount$])
+  }, [])
 
   return unMount$.current.asObservable()
 }
