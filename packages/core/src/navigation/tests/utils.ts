@@ -32,6 +32,7 @@ export const createNavigator = () => {
   const context = new Context()
   const settings = new ReaderSettingsManager({}, context)
   const spineItemsManagerMock = new SpineItemsManagerMock()
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const pagination = new Pagination(context, spineItemsManagerMock as any)
   const spineItemLocator = createSpineItemLocator({ context, settings })
   const hookManager = new HookManager()
@@ -39,6 +40,7 @@ export const createNavigator = () => {
     of(noopElement()),
     context,
     pagination,
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     spineItemsManagerMock as any,
     spineItemLocator,
     settings,
@@ -51,6 +53,7 @@ export const createNavigator = () => {
     context,
     settings,
     spineItemLocator,
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     spineItemsManager: spineItemsManagerMock as any,
     spineLayout: spine.spineLayout,
   })
@@ -58,6 +61,7 @@ export const createNavigator = () => {
     context,
     locator: spineLocator,
     settings,
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     spineItemsManager: spineItemsManagerMock as any,
     spineLayout: spine.spineLayout,
   })

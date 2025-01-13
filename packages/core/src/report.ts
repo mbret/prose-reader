@@ -37,6 +37,7 @@ const createReport = (namespace?: string) => ({
       else console.log(wrap(ROOT_NAMESPACE), ...data)
     }
   },
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   warn: (...data: any[]) => {
     if (getWindow()?.__PROSE_READER_DEBUG) {
       if (namespace)
@@ -44,6 +45,7 @@ const createReport = (namespace?: string) => ({
       else console.warn(wrap(ROOT_NAMESPACE), ...data)
     }
   },
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   info: (...data: any[]) => {
     if (getWindow()?.__PROSE_READER_DEBUG) {
       if (namespace)
@@ -63,6 +65,7 @@ const createReport = (namespace?: string) => ({
         console,
         wrap(`${ROOT_NAMESPACE}`),
       ),
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   error: (...data: any[]) => {
     console.error(...data)
   },
@@ -95,9 +98,11 @@ const createReport = (namespace?: string) => ({
     return (...args: Parameters<F>): ReturnType<F> => {
       const t0 = performance.now()
 
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       const response = functionToMeasure(...(args as any))
 
       if (response?.then) {
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         return response.then((res: any) => {
           const t1 = performance.now()
           Report.logMetric({ name, duration: t1 - t0 }, targetDuration)

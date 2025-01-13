@@ -5,7 +5,6 @@ import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManagerMock } from "../../navigation/tests/SpineItemsManagerMock"
 import { SpineLayout } from "../SpineLayout"
-import { waitFor } from "../../tests/utils"
 import { firstValueFrom } from "rxjs"
 
 const context = new Context()
@@ -46,6 +45,7 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
         const spineLayout = new SpineLayout(
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
@@ -69,6 +69,7 @@ describe("Given single page items and no spread", () => {
             context: context,
             position: { x: 50, y: 0 },
             settings,
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,
             threshold: 0.51,
             restrictToScreen: true,
@@ -86,6 +87,7 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
         const spineLayout = new SpineLayout(
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
@@ -109,6 +111,7 @@ describe("Given single page items and no spread", () => {
             context: context,
             position: { x: 50, y: 0 },
             settings,
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,
             threshold: 0.5,
             restrictToScreen: true,
@@ -126,6 +129,7 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
         const spineLayout = new SpineLayout(
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
@@ -151,6 +155,7 @@ describe("Given single page items and no spread", () => {
             context: context,
             position: { x: 50, y: 0 },
             settings,
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,
             threshold: 0.49,
             restrictToScreen: true,

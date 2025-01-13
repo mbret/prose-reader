@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { layout } from "@chakra-ui/react"
 import { BehaviorSubject, first, NEVER, of, Subject } from "rxjs"
 
 export type Item = {
@@ -73,6 +71,7 @@ export class SpineItemsManagerMock {
     return this.items.indexOf(item)
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   getAbsolutePositionOf(spineItem: any) {
     return (
       this.get(spineItem) ?? {

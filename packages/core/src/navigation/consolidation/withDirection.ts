@@ -79,31 +79,31 @@ export const getOrGuessDirection = ({
   if (settings.values.computedPageTurnDirection === "vertical") {
     if (navigation.position.y > previousNavigation.position.y) {
       return "forward"
-    } else {
-      if (
-        navigation.position.y === previousNavigation.position.y &&
-        previousNavigation.directionFromLastNavigation !== "backward"
-      ) {
-        return "forward"
-      }
-      return "backward"
     }
+
+    if (
+      navigation.position.y === previousNavigation.position.y &&
+      previousNavigation.directionFromLastNavigation !== "backward"
+    ) {
+      return "forward"
+    }
+    return "backward"
   }
 
   if (
     Math.abs(navigation.position.x) > Math.abs(previousNavigation.position.x)
   ) {
     return "forward"
-  } else {
-    if (
-      navigation.position.x === previousNavigation.position.x &&
-      previousNavigation.directionFromLastNavigation !== "backward"
-    ) {
-      return "forward"
-    }
-
-    return "backward"
   }
+
+  if (
+    navigation.position.x === previousNavigation.position.x &&
+    previousNavigation.directionFromLastNavigation !== "backward"
+  ) {
+    return "forward"
+  }
+
+  return "backward"
 }
 
 export const withDirection =

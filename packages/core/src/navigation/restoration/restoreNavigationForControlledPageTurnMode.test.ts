@@ -20,6 +20,7 @@ describe(`Given a backward navigation to a new item`, () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManagerMock()
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         const pagination = new Pagination(context, spineItemsManager as any)
         const hooksManager = new HookManager()
         const spineItemLocator = createSpineItemLocator({ context, settings })
@@ -27,6 +28,7 @@ describe(`Given a backward navigation to a new item`, () => {
           of(noopElement()),
           context,
           pagination,
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           spineItemLocator,
           settings,
@@ -36,6 +38,7 @@ describe(`Given a backward navigation to a new item`, () => {
           context,
           locator: spine.locator,
           settings,
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager: spineItemsManager as any,
           spineLayout: spine.spineLayout,
         })
@@ -76,6 +79,7 @@ describe(`Given a backward navigation to a new item`, () => {
             id: Symbol(),
           },
           navigationResolver,
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager: spineItemsManager as any,
           spineLocator: spine.locator,
           spineLayout: spine.spineLayout,
