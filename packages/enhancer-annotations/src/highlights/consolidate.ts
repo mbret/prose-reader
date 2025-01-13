@@ -1,5 +1,5 @@
-import { Reader } from "@prose-reader/core"
-import { Highlight } from "./Highlight"
+import type { Reader } from "@prose-reader/core"
+import type { Highlight } from "./Highlight"
 import { map, of, tap, withLatestFrom } from "rxjs"
 
 export const consolidate = (highlight: Highlight, reader: Reader) => {

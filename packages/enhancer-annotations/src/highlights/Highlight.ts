@@ -1,5 +1,5 @@
-import { Commands } from "../Commands"
-import { SerializableHighlight } from "../types"
+import type { Commands } from "../Commands"
+import type { SerializableHighlight } from "../types"
 
 export class Highlight {
   public cfi: string

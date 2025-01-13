@@ -1,6 +1,6 @@
 import { DestroyableClass } from "@prose-reader/core"
 import { filter, Subject } from "rxjs"
-import { SerializableHighlight } from "./types"
+import type { SerializableHighlight } from "./types"
 
 type HighlightParams = {
   selection: Selection

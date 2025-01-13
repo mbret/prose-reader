@@ -1,6 +1,6 @@
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import { resolve } from "path"
+import { resolve } from "node:path"
 import { name } from "./package.json"
 import externals from "rollup-plugin-node-externals"
 

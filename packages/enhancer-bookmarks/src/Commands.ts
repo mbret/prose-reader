@@ -1,6 +1,6 @@
 import { DestroyableClass } from "@prose-reader/core"
 import { filter, Subject } from "rxjs"
-import { type SerializableBookmark } from "./types"
+import type { SerializableBookmark } from "./types"
 
 type Command =
   | { type: "delete"; id: string }

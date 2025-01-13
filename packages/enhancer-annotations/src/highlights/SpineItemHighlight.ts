@@ -1,7 +1,7 @@
-import { DestroyableClass, Reader, SpineItem } from "@prose-reader/core"
+import { DestroyableClass, type Reader, type SpineItem } from "@prose-reader/core"
 import { createElementForRange } from "./utils"
-import { fromEvent, map, Observable, share, skip, takeUntil, tap } from "rxjs"
-import { Highlight } from "./Highlight"
+import { fromEvent, map, type Observable, share, skip, takeUntil, tap } from "rxjs"
+import type { Highlight } from "./Highlight"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
@@ -21,7 +21,7 @@ export class SpineItemHighlight extends DestroyableClass {
     void this.reader
 
     this.container = this.containerElement.ownerDocument.createElement("div")
-    this.container.dataset["highlightContainer"] = this.highlight.id
+    this.container.dataset.highlightContainer = this.highlight.id
     this.containerElement.appendChild(this.container)
 
     this.tap$ = fromEvent(this.container, "click").pipe(
@@ -71,7 +71,7 @@ export class SpineItemHighlight extends DestroyableClass {
     rectElements.forEach((elt) => {
       elt.style.pointerEvents = "initial"
       elt.style.cursor = "pointer"
-      elt.dataset["highlightRect"] = this.highlight.id
+      elt.dataset.highlightRect = this.highlight.id
 
       this.container.appendChild(elt)
     })

@@ -1,4 +1,4 @@
-import { Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
   first,
@@ -10,14 +10,14 @@ import {
   forkJoin,
   merge,
   of,
-  Observable,
-  ObservedValueOf,
+  type Observable,
+  type ObservedValueOf,
 } from "rxjs"
-import { SerializableBookmark, RuntimeBookmark } from "./types"
+import type { SerializableBookmark, RuntimeBookmark } from "./types"
 import { report } from "./report"
 import { Commands } from "./Commands"
 
-export { type SerializableBookmark, type RuntimeBookmark }
+export type { SerializableBookmark, RuntimeBookmark }
 
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(

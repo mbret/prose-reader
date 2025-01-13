@@ -1,10 +1,10 @@
-import { Reader } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
   merge,
   takeUntil,
   tap,
-  Observable,
+  type Observable,
   debounceTime,
   filter,
   mergeMap,
