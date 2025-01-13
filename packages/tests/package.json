@@ -18,7 +18,6 @@
     "@prose-reader/enhancer-pdf": "^1.120.0",
     "@prose-reader/enhancer-search": "^1.120.0",
     "@prose-reader/streamer": "^1.120.0",
-    "@types/node": "^22.8.6",
     "pdfjs-dist": "^4.7.76",
     "xmldoc": "^1.2.0",
     "@vitejs/plugin-react": "^4.3.3",

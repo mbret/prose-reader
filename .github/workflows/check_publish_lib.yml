@@ -28,7 +28,7 @@ jobs:
       - name: Check
         run: |
           npm run format
-          npx run lint
+          npm run lint
 
       # We only build library on this pipe
       - name: Build
