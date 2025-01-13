@@ -57,7 +57,7 @@ export const isHtmlElement = (
   element?: Element | Node | null | EventTarget,
 ): element is HTMLElement => {
   return (
-    typeof element === `object` &&
+    typeof element === "object" &&
     !!element &&
     `nodeType` in element &&
     element?.nodeType === Node.ELEMENT_NODE
@@ -80,7 +80,7 @@ function createRangeOrCaretFromPoint(
   if (
     "caretRangeFromPoint" in doc &&
     // @ts-expect-error limited availability
-    typeof doc.caretRangeFromPoint !== `undefined`
+    typeof doc.caretRangeFromPoint !== "undefined"
   ) {
     // @ts-expect-error limited availability
     return doc.caretRangeFromPoint(startX, startY)

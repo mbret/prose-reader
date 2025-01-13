@@ -1,13 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint no-useless-escape: "off" */
-/**
- * @see https://github.com/fread-ink/epub-cfi-resolver
- * @latest a0d7e4e39d5b4adc9150e006e0b6d7af9513ae27
- */
-"use strict"
-
 const ELEMENT_NODE = Node.ELEMENT_NODE
 const TEXT_NODE = Node.TEXT_NODE
 const CDATA_SECTION_NODE = Node.CDATA_SECTION_NODE
@@ -108,6 +98,7 @@ function calcSiblingCount(
       prevOffset += node.textContent.length
       lastWasElement = false
     } else {
+      // biome-ignore lint/correctness/noUnnecessaryContinue: <explanation>
       continue
     }
   }
@@ -115,8 +106,8 @@ function calcSiblingCount(
 }
 
 function compareTemporal(a: number, b: number) {
-  const isA = typeof a === `number`
-  const isB = typeof b === `number`
+  const isA = typeof a === "number"
+  const isB = typeof b === "number"
 
   if (!isA && !isB) return 0
   if (!isA && isB) return -1
@@ -180,11 +171,13 @@ export class CfiHandler {
 
     str = m[1] || ``
 
-    let parsed, offset, newDoc
+    let parsed
+    let offset
+    let newDoc
     let subParts = []
     let sawComma = 0
     while (str.length) {
-      ;({ parsed, offset, newDoc } = this.parse(str))
+      ({ parsed, offset, newDoc } = this.parse(str))
       if (!parsed || offset === null) throw new Error(`Parsing failed`)
       if (sawComma && newDoc)
         throw new Error(
@@ -266,7 +259,10 @@ export class CfiHandler {
       }
     }
 
-    let i, j, part, subpart
+    let i
+    let j
+    let part
+    let subpart
     for (i = 0; i < parts.length; i++) {
       part = parts[i]
       for (j = 0; j < part.length - 1; j++) {
@@ -280,14 +276,13 @@ export class CfiHandler {
   }
 
   static generatePart(node: Element | Node, offset?: number, extra?: {}) {
-    /* eslint-disable-next-line no-void */
     void extra
     let cfi = ``
     let o
     while (node.parentNode) {
       // @ts-ignore
       o = calcSiblingCount(node.parentNode.childNodes, node, offset)
-      if (!cfi && o.offset) cfi = `:` + o.offset
+      if (!cfi && o.offset) cfi = `:${o.offset}`
 
       cfi =
         // @ts-ignore
@@ -314,25 +309,27 @@ export class CfiHandler {
 
     if (extra) cfi += extra
 
-    return `epubcfi(` + cfi + `)`
+    return `epubcfi(${cfi})`
   }
 
   static toParsed(cfi: any) {
-    if (typeof cfi === `string`) {
+    if (typeof cfi === "string") {
       // cif = new this(cfi)
     }
     if (cfi.isRange) {
       return cfi.getFrom()
-    } else {
-      return cfi.get()
     }
+    return cfi.get()
   }
 
   // Takes two CFI paths and compares them
   static comparePath(a: any[], b: any[]) {
     const max = Math.max(a.length, b.length)
 
-    let i, cA, cB, diff
+    let i
+    let cA
+    let cB
+    let diff
     for (i = 0; i < max; i++) {
       cA = a[i]
       cB = b[i]
@@ -377,7 +374,10 @@ export class CfiHandler {
   static compareParts(a: any, b: any) {
     const max = Math.max(a.length, b.length)
 
-    let i, cA, cB, diff
+    let i
+    let cA
+    let cB
+    let diff
     for (i = 0; i < max; i++) {
       cA = a[i]
       cB = b[i]
@@ -496,7 +496,7 @@ export class CfiHandler {
     if (!loc) return
     const m = loc.trim().match(/^(.*);s=([ba])$/)
     if (!m || m.length < 3) {
-      if (typeof o.textLocationAssertion === `object`) {
+      if (typeof o.textLocationAssertion === "object") {
         o.textLocationAssertion.post = loc
       } else {
         o.textLocationAssertion = loc
@@ -504,7 +504,7 @@ export class CfiHandler {
       return
     }
     if (m[1]) {
-      if (typeof o.textLocationAssertion === `object`) {
+      if (typeof o.textLocationAssertion === "object") {
         o.textLocationAssertion.post = m[1]
       } else {
         o.textLocationAssertion = m[1]
@@ -523,10 +523,10 @@ export class CfiHandler {
     const m = range.trim().match(/^([\d\.]+):([\d\.]+)$/)
     if (!m || m.length < 3) return undefined
     const o = {
-      x: parseInt(m[1]),
-      y: parseInt(m[2]),
+      x: Number.parseInt(m[1]),
+      y: Number.parseInt(m[2]),
     }
-    if (typeof o.x !== `number` || typeof o.y !== `number`) {
+    if (typeof o.x !== "number" || typeof o.y !== "number") {
       return undefined
     }
     return o
@@ -538,7 +538,8 @@ export class CfiHandler {
     let f
     let state
     let prevState
-    let cur, escape
+    let cur
+    let escape
     let seenColon = false
     let seenSlash = false
     let i
@@ -614,13 +615,12 @@ export class CfiHandler {
           }
           escape = false
           continue
-        } else {
-          prevState = state
-          state = null
-          // @ts-ignore
-          if (f && seenColon) o.spatial = this.parseSpatialRange(f)
-          f = null
         }
+        prevState = state
+        state = null
+        // @ts-ignore
+        if (f && seenColon) o.spatial = this.parseSpatialRange(f)
+        f = null
       }
 
       if (state === `~`) {
@@ -657,13 +657,12 @@ export class CfiHandler {
         if (cur === `/`) {
           if (seenSlash) {
             break
-          } else {
-            seenSlash = true
-            prevState = state
-            state = cur
-            escape = false
-            continue
           }
+          seenSlash = true
+          prevState = state
+          state = cur
+          escape = false
+          continue
         }
 
         if (cur === `:` || cur === `~` || cur === `@`) {
@@ -674,9 +673,9 @@ export class CfiHandler {
             if (
               cur === `:` &&
               // @ts-ignore
-              (typeof o.temporal !== `undefined` ||
+              (typeof o.temporal !== "undefined" ||
                 // @ts-ignore
-                typeof o.spatial !== `undefined`)
+                typeof o.spatial !== "undefined")
             ) {
               break
             }
@@ -686,7 +685,7 @@ export class CfiHandler {
             if (
               (cur === `~` || cur === `@`) &&
               // @ts-ignore
-              typeof o.offset !== `undefined`
+              typeof o.offset !== "undefined"
             ) {
               break
             }
@@ -786,7 +785,8 @@ export class CfiHandler {
 
     let cfiCount = 0
     let lastChild
-    let i, child
+    let i
+    let child
 
     // console.log(children, children.length)
     for (i = 0; i < children.length; i++) {
@@ -911,12 +911,12 @@ export class CfiHandler {
     let curNode = node
     let matchStr: string | undefined
 
-    if (typeof assertion === `string`) {
+    if (typeof assertion === "string") {
       matchStr = this.decodeEntities(dom, assertion)
     } else {
       assertion.pre = this.decodeEntities(dom, assertion.pre)
       assertion.post = this.decodeEntities(dom, assertion.post)
-      matchStr = assertion.pre + `.` + assertion.post
+      matchStr = `${assertion.pre}.${assertion.post}`
     }
 
     if (!this.isTextNode(node)) {
@@ -1086,7 +1086,7 @@ export class CfiHandler {
     }
 
     const subparts = this.parts[index]
-    if (!subparts) throw new Error(`Missing CFI part for index: ` + index)
+    if (!subparts) throw new Error(`Missing CFI part for index: ${index}`)
 
     // @ts-ignore
     const o = this.resolveNode(index, subparts, dom, opts)
@@ -1115,15 +1115,15 @@ export class CfiHandler {
     if (tagName === `iframe` || tagName === `embed`) {
       // @ts-ignore
       const src = node.getAttribute(`src`)
-      if (!src) throw new Error(tagName + ` element is missing 'src' attribute`)
+      if (!src) throw new Error(`${tagName} element is missing 'src' attribute`)
       return src
     }
 
-    if (tagName === `object`) {
+    if (tagName === "object") {
       // @ts-ignore
       const data = node.getAttribute(`data`)
       if (!data)
-        throw new Error(tagName + ` element is missing 'data' attribute`)
+        throw new Error(`${tagName} element is missing 'data' attribute`)
       return data
     }
 
@@ -1131,7 +1131,7 @@ export class CfiHandler {
       // @ts-ignore
       const href = node.getAttribute(`xlink:href`)
       if (!href)
-        throw new Error(tagName + ` element is missing 'xlink:href' attribute`)
+        throw new Error(`${tagName} element is missing 'xlink:href' attribute`)
       return href
     }
 
@@ -1145,7 +1145,7 @@ export class CfiHandler {
   resolveLocation(dom: Document, parts: {}[]) {
     const index = parts.length - 1
     const subparts = parts[index]
-    if (!subparts) throw new Error(`Missing CFI part for index: ` + index)
+    if (!subparts) throw new Error(`Missing CFI part for index: ${index}`)
 
     // @ts-ignore
     const o = this.resolveNode(index, subparts, dom)

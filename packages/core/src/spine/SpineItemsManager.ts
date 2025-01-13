@@ -17,11 +17,11 @@ export class SpineItemsManager extends DestroyableClass {
   public items$ = this.orderedSpineItemsSubject.asObservable()
 
   get(indexOrId: number | string | SpineItem | undefined) {
-    if (typeof indexOrId === `number`) {
+    if (typeof indexOrId === "number") {
       return this.orderedSpineItemsSubject.value[indexOrId]
     }
 
-    if (typeof indexOrId === `string`) {
+    if (typeof indexOrId === "string") {
       return this.orderedSpineItemsSubject.value.find(
         ({ item }) => item.id === indexOrId,
       )

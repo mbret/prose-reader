@@ -89,7 +89,7 @@ export const createSpineLocator = ({
     offset: number | undefined,
     spineItemOrIndex: SpineItem | number,
   ) => {
-    if (typeof spineItemOrIndex === `number`) {
+    if (typeof spineItemOrIndex === "number") {
       const spineItem = spineItemsManager.get(spineItemOrIndex)
       return spineItem
         ? spineItemLocator.getSpineItemPageIndexFromNode(
