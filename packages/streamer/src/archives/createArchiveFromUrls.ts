@@ -1,6 +1,6 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { getUriBasename } from "../utils/uri"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 
 /**
  * @important

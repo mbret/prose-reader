@@ -1,5 +1,5 @@
-import { Manifest, TocItem, urlJoin } from "@prose-reader/shared"
-import { Archive } from "../../../archives/types"
+import { type Manifest, type TocItem, urlJoin } from "@prose-reader/shared"
+import type { Archive } from "../../../archives/types"
 import { sortByTitleComparator } from "../../../utils/sortByTitleComparator"
 
 /**
@@ -32,7 +32,7 @@ export const navigationFallbackHook =
       if (foundEntry) {
         if (nextFolderCursor) {
           return [
-            ...toc.filter((entry) => entry != foundEntry),
+            ...toc.filter((entry) => entry !== foundEntry),
             {
               ...foundEntry,
               contents: [
@@ -56,7 +56,7 @@ export const navigationFallbackHook =
 
         if (previousRegisteredPathWasLonger) {
           return [
-            ...toc.filter((entry) => entry != foundEntry),
+            ...toc.filter((entry) => entry !== foundEntry),
             {
               ...foundEntry,
               path,

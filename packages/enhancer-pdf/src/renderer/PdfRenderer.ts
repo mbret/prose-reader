@@ -4,15 +4,15 @@ import {
   finalize,
   from,
   map,
-  Observable,
+  type Observable,
   of,
   switchMap,
   tap,
 } from "rxjs"
 import {
-  PDFPageProxy,
+  type PDFPageProxy,
   RenderingCancelledException,
-  RenderTask,
+  type RenderTask,
   TextLayer,
 } from "pdfjs-dist"
 import {
@@ -247,8 +247,8 @@ export class PdfRenderer extends DocumentRenderer {
 
         const canvasScale = canvas.clientWidth / viewportWidth
 
-        textLayerElement.style.top = canvas.offsetTop + "px"
-        textLayerElement.style.left = canvas.offsetLeft + "px"
+        textLayerElement.style.top = `${canvas.offsetTop}px`
+        textLayerElement.style.left = `${canvas.offsetLeft}px`
         textLayerElement.style.height = canvas.style.height
         textLayerElement.style.width = canvas.style.width
 

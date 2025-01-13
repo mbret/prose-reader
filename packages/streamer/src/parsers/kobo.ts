@@ -1,5 +1,5 @@
 import xmldoc from "xmldoc"
-import { Archive } from ".."
+import type { Archive } from ".."
 
 type KoboInformation = {
   renditionLayout?: `reflowable` | `pre-paginated` | undefined

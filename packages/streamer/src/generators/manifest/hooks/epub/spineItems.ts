@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import xmldoc from "xmldoc"
+import type { Manifest } from "@prose-reader/shared"
+import type xmldoc from "xmldoc"
 
 export type SpineItemProperties =
   // @see https://www.w3.org/TR/epub/#layout-overrides

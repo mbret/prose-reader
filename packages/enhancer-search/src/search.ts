@@ -1,6 +1,6 @@
-import { Reader, SpineItem } from "@prose-reader/core"
-import { Observable, of } from "rxjs"
-import { ResultItem } from "./types"
+import type { Reader, SpineItem } from "@prose-reader/core"
+import { type Observable, of } from "rxjs"
+import type { ResultItem } from "./types"
 
 export type SearchResult = ResultItem[]
 

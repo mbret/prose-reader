@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { map, Observable, ObservedValueOf, Subject, takeUntil } from "rxjs"
+import { map, type Observable, type ObservedValueOf, Subject, takeUntil } from "rxjs"
 import { tap, pairwise } from "rxjs/operators"
-import {
+import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { InputSettings } from "./types"
+import type { InputSettings } from "./types"
 import { SettingsManager } from "./SettingsManager"
-import { SettingsInterface } from "../../settings/SettingsInterface"
+import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { upsertCSSToFrame } from "../../utils/frames"
 
 type OutputOptions = Required<InputSettings>

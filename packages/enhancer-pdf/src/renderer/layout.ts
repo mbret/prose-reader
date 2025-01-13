@@ -1,5 +1,5 @@
-import { Reader } from "@prose-reader/core"
-import { PDFPageProxy } from "pdfjs-dist"
+import type { Reader } from "@prose-reader/core"
+import type { PDFPageProxy } from "pdfjs-dist"
 
 export const layoutLayers = (
   layers: { element: HTMLElement }[],
@@ -51,6 +51,6 @@ export const layoutCanvas = (
 
   canvas.width = Math.floor(viewport.width * pixelRatioScale)
   canvas.height = Math.floor(viewport.height * pixelRatioScale)
-  canvas.style.width = Math.floor(canvasWidth) + "px"
-  canvas.style.height = Math.floor(canvasHeight) + "px"
+  canvas.style.width = `${Math.floor(canvasWidth)}px`
+  canvas.style.height = `${Math.floor(canvasHeight)}px`
 }

@@ -5,15 +5,15 @@ import {
   lastValueFrom,
   map,
   mergeMap,
-  Observable,
+  type Observable,
   of,
   switchMap,
 } from "rxjs"
 import { createArchiveLoader } from "./archives/archiveLoader"
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
-import { Archive } from "./archives/types"
+import type { Archive } from "./archives/types"
 
 type OnError = (error: unknown) => Response
 type OnManifestSuccess = (params: {

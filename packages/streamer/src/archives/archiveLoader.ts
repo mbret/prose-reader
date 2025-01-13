@@ -19,9 +19,9 @@ import {
   takeUntil,
   tap,
   timer,
-  ObservedValueOf,
+  type ObservedValueOf,
 } from "rxjs"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 
 class ArchiveEntry {
   state$ = new BehaviorSubject<{

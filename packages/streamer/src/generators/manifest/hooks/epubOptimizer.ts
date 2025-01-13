@@ -1,6 +1,6 @@
-import { isXmlBasedMimeType, Manifest } from "@prose-reader/shared"
+import { isXmlBasedMimeType, type Manifest } from "@prose-reader/shared"
 import xmldoc from "xmldoc"
-import { Archive } from "../../../archives/types"
+import type { Archive } from "../../../archives/types"
 import { getSpineItemFilesFromArchive } from "../../../epubs/getSpineItemFilesFromArchive"
 
 const hasDocMetaViewport = (doc: xmldoc.XmlDocument) => {

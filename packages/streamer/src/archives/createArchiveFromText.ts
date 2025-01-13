@@ -1,5 +1,5 @@
 import { getUriBasename } from "../utils/uri"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 
 /**
  * Useful to create archive from txt content

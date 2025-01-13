@@ -1,9 +1,9 @@
-import { Archive } from "../.."
+import type { Archive } from "../.."
 import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"
 import { cssFixHook } from "./hooks/cssFixHook"
 import { defaultHook } from "./hooks/defaultHook"
-import { HookResource } from "./hooks/types"
+import type { HookResource } from "./hooks/types"
 import { selfClosingTagsFixHook } from "./hooks/selfClosingTagsFixHook"
 
 export const generateResourceFromArchive = async (

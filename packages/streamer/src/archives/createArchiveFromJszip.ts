@@ -1,7 +1,7 @@
 import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
-import { Archive, StreamResult } from "./types"
+import type { Archive, StreamResult } from "./types"
 
 interface OutputByType {
   base64: string

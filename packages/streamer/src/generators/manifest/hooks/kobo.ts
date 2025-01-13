@@ -1,6 +1,6 @@
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 import xmldoc from "xmldoc"
-import { Archive } from "../../../archives/types"
+import type { Archive } from "../../../archives/types"
 
 export const kobo =
   ({ archive }: { archive: Archive; baseUrl: string }) =>

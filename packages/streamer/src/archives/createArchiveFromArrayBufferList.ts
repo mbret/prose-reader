@@ -1,6 +1,6 @@
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 
 export const createArchiveFromArrayBufferList = async (
   list: {

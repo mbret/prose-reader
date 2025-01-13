@@ -1,5 +1,5 @@
-import { Archive } from "../../../archives/types"
-import { HookResource } from "./types"
+import type { Archive } from "../../../archives/types"
+import type { HookResource } from "./types"
 
 const invalidSelfClosingTags = [
   "div",

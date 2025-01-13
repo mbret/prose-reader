@@ -1,4 +1,4 @@
-import { Archive } from "@prose-reader/streamer"
+import type { Archive } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
 
 type PdfJsArchive = Archive & {

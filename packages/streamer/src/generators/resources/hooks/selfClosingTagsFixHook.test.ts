@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { Archive } from "../../../archives/types"
+import type { Archive } from "../../../archives/types"
 import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook"
 
 describe("Given a book with invalid self closing tag", () => {

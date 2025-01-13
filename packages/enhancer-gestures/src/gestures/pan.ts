@@ -1,8 +1,8 @@
-import { HookManager, Reader } from "@prose-reader/core"
+import type { HookManager, Reader } from "@prose-reader/core"
 import { EMPTY, map, switchMap, tap } from "rxjs"
-import { Hook } from "../types"
-import { GesturesSettingsManager } from "../SettingsManager"
-import { PanRecognizer } from "gesturx"
+import type { Hook } from "../types"
+import type { GesturesSettingsManager } from "../SettingsManager"
+import type { PanRecognizer } from "gesturx"
 
 const DELAY_IGNORE_PAN = 400
 

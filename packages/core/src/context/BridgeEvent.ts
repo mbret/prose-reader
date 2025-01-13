@@ -4,8 +4,8 @@ import {
   filter,
   ReplaySubject,
 } from "rxjs"
-import { Navigation } from "../navigation/InternalNavigator"
-import { PaginationInfo } from "../pagination/Pagination"
+import type { Navigation } from "../navigation/InternalNavigator"
+import type { PaginationInfo } from "../pagination/Pagination"
 
 /**
  * Bridge events that are transverse to the project and needed across several

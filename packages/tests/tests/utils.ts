@@ -1,10 +1,9 @@
-import { Page } from "@playwright/test"
-import { Reader } from "@prose-reader/core"
+import type { Page } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   await page.evaluate(
     (args) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const reader = (window as any).reader as Reader
 
       return new Promise((resolve) => {
@@ -16,6 +15,7 @@ export async function waitForSpineItemReady(page: Page, indexes: number[]) {
 
           const currentIndex = remainingIndexes[0]
 
+          // biome-ignore lint/style/noNonNullAssertion: <explanation>
           reader.spineItemsManager
             .get(currentIndex)!
             .isReady$.subscribe((isReady) => {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest"
-import { Archive, generateManifestFromArchive, ServiceWorkerStreamer } from "."
+import { type Archive, generateManifestFromArchive, ServiceWorkerStreamer } from "."
 
 const archive: Archive = {
   filename: `comicinfo.xml`,

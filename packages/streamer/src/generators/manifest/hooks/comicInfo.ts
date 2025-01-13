@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import { Archive } from "../../../archives/types"
+import type { Manifest } from "@prose-reader/shared"
+import type { Archive } from "../../../archives/types"
 import { extractKoboInformationFromArchive } from "../../../parsers/kobo"
 
 /**

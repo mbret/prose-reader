@@ -1,4 +1,4 @@
-import { GestureEvent } from "./types"
+import type { GestureEvent } from "./types"
 import { isHtmlElement } from "@prose-reader/core"
 
 export const isNotLink = (event: GestureEvent) => {

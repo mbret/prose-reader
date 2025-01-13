@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Report } from "../report"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 
 interface ArchiveReader {
   getFilesArray(): Promise<any[]>

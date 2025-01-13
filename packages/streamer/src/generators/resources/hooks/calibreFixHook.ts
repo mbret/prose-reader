@@ -1,6 +1,6 @@
 import { XmlDocument } from "xmldoc"
-import { Archive } from "../../../archives/types"
-import { HookResource } from "./types"
+import type { Archive } from "../../../archives/types"
+import type { HookResource } from "./types"
 
 const hasCalibreCoverMeta = (doc: XmlDocument) => {
   const metaElm = doc
@@ -38,7 +38,7 @@ const fixBuggyCover =
         const buggySvg = getBuggyCoverSvg(opfXmlDoc)
 
         if (buggySvg) {
-          delete buggySvg.attr.preserveAspectRatio
+          buggySvg.attr.preserveAspectRatio = undefined
         }
 
         return {

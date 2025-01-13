@@ -1,5 +1,5 @@
-import { Context } from "../../context/Context"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { Context } from "../../context/Context"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
 import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage"
 

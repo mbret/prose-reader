@@ -1,5 +1,5 @@
-import { Reader } from "@prose-reader/core"
-import { PanRecognizer } from "gesturx"
+import type { Reader } from "@prose-reader/core"
+import type { PanRecognizer } from "gesturx"
 import { filter, switchMap, tap } from "rxjs"
 
 export const registerZoomPan = ({

@@ -1,4 +1,4 @@
-import { HookManager, Reader } from "@prose-reader/core"
+import { HookManager, type Reader } from "@prose-reader/core"
 import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
 import {
   PanRecognizer,
@@ -7,7 +7,7 @@ import {
   SwipeRecognizer,
   TapRecognizer,
 } from "gesturx"
-import { EnhancerAPI, InputSettings, Hook } from "./types"
+import type { EnhancerAPI, InputSettings, Hook } from "./types"
 import { registerTaps } from "./gestures/taps"
 import { registerPan } from "./gestures/pan"
 import { registerSwipe } from "./gestures/swipe"

@@ -1,6 +1,6 @@
 import { describe, expect, it, vitest } from "vitest"
 import { createArchiveLoader } from "./archiveLoader"
-import { Archive } from "./types"
+import type { Archive } from "./types"
 import { waitFor } from "../tests/waitFor"
 import { catchError, lastValueFrom, of } from "rxjs"
 
@@ -172,7 +172,7 @@ describe(`Given a long coming archive`, () => {
 
       release()
 
-      expect(archiveLoader.archives[`_`]?.state.archive).toEqual(archive)
+      expect(archiveLoader.archives._?.state.archive).toEqual(archive)
 
       expect(closeFnMock).not.toBeCalled()
 

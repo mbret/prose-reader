@@ -1,7 +1,7 @@
-import { HookManager, Reader } from "@prose-reader/core"
+import type { HookManager, Reader } from "@prose-reader/core"
 import { EMPTY, filter, map, switchMap, tap } from "rxjs"
-import { GestureRecognizable, Hook } from "../types"
-import { GesturesSettingsManager } from "../SettingsManager"
+import type { GestureRecognizable, Hook } from "../types"
+import type { GesturesSettingsManager } from "../SettingsManager"
 
 export const registerSwipe = ({
   reader,

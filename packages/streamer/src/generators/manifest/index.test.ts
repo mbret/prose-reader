@@ -1,8 +1,8 @@
 import { generateManifestFromArchive } from "./index"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 import { describe, expect, it } from "vitest"
-import { Archive } from "../../archives/types"
-import { Manifest } from "@prose-reader/shared"
+import type { Archive } from "../../archives/types"
+import type { Manifest } from "@prose-reader/shared"
 
 const fakeContent = {
   blob: () => Promise.resolve(new Blob([])),

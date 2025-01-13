@@ -1,5 +1,5 @@
 import { isPointerEvent } from "../../utils/dom"
-import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { normalizeEventForViewport } from "./normalizeEventForViewport"
 
 const pointerEvents = [

@@ -9,7 +9,7 @@ function normalize(strArray: string[]) {
   }
 
   if (typeof strArray[0] !== "string") {
-    throw new TypeError("Url must be a string. Received " + strArray[0])
+    throw new TypeError(`Url must be a string. Received ${strArray[0]}`)
   }
 
   // If the first part is a plain protocol, we combine it with the next part.
@@ -28,7 +28,7 @@ function normalize(strArray: string[]) {
     let component = strArray[i]
 
     if (typeof component !== "string") {
-      throw new TypeError("Url must be a string. Received " + component)
+      throw new TypeError(`Url must be a string. Received ${component}`)
     }
 
     if (component === "") {

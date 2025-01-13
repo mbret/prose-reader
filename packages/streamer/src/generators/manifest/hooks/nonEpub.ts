@@ -1,9 +1,9 @@
 import {
   detectMimeTypeFromName,
-  Manifest,
+  type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import { Archive } from "../../../archives/types"
+import type { Archive } from "../../../archives/types"
 import { isArchiveEpub } from "../../../epubs/isArchiveEpub"
 
 /**

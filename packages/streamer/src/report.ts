@@ -38,7 +38,7 @@ export const Report = {
   },
   metric: (
     performanceEntry: { name: string; duration: number },
-    targetDuration = Infinity,
+    targetDuration =Infinity,
   ) => {
     const duration =
       typeof performanceEntry === `number`
@@ -63,7 +63,7 @@ export const Report = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   measurePerformance: <F extends (...args: any[]) => any>(
     name: string,
-    targetDuration = 10,
+    targetDuration,
     functionToMeasure: F,
   ) => {
     return (...args: Parameters<F>): ReturnType<F> => {
@@ -72,7 +72,7 @@ export const Report = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = functionToMeasure(...(args as any))
 
-      if (response && response.then) {
+      if (response?.then) {
         return response.then((res: any) => {
           const t1 = performance.now()
           Report.metric({ name, duration: t1 - t0 }, targetDuration)

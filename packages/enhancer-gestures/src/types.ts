@@ -1,5 +1,5 @@
-import { Observable, ObservedValueOf } from "rxjs"
-import {
+import type { Observable, ObservedValueOf } from "rxjs"
+import type {
   PanEvent,
   PanRecognizer,
   PinchEvent,
@@ -8,10 +8,10 @@ import {
   SwipeEvent,
   SwipeRecognizer,
   TapRecognizer,
-  type TapEvent,
+  TapEvent,
 } from "gesturx"
-import { HookManager } from "../../core/dist/hooks/HookManager"
-import { GesturesSettingsManager } from "./SettingsManager"
+import type { HookManager } from "../../core/dist/hooks/HookManager"
+import type { GesturesSettingsManager } from "./SettingsManager"
 
 export type Hook = {
   name: "beforeGesture"

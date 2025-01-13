@@ -1,6 +1,6 @@
-import xmldoc, { XmlElement } from "xmldoc"
+import xmldoc, { type XmlElement } from "xmldoc"
 import type { Manifest } from "@prose-reader/shared"
-import { Archive, getArchiveOpfInfo } from ".."
+import { type Archive, getArchiveOpfInfo } from ".."
 import { urlJoin } from "@prose-reader/shared"
 import { getXmlElementInnerText } from "./xml"
 import { getUriBasePath } from "../utils/uri"
@@ -147,7 +147,7 @@ const buildTOCFromNCX = (
   const rootTagName = ncxData.name
   let prefix = ``
   if (rootTagName.indexOf(`:`) !== -1) {
-    prefix = rootTagName.split(`:`)[0] + `:`
+    prefix = `${rootTagName.split(`:`)[0]}:`
   }
 
   ncxData
@@ -172,7 +172,7 @@ const parseTocFromNcx = async ({
   baseUrl: string
 }) => {
   const spine = opfData.childNamed(`spine`)
-  const ncxId = spine && spine.attr.toc
+  const ncxId = spine?.attr.toc
 
   if (ncxId) {
     const ncxItem = opfData

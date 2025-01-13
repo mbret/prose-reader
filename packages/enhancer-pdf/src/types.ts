@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-import { Manifest } from "@prose-reader/core"
-import { Archive } from "@prose-reader/streamer"
-import { Observable } from "rxjs"
+import type { Manifest } from "@prose-reader/core"
+import type { Archive } from "@prose-reader/streamer"
+import type { Observable } from "rxjs"
 
 export type EnhancerOptions = {
   pdf: {

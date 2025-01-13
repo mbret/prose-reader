@@ -1,4 +1,4 @@
-import { HookManager, isHtmlElement, Reader } from "@prose-reader/core"
+import { type HookManager, isHtmlElement, type Reader } from "@prose-reader/core"
 import {
   EMPTY,
   animationFrameScheduler,
@@ -11,9 +11,9 @@ import {
   throttleTime,
   withLatestFrom,
 } from "rxjs"
-import { GestureRecognizable, Hook } from "../types"
-import { GesturesSettingsManager } from "../SettingsManager"
-import { PinchEvent } from "gesturx"
+import type { GestureRecognizable, Hook } from "../types"
+import type { GesturesSettingsManager } from "../SettingsManager"
+import type { PinchEvent } from "gesturx"
 
 const isHtmlImageElement = (
   target: EventTarget | null,
@@ -106,7 +106,7 @@ export const registerPinch = ({
                   },
                 ),
                 tap((event) => {
-                  const newScale = parseFloat(
+                  const newScale = Number.parseFloat(
                     (lastFontScaleOnPinchStart + (event.scale - 1)).toFixed(2),
                   )
 

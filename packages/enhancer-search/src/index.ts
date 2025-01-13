@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { deferIdle, Reader } from "@prose-reader/core"
-import { defer, forkJoin, Observable, of } from "rxjs"
+import { deferIdle, type Reader } from "@prose-reader/core"
+import { defer, forkJoin, type Observable, of } from "rxjs"
 import { catchError, finalize, map, switchMap } from "rxjs/operators"
-import { searchInDocument, SearchResult } from "./search"
+import { searchInDocument, type SearchResult } from "./search"
 import { report } from "./report"
 
 /**

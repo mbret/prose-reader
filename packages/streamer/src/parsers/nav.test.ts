@@ -1,8 +1,8 @@
 import xmldoc from "xmldoc"
-import fs from "fs"
-import path from "path"
+import fs from "node:fs"
+import path from "node:path"
 import { parseToc } from "./nav"
-import { Archive } from ".."
+import type { Archive } from ".."
 import { expect, it, describe } from "vitest"
 
 describe(`Given ncx toc with prefix`, () => {

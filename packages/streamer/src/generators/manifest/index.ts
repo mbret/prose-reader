@@ -1,5 +1,5 @@
 import { Report } from "../../report"
-import { Archive } from "../../archives/types"
+import type { Archive } from "../../archives/types"
 import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub/epub"
 import { comicInfoHook } from "./hooks/comicInfo"

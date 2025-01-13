@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import { Archive } from "../../../archives/types"
+import type { Manifest } from "@prose-reader/shared"
+import type { Archive } from "../../../archives/types"
 
 export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>

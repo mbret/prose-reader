@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { BehaviorSubject, Subject } from "rxjs"
 import { distinctUntilChanged, map, filter } from "rxjs/operators"
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 import { isDefined } from "../utils/isDefined"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 import { isShallowEqual } from "../utils/objects"
