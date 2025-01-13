@@ -1,7 +1,7 @@
-import { first, map, Observable } from "rxjs"
-import { Context } from "../context/Context"
-import { Reader } from "../reader"
-import { SpineItem } from "../spineItem/SpineItem"
+import { first, map, type Observable } from "rxjs"
+import type { Context } from "../context/Context"
+import type { Reader } from "../reader"
+import type { SpineItem } from "../spineItem/SpineItem"
 
 /**
  * Help dealing with progression through the book
@@ -131,16 +131,15 @@ export const progressionEnhancer =
               height,
           ),
         )
-      } else {
-        return Math.max(
-          0,
-          Math.min(
-            1,
-            (currentPosition.x - left + context.state.visibleAreaRect.width) /
-              width,
-          ),
-        )
       }
+      return Math.max(
+        0,
+        Math.min(
+          1,
+          (currentPosition.x - left + context.state.visibleAreaRect.width) /
+            width,
+        ),
+      )
     }
 
     return {

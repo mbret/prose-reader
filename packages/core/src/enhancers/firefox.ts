@@ -1,4 +1,4 @@
-import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const firefoxEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(

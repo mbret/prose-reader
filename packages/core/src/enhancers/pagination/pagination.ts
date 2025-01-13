@@ -1,7 +1,7 @@
 import {
   BehaviorSubject,
-  Observable,
-  ObservedValueOf,
+  type Observable,
+  type ObservedValueOf,
   combineLatest,
   combineLatestWith,
   distinctUntilChanged,
@@ -12,14 +12,14 @@ import {
   tap,
 } from "rxjs"
 import { trackChapterInfo } from "./chapters"
-import {
+import type {
   EnhancerPaginationInto,
   ExtraPaginationInfo,
   ReaderWithProgression,
 } from "./types"
 import { isShallowEqual } from "../../utils/objects"
 import { trackTotalPages } from "./spine"
-import { PaginationInfo } from "../../pagination/Pagination"
+import type { PaginationInfo } from "../../pagination/Pagination"
 
 export const mapPaginationInfoToExtendedInfo = (
   reader: ReaderWithProgression,

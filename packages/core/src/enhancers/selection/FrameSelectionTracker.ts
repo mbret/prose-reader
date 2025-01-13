@@ -5,7 +5,7 @@ import {
   first,
   merge,
   NEVER,
-  Observable,
+  type Observable,
   of,
   switchMap,
   takeUntil,

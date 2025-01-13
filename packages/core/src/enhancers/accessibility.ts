@@ -1,5 +1,5 @@
 import { upsertCSSToFrame } from "../utils/frames"
-import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
  *

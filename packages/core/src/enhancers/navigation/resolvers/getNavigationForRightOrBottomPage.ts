@@ -1,9 +1,9 @@
-import { Context } from "../../../context/Context"
-import { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
-import { SpineLocator } from "../../../spine/locator/SpineLocator"
-import { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { SpineItem } from "../../../spineItem/SpineItem"
+import type { Context } from "../../../context/Context"
+import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
+import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { SpineLocator } from "../../../spine/locator/SpineLocator"
+import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
+import type { SpineItem } from "../../../spineItem/SpineItem"
 import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
 
 /**

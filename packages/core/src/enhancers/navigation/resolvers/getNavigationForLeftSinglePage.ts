@@ -1,8 +1,8 @@
-import { Context } from "../../../context/Context"
-import { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
-import { SpineLocator } from "../../../spine/locator/SpineLocator"
-import { SpineItemsManager } from "../../../spine/SpineItemsManager"
+import type { Context } from "../../../context/Context"
+import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
+import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { SpineLocator } from "../../../spine/locator/SpineLocator"
+import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import { getSpineItemPositionForLeftPage } from "./getSpineItemPositionForLeftPage"
 
 export const getNavigationForLeftSinglePage = ({
@@ -53,13 +53,12 @@ export const getNavigationForLeftSinglePage = ({
         ? { x: position.x - context.getPageSize().width, y: 0 }
         : { y: position.y - context.getPageSize().height, x: 0 },
     )
-  } else {
-    const readingOrderPosition =
-      spineLocator.getSpinePositionFromSpineItemPosition({
-        spineItemPosition: spineItemNavigation,
-        spineItem,
-      })
-
-    return readingOrderPosition
   }
+  const readingOrderPosition =
+    spineLocator.getSpinePositionFromSpineItemPosition({
+      spineItemPosition: spineItemNavigation,
+      spineItem,
+    })
+
+  return readingOrderPosition
 }

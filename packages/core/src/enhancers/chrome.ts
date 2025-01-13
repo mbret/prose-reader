@@ -1,5 +1,5 @@
 import { takeUntil } from "rxjs"
-import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
  * All fixes relative to chromes

@@ -3,15 +3,15 @@ import {
   from,
   map,
   mergeMap,
-  Observable,
+  type Observable,
   of,
   switchMap,
   tap,
 } from "rxjs"
 import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { getParentPath, Manifest } from "@prose-reader/shared"
-import { Context } from "../../../context/Context"
+import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
+import { getParentPath, type Manifest } from "@prose-reader/shared"
+import type { Context } from "../../../context/Context"
 
 /**
  * @important Firefox handles file protocol weirdly and will not

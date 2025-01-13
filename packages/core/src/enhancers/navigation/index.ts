@@ -1,4 +1,4 @@
-import {
+import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
@@ -7,7 +7,7 @@ import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
 import { throttleLock } from "./throttleLock"
-import { NavigationEnhancerOutput } from "./types"
+import type { NavigationEnhancerOutput } from "./types"
 
 export const navigationEnhancer =
   <

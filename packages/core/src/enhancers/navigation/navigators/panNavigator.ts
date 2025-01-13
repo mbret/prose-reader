@@ -1,6 +1,6 @@
-import { Reader } from "../../../reader"
+import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }

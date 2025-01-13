@@ -1,4 +1,4 @@
-import { KeyboardEvent } from "react"
+import type { KeyboardEvent } from "react"
 import {
   EMPTY,
   fromEvent,
@@ -8,8 +8,12 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
-import { NavigationEnhancerOutput } from "./navigation/types"
+import type {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "./types/enhancer"
+import type { NavigationEnhancerOutput } from "./navigation/types"
 
 export const hotkeysEnhancer =
   <

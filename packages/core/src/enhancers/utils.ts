@@ -1,5 +1,5 @@
 import { isHtmlElement } from "../utils/dom"
-import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const utilsEnhancer =
   <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(

@@ -1,4 +1,4 @@
-import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createResourcesManager } from "./resourcesManager"
 
 export const resourcesEnhancer =

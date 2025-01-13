@@ -1,15 +1,15 @@
-import { Observable, takeUntil } from "rxjs"
-import { progressionEnhancer } from "../progression"
+import { type Observable, takeUntil } from "rxjs"
+import type { progressionEnhancer } from "../progression"
 import { Report } from "../../report"
-import { EnhancerOutput } from "../types/enhancer"
-import { PaginationInfo } from "../../pagination/Pagination"
-import { ExtraPaginationInfo } from "./types"
+import type { EnhancerOutput } from "../types/enhancer"
+import type { PaginationInfo } from "../../pagination/Pagination"
+import type { ExtraPaginationInfo } from "./types"
 import { trackPaginationInfo } from "./pagination"
 import { NAMESPACE } from "./constants"
 import {
-  ConsolidatedResource,
+  type ConsolidatedResource,
   createLocator,
-  LocatableResource,
+  type LocatableResource,
 } from "./locate"
 
 type ProgressionEnhancer = typeof progressionEnhancer

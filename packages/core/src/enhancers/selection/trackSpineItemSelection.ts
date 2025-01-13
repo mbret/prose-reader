@@ -8,7 +8,7 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
@@ -29,9 +29,8 @@ export const trackSpineItemSelection = (spineItem: SpineItem) =>
                 type: "change" as const,
                 selection,
               }
-            } else {
-              return undefined
             }
+            return undefined
           }),
         ),
         selectionTracker.selectionOver$.pipe(

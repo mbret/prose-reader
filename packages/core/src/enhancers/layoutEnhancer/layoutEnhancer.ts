@@ -8,15 +8,15 @@ import {
 } from "rxjs/operators"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
-import {
+import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
 import { isDefined } from "../../utils/isDefined"
-import { SettingsInterface } from "../../settings/SettingsInterface"
+import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
-import { InputSettings, OutputSettings } from "./types"
+import type { InputSettings, OutputSettings } from "./types"
 import { merge, Observable } from "rxjs"
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { upsertCSSToFrame } from "../../utils/frames"
@@ -95,7 +95,6 @@ export const layoutEnhancer =
         const frame = item.renderer.getDocumentFrame()
 
         if (!hasRedrawn && frame) {
-          /* eslint-disable-next-line no-void */
           void frame.getBoundingClientRect().left
           hasRedrawn = true
         }

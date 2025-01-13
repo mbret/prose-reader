@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import { ObservedValueOf, of, skip } from "rxjs"
+import type { Manifest } from "@prose-reader/shared"
+import { type ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
 import { paginationEnhancer } from "./enhancer"

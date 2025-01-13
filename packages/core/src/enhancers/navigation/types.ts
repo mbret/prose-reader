@@ -1,8 +1,8 @@
-import { Observable } from "rxjs"
-import { Reader } from "../../reader"
-import { ManualNavigator } from "./navigators/manualNavigator"
-import { PanNavigator } from "./navigators/panNavigator"
-import { observeState } from "./state"
+import type { Observable } from "rxjs"
+import type { Reader } from "../../reader"
+import type { ManualNavigator } from "./navigators/manualNavigator"
+import type { PanNavigator } from "./navigators/panNavigator"
+import type { observeState } from "./state"
 
 export type NavigationEnhancerOutput = {
   load: (options: Parameters<Reader["load"]>[0] & { cfi?: string }) => void

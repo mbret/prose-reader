@@ -1,5 +1,5 @@
-import { BehaviorSubject } from "rxjs"
-import { Reader } from "../../reader"
+import type { BehaviorSubject } from "rxjs"
+import type { Reader } from "../../reader"
 
 export abstract class Zoomer {
   constructor(protected reader: Reader) {}

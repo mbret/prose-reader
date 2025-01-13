@@ -1,6 +1,6 @@
-import { SpineItemLocator } from "../../../spineItem/locationResolver"
-import { SpineItem } from "../../../spineItem/SpineItem"
-import {
+import type { SpineItemLocator } from "../../../spineItem/locationResolver"
+import type { SpineItem } from "../../../spineItem/SpineItem"
+import type {
   SafeSpineItemPosition,
   UnsafeSpineItemPosition,
 } from "../../../spineItem/types"

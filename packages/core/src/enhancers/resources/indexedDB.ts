@@ -3,11 +3,11 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readwrite`)
 
-      transaction.onerror = function (event) {
+      transaction.onerror = (event) => {
         reject(event)
       }
 
-      transaction.oncomplete = function () {
+      transaction.oncomplete = () => {
         resolve()
       }
 
@@ -38,7 +38,7 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
         resolve(value)
       }
 
-      transaction.onerror = function () {
+      transaction.onerror = () => {
         reject(request.error)
       }
     })
@@ -51,17 +51,17 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
       const objectStore = transaction.objectStore(`store`)
       const request = objectStore.delete(key)
 
-      transaction.onerror = function () {
+      transaction.onerror = () => {
         reject(request.error)
       }
 
-      transaction.oncomplete = function () {
+      transaction.oncomplete = () => {
         resolve()
       }
 
       // The request will be also be aborted if we've exceeded our storage
       // space.
-      transaction.onabort = function () {
+      transaction.onabort = () => {
         const err = request.error ? request.error : request.transaction?.error
         reject(err)
       }
@@ -72,7 +72,7 @@ const createDatabase = (db: globalThis.IDBDatabase) => {
     return new Promise<globalThis.IDBValidKey[]>((resolve, reject) => {
       const transaction = db.transaction([`store`], `readonly`)
 
-      transaction.onerror = function (event) {
+      transaction.onerror = (event) => {
         reject(event)
       }
 
@@ -114,11 +114,11 @@ export const openDatabase = async (name: string) => {
   return new Promise<ReturnType<typeof createDatabase>>((resolve, reject) => {
     const request = window.indexedDB.open(name)
 
-    request.onerror = function (event) {
+    request.onerror = (event) => {
       reject(event)
     }
 
-    request.onsuccess = function () {
+    request.onsuccess = () => {
       resolve(createDatabase(request.result))
     }
 

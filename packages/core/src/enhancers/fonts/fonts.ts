@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { map, type Observable, type ObservedValueOf, Subject, takeUntil } from "rxjs"
+import {
+  map,
+  type Observable,
+  type ObservedValueOf,
+  Subject,
+  takeUntil,
+} from "rxjs"
 import { tap, pairwise } from "rxjs/operators"
 import type {
   EnhancerOptions,

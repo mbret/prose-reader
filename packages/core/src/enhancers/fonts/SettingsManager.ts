@@ -1,7 +1,10 @@
 import type { InputSettings } from "./types"
 import { SettingsManagerOverload } from "../../settings/SettingsManagerOverload"
 import { isShallowEqual } from "../../utils/objects"
-import type { CoreInputSettings, CoreOutputSettings } from "../../settings/types"
+import type {
+  CoreInputSettings,
+  CoreOutputSettings,
+} from "../../settings/types"
 
 export class SettingsManager<
   ParentInputSettings extends CoreInputSettings,
@@ -23,7 +26,6 @@ export class SettingsManager<
   getCleanedParentInputSettings(
     settings: Partial<InputSettings & ParentInputSettings>,
   ): ParentInputSettings {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { fontJustification, fontScale, fontWeight, lineHeight, ...rest } =
       settings
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CreateReaderParameters, ReaderInternal } from "../../reader"
+import type { CreateReaderParameters, ReaderInternal } from "../../reader"
 
 export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<
   ReturnType<Enhancer>
@@ -7,12 +7,10 @@ export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<
 export type EnhancerOptions<Enhancer extends (options: any) => any> =
   Parameters<ReturnType<Enhancer>>[0]
 
-export interface RootEnhancer<
+export type RootEnhancer<
   Options extends CreateReaderParameters = CreateReaderParameters,
   Reader extends ReaderInternal = ReaderInternal,
-> {
-  (next: (options: Options) => Reader): (options: Options) => Reader
-}
+> = (next: (options: Options) => Reader) => (options: Options) => Reader
 
 export const rootEnhancer =
   <Options extends CreateReaderParameters, Reader extends ReaderInternal>(

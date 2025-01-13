@@ -1,6 +1,6 @@
-import { BehaviorSubject, Observable } from "rxjs"
+import { BehaviorSubject, type Observable } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import { EnhancerOutput, RootEnhancer } from "./types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 import { upsertCSSToFrame } from "../utils/frames"
 
 const defaultThemes = [
@@ -22,20 +22,21 @@ const defaultThemes = [
 
 export type Theme = (typeof defaultThemes)[number][`name`] | `publisher`
 
-export interface ThemeEnhancer {
-  <InheritOptions, InheritOutput extends EnhancerOutput<RootEnhancer>>(
-    next: (options: InheritOptions) => InheritOutput,
-  ): (
-    options: InheritOptions & {
-      theme?: Theme
-    },
-  ) => InheritOutput & {
-    theme: {
-      set: (theme: Theme) => void
-      get: () => Theme
-      $: {
-        theme$: Observable<Theme>
-      }
+export type ThemeEnhancer = <
+  InheritOptions,
+  InheritOutput extends EnhancerOutput<RootEnhancer>,
+>(
+  next: (options: InheritOptions) => InheritOutput,
+) => (
+  options: InheritOptions & {
+    theme?: Theme
+  },
+) => InheritOutput & {
+  theme: {
+    set: (theme: Theme) => void
+    get: () => Theme
+    $: {
+      theme$: Observable<Theme>
     }
   }
 }

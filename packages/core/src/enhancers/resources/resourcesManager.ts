@@ -10,9 +10,9 @@ import {
   takeUntil,
   tap,
 } from "rxjs/operators"
-import { Context } from "../../context/Context"
+import type { Context } from "../../context/Context"
 import { Report } from "../../report"
-import { Manifest } from "../.."
+import type { Manifest } from "../.."
 import { openDatabase } from "./indexedDB"
 
 export const createResourcesManager = (context: Context) => {
@@ -32,9 +32,8 @@ export const createResourcesManager = (context: Context) => {
       const id =
         typeof itemIndexOrId === `object` ? itemIndexOrId.id : undefined
       return context.manifest?.spineItems.find((entry) => entry.id === id)
-    } else {
-      return context.manifest?.spineItems[itemIndexOrId]
     }
+    return context.manifest?.spineItems[itemIndexOrId]
   }
 
   const get = async (

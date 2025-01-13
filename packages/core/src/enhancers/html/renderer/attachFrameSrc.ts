@@ -4,16 +4,16 @@ import {
   filter,
   from,
   map,
-  Observable,
+  type Observable,
   of,
   switchMap,
   tap,
 } from "rxjs"
-import { Manifest } from "@prose-reader/shared"
-import { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
+import type { Manifest } from "@prose-reader/shared"
+import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 import { Report } from "../../../report"
-import { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
+import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
 
 export const attachFrameSrc = ({
@@ -59,40 +59,39 @@ export const attachFrameSrc = ({
               frameElement?.setAttribute(`src`, item.href)
 
               return of(frameElement)
-            } else {
-              const resourceResponse$ =
-                resource instanceof URL
-                  ? from(resourcesHandler.fetchResource())
-                  : resource instanceof Response
-                    ? of(resource)
-                    : EMPTY
-
-              return resourceResponse$.pipe(
-                filter((response) => response instanceof Response),
-                switchMap((response) => from(getHtmlFromResource(response))),
-                tap((htmlDoc) => {
-                  if (htmlDoc) {
-                    const blob = new Blob([htmlDoc], { type: "text/html" })
-                    /**
-                     * The blob will be released once the document is destroyed.
-                     * No need to deal with it ourselves.
-                     */
-                    const blobURL = URL.createObjectURL(blob)
-
-                    frameElement?.setAttribute(`src`, blobURL)
-                  }
-                }),
-                map(() => frameElement),
-                catchError((e) => {
-                  Report.error(
-                    `Error while trying to fetch or load resource for item ${item.id}`,
-                  )
-                  console.error(e)
-
-                  return of(frameElement)
-                }),
-              )
             }
+            const resourceResponse$ =
+              resource instanceof URL
+                ? from(resourcesHandler.fetchResource())
+                : resource instanceof Response
+                  ? of(resource)
+                  : EMPTY
+
+            return resourceResponse$.pipe(
+              filter((response) => response instanceof Response),
+              switchMap((response) => from(getHtmlFromResource(response))),
+              tap((htmlDoc) => {
+                if (htmlDoc) {
+                  const blob = new Blob([htmlDoc], { type: "text/html" })
+                  /**
+                   * The blob will be released once the document is destroyed.
+                   * No need to deal with it ourselves.
+                   */
+                  const blobURL = URL.createObjectURL(blob)
+
+                  frameElement?.setAttribute(`src`, blobURL)
+                }
+              }),
+              map(() => frameElement),
+              catchError((e) => {
+                Report.error(
+                  `Error while trying to fetch or load resource for item ${item.id}`,
+                )
+                console.error(e)
+
+                return of(frameElement)
+              }),
+            )
           }),
         )
       }),

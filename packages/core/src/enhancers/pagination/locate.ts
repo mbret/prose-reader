@@ -9,7 +9,7 @@ import {
   finalize,
 } from "rxjs"
 import { deferIdle, idle } from "../../utils/rxjs"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 import { isDefined } from "../../utils/isDefined"
 
 export type LocatableResource = {

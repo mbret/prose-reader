@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import {
+import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,

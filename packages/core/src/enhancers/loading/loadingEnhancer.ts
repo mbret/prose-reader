@@ -1,4 +1,10 @@
-import { combineLatest, merge, Observable, ObservedValueOf, of } from "rxjs"
+import {
+  combineLatest,
+  merge,
+  type Observable,
+  type ObservedValueOf,
+  of,
+} from "rxjs"
 import {
   takeUntil,
   switchMap,
@@ -8,9 +14,9 @@ import {
   shareReplay,
 } from "rxjs/operators"
 import { isShallowEqual } from "../../utils/objects"
-import { Manifest } from "../.."
-import { EnhancerOutput } from "../types/enhancer"
-import { themeEnhancer } from "../theme"
+import type { Manifest } from "../.."
+import type { EnhancerOutput } from "../types/enhancer"
+import type { themeEnhancer } from "../theme"
 import {
   createLoadingElementContainer,
   defaultLoadingElementCreate,

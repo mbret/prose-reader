@@ -14,7 +14,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs/operators"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 
 /**
  * For some reason (bug / expected / engine layout optimization) when the viewport is being animated clicking inside iframe

@@ -1,4 +1,4 @@
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 import { getFrameViewportInfo } from "../../utils/frames"
 
 export const fixReflowable = (reader: Reader) => {

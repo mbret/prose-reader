@@ -1,7 +1,7 @@
-import { Manifest } from "@prose-reader/shared"
-import { Observable } from "rxjs"
+import type { Manifest } from "@prose-reader/shared"
+import type { Observable } from "rxjs"
 
-export type UserDestroyFn = () => void | Observable<unknown>
+export type UserDestroyFn = () => undefined | Observable<unknown>
 
 export interface Hook<Name, Params, Result> {
   name: Name
@@ -63,7 +63,7 @@ export type CoreHook =
     }
   | {
       name: "onViewportOffsetAdjust"
-      runFn: (params: void) => void
+      runFn: (params: undefined) => void
     }
   /**
    * Only available during reader creation
@@ -73,7 +73,6 @@ export type CoreHook =
       runFn: (params: { element: HTMLElement }) => void
     }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HookExecution<H extends Hook<any, any, any>> = {
   name: string
   id: string | undefined
@@ -82,7 +81,6 @@ export type HookExecution<H extends Hook<any, any, any>> = {
 }
 
 export type HookFrom<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   H extends Hook<any, any, any>,
   Name extends H["name"],
 > = H extends infer HK

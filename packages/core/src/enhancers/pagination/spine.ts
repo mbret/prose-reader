@@ -1,5 +1,5 @@
 import {
-  Observable,
+  type Observable,
   debounceTime,
   animationFrameScheduler,
   withLatestFrom,
@@ -7,7 +7,7 @@ import {
   distinctUntilChanged,
   startWith,
 } from "rxjs"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>

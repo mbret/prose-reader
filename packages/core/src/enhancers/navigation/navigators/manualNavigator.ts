@@ -1,9 +1,9 @@
-import { Reader } from "../../../reader"
+import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
-import { UserNavigationEntry } from "../../../navigation/UserNavigator"
+import type { UserNavigationEntry } from "../../../navigation/UserNavigator"
 import { report } from "../report"
 
 export class ManualNavigator {

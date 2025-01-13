@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import { Context } from "../../context/Context"
+import type { Manifest } from "@prose-reader/shared"
+import type { Context } from "../../context/Context"
 import { CONTAINER_HTML_PREFIX } from "./constants"
 
 /**

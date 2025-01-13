@@ -1,6 +1,6 @@
 import { map, startWith } from "rxjs"
-import { Reader } from "../../reader"
-import { Manifest } from "@prose-reader/shared"
+import type { Reader } from "../../reader"
+import type { Manifest } from "@prose-reader/shared"
 
 /**
  * @todo

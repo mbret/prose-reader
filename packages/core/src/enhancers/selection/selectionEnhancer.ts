@@ -4,7 +4,7 @@ import {
   fromEvent,
   map,
   merge,
-  Observable,
+  type Observable,
   share,
   shareReplay,
   startWith,
@@ -13,9 +13,9 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createOrderedRangeFromSelection } from "./selection"
-import { SpineItem } from "../.."
+import type { SpineItem } from "../.."
 import { trackSpineItemSelection } from "./trackSpineItemSelection"
 
 type SelectionChange = {

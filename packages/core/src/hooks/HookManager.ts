@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subject, combineLatest, of } from "rxjs"
-import { CoreHook, Hook, HookExecution, HookFrom } from "./types"
-import { UserDestroyFn } from "./types"
+import type { CoreHook, Hook, HookExecution, HookFrom } from "./types"
+import type { UserDestroyFn } from "./types"
 
 export class HookManager<H extends Hook<any, any, any> = CoreHook> {
   _hooks: Array<H> = []
@@ -68,7 +68,6 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
         return result ?? of(undefined)
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fnResult = hook.runFn({
         ...(params as any),
         destroy$: destroySubject.asObservable(),

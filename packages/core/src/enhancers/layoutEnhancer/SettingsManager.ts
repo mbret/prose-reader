@@ -1,7 +1,10 @@
-import { InputSettings, OutputSettings } from "./types"
+import type { InputSettings, OutputSettings } from "./types"
 import { SettingsManagerOverload } from "../../settings/SettingsManagerOverload"
 import { isShallowEqual } from "../../utils/objects"
-import { CoreInputSettings, CoreOutputSettings } from "../../settings/types"
+import type {
+  CoreInputSettings,
+  CoreOutputSettings,
+} from "../../settings/types"
 
 export class SettingsManager<
   ParentInputSettings extends CoreInputSettings,
@@ -24,13 +27,9 @@ export class SettingsManager<
     settings: Partial<InputSettings & ParentInputSettings>,
   ): ParentInputSettings {
     const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       layoutAutoResize,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       pageHorizontalMargin,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       pageVerticalMargin,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       layoutLayerTransition,
       ...rest
     } = settings

@@ -1,5 +1,5 @@
 import { distinctUntilChanged, map, withLatestFrom } from "rxjs"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 
 export type State = ReturnType<typeof observeState>

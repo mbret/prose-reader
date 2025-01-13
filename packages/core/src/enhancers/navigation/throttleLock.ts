@@ -1,11 +1,11 @@
 import {
   animationFrameScheduler,
   finalize,
-  Observable,
+  type Observable,
   tap,
   throttleTime,
 } from "rxjs"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
 
 export const throttleLock =
   ({ reader, duration }: { reader: Reader; duration: number }) =>

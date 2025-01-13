@@ -1,7 +1,11 @@
-import { Observable, Subject } from "rxjs"
+import { type Observable, Subject } from "rxjs"
 import { Report } from "../report"
-import { EnhancerOptions, EnhancerOutput, RootEnhancer } from "./types/enhancer"
-import { NavigationEnhancerOutput } from "./navigation/types"
+import type {
+  EnhancerOptions,
+  EnhancerOutput,
+  RootEnhancer,
+} from "./types/enhancer"
+import type { NavigationEnhancerOutput } from "./navigation/types"
 
 type SubjectData = {
   event: `linkClicked`
