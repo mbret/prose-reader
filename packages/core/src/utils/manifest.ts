@@ -1,4 +1,4 @@
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 
 /**
  * @todo strip out param url so that equality works better

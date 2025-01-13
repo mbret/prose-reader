@@ -70,9 +70,9 @@ export const createSpineItemLocator = ({
     if (isUsingVerticalWriting) {
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
     }
-      const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
+    const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
 
-      return pageIndex
+    return pageIndex
   }
 
   const getSpineItemPositionFromNode = (

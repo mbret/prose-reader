@@ -40,7 +40,8 @@ function matchAll(str: string, regExp: any, add: any) {
 function closest(a: any[], n: number) {
   let minDiff
   let closest
-  let i, diff
+  let i
+  let diff
   for (i = 0; i < a.length; i++) {
     diff = Math.abs(a[i] - n)
     // @ts-ignore
@@ -66,7 +67,8 @@ function calcSiblingCount(
   let lastWasElement
   let prevOffset = 0
   let firstNode = true
-  let i, node
+  let i
+  let node
   for (i = 0; i < nodes.length; i++) {
     node = nodes[i]
     // @ts-ignore
@@ -83,9 +85,8 @@ function calcSiblingCount(
         // @ts-ignore
         if (node.tagName.toLowerCase() === `img`) {
           return { count, offset }
-        } else {
-          return { count }
         }
+        return { count }
       }
       prevOffset = 0
       lastWasElement = true

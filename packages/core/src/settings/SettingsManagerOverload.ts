@@ -1,4 +1,9 @@
-import { type Observable, type ObservedValueOf, Subject, combineLatest } from "rxjs"
+import {
+  type Observable,
+  type ObservedValueOf,
+  Subject,
+  combineLatest,
+} from "rxjs"
 import {
   distinctUntilChanged,
   map,

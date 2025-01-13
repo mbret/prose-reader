@@ -83,9 +83,10 @@ const createReport = (namespace?: string) => ({
       }
     }
   },
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   measurePerformance: <F extends (...args: any[]) => any>(
     name: string,
-    targetDuration,
+    targetDuration: number,
     functionToMeasure: F,
     { disable }: { disable?: boolean } = {},
   ) => {

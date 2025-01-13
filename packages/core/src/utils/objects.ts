@@ -6,7 +6,7 @@ export const getBase64FromBlob = (data: Blob) => {
   return new Promise<string>((resolve) => {
     reader.addEventListener(
       `load`,
-      function () {
+      () => {
         resolve(reader.result as string)
       },
       false,

@@ -76,7 +76,8 @@ function createRangeOrCaretFromPoint(
       offsetNode: Node
       offset: number
     }
-  } else if (
+  }
+  if (
     "caretRangeFromPoint" in doc &&
     // @ts-expect-error limited availability
     typeof doc.caretRangeFromPoint !== `undefined`
@@ -257,7 +258,7 @@ export const isPointerEvent = (event: Event): event is PointerEvent => {
     }
   }
 
-  if ((event as PointerEvent)?.view && (event as PointerEvent)?.view?.window) {
+  if ((event as PointerEvent)?.view?.window) {
     const eventView = (event as PointerEvent)?.view as Window &
       typeof globalThis
 
@@ -288,7 +289,7 @@ export const isMouseEvent = (event: Event): event is MouseEvent => {
     }
   }
 
-  if ((event as MouseEvent)?.view && (event as MouseEvent)?.view?.window) {
+  if ((event as MouseEvent)?.view?.window) {
     const eventView = (event as MouseEvent)?.view as Window & typeof globalThis
 
     if (eventView.MouseEvent) {
@@ -312,7 +313,7 @@ export const isTouchEvent = (event: Event): event is TouchEvent => {
     }
   }
 
-  if ((event as TouchEvent)?.view && (event as TouchEvent)?.view?.window) {
+  if ((event as TouchEvent)?.view?.window) {
     const eventView = (event as TouchEvent)?.view as Window & typeof globalThis
 
     if (eventView.TouchEvent) {

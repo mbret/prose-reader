@@ -1,11 +1,19 @@
-import { from, fromEvent, map, Observable, of, switchMap, take } from "rxjs"
+import {
+  from,
+  fromEvent,
+  map,
+  type Observable,
+  of,
+  switchMap,
+  take,
+} from "rxjs"
 
 export const getAttributeValueFromString = (string: string, key: string) => {
-  const regExp = new RegExp(key + `\\s*=\\s*([0-9.]+)`, `i`)
+  const regExp = new RegExp(`${key}\\s*=\\s*([0-9.]+)`, `i`)
   const match = string.match(regExp) || []
   const firstMatch = match[1] || `0`
 
-  return (match && parseFloat(firstMatch)) || 0
+  return (match && Number.parseFloat(firstMatch)) || 0
 }
 
 export const injectCSS = (
@@ -14,11 +22,7 @@ export const injectCSS = (
   style: string,
   prepend?: boolean,
 ) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
+  if (frameElement?.contentDocument?.head) {
     const userStyle = frameElement.contentDocument.createElement(`style`)
     userStyle.id = id
     userStyle.innerHTML = style
@@ -32,11 +36,7 @@ export const injectCSS = (
 }
 
 export const removeCSS = (frameElement: HTMLIFrameElement, id: string) => {
-  if (
-    frameElement &&
-    frameElement.contentDocument &&
-    frameElement.contentDocument.head
-  ) {
+  if (frameElement?.contentDocument?.head) {
     const styleElement = frameElement.contentDocument.getElementById(id)
 
     if (styleElement) {
@@ -58,7 +58,7 @@ export const upsertCSSToFrame = (
 }
 
 export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
-  if (frame && frame?.contentDocument) {
+  if (frame?.contentDocument) {
     const doc = frame.contentDocument
     const viewportMetaElement = doc.querySelector(`meta[name='viewport']`)
 
@@ -75,9 +75,8 @@ export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
             width: width,
             height: height,
           }
-        } else {
-          return { hasViewport: true }
         }
+        return { hasViewport: true }
       }
     }
   }

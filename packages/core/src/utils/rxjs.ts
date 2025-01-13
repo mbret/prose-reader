@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { defer, Observable, of, OperatorFunction } from "rxjs"
+import { defer, Observable, of, type OperatorFunction } from "rxjs"
 import { first, map, switchMap } from "rxjs/operators"
 
 export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(

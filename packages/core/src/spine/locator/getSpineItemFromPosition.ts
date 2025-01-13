@@ -25,7 +25,7 @@ export const getSpineItemFromPosition = ({
     if (settings.values.computedPageTurnDirection === `horizontal`) {
       return isWithinXAxis
     }
-      return isWithinXAxis && position.y >= top && position.y < bottom
+    return isWithinXAxis && position.y >= top && position.y < bottom
   })
 
   if (position.x === 0 && !spineItem) {
