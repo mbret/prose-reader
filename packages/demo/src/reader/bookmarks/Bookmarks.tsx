@@ -21,50 +21,50 @@ export const Bookmarks = () => {
     <>
       {createPortal(
         pages?.map(
-            (
-              { isBookmarkable, absolutePosition: { left, top, width } },
-              index,
-            ) => {
-              const bookmarkForPage = consolidatedBookmarks?.find(
-                (bookmark) => bookmark.meta?.absolutePageIndex === index,
-              )
+          (
+            { isBookmarkable, absolutePosition: { left, top, width } },
+            index,
+          ) => {
+            const bookmarkForPage = consolidatedBookmarks?.find(
+              (bookmark) => bookmark.meta?.absolutePageIndex === index,
+            )
 
-              /**
-               * Stale bookmarks means we cannot assert at the moment whether the page is marked or not.
-               * In this case we just hide the bookmark button. You may want to have different UX to handle
-               * this case.
-               *
-               * This also avoid having a flash where you show an non bookmarked icon and right away change it with
-               * a valid marked page icon.
-               */
-              if (!isBookmarkable) return null
+            /**
+             * Stale bookmarks means we cannot assert at the moment whether the page is marked or not.
+             * In this case we just hide the bookmark button. You may want to have different UX to handle
+             * this case.
+             *
+             * This also avoid having a flash where you show an non bookmarked icon and right away change it with
+             * a valid marked page icon.
+             */
+            if (!isBookmarkable) return null
 
-              return (
-                <Box
-                  data-bookmark-area
-                  key={index}
-                  position="absolute"
-                  left={left + width}
-                  transform="translateX(-100%)"
-                  top={top}
-                >
-                  {bookmarkForPage ? (
-                    <BookmarkRemoveButton
-                      onClick={() => {
-                        reader?.bookmarks.delete(bookmarkForPage.id)
-                      }}
-                    />
-                  ) : (
-                    <BookmarkAddButton
-                      onClick={() => {
-                        reader?.bookmarks.bookmark(index)
-                      }}
-                    />
-                  )}
-                </Box>
-              )
-            },
-          ),
+            return (
+              <Box
+                data-bookmark-area
+                key={index}
+                position="absolute"
+                left={left + width}
+                transform="translateX(-100%)"
+                top={top}
+              >
+                {bookmarkForPage ? (
+                  <BookmarkRemoveButton
+                    onClick={() => {
+                      reader?.bookmarks.delete(bookmarkForPage.id)
+                    }}
+                  />
+                ) : (
+                  <BookmarkAddButton
+                    onClick={() => {
+                      reader?.bookmarks.bookmark(index)
+                    }}
+                  />
+                )}
+              </Box>
+            )
+          },
+        ),
         spineElement,
       )}
     </>

@@ -8,7 +8,7 @@ export const is = (x: any, y: any): boolean => {
   if (x === y) {
     return x !== 0 || y !== 0 || 1 / x === 1 / y
   }
-    return false
+  return false
 }
 
 /**

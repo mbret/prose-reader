@@ -66,22 +66,18 @@ export const PaginationInfoSection = () => {
             color: "white",
           }}
         >
-          {beginAndEndAreDifferent && (
-            `page ${pageIndex} - ${endPageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`
-          )}
-          {!beginAndEndAreDifferent && (
-            `page ${pageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`
-          )}
+          {beginAndEndAreDifferent &&
+            `page ${pageIndex} - ${endPageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}
+          {!beginAndEndAreDifferent &&
+            `page ${pageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}
         </div>
       )}
       {(isComic || isWebtoon) && !hasOnlyOnePage && (
         <Box color="white">
-          {beginAndEndAreDifferent && (
-            `page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${numberOfTotalPages}`
-          )}
-          {!beginAndEndAreDifferent && (
-            `page ${absoluteBeginPageIndex + 1} of ${numberOfTotalPages}`
-          )}
+          {beginAndEndAreDifferent &&
+            `page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${numberOfTotalPages}`}
+          {!beginAndEndAreDifferent &&
+            `page ${absoluteBeginPageIndex + 1} of ${numberOfTotalPages}`}
         </Box>
       )}
     </Box>

@@ -38,7 +38,8 @@ const fixBuggyCover =
         const buggySvg = getBuggyCoverSvg(opfXmlDoc)
 
         if (buggySvg) {
-          buggySvg.attr.preserveAspectRatio = undefined
+          // biome-ignore lint/performance/noDelete: <explanation>
+          delete buggySvg.attr.preserveAspectRatio
         }
 
         return {

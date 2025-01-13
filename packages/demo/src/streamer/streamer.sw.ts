@@ -24,9 +24,9 @@ export const swStreamer = new ServiceWorkerStreamer({
     if (url.endsWith(`.txt`)) {
       return await createArchiveFromText(blob)
     }
-      const name = blob.name
-      const jszip = await loadAsync(blob)
+    const name = blob.name
+    const jszip = await loadAsync(blob)
 
-      return await createArchiveFromJszip(jszip, { orderByAlpha: true, name })
+    return await createArchiveFromJszip(jszip, { orderByAlpha: true, name })
   },
 })

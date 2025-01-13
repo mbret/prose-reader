@@ -1,6 +1,18 @@
-import { DestroyableClass, type Reader, type SpineItem } from "@prose-reader/core"
+import {
+  DestroyableClass,
+  type Reader,
+  type SpineItem,
+} from "@prose-reader/core"
 import { createElementForRange } from "./utils"
-import { fromEvent, map, type Observable, share, skip, takeUntil, tap } from "rxjs"
+import {
+  fromEvent,
+  map,
+  type Observable,
+  share,
+  skip,
+  takeUntil,
+  tap,
+} from "rxjs"
 import type { Highlight } from "./Highlight"
 
 export class SpineItemHighlight extends DestroyableClass {

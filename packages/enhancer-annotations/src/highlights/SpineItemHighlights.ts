@@ -8,7 +8,11 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import { DestroyableClass, type Reader, type SpineItem } from "@prose-reader/core"
+import {
+  DestroyableClass,
+  type Reader,
+  type SpineItem,
+} from "@prose-reader/core"
 import { SpineItemHighlight } from "./SpineItemHighlight"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils"
 import type { Highlight } from "./Highlight"

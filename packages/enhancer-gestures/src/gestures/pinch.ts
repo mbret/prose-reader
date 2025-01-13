@@ -1,4 +1,8 @@
-import { type HookManager, isHtmlElement, type Reader } from "@prose-reader/core"
+import {
+  type HookManager,
+  isHtmlElement,
+  type Reader,
+} from "@prose-reader/core"
 import {
   EMPTY,
   animationFrameScheduler,

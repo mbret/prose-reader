@@ -149,7 +149,8 @@ export const SettingsMenu = ({
           defaultValue="publisher"
           onChange={(value) => {
             reader.settings.update({
-              lineHeight: value === `publisher` ? `publisher` : Number.parseInt(value),
+              lineHeight:
+                value === `publisher` ? `publisher` : Number.parseInt(value),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
@@ -169,7 +170,9 @@ export const SettingsMenu = ({
           onChange={(value) => {
             reader.settings.update({
               fontWeight:
-                value === `publisher` ? `publisher` : (Number.parseInt(value) as 100),
+                value === `publisher`
+                  ? `publisher`
+                  : (Number.parseInt(value) as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}
