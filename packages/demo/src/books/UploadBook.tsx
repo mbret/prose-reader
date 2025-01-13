@@ -14,9 +14,9 @@ export const UploadBook = () => {
       "application/octet-stream": [".rar", ".cbr"],
       "application/epub+zip": [".epub"],
       "application/zip": [".cbz", ".epub"],
-      "application/x-cbz": [".cbz"]
+      "application/x-cbz": [".cbz"],
     },
-    maxFiles: 1
+    maxFiles: 1,
   })
   const [isUploading, setIsUploading] = useState(false)
   const [lastAddedBook, setLastAddedBook] = useState<string | undefined>()
@@ -39,10 +39,21 @@ export const UploadBook = () => {
   }, [acceptedFiles, refetch])
 
   return (
-    <Box borderWidth={1} borderStyle="dashed" padding={4} marginY={6} cursor="pointer" {...getRootProps()}>
+    <Box
+      borderWidth={1}
+      borderStyle="dashed"
+      padding={4}
+      marginY={6}
+      cursor="pointer"
+      {...getRootProps()}
+    >
       <input {...getInputProps()} />
       {lastAddedBook && <Text>{lastAddedBook} has been added!</Text>}
-      {isUploading ? <Text>Uploading...</Text> : <Text>Click or drag to upload your own book</Text>}
+      {isUploading ? (
+        <Text>Uploading...</Text>
+      ) : (
+        <Text>Click or drag to upload your own book</Text>
+      )}
     </Box>
   )
 }

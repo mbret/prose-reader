@@ -14,7 +14,9 @@ import { report } from "./report"
  * enhancer is agnostic and can only search into documents.
  */
 export const searchEnhancer =
-  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (
     options: InheritOptions,
   ): InheritOutput & {
@@ -37,7 +39,9 @@ export const searchEnhancer =
 
           if (!doc) return of([])
 
-          return deferIdle(() => searchInDocument(reader, item, doc, text)).pipe(
+          return deferIdle(() =>
+            searchInDocument(reader, item, doc, text),
+          ).pipe(
             finalize(() => {
               release?.()
             }),
@@ -57,7 +61,10 @@ export const searchEnhancer =
           return of([])
         }
 
-        const searches$ = reader.context.manifest?.spineItems.map((_, index) => searchForItem(index, text)) || []
+        const searches$ =
+          reader.context.manifest?.spineItems.map((_, index) =>
+            searchForItem(index, text),
+          ) || []
 
         return forkJoin([...searches$, of([])])
       }).pipe(

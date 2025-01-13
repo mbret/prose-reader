@@ -29,7 +29,10 @@ export const QuickMenu = memo(() => {
                 icon={<ArrowBackIcon />}
                 aria-label="back"
                 onClick={() => {
-                  if (window.history.state === null && window.location.pathname !== `/`) {
+                  if (
+                    window.history.state === null &&
+                    window.location.pathname !== `/`
+                  ) {
                     navigate(`/`)
                   } else {
                     navigate(-1)

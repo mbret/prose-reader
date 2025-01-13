@@ -6,7 +6,7 @@ import {
   NumberInputField,
   NumberInputStepper,
   NumberIncrementStepper,
-  NumberDecrementStepper
+  NumberDecrementStepper,
 } from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
 import { useReader } from "../reader/useReader"
@@ -17,16 +17,19 @@ export const OtherSettings = () => {
 
   return (
     <FormControl as="fieldset" style={{ marginTop: 10 }}>
-      <FormLabel as="legend">Number of adjacent spine items to pre-load</FormLabel>
+      <FormLabel as="legend">
+        Number of adjacent spine items to pre-load
+      </FormLabel>
       <FormHelperText mt={0} mb={2}>
-        Help smoother the transition between pages and prevent blank (loading) page when turning. Note that pre-loading more page
-        increase memory and CPU consumption
+        Help smoother the transition between pages and prevent blank (loading)
+        page when turning. Note that pre-loading more page increase memory and
+        CPU consumption
       </FormHelperText>
       <NumberInput
         value={settings?.numberOfAdjacentSpineItemToPreLoad ?? 0}
         onChange={(_, value) => {
           reader?.settings.update({
-            numberOfAdjacentSpineItemToPreLoad: value
+            numberOfAdjacentSpineItemToPreLoad: value,
           })
         }}
       >

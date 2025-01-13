@@ -13,7 +13,9 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const toc = nav?.toc || []
   const { beginSpineItemIndex, beginPageIndexInSpineItem } = pagination ?? {}
   const currentSpineItemOrChapterPageIndex =
-    (renditionLayout === "reflowable" ? beginPageIndexInSpineItem : beginSpineItemIndex) || 0
+    (renditionLayout === "reflowable"
+      ? beginPageIndexInSpineItem
+      : beginSpineItemIndex) || 0
 
   let currentSubChapter = pagination?.beginChapterInfo
 
@@ -21,13 +23,17 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
     currentSubChapter = currentSubChapter?.subChapter
   }
 
-  const buildTocForItem = (tocItem: (typeof toc)[number], index: number, lvl: number) => (
+  const buildTocForItem = (
+    tocItem: (typeof toc)[number],
+    index: number,
+    lvl: number,
+  ) => (
     <React.Fragment key={index}>
       <ListItem
         style={{
           paddingLeft: 5 + lvl * 20,
           display: "flex",
-          alignItems: "center"
+          alignItems: "center",
         }}
         onClick={() => {
           onNavigate()
@@ -37,8 +43,12 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
         as="a"
         href="#"
       >
-        {currentSubChapter?.path === tocItem.path && <ListIcon as={CheckCircleIcon} />}
-        {currentSubChapter?.path !== tocItem.path && <ListIcon as={CheckCircleIcon} style={{ visibility: "hidden" }} />}
+        {currentSubChapter?.path === tocItem.path && (
+          <ListIcon as={CheckCircleIcon} />
+        )}
+        {currentSubChapter?.path !== tocItem.path && (
+          <ListIcon as={CheckCircleIcon} style={{ visibility: "hidden" }} />
+        )}
         <Stack gap={0}>
           <Text>{tocItem.title || tocItem.path}</Text>
           {currentSubChapter?.path === tocItem.path && (
@@ -52,7 +62,9 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
       </ListItem>
       {tocItem.contents.length > 0 && (
         <List as="div" spacing={2}>
-          {tocItem.contents.map((tocItem, index) => buildTocForItem(tocItem, index, lvl + 1))}
+          {tocItem.contents.map((tocItem, index) =>
+            buildTocForItem(tocItem, index, lvl + 1),
+          )}
         </List>
       )}
     </React.Fragment>

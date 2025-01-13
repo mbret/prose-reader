@@ -20,7 +20,11 @@ export const registerTaps = ({
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
-      if (event.type === "tap" && isNotLink(event) && !istMatchingSelectors(settingsManager.values.ignore, event)) {
+      if (
+        event.type === "tap" &&
+        isNotLink(event) &&
+        !istMatchingSelectors(settingsManager.values.ignore, event)
+      ) {
         const width = window.innerWidth
         const height = window.innerHeight
         const pageTurnMargin = 0.15
@@ -28,7 +32,11 @@ export const registerTaps = ({
         if (`x` in normalizedEvent) {
           const { x = 0, y } = normalizedEvent
 
-          const beforeTapResults$ = hookManager.execute("beforeGesture", undefined, { event$: of(event) })
+          const beforeTapResults$ = hookManager.execute(
+            "beforeGesture",
+            undefined,
+            { event$: of(event) },
+          )
 
           return combineLatest([...beforeTapResults$, of(true)]).pipe(
             first(),
@@ -41,11 +49,20 @@ export const registerTaps = ({
 
               if (isLeftArea && computedPageTurnDirection === "horizontal") {
                 reader.navigation.turnLeftOrTop()
-              } else if (isTopArea && computedPageTurnDirection === "vertical") {
+              } else if (
+                isTopArea &&
+                computedPageTurnDirection === "vertical"
+              ) {
                 reader.navigation.turnLeftOrTop()
-              } else if (isBottomArea && computedPageTurnDirection === "vertical") {
+              } else if (
+                isBottomArea &&
+                computedPageTurnDirection === "vertical"
+              ) {
                 reader.navigation.turnRightOrBottom()
-              } else if (isRightArea && computedPageTurnDirection === "horizontal") {
+              } else if (
+                isRightArea &&
+                computedPageTurnDirection === "horizontal"
+              ) {
                 reader.navigation.turnRightOrBottom()
               } else {
                 return { event, handled: false }

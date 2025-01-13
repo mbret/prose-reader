@@ -3,9 +3,25 @@ import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
 import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
-import { FormControl, FormHelperText, FormLabel, HStack, Radio, RadioGroup, Text, Box, Checkbox, Stack } from "@chakra-ui/react"
+import {
+  FormControl,
+  FormHelperText,
+  FormLabel,
+  HStack,
+  Radio,
+  RadioGroup,
+  Text,
+  Box,
+  Checkbox,
+  Stack,
+} from "@chakra-ui/react"
 import { NavigationSettings } from "../../common/NavigationSettings"
-import { ArrowDownIcon, ArrowUpIcon, ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons"
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ArrowBackIcon,
+  ArrowForwardIcon,
+} from "@chakra-ui/icons"
 import { OtherSettings } from "../../common/OtherSettings"
 import { useReaderSettings } from "../../common/useReaderSettings"
 import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
@@ -16,7 +32,7 @@ import { Theme } from "@prose-reader/core/dist/enhancers/theme"
 export const SettingsMenu = ({
   open,
   localSettings,
-  setLocalSettings
+  setLocalSettings,
 }: {
   open: boolean
   setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
@@ -28,25 +44,34 @@ export const SettingsMenu = ({
   const readerSettings = useReaderSettings()
   const [fontScaleSliderValue, setFontScaleSliderValue] = useState(1)
   const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
-  const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] = useState(0)
+  const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] =
+    useState(0)
 
   // async update from reader to slider
   useEffect(() => {
     if (readerSettings?.fontScale !== undefined) {
-      setFontScaleSliderValue((old) => (old !== readerSettings.fontScale ? readerSettings.fontScale : old))
+      setFontScaleSliderValue((old) =>
+        old !== readerSettings.fontScale ? readerSettings.fontScale : old,
+      )
     }
   }, [readerSettings?.fontScale])
 
   useEffect(() => {
     if (readerSettings?.pageVerticalMargin !== undefined) {
-      setVerticalMarginSliderValue((old) => (old !== readerSettings.pageVerticalMargin ? readerSettings.pageVerticalMargin : old))
+      setVerticalMarginSliderValue((old) =>
+        old !== readerSettings.pageVerticalMargin
+          ? readerSettings.pageVerticalMargin
+          : old,
+      )
     }
   }, [readerSettings?.pageVerticalMargin])
 
   useEffect(() => {
     if (readerSettings?.pageHorizontalMargin !== undefined) {
       setHorizontalMarginSliderValue((old) =>
-        old !== readerSettings.pageHorizontalMargin ? readerSettings.pageHorizontalMargin : old
+        old !== readerSettings.pageHorizontalMargin
+          ? readerSettings.pageHorizontalMargin
+          : old,
       )
     }
   }, [readerSettings?.pageHorizontalMargin])
@@ -71,25 +96,25 @@ export const SettingsMenu = ({
     <Stack
       padding={4}
       style={{
-        overflow: "auto"
+        overflow: "auto",
       }}
     >
       <FormControl as="fieldset" mb={4}>
-          <Checkbox
-            isChecked={isFullscreen}
-            defaultChecked={false}
-            onChange={async (e) => {
-              if (screenfull.isEnabled) {
-                if (e.target.checked) {
-                  await screenfull.request()
-                } else {
-                  await screenfull.exit()
-                }
+        <Checkbox
+          isChecked={isFullscreen}
+          defaultChecked={false}
+          onChange={async (e) => {
+            if (screenfull.isEnabled) {
+              if (e.target.checked) {
+                await screenfull.request()
+              } else {
+                await screenfull.exit()
               }
-            }}
-          >
-            Use full screen
-          </Checkbox>
+            }
+          }}
+        >
+          Use full screen
+        </Checkbox>
       </FormControl>
       <FormControl as="fieldset">
         <FormLabel as="legend">Font size (%)</FormLabel>
@@ -97,7 +122,7 @@ export const SettingsMenu = ({
           <RcSlider
             style={{
               width: `auto`,
-              flex: 1
+              flex: 1,
             }}
             value={fontScaleSliderValue}
             max={FONT_SCALE_MAX}
@@ -106,7 +131,7 @@ export const SettingsMenu = ({
             onChange={(value) => {
               if (typeof value === "number") {
                 reader.settings.update({
-                  fontScale: value
+                  fontScale: value,
                 })
                 setFontScaleSliderValue(value)
               }
@@ -123,7 +148,7 @@ export const SettingsMenu = ({
           defaultValue="publisher"
           onChange={(value) => {
             reader.settings.update({
-              lineHeight: value === `publisher` ? `publisher` : parseInt(value)
+              lineHeight: value === `publisher` ? `publisher` : parseInt(value),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
@@ -142,7 +167,8 @@ export const SettingsMenu = ({
           defaultValue="publisher"
           onChange={(value) => {
             reader.settings.update({
-              fontWeight: value === `publisher` ? `publisher` : (parseInt(value) as 100)
+              fontWeight:
+                value === `publisher` ? `publisher` : (parseInt(value) as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}
@@ -153,7 +179,10 @@ export const SettingsMenu = ({
             <Radio value="900">big</Radio>
           </HStack>
         </RadioGroup>
-        <FormHelperText>Change the weight of the text in the entire book (if supported by current font)</FormHelperText>
+        <FormHelperText>
+          Change the weight of the text in the entire book (if supported by
+          current font)
+        </FormHelperText>
       </FormControl>
       <FormControl as="fieldset" mt={4}>
         <FormLabel as="legend">Theme</FormLabel>
@@ -176,14 +205,19 @@ export const SettingsMenu = ({
       <FormControl as="fieldset" mt={4}>
         <FormLabel as="legend">Margins</FormLabel>
         <Box display="flex" alignItems="center">
-          <Box display="flex" flexDirection="column" flex={0.2} alignItems="center">
+          <Box
+            display="flex"
+            flexDirection="column"
+            flex={0.2}
+            alignItems="center"
+          >
             <ArrowDownIcon />
             <ArrowUpIcon />
           </Box>
           <RcSlider
             style={{
               width: `auto`,
-              flex: 1
+              flex: 1,
             }}
             value={verticalMarginSliderValue}
             max={60}
@@ -192,7 +226,7 @@ export const SettingsMenu = ({
             onChange={(value) => {
               if (typeof value === "number") {
                 reader.settings.update({
-                  pageVerticalMargin: value
+                  pageVerticalMargin: value,
                 })
                 setVerticalMarginSliderValue(value)
               }
@@ -203,14 +237,19 @@ export const SettingsMenu = ({
           </Text>
         </Box>
         <Box display="flex" alignItems="center">
-          <Box display="flex" flexDirection="row" flex={0.2} justifyContent="center">
+          <Box
+            display="flex"
+            flexDirection="row"
+            flex={0.2}
+            justifyContent="center"
+          >
             <ArrowForwardIcon />
             <ArrowBackIcon />
           </Box>
           <RcSlider
             style={{
               width: `auto`,
-              flex: 1
+              flex: 1,
             }}
             value={horizontalMarginSliderValue}
             max={60}
@@ -219,7 +258,7 @@ export const SettingsMenu = ({
             onChange={(value) => {
               if (typeof value === "number") {
                 reader.settings.update({
-                  pageHorizontalMargin: value
+                  pageHorizontalMargin: value,
                 })
                 setHorizontalMarginSliderValue(value)
               }
@@ -230,7 +269,10 @@ export const SettingsMenu = ({
           </Text>
         </Box>
       </FormControl>
-      <NavigationSettings localSettings={localSettings} setLocalSettings={setLocalSettings} />
+      <NavigationSettings
+        localSettings={localSettings}
+        setLocalSettings={setLocalSettings}
+      />
       <OtherSettings />
     </Stack>
   )

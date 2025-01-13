@@ -1,4 +1,7 @@
-import { getFrameViewportInfo, upsertCSSToFrame } from "../../../../utils/frames"
+import {
+  getFrameViewportInfo,
+  upsertCSSToFrame,
+} from "../../../../utils/frames"
 
 export const getStyleForViewportDocument = () => {
   return `

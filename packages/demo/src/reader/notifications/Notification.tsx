@@ -1,5 +1,13 @@
 import { memo, useEffect } from "react"
-import { distinctUntilChanged, EMPTY, finalize, map, NEVER, skip, switchMap } from "rxjs"
+import {
+  distinctUntilChanged,
+  EMPTY,
+  finalize,
+  map,
+  NEVER,
+  skip,
+  switchMap,
+} from "rxjs"
 import { useObserve } from "reactjrx"
 import { useReader } from "../useReader"
 import { useToast } from "@chakra-ui/react"
@@ -18,9 +26,14 @@ const useNotification = () => {
         map(({ fontScale }) => fontScale),
         distinctUntilChanged(),
         skip(1),
-        map((fontScale): Notification => ({ type: "fontScaleChange", value: fontScale }))
+        map(
+          (fontScale): Notification => ({
+            type: "fontScaleChange",
+            value: fontScale,
+          }),
+        ),
       ),
-    [reader]
+    [reader],
   )
 }
 
@@ -39,7 +52,7 @@ export const Notification = memo(() => {
         title: "Font size changed",
         description: `${notification.value * 100} %`,
         status: "info",
-        duration: 2000
+        duration: 2000,
       })
 
       return () => {
@@ -57,17 +70,17 @@ export const Notification = memo(() => {
           const toastId = toast({
             title: "Zooming",
             status: "info",
-            duration: 999999
+            duration: 999999,
           })
 
           return NEVER.pipe(
             finalize(() => {
               toast.close(toastId)
-            })
+            }),
           )
-        })
+        }),
       ),
-    [reader, toast]
+    [reader, toast],
   )
 
   return null

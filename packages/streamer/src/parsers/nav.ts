@@ -214,5 +214,8 @@ export const parseToc = async (
     return tocFromNcx
   }
 
-  return await parseTocFromNavPath(opfXmlDoc, archive, { opfBasePath, baseUrl })
+  return await parseTocFromNavPath(opfXmlDoc, archive, {
+    opfBasePath,
+    baseUrl,
+  })
 }

@@ -19,12 +19,15 @@ const persist = (bookKey: string, annotations: Highlight[]) => {
     `annotations`,
     JSON.stringify({
       ...existing,
-      [bookKey]: annotations
-    })
+      [bookKey]: annotations,
+    }),
   )
 }
 
-export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: string) => {
+export const useAnnotations = (
+  reader: ReaderInstance | undefined,
+  bookKey: string,
+) => {
   /**
    * Restore annotations from local storage
    */
@@ -37,7 +40,7 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
       return of(true)
     },
     { defaultValue: false },
-    [reader, bookKey]
+    [reader, bookKey],
   )
 
   /**
@@ -49,9 +52,9 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
         ? EMPTY
         : reader?.annotations.highlights$.pipe(
             skip(1),
-            tap((annotations) => persist(bookKey, annotations))
+            tap((annotations) => persist(bookKey, annotations)),
           ),
-    [isHydrated, reader, bookKey]
+    [isHydrated, reader, bookKey],
   )
 
   useSubscribe(
@@ -60,8 +63,8 @@ export const useAnnotations = (reader: ReaderInstance | undefined, bookKey: stri
         tap(({ highlight }) => {
           isQuickMenuOpenSignal.setValue(false)
           selectedHighlightSignal.setValue({ highlight })
-        })
+        }),
       ),
-    [reader]
+    [reader],
   )
 }

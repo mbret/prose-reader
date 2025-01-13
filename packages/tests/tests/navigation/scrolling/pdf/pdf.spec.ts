@@ -1,13 +1,17 @@
 import { expect, test } from "@playwright/test"
 import { Reader } from "@prose-reader/core"
 
-test("should navigate to second page and back to first page", async ({ page }) => {
+test("should navigate to second page and back to first page", async ({
+  page,
+}) => {
   await page.setViewportSize({
     width: 300,
     height: 400,
   })
 
-  await page.goto("http://localhost:3333/tests/navigation/scrolling/pdf/index.html")
+  await page.goto(
+    "http://localhost:3333/tests/navigation/scrolling/pdf/index.html",
+  )
 
   // wait for first item to be ready
   await page.waitForSelector(".prose-spineItem-ready")

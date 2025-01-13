@@ -15,7 +15,9 @@ import { GestureRecognizable, Hook } from "../types"
 import { GesturesSettingsManager } from "../SettingsManager"
 import { PinchEvent } from "gesturx"
 
-const isHtmlImageElement = (target: EventTarget | null): target is HTMLImageElement =>
+const isHtmlImageElement = (
+  target: EventTarget | null,
+): target is HTMLImageElement =>
   isHtmlElement(target) &&
   !!target.ownerDocument.defaultView &&
   target instanceof target.ownerDocument.defaultView.HTMLImageElement
@@ -30,13 +32,21 @@ export const registerPinch = ({
   hookManager: HookManager<Hook>
   settingsManager: GesturesSettingsManager
 }) => {
-  const pinchStart$ = recognizable.events$.pipe(filter((event): event is PinchEvent => event.type === "pinchStart"))
+  const pinchStart$ = recognizable.events$.pipe(
+    filter((event): event is PinchEvent => event.type === "pinchStart"),
+  )
 
-  const pinchMove$ = recognizable.events$.pipe(filter((event): event is PinchEvent => event.type === "pinchMove"))
+  const pinchMove$ = recognizable.events$.pipe(
+    filter((event): event is PinchEvent => event.type === "pinchMove"),
+  )
 
-  const pinchEnd$ = recognizable.events$.pipe(filter((event): event is PinchEvent => event.type === "pinchEnd"))
+  const pinchEnd$ = recognizable.events$.pipe(
+    filter((event): event is PinchEvent => event.type === "pinchEnd"),
+  )
 
-  const shouldStartZoom = (target: EventTarget | null): target is HTMLImageElement =>
+  const shouldStartZoom = (
+    target: EventTarget | null,
+  ): target is HTMLImageElement =>
     isHtmlImageElement(target) && !reader.zoom.isZooming
 
   return settingsManager.values$.pipe(
@@ -78,20 +88,33 @@ export const registerPinch = ({
         : pinchStart$.pipe(
             withLatestFrom(reader.viewportState$),
             switchMap(([pinchStartEvent, viewportState]) => {
-              if (viewportState === "busy" || shouldStartZoom(pinchStartEvent.event.target) || reader.zoom.isZooming)
+              if (
+                viewportState === "busy" ||
+                shouldStartZoom(pinchStartEvent.event.target) ||
+                reader.zoom.isZooming
+              )
                 return EMPTY
 
               const lastFontScaleOnPinchStart = reader.settings.values.fontScale
 
               return pinchMove$.pipe(
-                throttleTime(fontScalePinchThrottleTime, animationFrameScheduler, {
-                  trailing: true,
-                }),
+                throttleTime(
+                  fontScalePinchThrottleTime,
+                  animationFrameScheduler,
+                  {
+                    trailing: true,
+                  },
+                ),
                 tap((event) => {
-                  const newScale = parseFloat((lastFontScaleOnPinchStart + (event.scale - 1)).toFixed(2))
+                  const newScale = parseFloat(
+                    (lastFontScaleOnPinchStart + (event.scale - 1)).toFixed(2),
+                  )
 
                   const newMinMaxedFontScale = Math.max(
-                    Math.min(newScale, settingsManager.values.fontScaleMaxScale),
+                    Math.min(
+                      newScale,
+                      settingsManager.values.fontScaleMaxScale,
+                    ),
                     settingsManager.values.fontScaleMinScale,
                   )
 
@@ -104,7 +127,9 @@ export const registerPinch = ({
             }),
           )
 
-      return merge(zoomGestures$, watchForFontScaleChange$).pipe(map((event) => ({ event, handled: true })))
+      return merge(zoomGestures$, watchForFontScaleChange$).pipe(
+        map((event) => ({ event, handled: true })),
+      )
     }),
   )
 }

@@ -1,5 +1,5 @@
 import { defineConfig } from "vite"
-import react from '@vitejs/plugin-react'
+import react from "@vitejs/plugin-react"
 
 export default defineConfig(() => {
   return {
@@ -16,7 +16,7 @@ export default defineConfig(() => {
       },
     },
     server: {
-      port: 3333
+      port: 3333,
     },
     plugins: [react()],
   }

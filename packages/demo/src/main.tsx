@@ -17,8 +17,8 @@ if ("serviceWorker" in navigator) {
           ? "/service-worker.js"
           : "/dev-sw.js?dev-sw",
         {
-          type: import.meta.env.MODE === "production" ? "classic" : "module"
-        }
+          type: import.meta.env.MODE === "production" ? "classic" : "module",
+        },
       )
       .then((registration) => {
         console.log("SW registered: ", registration)
@@ -26,8 +26,8 @@ if ("serviceWorker" in navigator) {
         const root = createRoot(container)
         root.render(
           <React.StrictMode>
-              <App />
-          </React.StrictMode>
+            <App />
+          </React.StrictMode>,
         )
       })
       .catch((registrationError) => {

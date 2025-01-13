@@ -1,6 +1,11 @@
 import React from "react"
 import { IconButton, Stack } from "@chakra-ui/react"
-import { ArrowBackIcon, ArrowDownIcon, ArrowForwardIcon, ArrowUpIcon } from "@chakra-ui/icons"
+import {
+  ArrowBackIcon,
+  ArrowDownIcon,
+  ArrowForwardIcon,
+  ArrowUpIcon,
+} from "@chakra-ui/icons"
 import { Scrubber } from "./Scrubber"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
@@ -23,25 +28,37 @@ export const BottomMenu = ({ open }: { open: boolean }) => {
           height="auto"
           minHeight={140}
           style={{
-            justifyContent: "space-between"
+            justifyContent: "space-between",
           }}
           leftElement={
             <IconButton
               icon={isVerticalDirection ? <ArrowUpIcon /> : <ArrowBackIcon />}
               aria-label="back"
               onClick={() =>
-                isVerticalDirection ? reader?.navigation.goToTopSpineItem() : reader?.navigation.goToLeftSpineItem()
+                isVerticalDirection
+                  ? reader?.navigation.goToTopSpineItem()
+                  : reader?.navigation.goToLeftSpineItem()
               }
-              isDisabled={!navigation?.canGoLeftSpineItem && !navigation?.canGoTopSpineItem}
+              isDisabled={
+                !navigation?.canGoLeftSpineItem &&
+                !navigation?.canGoTopSpineItem
+              }
             />
           }
           rightElement={
             <IconButton
-              icon={isVerticalDirection ? <ArrowDownIcon /> : <ArrowForwardIcon />}
+              icon={
+                isVerticalDirection ? <ArrowDownIcon /> : <ArrowForwardIcon />
+              }
               aria-label="forward"
-              isDisabled={!navigation?.canGoRightSpineItem && !navigation?.canGoBottomSpineItem}
+              isDisabled={
+                !navigation?.canGoRightSpineItem &&
+                !navigation?.canGoBottomSpineItem
+              }
               onClick={() => {
-                isVerticalDirection ? reader?.navigation.goToBottomSpineItem() : reader?.navigation.goToRightSpineItem()
+                isVerticalDirection
+                  ? reader?.navigation.goToBottomSpineItem()
+                  : reader?.navigation.goToRightSpineItem()
               }}
             />
           }
@@ -49,7 +66,7 @@ export const BottomMenu = ({ open }: { open: boolean }) => {
             <Stack
               style={{
                 overflow: "hidden",
-                textAlign: `center`
+                textAlign: `center`,
               }}
               flex={1}
               p={2}

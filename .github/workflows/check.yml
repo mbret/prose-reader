@@ -3,10 +3,10 @@ name: check
 on:
   push:
     branches-ignore:
-      - "master"
+      - 'master'
   pull_request:
     branches-ignore:
-      - "master"
+      - 'master'
 
 jobs:
   check:
@@ -16,8 +16,8 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
       - uses: actions/checkout@v4
 
       # - name: Checkout release branch
@@ -28,8 +28,9 @@ jobs:
           npm ci
 
       # We only build library on this pipe
-      - name: Lint
+      - name: Check
         run: |
+          npm run format
           npx lerna run lint --stream --scope @prose-reader/*
 
       # We only build library on this pipe

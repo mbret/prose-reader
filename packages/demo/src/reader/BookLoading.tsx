@@ -12,7 +12,7 @@ export const BookLoading = () => {
         left: 0,
         backgroundColor: "white",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
       }}
       color="black"
     >

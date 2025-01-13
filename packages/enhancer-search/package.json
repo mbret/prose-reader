@@ -14,8 +14,8 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
-    "lint:read": "prettier --check . && eslint . --ext .ts,.tsx,.js,.jsx",
-    "lint:write": "prettier --write . && eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "lint:check": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:write": "eslint --fix . --ext .ts,.tsx,.js,.jsx",
     "test": "vitest run --coverage"
   },
   "dependencies": {

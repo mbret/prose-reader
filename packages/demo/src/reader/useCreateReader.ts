@@ -20,11 +20,11 @@ export const createAppReader = pdfEnhancer(
       bookmarksEnhancer(
         searchEnhancer(
           // __
-          createReader
-        )
-      )
-    )
-  )
+          createReader,
+        ),
+      ),
+    ),
+  ),
 )
 
 export const useCreateReader = () => {
@@ -40,8 +40,8 @@ export const useCreateReader = () => {
         fontScalePinchEnabled: true,
         ignore: [
           // ignore gestures within the bookmark area
-          `[data-bookmark-area]`
-        ]
+          `[data-bookmark-area]`,
+        ],
       },
       pdf: {
         pdfjsViewerInlineCss,
@@ -53,8 +53,8 @@ export const useCreateReader = () => {
           const key = getFileKeyFromUrl(item.href)
 
           return webStreamer.accessArchiveWithoutLock(key)
-        }
-      }
+        },
+      },
     }
 
     const instance = createAppReader(readerOptions)

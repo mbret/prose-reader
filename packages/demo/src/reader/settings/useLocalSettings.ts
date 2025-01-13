@@ -9,6 +9,6 @@ export const useLocalSettings = (defaultSettings: Partial<LocalSettings>) => {
   return useState<LocalSettings>({
     enablePan: true,
     enableSwipe: false,
-    ...defaultSettings
+    ...defaultSettings,
   })
 }

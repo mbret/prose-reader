@@ -12,7 +12,16 @@ export const AppBar = memo(
     middleElement?: React.ReactElement | string
     rightElement?: React.ReactElement
   }) => (
-    <Stack width="100%" bg="gray.800" paddingX={4} paddingY={4} overflow="hidden" direction="row" alignItems="center" {...rest}>
+    <Stack
+      width="100%"
+      bg="gray.800"
+      paddingX={4}
+      paddingY={4}
+      overflow="hidden"
+      direction="row"
+      alignItems="center"
+      {...rest}
+    >
       {leftElement}
       {typeof middleElement === `string` ? (
         <Text as="h1" noOfLines={1}>
@@ -23,5 +32,5 @@ export const AppBar = memo(
       )}
       {rightElement}
     </Stack>
-  )
+  ),
 )

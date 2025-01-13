@@ -17,12 +17,12 @@ export const QuickActionsMenu = () => {
             reader.selection.selection$.pipe(
               filter((selection) => !selection),
               map(() => false),
-              first()
-            )
-          )
-        )
+              first(),
+            ),
+          ),
+        ),
       ),
-    [reader]
+    [reader],
   )
 
   return (
@@ -35,7 +35,7 @@ export const QuickActionsMenu = () => {
           borderRadius: 10,
           position: "absolute",
           bottom: "5%",
-          right: "5%"
+          right: "5%",
         }}
       >
         <IconButton
@@ -44,7 +44,9 @@ export const QuickActionsMenu = () => {
           icon={<EditIcon />}
           onClick={() => {
             isQuickMenuOpenSignal.setValue(false)
-            selectedHighlightSignal.setValue({ selection: reader?.selection.getSelection() })
+            selectedHighlightSignal.setValue({
+              selection: reader?.selection.getSelection(),
+            })
           }}
         />
       </Stack>

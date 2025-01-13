@@ -22,13 +22,14 @@ export const useGestureHandler = () => {
              * it.
              */
             const wasOrIsOnSelection =
-              (target && reader.annotations.isTargetWithinHighlight(target)) || lastSelectionOnPointerdown
+              (target && reader.annotations.isTargetWithinHighlight(target)) ||
+              lastSelectionOnPointerdown
 
             return !wasOrIsOnSelection
-          })
-        )
+          }),
+        ),
       ),
-    [reader]
+    [reader],
   )
 
   /**
@@ -40,7 +41,10 @@ export const useGestureHandler = () => {
   useSubscribe(() => {
     return reader?.gestures.gestures$.pipe(
       filter(({ handled, event }) => !handled && event?.type === "tap"),
-      withLatestFrom(reader.selection.selection$, reader.selection.lastSelectionOnPointerdown$),
+      withLatestFrom(
+        reader.selection.selection$,
+        reader.selection.lastSelectionOnPointerdown$,
+      ),
       tap(([, selection, selectionOnPointerdown]) => {
         /**
          * Where there is or was a selection before or during the tap, we want to avoid
@@ -51,7 +55,7 @@ export const useGestureHandler = () => {
         } else {
           isQuickMenuOpenSignal.setValue((val) => !val)
         }
-      })
+      }),
     )
   }, [reader])
 }

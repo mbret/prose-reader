@@ -23,24 +23,37 @@ function App() {
           alignItems: "center",
         }}
       >
-        <Heading as="h1" fontFamily={`"Dancing Script", serif;`} size="6xl" mb={8}>
+        <Heading
+          as="h1"
+          fontFamily={`"Dancing Script", serif;`}
+          size="6xl"
+          mb={8}
+        >
           prose
         </Heading>
         {<Image src={headerLogo} alt="logo" height={[150, 200, 250]} />}
         <Box display="flex" maxW={[400]} flexDirection="column" gap={2}>
           <Text paddingTop={10} textAlign="center" fontFamily="body">
-            Next generation reading engine. Build your reading app for any platforms, any formats and any languages with ease and
-            extensive functionalities.
+            Next generation reading engine. Build your reading app for any
+            platforms, any formats and any languages with ease and extensive
+            functionalities.
           </Text>
           <Text paddingY={5} textAlign="center">
             prose is a library licensed under <b>MIT license</b>. It&apos;s{" "}
-            <Link variant="underline" href="https://github.com/mbret/prose-reader/blob/master/LICENCE">
+            <Link
+              variant="underline"
+              href="https://github.com/mbret/prose-reader/blob/master/LICENCE"
+            >
               free of use <LuExternalLink />
             </Link>{" "}
             and open source
           </Text>
           <Button asChild textTransform="uppercase">
-            <Link href="https://demo.prose-reader.com/" target="_blank" unstyled>
+            <Link
+              href="https://demo.prose-reader.com/"
+              target="_blank"
+              unstyled
+            >
               demo <LuExternalLink />
             </Link>
           </Button>
@@ -51,7 +64,11 @@ function App() {
           </Button>
           <OrDivider title="more" />
           <Button as="a" asChild variant="outline" textTransform="uppercase">
-            <Link href="https://github.com/mbret/prose-reader" target="_blank" unstyled>
+            <Link
+              href="https://github.com/mbret/prose-reader"
+              target="_blank"
+              unstyled
+            >
               <FaGithub />
               github
             </Link>
@@ -73,7 +90,10 @@ function App() {
         <Text>
           © Copyright{" "}
           <b>
-            <Link href="https://www.linkedin.com/in/maxime-bret/" rel="nofollow noopener noreferrer">
+            <Link
+              href="https://www.linkedin.com/in/maxime-bret/"
+              rel="nofollow noopener noreferrer"
+            >
               Maxime Bret
             </Link>
           </b>

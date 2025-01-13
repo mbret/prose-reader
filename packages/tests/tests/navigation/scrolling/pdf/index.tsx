@@ -6,7 +6,10 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import { of } from "rxjs"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, import.meta.url).toString()
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  pdfWorkerUrl,
+  import.meta.url,
+).toString()
 
 async function run() {
   const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")

@@ -12,7 +12,9 @@ export const consolidate = (highlight: Highlight, reader: Reader) => {
     withLatestFrom(spineItem.isReady$),
     tap(([, isItemReady]) => {
       const startCfi = reader.cfi.resolveCfi({ cfi: highlight.cfi ?? "" })
-      const resolvedFocusCfi = reader.cfi.resolveCfi({ cfi: highlight.endCfi ?? "" })
+      const resolvedFocusCfi = reader.cfi.resolveCfi({
+        cfi: highlight.endCfi ?? "",
+      })
 
       if (startCfi?.node && resolvedFocusCfi?.node && isItemReady) {
         const range = startCfi?.node.ownerDocument?.createRange()

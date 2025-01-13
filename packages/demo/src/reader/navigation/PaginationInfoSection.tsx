@@ -10,22 +10,27 @@ export const PaginationInfoSection = () => {
   const settings = useObserve(() => reader?.settings.values$, [reader])
   const [pageIndex, endPageIndex] = [
     (pagination?.beginPageIndexInSpineItem || 0) + 1,
-    (pagination?.endPageIndexInSpineItem || 0) + 1
+    (pagination?.endPageIndexInSpineItem || 0) + 1,
   ].sort((a, b) => a - b)
   const beginAndEndAreDifferent =
-    pagination?.beginPageIndexInSpineItem !== pagination?.endPageIndexInSpineItem ||
+    pagination?.beginPageIndexInSpineItem !==
+      pagination?.endPageIndexInSpineItem ||
     pagination?.beginSpineItemIndex !== pagination?.endSpineItemIndex
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
   const { numberOfTotalPages } = pagination ?? {}
   const isComic = useIsComics()
   const [absoluteBeginPageIndex = 0, absoluteEndPageIndex = 0] = [
     pagination?.beginAbsolutePageIndex,
-    pagination?.endAbsolutePageIndex
+    pagination?.endAbsolutePageIndex,
   ].sort()
 
-  const isWebtoon = settings?.computedPageTurnDirection === "vertical" && settings.computedPageTurnMode === "scrollable"
+  const isWebtoon =
+    settings?.computedPageTurnDirection === "vertical" &&
+    settings.computedPageTurnMode === "scrollable"
 
-  const buildTitleChain = (chapterInfo: NonNullable<typeof pagination>["beginChapterInfo"]): string => {
+  const buildTitleChain = (
+    chapterInfo: NonNullable<typeof pagination>["beginChapterInfo"],
+  ): string => {
     if (chapterInfo?.subChapter) {
       return `${chapterInfo.title} / ${buildTitleChain(chapterInfo.subChapter)}`
     }
@@ -38,7 +43,7 @@ export const PaginationInfoSection = () => {
     <Box>
       <div
         style={{
-          color: "white"
+          color: "white",
         }}
       >
         {`Progression: ${Math.round((pagination?.percentageEstimateOfBook || 0) * 100)}%`}
@@ -49,7 +54,7 @@ export const PaginationInfoSection = () => {
             color: "white",
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
-            overflow: "hidden"
+            overflow: "hidden",
           }}
         >
           {chapterTitle ? `Chapter ${chapterTitle}` : ``}
@@ -58,13 +63,15 @@ export const PaginationInfoSection = () => {
       {!isComic && !hasOnlyOnePage && !isWebtoon && (
         <div
           style={{
-            color: "white"
+            color: "white",
           }}
         >
           {beginAndEndAreDifferent && (
             <>{`page ${pageIndex} - ${endPageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}</>
           )}
-          {!beginAndEndAreDifferent && <>{`page ${pageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}</>}
+          {!beginAndEndAreDifferent && (
+            <>{`page ${pageIndex} of ${pagination?.beginNumberOfPagesInSpineItem}`}</>
+          )}
         </div>
       )}
       {(isComic || isWebtoon) && !hasOnlyOnePage && (
@@ -72,7 +79,9 @@ export const PaginationInfoSection = () => {
           {beginAndEndAreDifferent && (
             <>{`page ${absoluteBeginPageIndex + 1} - ${absoluteEndPageIndex + 1} of ${numberOfTotalPages}`}</>
           )}
-          {!beginAndEndAreDifferent && <>{`page ${absoluteBeginPageIndex + 1} of ${numberOfTotalPages}`}</>}
+          {!beginAndEndAreDifferent && (
+            <>{`page ${absoluteBeginPageIndex + 1} of ${numberOfTotalPages}`}</>
+          )}
         </Box>
       )}
     </Box>

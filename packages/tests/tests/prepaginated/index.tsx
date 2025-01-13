@@ -8,7 +8,9 @@ window.__PROSE_READER_DEBUG = true
 async function createStreamer() {
   const streamer = new Streamer({
     getArchive: async () => {
-      const epubResponse = await fetch("http://localhost:3333/epubs/sous-le-vent.epub")
+      const epubResponse = await fetch(
+        "http://localhost:3333/epubs/sous-le-vent.epub",
+      )
       const epubBlob = await epubResponse.blob()
       const epubJszip = await loadAsync(epubBlob)
       const archive = await createArchiveFromJszip(epubJszip)

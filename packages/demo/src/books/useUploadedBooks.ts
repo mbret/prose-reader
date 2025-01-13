@@ -8,8 +8,11 @@ export const useUploadedBooks = () => {
       const keys = await localforage.keys()
 
       return keys.map((name) => {
-        return { name, base64Uri: btoa(`${encodeURIComponent(`file://epubs/${name}`)}`) }
+        return {
+          name,
+          base64Uri: btoa(`${encodeURIComponent(`file://epubs/${name}`)}`),
+        }
       })
-    }
+    },
   })
 }

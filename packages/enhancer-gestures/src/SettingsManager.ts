@@ -2,7 +2,10 @@ import { Reader, SettingsManager } from "@prose-reader/core"
 import { InputSettings, OutputSettings } from "./types"
 import { takeUntil, tap } from "rxjs"
 
-export class GesturesSettingsManager extends SettingsManager<InputSettings, OutputSettings> {
+export class GesturesSettingsManager extends SettingsManager<
+  InputSettings,
+  OutputSettings
+> {
   constructor(
     initialSettings: Partial<InputSettings>,
     private reader: Reader,
@@ -27,7 +30,9 @@ export class GesturesSettingsManager extends SettingsManager<InputSettings, Outp
     return {
       ...inputSettings,
       panNavigation:
-        this.reader.settings.values.computedPageTurnMode === `scrollable` ? false : inputSettings.panNavigation,
+        this.reader.settings.values.computedPageTurnMode === `scrollable`
+          ? false
+          : inputSettings.panNavigation,
     }
   }
 

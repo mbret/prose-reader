@@ -1,6 +1,28 @@
-import { catchError, EMPTY, finalize, from, map, Observable, of, switchMap, tap } from "rxjs"
-import { PDFPageProxy, RenderingCancelledException, RenderTask, TextLayer } from "pdfjs-dist"
-import { DocumentRenderer, injectCSS, removeCSS, waitForFrameLoad, waitForFrameReady, waitForSwitch } from "@prose-reader/core"
+import {
+  catchError,
+  EMPTY,
+  finalize,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from "rxjs"
+import {
+  PDFPageProxy,
+  RenderingCancelledException,
+  RenderTask,
+  TextLayer,
+} from "pdfjs-dist"
+import {
+  DocumentRenderer,
+  injectCSS,
+  removeCSS,
+  waitForFrameLoad,
+  waitForFrameReady,
+  waitForSwitch,
+} from "@prose-reader/core"
 import pdfFrameStyle from "./frame.css?inline"
 import { layoutCanvas, layoutLayers } from "./layout"
 
@@ -75,7 +97,8 @@ export class PdfRenderer extends DocumentRenderer {
     frameElement.setAttribute("frameBorder", "0")
     frameElement.setAttribute(`src`, "about:blank")
 
-    const frameContainer = this.containerElement.ownerDocument.createElement("div")
+    const frameContainer =
+      this.containerElement.ownerDocument.createElement("div")
     frameContainer.style.cssText = `
       mix-blend-mode: multiply;
       -webkit-transform: translateZ(0);
@@ -91,7 +114,8 @@ export class PdfRenderer extends DocumentRenderer {
      * then copied into the frame.
      */
     const canvas = this.containerElement.ownerDocument.createElement("canvas")
-    const canvasContainer = this.containerElement.ownerDocument.createElement("div")
+    const canvasContainer =
+      this.containerElement.ownerDocument.createElement("div")
     canvasContainer.style.cssText = `
       height: 100%;
       width: 100%;
@@ -180,13 +204,20 @@ export class PdfRenderer extends DocumentRenderer {
 
     layoutCanvas(this.pageProxy, canvas, this.context)
 
-    const { width: viewportWidth, height: viewportHeight } = this.pageProxy.getViewport({ scale: 1 })
-    const pageScale = Math.max(pageWidth / viewportWidth, pageHeight / viewportHeight)
+    const { width: viewportWidth, height: viewportHeight } =
+      this.pageProxy.getViewport({ scale: 1 })
+    const pageScale = Math.max(
+      pageWidth / viewportWidth,
+      pageHeight / viewportHeight,
+    )
 
     // then we generate the viewport for the canvas based on the page scale
     const viewport = this.pageProxy.getViewport({ scale: pageScale })
 
-    const transform = pixelRatioScale !== 1 ? [pixelRatioScale, 0, 0, pixelRatioScale, 0, 0] : null
+    const transform =
+      pixelRatioScale !== 1
+        ? [pixelRatioScale, 0, 0, pixelRatioScale, 0, 0]
+        : null
 
     this.renderTask = this.pageProxy?.render({
       ...(transform && { transform }),
@@ -222,7 +253,11 @@ export class PdfRenderer extends DocumentRenderer {
         textLayerElement.style.width = canvas.style.width
 
         removeCSS(frameElement, "pdf-scale-scale")
-        injectCSS(frameElement, "pdf-scale-scale", `:root { --scale-factor: ${canvasScale}; }`)
+        injectCSS(
+          frameElement,
+          "pdf-scale-scale",
+          `:root { --scale-factor: ${canvasScale}; }`,
+        )
 
         if (this.textLayer) {
           this.textLayer.cancel()

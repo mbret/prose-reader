@@ -73,9 +73,9 @@ export const createMovingSafePan$ = (reader: Reader) => {
     }),
   )
 
-  const resetLockViewportFree$ = createResetLock$(
-    reader.viewportFree$,
-  ).pipe(take(1))
+  const resetLockViewportFree$ = createResetLock$(reader.viewportFree$).pipe(
+    take(1),
+  )
 
   const pageTurnMode$ = reader.settings.values$.pipe(
     map(() => reader.settings.values.computedPageTurnMode),

@@ -1,4 +1,8 @@
-import { createArchiveFromText, createArchiveFromJszip, ServiceWorkerStreamer } from "@prose-reader/streamer"
+import {
+  createArchiveFromText,
+  createArchiveFromJszip,
+  ServiceWorkerStreamer,
+} from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { getBlobFromKey, getStreamerBaseUrl } from "./utils.shared"
@@ -25,5 +29,5 @@ export const swStreamer = new ServiceWorkerStreamer({
 
       return await createArchiveFromJszip(jszip, { orderByAlpha: true, name })
     }
-  }
+  },
 })

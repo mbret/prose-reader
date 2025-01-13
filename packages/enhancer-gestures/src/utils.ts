@@ -9,7 +9,10 @@ export const isNotLink = (event: GestureEvent) => {
   return true
 }
 
-export const istMatchingSelectors = (selectors: string[], event: GestureEvent): boolean => {
+export const istMatchingSelectors = (
+  selectors: string[],
+  event: GestureEvent,
+): boolean => {
   const target = event.event.target
 
   if (!isHtmlElement(target)) return false

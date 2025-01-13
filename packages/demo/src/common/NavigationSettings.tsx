@@ -1,5 +1,14 @@
 import React from "react"
-import { FormControl, FormHelperText, FormLabel, Stack, Radio, RadioGroup, Box, Checkbox } from "@chakra-ui/react"
+import {
+  FormControl,
+  FormHelperText,
+  FormLabel,
+  Stack,
+  Radio,
+  RadioGroup,
+  Box,
+  Checkbox,
+} from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
 import { LocalSettings } from "../reader/settings/useLocalSettings"
 import { useReader } from "../reader/useReader"
@@ -7,7 +16,7 @@ import { useObserve } from "reactjrx"
 
 export const NavigationSettings = ({
   localSettings,
-  setLocalSettings
+  setLocalSettings,
 }: {
   localSettings: LocalSettings
   setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
@@ -16,7 +25,8 @@ export const NavigationSettings = ({
   const { reader } = useReader()
   const readerState = useObserve(() => reader?.$.state$, [reader])
   const onlySupportScrollableMode =
-    readerState?.supportedPageTurnMode.length === 1 && readerState.supportedPageTurnMode[0] === `scrollable`
+    readerState?.supportedPageTurnMode.length === 1 &&
+    readerState.supportedPageTurnMode[0] === `scrollable`
 
   return (
     <FormControl as="fieldset" style={{ marginTop: 10 }}>
@@ -37,8 +47,10 @@ export const NavigationSettings = ({
           defaultValue={settings?.computedPageTurnAnimation}
           onChange={(value) => {
             reader?.settings.update({
-              pageTurnAnimation: value as NonNullable<typeof settings>["computedPageTurnAnimation"],
-              pageTurnMode: `controlled`
+              pageTurnAnimation: value as NonNullable<
+                typeof settings
+              >["computedPageTurnAnimation"],
+              pageTurnMode: `controlled`,
             })
           }}
           value={settings?.computedPageTurnAnimation}
@@ -46,19 +58,28 @@ export const NavigationSettings = ({
           <Stack>
             <Radio
               value="none"
-              isDisabled={onlySupportScrollableMode || !readerState?.supportedPageTurnAnimation.includes(`none`)}
+              isDisabled={
+                onlySupportScrollableMode ||
+                !readerState?.supportedPageTurnAnimation.includes(`none`)
+              }
             >
               none
             </Radio>
             <Radio
               value="fade"
-              isDisabled={onlySupportScrollableMode || !readerState?.supportedPageTurnAnimation.includes(`fade`)}
+              isDisabled={
+                onlySupportScrollableMode ||
+                !readerState?.supportedPageTurnAnimation.includes(`fade`)
+              }
             >
               fade
             </Radio>
             <Radio
               value="slide"
-              isDisabled={onlySupportScrollableMode || !readerState?.supportedPageTurnAnimation.includes(`slide`)}
+              isDisabled={
+                onlySupportScrollableMode ||
+                !readerState?.supportedPageTurnAnimation.includes(`slide`)
+              }
             >
               slide
             </Radio>
@@ -67,12 +88,15 @@ export const NavigationSettings = ({
         <Box borderWidth={1} alignSelf="stretch" />
         <Stack>
           <Checkbox
-            isDisabled={settings?.computedPageTurnMode === "scrollable" || localSettings.enableSwipe}
+            isDisabled={
+              settings?.computedPageTurnMode === "scrollable" ||
+              localSettings.enableSwipe
+            }
             isChecked={localSettings.enablePan}
             onChange={() => {
               setLocalSettings((state) => ({
                 ...state,
-                enablePan: !state.enablePan
+                enablePan: !state.enablePan,
               }))
             }}
           >
@@ -84,7 +108,7 @@ export const NavigationSettings = ({
             onChange={() => {
               setLocalSettings((state) => ({
                 ...state,
-                enableSwipe: !state.enableSwipe
+                enableSwipe: !state.enableSwipe,
               }))
             }}
           >
@@ -93,13 +117,14 @@ export const NavigationSettings = ({
           <Checkbox
             isDisabled={
               !readerState?.supportedPageTurnMode.includes(`scrollable`) ||
-              (readerState?.supportedPageTurnMode.includes(`scrollable`) && readerState?.supportedPageTurnMode.length === 1)
+              (readerState?.supportedPageTurnMode.includes(`scrollable`) &&
+                readerState?.supportedPageTurnMode.length === 1)
             }
             isChecked={settings?.computedPageTurnMode === `scrollable`}
             defaultChecked={settings?.computedPageTurnMode === `scrollable`}
             onChange={(e) => {
               reader?.settings.update({
-                pageTurnMode: e.target.checked ? `scrollable` : `controlled`
+                pageTurnMode: e.target.checked ? `scrollable` : `controlled`,
               })
             }}
           >
@@ -115,7 +140,7 @@ export const NavigationSettings = ({
             defaultChecked={settings?.computedPageTurnDirection === `vertical`}
             onChange={(e) => {
               reader?.settings.update({
-                pageTurnDirection: e.target.checked ? `vertical` : `horizontal`
+                pageTurnDirection: e.target.checked ? `vertical` : `horizontal`,
               })
             }}
           >

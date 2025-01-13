@@ -10,9 +10,15 @@ type Command =
 export class Commands extends DestroyableClass {
   private commandSubject = new Subject<Command>()
 
-  public readonly delete$ = this.commandSubject.pipe(filter((command) => command.type === "delete"))
-  public readonly add$ = this.commandSubject.pipe(filter((command) => command.type === "add"))
-  public readonly bookmark$ = this.commandSubject.pipe(filter((command) => command.type === "bookmark"))
+  public readonly delete$ = this.commandSubject.pipe(
+    filter((command) => command.type === "delete"),
+  )
+  public readonly add$ = this.commandSubject.pipe(
+    filter((command) => command.type === "add"),
+  )
+  public readonly bookmark$ = this.commandSubject.pipe(
+    filter((command) => command.type === "bookmark"),
+  )
 
   delete = (id: string) => {
     this.commandSubject.next({ type: "delete", id })

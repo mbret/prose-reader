@@ -12,26 +12,26 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: "index.html"
-      }
-    }
+        main: "index.html",
+      },
+    },
   },
   optimizeDeps: {
     esbuildOptions: {
       // Node.js global to browser globalThis
       // fix sax on browser
       define: {
-        global: "globalThis"
-      }
-    }
+        global: "globalThis",
+      },
+    },
   },
   /**
    * require('events') uses package events which is a web polyfill
    */
   resolve: {
     alias: {
-      stream: path.resolve(__dirname, "./stream-shim.js")
-    }
+      stream: path.resolve(__dirname, "./stream-shim.js"),
+    },
   },
   plugins: [
     VitePWA({
@@ -41,22 +41,22 @@ export default defineConfig(({ mode }) => ({
       strategies: "injectManifest",
       manifest: false,
       injectManifest: {
-        injectionPoint: undefined
+        injectionPoint: undefined,
       },
       srcDir: "src/serviceWorker",
       filename: "service-worker.ts",
       ...(mode === "development" && {
         devOptions: {
-          enabled: true
-        }
-      })
+          enabled: true,
+        },
+      }),
     }),
     react({}),
     svgr({}),
     replace({
       // fix for util/util.js
       "process.env.NODE_DEBUG": false,
-      preventAssignment: true
-    })
-  ]
+      preventAssignment: true,
+    }),
+  ],
 }))

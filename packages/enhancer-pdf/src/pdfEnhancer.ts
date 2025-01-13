@@ -8,7 +8,9 @@ type CreateReader = typeof createReader
 type CreateReaderOptions = Parameters<CreateReader>[0]
 
 export const pdfEnhancer =
-  <InheritOptions extends CreateReaderOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions extends CreateReaderOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (options: InheritOptions & EnhancerOptions): InheritOutput => {
     const reader = next({
       ...options,
@@ -25,7 +27,8 @@ export const pdfEnhancer =
         const maybeFactory = options.getRenderer?.(item)
 
         if (!maybeFactory && item.href.endsWith(`.pdf`)) {
-          return (params) => new PdfRenderer(options.pdf.pdfjsViewerInlineCss, params)
+          return (params) =>
+            new PdfRenderer(options.pdf.pdfjsViewerInlineCss, params)
         }
 
         return maybeFactory
@@ -42,7 +45,9 @@ export const pdfEnhancer =
             }
 
             // we account for opf file
-            const fileIndex = archive.files.findIndex((file) => item.href.endsWith(file.uri)) - 1
+            const fileIndex =
+              archive.files.findIndex((file) => item.href.endsWith(file.uri)) -
+              1
 
             return from(archive.proxyDocument.getPage(fileIndex + 1)).pipe(
               map((pageProxy) => ({

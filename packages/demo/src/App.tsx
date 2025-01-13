@@ -1,5 +1,10 @@
 import React, { memo } from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom"
 import { HomeScreen } from "./home/HomeScreen"
 import { ChakraProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"
@@ -11,8 +16,8 @@ import "@fontsource/dancing-script/400.css"
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error) => console.error(error)
-  })
+    onError: (error) => console.error(error),
+  }),
 })
 
 export const App = memo(() => {

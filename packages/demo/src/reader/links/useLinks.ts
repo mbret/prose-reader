@@ -11,13 +11,15 @@ export const useLinks = () => {
           if (!data.data.href) return
           const url = new URL(data.data.href)
           if (window.location.host !== url.host) {
-            const response = confirm(`You are going to be redirected to external link`)
+            const response = confirm(
+              `You are going to be redirected to external link`,
+            )
             if (response) {
               window.open(data.data.href, "__blank")
             }
           }
         }
       }),
-    [reader]
+    [reader],
   )
 }

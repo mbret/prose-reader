@@ -16,7 +16,12 @@ const images = [
 export const ReadAnythingSection = () => {
   return (
     <Section>
-      <Box flexDirection="column" display="flex" gap={[4, null, 4]} alignItems={["flex-start"]}>
+      <Box
+        flexDirection="column"
+        display="flex"
+        gap={[4, null, 4]}
+        alignItems={["flex-start"]}
+      >
         <Box flexDirection="column" gap={2} display="flex">
           <SectionTitle>Read any books & formats</SectionTitle>
           <Box display="flex" gap={4} mt={2}>
@@ -31,14 +36,21 @@ export const ReadAnythingSection = () => {
             </Icon>
           </Box>
           <Box flexDirection="column" gap={2} display="flex" mt={2}>
-            <Text>Prose uses its own standard to know where and what to display. How you serve your book is up to you.</Text>
             <Text>
-              ePubs, PDFs, MOBI, CBZ, CBR, etc. We support them all and we provide many helpers to help you implement your own
-              streamer.
+              Prose uses its own standard to know where and what to display. How
+              you serve your book is up to you.
+            </Text>
+            <Text>
+              ePubs, PDFs, MOBI, CBZ, CBR, etc. We support them all and we
+              provide many helpers to help you implement your own streamer.
             </Text>
           </Box>
           <Button asChild alignSelf="center" mt={2}>
-            <Link href="https://demo.prose-reader.com/" target="_blank" unstyled>
+            <Link
+              href="https://demo.prose-reader.com/"
+              target="_blank"
+              unstyled
+            >
               Try it on the demo
               <FaExternalLinkAlt />
             </Link>
@@ -68,10 +80,30 @@ export const ReadAnythingSection = () => {
               opacity={0.7}
             />
           ))}
-          <Box position="absolute" height="100%" display="flex" top={0} left={0} right={0}>
+          <Box
+            position="absolute"
+            height="100%"
+            display="flex"
+            top={0}
+            left={0}
+            right={0}
+          >
             {images.map(([, format]) => (
-              <Box key={format} flex={1} display="flex" alignItems="center" justifyContent="center">
-                <Text bgColor="white" border="2px solid black" borderColor="gray.500" rounded="lg" p={1} fontWeight="bold">
+              <Box
+                key={format}
+                flex={1}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Text
+                  bgColor="white"
+                  border="2px solid black"
+                  borderColor="gray.500"
+                  rounded="lg"
+                  p={1}
+                  fontWeight="bold"
+                >
                   {format}
                 </Text>
               </Box>

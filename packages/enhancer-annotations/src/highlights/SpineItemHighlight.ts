@@ -37,7 +37,9 @@ export class SpineItemHighlight extends DestroyableClass {
         tap((isSelected) => {
           Array.from(this.container.children).forEach((child) => {
             if (child instanceof HTMLElement) {
-              child.style.border = isSelected ? "3px dashed red" : "3px dashed transparent"
+              child.style.border = isSelected
+                ? "3px dashed red"
+                : "3px dashed transparent"
             }
           })
         }),
@@ -60,7 +62,11 @@ export class SpineItemHighlight extends DestroyableClass {
       return
     }
 
-    const rectElements = createElementForRange(range, this.container, this.highlight.color ?? "yellow")
+    const rectElements = createElementForRange(
+      range,
+      this.container,
+      this.highlight.color ?? "yellow",
+    )
 
     rectElements.forEach((elt) => {
       elt.style.pointerEvents = "initial"

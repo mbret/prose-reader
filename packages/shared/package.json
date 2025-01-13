@@ -12,12 +12,10 @@
   },
   "types": "./dist/index.d.ts",
   "license": "MIT",
-  "files": [
-    "/dist"
-  ],
+  "files": ["/dist"],
   "scripts": {
-    "lint:read": "prettier --check . && eslint .",
-    "lint:write": "prettier --write . && eslint --fix .",
+    "lint:check": "eslint .",
+    "lint:write": "eslint --fix .",
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
     "test": "vitest run --coverage"

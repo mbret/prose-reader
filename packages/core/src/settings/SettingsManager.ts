@@ -1,9 +1,4 @@
-import {
-  Observable,
-  Subject,
-  distinctUntilChanged,
-  shareReplay,
-} from "rxjs"
+import { Observable, Subject, distinctUntilChanged, shareReplay } from "rxjs"
 import { SettingsInterface } from "./SettingsInterface"
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import { DestroyableClass } from "../utils/DestroyableClass"

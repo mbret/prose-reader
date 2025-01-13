@@ -10,7 +10,10 @@ import { useEffect, useState } from "react"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, import.meta.url).toString()
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  pdfWorkerUrl,
+  import.meta.url,
+).toString()
 
 async function run() {
   const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")
@@ -18,7 +21,9 @@ async function run() {
   const archive = await createArchiveFromPdf(pdfBlob)
   const manifest = await generateManifestFromArchive(archive)
 
-  const createReaderWithEnhancers = gesturesEnhancer(pdfEnhancer(bookmarksEnhancer(createReader)))
+  const createReaderWithEnhancers = gesturesEnhancer(
+    pdfEnhancer(bookmarksEnhancer(createReader)),
+  )
 
   const reader = createReaderWithEnhancers({
     pageTurnAnimation: "none",
@@ -32,8 +37,12 @@ async function run() {
   })
 
   const Bookmarks = () => {
-    const [bookmarks, setBookmarks] = useState<{ meta?: { absolutePageIndex?: number | undefined } }[]>([])
-    const [pagination, setPagination] = useState<{ beginAbsolutePageIndex?: number }>({ beginAbsolutePageIndex: 0 })
+    const [bookmarks, setBookmarks] = useState<
+      { meta?: { absolutePageIndex?: number | undefined } }[]
+    >([])
+    const [pagination, setPagination] = useState<{
+      beginAbsolutePageIndex?: number
+    }>({ beginAbsolutePageIndex: 0 })
 
     useEffect(() => {
       reader.pagination.state$.subscribe((state) => {
@@ -42,12 +51,17 @@ async function run() {
     }, [])
 
     useEffect(() => {
-      reader.bookmarks.bookmarks$.pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks))).subscribe((data) => {
-        setBookmarks(data)
-      })
+      reader.bookmarks.bookmarks$
+        .pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks)))
+        .subscribe((data) => {
+          setBookmarks(data)
+        })
     }, [reader])
 
-    const bookmarkForPage = bookmarks?.find((bookmark) => bookmark.meta?.absolutePageIndex === pagination.beginAbsolutePageIndex)
+    const bookmarkForPage = bookmarks?.find(
+      (bookmark) =>
+        bookmark.meta?.absolutePageIndex === pagination.beginAbsolutePageIndex,
+    )
 
     return (
       <button

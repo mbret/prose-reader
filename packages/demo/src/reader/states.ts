@@ -15,7 +15,9 @@ export const useIsPrepaginated = () => {
 
   return (
     manifest?.renditionLayout === "pre-paginated" ||
-    manifest?.spineItems.every((item) => item.renditionLayout === "pre-paginated")
+    manifest?.spineItems.every(
+      (item) => item.renditionLayout === "pre-paginated",
+    )
   )
 }
 
@@ -29,13 +31,15 @@ export const useIsComics = () => {
     // webtoon
     (manifest?.renditionFlow === `scrolled-continuous` &&
       manifest.renditionLayout === `reflowable` &&
-      manifest?.spineItems.every((item) => item.mediaType?.startsWith(`image/`)))
+      manifest?.spineItems.every((item) =>
+        item.mediaType?.startsWith(`image/`),
+      ))
   )
 }
 
 export const isQuickMenuOpenSignal = signal({
   key: `isQuickMenuOpenSignal`,
-  default: false
+  default: false,
 })
 
 export const useResetStateOnUnMount = () => {

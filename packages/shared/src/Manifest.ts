@@ -16,7 +16,13 @@ export type Manifest = {
   title: string
   renditionLayout: `reflowable` | `pre-paginated` | undefined
   renditionFlow?: `scrolled-continuous` | `scrolled-doc` | `paginated` | `auto`
-  renditionSpread: `none` | `landscape` | `portrait` | `both` | `auto` | undefined
+  renditionSpread:
+    | `none`
+    | `landscape`
+    | `portrait`
+    | `both`
+    | `auto`
+    | undefined
   readingDirection: "ltr" | "rtl"
   /**
    * legacy

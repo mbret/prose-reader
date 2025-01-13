@@ -13,14 +13,18 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.waitForSelector(".prose-spineItem-ready")
 
-      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, { maxDiffPixels: 10 })
+      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, {
+        maxDiffPixels: 10,
+      })
     })
 
     /**
      * - Make sure layout is correct
      * - Make sure layout are not infinite and looping.
      */
-    test("should have a stable layout after navigating right", async ({ page }) => {
+    test("should have a stable layout after navigating right", async ({
+      page,
+    }) => {
       await page.setViewportSize({
         width: 400,
         height: 300,
@@ -34,7 +38,10 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await waitForSpineItemReady(page, [1, 2])
 
-      expect(await page.screenshot()).toMatchSnapshot(`right-navigation-layout.png`, { maxDiffPixels: 10 })
+      expect(await page.screenshot()).toMatchSnapshot(
+        `right-navigation-layout.png`,
+        { maxDiffPixels: 10 },
+      )
 
       const numberOfLayout = await page.evaluate(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

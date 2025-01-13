@@ -1,5 +1,9 @@
 import { createReader } from "@prose-reader/core"
-import { createArchiveFromText, generateManifestFromArchive, Streamer } from "@prose-reader/streamer"
+import {
+  createArchiveFromText,
+  generateManifestFromArchive,
+  Streamer,
+} from "@prose-reader/streamer"
 import { from } from "rxjs"
 
 async function run() {
@@ -15,8 +19,9 @@ async function run() {
 
   const reader = createReaderWithEnhancers({
     pageTurnAnimation: "none",
-    getResource: (item) => from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
-    layoutLayerTransition: false
+    getResource: (item) =>
+      from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
+    layoutLayerTransition: false,
   })
 
   reader.load({

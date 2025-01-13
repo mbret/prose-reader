@@ -22,7 +22,9 @@ import { consolidate } from "./highlights/consolidate"
 import { isDefined } from "reactjrx"
 
 export const annotationsEnhancer =
-  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (
     options: InheritOptions,
   ): InheritOutput & {
@@ -40,11 +42,19 @@ export const annotationsEnhancer =
     const reader = next(options)
     const commands = new Commands()
     const highlightsSubject = new BehaviorSubject<Highlight[]>([])
-    const selectedHighlightSubject = new BehaviorSubject<string | undefined>(undefined)
+    const selectedHighlightSubject = new BehaviorSubject<string | undefined>(
+      undefined,
+    )
 
-    const highlights$ = highlightsSubject.asObservable().pipe(distinctUntilChanged())
+    const highlights$ = highlightsSubject
+      .asObservable()
+      .pipe(distinctUntilChanged())
 
-    const readerHighlights = new ReaderHighlights(reader, highlightsSubject, selectedHighlightSubject)
+    const readerHighlights = new ReaderHighlights(
+      reader,
+      highlightsSubject,
+      selectedHighlightSubject,
+    )
 
     const highlighted$ = commands.highlight$.pipe(
       map(({ data: { itemIndex, selection, ...rest } }) => {
@@ -52,11 +62,15 @@ export const annotationsEnhancer =
 
         if (!spineItem) return undefined
 
-        const range = reader.selection.createOrderedRangeFromSelection({ selection, spineItem })
+        const range = reader.selection.createOrderedRangeFromSelection({
+          selection,
+          spineItem,
+        })
 
         if (!range) return undefined
 
-        const { start: startCfi, end: endCfi } = reader.cfi.generateCfiFromRange(range, spineItem.item)
+        const { start: startCfi, end: endCfi } =
+          reader.cfi.generateCfiFromRange(range, spineItem.item)
 
         const highlight = new Highlight({
           cfi: startCfi,
@@ -86,13 +100,20 @@ export const annotationsEnhancer =
           return highlight
         })
 
-        highlightsSubject.next([...highlightsSubject.getValue(), ...addedHighlights])
+        highlightsSubject.next([
+          ...highlightsSubject.getValue(),
+          ...addedHighlights,
+        ])
       }),
     )
 
     const delete$ = commands.delete$.pipe(
       tap(({ id }) => {
-        highlightsSubject.next(highlightsSubject.getValue().filter((highlight) => highlight.id !== id))
+        highlightsSubject.next(
+          highlightsSubject
+            .getValue()
+            .filter((highlight) => highlight.id !== id),
+        )
       }),
     )
 
@@ -115,10 +136,18 @@ export const annotationsEnhancer =
     const highlightsConsolidation$ = merge(highlighted$, reader.layout$).pipe(
       debounceTime(50),
       withLatestFrom(highlights$),
-      mergeMap(() => forkJoin(highlightsSubject.value.map((highlight) => consolidate(highlight, reader)))),
+      mergeMap(() =>
+        forkJoin(
+          highlightsSubject.value.map((highlight) =>
+            consolidate(highlight, reader),
+          ),
+        ),
+      ),
       tap((consolidatedHighlights) => {
         const consolidatedExistingHighlights = highlightsSubject.value.map(
-          (highlight) => consolidatedHighlights.find((c) => c.id === highlight.id) ?? highlight,
+          (highlight) =>
+            consolidatedHighlights.find((c) => c.id === highlight.id) ??
+            highlight,
         )
 
         highlightsSubject.next(consolidatedExistingHighlights)

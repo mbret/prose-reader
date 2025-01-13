@@ -11,7 +11,7 @@ import {
   DrawerOverlay,
   Stack,
   Text,
-  Textarea
+  Textarea,
 } from "@chakra-ui/react"
 import { truncateText } from "../../common/utils"
 import { selectedHighlightSignal } from "./states"
@@ -21,13 +21,15 @@ const HIGHLIGHT_COLORS = [
   "rgba(255, 225, 125, 1)", // Soft yellow
   "rgba(144, 238, 144, 1)", // Light green
   "rgba(173, 216, 230, 1)", // Light blue
-  "rgba(255, 182, 193, 1)" // Light pink
+  "rgba(255, 182, 193, 1)", // Light pink
 ] as const
 
 export const HighlightMenu = memo(() => {
   const { reader } = useReader()
   const { highlight, selection } = useSignalValue(selectedHighlightSignal)
-  const [selectedColor, setSelectedColor] = useState<string>(HIGHLIGHT_COLORS[0])
+  const [selectedColor, setSelectedColor] = useState<string>(
+    HIGHLIGHT_COLORS[0],
+  )
   const [contents, setContents] = useState<string>("")
   const isOpen = !!(selection ?? highlight)
 
@@ -69,7 +71,9 @@ export const HighlightMenu = memo(() => {
       <DrawerOverlay />
       <DrawerContent>
         <DrawerHeader borderBottomWidth="1px">
-          {highlight ? "Highlight" : `Selection: "${truncateText(selection?.selection?.toString() ?? "", 10)}"`}
+          {highlight
+            ? "Highlight"
+            : `Selection: "${truncateText(selection?.selection?.toString() ?? "", 10)}"`}
         </DrawerHeader>
         <DrawerBody gap={4} display="flex" flexDirection="column" pb={4}>
           <Stack>
@@ -83,20 +87,27 @@ export const HighlightMenu = memo(() => {
                   borderRadius="50%"
                   cursor="pointer"
                   {...(selectedColor === color && {
-                    border: "4px solid white"
+                    border: "4px solid white",
                   })}
                   onClick={() => setSelectedColor(color)}
                 />
               ))}
             </Stack>
             <Text>Annotation:</Text>
-            <Textarea value={contents} onChange={(event) => setContents(event.target.value)} />
+            <Textarea
+              value={contents}
+              onChange={(event) => setContents(event.target.value)}
+            />
           </Stack>
           {!!selection && (
             <Button
               onClick={() => {
                 onClose()
-                reader?.annotations.highlight({ ...selection, color: selectedColor, contents: contents ? [contents] : undefined })
+                reader?.annotations.highlight({
+                  ...selection,
+                  color: selectedColor,
+                  contents: contents ? [contents] : undefined,
+                })
               }}
             >
               Highlight
@@ -108,7 +119,10 @@ export const HighlightMenu = memo(() => {
                 flex={1}
                 onClick={() => {
                   onClose()
-                  reader?.annotations.update(highlight.id, { color: selectedColor, contents: contents ? [contents] : undefined })
+                  reader?.annotations.update(highlight.id, {
+                    color: selectedColor,
+                    contents: contents ? [contents] : undefined,
+                  })
                 }}
               >
                 Update

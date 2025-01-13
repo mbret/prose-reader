@@ -19,12 +19,15 @@ const persist = (bookKey: string, bookmarks: SerializableBookmark[]) => {
     `bookmarks`,
     JSON.stringify({
       ...existing,
-      [bookKey]: bookmarks
-    })
+      [bookKey]: bookmarks,
+    }),
   )
 }
 
-export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string) => {
+export const useBookmarks = (
+  reader: ReaderInstance | undefined,
+  bookKey: string,
+) => {
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
@@ -44,9 +47,9 @@ export const useBookmarks = (reader: ReaderInstance | undefined, bookKey: string
             skip(1),
             tap((bookmarks) => {
               persist(bookKey, bookmarks)
-            })
+            }),
           )
         : NEVER,
-    [reader, isHydrated, bookKey]
+    [reader, isHydrated, bookKey],
   )
 }

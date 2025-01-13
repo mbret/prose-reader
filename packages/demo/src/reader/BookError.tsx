@@ -16,11 +16,14 @@ export const BookError = ({ url }: { url: string }) => {
         justifyContent: "center",
         flexDirection: `column`,
         textAlign: `center`,
-        color: "black"
+        color: "black",
       }}
     >
       <Text wordBreak="break-word">Unable to load your book {url}</Text>
-      <Text>Make sure to have CORS enabled if you are linking to an external resource</Text>
+      <Text>
+        Make sure to have CORS enabled if you are linking to an external
+        resource
+      </Text>
     </Box>
   )
 }

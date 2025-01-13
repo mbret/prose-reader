@@ -17,25 +17,39 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
       onNavigate()
       reader?.navigation.goToCfi(cfi)
     },
-    [reader, onNavigate]
+    [reader, onNavigate],
   )
 
   const search = useObserve(
     () =>
       reader?.search.search(text).pipe(
         map((data) => ({ type: `end` as const, data })),
-        startWith({ type: `start` as const })
+        startWith({ type: `start` as const }),
       ),
-    [reader, text]
+    [reader, text],
   )
   const searching = search?.type === "start"
   const results = search?.type === "end" ? search.data : []
-  const consolidatedResults = useObserve(() => reader?.pagination.locate(results.slice(0, 100)), [results])
+  const consolidatedResults = useObserve(
+    () => reader?.pagination.locate(results.slice(0, 100)),
+    [results],
+  )
 
   return (
     <Stack flex={1}>
-      <Input placeholder="Type something..." value={text} onChange={onValueChange} borderRadius={0} size="lg" />
-      <Box padding={2} pt={2} flex={1} style={{ overflow: "hidden", overflowY: "auto" }}>
+      <Input
+        placeholder="Type something..."
+        value={text}
+        onChange={onValueChange}
+        borderRadius={0}
+        size="lg"
+      />
+      <Box
+        padding={2}
+        pt={2}
+        flex={1}
+        style={{ overflow: "hidden", overflowY: "auto" }}
+      >
         {searching && <Text>Searching ...</Text>}
         {!searching && results.length === 0 && <p>There are no results</p>}
         {!searching && results.length >= 0 && (
@@ -48,7 +62,10 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
                 return (
                   <Item
                     key={j}
-                    contextText={result.meta?.range?.startContainer.parentElement?.textContent ?? ""}
+                    contextText={
+                      result.meta?.range?.startContainer.parentElement
+                        ?.textContent ?? ""
+                    }
                     pageIndex={result.meta?.itemPageIndex}
                     startOffset={result.meta?.range?.startOffset ?? 0}
                     text={text}
@@ -72,7 +89,7 @@ const Item = ({
   text,
   cfi = "#",
   onClick,
-  absolutePageIndex
+  absolutePageIndex,
 }: {
   pageIndex: number | undefined
   absolutePageIndex?: number
@@ -83,10 +100,16 @@ const Item = ({
   onClick: (cfi: string) => void
 }) => {
   const charsAroundText = 15
-  const before = contextText.substring(Math.max(startOffset - charsAroundText, 0), Math.max(startOffset, 0))
+  const before = contextText.substring(
+    Math.max(startOffset - charsAroundText, 0),
+    Math.max(startOffset, 0),
+  )
   const after = contextText.substring(
     Math.min(startOffset + text.length, contextText.length - 1),
-    Math.min(startOffset + text.length + charsAroundText, contextText.length - 1)
+    Math.min(
+      startOffset + text.length + charsAroundText,
+      contextText.length - 1,
+    ),
   )
 
   return (

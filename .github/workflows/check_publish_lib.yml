@@ -25,8 +25,9 @@ jobs:
           npm ci
 
       # We only build library on this pipe
-      - name: Lint
+      - name: Check
         run: |
+          npm run format
           npx lerna run lint --stream --scope @prose-reader/*
 
       # We only build library on this pipe

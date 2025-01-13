@@ -12,13 +12,13 @@ import { LocalSettings } from "../settings/useLocalSettings"
 import { AnnotationsMenu } from "./AnnotationsMenu"
 
 export const isMenuOpenSignal = signal({
-  default: false
+  default: false,
 })
 
 export const Menu = memo(
   ({
     localSettings,
-    setLocalSettings
+    setLocalSettings,
   }: {
     setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
     localSettings: LocalSettings
@@ -43,7 +43,14 @@ export const Menu = memo(
         }}
         title="Menu"
       >
-        <Tabs index={tabIndex} onChange={handleTabsChange} overflow="hidden" flex={1} display="flex" flexDirection="column">
+        <Tabs
+          index={tabIndex}
+          onChange={handleTabsChange}
+          overflow="hidden"
+          flex={1}
+          display="flex"
+          flexDirection="column"
+        >
           <TabList overflow="hidden" overflowX="auto" flexShrink={0}>
             <Tab>Settings</Tab>
             <Tab>Help</Tab>
@@ -54,7 +61,11 @@ export const Menu = memo(
 
           <TabPanels overflow="hidden" display="flex">
             <TabPanel p={0} display="flex">
-              <SettingsMenu setLocalSettings={setLocalSettings} localSettings={localSettings} open />
+              <SettingsMenu
+                setLocalSettings={setLocalSettings}
+                localSettings={localSettings}
+                open
+              />
             </TabPanel>
             <TabPanel p={4}>
               <HelpMenu />
@@ -72,5 +83,5 @@ export const Menu = memo(
         </Tabs>
       </FullScreenModal>
     )
-  }
+  },
 )

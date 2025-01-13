@@ -4,9 +4,13 @@ import { useObserve } from "reactjrx"
 import { LocalSettings } from "./useLocalSettings"
 import { Manifest } from "@prose-reader/core"
 
-export const useUpdateReaderSettings = ({ localSettings, manifest }: { localSettings: LocalSettings; manifest?: Manifest }) => {
+export const useUpdateReaderSettings = ({
+  localSettings,
+  manifest,
+}: { localSettings: LocalSettings; manifest?: Manifest }) => {
   const { reader } = useReader()
-  const { computedPageTurnMode } = useObserve(() => reader?.settings.values$, [reader]) ?? {}
+  const { computedPageTurnMode } =
+    useObserve(() => reader?.settings.values$, [reader]) ?? {}
   const renditionLayout = manifest?.renditionLayout
 
   useEffect(() => {
@@ -18,18 +22,18 @@ export const useUpdateReaderSettings = ({ localSettings, manifest }: { localSett
             : localSettings.enablePan
               ? "pan"
               : false
-          : false
+          : false,
     })
   }, [computedPageTurnMode, reader, localSettings])
 
   useEffect(() => {
     if (renditionLayout === "pre-paginated") {
       reader?.gestures.settings.update({
-        panNavigation: "pan"
+        panNavigation: "pan",
       })
     } else {
       reader?.gestures.settings.update({
-        panNavigation: "swipe"
+        panNavigation: "swipe",
       })
     }
   }, [renditionLayout, reader])

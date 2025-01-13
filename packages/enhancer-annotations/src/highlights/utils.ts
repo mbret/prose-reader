@@ -1,4 +1,8 @@
-export const createElementForRange = (range: Range, container: HTMLElement, color: string) => {
+export const createElementForRange = (
+  range: Range,
+  container: HTMLElement,
+  color: string,
+) => {
   // Get all rects and group them by line (based on vertical position)
   const rects = Array.from(range.getClientRects())
   const lineGroups = new Map<number, DOMRect[]>()
@@ -47,7 +51,10 @@ export const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {
   target.style.cssText = source.style.cssText
 }
 
-export const createAnnotationLayer = (container: HTMLElement, layer: HTMLElement) => {
+export const createAnnotationLayer = (
+  container: HTMLElement,
+  layer: HTMLElement,
+) => {
   const annotationLayer = container.ownerDocument.createElement("div")
 
   layoutAnnotationLayer(layer, annotationLayer)
@@ -57,7 +64,10 @@ export const createAnnotationLayer = (container: HTMLElement, layer: HTMLElement
   return annotationLayer
 }
 
-export const layoutAnnotationLayer = (layer: HTMLElement, annotationLayer: HTMLElement) => {
+export const layoutAnnotationLayer = (
+  layer: HTMLElement,
+  annotationLayer: HTMLElement,
+) => {
   copyPositionStyle(layer, annotationLayer)
 
   if (layer.style.position === "") {

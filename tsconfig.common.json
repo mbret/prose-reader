@@ -3,10 +3,7 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "strict": true,
     "allowJs": false,
     "moduleResolution": "node",
@@ -16,12 +13,11 @@
     "removeComments": true,
     "noEmit": true,
     "pretty": false,
-    "stripInternal": true,   
+    "stripInternal": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
     "skipLibCheck": true
   },
-  // important to avoid infinite build from resolved path
   "exclude": ["**/dist"]
 }

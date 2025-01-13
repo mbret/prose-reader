@@ -127,13 +127,10 @@ export const renderReflowable = ({
         buildStyleForViewportFrame(),
       )
 
-      staticLayout(
-        frameElement,
-        {
-          width: viewportDimensions.width ?? 1,
-          height: viewportDimensions.height ?? 1,
-        },
-      )
+      staticLayout(frameElement, {
+        width: viewportDimensions.width ?? 1,
+        height: viewportDimensions.height ?? 1,
+      })
 
       frameElement?.style.setProperty(`position`, `absolute`)
       frameElement?.style.setProperty(`top`, `50%`)
@@ -179,13 +176,10 @@ export const renderReflowable = ({
         )
         contentHeight = pages * pageHeight
 
-        staticLayout(
-          frameElement,
-          {
-            width: minimumWidth,
-            height: contentHeight,
-          },
-        )
+        staticLayout(frameElement, {
+          width: minimumWidth,
+          height: contentHeight,
+        })
       } else if (manifest?.renditionFlow === `scrolled-continuous`) {
         /**
          * We take body content here because the frame body might be smaller after
@@ -196,13 +190,10 @@ export const renderReflowable = ({
         contentHeight = frameElement.contentDocument.body.scrollHeight
         newLatestContentHeightWhenLoaded = contentHeight
 
-        staticLayout(
-          frameElement,
-          {
-            width: minimumWidth,
-            height: contentHeight,
-          },
-        )
+        staticLayout(frameElement, {
+          width: minimumWidth,
+          height: contentHeight,
+        })
       } else {
         const pages = Math.ceil(
           frameElement.contentDocument.documentElement.scrollWidth / pageWidth,
@@ -221,13 +212,10 @@ export const renderReflowable = ({
           contentWidth = pages * pageWidth
         }
 
-        staticLayout(
-          frameElement,
-          {
-            width: contentWidth,
-            height: contentHeight,
-          },
-        )
+        staticLayout(frameElement, {
+          width: contentWidth,
+          height: contentHeight,
+        })
       }
     }
 

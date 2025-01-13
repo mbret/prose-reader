@@ -5,7 +5,10 @@ import { createArchiveFromPdf } from "@prose-reader/enhancer-pdf"
 
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, import.meta.url).toString()
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  pdfWorkerUrl,
+  import.meta.url,
+).toString()
 
 export const webStreamer = new Streamer({
   /**
@@ -25,5 +28,5 @@ export const webStreamer = new Streamer({
     }
 
     return createArchiveFromPdf(blob)
-  }
+  },
 })

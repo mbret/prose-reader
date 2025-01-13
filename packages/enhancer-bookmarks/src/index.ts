@@ -20,7 +20,9 @@ import { Commands } from "./Commands"
 export { type SerializableBookmark, type RuntimeBookmark }
 
 export const bookmarksEnhancer =
-  <InheritOptions, InheritOutput extends Reader>(next: (options: InheritOptions) => InheritOutput) =>
+  <InheritOptions, InheritOutput extends Reader>(
+    next: (options: InheritOptions) => InheritOutput,
+  ) =>
   (
     options: InheritOptions,
   ): InheritOutput & {
@@ -33,7 +35,9 @@ export const bookmarksEnhancer =
        * Make it conveniant for users to observes pages with bookmarkable status.
        */
       pages$: Observable<
-        (ObservedValueOf<Reader["spine"]["spineLayout"]["info$"]>["pages"][number] & {
+        (ObservedValueOf<
+          Reader["spine"]["spineLayout"]["info$"]
+        >["pages"][number] & {
           isBookmarkable: boolean | undefined
         })[]
       >
@@ -53,7 +57,9 @@ export const bookmarksEnhancer =
 
     const delete$ = commands.delete$.pipe(
       tap(({ id }) => {
-        bookmarksSubject.next(bookmarksSubject.value.filter((item) => item.id !== id))
+        bookmarksSubject.next(
+          bookmarksSubject.value.filter((item) => item.id !== id),
+        )
       }),
     )
 
@@ -63,7 +69,10 @@ export const bookmarksEnhancer =
           // if we can't find a page index we just fallback to 0
           pageIndex = 0,
           spineItem,
-        } = reader.spine.locator.getSpineInfoFromAbsolutePageIndex({ absolutePageIndex }) ?? {}
+        } =
+          reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
+            absolutePageIndex,
+          }) ?? {}
 
         if (!spineItem) return
 
@@ -73,7 +82,10 @@ export const bookmarksEnhancer =
         })
 
         if (!bookmarksSubject.value.find((bookmark) => bookmark.cfi === cfi)) {
-          bookmarksSubject.next([...bookmarksSubject.value, { cfi, id: window.crypto.randomUUID() }])
+          bookmarksSubject.next([
+            ...bookmarksSubject.value,
+            { cfi, id: window.crypto.randomUUID() },
+          ])
         }
       }),
     )

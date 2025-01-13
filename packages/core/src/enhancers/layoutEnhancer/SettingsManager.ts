@@ -43,7 +43,7 @@ export class SettingsManager<
       layoutAutoResize: "container",
       pageHorizontalMargin: 24,
       pageVerticalMargin: 24,
-      layoutLayerTransition: true
+      layoutLayerTransition: true,
     }
   }
 }

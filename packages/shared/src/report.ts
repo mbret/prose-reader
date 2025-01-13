@@ -15,24 +15,52 @@ const createReport = (namespace?: string, enabled?: boolean) => {
       !enabled || window?.__PROSE_READER_DEBUG !== true
         ? () => {}
         : namespace
-          ? Function.prototype.bind.call(console.debug, console, wrap(`${ROOT_NAMESPACE}`), wrap(namespace))
-          : Function.prototype.bind.call(console.debug, console, wrap(`${ROOT_NAMESPACE}`)),
+          ? Function.prototype.bind.call(
+              console.debug,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+              wrap(namespace),
+            )
+          : Function.prototype.bind.call(
+              console.debug,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+            ),
     info:
       !enabled || window?.__PROSE_READER_DEBUG !== true
         ? () => {}
         : namespace
-          ? Function.prototype.bind.call(console.info, console, wrap(`${ROOT_NAMESPACE}`), wrap(namespace))
-          : Function.prototype.bind.call(console.info, console, wrap(`${ROOT_NAMESPACE}`)),
+          ? Function.prototype.bind.call(
+              console.info,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+              wrap(namespace),
+            )
+          : Function.prototype.bind.call(
+              console.info,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+            ),
     error:
       !enabled || window?.__PROSE_READER_DEBUG !== true
         ? () => {}
         : namespace
-          ? Function.prototype.bind.call(console.error, console, wrap(`${ROOT_NAMESPACE}`), wrap(namespace))
-          : Function.prototype.bind.call(console.error, console, wrap(`${ROOT_NAMESPACE}`)),
+          ? Function.prototype.bind.call(
+              console.error,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+              wrap(namespace),
+            )
+          : Function.prototype.bind.call(
+              console.error,
+              console,
+              wrap(`${ROOT_NAMESPACE}`),
+            ),
   }
 }
 
 export const Report = {
   ...createReport(),
-  namespace: (namespace: string, enabled?: boolean) => createReport(namespace, enabled),
+  namespace: (namespace: string, enabled?: boolean) =>
+    createReport(namespace, enabled),
 }

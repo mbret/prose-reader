@@ -44,7 +44,12 @@ const searchNodeContainingText = (node: Node, text: string) => {
   return rangeList
 }
 
-export const searchInDocument = (reader: Reader, item: SpineItem, doc: Document, text: string): Observable<SearchResult> => {
+export const searchInDocument = (
+  reader: Reader,
+  item: SpineItem,
+  doc: Document,
+  text: string,
+): Observable<SearchResult> => {
   const ranges = searchNodeContainingText(doc, text)
 
   const newResults = ranges.map((range) => {

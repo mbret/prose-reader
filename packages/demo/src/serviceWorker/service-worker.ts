@@ -6,7 +6,7 @@ import { swStreamer } from "../streamer/streamer.sw"
 declare const self: ServiceWorkerGlobalScope
 
 configure({
-  enableReport: !import.meta.env.PROD
+  enableReport: !import.meta.env.PROD,
 })
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -25,7 +25,7 @@ self.addEventListener("install", function (e: ExtendableEvent & any) {
       return
     }
     client?.postMessage({
-      msg: "Hey I just got a fetch from you!"
+      msg: "Hey I just got a fetch from you!",
     })
   })
 })

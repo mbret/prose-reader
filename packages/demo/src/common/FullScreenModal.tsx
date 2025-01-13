@@ -1,14 +1,20 @@
 import { CloseIcon } from "@chakra-ui/icons"
-import { IconButton, Box, Modal, ModalContent, ModalOverlay } from "@chakra-ui/react"
+import {
+  IconButton,
+  Box,
+  Modal,
+  ModalContent,
+  ModalOverlay,
+} from "@chakra-ui/react"
 import React, { FC, ReactNode } from "react"
 import { AppBar } from "./AppBar"
 
-export const FullScreenModal: FC<{ onClose: () => void; isOpen: boolean; title: string; children: ReactNode }> = ({
-  onClose,
-  isOpen,
-  children,
-  title
-}) => {
+export const FullScreenModal: FC<{
+  onClose: () => void
+  isOpen: boolean
+  title: string
+  children: ReactNode
+}> = ({ onClose, isOpen, children, title }) => {
   return (
     <Modal isOpen={isOpen} size="full" autoFocus={false} onClose={onClose}>
       <ModalOverlay />
@@ -18,10 +24,19 @@ export const FullScreenModal: FC<{ onClose: () => void; isOpen: boolean; title: 
             height: "100%",
             overflow: "hidden",
             display: "flex",
-            flexDirection: "column"
+            flexDirection: "column",
           }}
         >
-          <AppBar leftElement={<IconButton icon={<CloseIcon />} aria-label="back" onClick={onClose} />} middleElement={title} />
+          <AppBar
+            leftElement={
+              <IconButton
+                icon={<CloseIcon />}
+                aria-label="back"
+                onClick={onClose}
+              />
+            }
+            middleElement={title}
+          />
           {children}
         </Box>
       </ModalContent>

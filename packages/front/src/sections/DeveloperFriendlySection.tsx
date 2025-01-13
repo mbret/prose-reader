@@ -17,8 +17,10 @@ export const DeveloperFriendlySection = () => {
         </Icon>
       </Box>
       <Text mt={2}>
-        Prose is written with modern features and typescript. You can easily extend the app with your own plugins and
-        customizations. The SDK focus on the difficult part while giving you the freedom to design your reader the way you want.
+        Prose is written with modern features and typescript. You can easily
+        extend the app with your own plugins and customizations. The SDK focus
+        on the difficult part while giving you the freedom to design your reader
+        the way you want.
       </Text>
       <Button asChild alignSelf="flex-start" mt={2}>
         <Link href="https://doc.prose-reader.com/" target="_blank" unstyled>

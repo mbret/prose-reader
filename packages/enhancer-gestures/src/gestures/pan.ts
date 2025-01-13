@@ -38,7 +38,10 @@ export const registerPan = ({
           }
 
           if (event.type === `panEnd`) {
-            reader?.navigation.moveTo({ x: event.deltaX, y: event.deltaY }, { final: true })
+            reader?.navigation.moveTo(
+              { x: event.deltaX, y: event.deltaY },
+              { final: true },
+            )
           }
         }),
         map((event) => ({ event, handled: true })),

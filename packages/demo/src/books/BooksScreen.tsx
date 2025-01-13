@@ -1,5 +1,19 @@
 import { Link as RouterLink } from "react-router-dom"
-import { Table, Tr, Th, Thead, Tbody, Link, Td, Box, Text, IconButton, Stack, Container, Heading } from "@chakra-ui/react"
+import {
+  Table,
+  Tr,
+  Th,
+  Thead,
+  Tbody,
+  Link,
+  Td,
+  Box,
+  Text,
+  IconButton,
+  Stack,
+  Container,
+  Heading,
+} from "@chakra-ui/react"
 import { DeleteIcon } from "@chakra-ui/icons"
 import localforage from "localforage"
 import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
@@ -22,8 +36,9 @@ export const BooksScreen = () => {
         </Heading>
 
         <Text mb={2}>
-          Find here a selection of <b>copyright free</b> books which covers a variety of different type of content. Additionally
-          you can upload your own book locally to test it.
+          Find here a selection of <b>copyright free</b> books which covers a
+          variety of different type of content. Additionally you can upload your
+          own book locally to test it.
         </Text>
 
         <Heading as="h2" size="md">
@@ -36,7 +51,11 @@ export const BooksScreen = () => {
 
         <Stack gap={4}>
           <Box borderWidth={[0, `1px`]} borderRadius="lg" margin="auto">
-            <Table variant="simple" size={["sm", "md"]} style={{ tableLayout: `fixed` }}>
+            <Table
+              variant="simple"
+              size={["sm", "md"]}
+              style={{ tableLayout: `fixed` }}
+            >
               <Thead>
                 <Tr>
                   <Th>My uploaded books</Th>

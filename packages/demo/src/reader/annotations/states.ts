@@ -9,5 +9,5 @@ export const selectedHighlightSignal = signal<{
   }
 }>({
   key: `selectedHighlightSignal`,
-  default: {}
+  default: {},
 })

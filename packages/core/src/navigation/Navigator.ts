@@ -1,13 +1,7 @@
 import { Context } from "../context/Context"
 import { SpineItemsManager } from "../spine/SpineItemsManager"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
-import {
-  BehaviorSubject,
-  combineLatest,
-  fromEvent,
-  merge,
-  timer,
-} from "rxjs"
+import { BehaviorSubject, combineLatest, fromEvent, merge, timer } from "rxjs"
 import {
   distinctUntilChanged,
   filter,

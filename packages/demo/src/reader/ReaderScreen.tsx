@@ -28,7 +28,7 @@ export const ReaderScreen = memo(() => {
   const { data: manifest, error: manifestError } = useManifest(url)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useLocalSettings({
-    enablePan: true
+    enablePan: true,
   })
   const bookState = useObserve(() => reader?.state$, [reader])
 
@@ -52,7 +52,7 @@ export const ReaderScreen = memo(() => {
       reader?.load({
         containerElement,
         manifest,
-        cfi: localStorage.getItem(`cfi`) || undefined
+        cfi: localStorage.getItem(`cfi`) || undefined,
       })
     }
   }, [manifest, reader])

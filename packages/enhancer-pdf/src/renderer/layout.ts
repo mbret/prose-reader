@@ -23,12 +23,20 @@ export const layoutLayers = (
   })
 }
 
-export const layoutCanvas = (pageProxy: PDFPageProxy, canvas: HTMLCanvasElement, context: Reader["context"]) => {
+export const layoutCanvas = (
+  pageProxy: PDFPageProxy,
+  canvas: HTMLCanvasElement,
+  context: Reader["context"],
+) => {
   // Support HiDPI-screens.
   const pixelRatioScale = window.devicePixelRatio || 1
   const { height: pageHeight, width: pageWidth } = context.getPageSize()
-  const { width: viewportWidth, height: viewportHeight } = pageProxy.getViewport({ scale: 1 })
-  const pageScale = Math.max(pageWidth / viewportWidth, pageHeight / viewportHeight)
+  const { width: viewportWidth, height: viewportHeight } =
+    pageProxy.getViewport({ scale: 1 })
+  const pageScale = Math.max(
+    pageWidth / viewportWidth,
+    pageHeight / viewportHeight,
+  )
 
   // then we generate the viewport for the canvas based on the page scale
   const viewport = pageProxy.getViewport({ scale: pageScale })
@@ -38,7 +46,8 @@ export const layoutCanvas = (pageProxy: PDFPageProxy, canvas: HTMLCanvasElement,
   const pageRatio = pageWidth / pageHeight
   const isWiderThanPage = viewportRatio > pageRatio
   const canvasWidth = isWiderThanPage ? pageWidth : pageHeight * viewportRatio
-  const canvasHeight = viewportRatio > pageRatio ? pageWidth / viewportRatio : pageHeight
+  const canvasHeight =
+    viewportRatio > pageRatio ? pageWidth / viewportRatio : pageHeight
 
   canvas.width = Math.floor(viewport.width * pixelRatioScale)
   canvas.height = Math.floor(viewport.height * pixelRatioScale)

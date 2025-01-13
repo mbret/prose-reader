@@ -15,27 +15,48 @@ export class ReaderHighlights extends DestroyableClass {
   ) {
     super()
 
-    this.reader.hookManager.register("item.onDocumentLoad", ({ itemId, destroy }) => {
-      const spineItem = reader.spineItemsManager.get(itemId)
+    this.reader.hookManager.register(
+      "item.onDocumentLoad",
+      ({ itemId, destroy }) => {
+        const spineItem = reader.spineItemsManager.get(itemId)
 
-      if (!spineItem) return
+        if (!spineItem) return
 
-      const spineItemHighlights$ = this.highlights.pipe(
-        map((highlights) => highlights.filter((highlight) => highlight.itemIndex === spineItem.item.index)),
-      )
+        const spineItemHighlights$ = this.highlights.pipe(
+          map((highlights) =>
+            highlights.filter(
+              (highlight) => highlight.itemIndex === spineItem.item.index,
+            ),
+          ),
+        )
 
-      const spineItemHighlights = new SpineItemHighlights(spineItemHighlights$, spineItem, reader, this.selectedHighlight)
+        const spineItemHighlights = new SpineItemHighlights(
+          spineItemHighlights$,
+          spineItem,
+          reader,
+          this.selectedHighlight,
+        )
 
-      this.spineItemHighlights.next([...this.spineItemHighlights.getValue(), spineItemHighlights])
+        this.spineItemHighlights.next([
+          ...this.spineItemHighlights.getValue(),
+          spineItemHighlights,
+        ])
 
-      destroy(() => {
-        this.spineItemHighlights.next(this.spineItemHighlights.getValue().filter((layer) => layer !== spineItemHighlights))
+        destroy(() => {
+          this.spineItemHighlights.next(
+            this.spineItemHighlights
+              .getValue()
+              .filter((layer) => layer !== spineItemHighlights),
+          )
 
-        spineItemHighlights.destroy()
-      })
-    })
+          spineItemHighlights.destroy()
+        })
+      },
+    )
 
-    this.tap$ = this.spineItemHighlights.pipe(switchMap((layers) => merge(...layers.map((layer) => layer.tap$))))
+    this.tap$ = this.spineItemHighlights.pipe(
+      switchMap((layers) => merge(...layers.map((layer) => layer.tap$))),
+    )
   }
 
   getHighlightsForTarget = (target: EventTarget) => {
