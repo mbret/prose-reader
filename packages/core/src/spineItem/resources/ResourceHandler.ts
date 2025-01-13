@@ -1,5 +1,5 @@
-import { Manifest } from "@prose-reader/shared"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Manifest } from "@prose-reader/shared"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { lastValueFrom, of } from "rxjs"
 
 const defaultGetResource = (item: Manifest["items"][0]) => new URL(item.href)

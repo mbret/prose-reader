@@ -8,7 +8,6 @@ export const readerSignal = signal<ReaderInstance | undefined>({
 export const useReader = () => {
   const reader = useSignalValue(readerSignal)
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
 

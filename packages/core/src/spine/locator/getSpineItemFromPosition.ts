@@ -1,7 +1,7 @@
-import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItemsManager } from "../SpineItemsManager"
-import { SpineLayout } from "../SpineLayout"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../SpineItemsManager"
+import type { SpineLayout } from "../SpineLayout"
 
 /**
  * This will retrieve the closest item to the x / y position edge relative to the reading direction.
@@ -24,9 +24,8 @@ export const getSpineItemFromPosition = ({
 
     if (settings.values.computedPageTurnDirection === `horizontal`) {
       return isWithinXAxis
-    } else {
-      return isWithinXAxis && position.y >= top && position.y < bottom
     }
+      return isWithinXAxis && position.y >= top && position.y < bottom
   })
 
   if (position.x === 0 && !spineItem) {

@@ -1,5 +1,5 @@
-import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import { SafeSpineItemPosition } from "../../spineItem/types"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { SafeSpineItemPosition } from "../../spineItem/types"
 
 /**
  * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when

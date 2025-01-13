@@ -1,4 +1,4 @@
-import { EMPTY, Observable, of } from "rxjs"
+import { EMPTY, type Observable, of } from "rxjs"
 import { DocumentRenderer } from "./DocumentRenderer"
 
 export class DefaultRenderer extends DocumentRenderer {

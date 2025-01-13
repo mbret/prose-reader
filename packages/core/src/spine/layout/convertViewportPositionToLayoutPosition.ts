@@ -1,5 +1,5 @@
-import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import { LayoutPosition } from "../SpineLayout"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { LayoutPosition } from "../SpineLayout"
 
 export const convertSpinePositionToLayoutPosition = ({
   position,

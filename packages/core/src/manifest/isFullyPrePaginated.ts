@@ -1,4 +1,4 @@
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 
 export const isFullyPrePaginated = (manifest?: Manifest) =>
   manifest?.renditionLayout === "pre-paginated" ||

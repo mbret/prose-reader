@@ -1,12 +1,12 @@
-import { Context } from "../context/Context"
+import type { Context } from "../context/Context"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
-import { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
 import { getSpineItemNumberOfPages } from "./locator/getSpineItemNumberOfPages"
 import { getSpineItemPositionFromPageIndex } from "./locator/getSpineItemPositionFromPageIndex"
 import { getSpineItemPagesPosition } from "./locator/getSpineItemPagesPosition"
-import { SpineItem } from "./SpineItem"
+import type { SpineItem } from "./SpineItem"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
@@ -69,11 +69,10 @@ export const createSpineItemLocator = ({
 
     if (isUsingVerticalWriting) {
       return getPageFromOffset(position.y, pageHeight, numberOfPages)
-    } else {
+    }
       const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
 
       return pageIndex
-    }
   }
 
   const getSpineItemPositionFromNode = (

@@ -9,13 +9,13 @@ import {
   BehaviorSubject,
   shareReplay,
 } from "rxjs"
-import { SpineItemsManager } from "../SpineItemsManager"
-import { SpineLocator } from "../locator/SpineLocator"
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../SpineItemsManager"
+import type { SpineLocator } from "../locator/SpineLocator"
+import type { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { waitForSwitch } from "../../utils/rxjs"
-import { SpineLayout } from "../SpineLayout"
+import type { SpineLayout } from "../SpineLayout"
 import { arrayEqual } from "@prose-reader/shared"
 
 export class SpineItemsLoader extends DestroyableClass {

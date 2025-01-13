@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { combineLatest, merge } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import {
+import type {
   CoreInputSettings,
   ComputedCoreSettings,
   CoreOutputSettings,
 } from "./types"
-import { Context } from "../context/Context"
+import type { Context } from "../context/Context"
 import { Report } from "../report"
 import { SettingsManager } from "./SettingsManager"
-import { SettingsInterface } from "./SettingsInterface"
+import type { SettingsInterface } from "./SettingsInterface"
 
 export class ReaderSettingsManager
   extends SettingsManager<CoreInputSettings, CoreOutputSettings>

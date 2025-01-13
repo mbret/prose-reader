@@ -1,5 +1,5 @@
-import { Context } from "../../context/Context"
-import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { Context } from "../../context/Context"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 
 const isItemVisibleByThresholdForPosition = ({
   itemHeight,

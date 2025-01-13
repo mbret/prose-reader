@@ -1,4 +1,4 @@
-import { Context } from "../../context/Context"
+import type { Context } from "../../context/Context"
 import { getSpineItemPositionFromPageIndex } from "../../spineItem/locator/getSpineItemPositionFromPageIndex"
 import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
 

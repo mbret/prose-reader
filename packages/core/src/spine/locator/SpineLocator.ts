@@ -1,19 +1,19 @@
-import { Context } from "../../context/Context"
-import { SpineItem } from "../../spineItem/SpineItem"
-import { createSpineItemLocator as createSpineItemLocator } from "../../spineItem/locationResolver"
-import { SpineItemsManager } from "../SpineItemsManager"
+import type { Context } from "../../context/Context"
+import type { SpineItem } from "../../spineItem/SpineItem"
+import type { createSpineItemLocator } from "../../spineItem/locationResolver"
+import type { SpineItemsManager } from "../SpineItemsManager"
 import { Report } from "../../report"
-import {
+import type {
   SafeSpineItemPosition,
   UnsafeSpineItemPosition,
 } from "../../spineItem/types"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
-import { SpineLayout } from "../SpineLayout"
+import type { SpineLayout } from "../SpineLayout"
 import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
 import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
 

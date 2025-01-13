@@ -1,7 +1,7 @@
-import { Manifest } from "@prose-reader/shared"
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Manifest } from "@prose-reader/shared"
+import type { Context } from "../../context/Context"
+import type { HookManager } from "../../hooks/HookManager"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import {
   BehaviorSubject,
   catchError,
@@ -22,7 +22,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ResourceHandler } from "../resources/ResourceHandler"
+import type { ResourceHandler } from "../resources/ResourceHandler"
 import { waitForSwitch } from "../../utils/rxjs"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { Report } from "../../report"

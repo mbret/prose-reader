@@ -9,11 +9,9 @@ configure({
   enableReport: !import.meta.env.PROD,
 })
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error self.__WB_MANIFEST not typed
 console.log(self.__WB_MANIFEST)
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 self.addEventListener("install", (e: ExtendableEvent & any) => {
   console.log("service worker install")
   e.waitUntil(self.skipWaiting()) // Activate worker immediately

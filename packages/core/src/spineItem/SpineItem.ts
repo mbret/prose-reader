@@ -1,6 +1,6 @@
-import { Context } from "../context/Context"
-import { DestroyableClass, Manifest } from ".."
-import { merge, Observable, ObservedValueOf, of, Subject } from "rxjs"
+import type { Context } from "../context/Context"
+import { DestroyableClass, type Manifest } from ".."
+import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
@@ -13,9 +13,9 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs/operators"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { HookManager } from "../hooks/HookManager"
-import { DocumentRenderer } from "./renderer/DocumentRenderer"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { HookManager } from "../hooks/HookManager"
+import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import { deferNextResult } from "../utils/rxjs"

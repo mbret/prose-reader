@@ -7,17 +7,17 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { Context } from "../context/Context"
-import { Pagination } from "./Pagination"
-import { SpineItemsManager } from "../spine/SpineItemsManager"
+import type { Context } from "../context/Context"
+import type { Pagination } from "./Pagination"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { createSpineItemLocator } from "../spineItem/locationResolver"
+import type { createSpineItemLocator } from "../spineItem/locationResolver"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
-import { Spine } from "../spine/Spine"
-import { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
+import type { Spine } from "../spine/Spine"
+import type { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
 import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
-import { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { waitForSwitch } from "../utils/rxjs"
 
 export class PaginationController extends DestroyableClass {

@@ -1,9 +1,9 @@
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItem } from "../../spineItem/SpineItem"
+import type { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { getSpineItemNumberOfPages } from "../../spineItem/locator/getSpineItemNumberOfPages"
-import { SpineItemsManager } from "../SpineItemsManager"
-import { SpineLayout } from "../SpineLayout"
+import type { SpineItemsManager } from "../SpineItemsManager"
+import type { SpineLayout } from "../SpineLayout"
 
 export const getSpineInfoFromAbsolutePageIndex = ({
   absolutePageIndex,

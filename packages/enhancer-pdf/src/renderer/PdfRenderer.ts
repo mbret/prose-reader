@@ -173,7 +173,6 @@ export class PdfRenderer extends DocumentRenderer {
     )
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onLayout({
     spreadPosition,
   }: {

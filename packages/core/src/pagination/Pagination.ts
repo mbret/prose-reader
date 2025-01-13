@@ -1,6 +1,6 @@
 import { BehaviorSubject, distinctUntilChanged, share, tap } from "rxjs"
-import { Context } from "../context/Context"
-import { SpineItemsManager } from "../spine/SpineItemsManager"
+import type { Context } from "../context/Context"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import { Report } from "../report"
 import { isShallowEqual } from "../utils/objects"
 import { DestroyableClass } from "../utils/DestroyableClass"

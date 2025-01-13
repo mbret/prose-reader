@@ -1,9 +1,9 @@
-import { Manifest } from "@prose-reader/shared"
-import {
+import type { Manifest } from "@prose-reader/shared"
+import type {
   DocumentRenderer,
   DocumentRendererParams,
 } from "../spineItem/renderer/DocumentRenderer"
-import { Observable } from "rxjs"
+import type { Observable } from "rxjs"
 
 export type CoreInputSettings = {
   forceSinglePageMode: boolean

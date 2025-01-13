@@ -1,9 +1,9 @@
-import { map, Observable } from "rxjs"
-import { SpineItem } from "../.."
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItemsManager } from "../SpineItemsManager"
-import { type LayoutPosition } from "../SpineLayout"
+import { map, type Observable } from "rxjs"
+import type { SpineItem } from "../.."
+import type { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../SpineItemsManager"
+import type { LayoutPosition } from "../SpineLayout"
 
 export const layoutItem = ({
   horizontalOffset,

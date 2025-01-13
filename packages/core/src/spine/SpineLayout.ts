@@ -9,7 +9,7 @@ import {
   from,
   map,
   merge,
-  Observable,
+  type Observable,
   of,
   reduce,
   share,
@@ -19,17 +19,17 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { Context } from "../context/Context"
+import type { Context } from "../context/Context"
 import { Report } from "../report"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { SpineItemsManager } from "./SpineItemsManager"
+import type { SpineItemsManager } from "./SpineItemsManager"
 import { isShallowEqual } from "../utils/objects"
 import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
 import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
-import { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { layoutItem } from "./layout/layoutItem"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 

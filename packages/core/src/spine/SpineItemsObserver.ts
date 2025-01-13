@@ -1,9 +1,9 @@
-import { map, merge, Observable, share, switchMap } from "rxjs"
-import { SpineItemsManager } from "./SpineItemsManager"
+import { map, merge, type Observable, share, switchMap } from "rxjs"
+import type { SpineItemsManager } from "./SpineItemsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
-import { SpineLocator } from "./locator/SpineLocator"
-import { SpineItem } from "../spineItem/SpineItem"
+import type { SpineLocator } from "./locator/SpineLocator"
+import type { SpineItem } from "../spineItem/SpineItem"
 
 export class SpineItemsObserver extends DestroyableClass {
   /**

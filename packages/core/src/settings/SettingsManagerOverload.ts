@@ -1,12 +1,12 @@
-import { Observable, ObservedValueOf, Subject, combineLatest } from "rxjs"
+import { type Observable, type ObservedValueOf, Subject, combineLatest } from "rxjs"
 import {
   distinctUntilChanged,
   map,
   shareReplay,
   startWith,
 } from "rxjs/operators"
-import { SettingsInterface } from "./SettingsInterface"
-import { CoreInputSettings, CoreOutputSettings } from "./types"
+import type { SettingsInterface } from "./SettingsInterface"
+import type { CoreInputSettings, CoreOutputSettings } from "./types"
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import { mapKeysTo } from "../utils/rxjs"
 

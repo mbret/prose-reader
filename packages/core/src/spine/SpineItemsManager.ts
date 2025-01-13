@@ -1,5 +1,5 @@
-import { Context } from "../context/Context"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { Context } from "../context/Context"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { parseCfi } from "../cfi/lookup/parseCfi"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { BehaviorSubject } from "rxjs"

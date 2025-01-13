@@ -1,6 +1,6 @@
-import { Context } from "../../context/Context"
+import type { Context } from "../../context/Context"
 import { getItemOffsetFromPageIndex } from "../helpers"
-import { SafeSpineItemPosition } from "../types"
+import type { SafeSpineItemPosition } from "../types"
 
 export const getSpineItemPositionFromPageIndex = ({
   pageIndex,
