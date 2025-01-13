@@ -1,6 +1,6 @@
-import { map, Observable } from "rxjs"
-import { InternalNavigationEntry } from "../InternalNavigator"
-import { PaginationInfo } from "../../pagination/Pagination"
+import { map, type Observable } from "rxjs"
+import type { InternalNavigationEntry } from "../InternalNavigator"
+import type { PaginationInfo } from "../../pagination/Pagination"
 
 type Navigation = {
   navigation: InternalNavigationEntry

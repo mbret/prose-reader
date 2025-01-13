@@ -1,4 +1,4 @@
-import { Manifest } from "@prose-reader/shared"
+import type { Manifest } from "@prose-reader/shared"
 import { getItemAnchor } from "./getItemAnchor"
 import { CfiHandler } from "../CfiHandler"
 

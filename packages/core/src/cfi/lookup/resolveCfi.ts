@@ -1,5 +1,5 @@
 import { Report } from "../../report"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { CfiHandler } from "../CfiHandler"
 import { parseCfi } from "./parseCfi"
 

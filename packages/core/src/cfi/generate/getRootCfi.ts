@@ -1,4 +1,4 @@
-import { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { getItemAnchor } from "./getItemAnchor"
 
 /**

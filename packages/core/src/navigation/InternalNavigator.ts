@@ -1,6 +1,6 @@
 import {
   BehaviorSubject,
-  Observable,
+  type Observable,
   distinctUntilChanged,
   filter,
   finalize,
@@ -17,17 +17,17 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { UserNavigationEntry } from "./UserNavigator"
-import {
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { UserNavigationEntry } from "./UserNavigator"
+import type {
   ViewportNavigator,
   ViewportPosition,
 } from "./viewport/ViewportNavigator"
-import { createNavigationResolver } from "./resolvers/NavigationResolver"
+import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { isShallowEqual } from "../utils/objects"
 import { Report } from "../report"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { Context } from "../context/Context"
+import type { Context } from "../context/Context"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withDirection } from "./consolidation/withDirection"
@@ -35,11 +35,11 @@ import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withFallbackPosition } from "./consolidation/withFallbackPosition"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
-import { UnsafeSpineItemPosition } from "../spineItem/types"
+import type { UnsafeSpineItemPosition } from "../spineItem/types"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
 import { withSpineItem } from "./consolidation/withSpineItem"
 import { Locker } from "./Locker"
-import { Spine } from "../spine/Spine"
+import type { Spine } from "../spine/Spine"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 
 const NAMESPACE = `navigation/InternalNavigator`

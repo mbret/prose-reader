@@ -1,6 +1,6 @@
 import {
   BehaviorSubject,
-  Observable,
+  type Observable,
   Subject,
   animationFrameScheduler,
   delay,
@@ -19,12 +19,12 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { HookManager } from "../../hooks/HookManager"
-import { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { HookManager } from "../../hooks/HookManager"
+import type { Context } from "../../context/Context"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { Report } from "../../report"
-import { Spine } from "../../spine/Spine"
+import type { Spine } from "../../spine/Spine"
 import { getScaledDownPosition } from "./getScaledDownPosition"
 
 const NAMESPACE = `navigation/ViewportNavigator`

@@ -1,7 +1,7 @@
-import { Context } from "../../context/Context"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { Context } from "../../context/Context"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationForPosition = ({

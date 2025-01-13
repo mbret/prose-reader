@@ -1,11 +1,11 @@
 import { Report } from "../../report"
-import { Context } from "../../context/Context"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { Context } from "../../context/Context"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { ViewportPosition } from "../viewport/ViewportNavigator"
-import {
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type {
   SafeSpineItemPosition,
   UnsafeSpineItemPosition,
 } from "../../spineItem/types"
@@ -16,8 +16,8 @@ import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItem
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { resolveCfi } from "../../cfi/lookup/resolveCfi"
-import { SpineLayout } from "../../spine/SpineLayout"
-import { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineLayout } from "../../spine/SpineLayout"
+import type { SpineItem } from "../../spineItem/SpineItem"
 
 export const NAMESPACE = `spineNavigator`
 

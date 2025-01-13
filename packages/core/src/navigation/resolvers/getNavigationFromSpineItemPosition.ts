@@ -1,8 +1,8 @@
-import { Context } from "../../context/Context"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItem } from "../../spineItem/SpineItem"
-import { SpineItemLocator } from "../../spineItem/locationResolver"
-import { UnsafeSpineItemPosition } from "../../spineItem/types"
+import type { Context } from "../../context/Context"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItemLocator } from "../../spineItem/locationResolver"
+import type { UnsafeSpineItemPosition } from "../../spineItem/types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationFromSpineItemPosition = ({

@@ -1,5 +1,5 @@
-import { Context } from "../context/Context"
-import { SpineItemsManager } from "../spine/SpineItemsManager"
+import type { Context } from "../context/Context"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { BehaviorSubject, combineLatest, fromEvent, merge, timer } from "rxjs"
 import {
@@ -11,10 +11,10 @@ import {
   switchMap,
   withLatestFrom,
 } from "rxjs/operators"
-import { Spine } from "../spine/Spine"
+import type { Spine } from "../spine/Spine"
 import { isDefined } from "../utils/isDefined"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { HookManager } from "../hooks/HookManager"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { HookManager } from "../hooks/HookManager"
 import { noopElement } from "../utils/dom"
 import { ViewportNavigator } from "./viewport/ViewportNavigator"
 import { UserNavigator } from "./UserNavigator"

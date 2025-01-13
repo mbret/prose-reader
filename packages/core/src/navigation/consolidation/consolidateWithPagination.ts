@@ -6,12 +6,12 @@ import {
   first,
   of,
   distinctUntilChanged,
-  Observable,
+  type Observable,
 } from "rxjs"
-import { Context } from "../../context/Context"
-import { type InternalNavigationEntry } from "../InternalNavigator"
+import type { Context } from "../../context/Context"
+import type { InternalNavigationEntry } from "../InternalNavigator"
 import { withPaginationInfo } from "./withPaginationInfo"
-import { Spine } from "../../spine/Spine"
+import type { Spine } from "../../spine/Spine"
 
 export const consolidateWithPagination = (
   context: Context,

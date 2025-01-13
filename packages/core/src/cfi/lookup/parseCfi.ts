@@ -15,12 +15,12 @@ export const parseCfi = (
       .match(/\|(\[prose\~offset[^\]]*\])+/gi)
       ?.map((s) => s.replace(/\|\[prose\~offset\~/, ``).replace(/\]/, ``)) || []
   const cleanedCfi = cfi.replace(/\|(\[prose\~[^\]]*\~[^\]]*\])+/gi, ``)
-  const foundOffset = parseInt(offset || ``)
-  const foundItemIndex = parseInt(itemIndex || ``)
+  const foundOffset = Number.parseInt(offset || ``)
+  const foundItemIndex = Number.parseInt(itemIndex || ``)
 
   return {
     cleanedCfi,
-    itemIndex: isNaN(foundItemIndex) ? undefined : foundItemIndex,
-    offset: isNaN(foundOffset) ? undefined : foundOffset,
+    itemIndex: Number.isNaN(foundItemIndex) ? undefined : foundItemIndex,
+    offset: Number.isNaN(foundOffset) ? undefined : foundOffset,
   }
 }

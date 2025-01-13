@@ -1,10 +1,10 @@
-import { map, Observable } from "rxjs"
-import {
+import { map, type Observable } from "rxjs"
+import type {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { NavigationResolver } from "../resolvers/NavigationResolver"
 
 export const withFallbackPosition =
   ({

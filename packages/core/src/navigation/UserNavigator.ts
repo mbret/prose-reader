@@ -1,6 +1,6 @@
 import {
   NEVER,
-  Observable,
+  type Observable,
   Subject,
   animationFrameScheduler,
   debounceTime,
@@ -18,14 +18,14 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { ViewportPosition } from "./viewport/ViewportNavigator"
-import { Context } from "../context/Context"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { ViewportPosition } from "./viewport/ViewportNavigator"
+import type { Context } from "../context/Context"
 import { Report } from "../report"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { Locker } from "./Locker"
 import { getScaledDownPosition } from "./viewport/getScaledDownPosition"
-import { Spine } from "../spine/Spine"
+import type { Spine } from "../spine/Spine"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 const NAMESPACE = `navigation/UserNavigator`

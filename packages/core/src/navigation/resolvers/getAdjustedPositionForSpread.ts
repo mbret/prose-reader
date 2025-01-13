@@ -1,4 +1,4 @@
-import { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
 
 export const getAdjustedPositionForSpread = ({
   position: { x, y },

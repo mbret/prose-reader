@@ -1,13 +1,13 @@
-import { Context } from "../../context/Context"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItemLocator } from "../../spineItem/locationResolver"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { InternalNavigationEntry } from "../InternalNavigator"
-import { NavigationResolver } from "../resolvers/NavigationResolver"
-import { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { SpineItemLocator } from "../../spineItem/locationResolver"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { InternalNavigationEntry } from "../InternalNavigator"
+import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
-import { SpineLayout } from "../../spine/SpineLayout"
+import type { SpineLayout } from "../../spine/SpineLayout"
 
 const restoreNavigationForScrollingPageTurnMode = ({
   navigation,

@@ -1,6 +1,6 @@
-import { map, Observable } from "rxjs"
-import { UserNavigationEntry } from "../UserNavigator"
-import {
+import { map, type Observable } from "rxjs"
+import type { UserNavigationEntry } from "../UserNavigator"
+import type {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"

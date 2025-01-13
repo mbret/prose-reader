@@ -1,6 +1,6 @@
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpineLayout } from "../../spine/SpineLayout"
-import { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineLayout } from "../../spine/SpineLayout"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
 
 export const NAMESPACE = `spineNavigator`
 

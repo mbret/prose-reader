@@ -1,5 +1,5 @@
 import { getNewScaledOffset } from "../../utils/layout"
-import { ViewportPosition } from "./ViewportNavigator"
+import type { ViewportPosition } from "./ViewportNavigator"
 
 export const getScaledDownPosition = ({
   position: { x, y },

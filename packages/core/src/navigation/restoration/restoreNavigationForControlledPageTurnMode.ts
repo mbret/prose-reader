@@ -1,9 +1,9 @@
 import { isRootCfi } from "../../cfi/lookup/isRootCfi"
-import { SpineLocator } from "../../spine/locator/SpineLocator"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpineLayout } from "../../spine/SpineLayout"
-import { InternalNavigationEntry } from "../InternalNavigator"
-import { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineLayout } from "../../spine/SpineLayout"
+import type { InternalNavigationEntry } from "../InternalNavigator"
+import type { NavigationResolver } from "../resolvers/NavigationResolver"
 
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,

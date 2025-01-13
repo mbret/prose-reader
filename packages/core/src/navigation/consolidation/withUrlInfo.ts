@@ -1,6 +1,6 @@
-import { map, Observable } from "rxjs"
-import { InternalNavigationInput } from "../InternalNavigator"
-import { NavigationResolver } from "../resolvers/NavigationResolver"
+import { map, type Observable } from "rxjs"
+import type { InternalNavigationInput } from "../InternalNavigator"
+import type { NavigationResolver } from "../resolvers/NavigationResolver"
 
 type Navigation = {
   navigation: InternalNavigationInput

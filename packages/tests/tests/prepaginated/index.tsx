@@ -51,12 +51,10 @@ async function run() {
     manifest,
   })
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.reader = reader
 
   reader.layout$.subscribe(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     window.layoutNumber = (window.layoutNumber ?? 0) + 1
   })

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "vitest"
-import { InternalNavigationEntry } from "./InternalNavigator"
+import type { InternalNavigationEntry } from "./InternalNavigator"
 import { createNavigator, generateItems } from "./tests/utils"
 import { waitFor } from "../tests/utils"
 import { firstValueFrom } from "rxjs"

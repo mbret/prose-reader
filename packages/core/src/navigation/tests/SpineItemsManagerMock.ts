@@ -37,7 +37,6 @@ export class SpineItemsManagerMock {
           height: item.height,
         }),
         isUsingVerticalWriting: () => false,
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         adjustPositionOfElement: () => {},
         layout$: layoutSubject,
         layout: () => {

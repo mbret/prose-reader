@@ -44,7 +44,6 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       )
 
       const numberOfLayout = await page.evaluate(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (window as any).layoutNumber as number
       })
 
@@ -52,7 +51,6 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       await page.waitForTimeout(1000)
 
       const numberOfLayoutAfterAWhile = await page.evaluate(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (window as any).layoutNumber as number
       })
 
