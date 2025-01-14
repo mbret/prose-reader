@@ -14,7 +14,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 async function run() {
   const response = await fetch("http://localhost:3333/epubs/sample-3.pdf")
   const pdfBlob = await response.blob()
-  const archive = await createArchiveFromPdf(pdfBlob)
+  const archive = await createArchiveFromPdf(pdfBlob, "sample.pdf")
   const manifest = await generateManifestFromArchive(archive)
 
   const createReaderWithEnhancers = pdfEnhancer(createReader)

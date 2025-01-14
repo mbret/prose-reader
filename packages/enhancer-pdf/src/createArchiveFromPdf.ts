@@ -16,7 +16,7 @@ export const isPdfJsArchive = (archive: Archive): archive is PdfJsArchive =>
  * Make sure the urls are on the same origin or the cors header is set otherwise
  * the resource cannot be consumed as it is on the web.
  */
-export const createArchiveFromPdf = async (file: Blob): Promise<Archive> => {
+export const createArchiveFromPdf = async (file: Blob, filename: string): Promise<Archive> => {
   const loadingTask = pdfjsLib.getDocument(await file.arrayBuffer())
 
   const pdf = await loadingTask.promise
@@ -47,7 +47,7 @@ export const createArchiveFromPdf = async (file: Blob): Promise<Archive> => {
   }
 
   const archive = {
-    filename: file.name,
+    filename,
     proxyDocument: pdf,
     _symbol: PDF_SYMBOL,
     files: [

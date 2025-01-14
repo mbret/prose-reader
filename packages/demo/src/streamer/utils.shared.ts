@@ -17,7 +17,9 @@ export const getFileKeyFromUrl = (url: string) => {
   return urlWithoutPrefix
 }
 
-export const getBlobFromKey = async (key: string) => {
+export const getBlobFromKey = async (
+  key: string,
+): Promise<{ blob: Blob | File; url: string; filename: string }> => {
   const demoEpubUrl = decodeURIComponent(atob(key))
   const epubFilenameFromUrl = demoEpubUrl.substring(
     demoEpubUrl.lastIndexOf("/") + 1,
@@ -34,8 +36,12 @@ export const getBlobFromKey = async (key: string) => {
   if (responseOrFile instanceof Response) {
     const blob = await responseOrFile.blob()
 
-    return { blob, url: demoEpubUrl }
+    return { blob, url: demoEpubUrl, filename: epubFilenameFromUrl }
   }
 
-  return { blob: responseOrFile, url: demoEpubUrl }
+  return {
+    blob: responseOrFile,
+    url: demoEpubUrl,
+    filename: epubFilenameFromUrl,
+  }
 }

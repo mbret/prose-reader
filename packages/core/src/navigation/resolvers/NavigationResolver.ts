@@ -57,23 +57,23 @@ export const createNavigationResolver = ({
 
     if (!spineItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)
-    } else {
-      const spineItemNavigation = node
-        ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
-        : ({ x: 0, y: 0 } as SafeSpineItemPosition)
-      const readingPosition = locator.getSpinePositionFromSpineItemPosition({
-        spineItemPosition: spineItemNavigation,
-        spineItem,
-      })
 
-      return getAdjustedPositionForSpread({
-        position: readingPosition,
-        pageSizeWidth: context.getPageSize().width,
-        visibleAreaRectWidth: context.state.visibleAreaRect.width,
-      })
+      return undefined
     }
 
-    return undefined
+    const spineItemNavigation = node
+      ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
+      : ({ x: 0, y: 0 } as SafeSpineItemPosition)
+    const readingPosition = locator.getSpinePositionFromSpineItemPosition({
+      spineItemPosition: spineItemNavigation,
+      spineItem,
+    })
+
+    return getAdjustedPositionForSpread({
+      position: readingPosition,
+      pageSizeWidth: context.getPageSize().width,
+      visibleAreaRectWidth: context.state.visibleAreaRect.width,
+    })
   }
 
   const getNavigationForLastPage = (spineItem: SpineItem): ViewportPosition => {

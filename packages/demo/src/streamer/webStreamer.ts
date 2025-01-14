@@ -21,12 +21,12 @@ export const webStreamer = new Streamer({
    */
   cleanArchiveAfter: Infinity,
   getArchive: async (key: string) => {
-    const { blob, url } = await getBlobFromKey(key)
+    const { blob, url, filename } = await getBlobFromKey(key)
 
     if (!url.endsWith(`.pdf`)) {
       throw new Error(`Please use sw streamer`)
     }
 
-    return createArchiveFromPdf(blob)
+    return createArchiveFromPdf(blob, filename)
   },
 })
