@@ -1,10 +1,5 @@
 import { memo } from "react"
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router"
 import { HomeScreen } from "./home/HomeScreen"
 import { ChakraProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"
