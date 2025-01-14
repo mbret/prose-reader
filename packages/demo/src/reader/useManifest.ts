@@ -1,8 +1,8 @@
 import type { Manifest } from "@prose-reader/core"
-import { useQuery } from "reactjrx"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { webStreamer } from "../streamer/webStreamer"
 import { getStreamerBaseUrl } from "../streamer/utils.shared"
+import { useQuery } from "@tanstack/react-query"
 
 export const useManifest = (epubKey: string) =>
   useQuery({

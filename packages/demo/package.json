@@ -22,19 +22,21 @@
     "@emotion/styled": "^11.10.5",
     "@fontsource/dancing-script": "^5.0.19",
     "@prose-reader/core": "^1.117.0",
+    "@prose-reader/enhancer-annotations": "^1.120.0",
     "@prose-reader/enhancer-bookmarks": "^1.117.0",
     "@prose-reader/enhancer-gestures": "^1.117.0",
-    "@prose-reader/enhancer-search": "^1.117.0",
     "@prose-reader/enhancer-pdf": "^1.117.0",
-    "@prose-reader/enhancer-annotations": "^1.120.0",
+    "@prose-reader/enhancer-search": "^1.117.0",
     "@prose-reader/streamer": "^1.117.0",
     "@react-rxjs/utils": "^0.9.5",
+    "@tanstack/react-query": "^5.64.1",
     "@types/react-dom": "*",
     "buffer": "^6.0.3",
     "framer-motion": "^11.0.6",
     "gesturx": "^1.8.0",
     "jszip": "^3.10.0",
     "localforage": "^1.10.0",
+    "pdfjs-dist": "^4.7.76",
     "rc-slider": "^11.1.5",
     "react": "^18.2.0",
     "react-dom": "^18.3.1",
@@ -46,8 +48,7 @@
     "rxjs": "^7.8.0",
     "screenfull": "^6.0.1",
     "stream-browserify": "^3.0.0",
-    "xmldoc": "^1.2.0",
-    "pdfjs-dist": "^4.7.76"
+    "xmldoc": "^1.2.0"
   },
   "gitHead": "781f4eb7b95735eca4fa981f1ea4bf8bc78ad7ac"
 }

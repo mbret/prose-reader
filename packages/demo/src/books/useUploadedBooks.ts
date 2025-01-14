@@ -1,5 +1,5 @@
+import { useQuery } from "@tanstack/react-query"
 import localforage from "localforage"
-import { useQuery } from "reactjrx"
 
 export const useUploadedBooks = () => {
   return useQuery({
