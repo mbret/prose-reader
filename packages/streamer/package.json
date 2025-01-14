@@ -33,6 +33,6 @@
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "devDependencies": {
     "buffer": "^6.0.3",
-    "xmldoc": "^1.2.0"
+    "xmldoc": "^1.1.2"
   }
 }

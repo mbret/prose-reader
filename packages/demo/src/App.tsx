@@ -4,7 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
-} from "react-router-dom"
+} from "react-router"
 import { HomeScreen } from "./home/HomeScreen"
 import { ChakraProvider } from "@chakra-ui/react"
 import { theme } from "./theme/theme"

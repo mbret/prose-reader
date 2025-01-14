@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef } from "react"
 import { useManifest } from "./useManifest"
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router"
 import { useResetStateOnUnMount } from "./states"
 import { HighlightMenu } from "./annotations/HighlightMenu"
 import { Bookmarks } from "./bookmarks/Bookmarks"
