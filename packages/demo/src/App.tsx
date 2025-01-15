@@ -1,29 +1,23 @@
-import { memo } from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router"
-import { HomeScreen } from "./home/HomeScreen"
-import { ChakraProvider } from "@chakra-ui/react"
-import { theme } from "./theme/theme"
-import { BooksScreen } from "./books/BooksScreen"
-import { ReaderScreen } from "./reader/ReaderScreen"
-import {
-  QueryCache,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query"
-import { QueryClientProvider$ } from "reactjrx"
-
-import "@fontsource/dancing-script/400.css"
+import { memo } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
+import { HomeScreen } from './home/HomeScreen';
+import { BooksScreen } from './books/BooksScreen';
+import { ReaderScreen } from './reader/ReaderScreen';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider$ } from 'reactjrx';
+import { Provider } from './components/ui/provider';
+import { Toaster } from './components/ui/toaster';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => console.error(error),
   }),
-})
+});
 
 export const App = memo(() => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider theme={theme}>
+      <Provider>
         <QueryClientProvider$>
           <Router>
             <Routes>
@@ -34,7 +28,8 @@ export const App = memo(() => {
             </Routes>
           </Router>
         </QueryClientProvider$>
-      </ChakraProvider>
+        <Toaster />
+      </Provider>
     </QueryClientProvider>
-  )
-})
+  );
+});
