@@ -51,11 +51,7 @@
     "workbox-window": "^7.0.0"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.0",
     "@rollup/plugin-replace": "^6.0.1",
-    "framer-motion": "^11.0.22",
     "reactjrx": "^1.81.0",
     "screenfull": "^6.0.2",
     "typescript": "^5.3.3"
