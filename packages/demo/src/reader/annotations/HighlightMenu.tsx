@@ -1,20 +1,17 @@
-import { memo, useEffect, useState } from "react"
+import { type ComponentProps, memo, useEffect, useState } from "react"
 import { useReader } from "../useReader"
 import { SIGNAL_RESET, useSignalValue } from "reactjrx"
+import { Box, Button, Stack, Text, Textarea } from "@chakra-ui/react"
+import { truncateText } from "../../common/utils"
+import { selectedHighlightSignal } from "./states"
 import {
-  Box,
-  Button,
-  Drawer,
+  DrawerBackdrop,
   DrawerBody,
   DrawerContent,
   DrawerHeader,
-  DrawerOverlay,
-  Stack,
-  Text,
-  Textarea,
-} from "@chakra-ui/react"
-import { truncateText } from "../../common/utils"
-import { selectedHighlightSignal } from "./states"
+  DrawerRoot,
+  DrawerTrigger,
+} from "../../components/ui/drawer"
 
 const HIGHLIGHT_COLORS = [
   "rgba(216, 191, 216, 1)", // Light purple
@@ -37,11 +34,20 @@ export const HighlightMenu = memo(() => {
     selectedHighlightSignal.setValue(SIGNAL_RESET)
   }
 
+  const onOpenChange: ComponentProps<typeof DrawerRoot>["onOpenChange"] = (
+    event,
+  ) => {
+    if (!event.open) {
+      onClose()
+    }
+  }
+
   const highlightColor = highlight?.color
   const highlightContent = (highlight?.contents ?? [])[0]
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
+    void isOpen
+
     setContents("")
   }, [isOpen])
 
@@ -49,8 +55,9 @@ export const HighlightMenu = memo(() => {
     setContents(highlightContent ?? "")
   }, [highlightContent])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
+    void isOpen
+
     if (highlightColor) {
       setSelectedColor(highlightColor)
     } else {
@@ -69,8 +76,9 @@ export const HighlightMenu = memo(() => {
   }, [reader, highlight])
 
   return (
-    <Drawer placement="bottom" onClose={onClose} isOpen={isOpen}>
-      <DrawerOverlay />
+    <DrawerRoot placement="bottom" onOpenChange={onOpenChange} open={isOpen}>
+      <DrawerBackdrop />
+      <DrawerTrigger />
       <DrawerContent>
         <DrawerHeader borderBottomWidth="1px">
           {highlight
@@ -131,7 +139,7 @@ export const HighlightMenu = memo(() => {
               </Button>
               <Button
                 flex={1}
-                colorScheme="red"
+                variant="surface"
                 onClick={() => {
                   onClose()
                   reader?.annotations.delete(highlight.id)
@@ -143,6 +151,6 @@ export const HighlightMenu = memo(() => {
           )}
         </DrawerBody>
       </DrawerContent>
-    </Drawer>
+    </DrawerRoot>
   )
 })
