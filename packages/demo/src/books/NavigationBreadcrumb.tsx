@@ -1,20 +1,16 @@
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@chakra-ui/react"
-import { Link } from "react-router"
+import { BreadcrumbCurrentLink, BreadcrumbLink, BreadcrumbRoot } from '../components/ui/breadcrumb';
+import { Link } from 'react-router';
 
 export const NavigationBreadcrumb = () => {
   return (
-    <Breadcrumb>
-      <BreadcrumbItem>
-        <BreadcrumbLink to="/" as={Link}>
-          Home
-        </BreadcrumbLink>
-      </BreadcrumbItem>
+    <BreadcrumbRoot>
+      <BreadcrumbLink asChild>
+        <Link to="/">Home</Link>
+      </BreadcrumbLink>
 
-      <BreadcrumbItem isCurrentPage>
-        <BreadcrumbLink to="/books" as={Link}>
-          Books
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-    </Breadcrumb>
-  )
-}
+      <BreadcrumbCurrentLink asChild>
+        <Link to="/books">Books</Link>
+      </BreadcrumbCurrentLink>
+    </BreadcrumbRoot>
+  );
+};

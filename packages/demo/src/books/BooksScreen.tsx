@@ -1,98 +1,86 @@
-import { Link as RouterLink } from "react-router"
+import { Link, Link as RouterLink } from 'react-router';
 import {
   Table,
-  Tr,
-  Th,
-  Thead,
-  Tbody,
-  Link,
-  Td,
+  Link as ChakraLink,
   Box,
   Text,
-  IconButton,
   Stack,
   Container,
   Heading,
-} from "@chakra-ui/react"
-import { DeleteIcon } from "@chakra-ui/icons"
-import localforage from "localforage"
-import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
-import { Glossary } from "./Glossary"
-import { UploadBook } from "./UploadBook"
-import { useUploadedBooks } from "./useUploadedBooks"
-import { COMICS, EPUBS, PDFS } from "./constants"
-import { BookTable } from "./BookTable"
+  IconButton,
+} from '@chakra-ui/react';
+import { MdDelete } from 'react-icons/md';
+import localforage from 'localforage';
+import { NavigationBreadcrumb } from './NavigationBreadcrumb';
+import { Glossary } from './Glossary';
+import { UploadBook } from './UploadBook';
+import { useUploadedBooks } from './useUploadedBooks';
+import { COMICS, EPUBS, PDFS } from './constants';
+import { BookTable } from './BookTable';
 
 export const BooksScreen = () => {
-  const { data: uploadedBooks, refetch } = useUploadedBooks()
+  const { data: uploadedBooks, refetch } = useUploadedBooks();
 
   return (
-    <Container maxW="container.sm">
-      <Stack py={4}>
-        <NavigationBreadcrumb />
+    <Container maxW="2xl" py={4} display="flex" flexDirection="column">
+      <NavigationBreadcrumb />
 
-        <Heading as="h1" mb={2}>
-          Books
-        </Heading>
+      <Heading as="h1" size="4xl" mb={2} mt={2}>
+        Books
+      </Heading>
 
-        <Text mb={2}>
-          Find here a selection of <b>copyright free</b> books which covers a
-          variety of different type of content. Additionally you can upload your
-          own book locally to test it.
-        </Text>
+      <Text mb={2}>
+        Find here a selection of <b>copyright free</b> books which covers a variety of different
+        type of content. Additionally you can upload your own book locally to test it.
+      </Text>
 
-        <Heading as="h2" size="md">
-          Glossary
-        </Heading>
+      <Heading as="h2" size="xl">
+        Glossary
+      </Heading>
 
-        <Glossary />
+      <Glossary />
 
-        <UploadBook />
+      <UploadBook />
 
-        <Stack gap={4}>
-          <Box borderWidth={[0, `1px`]} borderRadius="lg" margin="auto">
-            <Table
-              variant="simple"
-              size={["sm", "md"]}
-              style={{ tableLayout: `fixed` }}
-            >
-              <Thead>
-                <Tr>
-                  <Th>My uploaded books</Th>
-                  <Th width="30%" textAlign="right">
-                    Actions
-                  </Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {uploadedBooks?.map(({ name, base64Uri }) => (
-                  <Tr key={name}>
-                    <Td>
-                      <Link to={`/reader/${base64Uri}`} as={RouterLink}>
-                        {name}
-                      </Link>
-                    </Td>
-                    <Td textAlign="right">
-                      <IconButton
-                        aria-label="Search database"
-                        icon={<DeleteIcon />}
-                        onClick={async () => {
-                          await localforage.removeItem(name)
+      <Stack gap={4}>
+        <Table.Root variant="outline" style={{ tableLayout: `fixed` }} borderRadius={5}>
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader>My uploaded books</Table.ColumnHeader>
+              <Table.ColumnHeader width="30%" textAlign="right">
+                Actions
+              </Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {uploadedBooks?.map(({ name, base64Uri }) => (
+              <Table.Row key={name}>
+                <Table.Cell>
+                  <ChakraLink asChild>
+                    <Link to={`/reader/${base64Uri}`}>{name}</Link>
+                  </ChakraLink>
+                </Table.Cell>
+                <Table.Cell textAlign="right">
+                  <IconButton
+                    colorPalette="red"
+                    aria-label="Remove"
+                    onClick={async () => {
+                      await localforage.removeItem(name);
 
-                          refetch()
-                        }}
-                      />
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-          <BookTable items={COMICS} title="Comics" />
-          <BookTable items={PDFS} title="PDF" />
-          <BookTable items={EPUBS} title="Epubs" />
-        </Stack>
+                      refetch();
+                    }}
+                  >
+                    <MdDelete />
+                  </IconButton>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+        <BookTable items={COMICS} title="Comics" />
+        <BookTable items={PDFS} title="PDF" />
+        <BookTable items={EPUBS} title="Epubs" />
       </Stack>
     </Container>
-  )
-}
+  );
+};

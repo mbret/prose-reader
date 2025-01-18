@@ -1,53 +1,44 @@
-import {
-  Box,
-  Table,
-  Thead,
-  Tr,
-  Th,
-  Tbody,
-  Td,
-  Link,
-  Text,
-} from "@chakra-ui/react"
-import { Link as RouterLink } from "react-router"
+import { Box, Table, Link, Text } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router';
 
 export const BookTable = ({
   items,
   title,
 }: {
-  title: string
-  items: { name: string; link: string; type: string }[]
+  title: string;
+  items: { name: string; link: string; type: string }[];
 }) => (
   <Box borderWidth={[0, `1px`]} borderRadius="lg" margin="auto">
-    <Table
-      variant="simple"
-      size={["sm", "md"]}
+    <Table.Root
+      variant="outline"
+      size={['sm', 'md']}
       style={{ tableLayout: `fixed` }}
+      borderRadius={5}
     >
-      <Thead>
-        <Tr>
-          <Th width="70%">{title}</Th>
-          <Th />
-        </Tr>
-      </Thead>
-      <Tbody>
+      <Table.Header>
+        <Table.Row>
+          <Table.ColumnHeader width="70%">{title}</Table.ColumnHeader>
+          <Table.ColumnHeader />
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
         {items.map(({ name, link, type }) => (
-          <Tr key={name}>
-            <Td>
-              <Link to={link} as={RouterLink}>
-                {name}
+          <Table.Row key={name}>
+            <Table.Cell>
+              <Link asChild>
+                <RouterLink to={link}>{name}</RouterLink>
               </Link>
-            </Td>
-            <Td textAlign="right">
+            </Table.Cell>
+            <Table.Cell textAlign="right">
               {type.split(` - `).map((e, i) => (
                 <Text key={i} as="span" mr={2} whiteSpace="nowrap">
                   {e}
                 </Text>
               ))}
-            </Td>
-          </Tr>
+            </Table.Cell>
+          </Table.Row>
         ))}
-      </Tbody>
-    </Table>
+      </Table.Body>
+    </Table.Root>
   </Box>
-)
+);
