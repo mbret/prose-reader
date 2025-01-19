@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef } from "react"
+import { memo, useEffect, useRef } from "react"
 import { useManifest } from "./useManifest"
 import { useParams } from "react-router"
 import { useResetStateOnUnMount } from "./states"
@@ -18,7 +18,7 @@ import { QuickMenu } from "./navigation/QuickMenu"
 import { useObserve } from "reactjrx"
 import { useLinks } from "./links/useLinks"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
-import { Menu } from "./navigation/Menu"
+import { MenuDialog } from "./navigation/MenuDialog"
 import { useAnnotations } from "./annotations/useAnnotations"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 
@@ -66,7 +66,10 @@ export const ReaderScreen = memo(() => {
       </Box>
       <QuickActionsMenu />
       <QuickMenu />
-      <Menu localSettings={localSettings} setLocalSettings={setLocalSettings} />
+      <MenuDialog
+        localSettings={localSettings}
+        setLocalSettings={setLocalSettings}
+      />
       <HighlightMenu />
       <Bookmarks />
       <Notification />

@@ -10,7 +10,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerRoot,
-  DrawerTrigger,
 } from "../../components/ui/drawer"
 
 const HIGHLIGHT_COLORS = [
@@ -78,7 +77,6 @@ export const HighlightMenu = memo(() => {
   return (
     <DrawerRoot placement="bottom" onOpenChange={onOpenChange} open={isOpen}>
       <DrawerBackdrop />
-      <DrawerTrigger />
       <DrawerContent>
         <DrawerHeader borderBottomWidth="1px">
           {highlight

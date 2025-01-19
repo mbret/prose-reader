@@ -1,13 +1,14 @@
 import { memo } from "react"
 import { useNavigate } from "react-router"
 import { Box, IconButton, Stack } from "@chakra-ui/react"
-import { ArrowBackIcon, HamburgerIcon } from "@chakra-ui/icons"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
 import { useObserve, useSignalValue } from "reactjrx"
 import { BottomMenu } from "./BottomMenu"
-import { isMenuOpenSignal } from "./Menu"
+import { isMenuOpenSignal } from "./MenuDialog"
 import { isQuickMenuOpenSignal } from "../states"
+import { IoMdArrowRoundBack } from "react-icons/io"
+import { GiHamburgerMenu } from "react-icons/gi"
 
 export const QuickMenu = memo(() => {
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
@@ -26,7 +27,6 @@ export const QuickMenu = memo(() => {
           leftElement={
             <Box flex={1}>
               <IconButton
-                icon={<ArrowBackIcon />}
                 aria-label="back"
                 onClick={() => {
                   if (
@@ -38,18 +38,21 @@ export const QuickMenu = memo(() => {
                     navigate(-1)
                   }
                 }}
-              />
+              >
+                <IoMdArrowRoundBack />
+              </IconButton>
             </Box>
           }
           rightElement={
             <Stack direction="row" flex={1} justifyContent="flex-end">
               <IconButton
-                icon={<HamburgerIcon />}
                 onClick={() => {
                   isMenuOpenSignal.setValue(true)
                 }}
                 aria-label="settings"
-              />
+              >
+                <GiHamburgerMenu />
+              </IconButton>
             </Stack>
           }
           middleElement={

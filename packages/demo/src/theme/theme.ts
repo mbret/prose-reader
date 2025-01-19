@@ -6,7 +6,7 @@ export const config = defineConfig({
       colorPalette: "red",
     },
     button: {
-      colorPalette: "gray",
+      // colorPalette: "teal",
     }
   },
   theme: {
@@ -16,10 +16,12 @@ export const config = defineConfig({
           DEFAULT: {
             value: "{colors.gray.900}",
           },
+          muted: { value: "{colors.gray.800}" },
+
+
           // solid: { value: "{colors.gray.500}" },
           // contrast: { value: "{colors.gray.100}" },
           // fg: { value: "{colors.gray.700}" },
-          muted: { value: "{colors.gray.800}" },
           // subtle: { value: "{colors.gray.200}" },
           // emphasized: { value: "{colors.gray.300}" },
           // focusRing: { value: "{colors.gray.500}" },
