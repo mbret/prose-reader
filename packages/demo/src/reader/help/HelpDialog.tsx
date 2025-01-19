@@ -1,13 +1,15 @@
-import { List, ListIcon, ListItem } from "@chakra-ui/react"
-import React from "react"
+import { List } from "@chakra-ui/react"
+import { LuCircleCheck } from "react-icons/lu"
 
 export const HelpMenu = () => {
   return (
-    <List spacing={3}>
-      <ListItem>
-        <ListIcon color="green.500" />
+    <List.Root gap={3} variant="plain">
+      <List.Item>
+        <List.Indicator asChild color="green.500">
+          <LuCircleCheck />
+        </List.Indicator>
         Pinch to zoom on images.
-      </ListItem>
-    </List>
+      </List.Item>
+    </List.Root>
   )
 }
