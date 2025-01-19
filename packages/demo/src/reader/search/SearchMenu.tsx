@@ -38,16 +38,18 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
 
   return (
     <Stack flex={1}>
-      <Input
-        placeholder="Type something..."
-        value={text}
-        onChange={onValueChange}
-        borderRadius={0}
-        size="lg"
-      />
+      <Box px={4}>
+        <Input
+          placeholder="Type something..."
+          value={text}
+          onChange={onValueChange}
+          borderRadius={0}
+        />
+      </Box>
       <Box
-        padding={2}
-        pt={2}
+        px={4}
+        pb={4}
+        mt={2}
         flex={1}
         style={{ overflow: "hidden", overflowY: "auto" }}
       >
@@ -55,7 +57,7 @@ export const SearchMenu = ({ onNavigate }: { onNavigate: () => void }) => {
         {!searching && results.length === 0 && <p>There are no results</p>}
         {!searching && results.length >= 0 && (
           <Stack>
-            <Heading as="h2" size="sm">
+            <Heading as="h2" size="md">
               {results.length} result(s)
             </Heading>
             <Stack gap={0}>
@@ -122,13 +124,17 @@ const Item = ({
 
         onClick(cfi)
       }}
+      display="flex"
+      flexDirection="column"
+      alignItems="flex-start"
+      gap={0}
     >
-      <Link noOfLines={1} as="cite" style={{ display: "block" }}>
+      <Text lineClamp={1} as="cite" style={{ display: "block" }}>
         "{before}
         <b>{text}</b>
         {after}"
-      </Link>
-      <Text size="xs" color="gray.500" style={{ textDecoration: "none" }}>
+      </Text>
+      <Text fontSize="sm" color="gray.500" style={{ textDecoration: "none" }}>
         {`Book page: ${absolutePageIndex !== undefined ? absolutePageIndex + 1 : "unknown (not loaded)"}`}
       </Text>
     </Link>
