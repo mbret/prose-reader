@@ -1,8 +1,7 @@
-import { Link, List, ListItem, Stack, Text } from "@chakra-ui/react"
-import React, { memo } from "react"
+import { Link, List, Stack, Text } from "@chakra-ui/react"
+import { memo } from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
-import { truncateText } from "../../common/utils"
 import { switchMap } from "rxjs"
 import { LuNotebookPen } from "react-icons/lu"
 
@@ -21,7 +20,7 @@ export const AnnotationsMenu = memo(
       item: NonNullable<typeof consolidatedHighlights>[number],
       index: number,
     ) => (
-      <List.Item key={index} >
+      <List.Item key={index}>
         <Link
           href="#"
           onClick={() => {
@@ -64,12 +63,7 @@ export const AnnotationsMenu = memo(
     )
 
     return (
-      <List.Root
-        overflowY="auto"
-        gap={3}
-        variant="plain"
-        px={4}
-      >
+      <List.Root overflowY="auto" gap={3} pt={4} variant="plain" px={4}>
         {consolidatedHighlights?.map((item, index) =>
           mapItemToListEntry(item, index),
         )}

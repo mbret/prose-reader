@@ -1,9 +1,9 @@
-import { CheckCircleIcon } from "@chakra-ui/icons"
-import { List, ListIcon, ListItem, Stack, Text } from "@chakra-ui/react"
+import { Link, List, Stack, Text } from "@chakra-ui/react"
 import React from "react"
 import { useReader } from "../useReader"
 import { useObserve } from "reactjrx"
 import { usePagination } from "../states"
+import { LuCircleCheck } from "react-icons/lu"
 
 export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   const { reader } = useReader()
@@ -29,50 +29,58 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
     lvl: number,
   ) => (
     <React.Fragment key={index}>
-      <ListItem
+      <List.Item
         style={{
           paddingLeft: 5 + lvl * 20,
           display: "flex",
           alignItems: "center",
         }}
-        onClick={() => {
-          onNavigate()
-
-          reader?.navigation.goToUrl(tocItem.href)
-        }}
-        as="a"
-        href="#"
       >
-        {currentSubChapter?.path === tocItem.path && (
-          <ListIcon as={CheckCircleIcon} />
-        )}
-        {currentSubChapter?.path !== tocItem.path && (
-          <ListIcon as={CheckCircleIcon} style={{ visibility: "hidden" }} />
-        )}
-        <Stack gap={0}>
-          <Text>{tocItem.title || tocItem.path}</Text>
+        <Link
+          onClick={() => {
+            onNavigate()
+
+            reader?.navigation.goToUrl(tocItem.href)
+          }}
+          href="#"
+        >
           {currentSubChapter?.path === tocItem.path && (
-            <Text
-              fontStyle="italic"
-              fontWeight="bold"
-              fontSize="xs"
-            >{`Currently on page ${currentSpineItemOrChapterPageIndex + 1}`}</Text>
+            <List.Indicator asChild>
+              <LuCircleCheck />
+            </List.Indicator>
           )}
-        </Stack>
-      </ListItem>
+          {currentSubChapter?.path !== tocItem.path && (
+            <List.Indicator asChild visibility="hidden">
+              <LuCircleCheck />
+            </List.Indicator>
+          )}
+          <Stack gap={0}>
+            <Text fontSize="md">{tocItem.title || tocItem.path}</Text>
+            {currentSubChapter?.path === tocItem.path && (
+              <Text
+                fontStyle="italic"
+                fontWeight="bold"
+                fontSize="sm"
+              >{`Currently on page ${
+                currentSpineItemOrChapterPageIndex + 1
+              }`}</Text>
+            )}
+          </Stack>
+        </Link>
+      </List.Item>
       {tocItem.contents.length > 0 && (
-        <List as="div" spacing={2}>
+        <List.Root as="div" gap={2}>
           {tocItem.contents.map((tocItem, index) =>
             buildTocForItem(tocItem, index, lvl + 1),
           )}
-        </List>
+        </List.Root>
       )}
     </React.Fragment>
   )
 
   return (
-    <List spacing={3} overflowY="auto" py={4} flex={1}>
+    <List.Root gap={3} overflowY="auto" py={4} flex={1}>
       {nav?.toc.map((tocItem, index) => buildTocForItem(tocItem, index, 0))}
-    </List>
+    </List.Root>
   )
 }
