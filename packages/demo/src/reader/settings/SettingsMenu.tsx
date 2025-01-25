@@ -2,33 +2,23 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
-import RcSlider from "rc-slider"
 import "rc-slider/assets/index.css"
-import {
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  HStack,
-  Radio,
-  RadioGroup,
-  Text,
-  Box,
-  Checkbox,
-  Stack,
-} from "@chakra-ui/react"
+import { HStack, Stack } from "@chakra-ui/react"
 import { NavigationSettings } from "../../common/NavigationSettings"
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ArrowBackIcon,
-  ArrowForwardIcon,
-} from "@chakra-ui/icons"
+import { IoMdArrowRoundBack } from "react-icons/io"
+import { IoMdArrowRoundForward } from "react-icons/io"
+import { IoMdArrowDown } from "react-icons/io"
+import { IoMdArrowUp } from "react-icons/io"
 import { OtherSettings } from "../../common/OtherSettings"
 import { useReaderSettings } from "../../common/useReaderSettings"
 import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
 import { useReader } from "../useReader"
 import type { LocalSettings } from "./useLocalSettings"
 import type { Theme } from "@prose-reader/core/dist/enhancers/theme"
+import { Field } from "../../components/ui/field"
+import { Checkbox } from "../../components/ui/checkbox"
+import { Slider } from "../../components/ui/slider"
+import { Radio, RadioGroup } from "../../components/ui/radio"
 
 export const SettingsMenu = ({
   open,
@@ -99,14 +89,15 @@ export const SettingsMenu = ({
       style={{
         overflow: "auto",
       }}
+      gap={4}
     >
-      <FormControl as="fieldset" mb={4}>
+      <Field>
         <Checkbox
-          isChecked={isFullscreen}
+          checked={isFullscreen}
           defaultChecked={false}
-          onChange={async (e) => {
+          onCheckedChange={async (e) => {
             if (screenfull.isEnabled) {
-              if (e.target.checked) {
+              if (e.checked) {
                 await screenfull.request()
               } else {
                 await screenfull.exit()
@@ -116,163 +107,170 @@ export const SettingsMenu = ({
         >
           Use full screen
         </Checkbox>
-      </FormControl>
-      <FormControl as="fieldset">
-        <FormLabel as="legend">Font size (%)</FormLabel>
-        <Box display="flex" alignItems="center">
-          <RcSlider
-            style={{
-              width: `auto`,
-              flex: 1,
-            }}
-            value={fontScaleSliderValue}
-            max={FONT_SCALE_MAX}
-            min={FONT_SCALE_MIN}
-            step={0.2}
-            onChange={(value) => {
-              if (typeof value === "number") {
-                reader.settings.update({
-                  fontScale: value,
-                })
-                setFontScaleSliderValue(value)
-              }
-            }}
-          />
-          <Text flex={0.3} textAlign="center" whiteSpace="nowrap">
-            {((readerSettings?.fontScale || 1) * 100).toFixed(0)} %
-          </Text>
-        </Box>
-      </FormControl>
-      <FormControl as="fieldset" mt={4}>
-        <FormLabel as="legend">Line height</FormLabel>
+      </Field>
+      <Field label="Font size (%)">
+        <Slider
+          value={[fontScaleSliderValue]}
+          step={0.2}
+          max={FONT_SCALE_MAX}
+          min={FONT_SCALE_MIN}
+          onValueChangeEnd={(e) => {
+            const value = e.value[0] ?? 1
+            reader.settings.update({
+              fontScale: value,
+            })
+            setFontScaleSliderValue(value)
+          }}
+          marks={[
+            { value: FONT_SCALE_MIN, label: `${FONT_SCALE_MIN * 100}%` },
+            { value: 1, label: `100%` },
+            {
+              value: (FONT_SCALE_MIN + FONT_SCALE_MAX) / 2,
+              label: `${((FONT_SCALE_MIN + FONT_SCALE_MAX) / 2) * 100}%`,
+            },
+            { value: FONT_SCALE_MAX, label: `${FONT_SCALE_MAX * 100}%` },
+          ]}
+          width="300px"
+        />
+      </Field>
+      <Field label="Line height" helperText="Change the space between lines">
         <RadioGroup
           defaultValue="publisher"
-          onChange={(value) => {
+          onValueChange={(e) => {
             reader.settings.update({
               lineHeight:
-                value === `publisher` ? `publisher` : Number.parseInt(value),
+                e.value === `publisher`
+                  ? `publisher`
+                  : Number.parseInt(e.value),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
         >
-          <HStack spacing="24px">
+          <HStack gap="24px">
             <Radio value="1">small</Radio>
             <Radio value="publisher">default (publisher)</Radio>
             <Radio value="2">big</Radio>
           </HStack>
         </RadioGroup>
-        <FormHelperText>Change the space between lines</FormHelperText>
-      </FormControl>
-      <FormControl as="fieldset" mt={4}>
-        <FormLabel as="legend">Font weight</FormLabel>
+      </Field>
+      <Field
+        label="Font weight"
+        helperText="Change the weight of the text in the entire book (if supported by current font)"
+      >
         <RadioGroup
           defaultValue="publisher"
-          onChange={(value) => {
+          onValueChange={(e) => {
             reader.settings.update({
               fontWeight:
-                value === `publisher`
+                e.value === `publisher`
                   ? `publisher`
-                  : (Number.parseInt(value) as 100),
+                  : (Number.parseInt(e.value) as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}
         >
-          <HStack spacing="24px">
+          <HStack gap="24px">
             <Radio value="100">small</Radio>
             <Radio value="publisher">default (publisher)</Radio>
             <Radio value="900">big</Radio>
           </HStack>
         </RadioGroup>
-        <FormHelperText>
-          Change the weight of the text in the entire book (if supported by
-          current font)
-        </FormHelperText>
-      </FormControl>
-      <FormControl as="fieldset" mt={4}>
-        <FormLabel as="legend">Theme</FormLabel>
+      </Field>
+      <Field
+        label="Theme"
+        helperText="Change the weight of the text in the entire book (if supported by current font)"
+      >
         <RadioGroup
           defaultValue="default"
-          onChange={(value: Theme) => {
-            setTheme(value)
-            reader.theme.set(value)
+          onValueChange={(e) => {
+            setTheme(e.value)
+            reader.theme.set(e.value as Theme)
           }}
           value={theme}
         >
-          <HStack spacing="12px">
+          <HStack gap="24px">
             <Radio value="publisher">default (publisher)</Radio>
             <Radio value="sepia">sepia</Radio>
             <Radio value="bright">bright</Radio>
             <Radio value="night">night</Radio>
           </HStack>
         </RadioGroup>
-      </FormControl>
-      <FormControl as="fieldset" mt={4}>
-        <FormLabel as="legend">Margins</FormLabel>
-        <Box display="flex" alignItems="center">
-          <Box
-            display="flex"
-            flexDirection="column"
-            flex={0.2}
-            alignItems="center"
-          >
-            <ArrowDownIcon />
-            <ArrowUpIcon />
-          </Box>
-          <RcSlider
+      </Field>
+      <Field label="Margins">
+        <Stack
+          direction="row"
+          gap={4}
+          alignItems="center"
+          width="100%"
+          maxWidth="300px"
+        >
+          <Stack gap={0}>
+            <IoMdArrowDown />
+            <IoMdArrowUp />
+          </Stack>
+          <Slider
+            flex={1}
+            value={[verticalMarginSliderValue]}
+            max={60}
+            min={0}
+            step={4}
+            marks={[
+              { value: 0, label: `0px` },
+              { value: 30, label: `30px` },
+              {
+                value: 60,
+                label: `60px`,
+              },
+            ]}
+            onValueChangeEnd={(e) => {
+              const value = e.value[0] ?? 0
+
+              reader.settings.update({
+                pageVerticalMargin: value,
+              })
+              setVerticalMarginSliderValue(value)
+            }}
+          />
+        </Stack>
+        <Stack
+          direction="row"
+          gap={4}
+          alignItems="center"
+          width="100%"
+          maxWidth="300px"
+        >
+          <Stack gap={0}>
+            <IoMdArrowRoundForward />
+            <IoMdArrowRoundBack />
+          </Stack>
+          <Slider
             style={{
               width: `auto`,
               flex: 1,
             }}
-            value={verticalMarginSliderValue}
+            value={[horizontalMarginSliderValue]}
             max={60}
             min={0}
             step={4}
-            onChange={(value) => {
-              if (typeof value === "number") {
-                reader.settings.update({
-                  pageVerticalMargin: value,
-                })
-                setVerticalMarginSliderValue(value)
-              }
+            marks={[
+              { value: 0, label: `0px` },
+              { value: 30, label: `30px` },
+              {
+                value: 60,
+                label: `60px`,
+              },
+            ]}
+            onValueChangeEnd={(e) => {
+              const value = e.value[0] ?? 0
+
+              reader.settings.update({
+                pageHorizontalMargin: value,
+              })
+              setHorizontalMarginSliderValue(value)
             }}
           />
-          <Text flex={0.4} textAlign="center" whiteSpace="nowrap">
-            {readerSettings?.pageVerticalMargin}px
-          </Text>
-        </Box>
-        <Box display="flex" alignItems="center">
-          <Box
-            display="flex"
-            flexDirection="row"
-            flex={0.2}
-            justifyContent="center"
-          >
-            <ArrowForwardIcon />
-            <ArrowBackIcon />
-          </Box>
-          <RcSlider
-            style={{
-              width: `auto`,
-              flex: 1,
-            }}
-            value={horizontalMarginSliderValue}
-            max={60}
-            min={0}
-            step={4}
-            onChange={(value) => {
-              if (typeof value === "number") {
-                reader.settings.update({
-                  pageHorizontalMargin: value,
-                })
-                setHorizontalMarginSliderValue(value)
-              }
-            }}
-          />
-          <Text flex={0.4} textAlign="center" whiteSpace="nowrap">
-            {readerSettings?.pageHorizontalMargin}px
-          </Text>
-        </Box>
-      </FormControl>
+        </Stack>
+      </Field>
       <NavigationSettings
         localSettings={localSettings}
         setLocalSettings={setLocalSettings}

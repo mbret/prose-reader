@@ -30,17 +30,19 @@ export const QuickActionsMenu = () => {
       opacity={isOpen ? 1 : 0}
       pointerEvents={isOpen ? "auto" : "none"}
       transition="opacity"
+      rounded="xl"
       style={{
         border: "1px solid red",
         borderColor: "teal",
         padding: 5,
-        borderRadius: 10,
         position: "absolute",
         bottom: "5%",
         right: "5%",
       }}
     >
       <IconButton
+        colorPalette="cyan"
+        rounded="xl"
         onClick={() => {
           isQuickMenuOpenSignal.setValue(false)
           selectedHighlightSignal.setValue({

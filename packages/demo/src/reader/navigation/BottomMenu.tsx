@@ -1,11 +1,8 @@
-import React from "react"
 import { IconButton, Stack } from "@chakra-ui/react"
-import {
-  ArrowBackIcon,
-  ArrowDownIcon,
-  ArrowForwardIcon,
-  ArrowUpIcon,
-} from "@chakra-ui/icons"
+import { IoMdArrowRoundBack } from "react-icons/io"
+import { IoMdArrowRoundForward } from "react-icons/io"
+import { IoMdArrowDown } from "react-icons/io"
+import { IoMdArrowUp } from "react-icons/io"
 import { Scrubber } from "./Scrubber"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
@@ -32,26 +29,24 @@ export const BottomMenu = ({ open }: { open: boolean }) => {
           }}
           leftElement={
             <IconButton
-              icon={isVerticalDirection ? <ArrowUpIcon /> : <ArrowBackIcon />}
               aria-label="back"
               onClick={() =>
                 isVerticalDirection
                   ? reader?.navigation.goToTopSpineItem()
                   : reader?.navigation.goToLeftSpineItem()
               }
-              isDisabled={
+              disabled={
                 !navigation?.canGoLeftSpineItem &&
                 !navigation?.canGoTopSpineItem
               }
-            />
+            >
+              {isVerticalDirection ? <IoMdArrowUp /> : <IoMdArrowRoundBack />}
+            </IconButton>
           }
           rightElement={
             <IconButton
-              icon={
-                isVerticalDirection ? <ArrowDownIcon /> : <ArrowForwardIcon />
-              }
               aria-label="forward"
-              isDisabled={
+              disabled={
                 !navigation?.canGoRightSpineItem &&
                 !navigation?.canGoBottomSpineItem
               }
@@ -60,7 +55,13 @@ export const BottomMenu = ({ open }: { open: boolean }) => {
                   ? reader?.navigation.goToBottomSpineItem()
                   : reader?.navigation.goToRightSpineItem()
               }}
-            />
+            >
+              {isVerticalDirection ? (
+                <IoMdArrowDown />
+              ) : (
+                <IoMdArrowRoundForward />
+              )}
+            </IconButton>
           }
           middleElement={
             <Stack

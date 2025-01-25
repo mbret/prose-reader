@@ -62,7 +62,7 @@ export const BooksScreen = () => {
                 </Table.Cell>
                 <Table.Cell textAlign="right">
                   <IconButton
-                    variant="surface"
+                    variant="outline"
                     aria-label="Remove"
                     onClick={async () => {
                       await localforage.removeItem(name);

@@ -1,24 +1,16 @@
-import { memo, useEffect } from "react"
-import {
-  distinctUntilChanged,
-  EMPTY,
-  finalize,
-  map,
-  NEVER,
-  skip,
-  switchMap,
-} from "rxjs"
-import { useObserve } from "reactjrx"
-import { useReader } from "../useReader"
-import { useToast } from "@chakra-ui/react"
+import { memo, useEffect } from 'react';
+import { distinctUntilChanged, EMPTY, finalize, map, NEVER, skip, switchMap } from 'rxjs';
+import { useObserve } from 'reactjrx';
+import { useReader } from '../useReader';
+import { toaster } from '../../components/ui/toaster';
 
 type Notification = {
-  type: "fontScaleChange"
-  value: number
-}
+  type: 'fontScaleChange';
+  value: number;
+};
 
 const useNotification = () => {
-  const { reader } = useReader()
+  const { reader } = useReader();
 
   return useObserve(
     () =>
@@ -28,60 +20,59 @@ const useNotification = () => {
         skip(1),
         map(
           (fontScale): Notification => ({
-            type: "fontScaleChange",
+            type: 'fontScaleChange',
             value: fontScale,
-          }),
-        ),
+          })
+        )
       ),
-    [reader],
-  )
-}
+    [reader]
+  );
+};
 
 export const Notification = memo(() => {
-  const notification = useNotification()
-  const { reader } = useReader()
-  const toast = useToast()
+  const notification = useNotification();
+  const { reader } = useReader();
 
   useEffect(() => {
-    if (!notification) return
+    if (!notification) return;
 
-    if (notification.type === "fontScaleChange") {
-      toast.close("fontScaleChange")
+    if (notification.type === 'fontScaleChange') {
+      toaster.dismiss('fontScaleChange');
 
-      const instance = toast({
-        title: "Font size changed",
+      const instance = toaster.create({
+        title: 'Font size changed',
         description: `${notification.value * 100} %`,
-        status: "info",
+        type: 'info',
         duration: 2000,
-      })
+      });
 
       return () => {
-        toast.close(instance)
-      }
+        toaster.dismiss(instance);
+      };
     }
-  }, [notification, toast])
+  }, [notification]);
 
   useObserve(
     () =>
       reader?.zoom.isZooming$.pipe(
         switchMap((isZooming) => {
-          if (!isZooming) return EMPTY
+          if (!isZooming) return EMPTY;
 
-          const toastId = toast({
-            title: "Zooming",
-            status: "info",
+          const toastId = toaster.create({
+            title: 'Zooming',
+            type: 'info',
             duration: 999999,
-          })
+          });
 
           return NEVER.pipe(
             finalize(() => {
-              toast.close(toastId)
-            }),
-          )
-        }),
+              toaster.dismiss(toastId);
+            })
+          );
+        })
       ),
-    [reader, toast],
-  )
+    [reader]
+  );
 
-  return null
-})
+  return null;
+});

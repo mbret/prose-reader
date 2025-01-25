@@ -1,6 +1,6 @@
 import type React from "react"
 import { type ComponentProps, memo } from "react"
-import { type Box, Stack, Text } from "@chakra-ui/react"
+import { Stack, Text } from "@chakra-ui/react"
 
 export const AppBar = memo(
   ({
@@ -8,7 +8,7 @@ export const AppBar = memo(
     middleElement,
     rightElement,
     ...rest
-  }: ComponentProps<typeof Box> & {
+  }: ComponentProps<typeof Stack> & {
     leftElement?: React.ReactElement
     middleElement?: React.ReactElement | string
     rightElement?: React.ReactElement
@@ -25,7 +25,7 @@ export const AppBar = memo(
     >
       {leftElement}
       {typeof middleElement === "string" ? (
-        <Text as="h1" noOfLines={1}>
+        <Text as="h1" lineClamp={1}>
           {middleElement}
         </Text>
       ) : (

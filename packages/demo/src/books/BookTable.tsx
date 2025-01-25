@@ -42,3 +42,4 @@ export const BookTable = ({
     </Table.Root>
   </Box>
 );
+

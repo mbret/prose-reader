@@ -30,8 +30,8 @@ export const TocMenu = ({ onNavigate }: { onNavigate: () => void }) => {
   ) => (
     <React.Fragment key={index}>
       <List.Item
+        pl={4 * (lvl + 1)}
         style={{
-          paddingLeft: 5 + lvl * 20,
           display: "flex",
           alignItems: "center",
         }}
