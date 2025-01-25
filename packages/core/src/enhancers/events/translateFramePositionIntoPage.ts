@@ -1,10 +1,14 @@
-import { getFrameViewportInfo } from "../../utils/frames"
-
+/**
+ * Take the relative position of the event in the iframe and translate
+ * it to the page coordinates.
+ * 
+ * For example the page 2 of an iframe could be at x=600 but
+ * the cursor on the page would be at x=100. That is for a 
+ * webpage of 500px of width and not using spread.
+ */
 export const translateFramePositionIntoPage = ({
   position,
   frameElement,
-  pageWidth,
-  pageHeight,
 }: {
   position: {
     clientX: number
@@ -14,22 +18,19 @@ export const translateFramePositionIntoPage = ({
   pageWidth: number
   pageHeight: number
 }) => {
-  const {
-    height: viewportHeight = pageHeight,
-    width: viewportWidth = pageWidth,
-  } = getFrameViewportInfo(frameElement)
-  const computedWidthScale = pageWidth / viewportWidth
-  const computedScale = Math.min(
-    computedWidthScale,
-    pageHeight / viewportHeight,
-  )
+  // Get the frame's current transform scale
+  const frameRect = frameElement.getBoundingClientRect()
+  const scaleX = frameRect.width / frameElement.offsetWidth
+  const scaleY = frameRect.height / frameElement.offsetHeight
 
-  // Here we use getBoundingClientRect meaning we will get relative value for left / top based on current
-  // window (viewport). This is handy because we can easily get the translated x/y without any extra information
-  // such as page index, etc. However this might be a bit less performance to request heavily getBoundingClientRect
-  const { left = 0, top = 0 } = frameElement?.getBoundingClientRect() || {}
-  const adjustedX = position.clientX * computedScale + left
-  const adjustedY = position.clientY * computedScale + top
+  // Get the frame's position relative to the viewport
+  const { left = 0, top = 0 } = frameRect
+
+  // Transform the coordinates:
+  // 1. Scale the position from iframe coordinates
+  // 2. Add the frame's offset relative to viewport
+  const adjustedX = position.clientX * scaleX + left
+  const adjustedY = position.clientY * scaleY + top
 
   return {
     clientX: adjustedX,
