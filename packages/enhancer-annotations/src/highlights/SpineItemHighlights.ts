@@ -80,8 +80,7 @@ export class SpineItemHighlights extends DestroyableClass {
 
   layout() {
     const firstLayerElement =
-      this.spineItem.renderer.documentContainer ??
-      document.createElement("div")
+      this.spineItem.renderer.documentContainer ?? document.createElement("div")
 
     layoutAnnotationLayer(firstLayerElement, this.layer)
 

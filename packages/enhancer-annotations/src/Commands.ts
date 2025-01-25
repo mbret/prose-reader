@@ -19,7 +19,7 @@ type Command =
       data: Pick<HighlightParams, "color" | "contents">
     }
   | { type: "select"; id: string | undefined }
-  | { type: "reset"; }
+  | { type: "reset" }
 
 export class Commands extends DestroyableClass {
   private commandSubject = new Subject<Command>()
@@ -64,7 +64,7 @@ export class Commands extends DestroyableClass {
   }
 
   reset = () => {
-    this.commandSubject.next({ type: "reset"})
+    this.commandSubject.next({ type: "reset" })
   }
 
   destroy() {

@@ -1,9 +1,9 @@
 /**
  * Take the relative position of the event in the iframe and translate
  * it to the page coordinates.
- * 
+ *
  * For example the page 2 of an iframe could be at x=600 but
- * the cursor on the page would be at x=100. That is for a 
+ * the cursor on the page would be at x=100. That is for a
  * webpage of 500px of width and not using spread.
  */
 export const translateFramePositionIntoPage = ({
