@@ -1,16 +1,16 @@
-import { EMPTY, type Observable, of } from "rxjs"
+import { EMPTY, of } from "rxjs"
 import { DocumentRenderer } from "./DocumentRenderer"
 
 export class DefaultRenderer extends DocumentRenderer {
-  onUnload(): Observable<unknown> {
+  onUnload() {
     return EMPTY
   }
 
-  onCreateDocument(): Observable<unknown> {
-    return EMPTY
+  onCreateDocument() {
+    return of(document.createElement("div"))
   }
 
-  onLoadDocument(): Observable<unknown> {
+  onLoadDocument() {
     return EMPTY
   }
 
