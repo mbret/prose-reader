@@ -1,4 +1,4 @@
-import { Link, Link as RouterLink } from 'react-router';
+import { Link, Link as RouterLink } from "react-router"
 import {
   Table,
   Link as ChakraLink,
@@ -8,18 +8,18 @@ import {
   Container,
   Heading,
   IconButton,
-} from '@chakra-ui/react';
-import { MdDelete } from 'react-icons/md';
-import localforage from 'localforage';
-import { NavigationBreadcrumb } from './NavigationBreadcrumb';
-import { Glossary } from './Glossary';
-import { UploadBook } from './UploadBook';
-import { useUploadedBooks } from './useUploadedBooks';
-import { COMICS, EPUBS, PDFS } from './constants';
-import { BookTable } from './BookTable';
+} from "@chakra-ui/react"
+import { MdDelete } from "react-icons/md"
+import localforage from "localforage"
+import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
+import { Glossary } from "./Glossary"
+import { UploadBook } from "./UploadBook"
+import { useUploadedBooks } from "./useUploadedBooks"
+import { COMICS, EPUBS, PDFS } from "./constants"
+import { BookTable } from "./BookTable"
 
 export const BooksScreen = () => {
-  const { data: uploadedBooks, refetch } = useUploadedBooks();
+  const { data: uploadedBooks, refetch } = useUploadedBooks()
 
   return (
     <Container maxW="2xl" py={4} display="flex" flexDirection="column">
@@ -30,8 +30,9 @@ export const BooksScreen = () => {
       </Heading>
 
       <Text mb={2}>
-        Find here a selection of <b>copyright free</b> books which covers a variety of different
-        type of content. Additionally you can upload your own book locally to test it.
+        Find here a selection of <b>copyright free</b> books which covers a
+        variety of different type of content. Additionally you can upload your
+        own book locally to test it.
       </Text>
 
       <Heading as="h2" size="xl">
@@ -43,7 +44,11 @@ export const BooksScreen = () => {
       <UploadBook />
 
       <Stack gap={4}>
-        <Table.Root variant="outline" style={{ tableLayout: `fixed` }} borderRadius={5}>
+        <Table.Root
+          variant="outline"
+          style={{ tableLayout: `fixed` }}
+          borderRadius={5}
+        >
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeader>My uploaded books</Table.ColumnHeader>
@@ -65,9 +70,9 @@ export const BooksScreen = () => {
                     variant="outline"
                     aria-label="Remove"
                     onClick={async () => {
-                      await localforage.removeItem(name);
+                      await localforage.removeItem(name)
 
-                      refetch();
+                      refetch()
                     }}
                   >
                     <MdDelete />
@@ -82,5 +87,5 @@ export const BooksScreen = () => {
         <BookTable items={EPUBS} title="Epubs" />
       </Stack>
     </Container>
-  );
-};
+  )
+}

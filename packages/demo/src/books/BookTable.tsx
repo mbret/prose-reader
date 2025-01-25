@@ -1,17 +1,17 @@
-import { Box, Table, Link, Text } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router';
+import { Box, Table, Link, Text } from "@chakra-ui/react"
+import { Link as RouterLink } from "react-router"
 
 export const BookTable = ({
   items,
   title,
 }: {
-  title: string;
-  items: { name: string; link: string; type: string }[];
+  title: string
+  items: { name: string; link: string; type: string }[]
 }) => (
   <Box borderWidth={[0, `1px`]} borderRadius="lg" margin="auto">
     <Table.Root
       variant="outline"
-      size={['sm', 'md']}
+      size={["sm", "md"]}
       style={{ tableLayout: `fixed` }}
       borderRadius={5}
     >
@@ -41,5 +41,4 @@ export const BookTable = ({
       </Table.Body>
     </Table.Root>
   </Box>
-);
-
+)

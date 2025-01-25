@@ -1,8 +1,8 @@
-import { Link } from 'react-router';
-import { Text, Box, Heading, Link as ChakraLink, Stack } from '@chakra-ui/react';
-import { OrDivider } from '../common/OrDivider';
-import { FaExternalLinkAlt } from 'react-icons/fa';
-import { Button } from '../components/ui/button';
+import { Link } from "react-router"
+import { Text, Box, Heading, Link as ChakraLink, Stack } from "@chakra-ui/react"
+import { OrDivider } from "../common/OrDivider"
+import { FaExternalLinkAlt } from "react-icons/fa"
+import { Button } from "../components/ui/button"
 
 export const HomeScreen = () => {
   return (
@@ -19,17 +19,24 @@ export const HomeScreen = () => {
           <Heading as="h1" fontFamily="'Dancing Script', sans-serif" size="6xl">
             prose
           </Heading>
-          <Text as="span" position="absolute" top="10%" right="-30%" opacity={0.5}>
+          <Text
+            as="span"
+            position="absolute"
+            top="10%"
+            right="-30%"
+            opacity={0.5}
+          >
             demo
           </Text>
         </Box>
         <Box textAlign="justify" maxWidth={[`auto`]} marginX={[4]} mb={4}>
           <Text as="p">
-            This demo is a reader made with React and use <b>prose</b> to render its content.
+            This demo is a reader made with React and use <b>prose</b> to render
+            its content.
           </Text>
           <Text as="p" mt={4}>
-            It provides a simple and generic user interface to showcase what <b>prose</b> can do and
-            how it integrates with a reader app.
+            It provides a simple and generic user interface to showcase what{" "}
+            <b>prose</b> can do and how it integrates with a reader app.
           </Text>
         </Box>
         <Box mt={4} mb={2} width="100%" paddingX={4}>
@@ -50,7 +57,7 @@ export const HomeScreen = () => {
       </Stack>
       <Box as="footer" paddingBottom={8} textAlign="center">
         <Text>
-          © Copyright{' '}
+          © Copyright{" "}
           <b>
             <ChakraLink
               href="https://www.linkedin.com/in/maxime-bret/"
@@ -63,5 +70,5 @@ export const HomeScreen = () => {
         </Text>
       </Box>
     </Stack>
-  );
-};
+  )
+}

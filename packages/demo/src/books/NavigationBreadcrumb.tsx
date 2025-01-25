@@ -1,5 +1,9 @@
-import { BreadcrumbCurrentLink, BreadcrumbLink, BreadcrumbRoot } from '../components/ui/breadcrumb';
-import { Link } from 'react-router';
+import {
+  BreadcrumbCurrentLink,
+  BreadcrumbLink,
+  BreadcrumbRoot,
+} from "../components/ui/breadcrumb"
+import { Link } from "react-router"
 
 export const NavigationBreadcrumb = () => {
   return (
@@ -12,5 +16,5 @@ export const NavigationBreadcrumb = () => {
         <Link to="/books">Books</Link>
       </BreadcrumbCurrentLink>
     </BreadcrumbRoot>
-  );
-};
+  )
+}

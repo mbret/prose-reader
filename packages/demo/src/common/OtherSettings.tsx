@@ -1,4 +1,4 @@
-import {  Fieldset, Stack } from "@chakra-ui/react"
+import { Fieldset, Stack } from "@chakra-ui/react"
 import { useReaderSettings } from "./useReaderSettings"
 import { useReader } from "../reader/useReader"
 import { Field } from "../components/ui/field"
