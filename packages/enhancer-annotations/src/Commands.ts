@@ -19,6 +19,7 @@ type Command =
       data: Pick<HighlightParams, "color" | "contents">
     }
   | { type: "select"; id: string | undefined }
+  | { type: "reset"; }
 
 export class Commands extends DestroyableClass {
   private commandSubject = new Subject<Command>()
@@ -37,6 +38,9 @@ export class Commands extends DestroyableClass {
   )
   public readonly select$ = this.commandSubject.pipe(
     filter((command) => command.type === "select"),
+  )
+  public readonly reset$ = this.commandSubject.pipe(
+    filter((command) => command.type === "reset"),
   )
 
   highlight = (params: HighlightParams) => {
@@ -57,6 +61,10 @@ export class Commands extends DestroyableClass {
 
   select = (id: string | undefined) => {
     this.commandSubject.next({ type: "select", id })
+  }
+
+  reset = () => {
+    this.commandSubject.next({ type: "reset"})
   }
 
   destroy() {

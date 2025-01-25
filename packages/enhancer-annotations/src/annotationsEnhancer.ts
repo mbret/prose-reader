@@ -133,6 +133,12 @@ export const annotationsEnhancer =
       }),
     )
 
+    const reset$ = commands.reset$.pipe(
+      tap(() => {
+        highlightsSubject.next([])
+      }),
+    )
+
     const highlightsConsolidation$ = merge(highlighted$, reader.layout$).pipe(
       debounceTime(50),
       withLatestFrom(highlights$),
@@ -162,6 +168,7 @@ export const annotationsEnhancer =
       delete$,
       update$,
       select$,
+      reset$,
       highlightsConsolidation$,
       highlights$.pipe(
         tap((annotations) => {
@@ -189,6 +196,7 @@ export const annotationsEnhancer =
         delete: commands.delete,
         update: commands.update,
         select: commands.select,
+        reset: commands.reset,
       },
     }
   }
