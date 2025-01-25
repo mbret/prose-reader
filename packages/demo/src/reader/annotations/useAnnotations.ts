@@ -35,6 +35,7 @@ export const useAnnotations = (
     () => {
       const restoredAnnotations = restore(bookKey)
 
+      reader?.annotations.reset()
       reader?.annotations.add(restoredAnnotations)
 
       return of(true)
