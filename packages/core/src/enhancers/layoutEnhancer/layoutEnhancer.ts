@@ -157,36 +157,39 @@ export const layoutEnhancer =
 
     fixReflowable(reader)
 
-    reader.hookManager.register(`item.onDocumentCreated`, ({ layers }) => {
-      layers.forEach(({ element }) => {
+    reader.hookManager.register(
+      `item.onDocumentCreated`,
+      ({ documentContainer }) => {
         /**
          * Hide document until it's ready
          */
-        element.style.opacity = `0`
+        documentContainer.style.opacity = `0`
         if (settingsManager.values.layoutLayerTransition) {
-          element.style.transition = `opacity 300ms`
+          documentContainer.style.transition = `opacity 300ms`
         }
-      })
-    })
+      },
+    )
 
     reader.hookManager.register(`item.onBeforeLayout`, ({ item }) => {
       const spineItem = reader.spineItemsManager.get(item.id)
 
-      spineItem?.renderer.layers.forEach(({ element }) => {
-        // @todo dont remember why i did this but there should be a reason. If i get time to explain
-        if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
-          // @todo see what's the impact
-          element.setAttribute(`tab-index`, `0`)
-        }
-      })
+      const element = spineItem?.renderer.documentContainer
+
+      // @todo dont remember why i did this but there should be a reason. If i get time to explain
+      if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
+        // @todo see what's the impact
+        element?.setAttribute(`tab-index`, `0`)
+      }
     })
 
     const revealItemOnReady$ = reader.spineItemsObserver.itemIsReady$.pipe(
       filter(({ isReady }) => isReady),
       tap(({ item }) => {
-        item.renderer.layers.forEach(({ element }) => {
+        const element = item.renderer.documentContainer
+
+        if (element) {
           element.style.opacity = `1`
-        })
+        }
       }),
     )
 

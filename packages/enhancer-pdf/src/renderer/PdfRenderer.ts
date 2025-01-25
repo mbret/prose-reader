@@ -24,7 +24,7 @@ import {
   waitForSwitch,
 } from "@prose-reader/core"
 import pdfFrameStyle from "./frame.css?inline"
-import { layoutCanvas, layoutLayers } from "./layout"
+import { layoutCanvas, layoutContainer } from "./layout"
 
 export class PdfRenderer extends DocumentRenderer {
   private pageProxy: PDFPageProxy | undefined
@@ -39,7 +39,7 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   private getCanvas() {
-    const element = this.layers[0]?.element.children[0]
+    const element = this.documentContainer?.children[0]
 
     if (!(element instanceof HTMLCanvasElement)) return
 
@@ -47,7 +47,7 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   private getFrameElement() {
-    const frame = this.layers[1]?.element.children[0]
+    const frame = this.documentContainer?.children[1].children[0]
 
     if (!(frame instanceof HTMLIFrameElement)) return
 
@@ -69,11 +69,7 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   onUnload(): Observable<unknown> {
-    this.layers.forEach(({ element }) => {
-      element.remove()
-    })
-
-    this.layers = []
+    this.detach()
 
     if (this.renderTask) {
       this.renderTask.cancel()
@@ -85,7 +81,7 @@ export class PdfRenderer extends DocumentRenderer {
     return EMPTY
   }
 
-  onCreateDocument(): Observable<unknown> {
+  onCreateDocument(): Observable<HTMLElement> {
     const frameElement = document.createElement(`iframe`)
     frameElement.style.cssText = `
       overflow: hidden;
@@ -114,30 +110,22 @@ export class PdfRenderer extends DocumentRenderer {
      * then copied into the frame.
      */
     const canvas = this.containerElement.ownerDocument.createElement("canvas")
-    const canvasContainer =
-      this.containerElement.ownerDocument.createElement("div")
-    canvasContainer.style.cssText = `
-      height: 100%;
-      width: 100%;
+
+    frameContainer.appendChild(frameElement)
+
+    const rootElement = this.containerElement.ownerDocument.createElement(`div`)
+    rootElement.style.cssText = `
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: clip;
     `
 
-    frameContainer.appendChild(frameElement)
-    canvasContainer.appendChild(canvas)
+    rootElement.appendChild(canvas)
+    rootElement.appendChild(frameContainer)
 
-    this.layers = [
-      {
-        element: canvasContainer,
-      },
-      {
-        element: frameContainer,
-      },
-    ]
+    this.documentContainer = rootElement
 
-    return EMPTY
+    return of(rootElement)
   }
 
   onLoadDocument(): Observable<unknown> {
@@ -150,9 +138,7 @@ export class PdfRenderer extends DocumentRenderer {
         return of(frameElement).pipe(
           waitForSwitch(this.context.bridgeEvent.viewportFree$),
           tap(() => {
-            this.layers.forEach(({ element }) => {
-              this.containerElement.appendChild(element)
-            })
+            this.attach()
           }),
           waitForFrameLoad,
           tap(() => {
@@ -188,7 +174,7 @@ export class PdfRenderer extends DocumentRenderer {
     // first we try to get the desired viewport for a confortable reading based on theh current page size
     const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
 
-    layoutLayers(this.layers, this.context, spreadPosition)
+    layoutContainer(this.documentContainer, this.context, spreadPosition)
 
     const context = canvas?.getContext("2d")
     // Support HiDPI-screens.

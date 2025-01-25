@@ -13,6 +13,7 @@ import {
   first,
   map,
   merge,
+  mergeMap,
   Observable,
   of,
   share,
@@ -83,7 +84,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
     share(),
   )
 
-  public layers: Layer[] = []
+  public documentContainer: HTMLElement | undefined
 
   constructor(params: {
     context: Context
@@ -123,39 +124,36 @@ export abstract class DocumentRenderer extends DestroyableClass {
         switchMap(() => {
           this.stateSubject.next(`loading`)
 
-          const createDocument$ = this.onCreateDocument().pipe(
-            endWith(null),
-            first(),
-          )
+          const createDocument$ = this.onCreateDocument().pipe(first())
 
           return createDocument$.pipe(
-            tap(() => {
+            mergeMap((documentContainer) => {
               this.hookManager.execute(`item.onDocumentCreated`, this.item.id, {
                 itemId: this.item.id,
-                layers: this.layers,
+                documentContainer,
               })
-            }),
-            switchMap(() => {
+
               const loadDocument$ = this.onLoadDocument().pipe(
                 endWith(null),
                 first(),
               )
 
-              return loadDocument$
-            }),
-            waitForSwitch(this.context.bridgeEvent.viewportFree$),
-            switchMap(() => {
-              const hookResults = this.hookManager
-                .execute(`item.onDocumentLoad`, this.item.id, {
-                  itemId: this.item.id,
-                  layers: this.layers,
-                })
-                .filter(
-                  (result): result is Observable<void> =>
-                    result instanceof Observable,
-                )
+              return loadDocument$.pipe(
+                waitForSwitch(this.context.bridgeEvent.viewportFree$),
+                switchMap(() => {
+                  const hookResults = this.hookManager
+                    .execute(`item.onDocumentLoad`, this.item.id, {
+                      itemId: this.item.id,
+                      documentContainer,
+                    })
+                    .filter(
+                      (result): result is Observable<void> =>
+                        result instanceof Observable,
+                    )
 
-              return combineLatest([of(null), ...hookResults]).pipe(first())
+                  return combineLatest([of(null), ...hookResults]).pipe(first())
+                }),
+              )
             }),
             tap(() => {
               this.stateSubject.next(`loaded`)
@@ -189,6 +187,17 @@ export abstract class DocumentRenderer extends DestroyableClass {
     )
 
     merge(unload$).pipe(takeUntil(this.destroy$)).subscribe()
+  }
+
+  protected attach() {
+    if (this.documentContainer) {
+      this.containerElement.appendChild(this.documentContainer)
+    }
+  }
+
+  protected detach() {
+    this.documentContainer?.remove()
+    this.documentContainer = undefined
   }
 
   public get state$() {
@@ -304,7 +313,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
    *
    * @important Do not attach anything to the dom yet.
    */
-  abstract onCreateDocument(): Observable<unknown>
+  abstract onCreateDocument(): Observable<HTMLElement>
 
   /**
    * This lifecycle lets you load whatever you need once the document is attached to

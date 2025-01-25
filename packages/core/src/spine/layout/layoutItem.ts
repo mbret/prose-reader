@@ -28,7 +28,7 @@ export const layoutItem = ({
 }): Observable<{ horizontalOffset: number; verticalOffset: number }> => {
   let minimumWidth = context.getPageSize().width
   let blankPagePosition: `none` | `before` | `after` = `none`
-  const itemStartOnNewScreen =
+  const isScreenStartItem =
     horizontalOffset % context.state.visibleAreaRect.width === 0
   const isLastItem = index === spineItemsManager.items.length - 1
 
@@ -64,20 +64,20 @@ export const layoutItem = ({
       !isGloballyPrePaginated &&
       item.renditionLayout === `reflowable` &&
       isLastItem &&
-      itemStartOnNewScreen
+      isScreenStartItem
     ) {
       minimumWidth = context.getPageSize().width * 2
     }
 
     const lastItemStartOnNewScreenInAPrepaginatedBook =
-      itemStartOnNewScreen && isLastItem && isGloballyPrePaginated
+      isScreenStartItem && isLastItem && isGloballyPrePaginated
 
-    if (item.item.pageSpreadRight && itemStartOnNewScreen && !context.isRTL()) {
+    if (item.item.pageSpreadRight && isScreenStartItem && !context.isRTL()) {
       blankPagePosition = `before`
       minimumWidth = context.getPageSize().width * 2
     } else if (
       item.item.pageSpreadLeft &&
-      itemStartOnNewScreen &&
+      isScreenStartItem &&
       context.isRTL()
     ) {
       blankPagePosition = `before`
@@ -88,6 +88,7 @@ export const layoutItem = ({
       } else {
         blankPagePosition = `after`
       }
+
       minimumWidth = context.getPageSize().width * 2
     }
   }
@@ -99,7 +100,7 @@ export const layoutItem = ({
     minimumWidth,
     blankPagePosition,
     spreadPosition: context.state.isUsingSpreadMode
-      ? itemStartOnNewScreen
+      ? isScreenStartItem
         ? context.isRTL()
           ? `right`
           : `left`
@@ -112,10 +113,10 @@ export const layoutItem = ({
   return itemLayout$.pipe(
     map(({ width, height }) => {
       if (settings.values.computedPageTurnDirection === `vertical`) {
-        const currentValidEdgeYForVerticalPositioning = itemStartOnNewScreen
+        const currentValidEdgeYForVerticalPositioning = isScreenStartItem
           ? verticalOffset
           : verticalOffset - context.state.visibleAreaRect.height
-        const currentValidEdgeXForVerticalPositioning = itemStartOnNewScreen
+        const currentValidEdgeXForVerticalPositioning = isScreenStartItem
           ? 0
           : horizontalOffset
 

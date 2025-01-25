@@ -3,7 +3,7 @@ import { DocumentRenderer } from "../../spineItem/renderer/DocumentRenderer"
 
 export class ImageRenderer extends DocumentRenderer {
   private getImageElement() {
-    const element = this.layers[0]?.element
+    const element = this.documentContainer
 
     if (!(element instanceof HTMLImageElement)) return undefined
 
@@ -11,12 +11,11 @@ export class ImageRenderer extends DocumentRenderer {
   }
 
   onCreateDocument() {
+    const imgElement = this.containerElement.ownerDocument.createElement(`img`)
+
     return from(this.resourcesHandler.getResource()).pipe(
       switchMap((responseOrUrl) => {
-        const imgElement =
-          this.containerElement.ownerDocument.createElement(`img`)
-
-        this.layers = [{ element: imgElement }]
+        this.documentContainer = imgElement
 
         imgElement.style.objectFit = `contain`
         imgElement.style.userSelect = `none`
@@ -34,12 +33,14 @@ export class ImageRenderer extends DocumentRenderer {
 
         throw new Error(`Invalid resource`)
       }),
-      tap((src) => {
+      map((src) => {
         const element = this.getImageElement()
 
         if (element) {
           element.src = src
         }
+
+        return imgElement
       }),
     )
   }
@@ -49,7 +50,7 @@ export class ImageRenderer extends DocumentRenderer {
 
     if (!imageElement) throw new Error(`invalid element`)
 
-    this.containerElement.appendChild(imageElement)
+    this.attach()
 
     return fromEvent(imageElement, `load`)
   }
@@ -61,11 +62,7 @@ export class ImageRenderer extends DocumentRenderer {
       URL.revokeObjectURL(imageElement.src)
     }
 
-    this.layers.forEach(({ element }) => {
-      element.remove()
-    })
-
-    this.layers = []
+    this.detach()
 
     return EMPTY
   }

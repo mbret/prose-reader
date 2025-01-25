@@ -20,7 +20,7 @@ export type CoreHook =
       name: `item.onDocumentCreated`
       runFn: (params: {
         itemId: string
-        layers: { element: HTMLElement }[]
+        documentContainer: HTMLElement
       }) => Observable<void> | void
     }
   | {
@@ -36,7 +36,7 @@ export type CoreHook =
         destroy$: Observable<void>
         destroy: (fn: UserDestroyFn) => void
         itemId: string
-        layers: { element: HTMLElement }[]
+        documentContainer: HTMLElement
       }) => Observable<void> | void
     }
   | {

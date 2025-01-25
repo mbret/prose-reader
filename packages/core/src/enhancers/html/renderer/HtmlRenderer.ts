@@ -25,13 +25,9 @@ export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
     const frameElement = createFrameElement()
 
-    this.layers = [
-      {
-        element: frameElement,
-      },
-    ]
+    this.documentContainer = frameElement
 
-    return EMPTY
+    return of(frameElement)
   }
 
   onLoadDocument() {
@@ -46,8 +42,8 @@ export class HtmlRenderer extends DocumentRenderer {
         settings: this.settings,
       }),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      tap((frameElement) => {
-        this.containerElement.appendChild(frameElement)
+      tap(() => {
+        this.attach()
       }),
       waitForFrameLoad,
       loadAssets({
@@ -62,8 +58,7 @@ export class HtmlRenderer extends DocumentRenderer {
   onUnload() {
     unloadMedias(this.getFrameElement())
 
-    this.layers.forEach((layer) => layer.element.remove())
-    this.layers = []
+    this.detach()
 
     return EMPTY
   }
@@ -164,7 +159,7 @@ export class HtmlRenderer extends DocumentRenderer {
   }
 
   private getFrameElement() {
-    const frame = this.layers[0]?.element
+    const frame = this.documentContainer
 
     if (!(frame instanceof HTMLIFrameElement)) return
 

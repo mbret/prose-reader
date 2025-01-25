@@ -1,26 +1,26 @@
 import type { Reader } from "@prose-reader/core"
 import type { PDFPageProxy } from "pdfjs-dist"
 
-export const layoutLayers = (
-  layers: { element: HTMLElement }[],
+export const layoutContainer = (
+  container: HTMLElement | undefined,
   context: Reader["context"],
   spreadPosition: `none` | `left` | `right`,
 ) => {
+  if (!container) return
+
   // first we try to get the desired viewport for a confortable reading based on theh current page size
   const { height: pageHeight, width: pageWidth } = context.getPageSize()
 
-  layers.forEach(({ element }) => {
-    element.style.width = `${pageWidth}px`
-    element.style.height = `${pageHeight}px`
+  container.style.width = `${pageWidth}px`
+  container.style.height = `${pageHeight}px`
 
-    if (spreadPosition === `right`) {
-      element.style.justifyContent = `flex-start`
-    } else if (spreadPosition === `left`) {
-      element.style.justifyContent = `flex-end`
-    } else {
-      element.style.justifyContent = `center`
-    }
-  })
+  if (spreadPosition === `right`) {
+    container.style.justifyContent = `flex-start`
+  } else if (spreadPosition === `left`) {
+    container.style.justifyContent = `flex-end`
+  } else {
+    container.style.justifyContent = `center`
+  }
 }
 
 export const layoutCanvas = (
