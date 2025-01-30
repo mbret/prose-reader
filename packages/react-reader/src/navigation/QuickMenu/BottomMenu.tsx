@@ -5,9 +5,9 @@ import { IoMdArrowDown } from "react-icons/io"
 import { IoMdArrowUp } from "react-icons/io"
 import { Scrubber } from "./Scrubber"
 import { AppBar } from "../../common/AppBar"
-import { useReader } from "../useReader"
+import { useReader } from "../../context"
 import { useObserve } from "reactjrx"
-import { PaginationInfoSection } from "@prose-reader/react-reader"
+import { PaginationInfoSection } from "./PaginationInfoSection"
 
 export const BottomMenu = ({ open }: { open: boolean }) => {
   const { reader } = useReader()

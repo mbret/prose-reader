@@ -21,6 +21,7 @@ import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { MenuDialog } from "./navigation/MenuDialog"
 import { useAnnotations } from "./annotations/useAnnotations"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
+import { ReactReaderProvider } from "@prose-reader/react-reader"
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -64,15 +65,18 @@ export const ReaderScreen = memo(() => {
         {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
       </Box>
-      <QuickActionsMenu />
-      <QuickMenu />
-      <MenuDialog
-        localSettings={localSettings}
-        setLocalSettings={setLocalSettings}
-      />
-      <HighlightMenu />
-      <Bookmarks />
-      <Notification />
+      {/* not wrapping the reader within for now since hot reload break the reader container */}
+      <ReactReaderProvider reader={reader}>
+        <QuickActionsMenu />
+        <QuickMenu />
+        <MenuDialog
+          localSettings={localSettings}
+          setLocalSettings={setLocalSettings}
+        />
+        <HighlightMenu />
+        <Bookmarks />
+        <Notification />
+      </ReactReaderProvider>
     </>
   )
 })
