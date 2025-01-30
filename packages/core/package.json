@@ -12,9 +12,7 @@
   },
   "types": "./dist/index.d.ts",
   "license": "MIT",
-  "files": [
-    "/dist"
-  ],
+  "files": ["/dist"],
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc && vite build",
