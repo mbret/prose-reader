@@ -1,11 +1,5 @@
 import type { PaginationInfo } from "../../pagination/Pagination"
-import type { Reader } from "../../reader"
-import type { progressionEnhancer } from "../progression"
-import type { EnhancerOutput } from "../types/enhancer"
 import type { ChapterInfo } from "./chapters"
-
-export type ReaderWithProgression = Reader &
-  EnhancerOutput<typeof progressionEnhancer>
 
 export type ExtraPaginationInfo = {
   beginChapterInfo: ChapterInfo | undefined

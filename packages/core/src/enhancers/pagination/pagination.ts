@@ -3,7 +3,6 @@ import {
   type Observable,
   type ObservedValueOf,
   combineLatest,
-  combineLatestWith,
   distinctUntilChanged,
   map,
   of,
@@ -11,19 +10,16 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import { trackChapterInfo } from "./chapters"
-import type {
-  EnhancerPaginationInto,
-  ExtraPaginationInfo,
-  ReaderWithProgression,
-} from "./types"
-import { isShallowEqual } from "../../utils/objects"
-import { trackTotalPages } from "./spine"
 import type { PaginationInfo } from "../../pagination/Pagination"
-import { Reader } from "../../reader"
+import type { Reader } from "../../reader"
+import { isShallowEqual } from "../../utils/objects"
+import { trackChapterInfo } from "./chapters"
+import { getPercentageEstimate } from "./progression"
+import { trackTotalPages } from "./spine"
+import type { EnhancerPaginationInto, ExtraPaginationInfo } from "./types"
 
 export const mapPaginationInfoToExtendedInfo = (
-  reader: ReaderWithProgression,
+  reader: Reader,
   paginationInfo: PaginationInfo,
   chaptersInfo: ObservedValueOf<ReturnType<typeof trackChapterInfo>>,
   percentageEstimateOfBook: number,
@@ -77,7 +73,7 @@ export const mapPaginationInfoToExtendedInfo = (
   })
 }
 
-const observeProgression = (reader: ReaderWithProgression) => {
+const observeProgression = (reader: Reader) => {
   return combineLatest([
     reader.pagination.state$,
     // Usually pagination change if layout changes (number of pages) however it is especially
@@ -92,10 +88,9 @@ const observeProgression = (reader: ReaderWithProgression) => {
           : undefined
 
       return endItem
-        ? reader.progression.getPercentageEstimate(
-            reader.context,
+        ? getPercentageEstimate(
+            reader,
             paginationInfo.endSpineItemIndex ?? 0,
-            paginationInfo.endNumberOfPagesInSpineItem,
             paginationInfo.endPageIndexInSpineItem || 0,
             reader.navigation.getNavigation().position,
             endItem,
@@ -105,7 +100,7 @@ const observeProgression = (reader: ReaderWithProgression) => {
   )
 }
 
-export const trackPaginationInfo = (reader: ReaderWithProgression) => {
+export const trackPaginationInfo = (reader: Reader) => {
   const chaptersInfo$ = trackChapterInfo(reader)
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({

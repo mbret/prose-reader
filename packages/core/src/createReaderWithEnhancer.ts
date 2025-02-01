@@ -1,23 +1,22 @@
+import { accessibilityEnhancer } from "./enhancers/accessibility"
 import { chromeEnhancer } from "./enhancers/chrome"
+import { eventsEnhancer } from "./enhancers/events/events"
 import { fontsEnhancer } from "./enhancers/fonts/fonts"
 import { hotkeysEnhancer } from "./enhancers/hotkeys"
+import { htmlEnhancer } from "./enhancers/html/enhancer"
 import { layoutEnhancer } from "./enhancers/layoutEnhancer/layoutEnhancer"
 import { linksEnhancer } from "./enhancers/links"
+import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
+import { mediaEnhancer } from "./enhancers/media/media"
 import { navigationEnhancer } from "./enhancers/navigation"
 import { paginationEnhancer } from "./enhancers/pagination/enhancer"
+import { resourcesEnhancer } from "./enhancers/resources"
+import { selectionEnhancer } from "./enhancers/selection/selectionEnhancer"
 import { themeEnhancer } from "./enhancers/theme"
+import { utilsEnhancer } from "./enhancers/utils"
+import { webkitEnhancer } from "./enhancers/webkit"
 import { zoomEnhancer } from "./enhancers/zoom"
 import { createReader as createInternalReader } from "./reader"
-import { utilsEnhancer } from "./enhancers/utils"
-import { resourcesEnhancer } from "./enhancers/resources"
-import { mediaEnhancer } from "./enhancers/media/media"
-import { progressionEnhancer } from "./enhancers/progression"
-import { accessibilityEnhancer } from "./enhancers/accessibility"
-import { webkitEnhancer } from "./enhancers/webkit"
-import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
-import { eventsEnhancer } from "./enhancers/events/events"
-import { htmlEnhancer } from "./enhancers/html/enhancer"
-import { selectionEnhancer } from "./enhancers/selection/selectionEnhancer"
 
 export const createReaderWithEnhancers = //__
   selectionEnhancer(
@@ -36,12 +35,10 @@ export const createReaderWithEnhancers = //__
                             navigationEnhancer(
                               themeEnhancer(
                                 paginationEnhancer(
-                                  progressionEnhancer(
-                                    eventsEnhancer(
-                                      htmlEnhancer(
-                                        // __
-                                        createInternalReader,
-                                      ),
+                                  eventsEnhancer(
+                                    htmlEnhancer(
+                                      // __
+                                      createInternalReader,
                                     ),
                                   ),
                                 ),

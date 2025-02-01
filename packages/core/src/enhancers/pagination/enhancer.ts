@@ -1,18 +1,15 @@
 import { type Observable, takeUntil } from "rxjs"
-import type { progressionEnhancer } from "../progression"
-import { Report } from "../../report"
-import type { EnhancerOutput } from "../types/enhancer"
 import type { PaginationInfo } from "../../pagination/Pagination"
-import type { ExtraPaginationInfo } from "./types"
-import { trackPaginationInfo } from "./pagination"
+import { Report } from "../../report"
+import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { NAMESPACE } from "./constants"
 import {
   type ConsolidatedResource,
-  createLocator,
   type LocatableResource,
+  createLocator,
 } from "./locate"
-
-type ProgressionEnhancer = typeof progressionEnhancer
+import { trackPaginationInfo } from "./pagination"
+import type { ExtraPaginationInfo } from "./types"
 
 const report = Report.namespace(NAMESPACE)
 
@@ -21,7 +18,7 @@ void report
 export const paginationEnhancer =
   <
     InheritOptions,
-    InheritOutput extends EnhancerOutput<ProgressionEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer>,
     PaginationOutput extends Omit<
       InheritOutput["pagination"],
       "state$" | "state"

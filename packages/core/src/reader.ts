@@ -1,32 +1,32 @@
-import { BehaviorSubject, merge, type ObservedValueOf, Subject } from "rxjs"
-import { Report } from "./report"
-import { Context, type ContextState } from "./context/Context"
-import { Pagination } from "./pagination/Pagination"
-import { HTML_PREFIX } from "./constants"
+import { BehaviorSubject, type ObservedValueOf, Subject, merge } from "rxjs"
 import {
-  takeUntil,
   distinctUntilChanged,
-  withLatestFrom,
-  map,
   filter,
+  map,
+  takeUntil,
+  withLatestFrom,
 } from "rxjs/operators"
-import { isShallowEqual } from "./utils/objects"
+import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
+import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
+import { generateCfiFromSelection } from "./cfi/generate/generateCfiFronSelection"
+import { parseCfi } from "./cfi/lookup/parseCfi"
+import { resolveCfi } from "./cfi/lookup/resolveCfi"
+import { HTML_PREFIX } from "./constants"
+import { Context, type ContextState } from "./context/Context"
+import { HookManager } from "./hooks/HookManager"
 import { createNavigator } from "./navigation/Navigator"
+import { Pagination } from "./pagination/Pagination"
+import { PaginationController } from "./pagination/PaginationController"
+import { Report } from "./report"
+import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
+import type { SettingsInterface } from "./settings/SettingsInterface"
+import type { CoreInputSettings } from "./settings/types"
+import { Spine } from "./spine/Spine"
+import { SpineItemsManager } from "./spine/SpineItemsManager"
+import type { SpineItem } from "./spineItem/SpineItem"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import { isDefined } from "./utils/isDefined"
-import { ReaderSettingsManager } from "./settings/ReaderSettingsManager"
-import { HookManager } from "./hooks/HookManager"
-import type { CoreInputSettings } from "./settings/types"
-import { PaginationController } from "./pagination/PaginationController"
-import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
-import { resolveCfi } from "./cfi/lookup/resolveCfi"
-import { SpineItemsManager } from "./spine/SpineItemsManager"
-import type { SettingsInterface } from "./settings/SettingsInterface"
-import { Spine } from "./spine/Spine"
-import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
-import type { SpineItem } from "./spineItem/SpineItem"
-import { parseCfi } from "./cfi/lookup/parseCfi"
-import { generateCfiFromSelection } from "./cfi/generate/generateCfiFronSelection"
+import { isShallowEqual } from "./utils/objects"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -289,6 +289,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     >,
     element$,
     layout$: spine.spineLayout.layout$,
+    layoutInfo$: spine.spineLayout.info$,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,
     /**

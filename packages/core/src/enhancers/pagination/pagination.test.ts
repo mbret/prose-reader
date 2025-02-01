@@ -2,9 +2,8 @@ import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
-import { paginationEnhancer } from "./enhancer"
-import { progressionEnhancer } from "../progression"
 import { navigationEnhancer } from "../navigation"
+import { paginationEnhancer } from "./enhancer"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -31,7 +30,7 @@ afterEach(() => {
 describe("Given a book with one chapter", () => {
   describe(`when we navigate to first page`, () => {
     it(`should return first chapter`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+      const reader = paginationEnhancer(createReader)({
         getResource: () => of(new Response("", { status: 200 })),
       })
 
@@ -82,9 +81,7 @@ describe("Given a book with one chapter", () => {
 
   describe("when we navigate to second page", () => {
     it(`should return first chapter`, async () => {
-      const reader = navigationEnhancer(
-        paginationEnhancer(progressionEnhancer(createReader)),
-      )({
+      const reader = navigationEnhancer(paginationEnhancer(createReader))({
         getResource: () => of(new Response("", { status: 200 })),
       })
 
@@ -148,9 +145,7 @@ describe("Given a book with one chapter", () => {
     describe(`when we are on first page`, () => {
       describe("and the first page is within firt chapter sub chapter", () => {
         it(`should return correct chapter with its subChapter info filled`, async () => {
-          const reader = navigationEnhancer(
-            paginationEnhancer(progressionEnhancer(createReader)),
-          )({
+          const reader = navigationEnhancer(paginationEnhancer(createReader))({
             getResource: () => of(new Response("", { status: 200 })),
           })
 
@@ -224,7 +219,7 @@ describe("Given a book with one chapter", () => {
 describe("Given a book with two chapters", () => {
   describe("when we navigate to the first page which is in first chapter", () => {
     it(`should return chapter 1`, async () => {
-      const reader = paginationEnhancer(progressionEnhancer(createReader))({
+      const reader = paginationEnhancer(createReader)({
         getResource: () => of(new Response("", { status: 200 })),
       })
 
