@@ -1,6 +1,6 @@
 import { useObserve } from "reactjrx"
+import { NEVER, combineLatest, map } from "rxjs"
 import { useReader } from "../context/useReader"
-import { combineLatest, map, NEVER } from "rxjs"
 
 export const usePagination = () => {
   const reader = useReader()
@@ -10,10 +10,16 @@ export const usePagination = () => {
       !reader
         ? NEVER
         : combineLatest([reader.pagination.state$, reader.context.state$]).pipe(
-            map(([state, context]) => ({
-              ...state,
-              hasChapters: !context.isFullyPrePaginated,
-            })),
+            map(([state, context]) => {
+              const isOnlyImages = context.manifest?.spineItems.every((item) =>
+                item.mediaType?.startsWith("image/"),
+              )
+
+              return {
+                ...state,
+                hasChapters: !context.isFullyPrePaginated && !isOnlyImages,
+              }
+            }),
           ),
     [reader],
   )

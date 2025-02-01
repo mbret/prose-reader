@@ -1,33 +1,21 @@
 import { HStack, Stack, Text } from "@chakra-ui/react"
-import { usePagination } from "../../pagination/usePagination"
 import {
   ProgressBar,
   ProgressRoot,
   ProgressValueText,
 } from "../../components/ui/progress"
+import { usePagination } from "../../pagination/usePagination"
+import { useNavigationContext } from "../useNavigationContext"
 
 export const PaginationInfoSection = () => {
   const pagination = usePagination()
-  const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
-  const beginPageIndex =
-    (pagination?.hasChapters
-      ? pagination?.beginPageIndexInSpineItem
-      : pagination?.beginAbsolutePageIndex) ?? 0
-  const endPageIndex =
-    (pagination?.hasChapters
-      ? pagination?.endPageIndexInSpineItem
-      : pagination?.endAbsolutePageIndex) ?? 0
-  const [leftPageIndex, rightPageIndex] = [beginPageIndex, endPageIndex].sort(
-    (a, b) => a - b,
-  )
-  const beginAndEndAreDifferent =
-    pagination?.beginPageIndexInSpineItem !==
-      pagination?.endPageIndexInSpineItem ||
-    pagination?.beginSpineItemIndex !== pagination?.endSpineItemIndex
-  const numberOfTotalPages = pagination?.hasChapters
-    ? pagination?.beginNumberOfPagesInSpineItem
-    : pagination?.numberOfTotalPages
-
+  const {
+    hasOnlyOnePage,
+    leftPageIndex,
+    rightPageIndex,
+    totalApproximatePages,
+    beginAndEndAreDifferent,
+  } = useNavigationContext()
   const progress = Math.round((pagination?.percentageEstimateOfBook ?? 0) * 100)
 
   const buildTitleChain = (
@@ -53,12 +41,21 @@ export const PaginationInfoSection = () => {
         {chapterTitle ? `Chapter: ${chapterTitle}` : `\u00A0`}
       </Text>
       {!hasOnlyOnePage && (
-        <Text>
-          {beginAndEndAreDifferent &&
-            `${leftPageIndex + 1} - ${rightPageIndex + 1} of ${numberOfTotalPages}`}
-          {!beginAndEndAreDifferent &&
-            `${leftPageIndex + 1} of ${numberOfTotalPages}`}
-        </Text>
+        <HStack>
+          <Text fontSize="sm">
+            {beginAndEndAreDifferent
+              ? `${leftPageIndex + 1} - ${rightPageIndex + 1} of ${totalApproximatePages}`
+              : `${leftPageIndex + 1} of ${totalApproximatePages}`}
+          </Text>
+          {!!pagination?.hasChapters && (
+            <>
+              <Text>-</Text>
+              <Text fontSize="sm">
+                ({(pagination?.beginAbsolutePageIndex ?? 0) + 1})
+              </Text>
+            </>
+          )}
+        </HStack>
       )}
     </Stack>
   )

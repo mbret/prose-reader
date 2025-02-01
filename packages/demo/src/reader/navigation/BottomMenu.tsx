@@ -1,13 +1,12 @@
 import { IconButton, Stack } from "@chakra-ui/react"
+import { PaginationInfoSection, Scrubber } from "@prose-reader/react-reader"
 import { IoMdArrowRoundBack } from "react-icons/io"
 import { IoMdArrowRoundForward } from "react-icons/io"
 import { IoMdArrowDown } from "react-icons/io"
 import { IoMdArrowUp } from "react-icons/io"
-import { Scrubber } from "./Scrubber"
+import { useObserve } from "reactjrx"
 import { AppBar } from "../../common/AppBar"
 import { useReader } from "../useReader"
-import { useObserve } from "reactjrx"
-import { PaginationInfoSection } from "@prose-reader/react-reader"
 
 export const BottomMenu = ({ open }: { open: boolean }) => {
   const { reader } = useReader()

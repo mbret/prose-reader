@@ -21,7 +21,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "~5.6.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "rollup-plugin-node-externals": "^8.0.0"
   },
   "peerDependencies": {
     "@chakra-ui/react": "3.x",
@@ -29,10 +30,8 @@
     "@prose-reader/core": "^1.169.0",
     "react": "19.x",
     "react-dom": "19.x",
-    "reactjrx": "1.x"
-  },
-  "dependencies": {
-    "react-icons": "^5.4.0",
-    "rollup-plugin-node-externals": "^8.0.0"
+    "reactjrx": "1.x",
+    "rc-slider": "11.1.x",
+    "react-icons": "5.x"
   }
 }
