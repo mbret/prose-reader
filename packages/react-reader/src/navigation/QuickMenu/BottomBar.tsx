@@ -1,4 +1,4 @@
-import { Box, IconButton, Presence, Stack } from "@chakra-ui/react"
+import { Box, IconButton, Stack } from "@chakra-ui/react"
 import {
   RxDoubleArrowDown,
   RxDoubleArrowLeft,
@@ -8,6 +8,7 @@ import {
 import { useObserve } from "reactjrx"
 import { useReader } from "../../context/useReader"
 import { PaginationInfoSection } from "./PaginationInfoSection"
+import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
 import { TimeIndicator } from "./TimeIndicator"
 
@@ -18,26 +19,7 @@ export const BottomBar = ({ open }: { open: boolean }) => {
   const isVerticalDirection = settings?.computedPageTurnDirection === "vertical"
 
   return (
-    <Presence
-      display="flex"
-      flexDirection="row"
-      present={open}
-      animationName={{
-        _open: "slide-from-bottom, fade-in",
-        _closed: "slide-to-bottom, fade-out",
-      }}
-      animationDuration="moderate"
-      position="absolute"
-      bottom={0}
-      left={0}
-      right={0}
-      bgColor="bg.panel"
-      alignItems="center"
-      justifyContent="center"
-      shadow="md"
-      height={130}
-      px={4}
-    >
+    <QuickBar present={open} position="bottom" height={130}>
       <IconButton
         aria-label="left"
         size="lg"
@@ -53,7 +35,7 @@ export const BottomBar = ({ open }: { open: boolean }) => {
       <Stack
         flex={1}
         maxW={400}
-        gap={1}
+        gap={2}
         alignItems="center"
         overflow="auto"
         px={4}
@@ -78,6 +60,6 @@ export const BottomBar = ({ open }: { open: boolean }) => {
         {isVerticalDirection ? <RxDoubleArrowDown /> : <RxDoubleArrowRight />}
       </IconButton>
       <TimeIndicator position="absolute" bottom={0} left={0} p={2} />
-    </Presence>
+    </QuickBar>
   )
 }

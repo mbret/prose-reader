@@ -1,27 +1,26 @@
-import { memo, useEffect, useRef } from "react"
-import { useManifest } from "./useManifest"
-import { useParams } from "react-router"
-import { useResetStateOnUnMount } from "./states"
-import { HighlightMenu } from "./annotations/HighlightMenu"
-import { Bookmarks } from "./bookmarks/Bookmarks"
-import { Notification } from "./notifications/Notification"
-import { useCreateReader } from "./useCreateReader"
-import { useGestureHandler } from "./gestures/useGestureHandler"
 import { Box } from "@chakra-ui/react"
+import { QuickMenu, ReactReaderProvider } from "@prose-reader/react-reader"
+import { memo, useEffect, useRef } from "react"
+import { useNavigate, useParams } from "react-router"
+import { useObserve, useSignalValue } from "reactjrx"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
-import { useReader } from "./useReader"
-import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
-import { useLocalSettings } from "./settings/useLocalSettings"
-import { useBookmarks } from "./bookmarks/useBookmarks"
-import { QuickMenu } from "./navigation/QuickMenu"
-import { useObserve } from "reactjrx"
-import { useLinks } from "./links/useLinks"
-import { usePersistCurrentPagination } from "./usePersistCurrentPage"
-import { MenuDialog } from "./navigation/MenuDialog"
+import { HighlightMenu } from "./annotations/HighlightMenu"
 import { useAnnotations } from "./annotations/useAnnotations"
+import { Bookmarks } from "./bookmarks/Bookmarks"
+import { useBookmarks } from "./bookmarks/useBookmarks"
+import { useGestureHandler } from "./gestures/useGestureHandler"
+import { useLinks } from "./links/useLinks"
+import { MenuDialog, isMenuOpenSignal } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
-import { ReactReaderProvider } from "@prose-reader/react-reader"
+import { Notification } from "./notifications/Notification"
+import { useLocalSettings } from "./settings/useLocalSettings"
+import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
+import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
+import { useCreateReader } from "./useCreateReader"
+import { useManifest } from "./useManifest"
+import { usePersistCurrentPagination } from "./usePersistCurrentPage"
+import { useReader } from "./useReader"
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -32,6 +31,8 @@ export const ReaderScreen = memo(() => {
     enablePan: true,
   })
   const bookState = useObserve(() => reader?.state$, [reader])
+  const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
+  const navigate = useNavigate()
 
   useCreateReader()
 
@@ -68,7 +69,22 @@ export const ReaderScreen = memo(() => {
       {/* not wrapping the reader within for now since hot reload break the reader container */}
       <ReactReaderProvider reader={reader}>
         <QuickActionsMenu />
-        <QuickMenu />
+        <QuickMenu
+          open={isQuickMenuOpen}
+          onMoreClick={() => {
+            isMenuOpenSignal.setValue(true)
+          }}
+          onBackClick={() => {
+            if (
+              window.history.state === null &&
+              window.location.pathname !== `/`
+            ) {
+              navigate(`/`)
+            } else {
+              navigate(-1)
+            }
+          }}
+        />
         <MenuDialog
           localSettings={localSettings}
           setLocalSettings={setLocalSettings}

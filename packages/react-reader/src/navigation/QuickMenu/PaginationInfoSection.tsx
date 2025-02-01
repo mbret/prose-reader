@@ -30,7 +30,7 @@ export const PaginationInfoSection = () => {
   const chapterTitle = buildTitleChain(pagination?.beginChapterInfo)
 
   return (
-    <Stack alignItems="center" gap={0} maxW="100%" overflow="auto">
+    <Stack alignItems="center" gap={1} maxW="100%" overflow="auto">
       <ProgressRoot value={progress} size="xs" width={150}>
         <HStack justifyContent="space-between">
           <ProgressBar width={110} />
