@@ -1,14 +1,15 @@
-import { memo } from "react"
-import { useNavigate } from "react-router"
 import { Box, IconButton, Stack } from "@chakra-ui/react"
-import { AppBar } from "../../common/AppBar"
-import { useReader } from "../useReader"
+import { BottomBar } from "@prose-reader/react-reader"
+import { memo } from "react"
+import { GiHamburgerMenu } from "react-icons/gi"
+import { IoMdArrowRoundBack } from "react-icons/io"
+import { useNavigate } from "react-router"
 import { useObserve, useSignalValue } from "reactjrx"
+import { AppBar } from "../../common/AppBar"
+import { isQuickMenuOpenSignal } from "../states"
+import { useReader } from "../useReader"
 import { BottomMenu } from "./BottomMenu"
 import { isMenuOpenSignal } from "./MenuDialog"
-import { isQuickMenuOpenSignal } from "../states"
-import { IoMdArrowRoundBack } from "react-icons/io"
-import { GiHamburgerMenu } from "react-icons/gi"
 
 export const QuickMenu = memo(() => {
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
@@ -62,7 +63,7 @@ export const QuickMenu = memo(() => {
           }
         />
       )}
-      <BottomMenu open={isQuickMenuOpen} />
+      <BottomBar open={isQuickMenuOpen} />
     </>
   )
 })

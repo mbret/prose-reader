@@ -30,19 +30,19 @@ export const PaginationInfoSection = () => {
   const chapterTitle = buildTitleChain(pagination?.beginChapterInfo)
 
   return (
-    <Stack alignItems="center">
+    <Stack alignItems="center" gap={0} maxW="100%" overflow="auto">
       <ProgressRoot value={progress} size="xs" width={150}>
         <HStack justifyContent="space-between">
           <ProgressBar width={110} />
           <ProgressValueText>{`${progress}%`}</ProgressValueText>
         </HStack>
       </ProgressRoot>
-      <Text truncate maxWidth="100%">
+      <Text truncate maxWidth="100%" fontSize="sm" mt={1}>
         {chapterTitle ? `Chapter: ${chapterTitle}` : `\u00A0`}
       </Text>
       {!hasOnlyOnePage && (
         <HStack>
-          <Text fontSize="sm">
+          <Text fontSize="xs">
             {beginAndEndAreDifferent
               ? `${leftPageIndex + 1} - ${rightPageIndex + 1} of ${totalApproximatePages}`
               : `${leftPageIndex + 1} of ${totalApproximatePages}`}
@@ -50,7 +50,7 @@ export const PaginationInfoSection = () => {
           {!!pagination?.hasChapters && (
             <>
               <Text>-</Text>
-              <Text fontSize="sm">
+              <Text fontSize="xs">
                 ({(pagination?.beginAbsolutePageIndex ?? 0) + 1})
               </Text>
             </>

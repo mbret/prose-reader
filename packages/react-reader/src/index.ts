@@ -1,4 +1,2 @@
-export * from "./navigation/QuickMenu/QuickMenu"
-export * from "./navigation/QuickMenu/PaginationInfoSection"
-export * from "./navigation/QuickMenu/Scrubber"
+export * from "./navigation/QuickMenu/BottomBar"
 export * from "./context/ReactReaderProvider"
