@@ -1,15 +1,15 @@
 import { BehaviorSubject, switchMap } from "rxjs"
 import type { Reader } from "../../reader"
 import { ControllableZoomer } from "./ControllableZoomer"
-import type { EnhancerApi } from "./types"
 import { ScrollableZoomer } from "./ScrollableZoomer"
 import type { Zoomer } from "./Zoomer"
+import type { ZoomEnhancerOutput } from "./types"
 
 export const zoomEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions): InheritOutput & EnhancerApi => {
+  (options: InheritOptions): InheritOutput & ZoomEnhancerOutput => {
     const reader = next(options)
     const controllableZoomer = new ControllableZoomer(reader)
     const scrollableZoomer = new ScrollableZoomer(reader)

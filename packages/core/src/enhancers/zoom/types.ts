@@ -1,6 +1,6 @@
 import type { Observable } from "rxjs"
 
-export type EnhancerApi = {
+export type ZoomEnhancerOutput = {
   zoom: {
     enter: (imgElement?: HTMLImageElement) => void
     exit: () => void
