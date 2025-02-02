@@ -7,6 +7,7 @@
   "exports": {
     ".": "./dist/index.js"
   },
+  "files": ["/dist"],
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc -b && vite build"
