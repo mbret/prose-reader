@@ -1,8 +1,11 @@
+import type { Reader } from "@prose-reader/core"
 import { useObserve } from "reactjrx"
 import { NEVER, combineLatest, map } from "rxjs"
 import { useReader } from "../context/useReader"
 
-export const usePagination = () => {
+export const usePagination = ():
+  | (Reader["pagination"]["state"] & { hasChapters: boolean })
+  | undefined => {
   const reader = useReader()
 
   return useObserve(

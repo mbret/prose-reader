@@ -1,4 +1,6 @@
 import type { Reader } from "@prose-reader/core"
-import { createContext } from "react"
+import { type Context, createContext } from "react"
 
-export const ReaderContext = createContext<Reader | undefined>(undefined)
+export const ReaderContext: Context<Reader | undefined> = createContext<
+  Reader | undefined
+>(undefined)

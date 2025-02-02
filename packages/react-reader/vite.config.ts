@@ -1,8 +1,8 @@
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
 import { resolve } from "node:path"
-import dts from "vite-plugin-dts"
+import react from "@vitejs/plugin-react"
 import externals from "rollup-plugin-node-externals"
+import { defineConfig } from "vite"
+import dts from "vite-plugin-dts"
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => ({
     react(),
     dts({
       tsconfigPath: "./tsconfig.app.json",
-      entryRoot: "src",
     }),
   ],
 }))
