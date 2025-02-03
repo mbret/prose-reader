@@ -48,7 +48,7 @@ export const Scrubber = () => {
   const isScrubberWithinChapter = isBeginWithinChapter
   const { value, valueSignal, min, max } = useSliderValues()
 
-  const onChange: NonNullable<ComponentProps<typeof RcSlider>["onChange"]> =
+  const onChange: NonNullable<ComponentProps<typeof ThemedSlider>["onChange"]> =
     useCallback(
       (values) => {
         const [value = 0] = Array.isArray(values) ? values : [values]
