@@ -1,10 +1,9 @@
-import RcSlider from "rc-slider"
 import { type ComponentProps, useCallback, useEffect } from "react"
 import { useObserve, useSignal, useSubscribe } from "reactjrx"
 import { useReader } from "../../context/useReader"
 import { usePagination } from "../../pagination/usePagination"
-import "rc-slider/assets/index.css"
 import { useNavigationContext } from "../useNavigationContext"
+import { ThemedSlider } from "./ThemedSlider"
 
 const useSliderValues = () => {
   const pagination = usePagination()
@@ -111,7 +110,7 @@ export const Scrubber = () => {
   // if (reverse) return null
 
   return (
-    <RcSlider
+    <ThemedSlider
       value={[value]}
       max={max}
       min={min}

@@ -37,7 +37,7 @@ export const BottomBar = ({ open }: { open: boolean }) => {
         maxW={400}
         gap={2}
         alignItems="center"
-        overflow="auto"
+        overflow="visible"
         px={4}
       >
         <PaginationInfoSection />
