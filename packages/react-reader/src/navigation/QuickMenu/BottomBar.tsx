@@ -10,7 +10,6 @@ import { useReader } from "../../context/useReader"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
-import { TimeIndicator } from "./TimeIndicator"
 
 export const BottomBar = ({ open }: { open: boolean }) => {
   const reader = useReader()
@@ -59,7 +58,6 @@ export const BottomBar = ({ open }: { open: boolean }) => {
       >
         {isVerticalDirection ? <RxDoubleArrowDown /> : <RxDoubleArrowRight />}
       </IconButton>
-      <TimeIndicator position="absolute" bottom={0} left={0} p={2} />
     </QuickBar>
   )
 }

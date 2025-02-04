@@ -1,5 +1,9 @@
 import { Box } from "@chakra-ui/react"
-import { QuickMenu, ReactReaderProvider } from "@prose-reader/react-reader"
+import {
+  QuickMenu,
+  ReactReader,
+  ReactReaderProvider,
+} from "@prose-reader/react-reader"
 import { memo, useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useObserve, useSignalValue } from "reactjrx"
@@ -69,7 +73,7 @@ export const ReaderScreen = memo(() => {
       {/* not wrapping the reader within for now since hot reload break the reader container */}
       <ReactReaderProvider reader={reader}>
         <QuickActionsMenu />
-        <QuickMenu
+        <ReactReader
           open={isQuickMenuOpen}
           onMoreClick={() => {
             isMenuOpenSignal.setValue(true)
