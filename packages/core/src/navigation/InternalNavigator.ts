@@ -17,30 +17,30 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
+import type { Context } from "../context/Context"
+import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { Spine } from "../spine/Spine"
+import type { UnsafeSpineItemPosition } from "../spineItem/types"
+import { DestroyableClass } from "../utils/DestroyableClass"
+import { isShallowEqual } from "../utils/objects"
+import { Locker } from "./Locker"
 import type { UserNavigationEntry } from "./UserNavigator"
+import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
+import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
+import { withCfiPosition } from "./consolidation/withCfiPosition"
+import { withDirection } from "./consolidation/withDirection"
+import { withFallbackPosition } from "./consolidation/withFallbackPosition"
+import { withSpineItem } from "./consolidation/withSpineItem"
+import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
+import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
+import { withUrlInfo } from "./consolidation/withUrlInfo"
+import type { createNavigationResolver } from "./resolvers/NavigationResolver"
+import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
   ViewportNavigator,
   ViewportPosition,
 } from "./viewport/ViewportNavigator"
-import type { createNavigationResolver } from "./resolvers/NavigationResolver"
-import { isShallowEqual } from "../utils/objects"
-import { Report } from "../report"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { Context } from "../context/Context"
-import { withRestoredPosition } from "./restoration/withRestoredPosition"
-import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
-import { withDirection } from "./consolidation/withDirection"
-import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
-import { withFallbackPosition } from "./consolidation/withFallbackPosition"
-import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
-import { withUrlInfo } from "./consolidation/withUrlInfo"
-import type { UnsafeSpineItemPosition } from "../spineItem/types"
-import { withCfiPosition } from "./consolidation/withCfiPosition"
-import { withSpineItem } from "./consolidation/withSpineItem"
-import { Locker } from "./Locker"
-import type { Spine } from "../spine/Spine"
-import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
@@ -51,6 +51,7 @@ export type NavigationConsolidation = {
   spineItemWidth?: number
   spineItemTop?: number
   spineItemLeft?: number
+  spineItemIsReady?: boolean
   spineItemIsUsingVerticalWriting?: boolean
   paginationBeginCfi?: string
   /**
@@ -119,6 +120,7 @@ export class InternalNavigator extends DestroyableClass {
     meta: {
       triggeredBy: "user",
     },
+    spineItemIsReady: false,
     type: "api",
     id: Symbol(),
   })
@@ -154,11 +156,6 @@ export class InternalNavigator extends DestroyableClass {
     protected isUserLocked$: Observable<boolean>,
   ) {
     super()
-
-    const layoutHasChanged$ = merge(
-      viewportController.layout$,
-      spine.spineLayout.layout$.pipe(filter(({ hasChanged }) => hasChanged)),
-    )
 
     const navigationFromUser$ = userNavigation$
       .pipe(
@@ -269,7 +266,10 @@ export class InternalNavigator extends DestroyableClass {
      * directly to new position. NO layout should happens during viewport busy.
      * This is responsability of other components.
      */
-    const navigationUpateFromLayout$ = layoutHasChanged$.pipe(
+    const navigationUpateFromLayout$ = merge(
+      viewportController.layout$,
+      spine.spineLayout.layout$,
+    ).pipe(
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>

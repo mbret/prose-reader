@@ -1,10 +1,10 @@
-import { map, type Observable } from "rxjs"
-import type { InternalNavigationEntry } from "../InternalNavigator"
-import { restorePosition } from "./restorePosition"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import { type Observable, map, switchMap } from "rxjs"
 import type { Context } from "../../context/Context"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
+import type { InternalNavigationEntry } from "../InternalNavigator"
+import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import { restorePosition } from "./restorePosition"
 
 type Navigation = {
   navigation: InternalNavigationEntry
@@ -24,20 +24,24 @@ export const withRestoredPosition =
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> =>
     stream.pipe(
-      map((params) => ({
-        ...params,
-        navigation: {
-          ...params.navigation,
-          position: restorePosition({
-            spineLocator: spine.locator,
-            navigation: params.navigation,
-            navigationResolver,
-            settings,
-            spineItemsManager: spine.spineItemsManager,
-            spineItemLocator: spine.locator.spineItemLocator,
-            context,
-            spineLayout: spine.spineLayout,
-          }),
-        },
-      })),
+      switchMap((params) => {
+        return restorePosition({
+          spineLocator: spine.locator,
+          navigation: params.navigation,
+          navigationResolver,
+          settings,
+          spineItemsManager: spine.spineItemsManager,
+          spineItemLocator: spine.locator.spineItemLocator,
+          context,
+          spineLayout: spine.spineLayout,
+        }).pipe(
+          map((restoredPosition) => ({
+            ...params,
+            navigation: {
+              ...params.navigation,
+              position: restoredPosition,
+            },
+          })),
+        )
+      }),
     )

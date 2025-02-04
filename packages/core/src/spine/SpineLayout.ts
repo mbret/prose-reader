@@ -1,5 +1,7 @@
 import {
   BehaviorSubject,
+  type Observable,
+  Subject,
   concatMap,
   debounceTime,
   exhaustMap,
@@ -9,29 +11,27 @@ import {
   from,
   map,
   merge,
-  type Observable,
   of,
   reduce,
   share,
   shareReplay,
-  Subject,
   switchMap,
   takeUntil,
   tap,
 } from "rxjs"
 import type { Context } from "../context/Context"
+import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { SpineItemsManager } from "./SpineItemsManager"
-import { isShallowEqual } from "../utils/objects"
-import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
-import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
-import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
-import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import type { SpineItem } from "../spineItem/SpineItem"
+import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
+import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
+import { DestroyableClass } from "../utils/DestroyableClass"
+import { isShallowEqual } from "../utils/objects"
+import type { SpineItemsManager } from "./SpineItemsManager"
+import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import { layoutItem } from "./layout/layoutItem"
-import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
+import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
 
 const NAMESPACE = `SpineLayout`
 
@@ -54,10 +54,25 @@ export type PageLayoutInformation = {
 }
 
 export type LayoutInfo = {
-  hasChanged: boolean
   spineItemsAbsolutePositions: LayoutPosition[]
   spineItemsPagesAbsolutePositions: LayoutPosition[][]
   pages: PageLayoutInformation[]
+}
+
+export type Layout = LayoutInfo & {
+  /**
+   * @important
+   * Tells you whether the layout has changed since the last layout.
+   * This is only regarding positioning and dimensions of each spine items.
+   *
+   * Things like the actual DOM content and their inner layout are not taken
+   * into consideration. This means that you should not rely on this if your
+   * manipulation involve DOM content (eg: cfi resolving).
+   *
+   * This is however a good way to optimize your code if you only care about
+   * global dimensions, absolute pages, etc.
+   */
+  hasChanged: boolean
 }
 
 export class SpineLayout extends DestroyableClass {
@@ -74,7 +89,8 @@ export class SpineLayout extends DestroyableClass {
   /**
    * Emit layout info after each layout is done.
    */
-  public readonly layout$: Observable<LayoutInfo>
+  public readonly layout$: Observable<Layout>
+
   /**
    * Emit current layout information on subscription.
    */

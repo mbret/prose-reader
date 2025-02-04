@@ -1,9 +1,9 @@
-import { map, type Observable } from "rxjs"
+import { type Observable, first, map, of, switchMap } from "rxjs"
+import type { Spine } from "../../spine/Spine"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import type { Spine } from "../../spine/Spine"
 
 type Navigation = {
   navigation: InternalNavigationInput | InternalNavigationEntry
@@ -13,24 +13,31 @@ export const withSpineItemLayoutInfo =
   ({ spine }: { spine: Spine }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
-      map(({ navigation, ...rest }) => {
+      switchMap(({ navigation, ...rest }) => {
         const spineItemDimensions = spine.spineLayout.getAbsolutePositionOf(
           navigation.spineItem,
         )
         const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
-        return {
-          navigation: {
-            ...navigation,
-            spineItemHeight: spineItemDimensions?.height,
-            spineItemWidth: spineItemDimensions?.width,
-            spineItemLeft: spineItemDimensions.left,
-            spineItemTop: spineItemDimensions.top,
-            spineItemIsUsingVerticalWriting:
-              spineItem?.isUsingVerticalWriting(),
-          },
-          ...rest,
-        } as N
+        return (spineItem?.isReady$ ?? of(false)).pipe(
+          first(),
+          map(
+            (isReady) =>
+              ({
+                navigation: {
+                  ...navigation,
+                  spineItemHeight: spineItemDimensions?.height,
+                  spineItemWidth: spineItemDimensions?.width,
+                  spineItemLeft: spineItemDimensions.left,
+                  spineItemTop: spineItemDimensions.top,
+                  spineItemIsUsingVerticalWriting:
+                    spineItem?.isUsingVerticalWriting(),
+                  spineItemIsReady: isReady,
+                },
+                ...rest,
+              }) as N,
+          ),
+        )
       }),
     )
   }

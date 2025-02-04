@@ -1,13 +1,13 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { EMPTY, from, map, of, switchMap, tap } from "rxjs"
-import { createFrameElement } from "./createFrameElement"
-import { attachFrameSrc } from "./attachFrameSrc"
-import { waitForSwitch } from "../../../utils/rxjs"
+import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
+import { waitForSwitch } from "../../../utils/rxjs"
+import { loadAssets, unloadAssets } from "./assets"
+import { attachFrameSrc } from "./attachFrameSrc"
+import { createFrameElement } from "./createFrameElement"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
-import { loadAssets, unloadMedias } from "./assets"
 
 export class HtmlRenderer extends DocumentRenderer {
   /**
@@ -56,7 +56,7 @@ export class HtmlRenderer extends DocumentRenderer {
   }
 
   onUnload() {
-    unloadMedias(this.getFrameElement())
+    unloadAssets(this.getFrameElement())
 
     this.detach()
 

@@ -325,3 +325,63 @@ export const isTouchEvent = (event: Event): event is TouchEvent => {
 }
 
 export const noopElement = () => document.createElement("div")
+
+export const getElementsWithAssets = (
+  _document: Document | null | undefined,
+) => {
+  const RESOURCE_ELEMENTS = [
+    "img", // Images
+    "video", // Video files
+    "audio", // Audio files
+    "source", // Source elements within video/audio
+    "link", // Stylesheets and other linked resources
+    "script", // JavaScript files
+  ].join(",")
+
+  return Array.from(_document?.querySelectorAll(RESOURCE_ELEMENTS) || [])
+}
+
+/**
+ * Revoke all found blob urls in the document
+ * - elements with src or href attribute
+ * - stylesheet font-face rules
+ */
+export const revokeDocumentBlobs = (_document: Document | null | undefined) => {
+  const elementsWithAsset = getElementsWithAssets(_document)
+
+  elementsWithAsset.forEach((element) => {
+    const url = element.getAttribute("src") || element.getAttribute("href")
+
+    if (url?.startsWith("blob:")) {
+      _document?.defaultView?.URL.revokeObjectURL(url)
+    }
+  })
+
+  if (_document) {
+    const styleSheets = Array.from(_document.styleSheets || [])
+
+    for (const sheet of styleSheets) {
+      const rules = Array.from(sheet.cssRules || [])
+
+      for (const rule of rules) {
+        if (
+          _document.defaultView &&
+          rule instanceof _document.defaultView.CSSFontFaceRule
+        ) {
+          // eg:
+          // 'url("font.woff2") format("woff2"), url("font.woff") format("woff"), url(blob:http://example.com/1234) format("opentype")'
+          // 'url(blob:http://example.com/1234)'
+          const src = rule.style.getPropertyValue("src")
+          // handle multiple comma-separated sources
+          const blobUrls = src.match(/blob:[^,\s'")]+/g)
+
+          if (blobUrls) {
+            blobUrls.forEach((url) => {
+              _document?.defaultView?.URL.revokeObjectURL(url)
+            })
+          }
+        }
+      }
+    }
+  }
+}

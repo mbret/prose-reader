@@ -1,13 +1,14 @@
+import { type Observable, of } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
-import type { SpineLayout } from "../../spine/SpineLayout"
 
 const restoreNavigationForScrollingPageTurnMode = ({
   navigation,
@@ -205,16 +206,18 @@ export const restorePosition = ({
   spineItemLocator: SpineItemLocator
   context: Context
   spineLayout: SpineLayout
-}): ViewportPosition => {
+}): Observable<ViewportPosition> => {
   if (settings.values.computedPageTurnMode === "scrollable") {
-    return restoreNavigationForScrollingPageTurnMode({
-      navigation,
-      spineLocator,
-      navigationResolver,
-      settings,
-      spineItemsManager,
-      spineLayout,
-    })
+    return of(
+      restoreNavigationForScrollingPageTurnMode({
+        navigation,
+        spineLocator,
+        navigationResolver,
+        settings,
+        spineItemsManager,
+        spineLayout,
+      }),
+    )
   }
 
   return restoreNavigationForControlledPageTurnMode({
