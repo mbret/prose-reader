@@ -49,7 +49,7 @@ export const ThemedSlider = memo((props: ComponentProps<typeof RcSlider>) => {
             height: "24px",
             top: "50%",
             borderColor: "var(--color-solid)",
-            transform: `translate(${props.reverse ? "-50%" : "50%"}, -50%)`,
+            transform: `translate(${props.reverse ? "50%" : "-50%"}, -50%)`,
             backgroundColor: "var(--bg)",
             marginTop: "0px",
           },
