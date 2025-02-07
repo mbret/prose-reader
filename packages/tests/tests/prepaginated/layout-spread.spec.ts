@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { waitForSpineItemReady } from "../utils"
 
 test.describe("Given a prepaginated book with first page on spread right", () => {
@@ -13,7 +13,12 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.waitForSelector(".prose-spineItem-ready")
 
-      expect(await page.screenshot()).toMatchSnapshot(`page-spread-right.png`, {
+      expect(
+        await page.screenshot({
+          type: "jpeg",
+          quality: 100,
+        }),
+      ).toMatchSnapshot(`page-spread-right.jpg`, {
         maxDiffPixels: 10,
       })
     })
@@ -38,10 +43,12 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await waitForSpineItemReady(page, [1, 2])
 
-      expect(await page.screenshot()).toMatchSnapshot(
-        `right-navigation-layout.png`,
-        { maxDiffPixels: 10 },
-      )
+      expect(
+        await page.screenshot({
+          type: "jpeg",
+          quality: 100,
+        }),
+      ).toMatchSnapshot(`right-navigation-layout.jpg`, { maxDiffPixels: 10 })
 
       const numberOfLayout = await page.evaluate(() => {
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
