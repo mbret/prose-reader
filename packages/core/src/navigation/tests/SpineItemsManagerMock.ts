@@ -1,4 +1,4 @@
-import { BehaviorSubject, first, NEVER, of, Subject } from "rxjs"
+import { BehaviorSubject, NEVER, Subject, first, of } from "rxjs"
 
 export type Item = {
   left: number
@@ -37,6 +37,7 @@ export class SpineItemsManagerMock {
         isUsingVerticalWriting: () => false,
         adjustPositionOfElement: () => {},
         layout$: layoutSubject,
+        isReady$: of(true),
         layout: () => {
           setTimeout(() => {
             layoutSubject.next({ width: item.width, height: item.height })
