@@ -8,10 +8,12 @@ export const QuickMenu = memo(
     onBackClick,
     onMoreClick,
     onTableOfContentsClick,
+    onHelpClick,
   }: {
     onBackClick: () => void
     onMoreClick: () => void
     onTableOfContentsClick: () => void
+    onHelpClick: () => void
   }) => {
     const [quickMenuOpen] = useQuickMenu()
 
@@ -25,6 +27,7 @@ export const QuickMenu = memo(
         <BottomBar
           open={quickMenuOpen}
           onTableOfContentsClick={onTableOfContentsClick}
+          onHelpClick={onHelpClick}
         />
       </>
     )

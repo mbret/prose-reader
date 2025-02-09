@@ -3,7 +3,6 @@ import { memo } from "react"
 import type React from "react"
 import { signal, useSignalValue } from "reactjrx"
 import { FullScreenDialog } from "../../common/FullScreenDialog"
-import { HelpMenu } from "../help/HelpDialog"
 import { SearchMenu } from "../search/SearchMenu"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import type { LocalSettings } from "../settings/useLocalSettings"
@@ -46,7 +45,6 @@ export const MenuDialog = memo(
         >
           <Tabs.List overflow="hidden" overflowX="auto" flexShrink={0}>
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
-            <Tabs.Trigger value="help">Help</Tabs.Trigger>
             <Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
             <Tabs.Trigger value="search">Search</Tabs.Trigger>
           </Tabs.List>
@@ -57,9 +55,6 @@ export const MenuDialog = memo(
               localSettings={localSettings}
               open
             />
-          </Tabs.Content>
-          <Tabs.Content p={4} value="help">
-            <HelpMenu />
           </Tabs.Content>
           <Tabs.Content
             value="annotations"

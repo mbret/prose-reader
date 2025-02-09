@@ -1,17 +1,8 @@
-import {
-  AccordionItem,
-  AccordionItemContent,
-  AccordionItemTrigger,
-  AccordionRoot,
-  Box,
-  Collapsible,
-  HStack,
-  IconButton,
-  Stack,
-} from "@chakra-ui/react"
+import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { LuChevronDown } from "react-icons/lu"
 import { LuTableOfContents } from "react-icons/lu"
+import { LuCircleHelp } from "react-icons/lu"
 import {
   RxDoubleArrowDown,
   RxDoubleArrowLeft,
@@ -28,7 +19,12 @@ export const BottomBar = memo(
   ({
     open,
     onTableOfContentsClick,
-  }: { open: boolean; onTableOfContentsClick: () => void }) => {
+    onHelpClick,
+  }: {
+    open: boolean
+    onTableOfContentsClick: () => void
+    onHelpClick: () => void
+  }) => {
     const reader = useReader()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
@@ -127,6 +123,14 @@ export const BottomBar = memo(
                 justifyContent="center"
                 gap={2}
               >
+                <IconButton
+                  aria-label="Help"
+                  size="lg"
+                  variant="ghost"
+                  onClick={onHelpClick}
+                >
+                  <LuCircleHelp />
+                </IconButton>
                 <IconButton
                   aria-label="Table of contents"
                   size="lg"
