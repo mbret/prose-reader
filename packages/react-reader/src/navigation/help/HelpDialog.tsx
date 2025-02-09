@@ -25,8 +25,7 @@ export const HelpDialog = memo(
       <DialogRoot
         lazyMount
         placement="center"
-        // open={open}
-        open
+        open={open}
         onOpenChange={(e) => setOpen(e.open)}
         size={{ mdDown: "full", md: "lg" }}
         scrollBehavior="inside"
