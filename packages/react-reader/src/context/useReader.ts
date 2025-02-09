@@ -3,7 +3,7 @@ import { useContext } from "react"
 import { ReaderContext } from "./context"
 
 export const useReader = (): Reader | undefined => {
-  const context = useContext(ReaderContext)
+  const { reader } = useContext(ReaderContext)
 
-  return context
+  return reader
 }

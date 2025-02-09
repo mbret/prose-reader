@@ -30,7 +30,7 @@ export const QuickBar = memo(
         alignItems="center"
         justifyContent="center"
         shadow="md"
-        px={4}
+        p={4}
         {...rest}
       >
         {children}

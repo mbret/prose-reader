@@ -1,6 +1,13 @@
 import type { Reader } from "@prose-reader/core"
 import { type Context, createContext } from "react"
+import { type Signal, signal } from "reactjrx"
 
-export const ReaderContext: Context<Reader | undefined> = createContext<
-  Reader | undefined
->(undefined)
+type ContextType = {
+  reader: Reader | undefined
+  quickMenuSignal: Signal<boolean, boolean, undefined>
+}
+
+export const ReaderContext: Context<ContextType> = createContext<ContextType>({
+  reader: undefined,
+  quickMenuSignal: signal({ default: false }),
+})

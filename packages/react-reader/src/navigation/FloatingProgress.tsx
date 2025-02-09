@@ -11,7 +11,7 @@ export const FloatingProgress = () => {
   if (pagination?.percentageEstimateOfBook === undefined) return null
 
   return (
-    <Box position="absolute" right={0} bottom={0} p={2}>
+    <Box position="absolute" right={0} bottom={0} p={2} color={"black"}>
       <Text fontSize="sm">{displayableProgress} %</Text>
     </Box>
   )

@@ -1,21 +1,31 @@
 import { memo } from "react"
 import { BottomBar } from "./BottomBar"
 import { TopBar } from "./TopBar"
+import { useQuickMenu } from "./useQuickMenu"
 
 export const QuickMenu = memo(
   ({
-    open,
     onBackClick,
     onMoreClick,
-  }: { open: boolean; onBackClick: () => void; onMoreClick: () => void }) => {
+    onTableOfContentsClick,
+  }: {
+    onBackClick: () => void
+    onMoreClick: () => void
+    onTableOfContentsClick: () => void
+  }) => {
+    const [quickMenuOpen] = useQuickMenu()
+
     return (
       <>
         <TopBar
-          open={open}
+          open={quickMenuOpen}
           onBackClick={onBackClick}
           onMoreClick={onMoreClick}
         />
-        <BottomBar open={open} />
+        <BottomBar
+          open={quickMenuOpen}
+          onTableOfContentsClick={onTableOfContentsClick}
+        />
       </>
     )
   },

@@ -71,10 +71,15 @@ export const ReaderScreen = memo(() => {
         {bookState !== "ready" && !manifestError && <BookLoading />}
       </Box>
       {/* not wrapping the reader within for now since hot reload break the reader container */}
-      <ReactReaderProvider reader={reader}>
+      <ReactReaderProvider
+        reader={reader}
+        quickMenuOpen={isQuickMenuOpen}
+        onQuickMenuOpenChange={(isOpen) =>
+          isQuickMenuOpenSignal.setValue(isOpen)
+        }
+      >
         <QuickActionsMenu />
         <ReactReader
-          open={isQuickMenuOpen}
           onMoreClick={() => {
             isMenuOpenSignal.setValue(true)
           }}

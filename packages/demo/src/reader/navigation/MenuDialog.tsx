@@ -1,14 +1,13 @@
-import { memo } from "react"
-import { FullScreenDialog } from "../../common/FullScreenDialog"
-import { signal, useSignalValue } from "reactjrx"
 import { Tabs } from "@chakra-ui/react"
+import { memo } from "react"
 import type React from "react"
+import { signal, useSignalValue } from "reactjrx"
+import { FullScreenDialog } from "../../common/FullScreenDialog"
 import { HelpMenu } from "../help/HelpDialog"
-import { TocMenu } from "./TocMenu"
 import { SearchMenu } from "../search/SearchMenu"
-import { isQuickMenuOpenSignal } from "../states"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import type { LocalSettings } from "../settings/useLocalSettings"
+import { isQuickMenuOpenSignal } from "../states"
 import { AnnotationsMenu } from "./AnnotationsMenu"
 
 export const isMenuOpenSignal = signal({
@@ -48,7 +47,6 @@ export const MenuDialog = memo(
           <Tabs.List overflow="hidden" overflowX="auto" flexShrink={0}>
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
             <Tabs.Trigger value="help">Help</Tabs.Trigger>
-            <Tabs.Trigger value="toc">TOC</Tabs.Trigger>
             <Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
             <Tabs.Trigger value="search">Search</Tabs.Trigger>
           </Tabs.List>
@@ -62,15 +60,6 @@ export const MenuDialog = memo(
           </Tabs.Content>
           <Tabs.Content p={4} value="help">
             <HelpMenu />
-          </Tabs.Content>
-          <Tabs.Content
-            value="toc"
-            display="flex"
-            flex={1}
-            overflow="auto"
-            p={0}
-          >
-            <TocMenu onNavigate={onNavigate} />
           </Tabs.Content>
           <Tabs.Content
             value="annotations"

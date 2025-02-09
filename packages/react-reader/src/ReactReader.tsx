@@ -1,32 +1,50 @@
 import { Presence } from "@chakra-ui/react"
-import type { ComponentProps } from "react"
+import { type ComponentProps, useState } from "react"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { QuickMenu } from "./navigation/QuickMenu/QuickMenu"
+import { useQuickMenu } from "./navigation/QuickMenu/useQuickMenu"
+import { TableOfContentsDialog } from "./navigation/toc/TableOfContentsDialog"
 
 export const ReactReader = ({
   enableFloatingTime = true,
   enableFloatingProgress = true,
-  open,
   ...rest
 }: {
   enableFloatingTime?: boolean
   enableFloatingProgress?: boolean
-} & ComponentProps<typeof QuickMenu>) => {
+} & Omit<
+  ComponentProps<typeof QuickMenu>,
+  "onTableOfContentsClick" | "open"
+>) => {
+  const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
+  const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
+
   return (
     <>
       {enableFloatingProgress && (
         <Presence
-          present={!open}
+          present={!quickMenuOpen}
           animationName={{ _open: "fade-in", _closed: "fade-out" }}
           animationDuration="moderate"
         >
           <FloatingProgress />
         </Presence>
       )}
-      <QuickMenu open={open} {...rest} />
+      <QuickMenu
+        {...rest}
+        onTableOfContentsClick={() => setIsTableOfContentsOpen(true)}
+      />
+      <TableOfContentsDialog
+        open={isTableOfContentsOpen}
+        setOpen={setIsTableOfContentsOpen}
+        onNavigate={() => {
+          setIsTableOfContentsOpen(false)
+          setQuickMenuOpen(false)
+        }}
+      />
       <Presence
-        present={enableFloatingTime || open}
+        present={enableFloatingTime || quickMenuOpen}
         animationName={{ _open: "fade-in", _closed: "fade-out" }}
         animationDuration="slow"
         overflow="hidden"

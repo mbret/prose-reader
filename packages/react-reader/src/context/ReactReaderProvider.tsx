@@ -1,14 +1,46 @@
 import type { Reader } from "@prose-reader/core"
-import { memo } from "react"
+import { memo, useEffect, useMemo } from "react"
+import { useLiveRef, useSignal, useSubscribe } from "reactjrx"
+import { tap } from "rxjs"
 import { ReaderContext } from "./context"
 
 export const ReactReaderProvider = memo(
   ({
     children,
     reader,
-  }: { children?: React.ReactNode; reader: Reader | undefined }) => {
+    quickMenuOpen,
+    onQuickMenuOpenChange,
+  }: {
+    children?: React.ReactNode
+    reader: Reader | undefined
+    quickMenuOpen: boolean
+    onQuickMenuOpenChange: (open: boolean) => void
+  }) => {
+    const [, quickMenuSignal] = useSignal({
+      default: quickMenuOpen,
+    })
+    const onQuickMenuOpenChangeLiveRef = useLiveRef(onQuickMenuOpenChange)
+
+    const value = useMemo(
+      () => ({
+        quickMenuSignal,
+        reader,
+      }),
+      [quickMenuSignal, reader],
+    )
+
+    useEffect(() => {
+      quickMenuSignal.setValue(quickMenuOpen)
+    }, [quickMenuOpen, quickMenuSignal])
+
+    useSubscribe(
+      () =>
+        quickMenuSignal.subject.pipe(tap(onQuickMenuOpenChangeLiveRef.current)),
+      [quickMenuSignal, onQuickMenuOpenChangeLiveRef],
+    )
+
     return (
-      <ReaderContext.Provider value={reader}>{children}</ReaderContext.Provider>
+      <ReaderContext.Provider value={value}>{children}</ReaderContext.Provider>
     )
   },
 )
