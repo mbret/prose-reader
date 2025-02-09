@@ -1,17 +1,18 @@
-import { BehaviorSubject, Subject } from "rxjs"
-import { distinctUntilChanged, map, filter } from "rxjs/operators"
 import type { Manifest } from "@prose-reader/shared"
-import { isDefined } from "../utils/isDefined"
-import { isUsingSpreadMode } from "./isUsingSpreadMode"
-import { isShallowEqual } from "../utils/objects"
+import { BehaviorSubject, Subject } from "rxjs"
+import { distinctUntilChanged, filter, map } from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
+import { isDefined } from "../utils/isDefined"
+import { isShallowEqual } from "../utils/objects"
 import { BridgeEvent } from "./BridgeEvent"
+import { isUsingSpreadMode } from "./isUsingSpreadMode"
 
 export type ContextState = {
   containerElement?: HTMLElement
   manifest?: Manifest
   hasVerticalWriting?: boolean
   isUsingSpreadMode?: boolean
+  assumedRenditionLayout: "reflowable" | "pre-paginated"
   isFullyPrePaginated?: boolean
   forceSinglePageMode?: boolean
   calculatedInnerMargin: number
@@ -31,6 +32,7 @@ export class Context {
     marginBottom: 0,
     marginTop: 0,
     calculatedInnerMargin: 0,
+    assumedRenditionLayout: "reflowable",
     visibleAreaRect: {
       width: 0,
       height: 0,
@@ -97,6 +99,7 @@ export class Context {
       }),
       ...(newState.manifest && {
         isFullyPrePaginated: isFullyPrePaginated(manifest),
+        assumedRenditionLayout: manifest?.renditionLayout ?? "reflowable",
       }),
       isUsingSpreadMode: isUsingSpreadMode({
         manifest,

@@ -1,10 +1,10 @@
+import type { UserNavigationEntry } from "../../../navigation/UserNavigator"
+import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
-import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
-import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
-import type { UserNavigationEntry } from "../../../navigation/UserNavigator"
 import { report } from "../report"
+import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
+import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
@@ -124,6 +124,7 @@ export class ManualNavigator {
   goToUrl(url: string | URL) {
     this.reader.navigation.navigate({
       url,
+      animation: false,
     })
   }
 
