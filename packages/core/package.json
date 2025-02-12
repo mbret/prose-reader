@@ -27,7 +27,7 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "happy-dom": "^16.5.3"
+    "happy-dom": "^17.1.0"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }
