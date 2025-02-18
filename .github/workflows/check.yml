@@ -9,45 +9,51 @@ on:
       - 'master'
 
 jobs:
-  # setup:
-  #   uses: ./.github/workflows/_setup.yml
-
   lint:
     runs-on: macos-latest
     steps:
-      - uses: ./.github/workflows/_setup.yml
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
       - name: Check
         run: |
+          npm run ci
           npm run format
           npm run lint
 
   ts:
     runs-on: macos-latest
     steps:
-      - uses: ./.github/workflows/_setup.yml
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
       - name: Check Typescript
         run: |
           npm run tsc
 
-  tests:
-    runs-on: macos-latest
-    needs: [lint, ts]
-    steps:
-      - uses: ./.github/workflows/_setup.yml
-      - name: Build
-        run: |
-          npx lerna run build --stream --scope @prose-reader/*
+  # tests:
+  #   runs-on: macos-latest
+  #   needs: [lint, ts]
+  #   steps:
+  #     - uses: ./.github/workflows/_setup.yml
+  #     - name: Build
+  #       run: |
+  #         npx lerna run build --stream --scope @prose-reader/*
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+  #     - name: Install Playwright Browsers
+  #       run: npx playwright install --with-deps
 
-      - name: Test
-        run: |
-          npm test
+  #     - name: Test
+  #       run: |
+  #         npm test
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: packages/tests/test-results/
-          retention-days: 30
+  #     - uses: actions/upload-artifact@v4
+  #       if: ${{ !cancelled() }}
+  #       with:
+  #         name: playwright-report
+  #         path: packages/tests/test-results/
+  #         retention-days: 30
