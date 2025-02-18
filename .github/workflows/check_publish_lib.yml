@@ -26,18 +26,15 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Install
+      - name: Prepare
         run: |
           npm ci
-
-      - name: Build
-        run: |
           npx lerna run build --stream --scope @prose-reader/*
 
       - name: Publish
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          npx lerna publish minor --no-private --yes -- --ignore="prose-reader-{demo,front,tests}"
+          lerna publish minor --no-private --yes --ignore="prose-reader-{demo,front,tests}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
