@@ -6,6 +6,26 @@ on:
       - "master"
 
 jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+  
+      - name: Prepare
+        run: |
+          npm ci
+          npx lerna run build --stream --scope @prose-reader/*
+  
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .nx
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
   lint:
     uses: ./.github/workflows/_lint.yml
 
@@ -16,7 +36,7 @@ jobs:
     uses: ./.github/workflows/_test.yml
 
   publish:
-    needs: [lint, ts, tests]
+    needs: [lint, ts, tests, build]
     runs-on: macos-latest
 
     steps:
