@@ -9,31 +9,46 @@ on:
       - 'master'
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-
+  setup:
+    runs-on: macos-latest
     steps:
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
       - uses: actions/checkout@v4
-
-      # - name: Checkout release branch
-      #   run: git checkout -b release
-
-      - name: Install
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: npm install
         run: |
           npm ci
-
-      # We only build library on this pipe
+      - name: Cache dependencies
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            ./**/node_modules
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
+  
+  lint:
+    runs-on: macos-latest
+    needs: [setup]
+    steps:
       - name: Check
         run: |
           npm run format
           npm run lint
 
-      # We only build library on this pipe
+  ts:
+    runs-on: macos-latest
+    needs: [setup]
+    steps:
+      - name: Check Typescript
+        run: |
+          npm run tsc
+
+  tests:
+    runs-on: macos-latest
+    needs: [setup, lint, ts]
+    steps:
       - name: Build
         run: |
           npx lerna run build --stream --scope @prose-reader/*
@@ -44,3 +59,10 @@ jobs:
       - name: Test
         run: |
           npm test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: packages/tests/test-results/
+          retention-days: 30
