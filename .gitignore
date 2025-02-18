@@ -24,4 +24,5 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log
 .nx/cache
+.nx/workspace-data
 .nx
