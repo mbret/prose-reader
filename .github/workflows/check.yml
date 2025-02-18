@@ -10,24 +10,8 @@ on:
 
 jobs:
   setup:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-      - name: npm install
-        run: |
-          npm ci
-      - name: Cache dependencies
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            node_modules
-            ./**/node_modules
-          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
-  
+    uses: ./.github/workflows/_setup.yml
+
   lint:
     runs-on: macos-latest
     needs: [setup]

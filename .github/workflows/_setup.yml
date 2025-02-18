@@ -1,0 +1,25 @@
+name: setup-env
+
+on:
+  workflow_call:
+
+jobs:
+  setup:
+    name: "Setup"
+    runs-on: macos-latest
+    steps:
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Cache dependencies
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            ./**/node_modules
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
