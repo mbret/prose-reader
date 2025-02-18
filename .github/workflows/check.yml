@@ -9,38 +9,11 @@ on:
       - 'master'
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
+  lint:
+    uses: ./.github/workflows/_lint.yml
 
-    steps:
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
-      - uses: actions/checkout@v4
+  ts:
+    uses: ./.github/workflows/_ts.yml
 
-      # - name: Checkout release branch
-      #   run: git checkout -b release
-
-      - name: Install
-        run: |
-          npm ci
-
-      # We only build library on this pipe
-      - name: Check
-        run: |
-          npm run format
-          npm run lint
-
-      # We only build library on this pipe
-      - name: Build
-        run: |
-          npx lerna run build --stream --scope @prose-reader/*
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Test
-        run: |
-          npm test
+  tests:
+    uses: ./.github/workflows/_test.yml
