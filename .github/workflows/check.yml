@@ -19,7 +19,7 @@ jobs:
           cache: 'npm'
       - name: Check
         run: |
-          npm run ci
+          npm ci
           npm run format
           npm run lint
 
@@ -33,6 +33,7 @@ jobs:
           cache: 'npm'
       - name: Check Typescript
         run: |
+          npm ci
           npm run tsc
 
   # tests:
