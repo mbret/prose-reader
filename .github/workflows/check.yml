@@ -9,13 +9,13 @@ on:
       - 'master'
 
 jobs:
-  setup:
-    uses: ./.github/workflows/_setup.yml
+  # setup:
+  #   uses: ./.github/workflows/_setup.yml
 
   lint:
     runs-on: macos-latest
-    needs: [setup]
     steps:
+      - uses: ./.github/workflows/_setup.yml
       - name: Check
         run: |
           npm run format
@@ -23,16 +23,17 @@ jobs:
 
   ts:
     runs-on: macos-latest
-    needs: [setup]
     steps:
+      - uses: ./.github/workflows/_setup.yml
       - name: Check Typescript
         run: |
           npm run tsc
 
   tests:
     runs-on: macos-latest
-    needs: [setup, lint, ts]
+    needs: [lint, ts]
     steps:
+      - uses: ./.github/workflows/_setup.yml
       - name: Build
         run: |
           npx lerna run build --stream --scope @prose-reader/*

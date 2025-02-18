@@ -1,4 +1,4 @@
-name: setup-env
+name: setup
 
 on:
   workflow_call:
@@ -16,10 +16,3 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: npm ci
-      - name: Cache dependencies
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            node_modules
-            ./**/node_modules
-          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
