@@ -47,16 +47,17 @@ jobs:
           cache: 'npm'
           registry-url: "https://registry.npmjs.org"
 
-      - name: Prepare
-        run: |
-          npm ci
-          npx lerna run build --stream --scope @prose-reader/*
-
       - uses: actions/cache@v4
+        id: nx-cache
         with:
           path: |
             .nx
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Prepare
+        run: |
+          npm ci
+          npx lerna run build --stream --scope @prose-reader/*
 
       - name: Publish
         run: |
