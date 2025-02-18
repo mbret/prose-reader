@@ -35,6 +35,6 @@ jobs:
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          lerna publish minor --no-private --yes --ignore="prose-reader-{demo,front,tests}"
+          npx lerna publish minor --no-private --yes --ignore="prose-reader-{demo,front,tests}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
