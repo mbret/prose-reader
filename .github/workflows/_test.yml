@@ -16,6 +16,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - uses: actions/cache@v4
+        id: nx-cache
+        with:
+          path: |
+            .nx
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/package-lock.json') }}
+
       - name: Build
         run: |
           npx lerna run build --stream --scope @prose-reader/*

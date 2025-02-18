@@ -20,7 +20,7 @@ jobs:
         with:
           path: |
             .nx
-          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/package-lock.json') }}
 
       - name: Prepare
         run: |
@@ -53,7 +53,7 @@ jobs:
         with:
           path: |
             .nx
-          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/package-lock.json') }}
 
       - name: Prepare
         run: |
@@ -64,6 +64,6 @@ jobs:
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          npx lerna publish minor --no-private --yes --no-private
+          npx lerna publish minor --no-private --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
