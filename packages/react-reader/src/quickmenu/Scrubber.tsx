@@ -1,8 +1,8 @@
 import { type ComponentProps, useCallback, useEffect } from "react"
 import { useObserve, useSignal, useSubscribe } from "reactjrx"
-import { useReader } from "../../context/useReader"
-import { usePagination } from "../../pagination/usePagination"
-import { useNavigationContext } from "../useNavigationContext"
+import { useReader } from "../context/useReader"
+import { useNavigationContext } from "../navigation/useNavigationContext"
+import { usePagination } from "../pagination/usePagination"
 import { ThemedSlider } from "./ThemedSlider"
 
 const useSliderValues = () => {

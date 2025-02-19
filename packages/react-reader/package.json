@@ -29,6 +29,9 @@
     "@emotion/react": "11.x",
     "@prose-reader/core": "^1.169.0",
     "@prose-reader/enhancer-search": "^1.169.0",
+    "@prose-reader/enhancer-bookmarks": "^1.169.0",
+    "@prose-reader/enhancer-annotations": "^1.169.0",
+    "@prose-reader/enhancer-gestures": "^1.169.0",
     "rc-slider": "11.1.x",
     "react": "19.x || 18.x",
     "react-dom": "19.x || 18.x",
@@ -37,6 +40,12 @@
   },
   "peerDependenciesMeta": {
     "@prose-reader/enhancer-search": {
+      "optional": true
+    },
+    "@prose-reader/enhancer-annotations": {
+      "optional": true
+    },
+    "@prose-reader/enhancer-bookmarks": {
       "optional": true
     }
   }

@@ -1,8 +1,9 @@
 import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
+import { BsBookmarks } from "react-icons/bs"
 import { LuChevronDown, LuSearch } from "react-icons/lu"
 import { LuTableOfContents } from "react-icons/lu"
-import { LuCircleHelp } from "react-icons/lu"
+import { LuCircleHelp, LuNotebookPen } from "react-icons/lu"
 import {
   RxDoubleArrowDown,
   RxDoubleArrowLeft,
@@ -10,7 +11,12 @@ import {
   RxDoubleArrowUp,
 } from "react-icons/rx"
 import { useObserve } from "reactjrx"
-import { hasSearchEnhancer, useReader } from "../../context/useReader"
+import {
+  hasAnnotationsEnhancer,
+  hasBookmarksEnhancer,
+  hasSearchEnhancer,
+  useReader,
+} from "../context/useReader"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
@@ -120,11 +126,7 @@ export const BottomBar = memo(
                   }}
                 />
               </Collapsible.Trigger>
-              <Collapsible.Content
-                display="flex"
-                justifyContent="center"
-                gap={2}
-              >
+              <Collapsible.Content display="flex" justifyContent="center">
                 <IconButton
                   aria-label="Help"
                   size="lg"
@@ -149,6 +151,26 @@ export const BottomBar = memo(
                     onClick={onSearchClick}
                   >
                     <LuSearch />
+                  </IconButton>
+                )}
+                {hasBookmarksEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Search"
+                    size="lg"
+                    variant="ghost"
+                    onClick={onSearchClick}
+                  >
+                    <BsBookmarks />
+                  </IconButton>
+                )}
+                {hasAnnotationsEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Search"
+                    size="lg"
+                    variant="ghost"
+                    onClick={onSearchClick}
+                  >
+                    <LuNotebookPen />
                   </IconButton>
                 )}
               </Collapsible.Content>
