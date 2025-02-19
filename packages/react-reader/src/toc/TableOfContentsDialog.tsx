@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../../components/ui/dialog"
+} from "../components/ui/dialog"
 import { TableOfContentsDialogContent } from "./TableOfContentsDialogContent"
 
 export const TableOfContentsDialog = memo(

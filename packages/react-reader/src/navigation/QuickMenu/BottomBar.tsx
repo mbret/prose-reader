@@ -1,6 +1,6 @@
 import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
-import { LuChevronDown } from "react-icons/lu"
+import { LuChevronDown, LuSearch } from "react-icons/lu"
 import { LuTableOfContents } from "react-icons/lu"
 import { LuCircleHelp } from "react-icons/lu"
 import {
@@ -10,7 +10,7 @@ import {
   RxDoubleArrowUp,
 } from "react-icons/rx"
 import { useObserve } from "reactjrx"
-import { useReader } from "../../context/useReader"
+import { hasSearchEnhancer, useReader } from "../../context/useReader"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
@@ -20,10 +20,12 @@ export const BottomBar = memo(
     open,
     onTableOfContentsClick,
     onHelpClick,
+    onSearchClick,
   }: {
     open: boolean
     onTableOfContentsClick: () => void
     onHelpClick: () => void
+    onSearchClick: () => void
   }) => {
     const reader = useReader()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
@@ -139,6 +141,16 @@ export const BottomBar = memo(
                 >
                   <LuTableOfContents />
                 </IconButton>
+                {hasSearchEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Search"
+                    size="lg"
+                    variant="ghost"
+                    onClick={onSearchClick}
+                  >
+                    <LuSearch />
+                  </IconButton>
+                )}
               </Collapsible.Content>
             </Collapsible.Root>
           </HStack>

@@ -3,7 +3,6 @@ import { memo } from "react"
 import type React from "react"
 import { signal, useSignalValue } from "reactjrx"
 import { FullScreenDialog } from "../../common/FullScreenDialog"
-import { SearchMenu } from "../search/SearchMenu"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import type { LocalSettings } from "../settings/useLocalSettings"
 import { isQuickMenuOpenSignal } from "../states"
@@ -46,7 +45,6 @@ export const MenuDialog = memo(
           <Tabs.List overflow="hidden" overflowX="auto" flexShrink={0}>
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
             <Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
-            <Tabs.Trigger value="search">Search</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content p={0} display="flex" value="settings">
@@ -64,9 +62,6 @@ export const MenuDialog = memo(
             p={0}
           >
             <AnnotationsMenu onNavigate={onNavigate} />
-          </Tabs.Content>
-          <Tabs.Content value="search" display="flex" flex={1} overflow="auto">
-            <SearchMenu onNavigate={onNavigate} />
           </Tabs.Content>
         </Tabs.Root>
       </FullScreenDialog>

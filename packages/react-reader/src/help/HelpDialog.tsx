@@ -1,7 +1,7 @@
 import { Button, HStack, Heading, Kbd, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { LuArrowBigLeft, LuArrowBigRight } from "react-icons/lu"
-import { name, version } from "../../../package.json"
+import { name, version } from "../../package.json"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-} from "../../components/ui/dialog"
+} from "../components/ui/dialog"
 
 export const HelpDialog = memo(
   ({

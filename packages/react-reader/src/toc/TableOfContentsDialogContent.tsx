@@ -4,8 +4,8 @@ import { List } from "@chakra-ui/react"
 import React, { memo } from "react"
 import { LuCircleCheck } from "react-icons/lu"
 import { useObserve } from "reactjrx"
-import { useReader } from "../../context/useReader"
-import { usePagination } from "../../pagination/usePagination"
+import { useReader } from "../context/useReader"
+import { usePagination } from "../pagination/usePagination"
 
 export const TableOfContentsDialogContent = memo(
   ({

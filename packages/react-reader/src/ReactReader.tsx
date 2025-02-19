@@ -1,25 +1,27 @@
 import { Presence } from "@chakra-ui/react"
-import { type ComponentProps, useState } from "react"
+import { useState } from "react"
+import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { QuickMenu } from "./navigation/QuickMenu/QuickMenu"
 import { useQuickMenu } from "./navigation/QuickMenu/useQuickMenu"
-import { HelpDialog } from "./navigation/help/HelpDialog"
-import { TableOfContentsDialog } from "./navigation/toc/TableOfContentsDialog"
+import { SearchDialog } from "./search/SearchDialog"
+import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 
 export const ReactReader = ({
   enableFloatingTime = true,
   enableFloatingProgress = true,
-  ...rest
+  onBackClick,
+  onMoreClick,
 }: {
   enableFloatingTime?: boolean
   enableFloatingProgress?: boolean
-} & Omit<
-  ComponentProps<typeof QuickMenu>,
-  "onTableOfContentsClick" | "open"
->) => {
+  onBackClick: () => void
+  onMoreClick: () => void
+}) => {
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
   return (
@@ -34,9 +36,11 @@ export const ReactReader = ({
         </Presence>
       )}
       <QuickMenu
-        {...rest}
+        onBackClick={onBackClick}
+        onMoreClick={onMoreClick}
         onTableOfContentsClick={() => setIsTableOfContentsOpen(true)}
         onHelpClick={() => setIsHelpOpen(true)}
+        onSearchClick={() => setIsSearchOpen(true)}
       />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
       <TableOfContentsDialog
@@ -44,6 +48,14 @@ export const ReactReader = ({
         setOpen={setIsTableOfContentsOpen}
         onNavigate={() => {
           setIsTableOfContentsOpen(false)
+          setQuickMenuOpen(false)
+        }}
+      />
+      <SearchDialog
+        open={isSearchOpen}
+        setOpen={setIsSearchOpen}
+        onNavigate={() => {
+          setIsSearchOpen(false)
           setQuickMenuOpen(false)
         }}
       />

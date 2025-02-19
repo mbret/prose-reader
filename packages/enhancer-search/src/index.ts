@@ -1,8 +1,11 @@
-import { deferIdle, type Reader } from "@prose-reader/core"
-import { defer, forkJoin, type Observable, of } from "rxjs"
+import { type Reader, deferIdle } from "@prose-reader/core"
+import { defer, forkJoin, of } from "rxjs"
 import { catchError, finalize, map, switchMap } from "rxjs/operators"
-import { searchInDocument, type SearchResult } from "./search"
 import { report } from "./report"
+import { searchInDocument } from "./search"
+import type { SearchEnhancerAPI } from "./types"
+
+export type { SearchEnhancerAPI }
 
 /**
  * Contract of search enhancer.
@@ -16,13 +19,7 @@ export const searchEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions,
-  ): InheritOutput & {
-    search: {
-      search: (text: string) => Observable<SearchResult>
-    }
-  } => {
+  (options: InheritOptions): InheritOutput & SearchEnhancerAPI => {
     const reader = next(options)
 
     const searchForItem = (index: number, text: string) => {
@@ -78,6 +75,7 @@ export const searchEnhancer =
 
     return {
       ...reader,
+      __PROSE_READER_ENHANCER_SEARCH: true,
       search: {
         search,
       },
