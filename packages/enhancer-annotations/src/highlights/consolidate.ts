@@ -1,8 +1,8 @@
 import type { Reader } from "@prose-reader/core"
-import type { Highlight } from "./Highlight"
 import { map, of, tap, withLatestFrom } from "rxjs"
+import type { ProseHighlight } from "./Highlight"
 
-export const consolidate = (highlight: Highlight, reader: Reader) => {
+export const consolidate = (highlight: ProseHighlight, reader: Reader) => {
   const { itemIndex } = reader.cfi.parseCfi(highlight.cfi ?? "")
   const spineItem = reader.spineItemsManager.get(itemIndex)
 

@@ -1,7 +1,7 @@
 import { DestroyableClass, type Reader } from "@prose-reader/core"
 import { BehaviorSubject, map, merge, switchMap } from "rxjs"
+import type { ProseHighlight } from "./Highlight"
 import { SpineItemHighlights } from "./SpineItemHighlights"
-import type { Highlight } from "./Highlight"
 
 export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])
@@ -10,7 +10,7 @@ export class ReaderHighlights extends DestroyableClass {
 
   constructor(
     private reader: Reader,
-    private highlights: BehaviorSubject<Highlight[]>,
+    private highlights: BehaviorSubject<ProseHighlight[]>,
     private selectedHighlight: BehaviorSubject<string | undefined>,
   ) {
     super()

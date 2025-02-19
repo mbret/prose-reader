@@ -1,21 +1,21 @@
 import {
+  DestroyableClass,
+  type Reader,
+  type SpineItem,
+} from "@prose-reader/core"
+import {
+  type Observable,
   distinctUntilChanged,
   map,
   merge,
-  type Observable,
   of,
   shareReplay,
   switchMap,
   takeUntil,
 } from "rxjs"
-import {
-  DestroyableClass,
-  type Reader,
-  type SpineItem,
-} from "@prose-reader/core"
+import type { ProseHighlight } from "./Highlight"
 import { SpineItemHighlight } from "./SpineItemHighlight"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils"
-import type { Highlight } from "./Highlight"
 
 export class SpineItemHighlights extends DestroyableClass {
   private layer: HTMLElement
@@ -24,7 +24,7 @@ export class SpineItemHighlights extends DestroyableClass {
   public readonly tap$: SpineItemHighlight["tap$"]
 
   constructor(
-    private highlights$: Observable<Highlight[]>,
+    private highlights$: Observable<ProseHighlight[]>,
     private spineItem: SpineItem,
     private reader: Reader,
     private selectedHighlight: Observable<string | undefined>,

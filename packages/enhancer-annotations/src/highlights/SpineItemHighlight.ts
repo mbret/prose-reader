@@ -3,28 +3,28 @@ import {
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { createElementForRange } from "./utils"
 import {
+  type Observable,
   fromEvent,
   map,
-  type Observable,
   share,
   skip,
   takeUntil,
   tap,
 } from "rxjs"
-import type { Highlight } from "./Highlight"
+import type { ProseHighlight } from "./Highlight"
+import { createElementForRange } from "./utils"
 
 export class SpineItemHighlight extends DestroyableClass {
   private container: HTMLElement
 
-  public readonly tap$: Observable<{ event: Event; highlight: Highlight }>
+  public readonly tap$: Observable<{ event: Event; highlight: ProseHighlight }>
 
   constructor(
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    public readonly highlight: Highlight,
+    public readonly highlight: ProseHighlight,
     private isSelected: Observable<boolean>,
   ) {
     super()

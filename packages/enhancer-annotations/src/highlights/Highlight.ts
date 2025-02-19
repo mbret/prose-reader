@@ -1,7 +1,7 @@
 import type { Commands } from "../Commands"
 import type { SerializableHighlight } from "../types"
 
-export class Highlight {
+export class ProseHighlight {
   public cfi: string
   public endCfi: string | undefined
   public itemIndex?: number

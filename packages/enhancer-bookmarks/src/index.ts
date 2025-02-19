@@ -2,47 +2,30 @@ import type { Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
   first,
+  forkJoin,
   map,
+  merge,
+  of,
   share,
   switchMap,
   takeUntil,
   tap,
-  forkJoin,
-  merge,
-  of,
-  type Observable,
-  type ObservedValueOf,
 } from "rxjs"
-import type { SerializableBookmark, RuntimeBookmark } from "./types"
-import { report } from "./report"
 import { Commands } from "./Commands"
+import { report } from "./report"
+import type {
+  BookmarksEnhancerAPI,
+  RuntimeBookmark,
+  SerializableBookmark,
+} from "./types"
 
-export type { SerializableBookmark, RuntimeBookmark }
+export type { SerializableBookmark, RuntimeBookmark, BookmarksEnhancerAPI }
 
 export const bookmarksEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions,
-  ): InheritOutput & {
-    bookmarks: {
-      bookmark: Commands["bookmark"]
-      delete: Commands["delete"]
-      add: Commands["add"]
-      bookmarks$: Observable<RuntimeBookmark[]>
-      /**
-       * Make it conveniant for users to observes pages with bookmarkable status.
-       */
-      pages$: Observable<
-        (ObservedValueOf<
-          Reader["spine"]["spineLayout"]["info$"]
-        >["pages"][number] & {
-          isBookmarkable: boolean | undefined
-        })[]
-      >
-    }
-  } => {
+  (options: InheritOptions): InheritOutput & BookmarksEnhancerAPI => {
     const reader = next(options)
     const bookmarksSubject = new BehaviorSubject<RuntimeBookmark[]>([])
     const commands = new Commands()
@@ -130,6 +113,7 @@ export const bookmarksEnhancer =
 
     return {
       ...reader,
+      __PROSE_READER_ENHANCER_BOOKMARKS: true,
       destroy: () => {
         commands.destroy()
         bookmarksSubject.complete()

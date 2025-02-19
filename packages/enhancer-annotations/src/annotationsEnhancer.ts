@@ -1,47 +1,36 @@
 import type { Reader } from "@prose-reader/core"
+import { isDefined } from "reactjrx"
 import {
   BehaviorSubject,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  forkJoin,
+  map,
   merge,
+  mergeMap,
+  share,
   takeUntil,
   tap,
-  type Observable,
-  debounceTime,
-  filter,
-  mergeMap,
-  map,
-  share,
-  distinctUntilChanged,
   withLatestFrom,
-  forkJoin,
 } from "rxjs"
-import { report } from "./report"
-import { ReaderHighlights } from "./highlights/ReaderHighlights"
 import { Commands } from "./Commands"
-import { Highlight } from "./highlights/Highlight"
+import { ProseHighlight } from "./highlights/Highlight"
+import { ReaderHighlights } from "./highlights/ReaderHighlights"
 import { consolidate } from "./highlights/consolidate"
-import { isDefined } from "reactjrx"
+import { report } from "./report"
+import type { AnnotationsEnhancerAPI } from "./types"
+
+export type { AnnotationsEnhancerAPI }
 
 export const annotationsEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions,
-  ): InheritOutput & {
-    annotations: {
-      highlights$: Observable<Highlight[]>
-      highlightTap$: ReaderHighlights["tap$"]
-      highlight: Commands["highlight"]
-      add: Commands["add"]
-      delete: Commands["delete"]
-      update: Commands["update"]
-      select: Commands["select"]
-      isTargetWithinHighlight: (target: EventTarget) => boolean
-    }
-  } => {
+  (options: InheritOptions): InheritOutput & AnnotationsEnhancerAPI => {
     const reader = next(options)
     const commands = new Commands()
-    const highlightsSubject = new BehaviorSubject<Highlight[]>([])
+    const highlightsSubject = new BehaviorSubject<ProseHighlight[]>([])
     const selectedHighlightSubject = new BehaviorSubject<string | undefined>(
       undefined,
     )
@@ -72,7 +61,7 @@ export const annotationsEnhancer =
         const { start: startCfi, end: endCfi } =
           reader.cfi.generateCfiFromRange(range, spineItem.item)
 
-        const highlight = new Highlight({
+        const highlight = new ProseHighlight({
           cfi: startCfi,
           endCfi,
           itemIndex,
@@ -95,7 +84,7 @@ export const annotationsEnhancer =
         const addedHighlights = annotations.map((annotation) => {
           const { itemIndex } = reader.cfi.parseCfi(annotation.cfi ?? "")
 
-          const highlight = new Highlight({ ...annotation, itemIndex })
+          const highlight = new ProseHighlight({ ...annotation, itemIndex })
 
           return highlight
         })
@@ -181,6 +170,7 @@ export const annotationsEnhancer =
 
     return {
       ...reader,
+      __PROSE_READER_ENHANCER_ANNOTATIONS: true,
       destroy: () => {
         highlightsSubject.complete()
         commands.destroy()
