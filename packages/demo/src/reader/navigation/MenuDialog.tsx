@@ -6,7 +6,6 @@ import { FullScreenDialog } from "../../common/FullScreenDialog"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import type { LocalSettings } from "../settings/useLocalSettings"
 import { isQuickMenuOpenSignal } from "../states"
-import { AnnotationsMenu } from "./AnnotationsMenu"
 
 export const isMenuOpenSignal = signal({
   default: false,
@@ -53,15 +52,6 @@ export const MenuDialog = memo(
               localSettings={localSettings}
               open
             />
-          </Tabs.Content>
-          <Tabs.Content
-            value="annotations"
-            display="flex"
-            flex={1}
-            overflow="auto"
-            p={0}
-          >
-            <AnnotationsMenu onNavigate={onNavigate} />
           </Tabs.Content>
         </Tabs.Root>
       </FullScreenDialog>

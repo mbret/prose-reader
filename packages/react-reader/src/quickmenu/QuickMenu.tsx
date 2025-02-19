@@ -5,33 +5,25 @@ import { useQuickMenu } from "./useQuickMenu"
 
 export const QuickMenu = memo(
   ({
-    onBackClick,
-    onMoreClick,
-    onTableOfContentsClick,
-    onHelpClick,
-    onSearchClick,
+    onItemClick,
   }: {
-    onBackClick: () => void
-    onMoreClick: () => void
-    onTableOfContentsClick: () => void
-    onHelpClick: () => void
-    onSearchClick: () => void
+    onItemClick: (
+      item:
+        | "annotations"
+        | "search"
+        | "help"
+        | "toc"
+        | "bookmarks"
+        | "more"
+        | "back",
+    ) => void
   }) => {
     const [quickMenuOpen] = useQuickMenu()
 
     return (
       <>
-        <TopBar
-          open={quickMenuOpen}
-          onBackClick={onBackClick}
-          onMoreClick={onMoreClick}
-        />
-        <BottomBar
-          open={quickMenuOpen}
-          onTableOfContentsClick={onTableOfContentsClick}
-          onHelpClick={onHelpClick}
-          onSearchClick={onSearchClick}
-        />
+        <TopBar open={quickMenuOpen} onItemClick={onItemClick} />
+        <BottomBar open={quickMenuOpen} onItemClick={onItemClick} />
       </>
     )
   },

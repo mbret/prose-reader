@@ -1,19 +1,25 @@
 import { Link, List, Stack, Text } from "@chakra-ui/react"
 import { memo } from "react"
-import { useReader } from "../useReader"
+import { LuNotebookPen } from "react-icons/lu"
 import { useObserve } from "reactjrx"
 import { switchMap } from "rxjs"
-import { LuNotebookPen } from "react-icons/lu"
+import { hasAnnotationsEnhancer, useReader } from "../context/useReader"
 
-export const AnnotationsMenu = memo(
+export const AnnotationsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {
-    const { reader } = useReader()
+    const reader = useReader()
+    const readerWithAnnotations = hasAnnotationsEnhancer(reader)
+      ? reader
+      : undefined
+
     const consolidatedHighlights = useObserve(
       () =>
-        reader?.annotations.highlights$.pipe(
-          switchMap((highlights) => reader.pagination.locate(highlights)),
+        readerWithAnnotations?.annotations.highlights$.pipe(
+          switchMap((highlights) =>
+            readerWithAnnotations.pagination.locate(highlights),
+          ),
         ),
-      [reader],
+      [readerWithAnnotations],
     )
 
     const mapItemToListEntry = (

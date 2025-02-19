@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     dts({
       tsconfigPath: "./tsconfig.app.json",
+      entryRoot: "src",
     }),
   ],
 }))

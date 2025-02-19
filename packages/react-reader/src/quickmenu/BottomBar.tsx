@@ -24,14 +24,12 @@ import { Scrubber } from "./Scrubber"
 export const BottomBar = memo(
   ({
     open,
-    onTableOfContentsClick,
-    onHelpClick,
-    onSearchClick,
+    onItemClick,
   }: {
     open: boolean
-    onTableOfContentsClick: () => void
-    onHelpClick: () => void
-    onSearchClick: () => void
+    onItemClick: (
+      item: "annotations" | "search" | "help" | "toc" | "bookmarks",
+    ) => void
   }) => {
     const reader = useReader()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
@@ -131,7 +129,7 @@ export const BottomBar = memo(
                   aria-label="Help"
                   size="lg"
                   variant="ghost"
-                  onClick={onHelpClick}
+                  onClick={() => onItemClick("help")}
                 >
                   <LuCircleHelp />
                 </IconButton>
@@ -139,7 +137,7 @@ export const BottomBar = memo(
                   aria-label="Table of contents"
                   size="lg"
                   variant="ghost"
-                  onClick={onTableOfContentsClick}
+                  onClick={() => onItemClick("toc")}
                 >
                   <LuTableOfContents />
                 </IconButton>
@@ -148,7 +146,7 @@ export const BottomBar = memo(
                     aria-label="Search"
                     size="lg"
                     variant="ghost"
-                    onClick={onSearchClick}
+                    onClick={() => onItemClick("search")}
                   >
                     <LuSearch />
                   </IconButton>
@@ -158,7 +156,7 @@ export const BottomBar = memo(
                     aria-label="Search"
                     size="lg"
                     variant="ghost"
-                    onClick={onSearchClick}
+                    onClick={() => onItemClick("bookmarks")}
                   >
                     <BsBookmarks />
                   </IconButton>
@@ -168,7 +166,7 @@ export const BottomBar = memo(
                     aria-label="Search"
                     size="lg"
                     variant="ghost"
-                    onClick={onSearchClick}
+                    onClick={() => onItemClick("annotations")}
                   >
                     <LuNotebookPen />
                   </IconButton>

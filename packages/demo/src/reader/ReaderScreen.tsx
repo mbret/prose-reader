@@ -1,9 +1,5 @@
 import { Box } from "@chakra-ui/react"
-import {
-  QuickMenu,
-  ReactReader,
-  ReactReaderProvider,
-} from "@prose-reader/react-reader"
+import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
 import { memo, useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useObserve, useSignalValue } from "reactjrx"
@@ -80,17 +76,19 @@ export const ReaderScreen = memo(() => {
       >
         <QuickActionsMenu />
         <ReactReader
-          onMoreClick={() => {
-            isMenuOpenSignal.setValue(true)
-          }}
-          onBackClick={() => {
-            if (
-              window.history.state === null &&
-              window.location.pathname !== `/`
-            ) {
-              navigate(`/`)
-            } else {
-              navigate(-1)
+          onItemClick={(item) => {
+            if (item === "more") {
+              isMenuOpenSignal.setValue(true)
+            }
+            if (item === "back") {
+              if (
+                window.history.state === null &&
+                window.location.pathname !== `/`
+              ) {
+                navigate(`/`)
+              } else {
+                navigate(-1)
+              }
             }
           }}
         />
