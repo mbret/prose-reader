@@ -36,7 +36,7 @@ const useSliderValues = () => {
   }
 }
 
-export const Scrubber = () => {
+export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
   const reader = useReader()
   const pagination = usePagination()
   const { manifest } = useObserve(() => reader?.context.state$, []) ?? {}
@@ -117,6 +117,7 @@ export const Scrubber = () => {
       reverse={reverse}
       step={step}
       onChange={onChange}
+      {...props}
     />
   )
   // return (

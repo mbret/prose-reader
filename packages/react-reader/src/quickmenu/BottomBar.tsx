@@ -39,15 +39,8 @@ export const BottomBar = memo(
     const [isExtraOpen, setIsExtraOpen] = useState(true)
 
     return (
-      <QuickBar
-        present={open}
-        position="bottom"
-        // height={130}
-      >
-        <Stack
-          // border="1px solid red"
-          flex={1}
-        >
+      <QuickBar present={open} position="bottom">
+        <Stack flex={1} overflow="auto">
           <HStack flex={1} alignItems="center" justifyContent="center">
             <IconButton
               aria-label="left"
@@ -71,13 +64,17 @@ export const BottomBar = memo(
               maxW={400}
               gap={2}
               alignItems="center"
-              overflow="visible"
+              overflow="auto"
               px={4}
             >
               <PaginationInfoSection />
-              <Box height={5} maxW={300} width="100%" overflow="visible">
-                <Scrubber />
-              </Box>
+              <Scrubber
+                style={{
+                  width: "100%",
+                  maxWidth: "300px",
+                  height: "35px",
+                }}
+              />
             </Stack>
             <IconButton
               aria-label="right"
@@ -99,11 +96,7 @@ export const BottomBar = memo(
               )}
             </IconButton>
           </HStack>
-          <HStack
-            alignItems="center"
-            justifyContent="center"
-            // border="1px solid blue"
-          >
+          <HStack alignItems="center" justifyContent="center">
             <Collapsible.Root
               open={isExtraOpen}
               flex={1}
@@ -113,7 +106,6 @@ export const BottomBar = memo(
             >
               <Collapsible.Trigger
                 paddingY="3"
-                // border="1px solid green"
                 width="100%"
                 display="flex"
                 justifyContent="center"

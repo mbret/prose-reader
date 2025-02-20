@@ -1,6 +1,7 @@
 import { Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
+import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
@@ -87,6 +88,11 @@ export const ReactReader = ({
       <AnnotationsDialog
         open={isAnnotationsOpen}
         setOpen={setIsAnnotationsOpen}
+        onNavigate={onNavigate}
+      />
+      <BookmarksDialog
+        open={isBookmarksOpen}
+        setOpen={setIsBookmarksOpen}
         onNavigate={onNavigate}
       />
       <Presence

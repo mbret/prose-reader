@@ -43,7 +43,6 @@ export const MenuDialog = memo(
         >
           <Tabs.List overflow="hidden" overflowX="auto" flexShrink={0}>
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
-            <Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content p={0} display="flex" value="settings">

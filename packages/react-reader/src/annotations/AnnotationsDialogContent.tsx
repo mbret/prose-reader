@@ -69,7 +69,7 @@ export const AnnotationsDialogContent = memo(
     )
 
     return (
-      <List.Root overflowY="auto" gap={3} pt={4} variant="plain" px={4}>
+      <List.Root overflowY="auto" gap={3} pt={4} variant="plain">
         {consolidatedHighlights?.map((item, index) =>
           mapItemToListEntry(item, index),
         )}
