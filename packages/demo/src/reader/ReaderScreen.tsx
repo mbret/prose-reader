@@ -7,8 +7,6 @@ import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
 import { HighlightMenu } from "./annotations/HighlightMenu"
 import { useAnnotations } from "./annotations/useAnnotations"
-import { Bookmarks } from "./bookmarks/Bookmarks"
-import { useBookmarks } from "./bookmarks/useBookmarks"
 import { useGestureHandler } from "./gestures/useGestureHandler"
 import { useLinks } from "./links/useLinks"
 import { MenuDialog, isMenuOpenSignal } from "./navigation/MenuDialog"
@@ -17,6 +15,7 @@ import { Notification } from "./notifications/Notification"
 import { useLocalSettings } from "./settings/useLocalSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
+import { useBookmarks } from "./useBookmarks"
 import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
@@ -97,7 +96,6 @@ export const ReaderScreen = memo(() => {
           setLocalSettings={setLocalSettings}
         />
         <HighlightMenu />
-        <Bookmarks />
         <Notification />
       </ReactReaderProvider>
     </>

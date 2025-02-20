@@ -1,6 +1,7 @@
 import { Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
+import { Bookmarks } from "./bookmarks/Bookmarks"
 import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
@@ -74,6 +75,7 @@ export const ReactReader = ({
         </Presence>
       )}
       <QuickMenu onItemClick={_onItemClick} />
+      <Bookmarks />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
       <TableOfContentsDialog
         open={isTableOfContentsOpen}
