@@ -69,6 +69,9 @@ export const Bookmarks = memo(() => {
                         readerWithBookmarks?.bookmarks.bookmark(index)
                       }}
                       size="lg"
+                      bgColor="white"
+                      opacity={0.5}
+                      _hover={{ opacity: 1 }}
                       variant="ghost"
                       _icon={{ boxSize: "36px" }}
                     >
@@ -77,6 +80,8 @@ export const Bookmarks = memo(() => {
                   ) : (
                     <IconButton
                       aria-label="bookmark"
+                      opacity={0.5}
+                      _hover={{ opacity: 1 }}
                       onClick={() => {
                         bookmarkForPage &&
                           readerWithBookmarks?.bookmarks.delete(
