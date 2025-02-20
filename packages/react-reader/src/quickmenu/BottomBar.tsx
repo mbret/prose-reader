@@ -1,4 +1,4 @@
-import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
+import { Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { BsBookmarks } from "react-icons/bs"
 import { LuChevronDown, LuSearch } from "react-icons/lu"
