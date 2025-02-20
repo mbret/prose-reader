@@ -1,18 +1,18 @@
-import type { ReaderInstance } from "../useCreateReader"
+import type { ProseHighlight } from "@prose-reader/enhancer-annotations"
 import { useObserve, useSubscribe } from "reactjrx"
 import { EMPTY, of, skip, tap } from "rxjs"
 import { isQuickMenuOpenSignal } from "../states"
-import type { Highlight } from "@prose-reader/enhancer-annotations"
+import type { ReaderInstance } from "../useCreateReader"
 import { selectedHighlightSignal } from "./states"
 
 const restore = (bookKey: string) => {
   const storedData = JSON.parse(localStorage.getItem(`annotations`) || `{}`)
-  const restored = storedData[bookKey] || ([] as Highlight[])
+  const restored = storedData[bookKey] || ([] as ProseHighlight[])
 
   return restored
 }
 
-const persist = (bookKey: string, annotations: Highlight[]) => {
+const persist = (bookKey: string, annotations: ProseHighlight[]) => {
   const existing = JSON.parse(localStorage.getItem(`annotations`) || `{}`)
 
   localStorage.setItem(

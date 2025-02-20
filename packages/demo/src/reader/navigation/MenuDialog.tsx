@@ -5,7 +5,6 @@ import { signal, useSignalValue } from "reactjrx"
 import { FullScreenDialog } from "../../common/FullScreenDialog"
 import { SettingsMenu } from "../settings/SettingsMenu"
 import type { LocalSettings } from "../settings/useLocalSettings"
-import { isQuickMenuOpenSignal } from "../states"
 
 export const isMenuOpenSignal = signal({
   default: false,
@@ -20,11 +19,6 @@ export const MenuDialog = memo(
     localSettings: LocalSettings
   }) => {
     const isMenuOpen = useSignalValue(isMenuOpenSignal)
-
-    const onNavigate = () => {
-      isMenuOpenSignal.setValue(false)
-      isQuickMenuOpenSignal.setValue(false)
-    }
 
     return (
       <FullScreenDialog

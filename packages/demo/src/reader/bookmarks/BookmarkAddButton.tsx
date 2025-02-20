@@ -1,4 +1,4 @@
-import { Box, Icon, IconButton } from "@chakra-ui/react"
+import { Box, IconButton } from "@chakra-ui/react"
 import { CiBookmarkCheck } from "react-icons/ci"
 
 export const BookmarkAddButton = ({ onClick }: { onClick: () => void }) => {

@@ -29,6 +29,7 @@ export type AnnotationsEnhancerAPI = {
     delete: Commands["delete"]
     update: Commands["update"]
     select: Commands["select"]
+    reset: Commands["reset"]
     isTargetWithinHighlight: (target: EventTarget) => boolean
   }
 }
