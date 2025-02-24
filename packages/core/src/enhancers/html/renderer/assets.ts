@@ -171,7 +171,7 @@ const loadElementSrc = (
           _document?.defaultView &&
           element instanceof _document.defaultView.HTMLLinkElement
         ) {
-          return new Observable((observer) => {
+          return new Observable<void>((observer) => {
             element.onload = async () => {
               try {
                 // Now that the stylesheet is loaded, replace font URLs
