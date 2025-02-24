@@ -1,25 +1,25 @@
+import { detectMimeTypeFromName } from "@prose-reader/shared"
+import { Observable, merge } from "rxjs"
 import {
+  debounceTime,
+  filter,
+  skip,
+  switchMap,
   takeUntil,
   tap,
-  skip,
-  filter,
-  switchMap,
-  debounceTime,
 } from "rxjs/operators"
-import { createMovingSafePan$ } from "./createMovingSafePan$"
-import { fixReflowable } from "./fixReflowable"
+import type { SettingsInterface } from "../../settings/SettingsInterface"
+import { upsertCSSToFrame } from "../../utils/frames"
+import { isDefined } from "../../utils/isDefined"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { isDefined } from "../../utils/isDefined"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
+import { createMovingSafePan$ } from "./createMovingSafePan$"
+import { fixReflowable } from "./fixReflowable"
 import type { InputSettings, OutputSettings } from "./types"
-import { merge, Observable } from "rxjs"
-import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { upsertCSSToFrame } from "../../utils/frames"
 
 export const layoutEnhancer =
   <
@@ -202,7 +202,7 @@ export const layoutEnhancer =
     // })
 
     const observeContainerResize = (container: HTMLElement) =>
-      new Observable((observer) => {
+      new Observable<void>((observer) => {
         const resizeObserver = new ResizeObserver(() => {
           observer.next()
         })
