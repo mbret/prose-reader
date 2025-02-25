@@ -1,7 +1,7 @@
-import { Link } from "react-router"
-import { Text, Box, Heading, Link as ChakraLink, Stack } from "@chakra-ui/react"
-import { OrDivider } from "../common/OrDivider"
+import { Box, Link as ChakraLink, Heading, Stack, Text } from "@chakra-ui/react"
 import { FaExternalLinkAlt } from "react-icons/fa"
+import { Link } from "react-router"
+import { OrDivider } from "../common/OrDivider"
 import { Button } from "../components/ui/button"
 
 export const HomeScreen = () => {
@@ -14,6 +14,7 @@ export const HomeScreen = () => {
           maxWidth: 320,
           alignItems: `center`,
         }}
+        px={4}
       >
         <Box position="relative" mb={8}>
           <Heading as="h1" fontFamily="'Dancing Script', sans-serif" size="6xl">
@@ -29,7 +30,7 @@ export const HomeScreen = () => {
             demo
           </Text>
         </Box>
-        <Box textAlign="justify" maxWidth={[`auto`]} marginX={[4]} mb={4}>
+        <Box textAlign="justify" maxWidth={[`auto`]} mb={4}>
           <Text as="p">
             This demo is a reader made with React and use <b>prose</b> to render
             its content.
@@ -39,21 +40,15 @@ export const HomeScreen = () => {
             <b>prose</b> can do and how it integrates with a reader app.
           </Text>
         </Box>
-        <Box mt={4} mb={2} width="100%" paddingX={4}>
-          <Button size="lg" width="100%" asChild>
-            <Link to={`/books`} style={{ marginBottom: 20 }}>
-              Take me in!
-            </Link>
-          </Button>
-        </Box>
+        <Button size="lg" width="100%" asChild mb={2}>
+          <Link to={`/books`}>Take me in!</Link>
+        </Button>
         <OrDivider />
-        <Box mt={2} width="100%" paddingX={4}>
-          <Button size="lg" width="100%" asChild>
-            <ChakraLink href="https://prose-reader.com" target="_blank">
-              landing page <FaExternalLinkAlt />
-            </ChakraLink>
-          </Button>
-        </Box>
+        <Button size="lg" width="100%" asChild mt={2}>
+          <ChakraLink href="https://prose-reader.com" target="_blank">
+            landing page <FaExternalLinkAlt />
+          </ChakraLink>
+        </Button>
       </Stack>
       <Box as="footer" paddingBottom={8} textAlign="center">
         <Text>

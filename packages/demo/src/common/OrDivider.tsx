@@ -9,8 +9,6 @@ export const OrDivider: FC<
     <Box
       display="flex"
       alignItems="center"
-      marginTop={2}
-      marginBottom={2}
       width="100%"
       opacity={0.5}
       {...rest}
@@ -19,17 +17,17 @@ export const OrDivider: FC<
         width="100%"
         height="1px"
         style={{
-          borderBottom: "1px solid white",
+          borderBottom: "1px solid black",
           opacity: "30%",
         }}
       />
       <Box marginX={2}>
-        <Text sx={{ textTransform: "uppercase" }}>{title}</Text>
+        <Text style={{ textTransform: "uppercase" }}>{title}</Text>
       </Box>
       <Box
         width="100%"
         style={{
-          borderBottom: "1px solid white",
+          borderBottom: "1px solid black",
           opacity: "30%",
         }}
       />
