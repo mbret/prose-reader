@@ -13,7 +13,6 @@ import type {
   NavigationConsolidation,
 } from "../InternalNavigator"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
-import { SpineItemsManagerMock } from "../tests/SpineItemsManagerMock"
 import { generateItems } from "../tests/utils"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
 
