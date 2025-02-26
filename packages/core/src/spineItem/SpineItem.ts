@@ -1,37 +1,32 @@
-import type { Context } from "../context/Context"
-import { DestroyableClass, type Manifest } from ".."
-import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
+import { type Observable, merge } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
   first,
   map,
-  share,
   shareReplay,
   startWith,
   switchMap,
   takeUntil,
   withLatestFrom,
 } from "rxjs/operators"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { DestroyableClass, type Manifest } from ".."
+import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { SpineItemLayout } from "./SpineItemLayout"
+import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
-import { DefaultRenderer } from "./renderer/DefaultRenderer"
-import { deferNextResult } from "../utils/rxjs"
 
 export class SpineItem extends DestroyableClass {
-  private layoutTriggerSubject = new Subject<{
-    blankPagePosition: `before` | `after` | `none`
-    minimumWidth: number
-    spreadPosition: `left` | `right` | `none`
-  }>()
-
+  private spineItemLayout: SpineItemLayout
   public readonly containerElement: HTMLElement
   public readonly needsLayout$: Observable<unknown>
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
-  public readonly layout$: Observable<{ width: number; height: number }>
+  public readonly layout$: SpineItemLayout["layout$"]
+  public readonly layout: SpineItemLayout["layout"]
   /**
    * Renderer loaded + spine item layout done
    */
@@ -72,46 +67,15 @@ export class SpineItem extends DestroyableClass {
       ? rendererFactory(rendererParams)
       : new DefaultRenderer(rendererParams)
 
-    const layoutProcess$ = this.layoutTriggerSubject.pipe(
-      switchMap(({ blankPagePosition, minimumWidth, spreadPosition }) => {
-        this.hookManager.execute(`item.onBeforeLayout`, undefined, {
-          blankPagePosition,
-          item: this.item,
-          minimumWidth,
-        })
-
-        const layout$ = this.renderer.layout({
-          blankPagePosition,
-          minPageSpread: minimumWidth / this.context.getPageSize().width,
-          minimumWidth,
-          spreadPosition,
-        })
-
-        return merge(
-          of({ type: "start" } as const),
-          layout$.pipe(
-            map(({ height, width }) => {
-              this.containerElement.style.width = `${width}px`
-              this.containerElement.style.height = `${height}px`
-
-              this.hookManager.execute(`item.onAfterLayout`, undefined, {
-                blankPagePosition,
-                item: this.item,
-                minimumWidth,
-              })
-
-              return {
-                type: "end",
-                data: { width, height },
-              } as const
-            }),
-          ),
-        )
-      }),
-      share(),
+    this.spineItemLayout = new SpineItemLayout(
+      item,
+      this.containerElement,
+      context,
+      hookManager,
+      this.renderer,
     )
 
-    this.isReady$ = layoutProcess$.pipe(
+    this.isReady$ = this.spineItemLayout.layoutProcess$.pipe(
       withLatestFrom(this.renderer.isLoaded$),
       map(([event, loaded]) => !!(event.type === `end` && loaded)),
       startWith(false),
@@ -119,12 +83,7 @@ export class SpineItem extends DestroyableClass {
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    this.layout$ = layoutProcess$.pipe(
-      filter((event) => event.type === `end`),
-      map((event) => event.data),
-      share(),
-    )
-
+    this.layout$ = this.spineItemLayout.layout$
     this.needsLayout$ = merge(this.unloaded$, this.loaded$)
 
     merge(
@@ -135,10 +94,12 @@ export class SpineItem extends DestroyableClass {
        * to layout changes may rely on the isReady value.
        */
       this.isReady$,
-      this.layout$,
+      this.spineItemLayout.layout$,
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
+
+    this.layout = this.spineItemLayout.layout
   }
 
   adjustPositionOfElement = ({
@@ -181,16 +142,6 @@ export class SpineItem extends DestroyableClass {
         ?.querySelector(selector)
         ?.getBoundingClientRect()
     }
-  }
-
-  public layout = (
-    params: ObservedValueOf<typeof this.layoutTriggerSubject>,
-  ) => {
-    const nextResult = deferNextResult(this.layout$.pipe(first()))
-
-    this.layoutTriggerSubject.next(params)
-
-    return nextResult()
   }
 
   load = () => {
