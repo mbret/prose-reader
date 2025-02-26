@@ -29,10 +29,6 @@ import { getFrameViewportInfo } from "../../utils/frames"
 import { waitForSwitch } from "../../utils/rxjs"
 import type { ResourceHandler } from "../resources/ResourceHandler"
 
-type Layer = {
-  element: HTMLElement
-}
-
 export type DocumentRendererParams = {
   context: Context
   settings: ReaderSettingsManager
@@ -51,13 +47,6 @@ type LayoutParams = {
 
 export abstract class DocumentRenderer extends DestroyableClass {
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
-  private lastLayoutDims:
-    | {
-        width: number
-        height: number
-        pageSize: { width: number; height: number }
-      }
-    | undefined = undefined
 
   protected context: Context
   protected settings: ReaderSettingsManager
@@ -107,10 +96,6 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.item = params.item
     this.containerElement = params.containerElement
     this.resourcesHandler = params.resourcesHandler
-
-    // this.stateSubject.subscribe((state) => {
-    //   console.log(`FOOO renderer state`, params.item.id, `state`, state)
-    // })
 
     const unloadTrigger$ = this.triggerSubject.pipe(
       withLatestFrom(this.stateSubject),
@@ -250,71 +235,8 @@ export abstract class DocumentRenderer extends DestroyableClass {
     )
   }
 
-  /**
-   * @important
-   *
-   * If renderer returns undefined as dimensions we will use the previous
-   * layout dimensions as fallback. This ensure minmum layout shift during
-   * load / unload of items and improve stability..
-   */
   public layout(params: LayoutParams) {
-    return defer(() => this.onLayout(params)).pipe(
-      map((dims) => {
-        const { height: defaultHeight, width: defaultWidth } =
-          this.context.getPageSize()
-
-        if (dims) {
-          const { height, width } = dims
-
-          if (height < defaultHeight || width < defaultWidth) {
-            Report.warn(
-              `Your height or width is smaller than the page size. Please check your rendering.`,
-            )
-          }
-
-          this.lastLayoutDims = {
-            height: height,
-            width: width,
-            pageSize: this.context.getPageSize(),
-          }
-
-          return this.lastLayoutDims
-        }
-
-        const hasPageSizeChanged =
-          this.lastLayoutDims?.pageSize.width !==
-            this.context.getPageSize().width ||
-          this.lastLayoutDims?.pageSize.height !==
-            this.context.getPageSize().height
-
-        if (
-          this.renditionLayout === `pre-paginated` ||
-          // in the case the page size change, we cannot use the old size reliably
-          // we have to drop it and use the default one
-          hasPageSizeChanged
-        ) {
-          this.lastLayoutDims = {
-            height: this.context.getPageSize().height,
-            width: params.minimumWidth,
-            pageSize: this.context.getPageSize(),
-          }
-        } else {
-          this.lastLayoutDims = {
-            height: Math.max(
-              defaultHeight,
-              this.lastLayoutDims?.height ?? defaultHeight,
-            ),
-            width: Math.max(
-              defaultWidth,
-              this.lastLayoutDims?.width ?? defaultWidth,
-            ),
-            pageSize: this.context.getPageSize(),
-          }
-        }
-
-        return this.lastLayoutDims
-      }),
-    )
+    return defer(() => this.onLayout(params)).pipe()
   }
 
   public destroy() {

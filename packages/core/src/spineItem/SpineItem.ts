@@ -21,12 +21,14 @@ import { ResourceHandler } from "./resources/ResourceHandler"
 
 export class SpineItem extends DestroyableClass {
   private spineItemLayout: SpineItemLayout
+
   public readonly containerElement: HTMLElement
   public readonly needsLayout$: Observable<unknown>
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
   public readonly layout$: SpineItemLayout["layout$"]
   public readonly layout: SpineItemLayout["layout"]
+  public readonly adjustPositionOfElement: SpineItemLayout["adjustPositionOfElement"]
   /**
    * Renderer loaded + spine item layout done
    */
@@ -100,32 +102,7 @@ export class SpineItem extends DestroyableClass {
       .subscribe()
 
     this.layout = this.spineItemLayout.layout
-  }
-
-  adjustPositionOfElement = ({
-    right,
-    left,
-    top,
-  }: {
-    right?: number
-    left?: number
-    top?: number
-  }) => {
-    if (right !== undefined) {
-      this.containerElement.style.right = `${right}px`
-    } else {
-      this.containerElement.style.removeProperty(`right`)
-    }
-    if (left !== undefined) {
-      this.containerElement.style.left = `${left}px`
-    } else {
-      this.containerElement.style.removeProperty(`left`)
-    }
-    if (top !== undefined) {
-      this.containerElement.style.top = `${top}px`
-    } else {
-      this.containerElement.style.removeProperty(`top`)
-    }
+    this.adjustPositionOfElement = this.spineItemLayout.adjustPositionOfElement
   }
 
   getBoundingRectOfElementFromSelector = (selector: string) => {
