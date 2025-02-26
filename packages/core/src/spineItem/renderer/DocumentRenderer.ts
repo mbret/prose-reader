@@ -1,9 +1,8 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { Context } from "../../context/Context"
-import type { HookManager } from "../../hooks/HookManager"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import {
   BehaviorSubject,
+  Observable,
+  Subject,
   catchError,
   combineLatest,
   defer,
@@ -14,20 +13,21 @@ import {
   map,
   merge,
   mergeMap,
-  Observable,
   of,
   share,
-  Subject,
   switchMap,
   takeUntil,
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { ResourceHandler } from "../resources/ResourceHandler"
-import { waitForSwitch } from "../../utils/rxjs"
-import { DestroyableClass } from "../../utils/DestroyableClass"
+import type { Context } from "../../context/Context"
+import type { HookManager } from "../../hooks/HookManager"
 import { Report } from "../../report"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { DestroyableClass } from "../../utils/DestroyableClass"
 import { getFrameViewportInfo } from "../../utils/frames"
+import { waitForSwitch } from "../../utils/rxjs"
+import type { ResourceHandler } from "../resources/ResourceHandler"
 
 type Layer = {
   element: HTMLElement
@@ -51,8 +51,13 @@ type LayoutParams = {
 
 export abstract class DocumentRenderer extends DestroyableClass {
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
-  private lastLayoutDims: { width: number; height: number } | undefined =
-    undefined
+  private lastLayoutDims:
+    | {
+        width: number
+        height: number
+        pageSize: { width: number; height: number }
+      }
+    | undefined = undefined
 
   protected context: Context
   protected settings: ReaderSettingsManager
@@ -267,15 +272,31 @@ export abstract class DocumentRenderer extends DestroyableClass {
             )
           }
 
-          this.lastLayoutDims = { height: height, width: width }
+          this.lastLayoutDims = {
+            height: height,
+            width: width,
+            pageSize: this.context.getPageSize(),
+          }
 
           return this.lastLayoutDims
         }
 
-        if (this.renditionLayout === `pre-paginated`) {
+        const hasPageSizeChanged =
+          this.lastLayoutDims?.pageSize.width !==
+            this.context.getPageSize().width ||
+          this.lastLayoutDims?.pageSize.height !==
+            this.context.getPageSize().height
+
+        if (
+          this.renditionLayout === `pre-paginated` ||
+          // in the case the page size change, we cannot use the old size reliably
+          // we have to drop it and use the default one
+          hasPageSizeChanged
+        ) {
           this.lastLayoutDims = {
             height: this.context.getPageSize().height,
             width: params.minimumWidth,
+            pageSize: this.context.getPageSize(),
           }
         } else {
           this.lastLayoutDims = {
@@ -287,6 +308,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
               defaultWidth,
               this.lastLayoutDims?.width ?? defaultWidth,
             ),
+            pageSize: this.context.getPageSize(),
           }
         }
 
