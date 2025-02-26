@@ -270,33 +270,21 @@ export class SpineLayout extends DestroyableClass {
     this.layoutSubject.next(undefined)
   }
 
-  /**
-   * It's important to not use x,y since we need the absolute position of each element. Otherwise x,y would be relative to
-   * current window (viewport).
-   */
   getAbsolutePositionOf(
     spineItemOrIndex: SpineItem | number | string | undefined,
   ) {
-    const fallback = {
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      width: 0,
-      height: 0,
-      x: 0,
-      y: 0,
-    }
-
-    const spineItem = this.spineItemsManager.get(spineItemOrIndex)
-
-    const indexOfItem = spineItem
-      ? this.spineItemsManager.items.indexOf(spineItem)
-      : -1
-
-    const layoutInformation = this.itemLayoutInformation[indexOfItem]
-
-    return layoutInformation || fallback
+    return (
+      this.spineItemsManager.get(spineItemOrIndex)?.layoutPosition || {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      }
+    )
   }
 
   public destroy() {

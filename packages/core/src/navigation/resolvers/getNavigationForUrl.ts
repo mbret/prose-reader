@@ -1,9 +1,9 @@
 import type { Context } from "../../context/Context"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
-import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
+import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 const getSpineItemOffsetFromAnchor = ({
@@ -15,7 +15,7 @@ const getSpineItemOffsetFromAnchor = ({
   spineItem: SpineItem
   context: Context
 }) => {
-  const itemWidth = spineItem.getElementDimensions()?.width || 0
+  const itemWidth = spineItem.layoutPosition?.width || 0
   const pageWidth = context.getPageSize().width
   const anchorElementBoundingRect =
     spineItem.getBoundingRectOfElementFromSelector(anchor)

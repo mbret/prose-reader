@@ -7,18 +7,18 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { Context } from "../context/Context"
-import type { Pagination } from "./Pagination"
-import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { createSpineItemLocator } from "../spineItem/locationResolver"
+import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
-import type { Spine } from "../spine/Spine"
+import type { Context } from "../context/Context"
 import type { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
-import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
+import type { Spine } from "../spine/Spine"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
+import type { createSpineItemLocator } from "../spineItem/locationResolver"
+import { DestroyableClass } from "../utils/DestroyableClass"
 import { waitForSwitch } from "../utils/rxjs"
+import type { Pagination } from "./Pagination"
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -129,8 +129,7 @@ export class PaginationController extends DestroyableClass {
               ? getRootCfi(endSpineItem)
               : endLastCfi
 
-            const beginSpineItemDimensions =
-              beginSpineItem.getElementDimensions()
+            const beginSpineItemDimensions = beginSpineItem.layoutPosition
 
             const beginNumberOfPagesInSpineItem =
               this.spineItemLocator.getSpineItemNumberOfPages({
@@ -140,7 +139,7 @@ export class PaginationController extends DestroyableClass {
                   !!beginSpineItem.isUsingVerticalWriting(),
               })
 
-            const endSpineItemDimensions = endSpineItem.getElementDimensions()
+            const endSpineItemDimensions = endSpineItem.layoutPosition
 
             const endNumberOfPagesInSpineItem =
               this.spineItemLocator.getSpineItemNumberOfPages({

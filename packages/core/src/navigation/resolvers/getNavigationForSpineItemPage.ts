@@ -1,8 +1,8 @@
 import type { Context } from "../../context/Context"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
@@ -40,7 +40,7 @@ export const getNavigationForSpineItemPage = ({
     spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
       pageIndex,
       isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      itemLayout: spineItem.getElementDimensions(),
+      itemLayout: spineItem.layoutPosition,
     })
 
   const readingOffset = spineLocator.getSpinePositionFromSpineItemPosition({

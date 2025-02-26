@@ -1,21 +1,21 @@
 import type { Context } from "../../context/Context"
+import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import { Report } from "../../report"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { createSpineItemLocator } from "../../spineItem/locationResolver"
-import type { SpineItemsManager } from "../SpineItemsManager"
-import { Report } from "../../report"
 import type {
   SafeSpineItemPosition,
   UnsafeSpineItemPosition,
 } from "../../spineItem/types"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
-import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
-import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
-import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
+import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
 import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
+import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
+import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
+import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
+import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
+import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 
 export type SpineLocator = ReturnType<typeof createSpineLocator>
 
@@ -123,7 +123,7 @@ export const createSpineLocator = ({
         endPageIndex: number
       }
     | undefined => {
-    const { height, width } = spineItem.getElementDimensions()
+    const { height, width } = spineItem.layoutPosition
     const numberOfPages = spineItemLocator.getSpineItemNumberOfPages({
       isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
       itemHeight: height,
@@ -135,7 +135,7 @@ export const createSpineLocator = ({
         spineItemLocator.getSpineItemPositionFromPageIndex({
           pageIndex: index,
           isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-          itemLayout: spineItem.getElementDimensions(),
+          itemLayout: spineItem.layoutPosition,
         })
 
       const spinePosition = getSpinePositionFromSpineItemPosition({

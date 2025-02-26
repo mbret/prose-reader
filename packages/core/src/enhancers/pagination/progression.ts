@@ -16,7 +16,7 @@ const getScrollPercentageWithinItem = (
   currentItem: SpineItem,
 ) => {
   const context = reader.context
-  const { height, width } = currentItem.getElementDimensions()
+  const { height, width } = currentItem.layoutPosition
 
   const { top, left } =
     reader.spine.spineLayout.getAbsolutePositionOf(currentItem)

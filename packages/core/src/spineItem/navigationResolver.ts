@@ -1,8 +1,8 @@
 import type { Context } from "../context/Context"
-import { createSpineItemLocator } from "./locationResolver"
-import type { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpineItem } from "./SpineItem"
+import { createSpineItemLocator } from "./locationResolver"
+import type { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
 
 export type SpineItemNavigationResolver = ReturnType<
   typeof createNavigationResolver
@@ -20,7 +20,7 @@ export const createNavigationResolver = ({
   const getNavigationForLastPage = (
     spineItem: SpineItem,
   ): SafeSpineItemPosition => {
-    const { height, width } = spineItem.getElementDimensions()
+    const { height, width } = spineItem.layoutPosition
     const numberOfPages = spineItemLocator.getSpineItemNumberOfPages({
       isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
       itemHeight: height,
@@ -30,7 +30,7 @@ export const createNavigationResolver = ({
     return spineItemLocator.getSpineItemPositionFromPageIndex({
       pageIndex: numberOfPages - 1,
       isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      itemLayout: spineItem.getElementDimensions(),
+      itemLayout: spineItem.layoutPosition,
     })
   }
 

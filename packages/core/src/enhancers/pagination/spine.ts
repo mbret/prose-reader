@@ -1,18 +1,18 @@
 import {
   type Observable,
-  debounceTime,
   animationFrameScheduler,
-  withLatestFrom,
-  map,
+  debounceTime,
   distinctUntilChanged,
+  map,
   startWith,
+  withLatestFrom,
 } from "rxjs"
 import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>
   reader.spineItemsManager.items.map((item) => {
-    const { height, width } = item.getElementDimensions()
+    const { height, width } = item.layoutPosition
 
     return reader.spine.spineItemLocator.getSpineItemNumberOfPages({
       isUsingVerticalWriting: !!item.isUsingVerticalWriting(),

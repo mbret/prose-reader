@@ -129,23 +129,6 @@ export class SpineItem extends DestroyableClass {
     this.renderer.unload()
   }
 
-  // @todo use spine item manager global layout reference if possible
-  // @todo getAbsolutePositionOf (for width and height)
-  getElementDimensions = () => {
-    // Keep in mind that getBoundingClientRect takes scale transform into consideration
-    // It's better to not use this is the viewport / spine is being scaled
-    const rect = this.containerElement.getBoundingClientRect()
-    const normalizedValues = {
-      ...rect,
-      // we want to round to first decimal because it's possible to have half pixel
-      // however browser engine can also gives back x.yyyy based on their precision
-      width: Math.round(rect.width * 10) / 10,
-      height: Math.round(rect.height * 10) / 10,
-    }
-
-    return normalizedValues
-  }
-
   public destroy = () => {
     super.destroy()
 
@@ -167,6 +150,10 @@ export class SpineItem extends DestroyableClass {
    */
   get readingDirection() {
     return this.renderer.readingDirection
+  }
+
+  get layoutPosition() {
+    return this.spineItemLayout.layoutPosition
   }
 
   isUsingVerticalWriting = () =>
