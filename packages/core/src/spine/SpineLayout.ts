@@ -27,7 +27,6 @@ import type { SpineItem } from "../spineItem/SpineItem"
 import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
 import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { isShallowEqual } from "../utils/objects"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import { layoutItem } from "./layout/layoutItem"
@@ -59,31 +58,9 @@ export type LayoutInfo = {
   pages: PageLayoutInformation[]
 }
 
-export type Layout = LayoutInfo & {
-  /**
-   * @important
-   * Tells you whether the layout has changed since the last layout.
-   * This is only regarding positioning and dimensions of each spine items.
-   *
-   * Things like the actual DOM content and their inner layout are not taken
-   * into consideration. This means that you should not rely on this if your
-   * manipulation involve DOM content (eg: cfi resolving).
-   *
-   * This is however a good way to optimize your code if you only care about
-   * global dimensions, absolute pages, etc.
-   */
-  hasChanged: boolean
-}
+export type Layout = LayoutInfo
 
 export class SpineLayout extends DestroyableClass {
-  /**
-   * This contains every item dimension / position on the viewport.
-   * This is only used to avoid intensively request bounding of each items later.
-   * This is always in sync with every layout since it is being updated for every layout
-   * done with the manager.
-   */
-  protected itemLayoutInformation: LayoutPosition[] = []
-
   protected layoutSubject = new Subject()
 
   /**
@@ -153,7 +130,6 @@ export class SpineLayout extends DestroyableClass {
         layoutInProgress.next(true)
 
         const manifest = this.context.manifest
-        const newItemLayoutInformation: typeof this.itemLayoutInformation = []
         const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
 
         return from(this.spineItemsManager.items).pipe(
@@ -170,37 +146,21 @@ export class SpineLayout extends DestroyableClass {
                     settings: this.settings,
                     spineItemsManager: this.spineItemsManager,
                     verticalOffset,
-                    newItemLayoutInformation,
                   }),
                 ),
               ),
             of({ horizontalOffset: 0, verticalOffset: 0 }),
           ),
           concatMap((layout$) => layout$),
-          map(() => {
-            const hasChanged =
-              this.itemLayoutInformation.length !==
-                newItemLayoutInformation.length ||
-              this.itemLayoutInformation.some(
-                (old, index) =>
-                  !isShallowEqual(old, newItemLayoutInformation[index]),
-              )
-
-            this.itemLayoutInformation = newItemLayoutInformation
-
-            Report.log(NAMESPACE, `layout`, {
-              hasChanged,
-              itemLayoutInformation: this.itemLayoutInformation,
-            })
-
-            return { hasChanged }
+          tap(() => {
+            Report.log(NAMESPACE, `layout`)
           }),
           finalize(() => {
             layoutInProgress.next(false)
           }),
         )
       }),
-      map(({ hasChanged }) => {
+      map(() => {
         const items = spineItemsManager.items
 
         const spineItemsPagesAbsolutePositions = items.map((item) => {
@@ -248,7 +208,6 @@ export class SpineLayout extends DestroyableClass {
         )
 
         return {
-          hasChanged,
           spineItemsAbsolutePositions: items.map((item) =>
             this.getAbsolutePositionOf(item),
           ),

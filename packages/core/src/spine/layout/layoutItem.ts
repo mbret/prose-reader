@@ -1,4 +1,4 @@
-import { map, type Observable } from "rxjs"
+import { type Observable, map } from "rxjs"
 import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -14,7 +14,6 @@ export const layoutItem = ({
   settings,
   index,
   item,
-  newItemLayoutInformation,
 }: {
   horizontalOffset: number
   verticalOffset: number
@@ -24,7 +23,6 @@ export const layoutItem = ({
   settings: ReaderSettingsManager
   item: SpineItem
   index: number
-  newItemLayoutInformation: LayoutPosition[]
 }): Observable<{ horizontalOffset: number; verticalOffset: number }> => {
   let minimumWidth = context.getPageSize().width
   let blankPagePosition: `none` | `before` | `after` = `none`
@@ -135,17 +133,6 @@ export const layoutItem = ({
         const newEdgeX = width + currentValidEdgeXForVerticalPositioning
         const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
-        newItemLayoutInformation.push({
-          left: currentValidEdgeXForVerticalPositioning,
-          right: newEdgeX,
-          top: currentValidEdgeYForVerticalPositioning,
-          bottom: newEdgeY,
-          height,
-          width,
-          x: currentValidEdgeXForVerticalPositioning,
-          y: currentValidEdgeYForVerticalPositioning,
-        })
-
         return {
           horizontalOffset: newEdgeX,
           verticalOffset: newEdgeY,
@@ -160,23 +147,6 @@ export const layoutItem = ({
           ? { right: horizontalOffset, top: 0 }
           : { left: horizontalOffset, top: 0 },
       )
-
-      const left = context.isRTL()
-        ? context.state.visibleAreaRect.width - horizontalOffset - width
-        : horizontalOffset
-
-      newItemLayoutInformation.push({
-        right: context.isRTL()
-          ? context.state.visibleAreaRect.width - horizontalOffset
-          : horizontalOffset + width,
-        left,
-        x: left,
-        top: verticalOffset,
-        bottom: height,
-        height,
-        width,
-        y: verticalOffset,
-      })
 
       return {
         horizontalOffset: horizontalOffset + width,
