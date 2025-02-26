@@ -39,7 +39,7 @@ const useSliderValues = () => {
 export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
   const reader = useReader()
   const pagination = usePagination()
-  const { manifest } = useObserve(() => reader?.context.state$, []) ?? {}
+  const { manifest } = useObserve(() => reader?.context.state$, [reader]) ?? {}
   const reverse = manifest?.readingDirection === "rtl"
   const isUsingSpread = pagination?.isUsingSpread
   const { totalApproximatePages = 0, isBeginWithinChapter } =
