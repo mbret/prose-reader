@@ -10,10 +10,11 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs/operators"
-import { DestroyableClass, type Manifest } from ".."
+import type { Manifest } from ".."
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { DestroyableClass } from "../utils/DestroyableClass"
 import { SpineItemLayout } from "./SpineItemLayout"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
