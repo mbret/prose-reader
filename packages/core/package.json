@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "1.191.0",
+  "version": "1.192.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
@@ -21,7 +21,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/shared": "^1.191.0"
+    "@prose-reader/shared": "^1.192.0"
   },
   "peerDependencies": {
     "rxjs": "*"
