@@ -5,6 +5,7 @@ import { HookManager } from "../../hooks/HookManager"
 import { Pagination } from "../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
+import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import type {
@@ -22,7 +23,7 @@ describe(`Given a backward navigation to a new item`, () => {
       it(`should restore position at the last page`, async () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManagerMock()
+        const spineItemsManager = new SpineItemsManager(context, settings)
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         const pagination = new Pagination(context, spineItemsManager as any)
         const hooksManager = new HookManager()
@@ -57,7 +58,9 @@ describe(`Given a backward navigation to a new item`, () => {
         })
 
         // items of 2 pages
-        spineItemsManager.load(generateItems(100, 2))
+        spineItemsManager.addMany(
+          generateItems(100, 2, context, settings, hooksManager),
+        )
 
         spine.layout()
 

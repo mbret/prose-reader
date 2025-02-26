@@ -1,8 +1,8 @@
+import { firstValueFrom } from "rxjs"
 import { describe, expect, it } from "vitest"
+import { waitFor } from "../tests/utils"
 import type { InternalNavigationEntry } from "./InternalNavigator"
 import { createNavigator, generateItems } from "./tests/utils"
-import { waitFor } from "../tests/utils"
-import { firstValueFrom } from "rxjs"
 
 describe(`Given unloaded book`, () => {
   describe("Given invalid navigation position", () => {
@@ -68,11 +68,19 @@ describe(`Given unloaded book`, () => {
 describe(`Given loaded book`, () => {
   describe("Given invalid negative navigation spine item", () => {
     it(`should fallback to 0`, async () => {
-      const { internalNavigator, userNavigator, spineItemsManagerMock } =
-        createNavigator()
+      const {
+        internalNavigator,
+        userNavigator,
+        spineItemsManagerMock,
+        context,
+        settings,
+        hookManager,
+      } = createNavigator()
       const navigations: InternalNavigationEntry[] = []
 
-      spineItemsManagerMock.load(generateItems(100, 2))
+      spineItemsManagerMock.addMany(
+        generateItems(100, 2, context, settings, hookManager),
+      )
 
       const sub = internalNavigator.navigated$.subscribe((navigation) => {
         navigations.push(navigation)
@@ -100,11 +108,20 @@ describe(`Given loaded book`, () => {
 
   describe("Given invalid positive navigation spine item", () => {
     it(`should fallback to length - 1`, async () => {
-      const { internalNavigator, userNavigator, spineItemsManagerMock, spine } =
-        createNavigator()
+      const {
+        internalNavigator,
+        userNavigator,
+        spineItemsManagerMock,
+        spine,
+        context,
+        settings,
+        hookManager,
+      } = createNavigator()
       const navigations: InternalNavigationEntry[] = []
 
-      spineItemsManagerMock.load(generateItems(100, 2))
+      spineItemsManagerMock.addMany(
+        generateItems(100, 2, context, settings, hookManager),
+      )
 
       spine.layout()
 

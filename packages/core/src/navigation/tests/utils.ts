@@ -1,46 +1,99 @@
-import { BehaviorSubject, of, Subject } from "rxjs"
+import { BehaviorSubject, Subject, of } from "rxjs"
+import { vi } from "vitest"
+import { SpineItem } from "../.."
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
+import { Pagination } from "../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { Spine } from "../../spine/Spine"
+import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { createSpineLocator } from "../../spine/locator/SpineLocator"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
+import { noopElement } from "../../utils/dom"
 import { InternalNavigator } from "../InternalNavigator"
-import { createNavigationResolver } from "../resolvers/NavigationResolver"
 import { UserNavigator } from "../UserNavigator"
+import { createNavigationResolver } from "../resolvers/NavigationResolver"
 import { ViewportNavigator } from "../viewport/ViewportNavigator"
 import { type Item, SpineItemsManagerMock } from "./SpineItemsManagerMock"
-import { Spine } from "../../spine/Spine"
-import { noopElement } from "../../utils/dom"
-import { Pagination } from "../../pagination/Pagination"
 
-export const generateItems = (size: number, number: number) => {
-  return Array.from(Array(number)).map(
-    (_, index) =>
-      ({
+const createSpineItem = (
+  item: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+    width: number
+    height: number
+  },
+  context: Context,
+  index: number,
+  settings: ReaderSettingsManager,
+  hookManager: HookManager,
+) => {
+  const containerElement = document.createElement("div")
+
+  const spineItem = new SpineItem(
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    {} as any,
+    containerElement,
+    context,
+    settings,
+    hookManager,
+    index,
+  )
+
+  vi.spyOn(spineItem, "layoutPosition", "get").mockReturnValue({
+    left: item.left,
+    top: item.top,
+    width: item.width,
+    height: item.height,
+    right: item.right,
+    bottom: item.bottom,
+    x: item.left,
+    y: item.top,
+  })
+
+  return spineItem
+}
+
+export const generateItems = (
+  size: number,
+  number: number,
+  context: Context,
+  settings: ReaderSettingsManager,
+  hookManager: HookManager,
+) => {
+  return Array.from(Array(number)).map((_, index) =>
+    createSpineItem(
+      {
         left: index * size,
         top: 0,
         right: (index + 1) * size,
         bottom: size,
         width: size,
         height: size,
-      }) as Item,
+      },
+      context,
+      index,
+      settings,
+      hookManager,
+    ),
   )
 }
 
 export const createNavigator = () => {
   const context = new Context()
   const settings = new ReaderSettingsManager({}, context)
-  const spineItemsManagerMock = new SpineItemsManagerMock()
+  const spineItemsManager = new SpineItemsManager(context, settings)
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const pagination = new Pagination(context, spineItemsManagerMock as any)
+  const pagination = new Pagination(context, spineItemsManager as any)
   const spineItemLocator = createSpineItemLocator({ context, settings })
   const hookManager = new HookManager()
   const spine = new Spine(
     of(noopElement()),
     context,
     pagination,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    spineItemsManagerMock as any,
+    spineItemsManager,
     spineItemLocator,
     settings,
     hookManager,
@@ -53,7 +106,7 @@ export const createNavigator = () => {
     settings,
     spineItemLocator,
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    spineItemsManager: spineItemsManagerMock as any,
+    spineItemsManager: spineItemsManager as any,
     spineLayout: spine.spineLayout,
   })
   const navigationResolver = createNavigationResolver({
@@ -61,7 +114,7 @@ export const createNavigator = () => {
     locator: spineLocator,
     settings,
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    spineItemsManager: spineItemsManagerMock as any,
+    spineItemsManager: spineItemsManager as any,
     spineLayout: spine.spineLayout,
   })
   const viewportController = new ViewportNavigator(
@@ -97,7 +150,9 @@ export const createNavigator = () => {
     internalNavigator,
     userNavigator,
     context,
-    spineItemsManagerMock,
+    spineItemsManagerMock: spineItemsManager,
     spine,
+    settings,
+    hookManager,
   }
 }
