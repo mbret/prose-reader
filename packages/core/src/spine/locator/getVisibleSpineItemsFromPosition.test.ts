@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest"
-import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
+import { firstValueFrom } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
+import { HookManager, SpineItem } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { SpineItemsManagerMock } from "../../navigation/tests/SpineItemsManagerMock"
+import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"
-import { firstValueFrom } from "rxjs"
+import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 
 const context = new Context()
 
@@ -36,13 +37,46 @@ const singlePageItems = [
   },
 ]
 
+const createSpineItem = (
+  item: (typeof singlePageItems)[number],
+  index: number,
+  settings: ReaderSettingsManager,
+  hookManager: HookManager,
+) => {
+  const containerElement = document.createElement("div")
+
+  const spineItem = new SpineItem(
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    {} as any,
+    containerElement,
+    context,
+    settings,
+    hookManager,
+    index,
+  )
+
+  vi.spyOn(spineItem, "layoutPosition", "get").mockReturnValue({
+    left: item.left,
+    top: item.top,
+    width: item.width,
+    height: item.height,
+    right: item.right,
+    bottom: item.bottom,
+    x: item.left,
+    y: item.top,
+  })
+
+  return spineItem
+}
+
 describe("Given single page items and no spread", () => {
   describe("when position is in half of the first item", () => {
     describe("and threshold of 0.51", () => {
       it("should not recognize second item", () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManagerMock()
+        const spineItemsManager = new SpineItemsManager(context, settings)
+        const hookManager = new HookManager()
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
@@ -59,7 +93,11 @@ describe("Given single page items and no spread", () => {
           },
         })
 
-        spineItemsManager.load(singlePageItems)
+        const spineItems = singlePageItems.map((item, index) =>
+          createSpineItem(item, index, settings, hookManager),
+        )
+
+        spineItemsManager.addMany(spineItems)
 
         spineLayout.layout()
 
@@ -84,7 +122,8 @@ describe("Given single page items and no spread", () => {
       it("should not recognize second item", () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManagerMock()
+        const spineItemsManager = new SpineItemsManager(context, settings)
+        const hookManager = new HookManager()
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
@@ -101,7 +140,11 @@ describe("Given single page items and no spread", () => {
           },
         })
 
-        spineItemsManager.load(singlePageItems)
+        const spineItems = singlePageItems.map((item, index) =>
+          createSpineItem(item, index, settings, hookManager),
+        )
+
+        spineItemsManager.addMany(spineItems)
 
         spineLayout.layout()
 
@@ -123,10 +166,11 @@ describe("Given single page items and no spread", () => {
     })
 
     describe("and threshold of 0.49", () => {
-      it("should recognize second item", async () => {
+      it("should recognize second item foobar", async () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManagerMock()
+        const spineItemsManager = new SpineItemsManager(context, settings)
+        const hookManager = new HookManager()
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
@@ -143,7 +187,11 @@ describe("Given single page items and no spread", () => {
           },
         })
 
-        spineItemsManager.load(singlePageItems)
+        const spineItems = singlePageItems.map((item, index) =>
+          createSpineItem(item, index, settings, hookManager),
+        )
+
+        spineItemsManager.addMany(spineItems)
 
         spineLayout.layout()
 
