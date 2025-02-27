@@ -1,10 +1,13 @@
 import { signal } from "reactjrx"
+import type { Observable } from "rxjs"
 
 export const notificationsSignal = signal<
   | {
-      key: string
+      key?: string
       title: string
-      description: string
+      description?: string
+      duration?: number
+      abort?: Observable<unknown>
     }
   | undefined
 >({

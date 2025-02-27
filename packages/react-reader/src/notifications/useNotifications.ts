@@ -1,5 +1,6 @@
 import { isDefined, useSubscribe } from "reactjrx"
 import {
+  NEVER,
   distinctUntilChanged,
   filter,
   finalize,
@@ -13,6 +14,7 @@ import {
 } from "rxjs"
 import { toaster } from "../components/ui/toaster"
 import { useReader } from "../context/useReader"
+import { useNotifyZoom } from "../zoom/useNotifyZoom"
 import { notificationsSignal } from "./notifications"
 
 const useFontScaleChangeNotification = () => {
@@ -38,12 +40,13 @@ const useFontScaleChangeNotification = () => {
 
 export const useNotifications = () => {
   useFontScaleChangeNotification()
+  useNotifyZoom()
 
   useSubscribe(() =>
     notificationsSignal.subject.pipe(
       filter(isDefined),
       mergeMap((notification) => {
-        const duration = 3000
+        const duration = notification.duration ?? 3000
 
         const toast = toaster.create({
           title: notification.title,
@@ -53,10 +56,14 @@ export const useNotifications = () => {
 
         const sameNotification$ = notificationsSignal.subject.pipe(
           skip(1),
-          filter((n) => n?.key === notification.key),
+          filter((n) => !!notification.key && n?.key === notification.key),
         )
 
-        return merge(timer(duration), sameNotification$).pipe(
+        return merge(
+          timer(duration),
+          notification.abort ?? NEVER,
+          sameNotification$,
+        ).pipe(
           first(),
           finalize(() => {
             toaster.dismiss(toast)

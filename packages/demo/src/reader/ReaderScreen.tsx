@@ -10,7 +10,6 @@ import { useAnnotations } from "./annotations/useAnnotations"
 import { useGestureHandler } from "./gestures/useGestureHandler"
 import { MenuDialog, isMenuOpenSignal } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
-import { Notification } from "./notifications/Notification"
 import { useLocalSettings } from "./settings/useLocalSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
@@ -94,7 +93,6 @@ export const ReaderScreen = memo(() => {
           setLocalSettings={setLocalSettings}
         />
         <HighlightMenu />
-        <Notification />
       </ReactReaderProvider>
     </>
   )
