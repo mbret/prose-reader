@@ -2,6 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
+import { htmlEnhancer } from "../html/enhancer"
 import { navigationEnhancer } from "../navigation"
 import { paginationEnhancer } from "./enhancer"
 
@@ -81,7 +82,9 @@ describe("Given a book with one chapter", () => {
 
   describe("when we navigate to second page", () => {
     it(`should return first chapter`, async () => {
-      const reader = navigationEnhancer(paginationEnhancer(createReader))({
+      const reader = navigationEnhancer(
+        htmlEnhancer(paginationEnhancer(createReader)),
+      )({
         getResource: () => of(new Response("", { status: 200 })),
       })
 
@@ -145,7 +148,9 @@ describe("Given a book with one chapter", () => {
     describe(`when we are on first page`, () => {
       describe("and the first page is within firt chapter sub chapter", () => {
         it(`should return correct chapter with its subChapter info filled`, async () => {
-          const reader = navigationEnhancer(paginationEnhancer(createReader))({
+          const reader = navigationEnhancer(
+            htmlEnhancer(paginationEnhancer(createReader)),
+          )({
             getResource: () => of(new Response("", { status: 200 })),
           })
 
