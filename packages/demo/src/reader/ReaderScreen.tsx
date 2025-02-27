@@ -8,7 +8,6 @@ import { BookLoading } from "./BookLoading"
 import { HighlightMenu } from "./annotations/HighlightMenu"
 import { useAnnotations } from "./annotations/useAnnotations"
 import { useGestureHandler } from "./gestures/useGestureHandler"
-import { useLinks } from "./links/useLinks"
 import { MenuDialog, isMenuOpenSignal } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 import { Notification } from "./notifications/Notification"
@@ -39,7 +38,6 @@ export const ReaderScreen = memo(() => {
   useUpdateReaderSettings({ localSettings, manifest })
   useBookmarks(reader, url)
   useAnnotations(reader, url)
-  useLinks()
   usePersistCurrentPagination()
 
   useResetStateOnUnMount()

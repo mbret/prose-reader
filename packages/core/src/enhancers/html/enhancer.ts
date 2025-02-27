@@ -1,9 +1,15 @@
+import { takeUntil } from "rxjs"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
+import { handleLinks } from "./links"
 import { HtmlRenderer } from "./renderer/HtmlRenderer"
+
+export type HtmlEnhancerOutput = {
+  links$: ReturnType<typeof handleLinks>
+}
 
 export const htmlEnhancer =
   <
@@ -12,7 +18,11 @@ export const htmlEnhancer =
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions): InheritOutput => {
+  (
+    options: InheritOptions,
+  ): InheritOutput & {
+    links$: ReturnType<typeof handleLinks>
+  } => {
     const reader = next({
       ...options,
       getRenderer(item) {
@@ -22,5 +32,12 @@ export const htmlEnhancer =
       },
     })
 
-    return reader
+    const links$ = handleLinks(reader)
+
+    links$.pipe(takeUntil(reader.$.destroy$)).subscribe()
+
+    return {
+      ...reader,
+      links$,
+    }
   }

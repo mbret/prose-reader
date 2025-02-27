@@ -1,8 +1,11 @@
+import { takeUntil } from "rxjs"
+import type { HtmlEnhancerOutput } from "../html/enhancer"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
+import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
 import { observeState } from "./state"
@@ -12,7 +15,7 @@ import type { NavigationEnhancerOutput } from "./types"
 export const navigationEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<RootEnhancer> & HtmlEnhancerOutput,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -35,6 +38,10 @@ export const navigationEnhancer =
         manualNavigator.goToCfi(cfi, { animate: false })
       }
     }
+
+    const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
+
+    linksNavigation$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
     return {
       ...reader,

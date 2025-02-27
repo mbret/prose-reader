@@ -53,9 +53,7 @@ const pointerEvents: string[] = [
  *
  * isHtmlElement(element) -> true
  */
-export const isHtmlElement = (
-  element?: Element | Node | null | EventTarget,
-): element is HTMLElement => {
+export const isHtmlElement = (element?: unknown): element is HTMLElement => {
   return (
     typeof element === "object" &&
     !!element &&
@@ -384,4 +382,20 @@ export const revokeDocumentBlobs = (_document: Document | null | undefined) => {
       }
     }
   }
+}
+
+/**
+ * Type guard function to check if an element is a specific HTML tag element
+ * @param element The element to check
+ * @param tagName The HTML tag name (e.g., 'div', 'span', 'a')
+ * @returns True if the element is an HTMLElement of the specified tag
+ */
+export function isHtmlTagElement<K extends keyof HTMLElementTagNameMap>(
+  element: unknown,
+  tagName: K,
+): element is HTMLElementTagNameMap[K] {
+  return (
+    isHtmlElement(element) &&
+    element.tagName.toLowerCase() === tagName.toLowerCase()
+  )
 }

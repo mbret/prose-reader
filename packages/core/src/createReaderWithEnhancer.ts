@@ -5,7 +5,6 @@ import { fontsEnhancer } from "./enhancers/fonts/fonts"
 import { hotkeysEnhancer } from "./enhancers/hotkeys"
 import { htmlEnhancer } from "./enhancers/html/enhancer"
 import { layoutEnhancer } from "./enhancers/layoutEnhancer/layoutEnhancer"
-import { linksEnhancer } from "./enhancers/links"
 import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
 import { mediaEnhancer } from "./enhancers/media/media"
 import { navigationEnhancer } from "./enhancers/navigation"
@@ -24,22 +23,20 @@ export const createReaderWithEnhancers = //__
       loadingEnhancer(
         webkitEnhancer(
           fontsEnhancer(
-            linksEnhancer(
-              accessibilityEnhancer(
-                resourcesEnhancer(
-                  utilsEnhancer(
-                    layoutEnhancer(
-                      zoomEnhancer(
-                        mediaEnhancer(
-                          chromeEnhancer(
-                            navigationEnhancer(
+            accessibilityEnhancer(
+              resourcesEnhancer(
+                utilsEnhancer(
+                  layoutEnhancer(
+                    zoomEnhancer(
+                      navigationEnhancer(
+                        htmlEnhancer(
+                          mediaEnhancer(
+                            chromeEnhancer(
                               themeEnhancer(
                                 paginationEnhancer(
                                   eventsEnhancer(
-                                    htmlEnhancer(
-                                      // __
-                                      createInternalReader,
-                                    ),
+                                    // __
+                                    createInternalReader,
                                   ),
                                 ),
                               ),

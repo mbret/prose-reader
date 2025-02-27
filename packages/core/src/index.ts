@@ -13,8 +13,7 @@ export type Reader = ReturnType<typeof createReader>
 export { createReader }
 
 export { Report } from "./report"
-
-export { isHtmlElement } from "./utils/dom"
+export { isHtmlElement, isHtmlTagElement } from "./utils/dom"
 export { isShallowEqual } from "./utils/objects"
 export { waitForSwitch } from "./utils/rxjs"
 export { SpineItem } from "./spineItem/SpineItem"

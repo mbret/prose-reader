@@ -6,6 +6,7 @@ import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
+import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLinks"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { SearchDialog } from "./search/SearchDialog"
@@ -62,6 +63,8 @@ export const ReactReader = ({
     },
     [onItemClick],
   )
+
+  useInterceptExternalLinks()
 
   return (
     <>
