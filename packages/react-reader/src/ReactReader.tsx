@@ -3,10 +3,12 @@ import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { Bookmarks } from "./bookmarks/Bookmarks"
 import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
+import { Toaster } from "./components/ui/toaster"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
 import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLinks"
+import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { SearchDialog } from "./search/SearchDialog"
@@ -65,6 +67,7 @@ export const ReactReader = ({
   )
 
   useInterceptExternalLinks()
+  useNotifications()
 
   return (
     <>
@@ -108,6 +111,7 @@ export const ReactReader = ({
       >
         <FloatingTime />
       </Presence>
+      <Toaster />
     </>
   )
 }
