@@ -2,6 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
+import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
 import { htmlEnhancer } from "../html/enhancer"
 import { navigationEnhancer } from "../navigation"
 import { paginationEnhancer } from "./enhancer"
@@ -85,6 +86,7 @@ describe("Given a book with one chapter", () => {
       const reader = navigationEnhancer(
         htmlEnhancer(paginationEnhancer(createReader)),
       )({
+        getRenderer: () => (props) => new DefaultRenderer(props),
         getResource: () => of(new Response("", { status: 200 })),
       })
 
@@ -151,6 +153,7 @@ describe("Given a book with one chapter", () => {
           const reader = navigationEnhancer(
             htmlEnhancer(paginationEnhancer(createReader)),
           )({
+            getRenderer: () => (props) => new DefaultRenderer(props),
             getResource: () => of(new Response("", { status: 200 })),
           })
 
