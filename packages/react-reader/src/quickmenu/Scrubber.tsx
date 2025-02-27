@@ -1,3 +1,4 @@
+import { Box } from "@chakra-ui/react"
 import { type ComponentProps, useCallback, useEffect } from "react"
 import { useObserve, useSignal, useSubscribe } from "reactjrx"
 import { useReader } from "../context/useReader"
@@ -99,15 +100,14 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
   //       )
   //     : []
 
-  if (
+  const disabled =
     totalApproximatePages === 1 ||
     (isUsingSpread && totalApproximatePages === 2)
-  ) {
-    return null
-  }
 
   // @tmp not available yet in chakra
   // if (reverse) return null
+
+  if (disabled) return <Box style={props.style} />
 
   return (
     <ThemedSlider
