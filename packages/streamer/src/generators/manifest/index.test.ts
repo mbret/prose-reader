@@ -1,8 +1,8 @@
-import { generateManifestFromArchive } from "./index"
-import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
-import { describe, expect, it } from "vitest"
-import type { Archive } from "../../archives/types"
 import type { Manifest } from "@prose-reader/shared"
+import { describe, expect, it } from "vitest"
+import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
+import type { Archive } from "../../archives/types"
+import { generateManifestFromArchive } from "./index"
 
 const fakeContent = {
   blob: () => Promise.resolve(new Blob([])),
@@ -128,7 +128,7 @@ describe("Given archive with a folder containing a space", () => {
 
     expect(manifest.spineItems).toEqual([
       {
-        href: "Chapter%201/page_1.jpg",
+        href: "file://Chapter%201/page_1.jpg",
         id: "0.page_1.jpg",
         index: 0,
         mediaType: undefined,
