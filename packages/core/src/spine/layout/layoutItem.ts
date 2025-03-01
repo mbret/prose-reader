@@ -3,7 +3,7 @@ import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../SpineItemsManager"
-import type { LayoutPosition } from "../SpineLayout"
+import type { SpineItemRelativeLayout } from "./types"
 
 export const layoutItem = ({
   horizontalOffset,
@@ -23,7 +23,11 @@ export const layoutItem = ({
   settings: ReaderSettingsManager
   item: SpineItem
   index: number
-}): Observable<{ horizontalOffset: number; verticalOffset: number }> => {
+}): Observable<{
+  horizontalOffset: number
+  verticalOffset: number
+  layoutPosition: SpineItemRelativeLayout
+}> => {
   let minimumWidth = context.getPageSize().width
   let blankPagePosition: `none` | `before` | `after` = `none`
   const isScreenStartItem =
@@ -94,7 +98,7 @@ export const layoutItem = ({
   // we trigger an item layout which will update the visual and return
   // us with the item new eventual layout information.
   // This step is not yet about moving item or adjusting position.
-  const itemLayout$ = item.layout({
+  const itemLayout$ = item.layout.layout({
     minimumWidth,
     blankPagePosition,
     spreadPosition: context.state.isUsingSpreadMode
@@ -119,12 +123,12 @@ export const layoutItem = ({
           : horizontalOffset
 
         if (context.isRTL()) {
-          item.adjustPositionOfElement({
+          item.layout.adjustPositionOfElement({
             top: currentValidEdgeYForVerticalPositioning,
             left: currentValidEdgeXForVerticalPositioning,
           })
         } else {
-          item.adjustPositionOfElement({
+          item.layout.adjustPositionOfElement({
             top: currentValidEdgeYForVerticalPositioning,
             left: currentValidEdgeXForVerticalPositioning,
           })
@@ -133,24 +137,54 @@ export const layoutItem = ({
         const newEdgeX = width + currentValidEdgeXForVerticalPositioning
         const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
+        const layoutPosition: SpineItemRelativeLayout = {
+          left: currentValidEdgeXForVerticalPositioning,
+          right: newEdgeX,
+          top: currentValidEdgeYForVerticalPositioning,
+          bottom: newEdgeY,
+          height,
+          width,
+          x: currentValidEdgeXForVerticalPositioning,
+          y: currentValidEdgeYForVerticalPositioning,
+        }
+
         return {
           horizontalOffset: newEdgeX,
           verticalOffset: newEdgeY,
+          layoutPosition,
         }
       }
 
       // We can now adjust the position of the item if needed based on its new layout.
       // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
       // it will be x from right
-      item.adjustPositionOfElement(
+      item.layout.adjustPositionOfElement(
         context.isRTL()
           ? { right: horizontalOffset, top: 0 }
           : { left: horizontalOffset, top: 0 },
       )
 
+      const left = context.isRTL()
+        ? context.state.visibleAreaRect.width - horizontalOffset - width
+        : horizontalOffset
+
+      const layoutPosition: SpineItemRelativeLayout = {
+        right: context.isRTL()
+          ? context.state.visibleAreaRect.width - horizontalOffset
+          : horizontalOffset + width,
+        left,
+        x: left,
+        top: verticalOffset,
+        bottom: height,
+        height,
+        width,
+        y: verticalOffset,
+      }
+
       return {
         horizontalOffset: horizontalOffset + width,
         verticalOffset: 0,
+        layoutPosition,
       }
     }),
   )

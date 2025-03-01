@@ -29,7 +29,7 @@ export const getAbsolutePageIndexFromPageIndex = ({
     (acc, item) => {
       if (acc.found) return acc
 
-      const itemLayout = spineLayout.getAbsolutePositionOf(item)
+      const itemLayout = spineLayout.getSpineItemRelativeLayoutInfo(item)
 
       const numberOfPages = getSpineItemNumberOfPages({
         isUsingVerticalWriting: !!item.isUsingVerticalWriting(),

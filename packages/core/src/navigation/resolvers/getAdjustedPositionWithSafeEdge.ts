@@ -23,7 +23,7 @@ export const getAdjustedPositionWithSafeEdge = ({
   const lastSpineItem = spineItemsManager.get(
     spineItemsManager.items.length - 1,
   )
-  const distanceOfLastSpineItem = spineLayout.getAbsolutePositionOf(
+  const distanceOfLastSpineItem = spineLayout.getSpineItemRelativeLayoutInfo(
     lastSpineItem || 0,
   )
 

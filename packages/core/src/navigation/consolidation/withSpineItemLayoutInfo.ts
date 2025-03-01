@@ -14,9 +14,8 @@ export const withSpineItemLayoutInfo =
   <N extends Navigation>(stream: Observable<N>): Observable<N> => {
     return stream.pipe(
       switchMap(({ navigation, ...rest }) => {
-        const spineItemDimensions = spine.spineLayout.getAbsolutePositionOf(
-          navigation.spineItem,
-        )
+        const spineItemDimensions =
+          spine.spineLayout.getSpineItemRelativeLayoutInfo(navigation.spineItem)
         const spineItem = spine.spineItemsManager.get(navigation.spineItem)
 
         return (spineItem?.isReady$ ?? of(false)).pipe(

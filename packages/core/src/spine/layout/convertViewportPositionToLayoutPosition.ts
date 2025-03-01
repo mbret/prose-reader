@@ -1,5 +1,5 @@
 import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import type { LayoutPosition } from "../SpineLayout"
+import type { SpineItemRelativeLayout } from "./types"
 
 export const convertSpinePositionToLayoutPosition = ({
   position,
@@ -7,7 +7,7 @@ export const convertSpinePositionToLayoutPosition = ({
 }: {
   position: ViewportPosition
   pageSize: { height: number; width: number }
-}): LayoutPosition => {
+}): SpineItemRelativeLayout => {
   return {
     x: position.x,
     y: position.y,

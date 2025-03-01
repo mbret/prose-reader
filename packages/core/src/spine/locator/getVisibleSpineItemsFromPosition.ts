@@ -39,7 +39,7 @@ export const getVisibleSpineItemsFromPosition = ({
 
   const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
     (acc, spineItem) => {
-      const itemPosition = spineLayout.getAbsolutePositionOf(spineItem)
+      const itemPosition = spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
 
       const { visible } = getItemVisibilityForPosition({
         itemPosition,

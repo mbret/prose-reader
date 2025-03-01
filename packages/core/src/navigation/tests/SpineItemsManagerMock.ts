@@ -73,7 +73,7 @@ export class SpineItemsManagerMock {
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  getAbsolutePositionOf(spineItem: any) {
+  getSpineItemRelativeLayoutInfo(spineItem: any) {
     return (
       this.get(spineItem) ?? {
         left: 0,

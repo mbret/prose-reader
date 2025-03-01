@@ -30,7 +30,8 @@ const restoreNavigationForScrollingPageTurnMode = ({
 
   if (!foundSpineItem) return { x: 0, y: 0 }
 
-  const { height, top } = spineLayout.getAbsolutePositionOf(foundSpineItem)
+  const { height, top } =
+    spineLayout.getSpineItemRelativeLayoutInfo(foundSpineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,

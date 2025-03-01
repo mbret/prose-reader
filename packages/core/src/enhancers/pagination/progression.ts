@@ -19,7 +19,7 @@ const getScrollPercentageWithinItem = (
   const { height, width } = currentItem.layout.layoutInfo
 
   const { top, left } =
-    reader.spine.spineLayout.getAbsolutePositionOf(currentItem)
+    reader.spine.spineLayout.getSpineItemRelativeLayoutInfo(currentItem)
 
   if (reader.settings.values.computedPageTurnDirection === `vertical`) {
     return Math.max(

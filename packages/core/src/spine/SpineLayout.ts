@@ -30,43 +30,35 @@ import { DestroyableClass } from "../utils/DestroyableClass"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import { layoutItem } from "./layout/layoutItem"
+import type { SpineItemRelativeLayout } from "./layout/types"
 import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
 
 const NAMESPACE = `SpineLayout`
 
-export type LayoutPosition = {
-  left: number
-  right: number
-  top: number
-  bottom: number
-  width: number
-  height: number
-  x: number
-  y: number
-  __symbol?: `LayoutPosition`
-}
-
 export type PageLayoutInformation = {
   absolutePageIndex: number
   itemIndex: number
-  absolutePosition: LayoutPosition
+  absolutePosition: SpineItemRelativeLayout
 }
 
 export type LayoutInfo = {
-  spineItemsAbsolutePositions: LayoutPosition[]
-  spineItemsPagesAbsolutePositions: LayoutPosition[][]
+  spineItemsAbsolutePositions: SpineItemRelativeLayout[]
   pages: PageLayoutInformation[]
 }
-
-export type Layout = LayoutInfo
 
 export class SpineLayout extends DestroyableClass {
   protected layoutSubject = new Subject()
 
   /**
+   * @todo use absolute position for all direction.
+   * translation of position should be done elsewhere
+   */
+  protected spineItemsRelativeLayouts: SpineItemRelativeLayout[] = []
+
+  /**
    * Emit layout info after each layout is done.
    */
-  public readonly layout$: Observable<Layout>
+  public readonly layout$: Observable<LayoutInfo>
 
   /**
    * Emit current layout information on subscription.
@@ -82,6 +74,9 @@ export class SpineLayout extends DestroyableClass {
 
     spineItemsManager.items$
       .pipe(
+        tap(() => {
+          this.spineItemsRelativeLayouts = []
+        }),
         switchMap((items) => {
           // upstream change, meaning we need to layout again to both resize correctly each item but also to
           // adjust positions, etc
@@ -131,30 +126,53 @@ export class SpineLayout extends DestroyableClass {
 
         const manifest = this.context.manifest
         const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
+        const items$ = from(this.spineItemsManager.items)
 
-        return from(this.spineItemsManager.items).pipe(
+        return items$.pipe(
           reduce(
-            (acc$, item, index) =>
+            (
+              acc$: Observable<{
+                horizontalOffset: number
+                verticalOffset: number
+                pages: SpineItemRelativeLayout[]
+              }>,
+              item,
+              itemIndex,
+            ) =>
               acc$.pipe(
-                concatMap(({ horizontalOffset, verticalOffset }) =>
+                concatMap(({ horizontalOffset, verticalOffset, pages }) =>
                   layoutItem({
                     context: this.context,
                     horizontalOffset,
-                    index,
+                    index: itemIndex,
                     isGloballyPrePaginated,
                     item,
                     settings: this.settings,
                     spineItemsManager: this.spineItemsManager,
                     verticalOffset,
-                  }),
+                  }).pipe(
+                    map(
+                      ({
+                        horizontalOffset: newHorizontalOffset,
+                        verticalOffset: newVerticalOffset,
+                        layoutPosition,
+                      }) => {
+                        this.spineItemsRelativeLayouts[itemIndex] =
+                          layoutPosition
+
+                        return {
+                          horizontalOffset: newHorizontalOffset,
+                          verticalOffset: newVerticalOffset,
+                          pages: [...pages, layoutPosition],
+                        }
+                      },
+                    ),
+                  ),
                 ),
               ),
-            of({ horizontalOffset: 0, verticalOffset: 0 }),
+            of({ horizontalOffset: 0, verticalOffset: 0, pages: [] }),
           ),
           concatMap((layout$) => layout$),
-          tap(() => {
-            Report.log(NAMESPACE, `layout`)
-          }),
           finalize(() => {
             layoutInProgress.next(false)
           }),
@@ -164,7 +182,7 @@ export class SpineLayout extends DestroyableClass {
         const items = spineItemsManager.items
 
         const spineItemsPagesAbsolutePositions = items.map((item) => {
-          const itemLayout = this.getAbsolutePositionOf(item)
+          const itemLayout = this.getSpineItemRelativeLayoutInfo(item)
 
           const numberOfPages = getSpineItemNumberOfPages({
             isUsingVerticalWriting: !!item.isUsingVerticalWriting(),
@@ -208,10 +226,7 @@ export class SpineLayout extends DestroyableClass {
         )
 
         return {
-          spineItemsAbsolutePositions: items.map((item) =>
-            this.getAbsolutePositionOf(item),
-          ),
-          spineItemsPagesAbsolutePositions,
+          spineItemsAbsolutePositions: [...this.spineItemsRelativeLayouts],
           pages,
         }
       }),
@@ -219,6 +234,9 @@ export class SpineLayout extends DestroyableClass {
     )
 
     this.info$ = this.layout$.pipe(
+      tap((layout) => {
+        Report.log(NAMESPACE, `layout:info`, layout)
+      }),
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
@@ -229,11 +247,15 @@ export class SpineLayout extends DestroyableClass {
     this.layoutSubject.next(undefined)
   }
 
-  getAbsolutePositionOf(
+  getSpineItemRelativeLayoutInfo(
     spineItemOrIndex: SpineItem | number | string | undefined,
   ) {
+    const itemIndex =
+      this.spineItemsManager.getSpineItemIndex(spineItemOrIndex) ?? 0
+
     return (
-      this.spineItemsManager.get(spineItemOrIndex)?.layoutPosition || {
+      this.spineItemsRelativeLayouts[itemIndex] ||
+      ({
         left: 0,
         right: 0,
         top: 0,
@@ -242,7 +264,7 @@ export class SpineLayout extends DestroyableClass {
         height: 0,
         x: 0,
         y: 0,
-      }
+      } satisfies SpineItemRelativeLayout)
     )
   }
 

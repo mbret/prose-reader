@@ -1,9 +1,9 @@
+import { BehaviorSubject } from "rxjs"
+import { parseCfi } from "../cfi/lookup/parseCfi"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { parseCfi } from "../cfi/lookup/parseCfi"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import { BehaviorSubject } from "rxjs"
 import { SpineItem } from "../spineItem/SpineItem"
+import { DestroyableClass } from "../utils/DestroyableClass"
 
 export class SpineItemsManager extends DestroyableClass {
   constructor(
@@ -41,7 +41,7 @@ export class SpineItemsManager extends DestroyableClass {
         : `before`
   }
 
-  getSpineItemIndex(spineItemOrId: SpineItem | string | undefined) {
+  getSpineItemIndex(spineItemOrId: SpineItem | string | number | undefined) {
     const spineItem =
       spineItemOrId instanceof SpineItem
         ? spineItemOrId

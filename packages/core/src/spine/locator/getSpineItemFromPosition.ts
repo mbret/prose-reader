@@ -18,7 +18,8 @@ export const getSpineItemFromPosition = ({
   settings: ReaderSettingsManager
 }) => {
   const spineItem = spineItemsManager.items.find((item) => {
-    const { left, right, bottom, top } = spineLayout.getAbsolutePositionOf(item)
+    const { left, right, bottom, top } =
+      spineLayout.getSpineItemRelativeLayoutInfo(item)
 
     const isWithinXAxis = position.x >= left && position.x < right
 
