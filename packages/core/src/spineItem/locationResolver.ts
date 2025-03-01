@@ -3,9 +3,9 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
 import type { SpineItem } from "./SpineItem"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
-import { getSpineItemNumberOfPages } from "./locator/getSpineItemNumberOfPages"
-import { getSpineItemPagesPosition } from "./locator/getSpineItemPagesPosition"
-import { getSpineItemPositionFromPageIndex } from "./locator/getSpineItemPositionFromPageIndex"
+import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
+import { getSpineItemPagesPosition } from "./layout/getSpineItemPagesPosition"
+import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
 import type { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
@@ -242,15 +242,5 @@ export const createSpineItemLocator = ({
         itemLayout: item.layout.layoutInfo,
       })
     },
-    getSpineItemNumberOfPages: (params: {
-      itemWidth: number
-      itemHeight: number
-      isUsingVerticalWriting: boolean
-    }) =>
-      getSpineItemNumberOfPages({
-        context,
-        settings,
-        ...params,
-      }),
   }
 }

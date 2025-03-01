@@ -1,5 +1,5 @@
 import type { Context } from "../../context/Context"
-import { getSpineItemPositionFromPageIndex } from "../../spineItem/locator/getSpineItemPositionFromPageIndex"
+import { getSpineItemPositionFromPageIndex } from "../../spineItem/layout/getSpineItemPositionFromPageIndex"
 import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
 
 export const getSpinePositionFromSpineItemPageIndex = ({
