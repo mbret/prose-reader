@@ -74,12 +74,21 @@ describe(`Given loaded book`, () => {
         spineItemsManagerMock,
         context,
         settings,
+        spine,
         hookManager,
       } = createNavigator()
       const navigations: InternalNavigationEntry[] = []
 
       spineItemsManagerMock.addMany(
-        generateItems(100, 2, context, settings, hookManager),
+        generateItems(
+          100,
+          2,
+          context,
+          settings,
+          hookManager,
+          spine,
+          spineItemsManagerMock,
+        ),
       )
 
       const sub = internalNavigator.navigated$.subscribe((navigation) => {
@@ -120,7 +129,15 @@ describe(`Given loaded book`, () => {
       const navigations: InternalNavigationEntry[] = []
 
       spineItemsManagerMock.addMany(
-        generateItems(100, 2, context, settings, hookManager),
+        generateItems(
+          100,
+          2,
+          context,
+          settings,
+          hookManager,
+          spine,
+          spineItemsManagerMock,
+        ),
       )
 
       spine.layout()

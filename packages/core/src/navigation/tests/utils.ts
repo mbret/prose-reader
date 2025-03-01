@@ -42,15 +42,15 @@ const createSpineItem = (
     index,
   )
 
-  vi.spyOn(spineItem, "layoutPosition", "get").mockReturnValue({
-    left: item.left,
-    top: item.top,
+  vi.spyOn(spineItem.layout, "layoutInfo", "get").mockReturnValue({
+    // left: item.left,
+    // top: item.top,
     width: item.width,
     height: item.height,
-    right: item.right,
-    bottom: item.bottom,
-    x: item.left,
-    y: item.top,
+    // right: item.right,
+    // bottom: item.bottom,
+    // x: item.left,
+    // y: item.top,
   })
 
   return spineItem
@@ -62,23 +62,42 @@ export const generateItems = (
   context: Context,
   settings: ReaderSettingsManager,
   hookManager: HookManager,
+  spine: Spine,
+  spineItemsManager: SpineItemsManager,
 ) => {
-  return Array.from(Array(number)).map((_, index) =>
+  const layoutInfos = Array.from(Array(number)).map((_, index) => ({
+    left: index * size,
+    top: 0,
+    right: (index + 1) * size,
+    bottom: size,
+    width: size,
+    height: size,
+    x: index * size,
+    y: 0,
+  }))
+
+  const items = Array.from(Array(number)).map((_, index) =>
     createSpineItem(
-      {
-        left: index * size,
-        top: 0,
-        right: (index + 1) * size,
-        bottom: size,
-        width: size,
-        height: size,
-      },
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      layoutInfos[index]!,
       context,
       index,
       settings,
       hookManager,
     ),
   )
+
+  vi.spyOn(
+    spine.spineLayout,
+    "getSpineItemRelativeLayoutInfo",
+  ).mockImplementation((item) => {
+    const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
+
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    return layoutInfos[itemIndex]!
+  })
+
+  return items
 }
 
 export const createNavigator = () => {

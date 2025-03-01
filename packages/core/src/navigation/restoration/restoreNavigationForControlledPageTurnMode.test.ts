@@ -58,7 +58,15 @@ describe(`Given a backward navigation to a new item`, () => {
 
         // items of 2 pages
         spineItemsManager.addMany(
-          generateItems(100, 2, context, settings, hooksManager),
+          generateItems(
+            100,
+            2,
+            context,
+            settings,
+            hooksManager,
+            spine,
+            spineItemsManager,
+          ),
         )
 
         spine.layout()

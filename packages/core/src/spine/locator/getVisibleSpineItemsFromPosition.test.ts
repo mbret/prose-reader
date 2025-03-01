@@ -55,15 +55,15 @@ const createSpineItem = (
     index,
   )
 
-  vi.spyOn(spineItem, "layoutPosition", "get").mockReturnValue({
-    left: item.left,
-    top: item.top,
+  vi.spyOn(spineItem.layout, "layoutInfo", "get").mockReturnValue({
+    // left: item.left,
+    // top: item.top,
     width: item.width,
     height: item.height,
-    right: item.right,
-    bottom: item.bottom,
-    x: item.left,
-    y: item.top,
+    // right: item.right,
+    // bottom: item.bottom,
+    // x: item.left,
+    // y: item.top,
   })
 
   return spineItem
