@@ -5,25 +5,34 @@ import {
   waitForSpineItemReady,
 } from "../../../utils"
 
-test.describe("Given spread book with an odd width for the page", () => {
-  test("should navigate to the right page", async ({ page }) => {
-    await page.setViewportSize({
-      width: 723, // odd
-      height: 671,
-    })
+const parameters = [
+  ["odd", { width: 723, height: 671 }],
+  ["even", { width: 722, height: 671 }],
+] as const
 
-    await page.goto(
-      `http://localhost:3333/tests/navigation/manual/comics/index.html`,
-    )
+parameters.forEach(([type, { width, height }]) => {
+  test.describe(`Given spread book with an ${type} width for the page`, () => {
+    test.describe("When the user turns right", () => {
+      test("should navigate to the right page", async ({ page }) => {
+        await page.setViewportSize({
+          width,
+          height,
+        })
 
-    // Wait for both spine items to be ready
-    await waitForSpineItemReady(page, [0, 1])
+        await page.goto(
+          `http://localhost:3333/tests/navigation/manual/comics/index.html`,
+        )
 
-    await turnRight({ page })
+        // Wait for both spine items to be ready
+        await waitForSpineItemReady(page, [0, 1])
 
-    await expectSpineItemsInViewport({
-      page,
-      indexes: [2, 3],
+        await turnRight({ page })
+
+        await expectSpineItemsInViewport({
+          page,
+          indexes: [2, 3],
+        })
+      })
     })
   })
 })
