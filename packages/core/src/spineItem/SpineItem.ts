@@ -8,6 +8,7 @@ import {
   startWith,
   switchMap,
   takeUntil,
+  tap,
   withLatestFrom,
 } from "rxjs/operators"
 import type { Manifest } from ".."
@@ -83,6 +84,10 @@ export class SpineItem extends DestroyableClass {
       map(([event, loaded]) => !!(event.type === `end` && loaded)),
       startWith(false),
       distinctUntilChanged(),
+      tap((isReady) => {
+        // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+        this.containerElement.dataset["isReady"] = isReady.toString()
+      }),
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
@@ -198,6 +203,8 @@ const createContainerElement = (
     position: absolute;
     overflow: hidden;
   `
+  // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+  element.dataset["isReady"] = `false`
 
   hookManager.execute("item.onBeforeContainerCreated", undefined, { element })
 

@@ -41,7 +41,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.keyboard.press("ArrowRight")
 
-      await waitForSpineItemReady(page, [1, 2])
+      await waitForSpineItemReady(page, [0, 1])
 
       expect(
         await page.screenshot({

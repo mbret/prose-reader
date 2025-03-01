@@ -20,7 +20,9 @@ test.describe("Given a CFI", () => {
     const textElement = frame?.getByText("About the Book")
     await textElement?.waitFor({ state: "visible" })
 
-    await expect(textElement).toBeInViewport()
+    await expect(textElement).toBeInViewport({
+      ratio: 1,
+    })
   })
 })
 
@@ -53,7 +55,9 @@ test.describe("Given CFI in the middle of book", () => {
       const textElement = frame?.getByText("Safari® Books Online")
 
       await textElement?.waitFor({ state: "visible" })
-      await expect(textElement).toBeInViewport()
+      await expect(textElement).toBeInViewport({
+        ratio: 1,
+      })
 
       // these sizes are chosen mostly because they are not even.
       await page.setViewportSize({
@@ -66,7 +70,9 @@ test.describe("Given CFI in the middle of book", () => {
       await page.waitForTimeout(1000)
 
       await textElement?.waitFor({ state: "visible" })
-      await expect(textElement).toBeInViewport()
+      await expect(textElement).toBeInViewport({
+        ratio: 1,
+      })
     })
   })
 })
