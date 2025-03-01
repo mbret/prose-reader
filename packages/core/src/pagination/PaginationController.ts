@@ -129,24 +129,9 @@ export class PaginationController extends DestroyableClass {
               ? getRootCfi(endSpineItem)
               : endLastCfi
 
-            const beginSpineItemDimensions = beginSpineItem.layout.layoutInfo
+            const beginNumberOfPagesInSpineItem = beginSpineItem.numberOfPages
 
-            const beginNumberOfPagesInSpineItem =
-              this.spineItemLocator.getSpineItemNumberOfPages({
-                itemHeight: beginSpineItemDimensions.height,
-                itemWidth: beginSpineItemDimensions.width,
-                isUsingVerticalWriting:
-                  !!beginSpineItem.isUsingVerticalWriting(),
-              })
-
-            const endSpineItemDimensions = endSpineItem.layout.layoutInfo
-
-            const endNumberOfPagesInSpineItem =
-              this.spineItemLocator.getSpineItemNumberOfPages({
-                itemHeight: endSpineItemDimensions.height,
-                itemWidth: endSpineItemDimensions.width,
-                isUsingVerticalWriting: !!endSpineItem.isUsingVerticalWriting(),
-              })
+            const endNumberOfPagesInSpineItem = endSpineItem.numberOfPages
 
             this.pagination.update({
               beginCfi,

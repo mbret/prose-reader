@@ -24,14 +24,13 @@ import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
-import { getSpineItemNumberOfPages } from "../spineItem/locator/getSpineItemNumberOfPages"
 import { getSpineItemPositionFromPageIndex } from "../spineItem/locator/getSpineItemPositionFromPageIndex"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { convertSpinePositionToLayoutPosition } from "./layout/convertViewportPositionToLayoutPosition"
 import { layoutItem } from "./layout/layoutItem"
-import type { SpineItemRelativeLayout } from "./layout/types"
 import { getSpinePositionFromSpineItemPosition } from "./locator/getSpinePositionFromSpineItemPosition"
+import type { SpineItemRelativeLayout } from "./types"
 
 const NAMESPACE = `SpineLayout`
 
@@ -42,7 +41,6 @@ export type PageLayoutInformation = {
 }
 
 export type LayoutInfo = {
-  spineItemsAbsolutePositions: SpineItemRelativeLayout[]
   pages: PageLayoutInformation[]
 }
 
@@ -181,21 +179,13 @@ export class SpineLayout extends DestroyableClass {
       map(() => {
         const items = spineItemsManager.items
 
-        const spineItemsPagesAbsolutePositions = items.map((item) => {
+        const pages = items.reduce((acc, item, itemIndex) => {
           const itemLayout = this.getSpineItemRelativeLayoutInfo(item)
 
-          const numberOfPages = getSpineItemNumberOfPages({
-            isUsingVerticalWriting: !!item.isUsingVerticalWriting(),
-            itemHeight: itemLayout.height,
-            itemWidth: itemLayout.width,
-            context,
-            settings,
-          })
+          const pages = new Array(item.numberOfPages).fill(undefined)
 
-          const pages = new Array(numberOfPages).fill(undefined)
-
-          return pages.map((_, pageIndex) =>
-            convertSpinePositionToLayoutPosition({
+          const pagesAbsolutePositions = pages.map((_, pageIndex) => {
+            return convertSpinePositionToLayoutPosition({
               pageSize: this.context.getPageSize(),
               position: getSpinePositionFromSpineItemPosition({
                 itemLayout,
@@ -206,27 +196,20 @@ export class SpineLayout extends DestroyableClass {
                   context,
                 }),
               }),
-            }),
-          )
-        })
+            })
+          })
 
-        const pages = spineItemsPagesAbsolutePositions.reduce(
-          (acc, itemPages, itemIndex) => {
-            const itemPagesInfo: PageLayoutInformation[] = itemPages.map(
-              (absolutePosition, pageIndex) => ({
-                itemIndex,
-                absolutePageIndex: itemIndex + pageIndex,
-                absolutePosition,
-              }),
-            )
+          const itemPagesInfo: PageLayoutInformation[] =
+            pagesAbsolutePositions.map((absolutePosition, pageIndex) => ({
+              itemIndex,
+              absolutePageIndex: itemIndex + pageIndex,
+              absolutePosition,
+            }))
 
-            return [...acc, ...itemPagesInfo]
-          },
-          [] as PageLayoutInformation[],
-        )
+          return [...acc, ...itemPagesInfo]
+        }, [] as PageLayoutInformation[])
 
         return {
-          spineItemsAbsolutePositions: [...this.spineItemsRelativeLayouts],
           pages,
         }
       }),
@@ -266,6 +249,12 @@ export class SpineLayout extends DestroyableClass {
         y: 0,
       } satisfies SpineItemRelativeLayout)
     )
+  }
+
+  get numberOfPages() {
+    return this.spineItemsManager.items.reduce((acc, item) => {
+      return acc + item.numberOfPages
+    }, 0)
   }
 
   public destroy() {

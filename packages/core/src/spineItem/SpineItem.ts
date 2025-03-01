@@ -17,6 +17,7 @@ import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { SpineItemLayout } from "./SpineItemLayout"
+import { getSpineItemNumberOfPages } from "./locator/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
@@ -175,6 +176,16 @@ export class SpineItem extends DestroyableClass {
 
   get renditionLayout() {
     return this.renderer.renditionLayout
+  }
+
+  get numberOfPages() {
+    return getSpineItemNumberOfPages({
+      isUsingVerticalWriting: !!this.isUsingVerticalWriting(),
+      itemHeight: this.layout.layoutInfo.height,
+      itemWidth: this.layout.layoutInfo.width,
+      context: this.context,
+      settings: this.settings,
+    })
   }
 }
 

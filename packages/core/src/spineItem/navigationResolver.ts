@@ -20,12 +20,7 @@ export const createNavigationResolver = ({
   const getNavigationForLastPage = (
     spineItem: SpineItem,
   ): SafeSpineItemPosition => {
-    const { height, width } = spineItem.layout.layoutInfo
-    const numberOfPages = spineItemLocator.getSpineItemNumberOfPages({
-      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      itemHeight: height,
-      itemWidth: width,
-    })
+    const numberOfPages = spineItem.numberOfPages
 
     return spineItemLocator.getSpineItemPositionFromPageIndex({
       pageIndex: numberOfPages - 1,

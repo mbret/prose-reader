@@ -3,7 +3,7 @@ import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineItemRelativeLayout } from "./types"
+import type { SpineItemRelativeLayout } from "../types"
 
 export const layoutItem = ({
   horizontalOffset,

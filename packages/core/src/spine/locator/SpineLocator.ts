@@ -124,12 +124,7 @@ export const createSpineLocator = ({
         endPageIndex: number
       }
     | undefined => {
-    const { height, width } = spineItem.layout.layoutInfo
-    const numberOfPages = spineItemLocator.getSpineItemNumberOfPages({
-      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      itemHeight: height,
-      itemWidth: width,
-    })
+    const numberOfPages = spineItem.numberOfPages
 
     const pages = Array.from(Array(numberOfPages)).map((_, index) => {
       const spineItemPosition =

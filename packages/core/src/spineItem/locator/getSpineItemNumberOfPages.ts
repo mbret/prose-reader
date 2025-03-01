@@ -15,9 +15,6 @@ export const getSpineItemNumberOfPages = ({
   settings: ReaderSettingsManager
   context: Context
 }) => {
-  // pre-paginated always are only one page
-  // if (!spineItem.isReflowable) return 1
-
   const { pageTurnDirection, pageTurnMode } = settings.values
 
   if (pageTurnDirection === `vertical` && pageTurnMode === `scrollable`) {

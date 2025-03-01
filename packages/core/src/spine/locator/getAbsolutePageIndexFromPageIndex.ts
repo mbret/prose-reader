@@ -1,17 +1,13 @@
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import { getSpineItemNumberOfPages } from "../../spineItem/locator/getSpineItemNumberOfPages"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 
 export const getAbsolutePageIndexFromPageIndex = ({
   pageIndex,
   spineItemOrId,
-  spineLayout,
   spineItemsManager,
-  context,
-  settings,
 }: {
   pageIndex: number
   spineItemOrId: number | SpineItem | string
@@ -29,15 +25,7 @@ export const getAbsolutePageIndexFromPageIndex = ({
     (acc, item) => {
       if (acc.found) return acc
 
-      const itemLayout = spineLayout.getSpineItemRelativeLayoutInfo(item)
-
-      const numberOfPages = getSpineItemNumberOfPages({
-        isUsingVerticalWriting: !!item.isUsingVerticalWriting(),
-        itemHeight: itemLayout.height,
-        itemWidth: itemLayout.width,
-        context,
-        settings,
-      })
+      const numberOfPages = item.numberOfPages
 
       if (spineItem === item) {
         if (pageIndex <= numberOfPages - 1) {

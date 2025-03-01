@@ -1,5 +1,5 @@
 import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import type { SpineItemRelativeLayout } from "./types"
+import type { SpineItemRelativeLayout } from "../types"
 
 export const convertSpinePositionToLayoutPosition = ({
   position,
