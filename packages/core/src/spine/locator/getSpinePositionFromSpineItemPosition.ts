@@ -1,5 +1,5 @@
-import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import type { SafeSpineItemPosition } from "../../spineItem/types"
+import type { SpineItemPosition } from "../../spineItem/types"
+import { SpinePosition } from "../types"
 
 /**
  * Be careful when using with spread with RTL, this will return the position for one page size. This is in order to prevent wrong position when
@@ -15,9 +15,9 @@ export const getSpinePositionFromSpineItemPosition = ({
   spineItemPosition,
   itemLayout: { left, top },
 }: {
-  spineItemPosition: SafeSpineItemPosition
+  spineItemPosition: SpineItemPosition
   itemLayout: { left: number; top: number }
-}): ViewportPosition => {
+}) => {
   /**
    * For this case the global offset move from right to left but this specific item
    * reads from left to right. This means that when the offset is at the start of the item
@@ -31,8 +31,8 @@ export const getSpinePositionFromSpineItemPosition = ({
   //   return (end - spineItemOffset) - context.getPageSize().width
   // }
 
-  return {
+  return new SpinePosition({
     x: left + spineItemPosition.x,
     y: top + spineItemPosition.y,
-  }
+  })
 }

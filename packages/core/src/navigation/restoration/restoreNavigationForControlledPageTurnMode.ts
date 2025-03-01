@@ -3,6 +3,7 @@ import { isRootCfi } from "../../cfi/lookup/isRootCfi"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import { SpineItemPosition } from "../../spineItem/types"
 import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 
@@ -29,7 +30,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
     first(),
     map((isReady) => {
       const spineItemAbsolutePosition =
-        spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+        spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
       const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
         navigation.position,
@@ -105,12 +106,12 @@ export const restoreNavigationForControlledPageTurnMode = ({
         hasSpineItemGrewOrShrink &&
         navigation.directionFromLastNavigation === "backward"
       ) {
-        const positionInSpineItemWithDifference = {
+        const positionInSpineItemWithDifference = new SpineItemPosition({
           x:
             (navigation.positionInSpineItem?.x ?? 0) + spineItemWidthDifference,
           y:
             (navigation.positionInSpineItem?.y ?? 0) + spineItemHeighDifference,
-        }
+        })
 
         return navigationResolver.getNavigationFromSpineItemPosition({
           spineItem,

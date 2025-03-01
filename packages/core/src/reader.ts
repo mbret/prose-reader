@@ -288,8 +288,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       NonNullable<(typeof settingsManager)["outputSettings"]>
     >,
     element$,
-    layout$: spine.spineLayout.layout$,
-    layoutInfo$: spine.spineLayout.info$,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,
     /**

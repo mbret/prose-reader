@@ -39,8 +39,7 @@ export const getNavigationForSpineItemPage = ({
   const spineItemNavigation =
     spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
       pageIndex,
-      isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      itemLayout: spineItem.layout.layoutInfo,
+      spineItem,
     })
 
   const readingOffset = spineLocator.getSpinePositionFromSpineItemPosition({

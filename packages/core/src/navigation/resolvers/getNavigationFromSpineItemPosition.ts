@@ -2,7 +2,7 @@ import type { Context } from "../../context/Context"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
-import type { UnsafeSpineItemPosition } from "../../spineItem/types"
+import type { SpineItemPosition } from "../../spineItem/types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationFromSpineItemPosition = ({
@@ -12,7 +12,7 @@ export const getNavigationFromSpineItemPosition = ({
   spineItemLocator,
   context,
 }: {
-  spineItemPosition: UnsafeSpineItemPosition
+  spineItemPosition: SpineItemPosition
   spineItem: SpineItem
   spineLocator: SpineLocator
   spineItemLocator: SpineItemLocator

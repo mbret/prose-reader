@@ -1,3 +1,33 @@
+export class SpineElementLayout {
+  public readonly left: number
+  public readonly right: number
+  public readonly top: number
+  public readonly bottom: number
+  public readonly width: number
+  public readonly height: number
+  public readonly x: number
+  public readonly y: number
+
+  constructor(layout: {
+    left: number
+    right: number
+    top: number
+    bottom: number
+    width: number
+    height: number
+    x: number
+    y: number
+  }) {
+    this.left = layout.left
+    this.right = layout.right
+    this.top = layout.top
+    this.bottom = layout.bottom
+    this.width = layout.width
+    this.height = layout.height
+    this.x = layout.x
+    this.y = layout.y
+  }
+}
 /**
  * Position of an item relative to spine element.
  *
@@ -19,16 +49,12 @@
  *
  * You can leverage this layout info for positioning overlay elements (eg: bookmarks).
  */
-export type SpineItemRelativeLayout = {
-  left: number
-  right: number
-  top: number
-  bottom: number
-  width: number
-  height: number
-  x: number
-  y: number
-  __symbol?: `SpineItemRelativeLayout`
+export class SpineItemSpineLayout extends SpineElementLayout {
+  public readonly __symbol = Symbol(`SpineItemSpineLayout`)
+}
+
+export class SpineItemPageSpineLayout extends SpineElementLayout {
+  public readonly __symbol = Symbol(`SpineItemPageSpineLayout`)
 }
 
 /**
@@ -36,8 +62,13 @@ export type SpineItemRelativeLayout = {
  *
  * This can be used for item, pages.
  */
-export type SpinePosition = {
-  x: number
-  y: number
-  __symbol?: `SpinePosition` | SpineItemRelativeLayout["__symbol"]
+export class SpinePosition {
+  public readonly x: number
+  public readonly y: number
+  public readonly __symbol = Symbol(`SpinePosition`)
+
+  constructor(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
 }

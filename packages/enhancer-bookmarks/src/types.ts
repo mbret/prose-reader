@@ -20,9 +20,7 @@ export type BookmarksEnhancerAPI = {
      * Make it conveniant for users to observes pages with bookmarkable status.
      */
     pages$: Observable<
-      (ObservedValueOf<
-        Reader["spine"]["spineLayout"]["info$"]
-      >["pages"][number] & {
+      (ObservedValueOf<Reader["layoutInfo$"]>["pages"][number] & {
         isBookmarkable: boolean | undefined
       })[]
     >

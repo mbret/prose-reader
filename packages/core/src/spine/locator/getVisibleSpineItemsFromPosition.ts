@@ -4,6 +4,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
+import type { SpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 
@@ -16,7 +17,7 @@ export const getVisibleSpineItemsFromPosition = ({
   settings,
   spineLayout,
 }: {
-  position: ViewportPosition
+  position: ViewportPosition | SpinePosition
   threshold: number
   restrictToScreen?: boolean
   spineItemsManager: SpineItemsManager
@@ -39,7 +40,7 @@ export const getVisibleSpineItemsFromPosition = ({
 
   const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
     (acc, spineItem) => {
-      const itemPosition = spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+      const itemPosition = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
       const { visible } = getItemVisibilityForPosition({
         itemPosition,

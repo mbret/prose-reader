@@ -26,14 +26,14 @@ export const createReaderWithEnhancers = //__
             accessibilityEnhancer(
               resourcesEnhancer(
                 utilsEnhancer(
-                  layoutEnhancer(
-                    zoomEnhancer(
-                      navigationEnhancer(
-                        htmlEnhancer(
-                          mediaEnhancer(
-                            chromeEnhancer(
-                              themeEnhancer(
-                                paginationEnhancer(
+                  zoomEnhancer(
+                    navigationEnhancer(
+                      htmlEnhancer(
+                        mediaEnhancer(
+                          chromeEnhancer(
+                            themeEnhancer(
+                              paginationEnhancer(
+                                layoutEnhancer(
                                   eventsEnhancer(
                                     // __
                                     createInternalReader,

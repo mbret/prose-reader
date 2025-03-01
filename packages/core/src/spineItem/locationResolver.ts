@@ -6,7 +6,7 @@ import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { getSpineItemPagesPosition } from "./layout/getSpineItemPagesPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
-import type { SafeSpineItemPosition, UnsafeSpineItemPosition } from "./types"
+import { SpineItemPosition } from "./types"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
@@ -22,13 +22,14 @@ export const createSpineItemLocator = ({
     itemHeight,
     spineItemPosition,
   }: {
-    spineItemPosition: UnsafeSpineItemPosition
+    spineItemPosition: SpineItemPosition
     itemWidth: number
     itemHeight: number
-  }): SafeSpineItemPosition => ({
-    x: Math.min(itemWidth, Math.max(0, spineItemPosition.x)),
-    y: Math.min(itemHeight, Math.max(0, spineItemPosition.y)),
-  })
+  }): SpineItemPosition =>
+    new SpineItemPosition({
+      x: Math.min(itemWidth, Math.max(0, spineItemPosition.x)),
+      y: Math.min(itemHeight, Math.max(0, spineItemPosition.y)),
+    })
 
   /**
    * @important
@@ -43,7 +44,7 @@ export const createSpineItemLocator = ({
   }: {
     itemWidth: number
     itemHeight: number
-    position: UnsafeSpineItemPosition
+    position: SpineItemPosition
     isUsingVerticalWriting: boolean
   }) => {
     const pageWidth = context.getPageSize().width
@@ -105,7 +106,7 @@ export const createSpineItemLocator = ({
       )
 
       // @todo vertical
-      return { x: val, y: 0 }
+      return new SpineItemPosition({ x: val, y: 0 })
     }
 
     return undefined
@@ -154,12 +155,12 @@ export const createSpineItemLocator = ({
   }
 
   const getSpineItemClosestPositionFromUnsafePosition = (
-    unsafePosition: UnsafeSpineItemPosition,
+    unsafePosition: SpineItemPosition,
     spineItem: SpineItem,
   ) => {
     const { width, height } = spineItem.layout.layoutInfo
 
-    const adjustedPosition = {
+    const adjustedPosition = new SpineItemPosition({
       x: getClosestValidOffsetFromApproximateOffsetInPages(
         unsafePosition.x,
         context.getPageSize().width,
@@ -170,7 +171,7 @@ export const createSpineItemLocator = ({
         context.getPageSize().height,
         height,
       ),
-    }
+    })
 
     return adjustedPosition
   }
@@ -214,20 +215,15 @@ export const createSpineItemLocator = ({
     getSpineItemPositionFromNode,
     getSpineItemPositionFromPageIndex: ({
       pageIndex,
-      itemLayout,
-      isUsingVerticalWriting,
+      spineItem,
     }: {
       pageIndex: number
-      itemLayout: {
-        width: number
-        height: number
-      }
-      isUsingVerticalWriting: boolean
+      spineItem: SpineItem
     }) =>
       getSpineItemPositionFromPageIndex({
         context,
-        isUsingVerticalWriting,
-        itemLayout,
+        isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
+        itemLayout: spineItem.layout.layoutInfo,
         pageIndex,
       }),
     getSpineItemPageIndexFromPosition,

@@ -4,12 +4,10 @@ import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { createSpineItemLocator } from "../../spineItem/locationResolver"
-import type {
-  SafeSpineItemPosition,
-  UnsafeSpineItemPosition,
-} from "../../spineItem/types"
+import { SpineItemPosition } from "../../spineItem/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
+import type { SpinePosition } from "../types"
 import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
@@ -36,11 +34,10 @@ export const createSpineLocator = ({
     `getSpineItemPositionFromSpinePosition`,
     10,
     (
-      position: ViewportPosition,
+      position: ViewportPosition | SpinePosition,
       spineItem: SpineItem,
-    ): UnsafeSpineItemPosition => {
-      const { left, top } =
-        spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+    ): SpineItemPosition => {
+      const { left, top } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
       /**
        * For this case the global offset move from right to left but this specific item
@@ -55,7 +52,7 @@ export const createSpineLocator = ({
       //   return (end - readingOrderViewOffset) - context.getPageSize().width
       // }
 
-      return {
+      return new SpineItemPosition({
         /**
          * when using spread the item could be on the right and therefore will be negative
          * @example
@@ -65,15 +62,15 @@ export const createSpineLocator = ({
          */
         x: Math.max(position.x - left, 0),
         y: Math.max(position.y - top, 0),
-      }
+      })
     },
     { disable: true },
   )
 
   const getSpinePositionFromSpineItem = (spineItem: SpineItem) => {
     return getSpinePositionFromSpineItemPosition({
-      spineItemPosition: { x: 0, y: 0 },
-      itemLayout: spineLayout.getSpineItemRelativeLayoutInfo(spineItem),
+      spineItemPosition: new SpineItemPosition({ x: 0, y: 0 }),
+      itemLayout: spineLayout.getSpineItemSpineLayoutInfo(spineItem),
     })
   }
 
@@ -114,7 +111,7 @@ export const createSpineLocator = ({
     spineItem,
     restrictToScreen,
   }: {
-    position: ViewportPosition
+    position: ViewportPosition | SpinePosition
     threshold: number
     spineItem: SpineItem
     restrictToScreen?: boolean
@@ -130,13 +127,12 @@ export const createSpineLocator = ({
       const spineItemPosition =
         spineItemLocator.getSpineItemPositionFromPageIndex({
           pageIndex: index,
-          isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-          itemLayout: spineItem.layout.layoutInfo,
+          spineItem,
         })
 
       const spinePosition = getSpinePositionFromSpineItemPosition({
         spineItemPosition,
-        itemLayout: spineLayout.getSpineItemRelativeLayoutInfo(spineItem),
+        itemLayout: spineLayout.getSpineItemSpineLayoutInfo(spineItem),
       })
 
       return {
@@ -184,11 +180,11 @@ export const createSpineLocator = ({
   }
 
   const isPositionWithinSpineItem = (
-    position: ViewportPosition,
+    position: ViewportPosition | SpinePosition,
     spineItem: SpineItem,
   ) => {
     const { bottom, left, right, top } =
-      spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+      spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
     return (
       position.x >= left &&
@@ -200,16 +196,15 @@ export const createSpineLocator = ({
 
   // @todo move into spine item locator
   const getSafeSpineItemPositionFromUnsafeSpineItemPosition = (
-    unsafePosition: UnsafeSpineItemPosition,
+    unsafePosition: SpineItemPosition,
     spineItem: SpineItem,
-  ): SafeSpineItemPosition => {
-    const { height, width } =
-      spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+  ): SpineItemPosition => {
+    const { height, width } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
-    return {
+    return new SpineItemPosition({
       x: Math.min(Math.max(0, unsafePosition.x), width),
       y: Math.min(Math.max(0, unsafePosition.y), height),
-    }
+    })
   }
 
   return {
@@ -217,10 +212,10 @@ export const createSpineLocator = ({
       spineItem,
       spineItemPosition,
     }: {
-      spineItemPosition: SafeSpineItemPosition
+      spineItemPosition: SpineItemPosition
       spineItem: SpineItem
     }) => {
-      const itemLayout = spineLayout.getSpineItemRelativeLayoutInfo(spineItem)
+      const itemLayout = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
       return getSpinePositionFromSpineItemPosition({
         itemLayout,
@@ -255,7 +250,7 @@ export const createSpineLocator = ({
       }),
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,
-    getSpineItemFromPosition: (position: ViewportPosition) =>
+    getSpineItemFromPosition: (position: ViewportPosition | SpinePosition) =>
       getSpineItemFromPosition({
         position,
         settings,

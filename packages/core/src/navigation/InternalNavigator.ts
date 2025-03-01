@@ -21,7 +21,8 @@ import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
-import type { UnsafeSpineItemPosition } from "../spineItem/types"
+import { SpinePosition } from "../spine/types"
+import type { SpineItemPosition } from "../spineItem/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isShallowEqual } from "../utils/objects"
 import { Locker } from "./Locker"
@@ -59,7 +60,7 @@ export type NavigationConsolidation = {
    * position in the item. If the item changed its content
    * we cannot assume it's accurate and will need more info.
    */
-  positionInSpineItem?: UnsafeSpineItemPosition
+  positionInSpineItem?: SpineItemPosition
   /**
    * Useful in restoration to anchor back to spine item position.
    * Whether we should anchor from bottom or top of the item.
@@ -85,7 +86,7 @@ export type NavigationConsolidation = {
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
-  position: ViewportPosition
+  position: SpinePosition | ViewportPosition
   id: symbol
   meta: {
     triggeredBy: `user` | `restoration` | `pagination`
@@ -116,7 +117,7 @@ export class InternalNavigator extends DestroyableClass {
    */
   public navigationSubject = new BehaviorSubject<InternalNavigationEntry>({
     animation: false,
-    position: { x: 0, y: 0 },
+    position: new SpinePosition({ x: 0, y: 0 }),
     meta: {
       triggeredBy: "user",
     },

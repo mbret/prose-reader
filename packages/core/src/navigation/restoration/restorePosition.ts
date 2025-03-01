@@ -4,7 +4,9 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import { SpinePosition } from "../../spine/types"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
+import { SpineItemPosition } from "../../spineItem/types"
 import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
@@ -28,20 +30,22 @@ const restoreNavigationForScrollingPageTurnMode = ({
   const { spineItem } = navigation
   const foundSpineItem = spineItemsManager.get(spineItem)
 
-  if (!foundSpineItem) return { x: 0, y: 0 }
+  if (!foundSpineItem) return new SpinePosition({ x: 0, y: 0 })
 
   const { height, top } =
-    spineLayout.getSpineItemRelativeLayoutInfo(foundSpineItem)
+    spineLayout.getSpineItemSpineLayoutInfo(foundSpineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,
     foundSpineItem,
   )
 
-  const positionInSpineItem = navigation.positionInSpineItem ?? {
-    y: 0,
-    x: 0,
-  }
+  const positionInSpineItem =
+    navigation.positionInSpineItem ??
+    new SpineItemPosition({
+      y: 0,
+      x: 0,
+    })
 
   /**
    * - vertical scroll
@@ -89,10 +93,11 @@ const restoreNavigationForScrollingPageTurnMode = ({
        */
       const positionInSpineItem =
         spineLocator.getSafeSpineItemPositionFromUnsafeSpineItemPosition(
-          navigation.positionInSpineItem ?? {
-            x: 0,
-            y: 0,
-          },
+          navigation.positionInSpineItem ??
+            new SpineItemPosition({
+              x: 0,
+              y: 0,
+            }),
           foundSpineItem,
         )
 
@@ -114,13 +119,13 @@ const restoreNavigationForScrollingPageTurnMode = ({
         (navigation.spineItemHeight ?? positionInSpineItem.y) -
         positionInSpineItem.y
 
-      const positionInspineItem = {
+      const positionInspineItem = new SpineItemPosition({
         y:
           navigation.directionFromLastNavigation === "backward"
             ? height - positionYfromBottomPreviousNavigation
             : positionInSpineItem.y,
         x: navigation.position.x,
-      }
+      })
 
       /**
        * - position within item
@@ -165,10 +170,10 @@ const restoreNavigationForScrollingPageTurnMode = ({
          * - we are now at the end of item, we need to go back by 100px
          */
         if (!positionIsBeforeItem) {
-          const positionInItem = {
+          const positionInItem = new SpineItemPosition({
             y: height - positionYfromBottomPreviousNavigation,
             x: navigation.position.x,
-          }
+          })
 
           return spineLocator.getSpinePositionFromSpineItemPosition({
             spineItemPosition:
@@ -207,7 +212,7 @@ export const restorePosition = ({
   spineItemLocator: SpineItemLocator
   context: Context
   spineLayout: SpineLayout
-}): Observable<ViewportPosition> => {
+}): Observable<ViewportPosition | SpinePosition> => {
   if (settings.values.computedPageTurnMode === "scrollable") {
     return of(
       restoreNavigationForScrollingPageTurnMode({

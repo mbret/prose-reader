@@ -1,5 +1,6 @@
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
+import type { SpinePosition } from "../../spine/types"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
 
 export const NAMESPACE = `spineNavigator`
@@ -12,7 +13,7 @@ export const getAdjustedPositionWithSafeEdge = ({
   visibleAreaRectWidth,
   spineLayout,
 }: {
-  position: ViewportPosition
+  position: ViewportPosition | SpinePosition
   isRTL: boolean
   pageSizeHeight: number
   spineItemsManager: SpineItemsManager
@@ -23,7 +24,7 @@ export const getAdjustedPositionWithSafeEdge = ({
   const lastSpineItem = spineItemsManager.get(
     spineItemsManager.items.length - 1,
   )
-  const distanceOfLastSpineItem = spineLayout.getSpineItemRelativeLayoutInfo(
+  const distanceOfLastSpineItem = spineLayout.getSpineItemSpineLayoutInfo(
     lastSpineItem || 0,
   )
 

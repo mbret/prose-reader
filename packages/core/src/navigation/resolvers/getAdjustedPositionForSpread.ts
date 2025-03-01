@@ -1,3 +1,4 @@
+import type { SpinePosition } from "../../spine/types"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
 
 export const getAdjustedPositionForSpread = ({
@@ -5,7 +6,7 @@ export const getAdjustedPositionForSpread = ({
   pageSizeWidth,
   visibleAreaRectWidth,
 }: {
-  position: ViewportPosition
+  position: ViewportPosition | SpinePosition
   pageSizeWidth: number
   visibleAreaRectWidth: number
 }): ViewportPosition => {

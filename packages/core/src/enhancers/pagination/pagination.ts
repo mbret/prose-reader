@@ -13,6 +13,7 @@ import {
 import type { PaginationInfo } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
+import type { LayoutEnhancerOutput } from "../layoutEnhancer/layoutEnhancer"
 import { trackChapterInfo } from "./chapters"
 import { getPercentageEstimate } from "./progression"
 import { trackTotalPages } from "./spine"
@@ -73,7 +74,7 @@ export const mapPaginationInfoToExtendedInfo = (
   })
 }
 
-const observeProgression = (reader: Reader) => {
+const observeProgression = (reader: Reader & LayoutEnhancerOutput) => {
   return combineLatest([
     reader.pagination.state$,
     // Usually pagination change if layout changes (number of pages) however it is especially
@@ -100,7 +101,7 @@ const observeProgression = (reader: Reader) => {
   )
 }
 
-export const trackPaginationInfo = (reader: Reader) => {
+export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   const chaptersInfo$ = trackChapterInfo(reader)
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({

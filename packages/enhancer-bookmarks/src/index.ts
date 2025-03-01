@@ -75,7 +75,7 @@ export const bookmarksEnhancer =
 
     const bookmarks$ = bookmarksSubject.asObservable()
 
-    const pages$ = reader.spine.spineLayout.info$.pipe(
+    const pages$ = reader.layoutInfo$.pipe(
       switchMap(({ pages }) =>
         forkJoin(
           pages.map((page) => {

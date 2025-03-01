@@ -19,7 +19,13 @@ import type {
 import { SettingsManager } from "./SettingsManager"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
+import { type LayoutInfo, createLayoutInfo } from "./layoutInfo"
 import type { InputSettings, OutputSettings } from "./types"
+
+export type LayoutEnhancerOutput = {
+  layout$: Observable<LayoutInfo>
+  layoutInfo$: Observable<LayoutInfo>
+}
 
 export const layoutEnhancer =
   <
@@ -31,12 +37,13 @@ export const layoutEnhancer =
     InheritComputedSettings extends NonNullable<
       InheritOutput["settings"]["_outputSettings"]
     >,
-    Output extends Omit<InheritOutput, "settings"> & {
-      settings: SettingsInterface<
-        InheritSettings & InputSettings,
-        OutputSettings & InheritComputedSettings
-      >
-    },
+    Output extends Omit<InheritOutput, "settings"> &
+      LayoutEnhancerOutput & {
+        settings: SettingsInterface<
+          InheritSettings & InputSettings,
+          OutputSettings & InheritComputedSettings
+        >
+      },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
@@ -255,6 +262,8 @@ export const layoutEnhancer =
         }),
       )
 
+    const { layout$, info$ } = createLayoutInfo(reader)
+
     merge(
       updateSpineItemClassName$,
       revealItemOnReady$,
@@ -271,5 +280,7 @@ export const layoutEnhancer =
         reader.destroy()
       },
       settings: settingsManager,
+      layout$,
+      layoutInfo$: info$,
     } as unknown as Output
   }

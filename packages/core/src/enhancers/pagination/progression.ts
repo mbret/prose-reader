@@ -1,6 +1,7 @@
 import { first, map, withLatestFrom } from "rxjs"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
+import type { LayoutEnhancerOutput } from "../layoutEnhancer/layoutEnhancer"
 
 const getTotalProgressFromPercentages = (
   estimateBeforeThisItem: number,
@@ -19,7 +20,7 @@ const getScrollPercentageWithinItem = (
   const { height, width } = currentItem.layout.layoutInfo
 
   const { top, left } =
-    reader.spine.spineLayout.getSpineItemRelativeLayoutInfo(currentItem)
+    reader.spine.spineLayout.getSpineItemSpineLayoutInfo(currentItem)
 
   if (reader.settings.values.computedPageTurnDirection === `vertical`) {
     return Math.max(
@@ -41,7 +42,7 @@ const getScrollPercentageWithinItem = (
 }
 
 export const getPercentageEstimate = (
-  reader: Reader,
+  reader: Reader & LayoutEnhancerOutput,
   currentSpineIndex: number,
   pageIndex: number,
   currentPosition: { x: number; y: number },

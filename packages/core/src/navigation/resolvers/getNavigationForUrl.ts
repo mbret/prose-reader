@@ -3,6 +3,7 @@ import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
+import { SpineItemPosition } from "../../spineItem/types"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
@@ -47,7 +48,7 @@ const getSpinePositionFromSpineItemAnchor = ({
   })
 
   const position = spineLocator.getSpinePositionFromSpineItemPosition({
-    spineItemPosition: { x: spineItemOffset, y: 0 },
+    spineItemPosition: new SpineItemPosition({ x: spineItemOffset, y: 0 }),
     spineItem,
   })
 

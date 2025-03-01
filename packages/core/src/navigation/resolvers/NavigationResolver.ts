@@ -1,23 +1,21 @@
-import { Report } from "../../report"
+import { resolveCfi } from "../../cfi/lookup/resolveCfi"
 import type { Context } from "../../context/Context"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpineLayout } from "../../spine/SpineLayout"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { SpinePosition } from "../../spine/types"
+import type { SpineItem } from "../../spineItem/SpineItem"
+import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
+import { SpineItemPosition } from "../../spineItem/types"
 import type { ViewportPosition } from "../viewport/ViewportNavigator"
-import type {
-  SafeSpineItemPosition,
-  UnsafeSpineItemPosition,
-} from "../../spineItem/types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getAdjustedPositionWithSafeEdge } from "./getAdjustedPositionWithSafeEdge"
+import { getNavigationForPosition } from "./getNavigationForPosition"
+import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
 import { getNavigationForUrl } from "./getNavigationForUrl"
 import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItemPosition"
-import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
-import { getNavigationForPosition } from "./getNavigationForPosition"
-import { resolveCfi } from "../../cfi/lookup/resolveCfi"
-import type { SpineLayout } from "../../spine/SpineLayout"
-import type { SpineItem } from "../../spineItem/SpineItem"
 
 export const NAMESPACE = `spineNavigator`
 
@@ -63,7 +61,7 @@ export const createNavigationResolver = ({
 
     const spineItemNavigation = node
       ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
-      : ({ x: 0, y: 0 } as SafeSpineItemPosition)
+      : new SpineItemPosition({ x: 0, y: 0 })
     const readingPosition = locator.getSpinePositionFromSpineItemPosition({
       spineItemPosition: spineItemNavigation,
       spineItem,
@@ -191,7 +189,7 @@ export const createNavigationResolver = ({
         spineLocator: locator,
       }),
     getNavigationFromSpineItemPosition: (params: {
-      spineItemPosition: UnsafeSpineItemPosition
+      spineItemPosition: SpineItemPosition
       spineItem: SpineItem
     }) =>
       getNavigationFromSpineItemPosition({
@@ -203,7 +201,9 @@ export const createNavigationResolver = ({
     getNavigationForCfi,
     getNavigationForLastPage,
     getNavigationForSpineIndexOrId,
-    getNavigationForPosition: (viewportPosition: ViewportPosition) =>
+    getNavigationForPosition: (
+      viewportPosition: ViewportPosition | SpinePosition,
+    ) =>
       getNavigationForPosition({
         viewportPosition,
         context,
@@ -211,7 +211,9 @@ export const createNavigationResolver = ({
         spineLocator: locator,
       }),
     getMostPredominantNavigationForPosition,
-    getAdjustedPositionWithSafeEdge: (position: ViewportPosition) =>
+    getAdjustedPositionWithSafeEdge: (
+      position: ViewportPosition | SpinePosition,
+    ) =>
       getAdjustedPositionWithSafeEdge({
         position,
         isRTL: context.isRTL(),
@@ -223,7 +225,9 @@ export const createNavigationResolver = ({
     isNavigationGoingForwardFrom,
     areNavigationDifferent,
     arePositionsDifferent,
-    getAdjustedPositionForSpread: (position: ViewportPosition) =>
+    getAdjustedPositionForSpread: (
+      position: ViewportPosition | SpinePosition,
+    ) =>
       getAdjustedPositionForSpread({
         position,
         pageSizeWidth: context.getPageSize().width,

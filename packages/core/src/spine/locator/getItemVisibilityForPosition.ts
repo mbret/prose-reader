@@ -1,5 +1,6 @@
 import type { Context } from "../../context/Context"
 import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { SpinePosition } from "../types"
 
 const isItemVisibleByThresholdForPosition = ({
   itemHeight,
@@ -85,7 +86,7 @@ export const getItemVisibilityForPosition = ({
     height: number
     width: number
   }
-  viewportPosition: ViewportPosition
+  viewportPosition: ViewportPosition | SpinePosition
   threshold: number
   restrictToScreen?: boolean
   context: Context

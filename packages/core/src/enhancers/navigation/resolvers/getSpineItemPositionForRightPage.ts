@@ -1,9 +1,6 @@
-import type { SpineItemLocator } from "../../../spineItem/locationResolver"
 import type { SpineItem } from "../../../spineItem/SpineItem"
-import type {
-  SafeSpineItemPosition,
-  UnsafeSpineItemPosition,
-} from "../../../spineItem/types"
+import type { SpineItemLocator } from "../../../spineItem/locationResolver"
+import { SpineItemPosition } from "../../../spineItem/types"
 
 export const getSpineItemPositionForRightPage = ({
   position,
@@ -12,22 +9,22 @@ export const getSpineItemPositionForRightPage = ({
   pageWidth,
   spineItemLocator,
 }: {
-  position: UnsafeSpineItemPosition
+  position: SpineItemPosition
   spineItem: SpineItem
   pageWidth: number
   pageHeight: number
   spineItemLocator: SpineItemLocator
-}): SafeSpineItemPosition => {
-  let nextPotentialPosition = {
+}): SpineItemPosition => {
+  let nextPotentialPosition = new SpineItemPosition({
     x: position.x + pageWidth,
     y: position.y,
-  }
+  })
 
   if (spineItem.isUsingVerticalWriting()) {
-    nextPotentialPosition = {
+    nextPotentialPosition = new SpineItemPosition({
       x: position.x,
       y: position.y - pageHeight,
-    }
+    })
   }
 
   const navigationPosition =

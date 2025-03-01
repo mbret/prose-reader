@@ -19,12 +19,13 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { HookManager } from "../../hooks/HookManager"
 import type { Context } from "../../context/Context"
-import { DestroyableClass } from "../../utils/DestroyableClass"
+import type { HookManager } from "../../hooks/HookManager"
 import { Report } from "../../report"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
+import type { SpinePosition } from "../../spine/types"
+import { DestroyableClass } from "../../utils/DestroyableClass"
 import { getScaledDownPosition } from "./getScaledDownPosition"
 
 const NAMESPACE = `navigation/ViewportNavigator`
@@ -39,7 +40,7 @@ export type ViewportPosition = {
 }
 
 export type ViewportNavigationEntry = {
-  position: ViewportPosition
+  position: ViewportPosition | SpinePosition
   animation?: boolean | "turn" | "snap"
 }
 
@@ -237,7 +238,7 @@ export class ViewportNavigator extends DestroyableClass {
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected setViewportPosition({ x, y }: ViewportPosition) {
+  protected setViewportPosition({ x, y }: ViewportPosition | SpinePosition) {
     const element = this.viewportElement$.getValue()
 
     if (this.settings.values.computedPageTurnMode === `scrollable`) {

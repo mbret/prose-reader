@@ -8,6 +8,7 @@ import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { createSpineLocator } from "../../spine/locator/SpineLocator"
+import { SpineItemSpineLayout } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import { InternalNavigator } from "../InternalNavigator"
@@ -65,16 +66,19 @@ export const generateItems = (
   spine: Spine,
   spineItemsManager: SpineItemsManager,
 ) => {
-  const layoutInfos = Array.from(Array(number)).map((_, index) => ({
-    left: index * size,
-    top: 0,
-    right: (index + 1) * size,
-    bottom: size,
-    width: size,
-    height: size,
-    x: index * size,
-    y: 0,
-  }))
+  const layoutInfos: SpineItemSpineLayout[] = Array.from(Array(number)).map(
+    (_, index) =>
+      new SpineItemSpineLayout({
+        left: index * size,
+        top: 0,
+        right: (index + 1) * size,
+        bottom: size,
+        width: size,
+        height: size,
+        x: index * size,
+        y: 0,
+      }),
+  )
 
   const items = Array.from(Array(number)).map((_, index) =>
     createSpineItem(
@@ -87,15 +91,14 @@ export const generateItems = (
     ),
   )
 
-  vi.spyOn(
-    spine.spineLayout,
-    "getSpineItemRelativeLayoutInfo",
-  ).mockImplementation((item) => {
-    const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
+  vi.spyOn(spine.spineLayout, "getSpineItemSpineLayoutInfo").mockImplementation(
+    (item) => {
+      const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
 
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    return layoutInfos[itemIndex]!
-  })
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      return layoutInfos[itemIndex]!
+    },
+  )
 
   return items
 }

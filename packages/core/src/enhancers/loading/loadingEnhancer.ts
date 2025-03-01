@@ -1,27 +1,27 @@
 import {
-  combineLatest,
-  merge,
   type Observable,
   type ObservedValueOf,
+  combineLatest,
+  merge,
   of,
 } from "rxjs"
 import {
-  takeUntil,
-  switchMap,
-  tap,
-  map,
   distinctUntilChanged,
+  map,
   shareReplay,
+  switchMap,
+  takeUntil,
+  tap,
 } from "rxjs/operators"
-import { isShallowEqual } from "../../utils/objects"
 import type { Manifest } from "../.."
-import type { EnhancerOutput } from "../types/enhancer"
+import { isShallowEqual } from "../../utils/objects"
 import type { themeEnhancer } from "../theme"
+import type { EnhancerOutput } from "../types/enhancer"
+import { CONTAINER_HTML_PREFIX } from "./constants"
 import {
   createLoadingElementContainer,
   defaultLoadingElementCreate,
 } from "./createLoadingElement"
-import { CONTAINER_HTML_PREFIX } from "./constants"
 
 type Entries = { [key: string]: HTMLElement }
 type Item = Manifest[`spineItems`][number]
@@ -87,7 +87,10 @@ export const loadingEnhancer =
       )
 
     const updateEntriesLayout$ = (entries: Entries) =>
-      combineLatest([reader.layout$, reader.theme.$.theme$]).pipe(
+      combineLatest([
+        reader.spine.spineLayout.layout$,
+        reader.theme.$.theme$,
+      ]).pipe(
         map(([, theme]) => ({
           width: reader.context.state.visibleAreaRect.width,
           theme,

@@ -3,7 +3,7 @@ import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineItemRelativeLayout } from "../types"
+import { SpineItemSpineLayout } from "../types"
 
 export const layoutItem = ({
   horizontalOffset,
@@ -26,7 +26,7 @@ export const layoutItem = ({
 }): Observable<{
   horizontalOffset: number
   verticalOffset: number
-  layoutPosition: SpineItemRelativeLayout
+  layoutPosition: SpineItemSpineLayout
 }> => {
   let minimumWidth = context.getPageSize().width
   let blankPagePosition: `none` | `before` | `after` = `none`
@@ -137,7 +137,7 @@ export const layoutItem = ({
         const newEdgeX = width + currentValidEdgeXForVerticalPositioning
         const newEdgeY = height + currentValidEdgeYForVerticalPositioning
 
-        const layoutPosition: SpineItemRelativeLayout = {
+        const layoutPosition = new SpineItemSpineLayout({
           left: currentValidEdgeXForVerticalPositioning,
           right: newEdgeX,
           top: currentValidEdgeYForVerticalPositioning,
@@ -146,7 +146,7 @@ export const layoutItem = ({
           width,
           x: currentValidEdgeXForVerticalPositioning,
           y: currentValidEdgeYForVerticalPositioning,
-        }
+        })
 
         return {
           horizontalOffset: newEdgeX,
@@ -168,7 +168,7 @@ export const layoutItem = ({
         ? context.state.visibleAreaRect.width - horizontalOffset - width
         : horizontalOffset
 
-      const layoutPosition: SpineItemRelativeLayout = {
+      const layoutPosition = new SpineItemSpineLayout({
         right: context.isRTL()
           ? context.state.visibleAreaRect.width - horizontalOffset
           : horizontalOffset + width,
@@ -179,7 +179,7 @@ export const layoutItem = ({
         height,
         width,
         y: verticalOffset,
-      }
+      })
 
       return {
         horizontalOffset: horizontalOffset + width,

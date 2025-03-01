@@ -14,7 +14,7 @@ export const trackTotalPages = (reader: Reader) => {
   const totalPages$: Observable<{
     numberOfPagesPerItems: number[]
     numberOfTotalPages: number
-  }> = reader.layout$.pipe(
+  }> = reader.spine.spineLayout.layout$.pipe(
     debounceTime(10, animationFrameScheduler),
     withLatestFrom(reader.pagination.state$),
     map(() => {

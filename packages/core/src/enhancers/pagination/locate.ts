@@ -1,16 +1,16 @@
 import {
+  debounceTime,
+  finalize,
+  forkJoin,
+  map,
   of,
   startWith,
-  map,
-  debounceTime,
   switchScan,
-  forkJoin,
   withLatestFrom,
-  finalize,
 } from "rxjs"
-import { deferIdle, idle } from "../../utils/rxjs"
 import type { Reader } from "../../reader"
 import { isDefined } from "../../utils/isDefined"
+import { deferIdle, idle } from "../../utils/rxjs"
 
 export type LocatableResource = {
   cfi: string
@@ -100,7 +100,7 @@ export const createLocator =
     return deferIdle(() => {
       if (!resources.length) return of(resources)
 
-      const consolidate$ = reader.layout$.pipe(
+      const consolidate$ = reader.spine.spineLayout.layout$.pipe(
         debounceTime(10),
         startWith(null),
         switchScan((acc$) => {

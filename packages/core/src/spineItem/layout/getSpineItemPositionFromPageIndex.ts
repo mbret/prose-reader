@@ -1,6 +1,6 @@
 import type { Context } from "../../context/Context"
 import { getItemOffsetFromPageIndex } from "../helpers"
-import type { SafeSpineItemPosition } from "../types"
+import { SpineItemPosition } from "../types"
 
 export const getSpineItemPositionFromPageIndex = ({
   pageIndex,
@@ -12,7 +12,7 @@ export const getSpineItemPositionFromPageIndex = ({
   itemLayout: { width: number; height: number }
   context: Context
   isUsingVerticalWriting: boolean
-}): SafeSpineItemPosition => {
+}): SpineItemPosition => {
   if (isUsingVerticalWriting) {
     const ltrRelativeOffset = getItemOffsetFromPageIndex(
       context.getPageSize().height,
@@ -20,10 +20,10 @@ export const getSpineItemPositionFromPageIndex = ({
       itemLayout.height,
     )
 
-    return {
+    return new SpineItemPosition({
       x: 0,
       y: ltrRelativeOffset,
-    }
+    })
   }
 
   const ltrRelativeOffset = getItemOffsetFromPageIndex(
@@ -33,14 +33,14 @@ export const getSpineItemPositionFromPageIndex = ({
   )
 
   if (context.isRTL()) {
-    return {
+    return new SpineItemPosition({
       x: itemLayout.width - ltrRelativeOffset - context.getPageSize().width,
       y: 0,
-    }
+    })
   }
 
-  return {
+  return new SpineItemPosition({
     x: ltrRelativeOffset,
     y: 0,
-  }
+  })
 }
