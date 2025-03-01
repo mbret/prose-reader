@@ -12,7 +12,7 @@ import { isShallowEqual } from "../../utils/objects"
 
 export const getNumberOfPagesForAllSpineItems = (reader: Reader) =>
   reader.spineItemsManager.items.map((item) => {
-    const { height, width } = item.layoutPosition
+    const { height, width } = item.layout.layoutInfo
 
     return reader.spine.spineItemLocator.getSpineItemNumberOfPages({
       isUsingVerticalWriting: !!item.isUsingVerticalWriting(),

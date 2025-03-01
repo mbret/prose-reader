@@ -92,7 +92,7 @@ export const withSpineItemPosition =
           spineLocator.spineItemLocator.getSpineItemPositionFromPageIndex({
             pageIndex: beginPageIndexForDirection,
             isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-            itemLayout: spineItem.layoutPosition,
+            itemLayout: spineItem.layout.layoutInfo,
           })
 
         return positionInSpineItem

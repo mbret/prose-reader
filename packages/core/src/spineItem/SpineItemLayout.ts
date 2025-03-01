@@ -188,37 +188,14 @@ export class SpineItemLayout extends DestroyableClass {
     }
   }
 
-  /**
-   * Returns the absolute layout position relative to the parent element which
-   * is supposedly and expectedly the spine element.
-   *
-   * @important
-   *
-   * This method is stable and does not consider scalings or transforms on the parents.
-   *
-   * It does assume and requires that:
-   * - the navigator element and the spine element are direct parents.
-   * - the spine items are correctly positioned in the DOM and with correct styles values.
-   */
-  get layoutPosition() {
-    const left = Math.round(this.containerElement.offsetLeft * 10) / 10
-    const top = Math.round(this.containerElement.offsetTop * 10) / 10
+  get layoutInfo() {
+    const style = this.containerElement.style
+    const width = style.width ? parseFloat(style.width) : 0
+    const height = style.height ? parseFloat(style.height) : 0
 
-    // offsetWidth/Height gives us the actual layout dimensions
-    const width = Math.round(this.containerElement.offsetWidth * 10) / 10
-    const height = Math.round(this.containerElement.offsetHeight * 10) / 10
-
-    const normalizedValues = {
-      left: left,
-      top: top,
-      right: left + width,
-      bottom: top + height,
-      x: left,
-      y: top,
+    return {
       width,
       height,
     }
-
-    return normalizedValues
   }
 }

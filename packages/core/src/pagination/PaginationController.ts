@@ -129,7 +129,7 @@ export class PaginationController extends DestroyableClass {
               ? getRootCfi(endSpineItem)
               : endLastCfi
 
-            const beginSpineItemDimensions = beginSpineItem.layoutPosition
+            const beginSpineItemDimensions = beginSpineItem.layout.layoutInfo
 
             const beginNumberOfPagesInSpineItem =
               this.spineItemLocator.getSpineItemNumberOfPages({
@@ -139,7 +139,7 @@ export class PaginationController extends DestroyableClass {
                   !!beginSpineItem.isUsingVerticalWriting(),
               })
 
-            const endSpineItemDimensions = endSpineItem.layoutPosition
+            const endSpineItemDimensions = endSpineItem.layout.layoutInfo
 
             const endNumberOfPagesInSpineItem =
               this.spineItemLocator.getSpineItemNumberOfPages({

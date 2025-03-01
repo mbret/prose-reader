@@ -15,7 +15,7 @@ const getSpineItemOffsetFromAnchor = ({
   spineItem: SpineItem
   context: Context
 }) => {
-  const itemWidth = spineItem.layoutPosition?.width || 0
+  const itemWidth = spineItem.layout.layoutInfo?.width || 0
   const pageWidth = context.getPageSize().width
   const anchorElementBoundingRect =
     spineItem.getBoundingRectOfElementFromSelector(anchor)

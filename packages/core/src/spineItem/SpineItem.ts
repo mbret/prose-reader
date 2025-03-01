@@ -22,15 +22,11 @@ import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 
 export class SpineItem extends DestroyableClass {
-  private spineItemLayout: SpineItemLayout
-
   public readonly containerElement: HTMLElement
   public readonly needsLayout$: Observable<unknown>
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
-  public readonly layout$: SpineItemLayout["layout$"]
-  public readonly layout: SpineItemLayout["layout"]
-  public readonly adjustPositionOfElement: SpineItemLayout["adjustPositionOfElement"]
+  public readonly layout: SpineItemLayout
   /**
    * Renderer loaded + spine item layout done
    */
@@ -71,7 +67,7 @@ export class SpineItem extends DestroyableClass {
       ? rendererFactory(rendererParams)
       : new DefaultRenderer(rendererParams)
 
-    this.spineItemLayout = new SpineItemLayout(
+    this.layout = new SpineItemLayout(
       item,
       this.containerElement,
       context,
@@ -79,7 +75,7 @@ export class SpineItem extends DestroyableClass {
       this.renderer,
     )
 
-    this.isReady$ = this.spineItemLayout.layoutProcess$.pipe(
+    this.isReady$ = this.layout.layoutProcess$.pipe(
       withLatestFrom(this.renderer.isLoaded$),
       map(([event, loaded]) => !!(event.type === `end` && loaded)),
       startWith(false),
@@ -91,7 +87,6 @@ export class SpineItem extends DestroyableClass {
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    this.layout$ = this.spineItemLayout.layout$
     this.needsLayout$ = merge(this.unloaded$, this.loaded$)
 
     merge(
@@ -102,13 +97,10 @@ export class SpineItem extends DestroyableClass {
        * to layout changes may rely on the isReady value.
        */
       this.isReady$,
-      this.spineItemLayout.layout$,
+      this.layout.layout$,
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
-
-    this.layout = this.spineItemLayout.layout
-    this.adjustPositionOfElement = this.spineItemLayout.adjustPositionOfElement
   }
 
   getBoundingRectOfElementFromSelector = (selector: string) => {
@@ -156,10 +148,6 @@ export class SpineItem extends DestroyableClass {
    */
   get readingDirection() {
     return this.renderer.readingDirection
-  }
-
-  get layoutPosition() {
-    return this.spineItemLayout.layoutPosition
   }
 
   isUsingVerticalWriting = () =>
