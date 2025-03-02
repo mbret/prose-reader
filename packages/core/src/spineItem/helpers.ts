@@ -4,7 +4,7 @@ export const getItemOffsetFromPageIndex = (
   itemWidth: number,
 ) => {
   const lastPageOffset = itemWidth - pageWidth
-  const logicalOffset = (itemWidth * (pageIndex * pageWidth)) / itemWidth
+  const logicalOffset = (itemWidth * (pageIndex * pageWidth)) / (itemWidth || 1)
 
   return Math.max(0, Math.min(lastPageOffset, logicalOffset))
 }
