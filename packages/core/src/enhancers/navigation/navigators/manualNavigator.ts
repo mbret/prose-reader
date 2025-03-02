@@ -1,14 +1,15 @@
 import type { UserNavigationEntry } from "../../../navigation/UserNavigator"
-import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
+import { SpinePosition } from "../../../spine/types"
 import { report } from "../report"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
-  movingLastPosition: ViewportPosition = { x: 0, y: 0 }
+  movingLastPosition = new SpinePosition({ x: 0, y: 0 })
   unlock: ReturnType<Reader["navigation"]["lock"]> | undefined = undefined
 
   constructor(protected reader: Reader) {}

@@ -5,6 +5,7 @@ import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"
+import { SpinePosition } from "../types"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 
 const context = new Context()
@@ -104,7 +105,7 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             context: context,
-            position: { x: 50, y: 0 },
+            position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,
@@ -151,7 +152,7 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             context: context,
-            position: { x: 50, y: 0 },
+            position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,
@@ -200,7 +201,7 @@ describe("Given single page items and no spread", () => {
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
             context: context,
-            position: { x: 50, y: 0 },
+            position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             spineItemsManager: spineItemsManager as any,

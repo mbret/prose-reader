@@ -1,22 +1,22 @@
+import { arrayEqual } from "@prose-reader/shared"
 import {
-  merge,
-  withLatestFrom,
-  map,
-  debounceTime,
-  animationFrameScheduler,
-  takeUntil,
-  distinctUntilChanged,
   BehaviorSubject,
+  animationFrameScheduler,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  merge,
   shareReplay,
+  takeUntil,
+  withLatestFrom,
 } from "rxjs"
-import type { SpineItemsManager } from "../SpineItemsManager"
-import type { SpineLocator } from "../locator/SpineLocator"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { waitForSwitch } from "../../utils/rxjs"
+import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import { arrayEqual } from "@prose-reader/shared"
+import type { SpineLocator } from "../locator/SpineLocator"
 
 export class SpineItemsLoader extends DestroyableClass {
   private forcedOpenSubject = new BehaviorSubject<number[][]>([])
@@ -72,6 +72,7 @@ export class SpineItemsLoader extends DestroyableClass {
           spineLocator.getVisibleSpineItemsFromPosition({
             position: navigation.position,
             threshold: 0,
+            useAbsoluteViewport: false,
           }) || {}
 
         // we increase the range based on settings

@@ -9,7 +9,7 @@ import type { SpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
 
 const restoreNavigationForScrollingPageTurnMode = ({
@@ -212,7 +212,7 @@ export const restorePosition = ({
   spineItemLocator: SpineItemLocator
   context: Context
   spineLayout: SpineLayout
-}): Observable<ViewportPosition | SpinePosition> => {
+}): Observable<DeprecatedViewportPosition | SpinePosition> => {
   if (settings.values.computedPageTurnMode === "scrollable") {
     return of(
       restoreNavigationForScrollingPageTurnMode({

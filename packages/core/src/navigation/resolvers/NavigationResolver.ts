@@ -5,11 +5,11 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpinePosition } from "../../spine/types"
+import { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getAdjustedPositionWithSafeEdge } from "./getAdjustedPositionWithSafeEdge"
 import { getNavigationForPosition } from "./getNavigationForPosition"
@@ -41,11 +41,9 @@ export const createNavigationResolver = ({
     b: { x: number; y: number },
   ) => a.x !== b.x || a.y !== b.y
 
-  const areNavigationDifferent = (a: ViewportPosition, b: ViewportPosition) =>
-    arePositionsDifferent(a, b) ||
-    (!!a.spineItem && !!b.spineItem && a.spineItem !== b.spineItem)
-
-  const getNavigationForCfi = (cfi: string): ViewportPosition | undefined => {
+  const getNavigationForCfi = (
+    cfi: string,
+  ): DeprecatedViewportPosition | undefined => {
     const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
     const { node, offset = 0 } =
       resolveCfi({
@@ -74,7 +72,9 @@ export const createNavigationResolver = ({
     })
   }
 
-  const getNavigationForLastPage = (spineItem: SpineItem): ViewportPosition => {
+  const getNavigationForLastPage = (
+    spineItem: SpineItem,
+  ): DeprecatedViewportPosition => {
     const spineItemNavigation =
       spineItemNavigator.getNavigationForLastPage(spineItem)
     const position = locator.getSpinePositionFromSpineItemPosition({
@@ -91,7 +91,7 @@ export const createNavigationResolver = ({
 
   const getNavigationForSpineIndexOrId = (
     indexOrId: number | string | SpineItem,
-  ): ViewportPosition => {
+  ): DeprecatedViewportPosition => {
     const spineItem = spineItemsManager.get(indexOrId)
 
     if (spineItem) {
@@ -104,7 +104,7 @@ export const createNavigationResolver = ({
       })
     }
 
-    return { x: 0, y: 0 }
+    return new SpinePosition({ x: 0, y: 0 })
   }
 
   /**
@@ -112,8 +112,8 @@ export const createNavigationResolver = ({
    * try to get the most visible / relevant element as navigation reference
    */
   const getMostPredominantNavigationForPosition = (
-    viewportPosition: ViewportPosition,
-  ): ViewportPosition => {
+    viewportPosition: DeprecatedViewportPosition,
+  ): DeprecatedViewportPosition => {
     const pageTurnDirection = settings.values.computedPageTurnDirection
     // @todo movingForward does not work same with free-scroll, try to find a reliable way to detect
     // const movingForward = navigator.isNavigationGoingForwardFrom(navigation, currentNavigationPosition)
@@ -130,10 +130,10 @@ export const createNavigationResolver = ({
         : viewportPosition.y +
           context.state.visibleAreaRect.height * triggerPercentage
     const midScreenPositionSafePosition = getAdjustedPositionWithSafeEdge({
-      position: {
+      position: new SpinePosition({
         x: triggerXPosition,
         y: triggerYPosition,
-      },
+      }),
       isRTL: context.isRTL(),
       pageSizeHeight: context.getPageSize().height,
       visibleAreaRectWidth: context.state.visibleAreaRect.width,
@@ -150,8 +150,8 @@ export const createNavigationResolver = ({
   }
 
   const isNavigationGoingForwardFrom = (
-    to: ViewportPosition,
-    from: ViewportPosition,
+    to: DeprecatedViewportPosition,
+    from: DeprecatedViewportPosition,
   ) => {
     const pageTurnDirection = settings.values.computedPageTurnDirection
 
@@ -202,7 +202,7 @@ export const createNavigationResolver = ({
     getNavigationForLastPage,
     getNavigationForSpineIndexOrId,
     getNavigationForPosition: (
-      viewportPosition: ViewportPosition | SpinePosition,
+      viewportPosition: DeprecatedViewportPosition | SpinePosition,
     ) =>
       getNavigationForPosition({
         viewportPosition,
@@ -212,7 +212,7 @@ export const createNavigationResolver = ({
       }),
     getMostPredominantNavigationForPosition,
     getAdjustedPositionWithSafeEdge: (
-      position: ViewportPosition | SpinePosition,
+      position: DeprecatedViewportPosition | SpinePosition,
     ) =>
       getAdjustedPositionWithSafeEdge({
         position,
@@ -223,10 +223,9 @@ export const createNavigationResolver = ({
         spineLayout,
       }),
     isNavigationGoingForwardFrom,
-    areNavigationDifferent,
     arePositionsDifferent,
     getAdjustedPositionForSpread: (
-      position: ViewportPosition | SpinePosition,
+      position: DeprecatedViewportPosition | SpinePosition,
     ) =>
       getAdjustedPositionForSpread({
         position,

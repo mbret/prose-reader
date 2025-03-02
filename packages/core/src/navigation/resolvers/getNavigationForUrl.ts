@@ -4,7 +4,7 @@ import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 const getSpineItemOffsetFromAnchor = ({
@@ -98,7 +98,9 @@ export const getNavigationForUrl = ({
   context: Context
   pageSizeWidth: number
   visibleAreaRectWidth: number
-}): { position: ViewportPosition; spineItemId: string } | undefined => {
+}):
+  | { position: DeprecatedViewportPosition; spineItemId: string }
+  | undefined => {
   try {
     const validUrl = url instanceof URL ? url : new URL(url)
     const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`

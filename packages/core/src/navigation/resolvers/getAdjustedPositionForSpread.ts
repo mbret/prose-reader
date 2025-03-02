@@ -1,17 +1,17 @@
-import type { SpinePosition } from "../../spine/types"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import { SpinePosition } from "../../spine/types"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 
 export const getAdjustedPositionForSpread = ({
   position: { x, y },
   pageSizeWidth,
   visibleAreaRectWidth,
 }: {
-  position: ViewportPosition | SpinePosition
+  position: DeprecatedViewportPosition | SpinePosition
   pageSizeWidth: number
   visibleAreaRectWidth: number
-}): ViewportPosition => {
+}): DeprecatedViewportPosition => {
   const isOffsetNotAtEdge = x % visibleAreaRectWidth !== 0
   const correctedX = isOffsetNotAtEdge ? x - pageSizeWidth : x
 
-  return { x: correctedX, y }
+  return new SpinePosition({ x: correctedX, y })
 }

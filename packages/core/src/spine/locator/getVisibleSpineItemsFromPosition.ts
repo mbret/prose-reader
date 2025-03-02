@@ -1,7 +1,9 @@
 import type { Context } from "../../context/Context"
-import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../../navigation/viewport/ViewportNavigator"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
+import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
+import { ViewportSlicePosition } from "../../viewport/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 import type { SpinePosition } from "../types"
@@ -16,14 +18,16 @@ export const getVisibleSpineItemsFromPosition = ({
   context,
   settings,
   spineLayout,
+  useAbsoluteViewport = true,
 }: {
-  position: ViewportPosition | SpinePosition
+  position: DeprecatedViewportPosition | SpinePosition
   threshold: number
   restrictToScreen?: boolean
   spineItemsManager: SpineItemsManager
   context: Context
   settings: ReaderSettingsManager
   spineLayout: SpineLayout
+  useAbsoluteViewport?: boolean
 }):
   | {
       beginIndex: number
@@ -41,13 +45,24 @@ export const getVisibleSpineItemsFromPosition = ({
   const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
     (acc, spineItem) => {
       const itemPosition = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
+      const viewport = useAbsoluteViewport
+        ? context.absoluteViewport
+        : context.relativeViewport
+      const relativeSpinePosition = translateSpinePositionToRelativeViewport(
+        position,
+        context.absoluteViewport,
+        viewport,
+      )
 
+      const viewportPosition = ViewportSlicePosition.from(
+        relativeSpinePosition,
+        viewport,
+      )
       const { visible } = getItemVisibilityForPosition({
         itemPosition,
         threshold,
-        viewportPosition: position,
+        viewportPosition,
         restrictToScreen,
-        context,
       })
 
       if (visible) {

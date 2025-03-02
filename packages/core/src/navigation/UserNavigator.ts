@@ -18,14 +18,15 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { ViewportPosition } from "./viewport/ViewportNavigator"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { Spine } from "../spine/Spine"
+import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { Locker } from "./Locker"
+import type { DeprecatedViewportPosition } from "./viewport/ViewportNavigator"
 import { getScaledDownPosition } from "./viewport/getScaledDownPosition"
-import type { Spine } from "../spine/Spine"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 const NAMESPACE = `navigation/UserNavigator`
@@ -33,7 +34,7 @@ const NAMESPACE = `navigation/UserNavigator`
 const report = Report.namespace(NAMESPACE)
 
 export type UserNavigationEntry = {
-  position?: ViewportPosition
+  position?: DeprecatedViewportPosition | SpinePosition
   spineItem?: number | string
   url?: string | URL
   cfi?: string
@@ -112,10 +113,10 @@ export class UserNavigator extends DestroyableClass {
              */
             const scaledDownPosition = getScaledDownPosition({
               element: targetElement,
-              position: {
+              position: new SpinePosition({
                 x: targetElement.scrollLeft ?? 0,
                 y: targetElement.scrollTop ?? 0,
-              },
+              }),
               spineElement: this.spine.element,
             })
 

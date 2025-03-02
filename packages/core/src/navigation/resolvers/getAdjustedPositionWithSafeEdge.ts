@@ -1,7 +1,7 @@
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
-import type { SpinePosition } from "../../spine/types"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import { SpinePosition } from "../../spine/types"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 
 export const NAMESPACE = `spineNavigator`
 
@@ -13,7 +13,7 @@ export const getAdjustedPositionWithSafeEdge = ({
   visibleAreaRectWidth,
   spineLayout,
 }: {
-  position: ViewportPosition | SpinePosition
+  position: DeprecatedViewportPosition | SpinePosition
   isRTL: boolean
   pageSizeHeight: number
   spineItemsManager: SpineItemsManager
@@ -36,16 +36,16 @@ export const getAdjustedPositionWithSafeEdge = ({
    * [-x, 0]
    */
   if (isRTL) {
-    return {
+    return new SpinePosition({
       x: Math.max(Math.min(0, position.x), distanceOfLastSpineItem.left),
       y,
-    }
+    })
   }
 
   const maximumXOffset = distanceOfLastSpineItem.right - visibleAreaRectWidth
 
-  return {
+  return new SpinePosition({
     x: Math.min(Math.max(0, position.x), maximumXOffset),
     y,
-  }
+  })
 }

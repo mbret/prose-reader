@@ -1,11 +1,11 @@
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
-import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import { SpinePosition } from "../../../spine/types"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }
-  lastPosition: ViewportPosition = { x: 0, y: 0 }
-  lastStartPosition: ViewportPosition = { x: 0, y: 0 }
+  lastPosition = new SpinePosition({ x: 0, y: 0 })
+  lastStartPosition = new SpinePosition({ x: 0, y: 0 })
   unlock: ReturnType<Reader["navigation"]["lock"]> | undefined = undefined
 
   constructor(protected reader: Reader) {}
@@ -34,7 +34,8 @@ export class PanNavigator {
       this.lastPosition = this.lastStartPosition
     }
 
-    let navigation = this.reader.navigation.getNavigation().position
+    let navigation: SpinePosition =
+      this.reader.navigation.getNavigation().position
 
     if (delta) {
       /**
@@ -44,7 +45,7 @@ export class PanNavigator {
       const correctedX = Math.floor(delta.x) - (this.lastDelta?.x || 0)
       const correctedY = Math.floor(delta.y) - (this.lastDelta?.y || 0)
 
-      navigation = {
+      navigation = new SpinePosition({
         x: Math.floor(
           pageTurnDirection === `horizontal`
             ? this.lastPosition.x - correctedX
@@ -55,7 +56,7 @@ export class PanNavigator {
             ? 0
             : this.lastPosition.y - correctedY,
         ),
-      }
+      })
 
       this.lastDelta = delta
     } else {

@@ -6,6 +6,7 @@ import { Pagination } from "../../pagination/Pagination"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import type {
@@ -76,10 +77,10 @@ describe(`Given a backward navigation to a new item`, () => {
         const position = await lastValueFrom(
           restoreNavigationForControlledPageTurnMode({
             navigation: {
-              position: {
+              position: new SpinePosition({
                 x: 0,
                 y: 0,
-              },
+              }),
               spineItem: 0,
               spineItemWidth: 50,
               directionFromLastNavigation: "backward",

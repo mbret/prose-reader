@@ -1,12 +1,13 @@
+import { SpinePosition } from "../../spine/types"
 import { getNewScaledOffset } from "../../utils/layout"
-import type { ViewportPosition } from "./ViewportNavigator"
+import type { DeprecatedViewportPosition } from "./ViewportNavigator"
 
 export const getScaledDownPosition = ({
   position: { x, y },
   spineElement,
   element,
 }: {
-  position: ViewportPosition
+  position: DeprecatedViewportPosition
   spineElement: HTMLElement
   element: HTMLElement
 }) => {
@@ -21,7 +22,7 @@ export const getScaledDownPosition = ({
    * the scrollbar will take up content space, thus having a reduced pageSize. It will mess up calculation
    * otherwise
    */
-  const scaledDownPosition = {
+  const scaledDownPosition = new SpinePosition({
     x: getNewScaledOffset({
       newScale: 1,
       oldScale: spineScaleX,
@@ -36,7 +37,7 @@ export const getScaledDownPosition = ({
       pageSize: spineElement.scrollHeight,
       scrollOffset: y,
     }),
-  }
+  })
 
   return scaledDownPosition
 }

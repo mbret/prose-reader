@@ -39,8 +39,8 @@ import { withUrlInfo } from "./consolidation/withUrlInfo"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
+  DeprecatedViewportPosition,
   ViewportNavigator,
-  ViewportPosition,
 } from "./viewport/ViewportNavigator"
 
 const NAMESPACE = `navigation/InternalNavigator`
@@ -86,7 +86,7 @@ export type NavigationConsolidation = {
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
-  position: SpinePosition | ViewportPosition
+  position: SpinePosition | DeprecatedViewportPosition
   id: symbol
   meta: {
     triggeredBy: `user` | `restoration` | `pagination`
@@ -102,8 +102,9 @@ export type InternalNavigationEntry = {
 export type InternalNavigationInput = Omit<
   InternalNavigationEntry,
   "position"
-> &
-  Partial<InternalNavigationEntry>
+> & {
+  position?: SpinePosition | DeprecatedViewportPosition
+}
 
 export type Navigation = Pick<InternalNavigationEntry, "position" | "id">
 

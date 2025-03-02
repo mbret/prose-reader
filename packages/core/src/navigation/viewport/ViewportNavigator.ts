@@ -24,23 +24,22 @@ import type { HookManager } from "../../hooks/HookManager"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
-import type { SpinePosition } from "../../spine/types"
+import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { getScaledDownPosition } from "./getScaledDownPosition"
+import {
+  spinePositionToTranslation,
+  translationToSpinePosition,
+} from "./positions"
 
 const NAMESPACE = `navigation/ViewportNavigator`
 
 const report = Report.namespace(NAMESPACE)
 
-export type ViewportPosition = {
-  x: number
-  y: number
-  __symbol?: `ViewportPosition`
-  spineItem?: false
-}
+export type DeprecatedViewportPosition = SpinePosition
 
 export type ViewportNavigationEntry = {
-  position: ViewportPosition | SpinePosition
+  position: SpinePosition
   animation?: boolean | "turn" | "snap"
 }
 
@@ -238,14 +237,18 @@ export class ViewportNavigator extends DestroyableClass {
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected setViewportPosition({ x, y }: ViewportPosition | SpinePosition) {
+  protected setViewportPosition(position: SpinePosition) {
     const element = this.viewportElement$.getValue()
 
     if (this.settings.values.computedPageTurnMode === `scrollable`) {
       this.scrollingSubject.next(true)
       // @todo use smooth later and adjust the class to avoid false positive
       // @todo see scrollend
-      element.scrollTo({ left: x, top: y, behavior: "instant" })
+      element.scrollTo({
+        left: position.x,
+        top: position.y,
+        behavior: "instant",
+      })
 
       timer(1)
         .pipe(
@@ -256,12 +259,8 @@ export class ViewportNavigator extends DestroyableClass {
         )
         .subscribe()
     } else {
-      /**
-       * @important
-       * will work automatically with RTL since x will be negative.
-       */
-      // element.style.transform = `translate3d(${-x}px, -${y}px, 0)`
-      element.style.transform = `translate(${-x}px, -${y}px)`
+      const translation = spinePositionToTranslation(position)
+      element.style.transform = `translate(${translation.x}px, ${translation.y}px)`
     }
 
     this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
@@ -271,7 +270,11 @@ export class ViewportNavigator extends DestroyableClass {
     this.navigateSubject.next(navigation)
   }
 
-  public get viewportPosition() {
+  /**
+   * @important The reason we use computed transform and not bounding client is to avoid
+   * transofmration inconsistency between the viewport and the spine.
+   */
+  public get viewportPosition(): SpinePosition {
     const element = this.viewportElement$.getValue()
 
     if (this.settings.values.computedPageTurnMode === `scrollable`) {
@@ -284,31 +287,25 @@ export class ViewportNavigator extends DestroyableClass {
        */
       return getScaledDownPosition({
         element,
-        position: {
+        position: new SpinePosition({
           x: element?.scrollLeft ?? 0,
           y: element?.scrollTop ?? 0,
-        },
+        }),
         spineElement: this.spine.element,
       })
     }
 
-    /**
-     * `x` will be either negative or positive depending on which side we are translating.
-     * For example LTR books which translate by moving up will have negative x. The viewport position
-     * is not however negative (this is only because of translate). However it can be legit negative
-     * for RTL
-     */
-    const { x, y } = element?.getBoundingClientRect() ?? {
-      x: 0,
-      y: 0,
+    const computedStyle = window.getComputedStyle(element)
+    const transform = computedStyle.transform || computedStyle.webkitTransform
+
+    if (!transform || transform === "none") {
+      return new SpinePosition({ x: 0, y: 0 })
     }
 
-    return {
-      // we want to round to first decimal because it's possible to have half pixel
-      // however browser engine can also gives back x.yyyy based on their precision
-      // @see https://stackoverflow.com/questions/13847053/difference-between-and-math-floor for ~~
-      x: ~~(x * -1 * 10) / 10,
-      y: ~~(Math.abs(y) * 10) / 10,
-    }
+    // Parse the transform matrix
+    // The matrix is in the format: matrix(a, b, c, d, tx, ty) or matrix3d(...)
+    const matrix = new DOMMatrix(transform)
+
+    return translationToSpinePosition(matrix)
   }
 }

@@ -1,8 +1,8 @@
 import type { Context } from "../../context/Context"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpinePosition } from "../../spine/types"
+import { SpinePosition } from "../../spine/types"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationForPosition = ({
@@ -11,7 +11,7 @@ export const getNavigationForPosition = ({
   context,
   spineItemNavigationResolver,
 }: {
-  viewportPosition: ViewportPosition | SpinePosition
+  viewportPosition: DeprecatedViewportPosition | SpinePosition
   spineLocator: SpineLocator
   context: Context
   spineItemNavigationResolver: SpineItemNavigationResolver
@@ -44,5 +44,5 @@ export const getNavigationForPosition = ({
     })
   }
 
-  return { x: 0, y: 0 }
+  return new SpinePosition({ x: 0, y: 0 })
 }

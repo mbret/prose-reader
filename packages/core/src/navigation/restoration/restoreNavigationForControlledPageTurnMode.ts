@@ -1,8 +1,9 @@
-import { first, map, of } from "rxjs"
+import { type Observable, first, map, of } from "rxjs"
 import { isRootCfi } from "../../cfi/lookup/isRootCfi"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
@@ -19,11 +20,11 @@ export const restoreNavigationForControlledPageTurnMode = ({
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
   spineLayout: SpineLayout
-}) => {
+}): Observable<SpinePosition> => {
   const spineItem = spineItemsManager.get(navigation.spineItem)
 
   if (!spineItem) {
-    return of({ x: 0, y: 0 })
+    return of(new SpinePosition({ x: 0, y: 0 }))
   }
 
   return spineItem.isReady$.pipe(

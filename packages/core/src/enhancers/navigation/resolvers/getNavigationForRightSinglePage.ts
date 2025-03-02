@@ -1,9 +1,9 @@
 import type { Context } from "../../../context/Context"
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import type { ViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
-import type { SpinePosition } from "../../../spine/types"
+import { SpinePosition } from "../../../spine/types"
 import { getSpineItemPositionForRightPage } from "./getSpineItemPositionForRightPage"
 
 export const getNavigationForRightSinglePage = ({
@@ -14,13 +14,13 @@ export const getNavigationForRightSinglePage = ({
   spineLocator,
   context,
 }: {
-  position: ViewportPosition | SpinePosition
+  position: DeprecatedViewportPosition | SpinePosition
   navigationResolver: NavigationResolver
   computedPageTurnDirection: "horizontal" | "vertical"
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
   context: Context
-}): ViewportPosition | SpinePosition => {
+}): DeprecatedViewportPosition | SpinePosition => {
   const pageTurnDirection = computedPageTurnDirection
   const spineItem =
     spineLocator.getSpineItemFromPosition(position) || spineItemsManager.get(0)
@@ -54,8 +54,14 @@ export const getNavigationForRightSinglePage = ({
   if (!isNewNavigationInCurrentItem) {
     return navigationResolver.getAdjustedPositionWithSafeEdge(
       pageTurnDirection === `horizontal`
-        ? { x: position.x + context.getPageSize().width, y: 0 }
-        : { y: position.y + context.getPageSize().height, x: 0 },
+        ? new SpinePosition({
+            x: position.x + context.getPageSize().width,
+            y: 0,
+          })
+        : new SpinePosition({
+            y: position.y + context.getPageSize().height,
+            x: 0,
+          }),
     )
   }
   const readingOrderPosition =

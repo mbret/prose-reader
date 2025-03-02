@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
+import { ViewportSlicePosition } from "../../viewport/types"
+import { SpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 
 const context = new Context()
@@ -19,7 +21,6 @@ describe("Given an item that is one page on spread", () => {
       it("should recognize item", () => {
         const { visible } =
           getItemVisibilityForPosition({
-            context,
             itemPosition: {
               bottom: 384,
               height: 384,
@@ -29,7 +30,10 @@ describe("Given an item that is one page on spread", () => {
               width: 252.5,
             },
             threshold: 0.3,
-            viewportPosition: { x: -380, y: 0 },
+            viewportPosition: ViewportSlicePosition.from(
+              new SpinePosition({ x: -380, y: 0 }),
+              context.absoluteViewport,
+            ),
             restrictToScreen: false,
           }) ?? {}
 
@@ -43,7 +47,6 @@ describe("Given an item that is one page on spread", () => {
       it("should recognize item", () => {
         const { visible } =
           getItemVisibilityForPosition({
-            context,
             itemPosition: {
               bottom: 384,
               height: 384,
@@ -53,7 +56,10 @@ describe("Given an item that is one page on spread", () => {
               width: 252.5,
             },
             threshold: 0.3,
-            viewportPosition: { x: -380, y: 0 },
+            viewportPosition: ViewportSlicePosition.from(
+              new SpinePosition({ x: -380, y: 0 }),
+              context.absoluteViewport,
+            ),
             restrictToScreen: true,
           }) ?? {}
 
@@ -67,7 +73,6 @@ describe("Given an item that is one page on spread", () => {
       it("should recognize item", () => {
         const { visible } =
           getItemVisibilityForPosition({
-            context,
             itemPosition: {
               bottom: 384,
               height: 384,
@@ -77,7 +82,10 @@ describe("Given an item that is one page on spread", () => {
               width: 252.5,
             },
             threshold: 0.3,
-            viewportPosition: { x: -450, y: 0 },
+            viewportPosition: ViewportSlicePosition.from(
+              new SpinePosition({ x: -450, y: 0 }),
+              context.absoluteViewport,
+            ),
             restrictToScreen: true,
           }) ?? {}
 

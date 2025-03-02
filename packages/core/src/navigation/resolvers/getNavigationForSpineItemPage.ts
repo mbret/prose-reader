@@ -1,9 +1,10 @@
 import type { Context } from "../../context/Context"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import type { ViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 
@@ -21,7 +22,7 @@ export const getNavigationForSpineItemPage = ({
   spineItemNavigationResolver: SpineItemNavigationResolver
   spineLocator: SpineLocator
   context: Context
-}): ViewportPosition => {
+}): DeprecatedViewportPosition => {
   const spineItem = spineItemsManager.get(spineItemId)
 
   // lookup for entire book
@@ -29,7 +30,7 @@ export const getNavigationForSpineItemPage = ({
   if (!spineItem) {
     const xPositionForPageIndex = pageIndex * context.getPageSize().width
     return getNavigationForPosition({
-      viewportPosition: { x: xPositionForPageIndex, y: 0 },
+      viewportPosition: new SpinePosition({ x: xPositionForPageIndex, y: 0 }),
       context,
       spineItemNavigationResolver,
       spineLocator,

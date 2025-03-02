@@ -11,7 +11,7 @@ import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpine
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
 import type { Context } from "../context/Context"
-import type { ViewportPosition } from "../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../navigation/viewport/ViewportNavigator"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition } from "../spine/types"
@@ -55,7 +55,7 @@ export class PaginationController extends DestroyableClass {
           position,
         }: {
           spineItem: SpineItem
-          position: ViewportPosition | SpinePosition
+          position: DeprecatedViewportPosition | SpinePosition
         }) =>
           this.spine.locator.getVisiblePagesFromViewportPosition({
             spineItem: spineItem,

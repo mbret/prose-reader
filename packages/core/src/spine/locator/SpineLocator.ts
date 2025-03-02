@@ -1,10 +1,10 @@
 import type { Context } from "../../context/Context"
-import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
+import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
+import { ViewportSlicePosition } from "../../viewport/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 import type { SpinePosition } from "../types"
@@ -30,42 +30,37 @@ export const createSpineLocator = ({
   settings: ReaderSettingsManager
   spineLayout: SpineLayout
 }) => {
-  const getSpineItemPositionFromSpinePosition = Report.measurePerformance(
-    `getSpineItemPositionFromSpinePosition`,
-    10,
-    (
-      position: ViewportPosition | SpinePosition,
-      spineItem: SpineItem,
-    ): SpineItemPosition => {
-      const { left, top } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
+  const getSpineItemPositionFromSpinePosition = (
+    position: SpinePosition,
+    spineItem: SpineItem,
+  ): SpineItemPosition => {
+    const { left, top } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
 
+    /**
+     * For this case the global offset move from right to left but this specific item
+     * reads from left to right. This means that when the offset is at the start of the item
+     * it is in fact at his end. This behavior can be observed in `haruko` about chapter.
+     * @example
+     * <---------------------------------------------------- global offset
+     * item offset ------------------>
+     * [item2 (page0 - page1 - page2)] [item1 (page1 - page0)] [item0 (page0)]
+     */
+    // if (context.isRTL() && itemReadingDirection === 'ltr') {
+    //   return (end - readingOrderViewOffset) - context.getPageSize().width
+    // }
+
+    return new SpineItemPosition({
       /**
-       * For this case the global offset move from right to left but this specific item
-       * reads from left to right. This means that when the offset is at the start of the item
-       * it is in fact at his end. This behavior can be observed in `haruko` about chapter.
+       * when using spread the item could be on the right and therefore will be negative
        * @example
-       * <---------------------------------------------------- global offset
-       * item offset ------------------>
-       * [item2 (page0 - page1 - page2)] [item1 (page1 - page0)] [item0 (page0)]
+       * 400 (position = viewport), page of 200
+       * 400 - 600 = -200.
+       * However we can assume we are at 0, because we in fact can see the beginning of the item
        */
-      // if (context.isRTL() && itemReadingDirection === 'ltr') {
-      //   return (end - readingOrderViewOffset) - context.getPageSize().width
-      // }
-
-      return new SpineItemPosition({
-        /**
-         * when using spread the item could be on the right and therefore will be negative
-         * @example
-         * 400 (position = viewport), page of 200
-         * 400 - 600 = -200.
-         * However we can assume we are at 0, because we in fact can see the beginning of the item
-         */
-        x: Math.max(position.x - left, 0),
-        y: Math.max(position.y - top, 0),
-      })
-    },
-    { disable: true },
-  )
+      x: Math.max(position.x - left, 0),
+      y: Math.max(position.y - top, 0),
+    })
+  }
 
   const getSpinePositionFromSpineItem = (spineItem: SpineItem) => {
     return getSpinePositionFromSpineItemPosition({
@@ -110,11 +105,13 @@ export const createSpineLocator = ({
     threshold,
     spineItem,
     restrictToScreen,
+    useAbsoluteViewport = true,
   }: {
-    position: ViewportPosition | SpinePosition
+    position: SpinePosition
     threshold: number
     spineItem: SpineItem
     restrictToScreen?: boolean
+    useAbsoluteViewport?: boolean
   }):
     | {
         beginPageIndex: number
@@ -150,9 +147,22 @@ export const createSpineLocator = ({
 
     const pagesVisible = pages.reduce<number[]>(
       (acc, { absolutePosition, index }) => {
+        const viewport = useAbsoluteViewport
+          ? context.absoluteViewport
+          : context.relativeViewport
+        const relativeSpinePosition = translateSpinePositionToRelativeViewport(
+          position,
+          context.absoluteViewport,
+          viewport,
+        )
+
+        const viewportPosition = ViewportSlicePosition.from(
+          relativeSpinePosition,
+          viewport,
+        )
+
         const { visible } = getItemVisibilityForPosition({
-          context,
-          viewportPosition: position,
+          viewportPosition,
           restrictToScreen,
           threshold,
           itemPosition: absolutePosition,
@@ -180,7 +190,7 @@ export const createSpineLocator = ({
   }
 
   const isPositionWithinSpineItem = (
-    position: ViewportPosition | SpinePosition,
+    position: ViewportSlicePosition | SpinePosition,
     spineItem: SpineItem,
   ) => {
     const { bottom, left, right, top } =
@@ -250,7 +260,7 @@ export const createSpineLocator = ({
       }),
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,
-    getSpineItemFromPosition: (position: ViewportPosition | SpinePosition) =>
+    getSpineItemFromPosition: (position: SpinePosition) =>
       getSpineItemFromPosition({
         position,
         settings,

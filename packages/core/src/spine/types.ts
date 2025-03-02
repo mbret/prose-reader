@@ -50,25 +50,57 @@ export class SpineElementLayout {
  * You can leverage this layout info for positioning overlay elements (eg: bookmarks).
  */
 export class SpineItemSpineLayout extends SpineElementLayout {
-  public readonly __symbol = Symbol(`SpineItemSpineLayout`)
+  public readonly __symbol = `SpineItemSpineLayout`
 }
 
 export class SpineItemPageSpineLayout extends SpineElementLayout {
-  public readonly __symbol = Symbol(`SpineItemPageSpineLayout`)
+  public readonly __symbol = `SpineItemPageSpineLayout`
 }
 
 /**
  * Position of an element relative to the spine.
  *
  * This can be used for item, pages.
+ *
+ * @important
+ * This position is not guaranteed to be valid and/or navigable.
+ * Its purpose is to be used for navigation and/or calculations but you may need
+ * to do proper validation depending of the context.
  */
 export class SpinePosition {
   public readonly x: number
   public readonly y: number
-  public readonly __symbol = Symbol(`SpinePosition`)
+  public readonly __symbol = `SpinePosition`
 
   constructor(position: { x: number; y: number }) {
     this.x = position.x
     this.y = position.y
+  }
+}
+
+/**
+ * Represent an obvious not valid spine position. Not valid means mostly:
+ * - out of bounds
+ * - not in the spine
+ * - not navigable
+ *
+ * Although a SpinePosition can always be invalid, its usage is clear.
+ * This distinction is here to help developer understand the context better.
+ *
+ * If you end up somewhere with an UnsafeSpinePosition, it means you need to
+ * validate it somehow and probably do some translation.
+ */
+export class UnsafeSpinePosition {
+  public readonly x: number
+  public readonly y: number
+  public readonly __symbol = `UnsafeSpinePosition`
+
+  constructor(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
+
+  static from(position: SpinePosition) {
+    return new UnsafeSpinePosition(position)
   }
 }

@@ -1,9 +1,10 @@
-import { map, type Observable } from "rxjs"
+import { type Observable, map } from "rxjs"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import { SpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 
 export const withFallbackPosition =
@@ -45,7 +46,7 @@ export const withFallbackPosition =
           return {
             navigation: {
               ...navigation,
-              position: { x: 0, y: 0 },
+              position: new SpinePosition({ x: 0, y: 0 }),
             },
             ...rest,
           }

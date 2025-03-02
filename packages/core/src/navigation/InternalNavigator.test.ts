@@ -1,5 +1,6 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it } from "vitest"
+import { SpinePosition } from "../spine/types"
 import { waitFor } from "../tests/utils"
 import type { InternalNavigationEntry } from "./InternalNavigator"
 import { createNavigator, generateItems } from "./tests/utils"
@@ -15,10 +16,10 @@ describe(`Given unloaded book`, () => {
       })
 
       userNavigator.navigate({
-        position: {
+        position: new SpinePosition({
           x: -10,
           y: -20,
-        },
+        }),
       })
 
       await waitFor(100)

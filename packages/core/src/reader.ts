@@ -115,16 +115,10 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     const margin = 0
     const marginTop = 0
     const marginBottom = 0
-    const isReflow = true // @todo
-    const containerElementWidth = dimensions.width
-    const containerElementEvenWidth =
-      containerElementWidth % 2 === 0 || isReflow
-        ? containerElementWidth
-        : containerElementWidth - 1 // @todo careful with the -1, dunno why it's here yet
 
     element.style.setProperty(`overflow`, `hidden`)
     element.style.height = `${dimensions.height - marginTop - marginBottom}px`
-    element.style.width = `${containerElementEvenWidth - 2 * margin}px`
+    element.style.width = `${dimensions.width - 2 * margin}px`
 
     if (margin > 0 || marginTop > 0 || marginBottom > 0) {
       element.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
@@ -135,7 +129,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       visibleAreaRect: {
         x: elementRect.x,
         y: elementRect.y,
-        width: containerElementEvenWidth,
+        width: dimensions.width,
         height: dimensions.height,
       },
     })

@@ -1,16 +1,12 @@
 import { map, share, shareReplay, takeUntil, tap } from "rxjs"
 import type { Reader } from "../../reader"
 import { Report } from "../../report"
-import {
-  SpineItemPageSpineLayout,
-  type SpineItemSpineLayout,
-  type SpinePosition,
-} from "../../spine/types"
+import { SpineItemPageSpineLayout, type SpinePosition } from "../../spine/types"
 
 export type PageLayoutInformation = {
   absolutePageIndex: number
   itemIndex: number
-  absolutePosition: SpineItemSpineLayout
+  absolutePosition: SpineItemPageSpineLayout
 }
 
 export type LayoutInfo = {

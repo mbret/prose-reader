@@ -4,6 +4,7 @@ import { distinctUntilChanged, filter, map } from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { isDefined } from "../utils/isDefined"
 import { isShallowEqual } from "../utils/objects"
+import { AbsoluteViewport, RelativeViewport } from "../viewport/types"
 import { BridgeEvent } from "./BridgeEvent"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 
@@ -141,6 +142,34 @@ export class Context {
         : visibleAreaRect.width,
       height: visibleAreaRect.height,
     }
+  }
+
+  public get absoluteViewport() {
+    const absoluteViewport = this._stateSubject.getValue().visibleAreaRect
+
+    return new AbsoluteViewport({
+      width: absoluteViewport.width,
+      height: absoluteViewport.height,
+    })
+  }
+
+  /**
+   * @important
+   *
+   * Contains long floating values.
+   */
+  public get relativeViewport() {
+    const absoluteViewport = this.absoluteViewport
+    const viewportRect = this._stateSubject
+      .getValue()
+      .containerElement?.children[0]?.getBoundingClientRect()
+    const relativeScale =
+      (viewportRect?.width ?? absoluteViewport.width) / absoluteViewport.width
+
+    return new RelativeViewport({
+      width: absoluteViewport.width / relativeScale,
+      height: absoluteViewport.height / relativeScale,
+    })
   }
 
   public destroy = () => {

@@ -1,6 +1,4 @@
-import type { Context } from "../../context/Context"
-import type { ViewportPosition } from "../../navigation/viewport/ViewportNavigator"
-import type { SpinePosition } from "../types"
+import type { ViewportSlicePosition } from "../../viewport/types"
 
 const isItemVisibleByThresholdForPosition = ({
   itemHeight,
@@ -30,18 +28,18 @@ const isItemVisibleOnScreenByThresholdForPosition = ({
   visibleWidthOfItem,
   visibleHeightOfItem,
   threshold,
-  context,
+  viewportPosition,
 }: {
   visibleWidthOfItem: number
   visibleHeightOfItem: number
   threshold: number
-  context: Context
+  viewportPosition: ViewportSlicePosition
 }) => {
   const widthRatioOfSpaceTakenInScreen =
-    visibleWidthOfItem / context.state.visibleAreaRect.width
+    visibleWidthOfItem / viewportPosition.width
 
   const heightRatioOfSpaceTakenInScreen =
-    visibleHeightOfItem / context.state.visibleAreaRect.height
+    visibleHeightOfItem / viewportPosition.height
 
   const isItemVisibleEnoughOnScreen =
     heightRatioOfSpaceTakenInScreen >= threshold &&
@@ -76,7 +74,6 @@ export const getItemVisibilityForPosition = ({
   threshold,
   viewportPosition,
   restrictToScreen,
-  context,
 }: {
   itemPosition: {
     right: number
@@ -86,21 +83,18 @@ export const getItemVisibilityForPosition = ({
     height: number
     width: number
   }
-  viewportPosition: ViewportPosition | SpinePosition
+  viewportPosition: ViewportSlicePosition
   threshold: number
   restrictToScreen?: boolean
-  context: Context
 }) => {
   const viewportLeft = viewportPosition.x
-  const viewportRight =
-    viewportPosition.x + (context.state.visibleAreaRect.width - 1)
+  const viewportRight = viewportPosition.x + (viewportPosition.width - 1)
 
   const viewportTop = viewportPosition.y
   const viewportBottom = Math.max(
-    viewportPosition.y + (context.state.visibleAreaRect.height - 1),
+    viewportPosition.y + (viewportPosition.height - 1),
     0,
   )
-  // const viewportWidth = context.state.visibleAreaRect.width
 
   const visibleWidthOfItem = Math.max(
     0,
@@ -125,7 +119,7 @@ export const getItemVisibilityForPosition = ({
       threshold,
       visibleHeightOfItem,
       visibleWidthOfItem,
-      context,
+      viewportPosition,
     })
 
   if (restrictToScreen) {
