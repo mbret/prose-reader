@@ -102,7 +102,7 @@ describe(`Given a backward navigation to a new item`, () => {
           }),
         )
 
-        expect(position).toEqual({ x: 50, y: 0 })
+        expect(position).toMatchObject(new SpinePosition({ x: 50, y: 0 }))
       })
     })
   })
