@@ -1,6 +1,7 @@
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
+import { translateSpinePositionToRelativeViewport } from "../../../viewport/translateSpinePositionToRelativeViewport"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }
@@ -27,10 +28,8 @@ export class PanNavigator {
       this.unlock?.()
       this.unlock = this.reader.navigation.lock()
 
-      // stateSubject$.next(`start`)
       this.lastDelta = { x: 0, y: 0 }
       this.lastStartPosition = this.reader.navigation.getViewportPosition()
-
       this.lastPosition = this.lastStartPosition
     }
 
@@ -38,24 +37,30 @@ export class PanNavigator {
       this.reader.navigation.getNavigation().position
 
     if (delta) {
+      const viewportScale =
+        this.reader.context.absoluteViewport.width /
+        this.reader.context.relativeViewport.width
+
       /**
        * We floor the delta to avoid having wrong direction derived because of
        * some sub pixel difference due to gesture precision
        */
       const correctedX = Math.floor(delta.x) - (this.lastDelta?.x || 0)
       const correctedY = Math.floor(delta.y) - (this.lastDelta?.y || 0)
+      const x = Math.floor(
+        pageTurnDirection === `horizontal`
+          ? this.lastPosition.x - correctedX / viewportScale
+          : 0,
+      )
+      const y = Math.floor(
+        pageTurnDirection === `horizontal`
+          ? 0
+          : this.lastPosition.y - correctedY / viewportScale,
+      )
 
       navigation = new SpinePosition({
-        x: Math.floor(
-          pageTurnDirection === `horizontal`
-            ? this.lastPosition.x - correctedX
-            : 0,
-        ),
-        y: Math.floor(
-          pageTurnDirection === `horizontal`
-            ? 0
-            : this.lastPosition.y - correctedY,
-        ),
+        x,
+        y,
       })
 
       this.lastDelta = delta
