@@ -1,10 +1,10 @@
-import type { InputSettings, OutputSettings } from "./types"
 import { SettingsManagerOverload } from "../../settings/SettingsManagerOverload"
-import { isShallowEqual } from "../../utils/objects"
 import type {
   CoreInputSettings,
   CoreOutputSettings,
 } from "../../settings/types"
+import { isShallowEqual } from "../../utils/objects"
+import type { InputSettings, OutputSettings } from "./types"
 
 export class SettingsManager<
   ParentInputSettings extends CoreInputSettings,
