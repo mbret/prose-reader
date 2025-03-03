@@ -1,4 +1,4 @@
-import type { DeprecatedViewportPosition } from "../navigation/controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "../navigation/controllers/ControlledNavigationController"
 import { type SpinePosition, UnsafeSpinePosition } from "../spine/types"
 import type { AbsoluteViewport, RelativeViewport } from "./types"
 

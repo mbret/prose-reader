@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import { HookManager, SpineItem } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { Viewport } from "../../viewport/Viewport"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"
 import { SpinePosition } from "../types"
@@ -78,11 +79,13 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
+        const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
+          viewport,
         )
 
         context.update({
@@ -104,7 +107,6 @@ describe("Given single page items and no spread", () => {
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
-            context: context,
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -112,6 +114,7 @@ describe("Given single page items and no spread", () => {
             threshold: 0.51,
             restrictToScreen: true,
             spineLayout,
+            viewport,
           }) ?? {}
 
         expect(beginIndex).toBe(0)
@@ -125,11 +128,13 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
+        const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
+          viewport,
         )
 
         context.update({
@@ -151,7 +156,6 @@ describe("Given single page items and no spread", () => {
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
-            context: context,
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -159,6 +163,7 @@ describe("Given single page items and no spread", () => {
             threshold: 0.5,
             restrictToScreen: true,
             spineLayout,
+            viewport,
           }) ?? {}
 
         expect(beginIndex).toBe(0)
@@ -172,11 +177,13 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
+        const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>
           spineItemsManager as any,
           context,
           settings,
+          viewport,
         )
 
         context.update({
@@ -200,7 +207,6 @@ describe("Given single page items and no spread", () => {
 
         const { beginIndex, endIndex } =
           getVisibleSpineItemsFromPosition({
-            context: context,
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -208,6 +214,7 @@ describe("Given single page items and no spread", () => {
             threshold: 0.49,
             restrictToScreen: true,
             spineLayout,
+            viewport,
           }) ?? {}
 
         expect(beginIndex).toBe(0)

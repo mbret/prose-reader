@@ -21,14 +21,13 @@ import { observeResize } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import { InternalNavigator } from "./InternalNavigator"
 import { UserNavigator } from "./UserNavigator"
-import { ViewportNavigator } from "./controllers/ControlledController"
-import { ScrollController } from "./controllers/ScrollController"
+import { ControlledNavigationController } from "./controllers/ControlledNavigationController"
+import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
 
 export const createNavigator = ({
   spineItemsManager,
   context,
-  parentElement$,
   hookManager,
   spine,
   settings,
@@ -36,7 +35,6 @@ export const createNavigator = ({
 }: {
   spineItemsManager: SpineItemsManager
   context: Context
-  parentElement$: BehaviorSubject<HTMLElement | undefined>
   hookManager: HookManager
   spine: Spine
   settings: ReaderSettingsManager
@@ -50,7 +48,7 @@ export const createNavigator = ({
     spineLayout: spine.spineLayout,
   })
 
-  const controlledController = new ViewportNavigator(
+  const controlledNavigationController = new ControlledNavigationController(
     settings,
     hookManager,
     context,
@@ -58,12 +56,12 @@ export const createNavigator = ({
     viewport,
   )
 
-  const scrollController = new ScrollController(
+  const scrollNavigationController = new ScrollNavigationController(
     viewport,
     settings,
     hookManager,
-    parentElement$,
     spine,
+    context,
   )
 
   // might be a bit overkill but we want to be sure of sure
@@ -84,7 +82,7 @@ export const createNavigator = ({
 
   const scrollHappeningFromBrowser$ = combineLatest([
     isSpineScrolling$,
-    scrollController.isScrolling$,
+    scrollNavigationController.isScrolling$,
   ]).pipe(
     map(
       ([spineScrolling, viewportScrolling]) =>
@@ -95,7 +93,7 @@ export const createNavigator = ({
 
   const userNavigator = new UserNavigator(
     settings,
-    scrollController.element$,
+    scrollNavigationController.element$,
     context,
     scrollHappeningFromBrowser$,
     spine,
@@ -105,16 +103,16 @@ export const createNavigator = ({
     settings,
     context,
     userNavigator.navigation$,
-    controlledController,
-    scrollController,
+    controlledNavigationController,
+    scrollNavigationController,
     navigationResolver,
     spine,
     userNavigator.locker.isLocked$,
   )
 
   const viewportState$ = combineLatest([
-    controlledController.isNavigating$,
-    scrollController.isNavigating$,
+    controlledNavigationController.isNavigating$,
+    scrollNavigationController.isNavigating$,
     userNavigator.locker.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
@@ -125,7 +123,7 @@ export const createNavigator = ({
 
   const destroy = () => {
     userNavigator.destroy()
-    controlledController.destroy()
+    controlledNavigationController.destroy()
     internalNavigator.destroy()
   }
 
@@ -133,8 +131,8 @@ export const createNavigator = ({
     destroy,
     getNavigation: () => internalNavigator.navigation,
     internalNavigator,
-    scrollController,
-    controlledController,
+    scrollNavigationController,
+    controlledNavigationController,
     isLocked$: userNavigator.locker.isLocked$,
     viewportState$,
     navigate: userNavigator.navigate.bind(userNavigator),

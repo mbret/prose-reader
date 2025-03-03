@@ -85,7 +85,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const navigator = createNavigator({
     context,
     spineItemsManager,
-    parentElement$: elementSubject$,
     hookManager,
     spine,
     settings: settingsManager,
@@ -166,6 +165,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     context.update({
       manifest,
       containerElement,
+      rootElement: element,
       forceSinglePageMode: settingsManager.values.forceSinglePageMode,
     })
 

@@ -3,6 +3,8 @@ import {
   type Observable,
   Subject,
   combineLatest,
+  distinctUntilChanged,
+  map,
   merge,
   of,
   shareReplay,
@@ -15,16 +17,17 @@ import {
   withLatestFrom,
 } from "rxjs"
 import { HTML_PREFIX } from "../../constants"
+import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import type { Viewport } from "../../viewport/Viewport"
-import type { ViewportNavigationEntry } from "./ControlledController"
+import type { ViewportNavigationEntry } from "./ControlledNavigationController"
 import { getScaledDownPosition } from "./getScaledDownPosition"
 
-export class ScrollController extends DestroyableClass {
+export class ScrollNavigationController extends DestroyableClass {
   protected navigateSubject = new Subject<ViewportNavigationEntry>()
   protected scrollingSubject = new BehaviorSubject(false)
 
@@ -38,12 +41,14 @@ export class ScrollController extends DestroyableClass {
     protected viewport: Viewport,
     protected settings: ReaderSettingsManager,
     protected hookManager: HookManager,
-    protected parentElement$: Observable<HTMLElement | undefined>,
     protected spine: Spine,
+    protected context: Context,
   ) {
     super()
 
-    const elementInit$ = this.parentElement$.pipe(
+    const elementInit$ = this.context.pipe(
+      map(({ rootElement }) => rootElement),
+      distinctUntilChanged(),
       withLatestFrom(this.element$),
       tap(([parentElement, element]) => {
         if (!parentElement) return

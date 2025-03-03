@@ -1,7 +1,7 @@
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import { SpinePosition } from "../../spine/types"
-import type { DeprecatedViewportPosition } from "../controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "../controllers/ControlledNavigationController"
 
 export const NAMESPACE = `spineNavigator`
 

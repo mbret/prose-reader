@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
+import { Viewport } from "../../viewport/Viewport"
 import { ViewportSlicePosition } from "../../viewport/types"
 import { SpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 
 const context = new Context()
+const viewport = new Viewport(context)
 
 context.update({
   visibleAreaRect: {
@@ -32,7 +34,7 @@ describe("Given an item that is one page on spread", () => {
             threshold: 0.3,
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -380, y: 0 }),
-              context.absoluteViewport,
+              viewport.absoluteViewport,
             ),
             restrictToScreen: false,
           }) ?? {}
@@ -58,7 +60,7 @@ describe("Given an item that is one page on spread", () => {
             threshold: 0.3,
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -380, y: 0 }),
-              context.absoluteViewport,
+              viewport.absoluteViewport,
             ),
             restrictToScreen: true,
           }) ?? {}
@@ -84,7 +86,7 @@ describe("Given an item that is one page on spread", () => {
             threshold: 0.3,
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -450, y: 0 }),
-              context.absoluteViewport,
+              viewport.absoluteViewport,
             ),
             restrictToScreen: true,
           }) ?? {}

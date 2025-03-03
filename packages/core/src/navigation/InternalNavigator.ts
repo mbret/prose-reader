@@ -37,10 +37,10 @@ import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
 import type {
+  ControlledNavigationController,
   DeprecatedViewportPosition,
-  ViewportNavigator,
-} from "./controllers/ControlledController"
-import type { ScrollController } from "./controllers/ScrollController"
+} from "./controllers/ControlledNavigationController"
+import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 
@@ -152,8 +152,8 @@ export class InternalNavigator extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected context: Context,
     protected userNavigation$: Observable<UserNavigationEntry>,
-    protected viewportController: ViewportNavigator,
-    protected scrollController: ScrollController,
+    protected viewportController: ControlledNavigationController,
+    protected scrollNavigationController: ScrollNavigationController,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     protected isUserLocked$: Observable<boolean>,
@@ -410,7 +410,7 @@ export class InternalNavigator extends DestroyableClass {
           }
 
           if (settings.values.computedPageTurnMode === `scrollable`) {
-            this.scrollController.navigate(navigation)
+            this.scrollNavigationController.navigate(navigation)
           } else {
             this.viewportController.navigate(navigation)
           }

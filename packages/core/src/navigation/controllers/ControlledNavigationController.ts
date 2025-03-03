@@ -43,7 +43,7 @@ export type ViewportNavigationEntry = {
   animation?: boolean | "turn" | "snap"
 }
 
-export class ViewportNavigator extends DestroyableClass {
+export class ControlledNavigationController extends DestroyableClass {
   protected navigateSubject = new Subject<ViewportNavigationEntry>()
 
   public readonly element$ = new BehaviorSubject<HTMLElement>(

@@ -1,5 +1,5 @@
 import type { UserNavigationEntry } from "../../../navigation/UserNavigator"
-import type { DeprecatedViewportPosition } from "../../../navigation/controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "../../../navigation/controllers/ControlledNavigationController"
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"

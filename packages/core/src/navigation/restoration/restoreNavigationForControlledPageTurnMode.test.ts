@@ -9,6 +9,7 @@ import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
+import { Viewport } from "../../viewport/Viewport"
 import type {
   InternalNavigationEntry,
   NavigationConsolidation,
@@ -28,6 +29,7 @@ describe(`Given a backward navigation to a new item`, () => {
         const pagination = new Pagination(context, spineItemsManager as any)
         const hooksManager = new HookManager()
         const spineItemLocator = createSpineItemLocator({ context, settings })
+        const viewport = new Viewport(context)
         const spine = new Spine(
           of(noopElement()),
           context,
@@ -37,6 +39,7 @@ describe(`Given a backward navigation to a new item`, () => {
           spineItemLocator,
           settings,
           hooksManager,
+          viewport,
         )
         const navigationResolver = createNavigationResolver({
           context,

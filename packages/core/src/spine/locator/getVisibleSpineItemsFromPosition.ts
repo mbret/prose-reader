@@ -1,5 +1,5 @@
 import type { Context } from "../../context/Context"
-import type { DeprecatedViewportPosition } from "../../navigation/controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "../../navigation/controllers/ControlledNavigationController"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { Viewport } from "../../viewport/Viewport"

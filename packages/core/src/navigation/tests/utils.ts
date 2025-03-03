@@ -11,11 +11,12 @@ import { createSpineLocator } from "../../spine/locator/SpineLocator"
 import { SpineItemSpineLayout } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
+import { Viewport } from "../../viewport/Viewport"
 import { InternalNavigator } from "../InternalNavigator"
 import { UserNavigator } from "../UserNavigator"
-import { ViewportNavigator } from "../controllers/ControlledController"
+import { ControlledNavigationController } from "../controllers/ControlledNavigationController"
+import { ScrollNavigationController } from "../controllers/ScrollNavigationController"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
-import { type Item, SpineItemsManagerMock } from "./SpineItemsManagerMock"
 
 const createSpineItem = (
   item: {
@@ -111,6 +112,7 @@ export const createNavigator = () => {
   const pagination = new Pagination(context, spineItemsManager as any)
   const spineItemLocator = createSpineItemLocator({ context, settings })
   const hookManager = new HookManager()
+  const viewport = new Viewport(context)
   const spine = new Spine(
     of(noopElement()),
     context,
@@ -119,9 +121,10 @@ export const createNavigator = () => {
     spineItemLocator,
     settings,
     hookManager,
+    viewport,
   )
   const elementSubject = new BehaviorSubject<HTMLElement>(
-    document.createElement(`div`),
+    document.createElement("div"),
   )
   const spineLocator = createSpineLocator({
     context,
@@ -130,6 +133,7 @@ export const createNavigator = () => {
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     spineItemsManager: spineItemsManager as any,
     spineLayout: spine.spineLayout,
+    viewport,
   })
   const navigationResolver = createNavigationResolver({
     context,
@@ -139,12 +143,12 @@ export const createNavigator = () => {
     spineItemsManager: spineItemsManager as any,
     spineLayout: spine.spineLayout,
   })
-  const viewportController = new ViewportNavigator(
+  const viewportController = new ControlledNavigationController(
     settings,
-    elementSubject,
     hookManager,
     context,
     spine,
+    viewport,
   )
 
   const scrollHappeningFromBrowser$ = new Subject()
@@ -157,14 +161,21 @@ export const createNavigator = () => {
     spine,
   )
 
+  const scrollNavigationController = new ScrollNavigationController(
+    viewport,
+    settings,
+    hookManager,
+    spine,
+    context,
+  )
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigator.navigation$,
     viewportController,
+    scrollNavigationController,
     navigationResolver,
     spine,
-    elementSubject,
     userNavigator.locker.isLocked$,
   )
 

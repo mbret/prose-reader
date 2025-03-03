@@ -1,7 +1,8 @@
 import type { Manifest } from "@prose-reader/shared"
-import { BehaviorSubject, Subject } from "rxjs"
+import { Subject } from "rxjs"
 import { distinctUntilChanged, filter, map } from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
+import { DestroyableBehaviorSubject } from "../utils/DestroyableBehaviorSubject"
 import { isDefined } from "../utils/isDefined"
 import { isShallowEqual } from "../utils/objects"
 import { BridgeEvent } from "./BridgeEvent"
@@ -9,6 +10,7 @@ import { isUsingSpreadMode } from "./isUsingSpreadMode"
 
 export type ContextState = {
   containerElement?: HTMLElement
+  rootElement?: HTMLElement
   manifest?: Manifest
   hasVerticalWriting?: boolean
   isUsingSpreadMode?: boolean
@@ -29,49 +31,50 @@ export type ContextState = {
   }
 }
 
-export class Context {
-  // @see https://github.com/microsoft/TypeScript/issues/17293
-  _stateSubject = new BehaviorSubject<ContextState>({
-    marginBottom: 0,
-    marginTop: 0,
-    calculatedInnerMargin: 0,
-    assumedRenditionLayout: "reflowable",
-    visibleAreaRect: {
-      width: 0,
-      height: 0,
-      x: 0,
-      y: 0,
-    },
-  })
-
+export class Context extends DestroyableBehaviorSubject<ContextState> {
   public bridgeEvent = new BridgeEvent()
 
   public destroy$ = new Subject<void>()
 
-  public state$ = this._stateSubject.pipe(distinctUntilChanged(isShallowEqual))
+  public state$ = this.pipe(distinctUntilChanged(isShallowEqual))
 
-  public manifest$ = this._stateSubject.pipe(
+  public manifest$ = this.pipe(
     map((state) => state.manifest),
     filter(isDefined),
     distinctUntilChanged(),
   )
 
-  public containerElement$ = this._stateSubject.pipe(
+  public containerElement$ = this.pipe(
     map((state) => state.containerElement),
     filter(isDefined),
     distinctUntilChanged(),
   )
 
-  public hasVerticalWriting$ = this._stateSubject.pipe(
+  public hasVerticalWriting$ = this.pipe(
     map((state) => state.hasVerticalWriting),
     filter(isDefined),
     distinctUntilChanged(),
   )
 
-  public isUsingSpreadMode$ = this._stateSubject.pipe(
+  public isUsingSpreadMode$ = this.pipe(
     map((state) => state.isUsingSpreadMode),
     distinctUntilChanged(),
   )
+
+  constructor() {
+    super({
+      marginBottom: 0,
+      marginTop: 0,
+      calculatedInnerMargin: 0,
+      assumedRenditionLayout: "reflowable",
+      visibleAreaRect: {
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      },
+    })
+  }
 
   /**
    * @todo optimize to not run if not necessary
@@ -79,7 +82,7 @@ export class Context {
   public update(newState: Partial<ContextState>) {
     // visibleAreaRect.width = width - horizontalMargin * 2
 
-    const previousState = this._stateSubject.getValue()
+    const previousState = this.getValue()
     const manifest = newState.manifest ?? previousState.manifest
     const forceSinglePageMode =
       newState.forceSinglePageMode ?? previousState.forceSinglePageMode
@@ -112,7 +115,7 @@ export class Context {
     }
 
     if (!isShallowEqual(newCompleteState, previousState)) {
-      this._stateSubject.next(newCompleteState)
+      this.next(newCompleteState)
     }
   }
 
@@ -120,11 +123,14 @@ export class Context {
    * RTL only makes sense for horizontal scrolling
    */
   public isRTL = () => {
-    return this._stateSubject.getValue().manifest?.readingDirection === `rtl`
+    return this.getValue().manifest?.readingDirection === `rtl`
   }
 
+  /**
+   * @deprecated
+   */
   get state() {
-    return this._stateSubject.getValue()
+    return this.getValue()
   }
 
   get manifest() {
@@ -139,7 +145,7 @@ export class Context {
    * @deprecated
    */
   public getPageSize() {
-    const { isUsingSpreadMode, visibleAreaRect } = this._stateSubject.getValue()
+    const { isUsingSpreadMode, visibleAreaRect } = this.getValue()
 
     return {
       width: isUsingSpreadMode
@@ -147,11 +153,5 @@ export class Context {
         : visibleAreaRect.width,
       height: visibleAreaRect.height,
     }
-  }
-
-  public destroy = () => {
-    this._stateSubject.complete()
-    this.destroy$.next()
-    this.destroy$.complete()
   }
 }

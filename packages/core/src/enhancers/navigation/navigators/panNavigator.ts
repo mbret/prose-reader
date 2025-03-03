@@ -30,7 +30,7 @@ export class PanNavigator {
 
       this.lastDelta = { x: 0, y: 0 }
       this.lastStartPosition =
-        this.reader.navigation.controlledController.viewportPosition
+        this.reader.navigation.controlledNavigationController.viewportPosition
       this.lastPosition = this.lastStartPosition
     }
 

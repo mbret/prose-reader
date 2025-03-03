@@ -25,7 +25,7 @@ import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { Locker } from "./Locker"
-import type { DeprecatedViewportPosition } from "./controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "./controllers/ControlledNavigationController"
 import { getScaledDownPosition } from "./controllers/getScaledDownPosition"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500

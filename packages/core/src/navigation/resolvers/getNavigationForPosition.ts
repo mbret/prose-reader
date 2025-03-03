@@ -2,7 +2,7 @@ import type { Context } from "../../context/Context"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import type { DeprecatedViewportPosition } from "../controllers/ControlledController"
+import type { DeprecatedViewportPosition } from "../controllers/ControlledNavigationController"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationForPosition = ({
