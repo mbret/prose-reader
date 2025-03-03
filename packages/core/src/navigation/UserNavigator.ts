@@ -1,3 +1,4 @@
+import { isDefined } from "reactjrx"
 import {
   NEVER,
   type Observable,
@@ -63,7 +64,7 @@ export class UserNavigator extends DestroyableClass {
 
   constructor(
     protected settings: ReaderSettingsManager,
-    protected scrollNavigatorElement$: Observable<HTMLElement>,
+    protected scrollNavigatorElement$: Observable<HTMLElement | undefined>,
     protected context: Context,
     protected scrollHappeningFromBrowser$: Observable<unknown>,
     protected spine: Spine,
@@ -71,6 +72,7 @@ export class UserNavigator extends DestroyableClass {
     super()
 
     const userScroll$ = scrollNavigatorElement$.pipe(
+      filter(isDefined),
       switchMap((element) =>
         settings.watch(["computedPageTurnMode"]).pipe(
           switchMap(({ computedPageTurnMode }) =>

@@ -2,7 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { Subject } from "rxjs"
 import { distinctUntilChanged, filter, map } from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { DestroyableBehaviorSubject } from "../utils/DestroyableBehaviorSubject"
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { isDefined } from "../utils/isDefined"
 import { isShallowEqual } from "../utils/objects"
 import { BridgeEvent } from "./BridgeEvent"
@@ -31,7 +31,7 @@ export type ContextState = {
   }
 }
 
-export class Context extends DestroyableBehaviorSubject<ContextState> {
+export class Context extends ReactiveEntity<ContextState> {
   public bridgeEvent = new BridgeEvent()
 
   public destroy$ = new Subject<void>()
@@ -130,11 +130,11 @@ export class Context extends DestroyableBehaviorSubject<ContextState> {
    * @deprecated
    */
   get state() {
-    return this.getValue()
+    return this.value
   }
 
   get manifest() {
-    return this.state.manifest
+    return this.value.manifest
   }
 
   get readingDirection() {

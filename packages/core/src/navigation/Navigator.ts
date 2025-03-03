@@ -93,7 +93,7 @@ export const createNavigator = ({
 
   const userNavigator = new UserNavigator(
     settings,
-    scrollNavigationController.element$,
+    scrollNavigationController.watch("element"),
     context,
     scrollHappeningFromBrowser$,
     spine,

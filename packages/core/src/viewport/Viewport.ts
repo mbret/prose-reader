@@ -1,13 +1,13 @@
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
-import { DestroyableBehaviorSubject } from "../utils/DestroyableBehaviorSubject"
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { AbsoluteViewport, RelativeViewport } from "./types"
 
 type State = {
   element: HTMLElement
 }
 
-export class Viewport extends DestroyableBehaviorSubject<State> {
+export class Viewport extends ReactiveEntity<State> {
   constructor(protected context: Context) {
     const element = document.createElement("div")
 

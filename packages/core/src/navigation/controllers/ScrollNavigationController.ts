@@ -3,8 +3,6 @@ import {
   type Observable,
   Subject,
   combineLatest,
-  distinctUntilChanged,
-  map,
   merge,
   of,
   shareReplay,
@@ -14,7 +12,6 @@ import {
   takeUntil,
   tap,
   timer,
-  withLatestFrom,
 } from "rxjs"
 import { HTML_PREFIX } from "../../constants"
 import type { Context } from "../../context/Context"
@@ -22,18 +19,18 @@ import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
-import { DestroyableClass } from "../../utils/DestroyableClass"
+import { ReactiveEntity } from "../../utils/ReactiveEntity"
+import { watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ViewportNavigationEntry } from "./ControlledNavigationController"
 import { getScaledDownPosition } from "./getScaledDownPosition"
 
-export class ScrollNavigationController extends DestroyableClass {
+export class ScrollNavigationController extends ReactiveEntity<{
+  element: HTMLElement | undefined
+}> {
   protected navigateSubject = new Subject<ViewportNavigationEntry>()
   protected scrollingSubject = new BehaviorSubject(false)
 
-  public readonly element$ = new BehaviorSubject<HTMLElement>(
-    document.createElement(`div`),
-  )
   public isScrolling$ = this.scrollingSubject.asObservable()
   public isNavigating$: Observable<boolean>
 
@@ -44,14 +41,16 @@ export class ScrollNavigationController extends DestroyableClass {
     protected spine: Spine,
     protected context: Context,
   ) {
-    super()
+    super({
+      element: undefined,
+    })
 
-    const elementInit$ = this.context.pipe(
-      map(({ rootElement }) => rootElement),
-      distinctUntilChanged(),
-      withLatestFrom(this.element$),
-      tap(([parentElement, element]) => {
-        if (!parentElement) return
+    const elementCreation$ = this.context.pipe(
+      watchKeys(["rootElement"]),
+      tap(({ rootElement }) => {
+        if (!rootElement) return
+
+        const element = document.createElement(`div`)
 
         // overflowX prevent the scroll bar on the bottom, effectively
         // hiden a small x part on non mobile device.
@@ -64,17 +63,19 @@ export class ScrollNavigationController extends DestroyableClass {
         `
         element.className = `${HTML_PREFIX}-scroll-navigator`
         element.appendChild(this.viewport.value.element)
-        parentElement.appendChild(element)
+        rootElement.appendChild(element)
 
-        this.element$.next(element)
+        this.update({ element })
       }),
     )
 
     const toggleElementDisplay$ = combineLatest([
       settings.watch([`computedPageTurnMode`]),
-      this.element$,
+      this.watch("element"),
     ]).pipe(
       tap(([{ computedPageTurnMode }, element]) => {
+        if (!element) return
+
         if (computedPageTurnMode === `scrollable`) {
           element.style.display = "block"
         } else {
@@ -91,7 +92,7 @@ export class ScrollNavigationController extends DestroyableClass {
       shareReplay(1),
     )
 
-    merge(this.isNavigating$, elementInit$, toggleElementDisplay$, navigate$)
+    merge(elementCreation$, toggleElementDisplay$, navigate$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }
@@ -104,13 +105,13 @@ export class ScrollNavigationController extends DestroyableClass {
    * for remark about flicker / fonts smoothing
    */
   protected setViewportPosition = ({ position }: ViewportNavigationEntry) => {
-    const element = this.element$.getValue()
+    const element = this.value.element
 
     this.scrollingSubject.next(true)
 
     // @todo use smooth later and adjust the class to avoid false positive
     // @todo see scrollend
-    element.scrollTo({
+    element?.scrollTo({
       left: position.x,
       top: position.y,
       behavior: "instant",
@@ -133,7 +134,9 @@ export class ScrollNavigationController extends DestroyableClass {
   }
 
   public get viewportPosition(): SpinePosition {
-    const element = this.element$.getValue()
+    const element = this.value.element
+
+    if (!element) return new SpinePosition({ x: 0, y: 0 })
 
     /**
      * We need to scale down cause a scrollbar might create inconsistency between navigation

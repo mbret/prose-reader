@@ -1,5 +1,6 @@
-import { defer, Observable, of, type OperatorFunction } from "rxjs"
-import { first, map, switchMap } from "rxjs/operators"
+import { isShallowEqual } from "@prose-reader/shared"
+import { Observable, type OperatorFunction, defer, of } from "rxjs"
+import { distinctUntilChanged, first, map, switchMap } from "rxjs/operators"
 
 export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
   keys: K[],
@@ -21,6 +22,12 @@ export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
     )
   })
 }
+
+export const watchKeys =
+  <R extends Record<string, unknown>, K extends keyof R>(keys: K[]) =>
+  (stream: Observable<R>) => {
+    return stream.pipe(mapKeysTo(keys), distinctUntilChanged(isShallowEqual))
+  }
 
 export function observeResize(
   element: HTMLElement,

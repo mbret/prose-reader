@@ -34,7 +34,7 @@ export class ScrollableZoomer extends Zoomer {
   public scaleAt(userScale: number): void {
     const spineElement = this.reader.spine.element
     const viewportElement =
-      this.reader.navigation.scrollNavigationController.element$.getValue()
+      this.reader.navigation.scrollNavigationController.value.element
 
     if (!spineElement || !viewportElement) return
 
