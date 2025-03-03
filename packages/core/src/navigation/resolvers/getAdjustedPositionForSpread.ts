@@ -1,5 +1,5 @@
 import { SpinePosition } from "../../spine/types"
-import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../controllers/ControlledController"
 
 export const getAdjustedPositionForSpread = ({
   position: { x, y },

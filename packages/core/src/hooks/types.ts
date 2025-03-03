@@ -66,13 +66,6 @@ export type CoreHook =
       name: "onViewportOffsetAdjust"
       runFn: (params: undefined) => void
     }
-  /**
-   * Only available during reader creation
-   */
-  | {
-      name: `navigator.onBeforeContainerCreated`
-      runFn: (params: { element: HTMLElement }) => void
-    }
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type HookExecution<H extends Hook<any, any, any>> = {

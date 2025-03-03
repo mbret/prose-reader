@@ -1,6 +1,6 @@
 import type { Context } from "../../../context/Context"
+import type { DeprecatedViewportPosition } from "../../../navigation/controllers/ControlledController"
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import type { DeprecatedViewportPosition } from "../../../navigation/viewport/ViewportNavigator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
 import type { SpinePosition } from "../../../spine/types"

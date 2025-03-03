@@ -3,6 +3,7 @@ import {
   type Observable,
   Subject,
   animationFrameScheduler,
+  combineLatest,
   delay,
   identity,
   map,
@@ -11,14 +12,13 @@ import {
   of,
   share,
   shareReplay,
-  skip,
   startWith,
   switchMap,
   takeUntil,
   tap,
-  timer,
   withLatestFrom,
 } from "rxjs"
+import { HTML_PREFIX } from "../../constants"
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import { Report } from "../../report"
@@ -26,7 +26,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
-import { getScaledDownPosition } from "./getScaledDownPosition"
+import type { Viewport } from "../../viewport/Viewport"
 import {
   spinePositionToTranslation,
   translationToSpinePosition,
@@ -45,20 +45,37 @@ export type ViewportNavigationEntry = {
 
 export class ViewportNavigator extends DestroyableClass {
   protected navigateSubject = new Subject<ViewportNavigationEntry>()
-  protected scrollingSubject = new BehaviorSubject(false)
 
+  public readonly element$ = new BehaviorSubject<HTMLElement>(
+    document.createElement(`div`),
+  )
   public isNavigating$: Observable<boolean>
-  public isScrolling$ = this.scrollingSubject.asObservable()
   public layout$: Observable<unknown>
 
   constructor(
     protected settings: ReaderSettingsManager,
-    protected viewportElement$: BehaviorSubject<HTMLElement>,
     protected hookManager: HookManager,
     protected context: Context,
     protected spine: Spine,
+    protected viewport: Viewport,
   ) {
     super()
+
+    const elementInit$ = this.spine.element$.pipe(
+      withLatestFrom(this.element$),
+      tap(([spineElement, element]) => {
+        element.style.cssText = `
+          height: 100%;
+          width: 100%;
+          position: relative;
+        `
+        element.className = `${HTML_PREFIX}-controlled-navigator`
+        element.innerHTML = ``
+        element.appendChild(spineElement)
+        this.viewport.value.element.appendChild(element)
+        this.element$.next(element)
+      }),
+    )
 
     const settingsThatRequireLayout$ = settings.watch([
       `computedPageTurnDirection`,
@@ -74,22 +91,15 @@ export class ViewportNavigator extends DestroyableClass {
      * Try not to have duplicate with other lower components that also listen to settings change and re-layout
      * on the same settings.
      */
-    const updateElementOnSettingsChange$ = merge(
+    const updateElementOnSettingsChange$ = combineLatest([
       settingsThatRequireLayout$,
-      this.viewportElement$,
-    ).pipe(
-      withLatestFrom(this.viewportElement$),
+      this.element$,
+    ]).pipe(
       tap(([, element]) => {
         if (settings.values.computedPageTurnMode === `scrollable`) {
-          element.style.removeProperty(`transform`)
-          element.style.removeProperty(`transition`)
-          element.style.overflowY = `scroll`
-          // prevent the scroll bar on the bottom, effectively
-          // hiden a small x part on non mobile device.
-          element.style.overflowX = `hidden`
+          element.style.display = `contents`
         } else {
-          element.style.removeProperty(`overflow`)
-          element.style.removeProperty(`overflowY`)
+          element.style.display = `block`
         }
       }),
     )
@@ -123,7 +133,7 @@ export class ViewportNavigator extends DestroyableClass {
         }
       }),
       switchMap((currentEvent) => {
-        const element = this.viewportElement$.getValue()
+        const element = this.element$.getValue()
 
         // cleanup potential previous manual adjust
         element.style.setProperty(`transition`, `none`)
@@ -157,7 +167,7 @@ export class ViewportNavigator extends DestroyableClass {
                   ? delay(1, animationFrameScheduler)
                   : identity,
                 tap((data) => {
-                  const element = this.viewportElement$.getValue()
+                  const element = this.element$.getValue()
                   const noAdjustmentNeeded = false
 
                   if (data.shouldAnimate && !noAdjustmentNeeded) {
@@ -199,7 +209,7 @@ export class ViewportNavigator extends DestroyableClass {
                   ? delay(animationDuration / 2, animationFrameScheduler)
                   : identity,
                 tap((data) => {
-                  const element = this.viewportElement$.getValue()
+                  const element = this.element$.getValue()
 
                   if (pageTurnAnimation === `fade`) {
                     this.setViewportPosition(data.position)
@@ -224,7 +234,7 @@ export class ViewportNavigator extends DestroyableClass {
       shareReplay(1),
     )
 
-    merge(this.isNavigating$, this.layout$)
+    merge(elementInit$, this.isNavigating$, this.layout$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }
@@ -238,30 +248,10 @@ export class ViewportNavigator extends DestroyableClass {
    * for remark about flicker / fonts smoothing
    */
   protected setViewportPosition(position: SpinePosition) {
-    const element = this.viewportElement$.getValue()
+    const element = this.element$.getValue()
 
-    if (this.settings.values.computedPageTurnMode === `scrollable`) {
-      this.scrollingSubject.next(true)
-      // @todo use smooth later and adjust the class to avoid false positive
-      // @todo see scrollend
-      element.scrollTo({
-        left: position.x,
-        top: position.y,
-        behavior: "instant",
-      })
-
-      timer(1)
-        .pipe(
-          tap(() => {
-            this.scrollingSubject.next(false)
-          }),
-          takeUntil(merge(this.scrollingSubject.pipe(skip(1)), this.destroy$)),
-        )
-        .subscribe()
-    } else {
-      const translation = spinePositionToTranslation(position)
-      element.style.transform = `translate(${translation.x}px, ${translation.y}px)`
-    }
+    const translation = spinePositionToTranslation(position)
+    element.style.transform = `translate(${translation.x}px, ${translation.y}px)`
 
     this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
   }
@@ -275,25 +265,7 @@ export class ViewportNavigator extends DestroyableClass {
    * transofmration inconsistency between the viewport and the spine.
    */
   public get viewportPosition(): SpinePosition {
-    const element = this.viewportElement$.getValue()
-
-    if (this.settings.values.computedPageTurnMode === `scrollable`) {
-      /**
-       * We need to scale down cause a scrollbar might create inconsistency between navigation
-       * element and spine.
-       *
-       * @todo Don't remember why this is needed exactly, need to be explained once found
-       * out again.
-       */
-      return getScaledDownPosition({
-        element,
-        position: new SpinePosition({
-          x: element?.scrollLeft ?? 0,
-          y: element?.scrollTop ?? 0,
-        }),
-        spineElement: this.spine.element,
-      })
-    }
+    const element = this.element$.getValue()
 
     const computedStyle = window.getComputedStyle(element)
     const transform = computedStyle.transform || computedStyle.webkitTransform

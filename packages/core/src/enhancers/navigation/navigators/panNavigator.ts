@@ -29,7 +29,8 @@ export class PanNavigator {
       this.unlock = this.reader.navigation.lock()
 
       this.lastDelta = { x: 0, y: 0 }
-      this.lastStartPosition = this.reader.navigation.getViewportPosition()
+      this.lastStartPosition =
+        this.reader.navigation.controlledController.viewportPosition
       this.lastPosition = this.lastStartPosition
     }
 
@@ -38,8 +39,8 @@ export class PanNavigator {
 
     if (delta) {
       const viewportScale =
-        this.reader.context.absoluteViewport.width /
-        this.reader.context.relativeViewport.width
+        this.reader.viewport.absoluteViewport.width /
+        this.reader.viewport.absoluteViewport.width
 
       /**
        * We floor the delta to avoid having wrong direction derived because of

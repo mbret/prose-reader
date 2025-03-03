@@ -25,8 +25,8 @@ import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { Locker } from "./Locker"
-import type { DeprecatedViewportPosition } from "./viewport/ViewportNavigator"
-import { getScaledDownPosition } from "./viewport/getScaledDownPosition"
+import type { DeprecatedViewportPosition } from "./controllers/ControlledController"
+import { getScaledDownPosition } from "./controllers/getScaledDownPosition"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 const NAMESPACE = `navigation/UserNavigator`
@@ -63,14 +63,14 @@ export class UserNavigator extends DestroyableClass {
 
   constructor(
     protected settings: ReaderSettingsManager,
-    protected element$: Observable<HTMLElement>,
+    protected scrollNavigatorElement$: Observable<HTMLElement>,
     protected context: Context,
     protected scrollHappeningFromBrowser$: Observable<unknown>,
     protected spine: Spine,
   ) {
     super()
 
-    const userScroll$ = element$.pipe(
+    const userScroll$ = scrollNavigatorElement$.pipe(
       switchMap((element) =>
         settings.watch(["computedPageTurnMode"]).pipe(
           switchMap(({ computedPageTurnMode }) =>

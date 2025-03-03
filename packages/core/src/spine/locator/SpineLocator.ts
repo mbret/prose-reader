@@ -3,6 +3,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
+import type { Viewport } from "../../viewport/Viewport"
 import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
 import { ViewportSlicePosition } from "../../viewport/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -23,12 +24,14 @@ export const createSpineLocator = ({
   spineItemLocator,
   settings,
   spineLayout,
+  viewport,
 }: {
   spineItemsManager: SpineItemsManager
   context: Context
   spineItemLocator: ReturnType<typeof createSpineItemLocator>
   settings: ReaderSettingsManager
   spineLayout: SpineLayout
+  viewport: Viewport
 }) => {
   const getSpineItemPositionFromSpinePosition = (
     position: SpinePosition,
@@ -106,12 +109,14 @@ export const createSpineLocator = ({
     spineItem,
     restrictToScreen,
     useAbsoluteViewport = true,
+    viewport,
   }: {
     position: SpinePosition
     threshold: number
     spineItem: SpineItem
     restrictToScreen?: boolean
     useAbsoluteViewport?: boolean
+    viewport: Viewport
   }):
     | {
         beginPageIndex: number
@@ -147,18 +152,18 @@ export const createSpineLocator = ({
 
     const pagesVisible = pages.reduce<number[]>(
       (acc, { absolutePosition, index }) => {
-        const viewport = useAbsoluteViewport
-          ? context.absoluteViewport
-          : context.relativeViewport
+        const viewportInfo = useAbsoluteViewport
+          ? viewport.absoluteViewport
+          : viewport.relativeViewport
         const relativeSpinePosition = translateSpinePositionToRelativeViewport(
           position,
-          context.absoluteViewport,
-          viewport,
+          viewport.absoluteViewport,
+          viewportInfo,
         )
 
         const viewportPosition = ViewportSlicePosition.from(
           relativeSpinePosition,
-          viewport,
+          viewportInfo,
         )
 
         const { visible } = getItemVisibilityForPosition({
@@ -272,17 +277,26 @@ export const createSpineLocator = ({
     getVisibleSpineItemsFromPosition: (
       params: Omit<
         Parameters<typeof getVisibleSpineItemsFromPosition>[0],
-        "context" | "spineItemsManager" | "settings" | "spineLayout"
+        "spineItemsManager" | "settings" | "spineLayout" | "viewport"
       >,
     ) =>
       getVisibleSpineItemsFromPosition({
-        context,
         settings,
         spineItemsManager,
         spineLayout,
+        viewport,
         ...params,
       }),
-    getVisiblePagesFromViewportPosition,
+    getVisiblePagesFromViewportPosition: (
+      params: Omit<
+        Parameters<typeof getVisiblePagesFromViewportPosition>[0],
+        "viewport"
+      >,
+    ) =>
+      getVisiblePagesFromViewportPosition({
+        ...params,
+        viewport,
+      }),
     isPositionWithinSpineItem,
     spineItemLocator,
     getSafeSpineItemPositionFromUnsafeSpineItemPosition,

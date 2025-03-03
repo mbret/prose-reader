@@ -27,6 +27,7 @@ import type { SpineItem } from "./spineItem/SpineItem"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import { isDefined } from "./utils/isDefined"
 import { isShallowEqual } from "./utils/objects"
+import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
 
@@ -62,6 +63,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(
     undefined,
   )
+  const viewport = new Viewport(context)
   const element$ = elementSubject$.pipe(filter(isDefined))
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -77,6 +79,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spineItemLocator,
     settingsManager,
     hookManager,
+    viewport,
   )
 
   const navigator = createNavigator({
@@ -86,6 +89,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     spine,
     settings: settingsManager,
+    viewport,
   })
 
   const paginationController = new PaginationController(
@@ -237,6 +241,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     stateSubject$.complete()
     destroy$.next()
     destroy$.complete()
+    viewport.destroy()
   }
 
   return {
@@ -259,15 +264,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
         params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,
       ) => resolveCfi({ ...params, spineItemsManager }),
     },
-    navigation: {
-      viewportBusy$: context.bridgeEvent.viewportBusy$,
-      getViewportPosition: () => navigator.viewportNavigator.viewportPosition,
-      getNavigation: navigator.getNavigation.bind(navigator),
-      getElement: navigator.getElement.bind(navigator),
-      navigate: navigator.navigate.bind(navigator),
-      lock: navigator.lock.bind(navigator),
-      navigationResolver: navigator.navigationResolver,
-    },
+    navigation: navigator,
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
     layout,
@@ -281,6 +278,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       NonNullable<(typeof settingsManager)["inputSettings"]>,
       NonNullable<(typeof settingsManager)["outputSettings"]>
     >,
+    viewport,
     element$,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,

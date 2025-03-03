@@ -8,8 +8,8 @@ import { SpinePosition } from "../../spine/types"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { InternalNavigationEntry } from "../InternalNavigator"
+import type { DeprecatedViewportPosition } from "../controllers/ControlledController"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
-import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
 
 const restoreNavigationForScrollingPageTurnMode = ({

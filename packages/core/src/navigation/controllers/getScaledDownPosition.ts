@@ -1,6 +1,6 @@
 import { SpinePosition } from "../../spine/types"
 import { getNewScaledOffset } from "../../utils/layout"
-import type { DeprecatedViewportPosition } from "./ViewportNavigator"
+import type { DeprecatedViewportPosition } from "./ControlledController"
 
 export const getScaledDownPosition = ({
   position: { x, y },

@@ -1,4 +1,4 @@
-import type { DeprecatedViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../../navigation/controllers/ControlledController"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"

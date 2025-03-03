@@ -13,6 +13,7 @@ import {
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { deferNextResult } from "../utils/rxjs"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
@@ -39,6 +40,7 @@ export class SpineItemLayout extends DestroyableClass {
     public context: Context,
     public hookManager: HookManager,
     public renderer: DocumentRenderer,
+    public settings: ReaderSettingsManager,
   ) {
     super()
 
@@ -126,11 +128,14 @@ export class SpineItemLayout extends DestroyableClass {
             pageSizeWidth,
             minimumWidth,
           )
-          const safeHeight = this.validateDimension(
-            height ?? pageSizeHeight,
-            pageSizeHeight,
-            pageSizeHeight,
-          )
+          const safeHeight =
+            this.settings.values.computedPageTurnMode === "scrollable"
+              ? (height ?? pageSizeHeight)
+              : this.validateDimension(
+                  height ?? pageSizeHeight,
+                  pageSizeHeight,
+                  pageSizeHeight,
+                )
 
           this.lastLayout = {
             width: safeWidth,

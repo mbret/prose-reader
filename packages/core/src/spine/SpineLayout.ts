@@ -23,6 +23,7 @@ import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { layoutItem } from "./layout/layoutItem"
 import { SpineItemSpineLayout } from "./types"
@@ -55,6 +56,7 @@ export class SpineLayout extends DestroyableClass {
     protected spineItemsManager: SpineItemsManager,
     protected context: Context,
     protected settings: ReaderSettingsManager,
+    protected viewport: Viewport,
   ) {
     super()
 
@@ -136,6 +138,7 @@ export class SpineLayout extends DestroyableClass {
                     settings: this.settings,
                     spineItemsManager: this.spineItemsManager,
                     verticalOffset,
+                    viewport,
                   }).pipe(
                     map(
                       ({

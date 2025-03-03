@@ -74,6 +74,7 @@ export class SpineItem extends DestroyableClass {
       context,
       hookManager,
       this.renderer,
+      this.settings,
     )
 
     this.isReady$ = this.layout.layoutProcess$.pipe(

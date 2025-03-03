@@ -1,19 +1,20 @@
-import { BehaviorSubject, merge, type Observable } from "rxjs"
+import { BehaviorSubject, type Observable, merge } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import type { Context } from "../context/Context"
-import type { Pagination } from "../pagination/Pagination"
-import type { SpineItemsManager } from "./SpineItemsManager"
-import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
-import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import { HTML_PREFIX } from "../constants"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
-import { SpineItemsLoader } from "./loader/SpineItemsLoader"
+import type { Pagination } from "../pagination/Pagination"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { SpineItem } from "../spineItem/SpineItem"
+import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { noopElement } from "../utils/dom"
+import type { Viewport } from "../viewport/Viewport"
+import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout } from "./SpineLayout"
-import { SpineItem } from "../spineItem/SpineItem"
+import { SpineItemsLoader } from "./loader/SpineItemsLoader"
+import { type SpineLocator, createSpineLocator } from "./locator/SpineLocator"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
@@ -34,10 +35,16 @@ export class Spine extends DestroyableClass {
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
     protected hookManager: HookManager,
+    protected viewport: Viewport,
   ) {
     super()
 
-    this.spineLayout = new SpineLayout(spineItemsManager, context, settings)
+    this.spineLayout = new SpineLayout(
+      spineItemsManager,
+      context,
+      settings,
+      viewport,
+    )
 
     this.locator = createSpineLocator({
       context,
@@ -45,6 +52,7 @@ export class Spine extends DestroyableClass {
       spineItemLocator,
       settings,
       spineLayout: this.spineLayout,
+      viewport,
     })
 
     this.spineItemsLoader = new SpineItemsLoader(

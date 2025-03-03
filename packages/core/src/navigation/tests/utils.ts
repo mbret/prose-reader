@@ -13,8 +13,8 @@ import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import { InternalNavigator } from "../InternalNavigator"
 import { UserNavigator } from "../UserNavigator"
+import { ViewportNavigator } from "../controllers/ControlledController"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
-import { ViewportNavigator } from "../viewport/ViewportNavigator"
 import { type Item, SpineItemsManagerMock } from "./SpineItemsManagerMock"
 
 const createSpineItem = (

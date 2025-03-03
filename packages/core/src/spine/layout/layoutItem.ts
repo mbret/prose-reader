@@ -2,6 +2,7 @@ import { type Observable, map } from "rxjs"
 import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import { SpineItemSpineLayout } from "../types"
 
@@ -14,6 +15,7 @@ export const layoutItem = ({
   settings,
   index,
   item,
+  viewport,
 }: {
   horizontalOffset: number
   verticalOffset: number
@@ -23,6 +25,7 @@ export const layoutItem = ({
   settings: ReaderSettingsManager
   item: SpineItem
   index: number
+  viewport: Viewport
 }): Observable<{
   horizontalOffset: number
   verticalOffset: number
@@ -31,7 +34,7 @@ export const layoutItem = ({
   let minimumWidth = context.getPageSize().width
   let blankPagePosition: `none` | `before` | `after` = `none`
   const isScreenStartItem =
-    horizontalOffset % context.state.visibleAreaRect.width === 0
+    horizontalOffset % viewport.absoluteViewport.width === 0
   const isLastItem = index === spineItemsManager.items.length - 1
 
   if (context.state.isUsingSpreadMode) {
@@ -165,12 +168,12 @@ export const layoutItem = ({
       )
 
       const left = context.isRTL()
-        ? context.state.visibleAreaRect.width - horizontalOffset - width
+        ? viewport.absoluteViewport.width - horizontalOffset - width
         : horizontalOffset
 
       const layoutPosition = new SpineItemSpineLayout({
         right: context.isRTL()
-          ? context.state.visibleAreaRect.width - horizontalOffset
+          ? viewport.absoluteViewport.width - horizontalOffset - width
           : horizontalOffset + width,
         left,
         x: left,

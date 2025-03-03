@@ -4,7 +4,7 @@ import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
-import type { DeprecatedViewportPosition } from "../viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../controllers/ControlledController"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 

@@ -1,8 +1,8 @@
 import {
-  animationFrameScheduler,
-  merge,
   NEVER,
   Observable,
+  animationFrameScheduler,
+  merge,
   of,
   scheduled,
 } from "rxjs"
@@ -64,7 +64,7 @@ export const createMovingSafePan$ = (reader: Reader) => {
       }),
     )
 
-  const lockAfterViewportBusy$ = reader.navigation.viewportBusy$.pipe(
+  const lockAfterViewportBusy$ = reader.context.bridgeEvent.viewportBusy$.pipe(
     tap(() => {
       iframeOverlayForAnimationsElement?.style.setProperty(
         `visibility`,

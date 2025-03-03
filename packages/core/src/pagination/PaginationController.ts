@@ -11,7 +11,7 @@ import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpine
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"
 import type { Context } from "../context/Context"
-import type { DeprecatedViewportPosition } from "../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../navigation/controllers/ControlledController"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition } from "../spine/types"

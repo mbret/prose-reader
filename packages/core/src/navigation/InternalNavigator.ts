@@ -36,12 +36,13 @@ import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
-import type { createNavigationResolver } from "./resolvers/NavigationResolver"
-import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
   DeprecatedViewportPosition,
   ViewportNavigator,
-} from "./viewport/ViewportNavigator"
+} from "./controllers/ControlledController"
+import type { ScrollController } from "./controllers/ScrollController"
+import type { createNavigationResolver } from "./resolvers/NavigationResolver"
+import { withRestoredPosition } from "./restoration/withRestoredPosition"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
@@ -152,9 +153,9 @@ export class InternalNavigator extends DestroyableClass {
     protected context: Context,
     protected userNavigation$: Observable<UserNavigationEntry>,
     protected viewportController: ViewportNavigator,
+    protected scrollController: ScrollController,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
-    protected element$: Observable<HTMLElement>,
     protected isUserLocked$: Observable<boolean>,
   ) {
     super()
@@ -403,10 +404,16 @@ export class InternalNavigator extends DestroyableClass {
           )
             return
 
-          this.viewportController.navigate({
+          const navigation = {
             position: currentNavigation.position,
             animation: currentNavigation.animation,
-          })
+          }
+
+          if (settings.values.computedPageTurnMode === `scrollable`) {
+            this.scrollController.navigate(navigation)
+          } else {
+            this.viewportController.navigate(navigation)
+          }
         }),
       )
 

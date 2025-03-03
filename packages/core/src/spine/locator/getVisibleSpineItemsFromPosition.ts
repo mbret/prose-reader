@@ -1,7 +1,8 @@
 import type { Context } from "../../context/Context"
-import type { DeprecatedViewportPosition } from "../../navigation/viewport/ViewportNavigator"
+import type { DeprecatedViewportPosition } from "../../navigation/controllers/ControlledController"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
+import type { Viewport } from "../../viewport/Viewport"
 import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
 import { ViewportSlicePosition } from "../../viewport/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -15,19 +16,19 @@ export const getVisibleSpineItemsFromPosition = ({
   threshold,
   restrictToScreen,
   spineItemsManager,
-  context,
   settings,
   spineLayout,
   useAbsoluteViewport = true,
+  viewport,
 }: {
   position: DeprecatedViewportPosition | SpinePosition
   threshold: number
   restrictToScreen?: boolean
   spineItemsManager: SpineItemsManager
-  context: Context
   settings: ReaderSettingsManager
   spineLayout: SpineLayout
   useAbsoluteViewport?: boolean
+  viewport: Viewport
 }):
   | {
       beginIndex: number
@@ -45,18 +46,18 @@ export const getVisibleSpineItemsFromPosition = ({
   const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
     (acc, spineItem) => {
       const itemPosition = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
-      const viewport = useAbsoluteViewport
-        ? context.absoluteViewport
-        : context.relativeViewport
+      const viewportInfo = useAbsoluteViewport
+        ? viewport.absoluteViewport
+        : viewport.relativeViewport
       const relativeSpinePosition = translateSpinePositionToRelativeViewport(
         position,
-        context.absoluteViewport,
-        viewport,
+        viewport.absoluteViewport,
+        viewportInfo,
       )
 
       const viewportPosition = ViewportSlicePosition.from(
         relativeSpinePosition,
-        viewport,
+        viewportInfo,
       )
       const { visible } = getItemVisibilityForPosition({
         itemPosition,
