@@ -1,7 +1,7 @@
 import { Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { BsBookmarks } from "react-icons/bs"
-import { LuChevronDown, LuSearch } from "react-icons/lu"
+import { LuChevronDown, LuGalleryHorizontal, LuSearch } from "react-icons/lu"
 import { LuTableOfContents } from "react-icons/lu"
 import { LuCircleHelp, LuNotebookPen } from "react-icons/lu"
 import {
@@ -10,6 +10,7 @@ import {
   RxDoubleArrowRight,
   RxDoubleArrowUp,
 } from "react-icons/rx"
+import { TbCarouselHorizontal } from "react-icons/tb"
 import { useObserve } from "reactjrx"
 import {
   hasAnnotationsEnhancer,
@@ -163,6 +164,25 @@ export const BottomBar = memo(
                     <LuNotebookPen />
                   </IconButton>
                 )}
+                <IconButton
+                  aria-label="Thumbnails"
+                  size="lg"
+                  variant={
+                    reader?.settings.values.viewportMode === "thumbnails"
+                      ? "solid"
+                      : "ghost"
+                  }
+                  onClick={() => {
+                    reader?.settings.update({
+                      viewportMode:
+                        reader?.settings.values.viewportMode === "normal"
+                          ? "thumbnails"
+                          : "normal",
+                    })
+                  }}
+                >
+                  <LuGalleryHorizontal />
+                </IconButton>
               </Collapsible.Content>
             </Collapsible.Root>
           </HStack>

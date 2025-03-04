@@ -1,7 +1,7 @@
 import { type Observable, takeUntil } from "rxjs"
 import type { PaginationInfo } from "../../pagination/Pagination"
 import { Report } from "../../report"
-import type { LayoutEnhancerOutput } from "../layoutEnhancer/layoutEnhancer"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { NAMESPACE } from "./constants"
 import {

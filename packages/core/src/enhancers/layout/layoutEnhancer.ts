@@ -21,6 +21,7 @@ import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
 import { type LayoutInfo, createLayoutInfo } from "./layoutInfo"
 import type { InputSettings, OutputSettings } from "./types"
+import { createViewportModeHandler } from "./viewportMode"
 
 export type LayoutEnhancerOutput = {
   layout$: Observable<LayoutInfo>
@@ -263,12 +264,17 @@ export const layoutEnhancer =
       )
 
     const { layout$, info$ } = createLayoutInfo(reader)
+    const viewportModeHandler$ = createViewportModeHandler(
+      reader,
+      settingsManager.watch(`viewportMode`),
+    )
 
     merge(
       updateSpineItemClassName$,
       revealItemOnReady$,
       movingSafePan$,
       layoutOnContainerResize$,
+      viewportModeHandler$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()

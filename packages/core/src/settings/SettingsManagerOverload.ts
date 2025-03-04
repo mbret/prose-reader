@@ -1,3 +1,4 @@
+import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import {
   type Observable,
   type ObservedValueOf,
@@ -10,10 +11,9 @@ import {
   shareReplay,
   startWith,
 } from "rxjs/operators"
+import { mapKeysTo, watchKeys } from "../utils/rxjs"
 import type { SettingsInterface } from "./SettingsInterface"
 import type { CoreInputSettings, CoreOutputSettings } from "./types"
-import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
-import { mapKeysTo } from "../utils/rxjs"
 
 export abstract class SettingsManagerOverload<
   InputSettings,
@@ -127,12 +127,21 @@ export abstract class SettingsManagerOverload<
       ...this.outputSettings,
     }
   }
-
+  public watch<K extends keyof ObservedValueOf<typeof this.values$>>(
+    key: K,
+  ): Observable<(ParentOutputSettings & OutputSettings)[K]>
   public watch<K extends keyof ObservedValueOf<typeof this.values$>>(
     keys: K[],
+  ): Observable<Pick<ParentOutputSettings & OutputSettings, K>>
+  public watch<K extends keyof ObservedValueOf<typeof this.values$>>(
+    keyOrKeys: K | K[],
   ) {
+    if (Array.isArray(keyOrKeys)) {
+      return this.values$.pipe(watchKeys(keyOrKeys))
+    }
+
     return this.values$.pipe(
-      mapKeysTo(keys),
+      map((result) => result[keyOrKeys]),
       distinctUntilChanged(isShallowEqual),
     )
   }

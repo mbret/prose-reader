@@ -155,6 +155,7 @@ export const createSpineLocator = ({
         const viewportInfo = useAbsoluteViewport
           ? viewport.absoluteViewport
           : viewport.relativeViewport
+
         const relativeSpinePosition = translateSpinePositionToRelativeViewport(
           position,
           viewport.absoluteViewport,

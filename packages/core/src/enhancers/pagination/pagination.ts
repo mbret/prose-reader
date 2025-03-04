@@ -13,7 +13,7 @@ import {
 import type { PaginationInfo } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
-import type { LayoutEnhancerOutput } from "../layoutEnhancer/layoutEnhancer"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import { trackChapterInfo } from "./chapters"
 import { getPercentageEstimate } from "./progression"
 import { trackTotalPages } from "./spine"

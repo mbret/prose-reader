@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createReader } from "../../reader"
 import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
 import { htmlEnhancer } from "../html/enhancer"
-import { layoutEnhancer } from "../layoutEnhancer/layoutEnhancer"
+import { layoutEnhancer } from "../layout/layoutEnhancer"
 import { navigationEnhancer } from "../navigation"
 import { paginationEnhancer } from "./enhancer"
 

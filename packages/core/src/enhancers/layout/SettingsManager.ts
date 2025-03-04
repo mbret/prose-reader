@@ -31,6 +31,7 @@ export class SettingsManager<
       pageHorizontalMargin,
       pageVerticalMargin,
       layoutLayerTransition,
+      viewportMode,
       ...rest
     } = settings
 
@@ -43,6 +44,7 @@ export class SettingsManager<
       pageHorizontalMargin: 24,
       pageVerticalMargin: 24,
       layoutLayerTransition: true,
+      viewportMode: "normal",
     }
   }
 }

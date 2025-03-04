@@ -11,6 +11,7 @@ export type InputSettings = {
    * Whether to use a CSS transition when spine item is ready.
    */
   layoutLayerTransition: boolean
+  viewportMode: `normal` | `thumbnails`
 }
 
 export type OutputSettings = InputSettings

@@ -1,7 +1,7 @@
 import { first, map, withLatestFrom } from "rxjs"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import type { LayoutEnhancerOutput } from "../layoutEnhancer/layoutEnhancer"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 
 const getTotalProgressFromPercentages = (
   estimateBeforeThisItem: number,

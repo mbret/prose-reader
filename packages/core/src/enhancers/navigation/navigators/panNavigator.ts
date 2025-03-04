@@ -1,7 +1,6 @@
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
-import { translateSpinePositionToRelativeViewport } from "../../../viewport/translateSpinePositionToRelativeViewport"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }
