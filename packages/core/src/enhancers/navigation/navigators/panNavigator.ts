@@ -40,8 +40,7 @@ export class PanNavigator {
     if (delta) {
       const viewportScale =
         this.reader.viewport.absoluteViewport.width /
-        this.reader.viewport.absoluteViewport.width
-
+        this.reader.viewport.relativeViewport.width
       /**
        * We floor the delta to avoid having wrong direction derived because of
        * some sub pixel difference due to gesture precision
