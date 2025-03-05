@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react"
-import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect"
+import { useLayoutEffect, useMemo, useState } from "react"
 
 export type UseMeasureRect = Pick<
   DOMRectReadOnly,
@@ -39,13 +38,15 @@ export function useMeasure<E extends Element = Element>(): UseMeasureResult<E> {
     [],
   )
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     if (!element) return
+
     observer.observe(element)
+
     return () => {
       observer.disconnect()
     }
-  }, [element])
+  }, [element, observer])
 
   return [setElement, rect, element]
 }
