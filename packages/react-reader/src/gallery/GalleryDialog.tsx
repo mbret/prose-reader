@@ -1,9 +1,8 @@
 import { Box, Button } from "@chakra-ui/react"
-import { type SpineItem, isShallowEqual } from "@prose-reader/core"
+import type { SpineItem } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve, useSubscribe } from "reactjrx"
-import { NEVER, distinctUntilChanged, filter, map, switchMap, tap } from "rxjs"
-import useMeasure from "../common/useMeasure"
+import { useMeasure } from "../common/useMeasure"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -14,34 +13,14 @@ import {
   DialogRoot,
   DialogTitle,
 } from "../components/ui/dialog"
-import { hasGalleryEnhancer, useReader } from "../context/useReader"
+import { useReader } from "../context/useReader"
+import { useAttachSnapshot } from "./useAttachSnapshot"
 
-const GalleryItem = ({ item }: { item: SpineItem }) => {
+const GalleryItem = memo(({ item }: { item: SpineItem }) => {
   const reader = useReader()
   const [setElement, measures, element] = useMeasure()
-  const readerWithGalleryEnhancer = hasGalleryEnhancer(reader)
-    ? reader
-    : undefined
 
-  useSubscribe(() => {
-    if (!readerWithGalleryEnhancer || !element) return NEVER
-
-    const itemReadyAndLayoutChanged$ = item.isReady$.pipe(
-      filter((isReady) => isReady),
-      map(() => item.layout.layoutInfo),
-      distinctUntilChanged(isShallowEqual),
-    )
-
-    return itemReadyAndLayoutChanged$.pipe(
-      switchMap(() =>
-        readerWithGalleryEnhancer?.gallery.snapshot(item, measures),
-      ),
-      tap((snapshot) => {
-        element.innerHTML = ""
-        element.appendChild(snapshot)
-      }),
-    )
-  }, [readerWithGalleryEnhancer, item, measures, element])
+  useAttachSnapshot(element, item, measures)
 
   useSubscribe(
     () => reader?.spine.spineItemsLoader.forceOpen([item]),
@@ -57,11 +36,9 @@ const GalleryItem = ({ item }: { item: SpineItem }) => {
       borderColor="border"
       borderRadius="md"
       data-grid-item
-    >
-      {item.item.id}
-    </Box>
+    />
   )
-}
+})
 
 export const GalleryDialog = memo(
   ({
@@ -87,19 +64,21 @@ export const GalleryDialog = memo(
           <DialogHeader>
             <DialogTitle>Gallery</DialogTitle>
           </DialogHeader>
-          <DialogBody
-            gridTemplateColumns={[
-              "repeat(2, minmax(0, 1fr))",
-              "repeat(2, minmax(0, 1fr))",
-            ]}
-            display="grid"
-            gap={2}
-            pt={2}
-            data-grid
-          >
-            {items?.map((item) => (
-              <GalleryItem key={item.item.id} item={item} />
-            ))}
+          <DialogBody>
+            <Box
+              gridTemplateColumns={[
+                "repeat(2, minmax(0, 1fr))",
+                "repeat(3, minmax(0, 1fr))",
+              ]}
+              display="grid"
+              gap={[2, 4]}
+              pt={2}
+              data-grid
+            >
+              {items?.map((item) => (
+                <GalleryItem key={item.item.id} item={item} />
+              ))}
+            </Box>
           </DialogBody>
           <DialogFooter>
             <DialogActionTrigger asChild>
