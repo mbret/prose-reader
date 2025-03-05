@@ -1,21 +1,70 @@
-import { firstValueFrom } from "rxjs"
+import { firstValueFrom, of } from "rxjs"
 import { describe, expect, it } from "vitest"
+import { Context } from "../context/Context"
+import { HookManager } from "../hooks/HookManager"
+import { Pagination } from "../pagination/Pagination"
+import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import { Spine } from "../spine/Spine"
+import { SpineItemsManager } from "../spine/SpineItemsManager"
 import { SpinePosition } from "../spine/types"
+import { createSpineItemLocator } from "../spineItem/locationResolver"
 import { waitFor } from "../tests/utils"
+import { Viewport } from "../viewport/Viewport"
 import type { InternalNavigationEntry } from "./InternalNavigator"
-import { createNavigator, generateItems } from "./tests/utils"
+import { createNavigator } from "./Navigator"
+import { generateItems } from "./tests/utils"
+
+const createNavigatorContext = () => {
+  const context = new Context()
+  const settings = new ReaderSettingsManager({}, context)
+  const spineItemsManager = new SpineItemsManager(context, settings)
+  const hookManager = new HookManager()
+  const viewport = new Viewport(context)
+  const pagination = new Pagination(context, spineItemsManager)
+  const spineItemLocator = createSpineItemLocator({ context, settings })
+  const spine = new Spine(
+    of(document.createElement("div")),
+    context,
+    pagination,
+    spineItemsManager,
+    spineItemLocator,
+    settings,
+    hookManager,
+    viewport,
+  )
+  const navigator = createNavigator({
+    context,
+    settings,
+    spineItemsManager,
+    hookManager,
+    spine,
+    viewport,
+  })
+
+  return {
+    navigator,
+    context,
+    settings,
+    spineItemsManager,
+    hookManager,
+    spine,
+    viewport,
+  }
+}
 
 describe(`Given unloaded book`, () => {
   describe("Given invalid navigation position", () => {
     it(`should return safe edge position`, async () => {
-      const { internalNavigator, userNavigator } = createNavigator()
+      const { navigator } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
-      const sub = internalNavigator.navigated$.subscribe((navigation) => {
-        navigations.push(navigation)
-      })
+      const sub = navigator.internalNavigator.navigated$.subscribe(
+        (navigation) => {
+          navigations.push(navigation)
+        },
+      )
 
-      userNavigator.navigate({
+      navigator.navigate({
         position: new SpinePosition({
           x: -10,
           y: -20,
@@ -39,14 +88,16 @@ describe(`Given unloaded book`, () => {
 
   describe("Given invalid negative navigation spine item", () => {
     it(`should remove it`, async () => {
-      const { internalNavigator, userNavigator } = createNavigator()
+      const { navigator } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
-      const sub = internalNavigator.navigated$.subscribe((navigation) => {
-        navigations.push(navigation)
-      })
+      const sub = navigator.internalNavigator.navigated$.subscribe(
+        (navigation) => {
+          navigations.push(navigation)
+        },
+      )
 
-      userNavigator.navigate({
+      navigator.navigate({
         spineItem: -1,
       })
 
@@ -70,33 +121,34 @@ describe(`Given loaded book`, () => {
   describe("Given invalid negative navigation spine item", () => {
     it(`should fallback to 0`, async () => {
       const {
-        internalNavigator,
-        userNavigator,
-        spineItemsManagerMock,
+        navigator,
+        spineItemsManager,
         context,
         settings,
-        spine,
         hookManager,
-      } = createNavigator()
+        spine,
+      } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
-      spineItemsManagerMock.addMany(
-        generateItems(
-          100,
-          2,
-          context,
-          settings,
-          hookManager,
-          spine,
-          spineItemsManagerMock,
-        ),
+      const items = generateItems(
+        100,
+        2,
+        context,
+        settings,
+        hookManager,
+        spine,
+        spineItemsManager,
       )
 
-      const sub = internalNavigator.navigated$.subscribe((navigation) => {
-        navigations.push(navigation)
-      })
+      spineItemsManager.addMany(items)
 
-      userNavigator.navigate({
+      const sub = navigator.internalNavigator.navigated$.subscribe(
+        (navigation) => {
+          navigations.push(navigation)
+        },
+      )
+
+      navigator.navigate({
         spineItem: -1,
       })
 
@@ -119,37 +171,38 @@ describe(`Given loaded book`, () => {
   describe("Given invalid positive navigation spine item", () => {
     it(`should fallback to length - 1`, async () => {
       const {
-        internalNavigator,
-        userNavigator,
-        spineItemsManagerMock,
         spine,
         context,
         settings,
         hookManager,
-      } = createNavigator()
+        navigator,
+        spineItemsManager,
+      } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
-      spineItemsManagerMock.addMany(
-        generateItems(
-          100,
-          2,
-          context,
-          settings,
-          hookManager,
-          spine,
-          spineItemsManagerMock,
-        ),
+      const items = generateItems(
+        100,
+        2,
+        context,
+        settings,
+        hookManager,
+        spine,
+        spineItemsManager,
       )
+
+      spineItemsManager.addMany(items)
 
       spine.layout()
 
       await firstValueFrom(spine.spineLayout.layout$)
 
-      const sub = internalNavigator.navigated$.subscribe((navigation) => {
-        navigations.push(navigation)
-      })
+      const sub = navigator.internalNavigator.navigated$.subscribe(
+        (navigation) => {
+          navigations.push(navigation)
+        },
+      )
 
-      userNavigator.navigate({
+      navigator.navigate({
         spineItem: 2,
       })
 

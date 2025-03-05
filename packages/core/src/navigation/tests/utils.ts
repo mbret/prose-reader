@@ -1,23 +1,11 @@
-import { of } from "rxjs"
 import { vi } from "vitest"
 import { SpineItem } from "../.."
-import { Context } from "../../context/Context"
-import { HookManager } from "../../hooks/HookManager"
-import { Pagination } from "../../pagination/Pagination"
-import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { Spine } from "../../spine/Spine"
-import { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { createSpineLocator } from "../../spine/locator/SpineLocator"
+import type { Context } from "../../context/Context"
+import type { HookManager } from "../../hooks/HookManager"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Spine } from "../../spine/Spine"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpineItemSpineLayout } from "../../spine/types"
-import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { noopElement } from "../../utils/dom"
-import { Viewport } from "../../viewport/Viewport"
-import { InternalNavigator } from "../InternalNavigator"
-import { Locker } from "../Locker"
-import { UserScrollNavigation } from "../UserScrollNavigation"
-import { ControlledNavigationController } from "../controllers/ControlledNavigationController"
-import { ScrollNavigationController } from "../controllers/ScrollNavigationController"
-import { createNavigationResolver } from "../resolvers/NavigationResolver"
 
 const createSpineItem = (
   item: {
@@ -103,88 +91,4 @@ export const generateItems = (
   )
 
   return items
-}
-
-export const createNavigator = () => {
-  const context = new Context()
-  const settings = new ReaderSettingsManager({}, context)
-  const spineItemsManager = new SpineItemsManager(context, settings)
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const pagination = new Pagination(context, spineItemsManager as any)
-  const spineItemLocator = createSpineItemLocator({ context, settings })
-  const hookManager = new HookManager()
-  const viewport = new Viewport(context)
-  const spine = new Spine(
-    of(noopElement()),
-    context,
-    pagination,
-    spineItemsManager,
-    spineItemLocator,
-    settings,
-    hookManager,
-    viewport,
-  )
-  const spineLocator = createSpineLocator({
-    context,
-    settings,
-    spineItemLocator,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    spineItemsManager: spineItemsManager as any,
-    spineLayout: spine.spineLayout,
-    viewport,
-  })
-  const navigationResolver = createNavigationResolver({
-    context,
-    locator: spineLocator,
-    settings,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    spineItemsManager: spineItemsManager as any,
-    spineLayout: spine.spineLayout,
-  })
-  const viewportController = new ControlledNavigationController(
-    settings,
-    hookManager,
-    context,
-    spine,
-    viewport,
-  )
-
-  const locker = new Locker()
-
-  const scrollNavigationController = new ScrollNavigationController(
-    viewport,
-    settings,
-    hookManager,
-    spine,
-    context,
-  )
-
-  const userNavigator = new UserScrollNavigation(
-    settings,
-    context,
-    spine,
-    scrollNavigationController,
-    locker,
-  )
-
-  const internalNavigator = new InternalNavigator(
-    settings,
-    context,
-    userNavigator.navigation$,
-    viewportController,
-    scrollNavigationController,
-    navigationResolver,
-    spine,
-    locker.isLocked$,
-  )
-
-  return {
-    internalNavigator,
-    userNavigator,
-    context,
-    spineItemsManagerMock: spineItemsManager,
-    spine,
-    settings,
-    hookManager,
-  }
 }
