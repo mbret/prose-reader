@@ -1,21 +1,4 @@
 import {
-  catchError,
-  EMPTY,
-  finalize,
-  from,
-  map,
-  type Observable,
-  of,
-  switchMap,
-  tap,
-} from "rxjs"
-import {
-  type PDFPageProxy,
-  RenderingCancelledException,
-  type RenderTask,
-  TextLayer,
-} from "pdfjs-dist"
-import {
   DocumentRenderer,
   injectCSS,
   removeCSS,
@@ -23,6 +6,23 @@ import {
   waitForFrameReady,
   waitForSwitch,
 } from "@prose-reader/core"
+import {
+  type PDFPageProxy,
+  type RenderTask,
+  RenderingCancelledException,
+  TextLayer,
+} from "pdfjs-dist"
+import {
+  EMPTY,
+  type Observable,
+  catchError,
+  finalize,
+  from,
+  map,
+  of,
+  switchMap,
+  tap,
+} from "rxjs"
 import pdfFrameStyle from "./frame.css?inline"
 import { layoutCanvas, layoutContainer } from "./layout"
 
@@ -123,7 +123,7 @@ export class PdfRenderer extends DocumentRenderer {
     rootElement.appendChild(canvas)
     rootElement.appendChild(frameContainer)
 
-    this.documentContainer = rootElement
+    this.setDocumentContainer(rootElement)
 
     return of(rootElement)
   }

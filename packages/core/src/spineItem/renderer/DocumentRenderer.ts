@@ -46,6 +46,8 @@ type LayoutParams = {
 }
 
 export abstract class DocumentRenderer extends DestroyableClass {
+  static readonly DOCUMENT_CONTAINER_CLASS_NAME =
+    `prose-reader-document-container`
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
 
   protected context: Context
@@ -78,7 +80,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
     share(),
   )
 
-  public documentContainer: HTMLElement | undefined
+  private _documentContainer: HTMLElement | undefined
 
   constructor(params: {
     context: Context
@@ -179,6 +181,13 @@ export abstract class DocumentRenderer extends DestroyableClass {
     merge(unload$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
+  protected setDocumentContainer(element: HTMLElement) {
+    this._documentContainer = element
+    this._documentContainer.classList.add(
+      DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
+    )
+  }
+
   protected attach() {
     if (this.documentContainer) {
       this.containerElement.appendChild(this.documentContainer)
@@ -186,8 +195,8 @@ export abstract class DocumentRenderer extends DestroyableClass {
   }
 
   protected detach() {
-    this.documentContainer?.remove()
-    this.documentContainer = undefined
+    this._documentContainer?.remove()
+    this._documentContainer = undefined
   }
 
   public get state$() {
@@ -277,6 +286,10 @@ export abstract class DocumentRenderer extends DestroyableClass {
    * Return the main document iframe.
    */
   abstract getDocumentFrame(): HTMLIFrameElement | undefined
+
+  get documentContainer() {
+    return this._documentContainer
+  }
 
   get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {
     return undefined

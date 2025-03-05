@@ -1,0 +1,139 @@
+import {
+  DocumentRenderer,
+  type Reader,
+  type SpineItem,
+} from "@prose-reader/core"
+import { Observable, filter, first, of, switchMap, tap } from "rxjs"
+import { deepCloneElement } from "./utils/deepCloneElement"
+
+const createGridItem = (options: {
+  height: number
+  width: number
+}) => {
+  const gridItemElement = document.createElement("div")
+  gridItemElement.style.width = `${options.width}px`
+  gridItemElement.style.height = `${options.height}px`
+  gridItemElement.style.position = "relative"
+
+  const spineItemContainerElement = document.createElement("div")
+  spineItemContainerElement.style.width = `100%`
+  spineItemContainerElement.style.height = `100%`
+  spineItemContainerElement.style.position = "relative"
+  spineItemContainerElement.style.overflow = "hidden"
+
+  const contentMask = document.createElement("div")
+
+  contentMask.style.width = "100%"
+  contentMask.style.height = "100%"
+  contentMask.style.position = "absolute"
+  contentMask.style.top = "0"
+  contentMask.style.left = "0"
+  contentMask.style.overflow = "hidden"
+
+  spineItemContainerElement.appendChild(contentMask)
+  // gridItemElement.appendChild(spineItemContainerElement)
+
+  return spineItemContainerElement
+}
+
+export class Snapshot extends Observable<HTMLElement> {
+  constructor(
+    reader: Reader,
+    item: SpineItem,
+    options: {
+      height: number
+      width: number
+    },
+  ) {
+    super((subscriber) => {
+      const gridItem = createGridItem(options)
+
+      return item.isReady$
+        .pipe(
+          filter((isReady) => isReady),
+          first(),
+          switchMap(() => {
+            const pageSize = reader.viewport.value.pageSize
+            const itemElement = gridItem
+            const contentMask = itemElement?.children[0] as
+              | HTMLElement
+              | undefined
+
+            if (!itemElement || !contentMask)
+              throw new Error("No item element or content mask")
+
+            // mask reset
+            contentMask.style.top = "0"
+            contentMask.style.left = "0"
+
+            // itemElement.style.aspectRatio = `${pageSize.width / pageSize.height}`
+
+            const measure = options
+            const { height, width } = item.layout.layoutInfo
+            const numberOfPages = item.numberOfPages
+            const widthScaleFullFrame = (measure.width / width) * numberOfPages
+            const heightScale = measure.height / height
+
+            // Use the minimum scale to ensure the element fits within both dimensions
+            const scale = Math.min(widthScaleFullFrame, heightScale)
+
+            const clonedElement = deepCloneElement(item.element)
+
+            // cleanup unwanted elements from the spine
+            Array.from(clonedElement.children).forEach((child) => {
+              if (
+                !child.classList.contains(
+                  DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
+                )
+              ) {
+                child.remove()
+              }
+            })
+
+            clonedElement.style.left = "0"
+            clonedElement.style.top = "0"
+            clonedElement.style.position = "relative"
+            // clonedElement.style.transformOrigin = "0 0"
+            // clonedElement.style.transform = `scale(${scale})`
+
+            /**
+             * Now we adjust the mask to make it fit in the center and cover
+             * only the required part of the spine item (hidding) the overflowing
+             * pages for example.
+             */
+            const pageWidthAfterScale = pageSize.width * scale
+            const pageHeightAfterScale = pageSize.height * scale
+
+            // contentMask.style.width = `${pageWidthAfterScale}px`
+            contentMask.style.width = `${pageSize.width}px`
+            // contentMask.style.height = `${pageHeightAfterScale}px`
+            contentMask.style.height = `${pageSize.height}px`
+            contentMask.style.transformOrigin = "0 0"
+            contentMask.style.transform = `scale(${scale})`
+
+            if (pageWidthAfterScale < measure.width) {
+              const gap = (measure.width - pageWidthAfterScale) / 2
+
+              contentMask.style.left = `${gap}px`
+            }
+
+            if (pageHeightAfterScale < measure.height) {
+              const gap = (measure.height - pageHeightAfterScale) / 2
+
+              contentMask.style.top = `${gap}px`
+            }
+
+            contentMask.innerHTML = ""
+            contentMask.appendChild(clonedElement)
+
+            return of(gridItem)
+          }),
+          tap((gridItem) => {
+            subscriber.next(gridItem)
+            subscriber.complete()
+          }),
+        )
+        .subscribe()
+    })
+  }
+}

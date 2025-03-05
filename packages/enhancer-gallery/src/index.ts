@@ -1,5 +1,5 @@
 import type { Reader } from "@prose-reader/core"
-import { Gallery } from "./Gallery"
+import { Snapshot } from "./Snapshot"
 import type { GalleryEnhancerAPI } from "./types"
 
 export type { GalleryEnhancerAPI }
@@ -15,7 +15,8 @@ export const galleryEnhancer =
       ...reader,
       __PROSE_READER_ENHANCER_GALLERY: true,
       gallery: {
-        create: (options) => new Gallery(reader, options),
+        snapshot: (spineItem, options) =>
+          new Snapshot(reader, spineItem, options),
       },
     }
   }

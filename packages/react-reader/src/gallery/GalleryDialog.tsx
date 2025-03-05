@@ -1,6 +1,9 @@
-import { Button } from "@chakra-ui/react"
-import { memo, useEffect, useState } from "react"
-import { useObserve } from "reactjrx"
+import { Box, Button } from "@chakra-ui/react"
+import { type SpineItem, isShallowEqual } from "@prose-reader/core"
+import { memo } from "react"
+import { useObserve, useSubscribe } from "reactjrx"
+import { NEVER, distinctUntilChanged, filter, map, switchMap, tap } from "rxjs"
+import useMeasure from "../common/useMeasure"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -13,6 +16,53 @@ import {
 } from "../components/ui/dialog"
 import { hasGalleryEnhancer, useReader } from "../context/useReader"
 
+const GalleryItem = ({ item }: { item: SpineItem }) => {
+  const reader = useReader()
+  const [setElement, measures, element] = useMeasure()
+  const readerWithGalleryEnhancer = hasGalleryEnhancer(reader)
+    ? reader
+    : undefined
+
+  useSubscribe(() => {
+    if (!readerWithGalleryEnhancer || !element) return NEVER
+
+    const itemReadyAndLayoutChanged$ = item.isReady$.pipe(
+      filter((isReady) => isReady),
+      map(() => item.layout.layoutInfo),
+      distinctUntilChanged(isShallowEqual),
+    )
+
+    return itemReadyAndLayoutChanged$.pipe(
+      switchMap(() =>
+        readerWithGalleryEnhancer?.gallery.snapshot(item, measures),
+      ),
+      tap((snapshot) => {
+        element.innerHTML = ""
+        element.appendChild(snapshot)
+      }),
+    )
+  }, [readerWithGalleryEnhancer, item, measures, element])
+
+  useSubscribe(
+    () => reader?.spine.spineItemsLoader.forceOpen([item]),
+    [item, reader],
+  )
+
+  return (
+    <Box
+      ref={setElement}
+      width="100%"
+      aspectRatio="2/3"
+      border="1px solid"
+      borderColor="border"
+      borderRadius="md"
+      data-grid-item
+    >
+      {item.item.id}
+    </Box>
+  )
+}
+
 export const GalleryDialog = memo(
   ({
     open,
@@ -22,27 +72,7 @@ export const GalleryDialog = memo(
     setOpen: (open: boolean) => void
   }) => {
     const reader = useReader()
-    const [element, setElement] = useState<HTMLElement | null>(null)
-    const readerWithGalleryEnhancer = hasGalleryEnhancer(reader)
-      ? reader
-      : undefined
-
-    const gridItemClassName = "prose-gallery-grid-item"
-
-    const galleryRootElement = useObserve(
-      () =>
-        readerWithGalleryEnhancer?.gallery.create({
-          gridItemClassName,
-        }),
-      [readerWithGalleryEnhancer],
-    )
-
-    useEffect(() => {
-      if (element && galleryRootElement) {
-        element.innerHTML = ""
-        element.appendChild(galleryRootElement)
-      }
-    }, [galleryRootElement, element])
+    const items = useObserve(() => reader?.spineItemsManager.items$, [reader])
 
     return (
       <DialogRoot
@@ -58,16 +88,19 @@ export const GalleryDialog = memo(
             <DialogTitle>Gallery</DialogTitle>
           </DialogHeader>
           <DialogBody
-            ref={setElement}
-            css={{
-              "--prose-gallery-columns": ["2", "3"],
-              [`& .${gridItemClassName}`]: {
-                border: "1px solid red",
-                borderColor: "border",
-                borderRadius: "md",
-              },
-            }}
-          />
+            gridTemplateColumns={[
+              "repeat(2, minmax(0, 1fr))",
+              "repeat(2, minmax(0, 1fr))",
+            ]}
+            display="grid"
+            gap={2}
+            pt={2}
+            data-grid
+          >
+            {items?.map((item) => (
+              <GalleryItem key={item.item.id} item={item} />
+            ))}
+          </DialogBody>
           <DialogFooter>
             <DialogActionTrigger asChild>
               <Button variant="outline">Cancel</Button>

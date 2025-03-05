@@ -25,7 +25,7 @@ export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
     const frameElement = createFrameElement()
 
-    this.documentContainer = frameElement
+    this.setDocumentContainer(frameElement)
 
     return of(frameElement)
   }

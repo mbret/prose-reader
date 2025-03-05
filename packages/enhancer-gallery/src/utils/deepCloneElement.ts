@@ -1,4 +1,4 @@
-export function snapshotSpineItem(sourceElement: HTMLElement) {
+export function deepCloneElement(sourceElement: HTMLElement) {
   // Create a deep clone of the source element
   const clone = sourceElement.cloneNode(true) as HTMLElement
 
@@ -33,28 +33,6 @@ export function snapshotSpineItem(sourceElement: HTMLElement) {
           const stylesheetClone = stylesheet.cloneNode(true)
           clonedIframe.contentDocument?.head.appendChild(stylesheetClone)
         })
-
-        // Copy computed styles for body and other elements if needed
-        if (
-          originalIframe.contentDocument.body &&
-          clonedIframe.contentDocument.body
-        ) {
-          const originalStyles = window.getComputedStyle(
-            originalIframe.contentDocument.body,
-          )
-
-          // Apply computed styles to the cloned iframe's body
-          for (let i = 0; i < originalStyles.length; i++) {
-            const property = originalStyles[i]
-
-            if (!property) continue
-
-            clonedIframe.contentDocument.body.style.setProperty(
-              property,
-              originalStyles.getPropertyValue(property),
-            )
-          }
-        }
       } catch (e) {
         console.error("Error copying iframe styles:", e)
       }
