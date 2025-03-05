@@ -26,7 +26,6 @@ import type { SpineItemPosition } from "../spineItem/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isShallowEqual } from "../utils/objects"
 import { Locker } from "./Locker"
-import type { UserNavigationEntry } from "./UserScrollNavigation"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -43,6 +42,7 @@ import type {
 import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
+import type { UserNavigationEntry } from "./types"
 
 const NAMESPACE = `navigation/InternalNavigator`
 

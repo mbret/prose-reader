@@ -3,7 +3,7 @@ import type {
   InternalNavigationEntry,
   InternalNavigationInput,
 } from "../InternalNavigator"
-import type { UserNavigationEntry } from "../UserScrollNavigation"
+import type { UserNavigationEntry } from "../types"
 
 export const mapUserNavigationToInternal = (
   stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,

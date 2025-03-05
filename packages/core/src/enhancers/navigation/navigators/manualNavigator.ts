@@ -1,4 +1,4 @@
-import type { UserNavigationEntry } from "../../../navigation/UserScrollNavigation"
+import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
