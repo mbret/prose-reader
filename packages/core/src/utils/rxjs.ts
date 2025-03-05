@@ -114,3 +114,20 @@ export const observeMutation = (
     return () => observer.disconnect()
   })
 }
+
+export function observeIntersection(
+  element: HTMLElement,
+  options?: IntersectionObserverInit,
+): Observable<IntersectionObserverEntry[]> {
+  return new Observable<IntersectionObserverEntry[]>((observer) => {
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      observer.next(entries)
+    }, options)
+
+    intersectionObserver.observe(element)
+
+    return () => {
+      intersectionObserver.disconnect()
+    }
+  })
+}
