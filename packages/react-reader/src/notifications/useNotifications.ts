@@ -44,6 +44,8 @@ export const useNotifications = () => {
 
   useSubscribe(() =>
     notificationsSignal.subject.pipe(
+      // @todo implement Signal / BehaviorSignal / ReplaySignal
+      skip(1),
       filter(isDefined),
       mergeMap((notification) => {
         const duration = notification.duration ?? 3000

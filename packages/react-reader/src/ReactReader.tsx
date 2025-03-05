@@ -4,6 +4,7 @@ import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { Bookmarks } from "./bookmarks/Bookmarks"
 import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
 import { Toaster } from "./components/ui/toaster"
+import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
@@ -29,7 +30,8 @@ export const ReactReader = ({
       | "toc"
       | "bookmarks"
       | "more"
-      | "back",
+      | "back"
+      | "gallery",
   ) => void
 }) => {
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
@@ -37,6 +39,7 @@ export const ReactReader = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isAnnotationsOpen, setIsAnnotationsOpen] = useState(false)
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false)
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
   const onNavigate = useCallback(() => {
@@ -46,6 +49,7 @@ export const ReactReader = ({
     setIsAnnotationsOpen(false)
     setIsBookmarksOpen(false)
     setQuickMenuOpen(false)
+    setIsGalleryOpen(false)
   }, [setQuickMenuOpen])
 
   const _onItemClick: NonNullable<typeof onItemClick> = useCallback(
@@ -60,6 +64,8 @@ export const ReactReader = ({
         setIsTableOfContentsOpen(true)
       } else if (item === "bookmarks") {
         setIsBookmarksOpen(true)
+      } else if (item === "gallery") {
+        setIsGalleryOpen(true)
       }
       onItemClick?.(item)
     },
@@ -80,6 +86,7 @@ export const ReactReader = ({
           <FloatingProgress />
         </Presence>
       )}
+      <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
       <QuickMenu onItemClick={_onItemClick} />
       <Bookmarks />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />

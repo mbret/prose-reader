@@ -4,17 +4,18 @@ import { BsBookmarks } from "react-icons/bs"
 import { LuChevronDown, LuGalleryHorizontal, LuSearch } from "react-icons/lu"
 import { LuTableOfContents } from "react-icons/lu"
 import { LuCircleHelp, LuNotebookPen } from "react-icons/lu"
+import { RiGalleryView2 } from "react-icons/ri"
 import {
   RxDoubleArrowDown,
   RxDoubleArrowLeft,
   RxDoubleArrowRight,
   RxDoubleArrowUp,
 } from "react-icons/rx"
-import { TbCarouselHorizontal } from "react-icons/tb"
 import { useObserve } from "reactjrx"
 import {
   hasAnnotationsEnhancer,
   hasBookmarksEnhancer,
+  hasGalleryEnhancer,
   hasSearchEnhancer,
   useReader,
 } from "../context/useReader"
@@ -29,7 +30,7 @@ export const BottomBar = memo(
   }: {
     open: boolean
     onItemClick: (
-      item: "annotations" | "search" | "help" | "toc" | "bookmarks",
+      item: "annotations" | "search" | "help" | "toc" | "bookmarks" | "gallery",
     ) => void
   }) => {
     const reader = useReader()
@@ -40,153 +41,163 @@ export const BottomBar = memo(
     const [isExtraOpen, setIsExtraOpen] = useState(true)
 
     return (
-      <QuickBar present={open} position="bottom">
-        <Stack flex={1} overflow="auto">
-          <HStack flex={1} alignItems="center" justifyContent="center">
-            <IconButton
-              aria-label="left"
-              size="lg"
-              variant="ghost"
-              flexShrink={0}
-              onClick={() => reader?.navigation.goToLeftOrTopSpineItem()}
-              disabled={
-                !navigation?.canGoLeftSpineItem &&
-                !navigation?.canGoTopSpineItem
-              }
+      <QuickBar
+        present={open}
+        position="bottom"
+        display="flex"
+        flexDirection="column"
+        overflow="auto"
+        pb={8}
+      >
+        <HStack flex={1} alignItems="center" justifyContent="center">
+          <IconButton
+            aria-label="left"
+            size="lg"
+            variant="ghost"
+            flexShrink={0}
+            onClick={() => reader?.navigation.goToLeftOrTopSpineItem()}
+            disabled={
+              !navigation?.canGoLeftSpineItem && !navigation?.canGoTopSpineItem
+            }
+          >
+            {isVerticalDirection ? <RxDoubleArrowUp /> : <RxDoubleArrowLeft />}
+          </IconButton>
+          <Stack
+            flex={1}
+            maxW={400}
+            gap={2}
+            alignItems="center"
+            overflow="auto"
+            px={4}
+          >
+            <PaginationInfoSection />
+            <Scrubber
+              style={{
+                width: "100%",
+                maxWidth: "300px",
+                height: "35px",
+              }}
+            />
+          </Stack>
+          <IconButton
+            aria-label="right"
+            size="lg"
+            flexShrink={0}
+            variant="ghost"
+            disabled={
+              !navigation?.canGoRightSpineItem &&
+              !navigation?.canGoBottomSpineItem
+            }
+            onClick={() => {
+              reader?.navigation.goToRightOrBottomSpineItem()
+            }}
+          >
+            {isVerticalDirection ? (
+              <RxDoubleArrowDown />
+            ) : (
+              <RxDoubleArrowRight />
+            )}
+          </IconButton>
+        </HStack>
+        <HStack alignItems="center" justifyContent="center">
+          <Collapsible.Root
+            open={isExtraOpen}
+            flex={1}
+            onOpenChange={({ open }) => {
+              setIsExtraOpen(open)
+            }}
+          >
+            <Collapsible.Trigger
+              paddingY="3"
+              width="100%"
+              display="flex"
+              justifyContent="center"
             >
-              {isVerticalDirection ? (
-                <RxDoubleArrowUp />
-              ) : (
-                <RxDoubleArrowLeft />
-              )}
-            </IconButton>
-            <Stack
-              flex={1}
-              maxW={400}
-              gap={2}
-              alignItems="center"
-              overflow="auto"
-              px={4}
-            >
-              <PaginationInfoSection />
-              <Scrubber
+              <LuChevronDown
                 style={{
-                  width: "100%",
-                  maxWidth: "300px",
-                  height: "35px",
+                  transform: isExtraOpen ? "rotate(0deg)" : "rotate(180deg)",
                 }}
               />
-            </Stack>
-            <IconButton
-              aria-label="right"
-              size="lg"
-              flexShrink={0}
-              variant="ghost"
-              disabled={
-                !navigation?.canGoRightSpineItem &&
-                !navigation?.canGoBottomSpineItem
-              }
-              onClick={() => {
-                reader?.navigation.goToRightOrBottomSpineItem()
-              }}
-            >
-              {isVerticalDirection ? (
-                <RxDoubleArrowDown />
-              ) : (
-                <RxDoubleArrowRight />
-              )}
-            </IconButton>
-          </HStack>
-          <HStack alignItems="center" justifyContent="center">
-            <Collapsible.Root
-              open={isExtraOpen}
-              flex={1}
-              onOpenChange={({ open }) => {
-                setIsExtraOpen(open)
-              }}
-            >
-              <Collapsible.Trigger
-                paddingY="3"
-                width="100%"
-                display="flex"
-                justifyContent="center"
+            </Collapsible.Trigger>
+            <Collapsible.Content display="flex" justifyContent="center">
+              <IconButton
+                aria-label="Help"
+                size="lg"
+                variant="ghost"
+                onClick={() => onItemClick("help")}
               >
-                <LuChevronDown
-                  style={{
-                    transform: isExtraOpen ? "rotate(0deg)" : "rotate(180deg)",
-                  }}
-                />
-              </Collapsible.Trigger>
-              <Collapsible.Content display="flex" justifyContent="center">
+                <LuCircleHelp />
+              </IconButton>
+              <IconButton
+                aria-label="Table of contents"
+                size="lg"
+                variant="ghost"
+                onClick={() => onItemClick("toc")}
+              >
+                <LuTableOfContents />
+              </IconButton>
+              {hasSearchEnhancer(reader) && (
                 <IconButton
-                  aria-label="Help"
+                  aria-label="Search"
                   size="lg"
                   variant="ghost"
-                  onClick={() => onItemClick("help")}
+                  onClick={() => onItemClick("search")}
                 >
-                  <LuCircleHelp />
+                  <LuSearch />
                 </IconButton>
+              )}
+              {hasBookmarksEnhancer(reader) && (
                 <IconButton
-                  aria-label="Table of contents"
+                  aria-label="Search"
                   size="lg"
                   variant="ghost"
-                  onClick={() => onItemClick("toc")}
+                  onClick={() => onItemClick("bookmarks")}
                 >
-                  <LuTableOfContents />
+                  <BsBookmarks />
                 </IconButton>
-                {hasSearchEnhancer(reader) && (
-                  <IconButton
-                    aria-label="Search"
-                    size="lg"
-                    variant="ghost"
-                    onClick={() => onItemClick("search")}
-                  >
-                    <LuSearch />
-                  </IconButton>
-                )}
-                {hasBookmarksEnhancer(reader) && (
-                  <IconButton
-                    aria-label="Search"
-                    size="lg"
-                    variant="ghost"
-                    onClick={() => onItemClick("bookmarks")}
-                  >
-                    <BsBookmarks />
-                  </IconButton>
-                )}
-                {hasAnnotationsEnhancer(reader) && (
-                  <IconButton
-                    aria-label="Search"
-                    size="lg"
-                    variant="ghost"
-                    onClick={() => onItemClick("annotations")}
-                  >
-                    <LuNotebookPen />
-                  </IconButton>
-                )}
+              )}
+              {hasAnnotationsEnhancer(reader) && (
                 <IconButton
-                  aria-label="Thumbnails"
+                  aria-label="Search"
                   size="lg"
-                  variant={
-                    reader?.settings.values.viewportMode === "thumbnails"
-                      ? "solid"
-                      : "ghost"
-                  }
-                  onClick={() => {
-                    reader?.settings.update({
-                      viewportMode:
-                        reader?.settings.values.viewportMode === "normal"
-                          ? "thumbnails"
-                          : "normal",
-                    })
-                  }}
+                  variant="ghost"
+                  onClick={() => onItemClick("annotations")}
                 >
-                  <LuGalleryHorizontal />
+                  <LuNotebookPen />
                 </IconButton>
-              </Collapsible.Content>
-            </Collapsible.Root>
-          </HStack>
-        </Stack>
+              )}
+              <IconButton
+                aria-label="Thumbnails"
+                size="lg"
+                variant={
+                  reader?.settings.values.viewportMode === "thumbnails"
+                    ? "solid"
+                    : "ghost"
+                }
+                onClick={() => {
+                  reader?.settings.update({
+                    viewportMode:
+                      reader?.settings.values.viewportMode === "normal"
+                        ? "thumbnails"
+                        : "normal",
+                  })
+                }}
+              >
+                <LuGalleryHorizontal />
+              </IconButton>
+              {hasGalleryEnhancer(reader) && (
+                <IconButton
+                  aria-label="Gallery"
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => onItemClick("gallery")}
+                >
+                  <RiGalleryView2 />
+                </IconButton>
+              )}
+            </Collapsible.Content>
+          </Collapsible.Root>
+        </HStack>
       </QuickBar>
     )
   },

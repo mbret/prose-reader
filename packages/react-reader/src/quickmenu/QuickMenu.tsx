@@ -15,7 +15,8 @@ export const QuickMenu = memo(
         | "toc"
         | "bookmarks"
         | "more"
-        | "back",
+        | "back"
+        | "gallery",
     ) => void
   }) => {
     const [quickMenuOpen] = useQuickMenu()
