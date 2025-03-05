@@ -23,6 +23,7 @@
     "@prose-reader/enhancer-gestures": "^1.117.0",
     "@prose-reader/enhancer-pdf": "^1.117.0",
     "@prose-reader/enhancer-search": "^1.117.0",
+    "@prose-reader/enhancer-gallery": "^1.117.0",
     "@prose-reader/streamer": "^1.117.0",
     "@prose-reader/react-reader": "^1.117.0",
     "@react-rxjs/utils": "^0.9.5",
