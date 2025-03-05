@@ -1,10 +1,16 @@
 import {
   BehaviorSubject,
+  NEVER,
   type Observable,
   Subject,
   combineLatest,
+  distinctUntilChanged,
+  filter,
+  fromEvent,
+  map,
   merge,
   of,
+  share,
   shareReplay,
   skip,
   startWith,
@@ -12,6 +18,7 @@ import {
   takeUntil,
   tap,
   timer,
+  withLatestFrom,
 } from "rxjs"
 import { HTML_PREFIX } from "../../constants"
 import type { Context } from "../../context/Context"
@@ -20,7 +27,8 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { watchKeys } from "../../utils/rxjs"
+import { isDefined } from "../../utils/isDefined"
+import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ViewportNavigationEntry } from "./ControlledNavigationController"
 import { getScaledDownPosition } from "./getScaledDownPosition"
@@ -33,6 +41,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
   public isScrolling$ = this.scrollingSubject.asObservable()
   public isNavigating$: Observable<boolean>
+  public userScroll$: Observable<Event>
 
   constructor(
     protected viewport: Viewport,
@@ -90,6 +99,53 @@ export class ScrollNavigationController extends ReactiveEntity<{
       startWith(false),
       switchMap(() => merge(of(true), of(false))),
       shareReplay(1),
+    )
+
+    // might be a bit overkill but we want to be sure of sure
+    const isSpineScrolling$ = merge(
+      spine.element$.pipe(switchMap((element) => observeResize(element))),
+      spine.element$.pipe(switchMap((element) => fromEvent(element, "scroll"))),
+      spine.spineItemsObserver.itemResize$,
+    ).pipe(
+      switchMap(() =>
+        timer(10).pipe(
+          map(() => false),
+          startWith(true),
+        ),
+      ),
+      distinctUntilChanged(),
+      startWith(false),
+    )
+
+    const scrollHappeningFromBrowser$ = combineLatest([
+      isSpineScrolling$,
+      this.isScrolling$,
+    ]).pipe(
+      map(
+        ([spineScrolling, viewportScrolling]) =>
+          spineScrolling || viewportScrolling,
+      ),
+      shareReplay(1),
+    )
+
+    this.userScroll$ = this.watch("element").pipe(
+      filter(isDefined),
+      switchMap((element) =>
+        settings.watch(["computedPageTurnMode"]).pipe(
+          switchMap(({ computedPageTurnMode }) =>
+            computedPageTurnMode === "controlled"
+              ? NEVER
+              : fromEvent(element, `scroll`).pipe(
+                  withLatestFrom(scrollHappeningFromBrowser$),
+                  filter(
+                    ([, shouldAvoidScrollEvent]) => !shouldAvoidScrollEvent,
+                  ),
+                  map(([event]) => event),
+                ),
+          ),
+        ),
+      ),
+      share(),
     )
 
     merge(elementCreation$, toggleElementDisplay$, navigate$)

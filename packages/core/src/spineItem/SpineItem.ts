@@ -30,6 +30,7 @@ export class SpineItem extends DestroyableClass {
   public readonly layout: SpineItemLayout
   /**
    * Renderer loaded + spine item layout done
+   * Will switch back and forth every new layout.
    */
   public readonly isReady$: Observable<boolean>
 

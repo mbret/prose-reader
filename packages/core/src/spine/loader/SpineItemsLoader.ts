@@ -10,6 +10,7 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
+import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../../utils/DestroyableClass"
@@ -101,14 +102,20 @@ export class SpineItemsLoader extends DestroyableClass {
     loadSpineItems$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  forceOpen(spineItems: number[]) {
-    this.forcedOpenSubject.next([...this.forcedOpenSubject.value, spineItems])
+  forceOpen(spineItems: (number | SpineItem)[]) {
+    const indexes = spineItems.map((item) =>
+      typeof item === "number" ? item : item.index,
+    )
+
+    this.forcedOpenSubject.next([...this.forcedOpenSubject.value, indexes])
 
     return () => {
       if (this.isDestroyed) return
 
       this.forcedOpenSubject.next(
-        this.forcedOpenSubject.value.filter((item) => item !== spineItems),
+        this.forcedOpenSubject.value.filter(
+          (arrayOfIndexes) => arrayOfIndexes !== indexes,
+        ),
       )
     }
   }

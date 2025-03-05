@@ -240,8 +240,10 @@ export abstract class DocumentRenderer extends DestroyableClass {
   }
 
   public destroy() {
-    super.destroy()
+    this.unload()
     this.stateSubject.complete()
+
+    super.destroy()
   }
 
   abstract onRenderHeadless(params: {

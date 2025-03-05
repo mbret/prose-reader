@@ -9,6 +9,9 @@ import type { SpinePosition, UnsafeSpinePosition } from "../spine/types"
  *
  * This is mostly useful when the viewport is scaled up / down. If there was
  * no scale this would be the equivalent of spine position + viewport
+ *
+ * You can also see it as a superposition of a spine position and a viewport creating
+ * a new position + its spanning size
  */
 export class ViewportSlicePosition extends DOMRect {
   public readonly __symbol = Symbol(`ViewportPosition`)

@@ -1,3 +1,4 @@
+import { merge, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
@@ -5,6 +6,10 @@ import { AbsoluteViewport, RelativeViewport } from "./types"
 
 type State = {
   element: HTMLElement
+  pageSize: {
+    width: number
+    height: number
+  }
 }
 
 export class Viewport extends ReactiveEntity<State> {
@@ -22,10 +27,24 @@ export class Viewport extends ReactiveEntity<State> {
 
     super({
       element,
+      pageSize: {
+        width: 1,
+        height: 1,
+      },
     })
+
+    const updatePageSize$ = this.context.watch("visibleAreaRect").pipe(
+      tap(() => {
+        this.update({
+          pageSize: this.calculatePageSize(),
+        })
+      }),
+    )
+
+    merge(updatePageSize$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  public getPageSize() {
+  protected calculatePageSize() {
     const absoluteViewport = this.absoluteViewport
     const { isUsingSpreadMode } = this.context.state
 
@@ -50,6 +69,9 @@ export class Viewport extends ReactiveEntity<State> {
    * @important
    *
    * Contains long floating values.
+   *
+   * @todo take position of translate into consideration in something
+   * like relativeViewportPosition or even better a ViewportSlicePosition
    */
   public get relativeViewport() {
     const absoluteViewport = this.absoluteViewport

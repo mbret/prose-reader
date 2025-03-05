@@ -1,4 +1,4 @@
-import { EMPTY, from, fromEvent, map, of, switchMap, tap } from "rxjs"
+import { EMPTY, from, fromEvent, map, of, switchMap } from "rxjs"
 import { DocumentRenderer } from "../../spineItem/renderer/DocumentRenderer"
 
 export class ImageRenderer extends DocumentRenderer {

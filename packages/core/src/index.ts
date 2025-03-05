@@ -3,7 +3,7 @@ export type { Manifest } from "@prose-reader/shared"
 import { createReaderWithEnhancers as createReader } from "./createReaderWithEnhancer"
 export { DocumentRenderer } from "./spineItem/renderer/DocumentRenderer"
 export { ResourceHandler } from "./spineItem/resources/ResourceHandler"
-
+export type { Theme } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
 
 export { SettingsManager } from "./settings/SettingsManager"

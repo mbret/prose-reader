@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject, of } from "rxjs"
+import { of } from "rxjs"
 import { vi } from "vitest"
 import { SpineItem } from "../.."
 import { Context } from "../../context/Context"
@@ -13,7 +13,8 @@ import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import { Viewport } from "../../viewport/Viewport"
 import { InternalNavigator } from "../InternalNavigator"
-import { UserNavigator } from "../UserNavigator"
+import { Locker } from "../Locker"
+import { UserScrollNavigation } from "../UserScrollNavigation"
 import { ControlledNavigationController } from "../controllers/ControlledNavigationController"
 import { ScrollNavigationController } from "../controllers/ScrollNavigationController"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
@@ -123,9 +124,6 @@ export const createNavigator = () => {
     hookManager,
     viewport,
   )
-  const elementSubject = new BehaviorSubject<HTMLElement>(
-    document.createElement("div"),
-  )
   const spineLocator = createSpineLocator({
     context,
     settings,
@@ -151,15 +149,7 @@ export const createNavigator = () => {
     viewport,
   )
 
-  const scrollHappeningFromBrowser$ = new Subject()
-
-  const userNavigator = new UserNavigator(
-    settings,
-    elementSubject,
-    context,
-    scrollHappeningFromBrowser$,
-    spine,
-  )
+  const locker = new Locker()
 
   const scrollNavigationController = new ScrollNavigationController(
     viewport,
@@ -168,6 +158,15 @@ export const createNavigator = () => {
     spine,
     context,
   )
+
+  const userNavigator = new UserScrollNavigation(
+    settings,
+    context,
+    spine,
+    scrollNavigationController,
+    locker,
+  )
+
   const internalNavigator = new InternalNavigator(
     settings,
     context,
@@ -176,7 +175,7 @@ export const createNavigator = () => {
     scrollNavigationController,
     navigationResolver,
     spine,
-    userNavigator.locker.isLocked$,
+    locker.isLocked$,
   )
 
   return {

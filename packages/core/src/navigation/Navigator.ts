@@ -1,29 +1,18 @@
-import {
-  type BehaviorSubject,
-  combineLatest,
-  fromEvent,
-  merge,
-  timer,
-} from "rxjs"
-import {
-  distinctUntilChanged,
-  map,
-  shareReplay,
-  startWith,
-  switchMap,
-} from "rxjs/operators"
+import { Subject, combineLatest, merge } from "rxjs"
+import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { observeResize } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import { InternalNavigator } from "./InternalNavigator"
-import { UserNavigator } from "./UserNavigator"
+import { Locker } from "./Locker"
+import { UserScrollNavigation } from "./UserScrollNavigation"
 import { ControlledNavigationController } from "./controllers/ControlledNavigationController"
 import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
+import type { UserNavigationEntry } from "./types"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -40,6 +29,8 @@ export const createNavigator = ({
   settings: ReaderSettingsManager
   viewport: Viewport
 }) => {
+  const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
+  const locker = new Locker()
   const navigationResolver = createNavigationResolver({
     context,
     settings,
@@ -64,56 +55,34 @@ export const createNavigator = ({
     context,
   )
 
-  // might be a bit overkill but we want to be sure of sure
-  const isSpineScrolling$ = merge(
-    spine.element$.pipe(switchMap((element) => observeResize(element))),
-    spine.element$.pipe(switchMap((element) => fromEvent(element, "scroll"))),
-    spine.spineItemsObserver.itemResize$,
-  ).pipe(
-    switchMap(() =>
-      timer(10).pipe(
-        map(() => false),
-        startWith(true),
-      ),
-    ),
-    distinctUntilChanged(),
-    startWith(false),
-  )
-
-  const scrollHappeningFromBrowser$ = combineLatest([
-    isSpineScrolling$,
-    scrollNavigationController.isScrolling$,
-  ]).pipe(
-    map(
-      ([spineScrolling, viewportScrolling]) =>
-        spineScrolling || viewportScrolling,
-    ),
-    shareReplay(1),
-  )
-
-  const userNavigator = new UserNavigator(
+  const userScrollNavigation = new UserScrollNavigation(
     settings,
-    scrollNavigationController.watch("element"),
     context,
-    scrollHappeningFromBrowser$,
     spine,
+    scrollNavigationController,
+    locker,
+  )
+
+  const userNavigation$ = merge(
+    userExplicitNavigationSubject,
+    userScrollNavigation.navigation$,
   )
 
   const internalNavigator = new InternalNavigator(
     settings,
     context,
-    userNavigator.navigation$,
+    userNavigation$,
     controlledNavigationController,
     scrollNavigationController,
     navigationResolver,
     spine,
-    userNavigator.locker.isLocked$,
+    locker.isLocked$,
   )
 
   const viewportState$ = combineLatest([
     controlledNavigationController.isNavigating$,
     scrollNavigationController.isNavigating$,
-    userNavigator.locker.isLocked$,
+    locker.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
@@ -121,8 +90,12 @@ export const createNavigator = ({
     shareReplay(1),
   )
 
+  const navigate = (to: UserNavigationEntry) => {
+    userExplicitNavigationSubject.next(to)
+  }
+
   const destroy = () => {
-    userNavigator.destroy()
+    userScrollNavigation.destroy()
     controlledNavigationController.destroy()
     internalNavigator.destroy()
   }
@@ -133,11 +106,11 @@ export const createNavigator = ({
     internalNavigator,
     scrollNavigationController,
     controlledNavigationController,
-    isLocked$: userNavigator.locker.isLocked$,
+    locker,
     viewportState$,
-    navigate: userNavigator.navigate.bind(userNavigator),
+    navigate,
     lock() {
-      return userNavigator.locker.lock()
+      return locker.lock()
     },
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,

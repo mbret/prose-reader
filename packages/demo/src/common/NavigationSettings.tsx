@@ -1,12 +1,12 @@
-import type React from "react"
 import { Box, Fieldset, Stack } from "@chakra-ui/react"
-import { useReaderSettings } from "./useReaderSettings"
-import type { LocalSettings } from "../reader/settings/useLocalSettings"
-import { useReader } from "../reader/useReader"
+import type React from "react"
 import { useObserve } from "reactjrx"
 import { Checkbox } from "../components/ui/checkbox"
 import { Field } from "../components/ui/field"
 import { Radio, RadioGroup } from "../components/ui/radio"
+import type { LocalSettings } from "../reader/settings/useLocalSettings"
+import { useReaderSettings } from "../reader/settings/useReaderSettings"
+import { useReader } from "../reader/useReader"
 
 export const NavigationSettings = ({
   localSettings,

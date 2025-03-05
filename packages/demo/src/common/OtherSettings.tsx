@@ -1,11 +1,11 @@
 import { Fieldset, Stack } from "@chakra-ui/react"
-import { useReaderSettings } from "./useReaderSettings"
-import { useReader } from "../reader/useReader"
 import { Field } from "../components/ui/field"
 import {
   NumberInputField,
   NumberInputRoot,
 } from "../components/ui/number-input"
+import { useReaderSettings } from "../reader/settings/useReaderSettings"
+import { useReader } from "../reader/useReader"
 
 export const OtherSettings = () => {
   const settings = useReaderSettings()

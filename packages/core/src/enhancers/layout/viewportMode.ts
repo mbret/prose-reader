@@ -9,6 +9,12 @@ export const createViewportModeHandler = (
     tap((viewportMode) => {
       reader.viewport.value.element.style.transition = `transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
 
+      if (reader.settings.values.computedPageTurnMode === "scrollable") {
+        reader.viewport.value.element.style.transformOrigin = `top`
+      } else {
+        reader.viewport.value.element.style.transformOrigin = `center`
+      }
+
       if (viewportMode === `thumbnails`) {
         reader.viewport.value.element.style.transform = `scale(0.5)`
       } else {
