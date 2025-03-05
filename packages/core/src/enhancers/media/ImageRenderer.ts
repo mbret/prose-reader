@@ -15,7 +15,7 @@ export class ImageRenderer extends DocumentRenderer {
 
     return from(this.resourcesHandler.getResource()).pipe(
       switchMap((responseOrUrl) => {
-        this.documentContainer = imgElement
+        this.setDocumentContainer(imgElement)
 
         imgElement.style.objectFit = `contain`
         imgElement.style.userSelect = `none`
