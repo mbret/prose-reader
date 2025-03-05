@@ -40,6 +40,10 @@
       },
       "suspicious": {
         "noArrayIndexKey": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
       }
     }
   },
