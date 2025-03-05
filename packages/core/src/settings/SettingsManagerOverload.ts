@@ -11,7 +11,7 @@ import {
   shareReplay,
   startWith,
 } from "rxjs/operators"
-import { mapKeysTo, watchKeys } from "../utils/rxjs"
+import { watchKeys } from "../utils/rxjs"
 import type { SettingsInterface } from "./SettingsInterface"
 import type { CoreInputSettings, CoreOutputSettings } from "./types"
 

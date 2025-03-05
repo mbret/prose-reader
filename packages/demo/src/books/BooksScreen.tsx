@@ -1,22 +1,21 @@
-import { Link, Link as RouterLink } from "react-router"
 import {
-  Table,
   Link as ChakraLink,
-  Box,
-  Text,
-  Stack,
   Container,
   Heading,
   IconButton,
+  Stack,
+  Table,
+  Text,
 } from "@chakra-ui/react"
-import { MdDelete } from "react-icons/md"
 import localforage from "localforage"
-import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
-import { Glossary } from "./Glossary"
-import { UploadBook } from "./UploadBook"
-import { useUploadedBooks } from "./useUploadedBooks"
-import { COMICS, EPUBS, PDFS } from "./constants"
+import { MdDelete } from "react-icons/md"
+import { Link } from "react-router"
 import { BookTable } from "./BookTable"
+import { Glossary } from "./Glossary"
+import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
+import { UploadBook } from "./UploadBook"
+import { COMICS, EPUBS, PDFS } from "./constants"
+import { useUploadedBooks } from "./useUploadedBooks"
 
 export const BooksScreen = () => {
   const { data: uploadedBooks, refetch } = useUploadedBooks()

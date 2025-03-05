@@ -1,12 +1,4 @@
-import {
-  filter,
-  merge,
-  switchMap,
-  take,
-  takeUntil,
-  tap,
-  withLatestFrom,
-} from "rxjs"
+import { merge, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs"
 import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
 import { getRootCfi } from "../cfi/generate/getRootCfi"
 import { isRootCfi } from "../cfi/lookup/isRootCfi"

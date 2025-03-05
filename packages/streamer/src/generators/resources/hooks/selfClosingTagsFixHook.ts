@@ -86,7 +86,7 @@ export const selfClosingTagsFixHook =
 
       const fixedBody = bodyToParse.replace(
         tagPattern,
-        (match, tagName, attributes = "") => {
+        (_, tagName, attributes = "") => {
           // Convert to an opening and closing tag
           return `<${tagName} ${attributes.trim()}></${tagName}>`
         },
