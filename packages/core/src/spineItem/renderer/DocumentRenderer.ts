@@ -245,7 +245,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
   }
 
   public layout(params: LayoutParams) {
-    return defer(() => this.onLayout(params)).pipe()
+    return defer(() => this.onLayout(params))
   }
 
   public destroy() {

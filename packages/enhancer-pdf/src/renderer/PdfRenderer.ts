@@ -191,6 +191,7 @@ export class PdfRenderer extends DocumentRenderer {
 
     const { width: viewportWidth, height: viewportHeight } =
       this.pageProxy.getViewport({ scale: 1 })
+
     const pageScale = Math.max(
       pageWidth / viewportWidth,
       pageHeight / viewportHeight,
@@ -204,18 +205,18 @@ export class PdfRenderer extends DocumentRenderer {
         ? [pixelRatioScale, 0, 0, pixelRatioScale, 0, 0]
         : null
 
-    this.renderTask = this.pageProxy?.render({
+    this.renderTask = this.pageProxy.render({
       ...(transform && { transform }),
       canvasContext: context,
       viewport,
     })
 
-    return from(this.renderTask?.promise).pipe(
-      map(() => {
+    return from(this.renderTask.promise).pipe(
+      switchMap(() => {
         const frameDoc = frameElement?.contentDocument
 
         if (!frameDoc || !frameElement) {
-          return undefined
+          return EMPTY
         }
 
         frameDoc.body.innerHTML = ``
@@ -223,7 +224,7 @@ export class PdfRenderer extends DocumentRenderer {
         // const frameCanvas = copyCanvasToFrame(canvas, frameDoc)
         const pdfPage = this.pageProxy
 
-        if (!pdfPage) return undefined
+        if (!pdfPage) return EMPTY
 
         const textLayerElement = frameDoc.createElement(`div`)
         // Set it's class to textLayer which have required CSS styles
@@ -254,7 +255,9 @@ export class PdfRenderer extends DocumentRenderer {
           viewport,
         })
 
-        return from(this.textLayer.render())
+        const textLayerRenderPromise = this.textLayer.render()
+
+        return from(textLayerRenderPromise)
       }),
       map(() => undefined),
       catchError((e) => {
