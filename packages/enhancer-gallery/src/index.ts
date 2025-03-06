@@ -15,8 +15,8 @@ export const galleryEnhancer =
       ...reader,
       __PROSE_READER_ENHANCER_GALLERY: true,
       gallery: {
-        snapshot: (spineItem, options) =>
-          new Snapshot(reader, spineItem, options),
+        snapshot: (spineItem, parent, options) =>
+          new Snapshot(reader, spineItem, parent, options),
       },
     }
   }

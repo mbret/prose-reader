@@ -1,8 +1,7 @@
 import { Box, Button } from "@chakra-ui/react"
-import { type SpineItem, observeIntersection } from "@prose-reader/core"
+import type { SpineItem } from "@prose-reader/core"
 import { memo } from "react"
-import { useObserve, useSubscribe } from "reactjrx"
-import { NEVER, finalize, switchMap } from "rxjs"
+import { useObserve } from "reactjrx"
 import { useMeasure } from "../common/useMeasure"
 import {
   DialogActionTrigger,
@@ -18,26 +17,9 @@ import { useReader } from "../context/useReader"
 import { useAttachSnapshot } from "./useAttachSnapshot"
 
 const GalleryItem = memo(({ item }: { item: SpineItem }) => {
-  const reader = useReader()
   const [setElement, measures, element] = useMeasure()
 
   useAttachSnapshot(element, item, measures)
-
-  useSubscribe(
-    () =>
-      (!element ? NEVER : observeIntersection(element as HTMLElement, {})).pipe(
-        switchMap((entries) => {
-          if (entries.some((e) => e.isIntersecting)) {
-            const unlock = reader?.spine.spineItemsLoader.forceOpen([item])
-
-            return NEVER.pipe(finalize(() => unlock?.()))
-          }
-
-          return NEVER
-        }),
-      ),
-    [item, reader, element],
-  )
 
   return (
     <Box

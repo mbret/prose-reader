@@ -6,6 +6,7 @@ export type GalleryEnhancerAPI = {
   gallery: {
     snapshot: (
       spineItem: SpineItem,
+      parent: Element,
       options: {
         height: number
         width: number

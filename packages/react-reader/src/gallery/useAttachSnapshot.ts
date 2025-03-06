@@ -1,11 +1,19 @@
-import { distinctUntilChanged, switchMap, tap } from "rxjs"
-
-import { map } from "rxjs"
-
-import { NEVER } from "rxjs"
-
-import { type SpineItem, isShallowEqual } from "@prose-reader/core"
+import {
+  type SpineItem,
+  isShallowEqual,
+  observeIntersection,
+} from "@prose-reader/core"
 import { useSubscribe } from "reactjrx"
+import {
+  distinctUntilChanged,
+  first,
+  map,
+  startWith,
+  switchMap,
+  tap,
+  throttleTime,
+} from "rxjs"
+import { NEVER } from "rxjs"
 import { filter } from "rxjs"
 import type { UseMeasureRect } from "../common/useMeasure"
 import { useReader } from "../context/useReader"
@@ -24,19 +32,40 @@ export const useAttachSnapshot = (
   useSubscribe(() => {
     if (!readerWithGalleryEnhancer || !element) return NEVER
 
-    const itemReadyAndLayoutChanged$ = item.isReady$.pipe(
-      filter((isReady) => isReady),
-      map(() => item.layout.layoutInfo),
+    const itemLayoutChanged$ = item.layout.layout$.pipe(
+      startWith(item.layout.layoutInfo),
       distinctUntilChanged(isShallowEqual),
     )
 
-    return itemReadyAndLayoutChanged$.pipe(
-      switchMap(() =>
-        readerWithGalleryEnhancer?.gallery.snapshot(item, measures),
-      ),
-      tap((snapshot) => {
-        element.innerHTML = ""
-        element.appendChild(snapshot)
+    const isIntemIntersecting$ = observeIntersection(
+      element as HTMLElement,
+    ).pipe(map((entries) => entries.some((e) => e.isIntersecting)))
+
+    return itemLayoutChanged$.pipe(
+      throttleTime(100, undefined, { trailing: true }),
+      switchMap(() => {
+        return isIntemIntersecting$
+          .pipe(
+            tap((isVisible) => {
+              // if the layout change and the item is not visible anymore, cleanup the element
+              if (!isVisible) {
+                element.innerHTML = ""
+              }
+            }),
+            filter((isVisible) => isVisible),
+            first(),
+          )
+          .pipe(
+            switchMap(() => {
+              element.innerHTML = ""
+
+              return readerWithGalleryEnhancer?.gallery.snapshot(
+                item,
+                element,
+                measures,
+              )
+            }),
+          )
       }),
     )
   }, [readerWithGalleryEnhancer, item, measures, element])

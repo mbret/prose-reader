@@ -3,18 +3,10 @@ import {
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { Observable, filter, first, of, switchMap, tap } from "rxjs"
+import { Observable, filter, finalize, first, switchMap, tap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
-const createGridItem = (options: {
-  height: number
-  width: number
-}) => {
-  const gridItemElement = document.createElement("div")
-  gridItemElement.style.width = `${options.width}px`
-  gridItemElement.style.height = `${options.height}px`
-  gridItemElement.style.position = "relative"
-
+const createSnapshotItem = () => {
   const spineItemContainerElement = document.createElement("div")
   spineItemContainerElement.style.width = `100%`
   spineItemContainerElement.style.height = `100%`
@@ -31,7 +23,6 @@ const createGridItem = (options: {
   contentMask.style.overflow = "hidden"
 
   spineItemContainerElement.appendChild(contentMask)
-  // gridItemElement.appendChild(spineItemContainerElement)
 
   return spineItemContainerElement
 }
@@ -40,21 +31,24 @@ export class Snapshot extends Observable<HTMLElement> {
   constructor(
     reader: Reader,
     item: SpineItem,
+    parent: Element,
     options: {
       height: number
       width: number
     },
   ) {
     super((subscriber) => {
-      const gridItem = createGridItem(options)
+      const unlock = reader.spine.spineItemsLoader.forceOpen([item])
 
       return item.isReady$
         .pipe(
           filter((isReady) => isReady),
           first(),
           switchMap(() => {
+            const snapshotItem = createSnapshotItem()
+
             const pageSize = reader.viewport.value.pageSize
-            const itemElement = gridItem
+            const itemElement = snapshotItem
             const contentMask = itemElement?.children[0] as
               | HTMLElement
               | undefined
@@ -66,8 +60,6 @@ export class Snapshot extends Observable<HTMLElement> {
             contentMask.style.top = "0"
             contentMask.style.left = "0"
 
-            // itemElement.style.aspectRatio = `${pageSize.width / pageSize.height}`
-
             const measure = options
             const { height, width } = item.layout.layoutInfo
             const numberOfPages = item.numberOfPages
@@ -77,7 +69,8 @@ export class Snapshot extends Observable<HTMLElement> {
             // Use the minimum scale to ensure the element fits within both dimensions
             const scale = Math.min(widthScaleFullFrame, heightScale)
 
-            const clonedElement = deepCloneElement(item.element)
+            const { clone: clonedElement, ready$: cloneReady$ } =
+              deepCloneElement(item.element)
 
             // cleanup unwanted elements from the spine
             Array.from(clonedElement.children).forEach((child) => {
@@ -93,8 +86,6 @@ export class Snapshot extends Observable<HTMLElement> {
             clonedElement.style.left = "0"
             clonedElement.style.top = "0"
             clonedElement.style.position = "relative"
-            // clonedElement.style.transformOrigin = "0 0"
-            // clonedElement.style.transform = `scale(${scale})`
 
             /**
              * Now we adjust the mask to make it fit in the center and cover
@@ -104,9 +95,7 @@ export class Snapshot extends Observable<HTMLElement> {
             const pageWidthAfterScale = pageSize.width * scale
             const pageHeightAfterScale = pageSize.height * scale
 
-            // contentMask.style.width = `${pageWidthAfterScale}px`
             contentMask.style.width = `${pageSize.width}px`
-            // contentMask.style.height = `${pageHeightAfterScale}px`
             contentMask.style.height = `${pageSize.height}px`
             contentMask.style.transformOrigin = "0 0"
             contentMask.style.transform = `scale(${scale})`
@@ -123,14 +112,18 @@ export class Snapshot extends Observable<HTMLElement> {
               contentMask.style.top = `${gap}px`
             }
 
-            contentMask.innerHTML = ""
+            parent.appendChild(snapshotItem)
             contentMask.appendChild(clonedElement)
 
-            return of(gridItem)
+            subscriber.next(snapshotItem)
+
+            return cloneReady$
           }),
-          tap((gridItem) => {
-            subscriber.next(gridItem)
+          tap(() => {
             subscriber.complete()
+          }),
+          finalize(() => {
+            unlock()
           }),
         )
         .subscribe()
