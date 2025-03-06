@@ -2,7 +2,6 @@ import { waitForFrameLoad } from "@prose-reader/core"
 import { EMPTY, combineLatest, defaultIfEmpty, of, switchMap } from "rxjs"
 import { copyFrameStyles } from "./copyFrameStyle"
 import { redrawCanvas } from "./redrawCanvas"
-import { redrawFrameCanvas } from "./redrawFrameCanvas"
 
 const copyFramesStyles = (
   originalIframes: NodeListOf<HTMLIFrameElement>,
@@ -34,25 +33,25 @@ const redrawCanvases = (sourceElement: HTMLElement, clone: HTMLElement) => {
   })
 }
 
-const redrawCanvasesInIframes = (
-  sourceElement: HTMLElement,
-  clone: HTMLElement,
-) => {
-  const originalIframes = sourceElement.querySelectorAll("iframe")
-  const clonedIframes = clone.querySelectorAll("iframe")
+// const redrawCanvasesInIframes = (
+//   sourceElement: HTMLElement,
+//   clone: HTMLElement,
+// ) => {
+//   const originalIframes = sourceElement.querySelectorAll("iframe")
+//   const clonedIframes = clone.querySelectorAll("iframe")
 
-  return combineLatest(
-    Array.from(originalIframes).map((originalIframe, index) => {
-      const clonedIframe = clonedIframes[index]
+//   return combineLatest(
+//     Array.from(originalIframes).map((originalIframe, index) => {
+//       const clonedIframe = clonedIframes[index]
 
-      if (!clonedIframe) return EMPTY
+//       if (!clonedIframe) return EMPTY
 
-      return waitForFrameLoad(of(clonedIframe)).pipe(
-        switchMap(() => redrawFrameCanvas(originalIframe, clonedIframe)),
-      )
-    }),
-  )
-}
+//       return waitForFrameLoad(of(clonedIframe)).pipe(
+//         switchMap(() => redrawFrameCanvas(originalIframe, clonedIframe)),
+//       )
+//     }),
+//   )
+// }
 
 export function deepCloneElement(sourceElement: HTMLElement) {
   // Create a deep clone of the source element
@@ -70,7 +69,14 @@ export function deepCloneElement(sourceElement: HTMLElement) {
   redrawCanvases(sourceElement, clone)
 
   // Also handle canvases inside iframes
-  redrawCanvasesInIframes(sourceElement, clone)
+  // const redrawCanvasFrames$ = redrawCanvasesInIframes(sourceElement, clone)
+  // for now we dont have iframes with canvas that cannot be loaded normally
+  const redrawCanvasFrames$ = EMPTY
 
-  return { clone, ready$: copyStyles$.pipe(defaultIfEmpty(true)) }
+  return {
+    clone,
+    ready$: combineLatest([copyStyles$, redrawCanvasFrames$]).pipe(
+      defaultIfEmpty(true),
+    ),
+  }
 }
