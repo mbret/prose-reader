@@ -52,7 +52,7 @@ async function run() {
 
     useEffect(() => {
       reader.bookmarks.bookmarks$
-        .pipe(switchMap((bookmarks) => reader.locateResources(bookmarks)))
+        .pipe(switchMap((bookmarks) => reader.locateResource(bookmarks)))
         .subscribe((data) => {
           setBookmarks(data)
         })

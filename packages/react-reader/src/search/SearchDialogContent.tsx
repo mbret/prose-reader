@@ -39,7 +39,7 @@ export const SearchDialogContent = memo(
     const searching = search?.type === "start"
     const results = search?.type === "end" ? search.data : []
     const consolidatedResults = useObserve(
-      () => reader?.locateResources(results.slice(0, 100)),
+      () => reader?.locateResource(results.slice(0, 100)),
       [results],
     )
 

@@ -120,17 +120,22 @@ export const consolidate = (
   )
 }
 
+type Options = {
+  /**
+   * does not load document if shallow
+   */
+  mode?: "shallow" | "load"
+}
+
+/**
+ * @todo optimize and share as much as possible when several same items are retrieved
+ */
 export class ResourcesLocator {
   constructor(private reader: Reader) {}
 
   locate = <T extends LocatableResource>(
     resource: T,
-    options: {
-      /**
-       * does not load document if shallow
-       */
-      mode?: "shallow" | "load"
-    } = {},
+    options: Options,
   ): Observable<{ resource: T; meta: ConsolidatedResource }> => {
     const cfiConsolidatedResource = {
       resource,
@@ -182,19 +187,26 @@ export class ResourcesLocator {
     })
   }
 
-  locateMultiple = <T extends LocatableResource>(
-    resources: T[],
-    options: {
-      /**
-       * does not load document if shallow
-       */
-      mode?: "shallow" | "load"
-    } = {},
-  ): Observable<{ resource: T; meta: ConsolidatedResource }[]> => {
-    return deferIdle(() =>
-      combineLatest(
-        resources.map((resource) => this.locate(resource, options)),
-      ),
-    )
+  locateResource<T extends LocatableResource>(
+    resource: T,
+    options?: Options,
+  ): Observable<{ resource: T; meta: ConsolidatedResource }>
+  locateResource<T extends LocatableResource>(
+    resource: T[],
+    options?: Options,
+  ): Observable<{ resource: T; meta: ConsolidatedResource }[]>
+  locateResource<T extends LocatableResource>(
+    resource: T | T[],
+    options?: Options,
+  ):
+    | Observable<{ resource: T; meta: ConsolidatedResource }>
+    | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
+    if (Array.isArray(resource)) {
+      return deferIdle(() =>
+        combineLatest(resource.map((item) => this.locate(item, options ?? {}))),
+      )
+    }
+
+    return this.locate(resource, options ?? {})
   }
 }

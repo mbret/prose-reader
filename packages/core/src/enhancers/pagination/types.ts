@@ -33,6 +33,5 @@ export type PaginationEnhancerAPI<
     state$: Observable<PaginationInfo & ExtraPaginationInfo>
     state: PaginationInfo & ExtraPaginationInfo
   }
-  locateResources: ResourcesLocator["locateMultiple"]
-  locateResource: ResourcesLocator["locate"]
+  locateResource: ResourcesLocator["locateResource"]
 }

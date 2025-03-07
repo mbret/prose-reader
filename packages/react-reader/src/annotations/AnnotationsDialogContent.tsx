@@ -16,7 +16,7 @@ export const AnnotationsDialogContent = memo(
       () =>
         readerWithAnnotations?.annotations.highlights$.pipe(
           switchMap((highlights) =>
-            readerWithAnnotations.locateResources(highlights),
+            readerWithAnnotations.locateResource(highlights),
           ),
         ),
       [readerWithAnnotations],

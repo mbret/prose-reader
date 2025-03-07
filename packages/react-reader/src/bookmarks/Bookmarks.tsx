@@ -18,7 +18,7 @@ export const Bookmarks = memo(() => {
     [readerWithBookmarks],
   )
   const consolidatedBookmarks = useObserve(
-    () => reader?.locateResources(bookmarks ?? []),
+    () => reader?.locateResource(bookmarks ?? []),
     [reader, bookmarks],
   )
 

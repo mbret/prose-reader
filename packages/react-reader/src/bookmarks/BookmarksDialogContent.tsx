@@ -14,7 +14,7 @@ export const BookmarksDialogContent = memo(
     const consolidatedBookmarks = useObserve(
       () =>
         readerWithBookmarks?.bookmarks.bookmarks$.pipe(
-          switchMap((items) => readerWithBookmarks.locateResources(items)),
+          switchMap((items) => readerWithBookmarks.locateResource(items)),
         ),
       [readerWithBookmarks],
     )

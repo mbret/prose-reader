@@ -30,8 +30,7 @@ export const paginationEnhancer =
 
     return {
       ...reader,
-      locateResources: resourcesLocator.locateMultiple,
-      locateResource: resourcesLocator.locate,
+      locateResource: resourcesLocator.locateResource.bind(resourcesLocator),
       pagination: {
         ...reader.pagination,
         getState: () => getPaginationInfo(),
