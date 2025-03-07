@@ -105,7 +105,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   navigator.locker.isLocked$.subscribe(
     context.bridgeEvent.navigationIsLockedSubject,
   )
-  pagination.state$.subscribe(context.bridgeEvent.paginationSubject)
+  pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {
     const containerElement = elementSubject$.getValue()?.parentElement
@@ -273,8 +273,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     load,
     destroy,
     pagination: {
-      getState: () => pagination.state,
-      state$: pagination.state$,
+      getState: () => pagination.value,
+      state$: pagination,
     },
     settings: settingsManager as SettingsInterface<
       NonNullable<(typeof settingsManager)["inputSettings"]>,

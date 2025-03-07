@@ -1,13 +1,6 @@
-import { BehaviorSubject, distinctUntilChanged, share, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import { Report } from "../report"
-import { isShallowEqual } from "../utils/objects"
-import { DestroyableClass } from "../utils/DestroyableClass"
-
-const NAMESPACE = `pagination`
-
-const report = Report.namespace(NAMESPACE)
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 
 export type PaginationInfo = {
   beginPageIndexInSpineItem: number | undefined
@@ -21,48 +14,25 @@ export type PaginationInfo = {
   navigationId?: symbol
 }
 
-export class Pagination extends DestroyableClass {
-  protected paginationSubject = new BehaviorSubject<PaginationInfo>({
-    beginPageIndexInSpineItem: undefined,
-    beginNumberOfPagesInSpineItem: 0,
-    beginCfi: undefined,
-    beginSpineItemIndex: undefined,
-    endPageIndexInSpineItem: undefined,
-    endNumberOfPagesInSpineItem: 0,
-    endCfi: undefined,
-    endSpineItemIndex: undefined,
-    navigationId: undefined,
-  })
-
-  public state$ = this.paginationSubject.pipe(
-    distinctUntilChanged(isShallowEqual),
-    tap((value) => {
-      report.info(`update`, value)
-    }),
-    share(),
-  )
-
+export class Pagination extends ReactiveEntity<PaginationInfo> {
   constructor(
     protected context: Context,
     protected spineItemsManager: SpineItemsManager,
   ) {
-    super()
-  }
-
-  public update(pagination: Partial<PaginationInfo>) {
-    this.paginationSubject.next({
-      ...this.paginationSubject.value,
-      ...pagination,
+    super({
+      beginPageIndexInSpineItem: undefined,
+      beginNumberOfPagesInSpineItem: 0,
+      beginCfi: undefined,
+      beginSpineItemIndex: undefined,
+      endPageIndexInSpineItem: undefined,
+      endNumberOfPagesInSpineItem: 0,
+      endCfi: undefined,
+      endSpineItemIndex: undefined,
+      navigationId: undefined,
     })
   }
 
-  get state() {
-    return this.paginationSubject.value
-  }
-
-  destroy() {
-    super.destroy()
-
-    this.paginationSubject.complete()
+  public update(pagination: Partial<PaginationInfo>) {
+    this.mergeCompare(pagination)
   }
 }

@@ -1,8 +1,8 @@
 // vite.config.js
 import { resolve } from "node:path"
+import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import externals from "rollup-plugin-node-externals"
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
       name: `prose`,
       fileName: `index`,
     },
-    minify: false,
+    minify: mode !== `development`,
     sourcemap: true,
     emptyOutDir: mode !== `development`,
   },

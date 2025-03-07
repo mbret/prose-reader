@@ -185,6 +185,14 @@ export class ScrollNavigationController extends ReactiveEntity<{
     this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
   }
 
+  public update(
+    value: Partial<{
+      element: HTMLElement | undefined
+    }>,
+  ) {
+    this.mergeCompare(value)
+  }
+
   navigate(navigation: ViewportNavigationEntry) {
     this.navigateSubject.next(navigation)
   }

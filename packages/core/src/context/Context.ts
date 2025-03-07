@@ -82,7 +82,7 @@ export class Context extends ReactiveEntity<ContextState> {
   public update(newState: Partial<ContextState>) {
     // visibleAreaRect.width = width - horizontalMargin * 2
 
-    const previousState = this.getValue()
+    const previousState = this.value
     const manifest = newState.manifest ?? previousState.manifest
     const forceSinglePageMode =
       newState.forceSinglePageMode ?? previousState.forceSinglePageMode
@@ -123,7 +123,7 @@ export class Context extends ReactiveEntity<ContextState> {
    * RTL only makes sense for horizontal scrolling
    */
   public isRTL = () => {
-    return this.getValue().manifest?.readingDirection === `rtl`
+    return this.value.manifest?.readingDirection === `rtl`
   }
 
   /**
@@ -145,7 +145,7 @@ export class Context extends ReactiveEntity<ContextState> {
    * @deprecated
    */
   public getPageSize() {
-    const { isUsingSpreadMode, visibleAreaRect } = this.getValue()
+    const { isUsingSpreadMode, visibleAreaRect } = this.value
 
     return {
       width: isUsingSpreadMode

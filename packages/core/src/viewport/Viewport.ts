@@ -35,7 +35,7 @@ export class Viewport extends ReactiveEntity<State> {
 
     const updatePageSize$ = this.context.watch("visibleAreaRect").pipe(
       tap(() => {
-        this.update({
+        this.mergeCompare({
           pageSize: this.calculatePageSize(),
         })
       }),
@@ -75,7 +75,7 @@ export class Viewport extends ReactiveEntity<State> {
    */
   public get relativeViewport() {
     const absoluteViewport = this.absoluteViewport
-    const viewportRect = this.getValue().element.getBoundingClientRect()
+    const viewportRect = this.value.element.getBoundingClientRect()
     const relativeScale =
       (viewportRect?.width ?? absoluteViewport.width) / absoluteViewport.width
 
