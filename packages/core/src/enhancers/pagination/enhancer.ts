@@ -1,16 +1,11 @@
-import { type Observable, takeUntil } from "rxjs"
-import type { PaginationInfo } from "../../pagination/Pagination"
+import { takeUntil } from "rxjs"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
+import { ResourcesLocator } from "./ResourcesLocator"
 import { NAMESPACE } from "./constants"
-import {
-  type ConsolidatedResource,
-  type LocatableResource,
-  createLocator,
-} from "./locate"
 import { trackPaginationInfo } from "./pagination"
-import type { ExtraPaginationInfo } from "./types"
+import type { PaginationEnhancerAPI } from "./types"
 
 const report = Report.namespace(NAMESPACE)
 
@@ -20,44 +15,27 @@ export const paginationEnhancer =
   <
     InheritOptions,
     InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,
-    PaginationOutput extends Omit<
-      InheritOutput["pagination"],
-      "state$" | "state"
-    > & {
-      state$: Observable<PaginationInfo & ExtraPaginationInfo>
-      state: PaginationInfo & ExtraPaginationInfo
-    },
+    PaginationOutput extends PaginationEnhancerAPI<InheritOutput>,
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions,
-  ): Omit<InheritOutput, "pagination"> & {
-    pagination: PaginationOutput & {
-      locate: <T extends LocatableResource>(
-        resources: T[],
-      ) => Observable<(ConsolidatedResource & T)[]>
-    }
-  } => {
+  (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
 
     const { paginationInfo$, getPaginationInfo } = trackPaginationInfo(reader)
 
     paginationInfo$.pipe(takeUntil(reader.$.destroy$)).subscribe()
 
-    const locate = createLocator(reader)
+    const resourcesLocator = new ResourcesLocator(reader)
 
     return {
       ...reader,
+      locateResources: resourcesLocator.locateMultiple,
+      locateResource: resourcesLocator.locate,
       pagination: {
         ...reader.pagination,
         getState: () => getPaginationInfo(),
         state$: paginationInfo$,
-        locate,
-      } as unknown as PaginationOutput & {
-        locate: <T extends LocatableResource>(
-          resources: T[],
-        ) => Observable<(ConsolidatedResource & T)[]>
       },
-    }
+    } as unknown as PaginationOutput
   }

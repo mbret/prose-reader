@@ -1,8 +1,9 @@
 import { waitForFrameLoad } from "@prose-reader/core"
-import { combineLatest, defaultIfEmpty, of, switchMap } from "rxjs"
-import { redrawCanvas } from "./redrawCanvas"
+import { combineLatest, switchMap } from "rxjs"
 
-const copyIframeContents = (
+import { of } from "rxjs"
+
+export const copyIframeContents = (
   originalIframes: NodeListOf<HTMLIFrameElement>,
   clonedIframes: NodeListOf<HTMLIFrameElement>,
 ) => {
@@ -13,6 +14,7 @@ const copyIframeContents = (
       if (!clonedIframe) return of(true)
 
       return waitForFrameLoad(of(clonedIframe)).pipe(
+        // delay(1000),
         switchMap(() => {
           try {
             // Since we know they're same-origin EPUBs, we can directly copy content
@@ -47,37 +49,4 @@ const copyIframeContents = (
       )
     }),
   )
-}
-
-const redrawCanvases = (sourceElement: HTMLElement, clone: HTMLElement) => {
-  const originalCanvases = sourceElement.querySelectorAll("canvas")
-  const clonedCanvases = clone.querySelectorAll("canvas")
-
-  originalCanvases.forEach((originalCanvas, index) => {
-    if (index < clonedCanvases.length) {
-      const clonedCanvas = clonedCanvases[index] as HTMLCanvasElement
-
-      redrawCanvas(originalCanvas, clonedCanvas)
-    }
-  })
-}
-
-export function deepCloneElement(sourceElement: HTMLElement) {
-  // Create a deep clone of the source element
-  const clone = sourceElement.cloneNode(true) as HTMLElement
-
-  // Find all iframes in the original element
-  const originalIframes = sourceElement.querySelectorAll("iframe")
-  // Find all iframes in the cloned element
-  const clonedIframes = clone.querySelectorAll("iframe")
-
-  // Handle canvases in the main document
-  redrawCanvases(sourceElement, clone)
-
-  const copyContents$ = copyIframeContents(originalIframes, clonedIframes)
-
-  return {
-    clone,
-    ready$: copyContents$.pipe(defaultIfEmpty(true)),
-  }
 }

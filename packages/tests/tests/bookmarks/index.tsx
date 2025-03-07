@@ -1,14 +1,14 @@
 import { createReader } from "@prose-reader/core"
-import { generateManifestFromArchive } from "@prose-reader/streamer"
 import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
+import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { createArchiveFromPdf, pdfEnhancer } from "@prose-reader/enhancer-pdf"
+import { generateManifestFromArchive } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
-import { of, switchMap } from "rxjs"
-import { createRoot } from "react-dom/client"
-import { useEffect, useState } from "react"
-import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
+import { useEffect, useState } from "react"
+import { createRoot } from "react-dom/client"
+import { of, switchMap } from "rxjs"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,
@@ -52,7 +52,7 @@ async function run() {
 
     useEffect(() => {
       reader.bookmarks.bookmarks$
-        .pipe(switchMap((bookmarks) => reader.pagination.locate(bookmarks)))
+        .pipe(switchMap((bookmarks) => reader.locateResources(bookmarks)))
         .subscribe((data) => {
           setBookmarks(data)
         })

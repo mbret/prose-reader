@@ -39,7 +39,7 @@ export const SearchDialogContent = memo(
     const searching = search?.type === "start"
     const results = search?.type === "end" ? search.data : []
     const consolidatedResults = useObserve(
-      () => reader?.pagination.locate(results.slice(0, 100)),
+      () => reader?.locateResources(results.slice(0, 100)),
       [results],
     )
 
@@ -79,7 +79,7 @@ export const SearchDialogContent = memo(
                       pageIndex={result.meta?.itemPageIndex}
                       startOffset={result.meta?.range?.startOffset ?? 0}
                       text={text}
-                      cfi={result.cfi}
+                      cfi={result.meta.cfi}
                       onClick={onClick}
                       absolutePageIndex={result.meta?.absolutePageIndex}
                     />

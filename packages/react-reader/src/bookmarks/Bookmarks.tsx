@@ -18,7 +18,7 @@ export const Bookmarks = memo(() => {
     [readerWithBookmarks],
   )
   const consolidatedBookmarks = useObserve(
-    () => reader?.pagination.locate(bookmarks ?? []),
+    () => reader?.locateResources(bookmarks ?? []),
     [reader, bookmarks],
   )
 
@@ -33,7 +33,7 @@ export const Bookmarks = memo(() => {
             index,
           ) => {
             const bookmarkForPage = consolidatedBookmarks?.find(
-              (bookmark) => bookmark.meta?.absolutePageIndex === index,
+              (bookmark) => bookmark?.meta?.absolutePageIndex === index,
             )
 
             /**
@@ -85,7 +85,7 @@ export const Bookmarks = memo(() => {
                       onClick={() => {
                         bookmarkForPage &&
                           readerWithBookmarks?.bookmarks.delete(
-                            bookmarkForPage?.id,
+                            bookmarkForPage.resource.id,
                           )
                       }}
                       size="lg"

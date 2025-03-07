@@ -22,6 +22,8 @@ import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
 
+export type SpineItemReference = string | SpineItem | number
+
 export class SpineItem extends DestroyableClass {
   public readonly containerElement: HTMLElement
   public readonly needsLayout$: Observable<unknown>

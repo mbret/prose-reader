@@ -1,4 +1,4 @@
-import { Box, Button } from "@chakra-ui/react"
+import { Box, Button, Text } from "@chakra-ui/react"
 import type { SpineItem } from "@prose-reader/core"
 import { memo } from "react"
 import { useObserve } from "reactjrx"
@@ -16,23 +16,63 @@ import {
 import { useReader } from "../context/useReader"
 import { useAttachSnapshot } from "./useAttachSnapshot"
 
-const GalleryItem = memo(({ item }: { item: SpineItem }) => {
-  const [setElement, measures, element] = useMeasure()
+const GalleryItem = memo(
+  ({
+    item,
+    onNavigated,
+  }: {
+    item: SpineItem
+    onNavigated: () => void
+  }) => {
+    const [setElement, measures, element] = useMeasure()
+    const reader = useReader()
 
-  useAttachSnapshot(element, item, measures)
+    useAttachSnapshot(element, item, measures)
 
-  return (
-    <Box
-      ref={setElement}
-      width="100%"
-      aspectRatio="2/3"
-      border="1px solid"
-      borderColor="border"
-      borderRadius="md"
-      data-grid-item
-    />
-  )
-})
+    const locatedResource = useObserve(
+      () => reader?.locateResource(item, { mode: "shallow" }),
+      [reader, item],
+    )
+
+    return (
+      <Box
+        width="100%"
+        aspectRatio="2/3"
+        border="1px solid"
+        borderColor="border"
+        borderRadius="md"
+        data-grid-item
+        cursor="pointer"
+        position="relative"
+        overflow="hidden"
+        onClick={() => {
+          onNavigated()
+          reader?.navigation.goToSpineItem({ indexOrId: item })
+        }}
+      >
+        <Box
+          height="100%"
+          width="100%"
+          overflow="hidden"
+          pointerEvents="none"
+          ref={setElement}
+        />
+        <Text
+          position="absolute"
+          bottom={0}
+          left="0"
+          right="0"
+          textAlign="center"
+          bgColor="white"
+          p={4}
+          fontSize="xs"
+        >
+          Page {(locatedResource?.meta?.absolutePageIndex ?? 0) + 1}
+        </Text>
+      </Box>
+    )
+  },
+)
 
 export const GalleryDialog = memo(
   ({
@@ -70,7 +110,13 @@ export const GalleryDialog = memo(
               data-grid
             >
               {items?.map((item) => (
-                <GalleryItem key={item.item.id} item={item} />
+                <GalleryItem
+                  key={item.item.id}
+                  item={item}
+                  onNavigated={() => {
+                    setOpen(false)
+                  }}
+                />
               ))}
             </Box>
           </DialogBody>

@@ -16,7 +16,7 @@ export const AnnotationsDialogContent = memo(
       () =>
         readerWithAnnotations?.annotations.highlights$.pipe(
           switchMap((highlights) =>
-            readerWithAnnotations.pagination.locate(highlights),
+            readerWithAnnotations.locateResources(highlights),
           ),
         ),
       [readerWithAnnotations],
@@ -32,10 +32,10 @@ export const AnnotationsDialogContent = memo(
           onClick={() => {
             onNavigate()
 
-            reader?.navigation.goToCfi(item.cfi ?? "")
+            reader?.navigation.goToCfi(item.meta.cfi ?? "")
           }}
         >
-          {(item.contents ?? [])[0] ? (
+          {(item.resource?.contents ?? [])[0] ? (
             <List.Indicator asChild>
               <LuNotebookPen />
             </List.Indicator>
@@ -46,8 +46,8 @@ export const AnnotationsDialogContent = memo(
           )}
           <Stack gap={0}>
             <Text lineClamp={2} fontSize="md">
-              {item.selectionAsText ? (
-                (item.selectionAsText ?? "")
+              {item.resource?.selectionAsText ? (
+                (item.resource.selectionAsText ?? "")
               ) : (
                 <i>
                   <b>unknown (not loaded)</b>

@@ -14,7 +14,7 @@ export const BookmarksDialogContent = memo(
     const consolidatedBookmarks = useObserve(
       () =>
         readerWithBookmarks?.bookmarks.bookmarks$.pipe(
-          switchMap((items) => readerWithBookmarks.pagination.locate(items)),
+          switchMap((items) => readerWithBookmarks.locateResources(items)),
         ),
       [readerWithBookmarks],
     )
@@ -29,7 +29,7 @@ export const BookmarksDialogContent = memo(
           onClick={() => {
             onNavigate()
 
-            reader?.navigation.goToCfi(item.cfi ?? "")
+            reader?.navigation.goToCfi(item.meta.cfi ?? "")
           }}
         >
           <Stack gap={0}>
@@ -58,7 +58,7 @@ export const BookmarksDialogContent = memo(
           variant="solid"
           size="xs"
           onClick={() => {
-            readerWithBookmarks?.bookmarks.delete(item.id)
+            readerWithBookmarks?.bookmarks.delete(item.resource.id)
           }}
         >
           Delete

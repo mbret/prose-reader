@@ -2,6 +2,7 @@ import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Reader } from "../../../reader"
 import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
+import type { SpineItemReference } from "../../../spineItem/SpineItem"
 import { report } from "../report"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
@@ -83,7 +84,10 @@ export class ManualNavigator {
   goToSpineItem({
     indexOrId,
     ...rest
-  }: { indexOrId: number | string } & Pick<UserNavigationEntry, "animation">) {
+  }: { indexOrId: SpineItemReference } & Pick<
+    UserNavigationEntry,
+    "animation"
+  >) {
     const spineItem = this.reader.spineItemsManager.get(indexOrId)
 
     if (spineItem === undefined) {
@@ -96,7 +100,7 @@ export class ManualNavigator {
     }
 
     this.reader.navigation.navigate({
-      spineItem: indexOrId,
+      spineItem: spineItem.index,
       ...rest,
     })
   }
