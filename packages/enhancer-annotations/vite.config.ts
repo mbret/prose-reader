@@ -1,8 +1,8 @@
+import { resolve } from "node:path"
+import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import { resolve } from "node:path"
 import { name } from "./package.json"
-import externals from "rollup-plugin-node-externals"
 
 const libName = name.replace(`@`, ``).replace(`/`, `-`)
 
@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => ({
         devDeps: true,
       }),
     },
-    dts(),
+    dts({
+      entryRoot: "src",
+    }),
   ],
 }))
