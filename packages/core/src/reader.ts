@@ -1,11 +1,5 @@
-import { BehaviorSubject, type ObservedValueOf, Subject, merge } from "rxjs"
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  takeUntil,
-  withLatestFrom,
-} from "rxjs/operators"
+import { BehaviorSubject, Subject } from "rxjs"
+import { filter, map } from "rxjs/operators"
 import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
 import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
 import { generateCfiFromSelection } from "./cfi/generate/generateCfiFronSelection"
@@ -13,6 +7,7 @@ import { parseCfi } from "./cfi/lookup/parseCfi"
 import { resolveCfi } from "./cfi/lookup/resolveCfi"
 import { HTML_PREFIX } from "./constants"
 import { Context, type ContextState } from "./context/Context"
+import { Features } from "./features/Features"
 import { HookManager } from "./hooks/HookManager"
 import { createNavigator } from "./navigation/Navigator"
 import { Pagination } from "./pagination/Pagination"
@@ -26,7 +21,6 @@ import { SpineItemsManager } from "./spine/SpineItemsManager"
 import type { SpineItem } from "./spineItem/SpineItem"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import { isDefined } from "./utils/isDefined"
-import { isShallowEqual } from "./utils/objects"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
@@ -38,27 +32,11 @@ export type ContextSettings = Partial<CoreInputSettings>
 export type ReaderInternal = ReturnType<typeof createReader>
 
 export const createReader = (inputSettings: CreateReaderOptions) => {
-  const stateSubject$ = new BehaviorSubject<{
-    supportedPageTurnAnimation: NonNullable<
-      ContextSettings[`pageTurnAnimation`]
-    >[]
-    supportedPageTurnMode: NonNullable<ContextSettings[`pageTurnMode`]>[]
-    supportedPageTurnDirection: NonNullable<
-      ContextSettings[`pageTurnDirection`]
-    >[]
-    supportedComputedPageTurnDirection: NonNullable<
-      ContextSettings[`pageTurnDirection`]
-    >[]
-  }>({
-    supportedPageTurnAnimation: [`fade`, `none`, `slide`],
-    supportedPageTurnMode: [`controlled`, `scrollable`],
-    supportedPageTurnDirection: [`horizontal`, `vertical`],
-    supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
-  })
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
   const context = new Context()
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
+  const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
   const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(
     undefined,
@@ -174,54 +152,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     layout()
   }
 
-  merge(context.state$, settingsManager.values$)
-    .pipe(
-      map(() => undefined),
-      withLatestFrom(context.state$),
-      map(([, { hasVerticalWriting }]) => {
-        const manifest = context.manifest
-
-        return {
-          hasVerticalWriting,
-          renditionFlow: manifest?.renditionFlow,
-          renditionLayout: manifest?.renditionLayout,
-          computedPageTurnMode: settingsManager.values.computedPageTurnMode,
-        }
-      }),
-      distinctUntilChanged(isShallowEqual),
-      map(
-        ({
-          hasVerticalWriting,
-          renditionFlow,
-          renditionLayout,
-          computedPageTurnMode,
-        }): ObservedValueOf<typeof stateSubject$> => {
-          return {
-            ...stateSubject$.value,
-            supportedPageTurnMode:
-              renditionFlow === `scrolled-continuous`
-                ? [`scrollable`]
-                : [`controlled`, `scrollable`],
-            supportedPageTurnAnimation:
-              renditionFlow === `scrolled-continuous` ||
-              computedPageTurnMode === `scrollable`
-                ? [`none`]
-                : hasVerticalWriting
-                  ? [`fade`, `none`]
-                  : [`fade`, `none`, `slide`],
-            supportedPageTurnDirection:
-              computedPageTurnMode === `scrollable`
-                ? [`vertical`]
-                : renditionLayout === `reflowable`
-                  ? [`horizontal`]
-                  : [`horizontal`, `vertical`],
-          }
-        },
-      ),
-      takeUntil(destroy$),
-    )
-    .subscribe(stateSubject$)
-
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
@@ -240,7 +170,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     navigator.destroy()
     spine.destroy()
     elementSubject$.getValue()?.remove()
-    stateSubject$.complete()
+    features.destroy()
     destroy$.next()
     destroy$.complete()
     viewport.destroy()
@@ -293,8 +223,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     state$: context.manifest$.pipe(
       map((manifest) => (manifest ? "ready" : "idle")),
     ),
+    features,
     $: {
-      state$: stateSubject$.asObservable(),
       destroy$,
     },
   }

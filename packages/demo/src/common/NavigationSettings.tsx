@@ -17,7 +17,7 @@ export const NavigationSettings = ({
 }) => {
   const settings = useReaderSettings()
   const { reader } = useReader()
-  const readerState = useObserve(() => reader?.$.state$, [reader])
+  const readerState = useObserve(() => reader?.features, [reader])
   const onlySupportScrollableMode =
     readerState?.supportedPageTurnMode.length === 1 &&
     readerState.supportedPageTurnMode[0] === `scrollable`
