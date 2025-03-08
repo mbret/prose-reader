@@ -61,3 +61,7 @@ export const expectSpineItemsInViewport = async ({
 export const turnRight = async ({ page }: { page: Page }) => {
   await page.keyboard.press("ArrowRight")
 }
+
+export const turnLeft = async ({ page }: { page: Page }) => {
+  await page.keyboard.press("ArrowLeft")
+}
