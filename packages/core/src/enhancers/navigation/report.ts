@@ -1,3 +1,3 @@
 import { Report } from "../../report"
 
-export const report = Report.namespace(`navigation`)
+export const navigationReport = Report.namespace(`navigation`)

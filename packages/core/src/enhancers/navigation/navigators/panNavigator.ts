@@ -1,6 +1,6 @@
 import type { Reader } from "../../../reader"
-import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
+import { navigationReport } from "../report"
 
 export class PanNavigator {
   lastDelta = { x: 0, y: 0 }
@@ -15,7 +15,9 @@ export class PanNavigator {
     { final, start }: { start?: boolean; final?: boolean } = {},
   ) {
     if (this.reader.settings.values.computedPageTurnMode === `scrollable`) {
-      Report.warn(`pan control is not available on free page turn mode`)
+      navigationReport.warn(
+        `pan control is not available on free page turn mode`,
+      )
 
       return
     }

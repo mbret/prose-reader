@@ -1,20 +1,20 @@
+import type { Manifest } from "@prose-reader/shared"
 import {
-  catchError,
   EMPTY,
+  type Observable,
+  catchError,
   filter,
   from,
   map,
-  type Observable,
   of,
   switchMap,
   tap,
 } from "rxjs"
-import type { Manifest } from "@prose-reader/shared"
-import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
-import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
-import { Report } from "../../../report"
-import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
+import { Report } from "../../../report"
+import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
+import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
+import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
 
 export const attachFrameSrc = ({
   item,
@@ -87,7 +87,7 @@ export const attachFrameSrc = ({
                 Report.error(
                   `Error while trying to fetch or load resource for item ${item.id}`,
                 )
-                console.error(e)
+                Report.error(e)
 
                 return of(frameElement)
               }),

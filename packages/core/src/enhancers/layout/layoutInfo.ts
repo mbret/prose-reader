@@ -74,7 +74,7 @@ export const createLayoutInfo = (reader: Reader) => {
       }
     }),
     tap((layout) => {
-      Report.log(`layout:info`, layout)
+      Report.debug(`layout:info`, layout)
     }),
     share(),
   )

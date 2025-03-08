@@ -1,6 +1,5 @@
-import { Report } from "../../report"
-import type { SpineItemLocator } from "../../spineItem/locationResolver"
 import type { SpineItem } from "../../spineItem/SpineItem"
+import type { SpineItemLocator } from "../../spineItem/locationResolver"
 import { generateCfi } from "./generateCfi"
 import { getRootCfi } from "./getRootCfi"
 
@@ -10,39 +9,35 @@ import { getRootCfi } from "./getRootCfi"
  *
  * @todo optimize
  */
-export const generateCfiForSpineItemPage = Report.measurePerformance(
-  `getCfi`,
-  10,
-  ({
+export const generateCfiForSpineItemPage = ({
+  pageIndex,
+  spineItem,
+  spineItemLocator,
+}: {
+  pageIndex: number
+  spineItem: SpineItem
+  spineItemLocator: SpineItemLocator
+}) => {
+  const nodeOrRange = spineItemLocator.getFirstNodeOrRangeAtPage(
     pageIndex,
     spineItem,
-    spineItemLocator,
-  }: {
-    pageIndex: number
-    spineItem: SpineItem
-    spineItemLocator: SpineItemLocator
-  }) => {
-    const nodeOrRange = spineItemLocator.getFirstNodeOrRangeAtPage(
-      pageIndex,
-      spineItem,
+  )
+
+  const rendererElement = spineItem.renderer.getDocumentFrame()
+
+  if (
+    nodeOrRange &&
+    rendererElement instanceof HTMLIFrameElement &&
+    rendererElement.contentWindow?.document
+  ) {
+    const cfiString = generateCfi(
+      nodeOrRange.node,
+      nodeOrRange.offset,
+      spineItem.item,
     )
 
-    const rendererElement = spineItem.renderer.getDocumentFrame()
+    return cfiString.trim()
+  }
 
-    if (
-      nodeOrRange &&
-      rendererElement instanceof HTMLIFrameElement &&
-      rendererElement.contentWindow?.document
-    ) {
-      const cfiString = generateCfi(
-        nodeOrRange.node,
-        nodeOrRange.offset,
-        spineItem.item,
-      )
-
-      return cfiString.trim()
-    }
-
-    return getRootCfi(spineItem)
-  },
-)
+  return getRootCfi(spineItem)
+}

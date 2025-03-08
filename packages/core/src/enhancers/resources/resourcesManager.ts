@@ -1,7 +1,7 @@
 /**
  * @todo web worker
  */
-import { EMPTY, forkJoin, from, merge, Subject } from "rxjs"
+import { EMPTY, Subject, forkJoin, from, merge } from "rxjs"
 import {
   catchError,
   map,
@@ -10,9 +10,9 @@ import {
   takeUntil,
   tap,
 } from "rxjs/operators"
+import type { Manifest } from "../.."
 import type { Context } from "../../context/Context"
 import { Report } from "../../report"
-import type { Manifest } from "../.."
 import { openDatabase } from "./indexedDB"
 
 export const createResourcesManager = (context: Context) => {
@@ -107,7 +107,7 @@ export const createResourcesManager = (context: Context) => {
   merge(onLoad$)
     .pipe(
       switchMap(() => {
-        Report.log(`Cleanup up old cache...`)
+        Report.debug(`Cleanup up old cache...`)
 
         return from(openDatabase(`prose-reader`)).pipe(
           switchMap((db) =>

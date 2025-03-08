@@ -1,9 +1,8 @@
 import type { UserNavigationEntry } from "../../../navigation/types"
 import type { Reader } from "../../../reader"
-import { Report } from "../../../report"
 import { SpinePosition } from "../../../spine/types"
 import type { SpineItemReference } from "../../../spineItem/SpineItem"
-import { report } from "../report"
+import { navigationReport } from "../report"
 import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
 import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
 
@@ -91,7 +90,7 @@ export class ManualNavigator {
     const spineItem = this.reader.spineItemsManager.get(indexOrId)
 
     if (spineItem === undefined) {
-      Report.warn(
+      navigationReport.warn(
         `goToSpineItem`,
         `Ignore navigation to ${indexOrId} since the item does not exist`,
       )
@@ -134,7 +133,7 @@ export class ManualNavigator {
 
   goToRightSpineItem() {
     if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
-      Report.warn(
+      navigationReport.warn(
         `You cannot call this navigation method on vertical direction`,
       )
 
@@ -166,7 +165,7 @@ export class ManualNavigator {
 
   goToLeftSpineItem() {
     if (this.reader.settings.values.computedPageTurnDirection === "vertical") {
-      Report.warn(
+      navigationReport.warn(
         `You cannot call this navigation method on vertical direction`,
       )
 
@@ -184,7 +183,7 @@ export class ManualNavigator {
     if (
       this.reader.settings.values.computedPageTurnDirection === "horizontal"
     ) {
-      Report.warn(
+      navigationReport.warn(
         `You cannot call this navigation method on horizontal direction`,
       )
 
@@ -198,7 +197,7 @@ export class ManualNavigator {
     if (
       this.reader.settings.values.computedPageTurnDirection === "horizontal"
     ) {
-      Report.warn(
+      navigationReport.warn(
         `You cannot call this navigation method on horizontal direction`,
       )
 
@@ -222,7 +221,7 @@ export class ManualNavigator {
         spineItemId,
       })
 
-    report.debug(`.goToPageOfSpineItem()`, {
+    navigationReport.debug(`.goToPageOfSpineItem()`, {
       pageIndex,
       spineItemId,
       ...rest,
@@ -244,7 +243,7 @@ export class ManualNavigator {
         absolutePageIndex,
       })
 
-    report.debug(`.goToAbsolutePageIndex()`, {
+    navigationReport.debug(`.goToAbsolutePageIndex()`, {
       absolutePageIndex,
       ...rest,
       foundInfo,

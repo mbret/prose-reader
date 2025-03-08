@@ -1,15 +1,9 @@
 import { takeUntil } from "rxjs"
-import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
-import { NAMESPACE } from "./constants"
 import { trackPaginationInfo } from "./pagination"
 import type { PaginationEnhancerAPI } from "./types"
-
-const report = Report.namespace(NAMESPACE)
-
-void report
 
 export const paginationEnhancer =
   <
