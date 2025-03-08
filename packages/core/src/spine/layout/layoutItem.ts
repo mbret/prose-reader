@@ -173,7 +173,7 @@ export const layoutItem = ({
 
       const layoutPosition = new SpineItemSpineLayout({
         right: context.isRTL()
-          ? viewport.absoluteViewport.width - horizontalOffset - width
+          ? viewport.absoluteViewport.width - horizontalOffset
           : horizontalOffset + width,
         left,
         x: left,
