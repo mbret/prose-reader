@@ -20,7 +20,7 @@
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
     "prepare": "husky"
   },
-  "workspaces": ["packages/*"],
+  "workspaces": ["apps/*", "packages/*"],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/jest": "^29.4.0",
