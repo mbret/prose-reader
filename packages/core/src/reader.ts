@@ -1,4 +1,9 @@
-import { BehaviorSubject, Subject } from "rxjs"
+import {
+  BehaviorSubject,
+  type Observable,
+  type ObservedValueOf,
+  Subject,
+} from "rxjs"
 import { filter, map } from "rxjs/operators"
 import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
 import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
@@ -203,8 +208,12 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     load,
     destroy,
     pagination: {
-      getState: () => pagination.value,
-      state$: pagination,
+      get state() {
+        return pagination.value
+      },
+      get state$(): Observable<ObservedValueOf<typeof pagination>> {
+        return pagination
+      },
     },
     settings: settingsManager as SettingsInterface<
       NonNullable<(typeof settingsManager)["inputSettings"]>,

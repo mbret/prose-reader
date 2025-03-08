@@ -105,7 +105,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   const chaptersInfo$ = trackChapterInfo(reader)
   const totalPages$ = trackTotalPages(reader)
   const currentValue = new BehaviorSubject<EnhancerPaginationInto>({
-    ...reader.pagination.getState(),
+    ...reader.pagination.state,
     beginChapterInfo: undefined,
     beginCfi: undefined,
     beginPageIndexInSpineItem: undefined,
