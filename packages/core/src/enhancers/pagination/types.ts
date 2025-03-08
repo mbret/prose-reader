@@ -1,5 +1,6 @@
 import type { Observable } from "rxjs"
 import type { PaginationInfo } from "../../pagination/Pagination"
+import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { ResourcesLocator } from "./ResourcesLocator"
 import type { ChapterInfo } from "./chapters"
@@ -27,7 +28,7 @@ export type ExtraPaginationInfo = {
 export type EnhancerPaginationInto = PaginationInfo & ExtraPaginationInfo
 
 export type PaginationEnhancerAPI<
-  InheritOutput extends EnhancerOutput<RootEnhancer>,
+  InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,
 > = Omit<InheritOutput, "pagination"> & {
   pagination: Omit<InheritOutput["pagination"], "state$" | "state"> & {
     state$: Observable<PaginationInfo & ExtraPaginationInfo>
