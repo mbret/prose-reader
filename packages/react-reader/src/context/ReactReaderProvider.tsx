@@ -16,9 +16,11 @@ export const ReactReaderProvider = memo(
     quickMenuOpen: boolean
     onQuickMenuOpenChange: (open: boolean) => void
   }) => {
-    const [, quickMenuSignal] = useSignal({
-      default: quickMenuOpen,
-    })
+    const [, quickMenuSignal] = useSignalState(() =>
+      signal({
+        default: quickMenuOpen,
+      }),
+    )
     const onQuickMenuOpenChangeLiveRef = useLiveRef(onQuickMenuOpenChange)
 
     const value = useMemo(

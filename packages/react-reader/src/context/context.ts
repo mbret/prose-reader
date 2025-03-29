@@ -4,7 +4,7 @@ import { type Signal, signal } from "reactjrx"
 
 type ContextType = {
   reader: Reader | undefined
-  quickMenuSignal: Signal<boolean, boolean, undefined>
+  quickMenuSignal: Signal<boolean, undefined>
 }
 
 export const ReaderContext: Context<ContextType> = createContext<ContextType>({

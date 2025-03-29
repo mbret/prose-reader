@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react"
 import { type ComponentProps, useCallback, useEffect } from "react"
-import { useObserve, useSignal, useSubscribe } from "reactjrx"
+import { signal, useObserve, useSignalState, useSubscribe } from "reactjrx"
 import { useReader } from "../context/useReader"
 import { useNavigationContext } from "../navigation/useNavigationContext"
 import { usePagination } from "../pagination/usePagination"
@@ -14,9 +14,11 @@ const useSliderValues = () => {
   const currentPage = isUsingSpread
     ? Math.floor((currentRealPage || 0) / 2)
     : currentRealPage
-  const [value, valueSignal] = useSignal({
-    default: currentPage || 0,
-  })
+  const [value, valueSignal] = useSignalState(() =>
+    signal({
+      default: currentPage || 0,
+    }),
+  )
   const min = 0
   const max = Math.max(
     0,
@@ -26,7 +28,7 @@ const useSliderValues = () => {
   )
 
   useEffect(() => {
-    valueSignal.setValue(currentPage || 0)
+    valueSignal.update(currentPage || 0)
   }, [currentPage, valueSignal])
 
   return {
