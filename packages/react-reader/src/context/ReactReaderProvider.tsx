@@ -1,6 +1,6 @@
 import type { Reader } from "@prose-reader/core"
 import { memo, useEffect, useMemo } from "react"
-import { useLiveRef, useSignal, useSubscribe } from "reactjrx"
+import { signal, useLiveRef, useSignalState, useSubscribe } from "reactjrx"
 import { tap } from "rxjs"
 import { ReaderContext } from "./context"
 
