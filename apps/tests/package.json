@@ -19,7 +19,7 @@
     "@prose-reader/enhancer-search": "^1.120.0",
     "@prose-reader/streamer": "^1.120.0",
     "@vitejs/plugin-react": "^4.3.3",
-    "pdfjs-dist": "^4.7.76",
+    "pdfjs-dist": "^5.1.91",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "xmldoc": "^1.2.0"
