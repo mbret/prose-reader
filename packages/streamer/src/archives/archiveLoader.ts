@@ -1,8 +1,11 @@
 import {
   BehaviorSubject,
+  EMPTY,
+  NEVER,
+  type ObservedValueOf,
+  Subject,
   catchError,
   distinctUntilChanged,
-  EMPTY,
   filter,
   first,
   from,
@@ -10,17 +13,15 @@ import {
   map,
   merge,
   mergeMap,
-  NEVER,
   pairwise,
   shareReplay,
   startWith,
-  Subject,
   switchMap,
   takeUntil,
   tap,
   timer,
-  type ObservedValueOf,
 } from "rxjs"
+import { Report } from "../report"
 import type { Archive } from "./types"
 
 class ArchiveEntry {
@@ -90,6 +91,8 @@ export const createArchiveLoader = ({
       let isClosed = false
 
       const cleanupArchive = (key: string) => {
+        Report.debug(`Cleaning up archive with key: ${key}`)
+
         const entry = archives[key]
 
         delete archives[key]
