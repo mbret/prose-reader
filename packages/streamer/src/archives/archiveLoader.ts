@@ -142,10 +142,14 @@ export const createArchiveLoader = ({
             filter((isUnlocked) => isUnlocked),
           )
 
-          return merge(readyForPurge$, archiveEntry.overTTL$)
-        }),
-        tap(() => {
-          cleanupArchive(key)
+          const toCleanup$ = merge(readyForPurge$, archiveEntry.overTTL$)
+
+          return toCleanup$.pipe(
+            first(),
+            tap(() => {
+              cleanupArchive(key)
+            }),
+          )
         }),
       )
     }),
@@ -212,6 +216,6 @@ export const createArchiveLoader = ({
   return {
     access,
     purge,
-    archives,
+    _archives: archives,
   }
 }

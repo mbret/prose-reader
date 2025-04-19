@@ -1,8 +1,8 @@
+import { catchError, lastValueFrom, of } from "rxjs"
 import { describe, expect, it, vitest } from "vitest"
+import { waitFor } from "../tests/waitFor"
 import { createArchiveLoader } from "./archiveLoader"
 import type { Archive } from "./types"
-import { waitFor } from "../tests/waitFor"
-import { catchError, lastValueFrom, of } from "rxjs"
 
 describe(`Given a TTL`, () => {
   describe(`and the archive is released right away`, () => {
@@ -74,7 +74,7 @@ describe(`Given a TTL`, () => {
 
       release()
 
-      expect(archiveLoader.archives).toEqual({})
+      expect(archiveLoader._archives).toEqual({})
       expect(closeFnMock).toBeCalledTimes(1)
     })
   })
@@ -144,7 +144,7 @@ describe(`Given an archive that rejects`, () => {
     )
 
     expect(result).toBe(error)
-    expect(archiveLoader.archives).toEqual({})
+    expect(archiveLoader._archives).toEqual({})
   })
 })
 
@@ -172,13 +172,13 @@ describe(`Given a long coming archive`, () => {
 
       release()
 
-      expect(archiveLoader.archives._?.state.archive).toEqual(archive)
+      expect(archiveLoader._archives._?.state.archive).toEqual(archive)
 
       expect(closeFnMock).not.toBeCalled()
 
       await waitFor(50)
 
-      expect(archiveLoader.archives).toEqual({})
+      expect(archiveLoader._archives).toEqual({})
 
       expect(closeFnMock).toBeCalledTimes(1)
     })
