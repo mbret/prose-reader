@@ -1,16 +1,16 @@
-import xmldoc from "xmldoc"
-import { parseToc } from "../../../../parsers/nav"
 import type { Manifest } from "@prose-reader/shared"
-import { Report } from "../../../../report"
+import { XmlDocument, type XmlElement } from "xmldoc"
 import type { Archive } from "../../../../archives/types"
-import { getSpineItemInfo } from "./spineItems"
 import { getArchiveOpfInfo } from "../../../../epubs/getArchiveOpfInfo"
 import { getSpineItemFilesFromArchive } from "../../../../epubs/getSpineItemFilesFromArchive"
+import { parseToc } from "../../../../parsers/nav"
+import { Report } from "../../../../report"
+import { getSpineItemInfo } from "./spineItems"
 
 const getItemFromElement = (
-  element: xmldoc.XmlElement,
+  element: XmlElement,
   opfBasePath: string,
-  getBaseUrl?: (element: xmldoc.XmlElement) => string,
+  getBaseUrl?: (element: XmlElement) => string,
 ) => {
   const href = element.attr.href || ``
   const baseUrl = getBaseUrl?.(element)
@@ -25,9 +25,9 @@ const getItemFromElement = (
 }
 
 export const getItemsFromDoc = (
-  doc: xmldoc.XmlDocument,
+  doc: XmlDocument,
   archive: Archive,
-  getBaseUrl?: (element: xmldoc.XmlElement) => string,
+  getBaseUrl?: (element: XmlElement) => string,
 ) => {
   const manifestElm = doc.childNamed(`manifest`)
   const { basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
@@ -53,7 +53,7 @@ export const epubHook =
 
     Report.log(`data`, data)
 
-    const opfXmlDoc = new xmldoc.XmlDocument(data)
+    const opfXmlDoc = new XmlDocument(data)
 
     const toc = (await parseToc(opfXmlDoc, archive, { baseUrl })) || []
 

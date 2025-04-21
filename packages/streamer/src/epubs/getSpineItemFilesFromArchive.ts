@@ -1,4 +1,4 @@
-import xmldoc from "xmldoc"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from "../archives/types"
 import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
 
@@ -14,7 +14,7 @@ export const getSpineItemFilesFromArchive = async ({
 
   if (!data) return []
 
-  const _opfXmlDoc = new xmldoc.XmlDocument(data)
+  const _opfXmlDoc = new XmlDocument(data)
 
   const manifestElm = _opfXmlDoc.childNamed(`manifest`)
   const spineElm = _opfXmlDoc.childNamed(`spine`)

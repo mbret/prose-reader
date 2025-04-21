@@ -1,8 +1,8 @@
+import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
-import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
-import xmldoc from "xmldoc"
-import type { HookResource } from "./types"
 import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
+import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
+import type { HookResource } from "./types"
 
 /**
  * We are trying to metadata from opf file in epub archive.
@@ -14,7 +14,7 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
   const data = await opfInfo.data?.string()
 
   if (data) {
-    const opfXmlDoc = new xmldoc.XmlDocument(data)
+    const opfXmlDoc = new XmlDocument(data)
     const items = getItemsFromDoc(opfXmlDoc, archive, () => "")
 
     // we are comparing opf items relative absolute path in epub archive

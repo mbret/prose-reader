@@ -1,9 +1,9 @@
-import { isXmlBasedMimeType, type Manifest } from "@prose-reader/shared"
-import xmldoc from "xmldoc"
+import { type Manifest, isXmlBasedMimeType } from "@prose-reader/shared"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
 import { getSpineItemFilesFromArchive } from "../../../epubs/getSpineItemFilesFromArchive"
 
-const hasDocMetaViewport = (doc: xmldoc.XmlDocument) => {
+const hasDocMetaViewport = (doc: XmlDocument) => {
   const metaElm = doc
     .descendantWithPath("head")
     ?.childrenNamed("meta")
@@ -31,7 +31,7 @@ const allFilesHaveViewportMeta = (files: Archive["files"]) =>
 
     if (!file) return false
 
-    return hasDocMetaViewport(new xmldoc.XmlDocument(file))
+    return hasDocMetaViewport(new XmlDocument(file))
   }, Promise.resolve(true))
 
 export const epubOptimizerHook =

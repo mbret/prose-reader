@@ -1,9 +1,9 @@
-import xmldoc from "xmldoc"
 import fs from "node:fs"
 import path from "node:path"
-import { parseToc } from "./nav"
+import { describe, expect, it } from "vitest"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from ".."
-import { expect, it, describe } from "vitest"
+import { parseToc } from "./nav"
 
 describe(`Given ncx toc with prefix`, () => {
   it(`should generate toc correctly`, async () => {
@@ -23,7 +23,7 @@ describe(`Given ncx toc with prefix`, () => {
       )
     ).toString()
 
-    const opfXmlDoc = new xmldoc.XmlDocument(opf)
+    const opfXmlDoc = new XmlDocument(opf)
 
     const archive: Archive = {
       filename: `archive`,
@@ -69,7 +69,7 @@ describe("Given a base url with a slash at the end", () => {
       )
     ).toString()
 
-    const opfXmlDoc = new xmldoc.XmlDocument(opf)
+    const opfXmlDoc = new XmlDocument(opf)
 
     const archive: Archive = {
       filename: `archive`,

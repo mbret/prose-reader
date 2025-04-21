@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import xmldoc from "xmldoc"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
 
 export const kobo =
@@ -27,7 +27,7 @@ export const kobo =
     const content = await comicInfoFile.string()
 
     try {
-      const xmlDoc = new xmldoc.XmlDocument(content)
+      const xmlDoc = new XmlDocument(content)
 
       const mangaVal =
         (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`

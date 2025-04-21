@@ -1,4 +1,4 @@
-import xmldoc from "xmldoc"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from ".."
 
 type KoboInformation = {
@@ -13,7 +13,7 @@ export const extractKoboInformationFromArchive = async (archive: Archive) => {
   await Promise.all(
     archive.files.map(async (file) => {
       if (file.uri.endsWith(`com.kobobooks.display-options.xml`)) {
-        const opfXmlDoc = new xmldoc.XmlDocument(await file.string())
+        const opfXmlDoc = new XmlDocument(await file.string())
         const optionElement = opfXmlDoc
           .childNamed(`platform`)
           ?.childNamed(`option`)

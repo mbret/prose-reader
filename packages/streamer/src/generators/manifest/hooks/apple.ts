@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import xmldoc from "xmldoc"
+import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
 
 export const apple =
@@ -17,7 +17,7 @@ export const apple =
     const content = await (await infoFile.blob()).text()
 
     try {
-      const xmlDoc = new xmldoc.XmlDocument(content)
+      const xmlDoc = new XmlDocument(content)
       const platformElement = xmlDoc.childNamed(`platform`)
       const fixedLayoutOption =
         platformElement

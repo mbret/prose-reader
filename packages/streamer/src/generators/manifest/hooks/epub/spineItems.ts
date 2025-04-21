@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import type xmldoc from "xmldoc"
+import type { XmlElement } from "xmldoc"
 
 export type SpineItemProperties =
   // @see https://www.w3.org/TR/epub/#layout-overrides
@@ -10,7 +10,7 @@ export type SpineItemProperties =
   | `page-spread-right`
 
 export const getSpineItemInfo = (
-  itemRefElement: xmldoc.XmlElement,
+  itemRefElement: XmlElement,
 ): Partial<Manifest["spineItems"][number]> => {
   /**
    * @see https://www.w3.org/TR/epub/#attrdef-properties

@@ -21,17 +21,16 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/shared": "^1.208.0"
+    "@prose-reader/shared": "^1.208.0",
+    "xmldoc": "^2.0.0"
   },
   "peerDependencies": {
     "buffer": "^6.0.3",
-    "rxjs": "*",
-    "xmldoc": "^1.1.2"
+    "rxjs": "*"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "devDependencies": {
     "buffer": "^6.0.3",
-    "isomorphic-fetch": "^3.0.0",
-    "xmldoc": "^1.1.2"
+    "isomorphic-fetch": "^3.0.0"
   }
 }

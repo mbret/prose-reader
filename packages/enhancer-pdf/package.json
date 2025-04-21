@@ -17,11 +17,11 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
-    "pdfjs-dist": "^4.8.69"
+    "pdfjs-dist": "^5.1.91"
   },
   "peerDependencies": {
     "@prose-reader/core": "^1.117.0",
-    "pdfjs-dist": "4.x",
+    "pdfjs-dist": "5.x",
     "rxjs": "*"
   }
 }

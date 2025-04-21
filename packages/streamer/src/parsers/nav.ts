@@ -1,9 +1,9 @@
-import xmldoc, { type XmlElement } from "xmldoc"
 import type { Manifest } from "@prose-reader/shared"
-import { type Archive, getArchiveOpfInfo } from ".."
 import { urlJoin } from "@prose-reader/shared"
-import { getXmlElementInnerText } from "./xml"
+import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"
+import { type Archive, getArchiveOpfInfo } from ".."
 import { getUriBasePath } from "../utils/uri"
+import { getXmlElementInnerText } from "./xml"
 
 type Toc = NonNullable<Manifest[`nav`]>[`toc`]
 type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
@@ -57,12 +57,12 @@ const extractNavChapter = (
 }
 
 const buildTOCFromNav = (
-  doc: xmldoc.XmlDocument,
+  doc: XmlDocument,
   { basePath, baseUrl }: { basePath: string; baseUrl: string },
 ) => {
   const toc: Toc = []
 
-  let navDataChildren: xmldoc.XmlNode[] | undefined
+  let navDataChildren: XmlNodeBase[] | undefined
 
   if (doc.descendantWithPath(`body.nav.ol`)) {
     navDataChildren = doc.descendantWithPath(`body.nav.ol`)?.children
@@ -82,7 +82,7 @@ const buildTOCFromNav = (
 }
 
 const parseTocFromNavPath = async (
-  opfXmlDoc: xmldoc.XmlDocument,
+  opfXmlDoc: XmlDocument,
   archive: Archive,
   { baseUrl }: { opfBasePath: string; baseUrl: string },
 ) => {
@@ -98,7 +98,7 @@ const parseTocFromNavPath = async (
     )
 
     if (tocFile) {
-      const doc = new xmldoc.XmlDocument(await tocFile.string())
+      const doc = new XmlDocument(await tocFile.string())
 
       const tocFileBasePath = getUriBasePath(tocFile.uri)
 
@@ -112,7 +112,7 @@ const parseTocFromNavPath = async (
 }
 
 const mapNcxChapter = (
-  point: xmldoc.XmlElement,
+  point: XmlElement,
   {
     opfBasePath,
     baseUrl,
@@ -139,7 +139,7 @@ const mapNcxChapter = (
 }
 
 const buildTOCFromNCX = (
-  ncxData: xmldoc.XmlDocument,
+  ncxData: XmlDocument,
   { opfBasePath, baseUrl }: { opfBasePath: string; baseUrl: string },
 ) => {
   const toc: NonNullable<Manifest[`nav`]>[`toc`] = []
@@ -166,7 +166,7 @@ const parseTocFromNcx = async ({
   baseUrl,
   archive,
 }: {
-  opfData: xmldoc.XmlDocument
+  opfData: XmlDocument
   opfBasePath: string
   archive: Archive
   baseUrl: string
@@ -188,7 +188,7 @@ const parseTocFromNcx = async ({
       )
 
       if (file) {
-        const ncxData = new xmldoc.XmlDocument(await file.string())
+        const ncxData = new XmlDocument(await file.string())
 
         return buildTOCFromNCX(ncxData, { opfBasePath, baseUrl })
       }
@@ -197,7 +197,7 @@ const parseTocFromNcx = async ({
 }
 
 export const parseToc = async (
-  opfXmlDoc: xmldoc.XmlDocument,
+  opfXmlDoc: XmlDocument,
   archive: Archive,
   { baseUrl }: { baseUrl: string },
 ) => {
