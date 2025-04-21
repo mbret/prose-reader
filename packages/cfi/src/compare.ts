@@ -1,7 +1,41 @@
 import { type CfiPart, type ParsedCfi, parse } from "./parse"
 
 /**
- * Compare two CFIs
+ * Collapses a parsed CFI to a single path (private helper for compare)
+ * @param parsed The parsed CFI to collapse
+ * @param toEnd Whether to collapse to the end of a range
+ * @returns A collapsed CFI
+ */
+function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
+  if (typeof parsed === "string") {
+    return collapse(parse(parsed), toEnd)
+  }
+
+  if ("parent" in parsed) {
+    // It's a range
+    if (toEnd) {
+      return parsed.parent.concat(parsed.end)
+    }
+    return parsed.parent.concat(parsed.start)
+  }
+
+  // It's a single CFI
+  return parsed
+}
+
+/**
+ * Get the weight of a step type for sorting
+ * According to rule 9: character offset (:) < child (/) < temporal-spatial (~ or @) < reference (!)
+ */
+function getStepTypeWeight(part: CfiPart): number {
+  if (part.offset !== undefined) return 1 // character offset (:)
+  if (part.index !== undefined) return 2 // child (/)
+  if (part.temporal !== undefined || part.spatial !== undefined) return 3 // temporal-spatial (~ or @)
+  return 4 // reference (!)
+}
+
+/**
+ * Compare two CFIs according to the EPUB CFI specification sorting rules (section 3.2)
  * @param a The first CFI
  * @param b The second CFI
  * @returns -1 if a < b, 0 if a = b, 1 if a > b
@@ -89,38 +123,4 @@ export function compare(a: ParsedCfi | string, b: ParsedCfi | string): number {
   }
 
   return 0
-}
-
-/**
- * Get the weight of a step type for sorting
- * According to rule 9: character offset (:) < child (/) < temporal-spatial (~ or @) < reference (!)
- */
-function getStepTypeWeight(part: CfiPart): number {
-  if (part.offset !== undefined) return 1 // character offset (:)
-  if (part.index !== undefined) return 2 // child (/)
-  if (part.temporal !== undefined || part.spatial !== undefined) return 3 // temporal-spatial (~ or @)
-  return 4 // reference (!)
-}
-
-/**
- * Collapse a parsed CFI to a single path
- * @param parsed The parsed CFI to collapse
- * @param toEnd Whether to collapse to the end of a range
- * @returns A collapsed CFI
- */
-export function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
-  if (typeof parsed === "string") {
-    return collapse(parse(parsed), toEnd)
-  }
-
-  if ("parent" in parsed) {
-    // It's a range
-    if (toEnd) {
-      return parsed.parent.concat(parsed.end)
-    }
-    return parsed.parent.concat(parsed.start)
-  }
-
-  // It's a single CFI
-  return parsed
 }

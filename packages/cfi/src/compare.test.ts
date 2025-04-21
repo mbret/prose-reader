@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { collapse, compare } from "./compare"
+import { compare } from "./compare"
 import { parse } from "./parse"
 
 describe("EPUB CFI Sorting", () => {
@@ -130,55 +130,62 @@ describe("EPUB CFI Sorting", () => {
       expect(compare(a, b)).toBe(-1)
       expect(compare(b, a)).toBe(1)
     })
-  })
-})
 
-describe("collapse", () => {
-  it("should collapse a CFI range to its start", () => {
-    const cfi = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
-    const parsed = parse(cfi)
-    const collapsed = collapse(parsed)
+    // Indirectly testing collapse functionality through range comparisons
+    it("should compare ranges by collapsing to start path first", () => {
+      // These ranges have the same parent and end but different start positions
+      const a = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
+      const b = "epubcfi(/4[body01]/10[para05],/2/1:2,/3:4)"
 
-    expect(collapsed).toEqual([
-      [
-        { index: 4, id: "body01" },
-        { index: 10, id: "para05" },
-      ],
-      [{ index: 2 }, { index: 1, offset: 1 }],
-    ])
-  })
+      // Compare should use the collapsed start path to determine order
+      expect(compare(a, b)).toBe(-1)
+    })
 
-  it("should collapse a CFI range to its end", () => {
-    const cfi = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
-    const parsed = parse(cfi)
-    const collapsed = collapse(parsed, true)
+    it("should compare ranges by collapsing to end path when start paths are equal", () => {
+      // These ranges have the same parent and start but different end positions
+      const a = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
+      const b = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:5)"
 
-    expect(collapsed).toEqual([
-      [
-        { index: 4, id: "body01" },
-        { index: 10, id: "para05" },
-      ],
-      [{ index: 3, offset: 4 }],
-    ])
-  })
-})
-
-describe("compare", () => {
-  it("should compare two CFIs", () => {
-    const a = "epubcfi(/4[body01]/10[para05]/2:3)"
-    const b = "epubcfi(/4[body01]/10[para05]/2:5)"
-
-    expect(compare(a, b)).toBe(-1)
-    expect(compare(b, a)).toBe(1)
-    expect(compare(a, a)).toBe(0)
+      // Compare should use the collapsed end path to determine order
+      expect(compare(a, b)).toBe(-1)
+    })
   })
 
-  it("should compare two CFI ranges", () => {
-    const a = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
-    const b = "epubcfi(/4[body01]/10[para05],/2/1:2,/3:4)"
+  describe("General compare functionality", () => {
+    it("should compare two CFIs", () => {
+      const a = "epubcfi(/4[body01]/10[para05]/2:3)"
+      const b = "epubcfi(/4[body01]/10[para05]/2:5)"
 
-    expect(compare(a, b)).toBe(-1)
-    expect(compare(b, a)).toBe(1)
-    expect(compare(a, a)).toBe(0)
+      expect(compare(a, b)).toBe(-1)
+      expect(compare(b, a)).toBe(1)
+      expect(compare(a, a)).toBe(0)
+    })
+
+    it("should compare two CFI ranges", () => {
+      const a = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
+      const b = "epubcfi(/4[body01]/10[para05],/2/1:2,/3:4)"
+
+      expect(compare(a, b)).toBe(-1)
+      expect(compare(b, a)).toBe(1)
+      expect(compare(a, a)).toBe(0)
+    })
+
+    it("should compare CFIs using parsed objects or strings", () => {
+      const aStr = "epubcfi(/4[body01]/10[para05]/2:3)"
+      const bStr = "epubcfi(/4[body01]/10[para05]/2:5)"
+
+      const aParsed = parse(aStr)
+      const bParsed = parse(bStr)
+
+      // String to string
+      expect(compare(aStr, bStr)).toBe(-1)
+
+      // Parsed to parsed
+      expect(compare(aParsed, bParsed)).toBe(-1)
+
+      // Mixed
+      expect(compare(aStr, bParsed)).toBe(-1)
+      expect(compare(aParsed, bStr)).toBe(-1)
+    })
   })
 })
