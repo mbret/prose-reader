@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "devDependencies": {
     "typescript": "~5.7.2",
     "vite": "^6.3.1"
+  },
+  "dependencies": {
+    "epub-cfi-resolver": "^1.0.2"
   }
 }
