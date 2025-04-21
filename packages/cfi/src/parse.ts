@@ -3,7 +3,7 @@
  * Based on the EPUB CFI 1.1 specification: https://idpf.org/epub/linking/cfi/epub-cfi.html
  */
 
-import { cfiEscape } from "./utils"
+import { cfiEscape, isCFI, wrapCfi } from "./utils"
 
 /**
  * Interface for a parsed CFI part
@@ -32,29 +32,6 @@ export interface CfiRange {
  * Interface for a parsed CFI
  */
 export type ParsedCfi = CfiPart[][] | CfiRange
-
-/**
- * Regular expression to check if a string is a valid CFI
- */
-export const isCFI = /^epubcfi\((.*)\)$/
-
-/**
- * Unescape special characters in a CFI string
- * @param str The string to unescape
- * @returns The unescaped string
- */
-export function cfiUnescape(str: string): string {
-  return str.replace(/\^([\[\]\^,();])/g, "$1")
-}
-
-/**
- * Wrap a CFI string in the epubcfi() function
- * @param cfi The CFI string to wrap
- * @returns The wrapped CFI string
- */
-export function wrapCfi(cfi: string): string {
-  return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`
-}
 
 /**
  * Unwrap a CFI string from the epubcfi() function

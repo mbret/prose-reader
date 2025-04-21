@@ -44,3 +44,17 @@ export function findCommonAncestor(nodeA: Node, nodeB: Node): Node | null {
 export function cfiEscape(str: string): string {
   return str.replace(/[\[\]\^,();]/g, `^$&`)
 }
+
+/**
+ * Wrap a CFI string in the epubcfi() function
+ * @param cfi The CFI string to wrap
+ * @returns The wrapped CFI string
+ */
+export function wrapCfi(cfi: string): string {
+  return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`
+}
+
+/**
+ * Regular expression to check if a string is a valid CFI
+ */
+export const isCFI = /^epubcfi\((.*)\)$/
