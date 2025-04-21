@@ -7,33 +7,33 @@
  * Interface for a parsed CFI part
  */
 export interface CfiPart {
-  index: number;
-  id?: string;
-  offset?: number;
-  temporal?: number;
-  spatial?: number[];
-  text?: string[];
-  side?: string;
+  index: number
+  id?: string
+  offset?: number
+  temporal?: number
+  spatial?: number[]
+  text?: string[]
+  side?: string
 }
 
 /**
  * Interface for a parsed CFI range
  */
 export interface CfiRange {
-  parent: CfiPart[][];
-  start: CfiPart[][];
-  end: CfiPart[][];
+  parent: CfiPart[][]
+  start: CfiPart[][]
+  end: CfiPart[][]
 }
 
 /**
  * Interface for a parsed CFI
  */
-export type ParsedCfi = CfiPart[][] | CfiRange;
+export type ParsedCfi = CfiPart[][] | CfiRange
 
 /**
  * Regular expression to check if a string is a valid CFI
  */
-export const isCFI = /^epubcfi\((.*)\)$/;
+export const isCFI = /^epubcfi\((.*)\)$/
 
 /**
  * Escape special characters in a CFI string
@@ -41,7 +41,7 @@ export const isCFI = /^epubcfi\((.*)\)$/;
  * @returns The escaped string
  */
 export function cfiEscape(str: string): string {
-  return str.replace(/[\[\]\^,();]/g, `^$&`);
+  return str.replace(/[\[\]\^,();]/g, `^$&`)
 }
 
 /**
@@ -50,7 +50,7 @@ export function cfiEscape(str: string): string {
  * @returns The unescaped string
  */
 export function cfiUnescape(str: string): string {
-  return str.replace(/\^([\[\]\^,();])/g, '$1');
+  return str.replace(/\^([\[\]\^,();])/g, "$1")
 }
 
 /**
@@ -59,7 +59,7 @@ export function cfiUnescape(str: string): string {
  * @returns The wrapped CFI string
  */
 export function wrapCfi(cfi: string): string {
-  return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`;
+  return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`
 }
 
 /**
@@ -68,8 +68,8 @@ export function wrapCfi(cfi: string): string {
  * @returns The unwrapped CFI string
  */
 export function unwrapCfi(cfi: string): string {
-  const match = cfi.match(isCFI);
-  return match ? match[1] : cfi;
+  const match = cfi.match(isCFI)
+  return match ? match[1] : cfi
 }
 
 /**
@@ -78,102 +78,99 @@ export function unwrapCfi(cfi: string): string {
  * @returns An array of tokens
  */
 function tokenize(cfi: string): Array<[string, any]> {
-  const tokens: Array<[string, any]> = [];
-  let state: string | null = null;
-  let escape = false;
-  let value = '';
-  
+  const tokens: Array<[string, any]> = []
+  let state: string | null = null
+  let escape = false
+  let value = ""
+
   const push = (token: [string, any]) => {
-    tokens.push(token);
-    state = null;
-    value = '';
-  };
-  
+    tokens.push(token)
+    state = null
+    value = ""
+  }
+
   const cat = (char: string) => {
-    value += char;
-    escape = false;
-  };
-  
-  const chars = Array.from(unwrapCfi(cfi).trim()).concat('');
-  
+    value += char
+    escape = false
+  }
+
+  const chars = Array.from(unwrapCfi(cfi).trim()).concat("")
+
   for (const char of chars) {
-    if (char === '^' && !escape) {
-      escape = true;
-      continue;
+    if (char === "^" && !escape) {
+      escape = true
+      continue
     }
-    
-    if (state === '!') {
-      push(['!', null]);
-    } else if (state === ',') {
-      push([',', null]);
-    } else if (state === '/' || state === ':') {
+
+    if (state === "!") {
+      push(["!", null])
+    } else if (state === ",") {
+      push([",", null])
+    } else if (state === "/" || state === ":") {
       if (/^\d$/.test(char)) {
-        cat(char);
-        continue;
-      } else {
-        push([state, parseInt(value, 10)]);
+        cat(char)
+        continue
       }
-    } else if (state === '~') {
-      if (/^\d$/.test(char) || char === '.') {
-        cat(char);
-        continue;
-      } else {
-        push(['~', parseFloat(value)]);
+      push([state, parseInt(value, 10)])
+    } else if (state === "~") {
+      if (/^\d$/.test(char) || char === ".") {
+        cat(char)
+        continue
       }
-    } else if (state === '@') {
-      if (char === ':') {
-        push(['@', parseFloat(value)]);
-        state = '@';
-        continue;
+      push(["~", parseFloat(value)])
+    } else if (state === "@") {
+      if (char === ":") {
+        push(["@", parseFloat(value)])
+        state = "@"
+        continue
       }
-      if (/^\d$/.test(char) || char === '.') {
-        cat(char);
-        continue;
-      } else {
-        push(['@', parseFloat(value)]);
+      if (/^\d$/.test(char) || char === ".") {
+        cat(char)
+        continue
       }
-    } else if (state === '[') {
-      if (char === ';' && !escape) {
-        push(['[', value]);
-        state = ';';
-      } else if (char === ',' && !escape) {
-        push(['[', value]);
-        state = '[';
-      } else if (char === ']' && !escape) {
-        push(['[', value]);
+      push(["@", parseFloat(value)])
+    } else if (state === "[") {
+      if (char === ";" && !escape) {
+        push(["[", value])
+        state = ";"
+      } else if (char === "," && !escape) {
+        push(["[", value])
+        state = "["
+      } else if (char === "]" && !escape) {
+        push(["[", value])
       } else {
-        cat(char);
-        continue;
+        cat(char)
+        continue
       }
-    } else if (state?.startsWith(';')) {
-      if (char === '=' && !escape) {
-        state = `;${value}`;
-        value = '';
-      } else if (char === ';' && !escape) {
-        push([state, value]);
-        state = ';';
-      } else if (char === ']' && !escape) {
-        push([state, value]);
+    } else if (state?.startsWith(";")) {
+      if (char === "=" && !escape) {
+        state = `;${value}`
+        value = ""
+      } else if (char === ";" && !escape) {
+        push([state, value])
+        state = ";"
+      } else if (char === "]" && !escape) {
+        push([state, value])
       } else {
-        cat(char);
-        continue;
+        cat(char)
+        continue
       }
     }
-    
+
     if (
-      char === '/' ||
-      char === ':' ||
-      char === '~' ||
-      char === '@' ||
-      char === '[' ||
-      char === '!' ||
-      char === ','
+      char === "/" ||
+      char === ":" ||
+      char === "~" ||
+      char === "@" ||
+      char === "[" ||
+      char === "!" ||
+      char === ","
     ) {
-      state = char;
+      state = char
     }
   }
-  
-  return tokens;
+
+  return tokens
 }
 
 /**
@@ -182,14 +179,17 @@ function tokenize(cfi: string): Array<[string, any]> {
  * @param type The type to find
  * @returns An array of indices
  */
-function findTokenIndices(tokens: Array<[string, any]> | undefined, type: string): number[] {
+function findTokenIndices(
+  tokens: Array<[string, any]> | undefined,
+  type: string,
+): number[] {
   if (!tokens) {
-    return [];
+    return []
   }
-  
+
   return tokens
     .map((token, i) => (token[0] === type ? i : null))
-    .filter((i): i is number => i !== null);
+    .filter((i): i is number => i !== null)
 }
 
 /**
@@ -199,16 +199,16 @@ function findTokenIndices(tokens: Array<[string, any]> | undefined, type: string
  * @returns An array of arrays
  */
 function splitAt<T>(arr: T[], indices: number[]): T[][] {
-  const result: T[][] = [];
-  let start = 0;
-  
+  const result: T[][] = []
+  let start = 0
+
   for (const index of indices) {
-    result.push(arr.slice(start, index));
-    start = index;
+    result.push(arr.slice(start, index))
+    start = index
   }
-  
-  result.push(arr.slice(start));
-  return result;
+
+  result.push(arr.slice(start))
+  return result
 }
 
 /**
@@ -217,37 +217,76 @@ function splitAt<T>(arr: T[], indices: number[]): T[][] {
  * @returns An array of CFI parts
  */
 function parsePart(tokens: Array<[string, any]>): CfiPart[] {
-  const parts: CfiPart[] = [];
-  let state: string | null = null;
+  const parts: CfiPart[] = []
   
-  for (const [type, val] of tokens) {
+  // Keep track of tokens for each path step
+  const pathStepTokens: { [key: number]: Array<[string, any]> } = {}
+  let currentPathStep = -1
+  
+  // First pass: group tokens by path step
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (!token) continue
+    
+    const [type, val] = token
+    
     if (type === '/') {
-      parts.push({ index: val });
-    } else {
-      const last = parts[parts.length - 1];
-      if (!last) continue;
+      currentPathStep++
+      parts.push({ index: val })
+      pathStepTokens[currentPathStep] = []
+    } else if (currentPathStep >= 0) {
+      pathStepTokens[currentPathStep].push(token)
+    }
+  }
+  
+  // Second pass: process tokens for each path step
+  for (let stepIndex = 0; stepIndex < parts.length; stepIndex++) {
+    const currentPart = parts[stepIndex]
+    const stepsTokens = pathStepTokens[stepIndex] || []
+    
+    // In the CFI spec, ID assertions are used to identify XML elements by their ID
+    // Text assertions are for correcting the target location
+    // Per the spec, the ID assertion only comes immediately after a step,
+    // and it should be an actual element ID, not arbitrary text
+    
+    for (let i = 0; i < stepsTokens.length; i++) {
+      const [type, val] = stepsTokens[i]
       
       if (type === ':') {
-        last.offset = val;
+        currentPart.offset = val
       } else if (type === '~') {
-        last.temporal = val;
+        currentPart.temporal = val
       } else if (type === '@') {
-        last.spatial = (last.spatial || []).concat(val);
+        currentPart.spatial = (currentPart.spatial || []).concat(val)
+      } else if (type === ';s') {
+        currentPart.side = val
       } else if (type.startsWith(';')) {
-        last.side = val;
+        // Other parameters (ignored)
       } else if (type === '[') {
-        if (state === '/' && val) {
-          last.id = val;
+        // Now the key logic:
+        // 1. ID assertions appear immediately after a path step (first token)
+        // 2. ID assertions should be valid XML IDs (generally short, no spaces)
+        // 3. Text assertions could be longer and may contain spaces
+        
+        // If this is the first token for this step AND it looks like an ID
+        // (no spaces, reasonable length), it's an ID assertion
+        const looksLikeId = typeof val === 'string' && 
+                           !val.includes(' ') && 
+                           val.length < 50
+                           
+        if (i === 0 && looksLikeId && !currentPart.id) {
+          currentPart.id = val
         } else {
-          last.text = (last.text || []).concat(val);
-          continue;
+          // Otherwise, it's a text assertion
+          if (val !== '') {
+            currentPart.text = (currentPart.text || []).concat(val)
+          }
         }
       }
     }
-    state = type;
   }
   
-  return parts;
+  return parts
 }
 
 /**
@@ -256,8 +295,8 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
  * @returns An array of arrays of CFI parts
  */
 function parseIndirection(tokens: Array<[string, any]>): CfiPart[][] {
-  const indirectionIndices = findTokenIndices(tokens, '!');
-  return splitAt(tokens, indirectionIndices).map(parsePart);
+  const indirectionIndices = findTokenIndices(tokens, "!")
+  return splitAt(tokens, indirectionIndices).map(parsePart)
 }
 
 /**
@@ -267,27 +306,27 @@ function parseIndirection(tokens: Array<[string, any]>): CfiPart[][] {
  */
 export function parse(cfi: string): ParsedCfi {
   if (!cfi) {
-    throw new Error("CFI string cannot be empty");
+    throw new Error("CFI string cannot be empty")
   }
-  
-  const tokens = tokenize(cfi);
+
+  const tokens = tokenize(cfi)
   if (!tokens || tokens.length === 0) {
-    throw new Error("Failed to tokenize CFI string");
+    throw new Error("Failed to tokenize CFI string")
   }
-  
-  const commaIndices = findTokenIndices(tokens, ',');
-  
+
+  const commaIndices = findTokenIndices(tokens, ",")
+
   if (commaIndices.length === 0) {
-    return parseIndirection(tokens);
+    return parseIndirection(tokens)
   }
-  
-  const [parentTokens, startTokens, endTokens] = splitAt(tokens, commaIndices);
-  
+
+  const [parentTokens, startTokens, endTokens] = splitAt(tokens, commaIndices)
+
   return {
     parent: parseIndirection(parentTokens || []),
     start: parseIndirection(startTokens || []),
-    end: parseIndirection(endTokens || [])
-  };
+    end: parseIndirection(endTokens || []),
+  }
 }
 
 /**
@@ -296,18 +335,18 @@ export function parse(cfi: string): ParsedCfi {
  * @returns A string representation of the CFI part
  */
 function partToString(part: CfiPart): string {
-  const param = part.side ? `;s=${part.side}` : '';
-  
+  const param = part.side ? `;s=${part.side}` : ""
+
   return (
     `/${part.index}` +
-    (part.id ? `[${cfiEscape(part.id)}${param}]` : '') +
-    (part.offset != null && part.index % 2 ? `:${part.offset}` : '') +
-    (part.temporal ? `~${part.temporal}` : '') +
-    (part.spatial ? `@${part.spatial.join(':')}` : '') +
+    (part.id ? `[${cfiEscape(part.id)}${param}]` : "") +
+    (part.offset != null && part.index % 2 ? `:${part.offset}` : "") +
+    (part.temporal ? `~${part.temporal}` : "") +
+    (part.spatial ? `@${part.spatial.join(":")}` : "") +
     (part.text || (!part.id && part.side)
-      ? `[${(part.text || []).map(cfiEscape).join(',')}${param}]`
-      : '')
-  );
+      ? `[${(part.text || []).map(cfiEscape).join(",")}${param}]`
+      : "")
+  )
 }
 
 /**
@@ -316,16 +355,24 @@ function partToString(part: CfiPart): string {
  * @returns A string representation of the CFI
  */
 export function parsedCfiToString(parsed: ParsedCfi): string {
-  if ('parent' in parsed) {
+  if ("parent" in parsed) {
     // It's a range
-    const parent = parsed.parent.map(parts => parts.map(partToString).join('')).join('!');
-    const start = parsed.start.map(parts => parts.map(partToString).join('')).join('!');
-    const end = parsed.end.map(parts => parts.map(partToString).join('')).join('!');
-    
-    return wrapCfi(`${parent},${start},${end}`);
+    const parent = parsed.parent
+      .map((parts) => parts.map(partToString).join(""))
+      .join("!")
+    const start = parsed.start
+      .map((parts) => parts.map(partToString).join(""))
+      .join("!")
+    const end = parsed.end
+      .map((parts) => parts.map(partToString).join(""))
+      .join("!")
+
+    return wrapCfi(`${parent},${start},${end}`)
   } else {
     // It's a single CFI
-    return wrapCfi(parsed.map(parts => parts.map(partToString).join('')).join('!'));
+    return wrapCfi(
+      parsed.map((parts) => parts.map(partToString).join("")).join("!"),
+    )
   }
 }
 
@@ -336,21 +383,21 @@ export function parsedCfiToString(parsed: ParsedCfi): string {
  * @returns A collapsed CFI
  */
 export function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
-  if (typeof parsed === 'string') {
-    return collapse(parse(parsed), toEnd);
+  if (typeof parsed === "string") {
+    return collapse(parse(parsed), toEnd)
   }
-  
-  if ('parent' in parsed) {
+
+  if ("parent" in parsed) {
     // It's a range
     if (toEnd) {
-      return parsed.parent.concat(parsed.end);
+      return parsed.parent.concat(parsed.end)
     } else {
-      return parsed.parent.concat(parsed.start);
+      return parsed.parent.concat(parsed.start)
     }
   }
-  
+
   // It's a single CFI
-  return parsed;
+  return parsed
 }
 
 /**
@@ -360,39 +407,39 @@ export function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
  * @returns -1 if a < b, 0 if a = b, 1 if a > b
  */
 export function compare(a: ParsedCfi | string, b: ParsedCfi | string): number {
-  if (typeof a === 'string') a = parse(a);
-  if (typeof b === 'string') b = parse(b);
-  
-  if ('parent' in a || 'parent' in b) {
+  if (typeof a === "string") a = parse(a)
+  if (typeof b === "string") b = parse(b)
+
+  if ("parent" in a || "parent" in b) {
     // At least one is a range
     return (
       compare(collapse(a), collapse(b)) ||
       compare(collapse(a, true), collapse(b, true))
-    );
+    )
   }
-  
+
   // Both are single CFIs
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const p = a[i] || [];
-    const q = b[i] || [];
-    const maxIndex = Math.max(p.length, q.length) - 1;
-    
+    const p = a[i] || []
+    const q = b[i] || []
+    const maxIndex = Math.max(p.length, q.length) - 1
+
     for (let i = 0; i <= maxIndex; i++) {
-      const x = p[i];
-      const y = q[i];
-      
-      if (!x) return -1;
-      if (!y) return 1;
-      if (x.index > y.index) return 1;
-      if (x.index < y.index) return -1;
-      
+      const x = p[i]
+      const y = q[i]
+
+      if (!x) return -1
+      if (!y) return 1
+      if (x.index > y.index) return 1
+      if (x.index < y.index) return -1
+
       if (i === maxIndex) {
         // Compare offsets
-        if (x.offset > y.offset) return 1;
-        if (x.offset < y.offset) return -1;
+        if (x.offset > y.offset) return 1
+        if (x.offset < y.offset) return -1
       }
     }
   }
-  
-  return 0;
+
+  return 0
 }
