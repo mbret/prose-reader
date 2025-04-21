@@ -3,6 +3,8 @@
  * Based on the EPUB CFI 1.1 specification: https://idpf.org/epub/linking/cfi/epub-cfi.html
  */
 
+import { cfiEscape } from "./utils"
+
 /**
  * Interface for a parsed CFI part
  */
@@ -35,15 +37,6 @@ export type ParsedCfi = CfiPart[][] | CfiRange
  * Regular expression to check if a string is a valid CFI
  */
 export const isCFI = /^epubcfi\((.*)\)$/
-
-/**
- * Escape special characters in a CFI string
- * @param str The string to escape
- * @returns The escaped string
- */
-export function cfiEscape(str: string): string {
-  return str.replace(/[\[\]\^,();]/g, `^$&`)
-}
 
 /**
  * Unescape special characters in a CFI string
@@ -449,71 +442,4 @@ export function parsedCfiToString(parsed: ParsedCfi): string {
   return wrapCfi(
     parsed.map((parts) => parts.map(partToString).join("")).join("!"),
   )
-}
-
-/**
- * Collapse a parsed CFI to a single path
- * @param parsed The parsed CFI to collapse
- * @param toEnd Whether to collapse to the end of a range
- * @returns A collapsed CFI
- */
-export function collapse(parsed: ParsedCfi, toEnd = false): CfiPart[][] {
-  if (typeof parsed === "string") {
-    return collapse(parse(parsed), toEnd)
-  }
-
-  if ("parent" in parsed) {
-    // It's a range
-    if (toEnd) {
-      return parsed.parent.concat(parsed.end)
-    }
-    return parsed.parent.concat(parsed.start)
-  }
-
-  // It's a single CFI
-  return parsed
-}
-
-/**
- * Compare two CFIs
- * @param a The first CFI
- * @param b The second CFI
- * @returns -1 if a < b, 0 if a = b, 1 if a > b
- */
-export function compare(a: ParsedCfi | string, b: ParsedCfi | string): number {
-  const aParsed = typeof a === "string" ? parse(a) : a
-  const bParsed = typeof b === "string" ? parse(b) : b
-
-  if ("parent" in aParsed || "parent" in bParsed) {
-    // At least one is a range
-    return (
-      compare(collapse(aParsed), collapse(bParsed)) ||
-      compare(collapse(aParsed, true), collapse(bParsed, true))
-    )
-  }
-
-  // Both are single CFIs
-  for (let i = 0; i < Math.max(aParsed.length, bParsed.length); i++) {
-    const p = aParsed[i] || []
-    const q = bParsed[i] || []
-    const maxIndex = Math.max(p.length, q.length) - 1
-
-    for (let i = 0; i <= maxIndex; i++) {
-      const x = p[i]
-      const y = q[i]
-
-      if (!x) return -1
-      if (!y) return 1
-      if (x.index > y.index) return 1
-      if (x.index < y.index) return -1
-
-      if (i === maxIndex) {
-        // Compare offsets
-        if ((x.offset ?? 0) > (y.offset ?? 0)) return 1
-        if ((x.offset ?? 0) < (y.offset ?? 0)) return -1
-      }
-    }
-  }
-
-  return 0
 }
