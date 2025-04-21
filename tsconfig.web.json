@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
     "noImplicitAny": true,
-    "module": "es6",
+    "module": "ESNext",
     "target": "es6",
     "lib": ["dom", "esnext"],
     "strict": true,
     "allowJs": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "noUncheckedIndexedAccess": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
     "declaration": true,
     "removeComments": true,
     "noEmit": true,
@@ -18,7 +20,13 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "useDefineForClassFields": true
   },
   "exclude": ["**/dist"]
 }

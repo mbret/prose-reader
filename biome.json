@@ -10,6 +10,7 @@
     "ignore": [
       ".nx",
       "**/.test/**",
+      "**/test-results/**",
       "**/dist/**",
       "CfiHandler.ts",
       "**/playwright-report/**"
