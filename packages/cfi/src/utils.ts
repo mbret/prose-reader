@@ -37,3 +37,10 @@ export function findCommonAncestor(nodeA: Node, nodeB: Node): Node | null {
 
   return commonAncestor
 }
+
+/**
+ * Escape special characters in a CFI string
+ */
+export function cfiEscape(str: string): string {
+  return str.replace(/[\[\]\^,();]/g, `^$&`)
+}

@@ -2,14 +2,7 @@
  * EPUB Canonical Fragment Identifier (CFI) utilities
  */
 
-import { findCommonAncestor } from "./utils"
-
-/**
- * Escape special characters in a CFI string
- */
-function cfiEscape(str: string): string {
-  return str.replace(/[\[\]\^,();]/g, `^$&`)
-}
+import { cfiEscape, findCommonAncestor } from "./utils"
 
 /**
  * Options for generating CFIs
@@ -30,6 +23,12 @@ export interface GenerateOptions {
    * Whether to include a side bias assertion
    */
   includeSideBias?: "before" | "after"
+  
+  /**
+   * Whether to include spatial coordinates (for image or video)
+   * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
+   */
+  spatialOffset?: [number, number]
 }
 
 /**
@@ -45,6 +44,17 @@ export interface CfiPosition {
    * Character offset within the node (for text nodes)
    */
   offset?: number
+  
+  /**
+   * Temporal position in seconds (for audio/video content)
+   */
+  temporal?: number
+  
+  /**
+   * Spatial position as [x,y] coordinates (for image or video)
+   * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
+   */
+  spatial?: [number, number]
 }
 
 /**
@@ -82,6 +92,7 @@ function generatePoint(
   node: Node,
   offset?: number,
   options: GenerateOptions = {},
+  position?: CfiPosition
 ): string {
   let cfi = ""
   let currentNode: Node | null = node
@@ -134,6 +145,28 @@ function generatePoint(
   if (offset !== undefined) {
     cfi += `:${offset}`
   }
+  
+  // Add temporal offset if provided (from position parameter)
+  const temporal = position?.temporal
+  if (temporal !== undefined) {
+    cfi += `~${temporal}`
+  }
+  
+  // Add spatial offset if provided (from position parameter or options)
+  const spatial = position?.spatial || options.spatialOffset
+  if (spatial !== undefined) {
+    const [x, y] = spatial
+    // Ensure values are within 0-100 range
+    const safeX = Math.max(0, Math.min(100, x))
+    const safeY = Math.max(0, Math.min(100, y))
+    
+    // If we already added temporal offset, don't add the @ symbol
+    if (temporal !== undefined) {
+      cfi += `@${safeX}:${safeY}`
+    } else {
+      cfi += `@${safeX}:${safeY}`
+    }
+  }
 
   // Add text assertions if available
   if (textAssertion) {
@@ -164,9 +197,32 @@ function generateRelativePath(
   toNode: Node,
   offset?: number,
   options: GenerateOptions = {},
+  position?: CfiPosition
 ): string {
   if (fromNode === toNode) {
-    return offset !== undefined ? `:${offset}` : ""
+    let result = offset !== undefined ? `:${offset}` : ""
+    
+    // Add temporal offset if provided
+    if (position?.temporal !== undefined) {
+      result += `~${position.temporal}`
+    }
+    
+    // Add spatial offset if provided
+    if (position?.spatial) {
+      const [x, y] = position.spatial
+      // Ensure values are within 0-100 range
+      const safeX = Math.max(0, Math.min(100, x))
+      const safeY = Math.max(0, Math.min(100, y))
+      
+      // If we already have a temporal offset, don't add the @ symbol
+      if (position.temporal !== undefined) {
+        result += `@${safeX}:${safeY}`
+      } else {
+        result += `@${safeX}:${safeY}`
+      }
+    }
+    
+    return result
   }
 
   const path: string[] = []
@@ -210,6 +266,26 @@ function generateRelativePath(
   if (offset !== undefined) {
     relativePath += `:${offset}`
   }
+  
+  // Add temporal offset if provided
+  if (position?.temporal !== undefined) {
+    relativePath += `~${position.temporal}`
+  }
+  
+  // Add spatial offset if provided
+  if (position?.spatial) {
+    const [x, y] = position.spatial
+    // Ensure values are within 0-100 range
+    const safeX = Math.max(0, Math.min(100, x))
+    const safeY = Math.max(0, Math.min(100, y))
+    
+    // If we already have a temporal offset, don't add the @ symbol
+    if (position?.temporal !== undefined) {
+      relativePath += `@${safeX}:${safeY}`
+    } else {
+      relativePath += `@${safeX}:${safeY}`
+    }
+  }
 
   // Add text assertion if enabled
   if (options.includeTextAssertions && toNode.nodeType === Node.TEXT_NODE) {
@@ -243,6 +319,8 @@ function generateRange(
   endNode: Node,
   endOffset: number,
   options: GenerateOptions = {},
+  startPosition?: CfiPosition,
+  endPosition?: CfiPosition
 ): string {
   // Find common ancestor
   const ancestor = findCommonAncestor(startNode, endNode)
@@ -259,10 +337,17 @@ function generateRange(
     startNode,
     startOffset,
     options,
+    startPosition
   )
 
   // Generate path from ancestor to end node
-  const endPath = generateRelativePath(ancestor, endNode, endOffset, options)
+  const endPath = generateRelativePath(
+    ancestor, 
+    endNode, 
+    endOffset, 
+    options,
+    endPosition
+  )
 
   // Combine into a range CFI
   return `${ancestorCfi},${startPath},${endPath}`
@@ -278,6 +363,14 @@ function generateRange(
  * @example
  * // Generate CFI for a text node with offset
  * const cfi = generate({ node: textNode, offset: 5 });
+ * 
+ * @example
+ * // Generate CFI for a video with temporal offset
+ * const cfi = generate({ node: videoElement, temporal: 45.5 });
+ * 
+ * @example
+ * // Generate CFI for an image with spatial coordinates
+ * const cfi = generate({ node: imageElement, spatial: [50, 75] });
  * 
  * @example
  * // Generate a range CFI
@@ -302,9 +395,14 @@ export function generate(
     return `epubcfi(${generatePoint(position, undefined, options)})`
   }
   
-  // Case 2: CfiPosition (node + optional offset)
+  // Case 2: CfiPosition (node + optional offset/temporal/spatial)
   if ('node' in position && !('start' in position)) {
-    return `epubcfi(${generatePoint(position.node, position.offset, options)})`
+    return `epubcfi(${generatePoint(
+      position.node, 
+      position.offset, 
+      options, 
+      position
+    )})`
   }
   
   // Case 3: Range (start + end positions)
@@ -315,7 +413,9 @@ export function generate(
       start.offset ?? 0,
       end.node,
       end.offset ?? 0,
-      options
+      options,
+      start,
+      end
     )})`
   }
   

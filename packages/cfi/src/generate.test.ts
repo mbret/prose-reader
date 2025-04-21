@@ -122,10 +122,13 @@ describe("CFI Generation", () => {
       if (!textNode) return
 
       // Use generateRobustCfi which uses more text context
-      const cfi = generate({ node: textNode, offset: 10 }, {
-        includeTextAssertions: true,
-        textAssertionLength: 15,
-      })
+      const cfi = generate(
+        { node: textNode, offset: 10 },
+        {
+          includeTextAssertions: true,
+          textAssertionLength: 15,
+        },
+      )
 
       // Should include text context (checking for actual pattern)
       expect(cfi).toContain("[")
@@ -188,6 +191,175 @@ describe("CFI Generation", () => {
           const lastPart = parsed[0][parsed[0].length - 1]
           if (lastPart) {
             expect(lastPart.side).toBe("a")
+          }
+        }
+      }
+    })
+  })
+
+  describe("temporal offset and spatial position", () => {
+    it("should generate a CFI with temporal offset for a video element", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <video id="video01" src="sample.mp4"></video>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const videoNode = doc.getElementById("video01")
+      expect(videoNode).not.toBeNull()
+      if (!videoNode) return
+
+      // Generate CFI with temporal offset (45.5 seconds)
+      const cfi = generate({
+        node: videoNode,
+        temporal: 45.5,
+      })
+
+      // The output should include the temporal marker
+      expect(cfi).toContain("~45.5")
+
+      // Make sure it parses correctly
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+
+      // Verify temporal offset was properly captured
+      if (Array.isArray(parsed) && parsed[0] && parsed[0].length > 0) {
+        const lastPart = parsed[0][parsed[0].length - 1]
+        if (lastPart) {
+          expect(lastPart.temporal).toBe(45.5)
+        }
+      }
+    })
+
+    it("should generate a CFI with spatial position for an image element", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <img id="img01" src="sample.jpg" alt="Sample Image" />
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const imgNode = doc.getElementById("img01")
+      expect(imgNode).not.toBeNull()
+      if (!imgNode) return
+
+      // Generate CFI with spatial position (x:25, y:75)
+      const cfi = generate({
+        node: imgNode,
+        spatial: [25, 75],
+      })
+
+      // The output should include the spatial marker
+      expect(cfi).toContain("@25:75")
+
+      // Make sure it parses correctly
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+
+      // Verify spatial position was properly captured
+      if (Array.isArray(parsed) && parsed[0] && parsed[0].length > 0) {
+        const lastPart = parsed[0][parsed[0].length - 1]
+        if (lastPart) {
+          expect(lastPart.spatial).toEqual([25, 75])
+        }
+      }
+    })
+
+    it("should generate a CFI with both temporal and spatial positions", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <video id="video01" src="sample.mp4"></video>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const videoNode = doc.getElementById("video01")
+      expect(videoNode).not.toBeNull()
+      if (!videoNode) return
+
+      // Generate CFI with both temporal (30 seconds) and spatial position (x:10, y:20)
+      const cfi = generate({
+        node: videoNode,
+        temporal: 30,
+        spatial: [10, 20],
+      })
+
+      // The output should include both markers
+      expect(cfi).toContain("~30@10:20")
+
+      // Make sure it parses correctly
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+
+      // Verify both temporal and spatial values were properly captured
+      if (Array.isArray(parsed) && parsed[0] && parsed[0].length > 0) {
+        const lastPart = parsed[0][parsed[0].length - 1]
+        if (lastPart) {
+          expect(lastPart.temporal).toBe(30)
+          expect(lastPart.spatial).toEqual([10, 20])
+        }
+      }
+    })
+
+    it("should handle temporal offset in a range CFI", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <video id="video01" src="sample.mp4"></video>
+            <p id="para01">Caption text for the video.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const videoNode = doc.getElementById("video01")
+      const paraNode = doc.getElementById("para01")
+      expect(videoNode).not.toBeNull()
+      expect(paraNode).not.toBeNull()
+      if (!videoNode || !paraNode) return
+
+      const textNode = paraNode.firstChild
+      if (!textNode) return
+
+      // Create a range from a point in the video to a point in the caption
+      const rangeCfi = generate({
+        start: {
+          node: videoNode,
+          temporal: 15.5,
+        },
+        end: {
+          node: textNode,
+          offset: 10,
+        },
+      })
+
+      // The output should include the temporal marker
+      expect(rangeCfi).toContain("~15.5")
+
+      // Make sure it parses correctly
+      const parsed = parse(rangeCfi)
+      expect("parent" in parsed).toBe(true)
+
+      // Verify temporal offset was properly captured in the range
+      if ("parent" in parsed) {
+        if (parsed.start?.[0] && parsed.start[0].length > 0) {
+          const startParts = parsed.start[0]
+          for (const part of startParts) {
+            if (part.temporal) {
+              expect(part.temporal).toBe(15.5)
+              break
+            }
           }
         }
       }
@@ -324,7 +496,7 @@ describe("CFI Generation", () => {
       }
     })
 
-    it("should generate a robust range CFI", () => {
+    it("should generate a robust range CFI with text assertions using unified generate function", () => {
       const parser = new DOMParser()
       const doc = parser.parseFromString(
         `<html xmlns="http://www.w3.org/1999/xhtml">
@@ -347,10 +519,16 @@ describe("CFI Generation", () => {
       if (!textNode1 || !textNode2) return
 
       // Use the generateRobust helper for a range
-      const robustRangeCfi = generateRobust({
-        start: { node: textNode1, offset: 5 },
-        end: { node: textNode2, offset: 12 },
-      })
+      const robustRangeCfi = generate(
+        {
+          start: { node: textNode1, offset: 5 },
+          end: { node: textNode2, offset: 12 },
+        },
+        {
+          includeTextAssertions: true,
+          textAssertionLength: 15,
+        },
+      )
 
       // Should include text assertions
       expect(robustRangeCfi).toContain("[")
@@ -359,10 +537,15 @@ describe("CFI Generation", () => {
       const parsed = parse(robustRangeCfi)
       expect("parent" in parsed).toBe(true)
 
-      // Should include text assertions with the longer default length
-      if ("parent" in parsed && parsed.start?.[0]?.length > 0) {
-        const lastStartPart = parsed.start[0][parsed.start[0].length - 1]
-        if (lastStartPart?.text && lastStartPart.text[0]) {
+      // Skip further tests if the parsed result doesn't have the expected structure
+      if (!("parent" in parsed)) return
+      if (!parsed.start || !parsed.start[0]) return
+
+      // Check text assertions in the start part
+      const startParts = parsed.start[0]
+      if (startParts?.length > 0) {
+        const lastStartPart = startParts[startParts.length - 1]
+        if (lastStartPart?.text?.[0]) {
           // Text length should be around 15 characters (the default for generateRobust)
           expect(lastStartPart.text[0].length).toBeGreaterThan(10)
         }
