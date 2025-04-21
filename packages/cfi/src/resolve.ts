@@ -101,13 +101,15 @@ export function resolve(
         /\/\d+\/\d+\[([^\]]+)\]\/\d+:(\d+)\[([a-z])\]/,
       )
       if (match) {
-        const [, id, offset, side] = match
-        const node = document.getElementById(id)
-        return {
-          node,
-          isRange: false,
-          offset: parseInt(offset, 10),
-          side,
+        const [, id, offsetStr, side] = match
+        if (id && offsetStr) {
+          const node = document.getElementById(id)
+          return {
+            node,
+            isRange: false,
+            offset: parseInt(offsetStr, 10),
+            side,
+          }
         }
       }
     }
@@ -138,11 +140,10 @@ function resolveParsed(
     if (isCfiRange(parsed)) {
       if (asRange) {
         return resolveRange(parsed, document, { ...options, asRange: true })
-      } else {
-        // If not as range, use the start point
-        const firstPath = parsed.start[0] || []
-        return resolvePath(firstPath, document, options)
       }
+      // If not as range, use the start point
+      const firstPath = parsed.start[0] || []
+      return resolvePath(firstPath, document, options)
     }
 
     // Handle path CFIs
@@ -200,7 +201,6 @@ function resolveRange(
 
     // Find the start and end nodes
     const startResult = resolvePath(startPath, document, { throwOnError })
-
     const endResult = resolvePath(endPath, document, { throwOnError })
 
     // Check that we have valid Node objects
@@ -217,12 +217,12 @@ function resolveRange(
     const startNode = startResult.node
     const endNode = endResult.node
 
-    let domRange
-    // Check if we need to create a Range or have it provided by the test environment
+    let domRange: Range;
+    // Check if we need to create a Range
     if (document.createRange) {
       domRange = document.createRange()
     } else {
-      // If document.createRange is not available, create a minimum object
+      // If document.createRange is not available, create a minimal object
       domRange = {} as Range
       Object.defineProperties(domRange, {
         startContainer: { value: startNode },
@@ -279,11 +279,13 @@ function extractSideBias(part: CfiPart | undefined): string | undefined {
 
   // Look for side bias in text assertions
   if (part.text && part.text.length > 0) {
+    const text = part.text[0];
     // The CFI spec says side bias can be a=after or b=before
-    // In the test it's expecting "a" for the side
-    const sideBiasMatch = part.text[0].match(/^([ab])$/)
-    if (sideBiasMatch) {
-      return sideBiasMatch[1]
+    if (text) {
+      const sideBiasMatch = text.match(/^([ab])$/)
+      if (sideBiasMatch) {
+        return sideBiasMatch[1]
+      }
     }
   }
 
@@ -315,7 +317,7 @@ function resolvePath(
 
     if (asRange) {
       // Create a Range object if possible
-      let range: Range
+      let range: Range;
 
       if (document.createRange) {
         range = document.createRange()
@@ -379,7 +381,10 @@ function resolvePath(
     const index = Math.floor(part.index / 2) - 1
 
     if (index >= 0 && index < childElements.length) {
-      currentNode = childElements[index]
+      const nextNode = childElements[index];
+      if (nextNode) {
+        currentNode = nextNode;
+      }
     } else {
       if (throwOnError) {
         throw new Error(`Invalid step index: ${part.index}`)
@@ -397,10 +402,10 @@ function resolvePath(
     }
 
     // If there's a text assertion, match against text content
-    if (part.text && part.text.length > 0 && currentNode) {
+    if (part.text?.length && currentNode) {
       let textFound = false
-      for (let j = 0; j < currentNode.childNodes.length; j++) {
-        const childNode = currentNode.childNodes[j]
+      for (let j = 0; currentNode && j < currentNode.childNodes.length; j++) {
+        const childNode = currentNode.childNodes[j] as ChildNode;
         if (
           childNode &&
           childNode.nodeType === Node.TEXT_NODE &&
@@ -437,7 +442,7 @@ function resolvePath(
 
   if (asRange && currentNode) {
     // Create a Range object if possible
-    let range: Range
+    let range: Range;
 
     if (document.createRange) {
       range = document.createRange()
@@ -492,14 +497,14 @@ function findNodeById(document: Document, parts: CfiPart[]): Node | null {
   // Check for nested IDs like "/4/2[chap01ref]/2[chap02ref]"
   // If the last part has an ID, use that
   const lastPart = parts[parts.length - 1]
-  if (lastPart && lastPart.id) {
+  if (lastPart?.id) {
     const node = document.getElementById(lastPart.id)
     if (node) return node
   }
 
   // Otherwise check all parts for an ID
   for (const part of parts) {
-    if (part && part.id) {
+    if (part?.id) {
       const node = document.getElementById(part.id)
       if (node) return node
     }

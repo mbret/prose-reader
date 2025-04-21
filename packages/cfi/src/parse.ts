@@ -219,7 +219,7 @@ function splitAt<T>(arr: T[], indices: number[]): T[][] {
 function parsePart(tokens: Array<[string, any]>): CfiPart[] {
   const parts: CfiPart[] = []
   
-  // Keep track of tokens for each path step
+  // Group tokens by path step
   const pathStepTokens: { [key: number]: Array<[string, any]> } = {}
   let currentPathStep = -1
   
@@ -244,11 +244,6 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
     const currentPart = parts[stepIndex]
     const stepsTokens = pathStepTokens[stepIndex] || []
     
-    // In the CFI spec, ID assertions are used to identify XML elements by their ID
-    // Text assertions are for correcting the target location
-    // Per the spec, the ID assertion only comes immediately after a step,
-    // and it should be an actual element ID, not arbitrary text
-    
     for (let i = 0; i < stepsTokens.length; i++) {
       const [type, val] = stepsTokens[i]
       
@@ -260,16 +255,8 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
         currentPart.spatial = (currentPart.spatial || []).concat(val)
       } else if (type === ';s') {
         currentPart.side = val
-      } else if (type.startsWith(';')) {
-        // Other parameters (ignored)
       } else if (type === '[') {
-        // Now the key logic:
-        // 1. ID assertions appear immediately after a path step (first token)
-        // 2. ID assertions should be valid XML IDs (generally short, no spaces)
-        // 3. Text assertions could be longer and may contain spaces
-        
-        // If this is the first token for this step AND it looks like an ID
-        // (no spaces, reasonable length), it's an ID assertion
+        // Determine if this is an ID or text assertion
         const looksLikeId = typeof val === 'string' && 
                            !val.includes(' ') && 
                            val.length < 50
