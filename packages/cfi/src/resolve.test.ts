@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import * as CFI from "./foliate"
 import { parse } from "./parse"
 import { resolve } from "./resolve"
 
@@ -81,9 +80,6 @@ describe("EPUB CFI Resolve", () => {
 
       expect(result.isRange).toBe(false)
       expect(result.node).toBe(doc.getElementById("chap02ref"))
-      expect(CFI.toElement(doc, CFI.parse(cfi)[0])).toBe(
-        doc.getElementById("chap02ref"),
-      )
     })
 
     it("should handle temporal offsets", () => {
