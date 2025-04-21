@@ -14,7 +14,7 @@ function cfiEscape(str: string): string {
 /**
  * Options for generating CFIs
  */
-interface GenerateOptions {
+export interface GenerateOptions {
   /**
    * Whether to include text assertions for more robust CFIs
    */
@@ -30,6 +30,21 @@ interface GenerateOptions {
    * Whether to include a side bias assertion
    */
   includeSideBias?: "before" | "after"
+}
+
+/**
+ * Position in a document, consisting of a node and optional offset
+ */
+export interface CfiPosition {
+  /**
+   * The DOM node
+   */
+  node: Node
+  
+  /**
+   * Character offset within the node (for text nodes)
+   */
+  offset?: number
 }
 
 /**
@@ -61,12 +76,11 @@ function extractTextAssertion(
 }
 
 /**
- * Generate a CFI for a node in the DOM
+ * Generate a CFI for a single node in the DOM
  */
-export function generate(
+function generatePoint(
   node: Node,
   offset?: number,
-  extra?: string,
   options: GenerateOptions = {},
 ): string {
   let cfi = ""
@@ -139,50 +153,7 @@ export function generate(
     }
   }
 
-  // Add any extra information
-  if (extra) {
-    cfi += extra
-  }
-
-  // Wrap the CFI in the epubcfi() function
-  return `epubcfi(${cfi})`
-}
-
-/**
- * Generate a CFI range between two points in the document
- */
-export function generateRangeCfi(
-  startNode: Node,
-  startOffset: number,
-  endNode: Node,
-  endOffset: number,
-  options: GenerateOptions = {},
-): string {
-  // Find common ancestor
-  const ancestor = findCommonAncestor(startNode, endNode)
-  if (!ancestor) {
-    throw new Error("No common ancestor found")
-  }
-
-  // Generate CFI from ancestor to document
-  const ancestorCfi = generate(ancestor, undefined, undefined, options)
-
-  // Generate path from ancestor to start node
-  const startPath = generateRelativePath(
-    ancestor,
-    startNode,
-    startOffset,
-    options,
-  )
-
-  // Generate path from ancestor to end node
-  const endPath = generateRelativePath(ancestor, endNode, endOffset, options)
-
-  // Unwrap the base CFI
-  const unwrappedAncestorCfi = ancestorCfi.replace(/^epubcfi\((.*)\)$/, "$1")
-
-  // Combine into a range CFI
-  return `epubcfi(${unwrappedAncestorCfi},${startPath},${endPath})`
+  return cfi
 }
 
 /**
@@ -261,4 +232,92 @@ function generateRelativePath(
   }
 
   return relativePath
+}
+
+/**
+ * Generate a CFI range between two points in the document
+ */
+function generateRange(
+  startNode: Node,
+  startOffset: number,
+  endNode: Node,
+  endOffset: number,
+  options: GenerateOptions = {},
+): string {
+  // Find common ancestor
+  const ancestor = findCommonAncestor(startNode, endNode)
+  if (!ancestor) {
+    throw new Error("No common ancestor found")
+  }
+
+  // Generate CFI from ancestor to document
+  const ancestorCfi = generatePoint(ancestor, undefined, options)
+
+  // Generate path from ancestor to start node
+  const startPath = generateRelativePath(
+    ancestor,
+    startNode,
+    startOffset,
+    options,
+  )
+
+  // Generate path from ancestor to end node
+  const endPath = generateRelativePath(ancestor, endNode, endOffset, options)
+
+  // Combine into a range CFI
+  return `${ancestorCfi},${startPath},${endPath}`
+}
+
+/**
+ * Unified generate function that can handle both single positions and ranges
+ * 
+ * @example
+ * // Generate CFI for a single node
+ * const cfi = generate(node);
+ * 
+ * @example
+ * // Generate CFI for a text node with offset
+ * const cfi = generate({ node: textNode, offset: 5 });
+ * 
+ * @example
+ * // Generate a range CFI
+ * const cfi = generate({ 
+ *   start: { node: startNode, offset: 0 },
+ *   end: { node: endNode, offset: 10 }
+ * });
+ * 
+ * @example
+ * // Generate a robust CFI with text assertions
+ * const cfi = generate(node, { 
+ *   includeTextAssertions: true,
+ *   textAssertionLength: 15
+ * });
+ */
+export function generate(
+  position: Node | CfiPosition | { start: CfiPosition; end: CfiPosition },
+  options: GenerateOptions = {}
+): string {
+  // Case 1: Simple Node
+  if (position instanceof Node) {
+    return `epubcfi(${generatePoint(position, undefined, options)})`
+  }
+  
+  // Case 2: CfiPosition (node + optional offset)
+  if ('node' in position && !('start' in position)) {
+    return `epubcfi(${generatePoint(position.node, position.offset, options)})`
+  }
+  
+  // Case 3: Range (start + end positions)
+  if ('start' in position && 'end' in position) {
+    const { start, end } = position
+    return `epubcfi(${generateRange(
+      start.node,
+      start.offset ?? 0,
+      end.node,
+      end.offset ?? 0,
+      options
+    )})`
+  }
+  
+  throw new Error('Invalid argument: expected Node, CfiPosition, or {start, end} object')
 }

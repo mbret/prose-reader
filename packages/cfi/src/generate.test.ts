@@ -1,4 +1,4 @@
-import { generate, generateRangeCfi } from "./generate"
+import { generate } from "./generate"
 import { describe, it, expect } from "vitest"
 // @ts-ignore
 import EpubCfiResolver from "epub-cfi-resolver"
@@ -34,6 +34,7 @@ describe("CFI Generation", () => {
       // biome-ignore lint/style/noNonNullAssertion: <explanation>
       const imageNode = doc.getElementById("svgimg")!
 
+      // Test simple node format
       const cfi = generate(imageNode)
 
       // These variables are used for debugging and comparison
@@ -50,7 +51,9 @@ describe("CFI Generation", () => {
       // biome-ignore lint/style/noNonNullAssertion: <explanation>
       const para5NodeEm = para05Node.children[0]!
 
-      expect(generate(para5NodeEm)).toEqual("epubcfi(/4[body01]/10[para05]/2)")
+      // Test using CfiPosition format
+      const cfi2 = generate({ node: para5NodeEm })
+      expect(cfi2).toEqual("epubcfi(/4[body01]/10[para05]/2)")
     })
   })
 
@@ -76,10 +79,13 @@ describe("CFI Generation", () => {
       expect(textNode?.nodeType).toBe(Node.TEXT_NODE)
       if (!textNode) return
 
-      // Generate CFI with text assertions
-      const cfi = generate(textNode, 5, undefined, {
-        includeTextAssertions: true,
-      })
+      // Generate CFI with text assertions - using CfiPosition format
+      const cfi = generate(
+        { node: textNode, offset: 5 },
+        {
+          includeTextAssertions: true,
+        },
+      )
 
       // The output should include a text assertion
       expect(cfi).toContain("[")
@@ -116,7 +122,7 @@ describe("CFI Generation", () => {
       if (!textNode) return
 
       // Use generateRobustCfi which uses more text context
-      const cfi = generate(textNode, 10, undefined, {
+      const cfi = generate({ node: textNode, offset: 10 }, {
         includeTextAssertions: true,
         textAssertionLength: 15,
       })
@@ -148,19 +154,25 @@ describe("CFI Generation", () => {
       const textNode = paraNode.firstChild
       if (!textNode) return
 
-      // Generate with 'before' side bias
-      const cfi1 = generate(textNode, 15, undefined, {
-        includeSideBias: "before",
-      })
+      // Generate with 'before' side bias using CfiPosition format
+      const cfi1 = generate(
+        { node: textNode, offset: 15 },
+        {
+          includeSideBias: "before",
+        },
+      )
 
       // Should include side bias marker
       expect(cfi1).toContain(";s=b")
 
-      // Generate with 'after' side bias and text assertions
-      const cfi2 = generate(textNode, 15, undefined, {
-        includeTextAssertions: true,
-        includeSideBias: "after",
-      })
+      // Generate with 'after' side bias and text assertions using CfiPosition format
+      const cfi2 = generate(
+        { node: textNode, offset: 15 },
+        {
+          includeTextAssertions: true,
+          includeSideBias: "after",
+        },
+      )
 
       // Should include text and side bias
       expect(cfi2).toContain(";s=a")
@@ -206,7 +218,11 @@ describe("CFI Generation", () => {
       if (!textNode1 || !textNode2) return
 
       // Generate a range from the start of first paragraph to middle of second paragraph
-      const rangeCfi = generateRangeCfi(textNode1, 0, textNode2, 8)
+      // using the unified range format
+      const rangeCfi = generate({
+        start: { node: textNode1, offset: 0 },
+        end: { node: textNode2, offset: 8 },
+      })
 
       // Should be in range format with commas
       expect(rangeCfi).toContain(",")
@@ -262,10 +278,16 @@ describe("CFI Generation", () => {
 
       if (!textNode1 || !textNode2) return
 
-      // Generate a range with text assertions
-      const rangeCfi = generateRangeCfi(textNode1, 6, textNode2, 10, {
-        includeTextAssertions: true,
-      })
+      // Generate a range with text assertions using the unified range format
+      const rangeCfi = generate(
+        {
+          start: { node: textNode1, offset: 6 },
+          end: { node: textNode2, offset: 10 },
+        },
+        {
+          includeTextAssertions: true,
+        },
+      )
 
       // Should include text context from both paragraphs
       expect(rangeCfi).toContain("[")
@@ -298,6 +320,51 @@ describe("CFI Generation", () => {
               expect(lastEndPart.text).toBeDefined()
             }
           }
+        }
+      }
+    })
+
+    it("should generate a robust range CFI", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">First paragraph with some text.</p>
+            <p id="para02">Second paragraph with different text.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const para1 = doc.getElementById("para01")
+      const para2 = doc.getElementById("para02")
+
+      if (!para1 || !para2) return
+
+      const textNode1 = para1.firstChild
+      const textNode2 = para2.firstChild
+
+      if (!textNode1 || !textNode2) return
+
+      // Use the generateRobust helper for a range
+      const robustRangeCfi = generateRobust({
+        start: { node: textNode1, offset: 5 },
+        end: { node: textNode2, offset: 12 },
+      })
+
+      // Should include text assertions
+      expect(robustRangeCfi).toContain("[")
+
+      // Should be parseable
+      const parsed = parse(robustRangeCfi)
+      expect("parent" in parsed).toBe(true)
+
+      // Should include text assertions with the longer default length
+      if ("parent" in parsed && parsed.start?.[0]?.length > 0) {
+        const lastStartPart = parsed.start[0][parsed.start[0].length - 1]
+        if (lastStartPart?.text && lastStartPart.text[0]) {
+          // Text length should be around 15 characters (the default for generateRobust)
+          expect(lastStartPart.text[0].length).toBeGreaterThan(10)
         }
       }
     })

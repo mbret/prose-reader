@@ -1,4 +1,8 @@
 /**
+ * Utility functions for EPUB CFI operations
+ */
+
+/**
  * Get all ancestors of a node, including the node itself
  */
 export function getAncestors(node: Node): Node[] {
