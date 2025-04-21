@@ -1,52 +1,305 @@
-import { generate } from "./generate"
+import { generate, generateRangeCfi } from "./generate"
 import { describe, it, expect } from "vitest"
 // @ts-ignore
 import EpubCfiResolver from "epub-cfi-resolver"
 import { fromElements } from "./foliate"
+import { parse } from "./parse"
 
-describe("given a xhtml document", () => {
-  it("should generate a cfi for img tag", () => {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(
-      `<html xmlns="http://www.w3.org/1999/xhtml">
-        <head>
-            <title>…</title>
-        </head>
-    
-            <body id="body01">
-                <p>…</p>
-                <p>…</p>
-                <p>…</p>
-                <p>…</p>
-                <p id="para05">xxx<em>yyy</em>0123456789</p>
-                <p>…</p>
-                <p>…</p>
-                <img id="svgimg" src="foo.svg" alt="…"/>
-                <p>…</p>
-                <p>…</p>
-            </body>
+describe("CFI Generation", () => {
+  describe("basic generation", () => {
+    it("should generate a cfi for img tag", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <head>
+              <title>…</title>
+          </head>
+      
+              <body id="body01">
+                  <p>…</p>
+                  <p>…</p>
+                  <p>…</p>
+                  <p>…</p>
+                  <p id="para05">xxx<em>yyy</em>0123456789</p>
+                  <p>…</p>
+                  <p>…</p>
+                  <img id="svgimg" src="foo.svg" alt="…"/>
+                  <p>…</p>
+                  <p>…</p>
+              </body>
+          </html>`,
+        "application/xhtml+xml",
+      )
+
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      const imageNode = doc.getElementById("svgimg")!
+
+      const cfi = generate(imageNode)
+
+      // These variables are used for debugging and comparison
+      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+      const resolved = EpubCfiResolver.generate(imageNode)
+      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+      const foliate = fromElements([imageNode])
+
+      // expect(resolved).toEqual("epubcfi(/4[body01]/16[svgimg])")
+      expect(cfi).toEqual("epubcfi(/4[body01]/16[svgimg])")
+
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      const para05Node = doc.getElementById("para05")!
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      const para5NodeEm = para05Node.children[0]!
+
+      expect(generate(para5NodeEm)).toEqual("epubcfi(/4[body01]/10[para05]/2)")
+    })
+  })
+
+  describe("text assertions", () => {
+    it("should generate a CFI with text assertions for text nodes", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">This is some sample text for testing.</p>
+          </body>
         </html>`,
-      "application/xhtml+xml",
-    )
+        "application/xhtml+xml",
+      )
 
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    const imageNode = doc.getElementById("svgimg")!
+      // Get the text node from the paragraph
+      const paraNode = doc.getElementById("para01")
+      expect(paraNode).not.toBeNull()
+      if (!paraNode) return
 
-    const cfi = generate(imageNode)
+      const textNode = paraNode.firstChild
+      expect(textNode).not.toBeNull()
+      expect(textNode?.nodeType).toBe(Node.TEXT_NODE)
+      if (!textNode) return
 
-    const resolved = EpubCfiResolver.generate(imageNode)
-    const foliate = fromElements([imageNode])
+      // Generate CFI with text assertions
+      const cfi = generate(textNode, 5, undefined, {
+        includeTextAssertions: true,
+      })
 
-    console.log({ resolved, cfi, foliate })
+      // The output should include a text assertion
+      expect(cfi).toContain("[")
+      expect(cfi).toContain("]")
 
-    // expect(resolved).toEqual("epubcfi(/4[body01]/16[svgimg])")
-    expect(cfi).toEqual("epubcfi(/4[body01]/16[svgimg])")
+      // Make sure it parses correctly
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
 
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    const para05Node = doc.getElementById("para05")!
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    const para5NodeEm = para05Node.children[0]!
+      // Verify text node was properly captured
+      if (Array.isArray(parsed) && parsed[0] && parsed[0].length > 0) {
+        const lastPart = parsed[0][parsed[0].length - 1]
+        if (lastPart) {
+          expect(lastPart.text).toBeDefined()
+        }
+      }
+    })
 
-    expect(generate(para5NodeEm)).toEqual("epubcfi(/4[body01]/10[para05]/2)")
+    it("should generate a robust CFI with longer text context", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">This is a longer paragraph with more context for robust CFIs.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const paraNode = doc.getElementById("para01")
+      if (!paraNode) return
+
+      const textNode = paraNode.firstChild
+      if (!textNode) return
+
+      // Use generateRobustCfi which uses more text context
+      const cfi = generate(textNode, 10, undefined, {
+        includeTextAssertions: true,
+        textAssertionLength: 15,
+      })
+
+      // Should include text context (checking for actual pattern)
+      expect(cfi).toContain("[")
+      // The text will be centered around position 10, which is "a" in "is a longer"
+      expect(cfi).toContain("is a longer")
+
+      // Should be parseable
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+    })
+
+    it("should include side bias in the CFI", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">Text with a boundary here.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const paraNode = doc.getElementById("para01")
+      if (!paraNode) return
+
+      const textNode = paraNode.firstChild
+      if (!textNode) return
+
+      // Generate with 'before' side bias
+      const cfi1 = generate(textNode, 15, undefined, {
+        includeSideBias: "before",
+      })
+
+      // Should include side bias marker
+      expect(cfi1).toContain(";s=b")
+
+      // Generate with 'after' side bias and text assertions
+      const cfi2 = generate(textNode, 15, undefined, {
+        includeTextAssertions: true,
+        includeSideBias: "after",
+      })
+
+      // Should include text and side bias
+      expect(cfi2).toContain(";s=a")
+
+      // Check correct format when both text assertion and side bias are present
+      const parsed = parse(cfi2)
+      expect(Array.isArray(parsed)).toBe(true)
+      if (!Array.isArray(parsed)) return
+
+      // The side param should be attached to the text assertion
+      if (parsed[0]) {
+        if (parsed[0].length > 0) {
+          const lastPart = parsed[0][parsed[0].length - 1]
+          if (lastPart) {
+            expect(lastPart.side).toBe("a")
+          }
+        }
+      }
+    })
+  })
+
+  describe("range CFIs", () => {
+    it("should generate a range CFI between two points", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">First paragraph.</p>
+            <p id="para02">Second paragraph.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const para1 = doc.getElementById("para01")
+      const para2 = doc.getElementById("para02")
+
+      if (!para1 || !para2) return
+
+      const textNode1 = para1.firstChild
+      const textNode2 = para2.firstChild
+
+      if (!textNode1 || !textNode2) return
+
+      // Generate a range from the start of first paragraph to middle of second paragraph
+      const rangeCfi = generateRangeCfi(textNode1, 0, textNode2, 8)
+
+      // Should be in range format with commas
+      expect(rangeCfi).toContain(",")
+      expect(rangeCfi).toBe("epubcfi(/2[body01],/2[para01]/1:0,/4[para02]/1:8)")
+
+      // Should be properly formatted
+      const parsed = parse(rangeCfi)
+      expect("parent" in parsed).toBe(true)
+
+      // Should include the correct offsets
+      if ("parent" in parsed) {
+        if (parsed.start?.[0]) {
+          const startParts = parsed.start[0]
+          if (startParts.length > 0) {
+            const lastStartPart = startParts[startParts.length - 1]
+            if (lastStartPart) {
+              expect(lastStartPart.offset).toBe(0)
+            }
+          }
+        }
+
+        if (parsed.end?.[0]) {
+          const endParts = parsed.end[0]
+          if (endParts.length > 0) {
+            const lastEndPart = endParts[endParts.length - 1]
+            if (lastEndPart) {
+              expect(lastEndPart.offset).toBe(8)
+            }
+          }
+        }
+      }
+    })
+
+    it("should generate a range CFI with text assertions", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">First paragraph with some text.</p>
+            <p id="para02">Second paragraph with different text.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const para1 = doc.getElementById("para01")
+      const para2 = doc.getElementById("para02")
+
+      if (!para1 || !para2) return
+
+      const textNode1 = para1.firstChild
+      const textNode2 = para2.firstChild
+
+      if (!textNode1 || !textNode2) return
+
+      // Generate a range with text assertions
+      const rangeCfi = generateRangeCfi(textNode1, 6, textNode2, 10, {
+        includeTextAssertions: true,
+      })
+
+      // Should include text context from both paragraphs
+      expect(rangeCfi).toContain("[")
+      // "irst" is at position 6 in "First paragraph..."
+      expect(rangeCfi).toContain("irst")
+      // "d" is at position 10 in "Second paragraph..."
+      expect(rangeCfi).toContain("d paragrap")
+
+      // Should be properly formatted
+      const parsed = parse(rangeCfi)
+      expect("parent" in parsed).toBe(true)
+
+      // Should include text assertions
+      if ("parent" in parsed) {
+        if (parsed.start?.[0]) {
+          const startParts = parsed.start[0]
+          if (startParts.length > 0) {
+            const lastStartPart = startParts[startParts.length - 1]
+            if (lastStartPart) {
+              expect(lastStartPart.text).toBeDefined()
+            }
+          }
+        }
+
+        if (parsed.end?.[0]) {
+          const endParts = parsed.end[0]
+          if (endParts.length > 0) {
+            const lastEndPart = endParts[endParts.length - 1]
+            if (lastEndPart) {
+              expect(lastEndPart.text).toBeDefined()
+            }
+          }
+        }
+      }
+    })
   })
 })
