@@ -205,4 +205,69 @@ describe("EPUB CFI Parser", () => {
       expect(compare(a, a)).toBe(0);
     });
   });
+  
+  describe("extensions", () => {
+    it("should parse a CFI with extension parameters", () => {
+      const cfi = "epubcfi(/4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2)";
+      const parsed = parse(cfi);
+      
+      expect(parsed).toEqual([
+        [
+          { 
+            index: 4, 
+            id: "body01" 
+          },
+          { 
+            index: 10, 
+            id: "para05",
+            extensions: {
+              "vnd.test.param1": "value1",
+              "vnd.test.param2": "value2"
+            }
+          }
+        ]
+      ]);
+    });
+    
+    it("should parse a CFI with mixed extensions and side bias", () => {
+      const cfi = "epubcfi(/4[body01]/10[para05]/2:3[;s=b;vnd.test.param=value])";
+      const parsed = parse(cfi);
+      
+      expect(parsed).toEqual([
+        [
+          { index: 4, id: "body01" },
+          { index: 10, id: "para05" },
+          { 
+            index: 2, 
+            offset: 3, 
+            side: "b",
+            extensions: {
+              "vnd.test.param": "value"
+            }
+          }
+        ]
+      ]);
+    });
+    
+    it("should convert parsed CFI with extensions back to a string", () => {
+      const cfi = "epubcfi(/4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2)";
+      const parsed = parse(cfi);
+      const result = parsedCfiToString(parsed);
+      
+      expect(result).toBe(cfi);
+    });
+    
+    it("should handle escaped characters in extension parameters", () => {
+      const cfi = "epubcfi(/4[body01]/10[para05];vnd.test.param=value^,with^[special^]chars)";
+      const parsed = parse(cfi);
+      
+      if (Array.isArray(parsed) && parsed[0] && parsed[0][1]) {
+        expect(parsed[0][1].extensions).toBeDefined();
+        expect(parsed[0][1].extensions?.["vnd.test.param"]).toBe("value,with[special]chars");
+      }
+      
+      const result = parsedCfiToString(parsed);
+      expect(result).toBe(cfi);
+    });
+  });
 }); 

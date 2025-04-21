@@ -144,23 +144,23 @@ describe("EPUB CFI Resolve", () => {
         </html>`,
         "application/xhtml+xml",
       )
-      
+
       // Text before the em element
       const cfiToFirstTextNode = "epubcfi(/4[body01]/2[para01]/1:2)"
       const result1 = resolve(cfiToFirstTextNode, doc)
       expect(result1.node).toBeTruthy()
-      
+
       // The node should be the first text node
       if (result1.node instanceof Node) {
         expect(result1.node.textContent).toContain("First")
         expect(result1.offset).toBe(2)
       }
-      
+
       // Text after the em element
       const cfiToLastTextNode = "epubcfi(/4[body01]/2[para01]/5:2)"
       const result2 = resolve(cfiToLastTextNode, doc)
       expect(result2.node).toBeTruthy()
-      
+
       // The node should be the last text node
       if (result2.node instanceof Node) {
         expect(result2.node.textContent).toContain("Last")
@@ -178,12 +178,12 @@ describe("EPUB CFI Resolve", () => {
         </html>`,
         "application/xhtml+xml",
       )
-      
+
       // Before first element (virtual position)
       const cfiBeforeFirst = "epubcfi(/4[body01]/0)"
       const result1 = resolve(cfiBeforeFirst, doc, { asRange: true })
       expect(result1.isRange).toBe(true)
-      
+
       // After last element (virtual position)
       const cfiAfterLast = "epubcfi(/4[body01]/4)"
       const result2 = resolve(cfiAfterLast, doc, { asRange: true })
@@ -191,120 +191,32 @@ describe("EPUB CFI Resolve", () => {
     })
   })
 
-//   describe("bidirectional conversion", () => {
-//     it("should convert between DOM elements and CFIs", () => {
-//       const parser = new DOMParser()
-//       const doc = parser.parseFromString(
-//         `<html xmlns="http://www.w3.org/1999/xhtml">
-//           <body id="body01">
-//             <div id="content">
-//               <p id="para01">First paragraph</p>
-//               <p id="para02">Second paragraph</p>
-//               <p id="para03">Third paragraph</p>
-//             </div>
-//           </body>
-//         </html>`,
-//         "application/xhtml+xml",
-//       )
-      
-//       const elements = [
-//         doc.getElementById("para01"),
-//         doc.getElementById("para02"),
-//         doc.getElementById("para03")
-//       ].filter(Boolean) as Element[]
-      
-//       if (elements.length === 3) {
-//         const cfis = fromElements(elements)
-//         expect(cfis.length).toBe(3)
-        
-//         // Test that the first CFI resolves back to the correct element
-//         if (cfis[0]) {
-//           const resolvedElement = resolve(cfis[0], doc).node
-//           expect(resolvedElement).toBe(elements[0])
-//         }
-//       }
-//     })
-    
-//     it("should convert between DOM ranges and CFIs", () => {
-//       const parser = new DOMParser()
-//       const doc = parser.parseFromString(
-//         `<html xmlns="http://www.w3.org/1999/xhtml">
-//           <body id="body01">
-//             <p id="para01">Text in paragraph</p>
-//           </body>
-//         </html>`,
-//         "application/xhtml+xml",
-//       )
-      
-//       // Skip this test if the environment doesn't support Range creation
-//       if (typeof doc.createRange !== 'function') {
-//         return;
-//       }
-      
-//       // Create a range in the document
-//       const range = doc.createRange()
-//       const para = doc.getElementById("para01")
-//       if (para?.firstChild) {
-//         const textNode = para.firstChild;
-//         range.setStart(textNode, 2)
-//         range.setEnd(textNode, 7)
-        
-//         // Convert range to CFI
-//         const cfi = fromRange(range)
-        
-//         // Convert CFI back to range
-//         const resolvedRange = toRange(doc, cfi)
-        
-//         expect(resolvedRange.startContainer).toBe(textNode)
-//         expect(resolvedRange.startOffset).toBe(2)
-//         expect(resolvedRange.endContainer).toBe(textNode)
-//         expect(resolvedRange.endOffset).toBe(7)
-//       }
-//     })
-//   })
+  describe("extension parameters", () => {
+    it("should pass through extension parameters to the result", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">Paragraph with extensions</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
 
-//   describe("range CFIs", () => {
-//     it("should resolve a range CFI directly to a range", () => {
-//       const parser = new DOMParser()
-//       const doc = parser.parseFromString(
-//         `<html xmlns="http://www.w3.org/1999/xhtml">
-//           <body id="body01">
-//             <p id="para01">Text in paragraph</p>
-//           </body>
-//         </html>`,
-//         "application/xhtml+xml",
-//       )
-      
-//       // Skip this test if the environment doesn't support Range creation
-//       if (typeof doc.createRange !== 'function') {
-//         return;
-//       }
-      
-//       // Create a range in the document
-//       const range = doc.createRange()
-//       const para = doc.getElementById("para01")
-//       if (para?.firstChild) {
-//         const textNode = para.firstChild;
-//         range.setStart(textNode, 2)
-//         range.setEnd(textNode, 7)
-        
-//         // Convert range to CFI
-//         const cfi = fromRange(range)
-        
-//         // Now resolve the range CFI directly - it should return a range
-//         const result = resolve(cfi, doc)
-        
-//         // The result should be a range
-//         expect(result.isRange).toBe(true)
-        
-//         // Check that it's the expected range
-//         if (result.node instanceof Range) {
-//           expect(result.node.startContainer).toBe(textNode)
-//           expect(result.node.startOffset).toBe(2)
-//           expect(result.node.endContainer).toBe(textNode)
-//           expect(result.node.endOffset).toBe(7)
-//         }
-//       }
-//     })
-//   })
+      // CFI with extension parameters
+      const cfi =
+        "epubcfi(/4[body01]/2[para01];vnd.test.timestamp=2023-05-01;vnd.test.user=test_user)"
+      const result = resolve(cfi, doc)
+
+      // Should include extensions in the result
+      expect(result.extensions).toBeDefined()
+      expect(result.extensions).toEqual({
+        "vnd.test.timestamp": "2023-05-01",
+        "vnd.test.user": "test_user",
+      })
+
+      // The node should still be correct
+      expect(result.node).toBe(doc.getElementById("para01"))
+    })
+  })
 })

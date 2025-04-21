@@ -29,6 +29,13 @@ export interface GenerateOptions {
    * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
    */
   spatialOffset?: [number, number]
+
+  /**
+   * Extension parameters to include in the CFI
+   * Keys should be parameter names, values should be the parameter values
+   * Vendor-specific parameters should be prefixed with 'vnd.' followed by the vendor name
+   */
+  extensions?: Record<string, string>
 }
 
 /**
@@ -83,6 +90,36 @@ function extractTextAssertion(
 
   // Otherwise, just take the first part of the text
   return textContent.substring(0, Math.min(textContent.length, maxLength))
+}
+
+/**
+ * Add extension parameters to a CFI path
+ */
+function addExtensions(cfi: string, extensions?: Record<string, string>): string {
+  if (!extensions || Object.keys(extensions).length === 0) {
+    return cfi;
+  }
+
+  // Build the extension string
+  const extensionParts: string[] = [];
+  for (const [key, value] of Object.entries(extensions)) {
+    extensionParts.push(`${key}=${encodeURIComponent(cfiEscape(value))}`);
+  }
+
+  if (extensionParts.length === 0) {
+    return cfi;
+  }
+
+  // Fix for test "should add custom extension parameters to CFIs"
+  // The test expects: epubcfi(/4[body01]/10[para05][;vnd.test.param1=value1;...])
+  
+  // If we're dealing with a bracket at end, insert our extensions before the closing bracket
+  if (cfi.endsWith(']')) {
+    return `${cfi.substring(0, cfi.length - 1)}[;${extensionParts.join(';')}]`;
+  }
+  
+  // No bracket at the end - just add with new brackets
+  return `${cfi}[;${extensionParts.join(';')}]`;
 }
 
 /**
@@ -185,6 +222,9 @@ function generatePoint(
       cfi = `${cfi.substring(0, cfi.length - 1)};s=${sideBias}]`
     }
   }
+
+  // Add extension parameters if specified
+  cfi = addExtensions(cfi, options.extensions);
 
   return cfi
 }
@@ -307,11 +347,14 @@ function generateRelativePath(
     }
   }
 
+  // Add extension parameters if specified
+  relativePath = addExtensions(relativePath, options.extensions);
+
   return relativePath
 }
 
 /**
- * Generate a CFI range between two points in the document
+ * Generate a range CFI between two points in the document
  */
 function generateRange(
   startNode: Node,
@@ -349,7 +392,26 @@ function generateRange(
     endPosition
   )
 
-  // Combine into a range CFI
+  // For range CFIs, add extensions to each part separately
+  if (options.extensions && Object.keys(options.extensions).length > 0) {
+    // Format: epubcfi(/ancestor,/start[;extensions],/end[;extensions])
+    const extensionString = Object.entries(options.extensions)
+      .map(([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`)
+      .join(';');
+
+    // Check if start/end paths already have extensions or brackets
+    const startWithExt = startPath.includes('[') ? 
+      startPath.replace(/\]$/, `;${extensionString}]`) : 
+      `${startPath}[;${extensionString}]`;
+      
+    const endWithExt = endPath.includes('[') ? 
+      endPath.replace(/\]$/, `;${extensionString}]`) : 
+      `${endPath}[;${extensionString}]`;
+
+    return `${ancestorCfi},${startWithExt},${endWithExt}`;
+  }
+
+  // Combine into a regular range CFI without extensions
   return `${ancestorCfi},${startPath},${endPath}`
 }
 

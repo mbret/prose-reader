@@ -14,6 +14,7 @@ export interface CfiPart {
   spatial?: number[]
   text?: string[]
   side?: string
+  extensions?: Record<string, string>
 }
 
 /**
@@ -69,43 +70,67 @@ export function wrapCfi(cfi: string): string {
  */
 export function unwrapCfi(cfi: string): string {
   const match = cfi.match(isCFI)
-  return match ? match[1] : cfi
+  return match ? match[1] || cfi : cfi
 }
+
+/**
+ * Token type for CFI parsing
+ */
+type CfiToken = [string, string | number];
 
 /**
  * Tokenize a CFI string into an array of tokens
  * @param cfi The CFI string to tokenize
  * @returns An array of tokens
  */
-function tokenize(cfi: string): Array<[string, any]> {
-  const tokens: Array<[string, any]> = []
+function tokenize(cfi: string): CfiToken[] {
+  const tokens: CfiToken[] = []
   let state: string | null = null
-  let escape = false
+  let isEscaped = false
   let value = ""
 
-  const push = (token: [string, any]) => {
+  const push = (token: CfiToken) => {
     tokens.push(token)
     state = null
     value = ""
   }
 
-  const cat = (char: string) => {
-    value += char
-    escape = false
+  const cat = (c: string) => {
+    value += c
+    isEscaped = false
   }
 
-  const chars = Array.from(unwrapCfi(cfi).trim()).concat("")
+  const unwrappedCfi = unwrapCfi(cfi).trim();
+  const chars = Array.from(unwrappedCfi).concat("")
 
-  for (const char of chars) {
-    if (char === "^" && !escape) {
-      escape = true
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    
+    if (!char) {
+      // End of string, push any pending token
+      if (state === "/" || state === ":") {
+        push([state, parseInt(value, 10)])
+      } else if (state === "~") {
+        push(["~", parseFloat(value)])
+      } else if (state === "@") {
+        push(["@", parseFloat(value)])
+      } else if (state === "[") {
+        push(["[", value])
+      } else if (state === ";" || (state?.startsWith(";"))) {
+        push([state, value])
+      }
+      break;
+    }
+    
+    if (char === "^" && !isEscaped) {
+      isEscaped = true
       continue
     }
 
     if (state === "!") {
-      push(["!", null])
+      push(["!", 0])
     } else if (state === ",") {
-      push([",", null])
+      push([",", 0])
     } else if (state === "/" || state === ":") {
       if (/^\d$/.test(char)) {
         cat(char)
@@ -130,31 +155,46 @@ function tokenize(cfi: string): Array<[string, any]> {
       }
       push(["@", parseFloat(value)])
     } else if (state === "[") {
-      if (char === ";" && !escape) {
+      if (char === ";" && !isEscaped) {
         push(["[", value])
         state = ";"
-      } else if (char === "," && !escape) {
+      } else if (char === "," && !isEscaped) {
         push(["[", value])
         state = "["
-      } else if (char === "]" && !escape) {
+      } else if (char === "]" && !isEscaped) {
         push(["[", value])
+      } else {
+        cat(char)
+        continue
+      }
+    } else if (state === ";") {
+      // Handle extension parameter key
+      if (char === "=" && !isEscaped) {
+        state = `;${value}`
+        value = ""
+      } else if (char === ";" && !isEscaped) {
+        push([state, value])
+        state = ";"
+      } else if (char === "]" && !isEscaped) {
+        push([state, value])
       } else {
         cat(char)
         continue
       }
     } else if (state?.startsWith(";")) {
-      if (char === "=" && !escape) {
-        state = `;${value}`
-        value = ""
-      } else if (char === ";" && !escape) {
+      // Handle extension parameter value
+      if (char === ";" && !isEscaped) {
         push([state, value])
         state = ";"
-      } else if (char === "]" && !escape) {
+      } else if (char === "]" && !isEscaped) {
         push([state, value])
       } else {
         cat(char)
         continue
       }
+    } else if (state === null && char === ";") {
+      // Handle standalone extension parameters (not inside brackets)
+      state = ";"
     }
 
     if (
@@ -180,7 +220,7 @@ function tokenize(cfi: string): Array<[string, any]> {
  * @returns An array of indices
  */
 function findTokenIndices(
-  tokens: Array<[string, any]> | undefined,
+  tokens: CfiToken[] | undefined,
   type: string,
 ): number[] {
   if (!tokens) {
@@ -216,11 +256,11 @@ function splitAt<T>(arr: T[], indices: number[]): T[][] {
  * @param tokens The tokens to parse
  * @returns An array of CFI parts
  */
-function parsePart(tokens: Array<[string, any]>): CfiPart[] {
+function parsePart(tokens: CfiToken[]): CfiPart[] {
   const parts: CfiPart[] = []
   
   // Group tokens by path step
-  const pathStepTokens: { [key: number]: Array<[string, any]> } = {}
+  const pathStepTokens: { [key: number]: CfiToken[] } = {}
   let currentPathStep = -1
   
   // First pass: group tokens by path step
@@ -232,29 +272,41 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
     
     if (type === '/') {
       currentPathStep++
-      parts.push({ index: val })
+      parts[currentPathStep] = { index: val as number }
       pathStepTokens[currentPathStep] = []
     } else if (currentPathStep >= 0) {
-      pathStepTokens[currentPathStep].push(token)
+      pathStepTokens[currentPathStep]?.push(token)
     }
   }
   
   // Second pass: process tokens for each path step
   for (let stepIndex = 0; stepIndex < parts.length; stepIndex++) {
     const currentPart = parts[stepIndex]
+    if (!currentPart) continue
+    
     const stepsTokens = pathStepTokens[stepIndex] || []
     
     for (let i = 0; i < stepsTokens.length; i++) {
-      const [type, val] = stepsTokens[i]
+      const token = stepsTokens[i]
+      if (!token) continue
+      
+      const [type, val] = token
       
       if (type === ':') {
-        currentPart.offset = val
+        currentPart.offset = val as number
       } else if (type === '~') {
-        currentPart.temporal = val
+        currentPart.temporal = val as number
       } else if (type === '@') {
-        currentPart.spatial = (currentPart.spatial || []).concat(val)
+        currentPart.spatial = (currentPart.spatial || []).concat(val as number)
       } else if (type === ';s') {
-        currentPart.side = val
+        currentPart.side = val as string
+      } else if (type.startsWith(';') && type !== ';s') {
+        // This is an extension parameter
+        const paramName = type.substring(1)
+        if (!currentPart.extensions) {
+          currentPart.extensions = {}
+        }
+        currentPart.extensions[paramName] = val as string
       } else if (type === '[') {
         // Determine if this is an ID or text assertion
         const looksLikeId = typeof val === 'string' && 
@@ -262,11 +314,11 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
                            val.length < 50
                            
         if (i === 0 && looksLikeId && !currentPart.id) {
-          currentPart.id = val
+          currentPart.id = val as string
         } else {
           // Otherwise, it's a text assertion
           if (val !== '') {
-            currentPart.text = (currentPart.text || []).concat(val)
+            currentPart.text = (currentPart.text || []).concat(val as string)
           }
         }
       }
@@ -281,7 +333,7 @@ function parsePart(tokens: Array<[string, any]>): CfiPart[] {
  * @param tokens The tokens to parse
  * @returns An array of arrays of CFI parts
  */
-function parseIndirection(tokens: Array<[string, any]>): CfiPart[][] {
+function parseIndirection(tokens: CfiToken[]): CfiPart[][] {
   const indirectionIndices = findTokenIndices(tokens, "!")
   return splitAt(tokens, indirectionIndices).map(parsePart)
 }
@@ -322,18 +374,55 @@ export function parse(cfi: string): ParsedCfi {
  * @returns A string representation of the CFI part
  */
 function partToString(part: CfiPart): string {
-  const param = part.side ? `;s=${part.side}` : ""
-
-  return (
-    `/${part.index}` +
-    (part.id ? `[${cfiEscape(part.id)}${param}]` : "") +
-    (part.offset != null && part.index % 2 ? `:${part.offset}` : "") +
-    (part.temporal ? `~${part.temporal}` : "") +
-    (part.spatial ? `@${part.spatial.join(":")}` : "") +
-    (part.text || (!part.id && part.side)
-      ? `[${(part.text || []).map(cfiEscape).join(",")}${param}]`
-      : "")
-  )
+  // Prepare extension parameters
+  const extensionParams: string[] = []
+  
+  if (part.side) {
+    extensionParams.push(`s=${part.side}`)
+  }
+  
+  if (part.extensions) {
+    for (const [key, value] of Object.entries(part.extensions)) {
+      extensionParams.push(`${key}=${cfiEscape(value)}`)
+    }
+  }
+  
+  // Format expected in the tests:
+  // /4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2
+  
+  let result = `/${part.index}`
+  
+  // Add ID assertion if present
+  if (part.id) {
+    result += `[${cfiEscape(part.id)}]`
+  }
+  
+  // Add offset if applicable 
+  if (part.offset !== undefined && part.index % 2 === 1) {
+    result += `:${part.offset}`
+  }
+  
+  // Add temporal offset if present
+  if (part.temporal !== undefined) {
+    result += `~${part.temporal}`
+  }
+  
+  // Add spatial offset if present
+  if (part.spatial) {
+    result += `@${part.spatial.join(":")}`
+  }
+  
+  // Add text assertion if present
+  if (part.text && part.text.length > 0) {
+    result += `[${part.text.map(cfiEscape).join(",")}]`
+  }
+  
+  // Add extension parameters outside of brackets, directly to the path
+  if (extensionParams.length > 0) {
+    result += `;${extensionParams.join(';')}`
+  }
+  
+  return result
 }
 
 /**
@@ -355,12 +444,12 @@ export function parsedCfiToString(parsed: ParsedCfi): string {
       .join("!")
 
     return wrapCfi(`${parent},${start},${end}`)
-  } else {
-    // It's a single CFI
-    return wrapCfi(
-      parsed.map((parts) => parts.map(partToString).join("")).join("!"),
-    )
   }
+  
+  // It's a single CFI
+  return wrapCfi(
+    parsed.map((parts) => parts.map(partToString).join("")).join("!"),
+  )
 }
 
 /**

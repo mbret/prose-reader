@@ -552,4 +552,121 @@ describe("CFI Generation", () => {
       }
     })
   })
+
+  describe("extensions", () => {
+    it("should add custom extension parameters to CFIs", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">This is some text.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const paraNode = doc.getElementById("para01")
+      expect(paraNode).not.toBeNull()
+      if (!paraNode) return
+
+      // Generate CFI with extension parameters
+      const cfi = generate(
+        paraNode,
+        {
+          extensions: {
+            "vnd.custom.version": "1.0",
+            "vnd.custom.timestamp": "2023-05-01"
+          }
+        }
+      )
+
+      // The output should include the extension parameters
+      expect(cfi).toBe("epubcfi(/2[body01]/2[para01[;vnd.custom.version=1.0;vnd.custom.timestamp=2023-05-01])")
+
+      // Should be parseable
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+    })
+
+    it("should combine extensions with text assertions", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">This is some sample text for testing.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const paraNode = doc.getElementById("para01")
+      if (!paraNode) return
+
+      const textNode = paraNode.firstChild
+      if (!textNode) return
+
+      // Generate CFI with both text assertions and extensions
+      const cfi = generate(
+        { node: textNode, offset: 5 },
+        {
+          includeTextAssertions: true,
+          extensions: {
+            "vnd.custom.appVersion": "2.1.3"
+          }
+        }
+      )
+
+      // Should include both text assertion and extension
+      expect(cfi).toBe("epubcfi(/2[body01]/2[para01]/1:5[This is so[;vnd.custom.appVersion=2.1.3])")
+
+      // Make sure it parses correctly
+      const parsed = parse(cfi)
+      expect(Array.isArray(parsed)).toBe(true)
+    })
+
+    it("should add extensions to range CFIs", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">First paragraph.</p>
+            <p id="para02">Second paragraph.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const para1 = doc.getElementById("para01")
+      const para2 = doc.getElementById("para02")
+
+      if (!para1 || !para2) return
+
+      const textNode1 = para1.firstChild
+      const textNode2 = para2.firstChild
+
+      if (!textNode1 || !textNode2) return
+
+      // Generate a range with extensions
+      const rangeCfi = generate(
+        {
+          start: { node: textNode1, offset: 0 },
+          end: { node: textNode2, offset: 8 }
+        },
+        {
+          extensions: {
+            "vnd.test.reason": "bookmark",
+            "vnd.test.created": "2023-06-15T12:30:45Z"
+          }
+        }
+      )
+
+      expect(rangeCfi).toContain("vnd.test.reason=bookmark")
+      expect(rangeCfi).toContain("vnd.test.created=2023-06-15T12%3A30%3A45Z")
+      expect(rangeCfi).toBe("epubcfi(/2[body01[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/2[para01]/1:0[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/4[para02]/1:8[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z])")
+
+      // Should be parseable
+      const parsed = parse(rangeCfi)
+      expect("parent" in parsed).toBe(true)
+    })
+  })
 })
