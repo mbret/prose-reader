@@ -79,7 +79,7 @@ describe("EPUB CFI Resolve", () => {
       const result = resolve(cfi, doc)
 
       expect(result.isRange).toBe(false)
-      expect(result.node).toBe(doc.getElementById("p2"))
+      expect(result.node).toBe(doc.getElementById("chap02ref"))
     })
 
     it("should resolve a CFI range", () => {
