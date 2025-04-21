@@ -23,7 +23,7 @@ export interface GenerateOptions {
    * Whether to include a side bias assertion
    */
   includeSideBias?: "before" | "after"
-  
+
   /**
    * Whether to include spatial coordinates (for image or video)
    * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
@@ -46,17 +46,17 @@ export interface CfiPosition {
    * The DOM node
    */
   node: Node
-  
+
   /**
    * Character offset within the node (for text nodes)
    */
   offset?: number
-  
+
   /**
    * Temporal position in seconds (for audio/video content)
    */
   temporal?: number
-  
+
   /**
    * Spatial position as [x,y] coordinates (for image or video)
    * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
@@ -95,31 +95,34 @@ function extractTextAssertion(
 /**
  * Add extension parameters to a CFI path
  */
-function addExtensions(cfi: string, extensions?: Record<string, string>): string {
+function addExtensions(
+  cfi: string,
+  extensions?: Record<string, string>,
+): string {
   if (!extensions || Object.keys(extensions).length === 0) {
-    return cfi;
+    return cfi
   }
 
   // Build the extension string
-  const extensionParts: string[] = [];
+  const extensionParts: string[] = []
   for (const [key, value] of Object.entries(extensions)) {
-    extensionParts.push(`${key}=${encodeURIComponent(cfiEscape(value))}`);
+    extensionParts.push(`${key}=${encodeURIComponent(cfiEscape(value))}`)
   }
 
   if (extensionParts.length === 0) {
-    return cfi;
+    return cfi
   }
 
   // Fix for test "should add custom extension parameters to CFIs"
   // The test expects: epubcfi(/4[body01]/10[para05][;vnd.test.param1=value1;...])
-  
+
   // If we're dealing with a bracket at end, insert our extensions before the closing bracket
-  if (cfi.endsWith(']')) {
-    return `${cfi.substring(0, cfi.length - 1)}[;${extensionParts.join(';')}]`;
+  if (cfi.endsWith("]")) {
+    return `${cfi.substring(0, cfi.length - 1)}[;${extensionParts.join(";")}]`
   }
-  
+
   // No bracket at the end - just add with new brackets
-  return `${cfi}[;${extensionParts.join(';')}]`;
+  return `${cfi}[;${extensionParts.join(";")}]`
 }
 
 /**
@@ -129,7 +132,7 @@ function generatePoint(
   node: Node,
   offset?: number,
   options: GenerateOptions = {},
-  position?: CfiPosition
+  position?: CfiPosition,
 ): string {
   let cfi = ""
   let currentNode: Node | null = node
@@ -182,13 +185,13 @@ function generatePoint(
   if (offset !== undefined) {
     cfi += `:${offset}`
   }
-  
+
   // Add temporal offset if provided (from position parameter)
   const temporal = position?.temporal
   if (temporal !== undefined) {
     cfi += `~${temporal}`
   }
-  
+
   // Add spatial offset if provided (from position parameter or options)
   const spatial = position?.spatial || options.spatialOffset
   if (spatial !== undefined) {
@@ -196,7 +199,7 @@ function generatePoint(
     // Ensure values are within 0-100 range
     const safeX = Math.max(0, Math.min(100, x))
     const safeY = Math.max(0, Math.min(100, y))
-    
+
     // If we already added temporal offset, don't add the @ symbol
     if (temporal !== undefined) {
       cfi += `@${safeX}:${safeY}`
@@ -224,7 +227,7 @@ function generatePoint(
   }
 
   // Add extension parameters if specified
-  cfi = addExtensions(cfi, options.extensions);
+  cfi = addExtensions(cfi, options.extensions)
 
   return cfi
 }
@@ -237,23 +240,23 @@ function generateRelativePath(
   toNode: Node,
   offset?: number,
   options: GenerateOptions = {},
-  position?: CfiPosition
+  position?: CfiPosition,
 ): string {
   if (fromNode === toNode) {
     let result = offset !== undefined ? `:${offset}` : ""
-    
+
     // Add temporal offset if provided
     if (position?.temporal !== undefined) {
       result += `~${position.temporal}`
     }
-    
+
     // Add spatial offset if provided
     if (position?.spatial) {
       const [x, y] = position.spatial
       // Ensure values are within 0-100 range
       const safeX = Math.max(0, Math.min(100, x))
       const safeY = Math.max(0, Math.min(100, y))
-      
+
       // If we already have a temporal offset, don't add the @ symbol
       if (position.temporal !== undefined) {
         result += `@${safeX}:${safeY}`
@@ -261,7 +264,7 @@ function generateRelativePath(
         result += `@${safeX}:${safeY}`
       }
     }
-    
+
     return result
   }
 
@@ -306,19 +309,19 @@ function generateRelativePath(
   if (offset !== undefined) {
     relativePath += `:${offset}`
   }
-  
+
   // Add temporal offset if provided
   if (position?.temporal !== undefined) {
     relativePath += `~${position.temporal}`
   }
-  
+
   // Add spatial offset if provided
   if (position?.spatial) {
     const [x, y] = position.spatial
     // Ensure values are within 0-100 range
     const safeX = Math.max(0, Math.min(100, x))
     const safeY = Math.max(0, Math.min(100, y))
-    
+
     // If we already have a temporal offset, don't add the @ symbol
     if (position?.temporal !== undefined) {
       relativePath += `@${safeX}:${safeY}`
@@ -348,7 +351,7 @@ function generateRelativePath(
   }
 
   // Add extension parameters if specified
-  relativePath = addExtensions(relativePath, options.extensions);
+  relativePath = addExtensions(relativePath, options.extensions)
 
   return relativePath
 }
@@ -363,7 +366,7 @@ function generateRange(
   endOffset: number,
   options: GenerateOptions = {},
   startPosition?: CfiPosition,
-  endPosition?: CfiPosition
+  endPosition?: CfiPosition,
 ): string {
   // Find common ancestor
   const ancestor = findCommonAncestor(startNode, endNode)
@@ -380,16 +383,16 @@ function generateRange(
     startNode,
     startOffset,
     options,
-    startPosition
+    startPosition,
   )
 
   // Generate path from ancestor to end node
   const endPath = generateRelativePath(
-    ancestor, 
-    endNode, 
-    endOffset, 
+    ancestor,
+    endNode,
+    endOffset,
     options,
-    endPosition
+    endPosition,
   )
 
   // For range CFIs, add extensions to each part separately
@@ -397,18 +400,18 @@ function generateRange(
     // Format: epubcfi(/ancestor,/start[;extensions],/end[;extensions])
     const extensionString = Object.entries(options.extensions)
       .map(([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`)
-      .join(';');
+      .join(";")
 
     // Check if start/end paths already have extensions or brackets
-    const startWithExt = startPath.includes('[') ? 
-      startPath.replace(/\]$/, `;${extensionString}]`) : 
-      `${startPath}[;${extensionString}]`;
-      
-    const endWithExt = endPath.includes('[') ? 
-      endPath.replace(/\]$/, `;${extensionString}]`) : 
-      `${endPath}[;${extensionString}]`;
+    const startWithExt = startPath.includes("[")
+      ? startPath.replace(/\]$/, `;${extensionString}]`)
+      : `${startPath}[;${extensionString}]`
 
-    return `${ancestorCfi},${startWithExt},${endWithExt}`;
+    const endWithExt = endPath.includes("[")
+      ? endPath.replace(/\]$/, `;${extensionString}]`)
+      : `${endPath}[;${extensionString}]`
+
+    return `${ancestorCfi},${startWithExt},${endWithExt}`
   }
 
   // Combine into a regular range CFI without extensions
@@ -417,58 +420,58 @@ function generateRange(
 
 /**
  * Unified generate function that can handle both single positions and ranges
- * 
+ *
  * @example
  * // Generate CFI for a single node
  * const cfi = generate(node);
- * 
+ *
  * @example
  * // Generate CFI for a text node with offset
  * const cfi = generate({ node: textNode, offset: 5 });
- * 
+ *
  * @example
  * // Generate CFI for a video with temporal offset
  * const cfi = generate({ node: videoElement, temporal: 45.5 });
- * 
+ *
  * @example
  * // Generate CFI for an image with spatial coordinates
  * const cfi = generate({ node: imageElement, spatial: [50, 75] });
- * 
+ *
  * @example
  * // Generate a range CFI
- * const cfi = generate({ 
+ * const cfi = generate({
  *   start: { node: startNode, offset: 0 },
  *   end: { node: endNode, offset: 10 }
  * });
- * 
+ *
  * @example
  * // Generate a robust CFI with text assertions
- * const cfi = generate(node, { 
+ * const cfi = generate(node, {
  *   includeTextAssertions: true,
  *   textAssertionLength: 15
  * });
  */
 export function generate(
   position: Node | CfiPosition | { start: CfiPosition; end: CfiPosition },
-  options: GenerateOptions = {}
+  options: GenerateOptions = {},
 ): string {
   // Case 1: Simple Node
   if (position instanceof Node) {
     return `epubcfi(${generatePoint(position, undefined, options)})`
   }
-  
+
   // Case 2: CfiPosition (node + optional offset/temporal/spatial)
-  if ('node' in position && !('start' in position)) {
+  if ("node" in position && !("start" in position)) {
     return `epubcfi(${generatePoint(
-      position.node, 
-      position.offset, 
-      options, 
-      position
+      position.node,
+      position.offset,
+      options,
+      position,
     )})`
   }
-  
+
   // Case 3: Range (start + end positions)
-  if ('start' in position && 'end' in position) {
+  if ("start" in position && "end" in position) {
     const { start, end } = position
     return `epubcfi(${generateRange(
       start.node,
@@ -477,9 +480,11 @@ export function generate(
       end.offset ?? 0,
       options,
       start,
-      end
+      end,
     )})`
   }
-  
-  throw new Error('Invalid argument: expected Node, CfiPosition, or {start, end} object')
+
+  throw new Error(
+    "Invalid argument: expected Node, CfiPosition, or {start, end} object",
+  )
 }

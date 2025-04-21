@@ -91,7 +91,7 @@ export function resolve(
   try {
     // If it contains a comma, it's a range
     const unwrappedCfi = unwrapCfi(cfi)
-    
+
     if (unwrappedCfi.includes(",") && options.asRange) {
       // Parse using the parse function
       const parsed = parse(cfi)
@@ -417,10 +417,7 @@ function resolvePath(
   }
 
   // Prepare the result
-  const lastPart =
-    path.length > 0
-      ? path[path.length - 1]
-      : undefined
+  const lastPart = path.length > 0 ? path[path.length - 1] : undefined
   const sideBias = extractSideBias(lastPart)
   const extensions = lastPart?.extensions
 

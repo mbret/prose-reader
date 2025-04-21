@@ -1,8 +1,5 @@
+import { describe, expect, it } from "vitest"
 import { generate } from "./generate"
-import { describe, it, expect } from "vitest"
-// @ts-ignore
-import EpubCfiResolver from "epub-cfi-resolver"
-import { fromElements } from "./foliate"
 import { parse } from "./parse"
 
 describe("CFI Generation", () => {
@@ -37,13 +34,6 @@ describe("CFI Generation", () => {
       // Test simple node format
       const cfi = generate(imageNode)
 
-      // These variables are used for debugging and comparison
-      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-      const resolved = EpubCfiResolver.generate(imageNode)
-      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-      const foliate = fromElements([imageNode])
-
-      // expect(resolved).toEqual("epubcfi(/4[body01]/16[svgimg])")
       expect(cfi).toEqual("epubcfi(/4[body01]/16[svgimg])")
 
       // biome-ignore lint/style/noNonNullAssertion: <explanation>
@@ -570,18 +560,17 @@ describe("CFI Generation", () => {
       if (!paraNode) return
 
       // Generate CFI with extension parameters
-      const cfi = generate(
-        paraNode,
-        {
-          extensions: {
-            "vnd.custom.version": "1.0",
-            "vnd.custom.timestamp": "2023-05-01"
-          }
-        }
-      )
+      const cfi = generate(paraNode, {
+        extensions: {
+          "vnd.custom.version": "1.0",
+          "vnd.custom.timestamp": "2023-05-01",
+        },
+      })
 
       // The output should include the extension parameters
-      expect(cfi).toBe("epubcfi(/2[body01]/2[para01[;vnd.custom.version=1.0;vnd.custom.timestamp=2023-05-01])")
+      expect(cfi).toBe(
+        "epubcfi(/2[body01]/2[para01[;vnd.custom.version=1.0;vnd.custom.timestamp=2023-05-01])",
+      )
 
       // Should be parseable
       const parsed = parse(cfi)
@@ -611,13 +600,15 @@ describe("CFI Generation", () => {
         {
           includeTextAssertions: true,
           extensions: {
-            "vnd.custom.appVersion": "2.1.3"
-          }
-        }
+            "vnd.custom.appVersion": "2.1.3",
+          },
+        },
       )
 
       // Should include both text assertion and extension
-      expect(cfi).toBe("epubcfi(/2[body01]/2[para01]/1:5[This is so[;vnd.custom.appVersion=2.1.3])")
+      expect(cfi).toBe(
+        "epubcfi(/2[body01]/2[para01]/1:5[This is so[;vnd.custom.appVersion=2.1.3])",
+      )
 
       // Make sure it parses correctly
       const parsed = parse(cfi)
@@ -650,19 +641,21 @@ describe("CFI Generation", () => {
       const rangeCfi = generate(
         {
           start: { node: textNode1, offset: 0 },
-          end: { node: textNode2, offset: 8 }
+          end: { node: textNode2, offset: 8 },
         },
         {
           extensions: {
             "vnd.test.reason": "bookmark",
-            "vnd.test.created": "2023-06-15T12:30:45Z"
-          }
-        }
+            "vnd.test.created": "2023-06-15T12:30:45Z",
+          },
+        },
       )
 
       expect(rangeCfi).toContain("vnd.test.reason=bookmark")
       expect(rangeCfi).toContain("vnd.test.created=2023-06-15T12%3A30%3A45Z")
-      expect(rangeCfi).toBe("epubcfi(/2[body01[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/2[para01]/1:0[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/4[para02]/1:8[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z])")
+      expect(rangeCfi).toBe(
+        "epubcfi(/2[body01[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/2[para01]/1:0[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/4[para02]/1:8[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z])",
+      )
 
       // Should be parseable
       const parsed = parse(rangeCfi)
