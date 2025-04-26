@@ -58,3 +58,19 @@ export function wrapCfi(cfi: string): string {
  * Regular expression to check if a string is a valid CFI
  */
 export const isCFI = /^epubcfi\((.*)\)$/
+
+/**
+ * @important Make it non browser runtime specific
+ */
+export const isElement = (node: Node): node is Element =>
+  node.nodeType === Node.ELEMENT_NODE
+
+/**
+ * @important Make it non browser runtime specific
+ */
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export const isNode = (node: any): node is Node =>
+  typeof node === "object" &&
+  node !== null &&
+  "nodeType" in node &&
+  (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE)

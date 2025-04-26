@@ -5,6 +5,7 @@ import {
   parse,
   unwrapCfi,
 } from "./parse"
+import { isNode } from "./utils"
 
 /**
  * Options for resolving a CFI
@@ -199,7 +200,7 @@ function resolveRange(
     let parentNode: Node | null = document.documentElement
     if (parentPath.length > 0) {
       const parentResult = resolvePath(parentPath, document, { throwOnError })
-      if (parentResult.node instanceof Node) {
+      if (isNode(parentResult.node)) {
         parentNode = parentResult.node
       }
     }
@@ -216,10 +217,7 @@ function resolveRange(
     const endResult = resolvePath(endPath, document, { throwOnError })
 
     // Check that we have valid Node objects
-    if (
-      !(startResult.node instanceof Node) ||
-      !(endResult.node instanceof Node)
-    ) {
+    if (!isNode(startResult.node) || !isNode(endResult.node)) {
       if (throwOnError) {
         throw new Error("Failed to resolve start or end node in CFI range")
       }
@@ -305,6 +303,16 @@ function extractSideBias(part: CfiPart | undefined): string | undefined {
 }
 
 /**
+ * Determines if a step in a CFI path is for a text node
+ * Text nodes have indices that are not doubled (odd numbers in CFI)
+ */
+function isTextNodeStep(part: CfiPart): boolean {
+  // Per the CFI spec, element indices are always even numbers
+  // So if we have an odd number, it's likely a text node or other non-element node
+  return part.index % 2 !== 0
+}
+
+/**
  * Resolves a CFI path to a DOM node
  */
 function resolvePath(
@@ -324,8 +332,33 @@ function resolvePath(
   // Look for an element with an ID first
   const nodeById = findNodeById(document, path)
   if (nodeById) {
-    // Grab the last part of the path for additional info
+    // Check if the last step indicates we need a child of this node
     const lastPart = path.length > 0 ? path[path.length - 1] : undefined
+
+    // Handle case where we have element with ID and we need to get to a text node child
+    if (lastPart && isTextNodeStep(lastPart)) {
+      // Text nodes use 1-based indexing without doubling
+      const childIndex = lastPart.index - 1
+
+      if (childIndex >= 0 && childIndex < nodeById.childNodes.length) {
+        const childNode = nodeById.childNodes[childIndex] as Node
+
+        const sideBias = extractSideBias(lastPart)
+        const extensions = lastPart?.extensions
+
+        return {
+          node: childNode,
+          isRange: false,
+          offset: lastPart?.offset,
+          temporal: lastPart?.temporal,
+          spatial: lastPart?.spatial,
+          side: sideBias,
+          extensions,
+        }
+      }
+    }
+
+    // If no text node reference or it couldn't be found, use the node found by ID
     const sideBias = extractSideBias(lastPart)
     const extensions = lastPart?.extensions
 
@@ -386,26 +419,44 @@ function resolvePath(
     const part = path[i]
     if (!currentNode || !part) break
 
-    // Get child nodes and try to navigate to the right one
-    const childElements: Node[] = Array.from(currentNode.childNodes).filter(
-      (node) => node.nodeType === Node.ELEMENT_NODE,
-    )
+    // Handle text nodes differently than element nodes
+    if (isTextNodeStep(part)) {
+      // For text nodes, we use the raw index (minus 1 for 0-based indexing)
+      const nodeIndex = part.index - 1
 
-    // Calculate the actual index (CFI indices are 1-based and doubled)
-    const index = Math.floor(part.index / 2) - 1
-
-    if (index >= 0 && index < childElements.length) {
-      const nextNode = childElements[index]
-      if (nextNode) {
-        currentNode = nextNode
+      if (nodeIndex >= 0 && nodeIndex < currentNode.childNodes.length) {
+        // We know this is a valid index, so the child node must exist
+        currentNode = currentNode.childNodes[nodeIndex] as Node
+      } else {
+        if (throwOnError) {
+          throw new Error(`Invalid text node index: ${part.index}`)
+        }
+        currentNode = null
+        break
       }
     } else {
-      if (throwOnError) {
-        throw new Error(`Invalid step index: ${part.index}`)
-      }
+      // For element nodes, we need to filter to just element nodes
+      // Get child nodes and try to navigate to the right one
+      const childElements: Node[] = Array.from(currentNode.childNodes).filter(
+        (node) => node.nodeType === Node.ELEMENT_NODE,
+      )
 
-      currentNode = null
-      break
+      // Calculate the actual index (CFI indices are 1-based and doubled for elements)
+      const index = Math.floor(part.index / 2) - 1
+
+      if (index >= 0 && index < childElements.length) {
+        const nextNode = childElements[index]
+        if (nextNode) {
+          currentNode = nextNode
+        }
+      } else {
+        if (throwOnError) {
+          throw new Error(`Invalid element step index: ${part.index}`)
+        }
+
+        currentNode = null
+        break
+      }
     }
   }
 
