@@ -21,6 +21,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "@prose-reader/cfi": "^1.209.0",
     "@prose-reader/shared": "^1.209.0"
   },
   "peerDependencies": {
