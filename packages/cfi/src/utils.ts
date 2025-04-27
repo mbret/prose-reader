@@ -24,26 +24,39 @@ export function findCommonAncestor(nodeA: Node, nodeB: Node): Node | null {
   if (nodeA === nodeB) return nodeA
 
   const ancestorsA = getAncestors(nodeA)
-  const ancestorsB = getAncestors(nodeB)
+  const ancestorsSet = new Set(ancestorsA)
 
-  let commonAncestor: Node | null = null
-
-  for (const ancestor of ancestorsA) {
-    if (ancestorsB.includes(ancestor)) {
-      commonAncestor = ancestor
-      break
+  // Start with nodeB and traverse up until we find a common ancestor
+  let current: Node | null = nodeB
+  while (current) {
+    if (ancestorsSet.has(current)) {
+      return current
     }
+    current = current.parentNode
   }
 
-  return commonAncestor
+  return null
 }
 
 /**
+ * Special characters in CFI that need to be escaped according to the spec
+ * These are: [ ] ^ , ( ) ;
+ */
+export const CFI_SPECIAL_CHARS = /[\[\]\^,();]/g
+
+/**
  * Escape special characters in a CFI string
+ * @param str The string to escape
+ * @returns The escaped string
  */
 export function cfiEscape(str: string): string {
-  return str.replace(/[\[\]\^,();]/g, `^$&`)
+  return str.replace(CFI_SPECIAL_CHARS, `^$&`)
 }
+
+/**
+ * Regular expression to check if a string is a valid CFI
+ */
+export const isCFI = /^epubcfi\((.*)\)$/
 
 /**
  * Wrap a CFI string in the epubcfi() function
@@ -53,11 +66,6 @@ export function cfiEscape(str: string): string {
 export function wrapCfi(cfi: string): string {
   return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`
 }
-
-/**
- * Regular expression to check if a string is a valid CFI
- */
-export const isCFI = /^epubcfi\((.*)\)$/
 
 /**
  * @important Make it non browser runtime specific
@@ -74,3 +82,9 @@ export const isNode = (node: any): node is Node =>
   node !== null &&
   "nodeType" in node &&
   (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE)
+
+/**
+ * Check if a node is a text node
+ */
+export const isTextNode = (node: Node): boolean =>
+  node.nodeType === Node.TEXT_NODE

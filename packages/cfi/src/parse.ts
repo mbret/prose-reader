@@ -92,6 +92,7 @@ function tokenize(cfi: string): CfiToken[] {
       break
     }
 
+    // Handle escape characters
     if (char === "^" && !isEscaped) {
       isEscaped = true
       continue

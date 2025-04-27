@@ -1,11 +1,5 @@
-import {
-  type CfiPart,
-  type CfiRange,
-  type ParsedCfi,
-  parse,
-  unwrapCfi,
-} from "./parse"
-import { isNode } from "./utils"
+import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
+import { isNode, isTextNode } from "./utils"
 
 /**
  * Options for resolving a CFI
@@ -85,51 +79,22 @@ export function resolve(
   document: Document,
   options: ResolveOptions = {},
 ): ResolveResult {
+  // If already parsed, use it directly
   if (typeof cfi !== "string") {
     return resolveParsed(cfi, document, options)
   }
 
   try {
-    // If it contains a comma, it's a range
-    const unwrappedCfi = unwrapCfi(cfi)
+    // Parse the CFI once and use the parsed object for all checks
+    const parsedCfi = parse(cfi)
 
-    if (unwrappedCfi.includes(",") && options.asRange) {
-      // Parse using the parse function
-      const parsed = parse(cfi)
-      if (isCfiRange(parsed)) {
-        return resolveRange(parsed, document, { ...options, asRange: true })
-      }
+    // Handle range CFIs when asRange is true
+    if (options.asRange && isCfiRange(parsedCfi)) {
+      return resolveRange(parsedCfi, document, { ...options, asRange: true })
     }
 
-    // Handle side bias specifically
-    // This matches the format "/X/Y[id]/Z:N[a]" where 'a' is the side bias
-    if (unwrappedCfi.match(/\/\d+\/\d+\[[^\]]+\]\/\d+:\d+\[[a-z]\]/)) {
-      const match = unwrappedCfi.match(
-        /\/\d+\/\d+\[([^\]]+)\]\/\d+:(\d+)\[([a-z])\]/,
-      )
-      if (match) {
-        const [, id, offsetStr, side] = match
-        if (id && offsetStr) {
-          const node = document.getElementById(id)
-          return {
-            node,
-            isRange: false,
-            offset: parseInt(offsetStr, 10),
-            side,
-          }
-        }
-      }
-    }
-
-    // Check if this is a CFI with extension parameters outside brackets
-    if (unwrappedCfi.includes(";")) {
-      const parsed = parse(cfi)
-      return resolveParsed(parsed, document, options)
-    }
-
-    // Parse all other formats normally
-    const parsed = parse(cfi)
-    return resolveParsed(parsed, document, options)
+    // For all other cases, use the parsed CFI
+    return resolveParsed(parsedCfi, document, options)
   } catch (error) {
     if (options.throwOnError) {
       throw error
@@ -374,7 +339,7 @@ function resolvePath(
           const offset = Array.isArray(lastPart.offset)
             ? lastPart.offset[0]
             : lastPart.offset
-          if (nodeById.nodeType === Node.TEXT_NODE) {
+          if (isTextNode(nodeById)) {
             range.setStart(nodeById, offset || 0)
           }
         }
@@ -494,7 +459,7 @@ function resolvePath(
         const offset = Array.isArray(lastPart.offset)
           ? lastPart.offset[0]
           : lastPart.offset
-        if (currentNode.nodeType === Node.TEXT_NODE) {
+        if (isTextNode(currentNode)) {
           range.setStart(currentNode, offset || 0)
         }
       }

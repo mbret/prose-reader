@@ -104,17 +104,9 @@ function addExtensions(
   }
 
   // Build the extension string
-  const extensionParts: string[] = []
-  for (const [key, value] of Object.entries(extensions)) {
-    extensionParts.push(`${key}=${encodeURIComponent(cfiEscape(value))}`)
-  }
-
-  if (extensionParts.length === 0) {
-    return cfi
-  }
-
-  // Fix for test "should add custom extension parameters to CFIs"
-  // The test expects: epubcfi(/4[body01]/10[para05][;vnd.test.param1=value1;...])
+  const extensionParts = Object.entries(extensions).map(
+    ([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`,
+  )
 
   // If we're dealing with a bracket at end, insert our extensions before the closing bracket
   if (cfi.endsWith("]")) {
@@ -261,12 +253,8 @@ function generatePoint(
     const safeX = Math.max(0, Math.min(100, x))
     const safeY = Math.max(0, Math.min(100, y))
 
-    // If we already added temporal offset, don't add the @ symbol
-    if (temporal !== undefined) {
-      cfi += `@${safeX}:${safeY}`
-    } else {
-      cfi += `@${safeX}:${safeY}`
-    }
+    // Add the spatial offset regardless of temporal offset
+    cfi += `@${safeX}:${safeY}`
   }
 
   // Add text assertions if available
@@ -383,12 +371,8 @@ function generateRelativePath(
     const safeX = Math.max(0, Math.min(100, x))
     const safeY = Math.max(0, Math.min(100, y))
 
-    // If we already have a temporal offset, don't add the @ symbol
-    if (position?.temporal !== undefined) {
-      relativePath += `@${safeX}:${safeY}`
-    } else {
-      relativePath += `@${safeX}:${safeY}`
-    }
+    // Add the spatial offset regardless of temporal offset
+    relativePath += `@${safeX}:${safeY}`
   }
 
   // Add text assertion if enabled
