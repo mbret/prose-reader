@@ -151,7 +151,7 @@ describe("EPUB CFI Parser", () => {
   describe("extensions", () => {
     it("should parse a CFI with extension parameters", () => {
       const cfi =
-        "epubcfi(/4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2)"
+        "epubcfi(/4[body01]/10[para05;vnd.test.param1=value1;vnd.test.param2=value2])"
       const parsed = parse(cfi)
 
       expect(parsed).toEqual([
@@ -195,7 +195,7 @@ describe("EPUB CFI Parser", () => {
 
     it("should handle escaped characters in extension parameters", () => {
       const cfi =
-        "epubcfi(/4[body01]/10[para05];vnd.test.param=value^,with^[special^]chars)"
+        "epubcfi(/4[body01]/10[para05;vnd.test.param=value^,with^[special^]chars])"
       const parsed = parse(cfi)
 
       if (Array.isArray(parsed) && parsed[0] && parsed[0][1]) {

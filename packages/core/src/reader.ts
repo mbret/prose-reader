@@ -5,11 +5,13 @@ import {
   Subject,
 } from "rxjs"
 import { filter, map } from "rxjs/operators"
-import { generateCfiForSpineItemPage } from "./cfi/generate/generateCfiForSpineItemPage"
-import { generateCfiFromRange } from "./cfi/generate/generateCfiFromRange"
-import { generateCfiFromSelection } from "./cfi/generate/generateCfiFronSelection"
-import { parseCfi } from "./cfi/lookup/parseCfi"
-import { resolveCfi } from "./cfi/lookup/resolveCfi"
+import {
+  generateCfiForSpineItemPage,
+  generateCfiFromRange,
+  generateCfiFromSelection,
+  parseCfi,
+} from "./cfi"
+import { resolveCfi } from "./cfi/resolve"
 import { HTML_PREFIX } from "./constants"
 import { Context, type ContextState } from "./context/Context"
 import { Features } from "./features/Features"

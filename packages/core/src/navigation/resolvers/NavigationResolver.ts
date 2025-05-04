@@ -1,4 +1,4 @@
-import { resolveCfi } from "../../cfi/lookup/resolveCfi"
+import { resolveCfi } from "../../cfi"
 import type { Context } from "../../context/Context"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"

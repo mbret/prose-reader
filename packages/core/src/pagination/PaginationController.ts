@@ -1,7 +1,5 @@
 import { merge, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs"
-import { generateCfiForSpineItemPage } from "../cfi/generate/generateCfiForSpineItemPage"
-import { getRootCfi } from "../cfi/generate/getRootCfi"
-import { isRootCfi } from "../cfi/lookup/isRootCfi"
+import { generateCfiForSpineItemPage, generateRootCfi, isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { DeprecatedViewportPosition } from "../navigation/controllers/ControlledNavigationController"
 import type { Spine } from "../spine/Spine"
@@ -115,11 +113,11 @@ export class PaginationController extends DestroyableClass {
               isRootCfi(endLastCfi)
 
             const beginCfi = shouldUpdateBeginCfi
-              ? getRootCfi(beginSpineItem)
+              ? generateRootCfi(beginSpineItem.item)
               : beginLastCfi
 
             const endCfi = shouldUpdateEndCfi
-              ? getRootCfi(endSpineItem)
+              ? generateRootCfi(endSpineItem.item)
               : endLastCfi
 
             const beginNumberOfPagesInSpineItem = beginSpineItem.numberOfPages

@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs"
-import { parseCfi } from "../cfi/lookup/parseCfi"
+import { parseCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem } from "../spineItem/SpineItem"

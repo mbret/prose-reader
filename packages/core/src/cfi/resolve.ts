@@ -1,12 +1,6 @@
 import { resolve } from "@prose-reader/cfi"
-import { Report } from "../../report"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { CfiHandler } from "../CfiHandler"
-import { parseCfi } from "./parseCfi"
-import {
-  toElement as foliateToElement,
-  parse as foliateParse,
-} from "../foliate"
+import { Report } from "../report"
+import type { SpineItemsManager } from "../spine/SpineItemsManager"
 
 /**
  * Returns the node and offset for the given cfi.
@@ -26,9 +20,6 @@ export const resolveCfi = ({
 
   if (!spineItem) return undefined
 
-  const { cleanedCfi, offset } = parseCfi(cfi)
-  const cfiHandler = new CfiHandler(cleanedCfi, {})
-
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
   if (rendererElement instanceof HTMLIFrameElement) {
@@ -39,10 +30,6 @@ export const resolveCfi = ({
         const resolved = resolve(cfi, doc, {
           throwOnError: true,
         })
-
-        console.log("FOOO", resolved, cfiHandler.resolve(doc, {}))
-        console.log("FOOO foliate", foliateToElement(doc, foliateParse(cfi)))
-        cfiHandler.destroy()
 
         return {
           node: resolved.isRange

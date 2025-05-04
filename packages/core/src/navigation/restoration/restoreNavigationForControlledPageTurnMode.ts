@@ -1,5 +1,5 @@
 import { type Observable, first, map, of } from "rxjs"
-import { isRootCfi } from "../../cfi/lookup/isRootCfi"
+import { isRootCfi } from "../../cfi"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"

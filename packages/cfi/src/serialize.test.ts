@@ -67,7 +67,7 @@ describe("EPUB CFI Serializer", () => {
 
     it("should serialize a CFI with multiple extensions", () => {
       const cfi =
-        "epubcfi(/4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2)"
+        "epubcfi(/4[body01]/10[para05]/2:3[;s=b;vnd.test.param=value])"
       const parsed = parse(cfi)
       expect(serialize(parsed)).toBe(cfi)
     })
@@ -79,10 +79,11 @@ describe("EPUB CFI Serializer", () => {
       expect(serialize(parsed)).toBe(cfi)
     })
 
-    it("should serialize a CFI with escaped characters in extensions", () => {
+    it("should handle escaped characters in extension parameters", () => {
       const cfi =
-        "epubcfi(/4[body01]/10[para05];vnd.test.param=value^,with^[special^]chars)"
+        "epubcfi(/4[body01]/10[para05;vnd.test.param=value^,with^[special^]chars])"
       const parsed = parse(cfi)
+
       expect(serialize(parsed)).toBe(cfi)
     })
 

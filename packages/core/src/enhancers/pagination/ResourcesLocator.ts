@@ -9,7 +9,7 @@ import {
   switchScan,
   withLatestFrom,
 } from "rxjs"
-import { getRootCfi } from "../../cfi/generate/getRootCfi"
+import { generateRootCfi } from "../../cfi"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { deferIdle, idle } from "../../utils/rxjs"
@@ -46,7 +46,7 @@ const toCfiLocatableResource = (
   }
 
   return {
-    cfi: getRootCfi(item),
+    cfi: generateRootCfi(item.item),
   }
 }
 
@@ -111,7 +111,7 @@ export const consolidate = (
         ...resource,
         range,
         itemIndex,
-        startNode,
+        startNode: startNode ?? undefined,
         startOffset,
         absolutePageIndex,
         itemPageIndex,
