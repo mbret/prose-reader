@@ -192,13 +192,9 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
   )
 
   return {
+    ...startResult,
     node: domRange,
     isRange: true,
-    offset: startResult.offset,
-    temporal: startResult.temporal,
-    spatial: startResult.spatial,
-    side: startResult.side,
-    extensions: startResult.extensions,
   }
 }
 
@@ -245,6 +241,112 @@ export function resolveExtensions(parsedCfi: ParsedCfi) {
   return lastPartPath?.extensions
 }
 
+function createBaseResultObject(part?: CfiPart) {
+  const sideBias = extractSideBias(part)
+  const extensions = part?.extensions
+
+  return {
+    offset: part?.offset,
+    temporal: part?.temporal,
+    spatial: part?.spatial,
+    side: sideBias,
+    extensions,
+  }
+}
+
+function createNodeResultObject(
+  node: Node | null,
+  part?: CfiPart,
+): ResolveResult {
+  return {
+    node,
+    isRange: false,
+    ...createBaseResultObject(part),
+  }
+}
+
+function createRangeResultObject(
+  node: Range | null,
+  part?: CfiPart,
+): ResolveResult {
+  return {
+    node,
+    isRange: true,
+    ...createBaseResultObject(part),
+  }
+}
+
+/**
+ * Creates a DOM range for a given node with optional offset
+ */
+function createRangeForNode(
+  document: Document,
+  node: Node,
+  offset?: number | number[],
+): Range {
+  const range = document.createRange()
+  range.selectNodeContents(node)
+
+  if (offset !== undefined) {
+    const offsetValue = Array.isArray(offset) ? offset[0] : offset
+    if (isTextNode(node)) {
+      range.setStart(node, offsetValue || 0)
+    }
+  }
+
+  return range
+}
+
+/**
+ * Traverses the DOM tree based on CFI path parts
+ */
+function traverseNodePath(
+  currentNode: Node | null,
+  path: CfiPart[],
+  startIndex: number,
+  throwOnError: boolean,
+): Node | null {
+  let _currentNode = currentNode
+
+  for (let i = startIndex; i < path.length; i++) {
+    const part = path[i]
+    if (!_currentNode || !part) break
+
+    if (isTextNodeStep(part)) {
+      const nodeIndex = part.index - 1
+      if (nodeIndex >= 0 && nodeIndex < _currentNode.childNodes.length) {
+        _currentNode = _currentNode.childNodes[nodeIndex] as Node
+      } else {
+        if (throwOnError) {
+          throw new Error(`Invalid text node index: ${part.index}`)
+        }
+        _currentNode = null
+        break
+      }
+    } else {
+      const childElements: Node[] = Array.from(_currentNode.childNodes).filter(
+        (node) => node.nodeType === Node.ELEMENT_NODE,
+      )
+      const index = Math.floor(part.index / 2) - 1
+
+      if (index >= 0 && index < childElements.length) {
+        const nextNode = childElements[index]
+        if (nextNode) {
+          _currentNode = nextNode
+        }
+      } else {
+        if (throwOnError) {
+          throw new Error(`Invalid element step index: ${part.index}`)
+        }
+        _currentNode = null
+        break
+      }
+    }
+  }
+
+  return _currentNode
+}
+
 /**
  * Resolves a CFI path to a DOM node
  */
@@ -259,7 +361,7 @@ function resolvePath(
     if (throwOnError) {
       throw new Error("Document is not available")
     }
-    return { node: null, isRange: false }
+    return createNodeResultObject(null)
   }
 
   // Look for an element with an ID first
@@ -268,132 +370,46 @@ function resolvePath(
   // If there's no remaining path to process after the ID node, return the ID node
   if (nodeById && remainingPathIndex >= path.length) {
     const lastPart = path.at(-1)
-    const extensions = lastPart?.extensions
-    // If no text node reference or it couldn't be found, use the node found by ID
-    const sideBias = extractSideBias(lastPart)
-    const commonData = {
-      offset: lastPart?.offset,
-      temporal: lastPart?.temporal,
-      spatial: lastPart?.spatial,
-      side: sideBias,
-      extensions,
-    }
 
-    // Handle case where we have element with ID and we need to get to a text node child
     if (lastPart && isTextNodeStep(lastPart)) {
-      // Text nodes use 1-based indexing without doubling
       const childIndex = lastPart.index - 1
-
       if (childIndex >= 0 && childIndex < nodeById.childNodes.length) {
         const childNode = nodeById.childNodes[childIndex] as Node
-
-        return {
-          node: childNode,
-          isRange: false,
-          ...commonData,
-        }
+        return createNodeResultObject(childNode, lastPart)
       }
     }
 
     if (asRange) {
-      // Create a range
-      const range = document.createRange()
-      range.selectNodeContents(nodeById)
-
-      // Adjust for offset
-      if (lastPart?.offset !== undefined) {
-        const offset = Array.isArray(lastPart.offset)
-          ? lastPart.offset[0]
-          : lastPart.offset
-        if (isTextNode(nodeById)) {
-          range.setStart(nodeById, offset || 0)
-        }
-      }
-
-      range.setEnd(nodeById, lastPart?.offset || 0)
-
-      return {
-        node: range,
-        isRange: true,
-        ...commonData,
-      }
+      const range = createRangeForNode(document, nodeById, lastPart?.offset)
+      return createRangeResultObject(range, lastPart)
     }
 
-    return {
-      node: nodeById,
-      isRange: false,
-      ...commonData,
-    }
+    return createNodeResultObject(nodeById, lastPart)
   }
 
   // Start traversal from the ID node if found, otherwise start from the document root
   let currentNode: Node | null = nodeById || document.documentElement
-
-  // Get the starting index for path traversal
   const startIndex = nodeById ? remainingPathIndex : 0
 
-  // Special case: Virtual positions (before first element or after last element)
-  // only applicable when asRange is true
+  // Handle virtual positions
   if (asRange && path.length > 0) {
     const lastPart = path[path.length - 1]
-
-    // Check if the last part might be a virtual position indicator
     if (lastPart && !isTextNodeStep(lastPart)) {
       // Handle position before first element (index 0)
       if (lastPart.index === 0 && currentNode) {
         const range = document.createRange()
         range.setStart(currentNode, 0)
         range.setEnd(currentNode, 0)
-
-        return {
-          node: range,
-          isRange: true,
-          offset: lastPart.offset,
-          temporal: lastPart.temporal,
-          spatial: lastPart.spatial,
-          side: extractSideBias(lastPart),
-          extensions: lastPart.extensions,
-        }
+        return createRangeResultObject(range, lastPart)
       }
 
-      // Parent node for navigation
-      let parentNode: Node | null = currentNode
-
-      // Navigate through all parts except the last one
-      for (let i = startIndex; i < path.length - 1; i++) {
-        const part = path[i]
-        if (!parentNode || !part) break
-
-        if (isTextNodeStep(part)) {
-          const nodeIndex = part.index - 1
-          if (nodeIndex >= 0 && nodeIndex < parentNode.childNodes.length) {
-            parentNode = parentNode.childNodes[nodeIndex] as Node
-          } else {
-            parentNode = null
-            break
-          }
-        } else {
-          const childElements: Node[] = Array.from(
-            parentNode.childNodes,
-          ).filter((node) => node.nodeType === Node.ELEMENT_NODE)
-          const index = Math.floor(part.index / 2) - 1
-
-          if (index >= 0 && index < childElements.length) {
-            const nextNode = childElements[index]
-            if (nextNode) {
-              parentNode = nextNode
-            } else {
-              parentNode = null
-              break
-            }
-          } else {
-            parentNode = null
-            break
-          }
-        }
-      }
-
-      // If we still have a parent node, handle possible after-last-element position
+      // Handle position after last element
+      const parentNode = traverseNodePath(
+        currentNode,
+        path.slice(0, -1),
+        startIndex,
+        throwOnError,
+      )
       if (parentNode) {
         const childElements: Node[] = Array.from(parentNode.childNodes).filter(
           (node) => node.nodeType === Node.ELEMENT_NODE,
@@ -405,112 +421,28 @@ function resolvePath(
           const range = document.createRange()
           range.selectNodeContents(parentNode)
           range.collapse(false) // Collapse to end
-
-          return {
-            node: range,
-            isRange: true,
-            offset: lastPart.offset,
-            temporal: lastPart.temporal,
-            spatial: lastPart.spatial,
-            side: extractSideBias(lastPart),
-            extensions: lastPart.extensions,
-          }
+          return createRangeResultObject(range, lastPart)
         }
       }
     }
   }
 
-  // For each part in the path
-  for (let i = startIndex; i < path.length; i++) {
-    const part = path[i]
-    if (!currentNode || !part) break
-
-    // Handle text nodes differently than element nodes
-    if (isTextNodeStep(part)) {
-      // For text nodes, we use the raw index (minus 1 for 0-based indexing)
-      const nodeIndex = part.index - 1
-
-      if (nodeIndex >= 0 && nodeIndex < currentNode.childNodes.length) {
-        // We know this is a valid index, so the child node must exist
-        currentNode = currentNode.childNodes[nodeIndex] as Node
-      } else {
-        if (throwOnError) {
-          throw new Error(`Invalid text node index: ${part.index}`)
-        }
-        currentNode = null
-        break
-      }
-    } else {
-      // For element nodes, we need to filter to just element nodes
-      // Get child nodes and try to navigate to the right one
-      const childElements: Node[] = Array.from(currentNode.childNodes).filter(
-        (node) => node.nodeType === Node.ELEMENT_NODE,
-      )
-
-      // Calculate the actual index (CFI indices are 1-based and doubled for elements)
-      const index = Math.floor(part.index / 2) - 1
-
-      if (index >= 0 && index < childElements.length) {
-        const nextNode = childElements[index]
-        if (nextNode) {
-          currentNode = nextNode
-        }
-      } else {
-        if (throwOnError) {
-          throw new Error(`Invalid element step index: ${part.index}`)
-        }
-
-        currentNode = null
-        break
-      }
-    }
-  }
+  currentNode = traverseNodePath(currentNode, path, startIndex, throwOnError)
 
   if (!currentNode) {
     if (throwOnError) {
       throw new Error("Failed to resolve CFI path")
     }
-
-    return { node: null, isRange: false }
+    return createNodeResultObject(null)
   }
 
-  // Prepare the result
   const lastPart = path.at(-1)
-  const sideBias = extractSideBias(lastPart)
-  const extensions = lastPart?.extensions
-
-  const result: ResolveResult = {
-    node: currentNode,
-    isRange: false,
-    offset: lastPart?.offset,
-    temporal: lastPart?.temporal,
-    spatial: lastPart?.spatial,
-    side: sideBias,
-    extensions,
-  }
-
   if (asRange) {
-    const range = document.createRange()
-    range.selectNodeContents(currentNode)
-
-    // Adjust for offset
-    if (lastPart?.offset !== undefined) {
-      const offset = Array.isArray(lastPart.offset)
-        ? lastPart.offset[0]
-        : lastPart.offset
-      if (isTextNode(currentNode)) {
-        range.setStart(currentNode, offset || 0)
-      }
-    }
-
-    return {
-      ...result,
-      node: range,
-      isRange: true,
-    }
+    const range = createRangeForNode(document, currentNode, lastPart?.offset)
+    return createRangeResultObject(range, lastPart)
   }
 
-  return result
+  return createNodeResultObject(currentNode, lastPart)
 }
 
 /**
