@@ -268,6 +268,16 @@ function resolvePath(
   // If there's no remaining path to process after the ID node, return the ID node
   if (nodeById && remainingPathIndex >= path.length) {
     const lastPart = path.at(-1)
+    const extensions = lastPart?.extensions
+    // If no text node reference or it couldn't be found, use the node found by ID
+    const sideBias = extractSideBias(lastPart)
+    const commonData = {
+      offset: lastPart?.offset,
+      temporal: lastPart?.temporal,
+      spatial: lastPart?.spatial,
+      side: sideBias,
+      extensions,
+    }
 
     // Handle case where we have element with ID and we need to get to a text node child
     if (lastPart && isTextNodeStep(lastPart)) {
@@ -277,24 +287,13 @@ function resolvePath(
       if (childIndex >= 0 && childIndex < nodeById.childNodes.length) {
         const childNode = nodeById.childNodes[childIndex] as Node
 
-        const sideBias = extractSideBias(lastPart)
-        const extensions = lastPart?.extensions
-
         return {
           node: childNode,
           isRange: false,
-          offset: lastPart?.offset,
-          temporal: lastPart?.temporal,
-          spatial: lastPart?.spatial,
-          side: sideBias,
-          extensions,
+          ...commonData,
         }
       }
     }
-
-    // If no text node reference or it couldn't be found, use the node found by ID
-    const sideBias = extractSideBias(lastPart)
-    const extensions = lastPart?.extensions
 
     if (asRange) {
       // Create a range
@@ -316,22 +315,14 @@ function resolvePath(
       return {
         node: range,
         isRange: true,
-        offset: lastPart?.offset,
-        temporal: lastPart?.temporal,
-        spatial: lastPart?.spatial,
-        side: sideBias,
-        extensions,
+        ...commonData,
       }
     }
 
     return {
       node: nodeById,
       isRange: false,
-      offset: lastPart?.offset,
-      temporal: lastPart?.temporal,
-      spatial: lastPart?.spatial,
-      side: sideBias,
-      extensions,
+      ...commonData,
     }
   }
 
