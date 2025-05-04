@@ -93,6 +93,64 @@ function extractTextAssertion(
 }
 
 /**
+ * Helper function to format spatial coordinates
+ */
+function formatSpatialOffset(spatial: [number, number]): string {
+  const [x, y] = spatial
+  // Ensure values are within 0-100 range
+  const safeX = Math.max(0, Math.min(100, x))
+  const safeY = Math.max(0, Math.min(100, y))
+  return `@${safeX}:${safeY}`
+}
+
+/**
+ * Helper function to add temporal and spatial offsets to a CFI string
+ */
+function addOffsets(
+  cfi: string,
+  temporal?: number,
+  spatial?: [number, number],
+): string {
+  let result = cfi
+
+  if (temporal !== undefined) {
+    result += `~${temporal}`
+  }
+
+  if (spatial !== undefined) {
+    result += formatSpatialOffset(spatial)
+  }
+
+  return result
+}
+
+/**
+ * Helper function to add text assertion and side bias to a CFI string
+ */
+function addTextAssertionAndSideBias(
+  cfi: string,
+  textAssertion: string | null,
+  sideBias?: "before" | "after",
+): string {
+  let result = cfi
+
+  if (textAssertion) {
+    result += `[${cfiEscape(textAssertion)}]`
+  }
+
+  if (sideBias) {
+    const sideBiasChar = sideBias === "before" ? "b" : "a"
+    if (!textAssertion) {
+      result += `[;s=${sideBiasChar}]`
+    } else {
+      result = `${result.substring(0, result.length - 1)};s=${sideBiasChar}]`
+    }
+  }
+
+  return result
+}
+
+/**
  * Generate a CFI for a single node in the DOM
  */
 function generatePoint(
@@ -214,41 +272,15 @@ function generatePoint(
     cfi += `:${offset}`
   }
 
-  // Add temporal offset if provided (from position parameter)
-  const temporal = position?.temporal
-  if (temporal !== undefined) {
-    cfi += `~${temporal}`
-  }
+  // Add temporal and spatial offsets using helper
+  cfi = addOffsets(
+    cfi,
+    position?.temporal,
+    position?.spatial || options.spatialOffset,
+  )
 
-  // Add spatial offset if provided (from position parameter or options)
-  const spatial = position?.spatial || options.spatialOffset
-  if (spatial !== undefined) {
-    const [x, y] = spatial
-    // Ensure values are within 0-100 range
-    const safeX = Math.max(0, Math.min(100, x))
-    const safeY = Math.max(0, Math.min(100, y))
-
-    // Add the spatial offset regardless of temporal offset
-    cfi += `@${safeX}:${safeY}`
-  }
-
-  // Add text assertions if available
-  if (textAssertion) {
-    cfi += `[${cfiEscape(textAssertion)}]`
-  }
-
-  // Add side bias if specified
-  if (options.includeSideBias) {
-    const sideBias = options.includeSideBias === "before" ? "b" : "a"
-    if (!textAssertion) {
-      // If we don't have a text assertion, add the side bias directly
-      cfi += `[;s=${sideBias}]`
-    } else {
-      // Otherwise, we need to modify the last text assertion
-      // Remove the closing bracket and add the side bias
-      cfi = `${cfi.substring(0, cfi.length - 1)};s=${sideBias}]`
-    }
-  }
+  // Add text assertion and side bias using helper
+  cfi = addTextAssertionAndSideBias(cfi, textAssertion, options.includeSideBias)
 
   // Add extension parameters if specified
   cfi = addExtensions(cfi, options.extensions)
@@ -268,27 +300,7 @@ function generateRelativePath(
 ): string {
   if (fromNode === toNode) {
     let result = offset !== undefined ? `:${offset}` : ""
-
-    // Add temporal offset if provided
-    if (position?.temporal !== undefined) {
-      result += `~${position.temporal}`
-    }
-
-    // Add spatial offset if provided
-    if (position?.spatial) {
-      const [x, y] = position.spatial
-      // Ensure values are within 0-100 range
-      const safeX = Math.max(0, Math.min(100, x))
-      const safeY = Math.max(0, Math.min(100, y))
-
-      // If we already have a temporal offset, don't add the @ symbol
-      if (position.temporal !== undefined) {
-        result += `@${safeX}:${safeY}`
-      } else {
-        result += `@${safeX}:${safeY}`
-      }
-    }
-
+    result = addOffsets(result, position?.temporal, position?.spatial)
     return result
   }
 
@@ -334,40 +346,17 @@ function generateRelativePath(
     relativePath += `:${offset}`
   }
 
-  // Add temporal offset if provided
-  if (position?.temporal !== undefined) {
-    relativePath += `~${position.temporal}`
-  }
+  // Add temporal and spatial offsets using helper
+  relativePath = addOffsets(relativePath, position?.temporal, position?.spatial)
 
-  // Add spatial offset if provided
-  if (position?.spatial) {
-    const [x, y] = position.spatial
-    // Ensure values are within 0-100 range
-    const safeX = Math.max(0, Math.min(100, x))
-    const safeY = Math.max(0, Math.min(100, y))
-
-    // Add the spatial offset regardless of temporal offset
-    relativePath += `@${safeX}:${safeY}`
-  }
-
-  // Add text assertion if enabled
+  // Add text assertion and side bias using helper
   if (options.includeTextAssertions && toNode.nodeType === Node.TEXT_NODE) {
     const textAssertion = extractTextAssertion(toNode, offset, options)
-    if (textAssertion) {
-      relativePath += `[${cfiEscape(textAssertion)}]`
-    }
-  }
-
-  // Add side bias if specified
-  if (options.includeSideBias) {
-    const sideBias = options.includeSideBias === "before" ? "b" : "a"
-    if (options.includeTextAssertions && toNode.nodeType === Node.TEXT_NODE) {
-      // If we have a text assertion, modify it to include side bias
-      relativePath = relativePath.replace(/\]$/, `;s=${sideBias}]`)
-    } else {
-      // Otherwise add a separate side bias
-      relativePath += `[;s=${sideBias}]`
-    }
+    relativePath = addTextAssertionAndSideBias(
+      relativePath,
+      textAssertion,
+      options.includeSideBias,
+    )
   }
 
   // Add extension parameters if specified
