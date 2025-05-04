@@ -40,7 +40,6 @@ function serializePart(part: CfiPart): string {
   const inBrackets: string[] = []
 
   // Handle text assertions
-  console.log(part.text)
   if (part.text && part.text.length > 0) {
     inBrackets.push(part.text.map(cfiEscape).join(","))
   }
