@@ -93,31 +93,6 @@ function extractTextAssertion(
 }
 
 /**
- * Add extension parameters to a CFI path
- */
-function addExtensions(
-  cfi: string,
-  extensions?: Record<string, string>,
-): string {
-  if (!extensions || Object.keys(extensions).length === 0) {
-    return cfi
-  }
-
-  // Build the extension string
-  const extensionParts = Object.entries(extensions).map(
-    ([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`,
-  )
-
-  // If we're dealing with a bracket at end, insert our extensions before the closing bracket
-  if (cfi.endsWith("]")) {
-    return `${cfi.substring(0, cfi.length - 1)}[;${extensionParts.join(";")}]`
-  }
-
-  // No bracket at the end - just add with new brackets
-  return `${cfi}[;${extensionParts.join(";")}]`
-}
-
-/**
  * Generate a CFI for a single node in the DOM
  */
 function generatePoint(
@@ -401,6 +376,32 @@ function generateRelativePath(
   return relativePath
 }
 
+const serializeExtensions = (extensions: Record<string, string>) => {
+  return Object.entries(extensions)
+    .map(([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`)
+    .join(";")
+}
+
+/**
+ * Add extension parameters to a CFI path
+ */
+function addExtensions(
+  cfi: string,
+  extensions?: Record<string, string>,
+): string {
+  if (!extensions || Object.keys(extensions).length === 0) {
+    return cfi
+  }
+
+  // If we're dealing with a bracket at end, insert our extensions before the closing bracket
+  if (cfi.endsWith("]")) {
+    return `${cfi.substring(0, cfi.length - 1)}[;${serializeExtensions(extensions)}]`
+  }
+
+  // No bracket at the end - just add with new brackets
+  return `${cfi}[;${serializeExtensions(extensions)}]`
+}
+
 /**
  * Generate a range CFI between two points in the document
  */
@@ -443,9 +444,7 @@ function generateRange(
   // For range CFIs, add extensions to each part separately
   if (options.extensions && Object.keys(options.extensions).length > 0) {
     // Format: epubcfi(/ancestor,/start[;extensions],/end[;extensions])
-    const extensionString = Object.entries(options.extensions)
-      .map(([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`)
-      .join(";")
+    const extensionString = serializeExtensions(options.extensions)
 
     // Check if start/end paths already have extensions or brackets
     const startWithExt = startPath.includes("[")
