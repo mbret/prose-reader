@@ -99,7 +99,7 @@ describe("EPUB CFI Serializer", () => {
     })
 
     it("should serialize a CFI with multiple text assertions", () => {
-      const cfi = "epubcfi(/4[body01]/10[para05]/2[Hello,World,Test])"
+      const cfi = "epubcfi(/4[body01]/10[para05]/2:3[Hello,World])"
       const parsed = parse(cfi)
       expect(serialize(parsed)).toBe(cfi)
     })

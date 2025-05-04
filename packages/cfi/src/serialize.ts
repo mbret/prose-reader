@@ -29,7 +29,14 @@ function serializePart(part: CfiPart): string {
 
   // Handle ID assertion first if present
   if (part.id) {
-    result += `[${escapeString(part.id)}]`
+    result += `[${escapeString(part.id)}`
+    // Add extensions inside ID brackets if present
+    if (part.extensions) {
+      for (const [key, value] of Object.entries(part.extensions)) {
+        result += `;${key}=${escapeString(value)}`
+      }
+    }
+    result += `]`
   }
 
   // Handle character offset
@@ -51,25 +58,26 @@ function serializePart(part: CfiPart): string {
   const inBrackets: string[] = []
 
   // Handle text assertions
+  console.log(part.text)
   if (part.text && part.text.length > 0) {
     inBrackets.push(part.text.map(escapeString).join(","))
   }
 
-  // Handle side bias
-  if (part.side) {
-    inBrackets.push(`;s=${part.side}`)
+  // Handle side bias and extensions in brackets
+  if (part.side || (part.extensions && !part.id)) {
+    if (part.side) {
+      inBrackets.push(`;s=${part.side}`)
+    }
+    if (part.extensions && !part.id) {
+      for (const [key, value] of Object.entries(part.extensions)) {
+        inBrackets.push(`;${key}=${escapeString(value)}`)
+      }
+    }
   }
 
   // Add bracketed attributes if any
   if (inBrackets.length > 0) {
     result += `[${inBrackets.join("")}]`
-  }
-
-  // Handle extension parameters outside brackets
-  if (part.extensions) {
-    for (const [key, value] of Object.entries(part.extensions)) {
-      result += `;${key}=${escapeString(value)}`
-    }
   }
 
   return result
