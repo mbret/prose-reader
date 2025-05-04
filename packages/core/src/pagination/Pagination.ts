@@ -1,18 +1,7 @@
 import type { Context } from "../context/Context"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
-
-export type PaginationInfo = {
-  beginPageIndexInSpineItem: number | undefined
-  beginNumberOfPagesInSpineItem: number
-  beginCfi: string | undefined
-  beginSpineItemIndex: number | undefined
-  endPageIndexInSpineItem: number | undefined
-  endNumberOfPagesInSpineItem: number
-  endCfi: string | undefined
-  endSpineItemIndex: number | undefined
-  navigationId?: symbol
-}
+import type { PaginationInfo } from "./types"
 
 export class Pagination extends ReactiveEntity<PaginationInfo> {
   constructor(

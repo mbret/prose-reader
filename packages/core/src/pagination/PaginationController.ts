@@ -1,7 +1,7 @@
 import { merge, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs"
 import { generateCfiForSpineItemPage, generateRootCfi, isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
-import type { DeprecatedViewportPosition } from "../navigation/controllers/ControlledNavigationController"
+import type { DeprecatedViewportPosition } from "../navigation/types"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition } from "../spine/types"

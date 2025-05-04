@@ -4,7 +4,7 @@ import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { DeprecatedViewportPosition } from "../controllers/ControlledNavigationController"
+import type { DeprecatedViewportPosition } from "../types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 const getSpineItemOffsetFromAnchor = ({

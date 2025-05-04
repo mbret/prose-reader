@@ -22,7 +22,6 @@ import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
-import type { SpineItemPosition } from "../spineItem/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isShallowEqual } from "../utils/objects"
 import { Locker } from "./Locker"
@@ -35,79 +34,15 @@ import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
-import type {
-  ControlledNavigationController,
-  DeprecatedViewportPosition,
-} from "./controllers/ControlledNavigationController"
+import type { ControlledNavigationController } from "./controllers/ControlledNavigationController"
 import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
-import type { UserNavigationEntry } from "./types"
+import type { InternalNavigationEntry, UserNavigationEntry } from "./types"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
-
-export type NavigationConsolidation = {
-  spineItemHeight?: number
-  spineItemWidth?: number
-  spineItemTop?: number
-  spineItemLeft?: number
-  spineItemIsReady?: boolean
-  spineItemIsUsingVerticalWriting?: boolean
-  paginationBeginCfi?: string
-  /**
-   * Useful for restoration to anchor back at an accurate
-   * position in the item. If the item changed its content
-   * we cannot assume it's accurate and will need more info.
-   */
-  positionInSpineItem?: SpineItemPosition
-  /**
-   * Useful in restoration to anchor back to spine item position.
-   * Whether we should anchor from bottom or top of the item.
-   * Works with `positionInSpineItem`
-   *
-   * @forward : Used when the user navigate to position only. We will
-   * try to restore position starting from begining of item.
-   *
-   * @backward : Used when the user navigate to position only. We will
-   * try to restore position starting from end of item.
-   *
-   * @anchor : similar to forward but more specific on the intent
-   */
-  directionFromLastNavigation?: "forward" | "backward" | "anchor"
-}
-
-/**
- * Priority of info taken for restoration:
- * - URL
- * - complete cfi
- * - incomplete cfi
- * - spine item position
- * - spine item (fallback)
- */
-export type InternalNavigationEntry = {
-  position: SpinePosition | DeprecatedViewportPosition
-  id: symbol
-  meta: {
-    triggeredBy: `user` | `restoration` | `pagination`
-  }
-  type: `api` | `scroll`
-  animation?: boolean | `turn` | `snap`
-  // direction?: "left" | "right" | "top" | "bottom"
-  url?: string | URL
-  spineItem?: string | number
-  cfi?: string
-} & NavigationConsolidation
-
-export type InternalNavigationInput = Omit<
-  InternalNavigationEntry,
-  "position"
-> & {
-  position?: SpinePosition | DeprecatedViewportPosition
-}
-
-export type Navigation = Pick<InternalNavigationEntry, "position" | "id">
 
 export class InternalNavigator extends DestroyableClass {
   /**

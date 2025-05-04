@@ -10,9 +10,9 @@ import { SpinePosition } from "../spine/types"
 import { createSpineItemLocator } from "../spineItem/locationResolver"
 import { waitFor } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
-import type { InternalNavigationEntry } from "./InternalNavigator"
 import { createNavigator } from "./Navigator"
 import { generateItems } from "./tests/utils"
+import type { InternalNavigationEntry } from "./types"
 
 const createNavigatorContext = () => {
   const context = new Context()

@@ -10,10 +10,11 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
-import { type SpineItem, waitForSwitch } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
+import { waitForSwitch } from "../../utils/rxjs"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 import type { SpineLocator } from "../locator/SpineLocator"

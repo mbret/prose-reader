@@ -30,5 +30,12 @@
   "devDependencies": {
     "happy-dom": "^17.1.0"
   },
+  "madge": {
+    "detectiveOptions": {
+      "ts": {
+        "skipTypeImports": true
+      }
+    }
+  },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

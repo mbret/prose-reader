@@ -1,5 +1,7 @@
 import type { SpinePosition } from "../spine/types"
-import type { DeprecatedViewportPosition } from "./controllers/ControlledNavigationController"
+import type { SpineItemPosition } from "../spineItem/types"
+
+export type DeprecatedViewportPosition = SpinePosition
 
 export type UserNavigationEntry = {
   position?: DeprecatedViewportPosition | SpinePosition
@@ -15,3 +17,64 @@ export type UserNavigationEntry = {
    */
   direction?: "left" | "right" | "top" | "bottom"
 }
+
+export type NavigationConsolidation = {
+  spineItemHeight?: number
+  spineItemWidth?: number
+  spineItemTop?: number
+  spineItemLeft?: number
+  spineItemIsReady?: boolean
+  spineItemIsUsingVerticalWriting?: boolean
+  paginationBeginCfi?: string
+  /**
+   * Useful for restoration to anchor back at an accurate
+   * position in the item. If the item changed its content
+   * we cannot assume it's accurate and will need more info.
+   */
+  positionInSpineItem?: SpineItemPosition
+  /**
+   * Useful in restoration to anchor back to spine item position.
+   * Whether we should anchor from bottom or top of the item.
+   * Works with `positionInSpineItem`
+   *
+   * @forward : Used when the user navigate to position only. We will
+   * try to restore position starting from begining of item.
+   *
+   * @backward : Used when the user navigate to position only. We will
+   * try to restore position starting from end of item.
+   *
+   * @anchor : similar to forward but more specific on the intent
+   */
+  directionFromLastNavigation?: "forward" | "backward" | "anchor"
+}
+
+/**
+ * Priority of info taken for restoration:
+ * - URL
+ * - complete cfi
+ * - incomplete cfi
+ * - spine item position
+ * - spine item (fallback)
+ */
+export type InternalNavigationEntry = {
+  position: SpinePosition | DeprecatedViewportPosition
+  id: symbol
+  meta: {
+    triggeredBy: `user` | `restoration` | `pagination`
+  }
+  type: `api` | `scroll`
+  animation?: boolean | `turn` | `snap`
+  // direction?: "left" | "right" | "top" | "bottom"
+  url?: string | URL
+  spineItem?: string | number
+  cfi?: string
+} & NavigationConsolidation
+
+export type InternalNavigationInput = Omit<
+  InternalNavigationEntry,
+  "position"
+> & {
+  position?: SpinePosition | DeprecatedViewportPosition
+}
+
+export type Navigation = Pick<InternalNavigationEntry, "position" | "id">

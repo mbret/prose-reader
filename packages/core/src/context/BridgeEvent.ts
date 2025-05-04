@@ -1,11 +1,11 @@
 import {
   BehaviorSubject,
+  ReplaySubject,
   distinctUntilChanged,
   filter,
-  ReplaySubject,
 } from "rxjs"
-import type { Navigation } from "../navigation/InternalNavigator"
-import type { PaginationInfo } from "../pagination/Pagination"
+import type { Navigation } from "../navigation/types"
+import type { PaginationInfo } from "../pagination/types"
 
 /**
  * Bridge events that are transverse to the project and needed across several

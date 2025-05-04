@@ -36,8 +36,6 @@ const NAMESPACE = `navigation/ViewportNavigator`
 
 const report = Report.namespace(NAMESPACE)
 
-export type DeprecatedViewportPosition = SpinePosition
-
 export type ViewportNavigationEntry = {
   position: SpinePosition
   animation?: boolean | "turn" | "snap"
