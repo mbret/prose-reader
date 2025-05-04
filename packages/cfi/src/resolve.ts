@@ -21,21 +21,13 @@ interface ResolveOptions {
 /**
  * Result of resolving a CFI
  */
-interface ResolveResult {
-  /**
-   * The resolved node or range
-   */
-  node: Node | Range | null
+interface ResolveRangeResult extends ResolveResultBase {
+  node: Range | null
+  isRange: true
+}
 
-  /**
-   * Whether the result is a range
-   */
-  isRange: boolean
-
-  /**
-   * The character offset if applicable
-   */
-  offset?: number | number[]
+interface ResolveResultBase {
+  offset?: number[] | number
 
   /**
    * The temporal offset if applicable
@@ -58,10 +50,17 @@ interface ResolveResult {
   extensions?: Record<string, string>
 }
 
+interface ResolveNodeResult extends ResolveResultBase {
+  node: Node | null
+  isRange: false
+}
+
+type ResolveResult = ResolveNodeResult | ResolveRangeResult
+
 /**
  * Check if a parsed CFI is a range
  */
-function isCfiRange(parsed: ParsedCfi): parsed is CfiRange {
+export function isParsedCfiRange(parsed: ParsedCfi): parsed is CfiRange {
   return (
     parsed !== null &&
     typeof parsed === "object" &&
@@ -77,20 +76,30 @@ function isCfiRange(parsed: ParsedCfi): parsed is CfiRange {
 export function resolve(
   cfi: string | ParsedCfi,
   document: Document,
+  options?: Omit<ResolveOptions, "asRange"> & { asRange: true },
+): ResolveRangeResult
+export function resolve(
+  cfi: string | ParsedCfi,
+  document: Document,
+  options?: ResolveOptions,
+): ResolveResult
+export function resolve(
+  cfi: string | ParsedCfi,
+  document: Document,
   options: ResolveOptions = {},
 ): ResolveResult {
-  // If already parsed, use it directly
-  if (typeof cfi !== "string") {
-    return resolveParsed(cfi, document, options)
-  }
-
   try {
+    // If already parsed, use it directly
+    if (typeof cfi !== "string") {
+      return resolveParsed(cfi, document, options)
+    }
+
     // Parse the CFI once and use the parsed object for all checks
     const parsedCfi = parse(cfi)
 
     // Handle range CFIs when asRange is true
-    if (options.asRange && isCfiRange(parsedCfi)) {
-      return resolveRange(parsedCfi, document, { ...options, asRange: true })
+    if (options.asRange && isParsedCfiRange(parsedCfi)) {
+      return resolveRange(parsedCfi, document)
     }
 
     // For all other cases, use the parsed CFI
@@ -99,6 +108,7 @@ export function resolve(
     if (options.throwOnError) {
       throw error
     }
+
     return { node: null, isRange: false }
   }
 }
@@ -109,137 +119,86 @@ export function resolve(
 function resolveParsed(
   parsed: ParsedCfi,
   document: Document,
-  options: ResolveOptions = {},
+  options: { asRange?: boolean } = { asRange: false },
 ): ResolveResult {
-  const { throwOnError = false, asRange = false } = options
+  const { asRange = false } = options
 
-  try {
-    // Handle range CFIs
-    if (isCfiRange(parsed)) {
-      if (asRange) {
-        return resolveRange(parsed, document, { ...options, asRange: true })
-      }
-      // If not as range, use the start point
-      const firstPath = parsed.start[0] || []
-      return resolvePath(firstPath, document, options)
+  // Handle range CFIs
+  if (isParsedCfiRange(parsed)) {
+    if (asRange) {
+      return resolveRange(parsed, document)
     }
 
-    // Handle path CFIs
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Handle path CFI (indirection)
-      if (parsed[0]) {
-        return resolvePath(parsed[0], document, options)
-      }
-    }
-
-    if (throwOnError) {
-      throw new Error("Invalid CFI structure")
-    }
-
-    return { node: null, isRange: false }
-  } catch (error) {
-    if (throwOnError) {
-      throw error
-    }
-    return { node: null, isRange: false }
+    // If not as range, use the start point
+    const firstPath = parsed.start[0] || []
+    return resolvePath(firstPath, document, options)
   }
+
+  // Handle path CFI (indirection)
+  if (parsed[0]) {
+    return resolvePath(parsed[0], document, options)
+  }
+
+  throw new Error("Invalid CFI structure")
 }
 
 /**
  * Resolves a CFI range to a DOM range
  */
-function resolveRange(
-  range: CfiRange,
-  document: Document,
-  options: ResolveOptions = {},
-): ResolveResult {
-  const { throwOnError = false } = options
+function resolveRange(range: CfiRange, document: Document): ResolveResult {
+  // Get the parent path and start/end paths
+  const parentPath = range.parent[0] || []
+  const startPath = range.start[0] || []
+  const endPath = range.end[0] || []
 
-  try {
-    // Get the parent path and start/end paths
-    const parentPath = range.parent[0] || []
-    const startPath = range.start[0] || []
-    const endPath = range.end[0] || []
+  // Find the parent node
+  let parentNode: Node | null = document.documentElement
 
-    // Find the parent node
-    let parentNode: Node | null = document.documentElement
-    if (parentPath.length > 0) {
-      const parentResult = resolvePath(parentPath, document, { throwOnError })
-      if (isNode(parentResult.node)) {
-        parentNode = parentResult.node
-      }
+  if (parentPath.length > 0) {
+    const parentResult = resolvePath(parentPath, document)
+    if (isNode(parentResult.node)) {
+      parentNode = parentResult.node
     }
+  }
 
-    if (!parentNode) {
-      if (throwOnError) {
-        throw new Error("Failed to resolve parent node in CFI range")
-      }
-      return { node: null, isRange: false }
-    }
+  if (!parentNode) {
+    throw new Error("Failed to resolve parent node in CFI range")
+  }
 
-    // Find the start and end nodes
-    const startResult = resolvePath(startPath, document, { throwOnError })
-    const endResult = resolvePath(endPath, document, { throwOnError })
+  // Find the start and end nodes
+  const startResult = resolvePath(startPath, document)
+  const endResult = resolvePath(endPath, document)
 
-    // Check that we have valid Node objects
-    if (!isNode(startResult.node) || !isNode(endResult.node)) {
-      if (throwOnError) {
-        throw new Error("Failed to resolve start or end node in CFI range")
-      }
-      return { node: null, isRange: false }
-    }
+  // Check that we have valid Node objects
+  if (!isNode(startResult.node) || !isNode(endResult.node)) {
+    throw new Error("Failed to resolve start or end node in CFI range")
+  }
 
-    const startNode = startResult.node
-    const endNode = endResult.node
+  const startNode = startResult.node
+  const endNode = endResult.node
 
-    let domRange: Range
-    // Check if we need to create a Range
-    if (document.createRange) {
-      domRange = document.createRange()
-    } else {
-      // If document.createRange is not available, create a minimal object
-      domRange = {} as Range
-      Object.defineProperties(domRange, {
-        startContainer: { value: startNode },
-        endContainer: { value: endNode },
-        startOffset: { value: startResult.offset || 0 },
-        endOffset: { value: endResult.offset || 0 },
-      })
-    }
+  const domRange = document.createRange()
+  domRange.setStart(
+    startNode,
+    (Array.isArray(startResult.offset)
+      ? startResult.offset[0]
+      : startResult.offset) ?? 0,
+  )
+  domRange.setEnd(
+    endNode,
+    (Array.isArray(endResult.offset)
+      ? endResult.offset[0]
+      : endResult.offset) ?? 0,
+  )
 
-    // If we have an actual Range object, set its properties
-    if (typeof domRange.setStart === "function") {
-      const startOffset =
-        startResult.offset !== undefined
-          ? Array.isArray(startResult.offset)
-            ? startResult.offset[0]
-            : startResult.offset
-          : 0
-
-      const endOffset =
-        endResult.offset !== undefined
-          ? Array.isArray(endResult.offset)
-            ? endResult.offset[0]
-            : endResult.offset
-          : 0
-
-      domRange.setStart(startNode, startOffset || 0)
-      domRange.setEnd(endNode, endOffset || 0)
-    }
-
-    return {
-      node: domRange,
-      isRange: true,
-      offset: startResult.offset,
-      temporal: startResult.temporal,
-      spatial: startResult.spatial,
-      side: startResult.side,
-    }
-  } catch (error) {
-    if (throwOnError) {
-      throw error
-    }
-    return { node: null, isRange: false }
+  return {
+    node: domRange,
+    isRange: true,
+    offset: startResult.offset,
+    temporal: startResult.temporal,
+    spatial: startResult.spatial,
+    side: startResult.side,
+    extensions: startResult.extensions,
   }
 }
 
@@ -247,13 +206,11 @@ function resolveRange(
  * Extracts side bias from a CFI part
  */
 function extractSideBias(part: CfiPart | undefined): string | undefined {
-  if (!part) return undefined
-
   // Return the side if it exists
-  if (part.side) return part.side
+  if (part?.side) return part.side
 
   // Look for side bias in text assertions
-  if (part.text && part.text.length > 0) {
+  if (part?.text && part.text.length > 0) {
     const text = part.text[0]
     // The CFI spec says side bias can be a=after or b=before
     if (text) {
@@ -278,6 +235,17 @@ function isTextNodeStep(part: CfiPart): boolean {
 }
 
 /**
+ * Returns the extensions from the last valid part of a parsed CFI
+ */
+export function resolveExtensions(parsedCfi: ParsedCfi) {
+  const parts = isParsedCfiRange(parsedCfi) ? parsedCfi.end : parsedCfi
+  const lastPart = parts.at(-1)
+  const lastPartPath = lastPart?.at(-1)
+
+  return lastPartPath?.extensions
+}
+
+/**
  * Resolves a CFI path to a DOM node
  */
 function resolvePath(
@@ -295,10 +263,11 @@ function resolvePath(
   }
 
   // Look for an element with an ID first
-  const nodeById = findNodeById(document, path)
-  if (nodeById) {
-    // Check if the last step indicates we need a child of this node
-    const lastPart = path.length > 0 ? path[path.length - 1] : undefined
+  const { node: nodeById, remainingPathIndex } = findNodeById(document, path)
+
+  // If there's no remaining path to process after the ID node, return the ID node
+  if (nodeById && remainingPathIndex >= path.length) {
+    const lastPart = path.at(-1)
 
     // Handle case where we have element with ID and we need to get to a text node child
     if (lastPart && isTextNodeStep(lastPart)) {
@@ -329,30 +298,20 @@ function resolvePath(
 
     if (asRange) {
       // Create a range
-      let range: Range
-      if (document.createRange) {
-        range = document.createRange()
-        range.selectNodeContents(nodeById)
+      const range = document.createRange()
+      range.selectNodeContents(nodeById)
 
-        // Adjust for offset
-        if (lastPart?.offset !== undefined) {
-          const offset = Array.isArray(lastPart.offset)
-            ? lastPart.offset[0]
-            : lastPart.offset
-          if (isTextNode(nodeById)) {
-            range.setStart(nodeById, offset || 0)
-          }
+      // Adjust for offset
+      if (lastPart?.offset !== undefined) {
+        const offset = Array.isArray(lastPart.offset)
+          ? lastPart.offset[0]
+          : lastPart.offset
+        if (isTextNode(nodeById)) {
+          range.setStart(nodeById, offset || 0)
         }
-      } else {
-        // Fallback
-        range = {} as Range
-        Object.defineProperties(range, {
-          startContainer: { value: nodeById },
-          endContainer: { value: nodeById },
-          startOffset: { value: lastPart?.offset || 0 },
-          endOffset: { value: lastPart?.offset || 0 },
-        })
       }
+
+      range.setEnd(nodeById, lastPart?.offset || 0)
 
       return {
         node: range,
@@ -376,11 +335,102 @@ function resolvePath(
     }
   }
 
-  // If no ID match, traverse the path
-  let currentNode: Node | null = document.documentElement
+  // Start traversal from the ID node if found, otherwise start from the document root
+  let currentNode: Node | null = nodeById || document.documentElement
+
+  // Get the starting index for path traversal
+  const startIndex = nodeById ? remainingPathIndex : 0
+
+  // Special case: Virtual positions (before first element or after last element)
+  // only applicable when asRange is true
+  if (asRange && path.length > 0) {
+    const lastPart = path[path.length - 1]
+
+    // Check if the last part might be a virtual position indicator
+    if (lastPart && !isTextNodeStep(lastPart)) {
+      // Handle position before first element (index 0)
+      if (lastPart.index === 0 && currentNode) {
+        const range = document.createRange()
+        range.setStart(currentNode, 0)
+        range.setEnd(currentNode, 0)
+
+        return {
+          node: range,
+          isRange: true,
+          offset: lastPart.offset,
+          temporal: lastPart.temporal,
+          spatial: lastPart.spatial,
+          side: extractSideBias(lastPart),
+          extensions: lastPart.extensions,
+        }
+      }
+
+      // Parent node for navigation
+      let parentNode: Node | null = currentNode
+
+      // Navigate through all parts except the last one
+      for (let i = startIndex; i < path.length - 1; i++) {
+        const part = path[i]
+        if (!parentNode || !part) break
+
+        if (isTextNodeStep(part)) {
+          const nodeIndex = part.index - 1
+          if (nodeIndex >= 0 && nodeIndex < parentNode.childNodes.length) {
+            parentNode = parentNode.childNodes[nodeIndex] as Node
+          } else {
+            parentNode = null
+            break
+          }
+        } else {
+          const childElements: Node[] = Array.from(
+            parentNode.childNodes,
+          ).filter((node) => node.nodeType === Node.ELEMENT_NODE)
+          const index = Math.floor(part.index / 2) - 1
+
+          if (index >= 0 && index < childElements.length) {
+            const nextNode = childElements[index]
+            if (nextNode) {
+              parentNode = nextNode
+            } else {
+              parentNode = null
+              break
+            }
+          } else {
+            parentNode = null
+            break
+          }
+        }
+      }
+
+      // If we still have a parent node, handle possible after-last-element position
+      if (parentNode) {
+        const childElements: Node[] = Array.from(parentNode.childNodes).filter(
+          (node) => node.nodeType === Node.ELEMENT_NODE,
+        )
+        const index = Math.floor(lastPart.index / 2) - 1
+
+        // If the index is equal to the number of child elements, it's a position after the last element
+        if (index === childElements.length) {
+          const range = document.createRange()
+          range.selectNodeContents(parentNode)
+          range.collapse(false) // Collapse to end
+
+          return {
+            node: range,
+            isRange: true,
+            offset: lastPart.offset,
+            temporal: lastPart.temporal,
+            spatial: lastPart.spatial,
+            side: extractSideBias(lastPart),
+            extensions: lastPart.extensions,
+          }
+        }
+      }
+    }
+  }
 
   // For each part in the path
-  for (let i = 0; i < path.length; i++) {
+  for (let i = startIndex; i < path.length; i++) {
     const part = path[i]
     if (!currentNode || !part) break
 
@@ -429,11 +479,12 @@ function resolvePath(
     if (throwOnError) {
       throw new Error("Failed to resolve CFI path")
     }
+
     return { node: null, isRange: false }
   }
 
   // Prepare the result
-  const lastPart = path.length > 0 ? path[path.length - 1] : undefined
+  const lastPart = path.at(-1)
   const sideBias = extractSideBias(lastPart)
   const extensions = lastPart?.extensions
 
@@ -447,61 +498,46 @@ function resolvePath(
     extensions,
   }
 
-  if (asRange && currentNode) {
-    // Create a range
-    let range: Range
-    if (document.createRange) {
-      range = document.createRange()
-      range.selectNodeContents(currentNode)
+  if (asRange) {
+    const range = document.createRange()
+    range.selectNodeContents(currentNode)
 
-      // Adjust for offset
-      if (lastPart?.offset !== undefined) {
-        const offset = Array.isArray(lastPart.offset)
-          ? lastPart.offset[0]
-          : lastPart.offset
-        if (isTextNode(currentNode)) {
-          range.setStart(currentNode, offset || 0)
-        }
+    // Adjust for offset
+    if (lastPart?.offset !== undefined) {
+      const offset = Array.isArray(lastPart.offset)
+        ? lastPart.offset[0]
+        : lastPart.offset
+      if (isTextNode(currentNode)) {
+        range.setStart(currentNode, offset || 0)
       }
-    } else {
-      // Fallback
-      range = {} as Range
-      Object.defineProperties(range, {
-        startContainer: { value: currentNode },
-        endContainer: { value: currentNode },
-        startOffset: { value: lastPart?.offset || 0 },
-        endOffset: { value: lastPart?.offset || 0 },
-      })
     }
 
-    result.node = range
-    result.isRange = true
+    return {
+      ...result,
+      node: range,
+      isRange: true,
+    }
   }
 
   return result
 }
 
 /**
- * Find a node by ID from a CFI path
+ * Find a node by ID from a CFI path.
+ * Starting from the last part and working backwards.
+ * Returns the node and the remaining path that needs to be processed.
  */
-function findNodeById(document: Document, parts: CfiPart[]): Node | null {
-  if (!parts || parts.length === 0) return null
-
-  // Check for nested IDs like "/4/2[chap01ref]/2[chap02ref]"
-  // If the last part has an ID, use that
-  const lastPart = parts[parts.length - 1]
-  if (lastPart?.id) {
-    const node = document.getElementById(lastPart.id)
-    if (node) return node
-  }
-
-  // Otherwise check all parts for an ID
-  for (const part of parts) {
+function findNodeById(
+  document: Document,
+  parts: CfiPart[],
+): { node: Node | null; remainingPathIndex: number } {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i]
     if (part?.id) {
       const node = document.getElementById(part.id)
-      if (node) return node
+      if (node) return { node, remainingPathIndex: i + 1 }
     }
   }
 
-  return null
+  return { node: null, remainingPathIndex: 0 }
 }

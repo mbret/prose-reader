@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    __PROSE_READER_DEBUG?: boolean
+    __PROSE_READER_DEBUG?: boolean | string
   }
 }
 

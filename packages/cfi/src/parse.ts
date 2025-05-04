@@ -3,10 +3,15 @@
  * Based on the EPUB CFI 1.1 specification: https://idpf.org/epub/linking/cfi/epub-cfi.html
  */
 
-import { cfiEscape, isCFI, wrapCfi } from "./utils"
+import { isCFI } from "./utils"
 
 /**
  * Interface for a parsed CFI part
+ *
+ * According to the EPUB CFI 1.1 specification, each step in a CFI path can have
+ * its own properties including ID assertions, character offsets, and extension parameters.
+ * Extensions are parameters in the form of key-value pairs that can be attached to any
+ * step in the CFI path to provide additional information or metadata about that specific step.
  */
 export interface CfiPart {
   index: number
@@ -16,6 +21,14 @@ export interface CfiPart {
   spatial?: number[]
   text?: string[]
   side?: string
+  /**
+   * Extension parameters for this CFI path step
+   *
+   * The EPUB CFI spec allows for extension parameters to be attached to any step in the path.
+   * These are key-value pairs that provide additional information or metadata.
+   * For example, in /6/4[chap01ref]!/4[body01]/10[para05]/2/1:3[;vnd.example.param=value],
+   * the extension parameter is "vnd.example.param" with value "value".
+   */
   extensions?: Record<string, string>
 }
 
@@ -336,88 +349,4 @@ export function parse(cfi: string): ParsedCfi {
     start: parseIndirection(startTokens || []),
     end: parseIndirection(endTokens || []),
   }
-}
-
-/**
- * Convert a CFI part to a string
- * @param part The CFI part to convert
- * @returns A string representation of the CFI part
- */
-function partToString(part: CfiPart): string {
-  // Prepare extension parameters
-  const extensionParams: string[] = []
-
-  if (part.side) {
-    extensionParams.push(`s=${part.side}`)
-  }
-
-  if (part.extensions) {
-    for (const [key, value] of Object.entries(part.extensions)) {
-      extensionParams.push(`${key}=${cfiEscape(value)}`)
-    }
-  }
-
-  // Format expected in the tests:
-  // /4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2
-
-  let result = `/${part.index}`
-
-  // Add ID assertion if present
-  if (part.id) {
-    result += `[${cfiEscape(part.id)}]`
-  }
-
-  // Add offset if applicable
-  if (part.offset !== undefined && part.index % 2 === 1) {
-    result += `:${part.offset}`
-  }
-
-  // Add temporal offset if present
-  if (part.temporal !== undefined) {
-    result += `~${part.temporal}`
-  }
-
-  // Add spatial offset if present
-  if (part.spatial) {
-    result += `@${part.spatial.join(":")}`
-  }
-
-  // Add text assertion if present
-  if (part.text && part.text.length > 0) {
-    result += `[${part.text.map(cfiEscape).join(",")}]`
-  }
-
-  // Add extension parameters outside of brackets, directly to the path
-  if (extensionParams.length > 0) {
-    result += `;${extensionParams.join(";")}`
-  }
-
-  return result
-}
-
-/**
- * Convert a parsed CFI to a string
- * @param parsed The parsed CFI to convert
- * @returns A string representation of the CFI
- */
-export function parsedCfiToString(parsed: ParsedCfi): string {
-  if ("parent" in parsed) {
-    // It's a range
-    const parent = parsed.parent
-      .map((parts) => parts.map(partToString).join(""))
-      .join("!")
-    const start = parsed.start
-      .map((parts) => parts.map(partToString).join(""))
-      .join("!")
-    const end = parsed.end
-      .map((parts) => parts.map(partToString).join(""))
-      .join("!")
-
-    return wrapCfi(`${parent},${start},${end}`)
-  }
-
-  // It's a single CFI
-  return wrapCfi(
-    parsed.map((parts) => parts.map(partToString).join("")).join("!"),
-  )
 }

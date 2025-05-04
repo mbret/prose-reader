@@ -20,7 +20,7 @@ test.describe("Given a CFI which points to item index 1", () => {
         })
 
         // safari books online chapter
-        const cfi = `epubcfi(/2/4/2|[prose~anchor~1]|[prose~offset~0])`
+        const cfi = `epubcfi(/2/4/2|[;vnd.prose.anchor=1;vnd.prose.offset=0])`
 
         await page.goto(
           `http://localhost:3333/tests/navigation/restoration/rtl-haruko/index.html?cfi=${encodeURIComponent(cfi)}`,

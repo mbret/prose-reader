@@ -7,7 +7,7 @@ test.describe("Given a CFI", () => {
       height: 842,
     })
 
-    const cfi = `epubcfi(/2/4/4[toc]/4/8/4/2/4/2/2/1|[prose~anchor~3]|[prose~offset~0])`
+    const cfi = `epubcfi(/2/4/4[toc]/4/8/4/2/4/2/2/1|[;vnd.prose.anchor=3;vnd.prose.offset=0])`
 
     await page.goto(
       `http://localhost:3333/tests/navigation/restoration/epub/index.html?cfi=${encodeURIComponent(cfi)}`,
@@ -44,7 +44,7 @@ test.describe("Given CFI in the middle of book", () => {
       })
 
       // safari books online chapter
-      const cfi = `epubcfi(/2/4/2/2[I_sect1_d1e191]/1|[prose~anchor~6]|[prose~offset~0])`
+      const cfi = `epubcfi(/2/4/2/2[I_sect1_d1e191]/1|[;vnd.prose.anchor=6;vnd.prose.offset=0])`
 
       await page.goto(
         `http://localhost:3333/tests/navigation/restoration/epub/index.html?cfi=${encodeURIComponent(cfi)}`,

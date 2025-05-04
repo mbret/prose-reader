@@ -6,7 +6,7 @@ import { resolve } from "../resolve"
 describe("test2.xhtml", () => {
   it("should correctly target img node", async () => {
     const domParser = new DOMParser()
-    const test1Xhtml = await fs.readFile(`${__dirname}/test1.xhtml`, "utf-8")
+    const test1Xhtml = await fs.readFile(`${__dirname}/test2.xhtml`, "utf-8")
     const doc = domParser.parseFromString(test1Xhtml, "application/xhtml+xml")
 
     const imageNode = doc.body.childNodes[1]

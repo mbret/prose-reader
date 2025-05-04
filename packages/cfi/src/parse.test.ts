@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parse, parsedCfiToString } from "./parse"
+import { parse } from "./parse"
 
 describe("EPUB CFI Parser", () => {
   describe("parse", () => {
@@ -119,23 +119,24 @@ describe("EPUB CFI Parser", () => {
         ],
       ])
     })
-  })
 
-  describe("toString", () => {
-    it("should convert a parsed CFI back to a string", () => {
-      const cfi = "epubcfi(/4[body01]/16[svgimg])"
+    it("should parse a CFI with extensions while preserving text and ids", () => {
+      const cfi =
+        "epubcfi(/4[body01]/10[para05;vnd.foo=bar]/3:10[foobar;vnd.foo=bar])"
       const parsed = parse(cfi)
-      const result = parsedCfiToString(parsed)
 
-      expect(result).toBe(cfi)
-    })
-
-    it("should convert a parsed CFI range back to a string", () => {
-      const cfi = "epubcfi(/4[body01]/10[para05],/2/1:1,/3:4)"
-      const parsed = parse(cfi)
-      const result = parsedCfiToString(parsed)
-
-      expect(result).toBe(cfi)
+      expect(parsed).toEqual([
+        [
+          { index: 4, id: "body01" },
+          { index: 10, id: "para05", extensions: { "vnd.foo": "bar" } },
+          {
+            index: 3,
+            offset: 10,
+            text: ["foobar"],
+            extensions: { "vnd.foo": "bar" },
+          },
+        ],
+      ])
     })
   })
 
@@ -184,15 +185,6 @@ describe("EPUB CFI Parser", () => {
       ])
     })
 
-    it("should convert parsed CFI with extensions back to a string", () => {
-      const cfi =
-        "epubcfi(/4[body01]/10[para05];vnd.test.param1=value1;vnd.test.param2=value2)"
-      const parsed = parse(cfi)
-      const result = parsedCfiToString(parsed)
-
-      expect(result).toBe(cfi)
-    })
-
     it("should handle escaped characters in extension parameters", () => {
       const cfi =
         "epubcfi(/4[body01]/10[para05];vnd.test.param=value^,with^[special^]chars)"
@@ -204,9 +196,6 @@ describe("EPUB CFI Parser", () => {
           "value,with[special]chars",
         )
       }
-
-      const result = parsedCfiToString(parsed)
-      expect(result).toBe(cfi)
     })
   })
 })

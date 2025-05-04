@@ -42,7 +42,7 @@ test("should restore to second page with CFI", async ({ page }) => {
   })
 
   await page.goto(
-    `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/0|[prose~anchor~1])")}`,
+    `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/0[;vnd.prose.anchor=1])")}`,
   )
 
   // wait for first item to be ready
@@ -58,7 +58,7 @@ test("should restore to first page with CFI", async ({ page }) => {
   })
 
   await page.goto(
-    `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/0|[prose~anchor~0])")}`,
+    `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/0[;vnd.prose.anchor=0])")}`,
   )
 
   // wait for first item to be ready
