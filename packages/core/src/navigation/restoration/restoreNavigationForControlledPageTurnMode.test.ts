@@ -10,12 +10,9 @@ import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { noopElement } from "../../utils/dom"
 import { Viewport } from "../../viewport/Viewport"
-import type {
-  InternalNavigationEntry,
-  NavigationConsolidation,
-} from "../InternalNavigator"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
 import { generateItems } from "../tests/utils"
+import type { InternalNavigationEntry } from "../types"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
 
 describe(`Given a backward navigation to a new item`, () => {

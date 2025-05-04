@@ -2,8 +2,8 @@ import { type Observable, map, switchMap } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
-import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { InternalNavigationEntry } from "../types"
 import { restorePosition } from "./restorePosition"
 
 type Navigation = {

@@ -5,8 +5,8 @@ import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { InternalNavigationEntry } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { InternalNavigationEntry } from "../types"
 
 export const restoreNavigationForControlledPageTurnMode = ({
   spineLocator,

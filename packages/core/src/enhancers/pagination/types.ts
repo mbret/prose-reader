@@ -1,5 +1,5 @@
 import type { Observable } from "rxjs"
-import type { PaginationInfo } from "../../pagination/Pagination"
+import type { PaginationInfo } from "../../pagination/types"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { ResourcesLocator } from "./ResourcesLocator"

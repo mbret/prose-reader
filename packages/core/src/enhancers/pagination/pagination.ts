@@ -10,7 +10,7 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import type { PaginationInfo } from "../../pagination/Pagination"
+import type { PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
