@@ -90,6 +90,14 @@ describe("EPUB CFI Parser", () => {
           { index: 2, text: ["Hello World"] },
         ],
       ])
+
+      expect(parse("epubcfi(/4[body01]/10[para05]/2:3[Hello,World])")).toEqual([
+        [
+          { index: 4, id: "body01" },
+          { index: 10, id: "para05" },
+          { index: 2, offset: 3, text: ["Hello", "World"] },
+        ],
+      ])
     })
 
     it("should parse a CFI range", () => {

@@ -142,9 +142,6 @@ function tokenize(cfi: string): CfiToken[] {
       if (char === ";" && !isEscaped) {
         push(["[", value])
         state = ";"
-      } else if (char === "," && !isEscaped) {
-        push(["[", value])
-        state = "["
       } else if (char === "]" && !isEscaped) {
         push(["[", value])
       } else {
@@ -301,7 +298,9 @@ function parsePart(tokens: CfiToken[]): CfiPart[] {
         } else {
           // Otherwise, it's a text assertion
           if (val !== "") {
-            currentPart.text = (currentPart.text || []).concat(val as string)
+            // Split on comma and trim each part
+            const parts = (val as string).split(",").map((part) => part.trim())
+            currentPart.text = parts
           }
         }
       }
