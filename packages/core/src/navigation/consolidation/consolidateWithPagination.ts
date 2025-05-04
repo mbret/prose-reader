@@ -1,17 +1,17 @@
 import {
-  withLatestFrom,
-  filter,
-  map,
-  switchMap,
-  first,
-  of,
-  distinctUntilChanged,
   type Observable,
+  distinctUntilChanged,
+  filter,
+  first,
+  map,
+  of,
+  switchMap,
+  withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
-import type { InternalNavigationEntry } from "../InternalNavigator"
-import { withPaginationInfo } from "./withPaginationInfo"
 import type { Spine } from "../../spine/Spine"
+import type { InternalNavigationEntry } from "../types"
+import { withPaginationInfo } from "./withPaginationInfo"
 
 export const consolidateWithPagination = (
   context: Context,

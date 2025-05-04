@@ -3,8 +3,8 @@ import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { InternalNavigationInput } from "../InternalNavigator"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
+import type { InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput

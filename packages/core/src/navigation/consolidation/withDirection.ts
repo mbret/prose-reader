@@ -1,10 +1,7 @@
-import { map, type Observable } from "rxjs"
-import type {
-  InternalNavigationEntry,
-  InternalNavigationInput,
-} from "../InternalNavigator"
+import { type Observable, map } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
 type Navigation = {
   navigation: InternalNavigationInput

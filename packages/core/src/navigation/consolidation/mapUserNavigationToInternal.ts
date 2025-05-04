@@ -2,8 +2,8 @@ import { type Observable, map } from "rxjs"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
-} from "../InternalNavigator"
-import type { UserNavigationEntry } from "../types"
+  UserNavigationEntry,
+} from "../types"
 
 export const mapUserNavigationToInternal = (
   stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
