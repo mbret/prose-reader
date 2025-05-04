@@ -1,23 +1,5 @@
 import type { CfiPart, ParsedCfi } from "./parse"
-
-function escapeChar(char: string): string {
-  if (
-    char === "[" ||
-    char === "]" ||
-    char === "(" ||
-    char === ")" ||
-    char === ";" ||
-    char === "=" ||
-    char === ","
-  ) {
-    return `^${char}`
-  }
-  return char
-}
-
-function escapeString(str: string): string {
-  return str.split("").map(escapeChar).join("")
-}
+import { cfiEscape } from "./utils"
 
 /**
  * Serialize a single CFI part into a string
@@ -29,11 +11,11 @@ function serializePart(part: CfiPart): string {
 
   // Handle ID assertion first if present
   if (part.id) {
-    result += `[${escapeString(part.id)}`
+    result += `[${cfiEscape(part.id)}`
     // Add extensions inside ID brackets if present
     if (part.extensions) {
       for (const [key, value] of Object.entries(part.extensions)) {
-        result += `;${key}=${escapeString(value)}`
+        result += `;${key}=${cfiEscape(value)}`
       }
     }
     result += `]`
@@ -60,7 +42,7 @@ function serializePart(part: CfiPart): string {
   // Handle text assertions
   console.log(part.text)
   if (part.text && part.text.length > 0) {
-    inBrackets.push(part.text.map(escapeString).join(","))
+    inBrackets.push(part.text.map(cfiEscape).join(","))
   }
 
   // Handle side bias and extensions in brackets
@@ -70,7 +52,7 @@ function serializePart(part: CfiPart): string {
     }
     if (part.extensions && !part.id) {
       for (const [key, value] of Object.entries(part.extensions)) {
-        inBrackets.push(`;${key}=${escapeString(value)}`)
+        inBrackets.push(`;${key}=${cfiEscape(value)}`)
       }
     }
   }
