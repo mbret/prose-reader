@@ -99,7 +99,7 @@ export const BottomBar = memo(
             )}
           </IconButton>
         </HStack>
-        <HStack alignItems="center" justifyContent="center">
+        <HStack alignSelf="stretch" alignItems="center" justifyContent="center">
           <Collapsible.Root
             open={isExtraOpen}
             flex={1}

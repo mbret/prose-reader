@@ -14,11 +14,12 @@ import {
 } from "rxjs"
 import { toaster } from "../components/ui/toaster"
 import { useReader } from "../context/useReader"
+import { useReaderContext } from "../context/useReaderContext"
 import { useNotifyZoom } from "../zoom/useNotifyZoom"
-import { notificationsSignal } from "./notifications"
 
-const useFontScaleChangeNotification = () => {
+const useNotifyFontScaleChange = () => {
   const reader = useReader()
+  const { notificationsSubject } = useReaderContext()
 
   useSubscribe(
     () =>
@@ -27,51 +28,53 @@ const useFontScaleChangeNotification = () => {
         distinctUntilChanged(),
         skip(1),
         tap((fontScale) => {
-          notificationsSignal.setValue({
+          notificationsSubject.next({
             key: "fontScaleChange",
             title: "Font size changed",
             description: `${fontScale * 100} %`,
           })
         }),
       ),
-    [reader],
+    [reader, notificationsSubject],
   )
 }
 
 export const useNotifications = () => {
-  useFontScaleChangeNotification()
+  const { notificationsSubject } = useReaderContext()
+
+  useNotifyFontScaleChange()
   useNotifyZoom()
 
-  useSubscribe(() =>
-    notificationsSignal.subject.pipe(
-      // @todo implement Signal / BehaviorSignal / ReplaySignal
-      skip(1),
-      filter(isDefined),
-      mergeMap((notification) => {
-        const duration = notification.duration ?? 3000
+  useSubscribe(
+    () =>
+      notificationsSubject.pipe(
+        filter(isDefined),
+        mergeMap((notification) => {
+          const duration = notification.duration ?? 3000
 
-        const toast = toaster.create({
-          title: notification.title,
-          description: notification.description,
-          duration,
-        })
+          const toast = toaster.create({
+            title: notification.title,
+            description: notification.description,
+            duration,
+          })
 
-        const sameNotification$ = notificationsSignal.subject.pipe(
-          skip(1),
-          filter((n) => !!notification.key && n?.key === notification.key),
-        )
+          const sameNotification$ = notificationsSubject.pipe(
+            skip(1),
+            filter((n) => !!notification.key && n?.key === notification.key),
+          )
 
-        return merge(
-          timer(duration),
-          notification.abort ?? NEVER,
-          sameNotification$,
-        ).pipe(
-          first(),
-          finalize(() => {
-            toaster.dismiss(toast)
-          }),
-        )
-      }),
-    ),
+          return merge(
+            timer(duration),
+            notification.abort ?? NEVER,
+            sameNotification$,
+          ).pipe(
+            first(),
+            finalize(() => {
+              toaster.dismiss(toast)
+            }),
+          )
+        }),
+      ),
+    [notificationsSubject],
   )
 }

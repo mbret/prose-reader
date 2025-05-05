@@ -3,11 +3,10 @@ import type { AnnotationsEnhancerAPI } from "@prose-reader/enhancer-annotations"
 import type { BookmarksEnhancerAPI } from "@prose-reader/enhancer-bookmarks"
 import type { GalleryEnhancerAPI } from "@prose-reader/enhancer-gallery"
 import type { SearchEnhancerAPI } from "@prose-reader/enhancer-search"
-import { useContext } from "react"
-import { ReaderContext } from "./context"
+import { useReaderContext } from "./useReaderContext"
 
 export const useReader = (): Reader | undefined => {
-  const { reader } = useContext(ReaderContext)
+  const { reader } = useReaderContext()
 
   return reader
 }

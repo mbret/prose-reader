@@ -1,10 +1,11 @@
 import { useSubscribe } from "reactjrx"
 import { EMPTY, NEVER, Subject, finalize, switchMap } from "rxjs"
 import { useReader } from "../context/useReader"
-import { notificationsSignal } from "../notifications/notifications"
+import { useReaderContext } from "../context/useReaderContext"
 
 export const useNotifyZoom = () => {
   const reader = useReader()
+  const { notificationsSubject } = useReaderContext()
 
   useSubscribe(
     () =>
@@ -14,7 +15,7 @@ export const useNotifyZoom = () => {
 
           const abort = new Subject<void>()
 
-          notificationsSignal.setValue({
+          notificationsSubject.next({
             key: "zoom",
             title: "Zooming",
             duration: 999999,

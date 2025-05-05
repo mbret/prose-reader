@@ -1,7 +1,14 @@
 import type { Reader } from "@prose-reader/core"
 import { memo, useEffect, useMemo } from "react"
-import { signal, useLiveRef, useSignalState, useSubscribe } from "reactjrx"
-import { tap } from "rxjs"
+import {
+  signal,
+  useConstant,
+  useLiveRef,
+  useSignalState,
+  useSubscribe,
+} from "reactjrx"
+import { Subject, tap } from "rxjs"
+import type { ReaderNotification } from "../notifications/types"
 import { ReaderContext } from "./context"
 
 export const ReactReaderProvider = memo(
@@ -21,14 +28,18 @@ export const ReactReaderProvider = memo(
         default: quickMenuOpen,
       }),
     )
+    const notificationsSubject = useConstant(
+      () => new Subject<ReaderNotification>(),
+    )
     const onQuickMenuOpenChangeLiveRef = useLiveRef(onQuickMenuOpenChange)
 
     const value = useMemo(
       () => ({
         quickMenuSignal,
         reader,
+        notificationsSubject,
       }),
-      [quickMenuSignal, reader],
+      [quickMenuSignal, reader, notificationsSubject],
     )
 
     useEffect(() => {
@@ -36,8 +47,7 @@ export const ReactReaderProvider = memo(
     }, [quickMenuOpen, quickMenuSignal])
 
     useSubscribe(
-      () =>
-        quickMenuSignal.subject.pipe(tap(onQuickMenuOpenChangeLiveRef.current)),
+      () => quickMenuSignal.pipe(tap(onQuickMenuOpenChangeLiveRef.current)),
       [quickMenuSignal, onQuickMenuOpenChangeLiveRef],
     )
 

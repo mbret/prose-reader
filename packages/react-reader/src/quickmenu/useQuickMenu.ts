@@ -1,9 +1,8 @@
-import { useContext } from "react"
 import { useSignalValue } from "reactjrx"
-import { ReaderContext } from "../context/context"
+import { useReaderContext } from "../context/useReaderContext"
 
 export const useQuickMenu = () => {
-  const { quickMenuSignal } = useContext(ReaderContext)
+  const { quickMenuSignal } = useReaderContext()
 
   const quickMenu = useSignalValue(quickMenuSignal)
 
