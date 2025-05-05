@@ -62,6 +62,16 @@ export interface CfiPosition {
    * Values should be in the range 0-100, where (0,0) is top-left and (100,100) is bottom-right
    */
   spatial?: [number, number]
+
+  /**
+   * Spine index (0-based) for the document containing the node
+   */
+  spineIndex?: number
+
+  /**
+   * ID of the spine item
+   */
+  spineId?: string
 }
 
 /**
@@ -283,7 +293,14 @@ function generatePoint(
   cfi = addTextAssertionAndSideBias(cfi, textAssertion, options.includeSideBias)
 
   // Add extension parameters if specified
-  cfi = addExtensions(cfi, options.extensions)
+  if (options.extensions && Object.keys(options.extensions).length > 0) {
+    const extensionString = serializeExtensions(options.extensions)
+    if (cfi.includes("[")) {
+      cfi = cfi.replace(/\]$/, `;${extensionString}]`)
+    } else {
+      cfi = `${cfi}[;${extensionString}]`
+    }
+  }
 
   return cfi
 }
@@ -432,19 +449,29 @@ function generateRange(
 
   // For range CFIs, add extensions to each part separately
   if (options.extensions && Object.keys(options.extensions).length > 0) {
-    // Format: epubcfi(/ancestor,/start[;extensions],/end[;extensions])
+    // Format: epubcfi(P[;extensions],S[;extensions],E[;extensions])
     const extensionString = serializeExtensions(options.extensions)
 
-    // Check if start/end paths already have extensions or brackets
-    const startWithExt = startPath.includes("[")
-      ? startPath.replace(/\]$/, `;${extensionString}]`)
-      : `${startPath}[;${extensionString}]`
+    // Add extensions to each part only if they don't already have them
+    const ancestorWithExt = ancestorCfi.includes(`;${extensionString}`)
+      ? ancestorCfi
+      : ancestorCfi.includes("[")
+        ? ancestorCfi.replace(/\]$/, `;${extensionString}]`)
+        : `${ancestorCfi}[;${extensionString}]`
 
-    const endWithExt = endPath.includes("[")
-      ? endPath.replace(/\]$/, `;${extensionString}]`)
-      : `${endPath}[;${extensionString}]`
+    const startWithExt = startPath.includes(`;${extensionString}`)
+      ? startPath
+      : startPath.includes("[")
+        ? startPath.replace(/\]$/, `;${extensionString}]`)
+        : `${startPath}[;${extensionString}]`
 
-    return `${ancestorCfi},${startWithExt},${endWithExt}`
+    const endWithExt = endPath.includes(`;${extensionString}`)
+      ? endPath
+      : endPath.includes("[")
+        ? endPath.replace(/\]$/, `;${extensionString}]`)
+        : `${endPath}[;${extensionString}]`
+
+    return `${ancestorWithExt},${startWithExt},${endWithExt}`
   }
 
   // Combine into a regular range CFI without extensions
@@ -452,7 +479,7 @@ function generateRange(
 }
 
 /**
- * Unified generate function that can handle both single positions and ranges
+ * Generate a CFI from a DOM node or position
  *
  * @example
  * // Generate CFI for a single node
@@ -478,6 +505,14 @@ function generateRange(
  * });
  *
  * @example
+ * // Generate a CFI with spine indirection
+ * const cfi = generate({
+ *   node: chapterNode,
+ *   spineIndex: 1,
+ *   spineId: 'chap01ref'
+ * });
+ *
+ * @example
  * // Generate a robust CFI with text assertions
  * const cfi = generate(node, {
  *   includeTextAssertions: true,
@@ -493,20 +528,47 @@ export function generate(
     return `epubcfi(${generatePoint(position, undefined, options)})`
   }
 
-  // Case 2: CfiPosition (node + optional offset/temporal/spatial)
+  // Case 2: CfiPosition (node + optional offset/temporal/spatial/spine)
   if ("node" in position && !("start" in position)) {
-    return `epubcfi(${generatePoint(
-      position.node,
-      position.offset,
-      options,
-      position,
-    )})`
+    let cfi = ""
+
+    // Add spine indirection if specified
+    if (position.spineIndex !== undefined) {
+      const cfiIndex = (position.spineIndex + 1) * 2
+      cfi = `/6/${cfiIndex}`
+
+      if (position.spineId) {
+        cfi += `[${cfiEscape(position.spineId)}]`
+      }
+
+      cfi += "!"
+    }
+
+    // Add the node path
+    cfi += generatePoint(position.node, position.offset, options, position)
+
+    return `epubcfi(${cfi})`
   }
 
   // Case 3: Range (start + end positions)
   if ("start" in position && "end" in position) {
     const { start, end } = position
-    return `epubcfi(${generateRange(
+    let cfi = ""
+
+    // Add spine indirection if specified (use start position's spine info)
+    if (start.spineIndex !== undefined) {
+      const cfiIndex = (start.spineIndex + 1) * 2
+      cfi = `/6/${cfiIndex}`
+
+      if (start.spineId) {
+        cfi += `[${cfiEscape(start.spineId)}]`
+      }
+
+      cfi += "!"
+    }
+
+    // Add the range path
+    cfi += generateRange(
       start.node,
       start.offset ?? 0,
       end.node,
@@ -514,7 +576,9 @@ export function generate(
       options,
       start,
       end,
-    )})`
+    )
+
+    return `epubcfi(${cfi})`
   }
 
   throw new Error(

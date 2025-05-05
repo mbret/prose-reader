@@ -569,7 +569,7 @@ describe("CFI Generation", () => {
 
       // The output should include the extension parameters
       expect(cfi).toBe(
-        "epubcfi(/2[body01]/2[para01[;vnd.custom.version=1.0;vnd.custom.timestamp=2023-05-01])",
+        "epubcfi(/2[body01]/2[para01;vnd.custom.version=1.0;vnd.custom.timestamp=2023-05-01])",
       )
 
       // Should be parseable
@@ -607,7 +607,7 @@ describe("CFI Generation", () => {
 
       // Should include both text assertion and extension
       expect(cfi).toBe(
-        "epubcfi(/2[body01]/2[para01]/1:5[This is so[;vnd.custom.appVersion=2.1.3])",
+        "epubcfi(/2[body01]/2[para01]/1:5[This is so;vnd.custom.appVersion=2.1.3])",
       )
 
       // Make sure it parses correctly
@@ -654,12 +654,122 @@ describe("CFI Generation", () => {
       expect(rangeCfi).toContain("vnd.test.reason=bookmark")
       expect(rangeCfi).toContain("vnd.test.created=2023-06-15T12%3A30%3A45Z")
       expect(rangeCfi).toBe(
-        "epubcfi(/2[body01[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/2[para01]/1:0[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/4[para02]/1:8[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z])",
+        "epubcfi(/2[body01;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/2[para01]/1:0[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z],/4[para02]/1:8[;vnd.test.reason=bookmark;vnd.test.created=2023-06-15T12%3A30%3A45Z])",
       )
 
       // Should be parseable
       const parsed = parse(rangeCfi)
       expect("parent" in parsed).toBe(true)
+    })
+  })
+
+  describe("indirection", () => {
+    it("should generate a CFI with spine indirection", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+            <body id="body01">
+              <p id="para01">First paragraph.</p>
+              <p id="para02">Second paragraph.</p>
+            </body>
+          </html>`,
+        "application/xhtml+xml",
+      )
+      const para1 = doc.getElementById("para01")
+
+      const cfi = generate({
+        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        node: para1!,
+        spineIndex: 1,
+        spineId: "chap01ref",
+      })
+      expect(cfi).toBe("epubcfi(/6/4[chap01ref]!/2[body01]/2[para01])")
+    })
+
+    it("should generate a CFI with spine indirection and offset", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+            <body id="body01">
+              <p id="para01">First paragraph.</p>
+              <p id="para02">Second paragraph.</p>
+            </body>
+          </html>`,
+        "application/xhtml+xml",
+      )
+      const para1 = doc.getElementById("para01")
+
+      const cfi = generate({
+        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        node: para1!,
+        offset: 5,
+        spineIndex: 1,
+        spineId: "chap01ref",
+      })
+      expect(cfi).toBe("epubcfi(/6/4[chap01ref]!/2[body01]/2[para01]:5)")
+    })
+
+    it("should generate a range CFI with spine indirection", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="para01">First paragraph.</p>
+            <p id="para02">Second paragraph.</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const para1 = doc.getElementById("para01")
+      const para2 = doc.getElementById("para02")
+
+      if (!para1 || !para2) return
+
+      const textNode1 = para1.firstChild
+      const textNode2 = para2.firstChild
+
+      if (!textNode1 || !textNode2) return
+
+      const cfi = generate({
+        start: {
+          node: textNode1,
+          offset: 0,
+          spineIndex: 1,
+          spineId: "chap01ref",
+        },
+        end: {
+          node: textNode2,
+          offset: 8,
+        },
+      })
+      expect(cfi).toBe(
+        "epubcfi(/6/4[chap01ref]!/2[body01],/2[para01]/1:0,/4[para02]/1:8)",
+      )
+    })
+
+    it("should generate a CFI with spine indirection and extensions", () => {
+      const div = document.createElement("div")
+      div.id = "test"
+      document.body.appendChild(div)
+
+      const cfi = generate(
+        {
+          node: div,
+          spineIndex: 1,
+          spineId: "chap01ref",
+        },
+        {
+          extensions: {
+            "vnd.example.param": "value",
+          },
+        },
+      )
+      expect(cfi).toBe(
+        "epubcfi(/6/4[chap01ref]!/4/2[test;vnd.example.param=value])",
+      )
+
+      document.body.removeChild(div)
     })
   })
 })
