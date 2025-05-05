@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cfi",
-  "version": "1.212.0",
+  "version": "1.213.0",
   "type": "module",
   "files": ["/dist"],
   "main": "./dist/index.umd.cjs",
