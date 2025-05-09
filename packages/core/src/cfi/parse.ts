@@ -1,4 +1,4 @@
-import { isParsedCfiRange, parse, resolveExtensions } from "@prose-reader/cfi"
+import { type CfiPart, isParsedCfiRange, parse } from "@prose-reader/cfi"
 
 /**
  * Root CFI are prose specific CFI that start with /0.
@@ -9,16 +9,22 @@ import { isParsedCfiRange, parse, resolveExtensions } from "@prose-reader/cfi"
 export const isRootCfi = (cfi: string) => {
   const parsed = parse(cfi)
 
-  // start with /0
-  if (Array.isArray(parsed)) {
-    // we only care about last indirection
-    const lastCfiPart = parsed.at(-1)
+  const checkIndirectionFromParsedCfiArray = (parsed: CfiPart[][]) => {
+    // we dont just have indirection, likely it contains a node
+    if (parsed.length !== 1) return false
 
-    return lastCfiPart?.[0]?.index === 0
+    // we only care about last indirection
+    const indirectionPart = parsed[0]
+    const indirectionMarkerParsed = indirectionPart?.[0]
+
+    return indirectionMarkerParsed?.index === 6
   }
 
-  // range parent
-  return parsed.parent.at(-1)?.[0]?.index === 0
+  if (Array.isArray(parsed)) {
+    return checkIndirectionFromParsedCfiArray(parsed)
+  }
+
+  return checkIndirectionFromParsedCfiArray(parsed.parent)
 }
 
 export const parseCfi = (
@@ -29,15 +35,23 @@ export const parseCfi = (
   offset?: number
 } => {
   const parsedCfi = parse(cfi)
-  const extensions = resolveExtensions(parsedCfi)
-  const proseAnchor = Number.parseInt(extensions?.["vnd.prose.anchor"] || ``)
+  const indirectionPart = Array.isArray(parsedCfi)
+    ? parsedCfi.length > 1
+      ? parsedCfi[0]
+      : undefined
+    : parsedCfi.parent.length > 1
+      ? parsedCfi.parent[0]
+      : undefined
+  const itemIndexPart = (indirectionPart ?? [])[1]
+  const parsedSpineItemIndex = itemIndexPart?.index ?? 2
+  const spineItemIndex = parsedSpineItemIndex / 2 - 1
   const offset = isParsedCfiRange(parsedCfi)
     ? parsedCfi.end.at(-1)?.at(-1)?.offset
     : parsedCfi.at(-1)?.at(-1)?.offset
 
   return {
     cleanedCfi: cfi,
-    itemIndex: Number.isNaN(proseAnchor) ? undefined : proseAnchor,
+    itemIndex: spineItemIndex,
     offset: offset ?? 0,
   }
 }

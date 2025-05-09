@@ -1,6 +1,7 @@
 import { resolve } from "@prose-reader/cfi"
 import { Report } from "../report"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
+import { parseCfi } from "./parse"
 
 /**
  * Returns the node and offset for the given cfi.
@@ -16,7 +17,9 @@ export const resolveCfi = ({
 }) => {
   if (!cfi) return undefined
 
-  const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
+  const { itemIndex } = parseCfi(cfi)
+
+  const spineItem = spineItemsManager.get(itemIndex)
 
   if (!spineItem) return undefined
 

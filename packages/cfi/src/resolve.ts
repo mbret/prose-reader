@@ -130,13 +130,15 @@ function resolveParsed(
     }
 
     // If not as range, use the start point
-    const firstPath = parsed.start[0] || []
+    const firstPath = parsed.start.at(-1) || []
     return resolvePath(firstPath, document, options)
   }
 
+  const nonIndirectionPart = parsed.at(-1)
+
   // Handle path CFI (indirection)
-  if (parsed[0]) {
-    return resolvePath(parsed[0], document, options)
+  if (nonIndirectionPart) {
+    return resolvePath(nonIndirectionPart, document, options)
   }
 
   throw new Error("Invalid CFI structure")

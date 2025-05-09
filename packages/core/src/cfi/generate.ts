@@ -1,14 +1,13 @@
-import { generate, serialize } from "@prose-reader/cfi"
+import { generate } from "@prose-reader/cfi"
 import type { Manifest } from "@prose-reader/shared"
 import type { SpineItem } from "../spineItem/SpineItem"
 import type { SpineItemLocator } from "../spineItem/locationResolver"
 
 export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
-  const itemAnchor = getItemAnchor(item)
-
-  return serialize([
-    [{ index: 0, extensions: { "vnd.prose.anchor": itemAnchor } }],
-  ])
+  return generate({
+    spineIndex: item.index,
+    spineId: item.id,
+  })
 }
 
 export const generateCfi = (
@@ -23,14 +22,7 @@ export const generateCfi = (
   )
     return generateRootCfi(item)
 
-  return generate(
-    { node, offset },
-    {
-      extensions: {
-        "vnd.prose.anchor": getItemAnchor(item),
-      },
-    },
-  )
+  return generate({ node, offset, spineIndex: item.index, spineId: item.id })
 }
 
 /**

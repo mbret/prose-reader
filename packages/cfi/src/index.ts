@@ -1,4 +1,4 @@
-export { parse } from "./parse"
+export { parse, type ParsedCfi, type CfiPart } from "./parse"
 export { resolve } from "./resolve"
 export { generate } from "./generate"
 export { compare } from "./compare"
