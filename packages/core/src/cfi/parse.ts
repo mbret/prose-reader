@@ -1,4 +1,13 @@
-import { type CfiPart, isParsedCfiRange, parse } from "@prose-reader/cfi"
+import {
+  type CfiPart,
+  type ParsedCfi,
+  isParsedCfiRange,
+  parse,
+} from "@prose-reader/cfi"
+
+const hasIndirectionMarker = (part: CfiPart[]) => {
+  return part[0]?.index === 6 && part.length > 1
+}
 
 /**
  * Root CFI are prose specific CFI that start with /0.
@@ -14,10 +23,9 @@ export const isRootCfi = (cfi: string) => {
     if (parsed.length !== 1) return false
 
     // we only care about last indirection
-    const indirectionPart = parsed[0]
-    const indirectionMarkerParsed = indirectionPart?.[0]
+    const indirectionPart = parsed[0] ?? []
 
-    return indirectionMarkerParsed?.index === 6
+    return hasIndirectionMarker(indirectionPart)
   }
 
   if (Array.isArray(parsed)) {
@@ -25,6 +33,16 @@ export const isRootCfi = (cfi: string) => {
   }
 
   return checkIndirectionFromParsedCfiArray(parsed.parent)
+}
+
+const extractIndirectionPart = (parsedCfi: ParsedCfi) => {
+  return Array.isArray(parsedCfi)
+    ? parsedCfi[0] && hasIndirectionMarker(parsedCfi[0])
+      ? parsedCfi[0]
+      : undefined
+    : parsedCfi.parent[0] && hasIndirectionMarker(parsedCfi.parent[0])
+      ? parsedCfi.parent[0]
+      : undefined
 }
 
 export const parseCfi = (
@@ -35,13 +53,7 @@ export const parseCfi = (
   offset?: number
 } => {
   const parsedCfi = parse(cfi)
-  const indirectionPart = Array.isArray(parsedCfi)
-    ? parsedCfi.length > 1
-      ? parsedCfi[0]
-      : undefined
-    : parsedCfi.parent.length > 1
-      ? parsedCfi.parent[0]
-      : undefined
+  const indirectionPart = extractIndirectionPart(parsedCfi)
   const itemIndexPart = (indirectionPart ?? [])[1]
   const parsedSpineItemIndex = itemIndexPart?.index ?? 2
   const spineItemIndex = parsedSpineItemIndex / 2 - 1

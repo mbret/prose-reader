@@ -10,6 +10,6 @@ describe("generateRootCfi", () => {
       index: 1,
     } as unknown as Manifest["spineItems"][number])
 
-    expect(cfi).toBe("epubcfi(/0[;vnd.prose.anchor=1])")
+    expect(cfi).toBe("epubcfi(/6/4[item1]!)")
   })
 })
