@@ -45,7 +45,7 @@ export interface CfiPosition {
   /**
    * The DOM node
    */
-  node: Node
+  node?: Node | null
 
   /**
    * Character offset within the node (for text nodes)
@@ -164,7 +164,7 @@ function addTextAssertionAndSideBias(
  * Generate a CFI for a single node in the DOM
  */
 function generatePoint(
-  node: Node,
+  node: Node | null,
   offset?: number,
   options: GenerateOptions = {},
   position?: CfiPosition,
@@ -174,7 +174,7 @@ function generatePoint(
   let textNode: Node | null = null
 
   // Handle text nodes specially
-  if (node.nodeType === Node.TEXT_NODE) {
+  if (node?.nodeType === Node.TEXT_NODE) {
     // If this is a text node, we need to remember it for text assertions
     // but for path construction, we'll work with the parent
     textNode = node
@@ -292,15 +292,7 @@ function generatePoint(
   // Add text assertion and side bias using helper
   cfi = addTextAssertionAndSideBias(cfi, textAssertion, options.includeSideBias)
 
-  // Add extension parameters if specified
-  if (options.extensions && Object.keys(options.extensions).length > 0) {
-    const extensionString = serializeExtensions(options.extensions)
-    if (cfi.includes("[")) {
-      cfi = cfi.replace(/\]$/, `;${extensionString}]`)
-    } else {
-      cfi = `${cfi}[;${extensionString}]`
-    }
-  }
+  cfi = addExtensions(cfi, options.extensions)
 
   return cfi
 }
@@ -384,7 +376,12 @@ function generateRelativePath(
 
 const serializeExtensions = (extensions: Record<string, string>) => {
   return Object.entries(extensions)
-    .map(([key, value]) => `${key}=${encodeURIComponent(cfiEscape(value))}`)
+    .map(([key, value]) => {
+      // Properly escape the value according to CFI spec
+      const escapedValue = cfiEscape(value)
+      // URL encode the value to handle special characters
+      return `${key}=${encodeURIComponent(escapedValue)}`
+    })
     .join(";")
 }
 
@@ -399,13 +396,30 @@ function addExtensions(
     return cfi
   }
 
-  // If we're dealing with a bracket at end, insert our extensions before the closing bracket
+  const extensionString = serializeExtensions(extensions)
+
+  // If we're dealing with a bracket at end
   if (cfi.endsWith("]")) {
-    return `${cfi.substring(0, cfi.length - 1)}[;${serializeExtensions(extensions)}]`
+    // Check if there are already parameters
+    const lastBracketIndex = cfi.lastIndexOf("[")
+    const content = cfi.substring(lastBracketIndex + 1, cfi.length - 1)
+
+    // If content already has these exact extensions, return as is
+    if (content.includes(extensionString)) {
+      return cfi
+    }
+
+    // Add extensions with proper separator
+    return `${cfi.substring(0, cfi.length - 1)}${content.includes(";") ? ";" : ";"}${extensionString}]`
   }
 
-  // No bracket at the end - just add with new brackets
-  return `${cfi}[;${serializeExtensions(extensions)}]`
+  // Special case for spine items with indirection
+  if (cfi.endsWith("!")) {
+    return cfi
+  }
+
+  // No bracket at the end - add with new brackets
+  return `${cfi}[;${extensionString}]`
 }
 
 /**
@@ -422,6 +436,7 @@ function generateRange(
 ): string {
   // Find common ancestor
   const ancestor = findCommonAncestor(startNode, endNode)
+
   if (!ancestor) {
     throw new Error("No common ancestor found")
   }
@@ -449,33 +464,35 @@ function generateRange(
 
   // For range CFIs, add extensions to each part separately
   if (options.extensions && Object.keys(options.extensions).length > 0) {
-    // Format: epubcfi(P[;extensions],S[;extensions],E[;extensions])
-    const extensionString = serializeExtensions(options.extensions)
-
-    // Add extensions to each part only if they don't already have them
-    const ancestorWithExt = ancestorCfi.includes(`;${extensionString}`)
-      ? ancestorCfi
-      : ancestorCfi.includes("[")
-        ? ancestorCfi.replace(/\]$/, `;${extensionString}]`)
-        : `${ancestorCfi}[;${extensionString}]`
-
-    const startWithExt = startPath.includes(`;${extensionString}`)
-      ? startPath
-      : startPath.includes("[")
-        ? startPath.replace(/\]$/, `;${extensionString}]`)
-        : `${startPath}[;${extensionString}]`
-
-    const endWithExt = endPath.includes(`;${extensionString}`)
-      ? endPath
-      : endPath.includes("[")
-        ? endPath.replace(/\]$/, `;${extensionString}]`)
-        : `${endPath}[;${extensionString}]`
+    // Add extensions to each part
+    const ancestorWithExt = addExtensions(ancestorCfi, options.extensions)
+    const startWithExt = addExtensions(startPath, options.extensions)
+    const endWithExt = addExtensions(endPath, options.extensions)
 
     return `${ancestorWithExt},${startWithExt},${endWithExt}`
   }
 
   // Combine into a regular range CFI without extensions
   return `${ancestorCfi},${startPath},${endPath}`
+}
+
+const generateSpineCfi = (
+  spineIndex: number,
+  spineId?: string,
+  options: GenerateOptions = {},
+  isFinal?: boolean,
+) => {
+  const bracket = ""
+  const cfiIndex = (spineIndex + 1) * 2
+  let cfi = `/6/${cfiIndex}`
+
+  if (spineId) {
+    cfi += `[${cfiEscape(spineId)}]`
+  }
+
+  cfi = isFinal ? addExtensions(cfi, options.extensions) : cfi
+
+  return `${cfi}${bracket}!`
 }
 
 /**
@@ -513,6 +530,13 @@ function generateRange(
  * });
  *
  * @example
+ * // Generate a CFI for a spine item without a node
+ * const cfi = generate({
+ *   spineIndex: 1,
+ *   spineId: 'chap01ref'
+ * });
+ *
+ * @example
  * // Generate a robust CFI with text assertions
  * const cfi = generate(node, {
  *   includeTextAssertions: true,
@@ -528,45 +552,49 @@ export function generate(
     return `epubcfi(${generatePoint(position, undefined, options)})`
   }
 
-  // Case 2: CfiPosition (node + optional offset/temporal/spatial/spine)
-  if ("node" in position && !("start" in position)) {
-    let cfi = ""
+  let cfi = ""
 
+  // Non Range case
+  if (!("start" in position)) {
     // Add spine indirection if specified
     if (position.spineIndex !== undefined) {
-      const cfiIndex = (position.spineIndex + 1) * 2
-      cfi = `/6/${cfiIndex}`
+      cfi = generateSpineCfi(
+        position.spineIndex,
+        position.spineId,
+        options,
+        !position.node,
+      )
 
-      if (position.spineId) {
-        cfi += `[${cfiEscape(position.spineId)}]`
+      if (!position.node) {
+        return `epubcfi(${cfi})`
       }
-
-      cfi += "!"
     }
 
     // Add the node path
-    cfi += generatePoint(position.node, position.offset, options, position)
+    cfi += generatePoint(
+      position.node ?? null,
+      position.offset,
+      options,
+      position,
+    )
 
     return `epubcfi(${cfi})`
   }
 
-  // Case 3: Range (start + end positions)
-  if ("start" in position && "end" in position) {
-    const { start, end } = position
-    let cfi = ""
+  // Range case
+  const { start, end } = position
 
-    // Add spine indirection if specified (use start position's spine info)
-    if (start.spineIndex !== undefined) {
-      const cfiIndex = (start.spineIndex + 1) * 2
-      cfi = `/6/${cfiIndex}`
+  // Add spine indirection if specified (use start position's spine info)
+  if (start.spineIndex !== undefined) {
+    cfi = generateSpineCfi(
+      start.spineIndex,
+      start.spineId,
+      options,
+      !start.node,
+    )
+  }
 
-      if (start.spineId) {
-        cfi += `[${cfiEscape(start.spineId)}]`
-      }
-
-      cfi += "!"
-    }
-
+  if (start.node && end.node) {
     // Add the range path
     cfi += generateRange(
       start.node,
@@ -577,11 +605,7 @@ export function generate(
       start,
       end,
     )
-
-    return `epubcfi(${cfi})`
   }
 
-  throw new Error(
-    "Invalid argument: expected Node, CfiPosition, or {start, end} object",
-  )
+  return `epubcfi(${cfi})`
 }

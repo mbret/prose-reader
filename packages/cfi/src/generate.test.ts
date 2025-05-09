@@ -772,4 +772,50 @@ describe("CFI Generation", () => {
       document.body.removeChild(div)
     })
   })
+
+  describe("spine item generation", () => {
+    it("should generate a CFI for a spine item without a node", () => {
+      const cfi = generate({
+        spineIndex: 1,
+        spineId: "chap01ref",
+      })
+      expect(cfi).toBe("epubcfi(/6/4[chap01ref]!)")
+    })
+
+    it("should generate a CFI for a spine item without an ID", () => {
+      const cfi = generate({
+        spineIndex: 2,
+      })
+      expect(cfi).toBe("epubcfi(/6/6!)")
+    })
+
+    it("should generate a CFI for a spine item without an ID but with extensions", () => {
+      const cfi = generate(
+        {
+          spineIndex: 2,
+        },
+        {
+          extensions: {
+            "vnd.example": "test",
+          },
+        },
+      )
+      expect(cfi).toBe("epubcfi(/6/6[;vnd.example=test]!)")
+    })
+
+    it("should generate a CFI for a spine item with extensions", () => {
+      const cfi = generate(
+        {
+          spineIndex: 0,
+          spineId: "titlepage",
+        },
+        {
+          extensions: {
+            "vnd.example": "test",
+          },
+        },
+      )
+      expect(cfi).toBe("epubcfi(/6/2[titlepage;vnd.example=test]!)")
+    })
+  })
 })
