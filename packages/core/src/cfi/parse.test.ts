@@ -10,6 +10,6 @@ describe("isRootCfi", () => {
   })
 
   it("should return true for a root CFI", () => {
-    expect(isRootCfi("epubcfi(/6/2)")).toBe(true)
+    expect(isRootCfi("epubcfi(/6/2!)")).toBe(true)
   })
 })
