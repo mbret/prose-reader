@@ -89,20 +89,8 @@ export function resolve(
   options: ResolveOptions = {},
 ): ResolveResult {
   try {
-    // If already parsed, use it directly
-    if (typeof cfi !== "string") {
-      return resolveParsed(cfi, document, options)
-    }
+    const parsedCfi = typeof cfi !== "string" ? cfi : parse(cfi)
 
-    // Parse the CFI once and use the parsed object for all checks
-    const parsedCfi = parse(cfi)
-
-    // Handle range CFIs when asRange is true
-    if (options.asRange && isParsedCfiRange(parsedCfi)) {
-      return resolveRange(parsedCfi, document)
-    }
-
-    // For all other cases, use the parsed CFI
     return resolveParsed(parsedCfi, document, options)
   } catch (error) {
     if (options.throwOnError) {
