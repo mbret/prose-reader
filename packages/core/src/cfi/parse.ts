@@ -1,6 +1,7 @@
 import {
   type CfiPart,
   type ParsedCfi,
+  isIndirectionOnly,
   isParsedCfiRange,
   parse,
 } from "@prose-reader/cfi"
@@ -18,21 +19,7 @@ const hasIndirectionMarker = (part: CfiPart[]) => {
 export const isRootCfi = (cfi: string) => {
   const parsed = parse(cfi)
 
-  const checkIndirectionFromParsedCfiArray = (parsed: CfiPart[][]) => {
-    // we dont just have indirection, likely it contains a node
-    if (parsed.length !== 1) return false
-
-    // we only care about last indirection
-    const indirectionPart = parsed[0] ?? []
-
-    return hasIndirectionMarker(indirectionPart)
-  }
-
-  if (Array.isArray(parsed)) {
-    return checkIndirectionFromParsedCfiArray(parsed)
-  }
-
-  return checkIndirectionFromParsedCfiArray(parsed.parent)
+  return isIndirectionOnly(parsed)
 }
 
 const extractIndirectionPart = (parsedCfi: ParsedCfi) => {

@@ -101,6 +101,9 @@ function tokenize(cfi: string): CfiToken[] {
         push(["[", value])
       } else if (state === ";" || state?.startsWith(";")) {
         push([state, value])
+      } else if (state === "!") {
+        // Make sure to push the '!' token at the end of the string
+        push(["!", 0])
       }
       break
     }
@@ -317,6 +320,7 @@ function parsePart(tokens: CfiToken[]): CfiPart[] {
  */
 function parseIndirection(tokens: CfiToken[]): CfiPart[][] {
   const indirectionIndices = findTokenIndices(tokens, "!")
+
   return splitAt(tokens, indirectionIndices).map(parsePart)
 }
 

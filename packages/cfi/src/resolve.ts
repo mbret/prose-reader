@@ -1,5 +1,10 @@
 import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
-import { isNode, isTextNode } from "./utils"
+import {
+  isIndirectionOnly,
+  isNode,
+  isParsedCfiRange,
+  isTextNode,
+} from "./utils"
 
 /**
  * Options for resolving a CFI
@@ -58,25 +63,12 @@ interface ResolveNodeResult extends ResolveResultBase {
 type ResolveResult = ResolveNodeResult | ResolveRangeResult
 
 /**
- * Check if a parsed CFI is a range
- */
-export function isParsedCfiRange(parsed: ParsedCfi): parsed is CfiRange {
-  return (
-    parsed !== null &&
-    typeof parsed === "object" &&
-    "parent" in parsed &&
-    "start" in parsed &&
-    "end" in parsed
-  )
-}
-
-/**
  * Resolves a CFI string to a DOM node or range
  */
 export function resolve(
   cfi: string | ParsedCfi,
   document: Document,
-  options?: Omit<ResolveOptions, "asRange"> & { asRange: true },
+  options: Omit<ResolveOptions, "asRange"> & { asRange: true },
 ): ResolveRangeResult
 export function resolve(
   cfi: string | ParsedCfi,
@@ -111,6 +103,13 @@ function resolveParsed(
 ): ResolveResult {
   if (isParsedCfiRange(parsed)) {
     return resolveRange(parsed, document)
+  }
+
+  // Check if this is a CFI with only indirection (e.g., "epubcfi(/6/2[cover]!)")
+  if (isIndirectionOnly(parsed)) {
+    // According to the spec, we cannot resolve beyond the indirection point
+    // so we return null for the node
+    return createNodeResultObject(null)
   }
 
   const nonIndirectionPart = parsed.at(-1)

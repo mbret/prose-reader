@@ -241,4 +241,24 @@ describe("EPUB CFI Resolve", () => {
       expect(result.node).toBe(doc.getElementById("para01"))
     })
   })
+
+  describe("indirection handling", () => {
+    it("should handle indirection-only CFIs", () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(
+        `<html xmlns="http://www.w3.org/1999/xhtml">
+          <body id="body01">
+            <p id="cover">Cover page</p>
+          </body>
+        </html>`,
+        "application/xhtml+xml",
+      )
+
+      const cfi = "epubcfi(/6/2[cover]!)"
+      const result = resolve(cfi, doc)
+
+      expect(result.node).toBeNull()
+      expect(result.isRange).toBe(false)
+    })
+  })
 })
