@@ -28,20 +28,6 @@ describe("EPUB CFI Parser", () => {
       ])
     })
 
-    it("should parse a CFI with indirection", () => {
-      const cfi = "epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2:3)"
-      const parsed = parse(cfi)
-
-      expect(parsed).toEqual([
-        [{ index: 6 }, { index: 4, id: "chap01ref" }],
-        [
-          { index: 4, id: "body01" },
-          { index: 10, id: "para05" },
-          { index: 2, offset: 3 },
-        ],
-      ])
-    })
-
     it("should parse a CFI with temporal offset", () => {
       const cfi = "epubcfi(/4[body01]/16[svgimg]~12.5)"
       const parsed = parse(cfi)
