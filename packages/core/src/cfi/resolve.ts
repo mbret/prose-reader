@@ -26,6 +26,7 @@ export const resolveCfi = ({
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
   if (rendererElement instanceof HTMLIFrameElement) {
+    console.log("FIII", cfi)
     const doc = rendererElement.contentWindow?.document
 
     if (doc) {

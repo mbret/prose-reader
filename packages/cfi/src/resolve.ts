@@ -109,17 +109,8 @@ function resolveParsed(
   document: Document,
   options: { asRange?: boolean } = { asRange: false },
 ): ResolveResult {
-  const { asRange = false } = options
-
-  // Handle range CFIs
   if (isParsedCfiRange(parsed)) {
-    if (asRange) {
-      return resolveRange(parsed, document)
-    }
-
-    // If not as range, use the start point
-    const firstPath = parsed.start.at(-1) || []
-    return resolvePath(firstPath, document, options)
+    return resolveRange(parsed, document)
   }
 
   const nonIndirectionPart = parsed.at(-1)
@@ -168,12 +159,14 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
   const endNode = endResult.node
 
   const domRange = document.createRange()
+
   domRange.setStart(
     startNode,
     (Array.isArray(startResult.offset)
       ? startResult.offset[0]
       : startResult.offset) ?? 0,
   )
+
   domRange.setEnd(
     endNode,
     (Array.isArray(endResult.offset)

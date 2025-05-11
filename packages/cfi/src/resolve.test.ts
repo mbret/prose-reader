@@ -203,11 +203,13 @@ describe("EPUB CFI Resolve", () => {
       const cfiBeforeFirst = "epubcfi(/4[body01]/0)"
       const result1 = resolve(cfiBeforeFirst, doc, { asRange: true })
       expect(result1.isRange).toBe(true)
+      expect(result1.node instanceof Range).toBe(true)
 
       // After last element (virtual position)
       const cfiAfterLast = "epubcfi(/4[body01]/4)"
       const result2 = resolve(cfiAfterLast, doc, { asRange: true })
       expect(result2.isRange).toBe(true)
+      expect(result2.node instanceof Range).toBe(true)
     })
   })
 
