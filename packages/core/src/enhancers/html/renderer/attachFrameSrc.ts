@@ -1,9 +1,7 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
-  EMPTY,
   type Observable,
   catchError,
-  filter,
   from,
   map,
   of,
@@ -60,16 +58,20 @@ export const attachFrameSrc = ({
 
               return of(frameElement)
             }
+
             const resourceResponse$ =
               resource instanceof URL
                 ? from(resourcesHandler.fetchResource())
-                : resource instanceof Response
-                  ? of(resource)
-                  : EMPTY
+                : of(resource)
 
             return resourceResponse$.pipe(
-              filter((response) => response instanceof Response),
-              switchMap((response) => from(getHtmlFromResource(response))),
+              switchMap((response) => {
+                if (!(response instanceof Response)) {
+                  throw new Error(`Invalid resource`)
+                }
+
+                return from(getHtmlFromResource(response))
+              }),
               tap((htmlDoc) => {
                 if (htmlDoc) {
                   const blob = new Blob([htmlDoc], { type: "text/html" })
@@ -86,6 +88,7 @@ export const attachFrameSrc = ({
               catchError((e) => {
                 Report.error(
                   `Error while trying to fetch or load resource for item ${item.id}`,
+                  resource,
                 )
                 Report.error(e)
 
