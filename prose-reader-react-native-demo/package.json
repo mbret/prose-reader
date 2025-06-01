@@ -3,11 +3,10 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "concurrently \"expo start\" \"vite build web --watch\"",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
+    "android": "npm run web:build && expo run:android",
+    "ios": "npm run web:build && expo run:ios",
     "lint": "expo lint",
     "web:dev": "vite web",
     "web:build": "tsc && vite build web",
@@ -58,7 +57,8 @@
     "eslint-config-expo": "~9.2.0",
     "typescript": "~5.8.3",
     "vite": "^6.2.0",
-    "vite-plugin-singlefile": "^2.1.0"
+    "vite-plugin-singlefile": "^2.1.0",
+    "concurrently": "^9.0.1"
   },
   "private": true
 }
