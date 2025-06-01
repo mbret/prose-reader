@@ -8,7 +8,10 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "web:dev": "vite web",
+    "web:build": "tsc && vite build web",
+    "web:preview": "vite preview web"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -40,14 +43,22 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
     "react-native-zip-archive": "^7.0.1",
-    "expo-build-properties": "~0.14.6"
+    "expo-build-properties": "~0.14.6",
+    "@prose-reader/core": "*",
+    "@prose-reader/streamer": "*",
+    "@prose-reader/react-native": "*",
+    "@webview-bridge/web": "^1.7.7",
+    "reactjrx": "^1.116.0",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "vite": "^6.2.0",
+    "vite-plugin-singlefile": "^2.1.0"
   },
   "private": true
 }

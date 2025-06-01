@@ -1,7 +1,6 @@
 import { bridgeReader, createReaderBridge } from '@prose-reader/react-native/web';
 import { createReader } from '@prose-reader/core';
-import { map } from 'rxjs';
-import { from } from 'rxjs';
+import { map, from } from 'rxjs';
 import './style.css';
 
 /**
