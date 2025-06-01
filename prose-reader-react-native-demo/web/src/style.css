@@ -1,0 +1,14 @@
+body,
+#reader,
+html {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+#reader {
+  border: 2px solid red;
+}
