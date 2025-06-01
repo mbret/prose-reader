@@ -20,7 +20,10 @@
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
     "prepare": "husky"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/jest": "^29.4.0",
@@ -37,7 +40,6 @@
     "rollup-plugin-node-externals": "^8.0.0",
     "rxjs": "*",
     "serve": "^14.2.0",
-    "ts-node": "^10.4.0",
     "vite": "^6.0.0",
     "vite-plugin-dts": "^4.0.3",
     "vite-plugin-pwa": "^1.0.0",
@@ -49,7 +51,6 @@
   "dependencies": {
     "@rollup/plugin-replace": "^6.0.1",
     "reactjrx": "^1.81.0",
-    "screenfull": "^6.0.2",
     "typescript": "*"
   },
   "lint-staged": {
