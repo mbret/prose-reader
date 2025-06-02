@@ -14,11 +14,18 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@prose-reader/core": "file:../packages/core",
+    "@prose-reader/react-native": "file:../packages/react-native",
+    "@prose-reader/shared": "file:../packages/shared",
+    "@prose-reader/streamer": "file:../packages/streamer",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@webview-bridge/react-native": "^1.7.7",
+    "@webview-bridge/web": "^1.7.7",
     "expo": "~53.0.9",
     "expo-blur": "~14.1.4",
+    "expo-build-properties": "~0.14.6",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.1.8",
     "expo-file-system": "~18.1.10",
@@ -42,23 +49,19 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
     "react-native-zip-archive": "^7.0.1",
-    "expo-build-properties": "~0.14.6",
-    "@prose-reader/core": "*",
-    "@prose-reader/streamer": "*",
-    "@prose-reader/react-native": "*",
-    "@webview-bridge/web": "^1.7.7",
     "reactjrx": "^1.116.0",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "xmldoc": "^2.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "concurrently": "^9.0.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "typescript": "~5.8.3",
     "vite": "^6.2.0",
-    "vite-plugin-singlefile": "^2.1.0",
-    "concurrently": "^9.0.1"
+    "vite-plugin-singlefile": "^2.1.0"
   },
   "private": true
 }
