@@ -13,7 +13,8 @@
       "**/test-results/**",
       "**/dist/**",
       "CfiHandler.ts",
-      "**/playwright-report/**"
+      "**/playwright-report/**",
+      "**/Pods/**"
     ]
   },
   "formatter": {

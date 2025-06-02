@@ -7,7 +7,6 @@ export const useDownloadFile = (url: string) => {
 
   useEffect(() => {
     let isMounted = true
-
     ;(async () => {
       setFile(null)
 

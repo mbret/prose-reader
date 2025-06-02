@@ -12,7 +12,6 @@ export const useManifestFromArchive = ({
 
   useEffect(() => {
     if (!archive) return
-
     ;(async () => {
       const manifest = await generateManifestFromArchive(archive)
 

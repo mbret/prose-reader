@@ -10,7 +10,6 @@ export const useUnzipFile = (file: File | undefined | null) => {
   useEffect(() => {
     let isMounted = true
     if (!file) return
-
     ;(async () => {
       try {
         setUnzippedFileDirectory(null)
