@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.mbret.prosereaderreactnativedemo'
+    namespace 'com.mbret.prosereactnativedemo'
     defaultConfig {
-        applicationId 'com.mbret.prosereaderreactnativedemo'
+        applicationId 'com.mbret.prosereactnativedemo'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

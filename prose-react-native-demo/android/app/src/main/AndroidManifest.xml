@@ -24,7 +24,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="prosereaderreactnativedemo"/>
+        <data android:scheme="prosereactnativedemo"/>
         <data android:scheme="exp+prose-react-native-demo"/>
       </intent-filter>
     </activity>

@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "prosereaderreactnativedemo",
+    "scheme": "prosereactnativedemo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -18,7 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.mbret.prosereaderreactnativedemo"
+      "package": "com.mbret.prosereactnativedemo"
     },
     "web": {
       "bundler": "metro",

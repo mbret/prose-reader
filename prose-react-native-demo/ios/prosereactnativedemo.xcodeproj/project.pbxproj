@@ -12,24 +12,24 @@
 		1556D8D761A3F25EDB48DEEA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E79D82539AC2E3507258B626 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		CB989BB456E9DD29A769FA79 /* libPods-prosereaderreactnativedemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C89302DE5F1526A0447016E /* libPods-prosereaderreactnativedemo.a */; };
+		CB989BB456E9DD29A769FA79 /* libPods-prosereactnativedemo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C89302DE5F1526A0447016E /* libPods-prosereactnativedemo.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* prosereaderreactnativedemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = prosereaderreactnativedemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = prosereaderreactnativedemo/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = prosereaderreactnativedemo/Info.plist; sourceTree = "<group>"; };
-		3C89302DE5F1526A0447016E /* libPods-prosereaderreactnativedemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-prosereaderreactnativedemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		54C0C523E15EE12B96621276 /* Pods-prosereaderreactnativedemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-prosereaderreactnativedemo.release.xcconfig"; path = "Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo.release.xcconfig"; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = prosereaderreactnativedemo/SplashScreen.storyboard; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* prosereactnativedemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = prosereactnativedemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = prosereactnativedemo/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = prosereactnativedemo/Info.plist; sourceTree = "<group>"; };
+		3C89302DE5F1526A0447016E /* libPods-prosereactnativedemo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-prosereactnativedemo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		54C0C523E15EE12B96621276 /* Pods-prosereactnativedemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-prosereactnativedemo.release.xcconfig"; path = "Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo.release.xcconfig"; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = prosereactnativedemo/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C22FA45CF73E9B812CDC2C5A /* Pods-prosereaderreactnativedemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-prosereaderreactnativedemo.debug.xcconfig"; path = "Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo.debug.xcconfig"; sourceTree = "<group>"; };
-		DA2C70EF5BE867388539D7E7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-prosereaderreactnativedemo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		E79D82539AC2E3507258B626 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = prosereaderreactnativedemo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C22FA45CF73E9B812CDC2C5A /* Pods-prosereactnativedemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-prosereactnativedemo.debug.xcconfig"; path = "Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo.debug.xcconfig"; sourceTree = "<group>"; };
+		DA2C70EF5BE867388539D7E7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-prosereactnativedemo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		E79D82539AC2E3507258B626 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = prosereactnativedemo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = prosereaderreactnativedemo/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* prosereaderreactnativedemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "prosereaderreactnativedemo-Bridging-Header.h"; path = "prosereaderreactnativedemo/prosereaderreactnativedemo-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = prosereactnativedemo/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* prosereactnativedemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "prosereactnativedemo-Bridging-Header.h"; path = "prosereactnativedemo/prosereactnativedemo-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,42 +37,42 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CB989BB456E9DD29A769FA79 /* libPods-prosereaderreactnativedemo.a in Frameworks */,
+				CB989BB456E9DD29A769FA79 /* libPods-prosereactnativedemo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* prosereaderreactnativedemo */ = {
+		13B07FAE1A68108700A75B9A /* prosereactnativedemo */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				F11748442D0722820044C1D9 /* prosereaderreactnativedemo-Bridging-Header.h */,
+				F11748442D0722820044C1D9 /* prosereactnativedemo-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				E79D82539AC2E3507258B626 /* PrivacyInfo.xcprivacy */,
 			);
-			name = prosereaderreactnativedemo;
+			name = prosereactnativedemo;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				3C89302DE5F1526A0447016E /* libPods-prosereaderreactnativedemo.a */,
+				3C89302DE5F1526A0447016E /* libPods-prosereactnativedemo.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		69342B8FAF133FB29CB0FD73 /* prosereaderreactnativedemo */ = {
+		69342B8FAF133FB29CB0FD73 /* prosereactnativedemo */ = {
 			isa = PBXGroup;
 			children = (
 				DA2C70EF5BE867388539D7E7 /* ExpoModulesProvider.swift */,
 			);
-			name = prosereaderreactnativedemo;
+			name = prosereactnativedemo;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -85,7 +85,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* prosereaderreactnativedemo */,
+				13B07FAE1A68108700A75B9A /* prosereactnativedemo */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -100,7 +100,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* prosereaderreactnativedemo.app */,
+				13B07F961A680F5B00A75B9A /* prosereactnativedemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,13 +111,13 @@
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
 			);
 			name = Supporting;
-			path = prosereaderreactnativedemo/Supporting;
+			path = prosereactnativedemo/Supporting;
 			sourceTree = "<group>";
 		};
 		C230A271C8DF33D494653911 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				69342B8FAF133FB29CB0FD73 /* prosereaderreactnativedemo */,
+				69342B8FAF133FB29CB0FD73 /* prosereactnativedemo */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -125,8 +125,8 @@
 		DA237D0769B4F10DFB4C0519 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				C22FA45CF73E9B812CDC2C5A /* Pods-prosereaderreactnativedemo.debug.xcconfig */,
-				54C0C523E15EE12B96621276 /* Pods-prosereaderreactnativedemo.release.xcconfig */,
+				C22FA45CF73E9B812CDC2C5A /* Pods-prosereactnativedemo.debug.xcconfig */,
+				54C0C523E15EE12B96621276 /* Pods-prosereactnativedemo.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
@@ -135,9 +135,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* prosereaderreactnativedemo */ = {
+		13B07F861A680F5B00A75B9A /* prosereactnativedemo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "prosereaderreactnativedemo" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "prosereactnativedemo" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
 				946C0D87F750249410E13F55 /* [Expo] Configure project */,
@@ -152,9 +152,9 @@
 			);
 			dependencies = (
 			);
-			name = prosereaderreactnativedemo;
-			productName = prosereaderreactnativedemo;
-			productReference = 13B07F961A680F5B00A75B9A /* prosereaderreactnativedemo.app */;
+			name = prosereactnativedemo;
+			productName = prosereactnativedemo;
+			productReference = 13B07F961A680F5B00A75B9A /* prosereactnativedemo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -183,7 +183,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* prosereaderreactnativedemo */,
+				13B07F861A680F5B00A75B9A /* prosereactnativedemo */,
 			);
 		};
 /* End PBXProject section */
@@ -233,7 +233,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-prosereaderreactnativedemo-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-prosereactnativedemo-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -246,7 +246,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -255,7 +255,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -264,7 +264,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
@@ -297,7 +297,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-prosereaderreactnativedemo/Pods-prosereaderreactnativedemo-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-prosereactnativedemo/Pods-prosereactnativedemo-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		946C0D87F750249410E13F55 /* [Expo] Configure project */ = {
@@ -317,7 +317,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-prosereaderreactnativedemo/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-prosereactnativedemo/expo-configure-project.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -336,18 +336,18 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C22FA45CF73E9B812CDC2C5A /* Pods-prosereaderreactnativedemo.debug.xcconfig */;
+			baseConfigurationReference = C22FA45CF73E9B812CDC2C5A /* Pods-prosereactnativedemo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = prosereaderreactnativedemo/prosereaderreactnativedemo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = prosereactnativedemo/prosereactnativedemo.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
-				INFOPLIST_FILE = prosereaderreactnativedemo/Info.plist;
+				INFOPLIST_FILE = prosereactnativedemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -361,8 +361,8 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mbret.prose-react-native-demo";
-				PRODUCT_NAME = prosereaderreactnativedemo;
-				SWIFT_OBJC_BRIDGING_HEADER = "prosereaderreactnativedemo/prosereaderreactnativedemo-Bridging-Header.h";
+				PRODUCT_NAME = prosereactnativedemo;
+				SWIFT_OBJC_BRIDGING_HEADER = "prosereactnativedemo/prosereactnativedemo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -372,13 +372,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 54C0C523E15EE12B96621276 /* Pods-prosereaderreactnativedemo.release.xcconfig */;
+			baseConfigurationReference = 54C0C523E15EE12B96621276 /* Pods-prosereactnativedemo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = prosereaderreactnativedemo/prosereaderreactnativedemo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = prosereactnativedemo/prosereactnativedemo.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = prosereaderreactnativedemo/Info.plist;
+				INFOPLIST_FILE = prosereactnativedemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -392,8 +392,8 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mbret.prose-react-native-demo";
-				PRODUCT_NAME = prosereaderreactnativedemo;
-				SWIFT_OBJC_BRIDGING_HEADER = "prosereaderreactnativedemo/prosereaderreactnativedemo-Bridging-Header.h";
+				PRODUCT_NAME = prosereactnativedemo;
+				SWIFT_OBJC_BRIDGING_HEADER = "prosereactnativedemo/prosereactnativedemo-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -527,7 +527,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "prosereaderreactnativedemo" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "prosereactnativedemo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,

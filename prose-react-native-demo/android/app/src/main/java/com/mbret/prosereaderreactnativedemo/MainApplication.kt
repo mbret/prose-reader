@@ -1,4 +1,4 @@
-package com.mbret.prosereaderreactnativedemo
+package com.mbret.prosereactnativedemo
 
 import android.app.Application
 import android.content.res.Configuration

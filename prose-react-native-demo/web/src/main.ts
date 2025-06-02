@@ -28,8 +28,7 @@ const reader = createReader({
    * If you already manage your content on your RN side, this interceptor is a straightforward method.
    */
   getResource: (item) => {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    return from(bridge.getResource(item as any)).pipe(
+    return from(bridge.getResource(item)).pipe(
       map(
         (resource) =>
           new Response(resource.data, { headers: resource.headers }),
@@ -41,7 +40,7 @@ const reader = createReader({
    * Works the same as web counterpart.
    */
   forceSinglePageMode: false,
-  numberOfAdjacentSpineItemToPreLoad: 0,
+  numberOfAdjacentSpineItemToPreLoad: 3,
 })
 
 /**

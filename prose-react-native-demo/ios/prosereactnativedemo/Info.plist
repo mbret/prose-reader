@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>prosereaderreactnativedemo</string>
+          <string>prosereactnativedemo</string>
           <string>com.mbret.prose-react-native-demo</string>
         </array>
       </dict>

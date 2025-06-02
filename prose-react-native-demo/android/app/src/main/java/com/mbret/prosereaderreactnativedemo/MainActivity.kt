@@ -1,4 +1,4 @@
-package com.mbret.prosereaderreactnativedemo
+package com.mbret.prosereactnativedemo
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
