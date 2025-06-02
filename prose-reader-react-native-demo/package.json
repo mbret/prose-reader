@@ -3,7 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"expo start\" \"vite build web --watch\"",
+    "start": "expo start",
+    "start:all": "concurrently \"expo start\" \"vite build web --watch\"",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "npm run web:build && expo run:android",
     "ios": "npm run web:build && expo run:ios",

@@ -1,0 +1,45 @@
+{
+  "name": "@prose-reader/react-native",
+  "version": "1.215.0",
+  "type": "module",
+  "main": "./dist/native/index.cjs.js",
+  "module": "./dist/native/index.es.js",
+  "react-native": "./dist/native/index.cjs.js",
+  "exports": {
+    ".": {
+      "import": "./dist/native/index.es.js",
+      "require": "./dist/native/index.cjs.js",
+      "types": "./dist/native/index.d.ts"
+    },
+    "./web": {
+      "import": "./dist/web/index.es.js",
+      "require": "./dist/web/index.cjs.js",
+      "types": "./dist/web/index.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.es.js",
+      "require": "./dist/shared/index.cjs.js",
+      "types": "./dist/shared/index.d.ts"
+    }
+  },
+  "license": "MIT",
+  "files": ["/dist"],
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "vite build",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@webview-bridge/react-native": "^1.7.7"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "^1.215.0",
+    "@prose-reader/shared": "^1.215.0",
+    "@prose-reader/streamer": "^1.215.0",
+    "@webview-bridge/react-native": "^1.7.7",
+    "@webview-bridge/web": "^1.7.7",
+    "expo-file-system": "^18.1.10",
+    "react": "19.x",
+    "rxjs": "*"
+  }
+}

@@ -1,11 +1,12 @@
-import { View } from "react-native"
 import {
-  epubsDownloadsDestination,
   epubsDestination,
+  epubsDownloadsDestination,
 } from "@/components/constants"
-import { useUnzipFile } from "@/components/useUnzipFile"
-import { useDownloadFile } from "@/components/useDownloadFile"
 import { Reader } from "@/components/reader/Reader"
+import { useDownloadFile } from "@/components/useDownloadFile"
+import { useUnzipFile } from "@/components/useUnzipFile"
+// biome-ignore lint/correctness/noUnusedImports: <explanation>
+import React from "react"
 
 /**
  * Initialize the folder where we will store the epubs
@@ -27,9 +28,5 @@ export default function HomeScreen() {
   )
   const unzippedFileDirectory = useUnzipFile(file)
 
-  return (
-    <View>
-      <Reader unzippedFileDirectory={unzippedFileDirectory} />
-    </View>
-  )
+  return <Reader unzippedFileDirectory={unzippedFileDirectory} />
 }

@@ -1,66 +1,63 @@
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { BottomMenu } from './BottomMenu';
-import type WebView from 'react-native-webview';
-import { useReaderHtmlAsset } from './useReaderHtmlAsset';
-import { useManifestFromArchive } from './useManifestFromArchive';
-import { ReaderProvider } from './ReaderProvider';
-import { TopMenu } from './TopMenu';
-import { useArchive } from './useArchive';
-import type { Directory } from 'expo-file-system/next';
-import { ProseReaderProvider } from './ProseReaderProvider';
-import { useCreateReader } from './useCreateReader';
+import { ReaderProvider } from "@prose-reader/react-native"
+import type { Directory } from "expo-file-system/next"
+import { useEffect, useState } from "react"
+import { StyleSheet, View } from "react-native"
+import { BottomMenu } from "./BottomMenu"
+import { TopMenu } from "./TopMenu"
+import { useArchive } from "./useArchive"
+import { useCreateReader } from "./useCreateReader"
+import { useManifestFromArchive } from "./useManifestFromArchive"
+import { useWebviewHtmlAsset } from "./useWebviewHtmlAsset"
 
-export const Reader = ({ unzippedFileDirectory }: { unzippedFileDirectory: Directory | null }) => {
-  const { data: archive } = useArchive(unzippedFileDirectory);
-  const { webviewBridge, appBridge } = useCreateReader({ archive });
-  const { html } = useReaderHtmlAsset();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const { WebView: BridgedWebView, postMessage } = webviewBridge ?? {};
-  const webviewRef = useRef<WebView>(null);
-  const { data: manifest } = useManifestFromArchive({ archive });
+export const Reader = ({
+  unzippedFileDirectory,
+}: { unzippedFileDirectory: Directory | null }) => {
+  const [isWebViewLoaded, setIsWebViewLoaded] = useState(false)
+  const { html } = useWebviewHtmlAsset()
+  const { data: archive } = useArchive(unzippedFileDirectory)
+  const { data: manifest } = useManifestFromArchive({ archive })
+  const reader = useCreateReader({ archive })
+  const ReaderWebView = reader?.ReaderWebView
 
   useEffect(() => {
-    if (webviewRef.current && manifest && html && isLoaded && postMessage) {
-      postMessage('load', { manifest });
+    if (manifest && isWebViewLoaded && reader) {
+      reader.load(manifest)
     }
-  }, [manifest, html, isLoaded, postMessage]);
+  }, [manifest, isWebViewLoaded, reader])
 
-  if (!webviewBridge || !appBridge || !BridgedWebView) {
-    return null;
+  if (!reader) {
+    return null
   }
 
   return (
-    <ProseReaderProvider appBridge={appBridge} webview={webviewBridge}>
-      <ReaderProvider manifest={manifest}>
-        <View style={styles.container}>
-          {!!html && (
-            <BridgedWebView
-              ref={webviewRef}
-              style={styles.webview}
-              originWhitelist={['*']}
-              source={{ html }}
-              onLoadEnd={() => {
-                setIsLoaded(true);
-              }}
-              webviewDebuggingEnabled
-              javaScriptEnabled={true}
-            />
-          )}
-          <TopMenu />
-          <BottomMenu />
-        </View>
-      </ReaderProvider>
-    </ProseReaderProvider>
-  );
-};
+    <ReaderProvider reader={reader}>
+      <View style={styles.container}>
+        {!!html && !!ReaderWebView && (
+          <ReaderWebView
+            style={styles.webview}
+            originWhitelist={["*"]}
+            source={{ html }}
+            onLoadEnd={() => {
+              setIsWebViewLoaded(true)
+            }}
+            webviewDebuggingEnabled
+            javaScriptEnabled={true}
+          />
+        )}
+        <TopMenu />
+        <BottomMenu />
+      </View>
+    </ReaderProvider>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: "column",
     flex: 1,
-    position: 'relative',
+    position: "relative",
   },
   webview: {
     flex: 1,
   },
-});
+})

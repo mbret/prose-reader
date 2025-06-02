@@ -1,32 +1,28 @@
-import { useState, useEffect } from "react"
-import { createWebView } from "@webview-bridge/react-native"
+import { useCreateReader as useProseReader } from "@prose-reader/react-native"
 import type { Archive } from "@prose-reader/streamer"
-import { useProseBridge, type BridgeMethods } from "@prose-reader/react-native"
-import { appPostMessageSchema } from "./bridge"
 
 export const useCreateReader = ({ archive }: { archive: Archive | null }) => {
-  const [webviewBridge, setWebviewBridge] = useState<
-    | ReturnType<
-        typeof createWebView<BridgeMethods, typeof appPostMessageSchema>
-      >
-    | undefined
-  >(undefined)
-  const appBridge = useProseBridge(archive)
+  return useProseReader({
+    /**
+     * For a given spine item, provide the resource to the webview.
+     */
+    async getResource(resource: { href: string }) {
+      const record = archive?.records.find((file) =>
+        resource.href.endsWith(file.uri),
+      )
 
-  useEffect(() => {
-    if (!appBridge) return
+      if (record?.dir) throw new Error("Record unsupported")
 
-    setWebviewBridge(
-      createWebView({
-        bridge: appBridge,
-        debug: true,
-        postMessageSchema: appPostMessageSchema,
-      }),
-    )
-  }, [appBridge])
+      const stringData = await record?.string()
 
-  return {
-    webviewBridge,
-    appBridge,
-  }
+      return {
+        data: stringData ?? "",
+        ...(record?.encodingFormat && {
+          headers: {
+            "Content-Type": record?.encodingFormat,
+          },
+        }),
+      }
+    },
+  })
 }
