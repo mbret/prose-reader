@@ -27,7 +27,7 @@ describe(`Given ncx toc with prefix`, () => {
 
     const archive: Archive = {
       filename: `archive`,
-      files: [
+      records: [
         {
           dir: false,
           basename: `content.opf`,
@@ -73,7 +73,7 @@ describe("Given a base url with a slash at the end", () => {
 
     const archive: Archive = {
       filename: `archive`,
-      files: [
+      records: [
         {
           dir: false,
           basename: `content.opf`,

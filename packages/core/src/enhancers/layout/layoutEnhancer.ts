@@ -20,7 +20,7 @@ import { SettingsManager } from "./SettingsManager"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
 import { type LayoutInfo, createLayoutInfo } from "./layoutInfo"
-import type { InputSettings, OutputSettings } from "./types"
+import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
 import { createViewportModeHandler } from "./viewportMode"
 
 export type LayoutEnhancerOutput = {
@@ -41,14 +41,14 @@ export const layoutEnhancer =
     Output extends Omit<InheritOutput, "settings"> &
       LayoutEnhancerOutput & {
         settings: SettingsInterface<
-          InheritSettings & InputSettings,
+          InheritSettings & EnhancerLayoutInputSettings,
           OutputSettings & InheritComputedSettings
         >
       },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<InputSettings>): Output => {
+  (options: InheritOptions & Partial<EnhancerLayoutInputSettings>): Output => {
     const {
       pageHorizontalMargin,
       pageVerticalMargin,

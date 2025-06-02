@@ -88,7 +88,7 @@ export const epubHook =
       | undefined
 
     const title =
-      titleElm?.val || archive.files.find(({ dir }) => dir)?.basename || ``
+      titleElm?.val || archive.records.find(({ dir }) => dir)?.basename || ``
     const pageProgressionDirection = spineElm?.attr[
       `page-progression-direction`
     ] as `ltr` | `rtl` | undefined
@@ -120,7 +120,7 @@ export const epubHook =
             .find((item) => item.attr.id === itemrefElm?.attr.idref)
           const href = manifestItem?.attr.href || ``
           const itemSize =
-            archive.files.find((file) => file.uri.endsWith(href))?.size || 0
+            archive.records.find((file) => file.uri.endsWith(href))?.size || 0
 
           const hrefBaseUri = baseUrl
             ? baseUrl

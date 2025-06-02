@@ -6,7 +6,7 @@ it("should create valid toc", async () => {
     archive: {
       filename: "archive",
       close: async () => {},
-      files: [
+      records: [
         {
           basename: "2.jpg",
           // biome-ignore lint/suspicious/noExplicitAny: <explanation>

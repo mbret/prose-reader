@@ -19,7 +19,7 @@ export const createArchiveFromArrayBufferList = async (
 
   return {
     filename: name || ``,
-    files: files.map((file) => ({
+    records: files.map((file) => ({
       dir: file.isDir,
       basename: getUriBasename(file.name),
       uri: file.name,

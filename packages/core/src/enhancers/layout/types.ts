@@ -1,4 +1,4 @@
-export type InputSettings = {
+export type EnhancerLayoutInputSettings = {
   pageHorizontalMargin: number
   pageVerticalMargin: number
   /**
@@ -14,4 +14,4 @@ export type InputSettings = {
   viewportMode: `normal` | `thumbnails`
 }
 
-export type OutputSettings = InputSettings
+export type OutputSettings = EnhancerLayoutInputSettings

@@ -43,6 +43,20 @@ export type Manifest = {
      *
      * @example
      * http://localhost:9000/streamer/ZmlsZTovL2VwdWJzL3BhdGhmaW5kZXJfdm9sMS5lcHVi/OEBPS/p002.xhtml
+     *
+     * Although not mandatory it is recommended to match what is used within the documents such as <a href="...">. so that
+     * navigation can be handled correctly.
+     *
+     * So let's say your href target a streaming server, you can use whatever base url but this would be recommended to use the same
+     * relative path as the one used within the document.
+     *
+     * In the perfect scenario where you are on the web you can have:
+     * - href that targets a resource directly (which can be used as source by the reader iframes)
+     * - href pathname that reflect the same path as the book documents.
+     *
+     * In the case you cannot follow this, there are several tools you can use to intercept resources fetching, navigation, etc.
+     *
+     * Ultimately, href have to make sense for either the reader or you since they are the primary means of mapping.
      */
     href: string
     /**

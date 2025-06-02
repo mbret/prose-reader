@@ -31,7 +31,7 @@ export const createArchiveFromUrls = async (
     </package>
   `
 
-  const filesFromUrl: Archive[`files`] = urls.map((url) => ({
+  const filesFromUrl: Archive[`records`] = urls.map((url) => ({
     dir: false,
     basename: getUriBasename(url),
     encodingFormat: detectMimeTypeFromName(url),
@@ -45,7 +45,7 @@ export const createArchiveFromUrls = async (
     string: async () => ``,
   }))
 
-  const opfFile: Archive[`files`][number] = {
+  const opfFile: Archive[`records`][number] = {
     dir: false,
     basename: `content.opf`,
     uri: `content.opf`,
@@ -56,7 +56,7 @@ export const createArchiveFromUrls = async (
 
   return {
     filename: ``,
-    files: [opfFile, ...filesFromUrl],
+    records: [opfFile, ...filesFromUrl],
     close: () => Promise.resolve(),
   }
 }

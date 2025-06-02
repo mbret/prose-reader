@@ -58,11 +58,11 @@ const getContentTypeFromExtension = (uri: string) => {
 export const defaultHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.files).find(
-      (file) => file.uri === resourcePath,
+    const file = Object.values(archive.records).find(
+      (file) => file.uri === resourcePath && !file.dir,
     )
 
-    if (!file) return resource
+    if (!file || file.dir) return resource
 
     // if (file.stream) {
     //   const stream = file.stream()

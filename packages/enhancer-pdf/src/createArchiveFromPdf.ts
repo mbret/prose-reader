@@ -40,7 +40,7 @@ export const createArchiveFromPdf = async (
     </package>
   `
 
-  const opfFile: Archive[`files`][number] = {
+  const opfFile: Archive[`records`][number] = {
     dir: false,
     basename: `content.opf`,
     uri: `content.opf`,
@@ -53,7 +53,7 @@ export const createArchiveFromPdf = async (
     filename,
     proxyDocument: pdf,
     _symbol: PDF_SYMBOL,
-    files: [
+    records: [
       opfFile,
       ...pages.map((_, index) => ({
         dir: false,

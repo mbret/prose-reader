@@ -12,7 +12,7 @@ const hasDocMetaViewport = (doc: XmlDocument) => {
   return !!(metaElm && metaElm.attr.name === "viewport")
 }
 
-const allFilesHaveViewportMeta = (files: Archive["files"]) =>
+const allFilesHaveViewportMeta = (files: Archive["records"]) =>
   files.reduce(async (result, current) => {
     const _result = await result
 
@@ -27,7 +27,7 @@ const allFilesHaveViewportMeta = (files: Archive["files"]) =>
       return false
     }
 
-    const file = await current.string()
+    const file = current.dir ? null : await current.string()
 
     if (!file) return false
 

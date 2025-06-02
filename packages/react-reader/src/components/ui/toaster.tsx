@@ -9,7 +9,9 @@ import {
   createToaster,
 } from "@chakra-ui/react"
 
-export const toaster = createToaster({
+type Toaster = ReturnType<typeof createToaster>
+
+export const toaster: Toaster = createToaster({
   placement: "bottom-end",
   pauseOnPageIdle: true,
 })

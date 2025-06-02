@@ -3,18 +3,18 @@ import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"
 import { cssFixHook } from "./hooks/cssFixHook"
 import { defaultHook } from "./hooks/defaultHook"
-import type { HookResource } from "./hooks/types"
 import { selfClosingTagsFixHook } from "./hooks/selfClosingTagsFixHook"
+import type { HookResource } from "./hooks/types"
 
 export const generateResourceFromArchive = async (
   archive: Archive,
   resourcePath: string,
 ) => {
-  const file = Object.values(archive.files).find(
-    (file) => file.uri === resourcePath,
+  const file = Object.values(archive.records).find(
+    (file) => file.uri === resourcePath && !file.dir,
   )
 
-  if (!file) {
+  if (!file || file.dir) {
     throw new Error(`no file found`)
   }
 

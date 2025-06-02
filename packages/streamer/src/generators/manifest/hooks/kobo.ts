@@ -5,11 +5,11 @@ import type { Archive } from "../../../archives/types"
 export const kobo =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const comicInfoFile = archive.files.find(
-      (file) => file.basename.toLowerCase() === `comicinfo.xml`,
+    const comicInfoFile = archive.records.find(
+      (file) => file.basename.toLowerCase() === `comicinfo.xml` && !file.dir,
     )
 
-    if (!comicInfoFile) {
+    if (!comicInfoFile || comicInfoFile.dir) {
       return manifest
     }
 

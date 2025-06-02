@@ -15,3 +15,6 @@ export type { Archive } from "./archives/types"
 export { configure } from "./configure"
 export { Streamer } from "./Streamer"
 export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
+
+export * from "./utils/sortByTitleComparator"
+export * from "./utils/uri"

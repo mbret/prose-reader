@@ -11,8 +11,8 @@ export const extractKoboInformationFromArchive = async (archive: Archive) => {
   }
 
   await Promise.all(
-    archive.files.map(async (file) => {
-      if (file.uri.endsWith(`com.kobobooks.display-options.xml`)) {
+    archive.records.map(async (file) => {
+      if (file.uri.endsWith(`com.kobobooks.display-options.xml`) && !file.dir) {
         const opfXmlDoc = new XmlDocument(await file.string())
         const optionElement = opfXmlDoc
           .childNamed(`platform`)

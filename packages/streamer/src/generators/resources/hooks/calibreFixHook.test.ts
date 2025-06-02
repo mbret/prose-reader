@@ -6,7 +6,7 @@ describe("Given a book from calibre", () => {
   it("should fix the responsive broken cover", async () => {
     const archive: Archive = {
       filename: "",
-      files: [
+      records: [
         {
           blob: () => Promise.resolve(new Blob([])),
           string: () =>

@@ -4,27 +4,29 @@ import type {
   CoreOutputSettings,
 } from "../../settings/types"
 import { isShallowEqual } from "../../utils/objects"
-import type { InputSettings, OutputSettings } from "./types"
+import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
 
 export class SettingsManager<
   ParentInputSettings extends CoreInputSettings,
   ParentOutputSettings extends CoreOutputSettings,
 > extends SettingsManagerOverload<
-  InputSettings,
+  EnhancerLayoutInputSettings,
   OutputSettings,
   ParentInputSettings,
   ParentOutputSettings
 > {
-  computeOutputSettings(inputSettings: InputSettings): InputSettings {
+  computeOutputSettings(
+    inputSettings: EnhancerLayoutInputSettings,
+  ): EnhancerLayoutInputSettings {
     return inputSettings
   }
 
-  hasSettingsChanged(newOutputSettings: InputSettings): boolean {
+  hasSettingsChanged(newOutputSettings: EnhancerLayoutInputSettings): boolean {
     return !isShallowEqual(this.outputSettings, newOutputSettings)
   }
 
   getCleanedParentInputSettings(
-    settings: Partial<InputSettings & ParentInputSettings>,
+    settings: Partial<EnhancerLayoutInputSettings & ParentInputSettings>,
   ): ParentInputSettings {
     const {
       layoutAutoResize,
@@ -38,7 +40,7 @@ export class SettingsManager<
     return rest as unknown as ParentInputSettings
   }
 
-  getDefaultSettings(): InputSettings {
+  getDefaultSettings(): EnhancerLayoutInputSettings {
     return {
       layoutAutoResize: "container",
       pageHorizontalMargin: 24,

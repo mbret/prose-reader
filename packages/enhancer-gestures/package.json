@@ -26,11 +26,12 @@
     "@prose-reader/core": "^1.217.0"
   },
   "devDependencies": {
-    "gesturx": "^1.8.4"
-  },
-  "peerDependencies": {
     "gesturx": "*",
     "rxjs": "*"
+  },
+  "peerDependencies": {
+    "gesturx": "1.x",
+    "rxjs": "7.x"
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
 }

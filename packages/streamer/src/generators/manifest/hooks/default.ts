@@ -4,12 +4,13 @@ import type { Archive } from "../../../archives/types"
 export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (): Promise<Manifest> => {
-    const files = Object.values(archive.files).filter((file) => !file.dir)
+    const files = Object.values(archive.records).filter((file) => !file.dir)
 
     return {
       filename: archive.filename,
       title:
-        archive.files.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) || ``,
+        archive.records.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) ||
+        ``,
       renditionLayout: undefined,
       renditionSpread: `auto`,
       readingDirection: `ltr`,

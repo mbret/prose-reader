@@ -27,7 +27,7 @@ export const getSpineItemFilesFromArchive = async ({
       ?.childrenNamed(`item`)
       .filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
 
-  const archiveSpineItems = archive.files.filter((file) => {
+  const archiveSpineItems = archive.records.filter((file) => {
     return manifestItemsFromSpine.find((item) => {
       if (!opfBasePath) return `${item.attr.href}` === file.uri
       return `${opfBasePath}/${item.attr.href}` === file.uri

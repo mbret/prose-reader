@@ -33,7 +33,7 @@ export const createArchiveFromText = async (
 
   const archive: Archive = {
     filename: `content.txt`,
-    files: [
+    records: [
       {
         dir: false,
         basename: getUriBasename(`generated.opf`),

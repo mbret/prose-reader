@@ -1,22 +1,22 @@
 import {
-  map,
   type Observable,
   type ObservedValueOf,
   Subject,
+  map,
   takeUntil,
 } from "rxjs"
-import { tap, pairwise } from "rxjs/operators"
+import { pairwise, tap } from "rxjs/operators"
+import type { SettingsInterface } from "../../settings/SettingsInterface"
+import { upsertCSSToFrame } from "../../utils/frames"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import type { InputSettings } from "./types"
 import { SettingsManager } from "./SettingsManager"
-import type { SettingsInterface } from "../../settings/SettingsInterface"
-import { upsertCSSToFrame } from "../../utils/frames"
+import type { EnhancerFontsInputSettings } from "./types"
 
-type OutputOptions = Required<InputSettings>
+type OutputOptions = Required<EnhancerFontsInputSettings>
 
 /**
  * @important
@@ -41,14 +41,14 @@ export const fontsEnhancer =
     >,
     Output extends Omit<InheritOutput, "settings"> & {
       settings: SettingsInterface<
-        InheritSettings & InputSettings,
-        InputSettings & InheritComputedSettings
+        InheritSettings & EnhancerFontsInputSettings,
+        EnhancerFontsInputSettings & InheritComputedSettings
       >
     },
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions & Partial<InputSettings>): Output => {
+  (options: InheritOptions & Partial<EnhancerFontsInputSettings>): Output => {
     const { fontScale, lineHeight, fontWeight, fontJustification } = options
     const changes$ = new Subject<Partial<OutputOptions>>()
     const reader = next(options)

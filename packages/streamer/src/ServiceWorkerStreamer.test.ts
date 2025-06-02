@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 import {
   type Archive,
-  generateManifestFromArchive,
   ServiceWorkerStreamer,
+  generateManifestFromArchive,
 } from "."
 
 const archive: Archive = {
   filename: `comicinfo.xml`,
-  files: [
+  records: [
     {
       dir: false,
       basename: `foo.jpg`,

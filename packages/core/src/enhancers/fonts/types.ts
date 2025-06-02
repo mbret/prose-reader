@@ -1,7 +1,7 @@
 const FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
 const FONT_JUSTIFICATION = [`center`, `left`, `right`, `justify`] as const
 
-export type InputSettings = {
+export type EnhancerFontsInputSettings = {
   /**
    * @description
    * Scale the font size. 1 means use default publisher/browser font size, 2 means 200%

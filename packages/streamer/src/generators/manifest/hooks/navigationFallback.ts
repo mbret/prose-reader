@@ -13,7 +13,7 @@ export const navigationFallbackHook =
   async (manifest: Manifest): Promise<Manifest> => {
     if (manifest.nav) return manifest
 
-    const filesSortedByAlpha = [...archive.files].sort((a, b) =>
+    const filesSortedByAlpha = [...archive.records].sort((a, b) =>
       sortByTitleComparator(a.uri, b.uri),
     )
 

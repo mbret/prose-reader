@@ -1,7 +1,7 @@
 import { accessibilityEnhancer } from "./enhancers/accessibility"
 import { chromeEnhancer } from "./enhancers/chrome"
 import { eventsEnhancer } from "./enhancers/events/events"
-import { fontsEnhancer } from "./enhancers/fonts/fonts"
+import { fontsEnhancer } from "./enhancers/fonts"
 import { hotkeysEnhancer } from "./enhancers/hotkeys"
 import { htmlEnhancer } from "./enhancers/html/enhancer"
 import { layoutEnhancer } from "./enhancers/layout/layoutEnhancer"

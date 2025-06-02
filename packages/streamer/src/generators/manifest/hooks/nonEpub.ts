@@ -1,6 +1,6 @@
 import {
-  detectMimeTypeFromName,
   type Manifest,
+  detectMimeTypeFromName,
   parseContentType,
 } from "@prose-reader/shared"
 import type { Archive } from "../../../archives/types"
@@ -20,7 +20,7 @@ export const nonEpub =
     return {
       ...manifest,
       spineItems: manifest.spineItems.map((spineItem) => {
-        const archiveItem = archive.files.find((item) =>
+        const archiveItem = archive.records.find((item) =>
           decodeURI(spineItem.href).endsWith(item.uri),
         )
 

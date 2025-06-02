@@ -1,8 +1,8 @@
-import type { createReader, Reader } from "@prose-reader/core"
-import { PdfRenderer } from "./renderer/PdfRenderer"
-import type { EnhancerOptions } from "./types"
+import type { Reader, createReader } from "@prose-reader/core"
 import { from, map, mergeMap, of } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
+import { PdfRenderer } from "./renderer/PdfRenderer"
+import type { EnhancerOptions } from "./types"
 
 type CreateReader = typeof createReader
 type CreateReaderOptions = Parameters<CreateReader>[0]
@@ -46,8 +46,9 @@ export const pdfEnhancer =
 
             // we account for opf file
             const fileIndex =
-              archive.files.findIndex((file) => item.href.endsWith(file.uri)) -
-              1
+              archive.records.findIndex((file) =>
+                item.href.endsWith(file.uri),
+              ) - 1
 
             return from(archive.proxyDocument.getPage(fileIndex + 1)).pipe(
               map((pageProxy) => ({

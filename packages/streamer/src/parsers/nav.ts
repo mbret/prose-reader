@@ -93,11 +93,11 @@ const parseTocFromNavPath = async (
     .find((child) => child.attr.properties === `nav`)
 
   if (navItem) {
-    const tocFile = Object.values(archive.files).find((item) =>
+    const tocFile = Object.values(archive.records).find((item) =>
       item.uri.endsWith(navItem.attr.href || ``),
     )
 
-    if (tocFile) {
+    if (tocFile && !tocFile.dir) {
       const doc = new XmlDocument(await tocFile.string())
 
       const tocFileBasePath = getUriBasePath(tocFile.uri)
@@ -183,11 +183,11 @@ const parseTocFromNcx = async ({
     if (ncxItem) {
       const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.attr.href}`
 
-      const file = Object.values(archive.files).find((item) =>
+      const file = Object.values(archive.records).find((item) =>
         item.uri.endsWith(ncxPath),
       )
 
-      if (file) {
+      if (file && !file.dir) {
         const ncxData = new XmlDocument(await file.string())
 
         return buildTOCFromNCX(ncxData, { opfBasePath, baseUrl })

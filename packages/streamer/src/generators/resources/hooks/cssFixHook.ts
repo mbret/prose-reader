@@ -4,11 +4,11 @@ import type { HookResource } from "./types"
 export const cssFixHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.files).find(
-      (file) => file.uri === resourcePath,
+    const file = Object.values(archive.records).find(
+      (file) => file.uri === resourcePath && !file.dir,
     )
 
-    if (file?.basename.endsWith(`.css`)) {
+    if (file && !file.dir && file.basename.endsWith(`.css`)) {
       const bodyToParse = resource.body ?? (await file.string())
 
       /**

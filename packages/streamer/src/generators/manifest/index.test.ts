@@ -105,7 +105,7 @@ describe("Given archive with a folder containing a space", () => {
   it("should encode space but not the slash", async () => {
     const archive: Archive = {
       filename: "",
-      files: [
+      records: [
         {
           ...fakeContent,
           basename: "Chapter 1/",
@@ -145,7 +145,7 @@ describe("Given archive with no folders", () => {
   it("should not create any toc", async () => {
     const archive: Archive = {
       filename: "",
-      files: [
+      records: [
         {
           ...fakeContent,
           basename: "page_1.jpg",
@@ -167,7 +167,7 @@ describe("Given archive with folders", () => {
   it("should create correct toc", async () => {
     const archive: Archive = {
       filename: "",
-      files: [
+      records: [
         {
           ...fakeContent,
           basename: "Chapter 1/",

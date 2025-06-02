@@ -43,9 +43,9 @@ export const createArchiveFromJszip = async (
     files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
-  const archive = {
+  const archive: Archive = {
     filename: name || ``,
-    files: files.map((file) => ({
+    records: files.map((file) => ({
       dir: file.dir,
       basename: getUriBasename(file.name),
       uri: file.name,

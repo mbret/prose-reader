@@ -46,7 +46,7 @@ export const createArchiveFromLibArchive = async (
   const archive: Archive = {
     close: () => libArchive.close(),
     filename: name ?? ``,
-    files: objArray.map((item: { file: CompressedFile; path: string }) => ({
+    records: objArray.map((item: { file: CompressedFile; path: string }) => ({
       dir: false,
       basename: item.file.name,
       size: item.file.size,

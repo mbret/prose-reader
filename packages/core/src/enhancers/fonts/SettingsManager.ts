@@ -1,30 +1,32 @@
-import type { InputSettings } from "./types"
 import { SettingsManagerOverload } from "../../settings/SettingsManagerOverload"
-import { isShallowEqual } from "../../utils/objects"
 import type {
   CoreInputSettings,
   CoreOutputSettings,
 } from "../../settings/types"
+import { isShallowEqual } from "../../utils/objects"
+import type { EnhancerFontsInputSettings } from "./types"
 
 export class SettingsManager<
   ParentInputSettings extends CoreInputSettings,
   ParentOutputSettings extends CoreOutputSettings,
 > extends SettingsManagerOverload<
-  InputSettings,
-  InputSettings,
+  EnhancerFontsInputSettings,
+  EnhancerFontsInputSettings,
   ParentInputSettings,
   ParentOutputSettings
 > {
-  computeOutputSettings(settings: InputSettings): InputSettings {
+  computeOutputSettings(
+    settings: EnhancerFontsInputSettings,
+  ): EnhancerFontsInputSettings {
     return settings
   }
 
-  hasSettingsChanged(newOutputSettings: InputSettings): boolean {
+  hasSettingsChanged(newOutputSettings: EnhancerFontsInputSettings): boolean {
     return !isShallowEqual(this.outputSettings, newOutputSettings)
   }
 
   getCleanedParentInputSettings(
-    settings: Partial<InputSettings & ParentInputSettings>,
+    settings: Partial<EnhancerFontsInputSettings & ParentInputSettings>,
   ): ParentInputSettings {
     const { fontJustification, fontScale, fontWeight, lineHeight, ...rest } =
       settings
@@ -32,7 +34,7 @@ export class SettingsManager<
     return rest as unknown as ParentInputSettings
   }
 
-  getDefaultSettings(): InputSettings {
+  getDefaultSettings(): EnhancerFontsInputSettings {
     return {
       fontScale: 1,
       fontWeight: "publisher",

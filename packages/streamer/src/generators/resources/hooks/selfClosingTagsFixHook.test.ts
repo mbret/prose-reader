@@ -6,7 +6,7 @@ describe("Given a book with invalid self closing tag", () => {
   it("should fix the self closing tag", async () => {
     const archive: Archive = {
       filename: "",
-      files: [
+      records: [
         {
           blob: () => Promise.resolve(new Blob([])),
           string: () =>

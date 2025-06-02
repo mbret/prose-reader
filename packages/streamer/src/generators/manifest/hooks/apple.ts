@@ -5,12 +5,12 @@ import type { Archive } from "../../../archives/types"
 export const apple =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const infoFile = archive.files.find(
+    const infoFile = archive.records.find(
       (file) =>
         file.basename.toLowerCase() === `com.apple.ibooks.display-options.xml`,
     )
 
-    if (!infoFile) {
+    if (!infoFile || infoFile.dir) {
       return manifest
     }
 
