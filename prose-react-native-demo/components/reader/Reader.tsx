@@ -1,29 +1,54 @@
-import { ReaderProvider } from "@prose-reader/react-native"
+import { ReaderProvider, useCreateReader } from "@prose-reader/react-native"
 import type { Directory } from "expo-file-system/next"
 import { useEffect, useState } from "react"
 import { StyleSheet, View } from "react-native"
+import { unzippedDestination } from "../constants"
 import { BottomMenu } from "./BottomMenu"
 import { TopMenu } from "./TopMenu"
-import { useArchive } from "./useArchive"
-import { useCreateReader } from "./useCreateReader"
-import { useManifestFromArchive } from "./useManifestFromArchive"
+import { useStreamer } from "./useStreamer"
 import { useWebviewHtmlAsset } from "./useWebviewHtmlAsset"
 
 export const Reader = ({
   unzippedFileDirectory,
-}: { unzippedFileDirectory: Directory | null }) => {
+  epubFileName,
+}: {
+  unzippedFileDirectory: Directory | null
+  epubFileName: string | null
+}) => {
   const [isWebViewLoaded, setIsWebViewLoaded] = useState(false)
   const { html } = useWebviewHtmlAsset()
-  const { data: archive } = useArchive(unzippedFileDirectory)
-  const { data: manifest } = useManifestFromArchive({ archive })
-  const reader = useCreateReader({ archive })
+  const streamer = useStreamer()
+  const reader = useCreateReader({
+    /**
+     * For a given spine item, provide the resource to the webview.
+     */
+    async getResource(resource) {
+      // extract the path after unzippedDestination.uri from resource.href and until the next /
+      const epubFolderName = resource.href
+        .substring(unzippedDestination.uri.length)
+        .split("/")[0]
+
+      return streamer.fetchResourceAsData({
+        key: epubFolderName,
+        resourcePath: resource.href,
+      })
+    },
+  })
   const ReaderWebView = reader?.ReaderWebView
 
   useEffect(() => {
-    if (manifest && isWebViewLoaded && reader) {
-      reader.load(manifest)
+    if (isWebViewLoaded && reader && epubFileName && unzippedFileDirectory) {
+      streamer
+        .fetchManifest({
+          key: epubFileName,
+        })
+        .then(async (response) => {
+          const manifest = await response.json()
+
+          reader.load(manifest)
+        })
     }
-  }, [manifest, isWebViewLoaded, reader])
+  }, [isWebViewLoaded, reader, streamer, epubFileName, unzippedFileDirectory])
 
   if (!reader) {
     return null

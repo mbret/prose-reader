@@ -1,19 +1,19 @@
+import type { Manifest } from "@prose-reader/shared"
 import {
+  type Observable,
   catchError,
   finalize,
   from,
   lastValueFrom,
   map,
   mergeMap,
-  type Observable,
   of,
   switchMap,
 } from "rxjs"
 import { createArchiveLoader } from "./archives/archiveLoader"
-import type { Manifest } from "@prose-reader/shared"
+import type { Archive } from "./archives/types"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
-import type { Archive } from "./archives/types"
 
 type OnError = (error: unknown) => Response
 type OnManifestSuccess = (params: {
@@ -117,11 +117,11 @@ export class Streamer {
          */
         const cleanedResourcePath = resourcePath.replaceAll(`file://`, ``)
 
-        const manifest$ = from(
+        const resource$ = from(
           generateResourceFromArchive(archive, cleanedResourcePath),
         )
 
-        return manifest$.pipe(
+        return resource$.pipe(
           map(
             (resource) =>
               new Response(resource.body, {
