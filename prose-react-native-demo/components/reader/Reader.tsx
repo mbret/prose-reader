@@ -2,10 +2,9 @@ import { ReaderProvider, useCreateReader } from "@prose-reader/react-native"
 import type { Directory } from "expo-file-system/next"
 import { useEffect, useState } from "react"
 import { StyleSheet, View } from "react-native"
-import { unzippedDestination } from "../constants"
 import { BottomMenu } from "./BottomMenu"
+import { streamer } from "./Streamer"
 import { TopMenu } from "./TopMenu"
-import { useStreamer } from "./useStreamer"
 import { useWebviewHtmlAsset } from "./useWebviewHtmlAsset"
 
 export const Reader = ({
@@ -13,23 +12,14 @@ export const Reader = ({
   epubFileName,
 }: {
   unzippedFileDirectory: Directory | null
-  epubFileName: string | null
+  epubFileName: string
 }) => {
   const [isWebViewLoaded, setIsWebViewLoaded] = useState(false)
   const { html } = useWebviewHtmlAsset()
-  const streamer = useStreamer()
   const reader = useCreateReader({
-    /**
-     * For a given spine item, provide the resource to the webview.
-     */
     async getResource(resource) {
-      // extract the path after unzippedDestination.uri from resource.href and until the next /
-      const epubFolderName = resource.href
-        .substring(unzippedDestination.uri.length)
-        .split("/")[0]
-
       return streamer.fetchResourceAsData({
-        key: epubFolderName,
+        key: epubFileName,
         resourcePath: resource.href,
       })
     },
@@ -37,7 +27,7 @@ export const Reader = ({
   const ReaderWebView = reader?.ReaderWebView
 
   useEffect(() => {
-    if (isWebViewLoaded && reader && epubFileName && unzippedFileDirectory) {
+    if (isWebViewLoaded && reader && unzippedFileDirectory) {
       streamer
         .fetchManifest({
           key: epubFileName,
@@ -48,7 +38,7 @@ export const Reader = ({
           reader.load(manifest)
         })
     }
-  }, [isWebViewLoaded, reader, streamer, epubFileName, unzippedFileDirectory])
+  }, [isWebViewLoaded, reader, unzippedFileDirectory, epubFileName])
 
   if (!reader) {
     return null

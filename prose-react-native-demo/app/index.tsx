@@ -27,10 +27,14 @@ export default function HomeScreen() {
 
   const unzippedFileDirectory = useUnzipFile(file)
 
+  if (!file?.name) {
+    return null
+  }
+
   return (
     <Reader
       unzippedFileDirectory={unzippedFileDirectory}
-      epubFileName={file?.name}
+      epubFileName={file.name}
     />
   )
 }
