@@ -1,15 +1,11 @@
-import { type BridgeStore, bridge } from "@webview-bridge/react-native"
-import { useEffect, useState } from "react"
+import { bridge } from "@webview-bridge/react-native"
+import { useState } from "react"
 import { type BridgeMethods, type BridgeState, useLiveRef } from "../shared"
 
 export const useProseBridge = (options: BridgeMethods) => {
-  const [appBridge, setAppBridge] = useState<
-    BridgeStore<BridgeState & BridgeMethods> | undefined
-  >(undefined)
   const optionsRef = useLiveRef(options)
-
-  useEffect(() => {
-    const appBridge = bridge<BridgeState & BridgeMethods>(({ set }) => ({
+  const [appBridge] = useState(() =>
+    bridge<BridgeState & BridgeMethods>(({ set }) => ({
       pagination: undefined,
       setPagination: async (state) => {
         set({ pagination: state })
@@ -24,10 +20,8 @@ export const useProseBridge = (options: BridgeMethods) => {
       async getResource(resource) {
         return optionsRef.current.getResource(resource)
       },
-    }))
-
-    setAppBridge(appBridge)
-  }, [optionsRef])
+    })),
+  )
 
   return appBridge
 }
