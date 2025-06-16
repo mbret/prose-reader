@@ -23,8 +23,6 @@ export const useUnzipFile = (file: File | undefined | null) => {
 
         if (!isMounted) return
 
-        console.log(unzippedFileDirectory.list())
-
         setUnzippedFileDirectory(unzippedFileDirectory)
       } catch (error) {
         console.error(error)
