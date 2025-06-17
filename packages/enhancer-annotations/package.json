@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-annotations",
-  "version": "1.220.0",
+  "version": "1.221.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
