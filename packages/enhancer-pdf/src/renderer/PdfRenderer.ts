@@ -171,7 +171,7 @@ export class PdfRenderer extends DocumentRenderer {
 
     if (!frameElement || !canvas) return of(undefined)
 
-    // first we try to get the desired viewport for a confortable reading based on theh current page size
+    // first we try to get the desired viewport for a comfortable reading based on the current page size
     const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
 
     layoutContainer(this.documentContainer, this.context, spreadPosition)
@@ -221,7 +221,6 @@ export class PdfRenderer extends DocumentRenderer {
 
         frameDoc.body.innerHTML = ``
 
-        // const frameCanvas = copyCanvasToFrame(canvas, frameDoc)
         const pdfPage = this.pageProxy
 
         if (!pdfPage) return EMPTY
@@ -239,10 +238,21 @@ export class PdfRenderer extends DocumentRenderer {
         textLayerElement.style.width = canvas.style.width
 
         removeCSS(frameElement, "pdf-scale-scale")
+        /**
+         * Taking inspiration from https://github.com/mozilla/pdf.js/blob/master/web/pdf_viewer.css.
+         * Not sure why pdfjs DOES rely on css from the viewer to works. Or in another words, why is it
+         * not more obvious that TextLayer requires a set of variables to work correctly.
+         */
         injectCSS(
           frameElement,
           "pdf-scale-scale",
-          `:root { --scale-factor: ${canvasScale}; }`,
+          `:root {
+            --scale-factor: ${canvasScale};
+            --user-unit: 1; 
+            --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+            --scale-round-x: 1px;
+            --scale-round-y: 1px;
+           }`,
         )
 
         if (this.textLayer) {
