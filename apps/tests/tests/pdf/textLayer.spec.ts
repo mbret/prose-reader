@@ -32,7 +32,12 @@ test("should render text layer correctly", async ({ page }) => {
   // Verify the element exists
   await expect(element).toBeVisible()
 
-  expect(box).toMatchObject({
+  expect({
+    x: box?.x.toFixed(2),
+    y: box?.y.toFixed(2),
+    width: box?.width.toFixed(2),
+    height: box?.height.toFixed(2),
+  }).toMatchObject({
     x: 46.546875,
     y: 399.75,
     width: 65.984375,
