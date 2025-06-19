@@ -28,7 +28,7 @@ describe("CFI Generation", () => {
         "application/xhtml+xml",
       )
 
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       const imageNode = doc.getElementById("svgimg")!
 
       // Test simple node format
@@ -36,9 +36,9 @@ describe("CFI Generation", () => {
 
       expect(cfi).toEqual("epubcfi(/4[body01]/16[svgimg])")
 
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       const para05Node = doc.getElementById("para05")!
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       const para5NodeEm = para05Node.children[0]!
 
       // Test using CfiPosition format
@@ -678,7 +678,7 @@ describe("CFI Generation", () => {
       const para1 = doc.getElementById("para01")
 
       const cfi = generate({
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        // biome-ignore lint/style/noNonNullAssertion: TODO
         node: para1!,
         spineIndex: 1,
         spineId: "chap01ref",
@@ -700,7 +700,7 @@ describe("CFI Generation", () => {
       const para1 = doc.getElementById("para01")
 
       const cfi = generate({
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        // biome-ignore lint/style/noNonNullAssertion: TODO
         node: para1!,
         offset: 5,
         spineIndex: 1,

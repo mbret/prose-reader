@@ -24,7 +24,7 @@ const createSpineItem = (
   const containerElement = document.createElement("div")
 
   const spineItem = new SpineItem(
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: TODO
     {} as any,
     containerElement,
     context,
@@ -72,7 +72,7 @@ export const generateItems = (
 
   const items = Array.from(Array(number)).map((_, index) =>
     createSpineItem(
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       layoutInfos[index]!,
       context,
       index,
@@ -85,7 +85,7 @@ export const generateItems = (
     (item) => {
       const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
 
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       return layoutInfos[itemIndex]!
     },
   )

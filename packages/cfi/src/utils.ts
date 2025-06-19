@@ -74,7 +74,7 @@ export const isElement = (node: Node): node is Element =>
 /**
  * @important Make it non browser runtime specific
  */
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export const isNode = (node: any): node is Node =>
   typeof node === "object" &&
   node !== null &&

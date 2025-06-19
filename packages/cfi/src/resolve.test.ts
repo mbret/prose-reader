@@ -61,7 +61,7 @@ describe("EPUB CFI Resolve", () => {
       expect(result.isRange).toBe(false)
       // According to the CFI spec, the result should be a text node within the element
       expect(chap01ref).not.toBeNull()
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       expect(result.node).toBe(chap01ref!.childNodes[0])
       expect(result.offset).toBe(5)
     })
@@ -94,7 +94,7 @@ describe("EPUB CFI Resolve", () => {
       expect(result.isRange).toBe(false)
       // According to the CFI spec, the result should be a text node within the element
       expect(chap01ref).not.toBeNull()
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       expect(result.node).toBe(chap01ref!.childNodes[0])
       expect(result.offset).toBe(5)
       expect(result.temporal).toBe(10)
@@ -108,7 +108,7 @@ describe("EPUB CFI Resolve", () => {
       expect(result.isRange).toBe(false)
       // According to the CFI spec, the result should be a text node within the element
       expect(chap01ref).not.toBeNull()
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      // biome-ignore lint/style/noNonNullAssertion: TODO
       expect(result.node).toBe(chap01ref!.childNodes[0])
       expect(result.offset).toBe(5)
       expect(result.side).toBe("a")

@@ -51,6 +51,6 @@ const reader = createReader({
 bridgeReader({
   reader,
   bridge,
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  // biome-ignore lint/style/noNonNullAssertion: TODO
   containerElement: document.getElementById("reader")!,
 })

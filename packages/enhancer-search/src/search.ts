@@ -28,7 +28,7 @@ const searchNodeContainingText = (node: Node, text: string) => {
         let match: RegExpExecArray | null = null
         const regexp = RegExp(`(${text})`, `gi`)
 
-        // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+        // biome-ignore lint/suspicious/noAssignInExpressions: TODO
         while ((match = regexp.exec(content)) !== null) {
           if (match.index >= 0 && subNode.ownerDocument) {
             const range = subNode.ownerDocument.createRange()

@@ -1,4 +1,4 @@
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export const arrayEqual = <A extends any[], B extends any[]>(a: A, b: B) => {
   // @ts-expect-error
   if (a === b) return true

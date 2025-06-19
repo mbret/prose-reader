@@ -86,7 +86,7 @@ export class SpineItem extends DestroyableClass {
       startWith(false),
       distinctUntilChanged(),
       tap((isReady) => {
-        // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+        // biome-ignore lint/complexity/useLiteralKeys: TODO
         this.containerElement.dataset["isReady"] = isReady.toString()
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
@@ -206,7 +206,7 @@ const createContainerElement = (
     position: absolute;
     overflow: hidden;
   `
-  // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+  // biome-ignore lint/complexity/useLiteralKeys: TODO
   element.dataset["isReady"] = `false`
 
   hookManager.execute("item.onBeforeContainerCreated", undefined, { element })

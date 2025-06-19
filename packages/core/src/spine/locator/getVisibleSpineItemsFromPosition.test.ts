@@ -48,7 +48,7 @@ const createSpineItem = (
   const containerElement = document.createElement("div")
 
   const spineItem = new SpineItem(
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: TODO
     {} as any,
     containerElement,
     context,
@@ -81,7 +81,7 @@ describe("Given single page items and no spread", () => {
         const hookManager = new HookManager()
         const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
           context,
           settings,
@@ -109,7 +109,7 @@ describe("Given single page items and no spread", () => {
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: 0.51,
             restrictToScreen: true,
@@ -130,7 +130,7 @@ describe("Given single page items and no spread", () => {
         const hookManager = new HookManager()
         const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
           context,
           settings,
@@ -158,7 +158,7 @@ describe("Given single page items and no spread", () => {
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: 0.5,
             restrictToScreen: true,
@@ -179,7 +179,7 @@ describe("Given single page items and no spread", () => {
         const hookManager = new HookManager()
         const viewport = new Viewport(context)
         const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
           context,
           settings,
@@ -209,7 +209,7 @@ describe("Given single page items and no spread", () => {
           getVisibleSpineItemsFromPosition({
             position: new SpinePosition({ x: 50, y: 0 }),
             settings,
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             threshold: 0.49,
             restrictToScreen: true,

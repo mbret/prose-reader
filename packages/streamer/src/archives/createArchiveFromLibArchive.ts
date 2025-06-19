@@ -7,7 +7,7 @@ import { Report } from "../report"
 import type { Archive } from "./types"
 
 interface ArchiveReader {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   getFilesArray(): Promise<any[]>
   /**
    * Terminate worker to free up memory
@@ -33,7 +33,7 @@ interface CompressedFile {
    * @returns {Promise<File>} extracted file
    */
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   extract(): any
 }
 

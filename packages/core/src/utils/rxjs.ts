@@ -8,7 +8,7 @@ export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
   return map((obj) => {
     return Object.entries(obj).reduce(
       (acc, [key, entry]) => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         if (keys.includes(key as any)) {
           return {
             ...acc,
