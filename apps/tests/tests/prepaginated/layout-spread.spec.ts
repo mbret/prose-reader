@@ -51,7 +51,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       ).toMatchSnapshot(`right-navigation-layout.jpg`, { maxDiffPixels: 10 })
 
       const numberOfLayout = await page.evaluate(() => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         return (window as any).layoutNumber as number
       })
 
@@ -59,7 +59,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
       await page.waitForTimeout(1000)
 
       const numberOfLayoutAfterAWhile = await page.evaluate(() => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         return (window as any).layoutNumber as number
       })
 

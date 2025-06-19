@@ -1,7 +1,7 @@
 import type { Manifest } from "@prose-reader/shared"
 import type { Observable } from "rxjs"
 
-// biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
+// biome-ignore lint/suspicious/noConfusingVoidType: TODO
 export type UserDestroyFn = () => void | Observable<unknown>
 
 export interface Hook<Name, Params, Result> {
@@ -67,7 +67,7 @@ export type CoreHook =
       runFn: (params: undefined) => void
     }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export type HookExecution<H extends Hook<any, any, any>> = {
   name: string
   id: string | undefined
@@ -76,7 +76,7 @@ export type HookExecution<H extends Hook<any, any, any>> = {
 }
 
 export type HookFrom<
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   H extends Hook<any, any, any>,
   Name extends H["name"],
 > = H extends infer HK

@@ -15,7 +15,7 @@ test("first spine item should have correct width and height", async ({
     page,
     indexes: [0],
   })
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  // biome-ignore lint/style/noNonNullAssertion: TODO
   const spineItem1 = spineItems[0]!
 
   await spineItem1.waitFor({ state: "visible" })

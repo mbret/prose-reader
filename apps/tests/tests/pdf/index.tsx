@@ -32,7 +32,7 @@ async function run() {
   })
 
   reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // biome-ignore lint/style/noNonNullAssertion: TODO
     containerElement: document.getElementById(`app`)!,
     manifest,
   })

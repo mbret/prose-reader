@@ -2,6 +2,7 @@ import {
   type Observable,
   combineLatest,
   debounceTime,
+  defaultIfEmpty,
   finalize,
   map,
   of,
@@ -203,7 +204,9 @@ export class ResourcesLocator {
     | Observable<{ resource: T; meta: ConsolidatedResource }[]> {
     if (Array.isArray(resource)) {
       return deferIdle(() =>
-        combineLatest(resource.map((item) => this.locate(item, options ?? {}))),
+        combineLatest(
+          resource.map((item) => this.locate(item, options ?? {})),
+        ).pipe(defaultIfEmpty([])),
       )
     }
 

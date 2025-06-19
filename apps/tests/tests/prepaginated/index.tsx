@@ -47,7 +47,7 @@ async function run() {
    * Finally we can load the reader with our manifest.
    */
   reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // biome-ignore lint/style/noNonNullAssertion: TODO
     containerElement: document.getElementById(`app`)!,
     manifest,
   })

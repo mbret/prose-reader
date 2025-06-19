@@ -6,9 +6,9 @@ import { generateManifestFromArchive } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
-import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { of, switchMap } from "rxjs"
+import { useObserve } from "reactjrx"
+import { of } from "rxjs"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,
@@ -37,30 +37,16 @@ async function run() {
   })
 
   const Bookmarks = () => {
-    const [bookmarks, setBookmarks] = useState<
-      { meta?: { absolutePageIndex?: number | undefined } }[]
-    >([])
-    const [pagination, setPagination] = useState<{
-      beginAbsolutePageIndex?: number
-    }>({ beginAbsolutePageIndex: 0 })
+    const pagination = useObserve(() => reader.pagination.state$, [reader])
+    const bookmarks = useObserve(() => reader.bookmarks.bookmarks$, [reader])
+    const consolidatedBookmarks = useObserve(
+      () => reader.locateResource(bookmarks ?? []),
+      [reader, bookmarks],
+    )
 
-    useEffect(() => {
-      reader.pagination.state$.subscribe((state) => {
-        setPagination(state)
-      })
-    }, [])
-
-    useEffect(() => {
-      reader.bookmarks.bookmarks$
-        .pipe(switchMap((bookmarks) => reader.locateResource(bookmarks)))
-        .subscribe((data) => {
-          setBookmarks(data)
-        })
-    }, [])
-
-    const bookmarkForPage = bookmarks?.find(
+    const bookmarkForPage = consolidatedBookmarks?.find(
       (bookmark) =>
-        bookmark.meta?.absolutePageIndex === pagination.beginAbsolutePageIndex,
+        bookmark.meta?.absolutePageIndex === pagination?.beginAbsolutePageIndex,
     )
 
     return (
@@ -78,19 +64,23 @@ async function run() {
           color: "white",
         }}
         onClick={() => {
-          reader.bookmarks.bookmark(pagination.beginAbsolutePageIndex ?? 0)
+          if (bookmarkForPage) {
+            reader.bookmarks.delete(bookmarkForPage.resource.id)
+          } else {
+            reader.bookmarks.bookmark(pagination?.beginAbsolutePageIndex ?? 0)
+          }
         }}
       >
-        Page {pagination.beginAbsolutePageIndex}
+        Page {pagination?.beginAbsolutePageIndex}
       </button>
     )
   }
 
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  // biome-ignore lint/style/noNonNullAssertion: TODO
   createRoot(document.getElementById("bookmarks")!).render(<Bookmarks />)
 
   reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // biome-ignore lint/style/noNonNullAssertion: TODO
     containerElement: document.getElementById(`app`)!,
     manifest,
   })

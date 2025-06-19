@@ -1,10 +1,10 @@
 import type { CreateReaderParameters, ReaderInternal } from "../../reader"
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export type EnhancerOutput<Enhancer extends (options: any) => any> = ReturnType<
   ReturnType<Enhancer>
 >
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export type EnhancerOptions<Enhancer extends (options: any) => any> =
   Parameters<ReturnType<Enhancer>>[0]
 

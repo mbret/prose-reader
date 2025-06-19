@@ -37,7 +37,7 @@ async function run() {
   const cfi = query.get("cfi") || undefined
 
   reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // biome-ignore lint/style/noNonNullAssertion: TODO
     containerElement: document.getElementById(`app`)!,
     manifest,
     cfi,

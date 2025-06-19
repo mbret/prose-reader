@@ -1,12 +1,12 @@
 import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { createReader } from "../../reader"
 import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
 import { htmlEnhancer } from "../html/enhancer"
 import { layoutEnhancer } from "../layout/layoutEnhancer"
 import { navigationEnhancer } from "../navigation"
 import { paginationEnhancer } from "./enhancer"
-import { createReader } from "../../reader"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -70,7 +70,7 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
-          // biome-ignore lint/style/noNonNullAssertion: <explanation>
+          // biome-ignore lint/style/noNonNullAssertion: TODO
           containerElement: document.getElementById("test-container")!,
         })
       })
@@ -133,7 +133,7 @@ describe("Given a book with one chapter", () => {
               },
             ],
           },
-          // biome-ignore lint/style/noNonNullAssertion: <explanation>
+          // biome-ignore lint/style/noNonNullAssertion: TODO
           containerElement: document.getElementById("test-container")!,
         })
 
@@ -207,7 +207,7 @@ describe("Given a book with one chapter", () => {
                   },
                 ],
               },
-              // biome-ignore lint/style/noNonNullAssertion: <explanation>
+              // biome-ignore lint/style/noNonNullAssertion: TODO
               containerElement: document.getElementById("test-container")!,
             })
 
@@ -280,7 +280,7 @@ describe("Given a book with two chapters", () => {
               },
             ],
           },
-          // biome-ignore lint/style/noNonNullAssertion: <explanation>
+          // biome-ignore lint/style/noNonNullAssertion: TODO
           containerElement: document.getElementById("test-container")!,
         })
       })

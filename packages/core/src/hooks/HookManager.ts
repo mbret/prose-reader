@@ -2,7 +2,7 @@ import { Subject, combineLatest, of } from "rxjs"
 import type { CoreHook, Hook, HookExecution, HookFrom } from "./types"
 import type { UserDestroyFn } from "./types"
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export class HookManager<H extends Hook<any, any, any> = CoreHook> {
   _hooks: Array<H> = []
   _hookExecutions: Array<HookExecution<H>> = []
@@ -69,7 +69,7 @@ export class HookManager<H extends Hook<any, any, any> = CoreHook> {
       }
 
       const fnResult = hook.runFn({
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         ...(params as any),
         destroy$: destroySubject.asObservable(),
         destroy,
