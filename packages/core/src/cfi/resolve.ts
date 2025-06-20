@@ -7,6 +7,10 @@ import { parseCfi } from "./parse"
  * Returns the node and offset for the given cfi.
  *
  * A CFI can only resolve if the item is loaded.
+ *
+ * @important
+ * This is up to you to resolve CFI at the right time. Trying to resolve a CFI to an invalid
+ * document will raise a warning but not crash.
  */
 export const resolveCfi = ({
   cfi,
@@ -26,7 +30,6 @@ export const resolveCfi = ({
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
   if (rendererElement instanceof HTMLIFrameElement) {
-    console.log("FIII", cfi)
     const doc = rendererElement.contentWindow?.document
 
     if (doc) {
@@ -45,7 +48,8 @@ export const resolveCfi = ({
           spineItem,
         }
       } catch (e) {
-        Report.error(e)
+        Report.warn(`Error resolving cfi: ${cfi}.`)
+        Report.warn(e)
 
         return {
           spineItem,

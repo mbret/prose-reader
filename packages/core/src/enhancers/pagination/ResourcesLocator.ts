@@ -67,7 +67,9 @@ export const consolidate = (
       let range: Range | undefined = undefined
 
       const { node: startNode, offset: startOffset } =
-        reader.cfi.resolveCfi({ cfi: resource.cfi }) ?? {}
+        (isSpineItemReady
+          ? reader.cfi.resolveCfi({ cfi: resource.cfi })
+          : {}) ?? {}
 
       const reflowableItemWithFoundNode =
         spineItem.renditionLayout !== `pre-paginated` && startNode

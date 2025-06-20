@@ -8,6 +8,7 @@ import {
 } from "@prose-reader/core"
 import {
   type PDFPageProxy,
+  type PageViewport,
   type RenderTask,
   RenderingCancelledException,
   TextLayer,
@@ -66,6 +67,24 @@ export class PdfRenderer extends DocumentRenderer {
         return of(this.pageProxy)
       }),
     )
+  }
+
+  private renderTextLayer({
+    container,
+    viewport,
+  }: {
+    container: HTMLElement
+    viewport?: PageViewport
+  }) {
+    if (!this.pageProxy) throw new Error("Page proxy not found")
+
+    const textLayer = new TextLayer({
+      container,
+      textContentSource: this.pageProxy.streamTextContent(),
+      viewport: viewport ?? this.pageProxy.getViewport({ scale: 1 }),
+    })
+
+    return from(textLayer.render())
   }
 
   onUnload(): Observable<unknown> {
@@ -132,8 +151,9 @@ export class PdfRenderer extends DocumentRenderer {
     return this.getPageProxy().pipe(
       switchMap(() => {
         const frameElement = this.getFrameElement()
+        const pageProxy = this.pageProxy
 
-        if (!frameElement) return EMPTY
+        if (!frameElement || !pageProxy) return EMPTY
 
         return of(frameElement).pipe(
           waitForSwitch(this.context.bridgeEvent.viewportFree$),
@@ -141,17 +161,22 @@ export class PdfRenderer extends DocumentRenderer {
             this.attach()
           }),
           waitForFrameLoad,
-          tap(() => {
+          switchMap(() => {
             injectCSS(frameElement, "pdfjs-viewer-style", this.pdfViewerStyle)
             injectCSS(frameElement, "enhancer-pdf-style", pdfFrameStyle)
 
-            const body = frameElement?.contentDocument?.body
+            /**
+             * We make sure to render the text layer to simulate the document being loaded.
+             * It will be correctly re-layout later. Consumers looking for document load have at least
+             * the actual text document ready. (cfi lookup, etc.)
+             */
+            const frameBody = frameElement.contentDocument?.body
 
-            if (body) {
-              const canvas = body.ownerDocument.createElement(`canvas`)
-
-              body.appendChild(canvas)
-            }
+            return !frameBody
+              ? EMPTY
+              : this.renderTextLayer({
+                  container: frameBody,
+                })
           }),
           waitForFrameReady,
         )
@@ -293,13 +318,13 @@ export class PdfRenderer extends DocumentRenderer {
 
         headlessDocument.body.appendChild(textLayerElement)
 
-        const textLayer = new TextLayer({
+        const render = this.renderTextLayer({
           container: textLayerElement,
-          textContentSource: pageProxy.streamTextContent(),
+          pageProxy,
           viewport: pageProxy.getViewport({ scale: 1 }),
         })
 
-        return from(textLayer.render()).pipe(map(() => headlessDocument))
+        return from(render).pipe(map(() => headlessDocument))
       }),
     )
   }
