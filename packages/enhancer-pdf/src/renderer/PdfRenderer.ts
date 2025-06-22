@@ -8,7 +8,6 @@ import {
 } from "@prose-reader/core"
 import {
   type PDFPageProxy,
-  type PageViewport,
   type RenderTask,
   RenderingCancelledException,
   TextLayer,
@@ -67,24 +66,6 @@ export class PdfRenderer extends DocumentRenderer {
         return of(this.pageProxy)
       }),
     )
-  }
-
-  private renderTextLayer({
-    container,
-    viewport,
-  }: {
-    container: HTMLElement
-    viewport?: PageViewport
-  }) {
-    if (!this.pageProxy) throw new Error("Page proxy not found")
-
-    const textLayer = new TextLayer({
-      container,
-      textContentSource: this.pageProxy.streamTextContent(),
-      viewport: viewport ?? this.pageProxy.getViewport({ scale: 1 }),
-    })
-
-    return from(textLayer.render())
   }
 
   onUnload(): Observable<unknown> {
@@ -172,11 +153,17 @@ export class PdfRenderer extends DocumentRenderer {
              */
             const frameBody = frameElement.contentDocument?.body
 
-            return !frameBody
-              ? EMPTY
-              : this.renderTextLayer({
-                  container: frameBody,
-                })
+            if (!frameBody || !this.pageProxy) return EMPTY
+
+            frameBody.setAttribute("class", "textLayer")
+
+            this.textLayer = new TextLayer({
+              container: frameBody,
+              textContentSource: this.pageProxy.streamTextContent(),
+              viewport: this.pageProxy.getViewport({ scale: 1 }),
+            })
+
+            return from(this.textLayer.render())
           }),
           waitForFrameReady,
         )
@@ -239,22 +226,13 @@ export class PdfRenderer extends DocumentRenderer {
     return from(this.renderTask.promise).pipe(
       switchMap(() => {
         const frameDoc = frameElement?.contentDocument
-
-        if (!frameDoc || !frameElement) {
-          return EMPTY
-        }
-
-        frameDoc.body.innerHTML = ``
-
         const pdfPage = this.pageProxy
 
-        if (!pdfPage) return EMPTY
+        if (!frameDoc || !frameElement || !pdfPage || !this.textLayer) {
+          throw new Error("Unable to update text layer due to missing elements")
+        }
 
-        const textLayerElement = frameDoc.createElement(`div`)
-        // Set it's class to textLayer which have required CSS styles
-        textLayerElement.setAttribute("class", "textLayer")
-        frameDoc.body.appendChild(textLayerElement)
-
+        const textLayerElement = frameDoc.body
         const canvasScale = canvas.clientWidth / viewportWidth
 
         textLayerElement.style.top = `${canvas.offsetTop}px`
@@ -280,21 +258,12 @@ export class PdfRenderer extends DocumentRenderer {
            }`,
         )
 
-        if (this.textLayer) {
-          this.textLayer.cancel()
-        }
-
-        this.textLayer = new TextLayer({
-          container: textLayerElement,
-          textContentSource: pdfPage.streamTextContent(),
+        this.textLayer.update({
           viewport,
         })
 
-        const textLayerRenderPromise = this.textLayer.render()
-
-        return from(textLayerRenderPromise)
+        return of(undefined)
       }),
-      map(() => undefined),
       catchError((e) => {
         if (!(e instanceof RenderingCancelledException)) console.error(e)
 
@@ -318,13 +287,13 @@ export class PdfRenderer extends DocumentRenderer {
 
         headlessDocument.body.appendChild(textLayerElement)
 
-        const render = this.renderTextLayer({
+        const textLayer = new TextLayer({
           container: textLayerElement,
-          pageProxy,
+          textContentSource: pageProxy.streamTextContent(),
           viewport: pageProxy.getViewport({ scale: 1 }),
         })
 
-        return from(render).pipe(map(() => headlessDocument))
+        return from(textLayer.render()).pipe(map(() => headlessDocument))
       }),
     )
   }
