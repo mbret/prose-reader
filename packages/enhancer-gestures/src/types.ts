@@ -1,4 +1,4 @@
-import type { Observable, ObservedValueOf } from "rxjs"
+import type { HookManager } from "@prose-reader/core"
 import type {
   PanEvent,
   PanRecognizer,
@@ -7,10 +7,10 @@ import type {
   Recognizable,
   SwipeEvent,
   SwipeRecognizer,
-  TapRecognizer,
   TapEvent,
+  TapRecognizer,
 } from "gesturx"
-import type { HookManager } from "../../core/dist/hooks/HookManager"
+import type { Observable, ObservedValueOf } from "rxjs"
 import type { GesturesSettingsManager } from "./SettingsManager"
 
 export type Hook = {

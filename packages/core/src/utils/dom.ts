@@ -43,25 +43,6 @@ const pointerEvents: string[] = [
   // `touchend` as const,
 ]
 
-/**
- * Global env agnostic method to detect if an element is HtmlElement.
- *
- * @example
- * checking instance of element from iframe will not work because
- * `window.HtmlElement` is not the same as iframe.window.HtmlElement
- * element instanceof HtmlElement -> false
- *
- * isHtmlElement(element) -> true
- */
-export const isHtmlElement = (element?: unknown): element is HTMLElement => {
-  return (
-    typeof element === "object" &&
-    !!element &&
-    `nodeType` in element &&
-    element?.nodeType === Node.ELEMENT_NODE
-  )
-}
-
 function createRangeOrCaretFromPoint(
   doc: Document,
   startX: number,
@@ -384,6 +365,56 @@ export const revokeDocumentBlobs = (_document: Document | null | undefined) => {
 }
 
 /**
+ * Generic structural type checker - checks if an object has the expected properties
+ * @param obj The object to check
+ * @param requiredProps Array of property names that must exist
+ * @param optionalMethods Array of method names that should be functions (optional)
+ */
+export function hasShape<T>(
+  obj: unknown,
+  requiredProps: (keyof T)[],
+  optionalMethods: (keyof T)[] = [],
+): obj is T {
+  if (typeof obj !== "object" || obj === null) return false
+
+  // Check required properties exist
+  for (const prop of requiredProps) {
+    if (!(prop in obj)) return false
+  }
+
+  // Check optional methods are functions
+  for (const method of optionalMethods) {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    if (method in obj && typeof (obj as any)[method] !== "function") {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Global env agnostic method to detect if an element is HtmlElement.
+ *
+ * @example
+ * checking instance of element from iframe will not work because
+ * `window.HtmlElement` is not the same as iframe.window.HtmlElement
+ * element instanceof HtmlElement -> false
+ *
+ * isHtmlElement(element) -> true
+ */
+export function isHtmlElement(element: unknown): element is HTMLElement {
+  return (
+    hasShape<HTMLElement>(
+      element,
+      ["nodeType"],
+      [],
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    ) && (element as any).nodeType === Node.ELEMENT_NODE
+  )
+}
+
+/**
  * Type guard function to check if an element is a specific HTML tag element
  * @param element The element to check
  * @param tagName The HTML tag name (e.g., 'div', 'span', 'a')
@@ -396,5 +427,20 @@ export function isHtmlTagElement<K extends keyof HTMLElementTagNameMap>(
   return (
     isHtmlElement(element) &&
     element.tagName.toLowerCase() === tagName.toLowerCase()
+  )
+}
+
+export function isHtmlRange(element: unknown): element is Range {
+  return hasShape<Range>(
+    element,
+    [
+      "startContainer",
+      "endContainer",
+      "startOffset",
+      "endOffset",
+      "collapsed",
+      "commonAncestorContainer",
+    ],
+    ["setStart", "setEnd", "selectNodeContents"],
   )
 }

@@ -1,11 +1,10 @@
 import type { Reader } from "@prose-reader/core"
 import type { AnnotationsEnhancerAPI } from "@prose-reader/enhancer-annotations"
-import type { BookmarksEnhancerAPI } from "@prose-reader/enhancer-bookmarks"
 import type { GalleryEnhancerAPI } from "@prose-reader/enhancer-gallery"
 import type { SearchEnhancerAPI } from "@prose-reader/enhancer-search"
 import { useReaderContext } from "./useReaderContext"
 
-export const useReader = (): Reader | undefined => {
+export const useReader = () => {
   const { reader } = useReaderContext()
 
   return reader
@@ -15,12 +14,6 @@ export const hasSearchEnhancer = (
   reader?: Reader,
 ): reader is Reader & SearchEnhancerAPI => {
   return !!reader && "__PROSE_READER_ENHANCER_SEARCH" in reader
-}
-
-export const hasBookmarksEnhancer = (
-  reader?: Reader,
-): reader is Reader & BookmarksEnhancerAPI => {
-  return !!reader && "__PROSE_READER_ENHANCER_BOOKMARKS" in reader
 }
 
 export const hasAnnotationsEnhancer = (

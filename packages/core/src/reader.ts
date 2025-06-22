@@ -8,7 +8,6 @@ import { filter, map } from "rxjs/operators"
 import {
   generateCfiForSpineItemPage,
   generateCfiFromRange,
-  generateCfiFromSelection,
   parseCfi,
 } from "./cfi"
 import { resolveCfi } from "./cfi/resolve"
@@ -189,7 +188,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     cfi: {
       generateCfiFromRange,
-      generateCfiFromSelection,
       parseCfi,
       generateCfiForSpineItemPage: (params: {
         pageIndex: number

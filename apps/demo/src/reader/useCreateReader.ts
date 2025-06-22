@@ -1,10 +1,10 @@
 import { createReader } from "@prose-reader/core"
 import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
-import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
 import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
+import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 import { useEffect } from "react"
 import { SIGNAL_RESET } from "reactjrx"
@@ -19,11 +19,9 @@ export const createAppReader = galleryEnhancer(
   pdfEnhancer(
     annotationsEnhancer(
       gesturesEnhancer(
-        bookmarksEnhancer(
-          searchEnhancer(
-            // __
-            createReader,
-          ),
+        searchEnhancer(
+          // __
+          createReader,
         ),
       ),
     ),
@@ -43,7 +41,7 @@ export const useCreateReader = () => {
         fontScalePinchEnabled: true,
         ignore: [
           // ignore gestures within the bookmark area
-          `[data-bookmark-area]`,
+          `[${BOOKMARK_AREA_DATA_ATTRIBUTE}]`,
         ],
       },
       pdf: {

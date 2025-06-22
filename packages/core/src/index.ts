@@ -7,10 +7,10 @@ export type { Theme } from "./enhancers/theme"
 export { HookManager } from "./hooks/HookManager"
 export { SettingsManager } from "./settings/SettingsManager"
 
-export type Reader = ReturnType<typeof createReader>
 export type CreateReaderOptions = Parameters<typeof createReader>[0]
 
 export { createReader }
+export type Reader = ReturnType<typeof createReader>
 
 export { isHtmlElement, isHtmlTagElement } from "./utils/dom"
 export { isShallowEqual } from "./utils/objects"
@@ -34,7 +34,8 @@ export * from "./context/Context"
 export * from "./enhancers/layout/layoutEnhancer"
 export * from "./enhancers/navigation/types"
 export * from "./enhancers/zoom/types"
-export * from "./hooks/types"
+export * from "./enhancers/pagination/ResourcesLocator"
+export * from "./hooks"
 export * from "./navigation/InternalNavigator"
 export * from "./navigation/Locker"
 export * from "./navigation/controllers/ControlledNavigationController"
@@ -43,3 +44,4 @@ export * from "./navigation/types"
 export * from "./spine/types"
 export * from "./spine/SpineItemsManager"
 export * from "./spine/Spine"
+export * from "./cfi"

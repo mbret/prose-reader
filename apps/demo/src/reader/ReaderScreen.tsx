@@ -13,7 +13,6 @@ import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 import { useLocalSettings } from "./settings/useLocalSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
-import { useBookmarks } from "./useBookmarks"
 import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
@@ -35,7 +34,6 @@ export const ReaderScreen = memo(() => {
 
   useGestureHandler()
   useUpdateReaderSettings({ localSettings, manifest })
-  useBookmarks(reader, url)
   useAnnotations(reader, url)
   usePersistCurrentPagination()
 

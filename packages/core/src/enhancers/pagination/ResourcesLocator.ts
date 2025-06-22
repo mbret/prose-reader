@@ -6,6 +6,7 @@ import {
   finalize,
   map,
   of,
+  shareReplay,
   startWith,
   switchScan,
   withLatestFrom,
@@ -17,11 +18,11 @@ import { deferIdle, idle } from "../../utils/rxjs"
 
 type CfiLocatableResource = {
   cfi: string
-  // @todo eventually support range in CFI
-  endCfi?: string
 }
 
-export type LocatableResource = SpineItem | CfiLocatableResource
+export type LocatableResource = (SpineItem | CfiLocatableResource) & {
+  key?: string
+}
 
 export type ConsolidatedResource = CfiLocatableResource & {
   itemIndex?: number
@@ -29,7 +30,7 @@ export type ConsolidatedResource = CfiLocatableResource & {
   absolutePageIndex?: number
   startNode?: Node
   startOffset?: number
-  range?: Range
+  range?: Range | null
 }
 
 const toCfiLocatableResource = (
@@ -64,34 +65,24 @@ export const consolidate = (
   return idle().pipe(
     withLatestFrom(spineItem.isReady$),
     map(([, isSpineItemReady]) => {
-      let range: Range | undefined = undefined
-
-      const { node: startNode, offset: startOffset } =
-        (isSpineItemReady
-          ? reader.cfi.resolveCfi({ cfi: resource.cfi })
-          : {}) ?? {}
+      const {
+        node,
+        offset: startOffset,
+        range,
+      } = (isSpineItemReady
+        ? reader.cfi.resolveCfi({ cfi: resource.cfi })
+        : {}) ?? {}
 
       const reflowableItemWithFoundNode =
-        spineItem.renditionLayout !== `pre-paginated` && startNode
+        spineItem.renditionLayout !== `pre-paginated` && node
 
       if (reflowableItemWithFoundNode) {
         itemPageIndex =
           reader.spine.locator.spineItemLocator.getSpineItemPageIndexFromNode(
-            startNode,
+            node,
             startOffset ?? 0,
             spineItem,
           ) ?? itemPageIndex
-      }
-
-      if (startNode && resource.endCfi) {
-        const { node: endNode, offset: endOffset } =
-          reader.cfi.resolveCfi({ cfi: resource.cfi }) ?? {}
-
-        if (endNode && isSpineItemReady) {
-          range = startNode?.ownerDocument?.createRange()
-          range?.setStart(startNode, startOffset ?? 0)
-          range?.setEnd(endNode, endOffset ?? 0)
-        }
       }
 
       let absolutePageIndex = resource?.absolutePageIndex
@@ -114,7 +105,7 @@ export const consolidate = (
         ...resource,
         range,
         itemIndex,
-        startNode: startNode ?? undefined,
+        startNode: node ?? undefined,
         startOffset,
         absolutePageIndex,
         itemPageIndex,
@@ -136,6 +127,29 @@ type Options = {
 export class ResourcesLocator {
   constructor(private reader: Reader) {}
 
+  private locatorsByKey = new Map<
+    string,
+    {
+      observerCount: number
+      consolidate$: Observable<{
+        resource: LocatableResource
+        meta: ConsolidatedResource
+      }>
+    }
+  >()
+
+  private deregisterMemoizedStream = (key: string) => {
+    const value = this.locatorsByKey.get(key)
+
+    if (!value) return
+
+    value.observerCount--
+
+    if (value.observerCount === 0) {
+      this.locatorsByKey.delete(key)
+    }
+  }
+
   locate = <T extends LocatableResource>(
     resource: T,
     options: Options,
@@ -146,19 +160,6 @@ export class ResourcesLocator {
     }
 
     return deferIdle(() => {
-      const consolidate$ = this.reader.spine.spineLayout.layout$.pipe(
-        debounceTime(10),
-        startWith(cfiConsolidatedResource),
-        switchScan((acc) => {
-          return consolidate(acc.meta, this.reader).pipe(
-            map((consolidatedResource) => ({
-              ...acc,
-              meta: consolidatedResource,
-            })),
-          )
-        }, cfiConsolidatedResource),
-      )
-
       /**
        * We only force open reflowable spine items.
        * This is because page index and absolute pages can be retrieved on
@@ -175,18 +176,67 @@ export class ResourcesLocator {
           ? () => {}
           : this.reader.spine.spineItemsLoader.forceOpen([item.index])
 
-      return consolidate$.pipe(
-        finalize(() => {
-          /**
-           * Make sure we wait a bit so if the user re-locate right after
-           * we don't have a flicker of unload/load. It helps stabilize
-           * resubscribing.
-           */
-          setTimeout(() => {
-            release()
-          }, 1000)
-        }),
+      const key = resource.key
+      const memoizedConsolidate$ = resource.key
+        ? this.locatorsByKey.get(resource.key)
+        : undefined
+
+      const withRelease = (
+        stream: Observable<{ resource: T; meta: ConsolidatedResource }>,
+      ) => {
+        return stream.pipe(
+          finalize(() => {
+            if (resource.key) {
+              this.deregisterMemoizedStream(resource.key)
+            }
+
+            /**
+             * Make sure we wait a bit so if the user re-locate right after
+             * we don't have a flicker of unload/load. It helps stabilize
+             * resubscribing.
+             */
+            setTimeout(() => {
+              release()
+            }, 1000)
+          }),
+        )
+      }
+
+      if (key && memoizedConsolidate$) {
+        memoizedConsolidate$.observerCount++
+
+        return withRelease(
+          memoizedConsolidate$.consolidate$.pipe(
+            map(({ resource, meta }) => ({
+              resource: resource as T,
+              meta: meta as ConsolidatedResource,
+            })),
+          ),
+        )
+      }
+
+      const consolidate$ = this.reader.spine.spineLayout.layout$.pipe(
+        debounceTime(10),
+        startWith(cfiConsolidatedResource),
+        switchScan((acc) => {
+          return consolidate(acc.meta, this.reader).pipe(
+            map((consolidatedResource) => ({
+              ...acc,
+              meta: consolidatedResource,
+            })),
+          )
+        }, cfiConsolidatedResource),
+        shareReplay({ refCount: true, bufferSize: 1 }),
       )
+
+      if (resource.key) {
+        this.locatorsByKey.set(resource.key, {
+          observerCount: 1,
+          consolidate$,
+        })
+      }
+
+      return withRelease(consolidate$)
     })
   }
 

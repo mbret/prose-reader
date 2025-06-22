@@ -14,7 +14,6 @@ import {
 import { useObserve } from "reactjrx"
 import {
   hasAnnotationsEnhancer,
-  hasBookmarksEnhancer,
   hasGalleryEnhancer,
   hasSearchEnhancer,
   useReader,
@@ -146,9 +145,9 @@ export const BottomBar = memo(
                   <LuSearch />
                 </IconButton>
               )}
-              {hasBookmarksEnhancer(reader) && (
+              {hasAnnotationsEnhancer(reader) && (
                 <IconButton
-                  aria-label="Search"
+                  aria-label="Bookmarks"
                   size="lg"
                   variant="ghost"
                   onClick={() => onItemClick("bookmarks")}
@@ -158,7 +157,7 @@ export const BottomBar = memo(
               )}
               {hasAnnotationsEnhancer(reader) && (
                 <IconButton
-                  aria-label="Search"
+                  aria-label="Annotations"
                   size="lg"
                   variant="ghost"
                   onClick={() => onItemClick("annotations")}

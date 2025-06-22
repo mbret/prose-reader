@@ -42,6 +42,8 @@ export const resolveCfi = ({
           node: resolved.isRange
             ? resolved.node?.startContainer
             : resolved.node,
+          isRange: resolved.isRange,
+          range: resolved.isRange ? resolved.node : undefined,
           offset: Array.isArray(resolved.offset)
             ? resolved.offset.at(-1)
             : resolved.offset,

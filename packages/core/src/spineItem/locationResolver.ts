@@ -136,6 +136,7 @@ export const createSpineItemLocator = ({
         context,
         isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
       })
+
       const viewport = {
         left,
         right: left + pageSize.width,

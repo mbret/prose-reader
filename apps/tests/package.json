@@ -13,7 +13,6 @@
   "devDependencies": {
     "@playwright/test": "^1.48.2",
     "@prose-reader/core": "^1.120.0",
-    "@prose-reader/enhancer-bookmarks": "^1.120.0",
     "@prose-reader/enhancer-gestures": "^1.120.0",
     "@prose-reader/enhancer-pdf": "^1.120.0",
     "@prose-reader/enhancer-search": "^1.120.0",

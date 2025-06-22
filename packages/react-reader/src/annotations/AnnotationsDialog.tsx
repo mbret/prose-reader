@@ -14,11 +14,11 @@ import { AnnotationsDialogContent } from "./AnnotationsDialogContent"
 
 export const AnnotationsDialog = memo(
   ({
-    open,
+    openWith,
     setOpen,
     onNavigate,
   }: {
-    open: boolean
+    openWith: "bookmarks" | "annotations" | undefined
     setOpen: (open: boolean) => void
     onNavigate: () => void
   }) => {
@@ -26,7 +26,7 @@ export const AnnotationsDialog = memo(
       <DialogRoot
         lazyMount
         placement="center"
-        open={open}
+        open={!!openWith}
         onOpenChange={(e) => setOpen(e.open)}
         size={{ mdDown: "full", md: "lg" }}
         scrollBehavior="inside"
@@ -36,7 +36,10 @@ export const AnnotationsDialog = memo(
             <DialogTitle>Annotations</DialogTitle>
           </DialogHeader>
           <DialogBody flex={1}>
-            <AnnotationsDialogContent onNavigate={onNavigate} />
+            <AnnotationsDialogContent
+              onNavigate={onNavigate}
+              defaultTab={openWith}
+            />
           </DialogBody>
           <DialogFooter>
             <DialogActionTrigger asChild>

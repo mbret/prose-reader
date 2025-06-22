@@ -1,5 +1,5 @@
 import { createReader } from "@prose-reader/core"
-import { bookmarksEnhancer } from "@prose-reader/enhancer-bookmarks"
+import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { createArchiveFromPdf, pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
@@ -22,7 +22,7 @@ async function run() {
   const manifest = await generateManifestFromArchive(archive)
 
   const createReaderWithEnhancers = gesturesEnhancer(
-    pdfEnhancer(bookmarksEnhancer(createReader)),
+    pdfEnhancer(annotationsEnhancer(createReader)),
   )
 
   const reader = createReaderWithEnhancers({
@@ -38,7 +38,10 @@ async function run() {
 
   const Bookmarks = () => {
     const pagination = useObserve(() => reader.pagination.state$, [reader])
-    const bookmarks = useObserve(() => reader.bookmarks.bookmarks$, [reader])
+    const bookmarks = useObserve(
+      () => reader.annotations.annotations$,
+      [reader],
+    )
     const consolidatedBookmarks = useObserve(
       () => reader.locateResource(bookmarks ?? []),
       [reader, bookmarks],
@@ -65,9 +68,11 @@ async function run() {
         }}
         onClick={() => {
           if (bookmarkForPage) {
-            reader.bookmarks.delete(bookmarkForPage.resource.id)
+            reader.annotations.delete(bookmarkForPage.resource.id)
           } else {
-            reader.bookmarks.bookmark(pagination?.beginAbsolutePageIndex ?? 0)
+            reader.annotations.annotateAbsolutePage({
+              absolutePageIndex: pagination?.beginAbsolutePageIndex ?? 0,
+            })
           }
         }}
       >

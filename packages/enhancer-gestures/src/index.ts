@@ -1,5 +1,4 @@
 import { HookManager, type Reader } from "@prose-reader/core"
-import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
 import {
   PanRecognizer,
   PinchRecognizer,
@@ -7,13 +6,16 @@ import {
   SwipeRecognizer,
   TapRecognizer,
 } from "gesturx"
-import type { EnhancerAPI, InputSettings, Hook } from "./types"
-import { registerTaps } from "./gestures/taps"
-import { registerPan } from "./gestures/pan"
-import { registerSwipe } from "./gestures/swipe"
+import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
 import { GesturesSettingsManager } from "./SettingsManager"
+import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
+import { registerSwipe } from "./gestures/swipe"
+import { registerTaps } from "./gestures/taps"
 import { registerZoomPan } from "./gestures/zoomPan"
+import type { EnhancerAPI, Hook, InputSettings } from "./types"
+
+export * from "./types"
 
 export const gesturesEnhancer =
   <InheritOptions, InheritOutput extends Reader>(

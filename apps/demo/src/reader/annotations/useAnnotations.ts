@@ -1,4 +1,4 @@
-import type { ProseHighlight } from "@prose-reader/enhancer-annotations"
+import type { Annotation } from "@prose-reader/enhancer-annotations"
 import { useObserve, useSubscribe } from "reactjrx"
 import { EMPTY, of, skip, tap } from "rxjs"
 import { isQuickMenuOpenSignal } from "../states"
@@ -7,12 +7,12 @@ import { selectedHighlightSignal } from "./states"
 
 const restore = (bookKey: string) => {
   const storedData = JSON.parse(localStorage.getItem(`annotations`) || `{}`)
-  const restored = storedData[bookKey] || ([] as ProseHighlight[])
+  const restored = storedData[bookKey] || ([] as Annotation[])
 
   return restored
 }
 
-const persist = (bookKey: string, annotations: ProseHighlight[]) => {
+const persist = (bookKey: string, annotations: Annotation[]) => {
   const existing = JSON.parse(localStorage.getItem(`annotations`) || `{}`)
 
   localStorage.setItem(
@@ -51,7 +51,7 @@ export const useAnnotations = (
     () =>
       !isHydrated
         ? EMPTY
-        : reader?.annotations.highlights$.pipe(
+        : reader?.annotations.annotations$.pipe(
             skip(1),
             tap((annotations) => persist(bookKey, annotations)),
           ),

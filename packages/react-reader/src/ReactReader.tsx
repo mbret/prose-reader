@@ -1,8 +1,7 @@
 import { Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
-import { Bookmarks } from "./bookmarks/Bookmarks"
-import { BookmarksDialog } from "./bookmarks/BookmarksDialog"
+import { Bookmarks } from "./annotations/bookmarks/Bookmarks"
 import { Toaster } from "./components/ui/toaster"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
@@ -37,8 +36,9 @@ export const ReactReader = ({
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [isAnnotationsOpen, setIsAnnotationsOpen] = useState(false)
-  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false)
+  const [isAnnotationsOpenWith, setIsAnnotationsOpenWith] = useState<
+    "bookmarks" | "annotations" | undefined
+  >(undefined)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [quickMenuOpen, setQuickMenuOpen] = useQuickMenu()
 
@@ -46,8 +46,7 @@ export const ReactReader = ({
     setIsTableOfContentsOpen(false)
     setIsHelpOpen(false)
     setIsSearchOpen(false)
-    setIsAnnotationsOpen(false)
-    setIsBookmarksOpen(false)
+    setIsAnnotationsOpenWith(undefined)
     setQuickMenuOpen(false)
     setIsGalleryOpen(false)
   }, [setQuickMenuOpen])
@@ -55,7 +54,7 @@ export const ReactReader = ({
   const _onItemClick: NonNullable<typeof onItemClick> = useCallback(
     (item) => {
       if (item === "annotations") {
-        setIsAnnotationsOpen(true)
+        setIsAnnotationsOpenWith("annotations")
       } else if (item === "search") {
         setIsSearchOpen(true)
       } else if (item === "help") {
@@ -63,7 +62,7 @@ export const ReactReader = ({
       } else if (item === "toc") {
         setIsTableOfContentsOpen(true)
       } else if (item === "bookmarks") {
-        setIsBookmarksOpen(true)
+        setIsAnnotationsOpenWith("bookmarks")
       } else if (item === "gallery") {
         setIsGalleryOpen(true)
       }
@@ -101,13 +100,10 @@ export const ReactReader = ({
         onNavigate={onNavigate}
       />
       <AnnotationsDialog
-        open={isAnnotationsOpen}
-        setOpen={setIsAnnotationsOpen}
-        onNavigate={onNavigate}
-      />
-      <BookmarksDialog
-        open={isBookmarksOpen}
-        setOpen={setIsBookmarksOpen}
+        openWith={isAnnotationsOpenWith}
+        setOpen={(open) =>
+          setIsAnnotationsOpenWith(open ? "annotations" : undefined)
+        }
         onNavigate={onNavigate}
       />
       <Presence
