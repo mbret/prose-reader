@@ -91,36 +91,6 @@ describe("CFI Range handling", () => {
     }
   })
 
-  // it("should handle range CFIs with extension parameters", () => {
-  //   const parser = new DOMParser()
-  //   const doc = parser.parseFromString(
-  //     `<html xmlns="http://www.w3.org/1999/xhtml">
-  //       <body id="body01">
-  //         <p id="para01">First paragraph</p>
-  //         <p id="para02">Second paragraph</p>
-  //       </body>
-  //     </html>`,
-  //     "application/xhtml+xml",
-  //   )
-
-  //   // Range with extension parameters
-  //   const cfi =
-  //     "epubcfi(/4[body01];vnd.test.type=highlight,/2[para01],/4[para02])"
-  //   const result = resolve(cfi, doc, { asRange: true })
-
-  //   expect(result.isRange).toBe(true)
-  //   expect(result.node).toBeInstanceOf(Range)
-  //   expect(result.extensions).toBeDefined()
-  //   expect(result.extensions).toEqual({
-  //     "vnd.test.type": "highlight",
-  //   })
-
-  //   if (result.node instanceof Range) {
-  //     expect(result.node.startContainer).toBe(doc.getElementById("para01"))
-  //     expect(result.node.endContainer).toBe(doc.getElementById("para02"))
-  //   }
-  // })
-
   it("should handle range CFIs with different path components", () => {
     const parser = new DOMParser()
     const doc = parser.parseFromString(
@@ -149,26 +119,6 @@ describe("CFI Range handling", () => {
       expect(result.node.endContainer).toBe(doc.getElementById("para02"))
     }
   })
-
-  // it("should handle parsing errors in range CFIs", () => {
-  //   const parser = new DOMParser()
-  //   const doc = parser.parseFromString(
-  //     `<html xmlns="http://www.w3.org/1999/xhtml">
-  //       <body id="body01">
-  //         <p id="para01">First paragraph</p>
-  //         <p id="para02">Second paragraph</p>
-  //       </body>
-  //     </html>`,
-  //     "application/xhtml+xml",
-  //   )
-
-  //   // Invalid range CFI (missing end part)
-  //   const cfi = "epubcfi(/4[body01],/2[para01],)"
-  //   const result = resolve(cfi, doc, { asRange: true })
-
-  //   // This should not return a valid range
-  //   expect(result.node).toBeNull()
-  // })
 
   it("should handle non-existent nodes in range CFIs", () => {
     const parser = new DOMParser()

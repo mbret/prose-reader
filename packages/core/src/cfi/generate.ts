@@ -2,6 +2,7 @@ import { generate } from "@prose-reader/cfi"
 import type { Manifest } from "@prose-reader/shared"
 import type { SpineItem } from "../spineItem/SpineItem"
 import type { SpineItemLocator } from "../spineItem/locationResolver"
+import { isHtmlRange } from "../utils/dom"
 
 export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
   return generate({
@@ -10,19 +11,50 @@ export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
   })
 }
 
-export const generateCfi = (
-  node: Node,
-  offset: number,
-  item: Manifest["spineItems"][number],
-) => {
+const generateCfi = ({
+  nodeOrRange,
+  offset,
+  item,
+}: {
+  nodeOrRange: Node | Range
+  offset?: number
+  item: Manifest["spineItems"][number]
+}) => {
+  const ownerDocument =
+    "ownerDocument" in nodeOrRange
+      ? nodeOrRange.ownerDocument
+      : nodeOrRange.startContainer.ownerDocument
+
   if (
-    !node.ownerDocument ||
-    !node.ownerDocument?.documentElement ||
-    node === node.ownerDocument
+    !ownerDocument ||
+    !ownerDocument?.documentElement ||
+    nodeOrRange === ownerDocument
   )
     return generateRootCfi(item)
 
-  return generate({ node, offset, spineIndex: item.index, spineId: item.id })
+  if (isHtmlRange(nodeOrRange)) {
+    return generate({
+      start: {
+        node: nodeOrRange.startContainer,
+        offset: nodeOrRange.startOffset,
+        spineIndex: item.index,
+        spineId: item.id,
+      },
+      end: {
+        node: nodeOrRange.endContainer,
+        offset: nodeOrRange.endOffset,
+        spineIndex: item.index,
+        spineId: item.id,
+      },
+    })
+  }
+
+  return generate({
+    node: nodeOrRange,
+    offset,
+    spineIndex: item.index,
+    spineId: item.id,
+  })
 }
 
 /**
@@ -52,11 +84,11 @@ export const generateCfiForSpineItemPage = ({
     rendererElement instanceof HTMLIFrameElement &&
     rendererElement.contentWindow?.document
   ) {
-    const cfiString = generateCfi(
-      nodeOrRange.node,
-      nodeOrRange.offset,
-      spineItem.item,
-    )
+    const cfiString = generateCfi({
+      nodeOrRange: nodeOrRange.node,
+      offset: nodeOrRange.offset,
+      item: spineItem.item,
+    })
 
     return cfiString.trim()
   }
@@ -64,39 +96,14 @@ export const generateCfiForSpineItemPage = ({
   return generateRootCfi(spineItem.item)
 }
 
-/**
- * @todo the package does not support creating for range at the moment @see https://github.com/fread-ink/epub-cfi-resolver/issues/3
- * so we use two cfi for start and end.
- */
 export const generateCfiFromRange = (
   range: Range,
   item: Manifest[`spineItems`][number],
 ) => {
-  const startCFI = generateCfi(range.startContainer, range.startOffset, item)
-  const endCFI = generateCfi(range.endContainer, range.endOffset, item)
-
-  return { start: startCFI, end: endCFI }
-}
-
-export const generateCfiFromSelection = ({
-  item,
-  selection,
-}: {
-  selection: Selection
-  item: Manifest["spineItems"][number]
-}) => {
-  const anchorCfi = selection.anchorNode
-    ? generateCfi(selection.anchorNode, selection.anchorOffset, item)
-    : undefined
-
-  const focusCfi = selection.focusNode
-    ? generateCfi(selection.focusNode, selection.focusOffset, item)
-    : undefined
-
-  return {
-    anchorCfi,
-    focusCfi,
-  }
+  return generateCfi({
+    nodeOrRange: range,
+    item,
+  })
 }
 
 export const getItemAnchor = (item: Manifest["spineItems"][number]) =>

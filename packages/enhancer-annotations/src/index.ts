@@ -1,3 +1,3 @@
 export * from "./annotationsEnhancer"
 export * from "./types"
-export * from "./highlights/Highlight"
+export * from "./annotations/types"

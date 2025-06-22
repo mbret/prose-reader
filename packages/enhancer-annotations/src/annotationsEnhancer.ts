@@ -5,19 +5,17 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
-  forkJoin,
   map,
   merge,
-  mergeMap,
   share,
+  shareReplay,
+  switchMap,
   takeUntil,
   tap,
-  withLatestFrom,
 } from "rxjs"
 import { Commands } from "./Commands"
-import { ProseHighlight } from "./highlights/Highlight"
-import { ReaderHighlights } from "./highlights/ReaderHighlights"
-import { consolidate } from "./highlights/consolidate"
+import { ReaderHighlights } from "./annotations/ReaderHighlights"
+import type { RuntimeAnnotation } from "./annotations/types"
 import { report } from "./report"
 import type { AnnotationsEnhancerAPI } from "./types"
 
@@ -30,46 +28,70 @@ export const annotationsEnhancer =
   (options: InheritOptions): InheritOutput & AnnotationsEnhancerAPI => {
     const reader = next(options)
     const commands = new Commands()
-    const highlightsSubject = new BehaviorSubject<ProseHighlight[]>([])
+    const annotationsSubject = new BehaviorSubject<RuntimeAnnotation[]>([])
     const selectedHighlightSubject = new BehaviorSubject<string | undefined>(
       undefined,
     )
 
-    const highlights$ = highlightsSubject
-      .asObservable()
-      .pipe(distinctUntilChanged())
+    const annotations$ = annotationsSubject.asObservable().pipe(
+      distinctUntilChanged(),
+      tap((annotations) => {
+        report.debug("annotations", annotations)
+      }),
+      shareReplay({
+        refCount: true,
+        bufferSize: 1,
+      }),
+    )
 
     const readerHighlights = new ReaderHighlights(
       reader,
-      highlightsSubject,
+      annotationsSubject,
       selectedHighlightSubject,
     )
 
-    const highlighted$ = commands.highlight$.pipe(
-      map(({ data: { itemIndex, selection, ...rest } }) => {
+    const resolveItemInformation = (params: {
+      absolutePageIndex?: number
+      itemIndex?: number
+    }) => {
+      if (params.itemIndex !== undefined)
+        return { itemIndex: params.itemIndex, pageIndex: undefined }
+
+      if (params.absolutePageIndex !== undefined) {
+        return reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
+          absolutePageIndex: params.absolutePageIndex,
+        })
+      }
+
+      return undefined
+    }
+
+    const annotated$ = commands.annotate$.pipe(
+      map(({ data: { selection, ...rest } }) => {
+        const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
         const spineItem = reader.spineItemsManager.get(itemIndex)
 
         if (!spineItem) return undefined
 
-        const range = reader.selection.createOrderedRangeFromSelection({
-          selection,
-          spineItem,
-        })
+        const range = selection
+          ? reader.selection.createOrderedRangeFromSelection({
+              selection,
+              spineItem,
+            })
+          : undefined
 
-        if (!range) return undefined
+        const cfi = range
+          ? reader.cfi.generateCfiFromRange(range, spineItem.item)
+          : reader.cfi.generateCfiForSpineItemPage({ pageIndex, spineItem })
 
-        const { start: startCfi, end: endCfi } =
-          reader.cfi.generateCfiFromRange(range, spineItem.item)
-
-        const highlight = new ProseHighlight({
-          cfi: startCfi,
-          endCfi,
-          itemIndex,
+        const highlight = {
+          cfi,
+          itemIndex: spineItem.index,
           id: window.crypto.randomUUID(),
           ...rest,
-        })
+        } satisfies RuntimeAnnotation
 
-        highlightsSubject.next([...highlightsSubject.getValue(), highlight])
+        annotationsSubject.next([...annotationsSubject.getValue(), highlight])
 
         return [highlight.id]
       }),
@@ -82,15 +104,18 @@ export const annotationsEnhancer =
         const annotations = Array.isArray(data) ? data : [data]
 
         const addedHighlights = annotations.map((annotation) => {
-          const { itemIndex } = reader.cfi.parseCfi(annotation.cfi ?? "")
+          const { itemIndex = 0 } = reader.cfi.parseCfi(annotation.cfi ?? "")
 
-          const highlight = new ProseHighlight({ ...annotation, itemIndex })
+          const highlight = {
+            ...annotation,
+            itemIndex,
+          } satisfies RuntimeAnnotation
 
           return highlight
         })
 
-        highlightsSubject.next([
-          ...highlightsSubject.getValue(),
+        annotationsSubject.next([
+          ...annotationsSubject.getValue(),
           ...addedHighlights,
         ])
       }),
@@ -98,8 +123,8 @@ export const annotationsEnhancer =
 
     const delete$ = commands.delete$.pipe(
       tap(({ id }) => {
-        highlightsSubject.next(
-          highlightsSubject
+        annotationsSubject.next(
+          annotationsSubject
             .getValue()
             .filter((highlight) => highlight.id !== id),
         )
@@ -108,9 +133,9 @@ export const annotationsEnhancer =
 
     const update$ = commands.update$.pipe(
       tap(({ id, data }) => {
-        highlightsSubject.next(
-          highlightsSubject.getValue().map((highlight) => {
-            return highlight.id === id ? highlight.update(data) : highlight
+        annotationsSubject.next(
+          annotationsSubject.getValue().map((highlight) => {
+            return highlight.id === id ? { ...highlight, ...data } : highlight
           }),
         )
       }),
@@ -124,46 +149,24 @@ export const annotationsEnhancer =
 
     const reset$ = commands.reset$.pipe(
       tap(() => {
-        highlightsSubject.next([])
+        annotationsSubject.next([])
       }),
     )
 
-    const highlightsConsolidation$ = merge(highlighted$, reader.layout$).pipe(
+    const renderAnnotations$ = merge(annotations$, reader.layout$).pipe(
       debounceTime(50),
-      withLatestFrom(highlights$),
-      mergeMap(() =>
-        forkJoin(
-          highlightsSubject.value.map((highlight) =>
-            consolidate(highlight, reader),
-          ),
-        ),
-      ),
-      tap((consolidatedHighlights) => {
-        const consolidatedExistingHighlights = highlightsSubject.value.map(
-          (highlight) =>
-            consolidatedHighlights.find((c) => c.id === highlight.id) ??
-            highlight,
-        )
-
-        highlightsSubject.next(consolidatedExistingHighlights)
-
-        readerHighlights.layout()
-      }),
+      switchMap(() => readerHighlights.layout()),
     )
 
     merge(
-      highlighted$,
+      annotated$,
       add$,
       delete$,
       update$,
       select$,
       reset$,
-      highlightsConsolidation$,
-      highlights$.pipe(
-        tap((annotations) => {
-          report.debug("highlights", annotations)
-        }),
-      ),
+      renderAnnotations$,
+      annotations$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
@@ -172,16 +175,17 @@ export const annotationsEnhancer =
       ...reader,
       __PROSE_READER_ENHANCER_ANNOTATIONS: true,
       destroy: () => {
-        highlightsSubject.complete()
+        annotationsSubject.complete()
         commands.destroy()
         readerHighlights.destroy()
         reader.destroy()
       },
       annotations: {
-        highlights$,
+        annotations$: annotations$,
         highlightTap$: readerHighlights.tap$,
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
-        highlight: commands.highlight,
+        annotate: commands.annotate,
+        annotateAbsolutePage: commands.annotateAbsolutePage,
         add: commands.add,
         delete: commands.delete,
         update: commands.update,

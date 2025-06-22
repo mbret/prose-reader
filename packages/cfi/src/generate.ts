@@ -321,22 +321,25 @@ function generateRelativePath(
     const parentNode = currentNode.parentNode as Node | null
     if (!parentNode) break
 
-    const siblings = parentNode.childNodes
-    let index = -1
-
-    for (let i = 0; i < siblings.length; i++) {
-      if (siblings[i] === currentNode) {
-        index = i
-        break
-      }
-    }
+    const siblings = Array.from(parentNode.childNodes)
+    const index = siblings.indexOf(currentNode as ChildNode)
 
     if (index === -1) {
       throw new Error("Node not found in parent's children")
     }
 
-    // Add the node index to the path
-    const step = index + 1
+    let step: number
+    if (currentNode.nodeType === Node.ELEMENT_NODE) {
+      // Find index among element siblings
+      const elementSiblings = siblings.filter(
+        (n) => n.nodeType === Node.ELEMENT_NODE,
+      )
+      const elementIndex = elementSiblings.indexOf(currentNode as ChildNode)
+      step = (elementIndex + 1) * 2
+    } else {
+      // For text nodes, use index among all child nodes (1-based, odd)
+      step = index + 1
+    }
 
     // If the node has an ID, add it
     if (isElement(currentNode) && currentNode.id) {

@@ -5,7 +5,9 @@ import {
 } from "@prose-reader/core"
 import {
   type Observable,
+  defaultIfEmpty,
   distinctUntilChanged,
+  forkJoin,
   map,
   merge,
   of,
@@ -13,8 +15,8 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import type { ProseHighlight } from "./Highlight"
 import { SpineItemHighlight } from "./SpineItemHighlight"
+import type { RuntimeAnnotation } from "./types"
 import { createAnnotationLayer, layoutAnnotationLayer } from "./utils"
 
 export class SpineItemHighlights extends DestroyableClass {
@@ -24,7 +26,7 @@ export class SpineItemHighlights extends DestroyableClass {
   public readonly tap$: SpineItemHighlight["tap$"]
 
   constructor(
-    private highlights$: Observable<ProseHighlight[]>,
+    private annotations$: Observable<RuntimeAnnotation[]>,
     private spineItem: SpineItem,
     private reader: Reader,
     private selectedHighlight: Observable<string | undefined>,
@@ -39,7 +41,7 @@ export class SpineItemHighlights extends DestroyableClass {
       firstLayerElement,
     )
 
-    const itemHighlights$ = this.highlights$.pipe(
+    const itemHighlights$ = this.annotations$.pipe(
       switchMap((annotations) => {
         this.highlights.forEach((highlight) => highlight.destroy())
         this.highlights = []
@@ -75,7 +77,7 @@ export class SpineItemHighlights extends DestroyableClass {
       ),
     )
 
-    highlights$.subscribe()
+    annotations$.subscribe()
   }
 
   layout() {
@@ -84,7 +86,9 @@ export class SpineItemHighlights extends DestroyableClass {
 
     layoutAnnotationLayer(firstLayerElement, this.layer)
 
-    this.highlights.forEach((highlight) => highlight.render())
+    return forkJoin(
+      this.highlights.map((highlight) => highlight.render()),
+    ).pipe(defaultIfEmpty(null))
   }
 
   getHighlightsForTarget(target: EventTarget) {

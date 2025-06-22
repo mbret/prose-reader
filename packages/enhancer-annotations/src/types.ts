@@ -1,30 +1,22 @@
 import type { Observable } from "rxjs"
 import type { Commands } from "./Commands"
-import type { ProseHighlight } from "./highlights/Highlight"
-import type { ReaderHighlights } from "./highlights/ReaderHighlights"
+import type { ReaderHighlights } from "./annotations/ReaderHighlights"
+import type { RuntimeAnnotation } from "./annotations/types"
 
-export type SerializableHighlight = {
-  cfi: string
-  endCfi: string | undefined
-  color?: string
-  contents?: string[]
-  /**
-   * Not required, only used for display purposes
-   */
-  selectionAsText?: string
-  /**
-   * Unique local ID. This is to ensure unicity
-   * for duplicate selections
-   */
+export interface Annotation {
   id: string
+  cfi: string
+  highlightColor?: string
+  notes?: string
 }
 
 export type AnnotationsEnhancerAPI = {
   readonly __PROSE_READER_ENHANCER_ANNOTATIONS: boolean
   annotations: {
-    highlights$: Observable<ProseHighlight[]>
+    annotations$: Observable<RuntimeAnnotation[]>
     highlightTap$: ReaderHighlights["tap$"]
-    highlight: Commands["highlight"]
+    annotate: Commands["annotate"]
+    annotateAbsolutePage: Commands["annotateAbsolutePage"]
     add: Commands["add"]
     delete: Commands["delete"]
     update: Commands["update"]

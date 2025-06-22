@@ -1,7 +1,14 @@
 import { DestroyableClass, type Reader } from "@prose-reader/core"
-import { BehaviorSubject, map, merge, switchMap } from "rxjs"
-import type { ProseHighlight } from "./Highlight"
+import {
+  BehaviorSubject,
+  defaultIfEmpty,
+  forkJoin,
+  map,
+  merge,
+  switchMap,
+} from "rxjs"
 import { SpineItemHighlights } from "./SpineItemHighlights"
+import type { RuntimeAnnotation } from "./types"
 
 export class ReaderHighlights extends DestroyableClass {
   private spineItemHighlights = new BehaviorSubject<SpineItemHighlights[]>([])
@@ -10,7 +17,7 @@ export class ReaderHighlights extends DestroyableClass {
 
   constructor(
     private reader: Reader,
-    private highlights: BehaviorSubject<ProseHighlight[]>,
+    private highlights: BehaviorSubject<RuntimeAnnotation[]>,
     private selectedHighlight: BehaviorSubject<string | undefined>,
   ) {
     super()
@@ -71,6 +78,8 @@ export class ReaderHighlights extends DestroyableClass {
   }
 
   public layout() {
-    this.spineItemHighlights.value.forEach((item) => item.layout())
+    return forkJoin(
+      this.spineItemHighlights.value.map((item) => item.layout()),
+    ).pipe(defaultIfEmpty(null))
   }
 }

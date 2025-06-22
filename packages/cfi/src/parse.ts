@@ -347,9 +347,48 @@ export function parse(cfi: string): ParsedCfi {
 
   const [parentTokens, startTokens, endTokens] = splitAt(tokens, commaIndices)
 
+  // Patch: If startTokens or endTokens are just offsets, attach them to the last parent path
+  function attachOffsetToParent(
+    parent: CfiPart[][],
+    offsetTokens: CfiToken[],
+  ): CfiPart[][] {
+    if (!offsetTokens || offsetTokens.length === 0) return [[]]
+
+    // Filter out comma tokens and check if the remaining tokens are just an offset
+    const filteredTokens = offsetTokens.filter((token) => token[0] !== ",")
+
+    // Only support a single offset (e.g., [:9] or [:25])
+    if (
+      filteredTokens.length === 1 &&
+      filteredTokens[0] &&
+      filteredTokens[0][0] === ":"
+    ) {
+      // Clone the last parent path
+      const lastParentPath =
+        parent.length > 0 ? parent[parent.length - 1] : undefined
+      const offsetToken = filteredTokens[0]
+      if (lastParentPath && lastParentPath.length > 0 && offsetToken) {
+        const pathClone = lastParentPath.map((part) => ({ ...part }))
+        const lastPart = pathClone[pathClone.length - 1]
+        if (lastPart) {
+          lastPart.offset = offsetToken[1] as number
+        }
+        return [pathClone]
+      }
+      // fallback: just return an empty path
+      return [[]]
+    }
+    // If not just an offset, parse as normal
+    return parseIndirection(offsetTokens)
+  }
+
+  const parent = parseIndirection(parentTokens || [])
+  const start = attachOffsetToParent(parent, startTokens || [])
+  const end = attachOffsetToParent(parent, endTokens || [])
+
   return {
-    parent: parseIndirection(parentTokens || []),
-    start: parseIndirection(startTokens || []),
-    end: parseIndirection(endTokens || []),
+    parent,
+    start,
+    end,
   }
 }
