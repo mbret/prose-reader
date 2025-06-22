@@ -2,8 +2,9 @@ import { Box, IconButton, Presence } from "@chakra-ui/react"
 import { memo } from "react"
 import { BsBookmarkPlus, BsBookmarkXFill } from "react-icons/bs"
 import { useSpineItemReady } from "../../common/useSpineItemReady"
-import { hasAnnotationsEnhancer, useReader } from "../../context/useReader"
+import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "../../constants"
 import { useAnnotations } from "../useAnnotations"
+import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
 
 export const BookmarkPageButton = memo(
   ({
@@ -17,10 +18,7 @@ export const BookmarkPageButton = memo(
     top: number
     width: number
   }) => {
-    const reader = useReader()
-    const readerWithAnnotations = hasAnnotationsEnhancer(reader)
-      ? reader
-      : undefined
+    const reader = useReaderWithAnnotations()
     const isItemReady = useSpineItemReady({ absolutePageIndex })
     const { data: bookmarks } = useAnnotations()
     const bookmarkForPage = bookmarks?.find(
@@ -47,7 +45,7 @@ export const BookmarkPageButton = memo(
         animationDuration="moderate"
       >
         <Box
-          data-bookmark-area
+          data-bookmark-area={BOOKMARK_AREA_DATA_ATTRIBUTE}
           position="absolute"
           left={left + width}
           transform="translateX(-100%)"
@@ -58,7 +56,7 @@ export const BookmarkPageButton = memo(
             <IconButton
               aria-label="bookmark"
               onClick={() => {
-                readerWithAnnotations?.annotations.annotateAbsolutePage({
+                reader?.annotations.annotateAbsolutePage({
                   absolutePageIndex,
                 })
               }}
@@ -77,9 +75,7 @@ export const BookmarkPageButton = memo(
               opacity={0.5}
               _hover={{ opacity: 1 }}
               onClick={() => {
-                readerWithAnnotations?.annotations.delete(
-                  bookmarkForPage.resource.id,
-                )
+                reader?.annotations.delete(bookmarkForPage.resource.id)
               }}
               size="lg"
               variant="ghost"
