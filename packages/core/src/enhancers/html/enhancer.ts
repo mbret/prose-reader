@@ -7,8 +7,10 @@ import type {
 import { handleLinks } from "./links"
 import { HtmlRenderer } from "./renderer/HtmlRenderer"
 
+type HandleLinksReturnType = ReturnType<typeof handleLinks>
+
 export type HtmlEnhancerOutput = {
-  links$: ReturnType<typeof handleLinks>
+  links$: HandleLinksReturnType
 }
 
 export const htmlEnhancer =
@@ -21,7 +23,7 @@ export const htmlEnhancer =
   (
     options: InheritOptions,
   ): InheritOutput & {
-    links$: ReturnType<typeof handleLinks>
+    links$: HandleLinksReturnType
   } => {
     const reader = next({
       ...options,

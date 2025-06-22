@@ -16,25 +16,21 @@ export { isHtmlElement, isHtmlTagElement } from "./utils/dom"
 export { isShallowEqual } from "./utils/objects"
 export { waitForSwitch } from "./utils/rxjs"
 export { SpineItem } from "./spineItem/SpineItem"
-export type { PaginationInfo } from "./pagination/types"
 export * from "./utils/DestroyableClass"
-
 export * from "./utils/frames"
 export * from "./utils/rxjs"
-
-export type PaginationState = ReturnType<
-  typeof createReader
->["pagination"]["state"]
-
 // Exports required so that libraries can build when having reference to internal types (TS2742)
 export type { EnhancerFontsInputSettings } from "./enhancers/fonts"
 export type { EnhancerLayoutInputSettings } from "./enhancers/layout/types"
-export * from "./settings/types"
-export * from "./context/Context"
+export * from "./pagination"
 export * from "./enhancers/layout/layoutEnhancer"
 export * from "./enhancers/navigation/types"
 export * from "./enhancers/zoom/types"
-export * from "./enhancers/pagination/ResourcesLocator"
+export * from "./enhancers/types/enhancer"
+export * from "./enhancers/html/enhancer"
+export * from "./settings/types"
+export * from "./context/Context"
+export * from "./enhancers/pagination"
 export * from "./hooks"
 export * from "./navigation/InternalNavigator"
 export * from "./navigation/Locker"

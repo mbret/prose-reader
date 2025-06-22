@@ -5,6 +5,8 @@ import { ResourcesLocator } from "./ResourcesLocator"
 import { trackPaginationInfo } from "./pagination"
 import type { PaginationEnhancerAPI } from "./types"
 
+export type { PaginationEnhancerAPI, EnhancerPaginationInto } from "./types"
+
 export const paginationEnhancer =
   <
     InheritOptions,
