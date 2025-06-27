@@ -1,7 +1,7 @@
 import { generate } from "@prose-reader/cfi"
 import type { Manifest } from "@prose-reader/shared"
+import type { Spine } from "../spine/Spine"
 import type { SpineItem } from "../spineItem/SpineItem"
-import type { SpineItemLocator } from "../spineItem/locationResolver"
 import { isHtmlRange } from "../utils/dom"
 
 export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
@@ -66,17 +66,17 @@ const generateCfi = ({
 export const generateCfiForSpineItemPage = ({
   pageIndex,
   spineItem,
-  spineItemLocator,
+  spine,
 }: {
   pageIndex: number
   spineItem: SpineItem
-  spineItemLocator: SpineItemLocator
+  spine: Spine
 }) => {
-  const nodeOrRange = spineItemLocator.getFirstNodeOrRangeAtPage(
-    pageIndex,
-    spineItem,
+  const pageEntry = spine.pages.value.pages.find(
+    (page) =>
+      page.itemIndex === spineItem.index && page.pageIndex === pageIndex,
   )
-
+  const nodeOrRange = pageEntry?.firstVisibleNode
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
   if (

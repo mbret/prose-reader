@@ -13,12 +13,7 @@ export const useAnnotation = (id: string) => {
       readerWithAnnotations?.annotations.annotations$.pipe(
         map((items) => items.find((item) => item.id === id)),
         filter(isDefined),
-        switchMap((item) =>
-          readerWithAnnotations.locateResource({
-            ...item,
-            key: item.id,
-          }),
-        ),
+        switchMap((item) => readerWithAnnotations.locateResource(item)),
       ),
     [readerWithAnnotations],
   )

@@ -33,7 +33,7 @@ export const withRestoredPosition =
           spineItemsManager: spine.spineItemsManager,
           spineItemLocator: spine.locator.spineItemLocator,
           context,
-          spineLayout: spine.spineLayout,
+          spine,
         }).pipe(
           map((restoredPosition) => ({
             ...params,

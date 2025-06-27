@@ -14,7 +14,7 @@ export const trackTotalPages = (reader: Reader) => {
   const totalPages$: Observable<{
     numberOfPagesPerItems: number[]
     numberOfTotalPages: number
-  }> = reader.spine.spineLayout.layout$.pipe(
+  }> = reader.spine.layout$.pipe(
     debounceTime(10, animationFrameScheduler),
     withLatestFrom(reader.pagination.state$),
     map(() => {
@@ -28,7 +28,7 @@ export const trackTotalPages = (reader: Reader) => {
         /**
          * This may be not accurate for reflowable due to dynamic load / unload.
          */
-        numberOfTotalPages: reader.spine.spineLayout.numberOfPages,
+        numberOfTotalPages: reader.spine.pages.value.pages.length,
       }
     }),
     distinctUntilChanged(isShallowEqual),

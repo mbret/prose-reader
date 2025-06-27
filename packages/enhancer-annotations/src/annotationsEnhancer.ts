@@ -2,11 +2,13 @@ import type { Reader } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 import {
   BehaviorSubject,
+  combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
   merge,
+  of,
   share,
   shareReplay,
   switchMap,
@@ -158,6 +160,25 @@ export const annotationsEnhancer =
       switchMap(() => readerHighlights.layout()),
     )
 
+    const candidates$ = reader.layoutInfo$.pipe(
+      switchMap(({ pages }) =>
+        combineLatest(
+          pages.map((page) => {
+            const item = reader.spineItemsManager.get(page.itemIndex)
+
+            if (!item) return of(false)
+
+            // pre-paginated can always be annotated on their unique page
+            if (item.renditionLayout === "pre-paginated") return of(true)
+
+            if (page.firstVisibleNode) return of(true)
+
+            return of(false)
+          }),
+        ),
+      ),
+    )
+
     merge(
       annotated$,
       add$,
@@ -183,6 +204,7 @@ export const annotationsEnhancer =
       annotations: {
         annotations$: annotations$,
         highlightTap$: readerHighlights.tap$,
+        candidates$,
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
         annotate: commands.annotate,
         annotateAbsolutePage: commands.annotateAbsolutePage,

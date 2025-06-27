@@ -10,6 +10,7 @@ import type { createSpineItemLocator as createSpineItemLocationResolver } from "
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { noopElement } from "../utils/dom"
 import type { Viewport } from "../viewport/Viewport"
+import { Pages } from "./Pages"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout } from "./SpineLayout"
@@ -18,13 +19,12 @@ import { type SpineLocator, createSpineLocator } from "./locator/SpineLocator"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
+  protected spineLayout: SpineLayout
+
   public readonly spineItemsLoader: SpineItemsLoader
-
   public locator: SpineLocator
-
   public spineItemsObserver: SpineItemsObserver
-  public spineLayout: SpineLayout
-
+  public pages: Pages
   public element$ = this.elementSubject.asObservable()
 
   constructor(
@@ -66,6 +66,15 @@ export class Spine extends DestroyableClass {
     this.spineItemsObserver = new SpineItemsObserver(
       spineItemsManager,
       this.locator,
+    )
+
+    this.pages = new Pages(
+      this.spineLayout,
+      this.spineItemsManager,
+      this.spineItemLocator,
+      this.context,
+      this.locator,
+      this.viewport,
     )
 
     const reloadOnManifestChange$ = context.manifest$.pipe(
@@ -115,9 +124,21 @@ export class Spine extends DestroyableClass {
     this.spineLayout.layout()
   }
 
+  public getSpineItemSpineLayoutInfo(
+    spineItemOrIndex: SpineItem | number | string | undefined,
+  ) {
+    return this.spineLayout.getSpineItemSpineLayoutInfo(spineItemOrIndex)
+  }
+
+  public get layout$() {
+    // first spineLayout then pages
+    return this.pages.layout$
+  }
+
   public destroy() {
     super.destroy()
 
+    this.pages.destroy()
     this.spineItemsLoader.destroy()
     this.elementSubject.getValue().remove()
     this.elementSubject.complete()

@@ -1,10 +1,9 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { getFirstVisibleNodeForViewport, getRangeFromNode } from "../utils/dom"
+import { getRangeFromNode } from "../utils/dom"
 import type { SpineItem } from "./SpineItem"
 import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
-import { getSpineItemPagesPosition } from "./layout/getSpineItemPagesPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
 import { SpineItemPosition } from "./types"
 
@@ -112,49 +111,6 @@ export const createSpineItemLocator = ({
     return undefined
   }
 
-  /**
-   * @todo handle vertical
-   */
-  const getFirstNodeOrRangeAtPage = (
-    pageIndex: number,
-    spineItem: SpineItem,
-  ) => {
-    const pageSize = context.getPageSize()
-    const frame = spineItem.renderer?.getDocumentFrame()
-
-    if (
-      frame &&
-      frame?.contentWindow?.document &&
-      // very important because it is being used by next functions
-      frame.contentWindow.document.body !== null
-    ) {
-      // @todo handle vertical jp
-      // top seems ok but left is not, it should probably not be 0 or something
-      const { x: left, y: top } = getSpineItemPositionFromPageIndex({
-        pageIndex,
-        itemLayout: spineItem.layout.layoutInfo,
-        context,
-        isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-      })
-
-      const viewport = {
-        left,
-        right: left + pageSize.width,
-        top,
-        bottom: top + pageSize.height,
-      }
-
-      const res = getFirstVisibleNodeForViewport(
-        frame.contentWindow.document,
-        viewport,
-      )
-
-      return res
-    }
-
-    return undefined
-  }
-
   const getSpineItemClosestPositionFromUnsafePosition = (
     unsafePosition: SpineItemPosition,
     spineItem: SpineItem,
@@ -230,14 +186,5 @@ export const createSpineItemLocator = ({
     getSpineItemPageIndexFromPosition,
     getSpineItemPageIndexFromNode,
     getSpineItemClosestPositionFromUnsafePosition,
-    getFirstNodeOrRangeAtPage,
-    getSpineItemPagesPosition: ({ item }: { item: SpineItem }) => {
-      return getSpineItemPagesPosition({
-        context,
-        isUsingVerticalWriting: !!item.isUsingVerticalWriting(),
-        settings,
-        itemLayout: item.layout.layoutInfo,
-      })
-    },
   }
 }

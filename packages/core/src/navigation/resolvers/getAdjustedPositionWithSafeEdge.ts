@@ -1,5 +1,5 @@
+import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { SpineLayout } from "../../spine/SpineLayout"
 import { SpinePosition } from "../../spine/types"
 import type { DeprecatedViewportPosition } from "../types"
 
@@ -11,20 +11,20 @@ export const getAdjustedPositionWithSafeEdge = ({
   pageSizeHeight,
   spineItemsManager,
   visibleAreaRectWidth,
-  spineLayout,
+  spine,
 }: {
   position: DeprecatedViewportPosition | SpinePosition
   isRTL: boolean
   pageSizeHeight: number
   spineItemsManager: SpineItemsManager
   visibleAreaRectWidth: number
-  spineLayout: SpineLayout
+  spine: Spine
 }) => {
   // @todo use container width instead to increase performances
   const lastSpineItem = spineItemsManager.get(
     spineItemsManager.items.length - 1,
   )
-  const distanceOfLastSpineItem = spineLayout.getSpineItemSpineLayoutInfo(
+  const distanceOfLastSpineItem = spine.getSpineItemSpineLayoutInfo(
     lastSpineItem || 0,
   )
 

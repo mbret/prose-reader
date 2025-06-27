@@ -81,14 +81,12 @@ export const generateItems = (
     ),
   )
 
-  vi.spyOn(spine.spineLayout, "getSpineItemSpineLayoutInfo").mockImplementation(
-    (item) => {
-      const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
+  vi.spyOn(spine, "getSpineItemSpineLayoutInfo").mockImplementation((item) => {
+    const itemIndex = spineItemsManager.getSpineItemIndex(item) ?? 0
 
-      // biome-ignore lint/style/noNonNullAssertion: TODO
-      return layoutInfos[itemIndex]!
-    },
-  )
+    // biome-ignore lint/style/noNonNullAssertion: TODO
+    return layoutInfos[itemIndex]!
+  })
 
   return items
 }

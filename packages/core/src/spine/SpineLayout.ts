@@ -122,13 +122,12 @@ export class SpineLayout extends DestroyableClass {
               acc$: Observable<{
                 horizontalOffset: number
                 verticalOffset: number
-                pages: SpineItemSpineLayout[]
               }>,
               item,
               itemIndex,
             ) =>
               acc$.pipe(
-                concatMap(({ horizontalOffset, verticalOffset, pages }) =>
+                concatMap(({ horizontalOffset, verticalOffset }) =>
                   layoutItem({
                     context: this.context,
                     horizontalOffset,
@@ -152,14 +151,13 @@ export class SpineLayout extends DestroyableClass {
                         return {
                           horizontalOffset: newHorizontalOffset,
                           verticalOffset: newVerticalOffset,
-                          pages: [...pages, layoutPosition],
                         }
                       },
                     ),
                   ),
                 ),
               ),
-            of({ horizontalOffset: 0, verticalOffset: 0, pages: [] }),
+            of({ horizontalOffset: 0, verticalOffset: 0 }),
           ),
           concatMap((layout$) => layout$),
           finalize(() => {
@@ -177,7 +175,7 @@ export class SpineLayout extends DestroyableClass {
     this.layoutSubject.next(undefined)
   }
 
-  getSpineItemSpineLayoutInfo(
+  public getSpineItemSpineLayoutInfo(
     spineItemOrIndex: SpineItem | number | string | undefined,
   ) {
     const itemIndex =

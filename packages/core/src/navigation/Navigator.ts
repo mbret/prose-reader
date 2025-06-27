@@ -36,7 +36,7 @@ export const createNavigator = ({
     settings,
     spineItemsManager,
     locator: spine.locator,
-    spineLayout: spine.spineLayout,
+    spine,
   })
 
   const controlledNavigationController = new ControlledNavigationController(

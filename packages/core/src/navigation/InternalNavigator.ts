@@ -206,7 +206,7 @@ export class InternalNavigator extends DestroyableClass {
      */
     const navigationUpateFromLayout$ = merge(
       viewportController.layout$,
-      spine.spineLayout.layout$,
+      spine.layout$,
     ).pipe(
       switchMap(() => {
         return of(null).pipe(

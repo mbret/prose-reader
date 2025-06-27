@@ -11,7 +11,7 @@ export const Bookmarks = memo(() => {
   return (
     <Spine>
       {pages?.pages.map(
-        ({ absolutePosition: { left, top, width } }, pageIndex) => (
+        ({ absoluteLayout: { left, top, width } }, pageIndex) => (
           <BookmarkPageButton
             key={pageIndex}
             absolutePageIndex={pageIndex}

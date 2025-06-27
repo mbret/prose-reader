@@ -87,10 +87,7 @@ export const loadingEnhancer =
       )
 
     const updateEntriesLayout$ = (entries: Entries) =>
-      combineLatest([
-        reader.spine.spineLayout.layout$,
-        reader.theme.$.theme$,
-      ]).pipe(
+      combineLatest([reader.spine.layout$, reader.theme.$.theme$]).pipe(
         map(([, theme]) => ({
           width: reader.context.state.visibleAreaRect.width,
           theme,

@@ -37,7 +37,7 @@ export class PaginationController extends DestroyableClass {
      */
     const updatePagination$ = merge(
       this.context.bridgeEvent.navigation$,
-      spine.spineLayout.layout$,
+      spine.layout$,
     ).pipe(
       switchMap(() => {
         const getVisiblePagesFromViewportPosition = ({
@@ -143,7 +143,7 @@ export class PaginationController extends DestroyableClass {
     /**
      * Heavy operation, needs to be optimized as much as possible.
      *
-     * @todo add more optimisation, comparing item before, after with position, etc
+     * @todo add more optimization, comparing item before, after with position, etc
      */
     const updateCfi$ = updatePagination$.pipe(
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
@@ -173,12 +173,12 @@ export class PaginationController extends DestroyableClass {
           beginCfi: generateCfiForSpineItemPage({
             pageIndex: beginPageIndexInSpineItem,
             spineItem: beginSpineItem,
-            spineItemLocator,
+            spine: this.spine,
           }),
           endCfi: generateCfiForSpineItemPage({
             pageIndex: endPageIndexInSpineItem,
             spineItem: endSpineItem,
-            spineItemLocator,
+            spine: this.spine,
           }),
         })
       }),

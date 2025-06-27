@@ -44,7 +44,7 @@ describe(`Given a backward navigation to a new item`, () => {
           settings,
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager: spineItemsManager as any,
-          spineLayout: spine.spineLayout,
+          spine,
         })
 
         // page of 50w
@@ -72,7 +72,7 @@ describe(`Given a backward navigation to a new item`, () => {
 
         spine.layout()
 
-        await firstValueFrom(spine.spineLayout.layout$)
+        await firstValueFrom(spine.layout$)
 
         const position = await lastValueFrom(
           restoreNavigationForControlledPageTurnMode({
@@ -98,7 +98,7 @@ describe(`Given a backward navigation to a new item`, () => {
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
             spineLocator: spine.locator,
-            spineLayout: spine.spineLayout,
+            spine,
           }),
         )
 

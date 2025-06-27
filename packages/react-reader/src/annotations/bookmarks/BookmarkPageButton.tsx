@@ -5,6 +5,7 @@ import { useSpineItemReady } from "../../common/useSpineItemReady"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "../../constants"
 import { useAnnotations } from "../useAnnotations"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
+import { useCanBookmarkPage } from "./useCanBookmarkPage"
 
 export const BookmarkPageButton = memo(
   ({
@@ -26,6 +27,7 @@ export const BookmarkPageButton = memo(
         bookmark?.meta?.absolutePageIndex === absolutePageIndex &&
         bookmark.meta.range === undefined,
     )
+    const canBookmarkPage = useCanBookmarkPage(absolutePageIndex)
 
     /**
      * Stale bookmarks means we cannot assert at the moment whether the page is marked or not.
@@ -35,7 +37,7 @@ export const BookmarkPageButton = memo(
      * This also avoid having a flash where you show an non bookmarked icon and right away change it with
      * a valid marked page icon.
      */
-    if (!isItemReady) return null
+    if (!isItemReady || !canBookmarkPage) return null
 
     return (
       <Presence

@@ -2,8 +2,8 @@ import { resolveCfi } from "../../cfi"
 import type { Context } from "../../context/Context"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
@@ -26,13 +26,13 @@ export const createNavigationResolver = ({
   spineItemsManager,
   locator,
   settings,
-  spineLayout,
+  spine,
 }: {
   context: Context
   spineItemsManager: SpineItemsManager
   locator: SpineLocator
   settings: ReaderSettingsManager
-  spineLayout: SpineLayout
+  spine: Spine
 }) => {
   const spineItemNavigator = createSpineItemNavigator({ context, settings })
 
@@ -138,7 +138,7 @@ export const createNavigationResolver = ({
       pageSizeHeight: context.getPageSize().height,
       visibleAreaRectWidth: context.state.visibleAreaRect.width,
       spineItemsManager,
-      spineLayout,
+      spine,
     })
 
     return getNavigationForPosition({
@@ -220,7 +220,7 @@ export const createNavigationResolver = ({
         pageSizeHeight: context.getPageSize().height,
         visibleAreaRectWidth: context.state.visibleAreaRect.width,
         spineItemsManager,
-        spineLayout,
+        spine,
       }),
     isNavigationGoingForwardFrom,
     arePositionsDifferent,

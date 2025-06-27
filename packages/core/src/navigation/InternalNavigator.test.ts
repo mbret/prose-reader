@@ -16,6 +16,14 @@ import type { InternalNavigationEntry } from "./types"
 
 const createNavigatorContext = () => {
   const context = new Context()
+  context.update({
+    visibleAreaRect: {
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    },
+  })
   const settings = new ReaderSettingsManager({}, context)
   const spineItemsManager = new SpineItemsManager(context, settings)
   const hookManager = new HookManager()
@@ -194,7 +202,7 @@ describe(`Given loaded book`, () => {
 
       spine.layout()
 
-      await firstValueFrom(spine.spineLayout.layout$)
+      await firstValueFrom(spine.layout$)
 
       const sub = navigator.internalNavigator.navigated$.subscribe(
         (navigation) => {

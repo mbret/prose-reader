@@ -1,8 +1,8 @@
 import { type Observable, of } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
@@ -20,22 +20,21 @@ const restoreNavigationForScrollingPageTurnMode = ({
   spineItemsManager,
   settings,
   navigationResolver,
-  spineLayout,
+  spine,
 }: {
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
   settings: ReaderSettingsManager
   navigationResolver: NavigationResolver
   navigation: InternalNavigationEntry
-  spineLayout: SpineLayout
+  spine: Spine
 }): InternalNavigationEntry["position"] => {
   const { spineItem } = navigation
   const foundSpineItem = spineItemsManager.get(spineItem)
 
   if (!foundSpineItem) return new SpinePosition({ x: 0, y: 0 })
 
-  const { height, top } =
-    spineLayout.getSpineItemSpineLayoutInfo(foundSpineItem)
+  const { height, top } = spine.getSpineItemSpineLayoutInfo(foundSpineItem)
 
   const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
     navigation.position,
@@ -204,7 +203,7 @@ export const restorePosition = ({
   settings,
   spineLocator,
   navigationResolver,
-  spineLayout,
+  spine,
 }: {
   spineLocator: SpineLocator
   settings: ReaderSettingsManager
@@ -213,7 +212,7 @@ export const restorePosition = ({
   spineItemsManager: SpineItemsManager
   spineItemLocator: SpineItemLocator
   context: Context
-  spineLayout: SpineLayout
+  spine: Spine
 }): Observable<DeprecatedViewportPosition | SpinePosition> => {
   if (settings.values.computedPageTurnMode === "scrollable") {
     return of(
@@ -223,7 +222,7 @@ export const restorePosition = ({
         navigationResolver,
         settings,
         spineItemsManager,
-        spineLayout,
+        spine,
       }),
     )
   }
@@ -233,6 +232,6 @@ export const restorePosition = ({
     spineLocator,
     navigationResolver,
     spineItemsManager,
-    spineLayout,
+    spine,
   })
 }

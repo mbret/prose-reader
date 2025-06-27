@@ -1,33 +1,5 @@
-export class SpineElementLayout {
-  public readonly left: number
-  public readonly right: number
-  public readonly top: number
-  public readonly bottom: number
-  public readonly width: number
-  public readonly height: number
-  public readonly x: number
-  public readonly y: number
+import { LayoutEntry } from "../spineItem/types"
 
-  constructor(layout: {
-    left: number
-    right: number
-    top: number
-    bottom: number
-    width: number
-    height: number
-    x: number
-    y: number
-  }) {
-    this.left = layout.left
-    this.right = layout.right
-    this.top = layout.top
-    this.bottom = layout.bottom
-    this.width = layout.width
-    this.height = layout.height
-    this.x = layout.x
-    this.y = layout.y
-  }
-}
 /**
  * Position of an item relative to spine element.
  *
@@ -49,11 +21,11 @@ export class SpineElementLayout {
  *
  * You can leverage this layout info for positioning overlay elements (eg: bookmarks).
  */
-export class SpineItemSpineLayout extends SpineElementLayout {
+export class SpineItemSpineLayout extends LayoutEntry {
   public readonly __symbol = `SpineItemSpineLayout`
 }
 
-export class SpineItemPageSpineLayout extends SpineElementLayout {
+export class SpineItemPageSpineLayout extends LayoutEntry {
   public readonly __symbol = `SpineItemPageSpineLayout`
 }
 

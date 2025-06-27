@@ -195,7 +195,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       }) =>
         generateCfiForSpineItemPage({
           ...params,
-          spineItemLocator,
+          spine,
         }),
       resolveCfi: (
         params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,

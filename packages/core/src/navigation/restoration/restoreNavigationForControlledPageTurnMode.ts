@@ -1,7 +1,7 @@
 import { type Observable, first, map, of } from "rxjs"
 import { isRootCfi } from "../../cfi"
+import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { SpineLayout } from "../../spine/SpineLayout"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
@@ -13,13 +13,13 @@ export const restoreNavigationForControlledPageTurnMode = ({
   navigation,
   navigationResolver,
   spineItemsManager,
-  spineLayout,
+  spine,
 }: {
   navigation: InternalNavigationEntry
   spineLocator: SpineLocator
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
-  spineLayout: SpineLayout
+  spine: Spine
 }): Observable<SpinePosition> => {
   const spineItem = spineItemsManager.get(navigation.spineItem)
 
@@ -31,7 +31,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
     first(),
     map((isReady) => {
       const spineItemAbsolutePosition =
-        spineLayout.getSpineItemSpineLayoutInfo(spineItem)
+        spine.getSpineItemSpineLayoutInfo(spineItem)
 
       const isPositionWithinSpineItem = spineLocator.isPositionWithinSpineItem(
         navigation.position,

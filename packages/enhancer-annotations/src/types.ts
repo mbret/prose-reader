@@ -15,6 +15,7 @@ export type AnnotationsEnhancerAPI = {
   annotations: {
     annotations$: Observable<RuntimeAnnotation[]>
     highlightTap$: ReaderHighlights["tap$"]
+    candidates$: Observable<boolean[]>
     annotate: Commands["annotate"]
     annotateAbsolutePage: Commands["annotateAbsolutePage"]
     add: Commands["add"]

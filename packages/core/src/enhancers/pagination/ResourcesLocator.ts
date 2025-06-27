@@ -20,9 +20,7 @@ type CfiLocatableResource = {
   cfi: string
 }
 
-export type LocatableResource = (SpineItem | CfiLocatableResource) & {
-  key?: string
-}
+export type LocatableResource = SpineItem | CfiLocatableResource
 
 export type ConsolidatedResource = CfiLocatableResource & {
   itemIndex?: number
@@ -176,18 +174,16 @@ export class ResourcesLocator {
           ? () => {}
           : this.reader.spine.spineItemsLoader.forceOpen([item.index])
 
-      const key = resource.key
-      const memoizedConsolidate$ = resource.key
-        ? this.locatorsByKey.get(resource.key)
-        : undefined
+      const key = "cfi" in resource ? resource.cfi : undefined
+      const memoizedConsolidate$ = key ? this.locatorsByKey.get(key) : undefined
 
       const withRelease = (
         stream: Observable<{ resource: T; meta: ConsolidatedResource }>,
       ) => {
         return stream.pipe(
           finalize(() => {
-            if (resource.key) {
-              this.deregisterMemoizedStream(resource.key)
+            if (key) {
+              this.deregisterMemoizedStream(key)
             }
 
             /**
@@ -215,7 +211,7 @@ export class ResourcesLocator {
         )
       }
 
-      const consolidate$ = this.reader.spine.spineLayout.layout$.pipe(
+      const consolidate$ = this.reader.spine.layout$.pipe(
         debounceTime(10),
         startWith(cfiConsolidatedResource),
         switchScan((acc) => {
@@ -229,8 +225,8 @@ export class ResourcesLocator {
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 
-      if (resource.key) {
-        this.locatorsByKey.set(resource.key, {
+      if (key) {
+        this.locatorsByKey.set(key, {
           observerCount: 1,
           consolidate$,
         })

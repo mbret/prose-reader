@@ -1,14 +1,16 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { Observable, merge } from "rxjs"
+import { Observable, type ObservedValueOf, merge } from "rxjs"
 import {
   debounceTime,
   filter,
+  shareReplay,
   skip,
   switchMap,
   takeUntil,
   tap,
 } from "rxjs/operators"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
+import type { Pages } from "../../spine/Pages"
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
 import type {
@@ -19,13 +21,12 @@ import type {
 import { SettingsManager } from "./SettingsManager"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
-import { type LayoutInfo, createLayoutInfo } from "./layoutInfo"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
 import { createViewportModeHandler } from "./viewportMode"
 
 export type LayoutEnhancerOutput = {
-  layout$: Observable<LayoutInfo>
-  layoutInfo$: Observable<LayoutInfo>
+  layout$: Observable<ObservedValueOf<Pages>>
+  layoutInfo$: Observable<ObservedValueOf<Pages>>
 }
 
 export const layoutEnhancer =
@@ -263,10 +264,13 @@ export const layoutEnhancer =
         }),
       )
 
-    const { layout$, info$ } = createLayoutInfo(reader)
     const viewportModeHandler$ = createViewportModeHandler(
       reader,
       settingsManager.watch(`viewportMode`),
+    )
+
+    const layoutInfo$ = reader.spine.pages.pipe(
+      shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
     merge(
@@ -275,6 +279,7 @@ export const layoutEnhancer =
       movingSafePan$,
       layoutOnContainerResize$,
       viewportModeHandler$,
+      layoutInfo$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
@@ -286,7 +291,7 @@ export const layoutEnhancer =
         reader.destroy()
       },
       settings: settingsManager,
-      layout$,
-      layoutInfo$: info$,
+      layout$: reader.spine.layout$,
+      layoutInfo$,
     } as unknown as Output
   }

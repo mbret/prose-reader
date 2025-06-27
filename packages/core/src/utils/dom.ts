@@ -71,7 +71,7 @@ type ViewPort = { left: number; right: number; top: number; bottom: number }
 /**
  * @todo optimize
  */
-export const getFirstVisibleNodeForViewport = (
+export const getFirstVisibleNodeForPositionRelativeTo = (
   documentOrElement: Document | Element,
   viewport: ViewPort,
 ) => {

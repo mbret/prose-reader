@@ -12,12 +12,7 @@ export const useAnnotations = () => {
     () =>
       readerWithAnnotations?.annotations.annotations$.pipe(
         switchMap((highlights) =>
-          readerWithAnnotations.locateResource(
-            highlights.map((h) => ({
-              ...h,
-              key: h.id,
-            })),
-          ),
+          readerWithAnnotations.locateResource(highlights),
         ),
       ),
     [readerWithAnnotations],
