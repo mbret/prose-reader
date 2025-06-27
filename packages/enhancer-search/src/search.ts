@@ -54,12 +54,10 @@ export const searchInDocument = (
   const ranges = searchNodeContainingText(doc, text)
 
   const newResults = ranges.map((range) => {
-    const { end, start } = reader.cfi.generateCfiFromRange(range, item.item)
+    const cfi = reader.cfi.generateCfiFromRange(range, item.item)
 
     return {
-      cfi: start,
-      startCfi: start,
-      endCfi: end,
+      cfi,
     } satisfies ResultItem
   })
 

@@ -35,10 +35,13 @@ type Report = {
 const createReport = (
   namespace?: string,
   enabled = isGlobalDebugEnabled(),
+  options?: {
+    color?: string
+  },
 ): Report => {
   return {
     namespace: (_namespace: string, enabled?: boolean) =>
-      createReport(`[${namespace}] [${_namespace}]`, enabled),
+      createReport(`[${namespace}] [${_namespace}]`, enabled, options),
     debug: !enabled
       ? () => {}
       : namespace
@@ -47,7 +50,12 @@ const createReport = (
     info: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.info, console, namespace)
+        ? Function.prototype.bind.call(
+            console.info,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          )
         : Function.prototype.bind.call(console.info, console),
     log: !enabled
       ? () => {}
@@ -69,6 +77,11 @@ const createReport = (
 
 export const Report = {
   ...createReport(),
-  namespace: (namespace: string, enabled?: boolean) =>
-    createReport(namespace, enabled),
+  namespace: (
+    namespace: string,
+    enabled?: boolean,
+    options?: {
+      color?: string
+    },
+  ) => createReport(namespace, enabled, options),
 }

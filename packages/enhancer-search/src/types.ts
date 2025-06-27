@@ -3,8 +3,6 @@ import type { SearchResult } from "./search"
 
 export type ResultItem = {
   cfi: string
-  startCfi?: string
-  endCfi?: string
 }
 
 export type SearchEnhancerAPI = {
