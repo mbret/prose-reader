@@ -1,7 +1,7 @@
 {
   "name": "@prose-reader/react-reader",
   "private": false,
-  "version": "1.222.0",
+  "version": "1.223.0",
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -26,11 +26,11 @@
     "@chakra-ui/react": "3.x",
     "@emotion/react": "11.x",
     "@prose-reader/core": "^1.169.0",
-    "@prose-reader/shared": "^1.169.0",
     "@prose-reader/enhancer-annotations": "^1.169.0",
     "@prose-reader/enhancer-gallery": "^1.169.0",
     "@prose-reader/enhancer-gestures": "^1.169.0",
     "@prose-reader/enhancer-search": "^1.169.0",
+    "@prose-reader/shared": "^1.169.0",
     "rc-slider": "11.1.x",
     "react": "19.x || 18.x",
     "react-dom": "19.x || 18.x",
