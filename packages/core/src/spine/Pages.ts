@@ -5,7 +5,6 @@ import {
   share,
   switchMap,
   takeUntil,
-  tap,
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../context/Context"
@@ -18,6 +17,7 @@ import type { Viewport } from "../viewport/Viewport"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineLayout } from "./SpineLayout"
 import type { SpineLocator } from "./locator/SpineLocator"
+import { Report } from "./report"
 import { SpineItemPageSpineLayout, type SpinePosition } from "./types"
 
 export const spinePositionToSpineItemSpineLayout = ({
@@ -70,7 +70,6 @@ export class Pages extends ReactiveEntity<State> {
     this.layout$ = spineLayout.layout$.pipe(
       withLatestFrom(viewport),
       switchMap(([, { pageSize }]) => {
-        console.log(pageSize)
         const pages = spineItemsManager.items.reduce(
           (
             acc: (Omit<PageEntry, "firstVisibleNode"> & {
@@ -151,9 +150,9 @@ export class Pages extends ReactiveEntity<State> {
 
         return pages$
       }),
-      map((pages) => ({ pages })),
-      tap(({ pages }) => {
-        console.log(pages)
+      map((pages) => {
+        Report.info(`Pages layout`, pages)
+        return { pages }
       }),
       share(),
     )

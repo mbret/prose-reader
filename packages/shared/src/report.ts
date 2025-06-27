@@ -18,36 +18,51 @@ function isGlobalDebugEnabled() {
   return debug === true || debug === "true"
 }
 
-const wrap = (str: string) => `[${str}]`
+type Report = {
+  namespace: (namespace: string, enabled?: boolean) => Report
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  debug: (...args: any[]) => void
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  info: (...args: any[]) => void
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  log: (...args: any[]) => void
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  warn: (...args: any[]) => void
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  error: (...args: any[]) => void
+}
 
-const createReport = (namespace?: string, enabled = isGlobalDebugEnabled()) => {
+const createReport = (
+  namespace?: string,
+  enabled = isGlobalDebugEnabled(),
+): Report => {
   return {
     namespace: (_namespace: string, enabled?: boolean) =>
-      createReport(`${namespace} ${_namespace}`, enabled),
+      createReport(`[${namespace}] [${_namespace}]`, enabled),
     debug: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.debug, console, wrap(namespace))
+        ? Function.prototype.bind.call(console.debug, console, namespace)
         : Function.prototype.bind.call(console.debug, console),
     info: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.info, console, wrap(namespace))
+        ? Function.prototype.bind.call(console.info, console, namespace)
         : Function.prototype.bind.call(console.info, console),
     log: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.log, console, wrap(namespace))
+        ? Function.prototype.bind.call(console.log, console, namespace)
         : Function.prototype.bind.call(console.log, console),
     warn: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.warn, console, wrap(namespace))
+        ? Function.prototype.bind.call(console.warn, console, namespace)
         : Function.prototype.bind.call(console.warn, console),
     error: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.error, console, wrap(namespace))
+        ? Function.prototype.bind.call(console.error, console, namespace)
         : Function.prototype.bind.call(console.error, console),
   }
 }
