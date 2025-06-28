@@ -122,12 +122,15 @@ export const SettingsMenu = ({
           step={0.2}
           max={FONT_SCALE_MAX}
           min={FONT_SCALE_MIN}
-          onValueChangeEnd={(e) => {
+          onValueChange={(e) => {
             const value = e.value[0] ?? 1
-            reader.settings.update({
-              fontScale: value,
-            })
+
             setFontScaleSliderValue(value)
+          }}
+          onValueChangeEnd={() => {
+            reader.settings.update({
+              fontScale: fontScaleSliderValue,
+            })
           }}
           marks={[
             { value: FONT_SCALE_MIN, label: `${FONT_SCALE_MIN * 100}%` },
@@ -231,13 +234,15 @@ export const SettingsMenu = ({
                 label: `60px`,
               },
             ]}
-            onValueChangeEnd={(e) => {
+            onValueChange={(e) => {
               const value = e.value[0] ?? 0
 
-              reader.settings.update({
-                pageVerticalMargin: value,
-              })
               setVerticalMarginSliderValue(value)
+            }}
+            onValueChangeEnd={() => {
+              reader.settings.update({
+                pageVerticalMargin: verticalMarginSliderValue,
+              })
             }}
           />
         </Stack>
@@ -269,13 +274,15 @@ export const SettingsMenu = ({
                 label: `60px`,
               },
             ]}
-            onValueChangeEnd={(e) => {
+            onValueChange={(e) => {
               const value = e.value[0] ?? 0
 
-              reader.settings.update({
-                pageHorizontalMargin: value,
-              })
               setHorizontalMarginSliderValue(value)
+            }}
+            onValueChangeEnd={() => {
+              reader.settings.update({
+                pageHorizontalMargin: horizontalMarginSliderValue,
+              })
             }}
           />
         </Stack>
