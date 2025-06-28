@@ -86,6 +86,7 @@ export const gesturesEnhancer =
       reader,
       recognizable,
       settingsManager,
+      recognizer: tapRecognizer,
     })
 
     const panGestures$ = registerPan({
