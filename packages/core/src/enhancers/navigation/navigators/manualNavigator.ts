@@ -108,7 +108,7 @@ export class ManualNavigator {
     const { endIndex = 0 } =
       this.reader.spine.locator.getVisibleSpineItemsFromPosition({
         position: this.reader.navigation.getNavigation().position,
-        threshold: 0.5,
+        threshold: { type: "percentage", value: 0.5 },
       }) || {}
 
     this.goToSpineItem({ indexOrId: endIndex + 1 })
@@ -118,7 +118,7 @@ export class ManualNavigator {
     const { beginIndex = 0 } =
       this.reader.spine.locator.getVisibleSpineItemsFromPosition({
         position: this.reader.navigation.getNavigation().position,
-        threshold: 0.5,
+        threshold: { type: "percentage", value: 0.5 },
       }) ?? {}
 
     this.goToSpineItem({ indexOrId: beginIndex - 1 })

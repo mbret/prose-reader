@@ -111,7 +111,7 @@ describe("Given single page items and no spread", () => {
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
-            threshold: 0.51,
+            threshold: { type: "percentage", value: 0.51 },
             restrictToScreen: true,
             spineLayout,
             viewport,
@@ -160,7 +160,7 @@ describe("Given single page items and no spread", () => {
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
-            threshold: 0.5,
+            threshold: { type: "percentage", value: 0.5 },
             restrictToScreen: true,
             spineLayout,
             viewport,
@@ -211,7 +211,7 @@ describe("Given single page items and no spread", () => {
             settings,
             // biome-ignore lint/suspicious/noExplicitAny: TODO
             spineItemsManager: spineItemsManager as any,
-            threshold: 0.49,
+            threshold: { type: "percentage", value: 0.49 },
             restrictToScreen: true,
             spineLayout,
             viewport,

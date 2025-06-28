@@ -50,7 +50,7 @@ export class PaginationController extends DestroyableClass {
           this.spine.locator.getVisiblePagesFromViewportPosition({
             spineItem: spineItem,
             position,
-            threshold: 0.5,
+            threshold: { type: "percentage", value: 0.5 },
           })
 
         /**
@@ -78,7 +78,7 @@ export class PaginationController extends DestroyableClass {
             } =
               this.spine.locator.getVisibleSpineItemsFromPosition({
                 position,
-                threshold: 0.5,
+                threshold: { type: "percentage", value: 0.5 },
               }) ?? {}
 
             const beginSpineItem =

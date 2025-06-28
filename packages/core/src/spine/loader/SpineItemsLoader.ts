@@ -72,7 +72,7 @@ export class SpineItemsLoader extends DestroyableClass {
         const { beginIndex = 0, endIndex = 0 } =
           spineLocator.getVisibleSpineItemsFromPosition({
             position: navigation.position,
-            threshold: 0,
+            threshold: { type: "percentage", value: 0 },
             useAbsoluteViewport: false,
           }) || {}
 

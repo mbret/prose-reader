@@ -31,7 +31,7 @@ describe("Given an item that is one page on spread", () => {
               top: 0,
               width: 252.5,
             },
-            threshold: 0.3,
+            threshold: { type: "percentage", value: 0.3 },
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -380, y: 0 }),
               viewport.absoluteViewport,
@@ -57,7 +57,7 @@ describe("Given an item that is one page on spread", () => {
               top: 0,
               width: 252.5,
             },
-            threshold: 0.3,
+            threshold: { type: "percentage", value: 0.3 },
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -380, y: 0 }),
               viewport.absoluteViewport,
@@ -83,7 +83,7 @@ describe("Given an item that is one page on spread", () => {
               top: 0,
               width: 252.5,
             },
-            threshold: 0.3,
+            threshold: { type: "percentage", value: 0.3 },
             viewportPosition: ViewportSlicePosition.from(
               new SpinePosition({ x: -450, y: 0 }),
               viewport.absoluteViewport,

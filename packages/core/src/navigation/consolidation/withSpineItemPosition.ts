@@ -75,7 +75,7 @@ export const withSpineItemPosition =
           spineLocator.getVisiblePagesFromViewportPosition({
             position: navigableSpinePositionForFarthestPageIndex,
             spineItem,
-            threshold: 0,
+            threshold: { type: "percentage", value: 0 },
             restrictToScreen: true,
           })
 
