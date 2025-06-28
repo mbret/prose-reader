@@ -25,8 +25,6 @@ export const TableOfContentsDialogContent = memo(
         ? beginPageIndexInSpineItem
         : beginSpineItemIndex) || 0
 
-    console.log({ assumedRenditionLayout, currentSpineItemOrChapterPageIndex })
-
     let currentSubChapter = pagination?.beginChapterInfo
 
     while (currentSubChapter?.subChapter) {

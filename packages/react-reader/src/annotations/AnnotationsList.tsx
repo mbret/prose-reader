@@ -5,7 +5,6 @@ import { useAnnotations } from "./useAnnotations"
 export const AnnotationsList = ({ onNavigate }: { onNavigate: () => void }) => {
   const { data: annotations } = useAnnotations()
 
-  console.log({ annotations })
   return (
     <List.Root overflowY="auto" gap={3} pt={4} variant="plain">
       {annotations?.map((item) => (
