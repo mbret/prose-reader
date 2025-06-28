@@ -66,7 +66,7 @@ export const NavigationSettings = ({
           <Field
             label={`Snap threshold (${localSettings.navigationSnapThreshold?.value ?? reader?.settings.values.navigationSnapThreshold.value ?? 100}px)`}
             helperTextPosition="top"
-            helperText="The threshold for which the next or previous page is detected when swiping or panning"
+            helperText="The threshold for which the next or previous page is detected when panning"
           >
             <Stack
               direction="row"
@@ -84,11 +84,11 @@ export const NavigationSettings = ({
                     100,
                 ]}
                 max={500}
-                min={50}
+                min={20}
                 step={5}
                 marks={[
-                  { value: 80, label: `80px (default)` },
-                  { value: 275, label: `275px` },
+                  { value: 40, label: `40px (default)` },
+                  { value: 250, label: `250px` },
                   {
                     value: 500,
                     label: `500px`,

@@ -104,7 +104,7 @@ export class ReaderSettingsManager
       pageTurnAnimationDuration: undefined,
       pageTurnMode: `controlled` as const,
       snapAnimationDuration: 300,
-      navigationSnapThreshold: { type: "pixels", value: 80 },
+      navigationSnapThreshold: { type: "pixels", value: 40 },
       numberOfAdjacentSpineItemToPreLoad: 3,
     } satisfies CoreInputSettings
   }
