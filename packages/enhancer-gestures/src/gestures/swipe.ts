@@ -38,7 +38,7 @@ export const registerSwipe = ({
                 }
               }
             }),
-            map((event) => ({ event, handled: true })),
+            map(({ event }) => ({ event, handled: true })),
           ),
     ),
   )
