@@ -11,15 +11,19 @@ const isItemVisibleByThresholdForPosition = ({
   visibleWidthOfItem: number
   visibleHeightOfItem: number
   itemHeight: number
-  threshold: number
+  threshold:
+    | { type: "percentage"; value: number }
+    | { type: "pixels"; value: number }
 }) => {
   const visibleWidthRatioOfSpineItem = visibleWidthOfItem / itemWidth
-
   const visibleHeightRatioOfSpineItem = visibleHeightOfItem / itemHeight
 
   const isItemVisibleEnough =
-    visibleWidthRatioOfSpineItem >= threshold &&
-    visibleHeightRatioOfSpineItem >= threshold
+    threshold.type === "percentage"
+      ? visibleWidthRatioOfSpineItem >= threshold.value &&
+        visibleHeightRatioOfSpineItem >= threshold.value
+      : visibleWidthOfItem >= threshold.value &&
+        visibleHeightOfItem >= threshold.value
 
   return isItemVisibleEnough
 }
@@ -32,7 +36,9 @@ const isItemVisibleOnScreenByThresholdForPosition = ({
 }: {
   visibleWidthOfItem: number
   visibleHeightOfItem: number
-  threshold: number
+  threshold:
+    | { type: "percentage"; value: number }
+    | { type: "pixels"; value: number }
   viewportPosition: ViewportSlicePosition
 }) => {
   const widthRatioOfSpaceTakenInScreen =
@@ -42,8 +48,11 @@ const isItemVisibleOnScreenByThresholdForPosition = ({
     visibleHeightOfItem / viewportPosition.height
 
   const isItemVisibleEnoughOnScreen =
-    heightRatioOfSpaceTakenInScreen >= threshold &&
-    widthRatioOfSpaceTakenInScreen >= threshold
+    threshold.type === "percentage"
+      ? heightRatioOfSpaceTakenInScreen >= threshold.value &&
+        widthRatioOfSpaceTakenInScreen >= threshold.value
+      : visibleHeightOfItem >= threshold.value &&
+        visibleWidthOfItem >= threshold.value
 
   return isItemVisibleEnoughOnScreen
 }
@@ -84,7 +93,9 @@ export const getItemVisibilityForPosition = ({
     width: number
   }
   viewportPosition: ViewportSlicePosition
-  threshold: number
+  threshold:
+    | { type: "percentage"; value: number }
+    | { type: "pixels"; value: number }
   restrictToScreen?: boolean
 }) => {
   const viewportLeft = viewportPosition.x

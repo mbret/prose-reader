@@ -1,4 +1,4 @@
-import { Fieldset, Stack } from "@chakra-ui/react"
+import { Fieldset } from "@chakra-ui/react"
 import { Field } from "../components/ui/field"
 import {
   NumberInputField,
@@ -13,14 +13,11 @@ export const OtherSettings = () => {
 
   return (
     <Fieldset.Root>
-      <Stack>
-        <Fieldset.Legend>Other</Fieldset.Legend>
-      </Stack>
-
+      <Fieldset.Legend>Performance</Fieldset.Legend>
       <Fieldset.Content>
         <Field
           label="Number of adjacent spine items to pre-load"
-          helperText={`Help smoother the transition between pages and prevent blank (loading) page when turning. Note that pre-loading more page increase memory and CPU consumption`}
+          helperText={`Help make the transition smoother between pages and prevent blank (loading) page when turning. Note that pre-loading more page increase memory and CPU consumption`}
         >
           <NumberInputRoot
             value={(

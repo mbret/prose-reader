@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
 import "rc-slider/assets/index.css"
-import { HStack, Stack } from "@chakra-ui/react"
+import { HStack, Heading, Stack } from "@chakra-ui/react"
 import type { Theme } from "@prose-reader/core"
 import { IoMdArrowRoundBack } from "react-icons/io"
 import { IoMdArrowRoundForward } from "react-icons/io"
@@ -19,6 +19,14 @@ import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
 import { useReader } from "../useReader"
 import type { LocalSettings } from "./useLocalSettings"
 import { useReaderSettings } from "./useReaderSettings"
+
+const SectionHeading = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Heading size="lg" mt={2}>
+      {children}
+    </Heading>
+  )
+}
 
 export const SettingsMenu = ({
   open,
@@ -272,10 +280,12 @@ export const SettingsMenu = ({
           />
         </Stack>
       </Field>
+      <SectionHeading>Navigation</SectionHeading>
       <NavigationSettings
         localSettings={localSettings}
         setLocalSettings={setLocalSettings}
       />
+      <SectionHeading>More</SectionHeading>
       <OtherSettings />
     </Stack>
   )

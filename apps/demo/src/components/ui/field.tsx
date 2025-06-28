@@ -4,14 +4,22 @@ import * as React from "react"
 export interface FieldProps extends Omit<ChakraField.RootProps, "label"> {
   label?: React.ReactNode
   helperText?: React.ReactNode
+  helperTextPosition?: "top" | "bottom"
   errorText?: React.ReactNode
   optionalText?: React.ReactNode
 }
 
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   function Field(props, ref) {
-    const { label, children, helperText, errorText, optionalText, ...rest } =
-      props
+    const {
+      label,
+      children,
+      helperText,
+      errorText,
+      optionalText,
+      helperTextPosition = "bottom",
+      ...rest
+    } = props
     return (
       <ChakraField.Root ref={ref} {...rest}>
         {label && (
@@ -20,8 +28,11 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
             <ChakraField.RequiredIndicator fallback={optionalText} />
           </ChakraField.Label>
         )}
+        {helperText && helperTextPosition === "top" && (
+          <ChakraField.HelperText>{helperText}</ChakraField.HelperText>
+        )}
         {children}
-        {helperText && (
+        {helperText && helperTextPosition === "bottom" && (
           <ChakraField.HelperText>{helperText}</ChakraField.HelperText>
         )}
         {errorText && (

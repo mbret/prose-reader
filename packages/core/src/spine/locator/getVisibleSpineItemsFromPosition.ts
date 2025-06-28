@@ -21,7 +21,9 @@ export const getVisibleSpineItemsFromPosition = ({
   viewport,
 }: {
   position: DeprecatedViewportPosition | SpinePosition
-  threshold: number
+  threshold:
+    | { type: "percentage"; value: number }
+    | { type: "pixels"; value: number }
   restrictToScreen?: boolean
   spineItemsManager: SpineItemsManager
   settings: ReaderSettingsManager

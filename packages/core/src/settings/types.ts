@@ -1,9 +1,9 @@
 import type { Manifest } from "@prose-reader/shared"
+import type { Observable } from "rxjs"
 import type {
   DocumentRenderer,
   DocumentRendererParams,
 } from "../spineItem/renderer/DocumentRenderer"
-import type { Observable } from "rxjs"
 
 export type CoreInputSettings = {
   forceSinglePageMode: boolean
@@ -12,7 +12,9 @@ export type CoreInputSettings = {
   pageTurnDirection: `vertical` | `horizontal`
   pageTurnMode: `controlled` | `scrollable`
   snapAnimationDuration: number
-  navigationSnapThreshold: number
+  navigationSnapThreshold:
+    | { type: "percentage"; value: number }
+    | { type: "pixels"; value: number }
   /**
    * Specify how many spine items you want to preload.
    * Useful for pre-paginated where you want the user to have a smooth transition between items.

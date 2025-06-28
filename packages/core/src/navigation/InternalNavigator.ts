@@ -202,9 +202,9 @@ export class InternalNavigator extends DestroyableClass {
      *
      * This means that if a layout happens during navigation, we will cut it and navigate
      * directly to new position. NO layout should happens during viewport busy.
-     * This is responsability of other components.
+     * This is responsibility of other components.
      */
-    const navigationUpateFromLayout$ = merge(
+    const navigationUpdateFromLayout$ = merge(
       viewportController.layout$,
       spine.layout$,
     ).pipe(
@@ -235,7 +235,7 @@ export class InternalNavigator extends DestroyableClass {
     )
 
     const navigationRestored$ = merge(
-      navigationUpateFromLayout$,
+      navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
       map((navigation) => ({ navigation })),
@@ -285,9 +285,9 @@ export class InternalNavigator extends DestroyableClass {
 
     // @todo export
     // @todo we should only update the cfi if the content of the
-    // item change, because otherwise everytime the viewport get bigger
-    // the pagination cfi will change and thus this one too, indefintely
-    // pulling the user baack since we always use the first visible node
+    // item change, because otherwise every time the viewport get bigger
+    // the pagination cfi will change and thus this one too, indefinitely
+    // pulling the user back since we always use the first visible node
     const navigationUpdateOnPaginationUpdate$ = consolidateWithPagination(
       context,
       this.navigationSubject,

@@ -112,7 +112,9 @@ export const createSpineLocator = ({
     viewport,
   }: {
     position: SpinePosition
-    threshold: number
+    threshold:
+      | { type: "percentage"; value: number }
+      | { type: "pixels"; value: number }
     spineItem: SpineItem
     restrictToScreen?: boolean
     useAbsoluteViewport?: boolean

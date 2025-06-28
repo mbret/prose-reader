@@ -1,14 +1,14 @@
 import { combineLatest, merge } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import type {
-  CoreInputSettings,
-  ComputedCoreSettings,
-  CoreOutputSettings,
-} from "./types"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
-import { SettingsManager } from "./SettingsManager"
 import type { SettingsInterface } from "./SettingsInterface"
+import { SettingsManager } from "./SettingsManager"
+import type {
+  ComputedCoreSettings,
+  CoreInputSettings,
+  CoreOutputSettings,
+} from "./types"
 
 export class ReaderSettingsManager
   extends SettingsManager<CoreInputSettings, CoreOutputSettings>
@@ -104,7 +104,7 @@ export class ReaderSettingsManager
       pageTurnAnimationDuration: undefined,
       pageTurnMode: `controlled` as const,
       snapAnimationDuration: 300,
-      navigationSnapThreshold: 0.3,
+      navigationSnapThreshold: { type: "pixels", value: 80 },
       numberOfAdjacentSpineItemToPreLoad: 3,
     } satisfies CoreInputSettings
   }
