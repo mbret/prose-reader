@@ -1,7 +1,7 @@
-import type { GestureEvent } from "./types"
 import { isHtmlElement } from "@prose-reader/core"
+import type { GestureEvent } from "./types"
 
-export const isNotLink = (event: GestureEvent) => {
+export const isNotLink = (event: GestureEvent["event"]) => {
   const target = event.event.target
 
   if (isHtmlElement(target) && target.tagName === "a") return false
@@ -11,7 +11,7 @@ export const isNotLink = (event: GestureEvent) => {
 
 export const istMatchingSelectors = (
   selectors: string[],
-  event: GestureEvent,
+  event: GestureEvent["event"],
 ): boolean => {
   const target = event.event.target
 

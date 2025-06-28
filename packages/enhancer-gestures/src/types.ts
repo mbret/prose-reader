@@ -15,7 +15,9 @@ import type { GesturesSettingsManager } from "./SettingsManager"
 
 export type Hook = {
   name: "beforeGesture"
-  runFn: (params: { event$: Observable<GestureEvent> }) => Observable<boolean>
+  runFn: (params: {
+    event$: Observable<GestureEvent["event"]>
+  }) => Observable<boolean>
 }
 
 export type GestureRecognizable = Recognizable<

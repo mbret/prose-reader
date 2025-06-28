@@ -1,8 +1,9 @@
 import {
   type HookManager,
-  isHtmlElement,
   type Reader,
+  isHtmlElement,
 } from "@prose-reader/core"
+import type { PinchEvent } from "gesturx"
 import {
   EMPTY,
   animationFrameScheduler,
@@ -15,9 +16,8 @@ import {
   throttleTime,
   withLatestFrom,
 } from "rxjs"
-import type { GestureRecognizable, Hook } from "../types"
 import type { GesturesSettingsManager } from "../SettingsManager"
-import type { PinchEvent } from "gesturx"
+import type { GestureRecognizable, Hook } from "../types"
 
 const isHtmlImageElement = (
   target: EventTarget | null,
@@ -37,14 +37,17 @@ export const registerPinch = ({
   settingsManager: GesturesSettingsManager
 }) => {
   const pinchStart$ = recognizable.events$.pipe(
+    map(({ event }) => event),
     filter((event): event is PinchEvent => event.type === "pinchStart"),
   )
 
   const pinchMove$ = recognizable.events$.pipe(
+    map(({ event }) => event),
     filter((event): event is PinchEvent => event.type === "pinchMove"),
   )
 
   const pinchEnd$ = recognizable.events$.pipe(
+    map(({ event }) => event),
     filter((event): event is PinchEvent => event.type === "pinchEnd"),
   )
 

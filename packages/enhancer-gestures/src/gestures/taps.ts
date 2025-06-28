@@ -1,7 +1,8 @@
 import type { HookManager, Reader } from "@prose-reader/core"
-import { combineLatest, EMPTY, filter, first, map, of, switchMap } from "rxjs"
-import type { GestureRecognizable, Hook } from "../types"
+import type { TapRecognizer } from "gesturx"
+import { EMPTY, combineLatest, filter, first, map, of, switchMap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
+import type { GestureRecognizable, Hook } from "../types"
 import { isNotLink, istMatchingSelectors } from "../utils"
 
 export const registerTaps = ({
@@ -9,14 +10,17 @@ export const registerTaps = ({
   recognizable,
   hookManager,
   settingsManager,
+  recognizer,
 }: {
   recognizable: GestureRecognizable
   reader: Reader
   hookManager: HookManager<Hook>
+  recognizer: TapRecognizer
   settingsManager: GesturesSettingsManager
 }) => {
   const gestures$ = recognizable.events$.pipe(
-    switchMap((event) => {
+    filter((event) => event.recognizer === recognizer),
+    switchMap(({ event }) => {
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
