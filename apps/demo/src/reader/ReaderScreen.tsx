@@ -23,9 +23,7 @@ export const ReaderScreen = memo(() => {
   const { reader } = useReader()
   const { data: manifest, error: manifestError } = useManifest(url)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
-  const [localSettings, setLocalSettings] = useLocalSettings({
-    enablePan: true,
-  })
+  const [localSettings, setLocalSettings] = useLocalSettings()
   const bookState = useObserve(() => reader?.state$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
@@ -33,7 +31,7 @@ export const ReaderScreen = memo(() => {
   useCreateReader()
 
   useGestureHandler()
-  useUpdateReaderSettings({ localSettings, manifest })
+  useUpdateReaderSettings({ localSettings })
   useAnnotations(reader, url)
   usePersistCurrentPagination()
 

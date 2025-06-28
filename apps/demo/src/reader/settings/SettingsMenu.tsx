@@ -141,7 +141,7 @@ export const SettingsMenu = ({
               lineHeight:
                 e.value === `publisher`
                   ? `publisher`
-                  : Number.parseInt(e.value),
+                  : Number.parseInt(e.value ?? `1`),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
@@ -164,7 +164,7 @@ export const SettingsMenu = ({
               fontWeight:
                 e.value === `publisher`
                   ? `publisher`
-                  : (Number.parseInt(e.value) as 100),
+                  : (Number.parseInt(e.value ?? "100") as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}
@@ -183,8 +183,9 @@ export const SettingsMenu = ({
         <RadioGroup
           defaultValue="default"
           onValueChange={(e) => {
-            setTheme(e.value)
-            reader.theme.set(e.value as Theme)
+            const value = (e.value ?? "publisher") as Theme
+            setTheme(value)
+            reader.theme.set(value)
           }}
           value={theme}
         >

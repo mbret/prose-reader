@@ -25,6 +25,48 @@ export const NavigationSettings = ({
   return (
     <Fieldset.Root>
       <Stack>
+        <Fieldset.Legend>Navigation gestures</Fieldset.Legend>
+      </Stack>
+      <Fieldset.Content>
+        <Stack flexDirection="row">
+          <RadioGroup
+            defaultValue={localSettings.navigationGestures}
+            onValueChange={(e) => {
+              setLocalSettings((state) => ({
+                ...state,
+                navigationGestures:
+                  e.value as LocalSettings["navigationGestures"],
+              }))
+            }}
+            value={localSettings.navigationGestures}
+          >
+            <Stack>
+              <Radio
+                value="none"
+                disabled={
+                  onlySupportScrollableMode ||
+                  !readerState?.supportedPageTurnAnimation.includes(`none`)
+                }
+              >
+                None (only taps)
+              </Radio>
+              <Radio
+                value="pan"
+                disabled={settings?.computedPageTurnMode === "scrollable"}
+              >
+                Pan
+              </Radio>
+              <Radio
+                value="swipe"
+                disabled={settings?.computedPageTurnMode === "scrollable"}
+              >
+                Swipe
+              </Radio>
+            </Stack>
+          </RadioGroup>
+        </Stack>
+      </Fieldset.Content>
+      <Stack>
         <Fieldset.Legend>Navigation</Fieldset.Legend>
         <Fieldset.HelperText>Change page turning animation</Fieldset.HelperText>
       </Stack>
@@ -81,37 +123,6 @@ export const NavigationSettings = ({
           </RadioGroup>
           <Box borderWidth={1} alignSelf="stretch" />
           <Stack>
-            <Field>
-              <Checkbox
-                disabled={
-                  settings?.computedPageTurnMode === "scrollable" ||
-                  localSettings.enableSwipe
-                }
-                checked={localSettings.enablePan}
-                onCheckedChange={() => {
-                  setLocalSettings((state) => ({
-                    ...state,
-                    enablePan: !state.enablePan,
-                  }))
-                }}
-              >
-                Enable pan
-              </Checkbox>
-            </Field>
-            <Field>
-              <Checkbox
-                disabled={settings?.computedPageTurnMode === "scrollable"}
-                checked={localSettings.enableSwipe}
-                onCheckedChange={() => {
-                  setLocalSettings((state) => ({
-                    ...state,
-                    enableSwipe: !state.enableSwipe,
-                  }))
-                }}
-              >
-                Enable swipe
-              </Checkbox>
-            </Field>
             <Field>
               <Checkbox
                 disabled={

@@ -52,7 +52,7 @@ export const gesturesEnhancer =
       failWith: [pinchRecognizer, failWithSelection],
       options: {
         // we want to have some margin to trigger zoom
-        posThreshold: 30,
+        posThreshold: 15,
       },
     })
 

@@ -1,14 +1,14 @@
 import { useState } from "react"
 
 export type LocalSettings = {
-  enablePan: boolean
-  enableSwipe: boolean
+  navigationGestures: "pan" | "swipe" | "none"
 }
 
-export const useLocalSettings = (defaultSettings: Partial<LocalSettings>) => {
+export const useLocalSettings = (
+  defaultSettings: Partial<LocalSettings> = {},
+) => {
   return useState<LocalSettings>({
-    enablePan: true,
-    enableSwipe: false,
+    navigationGestures: "pan",
     ...defaultSettings,
   })
 }
