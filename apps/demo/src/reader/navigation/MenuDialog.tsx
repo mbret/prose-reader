@@ -39,7 +39,7 @@ export const MenuDialog = memo(
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
           </Tabs.List>
 
-          <Tabs.Content p={0} display="flex" value="settings">
+          <Tabs.Content p={0} display="flex" value="settings" overflow="auto">
             <SettingsMenu
               setLocalSettings={setLocalSettings}
               localSettings={localSettings}
