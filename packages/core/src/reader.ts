@@ -1,10 +1,5 @@
-import {
-  BehaviorSubject,
-  type Observable,
-  type ObservedValueOf,
-  Subject,
-} from "rxjs"
-import { filter, map } from "rxjs/operators"
+import { type Observable, type ObservedValueOf, Subject } from "rxjs"
+import { map } from "rxjs/operators"
 import {
   generateCfiForSpineItemPage,
   generateCfiFromRange,
@@ -26,7 +21,6 @@ import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import type { SpineItem } from "./spineItem/SpineItem"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
-import { isDefined } from "./utils/isDefined"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
@@ -44,11 +38,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
-  const elementSubject$ = new BehaviorSubject<HTMLElement | undefined>(
-    undefined,
-  )
   const viewport = new Viewport(context)
-  const element$ = elementSubject$.pipe(filter(isDefined))
+  const element$ = context.containerElement$
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,
@@ -92,10 +83,9 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {
-    const containerElement = elementSubject$.getValue()?.parentElement
-    const element = elementSubject$.getValue()
+    const containerElement = context.value.rootElement
 
-    if (!element || !containerElement) return
+    if (!containerElement) return
 
     const dimensions = {
       width: containerElement?.offsetWidth,
@@ -105,14 +95,12 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     const marginTop = 0
     const marginBottom = 0
 
-    element.style.setProperty(`overflow`, `hidden`)
-    element.style.height = `${dimensions.height - marginTop - marginBottom}px`
-    element.style.width = `${dimensions.width - 2 * margin}px`
+    containerElement.style.setProperty(`overflow`, `hidden`)
 
     if (margin > 0 || marginTop > 0 || marginBottom > 0) {
-      element.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
+      containerElement.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
     }
-    const elementRect = element.getBoundingClientRect()
+    const elementRect = containerElement.getBoundingClientRect()
 
     context.update({
       visibleAreaRect: {
@@ -127,7 +115,9 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   }
 
   const load = (
-    options: Required<Pick<ContextState, "manifest" | "containerElement">>,
+    options: Required<
+      Pick<ContextState, "manifest"> & { containerElement: HTMLElement }
+    >,
   ) => {
     const { containerElement, manifest } = options
 
@@ -139,18 +129,10 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
 
     Report.log(`load`, { options })
 
-    // @todo hook
-    const element = createWrapperElement(containerElement)
-
-    if (containerElement !== elementSubject$.getValue()?.parentElement) {
-      elementSubject$.next(element)
-
-      containerElement.appendChild(element)
-    }
+    const element = wrapContainer(containerElement)
 
     context.update({
       manifest,
-      containerElement,
       rootElement: element,
       forceSinglePageMode: settingsManager.values.forceSinglePageMode,
     })
@@ -175,7 +157,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     context.destroy()
     navigator.destroy()
     spine.destroy()
-    elementSubject$.getValue()?.remove()
     features.destroy()
     destroy$.next()
     destroy$.complete()
@@ -239,15 +220,15 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   }
 }
 
-const createWrapperElement = (containerElement: HTMLElement) => {
-  const element = containerElement.ownerDocument.createElement(`div`)
-  element.style.cssText = `
+const wrapContainer = (containerElement: HTMLElement) => {
+  containerElement.style.cssText = `
+    ${containerElement.style.cssText}
     background-color: white;
     position: relative;
   `
-  element.className = `${HTML_PREFIX}-reader`
+  containerElement.classList.add(`${HTML_PREFIX}-reader`)
 
-  return element
+  return containerElement
 }
 
 type Reader = ReturnType<typeof createReader>

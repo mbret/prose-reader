@@ -56,9 +56,7 @@ export const eventsEnhancer =
                 reader.context,
               )
 
-              reader.context.state.containerElement?.dispatchEvent(
-                normalizedEvent,
-              )
+              reader.context.state.rootElement?.dispatchEvent(normalizedEvent)
             }
           }
 

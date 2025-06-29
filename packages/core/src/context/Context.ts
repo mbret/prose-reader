@@ -1,15 +1,22 @@
 import type { Manifest } from "@prose-reader/shared"
-import { Subject } from "rxjs"
-import { distinctUntilChanged, filter, map } from "rxjs/operators"
+import { Subject, merge } from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  switchMap,
+  tap,
+} from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { isDefined } from "../utils/isDefined"
 import { isShallowEqual } from "../utils/objects"
+import { observeIntersection, observeResize } from "../utils/rxjs"
 import { BridgeEvent } from "./BridgeEvent"
 import { isUsingSpreadMode } from "./isUsingSpreadMode"
 
 export type ContextState = {
-  containerElement?: HTMLElement
   rootElement?: HTMLElement
   manifest?: Manifest
   hasVerticalWriting?: boolean
@@ -45,9 +52,30 @@ export class Context extends ReactiveEntity<ContextState> {
   )
 
   public containerElement$ = this.pipe(
-    map((state) => state.containerElement),
+    map((state) => state.rootElement),
     filter(isDefined),
     distinctUntilChanged(),
+  )
+
+  /**
+   * Optimized size observer. Use it when you need information regarding layout without causing
+   * re-flow.
+   * @example: Calculating coordinates on click events.
+   * @important Do not use it to affect the reader layout as it's async. Use layout information instead.
+   */
+  public containerElementRect$ = this.containerElement$.pipe(
+    switchMap((element) =>
+      merge(
+        observeResize(element).pipe(map((entries) => entries[0]?.contentRect)),
+        observeIntersection(element).pipe(
+          map((entries) => entries[0]?.boundingClientRect),
+        ),
+      ),
+    ),
+    tap((entries) => console.log(entries)),
+    filter(isDefined),
+    distinctUntilChanged(),
+    shareReplay({ refCount: true, bufferSize: 1 }),
   )
 
   public hasVerticalWriting$ = this.pipe(

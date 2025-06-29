@@ -29,3 +29,16 @@ export const istMatchingSelectors = (
 
   return !!match
 }
+
+export const getPositionRelativeToContainer = (
+  event: PointerEvent,
+  containerElementRect: DOMRectReadOnly,
+) => {
+  const { x, y } = event
+  const { left, top } = containerElementRect
+
+  return {
+    x: x - left,
+    y: y - top,
+  }
+}

@@ -1,9 +1,36 @@
 import type { HookManager, Reader } from "@prose-reader/core"
 import type { TapRecognizer } from "gesturx"
-import { EMPTY, combineLatest, filter, first, map, of, switchMap } from "rxjs"
+import {
+  EMPTY,
+  combineLatest,
+  filter,
+  first,
+  map,
+  of,
+  switchMap,
+  withLatestFrom,
+} from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
 import type { GestureRecognizable, Hook } from "../types"
-import { isNotLink, istMatchingSelectors } from "../utils"
+import {
+  getPositionRelativeToContainer,
+  isNotLink,
+  istMatchingSelectors,
+} from "../utils"
+
+const calculatePageTurnMargin = (screenWidth: number): number => {
+  const minMargin = 0.15
+  const maxMargin = 0.3
+  const minWidth = 400
+  const maxWidth = 1200
+
+  if (screenWidth <= minWidth) return maxMargin
+  if (screenWidth >= maxWidth) return minMargin
+
+  // Linear interpolation between min and max
+  const ratio = (screenWidth - minWidth) / (maxWidth - minWidth)
+  return maxMargin - ratio * (maxMargin - minMargin)
+}
 
 export const registerTaps = ({
   reader,
@@ -20,7 +47,8 @@ export const registerTaps = ({
 }) => {
   const gestures$ = recognizable.events$.pipe(
     filter((event) => event.recognizer === recognizer),
-    switchMap(({ event }) => {
+    withLatestFrom(reader.context.containerElementRect$),
+    switchMap(([{ event }, containerElementRect]) => {
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 
@@ -29,12 +57,14 @@ export const registerTaps = ({
         isNotLink(event) &&
         !istMatchingSelectors(settingsManager.values.ignore, event)
       ) {
-        const width = window.innerWidth
-        const height = window.innerHeight
-        const pageTurnMargin = 0.15
-
         if (`x` in normalizedEvent) {
-          const { x = 0, y } = normalizedEvent
+          const width = containerElementRect.width
+          const height = containerElementRect.height
+          const pageTurnMargin = calculatePageTurnMargin(width)
+          const { x, y } = getPositionRelativeToContainer(
+            normalizedEvent,
+            containerElementRect,
+          )
 
           const beforeTapResults$ = hookManager.execute(
             "beforeGesture",
