@@ -49,6 +49,8 @@ export const registerTaps = ({
     filter((event) => event.recognizer === recognizer),
     withLatestFrom(reader.context.containerElementRect$),
     switchMap(([{ event }, containerElementRect]) => {
+      if (!containerElementRect) return EMPTY
+
       const normalizedEvent = event.event
       const { computedPageTurnDirection } = reader.settings.values
 

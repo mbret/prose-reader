@@ -115,7 +115,7 @@ export const gesturesEnhancer =
       recognizer: zoomPanRecognizer,
     })
 
-    const containerUpdate$ = reader.context.containerElement$.pipe(
+    const containerUpdate$ = reader.context.watch(`rootElement`).pipe(
       tap((container) => {
         recognizable.update({
           container,
