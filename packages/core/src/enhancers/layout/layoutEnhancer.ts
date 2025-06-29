@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { Observable, type ObservedValueOf, merge } from "rxjs"
+import { type Observable, type ObservedValueOf, merge } from "rxjs"
 import {
   debounceTime,
   filter,
@@ -13,6 +13,7 @@ import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
+import { observeResize } from "../../utils/rxjs"
 import type {
   EnhancerOptions,
   EnhancerOutput,
@@ -202,7 +203,7 @@ export const layoutEnhancer =
       }),
     )
 
-    // @todo fix the panstart issue
+    // @todo fix the pan-start issue
     // @todo maybe increasing the hammer distance before triggering pan as well
     // reader.registerHook(`item.onDocumentLoad`, ({frame}) => {
     //   frame.contentDocument?.body.addEventListener(`contextmenu`, e => {
@@ -210,25 +211,13 @@ export const layoutEnhancer =
     //   })
     // })
 
-    const observeContainerResize = (container: HTMLElement) =>
-      new Observable<void>((observer) => {
-        const resizeObserver = new ResizeObserver(() => {
-          observer.next()
-        })
-
-        resizeObserver.observe(container)
-
-        return () => {
-          resizeObserver.disconnect()
-        }
-      })
-
     const layoutOnContainerResize$ = settingsManager.values$.pipe(
       filter(({ layoutAutoResize }) => layoutAutoResize === "container"),
-      switchMap(() => reader.context.containerElement$),
+      switchMap(() => reader.context.watch(`rootElement`)),
       filter(isDefined),
-      switchMap((container) => observeContainerResize(container)),
+      switchMap((element) => observeResize(element)),
       debounceTime(100),
+      filter(isDefined),
       tap(() => {
         reader?.layout()
       }),

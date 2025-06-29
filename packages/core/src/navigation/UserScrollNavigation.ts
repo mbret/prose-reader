@@ -15,6 +15,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { noopElement } from "../utils/dom"
 import type { Locker } from "./Locker"
 import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { getScaledDownPosition } from "./controllers/getScaledDownPosition"
@@ -73,7 +74,7 @@ export class UserScrollNavigation extends DestroyableClass {
                 x: targetElement.scrollLeft ?? 0,
                 y: targetElement.scrollTop ?? 0,
               }),
-              spineElement: this.spine.element,
+              spineElement: this.spine.element ?? noopElement(),
             })
 
             this.navigationSubject.next({

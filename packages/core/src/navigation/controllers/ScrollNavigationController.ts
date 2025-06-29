@@ -27,6 +27,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
+import { noopElement } from "../../utils/dom"
 import { isDefined } from "../../utils/isDefined"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
@@ -103,8 +104,14 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     // might be a bit overkill but we want to be sure of sure
     const isSpineScrolling$ = merge(
-      spine.element$.pipe(switchMap((element) => observeResize(element))),
-      spine.element$.pipe(switchMap((element) => fromEvent(element, "scroll"))),
+      spine.element$.pipe(
+        filter(isDefined),
+        switchMap((element) => observeResize(element)),
+      ),
+      spine.element$.pipe(
+        filter(isDefined),
+        switchMap((element) => fromEvent(element, "scroll")),
+      ),
       spine.spineItemsObserver.itemResize$,
     ).pipe(
       switchMap(() =>
@@ -215,7 +222,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
         x: element?.scrollLeft ?? 0,
         y: element?.scrollTop ?? 0,
       }),
-      spineElement: this.spine.element,
+      spineElement: this.spine.element ?? noopElement(),
     })
   }
 }

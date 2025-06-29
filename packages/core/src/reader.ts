@@ -39,7 +39,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
   const viewport = new Viewport(context)
-  const element$ = context.containerElement$
+  const element$ = context.watch(`rootElement`)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,

@@ -1,5 +1,6 @@
-import { BehaviorSubject, type Observable, merge } from "rxjs"
-import { takeUntil, tap } from "rxjs/operators"
+import { isDefined } from "reactjrx"
+import { BehaviorSubject, type Observable, combineLatest, merge } from "rxjs"
+import { filter, takeUntil, tap } from "rxjs/operators"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -8,7 +9,6 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem } from "../spineItem/SpineItem"
 import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { noopElement } from "../utils/dom"
 import type { Viewport } from "../viewport/Viewport"
 import { Pages } from "./Pages"
 import type { SpineItemsManager } from "./SpineItemsManager"
@@ -18,7 +18,9 @@ import { SpineItemsLoader } from "./loader/SpineItemsLoader"
 import { type SpineLocator, createSpineLocator } from "./locator/SpineLocator"
 
 export class Spine extends DestroyableClass {
-  protected elementSubject = new BehaviorSubject<HTMLElement>(noopElement())
+  protected elementSubject = new BehaviorSubject<HTMLElement | undefined>(
+    undefined,
+  )
   protected spineLayout: SpineLayout
 
   public readonly spineItemsLoader: SpineItemsLoader
@@ -28,7 +30,7 @@ export class Spine extends DestroyableClass {
   public element$ = this.elementSubject.asObservable()
 
   constructor(
-    protected parentElement$: Observable<HTMLElement>,
+    protected parentElement$: Observable<HTMLElement | undefined>,
     protected context: Context,
     protected pagination: Pagination,
     public spineItemsManager: SpineItemsManager,
@@ -77,27 +79,8 @@ export class Spine extends DestroyableClass {
       this.viewport,
     )
 
-    const reloadOnManifestChange$ = context.manifest$.pipe(
-      tap((manifest) => {
-        this.spineItemsManager.destroyItems()
-
-        const spineItems = manifest.spineItems.map(
-          (resource, index) =>
-            new SpineItem(
-              resource,
-              this.elementSubject.getValue(),
-              this.context,
-              this.settings,
-              this.hookManager,
-              index,
-            ),
-        )
-
-        this.spineItemsManager.addMany(spineItems)
-      }),
-    )
-
-    const updateElement$ = parentElement$.pipe(
+    const spineElementUpdate$ = parentElement$.pipe(
+      filter(isDefined),
       tap((parentElement) => {
         const element: HTMLElement =
           parentElement.ownerDocument.createElement(`div`)
@@ -111,7 +94,32 @@ export class Spine extends DestroyableClass {
       }),
     )
 
-    merge(reloadOnManifestChange$, updateElement$)
+    const loadSpineItems$ = combineLatest([
+      this.context.manifest$,
+      this.element$,
+    ]).pipe(
+      tap(([manifest, element]) => {
+        if (!element) return
+
+        this.spineItemsManager.destroyItems()
+
+        const spineItems = manifest.spineItems.map(
+          (resource, index) =>
+            new SpineItem(
+              resource,
+              element,
+              this.context,
+              this.settings,
+              this.hookManager,
+              index,
+            ),
+        )
+
+        this.spineItemsManager.addMany(spineItems)
+      }),
+    )
+
+    merge(loadSpineItems$, spineElementUpdate$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }
@@ -140,7 +148,7 @@ export class Spine extends DestroyableClass {
 
     this.pages.destroy()
     this.spineItemsLoader.destroy()
-    this.elementSubject.getValue().remove()
+    this.elementSubject.getValue()?.remove()
     this.elementSubject.complete()
   }
 }

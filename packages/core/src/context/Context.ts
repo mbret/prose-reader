@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import { Subject, merge } from "rxjs"
+import { Subject, merge, of } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
@@ -51,30 +51,25 @@ export class Context extends ReactiveEntity<ContextState> {
     distinctUntilChanged(),
   )
 
-  public containerElement$ = this.pipe(
-    map((state) => state.rootElement),
-    filter(isDefined),
-    distinctUntilChanged(),
-  )
-
   /**
    * Optimized size observer. Use it when you need information regarding layout without causing
    * re-flow.
    * @example: Calculating coordinates on click events.
    * @important Do not use it to affect the reader layout as it's async. Use layout information instead.
    */
-  public containerElementRect$ = this.containerElement$.pipe(
-    switchMap((element) =>
-      merge(
+  public containerElementRect$ = this.watch(`rootElement`).pipe(
+    switchMap((element) => {
+      if (!element) return of(undefined)
+
+      return merge(
         observeResize(element).pipe(map((entries) => entries[0]?.contentRect)),
         observeIntersection(element).pipe(
           map((entries) => entries[0]?.boundingClientRect),
         ),
-      ),
-    ),
+      )
+    }),
     tap((entries) => console.log(entries)),
-    filter(isDefined),
-    distinctUntilChanged(),
+    distinctUntilChanged(isShallowEqual),
     shareReplay({ refCount: true, bufferSize: 1 }),
   )
 

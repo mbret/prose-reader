@@ -8,7 +8,7 @@ export const layoutContainer = (
 ) => {
   if (!container) return
 
-  // first we try to get the desired viewport for a confortable reading based on theh current page size
+  // first we try to get the desired viewport for a comfortable reading based on theh current page size
   const { height: pageHeight, width: pageWidth } = context.getPageSize()
 
   container.style.width = `${pageWidth}px`
@@ -41,7 +41,7 @@ export const layoutCanvas = (
   // then we generate the viewport for the canvas based on the page scale
   const viewport = pageProxy.getViewport({ scale: pageScale })
 
-  // Then wedefine which axis should stretch or shrink to ratio
+  // Then we define which axis should stretch or shrink to ratio
   const viewportRatio = viewport.width / viewport.height
   const pageRatio = pageWidth / pageHeight
   const isWiderThanPage = viewportRatio > pageRatio

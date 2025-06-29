@@ -1,3 +1,4 @@
+import { isDefined } from "reactjrx"
 import {
   BehaviorSubject,
   type Observable,
@@ -5,6 +6,7 @@ import {
   animationFrameScheduler,
   combineLatest,
   delay,
+  filter,
   identity,
   map,
   merge,
@@ -60,6 +62,7 @@ export class ControlledNavigationController extends DestroyableClass {
     super()
 
     const elementInit$ = this.spine.element$.pipe(
+      filter(isDefined),
       withLatestFrom(this.element$),
       tap(([spineElement, element]) => {
         element.style.cssText = `

@@ -1,10 +1,11 @@
+import { isDefined } from "reactjrx"
 import {
+  type Observable,
   distinctUntilChanged,
   filter,
   fromEvent,
   map,
   merge,
-  type Observable,
   share,
   shareReplay,
   startWith,
@@ -13,9 +14,9 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
+import type { SpineItem } from "../.."
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createOrderedRangeFromSelection } from "./selection"
-import type { SpineItem } from "../.."
 import { trackSpineItemSelection } from "./trackSpineItemSelection"
 
 type SelectionChange = {
@@ -110,13 +111,16 @@ export const selectionEnhancer =
       share(),
     )
 
-    const lastSelectionOnPointerdown$ = reader.context.containerElement$.pipe(
-      switchMap((container) => fromEvent(container, "pointerdown")),
-      withLatestFrom(selection$),
-      map(([, selection]) => selection),
-      startWith(undefined),
-      shareReplay({ refCount: true, bufferSize: 1 }),
-    )
+    const lastSelectionOnPointerdown$ = reader.context
+      .watch(`rootElement`)
+      .pipe(
+        filter(isDefined),
+        switchMap((container) => fromEvent(container, "pointerdown")),
+        withLatestFrom(selection$),
+        map(([, selection]) => selection),
+        startWith(undefined),
+        shareReplay({ refCount: true, bufferSize: 1 }),
+      )
 
     merge(selection$, lastSelectionOnPointerdown$)
       .pipe(takeUntil(reader.$.destroy$))
