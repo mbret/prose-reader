@@ -37,12 +37,12 @@ export const chromeEnhancer =
 
     reader.context.state$
       .pipe(takeUntil(reader.$.destroy$))
-      .subscribe(({ containerElement }) => {
-        if (!containerElement) return
+      .subscribe(({ rootElement }) => {
+        if (!rootElement) return
 
         const onScroll = () => {
           if (reader.settings.values.computedPageTurnMode === `controlled`) {
-            containerElement.scrollTo(0, 0)
+            rootElement.scrollTo(0, 0)
           }
         }
 
@@ -51,7 +51,7 @@ export const chromeEnhancer =
          * whenever the user select text and drag it to the edges. This is not a scroll inside the iframe
          * but a scroll on the container itself..
          */
-        containerElement.addEventListener(`scroll`, onScroll)
+        rootElement.addEventListener(`scroll`, onScroll)
       })
 
     reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
