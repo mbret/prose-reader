@@ -1,6 +1,6 @@
 {
   "npmClient": "npm",
-  "version": "1.228.0",
+  "version": "1.229.0",
   "command": {
     "publish": {
       "graphType": "all"
