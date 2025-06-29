@@ -17,7 +17,7 @@ export class ControllableZoomer extends Zoomer {
     this.currentPosition = { x: 0, y: 0 }
     this.currentScale = 1
 
-    const container = this.reader.context.state.containerElement
+    const container = this.reader.context.value.rootElement
 
     if (container) {
       this.element = container.ownerDocument.createElement(`div`)

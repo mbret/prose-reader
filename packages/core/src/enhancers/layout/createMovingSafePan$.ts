@@ -30,12 +30,12 @@ export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
   const updateOverlayElement$ = reader.context.state$.pipe(
-    switchMap(({ containerElement }) => {
-      if (!containerElement) return NEVER
+    switchMap(({ rootElement }) => {
+      if (!rootElement) return NEVER
 
       return new Observable(() => {
         iframeOverlayForAnimationsElement =
-          containerElement.ownerDocument.createElement(`div`)
+          rootElement.ownerDocument.createElement(`div`)
         iframeOverlayForAnimationsElement.style.cssText = `
         position: absolute;
         left: 0;
@@ -44,7 +44,7 @@ export const createMovingSafePan$ = (reader: Reader) => {
         height: 100%;
         visibility: hidden;
       `
-        containerElement.appendChild(iframeOverlayForAnimationsElement)
+        rootElement.appendChild(iframeOverlayForAnimationsElement)
 
         return () => {
           iframeOverlayForAnimationsElement?.remove()
