@@ -5,12 +5,12 @@ export const getPageFromOffset = (
 ) => {
   const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
 
-  if (offset <= 0) return 0
+  if (offset <= 0 || numberOfPages === 0) return 0
 
   if (offset >= numberOfPages * pageWidth) return numberOfPages - 1
 
-  return Math.max(
-    0,
-    offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth),
+  return (
+    offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth) ??
+    0
   )
 }

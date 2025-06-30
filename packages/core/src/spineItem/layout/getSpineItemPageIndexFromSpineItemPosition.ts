@@ -53,16 +53,6 @@ export const getSpineItemPageIndexFromSpineItemPosition = ({
 
   const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
 
-  console.log({
-    pageIndex,
-    position,
-    safePosition,
-    numberOfPages,
-    offset,
-    pageWidth,
-    pageHeight,
-  })
-
   if (isRTL) {
     // Reverse the page index for RTL
     return numberOfPages - 1 - pageIndex
