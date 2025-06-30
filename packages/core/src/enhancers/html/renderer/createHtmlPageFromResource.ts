@@ -1,16 +1,5 @@
-import type { Manifest } from "../../.."
 import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
-import { getBase64FromBlob } from "../../../utils/objects"
-
-const getIntrinsicDimensionsFromBase64Img = (data: string) =>
-  new Promise<{ width: number; height: number }>((resolve, reject) => {
-    const image = new Image()
-    image.src = data
-    image.onload = () => {
-      resolve({ height: image.naturalHeight, width: image.naturalWidth })
-    }
-    image.onerror = reject
-  })
+import type { Manifest } from "../../.."
 
 /**
  * Document is application/xhtml+xml
@@ -33,8 +22,11 @@ export const createHtmlPageFromResource = async (
       (mime) => mime === contentType,
     )
   ) {
-    const data = await getBase64FromBlob(await resourceResponse.blob())
-    const { height, width } = await getIntrinsicDimensionsFromBase64Img(data)
+    const blob = await resourceResponse.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const bitmap = await createImageBitmap(blob)
+    const { width, height } = { width: bitmap.width, height: bitmap.height }
+    bitmap.close()
 
     return `
       <html>
@@ -43,7 +35,7 @@ export const createHtmlPageFromResource = async (
         </head>
         <body style="margin: 0px;" tab-index="-1;">
           <img
-            src="${data}"
+            src="${objectUrl}"
             style="max-width: 100%;height:100%;object-fit:contain;"
           >
         </body>
