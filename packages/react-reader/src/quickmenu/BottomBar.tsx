@@ -48,7 +48,12 @@ export const BottomBar = memo(
         overflow="auto"
         pb={8}
       >
-        <HStack flex={1} alignItems="center" justifyContent="center">
+        <HStack
+          flex={1}
+          alignItems="center"
+          justifyContent="center"
+          maxWidth="100%"
+        >
           <IconButton
             aria-label="left"
             size="lg"
