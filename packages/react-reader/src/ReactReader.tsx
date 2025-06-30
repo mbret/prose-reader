@@ -2,6 +2,7 @@ import { Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { Bookmarks } from "./annotations/bookmarks/Bookmarks"
+import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { Toaster } from "./components/ui/toaster"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
@@ -73,6 +74,7 @@ export const ReactReader = ({
 
   useInterceptExternalLinks()
   useNotifications()
+  useBookmarkOnCornerTap()
 
   return (
     <>

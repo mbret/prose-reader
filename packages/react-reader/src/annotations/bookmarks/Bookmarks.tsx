@@ -2,7 +2,7 @@ import { memo } from "react"
 import { useObserve } from "reactjrx"
 import { Spine } from "../../common/Spine"
 import { useReader } from "../../context/useReader"
-import { BookmarkPageButton } from "./BookmarkPageButton"
+import { BookmarkPageMarker } from "./BookmarkPageMarker"
 
 export const Bookmarks = memo(() => {
   const reader = useReader()
@@ -12,7 +12,7 @@ export const Bookmarks = memo(() => {
     <Spine>
       {pages?.pages.map(
         ({ absoluteLayout: { left, top, width } }, pageIndex) => (
-          <BookmarkPageButton
+          <BookmarkPageMarker
             key={pageIndex}
             absolutePageIndex={pageIndex}
             left={left}
