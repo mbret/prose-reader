@@ -1,10 +1,8 @@
 import type { HookManager, Reader } from "@prose-reader/core"
-import { EMPTY, map, switchMap, tap } from "rxjs"
-import type { Hook } from "../types"
-import type { GesturesSettingsManager } from "../SettingsManager"
 import type { PanRecognizer } from "gesturx"
-
-const DELAY_IGNORE_PAN = 400
+import { EMPTY, map, switchMap, tap } from "rxjs"
+import type { GesturesSettingsManager } from "../SettingsManager"
+import type { Hook } from "../types"
 
 export const registerPan = ({
   reader,
@@ -25,11 +23,6 @@ export const registerPan = ({
           if (reader.zoom.isZooming) return
 
           if (event.type === `panStart`) {
-            /**
-             * We let the user select
-             */
-            if (event.delay > DELAY_IGNORE_PAN) return
-
             reader?.navigation.moveTo({ x: 0, y: 0 }, { start: true })
           }
 

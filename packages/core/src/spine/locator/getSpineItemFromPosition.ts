@@ -1,22 +1,21 @@
 import type { DeprecatedViewportPosition } from "../../navigation/types"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition } from "../types"
+import type { SpinePosition, UnsafeSpinePosition } from "../types"
 
 /**
- * This will retrieve the closest item to the x / y position edge relative to the reading direction.
+ * Returns the first element that is within the given position.
+ *
+ * This method is safe and take into account boundaries.
  */
 export const getSpineItemFromPosition = ({
   position,
   spineItemsManager,
   spineLayout,
-  settings,
 }: {
-  position: DeprecatedViewportPosition | SpinePosition
+  position: DeprecatedViewportPosition | SpinePosition | UnsafeSpinePosition
   spineItemsManager: SpineItemsManager
   spineLayout: SpineLayout
-  settings: ReaderSettingsManager
 }) => {
   const spineItem = spineItemsManager.items.find((item) => {
     const { left, right, bottom, top } =
@@ -24,10 +23,9 @@ export const getSpineItemFromPosition = ({
 
     const isWithinXAxis = position.x >= left && position.x < right
 
-    if (settings.values.computedPageTurnDirection === `horizontal`) {
-      return isWithinXAxis
-    }
-    return isWithinXAxis && position.y >= top && position.y < bottom
+    const isWithinYAxis = position.y >= top && position.y < bottom
+
+    return isWithinXAxis && isWithinYAxis
   })
 
   if (position.x === 0 && !spineItem) {

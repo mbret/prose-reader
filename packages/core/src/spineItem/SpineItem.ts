@@ -187,8 +187,10 @@ export class SpineItem extends DestroyableClass {
       isUsingVerticalWriting: !!this.isUsingVerticalWriting(),
       itemHeight: this.layout.layoutInfo.height,
       itemWidth: this.layout.layoutInfo.width,
-      context: this.context,
-      settings: this.settings,
+      pageWidth: this.context.getPageSize().width,
+      pageHeight: this.context.getPageSize().height,
+      pageTurnDirection: this.settings.values.computedPageTurnDirection,
+      pageTurnMode: this.settings.values.pageTurnMode,
     })
   }
 }

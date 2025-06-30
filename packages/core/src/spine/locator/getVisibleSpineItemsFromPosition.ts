@@ -15,7 +15,6 @@ export const getVisibleSpineItemsFromPosition = ({
   threshold,
   restrictToScreen,
   spineItemsManager,
-  settings,
   spineLayout,
   useAbsoluteViewport = true,
   viewport,
@@ -39,7 +38,6 @@ export const getVisibleSpineItemsFromPosition = ({
   const fallbackSpineItem =
     getSpineItemFromPosition({
       position,
-      settings,
       spineItemsManager,
       spineLayout,
     }) || spineItemsManager.get(0)

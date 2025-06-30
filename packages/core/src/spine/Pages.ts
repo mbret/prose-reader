@@ -159,4 +159,11 @@ export class Pages extends ReactiveEntity<State> {
 
     this.layout$.pipe(takeUntil(this.destroy$)).subscribe(this.next.bind(this))
   }
+
+  fromSpineItemPageIndex = (spineItem: SpineItem, pageIndex: number) => {
+    return this.value.pages.find(
+      (page) =>
+        page.itemIndex === spineItem.index && page.pageIndex === pageIndex,
+    )
+  }
 }

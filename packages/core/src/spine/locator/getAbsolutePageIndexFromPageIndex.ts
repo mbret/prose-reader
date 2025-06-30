@@ -4,6 +4,9 @@ import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 
+/**
+ * @deprecated use Pages
+ */
 export const getAbsolutePageIndexFromPageIndex = ({
   pageIndex,
   spineItemOrId,

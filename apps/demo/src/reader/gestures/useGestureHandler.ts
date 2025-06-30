@@ -11,10 +11,10 @@ export const useGestureHandler = () => {
       /**
        * Hook used to prevent some gestures from being handled.
        */
-      reader?.gestures.hooks.register("beforeGesture", ({ event$ }) =>
+      reader?.gestures.hooks.register("beforeTapGesture", ({ event$ }) =>
         event$.pipe(
           withLatestFrom(reader.selection.lastSelectionOnPointerdown$),
-          map(([event, lastSelectionOnPointerdown]) => {
+          map(([{ event }, lastSelectionOnPointerdown]) => {
             const target = event.event.target
 
             /**

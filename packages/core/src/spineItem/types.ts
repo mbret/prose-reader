@@ -40,6 +40,20 @@ export class SpineItemPosition {
   }
 }
 
+/**
+ * Allow out of bounds positions
+ */
+export class UnsafeSpineItemPagePosition {
+  public readonly x: number
+  public readonly y: number
+  public readonly __symbol = Symbol(`SpineItemPagePosition`)
+
+  constructor(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
+}
+
 export class SpineItemPageLayout extends LayoutEntry {
   public readonly __symbol = `SpineItemPageLayout`
 }

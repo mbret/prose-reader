@@ -263,7 +263,7 @@ export class ControlledNavigationController extends DestroyableClass {
 
   /**
    * @important The reason we use computed transform and not bounding client is to avoid
-   * transofmration inconsistency between the viewport and the spine.
+   * transformation inconsistency between the viewport and the spine.
    */
   public get viewportPosition(): SpinePosition {
     const element = this.element$.getValue()

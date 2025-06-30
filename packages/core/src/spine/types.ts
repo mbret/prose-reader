@@ -29,6 +29,16 @@ export class SpineItemPageSpineLayout extends LayoutEntry {
   public readonly __symbol = `SpineItemPageSpineLayout`
 }
 
+export class AbstractSpinePosition {
+  public readonly x: number
+  public readonly y: number
+
+  constructor(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
+}
+
 /**
  * Position of an element relative to the spine.
  *
@@ -39,15 +49,8 @@ export class SpineItemPageSpineLayout extends LayoutEntry {
  * Its purpose is to be used for navigation and/or calculations but you may need
  * to do proper validation depending of the context.
  */
-export class SpinePosition {
-  public readonly x: number
-  public readonly y: number
+export class SpinePosition extends AbstractSpinePosition {
   public readonly __symbol = `SpinePosition`
-
-  constructor(position: { x: number; y: number }) {
-    this.x = position.x
-    this.y = position.y
-  }
 }
 
 /**
@@ -62,15 +65,8 @@ export class SpinePosition {
  * If you end up somewhere with an UnsafeSpinePosition, it means you need to
  * validate it somehow and probably do some translation.
  */
-export class UnsafeSpinePosition {
-  public readonly x: number
-  public readonly y: number
+export class UnsafeSpinePosition extends AbstractSpinePosition {
   public readonly __symbol = `UnsafeSpinePosition`
-
-  constructor(position: { x: number; y: number }) {
-    this.x = position.x
-    this.y = position.y
-  }
 
   static from(position: SpinePosition) {
     return new UnsafeSpinePosition(position)

@@ -12,11 +12,16 @@ import type {
 } from "gesturx"
 import type { Observable, ObservedValueOf } from "rxjs"
 import type { GesturesSettingsManager } from "./SettingsManager"
+import type { TapAreaGestureContext } from "./gestures/taps/types"
 
 export type Hook = {
-  name: "beforeGesture"
+  name: "beforeTapGesture"
   runFn: (params: {
-    event$: Observable<GestureEvent["event"]>
+    event$: Observable<
+      {
+        event: GestureEvent["event"]
+      } & TapAreaGestureContext
+    >
   }) => Observable<boolean>
 }
 

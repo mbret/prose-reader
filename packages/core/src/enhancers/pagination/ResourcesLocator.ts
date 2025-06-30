@@ -94,7 +94,7 @@ export const consolidate = (
       }
 
       absolutePageIndex =
-        reader.spine.locator.getAbsolutePageIndexFromPageIndex({
+        reader.spine.locator._getAbsolutePageIndexFromPageIndex({
           pageIndex: itemPageIndex,
           spineItemOrId: spineItem,
         }) ?? resource?.absolutePageIndex

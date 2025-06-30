@@ -20,6 +20,7 @@ import type {
   RootEnhancer,
 } from "../types/enhancer"
 import { SettingsManager } from "./SettingsManager"
+import { createCoordinatesApi } from "./coordinates"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
@@ -28,6 +29,7 @@ import { createViewportModeHandler } from "./viewportMode"
 export type LayoutEnhancerOutput = {
   layout$: Observable<ObservedValueOf<Pages>>
   layoutInfo$: Observable<ObservedValueOf<Pages>>
+  coordinates: ReturnType<typeof createCoordinatesApi>
 }
 
 export const layoutEnhancer =
@@ -56,6 +58,7 @@ export const layoutEnhancer =
       pageVerticalMargin,
       layoutAutoResize,
       layoutLayerTransition,
+      viewportMode,
     } = options
     const reader = next(options)
 
@@ -68,6 +71,7 @@ export const layoutEnhancer =
         pageVerticalMargin,
         layoutAutoResize,
         layoutLayerTransition,
+        viewportMode,
       },
       reader.settings as SettingsInterface<
         InheritSettings,
@@ -282,5 +286,6 @@ export const layoutEnhancer =
       settings: settingsManager,
       layout$: reader.spine.layout$,
       layoutInfo$,
+      coordinates: createCoordinatesApi(reader),
     } as unknown as Output
   }

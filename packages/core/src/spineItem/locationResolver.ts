@@ -2,10 +2,13 @@ import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { getRangeFromNode } from "../utils/dom"
 import type { SpineItem } from "./SpineItem"
-import { getClosestValidOffsetFromApproximateOffsetInPages } from "./helpers"
-import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
+import {
+  getClosestValidOffsetFromApproximateOffsetInPages,
+  getItemOffsetFromPageIndex,
+} from "./helpers"
+import { getSpineItemPageIndexFromSpineItemPosition } from "./layout/getSpineItemPageIndexFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
-import { SpineItemPosition } from "./types"
+import { SpineItemPosition, UnsafeSpineItemPagePosition } from "./types"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
@@ -16,65 +19,6 @@ export const createSpineItemLocator = ({
   context: Context
   settings: ReaderSettingsManager
 }) => {
-  const getSafePosition = ({
-    itemWidth,
-    itemHeight,
-    spineItemPosition,
-  }: {
-    spineItemPosition: SpineItemPosition
-    itemWidth: number
-    itemHeight: number
-  }): SpineItemPosition =>
-    new SpineItemPosition({
-      x: Math.min(itemWidth, Math.max(0, spineItemPosition.x)),
-      y: Math.min(itemHeight, Math.max(0, spineItemPosition.y)),
-    })
-
-  /**
-   * @important
-   * This calculation takes blank page into account, the iframe could be only one page but with a blank page
-   * positioned before. Resulting on two page index possible values (0 & 1).
-   */
-  const getSpineItemPageIndexFromPosition = ({
-    itemWidth,
-    itemHeight,
-    position,
-    isUsingVerticalWriting,
-  }: {
-    itemWidth: number
-    itemHeight: number
-    position: SpineItemPosition
-    isUsingVerticalWriting: boolean
-  }) => {
-    const pageWidth = context.getPageSize().width
-    const pageHeight = context.getPageSize().height
-
-    const safePosition = getSafePosition({
-      spineItemPosition: position,
-      itemHeight,
-      itemWidth,
-    })
-
-    const offset = context.isRTL()
-      ? itemWidth - safePosition.x - context.getPageSize().width
-      : safePosition.x
-
-    const numberOfPages = getSpineItemNumberOfPages({
-      isUsingVerticalWriting,
-      itemHeight,
-      itemWidth,
-      context,
-      settings,
-    })
-
-    if (isUsingVerticalWriting) {
-      return getPageFromOffset(position.y, pageHeight, numberOfPages)
-    }
-    const pageIndex = getPageFromOffset(offset, pageWidth, numberOfPages)
-
-    return pageIndex
-  }
-
   const getSpineItemPositionFromNode = (
     node: Node,
     offset: number,
@@ -142,30 +86,60 @@ export const createSpineItemLocator = ({
     const { height, width } = spineItem.layout.layoutInfo
 
     return position
-      ? getSpineItemPageIndexFromPosition({
+      ? getSpineItemPageIndexFromSpineItemPosition({
           isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
           position,
           itemHeight: height,
           itemWidth: width,
+          isRTL: context.isRTL(),
+          pageWidth: context.getPageSize().width,
+          pageHeight: context.getPageSize().height,
+          pageTurnDirection: settings.values.computedPageTurnDirection,
+          pageTurnMode: settings.values.pageTurnMode,
         })
       : undefined
   }
 
-  const getPageFromOffset = (
-    offset: number,
-    pageWidth: number,
-    numberOfPages: number,
+  const getSpineItemPagePositionFromSpineItemPosition = (
+    position: SpineItemPosition,
+    pageIndex: number,
+    spineItem: SpineItem,
   ) => {
-    const offsetValues = [...Array(numberOfPages)].map((_, i) => i * pageWidth)
+    const { width, height } = spineItem.layout.layoutInfo
+    const pageWidth = context.getPageSize().width
+    const pageHeight = context.getPageSize().height
+    const isUsingVerticalWriting = !!spineItem.isUsingVerticalWriting()
 
-    if (offset <= 0) return 0
+    if (isUsingVerticalWriting) {
+      // For vertical writing, pages stack vertically
+      const pageStartY = getItemOffsetFromPageIndex(
+        pageHeight,
+        pageIndex,
+        height,
+      )
+      return new UnsafeSpineItemPagePosition({
+        x: position.x,
+        y: position.y - pageStartY,
+      })
+    }
 
-    if (offset >= numberOfPages * pageWidth) return numberOfPages - 1
+    // For horizontal writing
+    const pageStartX = getItemOffsetFromPageIndex(pageWidth, pageIndex, width)
 
-    return Math.max(
-      0,
-      offsetValues.findIndex((offsetRange) => offset < offsetRange + pageWidth),
-    )
+    if (context.isRTL()) {
+      // For RTL, pages are positioned from right to left
+      const rtlPageStartX = width - (pageIndex + 1) * pageWidth
+      return new UnsafeSpineItemPagePosition({
+        x: position.x - Math.max(0, rtlPageStartX),
+        y: position.y,
+      })
+    }
+
+    // For LTR, simply subtract the page start position from the absolute position
+    return new UnsafeSpineItemPagePosition({
+      x: position.x - pageStartX,
+      y: position.y,
+    })
   }
 
   return {
@@ -183,8 +157,22 @@ export const createSpineItemLocator = ({
         itemLayout: spineItem.layout.layoutInfo,
         pageIndex,
       }),
-    getSpineItemPageIndexFromPosition,
+    getSpineItemPageIndexFromPosition: (params: {
+      position: SpineItemPosition
+      isUsingVerticalWriting: boolean
+      itemWidth: number
+      itemHeight: number
+    }) =>
+      getSpineItemPageIndexFromSpineItemPosition({
+        ...params,
+        isRTL: context.isRTL(),
+        pageWidth: context.getPageSize().width,
+        pageHeight: context.getPageSize().height,
+        pageTurnDirection: settings.values.computedPageTurnDirection,
+        pageTurnMode: settings.values.pageTurnMode,
+      }),
     getSpineItemPageIndexFromNode,
     getSpineItemClosestPositionFromUnsafePosition,
+    getSpineItemPagePositionFromSpineItemPosition,
   }
 }

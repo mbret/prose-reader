@@ -66,8 +66,14 @@ export class Viewport extends ReactiveEntity<State> {
   }
 
   /**
-   * @important
+   * Returns the relative viewport after eventual transforms.
+   * For example if the viewport was zoomed out, we start seeing more left and right
+   * items. Therefore we can virtually expand the viewport.
+   * Inversely if the viewport is zoomed in, we see less left and right items.
    *
+   * This is mostly useful for detecting what should be visible, navigable, etc.
+   *
+   * @important
    * Contains long floating values.
    *
    * @todo take position of translate into consideration in something
