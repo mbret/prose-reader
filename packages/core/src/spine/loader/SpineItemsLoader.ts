@@ -78,8 +78,13 @@ export class SpineItemsLoader extends DestroyableClass {
 
         // we increase the range based on settings
         const beginMaximumIndex =
-          beginIndex - numberOfAdjacentSpineItemToPreLoad
-        const endMaximumIndex = endIndex + numberOfAdjacentSpineItemToPreLoad
+          numberOfAdjacentSpineItemToPreLoad === Infinity
+            ? 0
+            : beginIndex - numberOfAdjacentSpineItemToPreLoad
+        const endMaximumIndex =
+          numberOfAdjacentSpineItemToPreLoad === Infinity
+            ? spineItemsManager.items.length - 1
+            : endIndex + numberOfAdjacentSpineItemToPreLoad
 
         const visibleIndexes = Array.from(
           { length: endMaximumIndex - beginMaximumIndex + 1 },
