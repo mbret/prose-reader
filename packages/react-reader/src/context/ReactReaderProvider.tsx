@@ -1,4 +1,5 @@
 import type { Reader } from "@prose-reader/core"
+import type { EnhancerAPI as GestureEnhancerAPI } from "@prose-reader/enhancer-gestures"
 import { memo, useEffect, useMemo } from "react"
 import {
   signal,
@@ -19,7 +20,7 @@ export const ReactReaderProvider = memo(
     onQuickMenuOpenChange,
   }: {
     children?: React.ReactNode
-    reader: Reader | undefined
+    reader: (Reader & GestureEnhancerAPI) | undefined
     quickMenuOpen: boolean
     onQuickMenuOpenChange: (open: boolean) => void
   }) => {
