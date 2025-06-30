@@ -1,8 +1,8 @@
 import {
+  type Observable,
   from,
   fromEvent,
   map,
-  type Observable,
   of,
   switchMap,
   take,
@@ -22,16 +22,16 @@ export const injectCSS = (
   style: string,
   prepend?: boolean,
 ) => {
-  if (frameElement?.contentDocument?.head) {
-    const userStyle = frameElement.contentDocument.createElement(`style`)
-    userStyle.id = id
-    userStyle.innerHTML = style
+  if (!frameElement?.contentDocument?.head) return
 
-    if (prepend) {
-      frameElement.contentDocument.head.prepend(userStyle)
-    } else {
-      frameElement.contentDocument.head.appendChild(userStyle)
-    }
+  const userStyle = frameElement.contentDocument.createElement(`style`)
+  userStyle.id = id
+  userStyle.innerHTML = style
+
+  if (prepend) {
+    frameElement.contentDocument.head.prepend(userStyle)
+  } else {
+    frameElement.contentDocument.head.appendChild(userStyle)
   }
 }
 
@@ -53,7 +53,15 @@ export const upsertCSSToFrame = (
 ) => {
   if (!frameElement) return
 
-  removeCSS(frameElement, id)
+  const existingElement = frameElement?.contentDocument?.getElementById(
+    id,
+  ) as HTMLStyleElement
+
+  if (existingElement) {
+    existingElement.innerHTML = style
+    return
+  }
+
   injectCSS(frameElement, id, style, prepend)
 }
 
@@ -104,9 +112,13 @@ export const waitForFrameLoad = (stream: Observable<HTMLIFrameElement>) =>
 
 export const waitForFrameReady = (stream: Observable<HTMLIFrameElement>) =>
   stream.pipe(
-    switchMap((frame) =>
-      from(frame?.contentDocument?.fonts.ready || of(undefined)).pipe(
-        map(() => frame),
-      ),
-    ),
+    switchMap((frame) => {
+      const readyPromise = frame?.contentDocument?.fonts.ready
+
+      if (readyPromise) {
+        return from(readyPromise).pipe(map(() => frame))
+      }
+
+      return of(undefined)
+    }),
   )
