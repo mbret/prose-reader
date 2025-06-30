@@ -1,6 +1,7 @@
 import { resolve } from "@prose-reader/cfi"
 import { Report } from "../report"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { parseCfi } from "./parse"
 
 /**
@@ -18,14 +19,21 @@ export const resolveCfi = ({
 }: {
   cfi: string
   spineItemsManager: SpineItemsManager
-}) => {
-  if (!cfi) return undefined
-
-  const { itemIndex } = parseCfi(cfi)
+}): Omit<ReturnType<typeof parseCfi>, "offset"> & {
+  offset?: number | undefined
+  node?: Node | null
+  range?: Range | null
+  spineItem?: SpineItem
+} => {
+  const { itemIndex, ...restParsed } = parseCfi(cfi)
 
   const spineItem = spineItemsManager.get(itemIndex)
 
-  if (!spineItem) return undefined
+  if (!spineItem)
+    return {
+      ...restParsed,
+      itemIndex,
+    }
 
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
@@ -39,10 +47,12 @@ export const resolveCfi = ({
         })
 
         return {
+          ...restParsed,
+          itemIndex,
           node: resolved.isRange
             ? resolved.node?.startContainer
             : resolved.node,
-          isRange: resolved.isRange,
+          isCfiRange: resolved.isRange,
           range: resolved.isRange ? resolved.node : undefined,
           offset: Array.isArray(resolved.offset)
             ? resolved.offset.at(-1)
@@ -54,13 +64,17 @@ export const resolveCfi = ({
         Report.warn(e)
 
         return {
+          ...restParsed,
           spineItem,
+          itemIndex,
         }
       }
     }
   }
 
   return {
+    ...restParsed,
+    itemIndex,
     spineItem,
   }
 }

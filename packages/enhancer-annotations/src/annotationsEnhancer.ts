@@ -60,9 +60,9 @@ export const annotationsEnhancer =
         return { itemIndex: params.itemIndex, pageIndex: undefined }
 
       if (params.absolutePageIndex !== undefined) {
-        return reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
-          absolutePageIndex: params.absolutePageIndex,
-        })
+        return reader.spine.pages.fromAbsolutePageIndex(
+          params.absolutePageIndex,
+        )
       }
 
       return undefined

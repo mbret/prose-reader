@@ -166,4 +166,19 @@ export class Pages extends ReactiveEntity<State> {
         page.itemIndex === spineItem.index && page.pageIndex === pageIndex,
     )
   }
+
+  fromAbsolutePageIndex = (absolutePageIndex: number) => {
+    return this.value.pages.reduce((acc: PageEntry | undefined, page) => {
+      if (acc) return acc
+
+      if (page.absolutePageIndex === absolutePageIndex) {
+        return page
+      }
+
+      return acc
+    }, undefined)
+  }
+
+  observeFromAbsolutePageIndex = (absolutePageIndex: number) =>
+    this.pipe(map(() => this.fromAbsolutePageIndex(absolutePageIndex)))
 }

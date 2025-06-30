@@ -11,7 +11,6 @@ import type { SpineLayout } from "../SpineLayout"
 import type { SpinePosition, UnsafeSpinePosition } from "../types"
 import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
-import { getSpineInfoFromAbsolutePageIndex } from "./getSpineInfoFromAbsolutePageIndex"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 import { getSpinePositionFromSpineItemPosition } from "./getSpinePositionFromSpineItemPosition"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
@@ -291,19 +290,6 @@ export const createSpineLocator = ({
       >,
     ) =>
       getAbsolutePageIndexFromPageIndex({
-        ...params,
-        context,
-        settings,
-        spineItemsManager,
-        spineLayout,
-      }),
-    getSpineInfoFromAbsolutePageIndex: (
-      params: Omit<
-        Parameters<typeof getSpineInfoFromAbsolutePageIndex>[0],
-        "context" | "settings" | "spineLayout" | "spineItemsManager"
-      >,
-    ) =>
-      getSpineInfoFromAbsolutePageIndex({
         ...params,
         context,
         settings,

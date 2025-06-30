@@ -11,7 +11,7 @@ import {
   switchScan,
   withLatestFrom,
 } from "rxjs"
-import { generateRootCfi } from "../../cfi"
+import { generateRootCfi, type resolveCfi } from "../../cfi"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { deferIdle, idle } from "../../utils/rxjs"
@@ -22,21 +22,28 @@ type CfiLocatableResource = {
 
 export type LocatableResource = SpineItem | CfiLocatableResource
 
-export type ConsolidatedResource = CfiLocatableResource & {
-  itemIndex?: number
-  itemPageIndex?: number
-  absolutePageIndex?: number
-  startNode?: Node
-  startOffset?: number
-  range?: Range | null
-}
+export type ConsolidatedResource = ReturnType<typeof resolveCfi> &
+  CfiLocatableResource & {
+    itemIndex?: number
+    itemPageIndex?: number
+    absolutePageIndex?: number
+    startNode?: Node
+    startOffset?: number
+    range?: Range | null
+  }
 
 const toCfiLocatableResource = (
   reader: Reader,
   resource: LocatableResource | CfiLocatableResource,
-): CfiLocatableResource => {
+): ConsolidatedResource => {
   if ("cfi" in resource) {
-    return resource
+    const { itemIndex, ...restParsedCfi } = reader.cfi.parseCfi(resource.cfi)
+
+    return {
+      ...resource,
+      ...restParsedCfi,
+      itemIndex,
+    }
   }
 
   const item = reader.spineItemsManager.get(resource)
@@ -45,8 +52,14 @@ const toCfiLocatableResource = (
     throw new Error(`Spine item not found`)
   }
 
+  const cfi = generateRootCfi(item.item)
+
+  const parsedCfi = reader.cfi.parseCfi(cfi)
+
   return {
+    ...parsedCfi,
     cfi: generateRootCfi(item.item),
+    itemIndex: item.index,
   }
 }
 
@@ -55,10 +68,10 @@ export const consolidate = (
   reader: Reader,
 ): Observable<ConsolidatedResource> => {
   let itemPageIndex = resource?.itemPageIndex
-  const { itemIndex } = reader.cfi.parseCfi(resource.cfi)
+  const { itemIndex, ...restParsedCfi } = reader.cfi.parseCfi(resource.cfi)
   const spineItem = reader.spineItemsManager.get(itemIndex)
 
-  if (!spineItem) return of({ ...resource, itemIndex })
+  if (!spineItem) return of({ ...resource, itemIndex, ...restParsedCfi })
 
   return idle().pipe(
     withLatestFrom(spineItem.isReady$),
@@ -67,9 +80,7 @@ export const consolidate = (
         node,
         offset: startOffset,
         range,
-      } = (isSpineItemReady
-        ? reader.cfi.resolveCfi({ cfi: resource.cfi })
-        : {}) ?? {}
+      } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi: resource.cfi }) : {}
 
       const reflowableItemWithFoundNode =
         spineItem.renditionLayout !== `pre-paginated` && node
@@ -101,6 +112,7 @@ export const consolidate = (
 
       return {
         ...resource,
+        ...restParsedCfi,
         range,
         itemIndex,
         startNode: node ?? undefined,
@@ -152,7 +164,7 @@ export class ResourcesLocator {
     resource: T,
     options: Options,
   ): Observable<{ resource: T; meta: ConsolidatedResource }> => {
-    const cfiConsolidatedResource = {
+    const initialConsolidatedValue = {
       resource,
       meta: toCfiLocatableResource(this.reader, resource),
     }
@@ -163,10 +175,10 @@ export class ResourcesLocator {
        * This is because page index and absolute pages can be retrieved on
        * a pre-paginated content without having to load it.
        */
-      const itemIndex = this.reader.cfi.parseCfi(
-        cfiConsolidatedResource.meta.cfi,
-      )?.itemIndex
-      const item = this.reader.spineItemsManager.get(itemIndex)
+
+      const item = this.reader.spineItemsManager.get(
+        initialConsolidatedValue.meta.itemIndex ?? 0,
+      )
       const isReflowable = item?.renditionLayout === `reflowable`
 
       const release =
@@ -213,7 +225,7 @@ export class ResourcesLocator {
 
       const consolidate$ = this.reader.spine.layout$.pipe(
         debounceTime(10),
-        startWith(cfiConsolidatedResource),
+        startWith(initialConsolidatedValue),
         switchScan((acc) => {
           return consolidate(acc.meta, this.reader).pipe(
             map((consolidatedResource) => ({
@@ -221,7 +233,7 @@ export class ResourcesLocator {
               meta: consolidatedResource,
             })),
           )
-        }, cfiConsolidatedResource),
+        }, initialConsolidatedValue),
         shareReplay({ refCount: true, bufferSize: 1 }),
       )
 

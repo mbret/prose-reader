@@ -45,11 +45,10 @@ export const createNavigationResolver = ({
     cfi: string,
   ): DeprecatedViewportPosition | undefined => {
     const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
-    const { node, offset = 0 } =
-      resolveCfi({
-        cfi,
-        spineItemsManager,
-      }) || {}
+    const { node, offset = 0 } = resolveCfi({
+      cfi,
+      spineItemsManager,
+    })
 
     if (!spineItem) {
       Report.warn(NAMESPACE, `unable to detect item id from cfi ${cfi}`)

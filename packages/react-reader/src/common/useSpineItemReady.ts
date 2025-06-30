@@ -7,10 +7,10 @@ export const useSpineItemReady = ({
   itemIndex,
 }: { absolutePageIndex?: number; itemIndex?: number }) => {
   const { spineItem } = useSpineItem({ absolutePageIndex, itemIndex })
-  const isItemReady = useObserve(
+  const isReady = useObserve(
     () => spineItem?.isReady$ ?? of(false),
     [spineItem],
   )
 
-  return isItemReady
+  return { spineItem, isReady }
 }

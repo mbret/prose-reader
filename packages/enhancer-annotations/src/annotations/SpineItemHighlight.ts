@@ -75,7 +75,7 @@ export class SpineItemHighlight extends DestroyableClass {
     return this.resolvedCfi$.pipe(
       first(),
       map((resolvedCfi) => {
-        if (!resolvedCfi || !resolvedCfi.isRange) return undefined
+        if (!resolvedCfi || !resolvedCfi.isCfiRange) return undefined
 
         const range = resolvedCfi.range
 

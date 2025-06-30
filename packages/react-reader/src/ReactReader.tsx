@@ -1,7 +1,7 @@
 import { Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
-import { Bookmarks } from "./annotations/bookmarks/Bookmarks"
+import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { Toaster } from "./components/ui/toaster"
 import { GalleryDialog } from "./gallery/GalleryDialog"
@@ -89,7 +89,7 @@ export const ReactReader = ({
       )}
       <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
       <QuickMenu onItemClick={_onItemClick} />
-      <Bookmarks />
+      <BookmarkPageMarkers />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
       <TableOfContentsDialog
         open={isTableOfContentsOpen}

@@ -239,9 +239,7 @@ export class ManualNavigator {
     ...rest
   }: { absolutePageIndex: number } & Pick<UserNavigationEntry, "animation">) {
     const foundInfo =
-      this.reader.spine.locator.getSpineInfoFromAbsolutePageIndex({
-        absolutePageIndex,
-      })
+      this.reader.spine.pages.fromAbsolutePageIndex(absolutePageIndex)
 
     navigationReport.debug(`.goToAbsolutePageIndex()`, {
       absolutePageIndex,

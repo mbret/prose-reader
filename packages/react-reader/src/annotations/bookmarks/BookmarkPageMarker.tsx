@@ -16,7 +16,9 @@ export const BookmarkPageMarker = memo(
     top: number
     width: number
   }) => {
-    const isItemReady = useSpineItemReady({ absolutePageIndex })
+    const { isReady: isItemReady } = useSpineItemReady({
+      absolutePageIndex,
+    })
     const { data: bookmarks } = useAnnotations()
     const bookmarkForPage = bookmarks?.find(
       (bookmark) =>

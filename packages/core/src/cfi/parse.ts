@@ -32,23 +32,19 @@ const extractIndirectionPart = (parsedCfi: ParsedCfi) => {
       : undefined
 }
 
-export const parseCfi = (
-  cfi: string,
-): {
-  cleanedCfi: string
-  itemIndex?: number
-  offset?: number
-} => {
+export const parseCfi = (cfi: string) => {
   const parsedCfi = parse(cfi)
   const indirectionPart = extractIndirectionPart(parsedCfi)
   const itemIndexPart = (indirectionPart ?? [])[1]
   const parsedSpineItemIndex = itemIndexPart?.index ?? 2
   const spineItemIndex = parsedSpineItemIndex / 2 - 1
-  const offset = isParsedCfiRange(parsedCfi)
+  const isCfiRange = isParsedCfiRange(parsedCfi)
+  const offset = isCfiRange
     ? parsedCfi.end.at(-1)?.at(-1)?.offset
     : parsedCfi.at(-1)?.at(-1)?.offset
 
   return {
+    isCfiRange,
     cleanedCfi: cfi,
     itemIndex: spineItemIndex,
     offset: offset ?? 0,

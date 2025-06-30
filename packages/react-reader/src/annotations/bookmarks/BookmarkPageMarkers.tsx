@@ -4,7 +4,7 @@ import { Spine } from "../../common/Spine"
 import { useReader } from "../../context/useReader"
 import { BookmarkPageMarker } from "./BookmarkPageMarker"
 
-export const Bookmarks = memo(() => {
+export const BookmarkPageMarkers = memo(() => {
   const reader = useReader()
   const pages = useObserve(() => reader?.layoutInfo$, [reader])
 

@@ -1,5 +1,5 @@
-import { useMemo } from "react"
 import { useObserve } from "reactjrx"
+import { EMPTY, map, of } from "rxjs"
 import { useReader } from "../context/useReader"
 
 export const useSpineItem = ({
@@ -8,28 +8,22 @@ export const useSpineItem = ({
 }: { absolutePageIndex?: number; itemIndex?: number }) => {
   const reader = useReader()
 
-  const items = useObserve(
-    () => reader?.spine.spineItemsManager.items$,
-    [reader],
-  )
-
-  const spineItem = useMemo(() => {
-    void items
+  const spineItem = useObserve(() => {
+    if (!reader) return EMPTY
 
     if (itemIndex !== undefined)
-      return reader?.spine.spineItemsManager.get(itemIndex)
+      return of(reader.spine.spineItemsManager.get(itemIndex))
 
     if (absolutePageIndex !== undefined) {
-      const { itemIndex } =
-        reader?.spine.locator.getSpineInfoFromAbsolutePageIndex({
-          absolutePageIndex,
-        }) ?? {}
-
-      return reader?.spine.spineItemsManager.get(itemIndex)
+      return reader.spine.pages
+        .observeFromAbsolutePageIndex(absolutePageIndex)
+        .pipe(
+          map((page) => reader.spine.spineItemsManager.get(page?.itemIndex)),
+        )
     }
 
-    return undefined
-  }, [itemIndex, absolutePageIndex, reader, items])
+    return EMPTY
+  }, [itemIndex, absolutePageIndex, reader])
 
   return {
     spineItem,
