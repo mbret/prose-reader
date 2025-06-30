@@ -21,7 +21,7 @@ export const resolveCfi = ({
   spineItemsManager: SpineItemsManager
 }): Omit<ReturnType<typeof parseCfi>, "offset"> & {
   offset?: number | undefined
-  node?: Node | null
+  node: Node | null
   range?: Range | null
   spineItem?: SpineItem
 } => {
@@ -33,6 +33,7 @@ export const resolveCfi = ({
     return {
       ...restParsed,
       itemIndex,
+      node: null,
     }
 
   const rendererElement = spineItem.renderer.getDocumentFrame()
@@ -50,8 +51,8 @@ export const resolveCfi = ({
           ...restParsed,
           itemIndex,
           node: resolved.isRange
-            ? resolved.node?.startContainer
-            : resolved.node,
+            ? (resolved.node?.startContainer ?? null)
+            : (resolved.node ?? null),
           isCfiRange: resolved.isRange,
           range: resolved.isRange ? resolved.node : undefined,
           offset: Array.isArray(resolved.offset)
@@ -67,6 +68,7 @@ export const resolveCfi = ({
           ...restParsed,
           spineItem,
           itemIndex,
+          node: null,
         }
       }
     }
@@ -76,5 +78,6 @@ export const resolveCfi = ({
     ...restParsed,
     itemIndex,
     spineItem,
+    node: null,
   }
 }

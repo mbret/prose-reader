@@ -12,6 +12,7 @@ export const BookmarksList = ({ onNavigate }: { onNavigate: () => void }) => {
           key={item.resource.id}
           id={item.resource.id}
           onNavigate={onNavigate}
+          allowLeftIcon={false}
         />
       ))}
     </List.Root>

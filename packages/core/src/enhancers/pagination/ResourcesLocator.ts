@@ -27,7 +27,6 @@ export type ConsolidatedResource = ReturnType<typeof resolveCfi> &
     itemIndex?: number
     itemPageIndex?: number
     absolutePageIndex?: number
-    startNode?: Node
     startOffset?: number
     range?: Range | null
   }
@@ -43,6 +42,7 @@ const toCfiLocatableResource = (
       ...resource,
       ...restParsedCfi,
       itemIndex,
+      node: null,
     }
   }
 
@@ -60,6 +60,7 @@ const toCfiLocatableResource = (
     ...parsedCfi,
     cfi: generateRootCfi(item.item),
     itemIndex: item.index,
+    node: null,
   }
 }
 
@@ -115,7 +116,7 @@ export const consolidate = (
         ...restParsedCfi,
         range,
         itemIndex,
-        startNode: node ?? undefined,
+        node,
         startOffset,
         absolutePageIndex,
         itemPageIndex,

@@ -6,9 +6,12 @@ import { useAnnotation } from "./useAnnotation"
 export const AnnotationListItem = ({
   id,
   onNavigate,
-}: { id: string; onNavigate: () => void }) => {
+  allowLeftIcon = true,
+}: { id: string; onNavigate: () => void; allowLeftIcon?: boolean }) => {
   const reader = useReader()
   const { data: annotation } = useAnnotation(id)
+  const textContent =
+    annotation?.meta.range?.toString() || annotation?.meta.node?.textContent
 
   return (
     <List.Item>
@@ -24,21 +27,21 @@ export const AnnotationListItem = ({
           <List.Indicator asChild>
             <LuNotebookPen />
           </List.Indicator>
-        ) : (
+        ) : allowLeftIcon ? (
           <List.Indicator asChild visibility="hidden">
             <LuNotebookPen />
           </List.Indicator>
-        )}
+        ) : null}
         <Stack gap={0}>
-          <Text lineClamp={2} fontSize="md">
-            {annotation?.meta.range ? (
-              annotation?.meta.range.toString()
-            ) : (
-              <i>
-                <b>unknown (not loaded)</b>
-              </i>
-            )}
-          </Text>
+          {textContent ? (
+            <Text lineClamp={2} fontSize="md">
+              {textContent}
+            </Text>
+          ) : (
+            <Text lineClamp={2} fontSize="md" fontStyle="italic">
+              Page {(annotation?.meta.absolutePageIndex ?? 0) + 1}
+            </Text>
+          )}
           <Text
             fontStyle="italic"
             fontWeight="bold"

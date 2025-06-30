@@ -89,8 +89,8 @@ export const isPositionInArea = (
 
 export const calculatePageTurnLinearMargin = (screenWidth: number): number => {
   const minMargin = 0.15
-  const maxMargin = 0.3
-  const minWidth = 400
+  const maxMargin = 0.2
+  const minWidth = 320
   const maxWidth = 1200
 
   if (screenWidth <= minWidth) return maxMargin
