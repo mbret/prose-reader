@@ -61,7 +61,7 @@ export const registerTaps = ({
             )
 
           const spineItemPageInfo = positionInSpineNonTransformed
-            ? reader.spine.locator.getSpineItemPageInfoFromSpinePosition(
+            ? reader.spine.locator.getSpineItemPagePositionFromSpinePosition(
                 positionInSpineNonTransformed,
               )
             : undefined

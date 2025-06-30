@@ -225,7 +225,7 @@ export const createSpineLocator = ({
     })
   }
 
-  const getSpineItemPageInfoFromSpinePosition = (
+  const getSpineItemPagePositionFromSpinePosition = (
     spinePosition: UnsafeSpinePosition | SpinePosition,
   ) => {
     const spineItem = getSpineItemFromPosition({
@@ -310,7 +310,7 @@ export const createSpineLocator = ({
         spineItemsManager,
         spineLayout,
       }),
-    getSpineItemPageInfoFromSpinePosition,
+    getSpineItemPagePositionFromSpinePosition,
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,
     getSpineItemFromPosition: (position: SpinePosition) =>
