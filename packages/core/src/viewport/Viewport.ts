@@ -65,6 +65,15 @@ export class Viewport extends ReactiveEntity<State> {
     })
   }
 
+  public get scaleFactor() {
+    const absoluteViewport = this.absoluteViewport
+    const viewportRect = this.value.element.getBoundingClientRect()
+    const relativeScale =
+      (viewportRect?.width ?? absoluteViewport.width) / absoluteViewport.width
+
+    return relativeScale
+  }
+
   /**
    * Returns the relative viewport after eventual transforms.
    * For example if the viewport was zoomed out, we start seeing more left and right
@@ -81,9 +90,7 @@ export class Viewport extends ReactiveEntity<State> {
    */
   public get relativeViewport() {
     const absoluteViewport = this.absoluteViewport
-    const viewportRect = this.value.element.getBoundingClientRect()
-    const relativeScale =
-      (viewportRect?.width ?? absoluteViewport.width) / absoluteViewport.width
+    const relativeScale = this.scaleFactor
 
     return new RelativeViewport({
       width: absoluteViewport.width / relativeScale,

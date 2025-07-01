@@ -13,12 +13,11 @@ import {
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
-import { SpinePosition } from "../spine/types"
+import { UnsafeSpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { noopElement } from "../utils/dom"
+import type { Viewport } from "../viewport/Viewport"
 import type { Locker } from "./Locker"
 import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
-import { getScaledDownPosition } from "./controllers/getScaledDownPosition"
 import type { UserNavigationEntry } from "./types"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
@@ -40,6 +39,7 @@ export class UserScrollNavigation extends DestroyableClass {
     protected spine: Spine,
     protected scrollNavigationController: ScrollNavigationController,
     protected locker: Locker,
+    viewport: Viewport,
   ) {
     super()
 
@@ -65,22 +65,15 @@ export class UserScrollNavigation extends DestroyableClass {
           tap(() => {
             const targetElement = event.target as HTMLElement
 
-            /**
-             * Make sure to scale position to stay agnostic to potential zoom
-             */
-            const scaledDownPosition = getScaledDownPosition({
-              element: targetElement,
-              position: new SpinePosition({
-                x: targetElement.scrollLeft ?? 0,
-                y: targetElement.scrollTop ?? 0,
-              }),
-              spineElement: this.spine.element ?? noopElement(),
+            const spinePosition = new UnsafeSpinePosition({
+              x: targetElement.scrollLeft / viewport.scaleFactor,
+              y: targetElement.scrollTop / viewport.scaleFactor,
             })
 
             this.navigationSubject.next({
               animation: false,
               type: "scroll",
-              position: scaledDownPosition,
+              position: spinePosition,
             })
           }),
           finalize(() => {

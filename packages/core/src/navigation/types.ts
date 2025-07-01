@@ -1,10 +1,10 @@
-import type { SpinePosition } from "../spine/types"
+import type { SpinePosition, UnsafeSpinePosition } from "../spine/types"
 import type { SpineItemPosition } from "../spineItem/types"
 
 export type DeprecatedViewportPosition = SpinePosition
 
 export type UserNavigationEntry = {
-  position?: DeprecatedViewportPosition | SpinePosition
+  position?: DeprecatedViewportPosition | SpinePosition | UnsafeSpinePosition
   spineItem?: number | string
   url?: string | URL
   cfi?: string
@@ -38,7 +38,7 @@ export type NavigationConsolidation = {
    * Works with `positionInSpineItem`
    *
    * @forward : Used when the user navigate to position only. We will
-   * try to restore position starting from begining of item.
+   * try to restore position starting from beginning of item.
    *
    * @backward : Used when the user navigate to position only. We will
    * try to restore position starting from end of item.

@@ -61,6 +61,7 @@ export const createNavigator = ({
     spine,
     scrollNavigationController,
     locker,
+    viewport,
   )
 
   const userNavigation$ = merge(

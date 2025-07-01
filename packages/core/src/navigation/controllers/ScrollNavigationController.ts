@@ -27,12 +27,10 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
-import { noopElement } from "../../utils/dom"
 import { isDefined } from "../../utils/isDefined"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ViewportNavigationEntry } from "./ControlledNavigationController"
-import { getScaledDownPosition } from "./getScaledDownPosition"
 
 export class ScrollNavigationController extends ReactiveEntity<{
   element: HTMLElement | undefined
@@ -63,7 +61,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
         const element = document.createElement(`div`)
 
         // overflowX prevent the scroll bar on the bottom, effectively
-        // hiden a small x part on non mobile device.
+        // hidden a small x part on non mobile device.
         element.style.cssText = `
           height: 100%;
           width: 100%;
@@ -172,11 +170,18 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     this.scrollingSubject.next(true)
 
+    const scaleFactor = this.viewport.scaleFactor
+
+    const scaledPosition = new SpinePosition({
+      x: position.x * scaleFactor,
+      y: position.y * scaleFactor,
+    })
+
     // @todo use smooth later and adjust the class to avoid false positive
     // @todo see scrollend
     element?.scrollTo({
-      left: position.x,
-      top: position.y,
+      left: scaledPosition.x,
+      top: scaledPosition.y,
       behavior: "instant",
     })
 
@@ -209,20 +214,11 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     if (!element) return new SpinePosition({ x: 0, y: 0 })
 
-    /**
-     * We need to scale down cause a scrollbar might create inconsistency between navigation
-     * element and spine.
-     *
-     * @todo Don't remember why this is needed exactly, need to be explained once found
-     * out again.
-     */
-    return getScaledDownPosition({
-      element,
-      position: new SpinePosition({
-        x: element?.scrollLeft ?? 0,
-        y: element?.scrollTop ?? 0,
-      }),
-      spineElement: this.spine.element ?? noopElement(),
+    const scaleFactor = this.viewport.scaleFactor
+
+    return new SpinePosition({
+      x: element.scrollLeft / scaleFactor,
+      y: element.scrollTop / scaleFactor,
     })
   }
 }
