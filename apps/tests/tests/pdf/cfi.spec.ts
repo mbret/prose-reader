@@ -3,6 +3,11 @@ import type { Reader } from "@prose-reader/core"
 import { waitForSpineItemReady } from "../utils"
 
 test.describe("Given headless rendering", () => {
+  /**
+   * @case Got a wrong CFI when searching for "Introduction". Because I was
+   * adding a text layer div to the body. However we use the body as text layer in non headless.
+   * Resulting in a extra layer and wrong CFI.
+   */
   test("should return correct CFI", async ({ page }) => {
     await page.setViewportSize({
       width: 400,

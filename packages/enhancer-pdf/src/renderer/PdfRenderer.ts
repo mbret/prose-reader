@@ -283,9 +283,7 @@ export class PdfRenderer extends DocumentRenderer {
     return this.getPageProxy().pipe(
       switchMap((pageProxy) => {
         const headlessDocument = document.implementation.createHTMLDocument()
-        const textLayerElement = headlessDocument.createElement("div")
-
-        headlessDocument.body.appendChild(textLayerElement)
+        const textLayerElement = headlessDocument.body
 
         const textLayer = new TextLayer({
           container: textLayerElement,

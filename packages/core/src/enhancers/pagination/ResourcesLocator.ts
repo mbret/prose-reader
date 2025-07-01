@@ -78,7 +78,7 @@ export const consolidate = (
     withLatestFrom(spineItem.isReady$),
     map(([, isSpineItemReady]) => {
       const {
-        node,
+        node = null,
         offset: startOffset,
         range,
       } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi: resource.cfi }) : {}

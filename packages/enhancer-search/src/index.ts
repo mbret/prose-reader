@@ -3,16 +3,17 @@ import { defer, forkJoin, of } from "rxjs"
 import { catchError, finalize, map, switchMap } from "rxjs/operators"
 import { report } from "./report"
 import { searchInDocument } from "./search"
-import type { SearchEnhancerAPI } from "./types"
+import type { SearchResult } from "./search"
+import type { ResultItem, SearchEnhancerAPI } from "./types"
 
-export type { SearchEnhancerAPI }
+export type { SearchEnhancerAPI, ResultItem, SearchResult }
 
 /**
  * Contract of search enhancer.
  *
  * - At best a result match should be navigable. It means the search needs to
  * be done on a rendered document. This is because rendering can differ from the original
- * item resource. A resource can be something indigest and very specific (.pdf). The search
+ * item resource. A resource can be something non digestible and very specific (.pdf). The search
  * enhancer is agnostic and can only search into documents.
  */
 export const searchEnhancer =

@@ -1,10 +1,10 @@
-import { Box, Heading, Input, Stack, Text } from "@chakra-ui/react"
+import { Input, Stack, Text } from "@chakra-ui/react"
 import type React from "react"
-import { memo, useCallback, useState } from "react"
+import { memo, useCallback } from "react"
 import { useObserve } from "reactjrx"
-import { map, startWith } from "rxjs"
-import { hasSearchEnhancer, useReader } from "../context/useReader"
+import { useReader } from "../context/useReader"
 import { SearchListItem } from "./SearchListItem"
+import { useSearch } from "./useSearch"
 
 export const SearchDialogContent = memo(
   ({
@@ -12,12 +12,11 @@ export const SearchDialogContent = memo(
   }: {
     onNavigate: () => void
   }) => {
-    const [text, setText] = useState("")
     const reader = useReader()
-    const readerWithSearch = hasSearchEnhancer(reader) ? reader : undefined
+    const { value: searchValue, setValue, status, data } = useSearch()
 
     const onValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setText(e.target.value)
+      setValue(e.target.value)
     }
 
     const onClick = useCallback(
@@ -28,45 +27,36 @@ export const SearchDialogContent = memo(
       [reader, onNavigate],
     )
 
-    const search = useObserve(
-      () =>
-        readerWithSearch?.search.search(text).pipe(
-          map((data) => ({ type: `end` as const, data })),
-          startWith({ type: `start` as const }),
-        ),
-      [reader, text],
-    )
-    const searching = search?.type === "start"
-    const results = search?.type === "end" ? search.data : []
     const consolidatedResults = useObserve(
-      () => reader?.locateResource(results.slice(0, 100)),
-      [results],
+      () => reader?.locateResource(data?.slice(0, 100) ?? []),
+      [data],
     )
 
     return (
-      <Stack flex={1} height="100%">
-        <Box px={4}>
-          <Input
-            placeholder="Type something..."
-            value={text}
-            onChange={onValueChange}
-            borderRadius={0}
-          />
-        </Box>
-        <Box
-          px={4}
-          pb={4}
-          mt={2}
-          flex={1}
+      <Stack flex={1} height="100%" gap={2}>
+        <Input
+          placeholder="Type something..."
+          value={searchValue}
+          onChange={onValueChange}
+          flexShrink={0}
+          variant="subtle"
+          name="search"
+          focusRing="none"
+          focusVisibleRing="none"
+          outline="none"
+          focusRingColor="transparent"
+        />
+        <Stack
           style={{ overflow: "hidden", overflowY: "auto" }}
+          overflow="auto"
+          px={4}
+          flex={1}
         >
-          {searching && <Text>Searching ...</Text>}
-          {!searching && results.length === 0 && <p>There are no results</p>}
-          {!searching && results.length >= 0 && (
+          {status === "start" && <Text>Searching ...</Text>}
+          {data?.length === 0 && <Text>No results</Text>}
+          {status === "end" && (data?.length ?? 0) > 0 && (
             <Stack>
-              <Heading as="h2" size="md">
-                {results.length} result(s)
-              </Heading>
+              <Text fontSize="md">{data?.length} result(s)</Text>
               <Stack gap={0}>
                 {consolidatedResults?.map((result, j) => {
                   return (
@@ -78,7 +68,7 @@ export const SearchDialogContent = memo(
                       }
                       pageIndex={result.meta?.itemPageIndex}
                       startOffset={result.meta?.range?.startOffset ?? 0}
-                      text={text}
+                      text={searchValue}
                       cfi={result.meta.cfi}
                       onClick={onClick}
                       absolutePageIndex={result.meta?.absolutePageIndex}
@@ -88,7 +78,7 @@ export const SearchDialogContent = memo(
               </Stack>
             </Stack>
           )}
-        </Box>
+        </Stack>
       </Stack>
     )
   },
