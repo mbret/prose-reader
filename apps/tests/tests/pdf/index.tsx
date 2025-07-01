@@ -5,7 +5,7 @@ import { generateManifestFromArchive } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
-import { of } from "rxjs"
+import { lastValueFrom, of } from "rxjs"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,
@@ -39,6 +39,8 @@ async function run() {
 
   // @ts-expect-error export for debug
   window.reader = reader
+  // @ts-expect-error export for debug
+  window.lastValueFrom = lastValueFrom
 }
 
 run()

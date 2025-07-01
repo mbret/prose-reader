@@ -35,7 +35,7 @@ export const SearchDialog = memo(
           <DialogHeader>
             <DialogTitle>Search</DialogTitle>
           </DialogHeader>
-          <DialogBody flex={1}>
+          <DialogBody flex={1} p={0}>
             <SearchDialogContent onNavigate={onNavigate} />
           </DialogBody>
           <DialogFooter>
