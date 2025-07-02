@@ -39,7 +39,7 @@
     "rollup-plugin-node-externals": "^8.0.0",
     "rxjs": "*",
     "serve": "^14.2.0",
-    "vite": "^6.0.0",
+    "vite": "^7",
     "vite-plugin-dts": "^4.0.3",
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-svgr": "^4.2.0",

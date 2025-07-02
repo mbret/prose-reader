@@ -4,7 +4,9 @@ import type { LocalSettings } from "./useLocalSettings"
 
 export const useUpdateReaderSettings = ({
   localSettings,
-}: { localSettings: LocalSettings }) => {
+}: {
+  localSettings: LocalSettings
+}) => {
   const { reader } = useReader()
 
   useEffect(() => {

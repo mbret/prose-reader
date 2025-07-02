@@ -2,7 +2,9 @@
   "name": "@prose-reader/cfi",
   "version": "1.234.0",
   "type": "module",
-  "files": ["/dist"],
+  "files": [
+    "/dist"
+  ],
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
   "exports": {
@@ -21,6 +23,6 @@
   "devDependencies": {
     "jsdom": "^26.1.0",
     "typescript": "~5.8.3",
-    "vite": "^6.3.1"
+    "vite": "^7"
   }
 }

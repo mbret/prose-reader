@@ -24,7 +24,10 @@ export const detectMimeTypeFromName = (name: string) => {
 export const isXmlBasedMimeType = ({
   mimeType,
   uri,
-}: { uri?: string; mimeType?: string }) => {
+}: {
+  uri?: string
+  mimeType?: string
+}) => {
   const _mimeType = mimeType ?? detectMimeTypeFromName(uri ?? "")
 
   return _mimeType?.startsWith(`application/xhtml+xml`)

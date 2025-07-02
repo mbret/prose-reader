@@ -7,7 +7,9 @@
   "exports": {
     ".": "./dist/index.js"
   },
-  "files": ["/dist"],
+  "files": [
+    "/dist"
+  ],
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "tsc -b && vite build"
@@ -20,7 +22,7 @@
     "react-dom": "^19.0.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "typescript": "*",
-    "vite": "^6.0.5"
+    "vite": "^7"
   },
   "peerDependencies": {
     "@chakra-ui/react": "3.x",
