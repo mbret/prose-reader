@@ -1,9 +1,9 @@
-import { type Reader, deferIdle } from "@prose-reader/core"
+import { deferIdle, type Reader } from "@prose-reader/core"
 import { defer, forkJoin, of } from "rxjs"
 import { catchError, finalize, map, switchMap } from "rxjs/operators"
 import { report } from "./report"
-import { searchInDocument } from "./search"
 import type { SearchResult } from "./search"
+import { searchInDocument } from "./search"
 import type { ResultItem, SearchEnhancerAPI } from "./types"
 
 export type { SearchEnhancerAPI, ResultItem, SearchResult }
@@ -30,7 +30,7 @@ export const searchEnhancer =
         return of([])
       }
 
-      return deferIdle(() => item.renderer.renderHeadless()).pipe(
+      return deferIdle(() => reader.renderHeadless(index)).pipe(
         switchMap((result) => {
           const { doc, release } = result || {}
 

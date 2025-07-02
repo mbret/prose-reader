@@ -1,4 +1,4 @@
-import { type Observable, type ObservedValueOf, Subject } from "rxjs"
+import { type Observable, type ObservedValueOf, of, Subject } from "rxjs"
 import { map } from "rxjs/operators"
 import {
   generateCfiForSpineItemPage,
@@ -20,7 +20,7 @@ import type { CoreInputSettings } from "./settings/types"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
-import type { SpineItem } from "./spineItem/SpineItem"
+import type { SpineItem, SpineItemReference } from "./spineItem/SpineItem"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
