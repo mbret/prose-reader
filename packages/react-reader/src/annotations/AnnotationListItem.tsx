@@ -7,7 +7,11 @@ export const AnnotationListItem = ({
   id,
   onNavigate,
   allowLeftIcon = true,
-}: { id: string; onNavigate: () => void; allowLeftIcon?: boolean }) => {
+}: {
+  id: string
+  onNavigate: () => void
+  allowLeftIcon?: boolean
+}) => {
   const reader = useReader()
   const { data: annotation } = useAnnotation(id)
   const textContent =

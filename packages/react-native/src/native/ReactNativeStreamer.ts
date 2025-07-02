@@ -4,7 +4,10 @@ export class ReactNativeStreamer extends Streamer {
   async fetchResourceAsData({
     key,
     resourcePath,
-  }: { key: string; resourcePath: string }) {
+  }: {
+    key: string
+    resourcePath: string
+  }) {
     const resource = await super.fetchResource({ key, resourcePath })
 
     return {

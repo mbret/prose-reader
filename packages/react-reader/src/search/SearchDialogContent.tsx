@@ -7,11 +7,7 @@ import { SearchListItem } from "./SearchListItem"
 import { useSearch } from "./useSearch"
 
 export const SearchDialogContent = memo(
-  ({
-    onNavigate,
-  }: {
-    onNavigate: () => void
-  }) => {
+  ({ onNavigate }: { onNavigate: () => void }) => {
     const reader = useReader()
     const { value: searchValue, setValue, status, data } = useSearch()
 

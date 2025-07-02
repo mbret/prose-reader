@@ -17,13 +17,7 @@ import { useReader } from "../context/useReader"
 import { useAttachSnapshot } from "./useAttachSnapshot"
 
 const GalleryItem = memo(
-  ({
-    item,
-    onNavigated,
-  }: {
-    item: SpineItem
-    onNavigated: () => void
-  }) => {
+  ({ item, onNavigated }: { item: SpineItem; onNavigated: () => void }) => {
     const [setElement, measures, element] = useMeasure()
     const reader = useReader()
 
@@ -75,13 +69,7 @@ const GalleryItem = memo(
 )
 
 export const GalleryDialog = memo(
-  ({
-    open,
-    setOpen,
-  }: {
-    open: boolean
-    setOpen: (open: boolean) => void
-  }) => {
+  ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
     const reader = useReader()
     const items = useObserve(() => reader?.spineItemsManager.items$, [reader])
 

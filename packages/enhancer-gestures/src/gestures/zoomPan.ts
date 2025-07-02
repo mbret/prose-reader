@@ -5,7 +5,10 @@ import { filter, switchMap, tap } from "rxjs"
 export const registerZoomPan = ({
   reader,
   recognizer,
-}: { recognizer: PanRecognizer; reader: Reader }) => {
+}: {
+  recognizer: PanRecognizer
+  reader: Reader
+}) => {
   const panStart$ = recognizer.events$.pipe(
     filter((event) => event.type === "panStart"),
   )

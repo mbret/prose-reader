@@ -5,7 +5,10 @@ import { useReader } from "../context/useReader"
 export const useSpineItem = ({
   absolutePageIndex,
   itemIndex,
-}: { absolutePageIndex?: number; itemIndex?: number }) => {
+}: {
+  absolutePageIndex?: number
+  itemIndex?: number
+}) => {
   const reader = useReader()
 
   const spineItem = useObserve(() => {

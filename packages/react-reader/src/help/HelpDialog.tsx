@@ -1,4 +1,4 @@
-import { Button, HStack, Heading, Kbd, Text } from "@chakra-ui/react"
+import { Button, Heading, HStack, Kbd, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { LuArrowBigLeft, LuArrowBigRight } from "react-icons/lu"
 import { name, version } from "../../package.json"
@@ -14,13 +14,7 @@ import {
 } from "../components/ui/dialog"
 
 export const HelpDialog = memo(
-  ({
-    open,
-    setOpen,
-  }: {
-    open: boolean
-    setOpen: (open: boolean) => void
-  }) => {
+  ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
     return (
       <DialogRoot
         lazyMount

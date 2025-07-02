@@ -1,6 +1,4 @@
-import { Link, Stack, Text } from "@chakra-ui/react"
-
-import { List } from "@chakra-ui/react"
+import { Link, List, Stack, Text } from "@chakra-ui/react"
 import React, { memo } from "react"
 import { LuCircleCheck } from "react-icons/lu"
 import { useObserve } from "reactjrx"
@@ -8,11 +6,7 @@ import { useReader } from "../context/useReader"
 import { usePagination } from "../pagination/usePagination"
 
 export const TableOfContentsDialogContent = memo(
-  ({
-    onNavigate,
-  }: {
-    onNavigate: () => void
-  }) => {
+  ({ onNavigate }: { onNavigate: () => void }) => {
     const reader = useReader()
     const { manifest, assumedRenditionLayout } =
       useObserve(() => reader?.context.state$, [reader]) ?? {}
