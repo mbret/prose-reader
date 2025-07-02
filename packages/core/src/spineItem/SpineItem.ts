@@ -1,4 +1,4 @@
-import { type Observable, merge } from "rxjs"
+import { merge, type Observable } from "rxjs"
 import {
   distinctUntilChanged,
   filter,
@@ -16,11 +16,11 @@ import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { SpineItemLayout } from "./SpineItemLayout"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 import { ResourceHandler } from "./resources/ResourceHandler"
+import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 

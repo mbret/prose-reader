@@ -2,7 +2,7 @@ import { BehaviorSubject } from "rxjs"
 import { parseCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { SpineItem } from "../spineItem/SpineItem"
+import { SpineItem, type SpineItemReference } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 
 export class SpineItemsManager extends DestroyableClass {
@@ -16,7 +16,7 @@ export class SpineItemsManager extends DestroyableClass {
   protected orderedSpineItemsSubject = new BehaviorSubject<SpineItem[]>([])
   public items$ = this.orderedSpineItemsSubject.asObservable()
 
-  get(indexOrId: number | string | SpineItem | undefined) {
+  get(indexOrId: SpineItemReference | undefined) {
     if (typeof indexOrId === "number") {
       return this.orderedSpineItemsSubject.value[indexOrId]
     }

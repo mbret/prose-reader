@@ -19,8 +19,8 @@ import type { SettingsInterface } from "./settings/SettingsInterface"
 import type { CoreInputSettings } from "./settings/types"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
-import type { SpineItem } from "./spineItem/SpineItem"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
+import type { SpineItem } from "./spineItem/SpineItem"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
@@ -200,6 +200,12 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       NonNullable<(typeof settingsManager)["inputSettings"]>,
       NonNullable<(typeof settingsManager)["outputSettings"]>
     >,
+    renderHeadless: (spineItem: SpineItemReference) => {
+      return (
+        spineItemsManager.get(spineItem)?.renderer.renderHeadless() ??
+        of(undefined)
+      )
+    },
     viewport,
     element$,
     viewportState$: context.bridgeEvent.viewportState$,
