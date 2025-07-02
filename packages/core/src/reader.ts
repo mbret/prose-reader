@@ -1,5 +1,5 @@
 import { type Observable, type ObservedValueOf, of, Subject } from "rxjs"
-import { map } from "rxjs/operators"
+import { map, tap } from "rxjs/operators"
 import {
   generateCfiForSpineItemPage,
   generateCfiFromRange,
@@ -32,6 +32,7 @@ export type ContextSettings = Partial<CoreInputSettings>
 export type ReaderInternal = ReturnType<typeof createReader>
 
 export const createReader = (inputSettings: CreateReaderOptions) => {
+  const layoutSubject = new Subject<void>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
   const context = new Context()
@@ -45,7 +46,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     settings: settingsManager,
   })
   const pagination = new Pagination(context, spineItemsManager)
-
   const spine = new Spine(
     element$,
     context,
@@ -56,7 +56,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     hookManager,
     viewport,
   )
-
   const navigator = createNavigator({
     context,
     spineItemsManager,
@@ -65,7 +64,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     settings: settingsManager,
     viewport,
   })
-
   const paginationController = new PaginationController(
     context,
     pagination,
@@ -83,35 +81,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {
-    const containerElement = context.value.rootElement
-
-    if (!containerElement) return
-
-    const dimensions = {
-      width: containerElement?.offsetWidth,
-      height: containerElement?.offsetHeight,
-    }
-    const margin = 0
-    const marginTop = 0
-    const marginBottom = 0
-
-    containerElement.style.setProperty(`overflow`, `hidden`)
-
-    if (margin > 0 || marginTop > 0 || marginBottom > 0) {
-      containerElement.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
-    }
-    const elementRect = containerElement.getBoundingClientRect()
-
-    context.update({
-      visibleAreaRect: {
-        x: elementRect.x,
-        y: elementRect.y,
-        width: dimensions.width,
-        height: dimensions.height,
-      },
-    })
-
-    spine.layout()
+    layoutSubject.next()
   }
 
   const load = (
@@ -140,6 +110,42 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     layout()
   }
 
+  const onLayout$ = layoutSubject.pipe(
+    tap(() => {
+      const containerElement = context.value.rootElement
+
+      if (!containerElement) return
+
+      const dimensions = {
+        width: containerElement?.offsetWidth,
+        height: containerElement?.offsetHeight,
+      }
+      const margin = 0
+      const marginTop = 0
+      const marginBottom = 0
+
+      containerElement.style.setProperty(`overflow`, `hidden`)
+
+      if (margin > 0 || marginTop > 0 || marginBottom > 0) {
+        containerElement.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
+      }
+      const elementRect = containerElement.getBoundingClientRect()
+
+      context.update({
+        visibleAreaRect: {
+          x: elementRect.x,
+          y: elementRect.y,
+          width: dimensions.width,
+          height: dimensions.height,
+        },
+      })
+
+      spine.layout()
+    }),
+  )
+
+  const subs = onLayout$.subscribe()
+
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
@@ -150,6 +156,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
    * instead of destroying it.
    */
   const destroy = () => {
+    subs.unsubscribe()
     spineItemsManager.destroy()
     paginationController.destroy()
     settingsManager.destroy()
