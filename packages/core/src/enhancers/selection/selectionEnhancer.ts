@@ -1,11 +1,11 @@
 import { isDefined } from "reactjrx"
 import {
-  type Observable,
   distinctUntilChanged,
   filter,
   fromEvent,
   map,
   merge,
+  type Observable,
   share,
   shareReplay,
   startWith,
@@ -60,7 +60,7 @@ export const selectionEnhancer =
     }
   } => {
     const reader = next(options)
-    let lasSelection: SelectionValue = undefined
+    let lasSelection: SelectionValue
 
     const trackedSelection$ = reader.spineItemsManager.items$.pipe(
       switchMap((spineItems) => {

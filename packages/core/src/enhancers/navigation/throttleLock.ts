@@ -10,7 +10,7 @@ import type { Reader } from "../../reader"
 export const throttleLock =
   ({ reader, duration }: { reader: Reader; duration: number }) =>
   <T>(stream: Observable<T>) => {
-    let unlockFn: (() => void) | undefined = undefined
+    let unlockFn: (() => void) | undefined
     const unlock = () => {
       unlockFn?.()
       unlockFn = undefined

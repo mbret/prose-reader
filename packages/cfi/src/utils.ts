@@ -40,7 +40,7 @@ export function findCommonAncestor(nodeA: Node, nodeB: Node): Node | null {
  * Special characters in CFI that need to be escaped according to the spec
  * These are: [ ] ^ , ( ) ;
  */
-export const CFI_SPECIAL_CHARS = /[\[\]\^,();]/g
+export const CFI_SPECIAL_CHARS = /[[\]^,();]/g
 
 /**
  * Escape special characters in a CFI string

@@ -18,8 +18,7 @@ export const getSpineItemInfo = (
   const properties = (itemRefElement.attr.properties?.split(` `) ||
     []) as SpineItemProperties[]
 
-  let renditionLayout: Manifest["spineItems"][number]["renditionLayout"] =
-    undefined
+  let renditionLayout: Manifest["spineItems"][number]["renditionLayout"]
 
   if (
     properties.find((property) => property === `rendition:layout-reflowable`)

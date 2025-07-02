@@ -83,7 +83,7 @@ export function shallowMergeIfDefined<T, U>(obj1: T, obj2: U): T & U {
   const result = { ...obj1 } as T & U
 
   for (const key in obj2) {
-    if (Object.prototype.hasOwnProperty.call(obj2, key)) {
+    if (Object.hasOwn(obj2, key)) {
       // biome-ignore lint/suspicious/noExplicitAny: TODO
       const value = (obj2 as any)[key]
       // @ts-ignore
