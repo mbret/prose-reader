@@ -10,18 +10,6 @@ import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 import { renderReflowable } from "./reflowable/renderReflowable"
 
 export class HtmlRenderer extends DocumentRenderer {
-  /**
-   * This value is being used to avoid item to shrink back to smaller size when getting a layout after
-   * the content has been loaded.
-   * This means when previous content get unload, the user does not end up farther than he should be due to previous content
-   * shrinking.
-   *
-   * @important
-   * For now it's only used for continuous-scroll as experimental test. This could potentially solve the sliding
-   * issue with reflow content as wel.
-   */
-  latestContentHeightWhenLoaded: number | undefined
-
   onCreateDocument() {
     const frameElement = createFrameElement()
 
@@ -98,7 +86,7 @@ export class HtmlRenderer extends DocumentRenderer {
       return of(dims)
     }
 
-    const { latestContentHeightWhenLoaded, ...rest } = renderReflowable({
+    const dims = renderReflowable({
       pageHeight,
       pageWidth,
       frameElement,
@@ -106,15 +94,12 @@ export class HtmlRenderer extends DocumentRenderer {
       blankPagePosition,
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),
-      latestContentHeightWhenLoaded: this.latestContentHeightWhenLoaded,
       minPageSpread,
       isImageType: this.isImageType(),
       enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
     })
 
-    this.latestContentHeightWhenLoaded = latestContentHeightWhenLoaded
-
-    return of(rest)
+    return of(dims)
   }
 
   onRenderHeadless() {

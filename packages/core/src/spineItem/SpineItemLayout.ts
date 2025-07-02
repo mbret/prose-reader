@@ -1,13 +1,13 @@
-import { type Manifest, isShallowEqual } from "@prose-reader/shared"
+import { isShallowEqual, type Manifest } from "@prose-reader/shared"
 import {
-  type Observable,
-  type ObservedValueOf,
-  Subject,
   filter,
   first,
   map,
   merge,
+  type Observable,
+  type ObservedValueOf,
   of,
+  Subject,
   share,
   switchMap,
 } from "rxjs"

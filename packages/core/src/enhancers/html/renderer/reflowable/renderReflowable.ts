@@ -1,11 +1,11 @@
 import type { Manifest } from "@prose-reader/shared"
+import { upsertCSSToFrame } from "../../../../utils/frames"
+import { getViewPortInformation } from "../prePaginated/renderPrePaginated"
 import {
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,
   buildStyleWithMultiColumn,
 } from "./styles"
-import { getViewPortInformation } from "../prePaginated/renderPrePaginated"
-import { upsertCSSToFrame } from "../../../../utils/frames"
 
 const getDimensionsForReflowableContent = ({
   isUsingVerticalWriting,
@@ -55,7 +55,6 @@ export const renderReflowable = ({
   pageWidth,
   frameElement,
   manifest,
-  latestContentHeightWhenLoaded,
   minPageSpread,
   isRTL,
   blankPagePosition,
@@ -69,25 +68,23 @@ export const renderReflowable = ({
   frameElement: HTMLIFrameElement
   manifest?: Manifest
   minPageSpread: number
-  latestContentHeightWhenLoaded: number | undefined
   isRTL: boolean
   isImageType: boolean
   enableTouch: boolean
   isUsingVerticalWriting: boolean
 }) => {
   const minimumWidth = minPageSpread * pageWidth
-  let newLatestContentHeightWhenLoaded = latestContentHeightWhenLoaded
   const continuousScrollableReflowableItem =
     manifest?.renditionLayout === "reflowable" &&
     manifest?.renditionFlow === "scrolled-continuous"
 
   /**
-   * In case of reflowable with continous scrolling, we don't know if the content is
+   * In case of reflowable with continuous scrolling, we don't know if the content is
    * bigger or smaller than the page size, therefore we find a middle ground to have
    * a pre-load page that is not too big nor too small to prevent weird jumping
    * once the frame load.
    *
-   * We also use a minimum height still becaues we don't want all of the items to
+   * We also use a minimum height still because we don't want all of the items to
    * preload since they would be in the current viewport.
    *
    * @todo make it a setting
@@ -100,11 +97,13 @@ export const renderReflowable = ({
   frameElement?.style.setProperty(`width`, `${pageWidth}px`)
 
   /**
-   * In case of reflowable with continous scrolling, we let the frame takes whatever height
-   * it needs since it could be less or more than page size and we want a continous reading
+   * In case of reflowable with continuous scrolling, we let the frame takes whatever height
+   * it needs since it could be less or more than page size and we want a continuous reading
    */
   if (!continuousScrollableReflowableItem) {
     frameElement?.style.setProperty(`height`, `${pageHeight}px`)
+  } else {
+    frameElement?.style.removeProperty(`height`)
   }
 
   const { viewportDimensions, computedScale = 1 } =
@@ -188,7 +187,6 @@ export const renderReflowable = ({
          * as the current frame set height which may be wrong after resize.
          */
         contentHeight = frameElement.contentDocument.body.scrollHeight
-        newLatestContentHeightWhenLoaded = contentHeight
 
         staticLayout(frameElement, {
           width: minimumWidth,
@@ -235,11 +233,5 @@ export const renderReflowable = ({
     return { width: contentWidth, height: contentHeight }
   }
 
-  const height = newLatestContentHeightWhenLoaded || pageHeight
-
-  return {
-    width: minimumWidth,
-    height,
-    latestContentHeightWhenLoaded: newLatestContentHeightWhenLoaded,
-  }
+  return undefined
 }
