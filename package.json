@@ -20,9 +20,12 @@
     "misc:check-pack": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz",
     "prepare": "husky"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.0.0",
     "@types/jest": "^29.4.0",
     "@types/node": "^22.8.6",
     "@types/rollup-plugin-node-builtins": "^2.1.2",
