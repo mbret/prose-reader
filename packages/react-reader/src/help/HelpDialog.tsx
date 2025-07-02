@@ -1,4 +1,4 @@
-import { Button, Heading, HStack, Kbd, Text } from "@chakra-ui/react"
+import { Button, Heading, HStack, Kbd, Stack, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { LuArrowBigLeft, LuArrowBigRight } from "react-icons/lu"
 import { name, version } from "../../package.json"
@@ -28,28 +28,46 @@ export const HelpDialog = memo(
           <DialogHeader>
             <DialogTitle>Help</DialogTitle>
           </DialogHeader>
-          <DialogBody overflowY="auto" flex={1}>
-            <Heading mb={2} as="h3" size="lg">
-              Shortcuts
-            </Heading>
-            <HStack mb={1}>
-              <Kbd>
-                <LuArrowBigRight />
-              </Kbd>{" "}
-              <Text>Navigate to right page</Text>
-            </HStack>
-            <HStack mb={1}>
-              <Kbd>
-                <LuArrowBigLeft />
-              </Kbd>{" "}
-              <Text>Navigate to left page</Text>
-            </HStack>
-            <Heading mb={2} mt={4} as="h3" size="lg">
-              About
-            </Heading>
-            <Text>
-              {name} version: {version}
-            </Text>
+          <DialogBody
+            overflowY="auto"
+            flex={1}
+            display="flex"
+            flexDirection="column"
+            gap={4}
+          >
+            <Stack>
+              <Heading mb={2} as="h3" size="lg">
+                Shortcuts
+              </Heading>
+              <HStack mb={1}>
+                <Kbd>
+                  <LuArrowBigRight />
+                </Kbd>{" "}
+                <Text>Navigate to right page</Text>
+              </HStack>
+              <HStack mb={1}>
+                <Kbd>
+                  <LuArrowBigLeft />
+                </Kbd>{" "}
+                <Text>Navigate to left page</Text>
+              </HStack>
+            </Stack>
+            <Stack>
+              <Heading mb={2} as="h3" size="lg">
+                Bookmarks
+              </Heading>
+              <HStack mb={1}>
+                <Text>Tap on the top right corner of a page bookmark it</Text>
+              </HStack>
+            </Stack>
+            <Stack>
+              <Heading mb={2} as="h3" size="lg">
+                About
+              </Heading>
+              <Text>
+                {name} version: {version}
+              </Text>
+            </Stack>
           </DialogBody>
           <DialogFooter>
             <DialogActionTrigger asChild>
