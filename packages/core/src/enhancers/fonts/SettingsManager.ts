@@ -28,8 +28,13 @@ export class SettingsManager<
   getCleanedParentInputSettings(
     settings: Partial<EnhancerFontsInputSettings & ParentInputSettings>,
   ): ParentInputSettings {
-    const { fontJustification, fontScale, fontWeight, lineHeight, ...rest } =
-      settings
+    const {
+      fontJustification: _unused1,
+      fontScale: _unused2,
+      fontWeight: _unused3,
+      lineHeight: _unused4,
+      ...rest
+    } = settings
 
     return rest as unknown as ParentInputSettings
   }

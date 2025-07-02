@@ -1,23 +1,23 @@
 import {
-  Observable,
   combineLatest,
   map,
+  Observable,
   share,
   switchMap,
   takeUntil,
   withLatestFrom,
 } from "rxjs"
 import type { Context } from "../context/Context"
-import type { SpineItem } from "../spineItem/SpineItem"
 import type { SpineItemLocator } from "../spineItem/locationResolver"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { SpineItemPageLayout } from "../spineItem/types"
-import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { getFirstVisibleNodeForPositionRelativeTo } from "../utils/dom"
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 import type { Viewport } from "../viewport/Viewport"
-import type { SpineItemsManager } from "./SpineItemsManager"
-import type { SpineLayout } from "./SpineLayout"
 import type { SpineLocator } from "./locator/SpineLocator"
 import { Report } from "./report"
+import type { SpineItemsManager } from "./SpineItemsManager"
+import type { SpineLayout } from "./SpineLayout"
 import { SpineItemPageSpineLayout, type SpinePosition } from "./types"
 
 export const spinePositionToSpineItemSpineLayout = ({
@@ -124,7 +124,7 @@ export class Pages extends ReactiveEntity<State> {
 
         const pages$ = combineLatest(
           pages.map((page) => {
-            const { spineItem, ...rest } = page
+            const { spineItem: _unused, ...rest } = page
 
             return new Observable<PageEntry>((subscriber) => {
               const frame = page.spineItem.renderer?.getDocumentFrame()

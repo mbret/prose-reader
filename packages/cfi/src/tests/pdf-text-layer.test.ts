@@ -112,12 +112,12 @@ describe("Given a pdf text layer document", () => {
 
     const cfi = generate({
       start: {
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        // biome-ignore lint/style/noNonNullAssertion: TODO
         node: firstTextNode!,
         offset: 28,
       },
       end: {
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        // biome-ignore lint/style/noNonNullAssertion: TODO
         node: secondTextNode!,
         offset: 33,
       },

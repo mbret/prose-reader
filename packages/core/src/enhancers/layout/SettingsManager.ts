@@ -29,11 +29,11 @@ export class SettingsManager<
     settings: Partial<EnhancerLayoutInputSettings & ParentInputSettings>,
   ): ParentInputSettings {
     const {
-      layoutAutoResize,
-      pageHorizontalMargin,
-      pageVerticalMargin,
-      layoutLayerTransition,
-      viewportMode,
+      layoutAutoResize: _unused1,
+      pageHorizontalMargin: _unused2,
+      pageVerticalMargin: _unused3,
+      layoutLayerTransition: _unused4,
+      viewportMode: _unused5,
       ...rest
     } = settings
 

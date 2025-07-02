@@ -20,15 +20,15 @@ function isGlobalDebugEnabled() {
 
 type Report = {
   namespace: (namespace: string, enabled?: boolean) => Report
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   debug: (...args: any[]) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   info: (...args: any[]) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   log: (...args: any[]) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   warn: (...args: any[]) => void
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
   error: (...args: any[]) => void
 }
 

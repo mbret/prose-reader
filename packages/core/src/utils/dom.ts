@@ -384,7 +384,7 @@ export function hasShape<T>(
 
   // Check optional methods are functions
   for (const method of optionalMethods) {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: TODO
     if (method in obj && typeof (obj as any)[method] !== "function") {
       return false
     }
@@ -409,7 +409,7 @@ export function isHtmlElement(element: unknown): element is HTMLElement {
       element,
       ["nodeType"],
       [],
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: TODO
     ) && (element as any).nodeType === Node.ELEMENT_NODE
   )
 }

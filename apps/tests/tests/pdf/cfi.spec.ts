@@ -19,14 +19,14 @@ test.describe("Given headless rendering", () => {
     await waitForSpineItemReady(page, [0])
 
     const cfi = await page.evaluate(async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: TODO
       const reader = (window as any).reader as Reader
 
       const spineItem = reader.spine.spineItemsManager.get(0)
 
       if (!spineItem) throw new Error("Spine item not found")
 
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: TODO
       const headlessRenderResult = await (window as any).lastValueFrom(
         spineItem.renderer.renderHeadless(),
       )
