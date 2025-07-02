@@ -1,16 +1,16 @@
+import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import {
+  distinctUntilChanged,
   type Observable,
   Subject,
-  distinctUntilChanged,
   shareReplay,
 } from "rxjs"
-import type { SettingsInterface } from "./SettingsInterface"
-import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { mapKeysTo } from "../utils/rxjs"
+import type { SettingsInterface } from "./SettingsInterface"
 
 export abstract class SettingsManager<
-    InputSettings,
+    InputSettings extends object,
     OutputSettings extends Record<string, unknown>,
   >
   extends DestroyableClass

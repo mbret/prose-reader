@@ -1,11 +1,11 @@
 import { takeUntil } from "rxjs"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
-import { ResourcesLocator } from "./ResourcesLocator"
 import { trackPaginationInfo } from "./pagination"
+import { ResourcesLocator } from "./ResourcesLocator"
 import type { PaginationEnhancerAPI } from "./types"
 
-export type { PaginationEnhancerAPI, EnhancerPaginationInto } from "./types"
+export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
 
 export const paginationEnhancer =
   <

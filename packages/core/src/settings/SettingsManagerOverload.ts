@@ -1,9 +1,9 @@
 import { isShallowEqual, shallowMergeIfDefined } from "@prose-reader/shared"
 import {
+  combineLatest,
   type Observable,
   type ObservedValueOf,
   Subject,
-  combineLatest,
 } from "rxjs"
 import {
   distinctUntilChanged,
@@ -16,8 +16,8 @@ import type { SettingsInterface } from "./SettingsInterface"
 import type { CoreInputSettings, CoreOutputSettings } from "./types"
 
 export abstract class SettingsManagerOverload<
-  InputSettings,
-  OutputSettings,
+  InputSettings extends object,
+  OutputSettings extends object,
   ParentInputSettings extends CoreInputSettings,
   ParentOutputSettings extends CoreOutputSettings,
 > implements

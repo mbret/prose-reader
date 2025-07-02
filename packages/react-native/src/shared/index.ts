@@ -1,13 +1,13 @@
 import type {
   ContextState,
+  createReader,
+  EnhancerPaginationInto,
   Manifest,
-  PaginationState,
 } from "@prose-reader/core"
-import type { createReader } from "@prose-reader/core"
 import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
 
 type ReaderOptions = Parameters<typeof createReader>[0]
-type RnPaginationState = Omit<PaginationState, "navigationId">
+type RnPaginationState = Omit<EnhancerPaginationInto, "navigationId">
 type RnContextState = Omit<ContextState, "containerElement" | "rootElement">
 
 export interface BridgeState extends Bridge {

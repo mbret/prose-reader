@@ -18,7 +18,7 @@ function isGlobalDebugEnabled() {
   return debug === true || debug === "true"
 }
 
-type Report = {
+export type Report = {
   namespace: (namespace: string, enabled?: boolean) => Report
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   debug: (...args: any[]) => void
