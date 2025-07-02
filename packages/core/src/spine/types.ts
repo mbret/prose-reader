@@ -51,6 +51,10 @@ export class AbstractSpinePosition {
  */
 export class SpinePosition extends AbstractSpinePosition {
   public readonly __symbol = `SpinePosition`
+
+  static from(position: UnsafeSpinePosition | SpinePosition) {
+    return new SpinePosition(position)
+  }
 }
 
 /**

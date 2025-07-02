@@ -1,4 +1,5 @@
 import { type Observable, map } from "rxjs"
+import { SpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
@@ -21,6 +22,9 @@ export const mapUserNavigationToInternal = (
         id: Symbol(),
         animation: "turn",
         ...userNavigation,
+        position: userNavigation.position
+          ? SpinePosition.from(userNavigation.position)
+          : undefined,
       }
 
       return {
