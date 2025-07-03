@@ -123,22 +123,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       .subscribe()
   }
 
-  getBoundingRectOfElementFromSelector = (selector: string) => {
-    const frameElement = this.renderer.getDocumentFrame()
-
-    if (frameElement && frameElement instanceof HTMLIFrameElement && selector) {
-      if (selector.startsWith(`#`)) {
-        return frameElement.contentDocument
-          ?.getElementById(selector.replace(`#`, ``))
-          ?.getBoundingClientRect()
-      }
-
-      return frameElement.contentDocument
-        ?.querySelector(selector)
-        ?.getBoundingClientRect()
-    }
-  }
-
   load = () => {
     this.renderer.load()
   }

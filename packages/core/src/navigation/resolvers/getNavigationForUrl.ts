@@ -1,50 +1,69 @@
 import type { Context } from "../../context/Context"
-import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
+import type { Spine } from "../../spine/Spine"
+import type { SpineItemsManager } from "../../spine/SpineItemsManager"
+import type { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import { getClosestValidOffsetFromApproximateOffsetInPages } from "../../spineItem/helpers"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { DeprecatedViewportPosition } from "../types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
+const getNodeFromSelector = (
+  selector: string,
+  frameElement?: HTMLIFrameElement,
+) => {
+  if (frameElement && frameElement instanceof HTMLIFrameElement) {
+    if (selector.startsWith(`#`)) {
+      return frameElement.contentDocument?.getElementById(
+        selector.replace(`#`, ``),
+      )
+    }
+
+    return frameElement.contentDocument?.querySelector(selector)
+  }
+}
+
+/**
+ * @todo vertical, should returns spine position or something anyway
+ */
 const getSpineItemOffsetFromAnchor = ({
   anchor,
   spineItem,
-  context,
+  spine,
 }: {
   anchor: string
   spineItem: SpineItem
-  context: Context
+  spine: Spine
 }) => {
-  const itemWidth = spineItem.layout.layoutInfo?.width || 0
-  const pageWidth = context.getPageSize().width
-  const anchorElementBoundingRect =
-    spineItem.getBoundingRectOfElementFromSelector(anchor)
+  const node = getNodeFromSelector(
+    anchor,
+    spineItem.renderer.getDocumentFrame(),
+  )
 
-  const offsetOfAnchor = anchorElementBoundingRect?.x || 0
+  if (!node) {
+    return 0
+  }
 
-  return getClosestValidOffsetFromApproximateOffsetInPages(
-    offsetOfAnchor,
-    pageWidth,
-    itemWidth,
+  return (
+    spine.spineItemLocator.getSpineItemPositionFromNode(node, 0, spineItem)
+      ?.x ?? 0
   )
 }
 
 const getSpinePositionFromSpineItemAnchor = ({
   anchor,
-  context,
   spineItem,
   spineLocator,
+  spine,
 }: {
   anchor: string
   spineItem: SpineItem
-  context: Context
   spineLocator: SpineLocator
+  spine: Spine
 }) => {
   const spineItemOffset = getSpineItemOffsetFromAnchor({
     anchor,
     spineItem,
-    context,
+    spine,
   })
 
   const position = spineLocator.getSpinePositionFromSpineItemPosition({
@@ -59,22 +78,22 @@ const getNavigationForAnchor = ({
   anchor,
   spineItem,
   spineLocator,
-  context,
+  spine,
   pageSizeWidth,
   visibleAreaRectWidth,
 }: {
   anchor: string
   spineItem: SpineItem
   spineLocator: SpineLocator
-  context: Context
+  spine: Spine
   pageSizeWidth: number
   visibleAreaRectWidth: number
 }) => {
   const position = getSpinePositionFromSpineItemAnchor({
     anchor,
-    context,
     spineItem,
     spineLocator,
+    spine,
   })
 
   return getAdjustedPositionForSpread({
@@ -84,11 +103,16 @@ const getNavigationForAnchor = ({
   })
 }
 
+/**
+ * @todo should be part of enhancer, all the core needs to know to restore navigation
+ * is a spine item id AND a node ID.
+ */
 export const getNavigationForUrl = ({
-  context,
+  spine,
   spineItemsManager,
   spineLocator,
   url,
+  context,
   pageSizeWidth,
   visibleAreaRectWidth,
 }: {
@@ -96,11 +120,10 @@ export const getNavigationForUrl = ({
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
   context: Context
+  spine: Spine
   pageSizeWidth: number
   visibleAreaRectWidth: number
-}):
-  | { position: DeprecatedViewportPosition; spineItemId: string }
-  | undefined => {
+}): { position: SpinePosition; spineItemId: string } | undefined => {
   try {
     const validUrl = url instanceof URL ? url : new URL(url)
     const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
@@ -115,7 +138,7 @@ export const getNavigationForUrl = ({
         const position = getNavigationForAnchor({
           anchor: validUrl.hash,
           spineItem,
-          context,
+          spine,
           spineLocator,
           pageSizeWidth,
           visibleAreaRectWidth,

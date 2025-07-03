@@ -170,6 +170,7 @@ export const createNavigationResolver = ({
         url,
         pageSizeWidth: context.getPageSize().width,
         visibleAreaRectWidth: context.state.visibleAreaRect.width,
+        spine,
       }),
     getNavigationForSpineItemPage: (
       params: Omit<
