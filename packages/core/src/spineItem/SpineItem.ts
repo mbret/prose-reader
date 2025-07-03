@@ -188,7 +188,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     !!this.renderer.writingMode?.startsWith(`vertical`)
 
   get loaded$() {
-    return this.watch(`isLoaded`)
+    return this.renderer.loaded$
   }
 
   get unloaded$() {

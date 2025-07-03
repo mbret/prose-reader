@@ -1,4 +1,4 @@
-import { NEVER, fromEvent, merge, share, switchMap, tap } from "rxjs"
+import { fromEvent, merge, NEVER, share, switchMap, tap } from "rxjs"
 import type { Reader } from "../../reader"
 
 export const handleLinks = (reader: Reader) => {

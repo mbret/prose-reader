@@ -1,8 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
   BehaviorSubject,
-  Observable,
-  Subject,
   catchError,
   combineLatest,
   defer,
@@ -13,7 +11,9 @@ import {
   map,
   merge,
   mergeMap,
+  Observable,
   of,
+  Subject,
   share,
   switchMap,
   takeUntil,
@@ -80,6 +80,8 @@ export abstract class DocumentRenderer extends DestroyableClass {
     share(),
   )
 
+  public loaded$: Observable<void>
+
   private _documentContainer: HTMLElement | undefined
 
   constructor(params: {
@@ -111,50 +113,50 @@ export abstract class DocumentRenderer extends DestroyableClass {
       share(),
     )
 
-    this.load$
-      .pipe(
-        switchMap(() => {
-          this.stateSubject.next(`loading`)
+    this.loaded$ = this.load$.pipe(
+      switchMap(() => {
+        this.stateSubject.next(`loading`)
 
-          const createDocument$ = this.onCreateDocument().pipe(first())
+        const createDocument$ = this.onCreateDocument().pipe(first())
 
-          return createDocument$.pipe(
-            mergeMap((documentContainer) => {
-              this.hookManager.execute(`item.onDocumentCreated`, this.item.id, {
-                itemId: this.item.id,
-                documentContainer,
-              })
+        return createDocument$.pipe(
+          mergeMap((documentContainer) => {
+            this.hookManager.execute(`item.onDocumentCreated`, this.item.id, {
+              itemId: this.item.id,
+              documentContainer,
+            })
 
-              const loadDocument$ = this.onLoadDocument().pipe(
-                endWith(null),
-                first(),
-              )
+            const loadDocument$ = this.onLoadDocument().pipe(
+              endWith(null),
+              first(),
+            )
 
-              return loadDocument$.pipe(
-                waitForSwitch(this.context.bridgeEvent.viewportFree$),
-                switchMap(() => {
-                  const hookResults = this.hookManager
-                    .execute(`item.onDocumentLoad`, this.item.id, {
-                      itemId: this.item.id,
-                      documentContainer,
-                    })
-                    .filter(
-                      (result): result is Observable<void> =>
-                        result instanceof Observable,
-                    )
+            return loadDocument$.pipe(
+              waitForSwitch(this.context.bridgeEvent.viewportFree$),
+              switchMap(() => {
+                const hookResults = this.hookManager
+                  .execute(`item.onDocumentLoad`, this.item.id, {
+                    itemId: this.item.id,
+                    documentContainer,
+                  })
+                  .filter(
+                    (result): result is Observable<void> =>
+                      result instanceof Observable,
+                  )
 
-                  return combineLatest([of(null), ...hookResults]).pipe(first())
-                }),
-              )
-            }),
-            tap(() => {
-              this.stateSubject.next(`loaded`)
-            }),
-            takeUntil(merge(this.destroy$, unloadTrigger$)),
-          )
-        }),
-      )
-      .subscribe()
+                return combineLatest([of(null), ...hookResults]).pipe(first())
+              }),
+            )
+          }),
+          map(() => {
+            this.stateSubject.next(`loaded`)
+
+            return undefined
+          }),
+          takeUntil(unloadTrigger$),
+        )
+      }),
+    )
 
     const unload$ = unloadTrigger$.pipe(
       switchMap(() => {
@@ -178,7 +180,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
       }),
     )
 
-    merge(unload$).pipe(takeUntil(this.destroy$)).subscribe()
+    merge(this.unload$, unload$).pipe(takeUntil(this.destroy$)).subscribe()
   }
 
   protected setDocumentContainer(element: HTMLElement) {
