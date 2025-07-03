@@ -1,6 +1,5 @@
 import {
   BehaviorSubject,
-  type Observable,
   distinctUntilChanged,
   filter,
   finalize,
@@ -8,6 +7,7 @@ import {
   identity,
   map,
   merge,
+  type Observable,
   of,
   share,
   shareReplay,
@@ -24,7 +24,6 @@ import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isShallowEqual } from "../utils/objects"
-import { Locker } from "./Locker"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -36,6 +35,7 @@ import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
 import type { ControlledNavigationController } from "./controllers/ControlledNavigationController"
 import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
+import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type { InternalNavigationEntry, UserNavigationEntry } from "./types"
