@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { type Observable, type ObservedValueOf, merge } from "rxjs"
+import { merge, type Observable, type ObservedValueOf } from "rxjs"
 import {
   debounceTime,
   filter,
@@ -19,10 +19,11 @@ import type {
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { SettingsManager } from "./SettingsManager"
 import { createCoordinatesApi } from "./coordinates"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
 import { fixReflowable } from "./fixReflowable"
+import { flagSpineItems } from "./flagSpineItems"
+import { SettingsManager } from "./SettingsManager"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
 import { createViewportModeHandler } from "./viewportMode"
 
@@ -266,6 +267,8 @@ export const layoutEnhancer =
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
+    const flagSpineItems$ = flagSpineItems(reader)
+
     merge(
       updateSpineItemClassName$,
       revealItemOnReady$,
@@ -273,6 +276,7 @@ export const layoutEnhancer =
       layoutOnContainerResize$,
       viewportModeHandler$,
       layoutInfo$,
+      flagSpineItems$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()

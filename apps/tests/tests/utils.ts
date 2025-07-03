@@ -3,7 +3,18 @@ import { expect, type Page } from "@playwright/test"
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
     await page.waitForSelector(
-      `.spineItem:nth-child(${index + 1})[data-is-ready="true"]`,
+      `.spineItem:nth-child(${index + 1})[data-is-ready="true"][data-is-dirty="false"]`,
+      {
+        state: "visible",
+      },
+    )
+  }
+}
+
+export async function waitForSpineItemUnloaded(page: Page, indexes: number[]) {
+  for (const index of indexes) {
+    await page.waitForSelector(
+      `.spineItem:nth-child(${index + 1})[data-is-ready="false"][data-is-dirty="false"]`,
       {
         state: "visible",
       },

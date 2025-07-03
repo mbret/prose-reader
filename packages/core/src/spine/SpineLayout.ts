@@ -1,7 +1,5 @@
 import {
   BehaviorSubject,
-  type Observable,
-  Subject,
   concatMap,
   debounceTime,
   exhaustMap,
@@ -11,8 +9,10 @@ import {
   from,
   map,
   merge,
+  type Observable,
   of,
   reduce,
+  Subject,
   share,
   switchMap,
   takeUntil,
@@ -24,8 +24,8 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import type { Viewport } from "../viewport/Viewport"
-import type { SpineItemsManager } from "./SpineItemsManager"
 import { layoutItem } from "./layout/layoutItem"
+import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemSpineLayout } from "./types"
 
 export type PageLayoutInformation = {
@@ -101,6 +101,11 @@ export class SpineLayout extends DestroyableClass {
     const layoutInProgress = new BehaviorSubject<boolean>(false)
 
     this.layout$ = this.layoutSubject.pipe(
+      tap(() => {
+        this.spineItemsManager.items.forEach((item) => {
+          item.markDirty()
+        })
+      }),
       debounceTime(50),
       // queue layout until previous layout is done
       exhaustMap(() =>

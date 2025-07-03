@@ -3,19 +3,15 @@ import {
   distinctUntilChanged,
   filter,
   first,
-  map,
-  shareReplay,
-  startWith,
   switchMap,
   takeUntil,
   tap,
-  withLatestFrom,
 } from "rxjs/operators"
 import type { Manifest } from ".."
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { DestroyableClass } from "../utils/DestroyableClass"
+import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
@@ -24,17 +20,26 @@ import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
-export class SpineItem extends DestroyableClass {
+type SpineItemState = {
+  isLoaded: boolean
+  /**
+   * - Content has been loaded
+   * - A first layout has been done
+   */
+  isReady: boolean
+  /**
+   * - Layout has been requested
+   * - Item layout not done yet
+   */
+  iDirty: boolean
+}
+
+export class SpineItem extends ReactiveEntity<SpineItemState> {
   public readonly containerElement: HTMLElement
   public readonly needsLayout$: Observable<unknown>
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
   public readonly layout: SpineItemLayout
-  /**
-   * Renderer loaded + spine item layout done
-   * Will switch back and forth every new layout.
-   */
-  public readonly isReady$: Observable<boolean>
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -44,7 +49,11 @@ export class SpineItem extends DestroyableClass {
     public hookManager: HookManager,
     public index: number,
   ) {
-    super()
+    super({
+      isLoaded: false,
+      isReady: false,
+      iDirty: false,
+    })
 
     this.containerElement = createContainerElement(
       parentElement,
@@ -80,16 +89,21 @@ export class SpineItem extends DestroyableClass {
       this.settings,
     )
 
-    this.isReady$ = this.layout.layoutProcess$.pipe(
-      withLatestFrom(this.renderer.isLoaded$),
-      map(([event, loaded]) => !!(event.type === `end` && loaded)),
-      startWith(false),
-      distinctUntilChanged(),
-      tap((isReady) => {
-        // biome-ignore lint/complexity/useLiteralKeys: TODO
-        this.containerElement.dataset["isReady"] = isReady.toString()
+    const updateStateOnLoaded$ = this.renderer.state$.pipe(
+      tap((state) => {
+        this.mergeCompare({
+          isLoaded: state === "loaded",
+        })
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+    )
+
+    const updateStateOnLayout$ = this.layout.layout$.pipe(
+      tap(() => {
+        this.mergeCompare({
+          iDirty: false,
+          isReady: this.renderer.state$.value === "loaded",
+        })
+      }),
     )
 
     this.needsLayout$ = merge(this.unloaded$, this.loaded$)
@@ -97,11 +111,12 @@ export class SpineItem extends DestroyableClass {
     merge(
       /**
        * @important
-       * The order is important here. We want to ensure the isReady value
+       * The order is important here. We want to ensure the state value
        * is set before dispatching the layout event. Elements reacting
-       * to layout changes may rely on the isReady value.
+       * to layout changes may rely on the state value to be updated.
        */
-      this.isReady$,
+      updateStateOnLoaded$,
+      updateStateOnLayout$,
       this.layout.layout$,
     )
       .pipe(takeUntil(this.destroy$))
@@ -132,6 +147,20 @@ export class SpineItem extends DestroyableClass {
     this.renderer.unload()
   }
 
+  public markDirty = () => {
+    this.mergeCompare({
+      iDirty: true,
+    })
+  }
+
+  /**
+   * Renderer loaded + spine item layout done
+   * Will switch back and forth every new layout.
+   */
+  public get isReady$() {
+    return this.watch(`isReady`)
+  }
+
   public destroy = () => {
     super.destroy()
 
@@ -159,10 +188,7 @@ export class SpineItem extends DestroyableClass {
     !!this.renderer.writingMode?.startsWith(`vertical`)
 
   get loaded$() {
-    return this.renderer.state$.pipe(
-      distinctUntilChanged(),
-      filter((state) => state === "loaded"),
-    )
+    return this.watch(`isLoaded`)
   }
 
   get unloaded$() {

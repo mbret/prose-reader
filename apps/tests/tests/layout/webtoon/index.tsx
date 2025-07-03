@@ -1,5 +1,5 @@
 import { createReader } from "@prose-reader/core"
-import { Streamer, createArchiveFromJszip } from "@prose-reader/streamer"
+import { createArchiveFromJszip, Streamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
 

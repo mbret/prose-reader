@@ -1,7 +1,7 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { SpineItem } from "./SpineItem"
 import { createSpineItemLocator } from "./locationResolver"
+import type { SpineItem } from "./SpineItem"
 import { SpineItemPosition } from "./types"
 
 export type SpineItemNavigationResolver = ReturnType<
