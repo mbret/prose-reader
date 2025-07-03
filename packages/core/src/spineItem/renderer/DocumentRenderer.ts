@@ -156,6 +156,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
           takeUntil(unloadTrigger$),
         )
       }),
+      share(),
     )
 
     const unload$ = unloadTrigger$.pipe(
