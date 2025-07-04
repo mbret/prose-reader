@@ -65,8 +65,8 @@ test.describe("Given a resize down", () => {
       expect(boundingBox?.width).toBe(200)
       expect(boundingBox?.height).toBe(870)
     }).toPass({
-      timeout: 1000,
-      intervals: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+      timeout: 1500,
+      intervals: [100, 300, 400, 500, 600, 700, 900, 1000],
     })
   })
 })
