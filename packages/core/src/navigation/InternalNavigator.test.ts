@@ -29,7 +29,11 @@ const createNavigatorContext = () => {
   const hookManager = new HookManager()
   const viewport = new Viewport(context)
   const pagination = new Pagination(context, spineItemsManager)
-  const spineItemLocator = createSpineItemLocator({ context, settings })
+  const spineItemLocator = createSpineItemLocator({
+    context,
+    settings,
+    viewport,
+  })
   const spine = new Spine(
     of(document.createElement("div")),
     context,
@@ -135,6 +139,7 @@ describe(`Given loaded book`, () => {
         settings,
         hookManager,
         spine,
+        viewport,
       } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
@@ -146,6 +151,7 @@ describe(`Given loaded book`, () => {
         hookManager,
         spine,
         spineItemsManager,
+        viewport,
       )
 
       spineItemsManager.addMany(items)
@@ -185,6 +191,7 @@ describe(`Given loaded book`, () => {
         hookManager,
         navigator,
         spineItemsManager,
+        viewport,
       } = createNavigatorContext()
       const navigations: InternalNavigationEntry[] = []
 
@@ -196,6 +203,7 @@ describe(`Given loaded book`, () => {
         hookManager,
         spine,
         spineItemsManager,
+        viewport,
       )
 
       spineItemsManager.addMany(items)

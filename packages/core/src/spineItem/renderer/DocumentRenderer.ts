@@ -27,6 +27,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { getFrameViewportInfo } from "../../utils/frames"
 import { waitForSwitch } from "../../utils/rxjs"
+import type { Viewport } from "../../viewport/Viewport"
 import type { ResourceHandler } from "../resources/ResourceHandler"
 
 export type DocumentRendererParams = {
@@ -36,6 +37,7 @@ export type DocumentRendererParams = {
   item: Manifest[`spineItems`][number]
   containerElement: HTMLElement
   resourcesHandler: ResourceHandler
+  viewport: Viewport
 }
 
 type LayoutParams = {
@@ -50,6 +52,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
     `prose-reader-document-container`
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
 
+  protected viewport: Viewport
   protected context: Context
   protected settings: ReaderSettingsManager
   protected hookManager: HookManager
@@ -91,6 +94,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
     item: Manifest[`spineItems`][number]
     containerElement: HTMLElement
     resourcesHandler: ResourceHandler
+    viewport: Viewport
   }) {
     super()
 
@@ -100,6 +104,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.item = params.item
     this.containerElement = params.containerElement
     this.resourcesHandler = params.resourcesHandler
+    this.viewport = params.viewport
 
     const unloadTrigger$ = this.triggerSubject.pipe(
       withLatestFrom(this.stateSubject),

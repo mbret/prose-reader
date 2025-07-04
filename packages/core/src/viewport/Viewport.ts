@@ -1,25 +1,41 @@
-import { merge, takeUntil, tap } from "rxjs"
+import { takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
+import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { AbsoluteViewport, RelativeViewport } from "./types"
 
 type State = {
   element: HTMLElement
+  /**
+   * Anything that can change the page size should trigger a layout and thus
+   * force a recalculation of the page size.
+   */
   pageSize: {
     width: number
     height: number
   }
+  /**
+   * To get the absolute viewport we consider clientWidth/clientHeight which gives more
+   * flexibility for the reader container. For example when using scrollbar with scroll
+   * navigator. The viewport dimensions will be affected by the scrollbar.
+   *
+   * The viewport dimensions are updated only before a layout.
+   */
+  width: number
+  height: number
 }
 
 export class Viewport extends ReactiveEntity<State> {
-  constructor(protected context: Context) {
+  constructor(
+    protected context: Context,
+    protected settingsManager: ReaderSettingsManager,
+  ) {
     const element = document.createElement("div")
 
     element.style.cssText = `
         background-color: white;
         position: relative;
-        -transform: scale(0.2);
         height: 100%;
         width: 100%;
     `
@@ -31,38 +47,55 @@ export class Viewport extends ReactiveEntity<State> {
         width: 1,
         height: 1,
       },
+      width: 1,
+      height: 1,
     })
 
-    const updatePageSize$ = this.context.watch("visibleAreaRect").pipe(
-      tap(() => {
-        this.mergeCompare({
-          pageSize: this.calculatePageSize(),
-        })
-      }),
-    )
+    const updatePageSize$ = this.settingsManager
+      .watch(["computedSpreadMode"])
+      .pipe(
+        tap(() => {
+          this.mergeCompare({
+            pageSize: this.calculatePageSize(this.value),
+          })
+        }),
+      )
 
-    merge(updatePageSize$).pipe(takeUntil(this.destroy$)).subscribe()
+    updatePageSize$.pipe(takeUntil(this.destroy$)).subscribe()
   }
 
-  protected calculatePageSize() {
-    const absoluteViewport = this.absoluteViewport
-    const { isUsingSpreadMode } = this.context.state
+  protected calculatePageSize(layout: { width: number; height: number }) {
+    const { computedSpreadMode } = this.settingsManager.values
 
-    return {
-      width: isUsingSpreadMode
-        ? absoluteViewport.width / 2
-        : absoluteViewport.width,
-      height: absoluteViewport.height,
+    const pageSize = {
+      width: computedSpreadMode ? layout.width / 2 : layout.width,
+      height: layout.height,
     }
+
+    return pageSize
+  }
+
+  public layout() {
+    const layout = {
+      width: this.value.element.clientWidth,
+      height: this.value.element.clientHeight,
+    }
+
+    this.mergeCompare({
+      pageSize: this.calculatePageSize(layout),
+      ...layout,
+    })
   }
 
   public get absoluteViewport() {
-    const absoluteViewport = this.context.state.visibleAreaRect
-
     return new AbsoluteViewport({
-      width: absoluteViewport.width,
-      height: absoluteViewport.height,
+      width: this.value.width,
+      height: this.value.height,
     })
+  }
+
+  public get pageSize() {
+    return this.value.pageSize
   }
 
   public get scaleFactor() {

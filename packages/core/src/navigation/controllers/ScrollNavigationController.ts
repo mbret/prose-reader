@@ -1,15 +1,15 @@
 import {
   BehaviorSubject,
-  NEVER,
-  type Observable,
-  Subject,
   combineLatest,
   distinctUntilChanged,
   filter,
   fromEvent,
   map,
   merge,
+  NEVER,
+  type Observable,
   of,
+  Subject,
   share,
   shareReplay,
   skip,
@@ -26,8 +26,8 @@ import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
-import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { isDefined } from "../../utils/isDefined"
+import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ViewportNavigationEntry } from "./ControlledNavigationController"

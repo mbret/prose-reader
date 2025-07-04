@@ -44,6 +44,7 @@ const createSpineItem = (
   index: number,
   settings: ReaderSettingsManager,
   hookManager: HookManager,
+  viewport: Viewport,
 ) => {
   const containerElement = document.createElement("div")
 
@@ -55,6 +56,7 @@ const createSpineItem = (
     settings,
     hookManager,
     index,
+    viewport,
   )
 
   vi.spyOn(spineItem.layout, "layoutInfo", "get").mockReturnValue({
@@ -98,7 +100,7 @@ describe("Given single page items and no spread", () => {
         })
 
         const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager),
+          createSpineItem(item, index, settings, hookManager, viewport),
         )
 
         spineItemsManager.addMany(spineItems)
@@ -147,7 +149,7 @@ describe("Given single page items and no spread", () => {
         })
 
         const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager),
+          createSpineItem(item, index, settings, hookManager, viewport),
         )
 
         spineItemsManager.addMany(spineItems)
@@ -173,11 +175,11 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.49", () => {
       it("should recognize second item foobar", async () => {
-        const context = new Context()
-        const settings = new ReaderSettingsManager({}, context)
+        const settings = new ReaderSettingsManager({})
+        const context = new Context(settings)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
-        const viewport = new Viewport(context)
+        const viewport = new Viewport(context, settings)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
@@ -196,7 +198,7 @@ describe("Given single page items and no spread", () => {
         })
 
         const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager),
+          createSpineItem(item, index, settings, hookManager, viewport),
         )
 
         spineItemsManager.addMany(spineItems)

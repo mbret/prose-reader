@@ -39,7 +39,7 @@ const reader = createReader({
    * Regular reader creation options.
    * Works the same as web counterpart.
    */
-  forceSinglePageMode: false,
+  spreadMode: false,
   numberOfAdjacentSpineItemToPreLoad: 3,
 })
 

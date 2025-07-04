@@ -44,6 +44,8 @@ export class ManualNavigator {
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
       spineLocator: this.reader.spine.locator,
+      viewport: this.reader.viewport,
+      settings: this.reader.settings,
     })
 
     return this.reader.navigation.navigate({
@@ -66,6 +68,8 @@ export class ManualNavigator {
       spineItem,
       spineItemsManager: this.reader.spineItemsManager,
       spineLocator: this.reader.spine.locator,
+      viewport: this.reader.viewport,
+      settings: this.reader.settings,
     })
 
     return this.reader.navigation.navigate({

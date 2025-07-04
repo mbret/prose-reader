@@ -9,7 +9,7 @@ export const TableOfContentsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {
     const reader = useReader()
     const { manifest, assumedRenditionLayout } =
-      useObserve(() => reader?.context.state$, [reader]) ?? {}
+      useObserve(() => reader?.context, [reader]) ?? {}
     const { nav } = manifest ?? {}
     const pagination = usePagination()
     const toc = nav?.toc || []

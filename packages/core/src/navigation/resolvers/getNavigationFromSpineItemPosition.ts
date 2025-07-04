@@ -1,8 +1,8 @@
-import type { Context } from "../../context/Context"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemLocator } from "../../spineItem/locationResolver"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import type { SpineItemPosition } from "../../spineItem/types"
+import type { Viewport } from "../../viewport/Viewport"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationFromSpineItemPosition = ({
@@ -10,13 +10,13 @@ export const getNavigationFromSpineItemPosition = ({
   spineItemPosition,
   spineLocator,
   spineItemLocator,
-  context,
+  viewport,
 }: {
   spineItemPosition: SpineItemPosition
   spineItem: SpineItem
   spineLocator: SpineLocator
   spineItemLocator: SpineItemLocator
-  context: Context
+  viewport: Viewport
 }) => {
   const navigationInSpineItem =
     spineItemLocator.getSpineItemClosestPositionFromUnsafePosition(
@@ -31,7 +31,7 @@ export const getNavigationFromSpineItemPosition = ({
 
   return getAdjustedPositionForSpread({
     position: spinePosition,
-    pageSizeWidth: context.getPageSize().width,
-    visibleAreaRectWidth: context.state.visibleAreaRect.width,
+    pageSizeWidth: viewport.pageSize.width,
+    visibleAreaRectWidth: viewport.absoluteViewport.width,
   })
 }

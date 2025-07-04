@@ -1,4 +1,4 @@
-import { Subject, combineLatest, merge } from "rxjs"
+import { combineLatest, merge, Subject } from "rxjs"
 import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -6,13 +6,13 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { Viewport } from "../viewport/Viewport"
-import { InternalNavigator } from "./InternalNavigator"
-import { Locker } from "./Locker"
-import { UserScrollNavigation } from "./UserScrollNavigation"
 import { ControlledNavigationController } from "./controllers/ControlledNavigationController"
 import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
+import { InternalNavigator } from "./InternalNavigator"
+import { Locker } from "./Locker"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
 import type { UserNavigationEntry } from "./types"
+import { UserScrollNavigation } from "./UserScrollNavigation"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -37,6 +37,7 @@ export const createNavigator = ({
     spineItemsManager,
     locator: spine.locator,
     spine,
+    viewport,
   })
 
   const controlledNavigationController = new ControlledNavigationController(

@@ -1,7 +1,7 @@
-import { combineLatest, merge } from "rxjs"
-import { takeUntil, tap } from "rxjs/operators"
+import { takeUntil, tap } from "rxjs"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
+import { computeSpreadMode } from "./computeSpreadMode"
 import type { SettingsInterface } from "./SettingsInterface"
 import { SettingsManager } from "./SettingsManager"
 import type {
@@ -10,6 +10,10 @@ import type {
   CoreOutputSettings,
 } from "./types"
 
+/**
+ * @important If a settings needs to be derived from a sub component, it needs to live next to the said
+ * component or pushed back into the context.
+ */
 export class ReaderSettingsManager
   extends SettingsManager<CoreInputSettings, CoreOutputSettings>
   implements SettingsInterface<CoreInputSettings, CoreOutputSettings>
@@ -20,26 +24,12 @@ export class ReaderSettingsManager
   ) {
     super(initialSettings)
 
-    const recomputeSettingsOnContextChange$ = combineLatest([
-      context.hasVerticalWriting$,
-      context.manifest$,
-    ]).pipe(
-      tap(() => {
-        this.update(this.values)
-      }),
-    )
-
-    /**
-     * Update state based on settings
-     */
-    const updateContextOnSettingsChanges$ = this.values$.pipe(
-      tap(({ forceSinglePageMode }) => {
-        context.update({ forceSinglePageMode })
-      }),
-    )
-
-    merge(recomputeSettingsOnContextChange$, updateContextOnSettingsChanges$)
-      .pipe(takeUntil(context.destroy$))
+    context
+      .watch(["manifest", "hasVerticalWriting"])
+      .pipe(
+        tap(() => this.update(this.values)),
+        takeUntil(this.destroy$),
+      )
       .subscribe()
   }
 
@@ -47,12 +37,16 @@ export class ReaderSettingsManager
     settings: CoreInputSettings,
   ): ComputedCoreSettings {
     const manifest = this.context.manifest
-    const hasVerticalWriting = this.context.state.hasVerticalWriting ?? false
+    const hasVerticalWriting = this.context.value.hasVerticalWriting ?? false
     const computedSettings: ComputedCoreSettings = {
       computedPageTurnDirection: settings.pageTurnDirection,
       computedPageTurnAnimation: settings.pageTurnAnimation,
       computedPageTurnMode: settings.pageTurnMode,
       computedPageTurnAnimationDuration: 0,
+      computedSpreadMode: computeSpreadMode({
+        spreadMode: settings.spreadMode,
+        manifest,
+      }),
     }
 
     // We force scroll mode for some books
@@ -98,7 +92,7 @@ export class ReaderSettingsManager
 
   getDefaultSettings() {
     return {
-      forceSinglePageMode: false,
+      spreadMode: false,
       pageTurnAnimation: `slide`,
       pageTurnDirection: `horizontal` as const,
       pageTurnAnimationDuration: undefined,

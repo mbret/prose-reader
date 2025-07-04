@@ -7,16 +7,16 @@ import {
   TapRecognizer,
 } from "gesturx"
 import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
-import { GesturesSettingsManager } from "./SettingsManager"
 import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
 import { registerSwipe } from "./gestures/swipe"
 import { registerTaps } from "./gestures/taps/registerTaps"
 import { registerZoomPan } from "./gestures/zoomPan"
+import { GesturesSettingsManager } from "./SettingsManager"
 import type { EnhancerAPI, Hook, InputSettings } from "./types"
 
-export * from "./types"
 export { isPositionInArea } from "./gestures/taps/utils"
+export * from "./types"
 
 export const gesturesEnhancer =
   <InheritOptions, InheritOutput extends Reader>(

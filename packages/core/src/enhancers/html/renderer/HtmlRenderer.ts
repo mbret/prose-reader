@@ -60,7 +60,7 @@ export class HtmlRenderer extends DocumentRenderer {
     blankPagePosition: `before` | `after` | `none`
     spreadPosition: `none` | `left` | `right`
   }) {
-    const { width: pageWidth, height: pageHeight } = this.context.getPageSize()
+    const { width: pageWidth, height: pageHeight } = this.viewport.pageSize
     const frameElement = this.getFrameElement()
 
     if (!frameElement) return of(undefined)

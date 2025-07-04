@@ -8,17 +8,17 @@ import {
 } from "@prose-reader/core"
 import {
   type PDFPageProxy,
-  type RenderTask,
   RenderingCancelledException,
+  type RenderTask,
   TextLayer,
 } from "pdfjs-dist"
 import {
-  EMPTY,
-  type Observable,
   catchError,
+  EMPTY,
   finalize,
   from,
   map,
+  type Observable,
   of,
   switchMap,
   tap,
@@ -184,9 +184,9 @@ export class PdfRenderer extends DocumentRenderer {
     if (!frameElement || !canvas) return of(undefined)
 
     // first we try to get the desired viewport for a comfortable reading based on the current page size
-    const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
+    const { height: pageHeight, width: pageWidth } = this.viewport.pageSize
 
-    layoutContainer(this.documentContainer, this.context, spreadPosition)
+    layoutContainer(this.documentContainer, spreadPosition, this.viewport)
 
     const context = canvas?.getContext("2d")
     // Support HiDPI-screens.
@@ -199,7 +199,7 @@ export class PdfRenderer extends DocumentRenderer {
       this.renderTask = undefined
     }
 
-    layoutCanvas(this.pageProxy, canvas, this.context)
+    layoutCanvas(this.pageProxy, canvas, this.viewport)
 
     const { width: viewportWidth, height: viewportHeight } =
       this.pageProxy.getViewport({ scale: 1 })

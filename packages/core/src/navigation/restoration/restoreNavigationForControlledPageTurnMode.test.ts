@@ -25,8 +25,12 @@ describe(`Given a backward navigation to a new item`, () => {
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         const pagination = new Pagination(context, spineItemsManager as any)
         const hooksManager = new HookManager()
-        const spineItemLocator = createSpineItemLocator({ context, settings })
         const viewport = new Viewport(context)
+        const spineItemLocator = createSpineItemLocator({
+          context,
+          settings,
+          viewport,
+        })
         const spine = new Spine(
           of(noopElement()),
           context,
@@ -45,6 +49,7 @@ describe(`Given a backward navigation to a new item`, () => {
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager: spineItemsManager as any,
           spine,
+          viewport,
         })
 
         // page of 50w
@@ -67,6 +72,7 @@ describe(`Given a backward navigation to a new item`, () => {
             hooksManager,
             spine,
             spineItemsManager,
+            viewport,
           ),
         )
 

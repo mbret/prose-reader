@@ -75,7 +75,8 @@ export class ImageRenderer extends DocumentRenderer {
     spreadPosition: `none` | `left` | `right`
   }) {
     const element = this.getImageElement()
-    const { height: pageHeight, width: pageWidth } = this.context.getPageSize()
+    const { height: pageHeight, width: pageWidth } =
+      this.viewport.value.pageSize
 
     let height = pageHeight
 
@@ -88,13 +89,13 @@ export class ImageRenderer extends DocumentRenderer {
     const ratio = naturalWidth / naturalHeight
 
     /**
-     * In case of continous scroll, we scale up/down the height
+     * In case of continuous scroll, we scale up/down the height
      * to match the page width.
      */
     if (
       this.settings.values.computedPageTurnDirection === "vertical" &&
       this.settings.values.computedPageTurnMode === "scrollable" &&
-      !this.context.state.isUsingSpreadMode
+      !this.settings.values.computedSpreadMode
     ) {
       height = Math.ceil(pageWidth / ratio)
     }

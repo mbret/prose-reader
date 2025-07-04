@@ -1,8 +1,8 @@
 import {
-  NEVER,
-  Observable,
   animationFrameScheduler,
   merge,
+  NEVER,
+  Observable,
   of,
   scheduled,
 } from "rxjs"
@@ -29,8 +29,8 @@ import type { Reader } from "../../reader"
 export const createMovingSafePan$ = (reader: Reader) => {
   let iframeOverlayForAnimationsElement: HTMLDivElement | undefined
 
-  const updateOverlayElement$ = reader.context.state$.pipe(
-    switchMap(({ rootElement }) => {
+  const updateOverlayElement$ = reader.context.watch("rootElement").pipe(
+    switchMap((rootElement) => {
       if (!rootElement) return NEVER
 
       return new Observable(() => {

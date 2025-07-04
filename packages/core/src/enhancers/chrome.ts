@@ -35,9 +35,10 @@ export const chromeEnhancer =
      */
     // let screenForceRefreshElt: HTMLDivElement | undefined = undefined
 
-    reader.context.state$
-      .pipe(takeUntil(reader.$.destroy$))
-      .subscribe(({ rootElement }) => {
+    reader.context
+      .watch("rootElement")
+      .pipe(takeUntil(reader.context.destroy$))
+      .subscribe((rootElement) => {
         if (!rootElement) return
 
         const onScroll = () => {

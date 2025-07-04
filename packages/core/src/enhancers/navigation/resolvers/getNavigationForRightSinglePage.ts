@@ -1,9 +1,9 @@
-import type { Context } from "../../../context/Context"
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
 import type { DeprecatedViewportPosition } from "../../../navigation/types"
-import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
+import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import { SpinePosition } from "../../../spine/types"
+import type { Viewport } from "../../../viewport/Viewport"
 import { getSpineItemPositionForRightPage } from "./getSpineItemPositionForRightPage"
 
 export const getNavigationForRightSinglePage = ({
@@ -12,14 +12,14 @@ export const getNavigationForRightSinglePage = ({
   computedPageTurnDirection,
   spineItemsManager,
   spineLocator,
-  context,
+  viewport,
 }: {
   position: DeprecatedViewportPosition | SpinePosition
   navigationResolver: NavigationResolver
   computedPageTurnDirection: "horizontal" | "vertical"
   spineItemsManager: SpineItemsManager
   spineLocator: SpineLocator
-  context: Context
+  viewport: Viewport
 }): DeprecatedViewportPosition | SpinePosition => {
   const pageTurnDirection = computedPageTurnDirection
   const spineItem =
@@ -40,8 +40,8 @@ export const getNavigationForRightSinglePage = ({
   const spineItemNavigationForRightPage = getSpineItemPositionForRightPage({
     position: spineItemPosition,
     spineItem,
-    pageHeight: context.getPageSize().height,
-    pageWidth: context.getPageSize().width,
+    pageHeight: viewport.pageSize.height,
+    pageWidth: viewport.pageSize.width,
     spineItemLocator: spineLocator.spineItemLocator,
   })
 
@@ -55,11 +55,11 @@ export const getNavigationForRightSinglePage = ({
     return navigationResolver.getAdjustedPositionWithSafeEdge(
       pageTurnDirection === `horizontal`
         ? new SpinePosition({
-            x: position.x + context.getPageSize().width,
+            x: position.x + viewport.pageSize.width,
             y: 0,
           })
         : new SpinePosition({
-            y: position.y + context.getPageSize().height,
+            y: position.y + viewport.pageSize.height,
             x: 0,
           }),
     )

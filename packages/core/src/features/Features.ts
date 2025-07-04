@@ -1,11 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import {
-  distinctUntilChanged,
-  map,
-  merge,
-  takeUntil,
-  withLatestFrom,
-} from "rxjs"
+import { combineLatest, distinctUntilChanged, map, takeUntil } from "rxjs"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { CoreInputSettings } from "../settings/types"
@@ -35,19 +29,17 @@ export class Features extends ReactiveEntity<State> {
       supportedComputedPageTurnDirection: [`horizontal`, `vertical`],
     })
 
-    merge(context.state$, settingsManager.values$)
+    combineLatest([
+      context.watch(["manifest", "hasVerticalWriting"]),
+      settingsManager.watch([`computedPageTurnMode`]),
+    ])
       .pipe(
-        withLatestFrom(context.state$),
-        map(([, { hasVerticalWriting }]) => {
-          const manifest = context.manifest
-
-          return {
-            hasVerticalWriting,
-            renditionFlow: manifest?.renditionFlow,
-            renditionLayout: manifest?.renditionLayout,
-            computedPageTurnMode: settingsManager.values.computedPageTurnMode,
-          }
-        }),
+        map(([{ manifest, hasVerticalWriting }, { computedPageTurnMode }]) => ({
+          hasVerticalWriting,
+          renditionFlow: manifest?.renditionFlow,
+          renditionLayout: manifest?.renditionLayout,
+          computedPageTurnMode,
+        })),
         distinctUntilChanged(isShallowEqual),
         map(
           ({

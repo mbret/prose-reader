@@ -1,10 +1,10 @@
 import {
   BehaviorSubject,
-  type Observable,
-  type ObservedValueOf,
   combineLatest,
   distinctUntilChanged,
   map,
+  type Observable,
+  type ObservedValueOf,
   of,
   shareReplay,
   switchMap,
@@ -33,7 +33,6 @@ export const mapPaginationInfoToExtendedInfo = (
     | "numberOfTotalPages"
   >
 > => {
-  const context = reader.context
   const beginItem =
     paginationInfo.beginSpineItemIndex !== undefined
       ? reader.spineItemsManager.get(paginationInfo.beginSpineItemIndex)
@@ -67,7 +66,7 @@ export const mapPaginationInfoToExtendedInfo = (
      * the number of pages and current index can be used instead since 1 page = 1 chapter.
      */
     percentageEstimateOfBook,
-    isUsingSpread: context.state.isUsingSpreadMode ?? false,
+    isUsingSpread: reader.settings.values.computedSpreadMode ?? false,
     // hasNextChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
     // hasPreviousChapter: (reader.spine.spineItemIndex || 0) < (manifest.readingOrder.length - 1),
     // numberOfSpineItems: context.manifest?.readingOrder.length,

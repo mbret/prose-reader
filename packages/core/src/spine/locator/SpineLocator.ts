@@ -1,11 +1,11 @@
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { SpineItem } from "../../spineItem/SpineItem"
 import type { createSpineItemLocator } from "../../spineItem/locationResolver"
+import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
-import type { Viewport } from "../../viewport/Viewport"
 import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
 import { ViewportSlicePosition } from "../../viewport/types"
+import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 import type { SpinePosition, UnsafeSpinePosition } from "../types"
@@ -141,12 +141,12 @@ export const createSpineLocator = ({
       return {
         index,
         absolutePosition: {
-          width: context.getPageSize().width,
-          height: context.getPageSize().height,
+          width: viewport.pageSize.width,
+          height: viewport.pageSize.height,
           left: spinePosition.x,
           top: spinePosition.y,
-          bottom: spinePosition.y + context.getPageSize().height,
-          right: spinePosition.x + context.getPageSize().width,
+          bottom: spinePosition.y + viewport.pageSize.height,
+          right: spinePosition.x + viewport.pageSize.width,
         },
       }
     })

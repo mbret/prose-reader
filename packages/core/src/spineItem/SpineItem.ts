@@ -12,6 +12,7 @@ import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
+import type { Viewport } from "../viewport/Viewport"
 import { getSpineItemNumberOfPages } from "./layout/getSpineItemNumberOfPages"
 import { DefaultRenderer } from "./renderer/DefaultRenderer"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
@@ -48,6 +49,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     public settings: ReaderSettingsManager,
     public hookManager: HookManager,
     public index: number,
+    public viewport: Viewport,
   ) {
     super({
       isLoaded: false,
@@ -74,6 +76,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       item,
       containerElement: this.containerElement,
       resourcesHandler: this.resourcesHandler,
+      viewport: this.viewport,
     }
 
     this.renderer = rendererFactory
@@ -87,6 +90,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       hookManager,
       this.renderer,
       this.settings,
+      this.viewport,
     )
 
     const updateStateOnLoaded$ = this.renderer.state$.pipe(
@@ -197,8 +201,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       isUsingVerticalWriting: !!this.isUsingVerticalWriting(),
       itemHeight: this.layout.layoutInfo.height,
       itemWidth: this.layout.layoutInfo.width,
-      pageWidth: this.context.getPageSize().width,
-      pageHeight: this.context.getPageSize().height,
+      pageWidth: this.viewport.pageSize.width,
+      pageHeight: this.viewport.pageSize.height,
       pageTurnDirection: this.settings.values.computedPageTurnDirection,
       pageTurnMode: this.settings.values.pageTurnMode,
     })

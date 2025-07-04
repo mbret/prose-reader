@@ -1,5 +1,5 @@
-import { type Observable, type ObservedValueOf, of, Subject } from "rxjs"
-import { map, tap } from "rxjs/operators"
+import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
+import { map, skip, takeUntil, tap } from "rxjs/operators"
 import {
   generateCfiForSpineItemPage,
   generateCfiFromRange,
@@ -39,11 +39,12 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
-  const viewport = new Viewport(context)
+  const viewport = new Viewport(context, settingsManager)
   const element$ = context.watch(`rootElement`)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,
+    viewport,
   })
   const pagination = new Pagination(context, spineItemsManager)
   const spine = new Spine(
@@ -104,47 +105,30 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     context.update({
       manifest,
       rootElement: element,
-      forceSinglePageMode: settingsManager.values.forceSinglePageMode,
     })
 
     layout()
   }
 
-  const onLayout$ = layoutSubject.pipe(
+  const layoutOnSpreadModeChange$ = settingsManager
+    .watch([`computedSpreadMode`])
+    .pipe(skip(1), tap(layout))
+
+  const layout$ = layoutSubject.pipe(
     tap(() => {
       const containerElement = context.value.rootElement
 
       if (!containerElement) return
 
-      const dimensions = {
-        width: containerElement?.offsetWidth,
-        height: containerElement?.offsetHeight,
-      }
-      const margin = 0
-      const marginTop = 0
-      const marginBottom = 0
-
       containerElement.style.setProperty(`overflow`, `hidden`)
 
-      if (margin > 0 || marginTop > 0 || marginBottom > 0) {
-        containerElement.style.margin = `${marginTop}px ${margin}px ${marginBottom}px`
-      }
-      const elementRect = containerElement.getBoundingClientRect()
-
-      context.update({
-        visibleAreaRect: {
-          x: elementRect.x,
-          y: elementRect.y,
-          width: dimensions.width,
-          height: dimensions.height,
-        },
-      })
-
+      viewport.layout()
       spine.layout()
     }),
+    takeUntil(destroy$),
   )
 
-  const subs = onLayout$.subscribe()
+  const subs = merge(layout$, layoutOnSpreadModeChange$).subscribe()
 
   /**
    * Free up resources, and dispose the whole reader.

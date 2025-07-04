@@ -1,13 +1,14 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { getRangeFromNode } from "../utils/dom"
-import type { SpineItem } from "./SpineItem"
+import type { Viewport } from "../viewport/Viewport"
 import {
   getClosestValidOffsetFromApproximateOffsetInPages,
   getItemOffsetFromPageIndex,
 } from "./helpers"
 import { getSpineItemPageIndexFromSpineItemPosition } from "./layout/getSpineItemPageIndexFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
+import type { SpineItem } from "./SpineItem"
 import { SpineItemPosition, UnsafeSpineItemPagePosition } from "./types"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
@@ -15,9 +16,11 @@ export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 export const createSpineItemLocator = ({
   context,
   settings,
+  viewport,
 }: {
   context: Context
   settings: ReaderSettingsManager
+  viewport: Viewport
 }) => {
   const getSpineItemPositionFromNode = (
     node: Node,
@@ -39,7 +42,7 @@ export const createSpineItemLocator = ({
     }
 
     const spineItemWidth = spineItem.layout.layoutInfo?.width || 0
-    const pageWidth = context.getPageSize().width
+    const pageWidth = viewport.pageSize.width
 
     if (offsetOfNodeInSpineItem !== undefined) {
       const val = getClosestValidOffsetFromApproximateOffsetInPages(
@@ -64,12 +67,12 @@ export const createSpineItemLocator = ({
     const adjustedPosition = new SpineItemPosition({
       x: getClosestValidOffsetFromApproximateOffsetInPages(
         unsafePosition.x,
-        context.getPageSize().width,
+        viewport.pageSize.width,
         width,
       ),
       y: getClosestValidOffsetFromApproximateOffsetInPages(
         unsafePosition.y,
-        context.getPageSize().height,
+        viewport.pageSize.height,
         height,
       ),
     })
@@ -92,8 +95,8 @@ export const createSpineItemLocator = ({
           itemHeight: height,
           itemWidth: width,
           isRTL: context.isRTL(),
-          pageWidth: context.getPageSize().width,
-          pageHeight: context.getPageSize().height,
+          pageWidth: viewport.pageSize.width,
+          pageHeight: viewport.pageSize.height,
           pageTurnDirection: settings.values.computedPageTurnDirection,
           pageTurnMode: settings.values.pageTurnMode,
         })
@@ -106,8 +109,8 @@ export const createSpineItemLocator = ({
     spineItem: SpineItem,
   ) => {
     const { width, height } = spineItem.layout.layoutInfo
-    const pageWidth = context.getPageSize().width
-    const pageHeight = context.getPageSize().height
+    const pageWidth = viewport.pageSize.width
+    const pageHeight = viewport.pageSize.height
     const isUsingVerticalWriting = !!spineItem.isUsingVerticalWriting()
 
     if (isUsingVerticalWriting) {
@@ -156,6 +159,7 @@ export const createSpineItemLocator = ({
         isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
         itemLayout: spineItem.layout.layoutInfo,
         pageIndex,
+        viewport,
       }),
     getSpineItemPageIndexFromPosition: (params: {
       position: SpineItemPosition
@@ -166,8 +170,8 @@ export const createSpineItemLocator = ({
       getSpineItemPageIndexFromSpineItemPosition({
         ...params,
         isRTL: context.isRTL(),
-        pageWidth: context.getPageSize().width,
-        pageHeight: context.getPageSize().height,
+        pageWidth: viewport.pageSize.width,
+        pageHeight: viewport.pageSize.height,
         pageTurnDirection: settings.values.computedPageTurnDirection,
         pageTurnMode: settings.values.pageTurnMode,
       }),

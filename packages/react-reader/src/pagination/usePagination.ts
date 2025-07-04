@@ -1,6 +1,6 @@
 import type { Reader } from "@prose-reader/core"
 import { useObserve } from "reactjrx"
-import { NEVER, combineLatest, map } from "rxjs"
+import { combineLatest, map, NEVER } from "rxjs"
 import { useReader } from "../context/useReader"
 
 export const usePagination = ():
@@ -12,7 +12,7 @@ export const usePagination = ():
     () =>
       !reader
         ? NEVER
-        : combineLatest([reader.pagination.state$, reader.context.state$]).pipe(
+        : combineLatest([reader.pagination.state$, reader.context]).pipe(
             map(([state, context]) => {
               const isOnlyImages = context.manifest?.spineItems.every((item) =>
                 item.mediaType?.startsWith("image/"),

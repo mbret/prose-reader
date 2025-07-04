@@ -53,10 +53,10 @@ export const eventsEnhancer =
                 convertedEvent,
                 e,
                 reader.spine.locator,
-                reader.context,
+                reader.viewport,
               )
 
-              reader.context.state.rootElement?.dispatchEvent(normalizedEvent)
+              reader.context.value.rootElement?.dispatchEvent(normalizedEvent)
             }
           }
 

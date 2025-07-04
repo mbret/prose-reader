@@ -25,6 +25,7 @@ import { fixReflowable } from "./fixReflowable"
 import { flagSpineItems } from "./flagSpineItems"
 import { SettingsManager } from "./SettingsManager"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
+import { updateSpreadMode } from "./updateSpreadMode"
 import { createViewportModeHandler } from "./viewportMode"
 
 export type LayoutEnhancerOutput = {
@@ -126,7 +127,7 @@ export const layoutEnhancer =
 
       const { pageHorizontalMargin = 0, pageVerticalMargin = 0 } =
         settingsManager.values
-      const pageSize = reader.context.getPageSize()
+      const pageSize = reader.viewport.pageSize
 
       if (spineItem?.renditionLayout === `reflowable` && !isImageType) {
         let columnWidth = pageSize.width - pageHorizontalMargin * 2
@@ -269,6 +270,8 @@ export const layoutEnhancer =
 
     const flagSpineItems$ = flagSpineItems(reader)
 
+    const updateSpreadMode$ = updateSpreadMode(reader)
+
     merge(
       updateSpineItemClassName$,
       revealItemOnReady$,
@@ -277,6 +280,7 @@ export const layoutEnhancer =
       viewportModeHandler$,
       layoutInfo$,
       flagSpineItems$,
+      updateSpreadMode$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()

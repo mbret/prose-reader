@@ -16,7 +16,6 @@ const getScrollPercentageWithinItem = (
   currentPosition: { x: number; y: number },
   currentItem: SpineItem,
 ) => {
-  const context = reader.context
   const { height, width } = currentItem.layout.layoutInfo
 
   const { top, left } = reader.spine.getSpineItemSpineLayoutInfo(currentItem)
@@ -26,7 +25,7 @@ const getScrollPercentageWithinItem = (
       0,
       Math.min(
         1,
-        (currentPosition.y - top + context.state.visibleAreaRect.height) /
+        (currentPosition.y - top + reader.viewport.absoluteViewport.height) /
           height,
       ),
     )
@@ -35,7 +34,8 @@ const getScrollPercentageWithinItem = (
     0,
     Math.min(
       1,
-      (currentPosition.x - left + context.state.visibleAreaRect.width) / width,
+      (currentPosition.x - left + reader.viewport.absoluteViewport.width) /
+        width,
     ),
   )
 }

@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { Context } from "../../context/Context"
+import type { Viewport } from "../../viewport/Viewport"
 import { CONTAINER_HTML_PREFIX } from "./constants"
 
 /**
@@ -8,14 +8,14 @@ import { CONTAINER_HTML_PREFIX } from "./constants"
  */
 export const createLoadingElementContainer = (
   containerElement: HTMLElement,
-  context: Context,
+  viewport: Viewport,
 ) => {
   const loadingElement = containerElement.ownerDocument.createElement(`div`)
   loadingElement.classList.add(CONTAINER_HTML_PREFIX)
   loadingElement.style.cssText = `
       height: 100%;
       width: 100%;
-      max-width: ${context.state.visibleAreaRect.width}px;
+      max-width: ${viewport.absoluteViewport.width}px;
       text-align: center;
       display: flex;
       justify-content: center;

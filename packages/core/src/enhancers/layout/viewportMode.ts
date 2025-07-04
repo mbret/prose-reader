@@ -52,7 +52,7 @@ export const createViewportModeHandler = (
       const isScrollingMode =
         reader.settings.values.computedPageTurnMode === "scrollable"
 
-      viewportElement.style.transition = `transform ${ANIMATION_DURATION}ms`
+      viewportElement.style.transition = `transform ${isScrollingMode ? 0 : ANIMATION_DURATION}ms`
 
       if (isScrollingMode) {
         viewportElement.style.transformOrigin = `top`

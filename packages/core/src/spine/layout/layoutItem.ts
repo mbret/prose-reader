@@ -1,4 +1,4 @@
-import { type Observable, map } from "rxjs"
+import { map, type Observable } from "rxjs"
 import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -31,13 +31,13 @@ export const layoutItem = ({
   verticalOffset: number
   layoutPosition: SpineItemSpineLayout
 }> => {
-  let minimumWidth = context.getPageSize().width
+  let minimumWidth = viewport.value.pageSize.width
   let blankPagePosition: `none` | `before` | `after` = `none`
   const isScreenStartItem =
     horizontalOffset % viewport.absoluteViewport.width === 0
   const isLastItem = index === spineItemsManager.items.length - 1
 
-  if (context.state.isUsingSpreadMode) {
+  if (settings.values.computedSpreadMode) {
     /**
      * for now every reflowable content that has reflow siblings takes the entire screen by default
      * this simplify many things and I am not sure the specs allow one reflow
@@ -61,7 +61,7 @@ export const layoutItem = ({
       item.renditionLayout === `reflowable` &&
       !isLastItem
     ) {
-      minimumWidth = context.getPageSize().width * 2
+      minimumWidth = viewport.value.pageSize.width * 2
     }
 
     // mainly to make loading screen looks good
@@ -71,7 +71,7 @@ export const layoutItem = ({
       isLastItem &&
       isScreenStartItem
     ) {
-      minimumWidth = context.getPageSize().width * 2
+      minimumWidth = viewport.value.pageSize.width * 2
     }
 
     const lastItemStartOnNewScreenInAPrepaginatedBook =
@@ -79,14 +79,14 @@ export const layoutItem = ({
 
     if (item.item.pageSpreadRight && isScreenStartItem && !context.isRTL()) {
       blankPagePosition = `before`
-      minimumWidth = context.getPageSize().width * 2
+      minimumWidth = viewport.value.pageSize.width * 2
     } else if (
       item.item.pageSpreadLeft &&
       isScreenStartItem &&
       context.isRTL()
     ) {
       blankPagePosition = `before`
-      minimumWidth = context.getPageSize().width * 2
+      minimumWidth = viewport.value.pageSize.width * 2
     } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
       if (context.isRTL()) {
         blankPagePosition = `before`
@@ -94,7 +94,7 @@ export const layoutItem = ({
         blankPagePosition = `after`
       }
 
-      minimumWidth = context.getPageSize().width * 2
+      minimumWidth = viewport.value.pageSize.width * 2
     }
   }
 
@@ -104,7 +104,7 @@ export const layoutItem = ({
   const itemLayout$ = item.layout.layout({
     minimumWidth,
     blankPagePosition,
-    spreadPosition: context.state.isUsingSpreadMode
+    spreadPosition: settings.values.computedSpreadMode
       ? isScreenStartItem
         ? context.isRTL()
           ? `right`
@@ -120,7 +120,7 @@ export const layoutItem = ({
       if (settings.values.computedPageTurnDirection === `vertical`) {
         const currentValidEdgeYForVerticalPositioning = isScreenStartItem
           ? verticalOffset
-          : verticalOffset - context.state.visibleAreaRect.height
+          : verticalOffset - viewport.absoluteViewport.height
         const currentValidEdgeXForVerticalPositioning = isScreenStartItem
           ? 0
           : horizontalOffset

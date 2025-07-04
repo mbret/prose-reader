@@ -16,6 +16,7 @@ import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { deferNextResult } from "../utils/rxjs"
+import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
 export class SpineItemLayout extends DestroyableClass {
@@ -41,6 +42,7 @@ export class SpineItemLayout extends DestroyableClass {
     public hookManager: HookManager,
     public renderer: DocumentRenderer,
     public settings: ReaderSettingsManager,
+    public viewport: Viewport,
   ) {
     super()
 
@@ -56,7 +58,7 @@ export class SpineItemLayout extends DestroyableClass {
 
         const rendererLayout$ = this.renderer.layout({
           blankPagePosition,
-          minPageSpread: minimumWidth / this.context.getPageSize().width,
+          minPageSpread: minimumWidth / this.viewport.pageSize.width,
           minimumWidth,
           spreadPosition,
         })
@@ -112,7 +114,7 @@ export class SpineItemLayout extends DestroyableClass {
         map((dims) => {
           const trustableLastLayout = isShallowEqual(
             this.lastLayout?.pageSize,
-            this.context.getPageSize(),
+            this.viewport.pageSize,
           )
             ? this.lastLayout
             : undefined
@@ -121,7 +123,7 @@ export class SpineItemLayout extends DestroyableClass {
             trustableLastLayout ?? {}
           const { width = previousWidth, height = previousHeight } = dims ?? {}
           const { width: pageSizeWidth, height: pageSizeHeight } =
-            this.context.getPageSize()
+            this.viewport.pageSize
 
           const safeWidth = this.validateDimension(
             width ?? pageSizeWidth,
@@ -140,7 +142,7 @@ export class SpineItemLayout extends DestroyableClass {
           this.lastLayout = {
             width: safeWidth,
             height: safeHeight,
-            pageSize: this.context.getPageSize(),
+            pageSize: this.viewport.pageSize,
           }
 
           this.containerElement.style.width = `${safeWidth}px`

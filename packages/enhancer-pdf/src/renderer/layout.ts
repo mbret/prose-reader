@@ -1,15 +1,15 @@
-import type { Reader } from "@prose-reader/core"
+import type { Viewport } from "@prose-reader/core"
 import type { PDFPageProxy } from "pdfjs-dist"
 
 export const layoutContainer = (
   container: HTMLElement | undefined,
-  context: Reader["context"],
   spreadPosition: `none` | `left` | `right`,
+  viewport: Viewport,
 ) => {
   if (!container) return
 
   // first we try to get the desired viewport for a comfortable reading based on theh current page size
-  const { height: pageHeight, width: pageWidth } = context.getPageSize()
+  const { height: pageHeight, width: pageWidth } = viewport.pageSize
 
   container.style.width = `${pageWidth}px`
   container.style.height = `${pageHeight}px`
@@ -26,11 +26,11 @@ export const layoutContainer = (
 export const layoutCanvas = (
   pageProxy: PDFPageProxy,
   canvas: HTMLCanvasElement,
-  context: Reader["context"],
+  readerViewport: Viewport,
 ) => {
   // Support HiDPI-screens.
   const pixelRatioScale = window.devicePixelRatio || 1
-  const { height: pageHeight, width: pageWidth } = context.getPageSize()
+  const { height: pageHeight, width: pageWidth } = readerViewport.pageSize
   const { width: viewportWidth, height: viewportHeight } =
     pageProxy.getViewport({ scale: 1 })
   const pageScale = Math.max(

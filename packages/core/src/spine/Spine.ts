@@ -112,6 +112,7 @@ export class Spine extends DestroyableClass {
               this.settings,
               this.hookManager,
               index,
+              this.viewport,
             ),
         )
 

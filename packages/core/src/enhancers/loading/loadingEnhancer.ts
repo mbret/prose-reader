@@ -1,8 +1,8 @@
 import {
-  type Observable,
-  type ObservedValueOf,
   combineLatest,
   merge,
+  type Observable,
+  type ObservedValueOf,
   of,
 } from "rxjs"
 import {
@@ -74,7 +74,7 @@ export const loadingEnhancer =
           }
 
           const loadingElementContainer = loadingElementCreate({
-            container: createLoadingElementContainer(element, reader.context),
+            container: createLoadingElementContainer(element, reader.viewport),
             item,
           })
 
@@ -89,7 +89,7 @@ export const loadingEnhancer =
     const updateEntriesLayout$ = (entries: Entries) =>
       combineLatest([reader.spine.layout$, reader.theme.$.theme$]).pipe(
         map(([, theme]) => ({
-          width: reader.context.state.visibleAreaRect.width,
+          width: reader.viewport.absoluteViewport.width,
           theme,
         })),
         distinctUntilChanged(isShallowEqual),

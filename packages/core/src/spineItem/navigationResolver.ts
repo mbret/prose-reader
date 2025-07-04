@@ -1,5 +1,6 @@
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import type { Viewport } from "../viewport/Viewport"
 import { createSpineItemLocator } from "./locationResolver"
 import type { SpineItem } from "./SpineItem"
 import { SpineItemPosition } from "./types"
@@ -11,11 +12,17 @@ export type SpineItemNavigationResolver = ReturnType<
 export const createNavigationResolver = ({
   context,
   settings,
+  viewport,
 }: {
   context: Context
   settings: ReaderSettingsManager
+  viewport: Viewport
 }) => {
-  const spineItemLocator = createSpineItemLocator({ context, settings })
+  const spineItemLocator = createSpineItemLocator({
+    context,
+    settings,
+    viewport,
+  })
 
   const getNavigationForLastPage = (spineItem: SpineItem) => {
     const numberOfPages = spineItem.numberOfPages

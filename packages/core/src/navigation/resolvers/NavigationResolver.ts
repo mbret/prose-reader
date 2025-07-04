@@ -9,6 +9,7 @@ import { SpinePosition } from "../../spine/types"
 import { createNavigationResolver as createSpineItemNavigator } from "../../spineItem/navigationResolver"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
+import type { Viewport } from "../../viewport/Viewport"
 import type { DeprecatedViewportPosition } from "../types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getAdjustedPositionWithSafeEdge } from "./getAdjustedPositionWithSafeEdge"
@@ -27,14 +28,20 @@ export const createNavigationResolver = ({
   locator,
   settings,
   spine,
+  viewport,
 }: {
   context: Context
   spineItemsManager: SpineItemsManager
   locator: SpineLocator
   settings: ReaderSettingsManager
   spine: Spine
+  viewport: Viewport
 }) => {
-  const spineItemNavigator = createSpineItemNavigator({ context, settings })
+  const spineItemNavigator = createSpineItemNavigator({
+    context,
+    settings,
+    viewport,
+  })
 
   const arePositionsDifferent = (
     a: { x: number; y: number },
@@ -66,8 +73,8 @@ export const createNavigationResolver = ({
 
     return getAdjustedPositionForSpread({
       position: readingPosition,
-      pageSizeWidth: context.getPageSize().width,
-      visibleAreaRectWidth: context.state.visibleAreaRect.width,
+      pageSizeWidth: viewport.pageSize.width,
+      visibleAreaRectWidth: viewport.absoluteViewport.width,
     })
   }
 
@@ -83,8 +90,8 @@ export const createNavigationResolver = ({
 
     return getAdjustedPositionForSpread({
       position,
-      pageSizeWidth: context.getPageSize().width,
-      visibleAreaRectWidth: context.state.visibleAreaRect.width,
+      pageSizeWidth: viewport.pageSize.width,
+      visibleAreaRectWidth: viewport.absoluteViewport.width,
     })
   }
 
@@ -98,8 +105,8 @@ export const createNavigationResolver = ({
 
       return getAdjustedPositionForSpread({
         position,
-        pageSizeWidth: context.getPageSize().width,
-        visibleAreaRectWidth: context.state.visibleAreaRect.width,
+        pageSizeWidth: viewport.pageSize.width,
+        visibleAreaRectWidth: viewport.absoluteViewport.width,
       })
     }
 
@@ -121,30 +128,30 @@ export const createNavigationResolver = ({
     const triggerXPosition =
       pageTurnDirection === `horizontal`
         ? viewportPosition.x +
-          context.state.visibleAreaRect.width * triggerPercentage
+          viewport.absoluteViewport.width * triggerPercentage
         : 0
     const triggerYPosition =
       pageTurnDirection === `horizontal`
         ? 0
         : viewportPosition.y +
-          context.state.visibleAreaRect.height * triggerPercentage
+          viewport.absoluteViewport.height * triggerPercentage
     const midScreenPositionSafePosition = getAdjustedPositionWithSafeEdge({
       position: new SpinePosition({
         x: triggerXPosition,
         y: triggerYPosition,
       }),
       isRTL: context.isRTL(),
-      pageSizeHeight: context.getPageSize().height,
-      visibleAreaRectWidth: context.state.visibleAreaRect.width,
+      pageSizeHeight: viewport.pageSize.height,
+      visibleAreaRectWidth: viewport.absoluteViewport.width,
       spineItemsManager,
       spine,
     })
 
     return getNavigationForPosition({
-      context,
       spineItemNavigationResolver: spineItemNavigator,
       spineLocator: locator,
       viewportPosition: midScreenPositionSafePosition,
+      viewport,
     })
   }
 
@@ -168,25 +175,25 @@ export const createNavigationResolver = ({
         spineItemsManager,
         spineLocator: locator,
         url,
-        pageSizeWidth: context.getPageSize().width,
-        visibleAreaRectWidth: context.state.visibleAreaRect.width,
+        pageSizeWidth: viewport.pageSize.width,
+        visibleAreaRectWidth: viewport.absoluteViewport.width,
         spine,
       }),
     getNavigationForSpineItemPage: (
       params: Omit<
         Parameters<typeof getNavigationForSpineItemPage>[0],
-        | "context"
         | "spineItemsManager"
         | "spineItemNavigationResolver"
         | "spineLocator"
+        | "viewport"
       >,
     ) =>
       getNavigationForSpineItemPage({
         ...params,
-        context,
         spineItemsManager,
         spineItemNavigationResolver: spineItemNavigator,
         spineLocator: locator,
+        viewport,
       }),
     getNavigationFromSpineItemPosition: (params: {
       spineItemPosition: SpineItemPosition
@@ -196,7 +203,7 @@ export const createNavigationResolver = ({
         ...params,
         spineItemLocator: locator.spineItemLocator,
         spineLocator: locator,
-        context,
+        viewport,
       }),
     getNavigationForCfi,
     getNavigationForLastPage,
@@ -206,9 +213,9 @@ export const createNavigationResolver = ({
     ) =>
       getNavigationForPosition({
         viewportPosition,
-        context,
         spineItemNavigationResolver: spineItemNavigator,
         spineLocator: locator,
+        viewport,
       }),
     getMostPredominantNavigationForPosition,
     getAdjustedPositionWithSafeEdge: (
@@ -217,8 +224,8 @@ export const createNavigationResolver = ({
       getAdjustedPositionWithSafeEdge({
         position,
         isRTL: context.isRTL(),
-        pageSizeHeight: context.getPageSize().height,
-        visibleAreaRectWidth: context.state.visibleAreaRect.width,
+        pageSizeHeight: viewport.pageSize.height,
+        visibleAreaRectWidth: viewport.absoluteViewport.width,
         spineItemsManager,
         spine,
       }),
@@ -229,8 +236,8 @@ export const createNavigationResolver = ({
     ) =>
       getAdjustedPositionForSpread({
         position,
-        pageSizeWidth: context.getPageSize().width,
-        visibleAreaRectWidth: context.state.visibleAreaRect.width,
+        pageSizeWidth: viewport.pageSize.width,
+        visibleAreaRectWidth: viewport.absoluteViewport.width,
       }),
     spineItemNavigator,
   }

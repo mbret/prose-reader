@@ -6,7 +6,7 @@ import type {
 } from "../spineItem/renderer/DocumentRenderer"
 
 export type CoreInputSettings = {
-  forceSinglePageMode: boolean
+  spreadMode: boolean
   pageTurnAnimation: `none` | `fade` | `slide`
   pageTurnAnimationDuration: undefined | number
   pageTurnDirection: `vertical` | `horizontal`
@@ -64,6 +64,7 @@ export type CoreInputSettings = {
  * we will overwrite it and force it to vertical (granted we only support vertical).
  */
 export type ComputedCoreSettings = {
+  computedSpreadMode: boolean
   /**
    * controlled: viewport will move in a controlled way, moving from one page to another with calculated coordinate
    * scrollable: viewport will use a simple css overflow mecanism and let the user scroll through content

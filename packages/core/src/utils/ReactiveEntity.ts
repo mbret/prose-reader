@@ -1,10 +1,10 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
-  Observable,
-  Subject,
   distinctUntilChanged,
   map,
+  Observable,
+  Subject,
   takeUntil,
 } from "rxjs"
 import { watchKeys } from "./rxjs"
@@ -19,12 +19,12 @@ export class ReactiveEntity<
   T extends Record<string, unknown>,
 > extends Observable<T> {
   protected stateSubject: BehaviorSubject<T>
-  protected destroy$ = new Subject<void>()
+  protected _destroy$ = new Subject<void>()
 
   constructor(initialState: T) {
     super((subscriber) => {
       const sub = this.stateSubject
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntil(this._destroy$))
         .subscribe(subscriber)
 
       return sub
@@ -63,8 +63,10 @@ export class ReactiveEntity<
     return this.stateSubject.value
   }
 
+  public destroy$ = this._destroy$.asObservable()
+
   public destroy() {
     this.stateSubject.complete()
-    this.destroy$.complete()
+    this._destroy$.complete()
   }
 }

@@ -37,7 +37,7 @@ export const fixReflowable = (reader: Reader) => {
         return
 
       const { hasViewport } = getFrameViewportInfo(element)
-      const { width: pageWidth } = reader.context.getPageSize()
+      const { width: pageWidth } = reader.viewport.pageSize
       const frameElement = spineItem?.renderer.getDocumentFrame()
 
       if (hasViewport) {

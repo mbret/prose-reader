@@ -1,20 +1,20 @@
-import type { Context } from "../../context/Context"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
+import type { Viewport } from "../../viewport/Viewport"
 import type { DeprecatedViewportPosition } from "../types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 export const getNavigationForPosition = ({
   viewportPosition,
   spineLocator,
-  context,
   spineItemNavigationResolver,
+  viewport,
 }: {
   viewportPosition: DeprecatedViewportPosition | SpinePosition
   spineLocator: SpineLocator
-  context: Context
   spineItemNavigationResolver: SpineItemNavigationResolver
+  viewport: Viewport
 }) => {
   const spineItem = spineLocator.getSpineItemFromPosition(viewportPosition)
 
@@ -39,8 +39,8 @@ export const getNavigationForPosition = ({
 
     return getAdjustedPositionForSpread({
       position: viewportNavigation,
-      pageSizeWidth: context.getPageSize().width,
-      visibleAreaRectWidth: context.state.visibleAreaRect.width,
+      pageSizeWidth: viewport.pageSize.width,
+      visibleAreaRectWidth: viewport.absoluteViewport.width,
     })
   }
 

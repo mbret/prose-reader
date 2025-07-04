@@ -1,5 +1,5 @@
 import { vi } from "vitest"
-import { SpineItem } from "../.."
+import { SpineItem, type Viewport } from "../.."
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -20,6 +20,7 @@ const createSpineItem = (
   index: number,
   settings: ReaderSettingsManager,
   hookManager: HookManager,
+  viewport: Viewport,
 ) => {
   const containerElement = document.createElement("div")
 
@@ -31,6 +32,7 @@ const createSpineItem = (
     settings,
     hookManager,
     index,
+    viewport,
   )
 
   vi.spyOn(spineItem.layout, "layoutInfo", "get").mockReturnValue({
@@ -55,6 +57,7 @@ export const generateItems = (
   hookManager: HookManager,
   spine: Spine,
   spineItemsManager: SpineItemsManager,
+  viewport: Viewport,
 ) => {
   const layoutInfos: SpineItemSpineLayout[] = Array.from(Array(number)).map(
     (_, index) =>
@@ -78,6 +81,7 @@ export const generateItems = (
       index,
       settings,
       hookManager,
+      viewport,
     ),
   )
 

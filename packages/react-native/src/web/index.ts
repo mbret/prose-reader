@@ -42,7 +42,7 @@ export const bridgeReader = ({
     bridge.setPagination(state)
   })
 
-  reader.context.state$.subscribe(({ rootElement, ...rest }) => {
+  reader.context.subscribe(({ rootElement, ...rest }) => {
     bridge.setContext(rest)
   })
 
