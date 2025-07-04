@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
+import { waitForSpineItemReady } from "../../../utils"
 
 test("should navigate to second page and back to first page", async ({
   page,
@@ -13,8 +14,7 @@ test("should navigate to second page and back to first page", async ({
     "http://localhost:3333/tests/navigation/scrolling/pdf/index.html",
   )
 
-  // wait for first item to be ready
-  await page.waitForSelector(".prose-spineItem-ready")
+  await waitForSpineItemReady(page, [0])
 
   await page.evaluate(() => {
     // biome-ignore lint/suspicious/noExplicitAny: TODO
@@ -45,8 +45,7 @@ test("should restore to second page with CFI", async ({ page }) => {
     `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/6/4!)")}`,
   )
 
-  // wait for first item to be ready
-  await page.waitForSelector(".prose-spineItem-ready")
+  await waitForSpineItemReady(page, [0])
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
@@ -61,8 +60,7 @@ test("should restore to first page with CFI", async ({ page }) => {
     `http://localhost:3333/tests/navigation/scrolling/pdf/index.html?cfi=${encodeURIComponent("epubcfi(/6/2!)")}`,
   )
 
-  // wait for first item to be ready
-  await page.waitForSelector(".prose-spineItem-ready")
+  await waitForSpineItemReady(page, [0])
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })

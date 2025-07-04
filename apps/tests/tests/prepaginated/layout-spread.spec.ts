@@ -11,7 +11,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.goto("http://localhost:3333/tests/prepaginated/index.html")
 
-      await page.waitForSelector(".prose-spineItem-ready")
+      await waitForSpineItemReady(page, [0])
 
       expect(
         await page.screenshot({
@@ -37,7 +37,7 @@ test.describe("Given a prepaginated book with first page on spread right", () =>
 
       await page.goto("http://localhost:3333/tests/prepaginated/index.html")
 
-      await page.waitForSelector(".prose-spineItem-ready")
+      await waitForSpineItemReady(page, [0])
 
       await page.keyboard.press("ArrowRight")
 

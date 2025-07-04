@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { waitForSpineItemReady } from "../utils"
 
 test("should display basic text", async ({ page }) => {
   await page.setViewportSize({
@@ -8,8 +9,7 @@ test("should display basic text", async ({ page }) => {
 
   await page.goto("http://localhost:3333/tests/text/index.html")
 
-  // wait for first item to be ready
-  await page.waitForSelector(".prose-spineItem-ready")
+  await waitForSpineItemReady(page, [0])
 
   expect(await page.screenshot()).toMatchSnapshot(`text.png`)
 })
