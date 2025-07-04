@@ -15,9 +15,9 @@ import {
   takeUntil,
   tap,
 } from "rxjs"
-import { Commands } from "./Commands"
 import { ReaderHighlights } from "./annotations/ReaderHighlights"
 import type { RuntimeAnnotation } from "./annotations/types"
+import { Commands } from "./Commands"
 import { report } from "./report"
 import type { AnnotationsEnhancerAPI } from "./types"
 

@@ -242,23 +242,6 @@ export const layoutEnhancer =
       )
       .subscribe()
 
-    /**
-     * Apply some extra classes to spine item to help debugging,
-     * styling, testing, etc.
-     */
-    const updateSpineItemClassName$ =
-      reader.spineItemsObserver.itemIsReady$.pipe(
-        tap(({ item, isReady }) => {
-          const className = `prose-spineItem-ready`
-
-          if (isReady) {
-            item.containerElement.classList.add(className)
-          } else {
-            item.containerElement.classList.remove(className)
-          }
-        }),
-      )
-
     const viewportModeHandler$ = createViewportModeHandler(
       reader,
       settingsManager.watch(`viewportMode`),
@@ -273,7 +256,6 @@ export const layoutEnhancer =
     const updateSpreadMode$ = updateSpreadMode(reader)
 
     merge(
-      updateSpineItemClassName$,
       revealItemOnReady$,
       movingSafePan$,
       layoutOnContainerResize$,

@@ -40,7 +40,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
   const viewport = new Viewport(context, settingsManager)
-  const element$ = context.watch(`rootElement`)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,
@@ -48,7 +47,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   })
   const pagination = new Pagination(context, spineItemsManager)
   const spine = new Spine(
-    element$,
     context,
     pagination,
     spineItemsManager,
@@ -198,7 +196,6 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       )
     },
     viewport,
-    element$,
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,
     /**

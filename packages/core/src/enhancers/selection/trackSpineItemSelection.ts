@@ -12,7 +12,7 @@ import type { SpineItem } from "../../spineItem/SpineItem"
 import { FrameSelectionTracker } from "./FrameSelectionTracker"
 
 export const trackSpineItemSelection = (spineItem: SpineItem) =>
-  spineItem.loaded$.pipe(
+  spineItem.watch("isLoaded").pipe(
     switchMap(() => {
       const frame = spineItem.renderer.getDocumentFrame()
       const frameDoc = frame?.contentDocument || frame?.contentWindow?.document

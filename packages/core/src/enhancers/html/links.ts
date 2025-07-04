@@ -6,7 +6,7 @@ export const handleLinks = (reader: Reader) => {
     switchMap((items) =>
       merge(
         ...items.map((item) => {
-          return item.loaded$.pipe(
+          return item.watch("isLoaded").pipe(
             switchMap(() => {
               const frame = item.renderer.getDocumentFrame()
 

@@ -8,12 +8,12 @@ import {
   takeUntil,
   withLatestFrom,
 } from "rxjs"
+import type { NavigationEnhancerOutput } from "./navigation/types"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "./types/enhancer"
-import type { NavigationEnhancerOutput } from "./navigation/types"
 
 export const hotkeysEnhancer =
   <
@@ -61,7 +61,7 @@ export const hotkeysEnhancer =
         switchMap((spineItems) =>
           merge(
             ...spineItems.map((item) =>
-              item.loaded$.pipe(
+              item.watch("isLoaded").pipe(
                 switchMap(() => {
                   const element = item.renderer.getDocumentFrame()
 

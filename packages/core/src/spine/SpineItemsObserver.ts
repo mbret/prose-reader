@@ -1,17 +1,15 @@
 import { map, merge, type Observable, share, switchMap } from "rxjs"
-import type { SpineItemsManager } from "./SpineItemsManager"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
 import type { SpineLocator } from "./locator/SpineLocator"
-import type { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItemsManager } from "./SpineItemsManager"
 
 export class SpineItemsObserver extends DestroyableClass {
   /**
-   * Observable that emit every time `isReady` change
+   * Observable that emit every time `isReady` change but also on subscription
    */
   public itemIsReady$: Observable<{ item: SpineItem; isReady: boolean }>
-
-  public itemLoaded$: Observable<SpineItem>
 
   /**
    * Observable directly plugged to ResizeObserver for each item.
@@ -49,16 +47,6 @@ export class SpineItemsObserver extends DestroyableClass {
         return merge(...resize$)
       }),
       share(),
-    )
-
-    this.itemLoaded$ = this.spineItemsManager.items$.pipe(
-      switchMap((items) => {
-        const itemsIsReady$ = items.map((item) =>
-          item.loaded$.pipe(map(() => item)),
-        )
-
-        return merge(...itemsIsReady$)
-      }),
     )
   }
 }

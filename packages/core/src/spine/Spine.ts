@@ -1,5 +1,5 @@
 import { isDefined } from "reactjrx"
-import { BehaviorSubject, combineLatest, merge, type Observable } from "rxjs"
+import { BehaviorSubject, combineLatest, merge } from "rxjs"
 import { filter, takeUntil, tap } from "rxjs/operators"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
@@ -30,7 +30,6 @@ export class Spine extends DestroyableClass {
   public element$ = this.elementSubject.asObservable()
 
   constructor(
-    protected parentElement$: Observable<HTMLElement | undefined>,
     protected context: Context,
     protected pagination: Pagination,
     public spineItemsManager: SpineItemsManager,
@@ -79,11 +78,11 @@ export class Spine extends DestroyableClass {
       this.viewport,
     )
 
-    const spineElementUpdate$ = parentElement$.pipe(
+    const spineElementUpdate$ = context.watch(`rootElement`).pipe(
       filter(isDefined),
-      tap((parentElement) => {
+      tap((rootElement) => {
         const element: HTMLElement =
-          parentElement.ownerDocument.createElement(`div`)
+          rootElement.ownerDocument.createElement(`div`)
         element.style.cssText = `
           height: 100%;
           position: relative;

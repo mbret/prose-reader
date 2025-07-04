@@ -4,11 +4,11 @@ import {
   type SpineItem,
 } from "@prose-reader/core"
 import {
-  type Observable,
   first,
   fromEvent,
   map,
   merge,
+  type Observable,
   share,
   shareReplay,
   skip,
@@ -47,7 +47,7 @@ export class SpineItemHighlight extends DestroyableClass {
       share(),
     )
 
-    this.resolvedCfi$ = this.spineItem.loaded$.pipe(
+    this.resolvedCfi$ = this.spineItem.watch("isLoaded").pipe(
       map(() => this.reader.cfi.resolveCfi({ cfi: this.highlight.cfi })),
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
