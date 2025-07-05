@@ -1,5 +1,5 @@
-import { firstValueFrom, lastValueFrom, of } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { firstValueFrom, lastValueFrom } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { Pagination } from "../../pagination/Pagination"
@@ -8,7 +8,6 @@ import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { noopElement } from "../../utils/dom"
 import { Viewport } from "../../viewport/Viewport"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
 import { generateItems } from "../tests/utils"
@@ -25,14 +24,13 @@ describe(`Given a backward navigation to a new item`, () => {
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         const pagination = new Pagination(context, spineItemsManager as any)
         const hooksManager = new HookManager()
-        const viewport = new Viewport(context)
+        const viewport = new Viewport(context, settings)
         const spineItemLocator = createSpineItemLocator({
           context,
           settings,
           viewport,
         })
         const spine = new Spine(
-          of(noopElement()),
           context,
           pagination,
           // biome-ignore lint/suspicious/noExplicitAny: TODO
@@ -52,15 +50,13 @@ describe(`Given a backward navigation to a new item`, () => {
           viewport,
         })
 
-        // page of 50w
-        context.update({
-          visibleAreaRect: {
-            height: 100,
-            width: 50,
-            x: 0,
-            y: 0,
-          },
-        })
+        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+          50,
+        )
+        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
+          100,
+        )
+        viewport.layout()
 
         // items of 2 pages
         spineItemsManager.addMany(

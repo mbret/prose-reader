@@ -11,15 +11,6 @@ import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosi
 
 const context = new Context()
 
-context.update({
-  visibleAreaRect: {
-    height: 100,
-    width: 100,
-    x: 0,
-    y: 0,
-  },
-})
-
 const singlePageItems = [
   {
     bottom: 100,
@@ -81,7 +72,7 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
-        const viewport = new Viewport(context)
+        const viewport = new Viewport(context, settings)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
@@ -90,14 +81,14 @@ describe("Given single page items and no spread", () => {
           viewport,
         )
 
-        context.update({
-          visibleAreaRect: {
-            height: 100,
-            width: 100,
-            x: 0,
-            y: 0,
-          },
-        })
+        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+          100,
+        )
+        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
+          100,
+        )
+
+        viewport.layout()
 
         const spineItems = singlePageItems.map((item, index) =>
           createSpineItem(item, index, settings, hookManager, viewport),
@@ -130,7 +121,7 @@ describe("Given single page items and no spread", () => {
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
-        const viewport = new Viewport(context)
+        const viewport = new Viewport(context, settings)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
@@ -139,14 +130,14 @@ describe("Given single page items and no spread", () => {
           viewport,
         )
 
-        context.update({
-          visibleAreaRect: {
-            height: 100,
-            width: 100,
-            x: 0,
-            y: 0,
-          },
-        })
+        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+          100,
+        )
+        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
+          100,
+        )
+
+        viewport.layout()
 
         const spineItems = singlePageItems.map((item, index) =>
           createSpineItem(item, index, settings, hookManager, viewport),
@@ -174,9 +165,9 @@ describe("Given single page items and no spread", () => {
     })
 
     describe("and threshold of 0.49", () => {
-      it("should recognize second item foobar", async () => {
-        const settings = new ReaderSettingsManager({})
-        const context = new Context(settings)
+      it("should recognize second item", async () => {
+        const context = new Context()
+        const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
         const viewport = new Viewport(context, settings)
@@ -188,14 +179,14 @@ describe("Given single page items and no spread", () => {
           viewport,
         )
 
-        context.update({
-          visibleAreaRect: {
-            height: 100,
-            width: 100,
-            x: 0,
-            y: 0,
-          },
-        })
+        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
+          100,
+        )
+        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
+          100,
+        )
+
+        viewport.layout()
 
         const spineItems = singlePageItems.map((item, index) =>
           createSpineItem(item, index, settings, hookManager, viewport),

@@ -26,11 +26,14 @@ import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
+import { AbstractPosition } from "../../types"
 import { isDefined } from "../../utils/isDefined"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ViewportNavigationEntry } from "./ControlledNavigationController"
+
+export class ScrollPosition extends AbstractPosition {}
 
 export class ScrollNavigationController extends ReactiveEntity<{
   element: HTMLElement | undefined
@@ -60,8 +63,10 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
         const element = document.createElement(`div`)
 
-        // overflowX prevent the scroll bar on the bottom, effectively
-        // hidden a small x part on non mobile device.
+        // overflowX hidden does not hide content, it is here to prevent
+        // scrollbar to appear during resize / reflow.
+        // the content is supposed taking 100% width and the scrollbar
+        // is part of the content.
         element.style.cssText = `
           height: 100%;
           width: 100%;
@@ -159,7 +164,6 @@ export class ScrollNavigationController extends ReactiveEntity<{
   }
 
   /**
-   *
    * Usually occurs due to navigation.
    *
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
@@ -170,12 +174,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     this.scrollingSubject.next(true)
 
-    const scaleFactor = this.viewport.scaleFactor
-
-    const scaledPosition = new SpinePosition({
-      x: position.x * scaleFactor,
-      y: position.y * scaleFactor,
-    })
+    const scaledPosition = this.fromSpinePosition(position)
 
     // @todo use smooth later and adjust the class to avoid false positive
     // @todo see scrollend
@@ -209,16 +208,30 @@ export class ScrollNavigationController extends ReactiveEntity<{
     this.navigateSubject.next(navigation)
   }
 
-  public get viewportPosition(): SpinePosition {
-    const element = this.value.element
-
-    if (!element) return new SpinePosition({ x: 0, y: 0 })
-
+  public fromScrollPosition(position: ScrollPosition) {
     const scaleFactor = this.viewport.scaleFactor
 
     return new SpinePosition({
-      x: element.scrollLeft / scaleFactor,
-      y: element.scrollTop / scaleFactor,
+      x: position.x / scaleFactor,
+      y: position.y / scaleFactor,
+    })
+  }
+
+  public fromSpinePosition(position: SpinePosition) {
+    const scaleFactor = this.viewport.scaleFactor
+
+    return new ScrollPosition({
+      x: position.x * scaleFactor,
+      y: position.y * scaleFactor,
+    })
+  }
+
+  public get scrollPosition() {
+    const element = this.value.element
+
+    return new ScrollPosition({
+      x: element?.scrollLeft ?? 0,
+      y: element?.scrollTop ?? 0,
     })
   }
 }

@@ -1,21 +1,19 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context"
-import { Viewport } from "../../viewport/Viewport"
+import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { ViewportSlicePosition } from "../../viewport/types"
+import { Viewport } from "../../viewport/Viewport"
 import { SpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 
 const context = new Context()
-const viewport = new Viewport(context)
+const settingsManager = new ReaderSettingsManager({}, context)
+const viewport = new Viewport(context, settingsManager)
 
-context.update({
-  visibleAreaRect: {
-    height: 384,
-    width: 505,
-    x: 0,
-    y: 0,
-  },
-})
+vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(505)
+vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(384)
+
+viewport.layout()
 
 describe("Given an item that is one page on spread", () => {
   describe("when viewport is at less than the screen threshold", () => {

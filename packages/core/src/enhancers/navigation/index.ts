@@ -1,4 +1,4 @@
-import { takeUntil } from "rxjs"
+import { merge, takeUntil, tap } from "rxjs"
 import type { HtmlEnhancerOutput } from "../html/enhancer"
 import type {
   EnhancerOptions,
@@ -8,6 +8,7 @@ import type {
 import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
+import { UserScrollNavigation } from "./navigators/UserScrollNavigation"
 import { observeState } from "./state"
 import { throttleLock } from "./throttleLock"
 import type { NavigationEnhancerOutput } from "./types"
@@ -23,11 +24,24 @@ export const navigationEnhancer =
     options: InheritOptions,
   ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
     const reader = next(options)
-
     const state$ = observeState(reader)
-
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
+    const userScrollNavigation = new UserScrollNavigation(
+      reader.navigation.scrollNavigationController,
+      reader.navigation.locker,
+    )
+
+    const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
+    const navigateOnUserScroll$ = userScrollNavigation.navigation$.pipe(
+      tap((navigation) => {
+        reader.navigation.navigate(navigation)
+      }),
+    )
+
+    merge(linksNavigation$, navigateOnUserScroll$)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
 
     const load: NavigationEnhancerOutput["load"] = (options) => {
       const { cfi, ...rest } = options
@@ -39,13 +53,15 @@ export const navigationEnhancer =
       }
     }
 
-    const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
-
-    linksNavigation$.pipe(takeUntil(reader.$.destroy$)).subscribe()
+    const destroy = () => {
+      userScrollNavigation.destroy()
+      reader.destroy()
+    }
 
     return {
       ...reader,
       load,
+      destroy,
       navigation: {
         ...reader.navigation,
         state$,

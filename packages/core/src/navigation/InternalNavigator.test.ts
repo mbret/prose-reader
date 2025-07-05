@@ -1,5 +1,5 @@
-import { firstValueFrom, of } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { firstValueFrom } from "rxjs"
+import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { Pagination } from "../pagination/Pagination"
@@ -16,18 +16,10 @@ import type { InternalNavigationEntry } from "./types"
 
 const createNavigatorContext = () => {
   const context = new Context()
-  context.update({
-    visibleAreaRect: {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100,
-    },
-  })
   const settings = new ReaderSettingsManager({}, context)
   const spineItemsManager = new SpineItemsManager(context, settings)
   const hookManager = new HookManager()
-  const viewport = new Viewport(context)
+  const viewport = new Viewport(context, settings)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -35,7 +27,6 @@ const createNavigatorContext = () => {
     viewport,
   })
   const spine = new Spine(
-    of(document.createElement("div")),
     context,
     pagination,
     spineItemsManager,
@@ -52,6 +43,11 @@ const createNavigatorContext = () => {
     spine,
     viewport,
   })
+
+  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
+  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
+
+  viewport.layout()
 
   return {
     navigator,

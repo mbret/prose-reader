@@ -1,5 +1,4 @@
 import {
-  Subject,
   animationFrameScheduler,
   debounceTime,
   exhaustMap,
@@ -7,18 +6,14 @@ import {
   first,
   merge,
   of,
+  Subject,
   takeUntil,
   tap,
 } from "rxjs"
-import type { Context } from "../context/Context"
-import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import type { Spine } from "../spine/Spine"
-import { UnsafeSpinePosition } from "../spine/types"
-import { DestroyableClass } from "../utils/DestroyableClass"
-import type { Viewport } from "../viewport/Viewport"
-import type { Locker } from "./Locker"
-import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
-import type { UserNavigationEntry } from "./types"
+import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
+import type { Locker } from "../../../navigation/Locker"
+import type { UserNavigationEntry } from "../../../navigation/types"
+import { DestroyableClass } from "../../../utils/DestroyableClass"
 
 const SCROLL_FINISHED_DEBOUNCE_TIMEOUT = 500
 
@@ -34,12 +29,8 @@ export class UserScrollNavigation extends DestroyableClass {
   public navigation$ = this.navigationSubject.asObservable()
 
   constructor(
-    protected settings: ReaderSettingsManager,
-    protected context: Context,
-    protected spine: Spine,
     protected scrollNavigationController: ScrollNavigationController,
     protected locker: Locker,
-    viewport: Viewport,
   ) {
     super()
 
@@ -63,12 +54,10 @@ export class UserScrollNavigation extends DestroyableClass {
           ),
           first(),
           tap(() => {
-            const targetElement = event.target as HTMLElement
-
-            const spinePosition = new UnsafeSpinePosition({
-              x: targetElement.scrollLeft / viewport.scaleFactor,
-              y: targetElement.scrollTop / viewport.scaleFactor,
-            })
+            const spinePosition =
+              this.scrollNavigationController.fromScrollPosition(
+                this.scrollNavigationController.scrollPosition,
+              )
 
             this.navigationSubject.next({
               animation: false,

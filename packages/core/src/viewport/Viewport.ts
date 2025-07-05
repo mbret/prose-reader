@@ -1,4 +1,4 @@
-import { takeUntil, tap } from "rxjs"
+import { merge, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -61,7 +61,15 @@ export class Viewport extends ReactiveEntity<State> {
         }),
       )
 
-    updatePageSize$.pipe(takeUntil(this.destroy$)).subscribe()
+    const updateLayout$ = this.context.watch("rootElement").pipe(
+      tap(() => {
+        this.layout()
+      }),
+    )
+
+    merge(updatePageSize$, updateLayout$)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe()
   }
 
   protected calculatePageSize(layout: { width: number; height: number }) {

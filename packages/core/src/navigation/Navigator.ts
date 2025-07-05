@@ -1,4 +1,4 @@
-import { combineLatest, merge, Subject } from "rxjs"
+import { combineLatest, Subject } from "rxjs"
 import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -12,7 +12,6 @@ import { InternalNavigator } from "./InternalNavigator"
 import { Locker } from "./Locker"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
 import type { UserNavigationEntry } from "./types"
-import { UserScrollNavigation } from "./UserScrollNavigation"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -30,6 +29,7 @@ export const createNavigator = ({
   viewport: Viewport
 }) => {
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
+  const userNavigation$ = userExplicitNavigationSubject.asObservable()
   const locker = new Locker()
   const navigationResolver = createNavigationResolver({
     context,
@@ -54,20 +54,6 @@ export const createNavigator = ({
     hookManager,
     spine,
     context,
-  )
-
-  const userScrollNavigation = new UserScrollNavigation(
-    settings,
-    context,
-    spine,
-    scrollNavigationController,
-    locker,
-    viewport,
-  )
-
-  const userNavigation$ = merge(
-    userExplicitNavigationSubject,
-    userScrollNavigation.navigation$,
   )
 
   const internalNavigator = new InternalNavigator(
@@ -97,7 +83,6 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
-    userScrollNavigation.destroy()
     controlledNavigationController.destroy()
     internalNavigator.destroy()
   }
