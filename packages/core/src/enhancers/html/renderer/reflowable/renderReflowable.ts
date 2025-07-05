@@ -115,7 +115,11 @@ export const renderReflowable = ({
   const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
 
   // @todo simplify ? should be from common spine item
-  if (frameElement?.contentDocument && frameElement?.contentWindow) {
+  if (
+    frameElement?.contentDocument &&
+    frameElement?.contentWindow &&
+    frameElement.contentDocument.body
+  ) {
     let contentWidth = pageWidth
     let contentHeight = pageHeight
 
