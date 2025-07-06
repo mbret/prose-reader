@@ -58,7 +58,7 @@ export type NavigationConsolidation = {
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
-  position: SpinePosition | SpinePosition | UnboundSpinePosition
+  position: SpinePosition | UnboundSpinePosition
   id: symbol
   meta: {
     triggeredBy: `user` | `restoration` | `pagination`

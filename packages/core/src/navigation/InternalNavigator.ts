@@ -98,7 +98,9 @@ export class InternalNavigator extends DestroyableClass {
     const navigationFromUser$ = userNavigation$
       .pipe(
         withLatestFrom(this.navigationSubject),
-        mapUserNavigationToInternal,
+        mapUserNavigationToInternal({
+          navigationResolver,
+        }),
         /**
          * Url lookup is heavier so we start with it to fill
          * as much information as needed to reduce later lookup
@@ -350,9 +352,12 @@ export class InternalNavigator extends DestroyableClass {
           } else {
             this.controlledNavigationController.navigate({
               ...navigation,
-              position: navigationResolver.fromUnboundSpinePosition(
-                navigation.position,
-              ),
+              /**
+               * @important
+               * Explicitly trust the unbound position to be valid at this point.
+               * Thanks to consolidation and restoration.
+               */
+              position: SpinePosition.from(navigation.position),
             })
           }
         }),

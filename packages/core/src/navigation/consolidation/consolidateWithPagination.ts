@@ -1,9 +1,9 @@
 import {
-  type Observable,
   distinctUntilChanged,
   filter,
   first,
   map,
+  type Observable,
   of,
   switchMap,
   withLatestFrom,

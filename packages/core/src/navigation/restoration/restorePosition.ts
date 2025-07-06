@@ -77,7 +77,7 @@ const restoreNavigationForScrollingPageTurnMode = ({
       !isPositionWithinSpineItem
     ) {
       /**
-       * -> fallback to begining of item
+       * -> fallback to beginning of item
        */
       return navigationResolver.getNavigationForSpineIndexOrId(foundSpineItem)
     }

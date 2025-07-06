@@ -1,4 +1,4 @@
-import { type Observable, map, switchMap } from "rxjs"
+import { map, type Observable, switchMap } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
