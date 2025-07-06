@@ -4,7 +4,6 @@ import { SpinePosition } from "../../spine/types"
 import type { SpineItemNavigationResolver } from "../../spineItem/navigationResolver"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { Viewport } from "../../viewport/Viewport"
-import type { DeprecatedViewportPosition } from "../types"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 
@@ -22,7 +21,7 @@ export const getNavigationForSpineItemPage = ({
   spineItemNavigationResolver: SpineItemNavigationResolver
   spineLocator: SpineLocator
   viewport: Viewport
-}): DeprecatedViewportPosition => {
+}): SpinePosition => {
   const spineItem = spineItemsManager.get(spineItemId)
 
   // lookup for entire book

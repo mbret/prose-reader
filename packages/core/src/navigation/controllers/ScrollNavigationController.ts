@@ -25,20 +25,23 @@ import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
-import { SpinePosition } from "../../spine/types"
+import { type SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import { AbstractPosition } from "../../types"
 import { isDefined } from "../../utils/isDefined"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
-import type { ViewportNavigationEntry } from "./ControlledNavigationController"
 
 export class ScrollPosition extends AbstractPosition {}
 
+export type ScrollNavigationViewportNavigationEntry = {
+  position: UnboundSpinePosition | SpinePosition
+}
 export class ScrollNavigationController extends ReactiveEntity<{
   element: HTMLElement | undefined
 }> {
-  protected navigateSubject = new Subject<ViewportNavigationEntry>()
+  protected navigateSubject =
+    new Subject<ScrollNavigationViewportNavigationEntry>()
   protected scrollingSubject = new BehaviorSubject(false)
 
   public isScrolling$ = this.scrollingSubject.asObservable()
@@ -169,15 +172,15 @@ export class ScrollNavigationController extends ReactiveEntity<{
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected setViewportPosition = ({ position }: ViewportNavigationEntry) => {
+  protected setViewportPosition = ({
+    position,
+  }: ScrollNavigationViewportNavigationEntry) => {
     const element = this.value.element
 
     this.scrollingSubject.next(true)
 
     const scaledPosition = this.fromSpinePosition(position)
 
-    // @todo use smooth later and adjust the class to avoid false positive
-    // @todo see scrollend
     element?.scrollTo({
       left: scaledPosition.x,
       top: scaledPosition.y,
@@ -204,20 +207,20 @@ export class ScrollNavigationController extends ReactiveEntity<{
     this.mergeCompare(value)
   }
 
-  navigate(navigation: ViewportNavigationEntry) {
+  navigate(navigation: ScrollNavigationViewportNavigationEntry) {
     this.navigateSubject.next(navigation)
   }
 
   public fromScrollPosition(position: ScrollPosition) {
     const scaleFactor = this.viewport.scaleFactor
 
-    return new SpinePosition({
+    return new UnboundSpinePosition({
       x: position.x / scaleFactor,
       y: position.y / scaleFactor,
     })
   }
 
-  public fromSpinePosition(position: SpinePosition) {
+  public fromSpinePosition(position: UnboundSpinePosition | SpinePosition) {
     const scaleFactor = this.viewport.scaleFactor
 
     return new ScrollPosition({

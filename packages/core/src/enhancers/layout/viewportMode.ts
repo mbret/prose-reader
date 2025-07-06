@@ -1,6 +1,7 @@
-import { type Observable, switchMap, tap, timer } from "rxjs"
+import { combineLatest, type Observable, switchMap, tap, timer } from "rxjs"
 import type { Reader } from "../../reader"
 import { noopElement } from "../../utils/dom"
+import { watchKeys } from "../../utils/rxjs"
 
 /**
  * @important
@@ -12,7 +13,7 @@ import { noopElement } from "../../utils/dom"
  */
 const ANIMATION_DURATION = 200
 
-const adjustScrollToKeepContentCentered = (
+export const adjustScrollToKeepContentCentered = (
   scrollContainer: HTMLElement,
   fromScale: number,
   toScale: number,
@@ -44,13 +45,15 @@ export const createViewportModeHandler = (
   reader: Reader,
   viewportMode$: Observable<`normal` | `thumbnails`>,
 ) => {
-  return viewportMode$.pipe(
-    switchMap((viewportMode) => {
+  return combineLatest([
+    viewportMode$,
+    reader.settings.values$.pipe(watchKeys(["computedPageTurnMode"])),
+  ]).pipe(
+    switchMap(([viewportMode, { computedPageTurnMode }]) => {
       const scrollContainer =
         reader.navigation.scrollNavigationController.value.element
       const viewportElement = reader.viewport.value.element
-      const isScrollingMode =
-        reader.settings.values.computedPageTurnMode === "scrollable"
+      const isScrollingMode = computedPageTurnMode
 
       viewportElement.style.transition = `transform ${isScrollingMode ? 0 : ANIMATION_DURATION}ms`
 

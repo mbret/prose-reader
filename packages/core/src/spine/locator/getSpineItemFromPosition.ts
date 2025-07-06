@@ -1,7 +1,6 @@
-import type { DeprecatedViewportPosition } from "../../navigation/types"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition, UnsafeSpinePosition } from "../types"
+import type { SpinePosition, UnboundSpinePosition } from "../types"
 
 /**
  * Returns the first element that is within the given position.
@@ -13,7 +12,7 @@ export const getSpineItemFromPosition = ({
   spineItemsManager,
   spineLayout,
 }: {
-  position: DeprecatedViewportPosition | SpinePosition | UnsafeSpinePosition
+  position: SpinePosition | SpinePosition | UnboundSpinePosition
   spineItemsManager: SpineItemsManager
   spineLayout: SpineLayout
 }) => {

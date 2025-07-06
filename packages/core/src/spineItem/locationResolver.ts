@@ -9,7 +9,7 @@ import {
 import { getSpineItemPageIndexFromSpineItemPosition } from "./layout/getSpineItemPageIndexFromSpineItemPosition"
 import { getSpineItemPositionFromPageIndex } from "./layout/getSpineItemPositionFromPageIndex"
 import type { SpineItem } from "./SpineItem"
-import { SpineItemPosition, UnsafeSpineItemPagePosition } from "./types"
+import { SpineItemPosition, UnboundSpineItemPagePosition } from "./types"
 
 export type SpineItemLocator = ReturnType<typeof createSpineItemLocator>
 
@@ -120,7 +120,7 @@ export const createSpineItemLocator = ({
         pageIndex,
         height,
       )
-      return new UnsafeSpineItemPagePosition({
+      return new UnboundSpineItemPagePosition({
         x: position.x,
         y: position.y - pageStartY,
       })
@@ -132,14 +132,14 @@ export const createSpineItemLocator = ({
     if (context.isRTL()) {
       // For RTL, pages are positioned from right to left
       const rtlPageStartX = width - (pageIndex + 1) * pageWidth
-      return new UnsafeSpineItemPagePosition({
+      return new UnboundSpineItemPagePosition({
         x: position.x - Math.max(0, rtlPageStartX),
         y: position.y,
       })
     }
 
     // For LTR, simply subtract the page start position from the absolute position
-    return new UnsafeSpineItemPagePosition({
+    return new UnboundSpineItemPagePosition({
       x: position.x - pageStartX,
       y: position.y,
     })

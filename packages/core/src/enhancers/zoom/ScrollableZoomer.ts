@@ -1,8 +1,10 @@
 import { BehaviorSubject } from "rxjs"
-import { getNewScaledOffset } from "../../utils/layout"
-import { Zoomer } from "./Zoomer"
+import { Report } from "../../report"
+import { noopElement } from "../../utils/dom"
+import { adjustScrollToKeepContentCentered } from "../layout/viewportMode"
+import { ZoomController } from "./ZoomController"
 
-export class ScrollableZoomer extends Zoomer {
+export class ScrollableZoomer extends ZoomController {
   public element: HTMLDivElement | undefined
   public isZooming$ = new BehaviorSubject(false)
   public currentScale = 1
@@ -13,9 +15,20 @@ export class ScrollableZoomer extends Zoomer {
     this.currentPosition = { x: 0, y: 0 }
 
     const spineElement = this.reader.spine.element
+    const viewportElement = this.reader.viewport.value.element
+    const scrollNavigationElement =
+      this.reader.navigation.scrollNavigationController.value.element
 
     if (spineElement) {
       spineElement.style.transformOrigin = `0 0`
+    }
+
+    if (viewportElement) {
+      viewportElement.style.transformOrigin = `0 0`
+    }
+
+    if (scrollNavigationElement) {
+      scrollNavigationElement.style.overflowX = "scroll"
     }
 
     this.isZooming$.next(true)
@@ -27,47 +40,43 @@ export class ScrollableZoomer extends Zoomer {
     this.isZooming$.next(false)
   }
 
+  /**
+   * Panning is directly managed through the scroll navigator element.
+   */
   public moveAt() {
-    // moved by user scroll
+    Report.warn("moveAt should not be called on scroll mode")
   }
 
   public scaleAt(userScale: number): void {
-    const spineElement = this.reader.spine.element
-    const viewportElement =
+    const viewportElement = this.reader.viewport.value.element
+    const scrollContainer =
       this.reader.navigation.scrollNavigationController.value.element
 
-    if (!spineElement || !viewportElement) return
+    if (!viewportElement || !viewportElement) return
 
     const roundedScale = Math.ceil(userScale * 100) / 100
     const newScale = Math.max(roundedScale, 1)
 
-    // GET CURRENT SCALE
-    // no need to check for Y as both axis have same scale
-    const currentScale =
-      spineElement.getBoundingClientRect().width / spineElement.offsetWidth
+    const currentScale = this.reader.viewport.scaleFactor
 
-    const currentScrollTop = viewportElement.scrollTop
-
-    // navigator.element.scrollTop does not change after the scale change thanks to fixed origin position
-    // the scroll offset is the one before the new scale and can be used to add / remove on newly scaled view
-    spineElement.style.transform = `scale(${newScale})`
-
-    viewportElement.scrollLeft = getNewScaledOffset({
+    const { newScrollLeft, newScrollTop } = adjustScrollToKeepContentCentered(
+      scrollContainer ?? noopElement(),
+      currentScale,
       newScale,
-      oldScale: currentScale,
-      pageSize: viewportElement.clientWidth,
-      screenSize: spineElement.offsetWidth,
-      scrollOffset: viewportElement.scrollLeft,
+    )
+
+    viewportElement.style.transform = `scale(${newScale})`
+
+    const spinePosition =
+      this.reader.navigation.scrollNavigationController.fromScrollPosition({
+        x: newScrollLeft,
+        y: newScrollTop,
+      })
+
+    this.reader.navigation.navigate({
+      position: spinePosition,
     })
 
-    viewportElement.scrollTop = getNewScaledOffset({
-      newScale,
-      oldScale: currentScale,
-      pageSize: viewportElement.clientHeight,
-      screenSize: spineElement.offsetHeight,
-      scrollOffset: currentScrollTop,
-    })
-
-    this.currentScale = roundedScale
+    this.currentScale = newScale
   }
 }

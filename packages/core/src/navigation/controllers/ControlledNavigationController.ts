@@ -1,9 +1,7 @@
 import { isDefined } from "reactjrx"
 import {
-  BehaviorSubject,
-  type Observable,
-  Subject,
   animationFrameScheduler,
+  BehaviorSubject,
   combineLatest,
   delay,
   filter,
@@ -11,7 +9,9 @@ import {
   map,
   merge,
   mergeMap,
+  type Observable,
   of,
+  Subject,
   share,
   shareReplay,
   startWith,

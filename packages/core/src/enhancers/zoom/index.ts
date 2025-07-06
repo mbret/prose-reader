@@ -2,8 +2,8 @@ import { BehaviorSubject, switchMap } from "rxjs"
 import type { Reader } from "../../reader"
 import { ControllableZoomer } from "./ControllableZoomer"
 import { ScrollableZoomer } from "./ScrollableZoomer"
-import type { Zoomer } from "./Zoomer"
 import type { ZoomEnhancerOutput } from "./types"
+import type { ZoomController } from "./ZoomController"
 
 export const zoomEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
@@ -13,9 +13,9 @@ export const zoomEnhancer =
     const reader = next(options)
     const controllableZoomer = new ControllableZoomer(reader)
     const scrollableZoomer = new ScrollableZoomer(reader)
-    const zoomerSubject = new BehaviorSubject<Zoomer>(scrollableZoomer)
+    const zoomerSubject = new BehaviorSubject<ZoomController>(scrollableZoomer)
 
-    const enter: Zoomer["enter"] = (element) => {
+    const enter: ZoomController["enter"] = (element) => {
       const zoomer =
         reader.settings.values.computedPageTurnMode === `scrollable`
           ? scrollableZoomer

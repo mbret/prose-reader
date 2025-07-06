@@ -1,6 +1,5 @@
 import type { Context } from "../../../context/Context"
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
-import type { DeprecatedViewportPosition } from "../../../navigation/types"
 import type { SettingsInterface } from "../../../settings/SettingsInterface"
 import type {
   ComputedCoreSettings,
@@ -8,7 +7,7 @@ import type {
 } from "../../../settings/types"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import type { SpinePosition } from "../../../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { SpineItem } from "../../../spineItem/SpineItem"
 import type { Viewport } from "../../../viewport/Viewport"
 import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
@@ -31,7 +30,7 @@ export const getNavigationForRightOrBottomPage = ({
   viewport,
   settings,
 }: {
-  position: DeprecatedViewportPosition | SpinePosition
+  position: SpinePosition | UnboundSpinePosition
   spineItem: SpineItem
   context: Context
   spineItemsManager: SpineItemsManager
@@ -43,7 +42,7 @@ export const getNavigationForRightOrBottomPage = ({
     CoreInputSettings,
     CoreInputSettings & ComputedCoreSettings
   >
-}): DeprecatedViewportPosition => {
+}): SpinePosition => {
   const navigation = getNavigationForRightSinglePage({
     position,
     viewport,
@@ -65,7 +64,7 @@ export const getNavigationForRightOrBottomPage = ({
     // for the next item in case it's also a vertical content
     if (spineItem?.isUsingVerticalWriting() && position.x !== navigation.x) {
       return navigationResolver.getAdjustedPositionForSpread(
-        navigationResolver.getAdjustedPositionWithSafeEdge(
+        navigationResolver.fromUnboundSpinePosition(
           context.isRTL()
             ? {
                 ...navigation,

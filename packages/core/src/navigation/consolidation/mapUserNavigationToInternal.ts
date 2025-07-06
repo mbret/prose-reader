@@ -1,4 +1,4 @@
-import { type Observable, map } from "rxjs"
+import { map, type Observable } from "rxjs"
 import { SpinePosition } from "../../spine/types"
 import type {
   InternalNavigationEntry,

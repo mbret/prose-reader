@@ -1,7 +1,7 @@
 import type { BehaviorSubject } from "rxjs"
 import type { Reader } from "../../reader"
 
-export abstract class Zoomer {
+export abstract class ZoomController {
   constructor(protected reader: Reader) {}
 
   public abstract enter(element?: HTMLImageElement): void

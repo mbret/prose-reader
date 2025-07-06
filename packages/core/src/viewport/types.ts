@@ -1,4 +1,4 @@
-import type { SpinePosition, UnsafeSpinePosition } from "../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 
 /**
  * This correspond to a visible slice of the viewport
@@ -24,14 +24,14 @@ export class ViewportSlicePosition extends DOMRect {
   }): ViewportSlicePosition
 
   static from(
-    position: SpinePosition | UnsafeSpinePosition,
+    position: SpinePosition | UnboundSpinePosition,
     viewport: AbsoluteViewport | RelativeViewport,
   ): ViewportSlicePosition
 
   static from(
     positionOrRect:
       | SpinePosition
-      | UnsafeSpinePosition
+      | UnboundSpinePosition
       | { x: number; y: number; width: number; height: number },
     viewport?: AbsoluteViewport | RelativeViewport,
   ): ViewportSlicePosition {

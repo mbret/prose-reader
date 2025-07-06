@@ -1,10 +1,9 @@
 import { merge, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs"
 import { generateCfiForSpineItemPage, generateRootCfi, isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
-import type { DeprecatedViewportPosition } from "../navigation/types"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
-import type { SpinePosition } from "../spine/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type { createSpineItemLocator } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
@@ -45,7 +44,7 @@ export class PaginationController extends DestroyableClass {
           position,
         }: {
           spineItem: SpineItem
-          position: DeprecatedViewportPosition | SpinePosition
+          position: SpinePosition | UnboundSpinePosition
         }) =>
           this.spine.locator.getVisiblePagesFromViewportPosition({
             spineItem: spineItem,

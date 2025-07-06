@@ -40,39 +40,35 @@ export class AbstractSpinePosition {
 }
 
 /**
- * Position of an element relative to the spine.
+ * Guaranteed to be a valid spine position at a given layout.
  *
- * This can be used for item, pages.
- *
- * @important
- * This position is not guaranteed to be valid and/or navigable.
- * Its purpose is to be used for navigation and/or calculations but you may need
- * to do proper validation depending of the context.
+ * Meaning:
+ * - within safe edges x/y
+ * - at a valid page edge offset
  */
 export class SpinePosition extends AbstractSpinePosition {
   public readonly __symbol = `SpinePosition`
 
-  static from(position: UnsafeSpinePosition | SpinePosition) {
+  static from(position: UnboundSpinePosition | SpinePosition) {
     return new SpinePosition(position)
   }
 }
 
 /**
- * Represent an obvious not valid spine position. Not valid means mostly:
- * - out of bounds
- * - not in the spine
- * - not navigable
+ * Represents a spine position that may not be:
+ * - within safe edges x/y (eg: out of bounds)
+ * - at a page edge offset (eg: 20% on a page)
  *
- * Although a SpinePosition can always be invalid, its usage is clear.
- * This distinction is here to help developer understand the context better.
+ * Such spine position is usually used for scroll navigation or calculations
+ * of relative things.
  *
- * If you end up somewhere with an UnsafeSpinePosition, it means you need to
- * validate it somehow and probably do some translation.
+ * This is just a class to flag potential misuses, getting a UnboundSpinePosition does not
+ * means the position is offset.
  */
-export class UnsafeSpinePosition extends AbstractSpinePosition {
+export class UnboundSpinePosition extends AbstractSpinePosition {
   public readonly __symbol = `UnsafeSpinePosition`
 
   static from(position: SpinePosition) {
-    return new UnsafeSpinePosition(position)
+    return new UnboundSpinePosition(position)
   }
 }

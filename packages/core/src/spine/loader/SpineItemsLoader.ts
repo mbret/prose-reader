@@ -1,7 +1,7 @@
 import { arrayEqual } from "@prose-reader/shared"
 import {
-  BehaviorSubject,
   animationFrameScheduler,
+  BehaviorSubject,
   debounceTime,
   distinctUntilChanged,
   map,
@@ -15,9 +15,9 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { waitForSwitch } from "../../utils/rxjs"
+import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpineLocator } from "../locator/SpineLocator"
 
 export class SpineItemsLoader extends DestroyableClass {
   private forcedOpenSubject = new BehaviorSubject<number[][]>([])

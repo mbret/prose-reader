@@ -1,7 +1,7 @@
 import { BehaviorSubject } from "rxjs"
-import { Zoomer } from "./Zoomer"
+import { ZoomController } from "./ZoomController"
 
-export class ControllableZoomer extends Zoomer {
+export class ControllableZoomer extends ZoomController {
   public element: HTMLDivElement | undefined
   public isZooming$ = new BehaviorSubject(false)
   public currentScale = 1

@@ -1,11 +1,10 @@
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition } from "../../spine/types"
-import type { DeprecatedViewportPosition } from "../types"
+import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
 
 export const NAMESPACE = `spineNavigator`
 
-export const getAdjustedPositionWithSafeEdge = ({
+export const fromUnboundSpinePosition = ({
   position,
   isRTL,
   pageSizeHeight,
@@ -13,7 +12,7 @@ export const getAdjustedPositionWithSafeEdge = ({
   visibleAreaRectWidth,
   spine,
 }: {
-  position: DeprecatedViewportPosition | SpinePosition
+  position: SpinePosition | UnboundSpinePosition
   isRTL: boolean
   pageSizeHeight: number
   spineItemsManager: SpineItemsManager

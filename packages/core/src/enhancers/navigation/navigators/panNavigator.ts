@@ -1,5 +1,5 @@
 import type { Reader } from "../../../reader"
-import { SpinePosition } from "../../../spine/types"
+import { SpinePosition, type UnboundSpinePosition } from "../../../spine/types"
 import { navigationReport } from "../report"
 
 export class PanNavigator {
@@ -35,7 +35,7 @@ export class PanNavigator {
       this.lastPosition = this.lastStartPosition
     }
 
-    let navigation: SpinePosition =
+    let navigation: SpinePosition | UnboundSpinePosition =
       this.reader.navigation.getNavigation().position
 
     if (delta) {

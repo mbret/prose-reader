@@ -8,7 +8,7 @@ import { ViewportSlicePosition } from "../../viewport/types"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition, UnsafeSpinePosition } from "../types"
+import type { SpinePosition, UnboundSpinePosition } from "../types"
 import { getAbsolutePageIndexFromPageIndex } from "./getAbsolutePageIndexFromPageIndex"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
@@ -33,7 +33,7 @@ export const createSpineLocator = ({
   viewport: Viewport
 }) => {
   const getSpineItemPositionFromSpinePosition = (
-    position: SpinePosition | UnsafeSpinePosition,
+    position: SpinePosition | UnboundSpinePosition,
     spineItem: SpineItem,
   ): SpineItemPosition => {
     const { left, top } = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
@@ -110,7 +110,7 @@ export const createSpineLocator = ({
     useAbsoluteViewport = true,
     viewport,
   }: {
-    position: SpinePosition
+    position: SpinePosition | UnboundSpinePosition
     threshold:
       | { type: "percentage"; value: number }
       | { type: "pixels"; value: number }
@@ -197,7 +197,7 @@ export const createSpineLocator = ({
   }
 
   const isPositionWithinSpineItem = (
-    position: ViewportSlicePosition | SpinePosition,
+    position: ViewportSlicePosition | SpinePosition | UnboundSpinePosition,
     spineItem: SpineItem,
   ) => {
     const { bottom, left, right, top } =
@@ -225,7 +225,7 @@ export const createSpineLocator = ({
   }
 
   const getSpineItemPagePositionFromSpinePosition = (
-    spinePosition: UnsafeSpinePosition | SpinePosition,
+    spinePosition: UnboundSpinePosition | SpinePosition,
   ) => {
     const spineItem = getSpineItemFromPosition({
       position: spinePosition,
@@ -299,7 +299,9 @@ export const createSpineLocator = ({
     getSpineItemPagePositionFromSpinePosition,
     getSpinePositionFromSpineItem,
     getSpineItemPositionFromSpinePosition,
-    getSpineItemFromPosition: (position: SpinePosition) =>
+    getSpineItemFromPosition: (
+      position: SpinePosition | UnboundSpinePosition,
+    ) =>
       getSpineItemFromPosition({
         position,
         spineItemsManager,

@@ -87,7 +87,7 @@ export class InternalNavigator extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected context: Context,
     protected userNavigation$: Observable<UserNavigationEntry>,
-    protected viewportController: ControlledNavigationController,
+    protected controlledNavigationController: ControlledNavigationController,
     protected scrollNavigationController: ScrollNavigationController,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
@@ -135,6 +135,7 @@ export class InternalNavigator extends DestroyableClass {
         withFallbackPosition({
           navigationResolver,
           spineItemsManager: spine.spineItemsManager,
+          settings,
         }),
         withLatestFrom(isUserLocked$),
         switchMap(([params, isUserLocked]) => {
@@ -205,7 +206,7 @@ export class InternalNavigator extends DestroyableClass {
      * This is responsibility of other components.
      */
     const navigationUpdateFromLayout$ = merge(
-      viewportController.layout$,
+      controlledNavigationController.layout$,
       spine.layout$,
     ).pipe(
       switchMap(() => {
@@ -347,7 +348,12 @@ export class InternalNavigator extends DestroyableClass {
           if (settings.values.computedPageTurnMode === `scrollable`) {
             this.scrollNavigationController.navigate(navigation)
           } else {
-            this.viewportController.navigate(navigation)
+            this.controlledNavigationController.navigate({
+              ...navigation,
+              position: navigationResolver.fromUnboundSpinePosition(
+                navigation.position,
+              ),
+            })
           }
         }),
       )

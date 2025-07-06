@@ -53,6 +53,7 @@ export class ReaderSettingsManager
     if (manifest?.renditionFlow === `scrolled-continuous`) {
       computedSettings.computedPageTurnMode = `scrollable`
     }
+
     if (computedSettings.computedPageTurnMode === "scrollable") {
       computedSettings.computedPageTurnDirection = `vertical`
     }

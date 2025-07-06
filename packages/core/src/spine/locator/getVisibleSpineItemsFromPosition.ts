@@ -1,12 +1,11 @@
-import type { DeprecatedViewportPosition } from "../../navigation/types"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
-import type { Viewport } from "../../viewport/Viewport"
 import { translateSpinePositionToRelativeViewport } from "../../viewport/translateSpinePositionToRelativeViewport"
 import { ViewportSlicePosition } from "../../viewport/types"
+import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
-import type { SpinePosition } from "../types"
+import type { SpinePosition, UnboundSpinePosition } from "../types"
 import { getItemVisibilityForPosition } from "./getItemVisibilityForPosition"
 import { getSpineItemFromPosition } from "./getSpineItemFromPosition"
 
@@ -19,7 +18,7 @@ export const getVisibleSpineItemsFromPosition = ({
   useAbsoluteViewport = true,
   viewport,
 }: {
-  position: DeprecatedViewportPosition | SpinePosition
+  position: SpinePosition | UnboundSpinePosition
   threshold:
     | { type: "percentage"; value: number }
     | { type: "pixels"; value: number }

@@ -1,10 +1,11 @@
-import type { SpinePosition, UnsafeSpinePosition } from "../spine/types"
-import type { SpineItemPosition } from "../spineItem/types"
-
-export type DeprecatedViewportPosition = SpinePosition
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
+import type {
+  SpineItemPosition,
+  UnboundSpineItemPagePosition,
+} from "../spineItem/types"
 
 export type UserNavigationEntry = {
-  position?: DeprecatedViewportPosition | SpinePosition | UnsafeSpinePosition
+  position?: SpinePosition | UnboundSpinePosition
   spineItem?: number | string
   url?: string | URL
   cfi?: string
@@ -31,7 +32,7 @@ export type NavigationConsolidation = {
    * position in the item. If the item changed its content
    * we cannot assume it's accurate and will need more info.
    */
-  positionInSpineItem?: SpineItemPosition
+  positionInSpineItem?: SpineItemPosition | UnboundSpineItemPagePosition
   /**
    * Useful in restoration to anchor back to spine item position.
    * Whether we should anchor from bottom or top of the item.
@@ -57,7 +58,7 @@ export type NavigationConsolidation = {
  * - spine item (fallback)
  */
 export type InternalNavigationEntry = {
-  position: SpinePosition | DeprecatedViewportPosition
+  position: SpinePosition | SpinePosition | UnboundSpinePosition
   id: symbol
   meta: {
     triggeredBy: `user` | `restoration` | `pagination`
@@ -74,7 +75,7 @@ export type InternalNavigationInput = Omit<
   InternalNavigationEntry,
   "position"
 > & {
-  position?: SpinePosition | DeprecatedViewportPosition
+  position?: SpinePosition | UnboundSpinePosition
 }
 
 export type Navigation = Pick<InternalNavigationEntry, "position" | "id">

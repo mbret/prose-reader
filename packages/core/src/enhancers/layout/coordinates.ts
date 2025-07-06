@@ -1,5 +1,5 @@
 import type { Reader } from "../../reader"
-import { UnsafeSpinePosition } from "../../spine/types"
+import { UnboundSpinePosition } from "../../spine/types"
 import { getPositionRelativeToNonTransformedElement } from "../../utils/coordinates"
 
 export const getSpinePositionFromClientPosition = (
@@ -7,7 +7,7 @@ export const getSpinePositionFromClientPosition = (
   spineElement: HTMLElement,
 ) => {
   // Convert back to non-transformed coordinates
-  return new UnsafeSpinePosition(
+  return new UnboundSpinePosition(
     getPositionRelativeToNonTransformedElement(position, spineElement),
   )
 }
