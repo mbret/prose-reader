@@ -1,11 +1,14 @@
-import type { SpineItem, UnsafeSpineItemPagePosition } from "@prose-reader/core"
+import type {
+  SpineItem,
+  UnboundSpineItemPagePosition,
+} from "@prose-reader/core"
 
 export type TapAreaGestureContext = {
   page:
     | {
         spineItem: SpineItem
         spineItemPageIndex: number
-        spineItemPagePosition: UnsafeSpineItemPagePosition
+        spineItemPagePosition: UnboundSpineItemPagePosition
         pageSize: {
           width: number
           height: number
