@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import {
   getScrollNavigationMetadata,
+  navigateToSpineItem,
   waitForSpineItemReady,
   waitForSpineItemUnloaded,
 } from "../../utils"
@@ -52,7 +53,6 @@ test.describe("Given a zoom in", () => {
 
         await waitForSpineItemReady(page, [0])
 
-        // Scroll to the bottom of the page
         await page.evaluate(() => {
           // @ts-ignore
           const reader = window.reader as Reader
@@ -60,12 +60,7 @@ test.describe("Given a zoom in", () => {
           reader.zoom.scaleAt(2)
         })
 
-        // Scroll to the bottom of the page
-        await page.evaluate(() => {
-          // @ts-ignore
-          ;(window.reader as Reader).navigation.goToSpineItem({ indexOrId: 9 })
-        })
-
+        await navigateToSpineItem({ page, index: 9 })
         await waitForSpineItemReady(page, [9])
         await waitForSpineItemUnloaded(page, [0])
 

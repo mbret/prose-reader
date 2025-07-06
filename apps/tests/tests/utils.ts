@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test"
+import type { Reader } from "@prose-reader/core"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -75,4 +76,41 @@ export const turnRight = async ({ page }: { page: Page }) => {
 
 export const turnLeft = async ({ page }: { page: Page }) => {
   await page.keyboard.press("ArrowLeft")
+}
+
+export const navigateToSpineItem = async ({
+  page,
+  index,
+}: {
+  page: Page
+  index: number
+}) => {
+  await page.evaluate(() => {
+    // @ts-ignore
+    const reader = window.reader as Reader
+
+    reader.navigation.goToSpineItem({ indexOrId: index })
+  })
+}
+export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
+  return await page.evaluate(() => {
+    // @ts-ignore
+    const reader = window.reader as Reader
+
+    const navigatorElement =
+      reader.navigation.scrollNavigationController.value.element
+    const scrollLeft =
+      reader.navigation.scrollNavigationController.value.element?.scrollLeft
+    const scrollTop =
+      reader.navigation.scrollNavigationController.value.element?.scrollTop
+
+    if (!navigatorElement) {
+      throw new Error("Navigator element not found")
+    }
+
+    const scrollbarWidth =
+      navigatorElement.offsetWidth - navigatorElement.clientWidth
+
+    return { scrollLeft, scrollbarWidth, scrollTop }
+  })
 }
