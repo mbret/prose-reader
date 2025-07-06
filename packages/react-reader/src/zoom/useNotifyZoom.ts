@@ -1,5 +1,6 @@
+import { watchKeys } from "@prose-reader/core"
 import { useSubscribe } from "reactjrx"
-import { EMPTY, NEVER, Subject, finalize, switchMap } from "rxjs"
+import { EMPTY, finalize, NEVER, Subject, switchMap } from "rxjs"
 import { useReader } from "../context/useReader"
 import { useReaderContext } from "../context/useReaderContext"
 
@@ -9,9 +10,10 @@ export const useNotifyZoom = () => {
 
   useSubscribe(
     () =>
-      reader?.zoom.isZooming$.pipe(
-        switchMap((isZooming) => {
-          if (!isZooming) return EMPTY
+      reader?.zoom.state$.pipe(
+        watchKeys(["isZooming", "currentScale"]),
+        switchMap(({ isZooming, currentScale }) => {
+          if (!isZooming || currentScale < 1) return EMPTY
 
           const abort = new Subject<void>()
 

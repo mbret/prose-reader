@@ -10,6 +10,7 @@ import { createNavigationResolver as createSpineItemNavigator } from "../../spin
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
+import { fromOutOfBoundsSpinePosition } from "./fromOutOfBoundsSpinePosition"
 import { fromUnboundSpinePosition } from "./fromUnboundSpinePosition"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
@@ -223,6 +224,16 @@ export const createNavigationResolver = ({
         visibleAreaRectWidth: viewport.absoluteViewport.width,
         spineItemsManager,
         spine,
+      }),
+    fromOutOfBoundsSpinePosition: (
+      position: SpinePosition | UnboundSpinePosition,
+    ) =>
+      fromOutOfBoundsSpinePosition({
+        position,
+        isRTL: context.isRTL(),
+        spineItemsManager,
+        spine,
+        viewportWidth: viewport.absoluteViewport.width,
       }),
     isNavigationGoingForwardFrom,
     arePositionsDifferent,

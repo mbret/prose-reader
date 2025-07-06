@@ -3,7 +3,11 @@ import type { ZoomControllerState } from "./ZoomController"
 
 export type ZoomEnhancerOutput = {
   zoom: {
-    enter: (imgElement?: HTMLImageElement) => void
+    enter: (params?: {
+      element?: HTMLImageElement
+      scale?: number
+      animate?: boolean
+    }) => void
     exit: () => void
     moveAt: (position: { x: number; y: number }) => void
     scaleAt: (scale: number) => void

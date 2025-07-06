@@ -66,7 +66,7 @@ export class SpinePosition extends AbstractSpinePosition {
  * means the position is offset.
  */
 export class UnboundSpinePosition extends AbstractSpinePosition {
-  public readonly __symbol = `UnsafeSpinePosition`
+  public readonly __symbol = `UnboundSpinePosition`
 
   static from(position: SpinePosition) {
     return new UnboundSpinePosition(position)

@@ -1,15 +1,48 @@
 import { Report } from "../../report"
 import { noopElement } from "../../utils/dom"
-import { adjustScrollToKeepContentCentered } from "../layout/viewportMode"
 import { ZoomController } from "./ZoomController"
 
+export const adjustScrollToKeepContentCentered = (
+  scrollContainer: HTMLElement,
+  fromScale: number,
+  toScale: number,
+) => {
+  const containerWidth = scrollContainer.clientWidth
+  const containerHeight = scrollContainer.clientHeight
+
+  // Current scroll position
+  const currentScrollLeft = scrollContainer.scrollLeft
+  const currentScrollTop = scrollContainer.scrollTop
+
+  // Calculate what's currently in the center of the visible area
+  const visibleCenterX = currentScrollLeft + containerWidth / 2
+  const visibleCenterY = currentScrollTop + containerHeight / 2
+
+  // After scaling, calculate where we need to scroll to keep the same content centered
+  const scaleFactor = toScale / fromScale
+  const newVisibleCenterX = visibleCenterX * scaleFactor
+  const newVisibleCenterY = visibleCenterY * scaleFactor
+
+  // Calculate new scroll position to keep the center content visible
+  const newScrollLeft = newVisibleCenterX - containerWidth / 2
+  const newScrollTop = newVisibleCenterY - containerHeight / 2
+
+  return { newScrollLeft, newScrollTop }
+}
+
 export class ScrollableZoomController extends ZoomController {
-  public enter(): void {
+  public enter({
+    scale = 1,
+  }: {
+    scale?: number
+  } = {}): void {
     if (this.value.isZooming) return
+
+    this.setScale(scale)
 
     this.mergeCompare({
       currentPosition: { x: 0, y: 0 },
-      currentScale: 1,
+      currentScale: scale,
       isZooming: true,
     })
   }

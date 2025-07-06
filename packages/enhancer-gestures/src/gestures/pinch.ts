@@ -1,12 +1,12 @@
 import {
   type HookManager,
-  type Reader,
   isHtmlElement,
+  type Reader,
 } from "@prose-reader/core"
 import type { PinchEvent } from "gesturx"
 import {
-  EMPTY,
   animationFrameScheduler,
+  EMPTY,
   filter,
   map,
   merge,
@@ -54,7 +54,7 @@ export const registerPinch = ({
   const shouldStartZoom = (
     target: EventTarget | null,
   ): target is HTMLImageElement =>
-    isHtmlImageElement(target) && !reader.zoom.isZooming
+    isHtmlImageElement(target) && !reader.zoom.state.isZooming
 
   return settingsManager.values$.pipe(
     switchMap(({ fontScalePinchEnabled, fontScalePinchThrottleTime }) => {
@@ -62,20 +62,20 @@ export const registerPinch = ({
         withLatestFrom(reader.viewportState$),
         switchMap(([event, viewportState]) => {
           const target = event.event.target
-          const startScale = reader.zoom.currentScale
+          const startScale = reader.zoom.state.currentScale
 
           if (viewportState === "busy") return EMPTY
 
           if (shouldStartZoom(target)) {
-            reader.zoom.enter(target)
+            reader.zoom.enter({ element: target })
           }
 
-          if (!reader.zoom.isZooming) return EMPTY
+          if (!reader.zoom.state.isZooming) return EMPTY
 
           return merge(
             pinchMove$.pipe(
               tap((event) => {
-                if (reader.zoom.isZooming) {
+                if (reader.zoom.state.isZooming) {
                   const newScale = startScale + (event.scale - 1)
 
                   if (newScale < 1) {
@@ -98,7 +98,7 @@ export const registerPinch = ({
               if (
                 viewportState === "busy" ||
                 shouldStartZoom(pinchStartEvent.event.target) ||
-                reader.zoom.isZooming
+                reader.zoom.state.isZooming
               )
                 return EMPTY
 

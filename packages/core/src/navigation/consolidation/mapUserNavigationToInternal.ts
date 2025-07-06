@@ -38,7 +38,7 @@ export const mapUserNavigationToInternal =
            * This "limitation" is here at the moment to avoid unexpected behaviors.
            */
           position: userNavigation.position
-            ? navigationResolver.fromUnboundSpinePosition(
+            ? navigationResolver.fromOutOfBoundsSpinePosition(
                 userNavigation.position,
               )
             : undefined,

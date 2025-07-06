@@ -35,6 +35,7 @@ export const BottomBar = memo(
     const reader = useReader()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
+    const zoomState = useObserve(() => reader?.zoom.state$, [reader])
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
     const [isExtraOpen, setIsExtraOpen] = useState(true)
@@ -174,17 +175,19 @@ export const BottomBar = memo(
                 aria-label="Thumbnails"
                 size="lg"
                 variant={
-                  reader?.settings.values.viewportMode === "thumbnails"
+                  zoomState?.isZooming && zoomState.currentScale < 1
                     ? "solid"
                     : "ghost"
                 }
                 onClick={() => {
-                  reader?.settings.update({
-                    viewportMode:
-                      reader?.settings.values.viewportMode === "normal"
-                        ? "thumbnails"
-                        : "normal",
-                  })
+                  if (zoomState?.isZooming) {
+                    reader?.zoom.exit()
+                  } else {
+                    reader?.zoom.enter({
+                      animate: true,
+                      scale: 0.5
+                    })
+                  }
                 }}
               >
                 <LuGalleryHorizontal />

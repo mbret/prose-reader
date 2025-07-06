@@ -18,7 +18,11 @@ export abstract class ZoomController extends ReactiveEntity<ZoomControllerState>
     })
   }
 
-  public abstract enter(element?: HTMLImageElement): void
+  public abstract enter(params?: {
+    element?: HTMLImageElement
+    scale?: number
+    animate?: boolean
+  }): void
   public abstract exit(): void
   public abstract moveAt(position: { x: number; y: number }): void
   public abstract scaleAt(scale: number): void

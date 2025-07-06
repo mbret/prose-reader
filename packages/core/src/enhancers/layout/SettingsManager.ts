@@ -33,7 +33,6 @@ export class SettingsManager<
       pageHorizontalMargin: _unused2,
       pageVerticalMargin: _unused3,
       layoutLayerTransition: _unused4,
-      viewportMode: _unused5,
       ...rest
     } = settings
 
@@ -45,8 +44,7 @@ export class SettingsManager<
       layoutAutoResize: "container",
       pageHorizontalMargin: 24,
       pageVerticalMargin: 24,
-      layoutLayerTransition: true,
-      viewportMode: "normal",
+      layoutLayerTransition: true
     }
   }
 }

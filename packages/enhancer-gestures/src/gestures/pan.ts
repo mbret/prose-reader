@@ -20,7 +20,8 @@ export const registerPan = ({
 
       return recognizer.events$.pipe(
         tap((event) => {
-          if (reader.zoom.isZooming) return
+          if (reader.zoom.state.isZooming && reader.zoom.state.currentScale > 1)
+            return
 
           if (event.type === `panStart`) {
             reader?.navigation.moveTo({ x: 0, y: 0 }, { start: true })

@@ -26,7 +26,6 @@ import { flagSpineItems } from "./flagSpineItems"
 import { SettingsManager } from "./SettingsManager"
 import type { EnhancerLayoutInputSettings, OutputSettings } from "./types"
 import { updateSpreadMode } from "./updateSpreadMode"
-import { createViewportModeHandler } from "./viewportMode"
 
 export type LayoutEnhancerOutput = {
   layout$: Observable<ObservedValueOf<Pages>>
@@ -60,7 +59,6 @@ export const layoutEnhancer =
       pageVerticalMargin,
       layoutAutoResize,
       layoutLayerTransition,
-      viewportMode,
     } = options
     const reader = next(options)
 
@@ -73,7 +71,6 @@ export const layoutEnhancer =
         pageVerticalMargin,
         layoutAutoResize,
         layoutLayerTransition,
-        viewportMode,
       },
       reader.settings as SettingsInterface<
         InheritSettings,
@@ -242,11 +239,6 @@ export const layoutEnhancer =
       )
       .subscribe()
 
-    const viewportModeHandler$ = createViewportModeHandler(
-      reader,
-      settingsManager.watch(`viewportMode`),
-    )
-
     const layoutInfo$ = reader.spine.pages.pipe(
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
@@ -259,7 +251,6 @@ export const layoutEnhancer =
       revealItemOnReady$,
       movingSafePan$,
       layoutOnContainerResize$,
-      viewportModeHandler$,
       layoutInfo$,
       flagSpineItems$,
       updateSpreadMode$,
