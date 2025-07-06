@@ -85,12 +85,15 @@ export const navigateToSpineItem = async ({
   page: Page
   index: number
 }) => {
-  await page.evaluate(() => {
-    // @ts-ignore
-    const reader = window.reader as Reader
+  await page.evaluate(
+    ([indexOrId = 0]) => {
+      // @ts-ignore
+      const reader = window.reader as Reader
 
-    reader.navigation.goToSpineItem({ indexOrId: index })
-  })
+      reader.navigation.goToSpineItem({ indexOrId })
+    },
+    [index],
+  )
 }
 export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
   return await page.evaluate(() => {
