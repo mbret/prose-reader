@@ -1,16 +1,25 @@
-import type { BehaviorSubject } from "rxjs"
 import type { Reader } from "../../reader"
+import { ReactiveEntity } from "../../utils/ReactiveEntity"
 
-export abstract class ZoomController {
-  constructor(protected reader: Reader) {}
+export type ZoomControllerState = {
+  element: HTMLDivElement | undefined
+  isZooming: boolean
+  currentScale: number
+  currentPosition: { x: number; y: number }
+}
+
+export abstract class ZoomController extends ReactiveEntity<ZoomControllerState> {
+  constructor(protected reader: Reader) {
+    super({
+      element: undefined,
+      isZooming: false,
+      currentScale: 1,
+      currentPosition: { x: 0, y: 0 },
+    })
+  }
 
   public abstract enter(element?: HTMLImageElement): void
   public abstract exit(): void
   public abstract moveAt(position: { x: number; y: number }): void
   public abstract scaleAt(scale: number): void
-
-  public abstract element: HTMLDivElement | undefined
-  public abstract isZooming$: BehaviorSubject<boolean>
-  public abstract currentScale: number
-  public abstract currentPosition: { x: number; y: number }
 }

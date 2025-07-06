@@ -1,43 +1,26 @@
-import { BehaviorSubject } from "rxjs"
 import { Report } from "../../report"
 import { noopElement } from "../../utils/dom"
 import { adjustScrollToKeepContentCentered } from "../layout/viewportMode"
 import { ZoomController } from "./ZoomController"
 
-export class ScrollableZoomer extends ZoomController {
-  public element: HTMLDivElement | undefined
-  public isZooming$ = new BehaviorSubject(false)
-  public currentScale = 1
-  public currentPosition = { x: 0, y: 0 }
-
+export class ScrollableZoomController extends ZoomController {
   public enter(): void {
-    this.currentScale = 1
-    this.currentPosition = { x: 0, y: 0 }
+    if (this.value.isZooming) return
 
-    const spineElement = this.reader.spine.element
-    const viewportElement = this.reader.viewport.value.element
-    const scrollNavigationElement =
-      this.reader.navigation.scrollNavigationController.value.element
-
-    if (spineElement) {
-      spineElement.style.transformOrigin = `0 0`
-    }
-
-    if (viewportElement) {
-      viewportElement.style.transformOrigin = `0 0`
-    }
-
-    if (scrollNavigationElement) {
-      scrollNavigationElement.style.overflowX = "scroll"
-    }
-
-    this.isZooming$.next(true)
+    this.mergeCompare({
+      currentPosition: { x: 0, y: 0 },
+      currentScale: 1,
+      isZooming: true,
+    })
   }
 
   public exit(): void {
-    this.scaleAt(1)
+    this.setScale(1)
 
-    this.isZooming$.next(false)
+    this.mergeCompare({
+      isZooming: false,
+      currentScale: 1,
+    })
   }
 
   /**
@@ -47,25 +30,39 @@ export class ScrollableZoomer extends ZoomController {
     Report.warn("moveAt should not be called on scroll mode")
   }
 
-  public scaleAt(userScale: number): void {
+  protected setScale(scale: number) {
     const viewportElement = this.reader.viewport.value.element
     const scrollContainer =
       this.reader.navigation.scrollNavigationController.value.element
+    const scrollNavigationElement =
+      this.reader.navigation.scrollNavigationController.value.element
 
-    if (!viewportElement || !viewportElement) return
-
-    const roundedScale = Math.ceil(userScale * 100) / 100
-    const newScale = Math.max(roundedScale, 1)
+    if (!viewportElement || !scrollNavigationElement) return
 
     const currentScale = this.reader.viewport.scaleFactor
 
     const { newScrollLeft, newScrollTop } = adjustScrollToKeepContentCentered(
       scrollContainer ?? noopElement(),
       currentScale,
-      newScale,
+      scale,
     )
 
-    viewportElement.style.transform = `scale(${newScale})`
+    /**
+     * When zooming out, we want to keep the content centered. Since we don't have a scrollbar we will cheat
+     * with origin and force it centered.
+     * When zooming in, we want to keep the content centered as well but we now have a scrollbar so we adjust it.
+     * Keeping the origin centered would make it impossible to scroll the left content
+     */
+    if (scale < 1) {
+      viewportElement.style.transformOrigin = `top`
+      // We don't need to force the scrollbar to be visible when zooming out
+      scrollNavigationElement.style.overflowX = "auto"
+    } else if (scale > 1) {
+      viewportElement.style.transformOrigin = `top left`
+      scrollNavigationElement.style.overflowX = "scroll"
+    }
+
+    viewportElement.style.transform = `scale(${scale})`
 
     const spinePosition =
       this.reader.navigation.scrollNavigationController.fromScrollPosition({
@@ -76,7 +73,16 @@ export class ScrollableZoomer extends ZoomController {
     this.reader.navigation.navigate({
       position: spinePosition,
     })
+  }
 
-    this.currentScale = newScale
+  public scaleAt(userScale: number): void {
+    const roundedScale = Math.ceil(userScale * 100) / 100
+    const newScale = roundedScale
+
+    this.setScale(newScale)
+
+    this.mergeCompare({
+      currentScale: newScale,
+    })
   }
 }

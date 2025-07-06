@@ -1,7 +1,7 @@
 import { BehaviorSubject, switchMap } from "rxjs"
 import type { Reader } from "../../reader"
 import { ControllableZoomer } from "./ControllableZoomer"
-import { ScrollableZoomer } from "./ScrollableZoomer"
+import { ScrollableZoomController } from "./ScrollableZoomer"
 import type { ZoomEnhancerOutput } from "./types"
 import type { ZoomController } from "./ZoomController"
 
@@ -12,7 +12,7 @@ export const zoomEnhancer =
   (options: InheritOptions): InheritOutput & ZoomEnhancerOutput => {
     const reader = next(options)
     const controllableZoomer = new ControllableZoomer(reader)
-    const scrollableZoomer = new ScrollableZoomer(reader)
+    const scrollableZoomer = new ScrollableZoomController(reader)
     const zoomerSubject = new BehaviorSubject<ZoomController>(scrollableZoomer)
 
     const enter: ZoomController["enter"] = (element) => {
@@ -40,20 +40,12 @@ export const zoomEnhancer =
         scaleAt: (scale) => zoomerSubject.getValue().scaleAt(scale),
         moveAt: (position) => zoomerSubject.getValue().moveAt(position),
         exit: () => zoomerSubject.getValue().exit(),
-        get currentPosition() {
-          return zoomerSubject.getValue().currentPosition
-        },
-        get currentScale() {
-          return zoomerSubject.getValue().currentScale
-        },
         isZooming$: zoomerSubject.pipe(
-          switchMap((zoomer) => zoomer.isZooming$),
+          switchMap((zoomer) => zoomer.watch("isZooming")),
         ),
-        get zoomContainerElement() {
-          return zoomerSubject.getValue().element
-        },
-        get isZooming() {
-          return zoomerSubject.getValue().isZooming$.getValue()
+        state$: zoomerSubject.pipe(switchMap((zoomer) => zoomer)),
+        get state() {
+          return zoomerSubject.getValue().value
         },
       },
     }

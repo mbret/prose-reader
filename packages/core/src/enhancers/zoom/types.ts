@@ -1,4 +1,5 @@
 import type { Observable } from "rxjs"
+import type { ZoomControllerState } from "./ZoomController"
 
 export type ZoomEnhancerOutput = {
   zoom: {
@@ -6,10 +7,7 @@ export type ZoomEnhancerOutput = {
     exit: () => void
     moveAt: (position: { x: number; y: number }) => void
     scaleAt: (scale: number) => void
-    currentScale: number
-    currentPosition: { x: number; y: number }
-    zoomContainerElement: HTMLDivElement | undefined
-    isZooming$: Observable<boolean>
-    isZooming: boolean
+    state$: Observable<ZoomControllerState>
+    get state(): ZoomControllerState
   }
 }
