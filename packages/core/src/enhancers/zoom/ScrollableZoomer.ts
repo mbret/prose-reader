@@ -31,11 +31,7 @@ export const adjustScrollToKeepContentCentered = (
 }
 
 export class ScrollableZoomController extends ZoomController {
-  public enter({
-    scale = 1,
-  }: {
-    scale?: number
-  } = {}): void {
+  public enter({ scale = 1 }: { scale?: number } = {}): void {
     if (this.value.isZooming) return
 
     this.setScale(scale)
