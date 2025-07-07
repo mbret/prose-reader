@@ -22,7 +22,10 @@ export const registerZoomPan = ({
 
       return panMove$.pipe(
         tap((panMoveEvent) => {
-          if (reader.zoom.state.isZooming && reader.zoom.state.currentScale > 1) {
+          if (
+            reader.zoom.state.isZooming &&
+            reader.zoom.state.currentScale > 1
+          ) {
             reader.zoom.moveAt({
               x: startPosition.x + panMoveEvent.deltaX,
               y: startPosition.y + panMoveEvent.deltaY,
