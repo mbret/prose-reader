@@ -1,9 +1,14 @@
 import { Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { BsBookmarks } from "react-icons/bs"
-import { LuChevronDown, LuGalleryHorizontal, LuSearch } from "react-icons/lu"
-import { LuTableOfContents } from "react-icons/lu"
-import { LuCircleHelp, LuNotebookPen } from "react-icons/lu"
+import {
+  LuChevronDown,
+  LuCircleHelp,
+  LuGalleryHorizontal,
+  LuNotebookPen,
+  LuSearch,
+  LuTableOfContents,
+} from "react-icons/lu"
 import { RiGalleryView2 } from "react-icons/ri"
 import {
   RxDoubleArrowDown,
@@ -185,7 +190,7 @@ export const BottomBar = memo(
                   } else {
                     reader?.zoom.enter({
                       animate: true,
-                      scale: 0.5
+                      scale: 0.5,
                     })
                   }
                 }}
