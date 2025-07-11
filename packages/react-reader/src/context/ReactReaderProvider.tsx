@@ -1,12 +1,7 @@
 import type { Reader } from "@prose-reader/core"
 import type { EnhancerAPI as GestureEnhancerAPI } from "@prose-reader/enhancer-gestures"
 import { memo, useEffect, useMemo } from "react"
-import {
-  signal,
-  useConstant,
-  useLiveRef,
-  useSubscribe,
-} from "reactjrx"
+import { signal, useConstant, useLiveRef, useSubscribe } from "reactjrx"
 import { Subject, tap } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
 import { ReaderContext } from "./context"
