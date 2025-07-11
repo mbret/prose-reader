@@ -29,7 +29,6 @@ import { useReaderContext } from "../context/useReaderContext"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
-import { useQuickMenu } from "./useQuickMenu"
 
 export const BottomBar = memo(
   ({
