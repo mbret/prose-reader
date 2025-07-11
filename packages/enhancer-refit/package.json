@@ -1,0 +1,24 @@
+{
+  "name": "@prose-reader/enhancer-refit",
+  "version": "1.241.0",
+  "type": "module",
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
+    }
+  },
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build"
+  },
+  "peerDependencies": {
+    "@prose-reader/core": "^1.117.0"
+  }
+}
