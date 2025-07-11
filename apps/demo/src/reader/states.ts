@@ -45,8 +45,8 @@ export const isQuickMenuOpenSignal = signal({
 export const useResetStateOnUnMount = () => {
   useEffect(() => {
     return () => {
-      isQuickMenuOpenSignal.setValue(SIGNAL_RESET)
-      selectedHighlightSignal.setValue(SIGNAL_RESET)
+      isQuickMenuOpenSignal.update(SIGNAL_RESET)
+      selectedHighlightSignal.update(SIGNAL_RESET)
     }
   }, [])
 }

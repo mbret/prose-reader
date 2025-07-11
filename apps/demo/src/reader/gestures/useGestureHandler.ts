@@ -51,9 +51,9 @@ export const useGestureHandler = () => {
          * showing the quick menu.
          */
         if (selection || selectionOnPointerdown) {
-          isQuickMenuOpenSignal.setValue(false)
+          isQuickMenuOpenSignal.update(false)
         } else {
-          isQuickMenuOpenSignal.setValue((val) => !val)
+          isQuickMenuOpenSignal.update((val) => !val)
         }
       }),
     )

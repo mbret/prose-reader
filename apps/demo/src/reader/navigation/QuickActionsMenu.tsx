@@ -44,8 +44,8 @@ export const QuickActionsMenu = () => {
         colorPalette="cyan"
         rounded="xl"
         onClick={() => {
-          isQuickMenuOpenSignal.setValue(false)
-          selectedHighlightSignal.setValue({
+          isQuickMenuOpenSignal.update(false)
+          selectedHighlightSignal.update({
             selection: reader?.selection.getSelection(),
           })
         }}

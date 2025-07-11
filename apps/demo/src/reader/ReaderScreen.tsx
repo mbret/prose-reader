@@ -3,12 +3,12 @@ import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
 import { memo, useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useObserve, useSignalValue } from "reactjrx"
-import { BookError } from "./BookError"
-import { BookLoading } from "./BookLoading"
 import { HighlightMenu } from "./annotations/HighlightMenu"
 import { useAnnotations } from "./annotations/useAnnotations"
+import { BookError } from "./BookError"
+import { BookLoading } from "./BookLoading"
 import { useGestureHandler } from "./gestures/useGestureHandler"
-import { MenuDialog, isMenuOpenSignal } from "./navigation/MenuDialog"
+import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 import { useLocalSettings } from "./settings/useLocalSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
@@ -62,15 +62,13 @@ export const ReaderScreen = memo(() => {
       <ReactReaderProvider
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
-        onQuickMenuOpenChange={(isOpen) =>
-          isQuickMenuOpenSignal.setValue(isOpen)
-        }
+        onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
       >
         <QuickActionsMenu />
         <ReactReader
           onItemClick={(item) => {
             if (item === "more") {
-              isMenuOpenSignal.setValue(true)
+              isMenuOpenSignal.next(true)
             }
             if (item === "back") {
               if (

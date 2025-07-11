@@ -62,8 +62,8 @@ export const useAnnotations = (
     () =>
       reader?.annotations.highlightTap$.pipe(
         tap(({ highlight }) => {
-          isQuickMenuOpenSignal.setValue(false)
-          selectedHighlightSignal.setValue({ highlight })
+          isQuickMenuOpenSignal.update(false)
+          selectedHighlightSignal.update({ highlight })
         }),
       ),
     [reader],

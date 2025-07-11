@@ -3,6 +3,7 @@ import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
 import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
+import { refitEnhancer } from "@prose-reader/enhancer-refit"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
@@ -15,13 +16,15 @@ import { readerSignal } from "./useReader"
 
 export type ReaderInstance = ReturnType<typeof createAppReader>
 
-export const createAppReader = galleryEnhancer(
-  pdfEnhancer(
-    annotationsEnhancer(
-      gesturesEnhancer(
-        searchEnhancer(
-          // __
-          createReader,
+export const createAppReader = refitEnhancer(
+  galleryEnhancer(
+    pdfEnhancer(
+      annotationsEnhancer(
+        gesturesEnhancer(
+          searchEnhancer(
+            // __
+            createReader,
+          ),
         ),
       ),
     ),
@@ -60,12 +63,12 @@ export const useCreateReader = () => {
 
     const instance = createAppReader(readerOptions)
 
-    readerSignal.setValue(instance)
+    readerSignal.update(instance)
 
     return () => {
       instance.destroy()
 
-      readerSignal.setValue(SIGNAL_RESET)
+      readerSignal.update(SIGNAL_RESET)
 
       webStreamer.prune()
     }

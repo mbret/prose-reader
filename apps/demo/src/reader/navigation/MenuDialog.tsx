@@ -1,6 +1,6 @@
 import { Tabs } from "@chakra-ui/react"
-import { memo } from "react"
 import type React from "react"
+import { memo } from "react"
 import { signal, useSignalValue } from "reactjrx"
 import { FullScreenDialog } from "../../common/FullScreenDialog"
 import { SettingsMenu } from "../settings/SettingsMenu"
@@ -24,7 +24,7 @@ export const MenuDialog = memo(
       <FullScreenDialog
         isOpen={isMenuOpen}
         onClose={() => {
-          isMenuOpenSignal.setValue(false)
+          isMenuOpenSignal.update(false)
         }}
         title="Menu"
       >

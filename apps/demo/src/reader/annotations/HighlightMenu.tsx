@@ -30,7 +30,7 @@ export const HighlightMenu = memo(() => {
   const isOpen = !!(selection ?? highlight)
 
   const onClose = () => {
-    selectedHighlightSignal.setValue(SIGNAL_RESET)
+    selectedHighlightSignal.update(SIGNAL_RESET)
   }
 
   const onOpenChange: ComponentProps<typeof DrawerRoot>["onOpenChange"] = (
