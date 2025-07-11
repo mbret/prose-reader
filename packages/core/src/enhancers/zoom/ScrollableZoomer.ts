@@ -6,6 +6,8 @@ export const adjustScrollToKeepContentCentered = (
   scrollContainer: HTMLElement,
   fromScale: number,
   toScale: number,
+  marginX: number,
+  marginY: number,
 ) => {
   const containerWidth = scrollContainer.clientWidth
   const containerHeight = scrollContainer.clientHeight
@@ -14,18 +16,18 @@ export const adjustScrollToKeepContentCentered = (
   const currentScrollLeft = scrollContainer.scrollLeft
   const currentScrollTop = scrollContainer.scrollTop
 
-  // Calculate what's currently in the center of the visible area
-  const visibleCenterX = currentScrollLeft + containerWidth / 2
-  const visibleCenterY = currentScrollTop + containerHeight / 2
+  // Calculate what's currently in the center of the visible area, accounting for margins
+  const visibleCenterX = currentScrollLeft + containerWidth / 2 - marginX
+  const visibleCenterY = currentScrollTop + containerHeight / 2 - marginY
 
   // After scaling, calculate where we need to scroll to keep the same content centered
   const scaleFactor = toScale / fromScale
   const newVisibleCenterX = visibleCenterX * scaleFactor
   const newVisibleCenterY = visibleCenterY * scaleFactor
 
-  // Calculate new scroll position to keep the center content visible
-  const newScrollLeft = newVisibleCenterX - containerWidth / 2
-  const newScrollTop = newVisibleCenterY - containerHeight / 2
+  // Calculate new scroll position to keep the center content visible, accounting for margins
+  const newScrollLeft = newVisibleCenterX - containerWidth / 2 + marginX
+  const newScrollTop = newVisibleCenterY - containerHeight / 2 + marginY
 
   return { newScrollLeft, newScrollTop }
 }
@@ -70,10 +72,17 @@ export class ScrollableZoomController extends ZoomController {
 
     const currentScale = this.reader.viewport.scaleFactor
 
+    // We assume the viewport is directly under the scroll container
+    // therefore we can use offsetLeft/offsetTop to get the margin
+    const marginX = viewportElement.offsetLeft
+    const marginY = viewportElement.offsetTop
+
     const { newScrollLeft, newScrollTop } = adjustScrollToKeepContentCentered(
       scrollContainer ?? noopElement(),
       currentScale,
       scale,
+      marginX,
+      marginY,
     )
 
     /**
@@ -87,7 +96,15 @@ export class ScrollableZoomController extends ZoomController {
       // We don't need to force the scrollbar to be visible when zooming out
       scrollNavigationElement.style.overflowX = "auto"
     } else if (scale > 1) {
-      viewportElement.style.transformOrigin = `top left`
+      /**
+       * @important
+       * Transform origin `center` would cut left part of the content because it would expand
+       * beyond the container on both side (albeit right side would be scrollable).
+       * transform origin `left` would cut right part of the content if the viewport has margin
+       * (eg: 50% viewport fit)
+       * Therefore we need to use an origin that start at the actual content eliminating margin.
+       */
+      viewportElement.style.transformOrigin = `${marginX}px ${marginY}px`
       scrollNavigationElement.style.overflowX = "scroll"
     }
 
