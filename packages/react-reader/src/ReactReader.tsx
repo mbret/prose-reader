@@ -12,6 +12,7 @@ import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLink
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
+import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
 
@@ -88,6 +89,7 @@ export const ReactReader = ({
         </Presence>
       )}
       <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
+      <RefitDialog />
       <QuickMenu onItemClick={_onItemClick} />
       <BookmarkPageMarkers />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />

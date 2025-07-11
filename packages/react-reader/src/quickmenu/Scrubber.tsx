@@ -56,7 +56,7 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
       (values) => {
         const [value = 0] = Array.isArray(values) ? values : [values]
 
-        valueSignal.setValue(value)
+        valueSignal.update(value)
 
         const pageIndex = isUsingSpread
           ? Math.floor(value) * 2

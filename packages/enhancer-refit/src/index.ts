@@ -50,7 +50,6 @@ export const refitEnhancer =
     style.id = stylesheetId
     style.textContent = `
       [${HTML_ATTRIBUTE_DATA_READER_ID}] .${HTML_ATTRIBUTE_VIEWPORT_CLASSNAME} {
-        border: 1px solid red;
         margin: auto;
         width: 100%;
         max-width: var(${maxWidthCssVariable});

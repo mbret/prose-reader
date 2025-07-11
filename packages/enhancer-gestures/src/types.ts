@@ -11,8 +11,8 @@ import type {
   TapRecognizer,
 } from "gesturx"
 import type { Observable, ObservedValueOf } from "rxjs"
-import type { GesturesSettingsManager } from "./SettingsManager"
 import type { TapAreaGestureContext } from "./gestures/taps/types"
+import type { GesturesSettingsManager } from "./SettingsManager"
 
 export type Hook = {
   name: "beforeTapGesture"

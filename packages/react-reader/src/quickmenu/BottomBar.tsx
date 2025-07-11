@@ -9,6 +9,7 @@ import {
   LuSearch,
   LuTableOfContents,
 } from "react-icons/lu"
+import { MdOutlineFitScreen } from "react-icons/md"
 import { RiGalleryView2 } from "react-icons/ri"
 import {
   RxDoubleArrowDown,
@@ -20,12 +21,15 @@ import { useObserve } from "reactjrx"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
+  hasRefitEnhancer,
   hasSearchEnhancer,
   useReader,
 } from "../context/useReader"
+import { useReaderContext } from "../context/useReaderContext"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
+import { useQuickMenu } from "./useQuickMenu"
 
 export const BottomBar = memo(
   ({
@@ -38,6 +42,7 @@ export const BottomBar = memo(
     ) => void
   }) => {
     const reader = useReader()
+    const { refitMenuSignal } = useReaderContext()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
     const zoomState = useObserve(() => reader?.zoom.state$, [reader])
@@ -174,6 +179,18 @@ export const BottomBar = memo(
                   onClick={() => onItemClick("annotations")}
                 >
                   <LuNotebookPen />
+                </IconButton>
+              )}
+              {hasRefitEnhancer(reader) && (
+                <IconButton
+                  aria-label="Refit"
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => {
+                    refitMenuSignal.next(true)
+                  }}
+                >
+                  <MdOutlineFitScreen />
                 </IconButton>
               )}
               <IconButton

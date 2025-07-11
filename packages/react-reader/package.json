@@ -48,6 +48,9 @@
     },
     "@prose-reader/enhancer-gallery": {
       "optional": true
+    },
+    "@prose-reader/enhancer-refit": {
+      "optional": true
     }
   }
 }

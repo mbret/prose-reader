@@ -1,4 +1,6 @@
 import { memo } from "react"
+import { useSignalValue } from "reactjrx"
+import { useReaderContext } from "../context/useReaderContext"
 import { BottomBar } from "./BottomBar"
 import { TopBar } from "./TopBar"
 import { useQuickMenu } from "./useQuickMenu"
@@ -20,11 +22,16 @@ export const QuickMenu = memo(
     ) => void
   }) => {
     const [quickMenuOpen] = useQuickMenu()
+    const { refitMenuSignal } = useReaderContext()
+    const refitMenu = useSignalValue(refitMenuSignal)
 
     return (
       <>
-        <TopBar open={quickMenuOpen} onItemClick={onItemClick} />
-        <BottomBar open={quickMenuOpen} onItemClick={onItemClick} />
+        <TopBar open={quickMenuOpen && !refitMenu} onItemClick={onItemClick} />
+        <BottomBar
+          open={quickMenuOpen && !refitMenu}
+          onItemClick={onItemClick}
+        />
       </>
     )
   },

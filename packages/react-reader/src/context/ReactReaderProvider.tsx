@@ -5,7 +5,6 @@ import {
   signal,
   useConstant,
   useLiveRef,
-  useSignalState,
   useSubscribe,
 } from "reactjrx"
 import { Subject, tap } from "rxjs"
@@ -24,13 +23,18 @@ export const ReactReaderProvider = memo(
     quickMenuOpen: boolean
     onQuickMenuOpenChange: (open: boolean) => void
   }) => {
-    const [, quickMenuSignal] = useSignalState(() =>
+    const quickMenuSignal = useConstant(() =>
       signal({
         default: quickMenuOpen,
       }),
     )
     const notificationsSubject = useConstant(
       () => new Subject<ReaderNotification>(),
+    )
+    const refitMenuSignal = useConstant(() =>
+      signal({
+        default: false,
+      }),
     )
     const onQuickMenuOpenChangeLiveRef = useLiveRef(onQuickMenuOpenChange)
 
@@ -39,12 +43,13 @@ export const ReactReaderProvider = memo(
         quickMenuSignal,
         reader,
         notificationsSubject,
+        refitMenuSignal,
       }),
-      [quickMenuSignal, reader, notificationsSubject],
+      [quickMenuSignal, reader, notificationsSubject, refitMenuSignal],
     )
 
     useEffect(() => {
-      quickMenuSignal.setValue(quickMenuOpen)
+      quickMenuSignal.next(quickMenuOpen)
     }, [quickMenuOpen, quickMenuSignal])
 
     useSubscribe(

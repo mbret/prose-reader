@@ -6,5 +6,5 @@ export const useQuickMenu = () => {
 
   const quickMenu = useSignalValue(quickMenuSignal)
 
-  return [quickMenu, quickMenuSignal.setValue, quickMenuSignal] as const
+  return [quickMenu, quickMenuSignal.update, quickMenuSignal] as const
 }

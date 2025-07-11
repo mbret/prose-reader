@@ -9,10 +9,12 @@ type ContextType = {
   reader: (Reader & GesturesEnhancerAPI) | undefined
   quickMenuSignal: Signal<boolean, undefined>
   notificationsSubject: Subject<ReaderNotification>
+  refitMenuSignal: Signal<boolean, undefined>
 }
 
 export const ReaderContext: Context<ContextType> = createContext<ContextType>({
   reader: undefined,
   quickMenuSignal: signal({ default: false }),
   notificationsSubject: new Subject<ReaderNotification>(),
+  refitMenuSignal: signal({ default: false }),
 })
