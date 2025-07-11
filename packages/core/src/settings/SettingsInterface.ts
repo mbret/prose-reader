@@ -17,4 +17,8 @@ export interface SettingsInterface<
   values$: Observable<OutputSettings>
 
   values: OutputSettings
+
+  watch<K extends keyof OutputSettings>(
+    keys: (keyof OutputSettings)[],
+  ): Observable<Pick<OutputSettings, K>>
 }

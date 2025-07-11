@@ -6,7 +6,7 @@ import {
   parseCfi,
 } from "./cfi"
 import { resolveCfi } from "./cfi/resolve"
-import { HTML_PREFIX } from "./constants"
+import { HTML_ATTRIBUTE_DATA_READER_ID, HTML_PREFIX } from "./constants"
 import { Context, type ContextState } from "./context/Context"
 import { Features } from "./features/Features"
 import { HookManager } from "./hooks/HookManager"
@@ -32,6 +32,7 @@ export type ContextSettings = Partial<CoreInputSettings>
 export type ReaderInternal = ReturnType<typeof createReader>
 
 export const createReader = (inputSettings: CreateReaderOptions) => {
+  const id = crypto.randomUUID()
   const layoutSubject = new Subject<void>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
@@ -98,7 +99,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
 
     Report.log(`load`, { options })
 
-    const element = wrapContainer(containerElement)
+    const element = wrapContainer(containerElement, id)
 
     context.update({
       manifest,
@@ -153,6 +154,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   }
 
   return {
+    id,
     context,
     spine,
     hookManager,
@@ -214,13 +216,14 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   }
 }
 
-const wrapContainer = (containerElement: HTMLElement) => {
+const wrapContainer = (containerElement: HTMLElement, id: string) => {
   containerElement.style.cssText = `
     ${containerElement.style.cssText}
     background-color: white;
     position: relative;
   `
   containerElement.classList.add(`${HTML_PREFIX}-reader`)
+  containerElement.setAttribute(HTML_ATTRIBUTE_DATA_READER_ID, id)
 
   return containerElement
 }

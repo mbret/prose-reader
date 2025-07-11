@@ -14,6 +14,7 @@ export { createReader }
 export type Reader = ReturnType<typeof createReader>
 
 export * from "./cfi"
+export * from "./constants"
 export * from "./context/Context"
 // Exports required so that libraries can build when having reference to internal types (TS2742)
 export type { EnhancerFontsInputSettings } from "./enhancers/fonts"
@@ -45,7 +46,7 @@ export * from "./spineItem/types"
 export * from "./utils/DestroyableClass"
 export { isHtmlElement, isHtmlTagElement } from "./utils/dom"
 export * from "./utils/frames"
-export { isShallowEqual } from "./utils/objects"
+export * from "./utils/objects"
+export * from "./utils/ReactiveEntity"
 export * from "./utils/rxjs"
-export { waitForSwitch } from "./utils/rxjs"
 export * from "./viewport/Viewport"
