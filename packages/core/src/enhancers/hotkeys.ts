@@ -1,13 +1,5 @@
 import type { KeyboardEvent } from "react"
-import {
-  EMPTY,
-  fromEvent,
-  map,
-  merge,
-  switchMap,
-  takeUntil,
-  withLatestFrom,
-} from "rxjs"
+import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
 import type { NavigationEnhancerOutput } from "./navigation/types"
 import type {
   EnhancerOptions,
@@ -28,8 +20,14 @@ export const hotkeysEnhancer =
 
     const navigateOnKey = (document: Document) =>
       fromEvent<KeyboardEvent>(document, "keyup").pipe(
-        withLatestFrom(reader.settings.values$),
-        map(([e, { pageTurnDirection }]) => {
+        map((e) => {
+          const { pageTurnDirection, computedPageTurnMode } =
+            reader.settings.values
+
+          if (computedPageTurnMode === "scrollable") {
+            return e
+          }
+
           if (pageTurnDirection === "horizontal") {
             if (e.key === `ArrowRight`) {
               return reader.navigation.turnRight()

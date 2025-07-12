@@ -1,8 +1,8 @@
 import type { HookManager, Reader } from "@prose-reader/core"
 import type { TapRecognizer } from "gesturx"
 import {
-  EMPTY,
   combineLatest,
+  EMPTY,
   filter,
   first,
   map,
@@ -39,7 +39,8 @@ export const registerTaps = ({
       if (!containerElement || !spineElement) return EMPTY
 
       const normalizedEvent = event.event
-      const { computedPageTurnDirection } = reader.settings.values
+      const { computedPageTurnDirection, computedPageTurnMode } =
+        reader.settings.values
 
       if (
         event.type === "tap" &&
@@ -76,6 +77,10 @@ export const registerTaps = ({
             first(),
             filter((results) => !results.some((result) => result === false)),
             map(() => {
+              if (computedPageTurnMode === "scrollable") {
+                return { event, handled: false }
+              }
+
               if (
                 computedPageTurnDirection === "horizontal" &&
                 isPositionInArea(
