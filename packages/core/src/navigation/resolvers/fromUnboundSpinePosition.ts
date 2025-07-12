@@ -36,7 +36,7 @@ export const fromUnboundSpinePosition = ({
     spine.getSpineItemSpineLayoutInfo(lastSpineItem)
 
   const maximumYOffset = distanceOfLastSpineItem.bottom - pageSizeHeight
-  const y = Math.min(unboundPosition.x, maximumYOffset)
+  const y = Math.min(unboundPosition.y, maximumYOffset)
 
   /**
    * For RTL books we move from right to left so negative x.

@@ -1,5 +1,5 @@
-import type { SpineItem } from "../../../spineItem/SpineItem"
 import type { SpineItemLocator } from "../../../spineItem/locationResolver"
+import type { SpineItem } from "../../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../../spineItem/types"
 
 export const getSpineItemPositionForRightPage = ({

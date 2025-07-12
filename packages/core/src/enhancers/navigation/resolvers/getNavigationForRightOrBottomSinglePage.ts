@@ -1,11 +1,17 @@
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { SpinePosition, type UnboundSpinePosition } from "../../../spine/types"
+import { type SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { Viewport } from "../../../viewport/Viewport"
 import { getSpineItemPositionForRightPage } from "./getSpineItemPositionForRightPage"
 
-export const getNavigationForRightSinglePage = ({
+/**
+ * @important
+ * Although we check for right page, it has the side effect to work for vertical
+ * controlled books because when checking right page, we will get nothing and therefore
+ * move the cursor to the next valid position, in turn getting the next bottom page.
+ */
+export const getNavigationForRightOrBottomSinglePage = ({
   position,
   navigationResolver,
   computedPageTurnDirection,
@@ -45,24 +51,25 @@ export const getNavigationForRightSinglePage = ({
   })
 
   // check both position to see if we moved out of it
-  const isNewNavigationInCurrentItem = navigationResolver.arePositionsDifferent(
+  const positionsAreDifferent = navigationResolver.arePositionsDifferent(
     spineItemNavigationForRightPage,
     spineItemPosition,
   )
 
-  if (!isNewNavigationInCurrentItem) {
+  if (!positionsAreDifferent) {
     return navigationResolver.fromUnboundSpinePosition(
       pageTurnDirection === `horizontal`
-        ? new SpinePosition({
+        ? new UnboundSpinePosition({
             x: position.x + viewport.pageSize.width,
             y: 0,
           })
-        : new SpinePosition({
+        : new UnboundSpinePosition({
             y: position.y + viewport.pageSize.height,
             x: 0,
           }),
     )
   }
+
   const readingOrderPosition =
     spineLocator.getSpinePositionFromSpineItemPosition({
       spineItemPosition: spineItemNavigationForRightPage,

@@ -10,7 +10,7 @@ import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { SpineItem } from "../../../spineItem/SpineItem"
 import type { Viewport } from "../../../viewport/Viewport"
-import { getNavigationForRightSinglePage } from "./getNavigationForRightSinglePage"
+import { getNavigationForRightOrBottomSinglePage } from "./getNavigationForRightOrBottomSinglePage"
 
 /**
  * Very naive approach for spread. It could be optimized but by using this approach
@@ -43,7 +43,7 @@ export const getNavigationForRightOrBottomPage = ({
     CoreInputSettings & ComputedCoreSettings
   >
 }): SpinePosition => {
-  const navigation = getNavigationForRightSinglePage({
+  const navigation = getNavigationForRightOrBottomSinglePage({
     position,
     viewport,
     navigationResolver,
@@ -89,7 +89,7 @@ export const getNavigationForRightOrBottomPage = ({
       return navigationResolver.getAdjustedPositionForSpread(navigation)
     }
 
-    const doubleNavigation = getNavigationForRightSinglePage({
+    const doubleNavigation = getNavigationForRightOrBottomSinglePage({
       position: navigation,
       viewport,
       navigationResolver,
