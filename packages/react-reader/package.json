@@ -32,6 +32,7 @@
     "@prose-reader/enhancer-gallery": "^1.169.0",
     "@prose-reader/enhancer-gestures": "^1.169.0",
     "@prose-reader/enhancer-search": "^1.169.0",
+    "@prose-reader/enhancer-refit": "^1.169.0",
     "@prose-reader/shared": "^1.169.0",
     "rc-slider": "11.1.x",
     "react": "19.x || 18.x",
