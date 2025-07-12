@@ -138,7 +138,7 @@ export const BottomBar = memo(
               />
             </Collapsible.Trigger>
             <Collapsible.Content display="flex" justifyContent="center">
-              <Box display="flex" overflowX="auto" px={4}>
+              <Box display="flex" overflowX="auto" px={4} pb={1}>
                 <IconButton
                   aria-label="Help"
                   size="lg"
