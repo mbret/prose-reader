@@ -45,6 +45,7 @@ export const BottomBar = memo(
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
     const zoomState = useObserve(() => reader?.zoom.state$, [reader])
+    const isScrollingMode = settings?.computedPageTurnMode === "scrollable"
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
     const [isExtraOpen, setIsExtraOpen] = useState(true)
@@ -188,6 +189,7 @@ export const BottomBar = memo(
                   onClick={() => {
                     refitMenuSignal.next(true)
                   }}
+                  disabled={!isScrollingMode}
                 >
                   <MdOutlineFitScreen />
                 </IconButton>
