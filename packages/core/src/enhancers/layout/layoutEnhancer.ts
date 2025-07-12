@@ -21,6 +21,7 @@ import type {
 } from "../types/enhancer"
 import { createCoordinatesApi } from "./coordinates"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
+import { fixIframeScrollbar } from "./fixIframeScrollbar"
 import { fixReflowable } from "./fixReflowable"
 import { flagSpineItems } from "./flagSpineItems"
 import { SettingsManager } from "./SettingsManager"
@@ -169,6 +170,7 @@ export const layoutEnhancer =
     })
 
     fixReflowable(reader)
+    fixIframeScrollbar(reader)
 
     reader.hookManager.register(
       `item.onDocumentCreated`,
