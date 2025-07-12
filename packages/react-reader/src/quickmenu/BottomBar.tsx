@@ -1,4 +1,4 @@
-import { Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
+import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useState } from "react"
 import { BsBookmarks } from "react-icons/bs"
 import {
@@ -58,12 +58,14 @@ export const BottomBar = memo(
         flexDirection="column"
         overflow="auto"
         pb={8}
+        px={0}
       >
         <HStack
           flex={1}
           alignItems="center"
           justifyContent="center"
           maxWidth="100%"
+          px={4}
         >
           <IconButton
             aria-label="left"
@@ -121,6 +123,7 @@ export const BottomBar = memo(
             onOpenChange={({ open }) => {
               setIsExtraOpen(open)
             }}
+            width="100%"
           >
             <Collapsible.Trigger
               paddingY="3"
@@ -135,96 +138,98 @@ export const BottomBar = memo(
               />
             </Collapsible.Trigger>
             <Collapsible.Content display="flex" justifyContent="center">
-              <IconButton
-                aria-label="Help"
-                size="lg"
-                variant="ghost"
-                onClick={() => onItemClick("help")}
-              >
-                <LuCircleHelp />
-              </IconButton>
-              <IconButton
-                aria-label="Table of contents"
-                size="lg"
-                variant="ghost"
-                onClick={() => onItemClick("toc")}
-              >
-                <LuTableOfContents />
-              </IconButton>
-              {hasSearchEnhancer(reader) && (
+              <Box display="flex" overflowX="auto" px={4}>
                 <IconButton
-                  aria-label="Search"
+                  aria-label="Help"
                   size="lg"
                   variant="ghost"
-                  onClick={() => onItemClick("search")}
+                  onClick={() => onItemClick("help")}
                 >
-                  <LuSearch />
+                  <LuCircleHelp />
                 </IconButton>
-              )}
-              {hasAnnotationsEnhancer(reader) && (
                 <IconButton
-                  aria-label="Bookmarks"
+                  aria-label="Table of contents"
                   size="lg"
                   variant="ghost"
-                  onClick={() => onItemClick("bookmarks")}
+                  onClick={() => onItemClick("toc")}
                 >
-                  <BsBookmarks />
+                  <LuTableOfContents />
                 </IconButton>
-              )}
-              {hasAnnotationsEnhancer(reader) && (
+                {hasSearchEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Search"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => onItemClick("search")}
+                  >
+                    <LuSearch />
+                  </IconButton>
+                )}
+                {hasAnnotationsEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Bookmarks"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => onItemClick("bookmarks")}
+                  >
+                    <BsBookmarks />
+                  </IconButton>
+                )}
+                {hasAnnotationsEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Annotations"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => onItemClick("annotations")}
+                  >
+                    <LuNotebookPen />
+                  </IconButton>
+                )}
+                {hasRefitEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Refit"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => {
+                      refitMenuSignal.next(true)
+                    }}
+                    disabled={!isScrollingMode}
+                  >
+                    <MdOutlineFitScreen />
+                  </IconButton>
+                )}
                 <IconButton
-                  aria-label="Annotations"
+                  aria-label="Thumbnails"
                   size="lg"
-                  variant="ghost"
-                  onClick={() => onItemClick("annotations")}
-                >
-                  <LuNotebookPen />
-                </IconButton>
-              )}
-              {hasRefitEnhancer(reader) && (
-                <IconButton
-                  aria-label="Refit"
-                  size="lg"
-                  variant="ghost"
-                  onClick={() => {
-                    refitMenuSignal.next(true)
-                  }}
-                  disabled={!isScrollingMode}
-                >
-                  <MdOutlineFitScreen />
-                </IconButton>
-              )}
-              <IconButton
-                aria-label="Thumbnails"
-                size="lg"
-                variant={
-                  zoomState?.isZooming && zoomState.currentScale < 1
-                    ? "solid"
-                    : "ghost"
-                }
-                onClick={() => {
-                  if (zoomState?.isZooming) {
-                    reader?.zoom.exit()
-                  } else {
-                    reader?.zoom.enter({
-                      animate: true,
-                      scale: 0.5,
-                    })
+                  variant={
+                    zoomState?.isZooming && zoomState.currentScale < 1
+                      ? "solid"
+                      : "ghost"
                   }
-                }}
-              >
-                <LuGalleryHorizontal />
-              </IconButton>
-              {hasGalleryEnhancer(reader) && (
-                <IconButton
-                  aria-label="Gallery"
-                  size="lg"
-                  variant="ghost"
-                  onClick={() => onItemClick("gallery")}
+                  onClick={() => {
+                    if (zoomState?.isZooming) {
+                      reader?.zoom.exit()
+                    } else {
+                      reader?.zoom.enter({
+                        animate: true,
+                        scale: 0.5,
+                      })
+                    }
+                  }}
                 >
-                  <RiGalleryView2 />
+                  <LuGalleryHorizontal />
                 </IconButton>
-              )}
+                {hasGalleryEnhancer(reader) && (
+                  <IconButton
+                    aria-label="Gallery"
+                    size="lg"
+                    variant="ghost"
+                    onClick={() => onItemClick("gallery")}
+                  >
+                    <RiGalleryView2 />
+                  </IconButton>
+                )}
+              </Box>
             </Collapsible.Content>
           </Collapsible.Root>
         </HStack>
