@@ -41,12 +41,23 @@ const createReport = (
 ): Report => {
   return {
     namespace: (_namespace: string, enabled?: boolean) =>
-      createReport(`[${namespace}] [${_namespace}]`, enabled, options),
+      createReport(`${namespace} [${_namespace}]`, enabled, options),
     debug: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.debug, console, namespace)
-        : Function.prototype.bind.call(console.debug, console),
+        ? Function.prototype.bind.call(
+            console.debug,
+            console,
+            namespace,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          )
+        : Function.prototype.bind.call(
+            console.debug,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          ),
     info: !enabled
       ? () => {}
       : namespace
@@ -56,22 +67,52 @@ const createReport = (
             `%c${namespace}`,
             options?.color ? `color: ${options.color}` : undefined,
           )
-        : Function.prototype.bind.call(console.info, console),
+        : Function.prototype.bind.call(
+            console.info,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          ),
     log: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.log, console, namespace)
+        ? Function.prototype.bind.call(
+            console.log,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          )
         : Function.prototype.bind.call(console.log, console),
     warn: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.warn, console, namespace)
-        : Function.prototype.bind.call(console.warn, console),
+        ? Function.prototype.bind.call(
+            console.warn,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          )
+        : Function.prototype.bind.call(
+            console.warn,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          ),
     error: !enabled
       ? () => {}
       : namespace
-        ? Function.prototype.bind.call(console.error, console, namespace)
-        : Function.prototype.bind.call(console.error, console),
+        ? Function.prototype.bind.call(
+            console.error,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          )
+        : Function.prototype.bind.call(
+            console.error,
+            console,
+            `%c${namespace}`,
+            options?.color ? `color: ${options.color}` : undefined,
+          ),
   }
 }
 
@@ -83,5 +124,5 @@ export const Report = {
     options?: {
       color?: string
     },
-  ) => createReport(namespace, enabled, options),
+  ) => createReport(`[${namespace}]`, enabled, options),
 }
