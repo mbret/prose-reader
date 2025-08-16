@@ -41,13 +41,14 @@ type ViewPort = { left: number; right: number; top: number; bottom: number }
 /**
  * @todo optimize
  */
-export const getFirstVisibleNodeForPositionRelativeTo = async (
+export const getFirstVisibleNodeForPositionRelativeTo = (
   documentOrElement: Document | Element,
   viewport: ViewPort,
 ) => {
-  const element = await (`body` in documentOrElement
-    ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
-    : getFirstVisibleElementForViewport(documentOrElement, viewport))
+  const element =
+    `body` in documentOrElement
+      ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
+      : getFirstVisibleElementForViewport(documentOrElement, viewport)
 
   const ownerDocument =
     `createRange` in documentOrElement
@@ -117,10 +118,10 @@ export const getFirstVisibleNodeForPositionRelativeTo = async (
   return undefined
 }
 
-const getFirstVisibleElementForViewport = async (
+const getFirstVisibleElementForViewport = (
   element: Element,
   viewport: ViewPort,
-): Promise<Element | undefined> => {
+): Element | undefined => {
   const rect = element.getBoundingClientRect()
   const positionFromViewport = getElementOrNodePositionFromViewPort(
     rect,
@@ -142,10 +143,7 @@ const getFirstVisibleElementForViewport = async (
   }
 
   for (const child of element.children) {
-    const childInViewPort = await getFirstVisibleElementForViewport(
-      child,
-      viewport,
-    )
+    const childInViewPort = getFirstVisibleElementForViewport(child, viewport)
 
     if (childInViewPort) {
       return childInViewPort
