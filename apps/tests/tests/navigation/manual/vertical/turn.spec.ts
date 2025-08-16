@@ -21,7 +21,7 @@ test.describe(`Given vertical controlled book`, () => {
       await waitForSpineItemReady(page, [0])
 
       await page.evaluate(() => {
-        // @ts-ignore
+        // @ts-expect-error
         const reader = window.reader as Reader
 
         reader.navigation.turnRightOrBottom()

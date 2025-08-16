@@ -16,7 +16,7 @@ test.describe("Given a scroll mid page", () => {
         await waitForSpineItemReady(page, [0])
 
         await page.evaluate(() => {
-          // @ts-ignore
+          // @ts-expect-error
           const reader = window.reader as Reader
 
           reader.navigation.scrollNavigationController.value.element?.scrollTo({
@@ -34,7 +34,7 @@ test.describe("Given a scroll mid page", () => {
         expect(previousScrollMetadata.scrollTop).toBe(6653)
 
         await page.evaluate(() => {
-          // @ts-ignore
+          // @ts-expect-error
           const reader = window.reader as Reader
 
           reader.zoom.enter()
@@ -51,7 +51,7 @@ test.describe("Given a scroll mid page", () => {
         expect(zoomedInScrollMetadata.scrollTop).toBe(813)
 
         await page.evaluate(() => {
-          // @ts-ignore
+          // @ts-expect-error
           const reader = window.reader as Reader
 
           reader.zoom.exit()

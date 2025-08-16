@@ -87,7 +87,7 @@ export const navigateToSpineItem = async ({
 }) => {
   await page.evaluate(
     ([indexOrId = 0]) => {
-      // @ts-ignore
+      // @ts-expect-error
       const reader = window.reader as Reader
 
       reader.navigation.goToSpineItem({ indexOrId })
@@ -97,7 +97,7 @@ export const navigateToSpineItem = async ({
 }
 export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
   return await page.evaluate(() => {
-    // @ts-ignore
+    // @ts-expect-error
     const reader = window.reader as Reader
 
     const navigatorElement =

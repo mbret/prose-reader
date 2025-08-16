@@ -52,11 +52,11 @@ async function run() {
     manifest,
   })
 
-  // @ts-ignore
+  // @ts-expect-error
   window.reader = reader
 
   reader.layout$.subscribe(() => {
-    // @ts-ignore
+    // @ts-expect-error
     window.layoutNumber = (window.layoutNumber ?? 0) + 1
   })
 }

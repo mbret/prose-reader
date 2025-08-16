@@ -73,9 +73,9 @@ const buildTOCFromNav = (
   if (navDataChildren && navDataChildren.length > 0) {
     navDataChildren
       .filter((li) => (li as XmlElement).name === `li`)
-      .forEach((li) =>
-        toc.push(extractNavChapter(li as XmlElement, { basePath, baseUrl })),
-      )
+      .forEach((li) => {
+        toc.push(extractNavChapter(li as XmlElement, { basePath, baseUrl }))
+      })
   }
 
   return toc
@@ -153,9 +153,9 @@ const buildTOCFromNCX = (
   ncxData
     .childNamed(`${prefix}navMap`)
     ?.childrenNamed(`${prefix}navPoint`)
-    .forEach((point) =>
-      toc.push(mapNcxChapter(point, { opfBasePath, baseUrl, prefix })),
-    )
+    .forEach((point) => {
+      toc.push(mapNcxChapter(point, { opfBasePath, baseUrl, prefix }))
+    })
 
   return toc
 }

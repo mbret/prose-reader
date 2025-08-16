@@ -6,7 +6,7 @@ export const readerSignal = signal<ReaderInstance | undefined>({})
 export const useReader = () => {
   const reader = useSignalValue(readerSignal)
 
-  // @ts-ignore
+  // @ts-expect-error
   window.reader = reader
 
   return { reader }

@@ -26,7 +26,7 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
     } = props
 
     const child = React.Children.only<React.ReactElement<InputElementProps>>(
-      // @ts-ignore
+      // @ts-expect-error
       children,
     )
 
@@ -42,7 +42,7 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
             ps: `calc(var(--input-height) - ${startOffset})`,
           }),
           ...(endElement && { pe: `calc(var(--input-height) - ${endOffset})` }),
-          // @ts-ignore
+          // @ts-expect-error
           ...children.props,
         })}
         {endElement && (

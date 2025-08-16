@@ -85,7 +85,7 @@ test.describe("Given a scroll scroll to bottom", () => {
 
       // Scroll to the bottom of the page
       await page.evaluate(() => {
-        // @ts-ignore
+        // @ts-expect-error
         ;(window.reader as Reader).navigation.goToSpineItem({ indexOrId: 9 })
       })
 
