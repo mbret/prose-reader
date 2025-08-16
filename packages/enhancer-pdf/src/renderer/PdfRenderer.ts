@@ -188,7 +188,7 @@ export class PdfRenderer extends DocumentRenderer {
 
     layoutContainer(this.documentContainer, spreadPosition, this.viewport)
 
-    const context = canvas?.getContext("2d")
+    const context = canvas.getContext("2d")
     // Support HiDPI-screens.
     const pixelRatioScale = window.devicePixelRatio || 1
 
@@ -221,6 +221,7 @@ export class PdfRenderer extends DocumentRenderer {
       ...(transform && { transform }),
       canvasContext: context,
       viewport,
+      canvas,
     })
 
     return from(this.renderTask.promise).pipe(
