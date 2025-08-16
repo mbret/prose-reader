@@ -3,12 +3,14 @@ import { useEffect, useState } from "react"
 import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
 import "rc-slider/assets/index.css"
-import { HStack, Heading, Stack } from "@chakra-ui/react"
+import { Heading, HStack, Stack } from "@chakra-ui/react"
 import type { Theme } from "@prose-reader/core"
-import { IoMdArrowRoundBack } from "react-icons/io"
-import { IoMdArrowRoundForward } from "react-icons/io"
-import { IoMdArrowDown } from "react-icons/io"
-import { IoMdArrowUp } from "react-icons/io"
+import {
+  IoMdArrowDown,
+  IoMdArrowRoundBack,
+  IoMdArrowRoundForward,
+  IoMdArrowUp,
+} from "react-icons/io"
 import { NavigationSettings } from "../../common/NavigationSettings"
 import { OtherSettings } from "../../common/OtherSettings"
 import { Checkbox } from "../../components/ui/checkbox"
@@ -152,7 +154,7 @@ export const SettingsMenu = ({
               lineHeight:
                 e.value === `publisher`
                   ? `publisher`
-                  : Number.parseInt(e.value ?? `1`),
+                  : Number.parseInt(e.value ?? `1`, 10),
             })
           }}
           value={readerSettings?.lineHeight.toString()}
@@ -175,7 +177,7 @@ export const SettingsMenu = ({
               fontWeight:
                 e.value === `publisher`
                   ? `publisher`
-                  : (Number.parseInt(e.value ?? "100") as 100),
+                  : (Number.parseInt(e.value ?? "100", 10) as 100),
             })
           }}
           value={readerSettings?.fontWeight.toString()}

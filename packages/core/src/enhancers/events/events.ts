@@ -68,7 +68,9 @@ export const eventsEnhancer =
         })
 
         destroy(() => {
-          unregister.forEach((cb) => cb())
+          unregister.forEach((cb) => {
+            cb()
+          })
         })
       },
     )

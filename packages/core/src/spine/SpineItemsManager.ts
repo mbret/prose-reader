@@ -80,6 +80,8 @@ export class SpineItemsManager extends DestroyableClass {
    * @todo handle reload, remove subscription to each items etc. See add()
    */
   destroyItems() {
-    this.orderedSpineItemsSubject.value.forEach((item) => item.destroy())
+    this.orderedSpineItemsSubject.value.forEach((item) => {
+      item.destroy()
+    })
   }
 }

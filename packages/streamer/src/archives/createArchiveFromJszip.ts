@@ -55,7 +55,7 @@ export const createArchiveFromJszip = async (
         stream: file.internalStream,
       }),
       // this is private API
-      // @ts-ignore
+      // @ts-expect-error
       size: file._data.uncompressedSize,
     })),
     close: () => Promise.resolve(),

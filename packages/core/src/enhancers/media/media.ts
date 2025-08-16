@@ -106,7 +106,9 @@ export const mediaEnhancer =
 
         destroy(() => {
           frameObserver.unobserve(frame)
-          unobserveElements.forEach((unobserve) => unobserve())
+          unobserveElements.forEach((unobserve) => {
+            unobserve()
+          })
         })
       },
     )

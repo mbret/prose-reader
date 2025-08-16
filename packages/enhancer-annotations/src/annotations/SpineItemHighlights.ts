@@ -4,12 +4,12 @@ import {
   type SpineItem,
 } from "@prose-reader/core"
 import {
-  type Observable,
   defaultIfEmpty,
   distinctUntilChanged,
   forkJoin,
   map,
   merge,
+  type Observable,
   of,
   shareReplay,
   switchMap,
@@ -43,7 +43,9 @@ export class SpineItemHighlights extends DestroyableClass {
 
     const itemHighlights$ = this.annotations$.pipe(
       switchMap((annotations) => {
-        this.highlights.forEach((highlight) => highlight.destroy())
+        this.highlights.forEach((highlight) => {
+          highlight.destroy()
+        })
         this.highlights = []
 
         annotations.forEach((annotation) => {
