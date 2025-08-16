@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import type { Manifest } from "@prose-reader/shared"
 
 export type { Manifest }

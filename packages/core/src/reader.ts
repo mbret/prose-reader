@@ -6,10 +6,15 @@ import {
   parseCfi,
 } from "./cfi"
 import { resolveCfi } from "./cfi/resolve"
-import { HTML_ATTRIBUTE_DATA_READER_ID, HTML_PREFIX } from "./constants"
+import {
+  HTML_ATTRIBUTE_DATA_READER_ID,
+  HTML_PREFIX,
+  HTML_STYLE_PREFIX,
+} from "./constants"
 import { Context, type ContextState } from "./context/Context"
 import { Features } from "./features/Features"
 import { HookManager } from "./hooks/HookManager"
+import styles from "./index.scss?inline"
 import { createNavigator } from "./navigation/Navigator"
 import { Pagination } from "./pagination/Pagination"
 import { PaginationController } from "./pagination/PaginationController"
@@ -21,6 +26,7 @@ import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import type { SpineItem, SpineItemReference } from "./spineItem/SpineItem"
+import { injectCSS, removeCSS } from "./utils/dom"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
@@ -30,6 +36,8 @@ export type CreateReaderParameters = CreateReaderOptions
 export type ContextSettings = Partial<CoreInputSettings>
 
 export type ReaderInternal = ReturnType<typeof createReader>
+
+const STYLES_ID = `${HTML_STYLE_PREFIX}-core`
 
 export const createReader = (inputSettings: CreateReaderOptions) => {
   const id = crypto.randomUUID()
@@ -129,6 +137,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
 
   const subs = merge(layout$, layoutOnSpreadModeChange$).subscribe()
 
+  injectCSS(document, STYLES_ID, styles)
+
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
@@ -139,6 +149,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
    * instead of destroying it.
    */
   const destroy = () => {
+    removeCSS(document, STYLES_ID)
+
     subs.unsubscribe()
     spineItemsManager.destroy()
     paginationController.destroy()

@@ -1,6 +1,5 @@
 import { isDefined, useSubscribe } from "reactjrx"
 import {
-  NEVER,
   distinctUntilChanged,
   filter,
   finalize,
@@ -8,6 +7,7 @@ import {
   map,
   merge,
   mergeMap,
+  NEVER,
   skip,
   tap,
   timer,
@@ -15,7 +15,6 @@ import {
 import { toaster } from "../components/ui/toaster"
 import { useReader } from "../context/useReader"
 import { useReaderContext } from "../context/useReaderContext"
-import { useNotifyZoom } from "../zoom/useNotifyZoom"
 
 const useNotifyFontScaleChange = () => {
   const reader = useReader()
@@ -43,7 +42,6 @@ export const useNotifications = () => {
   const { notificationsSubject } = useReaderContext()
 
   useNotifyFontScaleChange()
-  useNotifyZoom()
 
   useSubscribe(
     () =>

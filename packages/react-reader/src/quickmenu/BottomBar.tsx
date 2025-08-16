@@ -1,5 +1,5 @@
 import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
-import { memo, useState } from "react"
+import { memo, useEffect, useRef, useState } from "react"
 import { BsBookmarks } from "react-icons/bs"
 import {
   LuChevronDown,
@@ -8,6 +8,8 @@ import {
   LuNotebookPen,
   LuSearch,
   LuTableOfContents,
+  LuZoomIn,
+  LuZoomOut,
 } from "react-icons/lu"
 import { MdOutlineFitScreen } from "react-icons/md"
 import { RiGalleryView2 } from "react-icons/ri"
@@ -40,15 +42,35 @@ export const BottomBar = memo(
       item: "annotations" | "search" | "help" | "toc" | "bookmarks" | "gallery",
     ) => void
   }) => {
+    const boxRef = useRef<HTMLDivElement>(null)
     const reader = useReader()
-    const { refitMenuSignal } = useReaderContext()
+    const { refitMenuSignal, quickMenuBottomBarBoundingBox } =
+      useReaderContext()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
     const zoomState = useObserve(() => reader?.zoom.state$, [reader])
+    const isZoomingIn = (zoomState?.currentScale ?? 1) > 1
+    const isZoomingOut = (zoomState?.currentScale ?? 1) < 1
     const isScrollingMode = settings?.computedPageTurnMode === "scrollable"
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
     const [isExtraOpen, setIsExtraOpen] = useState(true)
+
+    useEffect(() => {
+      if (!boxRef.current) return
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          quickMenuBottomBarBoundingBox.next(entry)
+        }
+      })
+
+      resizeObserver.observe(boxRef.current)
+
+      return () => {
+        resizeObserver.disconnect()
+      }
+    }, [quickMenuBottomBarBoundingBox])
 
     return (
       <QuickBar
@@ -59,6 +81,7 @@ export const BottomBar = memo(
         overflow="auto"
         pb={8}
         px={0}
+        ref={boxRef}
       >
         <HStack
           flex={1}
@@ -165,6 +188,24 @@ export const BottomBar = memo(
                     <LuSearch />
                   </IconButton>
                 )}
+                <IconButton
+                  aria-label="Zoom"
+                  size="lg"
+                  variant={isZoomingIn ? "solid" : "ghost"}
+                  disabled={!isScrollingMode}
+                  onClick={() => {
+                    if (isZoomingIn) {
+                      reader?.zoom.exit()
+                    } else {
+                      reader?.zoom.enter({
+                        animate: false,
+                        scale: 2,
+                      })
+                    }
+                  }}
+                >
+                  {isZoomingIn ? <LuZoomOut /> : <LuZoomIn />}
+                </IconButton>
                 {hasAnnotationsEnhancer(reader) && (
                   <IconButton
                     aria-label="Bookmarks"
@@ -201,13 +242,9 @@ export const BottomBar = memo(
                 <IconButton
                   aria-label="Thumbnails"
                   size="lg"
-                  variant={
-                    zoomState?.isZooming && zoomState.currentScale < 1
-                      ? "solid"
-                      : "ghost"
-                  }
+                  variant={isZoomingOut ? "solid" : "ghost"}
                   onClick={() => {
-                    if (zoomState?.isZooming) {
+                    if (isZoomingOut) {
                       reader?.zoom.exit()
                     } else {
                       reader?.zoom.enter({

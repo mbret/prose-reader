@@ -1,0 +1,11 @@
+@use "../../constants.scss" as *;
+
+[data-#{$html-prefix-scroll-navigator}] {
+    &[data-#{$html-prefix}-zooming="true"] {
+        overflow: scroll;
+
+        &[data-#{$html-prefix}-zooming-direction="down"] {
+            overflow-x: auto;
+        }
+    }
+}

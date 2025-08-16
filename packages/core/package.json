@@ -30,7 +30,8 @@
     "rxjs": "*"
   },
   "devDependencies": {
-    "happy-dom": "*"
+    "happy-dom": "*",
+    "sass-embedded": "^1.90.0"
   },
   "madge": {
     "detectiveOptions": {

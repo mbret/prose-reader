@@ -6,7 +6,9 @@ export const QuickBar = memo(
     children,
     position,
     ...rest
-  }: { position: "top" | "bottom" } & PresenceProps) => {
+  }: { position: "top" | "bottom" } & PresenceProps & {
+      ref?: React.RefObject<HTMLDivElement | null>
+    }) => {
     return (
       <Presence
         display="flex"

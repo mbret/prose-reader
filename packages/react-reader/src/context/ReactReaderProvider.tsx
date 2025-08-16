@@ -26,6 +26,9 @@ export const ReactReaderProvider = memo(
     const notificationsSubject = useConstant(
       () => new Subject<ReaderNotification>(),
     )
+    const quickMenuBottomBarBoundingBox = useConstant(() =>
+      signal<DOMRectReadOnly | undefined>({ default: undefined }),
+    )
     const refitMenuSignal = useConstant(() =>
       signal({
         default: false,
@@ -39,8 +42,15 @@ export const ReactReaderProvider = memo(
         reader,
         notificationsSubject,
         refitMenuSignal,
+        quickMenuBottomBarBoundingBox,
       }),
-      [quickMenuSignal, reader, notificationsSubject, refitMenuSignal],
+      [
+        quickMenuSignal,
+        reader,
+        notificationsSubject,
+        refitMenuSignal,
+        quickMenuBottomBarBoundingBox,
+      ],
     )
 
     useEffect(() => {

@@ -1,0 +1,13 @@
+@use "./constants.scss" as *;
+
+[data-#{$html-prefix-scroll-navigator}] {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow-y: scroll;
+    // overflowX hidden does not hide content, it is here to prevent
+    // scrollbar to appear during resize / reflow.
+    // the content is supposed taking 100% width and the scrollbar
+    // is part of the content.
+    overflow-x: hidden;
+}

@@ -101,6 +101,8 @@ export class ControlledZoomController extends ZoomController {
   }
 
   public exit() {
+    super.exit()
+
     const viewportElement = this.reader.viewport.value.element
 
     if (!this.value.element) {

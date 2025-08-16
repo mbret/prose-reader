@@ -53,19 +53,16 @@ export const ReaderScreen = memo(() => {
 
   return (
     <>
-      <Box height="100%" width="100%" position="relative">
-        <Box width="100%" height="100%" ref={readerContainerRef} />
-        {!!manifestError && <BookError url={url} />}
-        {bookState !== "ready" && !manifestError && <BookLoading />}
-      </Box>
       {/* not wrapping the reader within for now since hot reload break the reader container */}
       <ReactReaderProvider
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
       >
-        <QuickActionsMenu />
         <ReactReader
+          height="100%"
+          width="100%"
+          position="relative"
           onItemClick={(item) => {
             if (item === "more") {
               isMenuOpenSignal.next(true)
@@ -81,12 +78,17 @@ export const ReaderScreen = memo(() => {
               }
             }
           }}
-        />
-        <MenuDialog
-          localSettings={localSettings}
-          setLocalSettings={setLocalSettings}
-        />
-        <HighlightMenu />
+        >
+          <Box width="100%" height="100%" ref={readerContainerRef} />
+          {!!manifestError && <BookError url={url} />}
+          {bookState !== "ready" && !manifestError && <BookLoading />}
+          <QuickActionsMenu />
+          <MenuDialog
+            localSettings={localSettings}
+            setLocalSettings={setLocalSettings}
+          />
+          <HighlightMenu />
+        </ReactReader>
       </ReactReaderProvider>
     </>
   )

@@ -1,4 +1,4 @@
-import type { Reader, createReader } from "@prose-reader/core"
+import type { createReader, Reader } from "@prose-reader/core"
 import { from, map, mergeMap, of } from "rxjs"
 import { isPdfJsArchive } from "./createArchiveFromPdf"
 import { PdfRenderer } from "./renderer/PdfRenderer"

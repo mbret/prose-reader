@@ -1,3 +1,4 @@
+import { HTML_PREFIX } from "../../constants"
 import { Report } from "../../report"
 import { noopElement } from "../../utils/dom"
 import { ZoomController } from "./ZoomController"
@@ -34,8 +35,6 @@ export const adjustScrollToKeepContentCentered = (
 
 export class ScrollableZoomController extends ZoomController {
   public enter({ scale = 1 }: { scale?: number } = {}): void {
-    if (this.value.isZooming) return
-
     this.setScale(scale)
 
     this.mergeCompare({
@@ -43,9 +42,16 @@ export class ScrollableZoomController extends ZoomController {
       currentScale: scale,
       isZooming: true,
     })
+
+    this.scrollNavigationController.value.element?.setAttribute(
+      `data-${HTML_PREFIX}-zooming`,
+      "true",
+    )
   }
 
   public exit(): void {
+    super.exit()
+
     this.setScale(1)
 
     this.mergeCompare({
@@ -85,6 +91,12 @@ export class ScrollableZoomController extends ZoomController {
       marginY,
     )
 
+    const direction = scale < 1 ? "down" : "up"
+    scrollNavigationElement.setAttribute(
+      `data-${HTML_PREFIX}-zooming-direction`,
+      direction,
+    )
+
     /**
      * When zooming out, we want to keep the content centered. Since we don't have a scrollbar we will cheat
      * with origin and force it centered.
@@ -93,8 +105,6 @@ export class ScrollableZoomController extends ZoomController {
      */
     if (scale < 1) {
       viewportElement.style.transformOrigin = `top`
-      // We don't need to force the scrollbar to be visible when zooming out
-      scrollNavigationElement.style.overflowX = "auto"
     } else if (scale > 1) {
       /**
        * @important
@@ -105,7 +115,6 @@ export class ScrollableZoomController extends ZoomController {
        * Therefore we need to use an origin that start at the actual content eliminating margin.
        */
       viewportElement.style.transformOrigin = `${marginX}px ${marginY}px`
-      scrollNavigationElement.style.overflowX = "scroll"
     }
 
     viewportElement.style.transform = `scale(${scale})`

@@ -1,4 +1,4 @@
-import { Presence } from "@chakra-ui/react"
+import { Box, type BoxProps, Presence } from "@chakra-ui/react"
 import { useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
@@ -15,11 +15,14 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
+import { ZoomControls } from "./zoom/ZoomControls"
 
 export const ReactReader = ({
   enableFloatingTime = true,
   enableFloatingProgress = true,
   onItemClick,
+  children,
+  ...rest
 }: {
   enableFloatingTime?: boolean
   enableFloatingProgress?: boolean
@@ -34,7 +37,8 @@ export const ReactReader = ({
       | "back"
       | "gallery",
   ) => void
-}) => {
+  children: React.ReactNode
+} & BoxProps) => {
   const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -78,7 +82,17 @@ export const ReactReader = ({
   useBookmarkOnCornerTap()
 
   return (
-    <>
+    <Box
+      position="absolute"
+      top={0}
+      left={0}
+      height="100%"
+      width="100%"
+      overflow="hidden"
+      data-prose-react-reader
+      {...rest}
+    >
+      {children}
       {enableFloatingProgress && (
         <Presence
           present={!quickMenuOpen}
@@ -91,6 +105,7 @@ export const ReactReader = ({
       <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
       <RefitDialog />
       <QuickMenu onItemClick={_onItemClick} />
+      <ZoomControls />
       <BookmarkPageMarkers />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
       <TableOfContentsDialog
@@ -119,6 +134,6 @@ export const ReactReader = ({
         <FloatingTime />
       </Presence>
       <Toaster />
-    </>
+    </Box>
   )
 }

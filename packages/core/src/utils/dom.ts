@@ -1,33 +1,3 @@
-// export function createSelectionFromPoint(startX: number, startY: number, endX: number, endY: number) {
-//   var doc = document;
-//   var start, end, range = null;
-//   if (typeof doc.caretPositionFromPoint != "undefined") {
-//     start = doc.caretPositionFromPoint(startX, startY);
-//     end = doc.caretPositionFromPoint(endX, endY);
-//     range = doc.createRange();
-//     range.setStart(start.offsetNode, start.offset);
-//     range.setEnd(end.offsetNode, end.offset);
-//   } else if (typeof doc.caretRangeFromPoint != "undefined") {
-//     start = doc.caretRangeFromPoint(startX, startY);
-//     end = doc.caretRangeFromPoint(endX, endY);
-//     range = doc.createRange();
-//     range.setStart(start.startContainer, start.startOffset);
-//     range.setEnd(end.startContainer, end.startOffset);
-//   }
-//   if (range !== null && typeof window.getSelection != "undefined") {
-//     var sel = window.getSelection();
-//     sel.removeAllRanges();
-//     sel.addRange(range);
-//   } else if (typeof doc.body.createTextRange != "undefined") {
-//     range = doc.body.createTextRange();
-//     range.moveToPoint(startX, startY);
-//     var endRange = range.duplicate();
-//     endRange.moveToPoint(endX, endY);
-//     range.setEndPoint("EndToEnd", endRange);
-//     range.select();
-//   }
-// }
-
 import { Report } from "../report"
 
 const pointerEvents: string[] = [
@@ -71,14 +41,13 @@ type ViewPort = { left: number; right: number; top: number; bottom: number }
 /**
  * @todo optimize
  */
-export const getFirstVisibleNodeForPositionRelativeTo = (
+export const getFirstVisibleNodeForPositionRelativeTo = async (
   documentOrElement: Document | Element,
   viewport: ViewPort,
 ) => {
-  const element =
-    `body` in documentOrElement
-      ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
-      : getFirstVisibleElementForViewport(documentOrElement, viewport)
+  const element = await (`body` in documentOrElement
+    ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
+    : getFirstVisibleElementForViewport(documentOrElement, viewport))
 
   const ownerDocument =
     `createRange` in documentOrElement
@@ -136,7 +105,10 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
     })
 
     if (lastValidRange) {
-      return { node: lastValidRange.startContainer, offset: lastValidOffset }
+      return {
+        node: lastValidRange.startContainer,
+        offset: lastValidOffset,
+      }
     }
 
     return { node: element, offset: 0 }
@@ -145,30 +117,40 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
   return undefined
 }
 
-const getFirstVisibleElementForViewport = (
+const getFirstVisibleElementForViewport = async (
   element: Element,
   viewport: ViewPort,
-) => {
-  let lastValidElement: Element | undefined
+): Promise<Element | undefined> => {
+  const rect = element.getBoundingClientRect()
   const positionFromViewport = getElementOrNodePositionFromViewPort(
-    element.getBoundingClientRect(),
+    rect,
     viewport,
   )
+
+  let lastValidElement: Element | undefined
+
+  /**
+   * @important
+   * We cannot safely early return if the element is completely outside bounds. This is
+   * because a children of that element could very much be positioned outside of its parent.
+   *
+   * We could do some heuristic assumptions or checking depth but nothing is quite safe at 100%
+   */
 
   if (positionFromViewport !== `before` && positionFromViewport !== `after`) {
     lastValidElement = element
   }
 
-  Array.from(element.children).some((child) => {
-    const childInViewPort = getFirstVisibleElementForViewport(child, viewport)
+  for (const child of element.children) {
+    const childInViewPort = await getFirstVisibleElementForViewport(
+      child,
+      viewport,
+    )
+
     if (childInViewPort) {
-      lastValidElement = childInViewPort
-
-      return true
+      return childInViewPort
     }
-
-    return false
-  })
+  }
 
   return lastValidElement
 }
@@ -443,4 +425,31 @@ export function isHtmlRange(element: unknown): element is Range {
     ],
     ["setStart", "setEnd", "selectNodeContents"],
   )
+}
+
+export const injectCSS = (
+  doc: Document,
+  id: string,
+  style: string,
+  prepend?: boolean,
+) => {
+  const userStyle = doc.createElement(`style`)
+  userStyle.id = id
+  userStyle.innerHTML = style
+
+  if (prepend) {
+    doc.head.prepend(userStyle)
+  } else {
+    doc.head.appendChild(userStyle)
+  }
+}
+
+export const removeCSS = (doc: Document, id: string) => {
+  if (doc?.head) {
+    const styleElement = doc.getElementById(id)
+
+    if (styleElement) {
+      styleElement.remove()
+    }
+  }
 }

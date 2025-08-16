@@ -1,12 +1,16 @@
 import {
-  type Observable,
   from,
   fromEvent,
   map,
+  type Observable,
   of,
   switchMap,
   take,
 } from "rxjs"
+import {
+  injectCSS as injectCSSToDocument,
+  removeCSS as removeCSSToDocument,
+} from "./dom"
 
 export const getAttributeValueFromString = (string: string, key: string) => {
   const regExp = new RegExp(`${key}\\s*=\\s*([0-9.]+)`, `i`)
@@ -24,25 +28,13 @@ export const injectCSS = (
 ) => {
   if (!frameElement?.contentDocument?.head) return
 
-  const userStyle = frameElement.contentDocument.createElement(`style`)
-  userStyle.id = id
-  userStyle.innerHTML = style
-
-  if (prepend) {
-    frameElement.contentDocument.head.prepend(userStyle)
-  } else {
-    frameElement.contentDocument.head.appendChild(userStyle)
-  }
+  injectCSSToDocument(frameElement.contentDocument, id, style, prepend)
 }
 
 export const removeCSS = (frameElement: HTMLIFrameElement, id: string) => {
-  if (frameElement?.contentDocument?.head) {
-    const styleElement = frameElement.contentDocument.getElementById(id)
+  if (!frameElement?.contentDocument) return
 
-    if (styleElement) {
-      styleElement.remove()
-    }
-  }
+  removeCSSToDocument(frameElement.contentDocument, id)
 }
 
 export const upsertCSSToFrame = (

@@ -20,7 +20,7 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs"
-import { HTML_PREFIX } from "../../constants"
+import { HTML_PREFIX_SCROLL_NAVIGATOR } from "../../constants"
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -37,6 +37,7 @@ export class ScrollPosition extends AbstractPosition {}
 export type ScrollNavigationViewportNavigationEntry = {
   position: UnboundSpinePosition | SpinePosition
 }
+
 export class ScrollNavigationController extends ReactiveEntity<{
   element: HTMLElement | undefined
 }> {
@@ -65,19 +66,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
         if (!rootElement) return
 
         const element = document.createElement(`div`)
-
-        // overflowX hidden does not hide content, it is here to prevent
-        // scrollbar to appear during resize / reflow.
-        // the content is supposed taking 100% width and the scrollbar
-        // is part of the content.
-        element.style.cssText = `
-          height: 100%;
-          width: 100%;
-          position: relative;
-          overflow-y: scroll;
-          overflow-x: hidden;
-        `
-        element.className = `${HTML_PREFIX}-scroll-navigator`
+        element.setAttribute(`data-${HTML_PREFIX_SCROLL_NAVIGATOR}`, "")
         element.appendChild(this.viewport.value.element)
         rootElement.appendChild(element)
 

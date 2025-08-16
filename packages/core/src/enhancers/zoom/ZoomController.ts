@@ -1,3 +1,4 @@
+import { HTML_PREFIX } from "../../constants"
 import type { Reader } from "../../reader"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 
@@ -23,7 +24,21 @@ export abstract class ZoomController extends ReactiveEntity<ZoomControllerState>
     scale?: number
     animate?: boolean
   }): void
-  public abstract exit(): void
+
+  public exit() {
+    this.scrollNavigationController.value.element?.removeAttribute(
+      `data-${HTML_PREFIX}-zooming-direction`,
+    )
+    this.scrollNavigationController.value.element?.setAttribute(
+      `data-${HTML_PREFIX}-zooming`,
+      "false",
+    )
+  }
+
   public abstract moveAt(position: { x: number; y: number }): void
   public abstract scaleAt(scale: number): void
+
+  protected get scrollNavigationController() {
+    return this.reader.navigation.scrollNavigationController
+  }
 }
