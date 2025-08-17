@@ -11,7 +11,6 @@ import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
 import { registerSwipe } from "./gestures/swipe"
 import { registerTaps } from "./gestures/taps/registerTaps"
-import { registerZoomPan } from "./gestures/zoomPan"
 import { GesturesSettingsManager } from "./SettingsManager"
 import type { EnhancerAPI, Hook, InputSettings } from "./types"
 
@@ -57,12 +56,6 @@ export const gesturesEnhancer =
       },
     })
 
-    const zoomPanRecognizer = new PanRecognizer({
-      options: {
-        posThreshold: 1,
-      },
-    })
-
     const tapRecognizer = new TapRecognizer({
       failWith: [panRecognizer],
     })
@@ -77,7 +70,6 @@ export const gesturesEnhancer =
         panRecognizer,
         swipeRecognizer,
         pinchRecognizer,
-        zoomPanRecognizer,
       ],
       disableTextSelection: false,
     })
@@ -109,11 +101,6 @@ export const gesturesEnhancer =
       reader,
       recognizable,
       settingsManager,
-    })
-
-    const zoomPanGestures$ = registerZoomPan({
-      reader,
-      recognizer: zoomPanRecognizer,
     })
 
     const containerUpdate$ = reader.context.watch(`rootElement`).pipe(
@@ -158,7 +145,7 @@ export const gesturesEnhancer =
       panGestures$,
     ).pipe(share())
 
-    merge(containerUpdate$, watchSettings$, zoomPanGestures$, gestures$)
+    merge(containerUpdate$, watchSettings$, gestures$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 

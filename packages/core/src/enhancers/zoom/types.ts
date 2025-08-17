@@ -8,8 +8,8 @@ export type ZoomEnhancerOutput = {
       scale?: number
       animate?: boolean
     }) => void
-    exit: () => void
-    moveAt: (position: { x: number; y: number }) => void
+    exit: (options?: { animate?: boolean }) => void
+    move: (position: { x: number; y: number }) => void
     scaleAt: (scale: number) => void
     state$: Observable<ZoomControllerState>
     get state(): ZoomControllerState

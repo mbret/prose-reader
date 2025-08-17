@@ -13,13 +13,13 @@ export const ZoomControls = memo(() => {
   const reader = useReader()
   const zoomState = useObserve(() => reader?.zoom.state$, [reader])
   const zoomScaleValue = zoomState?.currentScale ?? 1
-  const isZooming = zoomState?.isZooming && zoomState.currentScale >= 1
+  const isZooming = zoomState?.isZooming
   const bottomBarHeight =
     quickMenuBottomBarBoundingBoxValue?.borderBoxSize?.[0]?.blockSize ?? 1
 
   return (
     <Presence
-      present={isZooming}
+      present={isZooming && zoomScaleValue > 1}
       animationName={{ _open: "fade-in", _closed: "fade-out" }}
       animationDuration="moderate"
       position="absolute"

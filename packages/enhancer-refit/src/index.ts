@@ -1,6 +1,6 @@
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,
-  HTML_ATTRIBUTE_VIEWPORT_CLASSNAME,
+  HTML_PREFIX_VIEWPORT,
   ReactiveEntity,
   type Reader,
 } from "@prose-reader/core"
@@ -49,7 +49,7 @@ export const refitEnhancer =
     const style = document.createElement("style")
     style.id = stylesheetId
     style.textContent = `
-      [${HTML_ATTRIBUTE_DATA_READER_ID}] .${HTML_ATTRIBUTE_VIEWPORT_CLASSNAME} {
+      [${HTML_ATTRIBUTE_DATA_READER_ID}] [data-${HTML_PREFIX_VIEWPORT}] {
         margin: auto;
         width: 100%;
         max-width: var(${maxWidthCssVariable});

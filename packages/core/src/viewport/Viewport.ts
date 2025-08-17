@@ -1,5 +1,5 @@
 import { merge, takeUntil, tap } from "rxjs"
-import { HTML_ATTRIBUTE_VIEWPORT_CLASSNAME } from "../constants"
+import { HTML_PREFIX_VIEWPORT } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
@@ -33,13 +33,7 @@ export class Viewport extends ReactiveEntity<State> {
   ) {
     const element = document.createElement("div")
 
-    element.style.cssText = `
-        background-color: white;
-        position: relative;
-        height: 100%;
-        width: 100%;
-    `
-    element.className = HTML_ATTRIBUTE_VIEWPORT_CLASSNAME
+    element.setAttribute(`data-${HTML_PREFIX_VIEWPORT}`, "")
 
     super({
       element,

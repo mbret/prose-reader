@@ -192,13 +192,12 @@ export const BottomBar = memo(
                   aria-label="Zoom"
                   size="lg"
                   variant={isZoomingIn ? "solid" : "ghost"}
-                  disabled={!isScrollingMode}
                   onClick={() => {
                     if (isZoomingIn) {
-                      reader?.zoom.exit()
+                      reader?.zoom.exit({ animate: true })
                     } else {
                       reader?.zoom.enter({
-                        animate: false,
+                        animate: true,
                         scale: 2,
                       })
                     }
@@ -245,7 +244,7 @@ export const BottomBar = memo(
                   variant={isZoomingOut ? "solid" : "ghost"}
                   onClick={() => {
                     if (isZoomingOut) {
-                      reader?.zoom.exit()
+                      reader?.zoom.exit({ animate: true })
                     } else {
                       reader?.zoom.enter({
                         animate: true,

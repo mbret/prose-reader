@@ -11,3 +11,10 @@
     // is part of the content.
     overflow-x: hidden;
 }
+
+[data-#{$html-prefix-viewport}] {
+    background-color: white;
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
