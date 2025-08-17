@@ -1,10 +1,16 @@
 import type { Reader } from "@prose-reader/core"
 import type { EnhancerAPI as GestureEnhancerAPI } from "@prose-reader/enhancer-gestures"
 import { memo, useEffect, useMemo } from "react"
-import { signal, useConstant, useLiveRef, useSubscribe } from "reactjrx"
+import {
+  type SignalValue,
+  signal,
+  useConstant,
+  useLiveRef,
+  useSubscribe,
+} from "reactjrx"
 import { Subject, tap } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
-import { ReaderContext } from "./context"
+import { ReaderContext, type ReaderContextType } from "./context"
 
 export const ReactReaderProvider = memo(
   ({
@@ -27,7 +33,9 @@ export const ReactReaderProvider = memo(
       () => new Subject<ReaderNotification>(),
     )
     const quickMenuBottomBarBoundingBox = useConstant(() =>
-      signal<DOMRectReadOnly | undefined>({ default: undefined }),
+      signal<SignalValue<ReaderContextType["quickMenuBottomBarBoundingBox"]>>({
+        default: undefined,
+      }),
     )
     const refitMenuSignal = useConstant(() =>
       signal({

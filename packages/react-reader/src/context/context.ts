@@ -5,7 +5,7 @@ import { type Signal, type SignalValue, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
 
-type ContextType = {
+export type ReaderContextType = {
   reader: (Reader & GesturesEnhancerAPI) | undefined
   quickMenuSignal: Signal<boolean, undefined>
   quickMenuBottomBarBoundingBox: Signal<ResizeObserverEntry | undefined>
@@ -13,12 +13,13 @@ type ContextType = {
   refitMenuSignal: Signal<boolean, undefined>
 }
 
-export const ReaderContext: Context<ContextType> = createContext<ContextType>({
-  reader: undefined,
-  quickMenuSignal: signal({ default: false }),
-  quickMenuBottomBarBoundingBox: signal<
-    SignalValue<ContextType["quickMenuBottomBarBoundingBox"]>
-  >({ default: undefined }),
-  notificationsSubject: new Subject<ReaderNotification>(),
-  refitMenuSignal: signal({ default: false }),
-})
+export const ReaderContext: Context<ReaderContextType> =
+  createContext<ReaderContextType>({
+    reader: undefined,
+    quickMenuSignal: signal({ default: false }),
+    quickMenuBottomBarBoundingBox: signal<
+      SignalValue<ReaderContextType["quickMenuBottomBarBoundingBox"]>
+    >({ default: undefined }),
+    notificationsSubject: new Subject<ReaderNotification>(),
+    refitMenuSignal: signal({ default: false }),
+  })
