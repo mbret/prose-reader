@@ -20,6 +20,7 @@ import {
   RxDoubleArrowUp,
 } from "react-icons/rx"
 import { useObserve } from "reactjrx"
+import { map } from "rxjs"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -48,9 +49,15 @@ export const BottomBar = memo(
       useReaderContext()
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
-    const zoomState = useObserve(() => reader?.zoom.state$, [reader])
-    const isZoomingIn = (zoomState?.currentScale ?? 1) > 1
-    const isZoomingOut = (zoomState?.currentScale ?? 1) < 1
+    const zoomState = useObserve(
+      () =>
+        reader?.zoom.state$.pipe(
+          map((state) => (state.currentScale > 1 ? "in" : "out")),
+        ),
+      [reader],
+    )
+    const isZoomingIn = zoomState === "in"
+    const isZoomingOut = zoomState === "out"
     const isScrollingMode = settings?.computedPageTurnMode === "scrollable"
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
