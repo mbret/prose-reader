@@ -50,7 +50,7 @@
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
     "react-native-zip-archive": "^7.0.1",
-    "reactjrx": "^1.116.0",
+    "reactjrx": "^1.126.0",
     "rxjs": "^7.8.2",
     "xmldoc": "^2.0.1"
   },

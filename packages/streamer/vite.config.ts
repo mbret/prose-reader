@@ -1,8 +1,8 @@
 // vite.config.js
 import { resolve } from "node:path"
+import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import externals from "rollup-plugin-node-externals"
 
 export default defineConfig(({ mode }) => ({
   build: {
@@ -16,14 +16,11 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: mode !== "development",
   },
   plugins: [
-    {
-      enforce: `pre`,
-      ...externals({
-        peerDeps: true,
-        deps: true,
-        devDeps: true,
-      }),
-    },
+    externals({
+      peerDeps: true,
+      deps: true,
+      devDeps: true,
+    }),
     dts({
       entryRoot: "src",
     }),

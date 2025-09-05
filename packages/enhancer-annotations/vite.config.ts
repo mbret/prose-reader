@@ -19,14 +19,11 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
   },
   plugins: [
-    {
-      enforce: `pre`,
-      ...externals({
-        peerDeps: true,
-        deps: true,
-        devDeps: true,
-      }),
-    },
+    externals({
+      peerDeps: true,
+      deps: true,
+      devDeps: true,
+    }),
     dts({
       entryRoot: "src",
     }),
