@@ -4,7 +4,7 @@ import { useObserve, useSignalValue } from "reactjrx"
 import { animationFrameScheduler, map, throttleTime } from "rxjs"
 import { Slider } from "../components/ui/slider"
 import { useReader } from "../context/useReader"
-import { useReaderContext } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
 
 const STEP = 0.5
 const MIN = 1
@@ -29,10 +29,13 @@ const normalizeZoomValue = (
 }
 
 export const ZoomControls = memo(() => {
-  const { quickMenuBottomBarBoundingBox } = useReaderContext()
-  const quickMenuBottomBarBoundingBoxValue = useSignalValue(
-    quickMenuBottomBarBoundingBox,
+  const { quickMenuBottomBarBoundingBoxSignal } = useReaderContextValue([
+    "quickMenuBottomBarBoundingBoxSignal",
+  ])
+  const quickMenuBottomBarBoundingBox = useSignalValue(
+    quickMenuBottomBarBoundingBoxSignal,
   )
+
   const reader = useReader()
   const zoomScaleValue =
     useObserve(
@@ -58,7 +61,7 @@ export const ZoomControls = memo(() => {
     STEP,
   )
   const bottomBarHeight =
-    quickMenuBottomBarBoundingBoxValue?.borderBoxSize?.[0]?.blockSize ?? 1
+    quickMenuBottomBarBoundingBox?.borderBoxSize?.[0]?.blockSize ?? 1
 
   return (
     <Presence
