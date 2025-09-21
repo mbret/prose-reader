@@ -37,3 +37,11 @@ if ("serviceWorker" in navigator) {
 } else {
   alert(`Unable to install service worker`)
 }
+
+const script = document.createElement("script")
+script.src = "//unpkg.com/react-scan/dist/auto.global.js"
+script.async = true
+
+if (import.meta.env.DEV) {
+  document.head.appendChild(script)
+}
