@@ -4,6 +4,7 @@ import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { Toaster } from "./components/ui/toaster"
+import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
@@ -106,6 +107,7 @@ export const ReactReader = ({
       <RefitDialog />
       <QuickMenu onItemClick={_onItemClick} />
       <ZoomControls />
+      <FontSizeControlsDialog />
       <BookmarkPageMarkers />
       <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
       <TableOfContentsDialog

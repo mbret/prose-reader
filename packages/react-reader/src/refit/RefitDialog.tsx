@@ -1,7 +1,7 @@
 import { Button, Fieldset, Stack } from "@chakra-ui/react"
 import type { RefitEnhancerOptions } from "@prose-reader/enhancer-refit"
 import { memo } from "react"
-import { useObserve, useSignalValue } from "reactjrx"
+import { useObserve } from "reactjrx"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -16,14 +16,16 @@ import { Field } from "../components/ui/field"
 import { Radio, RadioGroup } from "../components/ui/radio"
 import { Slider } from "../components/ui/slider"
 import { hasRefitEnhancer, useReader } from "../context/useReader"
-import { useReaderContext } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
 
 type OptionValue = RefitEnhancerOptions["viewportFit"]
 
 export const RefitDialog = memo(() => {
   const defaultCustomWidth = 60
-  const { refitMenuSignal } = useReaderContext()
-  const refitMenu = useSignalValue(refitMenuSignal)
+  const { refitMenuOpen, onRefitMenuOpenChange } = useReaderContextValue([
+    "refitMenuOpen",
+    "onRefitMenuOpenChange",
+  ])
   const reader = useReader()
   const readerWithRefit = hasRefitEnhancer(reader) ? reader : undefined
   const refitSettings = useObserve(
@@ -34,8 +36,8 @@ export const RefitDialog = memo(() => {
   return (
     <DialogRoot
       lazyMount
-      open={refitMenu}
-      onOpenChange={(e) => refitMenuSignal.next(e.open)}
+      open={refitMenuOpen}
+      onOpenChange={(e) => onRefitMenuOpenChange(e.open)}
       placement="center"
     >
       <DialogContent>

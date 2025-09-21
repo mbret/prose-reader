@@ -1,10 +1,10 @@
-import { useSignalValue } from "reactjrx"
-import { useReaderContext } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
 
 export const useQuickMenu = () => {
-  const { quickMenuSignal } = useReaderContext()
+  const { quickMenuOpen, onQuickMenuOpenChange } = useReaderContextValue([
+    "quickMenuOpen",
+    "onQuickMenuOpenChange",
+  ])
 
-  const quickMenu = useSignalValue(quickMenuSignal)
-
-  return [quickMenu, quickMenuSignal.update, quickMenuSignal] as const
+  return [quickMenuOpen, onQuickMenuOpenChange] as const
 }

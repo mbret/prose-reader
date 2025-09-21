@@ -1,5 +1,6 @@
 import { Box, Collapsible, HStack, IconButton, Stack } from "@chakra-ui/react"
 import { memo, useEffect, useRef, useState } from "react"
+import { BiFontSize } from "react-icons/bi"
 import { BsBookmarks } from "react-icons/bs"
 import {
   LuChevronDown,
@@ -28,7 +29,7 @@ import {
   hasSearchEnhancer,
   useReader,
 } from "../context/useReader"
-import { useReaderContext } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
 import { PaginationInfoSection } from "./PaginationInfoSection"
 import { QuickBar } from "./QuickBar"
 import { Scrubber } from "./Scrubber"
@@ -45,14 +46,27 @@ export const BottomBar = memo(
   }) => {
     const boxRef = useRef<HTMLDivElement>(null)
     const reader = useReader()
-    const { refitMenuSignal, quickMenuBottomBarBoundingBox } =
-      useReaderContext()
+    const {
+      quickMenuBottomBarBoundingBoxSignal,
+      onFontSizeMenuOpenChange,
+      onRefitMenuOpenChange,
+    } = useReaderContextValue([
+      "quickMenuBottomBarBoundingBoxSignal",
+      "onFontSizeMenuOpenChange",
+      "onRefitMenuOpenChange",
+    ])
     const navigation = useObserve(() => reader?.navigation.state$, [reader])
     const settings = useObserve(() => reader?.settings.values$, [reader])
     const zoomState = useObserve(
       () =>
         reader?.zoom.state$.pipe(
-          map((state) => (state.currentScale > 1 ? "in" : "out")),
+          map((state) =>
+            state.currentScale > 1
+              ? "in"
+              : state.currentScale < 1
+                ? "out"
+                : undefined,
+          ),
         ),
       [reader],
     )
@@ -68,7 +82,7 @@ export const BottomBar = memo(
 
       const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          quickMenuBottomBarBoundingBox.next(entry)
+          quickMenuBottomBarBoundingBoxSignal.update(entry)
         }
       })
 
@@ -77,7 +91,7 @@ export const BottomBar = memo(
       return () => {
         resizeObserver.disconnect()
       }
-    }, [quickMenuBottomBarBoundingBox])
+    }, [quickMenuBottomBarBoundingBoxSignal])
 
     return (
       <QuickBar
@@ -212,6 +226,16 @@ export const BottomBar = memo(
                 >
                   {isZoomingIn ? <LuZoomOut /> : <LuZoomIn />}
                 </IconButton>
+                <IconButton
+                  aria-label="font size"
+                  size="lg"
+                  onClick={() => {
+                    onFontSizeMenuOpenChange(true)
+                  }}
+                  variant="ghost"
+                >
+                  <BiFontSize />
+                </IconButton>
                 {hasAnnotationsEnhancer(reader) && (
                   <IconButton
                     aria-label="Bookmarks"
@@ -238,7 +262,7 @@ export const BottomBar = memo(
                     size="lg"
                     variant="ghost"
                     onClick={() => {
-                      refitMenuSignal.next(true)
+                      onRefitMenuOpenChange(true)
                     }}
                     disabled={!isScrollingMode}
                   >

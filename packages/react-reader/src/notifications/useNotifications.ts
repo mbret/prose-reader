@@ -1,6 +1,7 @@
 import { isDefined, useSubscribe } from "reactjrx"
 import {
   distinctUntilChanged,
+  EMPTY,
   filter,
   finalize,
   first,
@@ -8,38 +9,51 @@ import {
   merge,
   mergeMap,
   NEVER,
+  Observable,
   skip,
+  switchMap,
   tap,
   timer,
 } from "rxjs"
 import { toaster } from "../components/ui/toaster"
 import { useReader } from "../context/useReader"
-import { useReaderContext } from "../context/useReaderContext"
+import { useReaderContextValue } from "../context/useReaderContext"
+
+export const NOTIFICATION_KEYS = {
+  fontScaleChange: "fontScaleChange",
+}
 
 const useNotifyFontScaleChange = () => {
   const reader = useReader()
-  const { notificationsSubject } = useReaderContext()
+  const { notificationsSubject, fontSizeMenuOpen } = useReaderContextValue([
+    "notificationsSubject",
+    "fontSizeMenuOpen",
+  ])
 
   useSubscribe(
     () =>
-      reader?.settings.values$.pipe(
-        map(({ fontScale }) => fontScale),
-        distinctUntilChanged(),
-        skip(1),
-        tap((fontScale) => {
-          notificationsSubject.next({
-            key: "fontScaleChange",
-            title: "Font size changed",
-            description: `${fontScale * 100} %`,
-          })
-        }),
-      ),
-    [reader, notificationsSubject],
+      fontSizeMenuOpen
+        ? EMPTY
+        : reader?.settings.values$.pipe(
+            map(({ fontScale }) => fontScale),
+            distinctUntilChanged(),
+            skip(1),
+            tap((fontScale) => {
+              notificationsSubject.next({
+                key: NOTIFICATION_KEYS.fontScaleChange,
+                title: "Font size changed",
+                description: `${fontScale * 100} %`,
+              })
+            }),
+          ),
+    [reader, notificationsSubject, fontSizeMenuOpen],
   )
 }
 
 export const useNotifications = () => {
-  const { notificationsSubject } = useReaderContext()
+  const { notificationsSubject } = useReaderContextValue([
+    "notificationsSubject",
+  ])
 
   useNotifyFontScaleChange()
 
@@ -50,10 +64,21 @@ export const useNotifications = () => {
         mergeMap((notification) => {
           const duration = notification.duration ?? 3000
 
-          const toast = toaster.create({
-            title: notification.title,
-            description: notification.description,
-            duration,
+          const toast$ = new Observable<string>((subscriber) => {
+            try {
+              queueMicrotask(() => {
+                const toastId = toaster.create({
+                  title: notification.title,
+                  description: notification.description,
+                  duration,
+                })
+
+                subscriber.next(toastId)
+                subscriber.complete()
+              })
+            } catch (error) {
+              subscriber.error(error)
+            }
           })
 
           const sameNotification$ = notificationsSubject.pipe(
@@ -61,15 +86,21 @@ export const useNotifications = () => {
             filter((n) => !!notification.key && n?.key === notification.key),
           )
 
-          return merge(
-            timer(duration),
-            notification.abort ?? NEVER,
-            sameNotification$,
-          ).pipe(
-            first(),
-            finalize(() => {
-              toaster.dismiss(toast)
-            }),
+          return toast$.pipe(
+            switchMap((toast) =>
+              merge(
+                timer(duration),
+                notification.abort ?? NEVER,
+                sameNotification$,
+              ).pipe(
+                first(),
+                finalize(() => {
+                  queueMicrotask(() => {
+                    toaster.dismiss(toast)
+                  })
+                }),
+              ),
+            ),
           )
         }),
       ),
