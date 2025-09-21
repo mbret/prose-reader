@@ -51,9 +51,9 @@ export const createArchiveFromExpoFileSystemNext = async (
         dir: false,
         basename: getUriBasename(record.name),
         uri: record.uri.replace("file://", ""), // @todo fix prose-reader
-        blob: async () => record.blob(),
+        blob: async () => new Blob([await record.arrayBuffer()]),
         string: async () => record.text(),
-        size: record.bytes().length,
+        size: record.info().size ?? 0,
         encodingFormat: record.type ?? undefined,
       }
     }),

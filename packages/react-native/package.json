@@ -40,7 +40,7 @@
     "@prose-reader/streamer": "^1.215.0",
     "@webview-bridge/react-native": "^1.7.7",
     "@webview-bridge/web": "^1.7.7",
-    "expo-file-system": "^18.1.10",
+    "expo-file-system": "^19.0.14",
     "react": "19.x",
     "rxjs": "*"
   }
