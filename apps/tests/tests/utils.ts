@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test"
-import type { Reader } from "@prose-reader/core"
+import type { Reader, UserNavigationEntry } from "@prose-reader/core"
 
 export async function waitForSpineItemReady(page: Page, indexes: number[]) {
   for (const index of indexes) {
@@ -95,6 +95,27 @@ export const navigateToSpineItem = async ({
     [index],
   )
 }
+
+export const navigateTo = async ({
+  navigation,
+  page,
+}: {
+  navigation: UserNavigationEntry
+  page: Page
+}) => {
+  await page.evaluate(
+    ([navigation]) => {
+      if (!navigation) return
+
+      // @ts-expect-error
+      const reader = window.reader as Reader
+
+      reader.navigation.navigate(navigation)
+    },
+    [navigation],
+  )
+}
+
 export const getScrollNavigationMetadata = async ({ page }: { page: Page }) => {
   return await page.evaluate(() => {
     // @ts-expect-error

@@ -49,7 +49,8 @@ export function fromOutOfBoundsSpinePosition({
     lastSpineItem || 0,
   )
 
-  const maximumYOffset = distanceOfLastSpineItem.bottom
+  // fallback on last element (before last pixel)
+  const maximumYOffset = distanceOfLastSpineItem.bottom - 1
   const positiveY = Math.max(0, position.y)
   const y = Math.min(positiveY, maximumYOffset)
 
@@ -67,7 +68,8 @@ export function fromOutOfBoundsSpinePosition({
     })
   }
 
-  const maximumXOffset = distanceOfLastSpineItem.right
+  // fallback on last element (before last pixel)
+  const maximumXOffset = distanceOfLastSpineItem.right - 1
   const positiveX = Math.max(0, position.x)
   const boundedX = Math.min(positiveX, maximumXOffset)
 

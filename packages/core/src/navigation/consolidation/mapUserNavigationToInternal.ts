@@ -36,6 +36,11 @@ export const mapUserNavigationToInternal =
            *
            * For now having things centered (negative x) on zoom out in scroll mode can be achieved with transform origin for example.
            * This "limitation" is here at the moment to avoid unexpected behaviors.
+           *
+           * @note
+           * Has a bug where scaling from < 1 to 1 was creating positive x offset. This is "expected" since on scroll mode the viewport
+           * is at the offset 0 at scale 0.2 for eg: then when calculating new scroll delta, we get positive x offset. Anyway, to prevent
+           * out of bounds position this should make sure we always stay within an item.
            */
           position: userNavigation.position
             ? navigationResolver.fromOutOfBoundsSpinePosition(
