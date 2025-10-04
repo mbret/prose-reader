@@ -1,61 +1,26 @@
 import { isDefined, useSubscribe } from "reactjrx"
 import {
-  distinctUntilChanged,
-  EMPTY,
   filter,
   finalize,
   first,
-  map,
   merge,
   mergeMap,
   NEVER,
   Observable,
   skip,
   switchMap,
-  tap,
   timer,
 } from "rxjs"
 import { toaster } from "../components/ui/toaster"
-import { useReader } from "../context/useReader"
 import { useReaderContextValue } from "../context/useReaderContext"
-
-export const NOTIFICATION_KEYS = {
-  fontScaleChange: "fontScaleChange",
-}
-
-const useNotifyFontScaleChange = () => {
-  const reader = useReader()
-  const { notificationsSubject, fontSizeMenuOpen } = useReaderContextValue([
-    "notificationsSubject",
-    "fontSizeMenuOpen",
-  ])
-
-  useSubscribe(
-    () =>
-      fontSizeMenuOpen
-        ? EMPTY
-        : reader?.settings.values$.pipe(
-            map(({ fontScale }) => fontScale),
-            distinctUntilChanged(),
-            skip(1),
-            tap((fontScale) => {
-              notificationsSubject.next({
-                key: NOTIFICATION_KEYS.fontScaleChange,
-                title: "Font size changed",
-                description: `${fontScale * 100} %`,
-              })
-            }),
-          ),
-    [reader, notificationsSubject, fontSizeMenuOpen],
-  )
-}
+import { useFontSizeNotifications } from "../fonts/useFontSizeNotifications"
 
 export const useNotifications = () => {
   const { notificationsSubject } = useReaderContextValue([
     "notificationsSubject",
   ])
 
-  useNotifyFontScaleChange()
+  useFontSizeNotifications()
 
   useSubscribe(
     () =>
