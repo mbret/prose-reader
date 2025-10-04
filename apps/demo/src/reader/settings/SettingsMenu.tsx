@@ -1,6 +1,5 @@
 import type React from "react"
 import { useEffect, useState } from "react"
-import "rc-slider/assets/index.css"
 import screenfull from "screenfull"
 import "rc-slider/assets/index.css"
 import { Heading, HStack, Stack } from "@chakra-ui/react"
@@ -19,8 +18,8 @@ import { Radio, RadioGroup } from "../../components/ui/radio"
 import { Slider } from "../../components/ui/slider"
 import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
 import { useReader } from "../useReader"
-import type { LocalSettings } from "./useLocalSettings"
 import { useReaderSettings } from "./useReaderSettings"
+import type { LocalSettings } from "./useSettings"
 
 const SectionHeading = ({ children }: { children: React.ReactNode }) => {
   return (

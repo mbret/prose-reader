@@ -5,8 +5,8 @@ import { Checkbox } from "../components/ui/checkbox"
 import { Field } from "../components/ui/field"
 import { Radio, RadioGroup } from "../components/ui/radio"
 import { Slider } from "../components/ui/slider"
-import type { LocalSettings } from "../reader/settings/useLocalSettings"
 import { useReaderSettings } from "../reader/settings/useReaderSettings"
+import type { LocalSettings } from "../reader/settings/useSettings"
 import { useReader } from "../reader/useReader"
 
 export const NavigationSettings = ({

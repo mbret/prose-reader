@@ -7,7 +7,7 @@ export const SyncFontSettings = () => {
   const { fontSize } = useReaderContextValue(["fontSize"])
 
   useEffect(() => {
-    if (reader && fontSize !== undefined) {
+    if (reader && typeof fontSize === "number") {
       const timeout = setTimeout(() => {
         reader.settings.update({
           fontScale: fontSize,

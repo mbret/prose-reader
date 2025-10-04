@@ -10,7 +10,7 @@ import { BookLoading } from "./BookLoading"
 import { useGestureHandler } from "./gestures/useGestureHandler"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
-import { useLocalSettings } from "./settings/useLocalSettings"
+import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
 import { useCreateReader } from "./useCreateReader"
@@ -23,7 +23,7 @@ export const ReaderScreen = memo(() => {
   const { reader } = useReader()
   const { data: manifest, error: manifestError } = useManifest(url)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
-  const [localSettings, setLocalSettings] = useLocalSettings()
+  const [localSettings, setLocalSettings] = useSettings()
   const bookState = useObserve(() => reader?.state$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
@@ -58,6 +58,10 @@ export const ReaderScreen = memo(() => {
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
+        fontSize={localSettings.fontSize}
+        onFontSizeChange={(fontSize) =>
+          setLocalSettings((old) => ({ ...old, fontSize }))
+        }
       >
         <ReactReader
           height="100%"

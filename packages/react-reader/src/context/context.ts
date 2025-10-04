@@ -17,11 +17,18 @@ export type ReaderContextType = {
   fontSizeMenuOpen: boolean
   onFontSizeMenuOpenChange: (open: boolean) => void
   fontSize?: number
-  onFontSizeValueChange: (value: number) => void
+  onFontSizeChange?: (value: number) => void
   fontSizeMin: number
   fontSizeMax: number
-  fontSizeScopeValue: SETTING_SCOPE
-  onFontSizeScopeValueChange: (scope: SETTING_SCOPE) => void
+  fontSizeScope?: SETTING_SCOPE
+  onFontSizeScopeChange?: (scope: SETTING_SCOPE) => void
+  /**
+   * Internal fallback values used for uncontrolled settings. This way the
+   * Reader works as intended but:
+   * - there are no persistent settings
+   * - the settings are valid only for the current mount runtime
+   */
+  uncontrolledFontSize: number
 }
 
 export const getDefaultValue = (): ReaderContextType => ({
@@ -34,14 +41,11 @@ export const getDefaultValue = (): ReaderContextType => ({
   notificationsSubject: new Subject<ReaderNotification>(),
   refitMenuOpen: false,
   onRefitMenuOpenChange: () => {},
-  fontSizeMenuOpen: true,
+  fontSizeMenuOpen: false,
   onFontSizeMenuOpenChange: () => {},
-  fontSize: 1,
   fontSizeMin: 0.2,
   fontSizeMax: 5,
-  fontSizeScopeValue: "book" satisfies SETTING_SCOPE,
-  onFontSizeValueChange: () => {},
-  onFontSizeScopeValueChange: () => {},
+  uncontrolledFontSize: 1,
 })
 
 export const ReaderContext = createContext(

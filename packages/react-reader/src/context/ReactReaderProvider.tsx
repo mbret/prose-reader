@@ -3,28 +3,30 @@ import type { EnhancerAPI as GestureEnhancerAPI } from "@prose-reader/enhancer-g
 import { type DependencyList, memo, useCallback, useEffect } from "react"
 import { signal, useConstant, useSignalValue } from "reactjrx"
 import { SyncFontSettings } from "../fonts/SyncFontSettings"
-import type { SETTING_SCOPE } from "../settings/types"
-import { getDefaultValue, ReaderContext } from "./context"
+import {
+  getDefaultValue,
+  ReaderContext,
+  type ReaderContextType,
+} from "./context"
 
 type ProviderProps = {
   children: React.ReactNode
   reader: (Reader & GestureEnhancerAPI) | undefined
   quickMenuOpen?: boolean
   onQuickMenuOpenChange?: (open: boolean) => void
-  onFontSizeValueChange?: (value: number) => void
-  onFontSizeScopeValueChange?: (scope: SETTING_SCOPE) => void
-  fontSize?: number
-  fontSizeScope?: SETTING_SCOPE
-}
+} & Pick<
+  ReaderContextType,
+  "fontSize" | "onFontSizeChange" | "fontSizeScope" | "onFontSizeScopeChange"
+>
 
 const SignalProvider = ({
   children,
   onQuickMenuOpenChange,
   quickMenuOpen,
   fontSizeScope,
-  onFontSizeScopeValueChange,
+  onFontSizeScopeChange,
   fontSize,
-  onFontSizeValueChange,
+  onFontSizeChange,
   ...props
 }: { children: React.ReactNode } & ProviderProps) => {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
@@ -43,40 +45,6 @@ const SignalProvider = ({
     },
     [uncontrolledFontSizeMenuOpen],
   )
-  /**
-   * Font size
-   */
-  const uncontrolledFontSize = useConstant(() =>
-    signal({ default: valueSignal.value.fontSize }),
-  )
-  const uncontrolledFontSizeValue = useSignalValue(uncontrolledFontSize)
-  const uncontrolledOnFontSizeValueChange = useCallback(
-    (value: number) => {
-      uncontrolledFontSize.update(value)
-    },
-    [uncontrolledFontSize],
-  )
-  const _fontSizeValue = fontSize ?? uncontrolledFontSizeValue
-  const _onFontSizeValueChange =
-    onFontSizeValueChange ?? uncontrolledOnFontSizeValueChange
-  /**
-   * font size scope
-   */
-  const uncontrolledFontSizeScope = useConstant(() =>
-    signal({ default: valueSignal.value.fontSizeScopeValue }),
-  )
-  const uncontrolledFontSizeScopeValue = useSignalValue(
-    uncontrolledFontSizeScope,
-  )
-  const uncontrolledOnFontSizeScopeChange = useCallback(
-    (scope: SETTING_SCOPE) => {
-      uncontrolledFontSizeScope.update(scope)
-    },
-    [uncontrolledFontSizeScope],
-  )
-  const _fontSizeScopeValue = fontSizeScope ?? uncontrolledFontSizeScopeValue
-  const _onFontSizeScopeChange =
-    onFontSizeScopeValueChange ?? uncontrolledOnFontSizeScopeChange
   const uncontrolledQuickMenuOpen = useConstant(() =>
     signal({ default: valueSignal.value.quickMenuOpen }),
   )
@@ -116,19 +84,19 @@ const SignalProvider = ({
       fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
       onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
       refitMenuOpen: uncontrolledRefitMenuOpenValue,
-      fontSizeScopeValue: _fontSizeScopeValue,
-      onFontSizeScopeValueChange: _onFontSizeScopeChange,
-      fontSize: _fontSizeValue,
-      onFontSizeValueChange: _onFontSizeValueChange,
+      fontSizeScope,
+      onFontSizeScopeChange,
+      fontSize,
+      onFontSizeChange,
     }))
   }, [
     ...(Object.values(props) as DependencyList),
     _quickMenuOpen,
     _onQuickMenuOpenChange,
-    _fontSizeScopeValue,
-    _onFontSizeScopeChange,
-    _fontSizeValue,
-    _onFontSizeValueChange,
+    fontSizeScope,
+    onFontSizeScopeChange,
+    fontSize,
+    onFontSizeChange,
     valueSignal,
     uncontrolledFontSizeMenuOpenValue,
     uncontrolledOnFontSizeMenuOpenChange,

@@ -4,7 +4,7 @@ import { memo } from "react"
 import { signal, useSignalValue } from "reactjrx"
 import { FullScreenDialog } from "../../common/FullScreenDialog"
 import { SettingsMenu } from "../settings/SettingsMenu"
-import type { LocalSettings } from "../settings/useLocalSettings"
+import type { LocalSettings } from "../settings/useSettings"
 
 export const isMenuOpenSignal = signal({
   default: false,

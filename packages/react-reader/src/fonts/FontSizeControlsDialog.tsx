@@ -1,5 +1,14 @@
-import { Button, Fieldset, Stack } from "@chakra-ui/react"
-import { memo } from "react"
+import {
+  Button,
+  Fieldset,
+  HStack,
+  Stack,
+  Tabs,
+  useMediaQuery,
+} from "@chakra-ui/react"
+import { memo, useCallback, useState } from "react"
+import { LuCheck } from "react-icons/lu"
+import { useLiveRef } from "reactjrx"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -10,36 +19,89 @@ import {
   DialogRoot,
   DialogTitle,
 } from "../components/ui/dialog"
-import { Field } from "../components/ui/field"
+import { Radio, RadioGroup } from "../components/ui/radio"
 import { Slider } from "../components/ui/slider"
-import { useReaderContextValue } from "../context/useReaderContext"
-// import {
-//   SCOPE_DEVICE_MOBILE_QUERY,
-//   SCOPE_DEVICE_TABLET_QUERY,
-// } from "../settings/types"
+import {
+  useReaderContext,
+  useReaderContextValue,
+} from "../context/useReaderContext"
+import {
+  SCOPE_DEVICE_MOBILE_QUERY,
+  SCOPE_DEVICE_TABLET_QUERY,
+  type SETTING_SCOPE,
+  type SETTING_SCOPE_REFERENCE,
+  SETTINGS_SCOPES,
+  SETTINGS_SCOPES_REFERENCES,
+} from "../settings/types"
 
 export const FontSizeControlsDialog = memo(() => {
+  const context = useReaderContext()
   const {
     fontSizeMenuOpen,
     onFontSizeMenuOpenChange,
-    fontSize,
+    uncontrolledFontSize,
+    fontSize = uncontrolledFontSize,
     fontSizeMin,
     fontSizeMax,
-    fontSizeScopeValue,
-    onFontSizeValueChange,
+    fontSizeScope,
+    onFontSizeChange,
+    onFontSizeScopeChange,
   } = useReaderContextValue([
     "fontSizeMenuOpen",
     "onFontSizeMenuOpenChange",
     "fontSize",
     "fontSizeMin",
     "fontSizeMax",
-    "fontSizeScopeValue",
-    "onFontSizeValueChange",
+    "fontSizeScope",
+    "onFontSizeChange",
+    "onFontSizeScopeChange",
+    "uncontrolledFontSize",
   ])
-  // const [isMobile, isTablet] = useMediaQuery([
-  //   SCOPE_DEVICE_MOBILE_QUERY,
-  //   SCOPE_DEVICE_TABLET_QUERY,
-  // ])
+  const onFontSizeChangeRef = useLiveRef(onFontSizeChange)
+  const [isMobile, isTablet] = useMediaQuery([
+    SCOPE_DEVICE_MOBILE_QUERY,
+    SCOPE_DEVICE_TABLET_QUERY,
+  ])
+  const activeReferenceScope: SETTING_SCOPE_REFERENCE =
+    fontSizeScope === "book"
+      ? "book"
+      : fontSizeScope === "device"
+        ? isMobile
+          ? "mobile"
+          : isTablet
+            ? "tablet"
+            : "desktop"
+        : "global"
+  const [tabValue, setTabValue] = useState<string | null>(activeReferenceScope)
+
+  const onFontUpdate = useCallback(
+    (scope: SETTING_SCOPE_REFERENCE, value: number) => {
+      if (scope === activeReferenceScope) {
+        if (onFontSizeChangeRef.current) {
+          onFontSizeChangeRef.current(value)
+        } else {
+          context.update((old) => ({
+            ...old,
+            fontSize: value,
+          }))
+        }
+      }
+    },
+    [activeReferenceScope, onFontSizeChangeRef, context],
+  )
+
+  const getValueForScope = useCallback(
+    (scope: SETTING_SCOPE_REFERENCE) => {
+      if (scope === "global") {
+        return fontSize
+      }
+
+      return fontSize
+    },
+    [fontSize],
+  )
+
+  console.log({ activeReferenceScope, fontSizeScope, fontSize })
 
   const sliderCommonProps = {
     showValue: true,
@@ -69,20 +131,20 @@ export const FontSizeControlsDialog = memo(() => {
         </DialogHeader>
         <DialogBody>
           <Stack gap={8} flex={1}>
-            {/* <Fieldset.Root>
+            <Fieldset.Root>
               <Fieldset.Legend>Scope</Fieldset.Legend>
               <Fieldset.HelperText>
                 The scope to which apply the font size for this book.
               </Fieldset.HelperText>
               <Fieldset.Content>
                 <RadioGroup
-                  defaultValue={`book` satisfies SETTING_SCOPE}
                   onValueChange={(e) => {
                     const value = e.value as SETTING_SCOPE
 
-                    onFontSizeScopeValueChange(value)
+                    onFontSizeScopeChange?.(value)
                   }}
-                  value={fontSizeScopeValue}
+                  value={fontSizeScope ?? "global"}
+                  disabled={!fontSizeScope}
                 >
                   <HStack gap={2}>
                     {SETTINGS_SCOPES.map((scope) => (
@@ -99,76 +161,39 @@ export const FontSizeControlsDialog = memo(() => {
                   </HStack>
                 </RadioGroup>
               </Fieldset.Content>
-            </Fieldset.Root> */}
-            <Fieldset.Root>
-              <Fieldset.Legend>Font scale</Fieldset.Legend>
-              <Fieldset.HelperText>
-                Only the one related to the scope will be applied.
-              </Fieldset.HelperText>
-              <Fieldset.Content>
-                <Field label="Book">
+            </Fieldset.Root>
+            <Tabs.Root
+              value={tabValue}
+              onValueChange={(e) => setTabValue(e.value)}
+            >
+              <Tabs.List>
+                {SETTINGS_SCOPES_REFERENCES.map((scope) => (
+                  <Tabs.Trigger
+                    value={scope}
+                    key={scope}
+                    textTransform="capitalize"
+                    disabled={scope !== "global" && !fontSizeScope}
+                  >
+                    {activeReferenceScope === scope && <LuCheck />}
+                    {scope}
+                  </Tabs.Trigger>
+                ))}
+              </Tabs.List>
+              {SETTINGS_SCOPES_REFERENCES.map((scope) => (
+                <Tabs.Content value={scope} key={scope}>
                   <Slider
                     label={`%`}
-                    disabled={fontSizeScopeValue !== "book"}
-                    value={[(fontSize ?? 1) * 100]}
+                    value={[(getValueForScope(scope) ?? 1) * 100]}
                     onValueChange={(e) => {
                       const value = e.value[0] ?? 0
 
-                      onFontSizeValueChange(value / 100)
+                      onFontUpdate(scope, value / 100)
                     }}
                     {...sliderCommonProps}
                   />
-                </Field>
-                {/* <Field label="Mobile devices">
-                  <Slider
-                    label="Font scale (%) - Scope book"
-                    disabled={fontSizeScopeValue !== "device"}
-                    onValueChange={(e) => {
-                      const value = e.value[0] ?? 0
-
-                      onFontSizeValueChange(value / 100)
-                    }}
-                    {...sliderCommonProps}
-                  />
-                </Field>
-                <Field label="Tablet devices">
-                  <Slider
-                    label="Font scale (%) - Scope book"
-                    disabled={fontSizeScopeValue !== "device"}
-                    onValueChange={(e) => {
-                      const value = e.value[0] ?? 0
-
-                      onFontSizeValueChange(value / 100)
-                    }}
-                    {...sliderCommonProps}
-                  />
-                </Field>
-                <Field label="Desktop devices">
-                  <Slider
-                    label="Font scale (%) - Scope book"
-                    disabled={fontSizeScopeValue !== "device"}
-                    onValueChange={(e) => {
-                      const value = e.value[0] ?? 0
-
-                      onFontSizeValueChange(value / 100)
-                    }}
-                    {...sliderCommonProps}
-                  />
-                </Field>
-                <Field label="Global">
-                  <Slider
-                    label="Font scale (%) - Scope book"
-                    disabled={fontSizeScopeValue !== "global"}
-                    onValueChange={(e) => {
-                      const value = e.value[0] ?? 0
-
-                      onFontSizeValueChange(value / 100)
-                    }}
-                    {...sliderCommonProps}
-                  />
-                </Field> */}
-              </Fieldset.Content>
-            </Fieldset.Root>
+                </Tabs.Content>
+              ))}
+            </Tabs.Root>
           </Stack>
         </DialogBody>
         <DialogFooter>

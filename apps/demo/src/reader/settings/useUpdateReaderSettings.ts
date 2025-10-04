@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useReader } from "../useReader"
-import type { LocalSettings } from "./useLocalSettings"
+import type { LocalSettings } from "./useSettings"
 
 export const useUpdateReaderSettings = ({
   localSettings,
