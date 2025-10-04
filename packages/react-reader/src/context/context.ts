@@ -4,7 +4,7 @@ import { createContext } from "react"
 import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
-import type { SETTING_SCOPE } from "../settings/types"
+import type { SETTING_SCOPE, SETTING_SCOPE_REFERENCE } from "../settings/types"
 
 export type ReaderContextType = {
   reader: (Reader & GesturesEnhancerAPI) | undefined
@@ -17,10 +17,10 @@ export type ReaderContextType = {
   fontSizeMenuOpen: boolean
   onFontSizeMenuOpenChange: (open: boolean) => void
   fontSize?: number
-  onFontSizeChange?: (value: number) => void
+  onFontSizeChange?: (scope: SETTING_SCOPE_REFERENCE, value: number) => void
   fontSizeMin: number
   fontSizeMax: number
-  fontSizeScope?: SETTING_SCOPE
+  fontSizeScope?: SETTING_SCOPE_REFERENCE
   onFontSizeScopeChange?: (scope: SETTING_SCOPE) => void
   /**
    * Internal fallback values used for uncontrolled settings. This way the

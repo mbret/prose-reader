@@ -29,12 +29,10 @@ export const ReaderScreen = memo(() => {
   const navigate = useNavigate()
 
   useCreateReader()
-
   useGestureHandler()
   useUpdateReaderSettings({ localSettings })
   useAnnotations(reader, url)
   usePersistCurrentPagination()
-
   useResetStateOnUnMount()
 
   useEffect(() => {
@@ -59,7 +57,7 @@ export const ReaderScreen = memo(() => {
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
         fontSize={localSettings.fontSize}
-        onFontSizeChange={(fontSize) =>
+        onFontSizeChange={(_scope, fontSize) =>
           setLocalSettings((old) => ({ ...old, fontSize }))
         }
       >

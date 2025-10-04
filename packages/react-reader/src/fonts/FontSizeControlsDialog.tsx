@@ -62,34 +62,22 @@ export const FontSizeControlsDialog = memo(() => {
     SCOPE_DEVICE_MOBILE_QUERY,
     SCOPE_DEVICE_TABLET_QUERY,
   ])
-  const activeReferenceScope: SETTING_SCOPE_REFERENCE =
-    fontSizeScope === "book"
-      ? "book"
-      : fontSizeScope === "device"
-        ? isMobile
-          ? "mobile"
-          : isTablet
-            ? "tablet"
-            : "desktop"
-        : "global"
-  const [tabValue, setTabValue] = useState<string | null>(activeReferenceScope)
-
+  const [tabValue, setTabValue] = useState<SETTING_SCOPE_REFERENCE>(
+    fontSizeScope ?? "global",
+  )
   const onFontUpdate = useCallback(
     (scope: SETTING_SCOPE_REFERENCE, value: number) => {
-      if (scope === activeReferenceScope) {
-        if (onFontSizeChangeRef.current) {
-          onFontSizeChangeRef.current(value)
-        } else {
-          context.update((old) => ({
-            ...old,
-            fontSize: value,
-          }))
-        }
+      if (onFontSizeChangeRef.current) {
+        onFontSizeChangeRef.current(scope, value)
+      } else {
+        context.update((old) => ({
+          ...old,
+          fontSize: value,
+        }))
       }
     },
-    [activeReferenceScope, onFontSizeChangeRef, context],
+    [onFontSizeChangeRef, context],
   )
-
   const getValueForScope = useCallback(
     (scope: SETTING_SCOPE_REFERENCE) => {
       if (scope === "global") {
@@ -100,8 +88,6 @@ export const FontSizeControlsDialog = memo(() => {
     },
     [fontSize],
   )
-
-  console.log({ activeReferenceScope, fontSizeScope, fontSize })
 
   const sliderCommonProps = {
     showValue: true,
@@ -164,7 +150,9 @@ export const FontSizeControlsDialog = memo(() => {
             </Fieldset.Root>
             <Tabs.Root
               value={tabValue}
-              onValueChange={(e) => setTabValue(e.value)}
+              onValueChange={(e) =>
+                setTabValue(e.value as SETTING_SCOPE_REFERENCE)
+              }
             >
               <Tabs.List>
                 {SETTINGS_SCOPES_REFERENCES.map((scope) => (
@@ -174,7 +162,7 @@ export const FontSizeControlsDialog = memo(() => {
                     textTransform="capitalize"
                     disabled={scope !== "global" && !fontSizeScope}
                   >
-                    {activeReferenceScope === scope && <LuCheck />}
+                    {fontSizeScope === scope && <LuCheck />}
                     {scope}
                   </Tabs.Trigger>
                 ))}
