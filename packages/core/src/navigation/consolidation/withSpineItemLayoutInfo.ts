@@ -1,4 +1,4 @@
-import { type Observable, first, map, of, switchMap } from "rxjs"
+import { first, map, type Observable, of, switchMap } from "rxjs"
 import type { Spine } from "../../spine/Spine"
 import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 

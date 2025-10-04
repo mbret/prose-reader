@@ -1,4 +1,5 @@
 import { HTML_PREFIX } from "../../constants"
+import { UnboundScrollPosition } from "../../navigation/controllers/ScrollNavigationController"
 import type { Reader } from "../../reader"
 import { noopElement } from "../../utils/dom"
 
@@ -26,10 +27,13 @@ export const adjustScrollToKeepContentCentered = (
   const newVisibleCenterY = visibleCenterY * scaleFactor
 
   // Calculate new scroll position to keep the center content visible, accounting for margins
-  const newScrollLeft = newVisibleCenterX - containerWidth / 2 + marginX
-  const newScrollTop = newVisibleCenterY - containerHeight / 2 + marginY
+  const scrollLeft = newVisibleCenterX - containerWidth / 2 + marginX
+  const scrollTop = newVisibleCenterY - containerHeight / 2 + marginY
 
-  return { newScrollLeft, newScrollTop }
+  return new UnboundScrollPosition({
+    x: scrollLeft,
+    y: scrollTop,
+  })
 }
 
 export const deriveSpinePositionFromScale = (scale: number, reader: Reader) => {
@@ -40,20 +44,21 @@ export const deriveSpinePositionFromScale = (scale: number, reader: Reader) => {
   const scrollContainer = scrollNavigationController.value.element
   const scrollNavigationElement = scrollNavigationController.value.element
 
-  const currentScale = viewport.scaleFactor
+  const currentScale = Math.round(viewport.scaleFactor * 100) / 100
 
   // We assume the viewport is directly under the scroll container
   // therefore we can use offsetLeft/offsetTop to get the margin
   const marginX = viewportElement.offsetLeft
   const marginY = viewportElement.offsetTop
 
-  const { newScrollLeft, newScrollTop } = adjustScrollToKeepContentCentered(
-    scrollContainer ?? noopElement(),
-    currentScale,
-    scale,
-    marginX,
-    marginY,
-  )
+  const newCenterPositionAfterNewScaleProjection =
+    adjustScrollToKeepContentCentered(
+      scrollContainer ?? noopElement(),
+      currentScale,
+      scale,
+      marginX,
+      marginY,
+    )
 
   const direction = scale < 1 ? "down" : "up"
   scrollNavigationElement?.setAttribute(
@@ -83,10 +88,9 @@ export const deriveSpinePositionFromScale = (scale: number, reader: Reader) => {
 
   viewportElement.style.transform = `scale(${scale})`
 
-  const spinePosition = scrollNavigationController.fromScrollPosition({
-    x: newScrollLeft,
-    y: newScrollTop,
-  })
+  const spinePosition = scrollNavigationController.fromScrollPosition(
+    newCenterPositionAfterNewScaleProjection,
+  )
 
   return spinePosition
 }

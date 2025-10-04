@@ -33,6 +33,9 @@ import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 
 export class ScrollPosition extends AbstractPosition {}
+export class UnboundScrollPosition extends AbstractPosition {
+  public readonly __symbol = Symbol(`UnboundScrollPosition`)
+}
 
 export type ScrollNavigationViewportNavigationEntry = {
   position: UnboundSpinePosition | SpinePosition
@@ -200,7 +203,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
     this.navigateSubject.next(navigation)
   }
 
-  public fromScrollPosition(position: ScrollPosition) {
+  public fromScrollPosition(position: UnboundScrollPosition | ScrollPosition) {
     const scaleFactor = this.viewport.scaleFactor
 
     return new UnboundSpinePosition({
