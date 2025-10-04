@@ -1,6 +1,12 @@
 import { Box } from "@chakra-ui/react"
 import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
-import { memo, useEffect, useRef } from "react"
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react"
 import { useNavigate, useParams } from "react-router"
 import { useObserve, useSignalValue } from "reactjrx"
 import { HighlightMenu } from "./annotations/HighlightMenu"
@@ -49,6 +55,26 @@ export const ReaderScreen = memo(() => {
     }
   }, [manifest, reader])
 
+  const onItemClick = useCallback(
+    (
+      item: Parameters<
+        NonNullable<ComponentProps<typeof ReactReader>["onItemClick"]>
+      >[0],
+    ) => {
+      if (item === "more") {
+        isMenuOpenSignal.next(true)
+      }
+      if (item === "back") {
+        if (window.history.state === null && window.location.pathname !== `/`) {
+          navigate(`/`)
+        } else {
+          navigate(-1)
+        }
+      }
+    },
+    [navigate],
+  )
+
   return (
     <>
       {/* not wrapping the reader within for now since hot reload break the reader container */}
@@ -65,21 +91,7 @@ export const ReaderScreen = memo(() => {
           height="100%"
           width="100%"
           position="relative"
-          onItemClick={(item) => {
-            if (item === "more") {
-              isMenuOpenSignal.next(true)
-            }
-            if (item === "back") {
-              if (
-                window.history.state === null &&
-                window.location.pathname !== `/`
-              ) {
-                navigate(`/`)
-              } else {
-                navigate(-1)
-              }
-            }
-          }}
+          onItemClick={onItemClick}
         >
           <Box width="100%" height="100%" ref={readerContainerRef} />
           {!!manifestError && <BookError url={url} />}
