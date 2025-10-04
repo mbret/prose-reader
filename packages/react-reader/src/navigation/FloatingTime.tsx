@@ -1,8 +1,9 @@
 import { Box } from "@chakra-ui/react"
+import { memo } from "react"
 import { TimeIndicator } from "../quickmenu/TimeIndicator"
 import { useQuickMenu } from "../quickmenu/useQuickMenu"
 
-export const FloatingTime = () => {
+export const FloatingTime = memo(() => {
   const [quickMenuOpen] = useQuickMenu()
 
   return (
@@ -16,4 +17,4 @@ export const FloatingTime = () => {
       <TimeIndicator />
     </Box>
   )
-}
+})

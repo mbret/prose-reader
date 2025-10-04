@@ -2,11 +2,13 @@ import {
   Button,
   Fieldset,
   HStack,
+  type SliderValueChangeDetails,
   Stack,
   Tabs,
+  type TabsValueChangeDetails,
   useMediaQuery,
 } from "@chakra-ui/react"
-import { memo, useCallback, useState } from "react"
+import { type ComponentProps, memo, useCallback, useState } from "react"
 import { LuCheck } from "react-icons/lu"
 import { useLiveRef } from "reactjrx"
 import {
@@ -102,6 +104,32 @@ export const FontSizeControlsDialog = memo(() => {
     ],
   }
 
+  const onScopeValueChange = useCallback(
+    (
+      details: Parameters<
+        NonNullable<ComponentProps<typeof RadioGroup>["onValueChange"]>
+      >[0],
+    ) => {
+      const value = details.value as SETTING_SCOPE
+
+      onFontSizeScopeChange?.(value)
+    },
+    [onFontSizeScopeChange],
+  )
+
+  const onTabValueChange = useCallback((details: TabsValueChangeDetails) => {
+    setTabValue(details.value as SETTING_SCOPE_REFERENCE)
+  }, [])
+
+  const onSliderValueChange = useCallback(
+    (details: SliderValueChangeDetails) => {
+      const value = details.value[0] ?? 0
+
+      onFontUpdate(tabValue, value / 100)
+    },
+    [onFontUpdate, tabValue],
+  )
+
   return (
     <DialogRoot
       lazyMount
@@ -124,11 +152,7 @@ export const FontSizeControlsDialog = memo(() => {
               </Fieldset.HelperText>
               <Fieldset.Content>
                 <RadioGroup
-                  onValueChange={(e) => {
-                    const value = e.value as SETTING_SCOPE
-
-                    onFontSizeScopeChange?.(value)
-                  }}
+                  onValueChange={onScopeValueChange}
                   value={fontSizeScope ?? "global"}
                   disabled={!fontSizeScope}
                 >
@@ -148,12 +172,7 @@ export const FontSizeControlsDialog = memo(() => {
                 </RadioGroup>
               </Fieldset.Content>
             </Fieldset.Root>
-            <Tabs.Root
-              value={tabValue}
-              onValueChange={(e) =>
-                setTabValue(e.value as SETTING_SCOPE_REFERENCE)
-              }
-            >
+            <Tabs.Root value={tabValue} onValueChange={onTabValueChange}>
               <Tabs.List>
                 {SETTINGS_SCOPES_REFERENCES.map((scope) => (
                   <Tabs.Trigger
@@ -172,11 +191,7 @@ export const FontSizeControlsDialog = memo(() => {
                   <Slider
                     label={`%`}
                     value={[(getValueForScope(scope) ?? 1) * 100]}
-                    onValueChange={(e) => {
-                      const value = e.value[0] ?? 0
-
-                      onFontUpdate(scope, value / 100)
-                    }}
+                    onValueChange={onSliderValueChange}
                     {...sliderCommonProps}
                   />
                 </Tabs.Content>
