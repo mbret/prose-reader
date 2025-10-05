@@ -144,7 +144,7 @@ export const FontSizeControlsDialog = memo(() => {
           <DialogTitle>Font size</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <Stack gap={8} flex={1}>
+          <Stack gap={4} flex={1}>
             <Fieldset.Root>
               <Fieldset.Legend>Scope</Fieldset.Legend>
               <Fieldset.HelperText>

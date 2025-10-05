@@ -16,7 +16,6 @@ import { Checkbox } from "../../components/ui/checkbox"
 import { Field } from "../../components/ui/field"
 import { Radio, RadioGroup } from "../../components/ui/radio"
 import { Slider } from "../../components/ui/slider"
-import { FONT_SCALE_MAX, FONT_SCALE_MIN } from "../../constants.shared"
 import { useReader } from "../useReader"
 import { useReaderSettings } from "./useReaderSettings"
 import type { LocalSettings } from "./useSettings"
@@ -42,19 +41,9 @@ export const SettingsMenu = ({
   const { reader } = useReader()
   const [theme, setTheme] = useState<Theme>(reader?.theme.get() || `publisher`)
   const readerSettings = useReaderSettings()
-  const [fontScaleSliderValue, setFontScaleSliderValue] = useState(1)
   const [verticalMarginSliderValue, setVerticalMarginSliderValue] = useState(0)
   const [horizontalMarginSliderValue, setHorizontalMarginSliderValue] =
     useState(0)
-
-  // async update from reader to slider
-  useEffect(() => {
-    if (readerSettings?.fontScale !== undefined) {
-      setFontScaleSliderValue((old) =>
-        old !== readerSettings.fontScale ? readerSettings.fontScale : old,
-      )
-    }
-  }, [readerSettings?.fontScale])
 
   useEffect(() => {
     if (readerSettings?.pageVerticalMargin !== undefined) {
@@ -116,34 +105,6 @@ export const SettingsMenu = ({
         >
           Use full screen
         </Checkbox>
-      </Field>
-      <Field label="Font size (%)">
-        <Slider
-          value={[fontScaleSliderValue]}
-          step={0.2}
-          max={FONT_SCALE_MAX}
-          min={FONT_SCALE_MIN}
-          onValueChange={(e) => {
-            const value = e.value[0] ?? 1
-
-            setFontScaleSliderValue(value)
-          }}
-          onValueChangeEnd={() => {
-            reader.settings.update({
-              fontScale: fontScaleSliderValue,
-            })
-          }}
-          marks={[
-            { value: FONT_SCALE_MIN, label: `${FONT_SCALE_MIN * 100}%` },
-            { value: 1, label: `100%` },
-            {
-              value: (FONT_SCALE_MIN + FONT_SCALE_MAX) / 2,
-              label: `${((FONT_SCALE_MIN + FONT_SCALE_MAX) / 2) * 100}%`,
-            },
-            { value: FONT_SCALE_MAX, label: `${FONT_SCALE_MAX * 100}%` },
-          ]}
-          width="300px"
-        />
       </Field>
       <Field label="Line height" helperText="Change the space between lines">
         <RadioGroup
