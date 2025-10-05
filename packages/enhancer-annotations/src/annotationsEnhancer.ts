@@ -1,5 +1,4 @@
-import type { Reader } from "@prose-reader/core"
-import { isDefined } from "reactjrx"
+import { isDefined, type Reader } from "@prose-reader/core"
 import {
   BehaviorSubject,
   combineLatest,

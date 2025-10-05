@@ -1,5 +1,5 @@
 import { DestroyableClass } from "@prose-reader/core"
-import { Subject, filter } from "rxjs"
+import { filter, Subject } from "rxjs"
 import type { Annotation } from "./types"
 
 type AnnotationSharedParams = Omit<Annotation, "id" | "cfi"> & {
