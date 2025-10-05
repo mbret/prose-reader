@@ -1,4 +1,3 @@
-import { isDefined } from "reactjrx"
 import {
   animationFrameScheduler,
   BehaviorSubject,
@@ -28,6 +27,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
+import { isDefined } from "../../utils/isDefined"
 import type { Viewport } from "../../viewport/Viewport"
 import {
   spinePositionToTranslation,

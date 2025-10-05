@@ -1,4 +1,3 @@
-import { isDefined } from "reactjrx"
 import {
   distinctUntilChanged,
   filter,
@@ -15,6 +14,7 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { SpineItem } from "../.."
+import { isDefined } from "../../utils/isDefined"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { createOrderedRangeFromSelection } from "./selection"
 import { trackSpineItemSelection } from "./trackSpineItemSelection"
