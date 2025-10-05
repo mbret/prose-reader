@@ -1,15 +1,14 @@
-import type React from "react"
-import { useEffect, useState } from "react"
-import screenfull from "screenfull"
-import "rc-slider/assets/index.css"
 import { Heading, HStack, Stack } from "@chakra-ui/react"
 import type { Theme } from "@prose-reader/core"
+import type React from "react"
+import { useEffect, useState } from "react"
 import {
   IoMdArrowDown,
   IoMdArrowRoundBack,
   IoMdArrowRoundForward,
   IoMdArrowUp,
 } from "react-icons/io"
+import screenfull from "screenfull"
 import { NavigationSettings } from "../../common/NavigationSettings"
 import { OtherSettings } from "../../common/OtherSettings"
 import { Checkbox } from "../../components/ui/checkbox"

@@ -6,22 +6,7 @@ import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
 import type { SETTING_SCOPE, SETTING_SCOPE_REFERENCE } from "../settings/types"
 
-export type ReaderContextType = {
-  reader: (Reader & GesturesEnhancerAPI) | undefined
-  quickMenuOpen: boolean
-  onQuickMenuOpenChange: (open: boolean) => void
-  quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
-  notificationsSubject: Subject<ReaderNotification>
-  refitMenuOpen: boolean
-  onRefitMenuOpenChange: (open: boolean) => void
-  fontSizeMenuOpen: boolean
-  onFontSizeMenuOpenChange: (open: boolean) => void
-  fontSize?: number
-  onFontSizeChange?: (scope: SETTING_SCOPE_REFERENCE, value: number) => void
-  fontSizeMin: number
-  fontSizeMax: number
-  fontSizeScope?: SETTING_SCOPE_REFERENCE
-  onFontSizeScopeChange?: (scope: SETTING_SCOPE) => void
+type PrivateContextType = {
   /**
    * Internal fallback values used for uncontrolled settings. This way the
    * Reader works as intended but:
@@ -29,7 +14,40 @@ export type ReaderContextType = {
    * - the settings are valid only for the current mount runtime
    */
   uncontrolledFontSize: number
+  refitMenuOpen: boolean
+  onRefitMenuOpenChange: (open: boolean) => void
+  fontSizeMenuOpen: boolean
+  onFontSizeMenuOpenChange: (open: boolean) => void
+  notificationsSubject: Subject<ReaderNotification>
+  quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
+  fontSizeMin: number
+  fontSizeMax: number
 }
+
+export type PublicContextType = {
+  reader: (Reader & GesturesEnhancerAPI) | undefined
+  enableFloatingTime?: boolean
+  enableFloatingProgress?: boolean
+  onItemClick?: (
+    item:
+      | "annotations"
+      | "search"
+      | "help"
+      | "toc"
+      | "bookmarks"
+      | "more"
+      | "back"
+      | "gallery",
+  ) => void
+  quickMenuOpen: boolean
+  onQuickMenuOpenChange: (open: boolean) => void
+  fontSize?: number
+  onFontSizeChange?: (scope: SETTING_SCOPE_REFERENCE, value: number) => void
+  fontSizeScope?: SETTING_SCOPE_REFERENCE
+  onFontSizeScopeChange?: (scope: SETTING_SCOPE) => void
+}
+
+export type ReaderContextType = PrivateContextType & PublicContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
   reader: undefined,

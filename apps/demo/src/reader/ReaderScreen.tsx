@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react"
-import { ReactReader, ReactReaderProvider } from "@prose-reader/react-reader"
+import { ReactReader } from "@prose-reader/react-reader"
 import {
   type ComponentProps,
   memo,
@@ -78,7 +78,8 @@ export const ReaderScreen = memo(() => {
   return (
     <>
       {/* not wrapping the reader within for now since hot reload break the reader container */}
-      <ReactReaderProvider
+      <ReactReader
+        onItemClick={onItemClick}
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
@@ -86,24 +87,26 @@ export const ReaderScreen = memo(() => {
         onFontSizeChange={(_scope, fontSize) =>
           setLocalSettings((old) => ({ ...old, fontSize }))
         }
+        slots={{
+          container: {
+            props: {
+              height: "100%",
+              width: "100%",
+              position: "relative",
+            },
+          },
+        }}
       >
-        <ReactReader
-          height="100%"
-          width="100%"
-          position="relative"
-          onItemClick={onItemClick}
-        >
-          <Box width="100%" height="100%" ref={readerContainerRef} />
-          {!!manifestError && <BookError url={url} />}
-          {bookState !== "ready" && !manifestError && <BookLoading />}
-          <QuickActionsMenu />
-          <MenuDialog
-            localSettings={localSettings}
-            setLocalSettings={setLocalSettings}
-          />
-          <HighlightMenu />
-        </ReactReader>
-      </ReactReaderProvider>
+        <Box width="100%" height="100%" ref={readerContainerRef} />
+        {!!manifestError && <BookError url={url} />}
+        {bookState !== "ready" && !manifestError && <BookLoading />}
+        <QuickActionsMenu />
+        <MenuDialog
+          localSettings={localSettings}
+          setLocalSettings={setLocalSettings}
+        />
+        <HighlightMenu />
+      </ReactReader>
     </>
   )
 })

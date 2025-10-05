@@ -1,34 +1,21 @@
-import type { Reader } from "@prose-reader/core"
-import type { EnhancerAPI as GestureEnhancerAPI } from "@prose-reader/enhancer-gestures"
-import { type DependencyList, memo, useCallback, useEffect } from "react"
+import { isShallowEqual } from "@prose-reader/shared"
+import { type ComponentProps, memo, useCallback, useEffect } from "react"
 import { signal, useConstant, useSignalValue } from "reactjrx"
-import { SyncFontSettings } from "../fonts/SyncFontSettings"
+import { useMemoCompare } from "../common/useMemoCompare"
 import {
   getDefaultValue,
+  type PublicContextType,
   ReaderContext,
-  type ReaderContextType,
 } from "./context"
-
-type ProviderProps = {
-  children: React.ReactNode
-  reader: (Reader & GestureEnhancerAPI) | undefined
-  quickMenuOpen?: boolean
-  onQuickMenuOpenChange?: (open: boolean) => void
-} & Pick<
-  ReaderContextType,
-  "fontSize" | "onFontSizeChange" | "fontSizeScope" | "onFontSizeScopeChange"
->
 
 const SignalProvider = ({
   children,
   onQuickMenuOpenChange,
   quickMenuOpen,
-  fontSizeScope,
-  onFontSizeScopeChange,
-  fontSize,
-  onFontSizeChange,
   ...props
-}: { children: React.ReactNode } & ProviderProps) => {
+}: {
+  children: React.ReactNode
+} & PublicContextType) => {
   const valueSignal = useConstant(() => signal({ default: getDefaultValue() }))
   /**
    * font menu open
@@ -73,30 +60,23 @@ const SignalProvider = ({
     uncontrolledRefitMenuOpen,
   )
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Expected
+  const memoizedProps = useMemoCompare(props, isShallowEqual)
+
   useEffect(() => {
     valueSignal.update((old) => ({
       ...old,
-      ...props,
+      ...memoizedProps,
       onQuickMenuOpenChange: _onQuickMenuOpenChange,
       quickMenuOpen: _quickMenuOpen,
       onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
       fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
       onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
       refitMenuOpen: uncontrolledRefitMenuOpenValue,
-      fontSizeScope,
-      onFontSizeScopeChange,
-      fontSize,
-      onFontSizeChange,
     }))
   }, [
-    ...(Object.values(props) as DependencyList),
+    memoizedProps,
     _quickMenuOpen,
     _onQuickMenuOpenChange,
-    fontSizeScope,
-    onFontSizeScopeChange,
-    fontSize,
-    onFontSizeChange,
     valueSignal,
     uncontrolledFontSizeMenuOpenValue,
     uncontrolledOnFontSizeMenuOpenChange,
@@ -112,17 +92,7 @@ const SignalProvider = ({
 }
 
 export const ReactReaderProvider = memo(
-  ({
-    children,
-    ...props
-  }: {
-    children?: React.ReactNode
-  } & ProviderProps) => {
-    return (
-      <SignalProvider {...props}>
-        <SyncFontSettings />
-        {children}
-      </SignalProvider>
-    )
+  ({ children, ...props }: ComponentProps<typeof SignalProvider>) => {
+    return <SignalProvider {...props}>{children}</SignalProvider>
   },
 )

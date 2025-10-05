@@ -1,10 +1,13 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
-import { memo, useCallback, useState } from "react"
+import { type ComponentProps, memo, useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { Toaster } from "./components/ui/toaster"
+import { ReactReaderProvider } from "./context/ReactReaderProvider"
+import { useReaderContextValue } from "./context/useReaderContext"
 import { FontSizeControlsDialog } from "./fonts/FontSizeControlsDialog"
+import { SyncFontSettings } from "./fonts/SyncFontSettings"
 import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
@@ -31,35 +34,27 @@ const Effects = memo(() => {
   useInterceptExternalLinks()
   useNotifications()
 
-  return <BookmarksEffects />
+  return (
+    <>
+      <SyncFontSettings />
+      <BookmarksEffects />
+    </>
+  )
 })
 
-export const ReactReader = memo(
+export const InnerReactReader = memo(
   ({
-    enableFloatingTime = true,
-    enableFloatingProgress = true,
-    onItemClick,
     children,
     ...rest
   }: {
-    enableFloatingTime?: boolean
-    enableFloatingProgress?: boolean
-    onItemClick?: (
-      item:
-        | "annotations"
-        | "search"
-        | "help"
-        | "toc"
-        | "bookmarks"
-        | "more"
-        | "back"
-        | "gallery",
-    ) => void
     children: React.ReactNode
-  } & Pick<
-    BoxProps,
-    "position" | "top" | "left" | "height" | "width" | "overflow"
-  >) => {
+  } & BoxProps) => {
+    const { enableFloatingTime, enableFloatingProgress, onItemClick } =
+      useReaderContextValue([
+        "enableFloatingTime",
+        "enableFloatingProgress",
+        "onItemClick",
+      ])
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -156,6 +151,28 @@ export const ReactReader = memo(
           <Toaster />
         </Box>
       </>
+    )
+  },
+)
+
+export const ReactReader = memo(
+  ({
+    children,
+    slots,
+    ...props
+  }: ComponentProps<typeof ReactReaderProvider> & {
+    slots?: {
+      container?: {
+        props?: Omit<ComponentProps<typeof InnerReactReader>, "children">
+      }
+    }
+  }) => {
+    const { container: { props: containerProps = {} } = {} } = slots ?? {}
+
+    return (
+      <ReactReaderProvider {...props}>
+        <InnerReactReader {...containerProps}>{children}</InnerReactReader>
+      </ReactReaderProvider>
     )
   },
 )
