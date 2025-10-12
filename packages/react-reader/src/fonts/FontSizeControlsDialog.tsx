@@ -6,9 +6,14 @@ import {
   Stack,
   Tabs,
   type TabsValueChangeDetails,
-  useMediaQuery,
 } from "@chakra-ui/react"
-import { type ComponentProps, memo, useCallback, useState } from "react"
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+} from "react"
 import { LuCheck } from "react-icons/lu"
 import { useLiveRef } from "reactjrx"
 import {
@@ -28,13 +33,29 @@ import {
   useReaderContextValue,
 } from "../context/useReaderContext"
 import {
-  SCOPE_DEVICE_MOBILE_QUERY,
-  SCOPE_DEVICE_TABLET_QUERY,
-  type SETTING_SCOPE,
-  type SETTING_SCOPE_REFERENCE,
-  SETTINGS_SCOPES,
-  SETTINGS_SCOPES_REFERENCES,
+  type PROSE_REACT_READER_SETTINGS_SCOPE,
+  PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION,
+  type PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
 } from "../settings/types"
+
+const SETTINGS_SCOPES_VALUES =
+  PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION.map((item) => item.value)
+const SETTINGS_SCOPES_REFERENCES =
+  PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION.flatMap(
+    (item) => item.references,
+  )
+
+const getScopeForReference = (
+  reference: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | undefined,
+) => {
+  if (!reference) {
+    return undefined
+  }
+
+  return PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION.find((item) =>
+    (item.references as readonly string[]).includes(reference),
+  )?.value
+}
 
 export const FontSizeControlsDialog = memo(() => {
   const context = useReaderContext()
@@ -46,6 +67,7 @@ export const FontSizeControlsDialog = memo(() => {
     fontSizeMin,
     fontSizeMax,
     fontSizeScope,
+    fontSizeValues,
     onFontSizeChange,
     onFontSizeScopeChange,
   } = useReaderContextValue([
@@ -58,51 +80,32 @@ export const FontSizeControlsDialog = memo(() => {
     "onFontSizeChange",
     "onFontSizeScopeChange",
     "uncontrolledFontSize",
+    "fontSizeValues",
   ])
   const onFontSizeChangeRef = useLiveRef(onFontSizeChange)
-  const [isMobile, isTablet] = useMediaQuery([
-    SCOPE_DEVICE_MOBILE_QUERY,
-    SCOPE_DEVICE_TABLET_QUERY,
-  ])
-  const [tabValue, setTabValue] = useState<SETTING_SCOPE_REFERENCE>(
-    fontSizeScope ?? "global",
-  )
+  const [tabValue, setTabValue] =
+    useState<PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE>(
+      fontSizeScope ?? "global",
+    )
   const onFontUpdate = useCallback(
-    (scope: SETTING_SCOPE_REFERENCE, value: number) => {
+    (scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE, value: number) => {
       if (onFontSizeChangeRef.current) {
         onFontSizeChangeRef.current(scope, value)
       } else {
         context.update((old) => ({
           ...old,
-          fontSize: value,
+          uncontrolledFontSize: value,
         }))
       }
     },
     [onFontSizeChangeRef, context],
   )
   const getValueForScope = useCallback(
-    (scope: SETTING_SCOPE_REFERENCE) => {
-      if (scope === "global") {
-        return fontSize
-      }
-
-      return fontSize
+    (scope: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE) => {
+      return fontSizeValues?.[scope] ?? fontSize
     },
-    [fontSize],
+    [fontSize, fontSizeValues],
   )
-
-  const sliderCommonProps = {
-    showValue: true,
-    max: fontSizeMax * 100,
-    min: fontSizeMin * 100,
-    width: "100%",
-    step: 0.1 * 100,
-    marks: [
-      { value: 100, label: "Publisher" },
-      { value: fontSizeMin * 100, label: `${fontSizeMin * 100}%` },
-      { value: fontSizeMax * 100, label: `${fontSizeMax * 100}%` },
-    ],
-  }
 
   const onScopeValueChange = useCallback(
     (
@@ -110,7 +113,7 @@ export const FontSizeControlsDialog = memo(() => {
         NonNullable<ComponentProps<typeof RadioGroup>["onValueChange"]>
       >[0],
     ) => {
-      const value = details.value as SETTING_SCOPE
+      const value = details.value as PROSE_REACT_READER_SETTINGS_SCOPE
 
       onFontSizeScopeChange?.(value)
     },
@@ -118,7 +121,7 @@ export const FontSizeControlsDialog = memo(() => {
   )
 
   const onTabValueChange = useCallback((details: TabsValueChangeDetails) => {
-    setTabValue(details.value as SETTING_SCOPE_REFERENCE)
+    setTabValue(details.value as PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE)
   }, [])
 
   const onSliderValueChange = useCallback(
@@ -128,6 +131,13 @@ export const FontSizeControlsDialog = memo(() => {
       onFontUpdate(tabValue, value / 100)
     },
     [onFontUpdate, tabValue],
+  )
+
+  useEffect(
+    function syncScopeChangeWithTabs() {
+      setTabValue(fontSizeScope ?? "global")
+    },
+    [fontSizeScope],
   )
 
   return (
@@ -153,26 +163,25 @@ export const FontSizeControlsDialog = memo(() => {
               <Fieldset.Content>
                 <RadioGroup
                   onValueChange={onScopeValueChange}
-                  value={fontSizeScope ?? "global"}
-                  disabled={!fontSizeScope}
+                  value={getScopeForReference(fontSizeScope) ?? "global"}
+                  disabled={!onFontSizeScopeChange}
                 >
                   <HStack gap={2}>
-                    {SETTINGS_SCOPES.map((scope) => (
+                    {SETTINGS_SCOPES_VALUES.map((scope) => (
                       <Radio value={scope} key={scope}>
-                        {scope === "device"
-                          ? isMobile
-                            ? `device (Mobile)`
-                            : isTablet
-                              ? "device (Tablet)"
-                              : "device (Desktop)"
-                          : scope}
+                        {scope}
                       </Radio>
                     ))}
                   </HStack>
                 </RadioGroup>
               </Fieldset.Content>
             </Fieldset.Root>
-            <Tabs.Root value={tabValue} onValueChange={onTabValueChange}>
+            <Tabs.Root
+              value={tabValue}
+              onValueChange={onTabValueChange}
+              fitted={false}
+              size="sm"
+            >
               <Tabs.List>
                 {SETTINGS_SCOPES_REFERENCES.map((scope) => (
                   <Tabs.Trigger
@@ -192,7 +201,22 @@ export const FontSizeControlsDialog = memo(() => {
                     label={`%`}
                     value={[(getValueForScope(scope) ?? 1) * 100]}
                     onValueChange={onSliderValueChange}
-                    {...sliderCommonProps}
+                    showValue={true}
+                    marks={[
+                      { value: 100, label: "Publisher" },
+                      {
+                        value: fontSizeMin * 100,
+                        label: `${fontSizeMin * 100}%`,
+                      },
+                      {
+                        value: fontSizeMax * 100,
+                        label: `${fontSizeMax * 100}%`,
+                      },
+                    ]}
+                    max={fontSizeMax * 100}
+                    min={fontSizeMin * 100}
+                    width="100%"
+                    step={0.1 * 100}
                   />
                 </Tabs.Content>
               ))}

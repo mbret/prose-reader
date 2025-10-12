@@ -1,18 +1,18 @@
-export type SETTING_SCOPE = "book" | "device" | "global"
-export type SETTING_SCOPE_REFERENCE =
-  | "book"
-  | "global"
-  | "mobile"
-  | "tablet"
-  | "desktop"
-
-export const SETTINGS_SCOPES: SETTING_SCOPE[] = ["global", "book", "device"]
-export const SETTINGS_SCOPES_REFERENCES: SETTING_SCOPE_REFERENCE[] = [
-  "global",
-  "book",
-  "mobile",
-  "tablet",
-  "desktop",
-]
-export const SCOPE_DEVICE_MOBILE_QUERY = "(max-width: 767px)"
-export const SCOPE_DEVICE_TABLET_QUERY = "(max-width: 1023px)"
+export const PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION = [
+  {
+    value: "global",
+    references: ["global"],
+  },
+  {
+    value: "book",
+    references: ["book"],
+  },
+  {
+    value: "screen",
+    references: ["mobile", "tablet", "desktop"],
+  },
+] as const
+export type PROSE_REACT_READER_SETTINGS_SCOPE =
+  (typeof PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION)[number]["value"]
+export type PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE =
+  (typeof PROSE_REACT_READER_SETTINGS_SCOPE_CONFIGURATION)[number]["references"][number]

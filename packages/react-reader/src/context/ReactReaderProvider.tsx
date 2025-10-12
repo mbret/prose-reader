@@ -1,7 +1,6 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import { type ComponentProps, memo, useCallback, useEffect } from "react"
-import { signal, useConstant, useSignalValue } from "reactjrx"
-import { useMemoCompare } from "../common/useMemoCompare"
+import { signal, useConstant, useMemoCompare, useSignalValue } from "reactjrx"
 import {
   getDefaultValue,
   type PublicContextType,

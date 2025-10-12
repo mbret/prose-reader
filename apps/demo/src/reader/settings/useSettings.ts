@@ -3,7 +3,10 @@ import { signal, useSignal } from "reactjrx"
 export type LocalSettings = {
   navigationGestures: "pan" | "swipe" | "none"
   navigationSnapThreshold: { type: "pixels"; value: number } | undefined
-  fontSize?: number
+  fontSizeGlobal?: number
+  fontSizeScreenMobile?: number
+  fontSizeScreenTablet?: number
+  fontSizeScreenDesktop?: number
 }
 
 const hydratedSettings = ((): Partial<LocalSettings> => {
@@ -23,7 +26,10 @@ const settings = signal<LocalSettings>({
     navigationGestures: hydratedSettings.navigationGestures ?? "pan",
     navigationSnapThreshold:
       hydratedSettings.navigationSnapThreshold ?? undefined,
-    fontSize: hydratedSettings.fontSize ?? undefined,
+    fontSizeGlobal: hydratedSettings.fontSizeGlobal ?? undefined,
+    fontSizeScreenMobile: hydratedSettings.fontSizeScreenMobile ?? undefined,
+    fontSizeScreenTablet: hydratedSettings.fontSizeScreenTablet ?? undefined,
+    fontSizeScreenDesktop: hydratedSettings.fontSizeScreenDesktop ?? undefined,
   },
 })
 

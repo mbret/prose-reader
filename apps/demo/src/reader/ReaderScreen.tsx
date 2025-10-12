@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react"
+import { Box, useBreakpointValue } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import {
   type ComponentProps,
@@ -16,6 +16,8 @@ import { BookLoading } from "./BookLoading"
 import { useGestureHandler } from "./gestures/useGestureHandler"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
+import { useBookSettings } from "./settings/useBookSettings"
+import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
@@ -27,12 +29,19 @@ import { useReader } from "./useReader"
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
-  const { data: manifest, error: manifestError } = useManifest(url)
+  const epubKey = url
+  const { data: manifest, error: manifestError } = useManifest(epubKey)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useSettings()
+  const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
   const bookState = useObserve(() => reader?.state$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
+  const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
+    base: "mobile",
+    md: "tablet",
+    lg: "desktop",
+  })
 
   useCreateReader()
   useGestureHandler()
@@ -40,6 +49,14 @@ export const ReaderScreen = memo(() => {
   useAnnotations(reader, url)
   usePersistCurrentPagination()
   useResetStateOnUnMount()
+
+  const {
+    fontSizeScopeReference,
+    fontSizeValue,
+    onFontSizeChange,
+    onFontSizeScopeChange,
+    fontSizeValues,
+  } = useFontSizeSettings(bookSettingsSignal, breakpointValue)
 
   useEffect(() => {
     console.debug(`manifest`, manifest)
@@ -83,10 +100,11 @@ export const ReaderScreen = memo(() => {
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
         onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
-        fontSize={localSettings.fontSize}
-        onFontSizeChange={(_scope, fontSize) =>
-          setLocalSettings((old) => ({ ...old, fontSize }))
-        }
+        fontSize={fontSizeValue}
+        onFontSizeChange={onFontSizeChange}
+        fontSizeValues={fontSizeValues}
+        onFontSizeScopeChange={onFontSizeScopeChange}
+        fontSizeScope={fontSizeScopeReference}
         slots={{
           container: {
             props: {

@@ -4,7 +4,10 @@ import { createContext } from "react"
 import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
-import type { SETTING_SCOPE, SETTING_SCOPE_REFERENCE } from "../settings/types"
+import type {
+  PROSE_REACT_READER_SETTINGS_SCOPE,
+  PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+} from "../settings/types"
 
 type PrivateContextType = {
   /**
@@ -42,9 +45,16 @@ export type PublicContextType = {
   quickMenuOpen: boolean
   onQuickMenuOpenChange: (open: boolean) => void
   fontSize?: number
-  onFontSizeChange?: (scope: SETTING_SCOPE_REFERENCE, value: number) => void
-  fontSizeScope?: SETTING_SCOPE_REFERENCE
-  onFontSizeScopeChange?: (scope: SETTING_SCOPE) => void
+  onFontSizeChange?: (
+    from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
+    value: number,
+  ) => void
+  fontSizeScope?: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE
+  onFontSizeScopeChange?: (scope: PROSE_REACT_READER_SETTINGS_SCOPE) => void
+  fontSizeValues?: Record<
+    PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
+    number | undefined
+  >
 }
 
 export type ReaderContextType = PrivateContextType & PublicContextType
