@@ -15,7 +15,8 @@
       "!**/dist",
       "!**/CfiHandler.ts",
       "!**/playwright-report",
-      "!**/Pods"
+      "!**/Pods",
+      "!**/prose-react-native-demo/assets/index.html"
     ]
   },
   "formatter": {
