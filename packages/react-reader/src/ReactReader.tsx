@@ -3,6 +3,7 @@ import { type ComponentProps, memo, useCallback, useState } from "react"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
+import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
 import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
@@ -16,6 +17,7 @@ import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLink
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
 import { useQuickMenu } from "./quickmenu/useQuickMenu"
+import { useQuickMenuToggleGesture } from "./quickmenu/useQuickMenuToggleGesture"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
@@ -35,6 +37,8 @@ const Effects = memo(() => {
   useZoomSettings()
   useInterceptExternalLinks()
   useNotifications()
+  useQuickMenuToggleGesture()
+  usePreventInteractionOnSelection()
 
   return (
     <>

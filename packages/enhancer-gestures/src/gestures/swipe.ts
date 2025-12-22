@@ -1,7 +1,11 @@
 import type { HookManager, Reader } from "@prose-reader/core"
+import type { SwipeEvent } from "gesturx"
 import { EMPTY, filter, map, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
-import type { GestureRecognizable, Hook } from "../types"
+import type { GestureEvent, GestureRecognizable, Hook } from "../types"
+
+const isSwipeEvent = (event: GestureEvent["event"]): event is SwipeEvent =>
+  event.type === "swipe"
 
 export const registerSwipe = ({
   reader,
@@ -18,8 +22,9 @@ export const registerSwipe = ({
       panNavigation !== "swipe"
         ? EMPTY
         : recognizable.events$.pipe(
-            filter(({ event }) => event.type === "swipe"),
-            tap(({ event }) => {
+            map(({ event }) => event),
+            filter(isSwipeEvent),
+            tap((event) => {
               const { computedPageTurnDirection } = reader.settings.values
 
               if (computedPageTurnDirection === "vertical") {
@@ -38,7 +43,7 @@ export const registerSwipe = ({
                 }
               }
             }),
-            map(({ event }) => ({ event, handled: true })),
+            map((event) => ({ type: "swipe" as const, gestureEvent: event })),
           ),
     ),
   )

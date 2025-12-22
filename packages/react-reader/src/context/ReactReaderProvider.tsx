@@ -3,14 +3,13 @@ import { type ComponentProps, memo, useCallback, useEffect } from "react"
 import { signal, useConstant, useMemoCompare, useSignalValue } from "reactjrx"
 import {
   getDefaultValue,
+  type PrivateContextType,
   type PublicContextType,
   ReaderContext,
 } from "./context"
 
 const SignalProvider = ({
   children,
-  onQuickMenuOpenChange,
-  quickMenuOpen,
   ...props
 }: {
   children: React.ReactNode
@@ -31,21 +30,19 @@ const SignalProvider = ({
     },
     [uncontrolledFontSizeMenuOpen],
   )
-  const uncontrolledQuickMenuOpen = useConstant(() =>
-    signal({ default: valueSignal.value.quickMenuOpen }),
-  )
-  const uncontrolledOnQuickMenuOpenChange = useCallback(
-    (open: boolean) => {
-      uncontrolledQuickMenuOpen.update(open)
-    },
-    [uncontrolledQuickMenuOpen],
-  )
-  const uncontrolledQuickMenuOpenValue = useSignalValue(
-    uncontrolledQuickMenuOpen,
-  )
-  const _quickMenuOpen = quickMenuOpen ?? uncontrolledQuickMenuOpenValue
-  const _onQuickMenuOpenChange =
-    onQuickMenuOpenChange ?? uncontrolledOnQuickMenuOpenChange
+  const _onQuickMenuOpenChange: PrivateContextType["_onQuickMenuOpenChange"] =
+    useCallback(
+      (valueOrUpdater: boolean | ((prev: boolean) => boolean)) => {
+        valueSignal.update((old) => ({
+          ...old,
+          _quickMenuOpen:
+            typeof valueOrUpdater === "function"
+              ? valueOrUpdater(old._quickMenuOpen)
+              : valueOrUpdater,
+        }))
+      },
+      [valueSignal],
+    )
   const uncontrolledRefitMenuOpen = useConstant(() =>
     signal({ default: valueSignal.value.refitMenuOpen }),
   )
@@ -65,16 +62,14 @@ const SignalProvider = ({
     valueSignal.update((old) => ({
       ...old,
       ...memoizedProps,
-      onQuickMenuOpenChange: _onQuickMenuOpenChange,
-      quickMenuOpen: _quickMenuOpen,
       onFontSizeMenuOpenChange: uncontrolledOnFontSizeMenuOpenChange,
       fontSizeMenuOpen: uncontrolledFontSizeMenuOpenValue,
       onRefitMenuOpenChange: uncontrolledOnRefitMenuOpenChange,
       refitMenuOpen: uncontrolledRefitMenuOpenValue,
+      _onQuickMenuOpenChange,
     }))
   }, [
     memoizedProps,
-    _quickMenuOpen,
     _onQuickMenuOpenChange,
     valueSignal,
     uncontrolledFontSizeMenuOpenValue,

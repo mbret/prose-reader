@@ -1,6 +1,6 @@
 import type { Reader } from "@prose-reader/core"
 import type { EnhancerAPI as GesturesEnhancerAPI } from "@prose-reader/enhancer-gestures"
-import { createContext } from "react"
+import { createContext, type Dispatch, type SetStateAction } from "react"
 import { type Signal, signal } from "reactjrx"
 import { Subject } from "rxjs"
 import type { ReaderNotification } from "../notifications/types"
@@ -9,7 +9,7 @@ import type {
   PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
 } from "../settings/types"
 
-type PrivateContextType = {
+export type PrivateContextType = {
   /**
    * Internal fallback values used for uncontrolled settings. This way the
    * Reader works as intended but:
@@ -25,6 +25,8 @@ type PrivateContextType = {
   quickMenuBottomBarBoundingBoxSignal: Signal<ResizeObserverEntry | undefined>
   fontSizeMin: number
   fontSizeMax: number
+  _quickMenuOpen: boolean
+  _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
 }
 
 export type PublicContextType = {
@@ -42,8 +44,8 @@ export type PublicContextType = {
       | "back"
       | "gallery",
   ) => void
-  quickMenuOpen: boolean
-  onQuickMenuOpenChange: (open: boolean) => void
+  quickMenuOpen?: boolean
+  onQuickMenuOpenChange?: Dispatch<SetStateAction<boolean>>
   fontSize?: number
   zoomMaxScale?: number
   onFontSizeChange?: (
@@ -61,9 +63,9 @@ export type PublicContextType = {
 export type ReaderContextType = PrivateContextType & PublicContextType
 
 export const getDefaultValue = (): ReaderContextType => ({
+  _quickMenuOpen: false,
+  _onQuickMenuOpenChange: (prev) => prev,
   reader: undefined,
-  quickMenuOpen: false,
-  onQuickMenuOpenChange: () => {},
   quickMenuBottomBarBoundingBoxSignal: signal<ResizeObserverEntry | undefined>({
     default: undefined,
   }),

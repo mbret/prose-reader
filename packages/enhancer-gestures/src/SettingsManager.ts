@@ -1,6 +1,6 @@
 import { type Reader, SettingsManager } from "@prose-reader/core"
-import type { InputSettings, OutputSettings } from "./types"
 import { takeUntil, tap } from "rxjs"
+import type { InputSettings, OutputSettings } from "./types"
 
 export class GesturesSettingsManager extends SettingsManager<
   InputSettings,
@@ -44,6 +44,7 @@ export class GesturesSettingsManager extends SettingsManager<
       fontScalePinchThrottleTime: 500,
       fontScaleMaxScale: 5,
       fontScaleMinScale: 0.2,
+      zoomMaxScale: Infinity,
       ignore: [],
     }
   }

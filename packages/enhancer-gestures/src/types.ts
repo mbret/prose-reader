@@ -36,6 +36,7 @@ export type InputSettings = {
   fontScalePinchEnabled: boolean
   fontScaleMaxScale: number
   fontScaleMinScale: number
+  zoomMaxScale: number
   // @todo default value
   // @todo font scale max / min
   // @todo cancel pan if selecting
@@ -50,9 +51,11 @@ export type EnhancerAPI = {
   gestures: {
     settings: GesturesSettingsManager
     hooks: HookManager<Hook>
-    gestures$: Observable<{
-      event: TapEvent | PanEvent | SwipeEvent | PinchEvent
-      handled: boolean
-    }>
+    gestures$: Observable<
+      | { type: "tap"; gestureEvent: TapEvent; handled: boolean }
+      | { type: "pan"; gestureEvent: PanEvent }
+      | { type: "swipe"; gestureEvent: SwipeEvent }
+      | { type: "pinch"; gestureEvent: PinchEvent }
+    >
   }
 }

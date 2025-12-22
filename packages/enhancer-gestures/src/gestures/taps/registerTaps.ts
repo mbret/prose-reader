@@ -78,7 +78,11 @@ export const registerTaps = ({
             filter((results) => !results.some((result) => result === false)),
             map(() => {
               if (computedPageTurnMode === "scrollable") {
-                return { event, handled: false }
+                return {
+                  type: "tap" as const,
+                  gestureEvent: event,
+                  handled: false,
+                }
               }
 
               if (
@@ -118,10 +122,18 @@ export const registerTaps = ({
               ) {
                 reader.navigation.turnRightOrBottom()
               } else {
-                return { event, handled: false }
+                return {
+                  type: "tap" as const,
+                  gestureEvent: event,
+                  handled: false,
+                }
               }
 
-              return { event, handled: true }
+              return {
+                type: "tap" as const,
+                gestureEvent: event,
+                handled: true,
+              }
             }),
           )
         }

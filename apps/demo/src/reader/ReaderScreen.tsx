@@ -13,7 +13,6 @@ import { HighlightMenu } from "./annotations/HighlightMenu"
 import { useAnnotations } from "./annotations/useAnnotations"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
-import { useGestureHandler } from "./gestures/useGestureHandler"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
 import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 import { useBookSettings } from "./settings/useBookSettings"
@@ -44,7 +43,6 @@ export const ReaderScreen = memo(() => {
   })
 
   useCreateReader()
-  useGestureHandler()
   useUpdateReaderSettings({ localSettings })
   useAnnotations(reader, url)
   usePersistCurrentPagination()
@@ -99,7 +97,7 @@ export const ReaderScreen = memo(() => {
         onItemClick={onItemClick}
         reader={reader}
         quickMenuOpen={isQuickMenuOpen}
-        onQuickMenuOpenChange={(isOpen) => isQuickMenuOpenSignal.next(isOpen)}
+        onQuickMenuOpenChange={isQuickMenuOpenSignal.update}
         fontSize={fontSizeValue}
         onFontSizeChange={onFontSizeChange}
         fontSizeValues={fontSizeValues}
