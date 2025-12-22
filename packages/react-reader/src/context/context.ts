@@ -45,6 +45,7 @@ export type PublicContextType = {
   quickMenuOpen: boolean
   onQuickMenuOpenChange: (open: boolean) => void
   fontSize?: number
+  zoomMaxScale?: number
   onFontSizeChange?: (
     from: PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE | "internal",
     value: number,
