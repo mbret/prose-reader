@@ -19,6 +19,7 @@ import { useQuickMenu } from "./quickmenu/useQuickMenu"
 import { RefitDialog } from "./refit/RefitDialog"
 import { SearchDialog } from "./search/SearchDialog"
 import { TableOfContentsDialog } from "./toc/TableOfContentsDialog"
+import { useZoomSettings } from "./zoom/useZoomSettings"
 import { ZoomControls } from "./zoom/ZoomControls"
 
 const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
@@ -31,6 +32,7 @@ const BookmarksEffects = memo(() => {
 })
 
 const Effects = memo(() => {
+  useZoomSettings()
   useInterceptExternalLinks()
   useNotifications()
 
@@ -42,7 +44,7 @@ const Effects = memo(() => {
   )
 })
 
-export const InnerReactReader = memo(
+const InnerReactReader = memo(
   ({
     children,
     ...rest

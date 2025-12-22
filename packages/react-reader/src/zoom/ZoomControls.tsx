@@ -3,12 +3,13 @@ import { memo } from "react"
 import { useObserve, useSignalValue } from "reactjrx"
 import { animationFrameScheduler, map, throttleTime } from "rxjs"
 import { Slider } from "../components/ui/slider"
+import { MAX_ZOOM_SCALE } from "../constants"
 import { useReader } from "../context/useReader"
 import { useReaderContextValue } from "../context/useReaderContext"
 
 const STEP = 0.5
 const MIN = 1
-const MAX = 5
+// const MAX = MAX_ZOOM_SCALE
 
 const normalizeZoomValue = (
   value: number,
@@ -29,13 +30,14 @@ const normalizeZoomValue = (
 }
 
 export const ZoomControls = memo(() => {
-  const { quickMenuBottomBarBoundingBoxSignal } = useReaderContextValue([
-    "quickMenuBottomBarBoundingBoxSignal",
-  ])
+  const { quickMenuBottomBarBoundingBoxSignal, zoomMaxScale = MAX_ZOOM_SCALE } =
+    useReaderContextValue([
+      "quickMenuBottomBarBoundingBoxSignal",
+      "zoomMaxScale",
+    ])
   const quickMenuBottomBarBoundingBox = useSignalValue(
     quickMenuBottomBarBoundingBoxSignal,
   )
-
   const reader = useReader()
   const zoomScaleValue =
     useObserve(
@@ -57,7 +59,7 @@ export const ZoomControls = memo(() => {
   const normalizedZoomScaleValue = normalizeZoomValue(
     zoomScaleValue,
     MIN,
-    MAX,
+    zoomMaxScale,
     STEP,
   )
   const bottomBarHeight =
@@ -79,7 +81,7 @@ export const ZoomControls = memo(() => {
       <Slider
         value={[normalizedZoomScaleValue]}
         min={MIN}
-        max={MAX}
+        max={zoomMaxScale}
         step={STEP}
         minWidth={200}
         onValueChange={(e) => {
