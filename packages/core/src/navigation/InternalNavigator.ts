@@ -91,7 +91,12 @@ export class InternalNavigator extends DestroyableClass {
     protected scrollNavigationController: ScrollNavigationController,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
-    protected isUserLocked$: Observable<boolean>,
+    /**
+     * Allow automatic restoration to happens.
+     * - correction of position
+     * - restoration of position
+     */
+    protected isRestorationLocked$: Observable<boolean>,
   ) {
     super()
 
@@ -139,7 +144,7 @@ export class InternalNavigator extends DestroyableClass {
           spineItemsManager: spine.spineItemsManager,
           settings,
         }),
-        withLatestFrom(isUserLocked$),
+        withLatestFrom(isRestorationLocked$),
         switchMap(([params, isUserLocked]) => {
           const shouldNotAlterPosition =
             params.navigation.cfi ||
@@ -169,13 +174,13 @@ export class InternalNavigator extends DestroyableClass {
       )
 
     const navigationUpdateFollowingUserUnlock$ = navigationFromUser$.pipe(
-      withLatestFrom(isUserLocked$),
+      withLatestFrom(isRestorationLocked$),
       filter(([, isUserLocked]) => isUserLocked),
       switchMap(([navigation]) => {
         // @todo emit true/false to keep stream pure
         const unlock = this.locker.lock()
 
-        return isUserLocked$.pipe(
+        return isRestorationLocked$.pipe(
           filter((isUserLocked) => !isUserLocked),
           first(),
           map(
@@ -214,7 +219,7 @@ export class InternalNavigator extends DestroyableClass {
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>
-            isUserLocked$.pipe(
+            isRestorationLocked$.pipe(
               filter((isLocked) => !isLocked),
               first(),
             ),
