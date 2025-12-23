@@ -12,7 +12,7 @@ export type NavigationEnhancerOutput = {
       duration: number
       trigger: Observable<T>
     }) => Observable<T>
-    moveTo: PanNavigator["moveTo"]
+    panNavigator: PanNavigator
     turnTop: ManualNavigator["turnTop"]
     turnBottom: ManualNavigator["turnBottom"]
     turnLeftOrTop: ManualNavigator["turnLeftOrTop"]

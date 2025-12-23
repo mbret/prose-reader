@@ -91,7 +91,7 @@ const buildDocumentStyle = (
       }
       html, body {
         ${
-          enableTouch
+          !enableTouch
             ? `
           touch-action: none
         `

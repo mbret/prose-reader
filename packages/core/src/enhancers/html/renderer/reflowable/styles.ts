@@ -65,7 +65,7 @@ export const buildStyleForReflowableImageOnly = ({
         margin: 0;
         padding: 0;
         ${
-          enableTouch
+          !enableTouch
             ? `
           touch-action: none
         `

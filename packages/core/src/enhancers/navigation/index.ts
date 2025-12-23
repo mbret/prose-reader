@@ -67,7 +67,7 @@ export const navigationEnhancer =
         state$,
         throttleLock: ({ duration, trigger }) =>
           trigger.pipe(throttleLock({ duration, reader })),
-        moveTo: panNavigator.moveTo.bind(panNavigator),
+        panNavigator,
         turnBottom: manualNavigator.turnBottom.bind(manualNavigator),
         turnTop: manualNavigator.turnTop.bind(manualNavigator),
         turnLeftOrTop: manualNavigator.turnLeftOrTop.bind(manualNavigator),

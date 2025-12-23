@@ -74,7 +74,12 @@ export class HtmlRenderer extends DocumentRenderer {
     ) {
       const dims = renderPrePaginated({
         blankPagePosition,
-        enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
+        /**
+         * When we have scrollable content, we use "native" touch event from the frame instead of
+         * our own gestures.
+         * @todo move this into scroll navigator
+         */
+        enableTouch: this.settings.values.computedPageTurnMode === `scrollable`,
         frameElement,
         isRTL: this.context.isRTL(),
         minPageSpread,
@@ -96,7 +101,12 @@ export class HtmlRenderer extends DocumentRenderer {
       isRTL: this.context.isRTL(),
       minPageSpread,
       isImageType: this.isImageType(),
-      enableTouch: this.settings.values.computedPageTurnMode !== `scrollable`,
+      /**
+       * When we have scrollable content, we use "native" touch event from the frame instead of
+       * our own gestures.
+       * @todo move this into scroll navigator
+       */
+      enableTouch: this.settings.values.computedPageTurnMode === `scrollable`,
     })
 
     return of(dims)
