@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-gallery",
-  "version": "1.261.0",
+  "version": "1.262.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.261.0"
+    "@prose-reader/core": "^1.262.0"
   },
   "peerDependencies": {
     "rxjs": "*"
