@@ -36,7 +36,10 @@ export const adjustScrollToKeepContentCentered = (
   })
 }
 
-export const deriveSpinePositionFromScale = (scale: number, reader: Reader) => {
+export const applyScaleToViewportForScroll = (
+  scale: number,
+  reader: Reader,
+) => {
   const viewport = reader.viewport
   const scrollNavigationController =
     reader.navigation.scrollNavigationController
@@ -92,5 +95,7 @@ export const deriveSpinePositionFromScale = (scale: number, reader: Reader) => {
     newCenterPositionAfterNewScaleProjection,
   )
 
-  return spinePosition
+  reader.navigation.navigate({
+    position: spinePosition,
+  })
 }

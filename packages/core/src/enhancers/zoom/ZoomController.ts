@@ -11,16 +11,22 @@ import {
 import { HTML_PREFIX } from "../../constants"
 import type { Reader } from "../../reader"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
+import { constrainPositionWithinViewport } from "./constraints"
 import {
   applyViewportTransformForControlledMode,
   derivePositionFromScaleForControlledMode,
 } from "./controlled"
-import { deriveSpinePositionFromScale } from "./scrollable"
+import { applyScaleToViewportForScroll } from "./scrollable"
+import type { ZoomPosition } from "./types"
 
 export type ZoomControllerState = {
   isZooming: boolean
   currentScale: number
-  currentPosition: { x: number; y: number }
+  /**
+   * Represents the origin translate position before zoom is applied
+   * and is based of an origin of 0,0.
+   */
+  currentPosition: ZoomPosition
 }
 
 /**
@@ -115,6 +121,10 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
 
         viewportElement.style.transform = ``
 
+        this.mergeCompare({
+          isZooming: false,
+        })
+
         return timer(options?.animate ? ANIMATION_DURATION : 0).pipe(
           tap(() => {
             const viewportElement = this.reader.viewport.value.element
@@ -124,10 +134,6 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
             if (this.isControlled) {
               this.reader.layout()
             }
-
-            this.mergeCompare({
-              isZooming: false,
-            })
           }),
           takeUntil(this.enterSubject),
         )
@@ -145,27 +151,51 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     this.exitSubject.next(options)
   }
 
-  public move(position: { x: number; y: number }) {
+  public move(
+    position: { x: number; y: number },
+    options?: { constrain?: "within-viewport" },
+  ) {
     // no moving needed for scrollable mode
     if (!this.isControlled) return
 
     // make sure to prevent animation before applying the new position
     this.viewport.element.style.transition = ``
 
-    this.updateZoom(this.value.currentScale, position)
+    this.updateZoom(this.value.currentScale, position, {
+      constraints:
+        options?.constrain === "within-viewport"
+          ? (...rest) =>
+              constrainPositionWithinViewport(...rest, this.reader.viewport)
+          : undefined,
+    })
   }
 
-  public scaleAt(userScale: number): void {
+  public scaleAt(
+    userScale: number,
+    options?: { constrain?: "within-viewport" },
+  ): void {
     // make sure to prevent animation before applying the new position
     this.viewport.element.style.transition = ``
 
     const roundedScale = Math.ceil(userScale * 100) / 100
     const newScale = roundedScale
 
-    this.updateZoom(newScale)
+    this.updateZoom(newScale, undefined, {
+      constraints:
+        options?.constrain === "within-viewport"
+          ? (...rest) =>
+              constrainPositionWithinViewport(...rest, this.reader.viewport)
+          : undefined,
+    })
   }
 
-  protected updateZoom(scale: number, position?: { x: number; y: number }) {
+  protected updateZoom(
+    scale: number,
+    position?: ZoomPosition,
+    options?: {
+      constraints?: (position: ZoomPosition, scale: number) => ZoomPosition
+    },
+  ) {
     if (this.isControlled) {
       const newPosition = position
         ? position
@@ -176,11 +206,14 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
             this.value.currentPosition,
           )
 
-      this.applyZoom(scale, newPosition)
+      const constrainedPosition =
+        options?.constraints?.(newPosition, scale) ?? newPosition
+
+      this.applyZoom(scale, constrainedPosition)
 
       return this.mergeCompare({
         currentScale: scale,
-        currentPosition: newPosition,
+        currentPosition: constrainedPosition,
       })
     }
 
@@ -193,11 +226,11 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
 
   protected applyZoom(scale: number, position: { x: number; y: number }) {
     if (!this.isControlled) {
-      const spinePosition = deriveSpinePositionFromScale(scale, this.reader)
-
-      this.reader.navigation.navigate({
-        position: spinePosition,
-      })
+      /**
+       * @important
+       * This does trigger a navigation to always re-center the scroll position with the new scale
+       */
+      applyScaleToViewportForScroll(scale, this.reader)
     } else {
       applyViewportTransformForControlledMode(
         scale,
