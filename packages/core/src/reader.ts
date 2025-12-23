@@ -81,7 +81,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   )
 
   // bridge all navigation stream with reader so they can be shared across app
-  navigator.viewportState$.subscribe(context.bridgeEvent.viewportStateSubject)
+  navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
   navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
   navigator.locker.isLocked$.subscribe(
     context.bridgeEvent.navigationIsLockedSubject,

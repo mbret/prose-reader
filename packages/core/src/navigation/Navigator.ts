@@ -30,7 +30,12 @@ export const createNavigator = ({
 }) => {
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
-  const locker = new Locker()
+  /**
+   * Allow automatic restoration to happens.
+   * - correction of position
+   * - restoration of position
+   */
+  const restorationLocker = new Locker()
   const navigationResolver = createNavigationResolver({
     context,
     settings,
@@ -64,13 +69,13 @@ export const createNavigator = ({
     scrollNavigationController,
     navigationResolver,
     spine,
-    locker.isLocked$,
+    restorationLocker.isLocked$,
   )
 
-  const viewportState$ = combineLatest([
+  const navigationState$ = combineLatest([
     controlledNavigationController.isNavigating$,
     scrollNavigationController.isNavigating$,
-    locker.isLocked$,
+    restorationLocker.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
@@ -93,11 +98,15 @@ export const createNavigator = ({
     internalNavigator,
     scrollNavigationController,
     controlledNavigationController,
-    locker,
-    viewportState$,
+    locker: restorationLocker,
+    navigationState$,
     navigate,
+    /**
+     * Prevent further navigation until the lock is released.
+     * Useful if you want to start navigation by panning for example.
+     */
     lock() {
-      return locker.lock()
+      return restorationLocker.lock()
     },
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,
