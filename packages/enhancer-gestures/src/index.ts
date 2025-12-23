@@ -37,9 +37,10 @@ export const gesturesEnhancer =
       options: {
         /**
          * @important
-         * To be less than pan otherwise it will not fail before it starts
+         * Ideally we want pinch to triggers before pan so we can
+         * capture zoom before starting panning.
          */
-        posThreshold: 20,
+        posThreshold: 10,
       },
     })
 
@@ -52,7 +53,7 @@ export const gesturesEnhancer =
       failWith: [pinchRecognizer, failWithSelection],
       options: {
         // we want to have some margin to trigger zoom
-        posThreshold: 15,
+        posThreshold: 20,
       },
     })
 

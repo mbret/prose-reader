@@ -90,7 +90,9 @@ export const ZoomControls = memo(() => {
           if (value === 1) {
             reader?.zoom.exit()
           } else {
-            reader?.zoom.scaleAt(value)
+            reader?.zoom.scaleAt(value, {
+              constrain: "within-viewport",
+            })
           }
         }}
       />

@@ -59,33 +59,48 @@ export const registerPinch = ({
   return settingsManager.values$.pipe(
     switchMap(({ fontScalePinchEnabled, fontScalePinchThrottleTime }) => {
       const zoomGestures$ = pinchStart$.pipe(
-        withLatestFrom(reader.viewportState$),
-        switchMap(([event, viewportState]) => {
-          const target = event.event.target
+        switchMap(() => {
           const startScale = reader.zoom.state.currentScale
 
-          if (viewportState === "busy") return EMPTY
+          return pinchMove$.pipe(
+            withLatestFrom(reader.viewportState$),
+            map(([event, viewportState]) => {
+              // symmetric scaling calculation
+              const newScale = startScale * event.scale
 
-          if (shouldStartZoom(target)) {
-            reader.zoom.enter({ element: target })
-          }
+              /**
+               * @important
+               * We don't want to trigger zoom gestures if there is a pan navigation
+               * in progress. This can happens if the user start panning and then adds
+               * another finger triggering a pinch.
+               */
+              if (viewportState === "busy") {
+                return event
+              }
 
-          if (!reader.zoom.state.isZooming) return EMPTY
+              if (!reader.zoom.state.isZooming && event.scale > 1) {
+                reader.zoom.enter({ animate: false, scale: newScale })
 
-          return merge(
-            pinchMove$.pipe(
-              tap((event) => {
-                if (reader.zoom.state.isZooming) {
-                  const newScale = startScale + (event.scale - 1)
+                return event
+              }
 
-                  if (newScale < 1) {
-                    reader.zoom.exit()
-                  } else {
-                    reader.zoom.scaleAt(newScale)
-                  }
+              if (reader.zoom.state.isZooming) {
+                if (newScale < 1) {
+                  reader.zoom.exit()
+                } else {
+                  reader.zoom.scaleAt(
+                    Math.min(newScale, settingsManager.values.zoomMaxScale),
+                    {
+                      constrain: "within-viewport",
+                    },
+                  )
                 }
-              }),
-            ),
+
+                return event
+              }
+
+              return event
+            }),
           )
         }),
       )
@@ -135,7 +150,10 @@ export const registerPinch = ({
           )
 
       return merge(zoomGestures$, watchForFontScaleChange$).pipe(
-        map((event) => ({ event, handled: true })),
+        map((event) => ({
+          type: "pinch" as const,
+          gestureEvent: event,
+        })),
       )
     }),
   )
