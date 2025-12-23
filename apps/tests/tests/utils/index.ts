@@ -44,6 +44,14 @@ export async function locateSpineItems({
   return spineItems
 }
 
+export async function locateSpineItemFrame(page: Page, index: number) {
+  const [spineItem] = await locateSpineItems({ page, indexes: [index] })
+
+  if (!spineItem) throw new Error(`Spine item not found`)
+
+  return spineItem.locator("iframe").first()
+}
+
 export const expectSpineItemsInViewport = async ({
   page,
   indexes,
