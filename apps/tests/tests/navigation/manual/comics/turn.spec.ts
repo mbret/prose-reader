@@ -33,6 +33,8 @@ parameters.forEach(([type, { width, height }]) => {
         await expectSpineItemsInViewport({
           page,
           indexes: [2, 3],
+          // On mobile safari for some reason the ratio is not 1 but 0.999 something.
+          ratio: 0.999,
         })
       })
     })

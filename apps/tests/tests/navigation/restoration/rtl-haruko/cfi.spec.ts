@@ -32,6 +32,8 @@ test.describe("Given a CFI which points to item index 1", () => {
         await expectSpineItemsInViewport({
           page,
           indexes: [1, 2],
+          // On mobile safari for some reason the ratio is not 1 but 0.999 something.
+          ratio: 0.999,
         })
       })
     })
