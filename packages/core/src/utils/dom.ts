@@ -440,6 +440,10 @@ export const injectCSS = (
   } else {
     doc.head.appendChild(userStyle)
   }
+
+  return () => {
+    removeCSS(doc, id)
+  }
 }
 
 export const removeCSS = (doc: Document, id: string) => {

@@ -7,11 +7,13 @@ import {
   TapRecognizer,
 } from "gesturx"
 import { combineLatest, merge, share, takeUntil, tap } from "rxjs"
+import { name as packageName } from "../package.json"
 import { registerPan } from "./gestures/pan"
 import { registerPinch } from "./gestures/pinch"
 import { registerSwipe } from "./gestures/swipe"
 import { registerTaps } from "./gestures/taps/registerTaps"
 import { GesturesSettingsManager } from "./SettingsManager"
+import styles from "./style.css?inline"
 import type { EnhancerAPI, Hook, InputSettings } from "./types"
 
 export { isPositionInArea } from "./gestures/taps/utils"
@@ -28,6 +30,12 @@ export const gesturesEnhancer =
   ): InheritOutput & EnhancerAPI => {
     const { gestures = {}, ...rest } = options
     const reader = next(rest as InheritOptions)
+
+    const removeStylesheet = reader.utils.injectScopedCSS(
+      document,
+      packageName,
+      styles,
+    )
 
     const settingsManager = new GesturesSettingsManager(gestures, reader)
 
@@ -153,6 +161,7 @@ export const gesturesEnhancer =
     return {
       ...reader,
       destroy: () => {
+        removeStylesheet()
         reader.destroy()
         settingsManager.destroy()
       },

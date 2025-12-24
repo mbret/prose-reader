@@ -1,6 +1,6 @@
 import {
   DocumentRenderer,
-  injectCSS,
+  injectCSSToFrame,
   removeCSS,
   waitForFrameLoad,
   waitForFrameReady,
@@ -143,8 +143,12 @@ export class PdfRenderer extends DocumentRenderer {
           }),
           waitForFrameLoad,
           switchMap(() => {
-            injectCSS(frameElement, "pdfjs-viewer-style", this.pdfViewerStyle)
-            injectCSS(frameElement, "enhancer-pdf-style", pdfFrameStyle)
+            injectCSSToFrame(
+              frameElement,
+              "pdfjs-viewer-style",
+              this.pdfViewerStyle,
+            )
+            injectCSSToFrame(frameElement, "enhancer-pdf-style", pdfFrameStyle)
 
             /**
              * We make sure to render the text layer to simulate the document being loaded.
@@ -247,7 +251,7 @@ export class PdfRenderer extends DocumentRenderer {
          * Not sure why pdfjs DOES rely on css from the viewer to works. Or in another words, why is it
          * not more obvious that TextLayer requires a set of variables to work correctly.
          */
-        injectCSS(
+        injectCSSToFrame(
           frameElement,
           "pdf-scale-scale",
           `:root {

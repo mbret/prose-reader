@@ -1,4 +1,4 @@
-import { isHtmlElement } from "../utils/dom"
+import { injectCSS, isHtmlElement } from "../utils/dom"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 export const utilsEnhancer =
@@ -10,6 +10,11 @@ export const utilsEnhancer =
   ): InheritOutput & {
     utils: {
       isOrIsWithinValidLink: (target: Event[`target`]) => boolean
+      injectScopedCSS: (
+        doc: Document,
+        scope: string,
+        styleTemplate: string,
+      ) => () => void
     }
   } => {
     const reader = next(options)
@@ -25,10 +30,22 @@ export const utilsEnhancer =
       return false
     }
 
+    const injectScopedCSS = (
+      doc: Document,
+      scope: string,
+      styleTemplate: string,
+    ) => {
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Expected
+      const styleWithIdReplaced = styleTemplate.replace("${id}", reader.id)
+
+      return injectCSS(doc, `${scope}-${reader.id}`, styleWithIdReplaced)
+    }
+
     return {
       ...reader,
       utils: {
         isOrIsWithinValidLink,
+        injectScopedCSS,
       },
     }
   }

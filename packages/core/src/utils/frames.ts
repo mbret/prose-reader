@@ -20,7 +20,7 @@ export const getAttributeValueFromString = (string: string, key: string) => {
   return (match && Number.parseFloat(firstMatch)) || 0
 }
 
-export const injectCSS = (
+export const injectCSSToFrame = (
   frameElement: HTMLIFrameElement,
   id: string,
   style: string,
@@ -54,7 +54,7 @@ export const upsertCSSToFrame = (
     return
   }
 
-  injectCSS(frameElement, id, style, prepend)
+  injectCSSToFrame(frameElement, id, style, prepend)
 }
 
 export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {

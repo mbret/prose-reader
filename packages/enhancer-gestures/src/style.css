@@ -1,0 +1,4 @@
+[data-prose-reader-container="${id}"] * {
+  /* Make sure that touche actions are correctly dispatched no matter where the user interact */
+  touch-action: inherit;
+}

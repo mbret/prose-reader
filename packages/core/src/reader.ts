@@ -236,6 +236,7 @@ const wrapContainer = (containerElement: HTMLElement, id: string) => {
   `
   containerElement.classList.add(`${HTML_PREFIX}-reader`)
   containerElement.setAttribute(HTML_ATTRIBUTE_DATA_READER_ID, id)
+  containerElement.setAttribute("data-prose-reader-container", id)
 
   return containerElement
 }

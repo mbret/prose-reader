@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { HookManager } from "@prose-reader/core"
 import type {
   PanEvent,
