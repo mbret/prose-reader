@@ -55,9 +55,11 @@ export async function locateSpineItemFrame(page: Page, index: number) {
 export const expectSpineItemsInViewport = async ({
   page,
   indexes,
+  ratio = 1,
 }: {
   page: Page
   indexes: number[]
+  ratio?: number
 }) => {
   const spineItems = await locateSpineItems({ page, indexes, isReady: true })
 
@@ -73,7 +75,7 @@ export const expectSpineItemsInViewport = async ({
     if (!spineItem) throw new Error(`Spine item not found`)
 
     await expect(spineItem).toBeInViewport({
-      ratio: 1,
+      ratio,
     })
   }
 }
