@@ -15,7 +15,6 @@ import {
 import {
   catchError,
   EMPTY,
-  finalize,
   from,
   map,
   type Observable,
@@ -230,6 +229,8 @@ export class PdfRenderer extends DocumentRenderer {
 
     return from(this.renderTask.promise).pipe(
       switchMap(() => {
+        this.renderTask = undefined
+
         const frameDoc = frameElement?.contentDocument
         const pdfPage = this.pageProxy
 
@@ -273,9 +274,6 @@ export class PdfRenderer extends DocumentRenderer {
         if (!(e instanceof RenderingCancelledException)) console.error(e)
 
         return of(undefined)
-      }),
-      finalize(() => {
-        this.renderTask = undefined
       }),
     )
   }
