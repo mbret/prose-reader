@@ -24,7 +24,7 @@ const persist = (bookKey: string, annotations: Annotation[]) => {
   )
 }
 
-export const useAnnotations = (
+const useHydrateAndPersistAnnotations = (
   reader: ReaderInstance | undefined,
   bookKey: string,
 ) => {
@@ -57,6 +57,13 @@ export const useAnnotations = (
           ),
     [isHydrated, reader, bookKey],
   )
+}
+
+export const useAnnotations = (
+  reader: ReaderInstance | undefined,
+  bookKey: string,
+) => {
+  useHydrateAndPersistAnnotations(reader, bookKey)
 
   useSubscribe(
     () =>

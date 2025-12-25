@@ -37,7 +37,6 @@ export const useCreateReader = () => {
 
     const readerOptions: Parameters<typeof createAppReader>[0] = {
       pageTurnAnimation: `slide`,
-      layoutAutoResize: `container`,
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
       gestures: {
