@@ -1,17 +1,21 @@
 import {
-  type Observable,
   combineLatest,
   debounceTime,
   defaultIfEmpty,
   finalize,
   map,
+  type Observable,
   of,
   shareReplay,
   startWith,
   switchScan,
   withLatestFrom,
 } from "rxjs"
-import { generateRootCfi, type resolveCfi } from "../../cfi"
+import {
+  generateRootCfi,
+  type ProseParsedCfi,
+  type resolveCfi,
+} from "../../cfi"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { deferIdle, idle } from "../../utils/rxjs"
@@ -23,8 +27,8 @@ type CfiLocatableResource = {
 export type LocatableResource = SpineItem | CfiLocatableResource
 
 export type ConsolidatedResource = ReturnType<typeof resolveCfi> &
+  ProseParsedCfi &
   CfiLocatableResource & {
-    itemIndex?: number
     itemPageIndex?: number
     absolutePageIndex?: number
     startOffset?: number

@@ -1,10 +1,15 @@
 import {
   type CfiPart,
-  type ParsedCfi,
   isIndirectionOnly,
   isParsedCfiRange,
+  type ParsedCfi,
   parse,
 } from "@prose-reader/cfi"
+
+export type ProseParsedCfi = {
+  isCfiRange: boolean
+  itemIndex: number
+}
 
 const hasIndirectionMarker = (part: CfiPart[]) => {
   return part[0]?.index === 6 && part.length > 1
@@ -32,7 +37,7 @@ const extractIndirectionPart = (parsedCfi: ParsedCfi) => {
       : undefined
 }
 
-export const parseCfi = (cfi: string) => {
+export const parseCfi = (cfi: string): ProseParsedCfi & { offset: number } => {
   const parsedCfi = parse(cfi)
   const indirectionPart = extractIndirectionPart(parsedCfi)
   const itemIndexPart = (indirectionPart ?? [])[1]
@@ -45,7 +50,6 @@ export const parseCfi = (cfi: string) => {
 
   return {
     isCfiRange,
-    cleanedCfi: cfi,
     itemIndex: spineItemIndex,
     offset: offset ?? 0,
   }

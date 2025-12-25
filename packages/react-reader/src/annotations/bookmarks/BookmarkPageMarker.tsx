@@ -23,7 +23,7 @@ export const BookmarkPageMarker = memo(
     const bookmarkForPage = bookmarks?.find(
       (bookmark) =>
         bookmark?.meta?.absolutePageIndex === absolutePageIndex &&
-        bookmark.meta.range === undefined,
+        !bookmark.meta.isCfiRange,
     )
 
     /**
