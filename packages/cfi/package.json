@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cfi",
-  "version": "1.263.0",
+  "version": "1.264.0",
   "type": "module",
   "files": [
     "/dist"
