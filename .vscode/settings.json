@@ -2,7 +2,8 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
     "**/dist": false,
-    "**/build": true
+    "**/build": true,
+    "prose-react-native-demo/assets/index.html": true
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit"
