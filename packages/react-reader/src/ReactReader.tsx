@@ -55,12 +55,10 @@ const InnerReactReader = memo(
   }: {
     children: React.ReactNode
   } & BoxProps) => {
-    const { enableFloatingTime, enableFloatingProgress, onItemClick } =
-      useReaderContextValue([
-        "enableFloatingTime",
-        "enableFloatingProgress",
-        "onItemClick",
-      ])
+    const { enableFloatingTime, onItemClick } = useReaderContextValue([
+      "enableFloatingTime",
+      "onItemClick",
+    ])
     const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false)
     const [isHelpOpen, setIsHelpOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -113,15 +111,7 @@ const InnerReactReader = memo(
           {...rest}
         >
           {children}
-          {enableFloatingProgress && (
-            <Presence
-              present={!quickMenuOpen}
-              animationName={ANIMATION_NAME_IN_OUT}
-              animationDuration="moderate"
-            >
-              <FloatingProgress />
-            </Presence>
-          )}
+          <FloatingProgress />
           <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
           <RefitDialog />
           <QuickMenu onItemClick={_onItemClick} />

@@ -77,6 +77,7 @@ export const getDefaultValue = (): ReaderContextType => ({
   fontSizeMin: 0.2,
   fontSizeMax: 5,
   uncontrolledFontSize: 1,
+  enableFloatingProgress: true,
 })
 
 export const ReaderContext = createContext(
