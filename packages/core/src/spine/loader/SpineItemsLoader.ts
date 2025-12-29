@@ -20,7 +20,9 @@ import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
 
 export class SpineItemsLoader extends DestroyableClass {
-  private forcedOpenSubject = new BehaviorSubject<number[][]>([])
+  private forcedOpenSubject = new BehaviorSubject<Map<number, number>>(
+    new Map(),
+  )
 
   constructor(
     protected context: Context,
@@ -32,7 +34,7 @@ export class SpineItemsLoader extends DestroyableClass {
     super()
 
     const forcedOpen$ = this.forcedOpenSubject.pipe(
-      map((v) => [...new Set(v.flat())].sort()),
+      map((v) => Array.from(v.keys()).sort((a, b) => a - b)),
       distinctUntilChanged(arrayEqual),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
@@ -112,16 +114,22 @@ export class SpineItemsLoader extends DestroyableClass {
       typeof item === "number" ? item : item.index,
     )
 
-    this.forcedOpenSubject.next([...this.forcedOpenSubject.value, indexes])
+    const updateMap = (add: boolean) => {
+      const map = this.forcedOpenSubject.value
+      indexes.forEach((index) => {
+        const count = map.get(index) || 0
+        const newCount = add ? count + 1 : count - 1
+        if (newCount <= 0) map.delete(index)
+        else map.set(index, newCount)
+      })
+      this.forcedOpenSubject.next(map)
+    }
+
+    updateMap(true)
 
     return () => {
       if (this.isDestroyed) return
-
-      this.forcedOpenSubject.next(
-        this.forcedOpenSubject.value.filter(
-          (arrayOfIndexes) => arrayOfIndexes !== indexes,
-        ),
-      )
+      updateMap(false)
     }
   }
 
