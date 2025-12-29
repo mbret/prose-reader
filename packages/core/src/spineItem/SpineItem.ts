@@ -28,6 +28,8 @@ type SpineItemState = {
    * - A first layout has been done
    */
   isReady: boolean
+  isError: boolean
+  error: unknown | undefined
   /**
    * - Layout has been requested
    * - Item layout not done yet
@@ -55,6 +57,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       isLoaded: false,
       isReady: false,
       iDirty: false,
+      isError: false,
+      error: undefined,
     })
 
     this.containerElement = createContainerElement(
@@ -94,9 +98,11 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     )
 
     const updateStateOnLoaded$ = this.renderer.state$.pipe(
-      tap((state) => {
+      tap(({ state, error }) => {
         this.mergeCompare({
           isLoaded: state === "loaded",
+          isError: state === "error",
+          error: state === "error" ? error : undefined,
         })
       }),
     )
@@ -105,7 +111,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       tap(() => {
         this.mergeCompare({
           iDirty: false,
-          isReady: this.renderer.state$.value === "loaded",
+          isReady: this.renderer.state$.value.state === "loaded",
         })
       }),
     )
@@ -182,10 +188,10 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   get unloaded$() {
     return this.renderer.state$.pipe(
       distinctUntilChanged(),
-      filter((state) => state !== "idle"),
+      filter(({ state }) => state !== "idle"),
       switchMap(() =>
         this.renderer.state$.pipe(
-          filter((state) => state === `idle`),
+          filter(({ state }) => state === `idle`),
           first(),
         ),
       ),

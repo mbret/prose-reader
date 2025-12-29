@@ -14,6 +14,7 @@ import type { Pages } from "../../spine/Pages"
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
 import { observeResize } from "../../utils/rxjs"
+import type { themeEnhancer } from "../theme"
 import type {
   EnhancerOptions,
   EnhancerOutput,
@@ -21,6 +22,7 @@ import type {
 } from "../types/enhancer"
 import { createCoordinatesApi } from "./coordinates"
 import { createMovingSafePan$ } from "./createMovingSafePan$"
+import { createPlaceholderPages } from "./createPlaceholderPages"
 import { fixIframeScrollbar } from "./fixIframeScrollbar"
 import { fixReflowable } from "./fixReflowable"
 import { flagSpineItems } from "./flagSpineItems"
@@ -37,7 +39,7 @@ export type LayoutEnhancerOutput = {
 export const layoutEnhancer =
   <
     InheritOptions extends EnhancerOptions<RootEnhancer>,
-    InheritOutput extends EnhancerOutput<RootEnhancer>,
+    InheritOutput extends EnhancerOutput<typeof themeEnhancer>,
     InheritSettings extends NonNullable<
       InheritOutput["settings"]["_inputSettings"]
     >,
@@ -249,6 +251,8 @@ export const layoutEnhancer =
 
     const updateSpreadMode$ = updateSpreadMode(reader)
 
+    const placeholderPages$ = createPlaceholderPages(reader)
+
     merge(
       revealItemOnReady$,
       movingSafePan$,
@@ -256,6 +260,7 @@ export const layoutEnhancer =
       layoutInfo$,
       flagSpineItems$,
       updateSpreadMode$,
+      placeholderPages$,
     )
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()

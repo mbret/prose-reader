@@ -1,7 +1,7 @@
 import { BehaviorSubject, type Observable } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
-import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 import { upsertCSSToFrame } from "../utils/frames"
+import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 const defaultThemes = [
   {

@@ -5,7 +5,6 @@ import { fontsEnhancer } from "./enhancers/fonts"
 import { hotkeysEnhancer } from "./enhancers/hotkeys"
 import { htmlEnhancer } from "./enhancers/html/enhancer"
 import { layoutEnhancer } from "./enhancers/layout/layoutEnhancer"
-import { loadingEnhancer } from "./enhancers/loading/loadingEnhancer"
 import { mediaEnhancer } from "./enhancers/media/media"
 import { navigationEnhancer } from "./enhancers/navigation"
 import { paginationEnhancer } from "./enhancers/pagination/enhancer"
@@ -20,24 +19,22 @@ import { createReader as createInternalReader } from "./reader"
 export const createReaderWithEnhancers = //__
   selectionEnhancer(
     hotkeysEnhancer(
-      loadingEnhancer(
-        webkitEnhancer(
-          fontsEnhancer(
-            accessibilityEnhancer(
-              resourcesEnhancer(
-                utilsEnhancer(
-                  zoomEnhancer(
-                    navigationEnhancer(
-                      htmlEnhancer(
-                        mediaEnhancer(
-                          chromeEnhancer(
-                            themeEnhancer(
-                              paginationEnhancer(
-                                layoutEnhancer(
-                                  eventsEnhancer(
-                                    // __
-                                    createInternalReader,
-                                  ),
+      webkitEnhancer(
+        fontsEnhancer(
+          accessibilityEnhancer(
+            resourcesEnhancer(
+              utilsEnhancer(
+                zoomEnhancer(
+                  navigationEnhancer(
+                    htmlEnhancer(
+                      mediaEnhancer(
+                        chromeEnhancer(
+                          eventsEnhancer(
+                            paginationEnhancer(
+                              layoutEnhancer(
+                                themeEnhancer(
+                                  // __
+                                  createInternalReader,
                                 ),
                               ),
                             ),

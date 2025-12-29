@@ -1,9 +1,9 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
-  BehaviorSubject,
   catchError,
   combineLatest,
   defer,
+  EMPTY,
   endWith,
   filter,
   finalize,
@@ -18,14 +18,13 @@ import {
   switchMap,
   takeUntil,
   tap,
-  withLatestFrom,
 } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { DestroyableClass } from "../../utils/DestroyableClass"
 import { getFrameViewportInfo } from "../../utils/frames"
+import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { waitForSwitch } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { ResourceHandler } from "../resources/ResourceHandler"
@@ -47,7 +46,17 @@ type LayoutParams = {
   minimumWidth: number
 }
 
-export abstract class DocumentRenderer extends DestroyableClass {
+type DocumentRendererState =
+  | {
+      state: `error`
+      error: unknown
+    }
+  | {
+      state: `idle` | `loading` | `loaded` | `unloading`
+      error: undefined
+    }
+
+export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererState> {
   static readonly DOCUMENT_CONTAINER_CLASS_NAME =
     `prose-reader-document-container`
   private triggerSubject = new Subject<{ type: `load` } | { type: `unload` }>()
@@ -59,29 +68,26 @@ export abstract class DocumentRenderer extends DestroyableClass {
   protected item: Manifest[`spineItems`][number]
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
-  protected stateSubject = new BehaviorSubject<
-    `idle` | `loading` | `loaded` | `unloading`
-  >(`idle`)
 
-  protected unload$ = this.triggerSubject.pipe(
-    withLatestFrom(this.stateSubject),
-    filter(
-      ([trigger, state]) =>
-        trigger.type === `unload` && state !== "idle" && state !== "unloading",
-    ),
-    map(() => undefined),
-    share(),
-  )
+  // protected unload$ = this.triggerSubject.pipe(
+  //   withLatestFrom(this.stateSubject),
+  //   filter(
+  //     ([trigger, state]) =>
+  //       trigger.type === `unload` && state.state !== "idle" && state.state !== "unloading",
+  //   ),
+  //   map(() => undefined),
+  //   share(),
+  // )
 
-  protected load$ = this.triggerSubject.pipe(
-    withLatestFrom(this.stateSubject),
-    filter(
-      ([trigger, state]) =>
-        trigger.type === `load` && state !== "loaded" && state !== "loading",
-    ),
-    map(() => undefined),
-    share(),
-  )
+  // protected load$ = this.triggerSubject.pipe(
+  //   withLatestFrom(this.stateSubject),
+  //   filter(
+  //     ([trigger, state]) =>
+  //       trigger.type === `load` && state.state !== "loaded" && state.state !== "loading",
+  //   ),
+  //   map(() => undefined),
+  //   share(),
+  // )
 
   public loaded$: Observable<void>
 
@@ -96,7 +102,10 @@ export abstract class DocumentRenderer extends DestroyableClass {
     resourcesHandler: ResourceHandler
     viewport: Viewport
   }) {
-    super()
+    super({
+      state: `idle`,
+      error: undefined,
+    })
 
     this.context = params.context
     this.settings = params.settings
@@ -107,20 +116,21 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.viewport = params.viewport
 
     const unloadTrigger$ = this.triggerSubject.pipe(
-      withLatestFrom(this.stateSubject),
-      filter(
-        ([trigger, state]) =>
-          trigger.type === `unload` &&
-          state !== "idle" &&
-          state !== "unloading",
-      ),
-      map(() => undefined),
-      share(),
+      filter((trigger) => trigger.type === `unload`),
     )
 
-    this.loaded$ = this.load$.pipe(
-      switchMap(() => {
-        this.stateSubject.next(`loading`)
+    const loadTrigger$ = this.triggerSubject.pipe(
+      filter((trigger) => trigger.type === `load`),
+    )
+
+    this.loaded$ = loadTrigger$.pipe(
+      mergeMap(() => {
+        const canBeIgnored =
+          this.value.state === `loaded` || this.value.state === `loading`
+
+        if (canBeIgnored) return EMPTY
+
+        this.next({ state: `loading`, error: undefined })
 
         const createDocument$ = this.onCreateDocument().pipe(first())
 
@@ -154,7 +164,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
             )
           }),
           map(() => {
-            this.stateSubject.next(`loaded`)
+            this.next({ state: `loaded`, error: undefined })
 
             return undefined
           }),
@@ -165,28 +175,41 @@ export abstract class DocumentRenderer extends DestroyableClass {
     )
 
     const unload$ = unloadTrigger$.pipe(
-      switchMap(() => {
-        this.stateSubject.next(`unloading`)
+      mergeMap(() => {
+        const canBeIgnored =
+          this.value.state === `unloading` || this.value.state === `idle`
+
+        if (canBeIgnored) return EMPTY
+
+        this.next({ state: `unloading`, error: undefined })
 
         return this.context.bridgeEvent.viewportFree$.pipe(
           first(),
-          tap(() => {
-            this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
-          }),
           switchMap(() => {
+            this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
+
             const onUnload$ = this.onUnload().pipe(endWith(null), first())
 
             return onUnload$
           }),
           tap(() => {
-            this.stateSubject.next(`idle`)
+            this.next({ state: `idle`, error: undefined })
           }),
-          takeUntil(this.load$),
+          takeUntil(loadTrigger$),
         )
       }),
     )
 
-    merge(this.unload$, unload$).pipe(takeUntil(this.destroy$)).subscribe()
+    merge(this.loaded$, unload$)
+      .pipe(
+        catchError((error) => {
+          this.next({ state: `error`, error })
+
+          return EMPTY
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe()
   }
 
   protected setDocumentContainer(element: HTMLElement) {
@@ -212,7 +235,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
   }
 
   public get isLoaded$() {
-    return this.state$.pipe(map((state) => state === `loaded`))
+    return this.state$.pipe(map((state) => state.state === `loaded`))
   }
 
   public load() {
@@ -223,6 +246,9 @@ export abstract class DocumentRenderer extends DestroyableClass {
     this.triggerSubject.next({ type: `unload` })
   }
 
+  /**
+   * Automatically release on complete or error.
+   */
   public renderHeadless(): Observable<
     { doc: Document; release: () => void } | undefined
   > {
@@ -253,7 +279,7 @@ export abstract class DocumentRenderer extends DestroyableClass {
   }
 
   public layout(params: LayoutParams) {
-    return defer(() => this.onLayout(params))
+    return this.onLayout(params)
   }
 
   public destroy() {
