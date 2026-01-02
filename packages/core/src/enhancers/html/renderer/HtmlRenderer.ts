@@ -1,14 +1,19 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { EMPTY, from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
-import { waitForFrameLoad, waitForFrameReady } from "../../../utils/frames"
+import {
+  upsertCSSToFrame,
+  waitForFrameLoad,
+  waitForFrameReady,
+} from "../../../utils/frames"
 import { waitForSwitch } from "../../../utils/rxjs"
 import { loadAssets, unloadAssets } from "./assets"
 import { attachFrameSrc } from "./attachFrameSrc"
 import { createFrameElement } from "./createFrameElement"
+import prePaginatedStyle from "./prePaginated/pre-paginated.css?inline"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
+// import reflowableImageStyle from "./reflowable/reflowable-image.css?inline"
 import { renderReflowable } from "./reflowable/renderReflowable"
-
 export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
     const frameElement = createFrameElement()
@@ -34,6 +39,21 @@ export class HtmlRenderer extends DocumentRenderer {
         this.attach()
       }),
       waitForFrameLoad,
+      tap((frameElement) => {
+        if (this.isPrePaginated()) {
+          upsertCSSToFrame(frameElement, `prose-reader-css`, prePaginatedStyle)
+        } else {
+          if (this.isImageType()) {
+            // upsertCSSToFrame(
+            //   frameElement,
+            //   `prose-reader-css`,
+            //   reflowableImageStyle,
+            // )
+          } else {
+            // upsertCSSToFrame(frameElement, `prose-reader-css`, reflowableStyle)
+          }
+        }
+      }),
       loadAssets({
         context: this.context,
         item: this.item,
@@ -67,19 +87,33 @@ export class HtmlRenderer extends DocumentRenderer {
 
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 
-    if (
-      this.item.renditionLayout === `pre-paginated` ||
-      (!this.item.renditionLayout &&
-        this.context.manifest?.renditionLayout === `pre-paginated`)
-    ) {
+    /**
+     * When we have scrollable content, we use "native" touch event from the frame instead of
+     * our own gestures.
+     * @todo move this into scroll navigator
+     */
+    const isTouchEnabled =
+      this.settings.values.computedPageTurnMode === `scrollable`
+
+    if (frameElement.contentDocument?.documentElement) {
+      frameElement.contentDocument?.documentElement.setAttribute(
+        `data-prose-reader-html-renderer-spread-position`,
+        spreadPosition,
+      )
+      if (isTouchEnabled) {
+        frameElement.contentDocument?.documentElement.classList.add(
+          `prose-reader-html-renderer-touch-enabled`,
+        )
+      } else {
+        frameElement.contentDocument?.documentElement.classList.remove(
+          `prose-reader-html-renderer-touch-enabled`,
+        )
+      }
+    }
+
+    if (this.isPrePaginated()) {
       const dims = renderPrePaginated({
         blankPagePosition,
-        /**
-         * When we have scrollable content, we use "native" touch event from the frame instead of
-         * our own gestures.
-         * @todo move this into scroll navigator
-         */
-        enableTouch: this.settings.values.computedPageTurnMode === `scrollable`,
         frameElement,
         isRTL: this.context.isRTL(),
         minPageSpread,
@@ -143,6 +177,14 @@ export class HtmlRenderer extends DocumentRenderer {
 
         return of(undefined)
       }),
+    )
+  }
+
+  private isPrePaginated = () => {
+    return (
+      this.item.renditionLayout === `pre-paginated` ||
+      (!this.item.renditionLayout &&
+        this.context.manifest?.renditionLayout === `pre-paginated`)
     )
   }
 

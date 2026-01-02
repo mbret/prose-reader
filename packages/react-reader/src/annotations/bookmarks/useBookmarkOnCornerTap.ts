@@ -4,6 +4,8 @@ import { map, withLatestFrom } from "rxjs"
 import { useAnnotations } from "../useAnnotations"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
 
+const CONTINUE_TAP_GESTURE = true
+
 export const useBookmarkOnCornerTap = () => {
   const reader = useReaderWithAnnotations()
   const { data: bookmarks } = useAnnotations()
@@ -17,7 +19,7 @@ export const useBookmarkOnCornerTap = () => {
         event$.pipe(
           withLatestFrom(reader?.annotations.candidates$),
           map(([context, candidates]) => {
-            if (!context.page) return true
+            if (!context.page) return CONTINUE_TAP_GESTURE
 
             const {
               spineItem,
@@ -43,7 +45,7 @@ export const useBookmarkOnCornerTap = () => {
                 spineItemPageIndex,
               )
 
-              if (!pageEntry) return true
+              if (!pageEntry) return CONTINUE_TAP_GESTURE
 
               const bookmarkForPage = bookmarks?.find(
                 (bookmark) =>
@@ -55,7 +57,7 @@ export const useBookmarkOnCornerTap = () => {
               if (bookmarkForPage) {
                 reader?.annotations.delete(bookmarkForPage.resource.id)
 
-                return false
+                return !CONTINUE_TAP_GESTURE
               }
 
               const canBookmarkPage = candidates?.[pageEntry.absolutePageIndex]
@@ -65,11 +67,11 @@ export const useBookmarkOnCornerTap = () => {
                   absolutePageIndex: pageEntry.absolutePageIndex,
                 })
 
-                return false
+                return !CONTINUE_TAP_GESTURE
               }
             }
 
-            return true
+            return CONTINUE_TAP_GESTURE
           }),
         ),
     )

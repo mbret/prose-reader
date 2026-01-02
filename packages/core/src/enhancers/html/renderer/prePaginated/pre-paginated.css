@@ -1,0 +1,69 @@
+body {
+  margin: 0;
+}
+
+/*  might be html * but it does mess up things like figure if so.
+    check accessible_epub_3 */
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+html[data-prose-reader-html-renderer-has-viewport-dimensions="false"] body {
+  display: flex;
+}
+
+html[data-prose-reader-html-renderer-has-viewport-dimensions="false"][data-prose-reader-html-renderer-spread-position="left"]
+  body {
+  justify-content: flex-end;
+}
+
+html[data-prose-reader-html-renderer-has-viewport-dimensions="false"][data-prose-reader-html-renderer-spread-position="right"]
+  body {
+  justify-content: flex-start;
+}
+
+html[data-prose-reader-html-renderer-has-viewport-dimensions="false"][data-prose-reader-html-renderer-spread-position="none"]
+  body {
+  justify-content: center;
+}
+
+/* @see https://hammerjs.github.io/touch-action/
+  It needs to be disabled when using free scroll */
+:not(html.prose-reader-html-renderer-touch-enabled),
+:not(html.prose-reader-html-renderer-touch-enabled) body {
+  touch-action: none;
+}
+
+/* This one is important for preventing 100% img to resize above
+   current width. Especially needed for cbz conversion */
+/* html,
+body {
+  max-width: var(--column-width) px !important;
+} */
+
+/* prevent drag of image instead of touch on firefox */
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  /* biome-ignore lint/correctness/noUnknownProperty: Okay */
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+
+  /* prevent weird overflow or margin. Try `block` if `flex` has weird behavior */
+  display: flex;
+}
+
+/*
+  If the document does not have viewport, we cannot scale anything inside.
+  This should never happens with a valid epub document however it will happens if
+  we load .jpg, .png, etc directly in the iframe. This is expected, in this case we force
+  the inner content to display correctly.
+*/
+html[data-prose-reader-html-renderer-has-viewport-dimensions="false"] img {
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

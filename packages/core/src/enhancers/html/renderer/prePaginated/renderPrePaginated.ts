@@ -1,16 +1,4 @@
-import {
-  getFrameViewportInfo,
-  upsertCSSToFrame,
-} from "../../../../utils/frames"
-
-export const getStyleForViewportDocument = () => {
-  return `
-    body {
-        margin: 0;
-        }
-      }
-    `
-}
+import { getFrameViewportInfo } from "../../../../utils/frames"
 
 export const getViewPortInformation = ({
   pageHeight,
@@ -38,118 +26,6 @@ export const getViewPortInformation = ({
   }
 }
 
-const buildDocumentStyle = (
-  {
-    columnWidth,
-    enableTouch,
-    spreadPosition,
-  }: {
-    columnWidth: number
-    columnHeight: number
-    enableTouch: boolean
-    spreadPosition: `none` | `left` | `right`
-  },
-  viewportDimensions: { height?: number; width?: number } | undefined,
-) => {
-  return `
-      ${getStyleForViewportDocument()}
-      body {
-        ${
-          !viewportDimensions
-            ? `
-          display: flex;
-          justify-content: ${spreadPosition === `left` ? `flex-end` : spreadPosition === `right` ? `flex-start` : `center`};
-        `
-            : ``
-        }
-      }
-      ${
-        /*
-        might be html * but it does mess up things like figure if so.
-        check accessible_epub_3
-      */ ``
-      }
-      html, body {
-        height: 100%;
-        width: 100%;
-      }
-      ${
-        /*
-        This one is important for preventing 100% img to resize above
-        current width. Especially needed for cbz conversion
-      */ ``
-      }
-      html, body {
-        -max-width: ${columnWidth}px !important;
-      }
-      ${
-        /*
-         * @see https://hammerjs.github.io/touch-action/
-         * It needs to be disabled when using free scroll
-         */
-        ``
-      }
-      html, body {
-        ${
-          !enableTouch
-            ? `
-          touch-action: none
-        `
-            : ``
-        }
-      }
-      ${
-        /*
-        prevent drag of image instead of touch on firefox
-      */ ``
-      }
-      img {
-        user-select: none;
-        -webkit-user-drag: none;
-        -khtml-user-drag: none;
-        -moz-user-drag: none;
-        -o-user-drag: none;
-        user-drag: none;
-        ${
-          /*
-          prevent weird overflow or margin. Try `block` if `flex` has weird behavior
-        */ ``
-        }
-        display: flex;
-        ${
-          /*
-          If the document does not have viewport, we cannot scale anything inside.
-          This should never happens with a valid epub document however it will happens if
-          we load .jpg, .png, etc directly in the iframe. This is expected, in this case we force
-          the inner content to display correctly.
-        */ ``
-        }
-        ${
-          !viewportDimensions
-            ? `
-          -width: 100%;
-          max-width: 100%;
-          height:100%;
-          object-fit:contain;
-        `
-            : ``
-        }
-      }
-    `
-}
-
-const getDimensionsForPaginatedContent = ({
-  pageHeight: columnHeight,
-  pageWidth,
-}: {
-  pageWidth: number
-  pageHeight: number
-}) => {
-  const columnWidth = pageWidth
-
-  return { columnHeight, columnWidth }
-}
-
 /**
  * Upward layout is used when the parent wants to manipulate the iframe without triggering
  * `layout` event. This is a particular case needed for iframe because the parent can layout following
@@ -172,7 +48,6 @@ export const renderPrePaginated = ({
   pageWidth,
   frameElement,
   isRTL,
-  enableTouch,
 }: {
   minPageSpread: number
   blankPagePosition: `before` | `after` | `none`
@@ -181,30 +56,24 @@ export const renderPrePaginated = ({
   pageHeight: number
   frameElement?: HTMLIFrameElement
   isRTL: boolean
-  enableTouch: boolean
 }) => {
   const minimumWidth = minPageSpread * pageWidth
 
   if (frameElement?.contentDocument && frameElement?.contentWindow) {
     const { viewportDimensions, computedScale = 1 } =
       getViewPortInformation({ frameElement, pageHeight, pageWidth }) ?? {}
-
+    const hasViewportDimensions = !!viewportDimensions
     const contentWidth = pageWidth
     const contentHeight = pageHeight
 
-    const cssLink = buildDocumentStyle(
-      {
-        ...getDimensionsForPaginatedContent({ pageHeight, pageWidth }),
-        enableTouch,
-        spreadPosition,
-      },
-      viewportDimensions,
-    )
-
+    if (frameElement.contentDocument?.documentElement) {
+      frameElement.contentDocument?.documentElement.setAttribute(
+        `data-prose-reader-html-renderer-has-viewport-dimensions`,
+        hasViewportDimensions.toString(),
+      )
+    }
     // frameElement?.style.setProperty(`visibility`, `visible`)
     // frameElement?.style.setProperty(`opacity`, `1`)
-
-    upsertCSSToFrame(frameElement, `prose-reader-css`, cssLink)
 
     if (viewportDimensions) {
       staticLayout(frameElement, {

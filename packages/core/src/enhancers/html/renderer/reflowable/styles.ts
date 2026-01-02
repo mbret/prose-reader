@@ -1,5 +1,3 @@
-import { getStyleForViewportDocument } from "../prePaginated/renderPrePaginated"
-
 /**
  * Item is:
  * - anything that contains a defined width/height viewport
@@ -17,7 +15,9 @@ import { getStyleForViewportDocument } from "../prePaginated/renderPrePaginated"
  */
 export const buildStyleForViewportFrame = () => {
   return `
-      ${getStyleForViewportDocument()}
+      body {
+        margin: 0;
+      }
       html {
         width: 100%;
         height: 100%;
