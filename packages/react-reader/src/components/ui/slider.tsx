@@ -10,7 +10,7 @@ export interface SliderProps extends ChakraSlider.RootProps {
 export const Slider = React.memo(function Slider({
   ref,
   ...props
-}: SliderProps & { ref: React.RefObject<HTMLDivElement> }) {
+}: SliderProps & { ref?: React.RefObject<HTMLDivElement> }) {
   const { marks: marksProp, label, showValue, ...rest } = props
   const value = props.defaultValue ?? props.value
 
