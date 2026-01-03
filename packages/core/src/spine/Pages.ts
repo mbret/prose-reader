@@ -1,7 +1,8 @@
 import {
   combineLatest,
   map,
-  Observable,
+  type Observable,
+  of,
   share,
   switchMap,
   takeUntil,
@@ -13,6 +14,7 @@ import type { SpineItem } from "../spineItem/SpineItem"
 import { SpineItemPageLayout } from "../spineItem/types"
 import { getFirstVisibleNodeForPositionRelativeTo } from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
+import { idle } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { SpineLocator } from "./locator/SpineLocator"
 import { Report } from "./report"
@@ -38,7 +40,7 @@ export const spinePositionToSpineItemSpineLayout = ({
   })
 }
 
-type PageEntry = {
+export type PageEntry = {
   absoluteLayout: SpineItemPageSpineLayout
   layout: SpineItemPageLayout
   itemIndex: number
@@ -126,25 +128,48 @@ export class Pages extends ReactiveEntity<State> {
           pages.map((page) => {
             const { spineItem: _unused, ...rest } = page
 
-            return new Observable<PageEntry>((subscriber) => {
+            /**
+             * Note that this part adds a significant overhead
+             * - lot of rxjs subscribers
+             * - overhead of the idle browser task chain
+             * - overhead with node finding
+             * This is directly tied to the number of items the user loads in parallel
+             * and the size of the book.
+             * However there are realistically no reason a user would want to load
+             * a massive book entirely in parallel.
+             */
+            if (page.spineItem.value.isLoaded) {
               const frame = page.spineItem.renderer?.getDocumentFrame()
-              let firstVisibleNode: { node: Node; offset: number } | undefined
 
               if (
                 frame &&
                 frame?.contentWindow?.document &&
-                // very important because it is being used by next functions
                 frame.contentWindow.document.body !== null
               ) {
-                // @todo handle vertical
-                firstVisibleNode = getFirstVisibleNodeForPositionRelativeTo(
-                  frame.contentWindow.document,
-                  page.layout,
+                const _document = frame.contentWindow.document
+
+                // might need to buffer them to run them all within a single idle task.
+                // not sure stacking lot of them like this is a good idea. additionally, maybe we can
+                // use something more efficient if its just to ensure 60fps.
+                return idle().pipe(
+                  map(() => {
+                    const firstVisibleNode =
+                      getFirstVisibleNodeForPositionRelativeTo(
+                        _document,
+                        page.layout,
+                      )
+
+                    return {
+                      ...rest,
+                      firstVisibleNode,
+                    }
+                  }),
                 )
               }
+            }
 
-              subscriber.next({ ...rest, firstVisibleNode })
-            })
+            // Fast path: No overhead for majority of pages
+            return of({ ...rest, firstVisibleNode: undefined })
           }),
         )
 
@@ -168,15 +193,9 @@ export class Pages extends ReactiveEntity<State> {
   }
 
   fromAbsolutePageIndex = (absolutePageIndex: number) => {
-    return this.value.pages.reduce((acc: PageEntry | undefined, page) => {
-      if (acc) return acc
-
-      if (page.absolutePageIndex === absolutePageIndex) {
-        return page
-      }
-
-      return acc
-    }, undefined)
+    return this.value.pages.find(
+      (page) => page.absolutePageIndex === absolutePageIndex,
+    )
   }
 
   observeFromAbsolutePageIndex = (absolutePageIndex: number) =>
