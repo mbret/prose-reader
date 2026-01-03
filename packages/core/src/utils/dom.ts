@@ -45,24 +45,33 @@ export const getFirstVisibleNodeForPositionRelativeTo = (
   documentOrElement: Document | Element,
   viewport: ViewPort,
 ) => {
-  const element =
-    `body` in documentOrElement
-      ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
-      : getFirstVisibleElementForViewport(documentOrElement, viewport)
-
   const ownerDocument =
     `createRange` in documentOrElement
       ? documentOrElement
       : documentOrElement.ownerDocument
+
+  if (!ownerDocument) return undefined
+
+  const element =
+    `body` in documentOrElement
+      ? getFirstVisibleElementForViewport(documentOrElement.body, viewport)
+      : getFirstVisibleElementForViewport(documentOrElement, viewport)
 
   if (element) {
     let lastValidRange: Range | undefined
     let lastValidOffset = 0
     const range = ownerDocument.createRange()
 
+    /**
+     * We iterate through children to ensure we match the writing mode (direction)
+     * of the document (This is easier than having to do some heuristics to match the direction)
+     * Although probably not perfect ?
+     */
     Array.from(element.childNodes).some((childNode) => {
       range.selectNodeContents(childNode)
-      const rects = range.getClientRects()
+
+      const rects = range.getClientRects() // this forces layout ? needs to find better approach
+
       const visibleRect = getFirstVisibleDOMRect(rects, viewport)
 
       // At this point we know the range is valid and contains visible rect.
