@@ -199,7 +199,7 @@ export const layoutEnhancer =
       }
     })
 
-    const revealItemOnReady$ = reader.spineItemsObserver.itemIsReady$.pipe(
+    const revealItemOnReady$ = reader.spineItemsObserver.states$.pipe(
       filter(({ isReady }) => isReady),
       tap(({ item }) => {
         const element = item.renderer.documentContainer

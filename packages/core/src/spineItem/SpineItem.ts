@@ -1,12 +1,5 @@
-import { merge, type Observable } from "rxjs"
-import {
-  distinctUntilChanged,
-  filter,
-  first,
-  switchMap,
-  takeUntil,
-  tap,
-} from "rxjs/operators"
+import { merge } from "rxjs"
+import { takeUntil, tap } from "rxjs/operators"
 import type { Manifest } from ".."
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -21,7 +14,7 @@ import { SpineItemLayout } from "./SpineItemLayout"
 
 export type SpineItemReference = string | SpineItem | number
 
-type SpineItemState = {
+export type SpineItemState = {
   isLoaded: boolean
   /**
    * - Content has been loaded
@@ -34,12 +27,11 @@ type SpineItemState = {
    * - Layout has been requested
    * - Item layout not done yet
    */
-  iDirty: boolean
+  isDirty: boolean
 }
 
 export class SpineItem extends ReactiveEntity<SpineItemState> {
   public readonly containerElement: HTMLElement
-  public readonly needsLayout$: Observable<unknown>
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
   public readonly layout: SpineItemLayout
@@ -56,7 +48,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     super({
       isLoaded: false,
       isReady: false,
-      iDirty: false,
+      isDirty: false,
       isError: false,
       error: undefined,
     })
@@ -110,13 +102,11 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     const updateStateOnLayout$ = this.layout.layout$.pipe(
       tap(() => {
         this.mergeCompare({
-          iDirty: false,
+          isDirty: false,
           isReady: this.renderer.state$.value.state === "loaded",
         })
       }),
     )
-
-    this.needsLayout$ = merge(this.unloaded$, this.loaded$)
 
     merge(
       /**
@@ -143,7 +133,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
   public markDirty = () => {
     this.mergeCompare({
-      iDirty: true,
+      isDirty: true,
     })
   }
 
@@ -181,21 +171,18 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   isUsingVerticalWriting = () =>
     !!this.renderer.writingMode?.startsWith(`vertical`)
 
+  /**
+   * Note that this is dispatched AFTER the state has been updated.
+   */
   get loaded$() {
     return this.renderer.loaded$
   }
 
+  /**
+   * Note that this is dispatched AFTER the state has been updated.
+   */
   get unloaded$() {
-    return this.renderer.state$.pipe(
-      distinctUntilChanged(),
-      filter(({ state }) => state !== "idle"),
-      switchMap(() =>
-        this.renderer.state$.pipe(
-          filter(({ state }) => state === `idle`),
-          first(),
-        ),
-      ),
-    )
+    return this.renderer.unloaded$
   }
 
   get renditionLayout() {

@@ -40,8 +40,11 @@ export class Spine extends DestroyableClass {
   ) {
     super()
 
+    this.spineItemsObserver = new SpineItemsObserver(spineItemsManager)
+
     this.spineLayout = new SpineLayout(
       spineItemsManager,
+      this.spineItemsObserver,
       context,
       settings,
       viewport,
@@ -62,11 +65,6 @@ export class Spine extends DestroyableClass {
       this.locator,
       settings,
       this.spineLayout,
-    )
-
-    this.spineItemsObserver = new SpineItemsObserver(
-      spineItemsManager,
-      this.locator,
     )
 
     this.pages = new Pages(

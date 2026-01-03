@@ -1,15 +1,24 @@
-import { map, merge, type Observable, share, switchMap } from "rxjs"
-import type { SpineItem } from "../spineItem/SpineItem"
+import { isShallowEqual } from "@prose-reader/shared"
+import {
+  distinctUntilChanged,
+  map,
+  merge,
+  type Observable,
+  share,
+  switchMap,
+} from "rxjs"
+import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
-import type { SpineLocator } from "./locator/SpineLocator"
 import type { SpineItemsManager } from "./SpineItemsManager"
 
 export class SpineItemsObserver extends DestroyableClass {
   /**
-   * Observable that emit every time `isReady` change but also on subscription
+   * Shared observable which emits every time a spine item state change.
+   * As there can be lot of spine items and subscriptions can become costly it is
+   * encouraged to use this shared observable.
    */
-  public itemIsReady$: Observable<{ item: SpineItem; isReady: boolean }>
+  public states$: Observable<{ item: SpineItem } & SpineItemState>
 
   /**
    * Observable directly plugged to ResizeObserver for each item.
@@ -19,19 +28,22 @@ export class SpineItemsObserver extends DestroyableClass {
     entries: ResizeObserverEntry[]
   }>
 
-  constructor(
-    protected spineItemsManager: SpineItemsManager,
-    protected spineLocator: SpineLocator,
-  ) {
+  public itemLoad$: Observable<SpineItem>
+  public itemUnload$: Observable<SpineItem>
+
+  constructor(protected spineItemsManager: SpineItemsManager) {
     super()
 
-    this.itemIsReady$ = this.spineItemsManager.items$.pipe(
+    this.states$ = this.spineItemsManager.items$.pipe(
       switchMap((items) => {
-        const itemsIsReady$ = items.map((item) =>
-          item.isReady$.pipe(map((isReady) => ({ item, isReady }))),
+        return merge(
+          ...items.map((item) =>
+            item.pipe(
+              map((state) => ({ item, ...state })),
+              distinctUntilChanged(isShallowEqual),
+            ),
+          ),
         )
-
-        return merge(...itemsIsReady$)
       }),
       share(),
     )
@@ -45,6 +57,22 @@ export class SpineItemsObserver extends DestroyableClass {
         )
 
         return merge(...resize$)
+      }),
+      share(),
+    )
+
+    this.itemLoad$ = this.spineItemsManager.items$.pipe(
+      switchMap((items) => {
+        return merge(...items.map((item) => item.loaded$.pipe(map(() => item))))
+      }),
+      share(),
+    )
+
+    this.itemUnload$ = this.spineItemsManager.items$.pipe(
+      switchMap((items) => {
+        return merge(
+          ...items.map((item) => item.unloaded$.pipe(map(() => item))),
+        )
       }),
       share(),
     )

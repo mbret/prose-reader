@@ -17,7 +17,6 @@ import {
   share,
   switchMap,
   takeUntil,
-  tap,
 } from "rxjs"
 import type { Context } from "../../context/Context"
 import type { HookManager } from "../../hooks/HookManager"
@@ -90,6 +89,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   // )
 
   public loaded$: Observable<void>
+  public unloaded$: Observable<void>
 
   private _documentContainer: HTMLElement | undefined
 
@@ -174,7 +174,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
       share(),
     )
 
-    const unload$ = unloadTrigger$.pipe(
+    this.unloaded$ = unloadTrigger$.pipe(
       mergeMap(() => {
         const canBeIgnored =
           this.value.state === `unloading` || this.value.state === `idle`
@@ -192,15 +192,18 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
             return onUnload$
           }),
-          tap(() => {
+          map(() => {
             this.next({ state: `idle`, error: undefined })
+
+            return undefined
           }),
           takeUntil(loadTrigger$),
         )
       }),
+      share(),
     )
 
-    merge(this.loaded$, unload$)
+    merge(this.loaded$, this.unloaded$)
       .pipe(
         catchError((error) => {
           this.next({ state: `error`, error })

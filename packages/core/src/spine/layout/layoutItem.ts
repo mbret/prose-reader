@@ -1,6 +1,7 @@
 import { map, type Observable } from "rxjs"
 import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
+import { isFullyPrePaginated } from "../../manifest/isFullyPrePaginated"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -11,7 +12,6 @@ export const layoutItem = ({
   verticalOffset,
   context,
   spineItemsManager,
-  isGloballyPrePaginated,
   settings,
   index,
   item,
@@ -21,7 +21,6 @@ export const layoutItem = ({
   verticalOffset: number
   context: Context
   spineItemsManager: SpineItemsManager
-  isGloballyPrePaginated: boolean
   settings: ReaderSettingsManager
   item: SpineItem
   index: number
@@ -36,6 +35,8 @@ export const layoutItem = ({
   const isScreenStartItem =
     horizontalOffset % viewport.absoluteViewport.width === 0
   const isLastItem = index === spineItemsManager.items.length - 1
+  const manifest = context.manifest
+  const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
 
   if (settings.values.computedSpreadMode) {
     /**
