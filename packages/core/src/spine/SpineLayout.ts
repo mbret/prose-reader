@@ -78,16 +78,31 @@ export class SpineLayout extends DestroyableClass {
         this.spineItemsManager.items.reduce(
           (acc$, item, itemIndex) =>
             acc$.pipe(
-              concatMap(({ horizontalOffset, verticalOffset }) =>
-                layoutItem({
+              concatMap(({ horizontalOffset, verticalOffset }) => {
+                const isScreenStartItem =
+                  horizontalOffset % viewport.absoluteViewport.width === 0
+                const isLastItem =
+                  itemIndex === spineItemsManager.items.length - 1
+                const spreadPosition = settings.values.computedSpreadMode
+                  ? isScreenStartItem
+                    ? context.isRTL()
+                      ? `right`
+                      : `left`
+                    : context.isRTL()
+                      ? `left`
+                      : `right`
+                  : `none`
+
+                return layoutItem({
                   context: this.context,
                   horizontalOffset,
-                  index: itemIndex,
                   item,
                   settings: this.settings,
-                  spineItemsManager: this.spineItemsManager,
                   verticalOffset,
                   viewport,
+                  isLastItem,
+                  spreadPosition,
+                  isScreenStartItem,
                 }).pipe(
                   map(
                     ({
@@ -103,8 +118,8 @@ export class SpineLayout extends DestroyableClass {
                       }
                     },
                   ),
-                ),
-              ),
+                )
+              }),
             ),
           of({ horizontalOffset: 0, verticalOffset: 0 }),
         ),

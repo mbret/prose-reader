@@ -1,119 +1,42 @@
 import { map, type Observable } from "rxjs"
 import type { SpineItem } from "../.."
 import type { Context } from "../../context/Context"
-import { isFullyPrePaginated } from "../../manifest/isFullyPrePaginated"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Viewport } from "../../viewport/Viewport"
-import type { SpineItemsManager } from "../SpineItemsManager"
 import { SpineItemSpineLayout } from "../types"
 
 export const layoutItem = ({
   horizontalOffset,
   verticalOffset,
   context,
-  spineItemsManager,
   settings,
-  index,
+  spreadPosition,
+  isLastItem,
+  isScreenStartItem,
   item,
   viewport,
 }: {
   horizontalOffset: number
   verticalOffset: number
   context: Context
-  spineItemsManager: SpineItemsManager
   settings: ReaderSettingsManager
   item: SpineItem
-  index: number
   viewport: Viewport
+  spreadPosition: "left" | "right" | "none"
+  isLastItem: boolean
+  isScreenStartItem: boolean
 }): Observable<{
   horizontalOffset: number
   verticalOffset: number
   layoutPosition: SpineItemSpineLayout
 }> => {
-  let minimumWidth = viewport.value.pageSize.width
-  let blankPagePosition: `none` | `before` | `after` = `none`
-  const isScreenStartItem =
-    horizontalOffset % viewport.absoluteViewport.width === 0
-  const isLastItem = index === spineItemsManager.items.length - 1
-  const manifest = context.manifest
-  const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
-
-  if (settings.values.computedSpreadMode) {
-    /**
-     * for now every reflowable content that has reflow siblings takes the entire screen by default
-     * this simplify many things and I am not sure the specs allow one reflow
-     * to end and an other one to start on the same screen anyway
-     *
-     * @important
-     * For now this is impossible to have reflow not taking all screen. This is because
-     * when an element is unloaded, the next element will move back its x axis, then an adjustment
-     * will occurs and the previous element will become visible again, meaning it will be loaded,
-     * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
-     * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
-     * book with spread on to make it work.
-     *
-     * @important
-     * When the book is globally pre-paginated we will not apply any of this even if each item is
-     * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
-     * we ignore it
-     */
-    if (
-      !isGloballyPrePaginated &&
-      item.renditionLayout === `reflowable` &&
-      !isLastItem
-    ) {
-      minimumWidth = viewport.value.pageSize.width * 2
-    }
-
-    // mainly to make loading screen looks good
-    if (
-      !isGloballyPrePaginated &&
-      item.renditionLayout === `reflowable` &&
-      isLastItem &&
-      isScreenStartItem
-    ) {
-      minimumWidth = viewport.value.pageSize.width * 2
-    }
-
-    const lastItemStartOnNewScreenInAPrepaginatedBook =
-      isScreenStartItem && isLastItem && isGloballyPrePaginated
-
-    if (item.item.pageSpreadRight && isScreenStartItem && !context.isRTL()) {
-      blankPagePosition = `before`
-      minimumWidth = viewport.value.pageSize.width * 2
-    } else if (
-      item.item.pageSpreadLeft &&
-      isScreenStartItem &&
-      context.isRTL()
-    ) {
-      blankPagePosition = `before`
-      minimumWidth = viewport.value.pageSize.width * 2
-    } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
-      if (context.isRTL()) {
-        blankPagePosition = `before`
-      } else {
-        blankPagePosition = `after`
-      }
-
-      minimumWidth = viewport.value.pageSize.width * 2
-    }
-  }
-
   // we trigger an item layout which will update the visual and return
   // us with the item new eventual layout information.
   // This step is not yet about moving item or adjusting position.
   const itemLayout$ = item.layout.layout({
-    minimumWidth,
-    blankPagePosition,
-    spreadPosition: settings.values.computedSpreadMode
-      ? isScreenStartItem
-        ? context.isRTL()
-          ? `right`
-          : `left`
-        : context.isRTL()
-          ? `left`
-          : `right`
-      : `none`,
+    spreadPosition,
+    horizontalOffset,
+    isLastItem,
   })
 
   return itemLayout$.pipe(

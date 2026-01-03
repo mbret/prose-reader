@@ -13,6 +13,7 @@ import {
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
+import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { deferNextResult } from "../utils/rxjs"
@@ -21,9 +22,9 @@ import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
 export class SpineItemLayout extends DestroyableClass {
   private layoutTriggerSubject = new Subject<{
-    blankPagePosition: `before` | `after` | `none`
-    minimumWidth: number
-    spreadPosition: `left` | `right` | `none`
+    spreadPosition: "left" | "right" | "none"
+    horizontalOffset: number
+    isLastItem: boolean
   }>()
 
   private lastLayout: {
@@ -47,8 +48,9 @@ export class SpineItemLayout extends DestroyableClass {
     super()
 
     this.layoutProcess$ = this.layoutTriggerSubject.pipe(
-      switchMap((params) => {
-        const { blankPagePosition, minimumWidth, spreadPosition } = params
+      switchMap(({ spreadPosition, horizontalOffset, isLastItem }) => {
+        const { blankPagePosition, minimumWidth } =
+          this.computeLayoutInformation({ horizontalOffset, isLastItem })
 
         this.hookManager.execute(`item.onBeforeLayout`, undefined, {
           blankPagePosition,
@@ -66,7 +68,7 @@ export class SpineItemLayout extends DestroyableClass {
         return merge(
           of({ type: "start" } as const),
           rendererLayout$.pipe(
-            this.applyDimsAfterLayout(params),
+            this.applyDimsAfterLayout({ blankPagePosition, minimumWidth }),
             map(
               (data) =>
                 ({
@@ -104,11 +106,99 @@ export class SpineItemLayout extends DestroyableClass {
     return Math.max(adjustedValue, pageSize)
   }
 
+  private computeLayoutInformation = ({
+    isLastItem,
+    horizontalOffset,
+  }: {
+    isLastItem: boolean
+    horizontalOffset: number
+  }) => {
+    let minimumWidth = this.viewport.value.pageSize.width
+    let blankPagePosition: `none` | `before` | `after` = `none`
+    const isScreenStartItem =
+      horizontalOffset % this.viewport.absoluteViewport.width === 0
+    const manifest = this.context.manifest
+    const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
+
+    if (this.settings.values.computedSpreadMode) {
+      /**
+       * for now every reflowable content that has reflow siblings takes the entire screen by default
+       * this simplify many things and I am not sure the specs allow one reflow
+       * to end and an other one to start on the same screen anyway
+       *
+       * @important
+       * For now this is impossible to have reflow not taking all screen. This is because
+       * when an element is unloaded, the next element will move back its x axis, then an adjustment
+       * will occurs and the previous element will become visible again, meaning it will be loaded,
+       * therefore pushing the focused element, meaning adjustment again, then unload of previous one,
+       * ... infinite loop. Due to the nature of reflow it's pretty much impossible to not load the entire
+       * book with spread on to make it work.
+       *
+       * @important
+       * When the book is globally pre-paginated we will not apply any of this even if each item is
+       * reflowable. This is mostly a publisher mistake but does not comply with spec. Therefore
+       * we ignore it
+       */
+      if (
+        !isGloballyPrePaginated &&
+        this.renderer.renditionLayout === `reflowable` &&
+        !isLastItem
+      ) {
+        minimumWidth = this.viewport.value.pageSize.width * 2
+      }
+
+      // mainly to make loading screen looks good
+      if (
+        !isGloballyPrePaginated &&
+        this.renderer.renditionLayout === `reflowable` &&
+        isLastItem &&
+        isScreenStartItem
+      ) {
+        minimumWidth = this.viewport.value.pageSize.width * 2
+      }
+
+      const lastItemStartOnNewScreenInAPrepaginatedBook =
+        isScreenStartItem && isLastItem && isGloballyPrePaginated
+
+      if (
+        this.item.pageSpreadRight &&
+        isScreenStartItem &&
+        !this.context.isRTL()
+      ) {
+        blankPagePosition = `before`
+        minimumWidth = this.viewport.value.pageSize.width * 2
+      } else if (
+        this.item.pageSpreadLeft &&
+        isScreenStartItem &&
+        this.context.isRTL()
+      ) {
+        blankPagePosition = `before`
+        minimumWidth = this.viewport.value.pageSize.width * 2
+      } else if (lastItemStartOnNewScreenInAPrepaginatedBook) {
+        if (this.context.isRTL()) {
+          blankPagePosition = `before`
+        } else {
+          blankPagePosition = `after`
+        }
+
+        minimumWidth = this.viewport.value.pageSize.width * 2
+      }
+    }
+
+    return {
+      minimumWidth,
+      blankPagePosition,
+    }
+  }
+
   private applyDimsAfterLayout =
     ({
       blankPagePosition,
       minimumWidth,
-    }: ObservedValueOf<typeof this.layoutTriggerSubject>) =>
+    }: {
+      blankPagePosition: `none` | `before` | `after`
+      minimumWidth: number
+    }) =>
     (stream: Observable<{ width: number; height: number } | undefined>) => {
       return stream.pipe(
         map((dims) => {
