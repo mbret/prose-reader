@@ -34,7 +34,6 @@ export class SpineItemLayout extends DestroyableClass {
   } | null = null
 
   public readonly layout$
-  public readonly layoutProcess$
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -47,7 +46,7 @@ export class SpineItemLayout extends DestroyableClass {
   ) {
     super()
 
-    this.layoutProcess$ = this.layoutTriggerSubject.pipe(
+    const layoutProcess$ = this.layoutTriggerSubject.pipe(
       switchMap(({ spreadPosition, horizontalOffset, isLastItem }) => {
         const { blankPagePosition, minimumWidth } =
           this.computeLayoutInformation({ horizontalOffset, isLastItem })
@@ -82,7 +81,7 @@ export class SpineItemLayout extends DestroyableClass {
       share(),
     )
 
-    this.layout$ = this.layoutProcess$.pipe(
+    this.layout$ = layoutProcess$.pipe(
       filter((event) => event.type === `end`),
       map((event) => event.data),
       share(),
