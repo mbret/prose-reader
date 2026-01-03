@@ -41,7 +41,7 @@ export const createSpineItemLocator = ({
         range?.getBoundingClientRect().x || offsetOfNodeInSpineItem
     }
 
-    const spineItemWidth = spineItem.layout.layoutInfo?.width || 0
+    const spineItemWidth = spineItem.layoutInfo?.width || 0
     const pageWidth = viewport.pageSize.width
 
     if (offsetOfNodeInSpineItem !== undefined) {
@@ -62,7 +62,7 @@ export const createSpineItemLocator = ({
     unsafePosition: SpineItemPosition,
     spineItem: SpineItem,
   ) => {
-    const { width, height } = spineItem.layout.layoutInfo
+    const { width, height } = spineItem.layoutInfo
 
     const adjustedPosition = new SpineItemPosition({
       x: getClosestValidOffsetFromApproximateOffsetInPages(
@@ -86,7 +86,7 @@ export const createSpineItemLocator = ({
     spineItem: SpineItem,
   ) => {
     const position = getSpineItemPositionFromNode(node, offset, spineItem)
-    const { height, width } = spineItem.layout.layoutInfo
+    const { height, width } = spineItem.layoutInfo
 
     return position
       ? getSpineItemPageIndexFromSpineItemPosition({
@@ -108,7 +108,7 @@ export const createSpineItemLocator = ({
     pageIndex: number,
     spineItem: SpineItem,
   ) => {
-    const { width, height } = spineItem.layout.layoutInfo
+    const { width, height } = spineItem.layoutInfo
     const pageWidth = viewport.pageSize.width
     const pageHeight = viewport.pageSize.height
     const isUsingVerticalWriting = !!spineItem.isUsingVerticalWriting()
@@ -157,7 +157,7 @@ export const createSpineItemLocator = ({
       getSpineItemPositionFromPageIndex({
         context,
         isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
-        itemLayout: spineItem.layout.layoutInfo,
+        itemLayout: spineItem.layoutInfo,
         pageIndex,
         viewport,
       }),

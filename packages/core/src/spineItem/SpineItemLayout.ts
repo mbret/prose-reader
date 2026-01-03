@@ -25,6 +25,8 @@ export class SpineItemLayout extends DestroyableClass {
     spreadPosition: "left" | "right" | "none"
     horizontalOffset: number
     isLastItem: boolean
+    edgeX: number
+    edgeY: number
   }>()
 
   private lastLayout: {
@@ -33,7 +35,7 @@ export class SpineItemLayout extends DestroyableClass {
     pageSize: { width: number; height: number }
   } | null = null
 
-  public readonly layout$
+  public readonly didLayout$: Observable<{ width: number; height: number }>
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -47,41 +49,56 @@ export class SpineItemLayout extends DestroyableClass {
     super()
 
     const layoutProcess$ = this.layoutTriggerSubject.pipe(
-      switchMap(({ spreadPosition, horizontalOffset, isLastItem }) => {
-        const { blankPagePosition, minimumWidth } =
-          this.computeLayoutInformation({ horizontalOffset, isLastItem })
+      switchMap(
+        ({ spreadPosition, horizontalOffset, isLastItem, edgeX, edgeY }) => {
+          const { blankPagePosition, minimumWidth } =
+            this.computeLayoutInformation({ horizontalOffset, isLastItem })
 
-        this.hookManager.execute(`item.onBeforeLayout`, undefined, {
-          blankPagePosition,
-          item: this.item,
-          minimumWidth,
-        })
+          this.hookManager.execute(`item.onBeforeLayout`, undefined, {
+            blankPagePosition,
+            item: this.item,
+            minimumWidth,
+          })
 
-        const rendererLayout$ = this.renderer.layout({
-          blankPagePosition,
-          minPageSpread: minimumWidth / this.viewport.pageSize.width,
-          minimumWidth,
-          spreadPosition,
-        })
+          const rendererLayout$ = this.renderer.layout({
+            blankPagePosition,
+            minPageSpread: minimumWidth / this.viewport.pageSize.width,
+            minimumWidth,
+            spreadPosition,
+          })
 
-        return merge(
-          of({ type: "start" } as const),
-          rendererLayout$.pipe(
-            this.applyDimsAfterLayout({ blankPagePosition, minimumWidth }),
-            map(
-              (data) =>
-                ({
+          return merge(
+            of({ type: "start" } as const),
+            rendererLayout$.pipe(
+              /**
+               * Now that inner layout is done from the renderer, we adjust the dimensions
+               * of the outer container element
+               */
+              this.updateContainerLayout({
+                minimumWidth,
+                edgeX,
+                edgeY,
+              }),
+              map((data) => {
+                this.hookManager.execute(`item.onAfterLayout`, undefined, {
+                  blankPagePosition,
+                  item: this.item,
+                  minimumWidth,
+                })
+
+                return {
                   type: "end",
                   data,
-                }) as const,
+                } as const
+              }),
             ),
-          ),
-        )
-      }),
+          )
+        },
+      ),
       share(),
     )
 
-    this.layout$ = layoutProcess$.pipe(
+    this.didLayout$ = layoutProcess$.pipe(
       filter((event) => event.type === `end`),
       map((event) => event.data),
       share(),
@@ -190,16 +207,44 @@ export class SpineItemLayout extends DestroyableClass {
     }
   }
 
-  private applyDimsAfterLayout =
+  private adjustPositionOfElement = ({
+    right,
+    left,
+    top,
+  }: {
+    right?: number
+    left?: number
+    top?: number
+  }) => {
+    if (right !== undefined) {
+      this.containerElement.style.right = `${right}px`
+    } else {
+      this.containerElement.style.removeProperty(`right`)
+    }
+    if (left !== undefined) {
+      this.containerElement.style.left = `${left}px`
+    } else {
+      this.containerElement.style.removeProperty(`left`)
+    }
+    if (top !== undefined) {
+      this.containerElement.style.top = `${top}px`
+    } else {
+      this.containerElement.style.removeProperty(`top`)
+    }
+  }
+
+  private updateContainerLayout =
     ({
-      blankPagePosition,
       minimumWidth,
+      edgeX,
+      edgeY,
     }: {
-      blankPagePosition: `none` | `before` | `after`
       minimumWidth: number
+      edgeX: number
+      edgeY: number
     }) =>
-    (stream: Observable<{ width: number; height: number } | undefined>) => {
-      return stream.pipe(
+    (stream: Observable<{ width: number; height: number } | undefined>) =>
+      stream.pipe(
         map((dims) => {
           const trustableLastLayout = isShallowEqual(
             this.lastLayout?.pageSize,
@@ -237,51 +282,36 @@ export class SpineItemLayout extends DestroyableClass {
           this.containerElement.style.width = `${safeWidth}px`
           this.containerElement.style.height = `${safeHeight}px`
 
-          this.hookManager.execute(`item.onAfterLayout`, undefined, {
-            blankPagePosition,
-            item: this.item,
-            minimumWidth,
-          })
+          if (this.settings.values.computedPageTurnDirection === `vertical`) {
+            this.adjustPositionOfElement({
+              top: edgeY,
+              left: edgeX,
+            })
+
+            return { width: safeWidth, height: safeHeight }
+          }
+
+          // We can now adjust the position of the item if needed based on its new layout.
+          // For simplification we use an edge offset, which means for LTR it will be x from left and for RTL
+          // it will be x from right
+          this.adjustPositionOfElement(
+            this.context.isRTL()
+              ? { right: edgeX, top: 0 }
+              : { left: edgeX, top: 0 },
+          )
 
           return { width: safeWidth, height: safeHeight }
         }),
       )
-    }
 
   public layout = (
     params: ObservedValueOf<typeof this.layoutTriggerSubject>,
   ) => {
-    const nextResult = deferNextResult(this.layout$.pipe(first()))
+    const nextResult = deferNextResult(this.didLayout$.pipe(first()))
 
     this.layoutTriggerSubject.next(params)
 
     return nextResult()
-  }
-
-  public adjustPositionOfElement = ({
-    right,
-    left,
-    top,
-  }: {
-    right?: number
-    left?: number
-    top?: number
-  }) => {
-    if (right !== undefined) {
-      this.containerElement.style.right = `${right}px`
-    } else {
-      this.containerElement.style.removeProperty(`right`)
-    }
-    if (left !== undefined) {
-      this.containerElement.style.left = `${left}px`
-    } else {
-      this.containerElement.style.removeProperty(`left`)
-    }
-    if (top !== undefined) {
-      this.containerElement.style.top = `${top}px`
-    } else {
-      this.containerElement.style.removeProperty(`top`)
-    }
   }
 
   get layoutInfo() {

@@ -1,5 +1,5 @@
 import { merge } from "rxjs"
-import { takeUntil, tap } from "rxjs/operators"
+import { share, takeUntil, tap } from "rxjs/operators"
 import type { Manifest } from ".."
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -34,7 +34,16 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   public readonly containerElement: HTMLElement
   public readonly renderer: DocumentRenderer
   public readonly resourcesHandler: ResourceHandler
-  public readonly layout: SpineItemLayout
+
+  /**
+   * Dispatched once the item has fully did layout. State is also updated before the dispatch.
+   * - not dirty
+   * - ready (if loaded)
+   * - element adjusted
+   */
+  public readonly didLayout$: SpineItemLayout["didLayout$"]
+
+  private readonly _layout: SpineItemLayout
 
   constructor(
     public item: Manifest[`spineItems`][number],
@@ -79,7 +88,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       ? rendererFactory(rendererParams)
       : new DefaultRenderer(rendererParams)
 
-    this.layout = new SpineItemLayout(
+    this._layout = new SpineItemLayout(
       item,
       this.containerElement,
       context,
@@ -99,13 +108,14 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       }),
     )
 
-    const updateStateOnLayout$ = this.layout.layout$.pipe(
+    this.didLayout$ = this._layout.didLayout$.pipe(
       tap(() => {
         this.mergeCompare({
           isDirty: false,
           isReady: this.renderer.state$.value.state === "loaded",
         })
       }),
+      share(),
     )
 
     merge(
@@ -116,8 +126,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
        * to layout changes may rely on the state value to be updated.
        */
       updateStateOnLoaded$,
-      updateStateOnLayout$,
-      this.layout.layout$,
+      this.didLayout$,
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
@@ -189,16 +198,24 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     return this.renderer.renditionLayout
   }
 
+  get layoutInfo() {
+    return this._layout.layoutInfo
+  }
+
   get numberOfPages() {
     return getSpineItemNumberOfPages({
       isUsingVerticalWriting: !!this.isUsingVerticalWriting(),
-      itemHeight: this.layout.layoutInfo.height,
-      itemWidth: this.layout.layoutInfo.width,
+      itemHeight: this._layout.layoutInfo.height,
+      itemWidth: this._layout.layoutInfo.width,
       pageWidth: this.viewport.pageSize.width,
       pageHeight: this.viewport.pageSize.height,
       pageTurnDirection: this.settings.values.computedPageTurnDirection,
       pageTurnMode: this.settings.values.pageTurnMode,
     })
+  }
+
+  public layout: SpineItemLayout["layout"] = (params) => {
+    return this._layout.layout(params)
   }
 }
 

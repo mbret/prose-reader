@@ -1,6 +1,6 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { HookManager, SpineItem } from "../.."
+import { HookManager, SpineItem, SpineItemsObserver } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import { Viewport } from "../../viewport/Viewport"
@@ -50,7 +50,7 @@ const createSpineItem = (
     viewport,
   )
 
-  vi.spyOn(spineItem.layout, "layoutInfo", "get").mockReturnValue({
+  vi.spyOn(spineItem, "layoutInfo", "get").mockReturnValue({
     // left: item.left,
     // top: item.top,
     width: item.width,
@@ -73,9 +73,11 @@ describe("Given single page items and no spread", () => {
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
         const viewport = new Viewport(context, settings)
+        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
+          spineItemsObserver,
           context,
           settings,
           viewport,
@@ -122,9 +124,11 @@ describe("Given single page items and no spread", () => {
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
         const viewport = new Viewport(context, settings)
+        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
+          spineItemsObserver,
           context,
           settings,
           viewport,
@@ -171,9 +175,11 @@ describe("Given single page items and no spread", () => {
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
         const viewport = new Viewport(context, settings)
+        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
         const spineLayout = new SpineLayout(
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           spineItemsManager as any,
+          spineItemsObserver,
           context,
           settings,
           viewport,

@@ -125,9 +125,7 @@ export const annotationsEnhancer =
     const delete$ = commands.delete$.pipe(
       tap(({ id }) => {
         annotationsSubject.next(
-          annotationsSubject
-            .getValue()
-            .filter((highlight) => highlight.id !== id),
+          annotationsSubject.value.filter((highlight) => highlight.id !== id),
         )
       }),
     )

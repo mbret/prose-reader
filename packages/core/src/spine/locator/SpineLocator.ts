@@ -244,8 +244,8 @@ export const createSpineLocator = ({
 
     const spineItemPageIndex =
       spineItemLocator.getSpineItemPageIndexFromPosition({
-        itemWidth: spineItem.layout.layoutInfo.width,
-        itemHeight: spineItem.layout.layoutInfo.height,
+        itemWidth: spineItem.layoutInfo.width,
+        itemHeight: spineItem.layoutInfo.height,
         position: spineItemPosition,
         isUsingVerticalWriting: !!spineItem.isUsingVerticalWriting(),
       })
