@@ -10,7 +10,7 @@ export const defaultHook =
       filename: archive.filename,
       title:
         archive.records.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) ||
-        ``,
+        archive.filename,
       renditionLayout: undefined,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
