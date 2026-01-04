@@ -3,7 +3,7 @@ import {
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { Observable, filter, finalize, first, switchMap, tap } from "rxjs"
+import { filter, finalize, first, Observable, switchMap, tap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
 const createSnapshotItem = () => {
@@ -61,7 +61,7 @@ export class Snapshot extends Observable<HTMLElement> {
             contentMask.style.left = "0"
 
             const measure = options
-            const { height, width } = item.layout.layoutInfo
+            const { height, width } = item.layoutInfo
             const numberOfPages = item.numberOfPages
             const widthScaleFullFrame = (measure.width / width) * numberOfPages
             const heightScale = measure.height / height
