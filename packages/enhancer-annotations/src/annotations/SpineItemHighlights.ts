@@ -43,12 +43,33 @@ export class SpineItemHighlights extends DestroyableClass {
 
     const itemHighlights$ = this.annotations$.pipe(
       switchMap((annotations) => {
-        this.highlights.forEach((highlight) => {
-          highlight.destroy()
-        })
-        this.highlights = []
+        const newAnnotations = annotations.filter(
+          (annotation) =>
+            !this.highlights.some(
+              (highlight) => highlight.highlight.id === annotation.id,
+            ),
+        )
+        const oldAnnotations = this.highlights.filter(
+          (highlight) =>
+            highlight.highlight.itemIndex !== this.spineItem.item.index,
+        )
 
-        annotations.forEach((annotation) => {
+        this.highlights.forEach((highlight, index) => {
+          const existingAnnotation = annotations.find(
+            (annotation) => annotation.id === highlight.highlight.id,
+          )
+
+          if (oldAnnotations.includes(highlight)) {
+            highlight.destroy()
+            this.highlights = this.highlights.splice(index, 1)
+          }
+
+          if (existingAnnotation) {
+            highlight.highlight = existingAnnotation
+          }
+        })
+
+        newAnnotations.forEach((annotation) => {
           if (annotation.itemIndex !== this.spineItem.item.index) return
 
           const isSelected$ = this.selectedHighlight.pipe(

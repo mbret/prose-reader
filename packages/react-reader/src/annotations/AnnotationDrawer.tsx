@@ -1,16 +1,20 @@
 import { Box, Button, Stack, Text, Textarea } from "@chakra-ui/react"
 import { type ComponentProps, memo, useEffect, useState } from "react"
-import { SIGNAL_RESET, useSignalValue } from "reactjrx"
-import { truncateText } from "../../common/utils"
+import { useSubscribe } from "reactjrx"
+import { tap } from "rxjs"
+import { truncateText } from "../common/utils"
 import {
   DrawerBackdrop,
   DrawerBody,
   DrawerContent,
   DrawerHeader,
   DrawerRoot,
-} from "../../components/ui/drawer"
-import { useReader } from "../useReader"
-import { selectedHighlightSignal } from "./states"
+} from "../components/ui/drawer"
+import {
+  useReaderContext,
+  useReaderContextValue,
+} from "../context/useReaderContext"
+import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
 
 const HIGHLIGHT_COLORS = [
   "rgba(216, 191, 216, 1)", // Light purple
@@ -20,9 +24,21 @@ const HIGHLIGHT_COLORS = [
   "rgba(255, 182, 193, 1)", // Light pink
 ] as const
 
-export const HighlightMenu = memo(() => {
-  const { reader } = useReader()
-  const { highlight, selection } = useSignalValue(selectedHighlightSignal)
+export const AnnotationDrawer = memo(() => {
+  const reader = useReaderWithAnnotations()
+  const {
+    selectedHighlight,
+    onAnnotationCreate,
+    onAnnotationUpdate,
+    onAnnotationDelete,
+  } = useReaderContextValue([
+    "selectedHighlight",
+    "onAnnotationCreate",
+    "onAnnotationUpdate",
+    "onAnnotationDelete",
+  ])
+  const context = useReaderContext()
+  const { highlight, selection } = selectedHighlight ?? {}
   const [selectedColor, setSelectedColor] = useState<string>(
     HIGHLIGHT_COLORS[0],
   )
@@ -30,7 +46,10 @@ export const HighlightMenu = memo(() => {
   const isOpen = !!(selection ?? highlight)
 
   const onClose = () => {
-    selectedHighlightSignal.update(SIGNAL_RESET)
+    context.update((state) => ({
+      ...state,
+      selectedHighlight: undefined,
+    }))
   }
 
   const onOpenChange: ComponentProps<typeof DrawerRoot>["onOpenChange"] = (
@@ -64,15 +83,21 @@ export const HighlightMenu = memo(() => {
     }
   }, [highlightColor, isOpen])
 
-  useEffect(() => {
-    if (reader && highlight) {
-      reader.annotations.select(highlight.id)
-
-      return () => {
-        reader.annotations.select(undefined)
-      }
-    }
-  }, [reader, highlight])
+  useSubscribe(
+    function openDrawerOnTap() {
+      return reader?.annotations.highlightTap$.pipe(
+        tap(({ highlight }) => {
+          context.update((state) => ({
+            ...state,
+            selectedHighlight: {
+              highlight,
+            },
+          }))
+        }),
+      )
+    },
+    [reader],
+  )
 
   return (
     <DrawerRoot placement="bottom" onOpenChange={onOpenChange} open={isOpen}>
@@ -111,11 +136,16 @@ export const HighlightMenu = memo(() => {
             <Button
               onClick={() => {
                 onClose()
-                reader?.annotations.annotate({
+
+                const annotation = reader?.annotations.createAnnotation({
                   ...selection,
                   highlightColor: selectedColor,
                   notes: contents,
                 })
+
+                if (annotation) {
+                  onAnnotationCreate?.(annotation)
+                }
               }}
             >
               Highlight
@@ -127,7 +157,9 @@ export const HighlightMenu = memo(() => {
                 flex={1}
                 onClick={() => {
                   onClose()
-                  reader?.annotations.update(highlight.id, {
+
+                  onAnnotationUpdate?.({
+                    id: highlight.id,
                     highlightColor: selectedColor,
                     notes: contents,
                   })
@@ -140,7 +172,8 @@ export const HighlightMenu = memo(() => {
                 variant="surface"
                 onClick={() => {
                   onClose()
-                  reader?.annotations.delete(highlight.id)
+
+                  onAnnotationDelete?.(highlight.id)
                 }}
               >
                 Remove

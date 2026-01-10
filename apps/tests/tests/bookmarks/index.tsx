@@ -71,9 +71,13 @@ async function run() {
           if (bookmarkForPage) {
             reader.annotations.delete(bookmarkForPage.resource.id)
           } else {
-            reader.annotations.annotateAbsolutePage({
+            const annotation = reader.annotations.createAnnotation({
               absolutePageIndex: pagination?.beginAbsolutePageIndex ?? 0,
             })
+
+            if (annotation) {
+              reader.annotations.upsert(annotation)
+            }
           }
         }}
       >

@@ -19,7 +19,7 @@ export const TimeIndicator = (props: TextProps) => {
   const time = useTime()
 
   return (
-    <Text fontSize="md" {...props}>
+    <Text fontSize="sm" {...props}>
       {time.toLocaleTimeString(navigator.language, {
         hour: "2-digit",
         minute: "2-digit",

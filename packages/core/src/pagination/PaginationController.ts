@@ -167,18 +167,29 @@ export class PaginationController extends DestroyableClass {
 
         if (beginSpineItem === undefined || endSpineItem === undefined) return
 
+        const beginPageEntry = this.spine.pages.fromSpineItemPageIndex(
+          beginSpineItem,
+          beginPageIndexInSpineItem,
+        )
+        const endPageEntry = this.spine.pages.fromSpineItemPageIndex(
+          endSpineItem,
+          endPageIndexInSpineItem,
+        )
+
         // @todo only update long cfi if the item layout change but specifically its content
         this.pagination.update({
-          beginCfi: generateCfiForSpineItemPage({
-            pageIndex: beginPageIndexInSpineItem,
-            spineItem: beginSpineItem,
-            spine: this.spine,
-          }),
-          endCfi: generateCfiForSpineItemPage({
-            pageIndex: endPageIndexInSpineItem,
-            spineItem: endSpineItem,
-            spine: this.spine,
-          }),
+          beginCfi: beginPageEntry?.firstVisibleNode
+            ? generateCfiForSpineItemPage({
+                spineItem: beginSpineItem.item,
+                pageNode: beginPageEntry?.firstVisibleNode,
+              })
+            : generateRootCfi(beginSpineItem.item),
+          endCfi: endPageEntry?.firstVisibleNode
+            ? generateCfiForSpineItemPage({
+                spineItem: endSpineItem.item,
+                pageNode: endPageEntry?.firstVisibleNode,
+              })
+            : generateRootCfi(endSpineItem.item),
         })
       }),
     )

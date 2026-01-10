@@ -8,13 +8,11 @@ import {
   useRef,
 } from "react"
 import { useNavigate, useParams } from "react-router"
-import { useObserve, useSignalValue } from "reactjrx"
-import { HighlightMenu } from "./annotations/HighlightMenu"
-import { useAnnotations } from "./annotations/useAnnotations"
+import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
+import { restoreAnnotations, usePersistAnnotations } from "./annotations"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
-import { QuickActionsMenu } from "./navigation/QuickActionsMenu"
 import { useBookSettings } from "./settings/useBookSettings"
 import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
@@ -32,6 +30,11 @@ export const ReaderScreen = memo(() => {
   const { data: manifest, error: manifestError } = useManifest(epubKey)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useSettings()
+  const [annotations, annotationsSignal] = useSignalState(() =>
+    signal({
+      default: restoreAnnotations(epubKey),
+    }),
+  )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
   const bookState = useObserve(() => reader?.state$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
@@ -44,9 +47,9 @@ export const ReaderScreen = memo(() => {
 
   useCreateReader()
   useUpdateReaderSettings({ localSettings })
-  useAnnotations(reader, url)
   usePersistCurrentPagination()
   useResetStateOnUnMount()
+  usePersistAnnotations(annotationsSignal, epubKey)
 
   const {
     fontSizeScopeReference,
@@ -112,16 +115,28 @@ export const ReaderScreen = memo(() => {
             },
           },
         }}
+        annotations={annotations}
+        onAnnotationCreate={(annotation) => {
+          annotationsSignal.update([...annotations, annotation])
+        }}
+        onAnnotationUpdate={(annotation) => {
+          annotationsSignal.update((state) =>
+            state.map((a) =>
+              a.id === annotation.id ? { ...a, ...annotation } : a,
+            ),
+          )
+        }}
+        onAnnotationDelete={(id) => {
+          annotationsSignal.update((state) => state.filter((a) => a.id !== id))
+        }}
       >
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
         {bookState !== "ready" && !manifestError && <BookLoading />}
-        <QuickActionsMenu />
         <MenuDialog
           localSettings={localSettings}
           setLocalSettings={setLocalSettings}
         />
-        <HighlightMenu />
       </ReactReader>
     </>
   )

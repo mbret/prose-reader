@@ -25,7 +25,7 @@ import type { CoreInputSettings } from "./settings/types"
 import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
-import type { SpineItem, SpineItemReference } from "./spineItem/SpineItem"
+import type { SpineItemReference } from "./spineItem/SpineItem"
 import { injectCSS, removeCSS } from "./utils/dom"
 import { Viewport } from "./viewport/Viewport"
 
@@ -173,14 +173,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     cfi: {
       generateCfiFromRange,
       parseCfi,
-      generateCfiForSpineItemPage: (params: {
-        pageIndex: number
-        spineItem: SpineItem
-      }) =>
-        generateCfiForSpineItemPage({
-          ...params,
-          spine,
-        }),
+      generateCfiForSpineItemPage,
       resolveCfi: (
         params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,
       ) => resolveCfi({ ...params, spineItemsManager }),

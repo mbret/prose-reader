@@ -5,6 +5,7 @@ import {
   forkJoin,
   map,
   merge,
+  type Observable,
   switchMap,
 } from "rxjs"
 import { SpineItemHighlights } from "./SpineItemHighlights"
@@ -17,8 +18,8 @@ export class ReaderHighlights extends DestroyableClass {
 
   constructor(
     private reader: Reader,
-    private highlights: BehaviorSubject<RuntimeAnnotation[]>,
-    private selectedHighlight: BehaviorSubject<string | undefined>,
+    private highlights: Observable<RuntimeAnnotation[]>,
+    private selectedHighlight: Observable<string | undefined>,
   ) {
     super()
 

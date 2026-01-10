@@ -1,6 +1,7 @@
 import { isPositionInArea } from "@prose-reader/enhancer-gestures"
 import { useEffect } from "react"
 import { map, withLatestFrom } from "rxjs"
+import { useReaderContext } from "../../context/useReaderContext"
 import { useAnnotations } from "../useAnnotations"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
 
@@ -9,6 +10,7 @@ const CONTINUE_TAP_GESTURE = true
 export const useBookmarkOnCornerTap = () => {
   const reader = useReaderWithAnnotations()
   const { data: bookmarks } = useAnnotations()
+  const readerContext = useReaderContext()
 
   useEffect(() => {
     if (!reader) return
@@ -55,7 +57,9 @@ export const useBookmarkOnCornerTap = () => {
               )
 
               if (bookmarkForPage) {
-                reader?.annotations.delete(bookmarkForPage.resource.id)
+                readerContext.value.onAnnotationDelete?.(
+                  bookmarkForPage.resource.id,
+                )
 
                 return !CONTINUE_TAP_GESTURE
               }
@@ -63,9 +67,13 @@ export const useBookmarkOnCornerTap = () => {
               const canBookmarkPage = candidates?.[pageEntry.absolutePageIndex]
 
               if (canBookmarkPage) {
-                reader?.annotations.annotateAbsolutePage({
+                const annotation = reader?.annotations.createAnnotation({
                   absolutePageIndex: pageEntry.absolutePageIndex,
                 })
+
+                if (annotation) {
+                  readerContext.value.onAnnotationCreate?.(annotation)
+                }
 
                 return !CONTINUE_TAP_GESTURE
               }
@@ -77,5 +85,5 @@ export const useBookmarkOnCornerTap = () => {
     )
 
     return unSub
-  }, [reader, bookmarks])
+  }, [reader, bookmarks, readerContext])
 }

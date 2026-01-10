@@ -1,6 +1,5 @@
 import { useEffect } from "react"
 import { SIGNAL_RESET, signal, useObserve } from "reactjrx"
-import { selectedHighlightSignal } from "./annotations/states"
 import { useReader } from "./useReader"
 
 export const usePagination = () => {
@@ -46,7 +45,6 @@ export const useResetStateOnUnMount = () => {
   useEffect(() => {
     return () => {
       isQuickMenuOpenSignal.update(SIGNAL_RESET)
-      selectedHighlightSignal.update(SIGNAL_RESET)
     }
   }, [])
 }

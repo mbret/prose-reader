@@ -1,7 +1,7 @@
-import { Presence } from "@chakra-ui/react"
 import { memo } from "react"
-import { useObserve, useSignalValue } from "reactjrx"
+import { useObserve } from "reactjrx"
 import { animationFrameScheduler, map, throttleTime } from "rxjs"
+import { FloatingMenu } from "../common/FloatingMenu"
 import { Slider } from "../components/ui/slider"
 import { MAX_ZOOM_SCALE } from "../constants"
 import { useReader } from "../context/useReader"
@@ -30,14 +30,9 @@ const normalizeZoomValue = (
 }
 
 export const ZoomControls = memo(() => {
-  const { quickMenuBottomBarBoundingBoxSignal, zoomMaxScale = MAX_ZOOM_SCALE } =
-    useReaderContextValue([
-      "quickMenuBottomBarBoundingBoxSignal",
-      "zoomMaxScale",
-    ])
-  const quickMenuBottomBarBoundingBox = useSignalValue(
-    quickMenuBottomBarBoundingBoxSignal,
-  )
+  const { zoomMaxScale = MAX_ZOOM_SCALE } = useReaderContextValue([
+    "zoomMaxScale",
+  ])
   const reader = useReader()
   const zoomScaleValue =
     useObserve(
@@ -62,22 +57,9 @@ export const ZoomControls = memo(() => {
     zoomMaxScale,
     STEP,
   )
-  const bottomBarHeight =
-    quickMenuBottomBarBoundingBox?.borderBoxSize?.[0]?.blockSize ?? 1
 
   return (
-    <Presence
-      present={isZooming && zoomScaleValue > 1}
-      animationName={{ _open: "fade-in", _closed: "fade-out" }}
-      animationDuration="moderate"
-      position="absolute"
-      bottom={`calc(${bottomBarHeight}px + var(--chakra-spacing-4))`}
-      right={4}
-      backgroundColor="bg.panel"
-      shadow="sm"
-      borderRadius="md"
-      p={4}
-    >
+    <FloatingMenu present={isZooming && zoomScaleValue > 1}>
       <Slider
         value={[normalizedZoomScaleValue]}
         min={MIN}
@@ -96,6 +78,6 @@ export const ZoomControls = memo(() => {
           }
         }}
       />
-    </Presence>
+    </FloatingMenu>
   )
 })

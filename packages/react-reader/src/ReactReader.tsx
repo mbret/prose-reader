@@ -1,9 +1,12 @@
 import { Box, type BoxProps, Presence } from "@chakra-ui/react"
 import { type ComponentProps, memo, useCallback, useState } from "react"
+import { AnnotateControls } from "./annotations/AnnotateControls"
+import { AnnotationDrawer } from "./annotations/AnnotationDrawer"
 import { AnnotationsDialog } from "./annotations/AnnotationsDialog"
 import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers"
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
+import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
 import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
@@ -39,6 +42,7 @@ const Effects = memo(() => {
   useNotifications()
   useQuickMenuToggleGesture()
   usePreventInteractionOnSelection()
+  useSyncAnnotationsWithReader()
 
   return (
     <>
@@ -116,6 +120,8 @@ const InnerReactReader = memo(
           <RefitDialog />
           <QuickMenu onItemClick={_onItemClick} />
           <ZoomControls />
+          <AnnotateControls />
+          <AnnotationDrawer />
           <FontSizeControlsDialog />
           <BookmarkPageMarkers />
           <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />

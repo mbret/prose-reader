@@ -38,7 +38,7 @@ export const FloatingProgress = () => {
         letterSpacing={1}
         color="white"
       >
-        <Text fontSize="md">{displayableProgress} %</Text>
+        <Text fontSize="sm">{displayableProgress} %</Text>
       </Box>
     </Presence>
   )

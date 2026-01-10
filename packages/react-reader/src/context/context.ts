@@ -1,4 +1,8 @@
 import type { Reader } from "@prose-reader/core"
+import type {
+  Annotation,
+  RuntimeAnnotation,
+} from "@prose-reader/enhancer-annotations"
 import type { EnhancerAPI as GesturesEnhancerAPI } from "@prose-reader/enhancer-gestures"
 import { createContext, type Dispatch, type SetStateAction } from "react"
 import { type Signal, signal } from "reactjrx"
@@ -27,6 +31,15 @@ export type PrivateContextType = {
   fontSizeMax: number
   _quickMenuOpen: boolean
   _onQuickMenuOpenChange: Dispatch<SetStateAction<boolean>>
+  selectedHighlight:
+    | {
+        highlight?: RuntimeAnnotation
+        selection?: {
+          selection: Selection
+          itemIndex: number
+        }
+      }
+    | undefined
 }
 
 export type PublicContextType = {
@@ -58,6 +71,12 @@ export type PublicContextType = {
     PROSE_REACT_READER_SETTINGS_SCOPE_REFERENCE,
     number | undefined
   >
+  annotations?: Annotation[]
+  onAnnotationCreate?: (annotation: Annotation) => void
+  onAnnotationUpdate?: (
+    annotation: Pick<Annotation, "id" | "highlightColor" | "notes">,
+  ) => void
+  onAnnotationDelete?: (id: string) => void
 }
 
 export type ReaderContextType = PrivateContextType & PublicContextType
@@ -78,6 +97,7 @@ export const getDefaultValue = (): ReaderContextType => ({
   fontSizeMax: 5,
   uncontrolledFontSize: 1,
   enableFloatingProgress: true,
+  selectedHighlight: undefined,
 })
 
 export const ReaderContext = createContext(

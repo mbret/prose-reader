@@ -1,14 +1,16 @@
-import { isDefined, type Reader } from "@prose-reader/core"
 import {
-  BehaviorSubject,
+  generateRootCfi,
+  isShallowEqual,
+  type Reader,
+} from "@prose-reader/core"
+import {
   combineLatest,
   debounceTime,
   distinctUntilChanged,
-  filter,
   map,
   merge,
+  NEVER,
   of,
-  share,
   shareReplay,
   switchMap,
   takeUntil,
@@ -16,9 +18,14 @@ import {
 } from "rxjs"
 import { ReaderHighlights } from "./annotations/ReaderHighlights"
 import type { RuntimeAnnotation } from "./annotations/types"
-import { Commands } from "./Commands"
 import { report } from "./report"
-import type { AnnotationsEnhancerAPI } from "./types"
+import { Settings } from "./Settings"
+import type {
+  AnnotateAbsolutePageParams,
+  AnnotateParams,
+  AnnotationsEnhancerAPI,
+  AnnotationsEnhancerOptions,
+} from "./types"
 
 export type { AnnotationsEnhancerAPI }
 
@@ -26,16 +33,35 @@ export const annotationsEnhancer =
   <InheritOptions, InheritOutput extends Reader>(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (options: InheritOptions): InheritOutput & AnnotationsEnhancerAPI => {
-    const reader = next(options)
-    const commands = new Commands()
-    const annotationsSubject = new BehaviorSubject<RuntimeAnnotation[]>([])
-    const selectedHighlightSubject = new BehaviorSubject<string | undefined>(
-      undefined,
-    )
+  (
+    options: InheritOptions & AnnotationsEnhancerOptions,
+  ): InheritOutput & AnnotationsEnhancerAPI => {
+    const { annotations$: initialAnnotations$, ...rest } = options
+    const settings = new Settings({ annotations$: initialAnnotations$ })
+    const reader = next(rest as InheritOptions)
 
-    const annotations$ = annotationsSubject.asObservable().pipe(
-      distinctUntilChanged(),
+    const annotations$ = settings
+      .watch("annotations$")
+      .pipe(switchMap((annotations) => annotations ?? NEVER))
+
+    const runtimeAnnotations$ = annotations$.pipe(
+      distinctUntilChanged(isShallowEqual),
+      map((annotations) => {
+        const runtimeAnnotations: RuntimeAnnotation[] = annotations.map(
+          (annotation) => {
+            const { itemIndex = 0 } = reader.cfi.parseCfi(annotation.cfi ?? "")
+
+            const highlight = {
+              ...annotation,
+              itemIndex,
+            } satisfies RuntimeAnnotation
+
+            return highlight
+          },
+        )
+
+        return runtimeAnnotations
+      }),
       tap((annotations) => {
         report.debug("annotations", annotations)
       }),
@@ -45,10 +71,19 @@ export const annotationsEnhancer =
       }),
     )
 
+    const selectedHighlight$ = runtimeAnnotations$.pipe(
+      map(
+        (annotations) =>
+          annotations.find((annotation) => annotation.selected)?.id,
+      ),
+      distinctUntilChanged(),
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    )
+
     const readerHighlights = new ReaderHighlights(
       reader,
-      annotationsSubject,
-      selectedHighlightSubject,
+      runtimeAnnotations$,
+      selectedHighlight$,
     )
 
     const resolveItemInformation = (params: {
@@ -67,92 +102,50 @@ export const annotationsEnhancer =
       return undefined
     }
 
-    const annotated$ = commands.annotate$.pipe(
-      map(({ data: { selection, ...rest } }) => {
-        const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
-        const spineItem = reader.spineItemsManager.get(itemIndex)
+    const createAnnotation = ({
+      selection,
+      ...rest
+    }: (AnnotateParams | AnnotateAbsolutePageParams) & {
+      absolutePageIndex?: number
+    }) => {
+      const { itemIndex, pageIndex = 0 } = resolveItemInformation(rest) ?? {}
+      const spineItem = reader.spineItemsManager.get(itemIndex)
+      const id = window.crypto.randomUUID()
 
-        if (!spineItem) return undefined
+      if (!spineItem) return undefined
 
-        const range = selection
-          ? reader.selection.createOrderedRangeFromSelection({
-              selection,
-              spineItem,
+      const range = selection
+        ? reader.selection.createOrderedRangeFromSelection({
+            selection,
+            spineItem,
+          })
+        : undefined
+
+      const pageEntry = reader.spine.pages.fromSpineItemPageIndex(
+        spineItem,
+        pageIndex,
+      )
+
+      const cfiWithRangeOrFirstNodeOrRoot = range
+        ? reader.cfi.generateCfiFromRange(range, spineItem.item)
+        : pageEntry?.firstVisibleNode
+          ? reader.cfi.generateCfiForSpineItemPage({
+              spineItem: spineItem.item,
+              pageNode: pageEntry.firstVisibleNode,
             })
-          : undefined
+          : generateRootCfi(spineItem.item)
 
-        const cfi = range
-          ? reader.cfi.generateCfiFromRange(range, spineItem.item)
-          : reader.cfi.generateCfiForSpineItemPage({ pageIndex, spineItem })
+      const highlight = {
+        cfi: cfiWithRangeOrFirstNodeOrRoot,
+        itemIndex: spineItem.index,
+        id,
+        ...rest,
+      } satisfies RuntimeAnnotation
 
-        const highlight = {
-          cfi,
-          itemIndex: spineItem.index,
-          id: window.crypto.randomUUID(),
-          ...rest,
-        } satisfies RuntimeAnnotation
+      return highlight
+    }
 
-        annotationsSubject.next([...annotationsSubject.getValue(), highlight])
-
-        return [highlight.id]
-      }),
-      filter(isDefined),
-      share(),
-    )
-
-    const add$ = commands.add$.pipe(
-      map(({ data }) => {
-        const annotations = Array.isArray(data) ? data : [data]
-
-        const addedHighlights = annotations.map((annotation) => {
-          const { itemIndex = 0 } = reader.cfi.parseCfi(annotation.cfi ?? "")
-
-          const highlight = {
-            ...annotation,
-            itemIndex,
-          } satisfies RuntimeAnnotation
-
-          return highlight
-        })
-
-        annotationsSubject.next([
-          ...annotationsSubject.getValue(),
-          ...addedHighlights,
-        ])
-      }),
-    )
-
-    const delete$ = commands.delete$.pipe(
-      tap(({ id }) => {
-        annotationsSubject.next(
-          annotationsSubject.value.filter((highlight) => highlight.id !== id),
-        )
-      }),
-    )
-
-    const update$ = commands.update$.pipe(
-      tap(({ id, data }) => {
-        annotationsSubject.next(
-          annotationsSubject.getValue().map((highlight) => {
-            return highlight.id === id ? { ...highlight, ...data } : highlight
-          }),
-        )
-      }),
-    )
-
-    const select$ = commands.select$.pipe(
-      tap(({ id }) => {
-        selectedHighlightSubject.next(id)
-      }),
-    )
-
-    const reset$ = commands.reset$.pipe(
-      tap(() => {
-        annotationsSubject.next([])
-      }),
-    )
-
-    const renderAnnotations$ = merge(annotations$, reader.layout$).pipe(
+    const renderAnnotations$ = merge(runtimeAnnotations$, reader.layout$).pipe(
       debounceTime(50),
       switchMap(() => readerHighlights.layout()),
     )
@@ -176,16 +169,7 @@ export const annotationsEnhancer =
       ),
     )
 
-    merge(
-      annotated$,
-      add$,
-      delete$,
-      update$,
-      select$,
-      reset$,
-      renderAnnotations$,
-      annotations$,
-    )
+    merge(renderAnnotations$, annotations$)
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
@@ -193,23 +177,16 @@ export const annotationsEnhancer =
       ...reader,
       __PROSE_READER_ENHANCER_ANNOTATIONS: true,
       destroy: () => {
-        annotationsSubject.complete()
-        commands.destroy()
         readerHighlights.destroy()
         reader.destroy()
       },
       annotations: {
-        annotations$: annotations$,
+        annotations$: runtimeAnnotations$,
         highlightTap$: readerHighlights.tap$,
         candidates$,
         isTargetWithinHighlight: readerHighlights.isTargetWithinHighlight,
-        annotate: commands.annotate,
-        annotateAbsolutePage: commands.annotateAbsolutePage,
-        add: commands.add,
-        delete: commands.delete,
-        update: commands.update,
-        select: commands.select,
-        reset: commands.reset,
+        createAnnotation,
+        update: settings.update.bind(settings),
       },
     }
   }

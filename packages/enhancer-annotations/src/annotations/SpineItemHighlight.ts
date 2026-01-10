@@ -11,9 +11,9 @@ import {
   type Observable,
   share,
   shareReplay,
-  skip,
   takeUntil,
   tap,
+  withLatestFrom,
 } from "rxjs"
 import type { RuntimeAnnotation } from "./types"
 import { createElementForRange } from "./utils"
@@ -30,7 +30,7 @@ export class SpineItemHighlight extends DestroyableClass {
     private spineItem: SpineItem,
     private containerElement: HTMLElement,
     private reader: Reader,
-    public readonly highlight: RuntimeAnnotation,
+    public highlight: RuntimeAnnotation,
     private isSelected: Observable<boolean>,
   ) {
     super()
@@ -52,29 +52,32 @@ export class SpineItemHighlight extends DestroyableClass {
       shareReplay({ refCount: true, bufferSize: 1 }),
     )
 
-    this.isSelected
-      .pipe(
-        skip(1),
-        tap((isSelected) => {
-          Array.from(this.container.children).forEach((child) => {
-            if (child instanceof HTMLElement) {
-              child.style.border = isSelected
-                ? "3px dashed red"
-                : "3px dashed transparent"
-            }
-          })
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe()
+    const updateStateOnSelection$ = this.isSelected.pipe(
+      tap((isSelected) => {
+        this.updateStateOnSelection(isSelected)
+      }),
+    )
 
-    merge(this.resolvedCfi$).pipe(takeUntil(this.destroy$)).subscribe()
+    merge(this.resolvedCfi$, updateStateOnSelection$)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe()
+  }
+
+  public updateStateOnSelection(isSelected: boolean) {
+    Array.from(this.container.children).forEach((child) => {
+      if (child instanceof HTMLElement) {
+        child.style.border = isSelected
+          ? "3px dashed red"
+          : "3px dashed transparent"
+      }
+    })
   }
 
   public render() {
     return this.resolvedCfi$.pipe(
       first(),
-      map((resolvedCfi) => {
+      withLatestFrom(this.isSelected),
+      map(([resolvedCfi, isSelected]) => {
         if (!resolvedCfi || !resolvedCfi.isCfiRange) return undefined
 
         const range = resolvedCfi.range
@@ -117,6 +120,8 @@ export class SpineItemHighlight extends DestroyableClass {
           noteIcon.style.opacity = "50%"
           firstElement.appendChild(noteIcon)
         }
+
+        this.updateStateOnSelection(isSelected)
 
         return null
       }),

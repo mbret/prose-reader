@@ -1,7 +1,6 @@
 import { generate } from "@prose-reader/cfi"
 import type { Manifest } from "@prose-reader/shared"
-import type { Spine } from "../spine/Spine"
-import type { SpineItem } from "../spineItem/SpineItem"
+import type { PageEntry } from "../spine/Pages"
 import { isHtmlRange } from "../utils/dom"
 
 export const generateRootCfi = (item: Manifest["spineItems"][number]) => {
@@ -20,15 +19,15 @@ const generateCfi = ({
   offset?: number
   item: Manifest["spineItems"][number]
 }) => {
-  const ownerDocument =
+  const nodeOrRangeOwnerDocument =
     "ownerDocument" in nodeOrRange
       ? nodeOrRange.ownerDocument
       : nodeOrRange.startContainer.ownerDocument
 
   if (
-    !ownerDocument ||
-    !ownerDocument?.documentElement ||
-    nodeOrRange === ownerDocument
+    !nodeOrRangeOwnerDocument ||
+    !nodeOrRangeOwnerDocument?.documentElement ||
+    nodeOrRange === nodeOrRangeOwnerDocument
   )
     return generateRootCfi(item)
 
@@ -64,36 +63,19 @@ const generateCfi = ({
  * @todo optimize
  */
 export const generateCfiForSpineItemPage = ({
-  pageIndex,
   spineItem,
-  spine,
+  pageNode,
 }: {
-  pageIndex: number
-  spineItem: SpineItem
-  spine: Spine
+  spineItem: Manifest["spineItems"][number]
+  pageNode: NonNullable<PageEntry["firstVisibleNode"]>
 }) => {
-  const pageEntry = spine.pages.value.pages.find(
-    (page) =>
-      page.itemIndex === spineItem.index && page.pageIndex === pageIndex,
-  )
-  const nodeOrRange = pageEntry?.firstVisibleNode
-  const rendererElement = spineItem.renderer.getDocumentFrame()
+  const cfiString = generateCfi({
+    nodeOrRange: pageNode.node,
+    offset: pageNode.offset,
+    item: spineItem,
+  })
 
-  if (
-    nodeOrRange &&
-    rendererElement instanceof HTMLIFrameElement &&
-    rendererElement.contentWindow?.document
-  ) {
-    const cfiString = generateCfi({
-      nodeOrRange: nodeOrRange.node,
-      offset: nodeOrRange.offset,
-      item: spineItem.item,
-    })
-
-    return cfiString.trim()
-  }
-
-  return generateRootCfi(spineItem.item)
+  return cfiString.trim()
 }
 
 export const generateCfiFromRange = (

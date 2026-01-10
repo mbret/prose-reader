@@ -11,9 +11,9 @@ export const useAnnotations = () => {
   const consolidatedHighlights = useObserve(
     () =>
       readerWithAnnotations?.annotations.annotations$.pipe(
-        switchMap((highlights) =>
-          readerWithAnnotations.locateResource(highlights),
-        ),
+        switchMap((highlights) => {
+          return readerWithAnnotations.locateResource(highlights)
+        }),
       ),
     [readerWithAnnotations],
   )

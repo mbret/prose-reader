@@ -21,15 +21,22 @@ export const QuickMenu = memo(
     ) => void
   }) => {
     const [quickMenuOpen] = useQuickMenu()
-    const { refitMenuOpen, fontSizeMenuOpen } = useReaderContextValue([
-      "refitMenuOpen",
-      "fontSizeMenuOpen",
-    ])
+    const { refitMenuOpen, fontSizeMenuOpen, selectedHighlight } =
+      useReaderContextValue([
+        "refitMenuOpen",
+        "fontSizeMenuOpen",
+        "selectedHighlight",
+      ])
 
     return (
       <>
         <TopBar
-          open={quickMenuOpen && !refitMenuOpen && !fontSizeMenuOpen}
+          open={
+            quickMenuOpen &&
+            !refitMenuOpen &&
+            !fontSizeMenuOpen &&
+            !selectedHighlight
+          }
           onItemClick={onItemClick}
         />
         <BottomBar
