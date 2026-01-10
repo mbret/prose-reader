@@ -1,5 +1,8 @@
 import { createReader } from "@prose-reader/core"
-import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
+import {
+  type Annotation,
+  annotationsEnhancer,
+} from "@prose-reader/enhancer-annotations"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { createArchiveFromPdf, pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
@@ -8,7 +11,7 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 import { createRoot } from "react-dom/client"
 import { useObserve } from "reactjrx"
-import { of } from "rxjs"
+import { BehaviorSubject, of } from "rxjs"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,
@@ -20,6 +23,7 @@ async function run() {
   const pdfBlob = await response.blob()
   const archive = await createArchiveFromPdf(pdfBlob, "sample.pdf")
   const manifest = await generateManifestFromArchive(archive)
+  const annotations$ = new BehaviorSubject<Annotation[]>([])
 
   const createReaderWithEnhancers = gesturesEnhancer(
     pdfEnhancer(annotationsEnhancer(createReader)),
@@ -33,6 +37,9 @@ async function run() {
       getArchiveForItem: () => {
         return of(archive)
       },
+    },
+    annotations: {
+      annotations$,
     },
   })
 
@@ -69,14 +76,18 @@ async function run() {
         }}
         onClick={() => {
           if (bookmarkForPage) {
-            reader.annotations.delete(bookmarkForPage.resource.id)
+            annotations$.next(
+              annotations$.value.filter(
+                (annotation) => annotation.id !== bookmarkForPage.resource.id,
+              ),
+            )
           } else {
             const annotation = reader.annotations.createAnnotation({
               absolutePageIndex: pagination?.beginAbsolutePageIndex ?? 0,
             })
 
             if (annotation) {
-              reader.annotations.upsert(annotation)
+              annotations$.next([...annotations$.value, annotation])
             }
           }
         }}
