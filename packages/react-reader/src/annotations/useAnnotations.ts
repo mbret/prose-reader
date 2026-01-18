@@ -8,7 +8,7 @@ export const useAnnotations = () => {
     ? reader
     : undefined
 
-  const consolidatedHighlights = useObserve(
+  return useObserve(
     () =>
       readerWithAnnotations?.annotations.annotations$.pipe(
         switchMap((highlights) => {
@@ -17,6 +17,4 @@ export const useAnnotations = () => {
       ),
     [readerWithAnnotations],
   )
-
-  return { data: consolidatedHighlights }
 }

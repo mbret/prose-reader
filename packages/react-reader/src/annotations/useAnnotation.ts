@@ -8,7 +8,7 @@ export const useAnnotation = (id: string) => {
     ? reader
     : undefined
 
-  const consolidatedHighlights = useObserve(
+  return useObserve(
     () =>
       readerWithAnnotations?.annotations.annotations$.pipe(
         map((items) => items.find((item) => item.id === id)),
@@ -17,6 +17,4 @@ export const useAnnotation = (id: string) => {
       ),
     [readerWithAnnotations],
   )
-
-  return { data: consolidatedHighlights }
 }

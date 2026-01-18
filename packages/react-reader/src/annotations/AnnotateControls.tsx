@@ -14,7 +14,7 @@ export const AnnotateControls = () => {
   const reader = useReaderWithAnnotations()
   const context = useReaderContext()
   const { selectedHighlight } = useReaderContextValue(["selectedHighlight"])
-  const isOpen = useObserve(
+  const { data: isOpen } = useObserve(
     () =>
       reader?.selection.selectionOver$.pipe(
         switchMap(() =>

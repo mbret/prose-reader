@@ -34,11 +34,11 @@ export const annotationsEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (
-    options: InheritOptions & { annotations: AnnotationsEnhancerOptions },
+    options: InheritOptions & { annotations?: AnnotationsEnhancerOptions },
   ): InheritOutput & AnnotationsEnhancerAPI => {
     const { annotations: annotationsOptions, ...rest } = options
     const settings = new Settings({
-      annotations$: annotationsOptions.annotations$,
+      annotations$: annotationsOptions?.annotations$,
     })
     const reader = next(rest as InheritOptions)
 

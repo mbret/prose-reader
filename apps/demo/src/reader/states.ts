@@ -10,7 +10,10 @@ export const usePagination = () => {
 
 export const useIsPrepaginated = () => {
   const { reader } = useReader()
-  const manifest = useObserve(() => reader?.context.manifest$, [reader])
+  const { data: manifest } = useObserve(
+    () => reader?.context.manifest$,
+    [reader],
+  )
 
   return (
     manifest?.renditionLayout === "pre-paginated" ||
@@ -22,7 +25,10 @@ export const useIsPrepaginated = () => {
 
 export const useIsComics = () => {
   const { reader } = useReader()
-  const manifest = useObserve(() => reader?.context.manifest$, [reader])
+  const { data: manifest } = useObserve(
+    () => reader?.context.manifest$,
+    [reader],
+  )
   const isPrepaginated = useIsPrepaginated()
 
   return (

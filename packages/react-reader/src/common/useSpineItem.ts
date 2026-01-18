@@ -11,7 +11,7 @@ export const useSpineItem = ({
 }) => {
   const reader = useReader()
 
-  const spineItem = useObserve(() => {
+  return useObserve(() => {
     if (!reader) return EMPTY
 
     if (itemIndex !== undefined)
@@ -27,8 +27,4 @@ export const useSpineItem = ({
 
     return EMPTY
   }, [itemIndex, absolutePageIndex, reader])
-
-  return {
-    spineItem,
-  }
 }

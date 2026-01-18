@@ -14,11 +14,11 @@ const DEBOUNCE_TIME = 500
 
 export const useSearch = () => {
   const searchSubject = useConstant(() => new BehaviorSubject(""))
-  const searchValue = useObserve(searchSubject)
+  const { data: searchValue } = useObserve(searchSubject)
   const reader = useReader()
   const readerWithSearch = hasSearchEnhancer(reader) ? reader : undefined
 
-  const search = useObserve(() => {
+  const { data: search } = useObserve(() => {
     return searchSubject.pipe(
       distinctUntilChanged(),
       switchMap((value) =>

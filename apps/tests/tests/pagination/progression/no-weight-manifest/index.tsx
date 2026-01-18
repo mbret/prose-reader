@@ -1,4 +1,4 @@
-import { type Manifest, createReader } from "@prose-reader/core"
+import { createReader, type Manifest } from "@prose-reader/core"
 import * as pdfjsLib from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 import { createRoot } from "react-dom/client"
@@ -52,7 +52,7 @@ async function run() {
   window.reader = reader
 
   const Progression = () => {
-    const pagination = useObserve(reader.pagination.state$)
+    const { data: pagination } = useObserve(reader.pagination.state$)
 
     return (
       <div

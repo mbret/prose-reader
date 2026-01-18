@@ -55,9 +55,15 @@ export const BottomBar = memo(
       "onFontSizeMenuOpenChange",
       "onRefitMenuOpenChange",
     ])
-    const navigation = useObserve(() => reader?.navigation.state$, [reader])
-    const settings = useObserve(() => reader?.settings.values$, [reader])
-    const zoomState = useObserve(
+    const { data: navigation } = useObserve(
+      () => reader?.navigation.state$,
+      [reader],
+    )
+    const { data: settings } = useObserve(
+      () => reader?.settings.values$,
+      [reader],
+    )
+    const { data: zoomState } = useObserve(
       () =>
         reader?.zoom.state$.pipe(
           map((state) =>

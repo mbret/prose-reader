@@ -1,5 +1,5 @@
 import { useObserve } from "reactjrx"
-import { of } from "rxjs"
+import { NEVER } from "rxjs"
 import { useSpineItem } from "./useSpineItem"
 
 export const useSpineItemReady = ({
@@ -9,9 +9,9 @@ export const useSpineItemReady = ({
   absolutePageIndex?: number
   itemIndex?: number
 }) => {
-  const { spineItem } = useSpineItem({ absolutePageIndex, itemIndex })
-  const isReady = useObserve(
-    () => spineItem?.isReady$ ?? of(false),
+  const { data: spineItem } = useSpineItem({ absolutePageIndex, itemIndex })
+  const { data: isReady } = useObserve(
+    () => (!spineItem ? NEVER : spineItem.isReady$),
     [spineItem],
   )
 

@@ -34,23 +34,21 @@ export const ZoomControls = memo(() => {
     "zoomMaxScale",
   ])
   const reader = useReader()
-  const zoomScaleValue =
-    useObserve(
-      () =>
-        reader?.zoom.state$.pipe(
-          map((state) => state.currentScale),
-          throttleTime(100, animationFrameScheduler, {
-            leading: true,
-            trailing: true,
-          }),
-        ),
-      [reader],
-    ) ?? 1
-  const isZooming =
-    useObserve(
-      () => reader?.zoom.state$.pipe(map((state) => state.isZooming)),
-      [reader],
-    ) ?? false
+  const { data: zoomScaleValue = 1 } = useObserve(
+    () =>
+      reader?.zoom.state$.pipe(
+        map((state) => state.currentScale),
+        throttleTime(100, animationFrameScheduler, {
+          leading: true,
+          trailing: true,
+        }),
+      ),
+    [reader],
+  )
+  const { data: isZooming = false } = useObserve(
+    () => reader?.zoom.state$.pipe(map((state) => state.isZooming)),
+    [reader],
+  )
   const normalizedZoomScaleValue = normalizeZoomValue(
     zoomScaleValue,
     MIN,

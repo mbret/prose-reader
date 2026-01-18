@@ -28,7 +28,7 @@ export const RefitDialog = memo(() => {
   ])
   const reader = useReader()
   const readerWithRefit = hasRefitEnhancer(reader) ? reader : undefined
-  const refitSettings = useObserve(
+  const { data: refitSettings } = useObserve(
     () => readerWithRefit?.refit.settings$,
     [readerWithRefit],
   )

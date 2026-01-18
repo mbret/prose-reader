@@ -8,7 +8,7 @@ import { usePagination } from "../pagination/usePagination"
 export const TableOfContentsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {
     const reader = useReader()
-    const { manifest, assumedRenditionLayout } =
+    const { data: { manifest, assumedRenditionLayout } = {} } =
       useObserve(() => reader?.context, [reader]) ?? {}
     const { nav } = manifest ?? {}
     const pagination = usePagination()

@@ -21,7 +21,11 @@ export default defineConfig(({ mode }) => ({
       deps: true,
       devDeps: true,
     }),
-    react(),
+    react({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
     dts({
       tsconfigPath: "./tsconfig.app.json",
       entryRoot: "src",

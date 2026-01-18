@@ -5,5 +5,5 @@ import { useReader } from "../context/useReader"
 export const useSettings = (): Reader["settings"]["values"] | undefined => {
   const reader = useReader()
 
-  return useObserve(() => reader?.settings.values$, [reader])
+  return useObserve(() => reader?.settings.values$, [reader]).data
 }

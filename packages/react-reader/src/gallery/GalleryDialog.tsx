@@ -23,7 +23,7 @@ const GalleryItem = memo(
 
     useAttachSnapshot(element, item, measures)
 
-    const locatedResource = useObserve(
+    const { data: locatedResource } = useObserve(
       () => reader?.locateResource(item, { mode: "shallow" }),
       [reader, item],
     )
@@ -71,7 +71,10 @@ const GalleryItem = memo(
 export const GalleryDialog = memo(
   ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
     const reader = useReader()
-    const items = useObserve(() => reader?.spineItemsManager.items$, [reader])
+    const { data: items } = useObserve(
+      () => reader?.spineItemsManager.items$,
+      [reader],
+    )
 
     return (
       <DialogRoot

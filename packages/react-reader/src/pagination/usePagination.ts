@@ -25,5 +25,5 @@ export const usePagination = ():
             }),
           ),
     [reader],
-  )
+  ).data
 }

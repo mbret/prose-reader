@@ -6,7 +6,7 @@ import { BookmarkPageMarker } from "./BookmarkPageMarker"
 
 export const BookmarkPageMarkers = memo(() => {
   const reader = useReader()
-  const pages = useObserve(() => reader?.layoutInfo$, [reader])
+  const { data: pages } = useObserve(() => reader?.layoutInfo$, [reader])
 
   return (
     <Spine>

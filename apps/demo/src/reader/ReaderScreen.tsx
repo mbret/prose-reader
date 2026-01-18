@@ -36,7 +36,7 @@ export const ReaderScreen = memo(() => {
     }),
   )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const bookState = useObserve(() => reader?.state$, [reader])
+  const { data: bookState } = useObserve(() => reader?.state$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({

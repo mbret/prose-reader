@@ -16,7 +16,10 @@ export const TopBar = memo(
     onItemClick: (item: "more" | "back") => void
   }) => {
     const reader = useReader()
-    const manifest = useObserve(() => reader?.context.manifest$, [reader])
+    const { data: manifest } = useObserve(
+      () => reader?.context.manifest$,
+      [reader],
+    )
     const { isFullscreen, onToggleFullscreenClick } = useFullscreen()
 
     return (

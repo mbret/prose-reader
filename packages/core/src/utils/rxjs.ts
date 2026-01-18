@@ -1,26 +1,12 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import { defer, Observable, type OperatorFunction, of } from "rxjs"
 import { distinctUntilChanged, first, map, switchMap } from "rxjs/operators"
+import { pick } from "./objects"
 
 export const mapKeysTo = <R extends Record<string, unknown>, K extends keyof R>(
   keys: K[],
 ): OperatorFunction<R, Pick<R, K>> => {
-  return map((obj) => {
-    return Object.entries(obj).reduce(
-      (acc, [key, entry]) => {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
-        if (keys.includes(key as any)) {
-          return {
-            ...acc,
-            [key]: entry,
-          }
-        }
-
-        return acc
-      },
-      {} as Pick<typeof obj, K>,
-    )
-  })
+  return map((obj) => pick(obj, keys))
 }
 
 export const watchKeys =

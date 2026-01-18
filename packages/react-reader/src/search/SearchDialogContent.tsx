@@ -23,7 +23,7 @@ export const SearchDialogContent = memo(
       [reader, onNavigate],
     )
 
-    const consolidatedResults = useObserve(
+    const { data: consolidatedResults } = useObserve(
       () => reader?.locateResource(data?.slice(0, 100) ?? []),
       [data],
     )

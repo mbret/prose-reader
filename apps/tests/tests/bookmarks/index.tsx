@@ -44,13 +44,16 @@ async function run() {
   })
 
   const Bookmarks = () => {
-    const pagination = useObserve(() => reader.pagination.state$, [reader])
-    const bookmarks = useObserve(
+    const { data: pagination } = useObserve(
+      () => reader.pagination.state$,
+      [reader],
+    )
+    const { data: bookmarks } = useObserve(
       () => reader.annotations.annotations$,
       [reader],
     )
 
-    const consolidatedBookmarks = useObserve(
+    const { data: consolidatedBookmarks } = useObserve(
       () => reader.locateResource(bookmarks ?? []),
       [reader, bookmarks],
     )
