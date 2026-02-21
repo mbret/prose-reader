@@ -1,13 +1,13 @@
-import { Report } from "../../report"
 import type { Archive } from "../../archives/types"
+import { Report } from "../../report"
+import { apple } from "./hooks/apple"
+import { comicInfoHook } from "./hooks/comicInfo"
 import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub/epub"
-import { comicInfoHook } from "./hooks/comicInfo"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
-import { navigationFallbackHook } from "./hooks/navigationFallback"
 import { kobo } from "./hooks/kobo"
+import { navigationFallbackHook } from "./hooks/navigationFallback"
 import { nonEpub } from "./hooks/nonEpub"
-import { apple } from "./hooks/apple"
 
 export const generateManifestFromArchive = async (
   archive: Archive,
