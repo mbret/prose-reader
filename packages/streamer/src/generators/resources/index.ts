@@ -15,7 +15,7 @@ export const generateResourceFromArchive = async (
   )
 
   if (!file || file.dir) {
-    throw new Error(`no file found`)
+    throw new Error(`no file found for resourcePath:${resourcePath}`)
   }
 
   const defaultResource: HookResource = {

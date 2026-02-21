@@ -188,7 +188,15 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
           switchMap(() => {
             this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
 
-            const onUnload$ = this.onUnload().pipe(endWith(null), first())
+            const onUnload$ = defer(() => this.onUnload()).pipe(
+              endWith(null),
+              first(),
+              catchError((error) => {
+                Report.error(`Error unloading document`, error)
+
+                return of(null)
+              }),
+            )
 
             return onUnload$
           }),

@@ -328,7 +328,21 @@ export const revokeDocumentBlobs = (_document: Document | null | undefined) => {
     const styleSheets = Array.from(_document.styleSheets || [])
 
     for (const sheet of styleSheets) {
-      const rules = Array.from(sheet.cssRules || [])
+      const getRules = () => {
+        /**
+         * Some stylesheets are not accessible in some cases and this may be a legit error.
+         * - cross-origin
+         * - resource not found (eg: epub internal structure error)
+         */
+        try {
+          return Array.from(sheet.cssRules || [])
+        } catch (e) {
+          Report.warn(`Error getting rules for sheet: ${sheet.href}`, e)
+          return []
+        }
+      }
+
+      const rules = getRules()
 
       for (const rule of rules) {
         if (
