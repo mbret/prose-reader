@@ -1,6 +1,6 @@
+import type { Manifest } from "@prose-reader/shared"
 import { map, startWith } from "rxjs"
 import type { Reader } from "../../reader"
-import type { Manifest } from "@prose-reader/shared"
 
 /**
  * @todo
@@ -29,7 +29,7 @@ export type ChapterInfo = {
  * @important it's important to compare only path vs path and or href vs href since
  * they have not comparable due to possible encoded values
  */
-const buildChaptersInfo = (
+export const buildChaptersInfo = (
   href: string,
   tocItem: NonNullable<Manifest["nav"]>["toc"],
   manifest: Manifest,
@@ -68,7 +68,7 @@ const buildChaptersInfo = (
 
     if (isPossibleTocItemCandidate) {
       const spineItemIndexOfPossibleCandidate = manifest.spineItems.findIndex(
-        (item) => item.href === tocItem.href,
+        (item) => item.href === tocItemPathWithoutAnchor,
       )
       const spineItemIsBeforeThisTocItem =
         spineItemIndex < spineItemIndexOfPossibleCandidate
@@ -113,7 +113,7 @@ export const getChaptersInfo = (
 
   if (!manifest) return {}
 
-  return items.reduce(
+  const chaptersInfo = items.reduce(
     (acc, { item }) => {
       acc[item.id] = buildChapterInfoFromSpineItem(manifest, item)
 
@@ -121,6 +121,8 @@ export const getChaptersInfo = (
     },
     {} as { [key: string]: ChapterInfo | undefined },
   )
+
+  return chaptersInfo
 }
 
 export const trackChapterInfo = (reader: Reader) => {
