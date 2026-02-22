@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { combineLatest, distinctUntilChanged, map } from "rxjs"
 import { useReaderContext } from "../context/useReaderContext"
@@ -7,7 +8,7 @@ export const useSyncAnnotationsWithReader = () => {
   const reader = useReaderWithAnnotations()
   const context = useReaderContext()
 
-  useSubscribe(() => {
+  const syncAnnotationsWithReader = useCallback(() => {
     if (reader) {
       const selectedHighlight$ = context.pipe(
         map((context) => context.selectedHighlight?.highlight?.id),
@@ -34,4 +35,6 @@ export const useSyncAnnotationsWithReader = () => {
       reader.annotations.update({ annotations$: annotationsWithSelected$ })
     }
   }, [reader, context])
+
+  useSubscribe(syncAnnotationsWithReader)
 }

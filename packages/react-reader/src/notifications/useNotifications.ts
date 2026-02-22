@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { isDefined, useSubscribe } from "reactjrx"
 import {
   filter,
@@ -22,7 +23,7 @@ export const useNotifications = () => {
 
   useFontSizeNotifications()
 
-  useSubscribe(
+  const notifications = useCallback(
     () =>
       notificationsSubject.pipe(
         filter(isDefined),
@@ -71,4 +72,6 @@ export const useNotifications = () => {
       ),
     [notificationsSubject],
   )
+
+  useSubscribe(notifications)
 }

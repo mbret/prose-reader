@@ -1,11 +1,12 @@
 import { isHtmlTagElement } from "@prose-reader/core"
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { useReader } from "../context/useReader"
 
 export const useInterceptExternalLinks = () => {
   const reader = useReader()
 
-  useSubscribe(
+  const interceptExternalLinks = useCallback(
     () =>
       reader?.links$.subscribe((event) => {
         if (event.type === "click" && isHtmlTagElement(event.target, "a")) {
@@ -26,4 +27,6 @@ export const useInterceptExternalLinks = () => {
       }),
     [reader],
   )
+
+  useSubscribe(interceptExternalLinks)
 }

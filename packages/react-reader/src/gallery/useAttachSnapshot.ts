@@ -3,6 +3,7 @@ import {
   observeIntersection,
   type SpineItem,
 } from "@prose-reader/core"
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import {
   distinctUntilChanged,
@@ -28,7 +29,7 @@ export const useAttachSnapshot = (
     ? reader
     : undefined
 
-  useSubscribe(() => {
+  const attachSnapshot = useCallback(() => {
     if (!readerWithGalleryEnhancer || !element) return NEVER
 
     const itemLayoutChanged$ = item.didLayout$.pipe(
@@ -68,4 +69,6 @@ export const useAttachSnapshot = (
       }),
     )
   }, [readerWithGalleryEnhancer, item, measures, element])
+
+  useSubscribe(attachSnapshot)
 }

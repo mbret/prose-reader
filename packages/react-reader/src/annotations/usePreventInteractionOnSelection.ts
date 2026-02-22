@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { map, withLatestFrom } from "rxjs"
 import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
@@ -5,7 +6,7 @@ import { useReaderWithAnnotations } from "./useReaderWithAnnotations"
 export const usePreventInteractionOnSelection = () => {
   const reader = useReaderWithAnnotations()
 
-  useSubscribe(
+  const beforeTapGesture = useCallback(
     () =>
       /**
        * Hook used to prevent some gestures from being handled.
@@ -30,4 +31,6 @@ export const usePreventInteractionOnSelection = () => {
       ),
     [reader],
   )
+
+  useSubscribe(beforeTapGesture)
 }

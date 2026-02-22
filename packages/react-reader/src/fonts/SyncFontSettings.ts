@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { useSubscribe } from "reactjrx"
 import { map } from "rxjs"
 import { useReader } from "../context/useReader"
@@ -32,7 +32,7 @@ export const SyncFontSettings = () => {
     [reader, _fontSize],
   )
 
-  useSubscribe(
+  const syncUpFontSize = useCallback(
     function syncUpFontSize() {
       return reader?.settings.values$
         .pipe(map((settings) => settings.fontScale))
@@ -51,6 +51,8 @@ export const SyncFontSettings = () => {
     },
     [reader, context],
   )
+
+  useSubscribe(syncUpFontSize)
 
   return null
 }

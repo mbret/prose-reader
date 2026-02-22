@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { filter, tap, withLatestFrom } from "rxjs"
 import { useReader } from "../context/useReader"
@@ -13,7 +14,7 @@ export const useQuickMenuToggleGesture = () => {
    * These are "app" specific behavior that the enhancer would usually not
    * know about such as triggering the quick menu.
    */
-  useSubscribe(() => {
+  const quickMenuToggleGesture = useCallback(() => {
     return reader?.gestures.gestures$.pipe(
       filter((event) => event.type === "tap" && !event.handled),
       withLatestFrom(
@@ -32,5 +33,7 @@ export const useQuickMenuToggleGesture = () => {
         }
       }),
     )
-  }, [reader])
+  }, [reader, onQuickMenuOpenChange])
+
+  useSubscribe(quickMenuToggleGesture)
 }

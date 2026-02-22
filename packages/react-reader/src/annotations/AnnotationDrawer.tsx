@@ -1,5 +1,11 @@
 import { Box, Button, Stack, Text, Textarea } from "@chakra-ui/react"
-import { type ComponentProps, memo, useEffect, useState } from "react"
+import {
+  type ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+} from "react"
 import { useSubscribe } from "reactjrx"
 import { tap } from "rxjs"
 import { truncateText } from "../common/utils"
@@ -83,7 +89,7 @@ export const AnnotationDrawer = memo(() => {
     }
   }, [highlightColor, isOpen])
 
-  useSubscribe(
+  const onOpenDrawerOnTap = useCallback(
     function openDrawerOnTap() {
       return reader?.annotations.highlightTap$.pipe(
         tap(({ highlight }) => {
@@ -96,8 +102,10 @@ export const AnnotationDrawer = memo(() => {
         }),
       )
     },
-    [reader],
+    [reader, context],
   )
+
+  useSubscribe(onOpenDrawerOnTap)
 
   return (
     <DrawerRoot placement="bottom" onOpenChange={onOpenChange} open={isOpen}>

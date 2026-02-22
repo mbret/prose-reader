@@ -86,14 +86,14 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
    * paginating and loading items in between.
    * This is good practice (but not required) to throttle it.
    */
-  useSubscribe(
-    () =>
-      reader?.navigation.throttleLock({
-        duration: 100,
-        trigger: valueSignal.subject,
-      }),
-    [reader, valueSignal],
-  )
+  const throttleLock = useCallback(() => {
+    return reader?.navigation.throttleLock({
+      duration: 100,
+      trigger: valueSignal.subject,
+    })
+  }, [reader, valueSignal])
+
+  useSubscribe(throttleLock)
 
   // const marks =
   //   max > 1
