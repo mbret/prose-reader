@@ -12,13 +12,28 @@ const getNodeFromSelector = (
   frameElement?: HTMLIFrameElement,
 ) => {
   if (frameElement && frameElement instanceof HTMLIFrameElement) {
-    if (selector.startsWith(`#`)) {
-      return frameElement.contentDocument?.getElementById(
-        selector.replace(`#`, ``),
-      )
+    const contentDocument = frameElement.contentDocument
+    const normalizedSelector = selector.trim()
+
+    if (!contentDocument || normalizedSelector.length === 0) {
+      return undefined
     }
 
-    return frameElement.contentDocument?.querySelector(selector)
+    if (normalizedSelector.startsWith(`#`)) {
+      const id = normalizedSelector.slice(1)
+
+      if (id.length === 0) {
+        return undefined
+      }
+
+      return contentDocument.getElementById(id)
+    }
+
+    try {
+      return contentDocument.querySelector(normalizedSelector)
+    } catch {
+      return undefined
+    }
   }
 }
 

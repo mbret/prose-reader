@@ -2,6 +2,7 @@ import { combineLatest, Subject } from "rxjs"
 import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
+import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -84,6 +85,8 @@ export const createNavigator = ({
   )
 
   const navigate = (to: UserNavigationEntry) => {
+    Report.info("User navigation", to)
+
     userExplicitNavigationSubject.next(to)
   }
 
