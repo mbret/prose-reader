@@ -1,6 +1,16 @@
+// @vitest-environment jsdom
 import type { Manifest } from "@prose-reader/shared"
 import { type ObservedValueOf, of, skip } from "rxjs"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest"
 import { createReader } from "../../reader"
 import { DefaultRenderer } from "../../spineItem/renderer/DefaultRenderer"
 import { htmlEnhancer } from "../html/enhancer"
@@ -20,6 +30,21 @@ const BASE_MANIFEST: Manifest = {
   spineItems: [],
   title: "",
 }
+
+beforeAll(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  )
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
+})
 
 beforeEach(async () => {
   const containerElement = document.createElement("div")
@@ -99,7 +124,7 @@ describe("Given a book with one chapter", () => {
       const value = await new Promise<
         ObservedValueOf<typeof reader.pagination.state$>
       >((resolve, reject) => {
-        reader.pagination.state$.pipe(skip(2)).subscribe({
+        reader.pagination.state$.pipe(skip(1)).subscribe({
           next: resolve,
           error: reject,
         })
@@ -168,7 +193,7 @@ describe("Given a book with one chapter", () => {
           const value = await new Promise<
             ObservedValueOf<typeof reader.pagination.state$>
           >((resolve, reject) => {
-            reader.pagination.state$.pipe(skip(2)).subscribe({
+            reader.pagination.state$.pipe(skip(1)).subscribe({
               next: resolve,
               error: reject,
             })

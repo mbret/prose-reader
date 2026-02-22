@@ -1,0 +1,636 @@
+{
+  "filename": "",
+  "nav": {
+    "toc": [
+      {
+        "contents": [
+          {
+            "contents": [],
+            "path": "EPUB/pr01.xhtml#I_sect1_d1e137",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01.xhtml#I_sect1_d1e137",
+            "title": "Conventions Used in This Book"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/pr01s02.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s02.xhtml",
+            "title": "Using Code Examples"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/pr01s03.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s03.xhtml",
+            "title": "Safari® Books Online"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/pr01s04.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s04.xhtml",
+            "title": "How to Contact Us"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/pr01s05.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s05.xhtml",
+            "title": "Acknowledgments"
+          }
+        ],
+        "path": "EPUB/pr01.xhtml",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01.xhtml",
+        "title": "Preface"
+      },
+      {
+        "contents": [
+          {
+            "contents": [],
+            "path": "EPUB/ch01.xhtml#_the_digital_famine",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01.xhtml#_the_digital_famine",
+            "title": "The Digital Famine"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/ch01s02.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01s02.xhtml",
+            "title": "Accessibility and Usability"
+          }
+        ],
+        "path": "EPUB/ch01.xhtml",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01.xhtml",
+        "title": "1. Introduction"
+      },
+      {
+        "contents": [
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_data_integrity",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_data_integrity",
+                "title": "Data Integrity"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_separation_of_style",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_separation_of_style",
+                "title": "Separation of Style"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_semantic_inflection",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_semantic_inflection",
+                "title": "Semantic Inflection"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_language",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_language",
+                "title": "Language"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_logical_reading_order",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_logical_reading_order",
+                "title": "Logical Reading Order"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_sections_and_headings",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_sections_and_headings",
+                "title": "Sections and Headings"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_context_changes",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_context_changes",
+                "title": "Context Changes"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_lists",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_lists",
+                "title": "Lists"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_tables",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_tables",
+                "title": "Tables"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_figures",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_figures",
+                "title": "Figures"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_images",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_images",
+                "title": "Images"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_svg",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_svg",
+                "title": "SVG"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_mathml",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_mathml",
+                "title": "MathML"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_footnotes",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_footnotes",
+                "title": "Footnotes"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch02.xhtml#_page_numbering",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_page_numbering",
+                "title": "Page Numbering"
+              }
+            ],
+            "path": "EPUB/ch02.xhtml#_a_solid_foundation_structure_and_semantics",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml#_a_solid_foundation_structure_and_semantics",
+            "title": "A Solid Foundation: Structure and Semantics"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/ch02s02.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s02.xhtml",
+            "title": "Getting Around: Navigating an EPUB"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/ch02s03.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s03.xhtml",
+            "title": "The Untold Story: Metadata"
+          }
+        ],
+        "path": "EPUB/ch02.xhtml",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml",
+        "title": "2. Building a Better EPUB: Fundamental Accessibility"
+      },
+      {
+        "contents": [
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch03.xhtml#_timed_tracks",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03.xhtml#_timed_tracks",
+                "title": "Timed Tracks"
+              }
+            ],
+            "path": "EPUB/ch03.xhtml#_the_sound_and_the_fury_audio_and_video",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03.xhtml#_the_sound_and_the_fury_audio_and_video",
+            "title": "The Sound and the Fury: Audio and Video"
+          },
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch03s02.xhtml#_building_an_overlay",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s02.xhtml#_building_an_overlay",
+                "title": "Building an Overlay"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch03s02.xhtml#_structural_considerations",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s02.xhtml#_structural_considerations",
+                "title": "Structural Considerations"
+              }
+            ],
+            "path": "EPUB/ch03s02.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s02.xhtml",
+            "title": "Talk to Me: Media Overlays"
+          },
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch03s03.xhtml#_pls_lexicons",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml#_pls_lexicons",
+                "title": "PLS Lexicons"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch03s03.xhtml#_ssml",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml#_ssml",
+                "title": "SSML"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch03s03.xhtml#_css3_speech",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml#_css3_speech",
+                "title": "CSS3 Speech"
+              }
+            ],
+            "path": "EPUB/ch03s03.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml",
+            "title": "Tell It Like It Is: Text-to-Speech (TTS)"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/ch03s04.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s04.xhtml",
+            "title": "The Coded Word: Scripted Interactivity"
+          },
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch03s05.xhtml#_custom_controls",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml#_custom_controls",
+                "title": "Custom Controls"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch03s05.xhtml#_forms",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml#_forms",
+                "title": "Forms"
+              },
+              {
+                "contents": [],
+                "path": "EPUB/ch03s05.xhtml#_live_regions",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml#_live_regions",
+                "title": "Live Regions"
+              }
+            ],
+            "path": "EPUB/ch03s05.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml",
+            "title": "A Little Help: WAI-ARIA"
+          },
+          {
+            "contents": [],
+            "path": "EPUB/ch03s06.xhtml",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s06.xhtml",
+            "title": "A Blank Slate: Canvas"
+          }
+        ],
+        "path": "EPUB/ch03.xhtml",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03.xhtml",
+        "title": "3. It’s Alive: Rich Content Accessibility"
+      },
+      {
+        "contents": [
+          {
+            "contents": [
+              {
+                "contents": [],
+                "path": "EPUB/ch04.xhtml#_about_the_book",
+                "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch04.xhtml#_about_the_book",
+                "title": "About the Book"
+              }
+            ],
+            "path": "EPUB/ch04.xhtml#_epub_3_best_practices_teaser",
+            "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch04.xhtml#_epub_3_best_practices_teaser",
+            "title": "EPUB 3 Best Practices Teaser"
+          }
+        ],
+        "path": "EPUB/ch04.xhtml",
+        "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch04.xhtml",
+        "title": "4. Conclusion"
+      }
+    ]
+  },
+  "renditionFlow": "auto",
+  "title": "Accessible EPUB 3",
+  "readingDirection": "ltr",
+  "spineItems": [
+    {
+      "id": "cover",
+      "index": 0,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/cover.xhtml",
+      "progressionWeight": 0.0016257970065301562,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "spi_ad",
+      "index": 1,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/spi-ad.xhtml",
+      "progressionWeight": 0.0014909560225762333,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2442754",
+      "index": 2,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/index.xhtml",
+      "progressionWeight": 0.011157128272301736,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "htmltoc",
+      "index": 3,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/bk01-toc.xhtml",
+      "progressionWeight": 0.016504536435960164,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2632344",
+      "index": 4,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01.xhtml",
+      "progressionWeight": 0.016573883227707895,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2604743",
+      "index": 5,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s02.xhtml",
+      "progressionWeight": 0.0064338412343728935,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2629773",
+      "index": 6,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s03.xhtml",
+      "progressionWeight": 0.006256621655462023,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2620395",
+      "index": 7,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s04.xhtml",
+      "progressionWeight": 0.007608884094542793,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2638681",
+      "index": 8,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s05.xhtml",
+      "progressionWeight": 0.004665498044805733,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2611884",
+      "index": 9,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01.xhtml",
+      "progressionWeight": 0.02643653805405197,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2627310",
+      "index": 10,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01s02.xhtml",
+      "progressionWeight": 0.026451948452218134,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2635343",
+      "index": 11,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml",
+      "progressionWeight": 0.26550575000481574,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2622654",
+      "index": 12,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s02.xhtml",
+      "progressionWeight": 0.04743705815499008,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2624850",
+      "index": 13,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s03.xhtml",
+      "progressionWeight": 0.03804056787317242,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2640702",
+      "index": 14,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03.xhtml",
+      "progressionWeight": 0.05780055092173444,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2641220",
+      "index": 15,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s02.xhtml",
+      "progressionWeight": 0.11210679405929151,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2642385",
+      "index": 16,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml",
+      "progressionWeight": 0.16615876562710688,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2644001",
+      "index": 17,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s04.xhtml",
+      "progressionWeight": 0.02679097721187371,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2644238",
+      "index": 18,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml",
+      "progressionWeight": 0.13172037832527497,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2645594",
+      "index": 19,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s06.xhtml",
+      "progressionWeight": 0.009203860304740625,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2645682",
+      "index": 20,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch04.xhtml",
+      "progressionWeight": 0.018230501030570376,
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "id": "id-id2645862",
+      "index": 21,
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/co01.xhtml",
+      "progressionWeight": 0.0017991639858994856,
+      "mediaType": "application/xhtml+xml"
+    }
+  ],
+  "items": [
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/bk01-toc.xhtml",
+      "id": "htmltoc",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/css/epub.css",
+      "id": "epub-css",
+      "mediaType": "text/css"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/css/synth.css",
+      "id": "epub-tss-css",
+      "mediaType": "text/css"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/cover.xhtml",
+      "id": "cover",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/covers/9781449328030_lrg.jpg",
+      "id": "cover-image",
+      "mediaType": "image/jpeg"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/index.xhtml",
+      "id": "id-id2442754",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01.xhtml",
+      "id": "id-id2632344",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s02.xhtml",
+      "id": "id-id2604743",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s03.xhtml",
+      "id": "id-id2629773",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s04.xhtml",
+      "id": "id-id2620395",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/pr01s05.xhtml",
+      "id": "id-id2638681",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01.xhtml",
+      "id": "id-id2611884",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch01s02.xhtml",
+      "id": "id-id2627310",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02.xhtml",
+      "id": "id-id2635343",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s02.xhtml",
+      "id": "id-id2622654",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch02s03.xhtml",
+      "id": "id-id2624850",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03.xhtml",
+      "id": "id-id2640702",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s02.xhtml",
+      "id": "id-id2641220",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s03.xhtml",
+      "id": "id-id2642385",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s04.xhtml",
+      "id": "id-id2644001",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s05.xhtml",
+      "id": "id-id2644238",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch03s06.xhtml",
+      "id": "id-id2645594",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/ch04.xhtml",
+      "id": "id-id2645682",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/co01.xhtml",
+      "id": "id-id2645862",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/images/web/epub3_0401.png",
+      "id": "id2670620",
+      "mediaType": "image/png"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/spi-ad.xhtml",
+      "id": "spi_ad",
+      "mediaType": "application/xhtml+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/images/spi_global_ad.png",
+      "id": "spi_global_ad",
+      "mediaType": "image/png"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/UbuntuMono-B.ttf",
+      "id": "epub.embedded.font.1",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/UbuntuMono-BI.ttf",
+      "id": "epub.embedded.font.2",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/UbuntuMono-R.ttf",
+      "id": "epub.embedded.font.3",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/UbuntuMono-RI.ttf",
+      "id": "epub.embedded.font.4",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/FreeSerif.otf",
+      "id": "epub.embedded.font.5",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/fonts/FreeSansBold.otf",
+      "id": "epub.embedded.font.6",
+      "mediaType": "application/vnd.ms-opentype"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/lexicon/en.pls",
+      "id": "pls-en",
+      "mediaType": "application/pls+xml"
+    },
+    {
+      "href": "http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2FjY2Vzc2libGVfZXB1Yl8zLmVwdWI=/EPUB/lexicon/fr.pls",
+      "id": "pls-fr",
+      "mediaType": "application/pls+xml"
+    }
+  ]
+}

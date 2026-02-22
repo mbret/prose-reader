@@ -1,3 +1,4 @@
+import type { Manifest } from "@prose-reader/shared"
 import { first, map, withLatestFrom } from "rxjs"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
@@ -46,31 +47,30 @@ export const getPercentageEstimate = (
   pageIndex: number,
   currentPosition: { x: number; y: number },
   currentItem: SpineItem,
+  manifest: Manifest,
 ) => {
   return currentItem.isReady$.pipe(
     first(),
     withLatestFrom(reader.layoutInfo$),
     map(([itemIsReady, layout]) => {
-      const context = reader.context
-
       const isGloballyPrePaginated =
-        context.manifest?.renditionLayout === `pre-paginated`
-      const readingOrderLength = context.manifest?.spineItems.length || 0
+        manifest.renditionLayout === `pre-paginated`
+      const readingOrderLength = manifest.spineItems.length || 0
       const estimateBeforeThisItem =
-        context.manifest?.spineItems
+        manifest.spineItems
           .slice(0, currentSpineIndex)
           .reduce((acc, item) => acc + (item.progressionWeight ?? 0), 0) || 0
       const itemIndexNumber =
         reader.spineItemsManager.getSpineItemIndex(currentItem) ?? 0
 
-      const numberOfSpineItems = reader.context.manifest?.spineItems.length ?? 0
+      const numberOfSpineItems = manifest.spineItems.length ?? 0
 
       const spineItemNumberOfPages =
         layout.pages.filter((page) => page.itemIndex === itemIndexNumber)
           .length ?? 0
 
       const currentItemWeight =
-        context.manifest?.spineItems[currentSpineIndex]?.progressionWeight ??
+        manifest.spineItems[currentSpineIndex]?.progressionWeight ??
         // if no progressionWeight is defined we "assume" the document weight to be
         // relative to the total number of documents
         (itemIndexNumber + 1) / numberOfSpineItems
@@ -88,7 +88,7 @@ export const getPercentageEstimate = (
 
       let totalProgress = estimateBeforeThisItem + progressWithinThisItem
 
-      if (context.manifest?.renditionFlow === `scrolled-continuous`) {
+      if (manifest.renditionFlow === `scrolled-continuous`) {
         if (itemIsReady) {
           progressWithinThisItem = getScrollPercentageWithinItem(
             reader,

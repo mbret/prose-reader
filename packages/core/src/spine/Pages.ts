@@ -49,15 +49,15 @@ export type PageEntry = {
   firstVisibleNode: { node: Node; offset: number } | undefined
 }
 
-type State = {
+export type PagesState = {
   pages: PageEntry[]
 }
 
 /**
  * Hold relevant information about spine pages.
  */
-export class Pages extends ReactiveEntity<State> {
-  public readonly layout$: Observable<State>
+export class Pages extends ReactiveEntity<PagesState> {
+  public readonly layout$: Observable<PagesState>
 
   constructor(
     public readonly spineLayout: SpineLayout,
@@ -185,17 +185,53 @@ export class Pages extends ReactiveEntity<State> {
     this.layout$.pipe(takeUntil(this.destroy$)).subscribe(this.next.bind(this))
   }
 
-  fromSpineItemPageIndex = (spineItem: SpineItem, pageIndex: number) => {
-    return this.value.pages.find(
+  static fromSpineItemPageIndex = (
+    pagesState: PagesState,
+    spineItem: SpineItem | number,
+    pageIndex: number,
+  ) => {
+    const spineItemIndex =
+      typeof spineItem === "number" ? spineItem : spineItem.index
+
+    return pagesState.pages.find(
       (page) =>
-        page.itemIndex === spineItem.index && page.pageIndex === pageIndex,
+        page.itemIndex === spineItemIndex && page.pageIndex === pageIndex,
     )
   }
 
-  fromAbsolutePageIndex = (absolutePageIndex: number) => {
-    return this.value.pages.find(
+  static fromNextPageWithinSameSpineItem = (
+    pagesState: PagesState,
+    pageEntry: PageEntry,
+  ) => {
+    return Pages.fromSpineItemPageIndex(
+      pagesState,
+      pageEntry.itemIndex,
+      pageEntry.pageIndex + 1,
+    )
+  }
+
+  static fromAbsolutePageIndex = (
+    pagesState: PagesState,
+    absolutePageIndex: number,
+  ) => {
+    return pagesState.pages.find(
       (page) => page.absolutePageIndex === absolutePageIndex,
     )
+  }
+
+  fromSpineItemPageIndex = (
+    spineItem: SpineItem | number,
+    pageIndex: number,
+  ) => {
+    return Pages.fromSpineItemPageIndex(this.value, spineItem, pageIndex)
+  }
+
+  fromNextPageWithinSameSpineItem = (pageEntry: PageEntry) => {
+    return Pages.fromNextPageWithinSameSpineItem(this.value, pageEntry)
+  }
+
+  fromAbsolutePageIndex = (absolutePageIndex: number) => {
+    return Pages.fromAbsolutePageIndex(this.value, absolutePageIndex)
   }
 
   observeFromAbsolutePageIndex = (absolutePageIndex: number) =>
