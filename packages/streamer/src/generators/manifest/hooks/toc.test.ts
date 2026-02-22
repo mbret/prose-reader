@@ -1,8 +1,8 @@
 import { expect, it } from "vitest"
-import { navigationFallbackHook } from "./navigationFallback"
+import { tocHook } from "./toc"
 
 it("should create valid toc", async () => {
-  const manifest = await navigationFallbackHook({
+  const manifest = await tocHook({
     archive: {
       filename: "archive",
       close: async () => {},

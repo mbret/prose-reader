@@ -84,7 +84,7 @@ const buildTOCFromNav = (
 const parseTocFromNavPath = async (
   opfXmlDoc: XmlDocument,
   archive: Archive,
-  { baseUrl }: { opfBasePath: string; baseUrl: string },
+  { baseUrl }: { baseUrl: string },
 ) => {
   // Try to detect if there is a nav item
   const navItem = opfXmlDoc
@@ -203,6 +203,14 @@ export const parseToc = async (
 ) => {
   const { basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
 
+  const tocFromNav = await parseTocFromNavPath(opfXmlDoc, archive, {
+    baseUrl,
+  })
+
+  if (tocFromNav) {
+    return tocFromNav
+  }
+
   const tocFromNcx = await parseTocFromNcx({
     opfData: opfXmlDoc,
     opfBasePath,
@@ -213,9 +221,4 @@ export const parseToc = async (
   if (tocFromNcx) {
     return tocFromNcx
   }
-
-  return await parseTocFromNavPath(opfXmlDoc, archive, {
-    opfBasePath,
-    baseUrl,
-  })
 }

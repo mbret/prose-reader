@@ -6,8 +6,8 @@ import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub/epub"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
 import { kobo } from "./hooks/kobo"
-import { navigationFallbackHook } from "./hooks/navigationFallback"
 import { nonEpub } from "./hooks/nonEpub"
+import { tocHook } from "./hooks/toc"
 
 export const generateManifestFromArchive = async (
   archive: Archive,
@@ -20,7 +20,7 @@ export const generateManifestFromArchive = async (
     nonEpub({ archive, baseUrl }),
     epubOptimizerHook({ archive, baseUrl }),
     comicInfoHook({ archive, baseUrl }),
-    navigationFallbackHook({ archive, baseUrl }),
+    tocHook({ archive, baseUrl }),
   ]
 
   try {
@@ -32,11 +32,13 @@ export const generateManifestFromArchive = async (
 
     Report.log("Generated manifest", manifest)
 
-    if (process.env.NODE_ENV === "development" && Report.isEnabled()) {
-      const manifestStr = JSON.stringify(manifest, null, 2)
-      Report.groupCollapsed(...Report.getGroupArgs("Generated manifest"))
-      Report.log(`\n${manifestStr}`)
-      Report.groupEnd()
+    if (process.env.NODE_ENV === "development") {
+      if (Report.isEnabled()) {
+        const manifestStr = JSON.stringify(manifest, null, 2)
+        Report.groupCollapsed(...Report.getGroupArgs("Generated manifest"))
+        Report.log(`\n${manifestStr}`)
+        Report.groupEnd()
+      }
     }
 
     return manifest

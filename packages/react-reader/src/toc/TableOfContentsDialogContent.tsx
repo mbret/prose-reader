@@ -8,16 +8,12 @@ import { usePagination } from "../pagination/usePagination"
 export const TableOfContentsDialogContent = memo(
   ({ onNavigate }: { onNavigate: () => void }) => {
     const reader = useReader()
-    const { data: { manifest, assumedRenditionLayout } = {} } =
+    const { data: { manifest } = {} } =
       useObserve(() => reader?.context, [reader]) ?? {}
     const { nav } = manifest ?? {}
     const pagination = usePagination()
     const toc = nav?.toc || []
-    const { beginSpineItemIndex, beginPageIndexInSpineItem } = pagination ?? {}
-    const currentSpineItemOrChapterPageIndex =
-      (assumedRenditionLayout === "reflowable"
-        ? beginPageIndexInSpineItem
-        : beginSpineItemIndex) || 0
+    const absolutePageIndex = pagination?.beginAbsolutePageIndex
 
     let currentSubChapter = pagination?.beginChapterInfo
 
@@ -58,15 +54,14 @@ export const TableOfContentsDialogContent = memo(
             )}
             <Stack gap={0}>
               <Text fontSize="md">{tocItem.title || tocItem.path}</Text>
-              {currentSubChapter?.path === tocItem.path && (
-                <Text
-                  fontStyle="italic"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >{`Currently on page ${
-                  currentSpineItemOrChapterPageIndex + 1
-                }`}</Text>
-              )}
+              {currentSubChapter?.path === tocItem.path &&
+                absolutePageIndex !== undefined && (
+                  <Text
+                    fontStyle="italic"
+                    fontWeight="bold"
+                    fontSize="sm"
+                  >{`Currently on page ${absolutePageIndex + 1}`}</Text>
+                )}
             </Stack>
           </Link>
         </List.Item>

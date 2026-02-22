@@ -3,7 +3,6 @@ import { XmlDocument, type XmlElement } from "xmldoc"
 import type { Archive } from "../../../../archives/types"
 import { getArchiveOpfInfo } from "../../../../epubs/getArchiveOpfInfo"
 import { getSpineItemFilesFromArchive } from "../../../../epubs/getSpineItemFilesFromArchive"
-import { parseToc } from "../../../../parsers/nav"
 import { Report } from "../../../../report"
 import { getSpineItemInfo } from "./spineItems"
 
@@ -55,8 +54,6 @@ export const epubHook =
 
     const opfXmlDoc = new XmlDocument(data)
 
-    const toc = (await parseToc(opfXmlDoc, archive, { baseUrl })) || []
-
     const metadataElm = opfXmlDoc.childNamed(`metadata`)
     const manifestElm = opfXmlDoc.childNamed(`manifest`)
     const spineElm = opfXmlDoc.childNamed(`spine`)
@@ -102,9 +99,6 @@ export const epubHook =
 
     return {
       filename: archive.filename,
-      nav: {
-        toc,
-      },
       renditionLayout: publisherRenditionLayout,
       renditionFlow: publisherRenditionFlow || `auto`,
       renditionSpread,
