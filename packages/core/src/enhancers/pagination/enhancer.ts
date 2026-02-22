@@ -6,7 +6,8 @@
  * transition of reader state, many non-final states could be emitted and would not bring much value
  * to the user. This is an opinionated decision for this API
  */
-import { BehaviorSubject } from "rxjs"
+import { BehaviorSubject, tap } from "rxjs"
+import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
@@ -44,8 +45,9 @@ export const paginationEnhancer =
 
     const resourcesLocator = new ResourcesLocator(reader)
 
-    const paginationSub =
-      trackPaginationInfo(reader).subscribe(enhancedPagination)
+    const paginationSub = trackPaginationInfo(reader)
+      .pipe(tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)))
+      .subscribe(enhancedPagination)
 
     return {
       ...reader,
