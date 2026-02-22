@@ -1,4 +1,5 @@
 import type { Annotation } from "@prose-reader/enhancer-annotations"
+import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { debounceTime, type Observable, tap } from "rxjs"
 
@@ -28,7 +29,7 @@ export const usePersistAnnotations = (
   annotations: Observable<Annotation[]>,
   bookKey: string,
 ) => {
-  useSubscribe(() => {
+  const persistAnnotations$ = useCallback(() => {
     return annotations.pipe(
       debounceTime(500),
       tap((annotations) => {
@@ -36,4 +37,6 @@ export const usePersistAnnotations = (
       }),
     )
   }, [annotations, bookKey])
+
+  useSubscribe(persistAnnotations$)
 }

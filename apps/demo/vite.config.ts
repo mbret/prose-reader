@@ -1,7 +1,7 @@
 import path from "node:path"
 import replace from "@rollup/plugin-replace"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 import svgr from "vite-plugin-svgr"
 
@@ -61,6 +61,6 @@ export default defineConfig(({ mode }) => ({
       // fix for util/util.js
       "process.env.NODE_DEBUG": false,
       preventAssignment: true,
-    }),
+    }) as Plugin,
   ],
 }))

@@ -6,4 +6,5 @@ export const useReaderSettings = () => {
   const { reader } = useReader()
 
   return useObserve(() => reader?.settings.values$ ?? of(undefined), [reader])
+    .data
 }

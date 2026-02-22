@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --port 9000",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "echo",
     "tsc": "tsc"
