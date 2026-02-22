@@ -50,7 +50,9 @@ export const epubHook =
 
     const data = await opsFile.string()
 
+    Report.groupCollapsed(...Report.getGroupArgs("OPF data"))
     Report.log(`data`, data)
+    Report.groupEnd()
 
     const opfXmlDoc = new XmlDocument(data)
 
