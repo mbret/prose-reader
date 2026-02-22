@@ -7,7 +7,6 @@ import {
   of,
   shareReplay,
   switchMap,
-  tap,
 } from "rxjs"
 import type { PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
@@ -305,6 +304,5 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     })),
     distinctUntilChanged(isShallowEqual),
     auditTime(5),
-    tap((paginationInfo) => console.warn(`paginationInfo`, paginationInfo)),
   )
 }
