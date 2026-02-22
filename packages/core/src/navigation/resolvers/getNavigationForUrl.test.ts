@@ -13,6 +13,7 @@ describe(`getNavigationForUrl`, () => {
     const contentDocument = iframe.contentDocument
     expect(contentDocument).toBeDefined()
 
+    // biome-ignore lint/style/noNonNullAssertion: Expected to be defined
     const querySelectorSpy = vi.spyOn(contentDocument!, `querySelector`)
     const errorSpy = vi.spyOn(console, `error`).mockImplementation(() => {})
     const spineItem = {
@@ -32,17 +33,17 @@ describe(`getNavigationForUrl`, () => {
       } as NavigationParams[`context`],
       spineItemsManager: {
         get: vi.fn(() => spineItem),
-      } as NavigationParams[`spineItemsManager`],
+      } as unknown as NavigationParams[`spineItemsManager`],
       spineLocator: {
         getSpinePositionFromSpineItemPosition: vi.fn(
           () => new SpinePosition({ x: 0, y: 0 }),
         ),
-      } as NavigationParams[`spineLocator`],
+      } as unknown as NavigationParams[`spineLocator`],
       spine: {
         spineItemLocator: {
           getSpineItemPositionFromNode: vi.fn(),
         },
-      } as NavigationParams[`spine`],
+      } as unknown as NavigationParams[`spine`],
       pageSizeWidth: 100,
       visibleAreaRectWidth: 100,
     })
