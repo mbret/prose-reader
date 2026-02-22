@@ -1,6 +1,6 @@
 import {
-  type Manifest,
   detectMimeTypeFromName,
+  type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
 import type { Archive } from "../../../archives/types"

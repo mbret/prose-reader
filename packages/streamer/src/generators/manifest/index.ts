@@ -32,6 +32,13 @@ export const generateManifestFromArchive = async (
 
     Report.log("Generated manifest", manifest)
 
+    if (process.env.NODE_ENV === "development" && Report.isEnabled()) {
+      const manifestStr = JSON.stringify(manifest, null, 2)
+      Report.groupCollapsed(...Report.getGroupArgs("Generated manifest"))
+      Report.log(`\n${manifestStr}`)
+      Report.groupEnd()
+    }
+
     return manifest
   } catch (e) {
     Report.error(e)

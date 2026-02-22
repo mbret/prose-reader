@@ -67,7 +67,7 @@ export const createArchiveFromJszip = async (
   if (process.env.NODE_ENV === "development" && Report.isEnabled()) {
     const folderStructureStr = printTree(files.map((file) => file.name))
     Report.groupCollapsed(...Report.getGroupArgs("Archive folder structure"))
-    Report.log(folderStructureStr)
+    Report.log(`\n${folderStructureStr}`)
     Report.groupEnd()
   }
 
