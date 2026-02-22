@@ -1,6 +1,7 @@
 import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
+import { printTree } from "./printTree"
 import type { Archive, StreamResult } from "./types"
 
 interface OutputByType {
@@ -62,6 +63,13 @@ export const createArchiveFromJszip = async (
   }
 
   Report.log("Generated archive", archive)
+
+  if (process.env.NODE_ENV === "development" && Report.isEnabled()) {
+    const folderStructureStr = printTree(files.map((file) => file.name))
+    Report.groupCollapsed(...Report.getGroupArgs("Archive folder structure"))
+    Report.log(folderStructureStr)
+    Report.groupEnd()
+  }
 
   return archive
 }

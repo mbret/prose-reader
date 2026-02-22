@@ -20,6 +20,7 @@ function isGlobalDebugEnabled() {
 
 export type Report = {
   enable: (enabled: boolean) => void
+  isEnabled: () => boolean
   namespace: (namespace: string, enabled?: boolean) => Report
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   debug: (...args: any[]) => void
@@ -27,6 +28,11 @@ export type Report = {
   info: (...args: any[]) => void
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   log: (...args: any[]) => void
+  /** Use with getGroupArgs for namespace + color. Preserves call site. */
+  groupCollapsed: (...args: unknown[]) => void
+  groupEnd: () => void
+  /** Returns [label, style?] to pass to groupCollapsed for namespace + color. */
+  getGroupArgs: (title: string) => [string, string?] | [string]
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   warn: (...args: any[]) => void
   // biome-ignore lint/suspicious/noExplicitAny: TODO
@@ -49,9 +55,16 @@ const createReport = (
     },
     namespace: (_namespace: string, enabled?: boolean) =>
       createReport(`${namespace} [${_namespace}]`, enabled, options),
+    isEnabled: () => reportEnabled,
     debug: () => {},
     info: () => {},
     log: () => {},
+    groupCollapsed: () => {},
+    groupEnd: () => {},
+    getGroupArgs: (title: string) =>
+      color
+        ? [`%c${namespace ? `${namespace} ${title}` : title}`, color]
+        : [namespace ? `${namespace} ${title}` : title],
     warn: () => {},
     error: () => {},
   }
@@ -64,6 +77,8 @@ const createReport = (
       report.debug = () => {}
       report.info = () => {}
       report.log = () => {}
+      report.groupCollapsed = () => {}
+      report.groupEnd = () => {}
       report.warn = () => {}
       report.error = () => {}
 
@@ -98,6 +113,11 @@ const createReport = (
           color,
         )
       : Function.prototype.bind.call(console.log, console)
+    report.groupCollapsed = Function.prototype.bind.call(
+      console.groupCollapsed,
+      console,
+    )
+    report.groupEnd = Function.prototype.bind.call(console.groupEnd, console)
     report.warn = Function.prototype.bind.call(
       console.warn,
       console,
