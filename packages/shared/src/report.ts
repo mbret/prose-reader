@@ -19,6 +19,7 @@ function isGlobalDebugEnabled() {
 }
 
 export type Report = {
+  enable: (enabled: boolean) => void
   namespace: (namespace: string, enabled?: boolean) => Report
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   debug: (...args: any[]) => void
@@ -39,81 +40,90 @@ const createReport = (
     color?: string
   },
 ): Report => {
-  return {
+  let reportEnabled = enabled
+  const color = options?.color ? `color: ${options.color}` : undefined
+
+  const report: Report = {
+    enable: (enabled: boolean) => {
+      setEnabled(enabled)
+    },
     namespace: (_namespace: string, enabled?: boolean) =>
       createReport(`${namespace} [${_namespace}]`, enabled, options),
-    debug: !enabled
-      ? () => {}
-      : namespace
-        ? Function.prototype.bind.call(
-            console.debug,
-            console,
-            namespace,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          )
-        : Function.prototype.bind.call(
-            console.debug,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          ),
-    info: !enabled
-      ? () => {}
-      : namespace
-        ? Function.prototype.bind.call(
-            console.info,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          )
-        : Function.prototype.bind.call(
-            console.info,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          ),
-    log: !enabled
-      ? () => {}
-      : namespace
-        ? Function.prototype.bind.call(
-            console.log,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          )
-        : Function.prototype.bind.call(console.log, console),
-    warn: !enabled
-      ? () => {}
-      : namespace
-        ? Function.prototype.bind.call(
-            console.warn,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          )
-        : Function.prototype.bind.call(
-            console.warn,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          ),
-    error: !enabled
-      ? () => {}
-      : namespace
-        ? Function.prototype.bind.call(
-            console.error,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          )
-        : Function.prototype.bind.call(
-            console.error,
-            console,
-            `%c${namespace}`,
-            options?.color ? `color: ${options.color}` : undefined,
-          ),
+    debug: () => {},
+    info: () => {},
+    log: () => {},
+    warn: () => {},
+    error: () => {},
   }
+
+  // Keep direct prototype-bound console functions for enabled mode.
+  // Wrapping console calls in closures changes call-site/stack behavior in devtools,
+  // which makes runtime debugging harder to interpret.
+  const applyEnabledState = (enabled: boolean) => {
+    if (!enabled) {
+      report.debug = () => {}
+      report.info = () => {}
+      report.log = () => {}
+      report.warn = () => {}
+      report.error = () => {}
+
+      return
+    }
+
+    report.debug = namespace
+      ? Function.prototype.bind.call(
+          console.debug,
+          console,
+          namespace,
+          `%c${namespace}`,
+          color,
+        )
+      : Function.prototype.bind.call(
+          console.debug,
+          console,
+          `%c${namespace}`,
+          color,
+        )
+    report.info = Function.prototype.bind.call(
+      console.info,
+      console,
+      `%c${namespace}`,
+      color,
+    )
+    report.log = namespace
+      ? Function.prototype.bind.call(
+          console.log,
+          console,
+          `%c${namespace}`,
+          color,
+        )
+      : Function.prototype.bind.call(console.log, console)
+    report.warn = Function.prototype.bind.call(
+      console.warn,
+      console,
+      `%c${namespace}`,
+      color,
+    )
+    report.error = Function.prototype.bind.call(
+      console.error,
+      console,
+      `%c${namespace}`,
+      color,
+    )
+  }
+
+  const setEnabled = (enabled: boolean) => {
+    if (reportEnabled === enabled) {
+      return
+    }
+
+    reportEnabled = enabled
+    applyEnabledState(reportEnabled)
+  }
+
+  applyEnabledState(reportEnabled)
+
+  return report
 }
 
 export const Report = {
