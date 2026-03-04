@@ -98,8 +98,6 @@ export class HtmlRenderer extends DocumentRenderer {
 
     if (!frameElement) return of(undefined)
 
-    const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
-
     /**
      * When we have scrollable content, we use "native" touch event from the frame instead of
      * our own gestures.
@@ -137,6 +135,8 @@ export class HtmlRenderer extends DocumentRenderer {
 
       return of(dims)
     }
+
+    const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
 
     const dims = renderReflowable({
       pageHeight,
