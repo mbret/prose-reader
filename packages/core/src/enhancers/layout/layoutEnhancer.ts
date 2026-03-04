@@ -82,8 +82,6 @@ export const layoutEnhancer =
     )
 
     reader.hookManager.register(`onViewportOffsetAdjust`, () => {
-      let hasRedrawn = false
-
       /**
        * When adjusting the offset, there is a chance that pointer event being dispatched right after
        * have a wrong `clientX` / `pageX` etc. This is because even if the iframe
@@ -107,14 +105,14 @@ export const layoutEnhancer =
        * @todo
        * Consider creating a bug ticket on both chromium and gecko projects.
        */
-      reader.spineItemsManager.items.forEach((item) => {
+      for (const item of reader.spineItemsManager.items) {
         const frame = item.renderer.getDocumentFrame()
 
-        if (!hasRedrawn && frame) {
+        if (frame) {
           void frame.getBoundingClientRect().left
-          hasRedrawn = true
+          break
         }
-      })
+      }
     })
 
     /**
@@ -182,7 +180,7 @@ export const layoutEnhancer =
          */
         documentContainer.style.opacity = `0`
         if (settingsManager.values.layoutLayerTransition) {
-          documentContainer.style.transition = `opacity 300ms`
+          documentContainer.style.transition = `opacity 800ms`
         }
       },
     )
