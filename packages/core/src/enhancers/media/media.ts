@@ -1,10 +1,8 @@
-import { detectMimeTypeFromName } from "@prose-reader/shared"
 import type {
   EnhancerOptions,
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { ImageRenderer } from "./ImageRenderer"
 
 export const mediaEnhancer =
   <
@@ -14,20 +12,7 @@ export const mediaEnhancer =
     next: (options: InheritOptions) => InheritOutput,
   ) =>
   (options: InheritOptions): InheritOutput => {
-    const reader = next({
-      ...options,
-      getRenderer(item) {
-        const maybeFactory = options.getRenderer?.(item)
-        const mimeType = item.mediaType ?? detectMimeTypeFromName(item.href)
-        const isImageType = !!mimeType?.startsWith(`image/`)
-
-        if (!maybeFactory && isImageType) {
-          return (props) => new ImageRenderer(props)
-        }
-
-        return maybeFactory
-      },
-    })
+    const reader = next(options)
 
     const frameObserver = new IntersectionObserver(
       (entries) => {
