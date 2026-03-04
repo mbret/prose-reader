@@ -72,8 +72,6 @@ export const renderPrePaginated = ({
         hasViewportDimensions.toString(),
       )
     }
-    // frameElement?.style.setProperty(`visibility`, `visible`)
-    // frameElement?.style.setProperty(`opacity`, `1`)
 
     if (viewportDimensions) {
       staticLayout(frameElement, {

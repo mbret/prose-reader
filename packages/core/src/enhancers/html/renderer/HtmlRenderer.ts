@@ -137,6 +137,7 @@ export class HtmlRenderer extends DocumentRenderer {
     }
 
     const isUsingVerticalWriting = !!this.writingMode?.startsWith(`vertical`)
+    const isImageType = this.isImageType()
 
     const dims = renderReflowable({
       pageHeight,
@@ -147,7 +148,7 @@ export class HtmlRenderer extends DocumentRenderer {
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),
       minPageSpread,
-      isImageType: this.isImageType(),
+      isImageType,
       /**
        * When we have scrollable content, we use "native" touch event from the frame instead of
        * our own gestures.
@@ -245,6 +246,8 @@ export class HtmlRenderer extends DocumentRenderer {
   }
 
   get writingMode() {
+    if (this.isImageType()) return undefined
+
     return this.getComputedStyleAfterLoad()?.writingMode as
       | `vertical-rl`
       | `horizontal-tb`
