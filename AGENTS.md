@@ -1,3 +1,7 @@
+# Repository structure
+
+This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
+
 # Performances
 
 This library needs to be very careful with everything that impact performances (eg: reflow, heavy dom computation). Whenever possible we should use

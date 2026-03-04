@@ -1,6 +1,7 @@
 import { merge } from "rxjs"
 import { share, takeUntil, tap } from "rxjs/operators"
 import type { Manifest } from ".."
+import { HTML_PREFIX_SPINE_ITEM } from "../constants"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -226,6 +227,7 @@ const createContainerElement = (
 ) => {
   const element: HTMLElement =
     containerElement.ownerDocument.createElement(`div`)
+  element.setAttribute(`data-${HTML_PREFIX_SPINE_ITEM}`, "")
   element.classList.add(`spineItem`)
   element.classList.add(`spineItem-${item.renditionLayout ?? "reflowable"}`)
   element.style.cssText = `

@@ -1,4 +1,5 @@
 @use "./constants.scss" as *;
+@use "./enhancers/index.scss" as *;
 
 [data-#{$html-prefix-scroll-navigator}] {
     height: 100%;

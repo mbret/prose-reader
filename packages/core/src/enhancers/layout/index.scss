@@ -1,0 +1,12 @@
+@use "../../constants.scss" as *;
+
+/*
+ * During page-turn panning, a spine item can be in a transient loading state.
+ * If a custom placeholder is rendered there, browser text selection may start
+ * and interfere with the drag gesture. Keep loading items non-interactive.
+ */
+[data-#{$html-prefix-spine-item}][data-is-ready="false"] {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
