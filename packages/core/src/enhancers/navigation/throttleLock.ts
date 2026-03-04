@@ -1,10 +1,4 @@
-import {
-  animationFrameScheduler,
-  finalize,
-  type Observable,
-  tap,
-  throttleTime,
-} from "rxjs"
+import { finalize, type Observable, tap, throttleTime } from "rxjs"
 import type { Reader } from "../../reader"
 
 export const throttleLock =
@@ -22,7 +16,7 @@ export const throttleLock =
           unlockFn = reader?.navigation.lock()
         }
       }),
-      throttleTime(duration, animationFrameScheduler, {
+      throttleTime(duration, undefined, {
         trailing: true,
         leading: true,
       }),

@@ -111,6 +111,6 @@ export const waitForFrameReady = (stream: Observable<HTMLIFrameElement>) =>
         return from(readyPromise).pipe(map(() => frame))
       }
 
-      return of(undefined)
+      return of(frame)
     }),
   )

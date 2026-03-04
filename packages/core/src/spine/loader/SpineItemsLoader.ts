@@ -1,6 +1,5 @@
 import { arrayEqual } from "@prose-reader/shared"
 import {
-  animationFrameScheduler,
   BehaviorSubject,
   debounceTime,
   distinctUntilChanged,
@@ -65,7 +64,7 @@ export class SpineItemsLoader extends DestroyableClass {
       // this can be changed by whatever we want and SHOULD not break navigation.
       // Ideally loading faster is better but loading too close to user navigating can
       // be dangerous.
-      debounceTime(100, animationFrameScheduler),
+      debounceTime(100),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
       withLatestFrom(this.context.bridgeEvent.navigation$, forcedOpen$),
       map(([, navigation, forcedOpenIndexes]) => {
