@@ -34,10 +34,11 @@ export const createHtmlPageFromResource = async (
           ${item.renditionLayout === `pre-paginated` ? `<meta name="viewport" content="width=${width}, height=${height}">` : ``}
         </head>
         <body style="margin: 0px;" tab-index="-1;">
-          <img
-            src="${objectUrl}"
-            style="max-width: 100%;height:100%;object-fit:contain;"
-          >
+           <img
+             src="${objectUrl}"
+             style="max-width:100%;height:100%;object-fit:contain;display:block;"
+             decoding="async"
+           >
         </body>
       </html>
         `
