@@ -1,10 +1,10 @@
-import { type Manifest, getParentPath } from "@prose-reader/shared"
+import { getParentPath, type Manifest } from "@prose-reader/shared"
 import {
-  Observable,
   combineLatest,
   from,
   map,
   mergeMap,
+  Observable,
   of,
   switchMap,
 } from "rxjs"
@@ -221,7 +221,7 @@ export const loadAssets =
 
         const spineItemUriParentPath = getParentPath(item.href)
 
-        const assetsLoad$ = elementsWithAsset.map((element) =>
+        const assetsLoads = elementsWithAsset.map((element) =>
           loadElementSrc(
             frameElement.contentDocument,
             element,
@@ -231,7 +231,11 @@ export const loadAssets =
           ),
         )
 
-        return combineLatest(assetsLoad$).pipe(map(() => frameElement))
+        if (assetsLoads.length === 0) {
+          return of(frameElement)
+        }
+
+        return combineLatest(assetsLoads).pipe(map(() => frameElement))
       }),
     )
 

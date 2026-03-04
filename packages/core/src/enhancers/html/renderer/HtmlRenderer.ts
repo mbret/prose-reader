@@ -14,6 +14,7 @@ import prePaginatedStyle from "./prePaginated/pre-paginated.css?inline"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
 // import reflowableImageStyle from "./reflowable/reflowable-image.css?inline"
 import { renderReflowable } from "./reflowable/renderReflowable"
+
 export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
     const frameElement = createFrameElement()
@@ -34,8 +35,17 @@ export class HtmlRenderer extends DocumentRenderer {
         resourcesHandler: this.resourcesHandler,
         settings: this.settings,
       }),
+      /**
+       * Preload iframes only when the viewport is stable to avoid competing with
+       * navigation/transition work on the main thread.
+       */
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      tap(() => {
+      tap((frameElement) => {
+        /**
+         * Attach hidden so parsing/layout/asset work can start off-screen.
+         * We reveal only once load + assets + fonts are ready.
+         */
+        this.prepareFrameForAttach(frameElement)
         this.attach()
       }),
       waitForFrameLoad,
@@ -60,6 +70,9 @@ export class HtmlRenderer extends DocumentRenderer {
         settings: this.settings,
       }),
       waitForFrameReady,
+      tap((frameElement) => {
+        this.revealFrameAfterReady(frameElement)
+      }),
     )
   }
 
@@ -201,6 +214,23 @@ export class HtmlRenderer extends DocumentRenderer {
     if (!(frame instanceof HTMLIFrameElement)) return
 
     return frame
+  }
+
+  private prepareFrameForAttach(frameElement: HTMLIFrameElement) {
+    /**
+     * Keep the frame out of interaction/paint while it warms up.
+     * `contain` limits parent invalidation during this preload phase.
+     */
+    frameElement.style.setProperty(`visibility`, `hidden`)
+    frameElement.style.setProperty(`pointer-events`, `none`)
+    frameElement.style.setProperty(`contain`, `layout paint size`)
+    frameElement.style.setProperty(`display`, `block`)
+  }
+
+  private revealFrameAfterReady(frameElement: HTMLIFrameElement) {
+    frameElement.style.removeProperty(`visibility`)
+    frameElement.style.removeProperty(`pointer-events`)
+    frameElement.style.removeProperty(`contain`)
   }
 
   // @todo optimize
