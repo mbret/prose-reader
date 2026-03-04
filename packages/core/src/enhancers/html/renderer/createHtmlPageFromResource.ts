@@ -37,7 +37,6 @@ export const createHtmlPageFromResource = async (
            <img
              src="${objectUrl}"
              style="max-width:100%;height:100%;object-fit:contain;display:block;"
-             decoding="async"
            >
         </body>
       </html>
