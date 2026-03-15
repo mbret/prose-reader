@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
 import { upsertCSSToFrame } from "../../../../utils/frames"
-import { getViewPortInformation } from "../prePaginated/renderPrePaginated"
+import { getViewPortInformation } from "../viewport"
 import {
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,

@@ -1,4 +1,4 @@
-import { getFrameViewportInfo } from "../../../../utils/frames"
+import { getViewPortInformation } from "../viewport"
 
 /**
  * Base iframe positioning/sizing styles are renderer-owned for pre-paginated items.
@@ -24,32 +24,6 @@ const removeFrameStyle = (
   if (frameElement.style.getPropertyValue(property) === ``) return
 
   frameElement.style.removeProperty(property)
-}
-
-export const getViewPortInformation = ({
-  pageHeight,
-  pageWidth,
-  frameElement,
-}: {
-  pageWidth: number
-  pageHeight: number
-  frameElement: HTMLIFrameElement
-}) => {
-  const viewportDimensions = getFrameViewportInfo(frameElement)
-
-  if (
-    frameElement?.contentDocument &&
-    frameElement.contentWindow &&
-    viewportDimensions
-  ) {
-    const computedWidthScale = pageWidth / (viewportDimensions.width ?? 1)
-    const computedScale = Math.min(
-      computedWidthScale,
-      pageHeight / (viewportDimensions.height ?? 1),
-    )
-
-    return { computedScale, computedWidthScale, viewportDimensions }
-  }
 }
 
 /**

@@ -12,12 +12,20 @@ import {
   removeCSS as removeCSSToDocument,
 } from "./dom"
 
-export const getAttributeValueFromString = (string: string, key: string) => {
-  const regExp = new RegExp(`${key}\\s*=\\s*([0-9.]+)`, `i`)
-  const match = string.match(regExp) || []
-  const firstMatch = match[1] || `0`
+const getAttributeTokenFromString = (string: string, key: string) => {
+  const regExp = new RegExp(`${key}\\s*=\\s*([^,\\s]+)`, `i`)
 
-  return (match && Number.parseFloat(firstMatch)) || 0
+  return string.match(regExp)?.[1]?.trim().toLowerCase()
+}
+
+export const getAttributeValueFromString = (string: string, key: string) => {
+  const token = getAttributeTokenFromString(string, key)
+
+  if (!token) return 0
+
+  const parsedValue = Number.parseFloat(token)
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0
 }
 
 export const injectCSSToFrame = (
@@ -66,17 +74,24 @@ export const getFrameViewportInfo = (frame: HTMLIFrameElement | undefined) => {
       const viewportContent = viewportMetaElement.getAttribute(`content`)
 
       if (viewportContent) {
+        const widthToken = getAttributeTokenFromString(viewportContent, `width`)
+        const heightToken = getAttributeTokenFromString(
+          viewportContent,
+          `height`,
+        )
         const width = getAttributeValueFromString(viewportContent, `width`)
         const height = getAttributeValueFromString(viewportContent, `height`)
 
         if (width > 0 && height > 0) {
           return {
             hasViewport: true,
+            widthToken,
+            heightToken,
             width: width,
             height: height,
           }
         }
-        return { hasViewport: true }
+        return { hasViewport: true, widthToken, heightToken }
       }
     }
   }
