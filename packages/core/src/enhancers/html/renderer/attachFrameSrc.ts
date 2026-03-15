@@ -1,18 +1,49 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
-  type Observable,
   catchError,
   from,
   map,
+  type Observable,
   of,
   switchMap,
   tap,
 } from "rxjs"
-import { ITEM_EXTENSION_VALID_FOR_FRAME_SRC } from "../../../constants"
 import { Report } from "../../../report"
 import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
+
+/**
+ * For these resources, we want to digest and wrap them into custom html pages.
+ *
+ * Anything that does not fall under these criteria will be served as is.
+ * If a format is not supported by prose it will simply renders whatever browser can render.
+ * Support for these formats can then be interpreted by enhancers.
+ */
+const ITEM_EXTENSION_REQUIRES_TRANSFORM = [
+  `.txt`,
+  `.jpg`,
+  `.jpeg`,
+  `.png`,
+  `.webp`,
+]
+const ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM = [
+  `text/plain`,
+  `image/jpg`,
+  `image/jpeg`,
+  `image/png`,
+  `image/webp`,
+]
+
+export const revokeFrameObjectUrl = (
+  frameElement: HTMLIFrameElement | undefined,
+) => {
+  const objectUrl = frameElement?.getAttribute(`src`)
+
+  if (!objectUrl?.startsWith(`blob:`)) return
+
+  URL.revokeObjectURL(objectUrl)
+}
 
 export const attachFrameSrc = ({
   item,
@@ -22,17 +53,29 @@ export const attachFrameSrc = ({
   item: Manifest[`spineItems`][number]
   resourcesHandler: ResourceHandler
 }) => {
-  const getHtmlFromResource = (response: Response) =>
-    createHtmlPageFromResource(response, item)
+  const attachSource = (frameElement: HTMLIFrameElement, blob: Blob) => {
+    revokeFrameObjectUrl(frameElement)
+
+    const blobURL = URL.createObjectURL(blob)
+
+    frameElement.setAttribute(`src`, blobURL)
+  }
 
   return (stream: Observable<HTMLIFrameElement>) =>
     stream.pipe(
       switchMap((frameElement) => {
         return from(resourcesHandler.getResource()).pipe(
           switchMap((resource) => {
+            const requiresTransform =
+              ITEM_EXTENSION_REQUIRES_TRANSFORM.some((extension) =>
+                item.href.endsWith(extension),
+              ) ||
+              (item.mediaType &&
+                ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM.includes(item.mediaType))
+
             /**
              * Because of the bug with iframe and sw, we should not use srcdoc and sw together for
-             * html document. This is because resources will not pass through SW. IF `fetchResource` is being
+             * html document. This is because resources will not pass through SW. If `fetchResource` is being
              * used the user should be aware of the limitation. We use srcdoc for everything except if we detect
              * an html document and same origin. Hopefully that bug gets fixed one day.
              * @see https://bugs.chromium.org/p/chromium/issues/detail?id=880768
@@ -40,21 +83,10 @@ export const attachFrameSrc = ({
             if (
               resource instanceof URL &&
               item.href.startsWith(window.location.origin) &&
-              // we have an encoding and it's a valid html
-              ((item.mediaType &&
-                [
-                  `application/xhtml+xml`,
-                  `application/xml`,
-                  `text/html`,
-                  `text/xml`,
-                ].includes(item.mediaType)) ||
-                // no encoding ? then try to detect html
-                (!item.mediaType &&
-                  ITEM_EXTENSION_VALID_FOR_FRAME_SRC.some((extension) =>
-                    item.href.endsWith(extension),
-                  )))
+              !requiresTransform
             ) {
-              frameElement?.setAttribute(`src`, item.href)
+              revokeFrameObjectUrl(frameElement)
+              frameElement?.setAttribute(`src`, resource.href)
 
               return of(frameElement)
             }
@@ -70,19 +102,10 @@ export const attachFrameSrc = ({
                   throw new Error(`Invalid resource`)
                 }
 
-                return from(getHtmlFromResource(response))
+                return createHtmlPageFromResource(response, item)
               }),
-              tap((htmlDoc) => {
-                if (htmlDoc) {
-                  const blob = new Blob([htmlDoc], { type: "text/html" })
-                  /**
-                   * The blob will be released once the document is destroyed.
-                   * No need to deal with it ourselves.
-                   */
-                  const blobURL = URL.createObjectURL(blob)
-
-                  frameElement?.setAttribute(`src`, blobURL)
-                }
+              tap((blob) => {
+                attachSource(frameElement, blob)
               }),
               map(() => frameElement),
               catchError((e) => {

@@ -8,7 +8,7 @@ import {
 } from "../../../utils/frames"
 import { waitForSwitch } from "../../../utils/rxjs"
 import { loadAssets, unloadAssets } from "./assets"
-import { attachFrameSrc } from "./attachFrameSrc"
+import { attachFrameSrc, revokeFrameObjectUrl } from "./attachFrameSrc"
 import { createFrameElement } from "./createFrameElement"
 import prePaginatedStyle from "./prePaginated/pre-paginated.css?inline"
 import { renderPrePaginated } from "./prePaginated/renderPrePaginated"
@@ -77,7 +77,10 @@ export class HtmlRenderer extends DocumentRenderer {
   }
 
   onUnload() {
-    unloadAssets(this.getFrameElement())
+    const frameElement = this.getFrameElement()
+
+    unloadAssets(frameElement)
+    revokeFrameObjectUrl(frameElement)
 
     this.detach()
 

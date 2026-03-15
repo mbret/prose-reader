@@ -10,8 +10,10 @@ import type { Manifest } from "../../.."
 export const createHtmlPageFromResource = async (
   resourceResponse: Response | string,
   item: Manifest[`spineItems`][number],
-) => {
-  if (typeof resourceResponse === "string") return resourceResponse
+): Promise<Blob> => {
+  if (typeof resourceResponse === "string") {
+    return new Blob([resourceResponse], { type: "text/html" })
+  }
 
   const contentType =
     parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) ||
@@ -28,44 +30,70 @@ export const createHtmlPageFromResource = async (
     const { width, height } = { width: bitmap.width, height: bitmap.height }
     bitmap.close()
 
-    return `
-      <html>
-        <head>
-          ${item.renditionLayout === `pre-paginated` ? `<meta name="viewport" content="width=${width}, height=${height}">` : ``}
-        </head>
-        <body style="margin: 0px;" tab-index="-1;">
-           <img
-             src="${objectUrl}"
-             style="max-width:100%;height:100%;object-fit:contain;display:block;"
-           >
-        </body>
-      </html>
+    const resourceUniqueId = Math.random()
+      .toString(36)
+      .substring(2, 15)
+      .toString()
+
+    return new Blob(
+      [
         `
+        <html>
+          <head>
+            ${item.renditionLayout === `pre-paginated` ? `<meta name="viewport" content="width=${width}, height=${height}">` : ``}
+          </head>
+          <body style="margin: 0px;" tab-index="-1;">
+             <img
+               id="${resourceUniqueId}"
+               src="${objectUrl}"
+               style="max-width:100%;height:100%;object-fit:contain;display:block;"
+             >
+             <script>
+               const imageElement = document.getElementById("${resourceUniqueId}")
+               if (imageElement instanceof HTMLImageElement) {
+                 imageElement.addEventListener(
+                   "load",
+                   () => {
+                     URL.revokeObjectURL("${objectUrl}")
+                   },
+                   { once: true },
+                 )
+               }
+             </script>
+          </body>
+        </html>
+          `,
+      ],
+      { type: "text/html" },
+    )
   }
 
   if ([`text/plain`].some((mime) => mime === contentType)) {
     const data = await resourceResponse.text()
 
-    return `
-      <!DOCTYPE html>
-      <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
-        <head>
-          <style>
-            pre {
-              white-space: pre;
-              white-space: pre-wrap;
-              word-wrap: break-word;
-            }
-          </style>
-        </head>
-        <body>
-          <pre>${data}</pre>
-        </body>
-      </html>
-    `
+    return new Blob(
+      [
+        `
+        <!DOCTYPE html>
+        <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
+          <head>
+            <style>
+              pre {
+                white-space: pre;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+            </style>
+          </head>
+          <body>
+            <pre>${data}</pre>
+          </body>
+        </html>
+      `,
+      ],
+      { type: "text/html" },
+    )
   }
 
-  const content = await resourceResponse.text()
-
-  return content
+  return await resourceResponse.blob()
 }
