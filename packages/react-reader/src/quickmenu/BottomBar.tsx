@@ -109,6 +109,7 @@ export const BottomBar = memo(
         pb={8}
         px={0}
         ref={boxRef}
+        gap={4}
       >
         <HStack
           flex={1}
@@ -138,6 +139,8 @@ export const BottomBar = memo(
             px={4}
           >
             <PaginationInfoSection />
+            {/* Note: scrubber takes same space whether it's visible or not. This is to prevent
+            jumping of items up and down between chapters. */}
             <Scrubber
               style={{
                 width: "100%",

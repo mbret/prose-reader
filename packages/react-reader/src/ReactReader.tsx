@@ -7,6 +7,7 @@ import { BookmarkPageMarkers } from "./annotations/bookmarks/BookmarkPageMarkers
 import { useBookmarkOnCornerTap } from "./annotations/bookmarks/useBookmarkOnCornerTap"
 import { usePreventInteractionOnSelection } from "./annotations/usePreventInteractionOnSelection"
 import { useSyncAnnotationsWithReader } from "./annotations/useSyncAnnotationsWithReader"
+import { Spine } from "./common/Spine"
 import { Toaster } from "./components/ui/toaster"
 import { ReactReaderProvider } from "./context/ReactReaderProvider"
 import { useReaderContextValue } from "./context/useReaderContext"
@@ -115,6 +116,9 @@ const InnerReactReader = memo(
           {...rest}
         >
           {children}
+          <Spine>
+            <BookmarkPageMarkers />
+          </Spine>
           <FloatingProgress />
           <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
           <RefitDialog />
@@ -123,7 +127,6 @@ const InnerReactReader = memo(
           <AnnotateControls />
           <AnnotationDrawer />
           <FontSizeControlsDialog />
-          <BookmarkPageMarkers />
           <HelpDialog open={isHelpOpen} setOpen={setIsHelpOpen} />
           <TableOfContentsDialog
             open={isTableOfContentsOpen}

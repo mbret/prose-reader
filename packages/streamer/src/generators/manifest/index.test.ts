@@ -163,6 +163,40 @@ describe("Given archive with no folders", () => {
   })
 })
 
+describe("Given non-epub image archive items with encodingFormat", () => {
+  it("should keep image spine items pre-paginated", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "page_1.jpeg",
+          uri: "page_1.jpeg",
+          dir: false,
+          size: 1,
+          encodingFormat: "image/jpeg",
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems).toEqual([
+      {
+        href: "file://page_1.jpeg",
+        id: "0.page_1.jpeg",
+        index: 0,
+        mediaType: "image/jpeg",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: undefined,
+        progressionWeight: 1,
+        renditionLayout: "pre-paginated",
+      },
+    ])
+  })
+})
+
 describe("Given archive with folders", () => {
   it("should create correct toc", async () => {
     const archive: Archive = {

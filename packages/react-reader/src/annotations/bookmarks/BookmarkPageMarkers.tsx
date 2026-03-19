@@ -1,6 +1,5 @@
 import { memo } from "react"
 import { useObserve } from "reactjrx"
-import { Spine } from "../../common/Spine"
 import { useReader } from "../../context/useReader"
 import { BookmarkPageMarker } from "./BookmarkPageMarker"
 
@@ -9,7 +8,7 @@ export const BookmarkPageMarkers = memo(() => {
   const { data: pages } = useObserve(() => reader?.layoutInfo$, [reader])
 
   return (
-    <Spine>
+    <>
       {pages?.pages.map(
         ({ absoluteLayout: { left, top, width } }, pageIndex) => (
           <BookmarkPageMarker
@@ -21,6 +20,6 @@ export const BookmarkPageMarkers = memo(() => {
           />
         ),
       )}
-    </Spine>
+    </>
   )
 })

@@ -21,6 +21,8 @@ export class ReactiveEntity<
   protected stateSubject: BehaviorSubject<T>
   protected _destroy$ = new Subject<void>()
 
+  public state$: Observable<T>
+
   constructor(initialState: T) {
     super((subscriber) => {
       const sub = this.stateSubject
@@ -30,6 +32,7 @@ export class ReactiveEntity<
       return sub
     })
     this.stateSubject = new BehaviorSubject<T>(initialState)
+    this.state$ = this.stateSubject.asObservable()
   }
 
   protected next(value: T) {

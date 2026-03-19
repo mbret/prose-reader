@@ -46,10 +46,19 @@ export type CoreInputSettings = {
    * the iframe will use `srcdoc` rather than `src`. Due to the bug the http hit for the resources inside the iframe will
    * not pass through the service worker.
    */
-  getResource?: (
-    item: Manifest["items"][number],
-  ) =>
-    | Observable<URL | Response | { custom: true; data: unknown } | undefined>
+  getResource?: (item: Manifest["items"][number]) =>
+    | Observable<
+        | URL
+        | Response
+        /**
+         * Custom type is here for flexibility but not a default type to support.
+         * This can be used internally by enhancers when they have to handle specific
+         * resources (eg: pdfjs pages). Enhancers should not handle this resource type
+         * if they are not the one creating it.
+         */
+        | { custom: true; data: unknown }
+        | undefined
+      >
     | undefined
   getRenderer?: (
     item: Manifest["spineItems"][number],

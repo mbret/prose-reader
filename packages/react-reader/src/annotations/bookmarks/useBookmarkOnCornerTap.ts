@@ -1,4 +1,3 @@
-import { isPositionInArea } from "@prose-reader/enhancer-gestures"
 import { useEffect } from "react"
 import { map, withLatestFrom } from "rxjs"
 import { useReaderContext } from "../../context/useReaderContext"
@@ -6,6 +5,30 @@ import { useAnnotations } from "../useAnnotations"
 import { useReaderWithAnnotations } from "../useReaderWithAnnotations"
 
 const CONTINUE_TAP_GESTURE = true
+const BOOKMARK_CORNER_SIZE_PERCENT = 10
+
+const isTopRightCornerPosition = ({
+  position,
+  containerSize,
+  sizePercent,
+}: {
+  position: {
+    x: number
+    y: number
+  }
+  containerSize: {
+    width: number
+    height: number
+  }
+  sizePercent: number
+}) => {
+  const actualSize =
+    Math.min(containerSize.width, containerSize.height) * (sizePercent / 100)
+
+  return (
+    position.x > containerSize.width - actualSize && position.y < actualSize
+  )
+}
 
 export const useBookmarkOnCornerTap = () => {
   const reader = useReaderWithAnnotations()
@@ -30,16 +53,11 @@ export const useBookmarkOnCornerTap = () => {
               pageSize,
             } = context.page
 
-            const hasTapOnTopRightCorner = isPositionInArea(
-              spineItemPagePosition,
-              {
-                type: "corner",
-                corner: "top-right",
-                size: 10,
-                unit: "%",
-              },
-              pageSize,
-            )
+            const hasTapOnTopRightCorner = isTopRightCornerPosition({
+              position: spineItemPagePosition,
+              containerSize: pageSize,
+              sizePercent: BOOKMARK_CORNER_SIZE_PERCENT,
+            })
 
             if (hasTapOnTopRightCorner) {
               const pageEntry = reader.spine.pages.fromSpineItemPageIndex(

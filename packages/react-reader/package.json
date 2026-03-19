@@ -12,7 +12,9 @@
   ],
   "scripts": {
     "start": "vite build --watch --mode development",
-    "build": "tsc -b && vite build"
+    "build": "node ./scripts/check-enhancer-imports.mjs && tsc -b && vite build",
+    "check:enhancers": "node ./scripts/check-enhancers.mjs",
+    "test": "vitest run --coverage"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
@@ -39,19 +41,5 @@
     "react-dom": "19.x || 18.x",
     "react-icons": "^5.4.0",
     "reactjrx": "1.x"
-  },
-  "peerDependenciesMeta": {
-    "@prose-reader/enhancer-search": {
-      "optional": true
-    },
-    "@prose-reader/enhancer-annotations": {
-      "optional": true
-    },
-    "@prose-reader/enhancer-gallery": {
-      "optional": true
-    },
-    "@prose-reader/enhancer-refit": {
-      "optional": true
-    }
   }
 }

@@ -30,6 +30,20 @@ export const ThemedSlider = memo((props: ComponentProps<typeof RcSlider>) => {
           "& > .rc-slider-handle.rc-slider-handle-dragging": {
             boxShadow: "0 0 0 3px var(--color-solid) !important",
           },
+          "&.rc-slider-disabled": {
+            backgroundColor: "transparent",
+            opacity: 0.5,
+          },
+          "&.rc-slider-disabled > .rc-slider-rail": {
+            backgroundColor: "var(--bg-emphasized)",
+          },
+          "&.rc-slider-disabled > .rc-slider-track": {
+            backgroundColor: "var(--color-solid)",
+          },
+          "&.rc-slider-disabled > .rc-slider-handle": {
+            backgroundColor: "var(--bg)",
+            borderColor: "var(--color-solid)",
+          },
         }}
         styles={{
           rail: {
