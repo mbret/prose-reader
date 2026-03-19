@@ -1,0 +1,649 @@
+import { ReactiveEntity, type Reader } from "@prose-reader/core"
+import {
+  catchError,
+  defer,
+  distinctUntilChanged,
+  EMPTY,
+  filter,
+  fromEvent,
+  map,
+  merge,
+  type Observable,
+  Subject,
+  Subscription,
+  switchMap,
+  takeUntil,
+  tap,
+  withLatestFrom,
+} from "rxjs"
+import type {
+  AudioEnhancerState,
+  AudioTrack,
+  AudioVisualizerState,
+  SelectAudioTrackOptions,
+} from "../types"
+import { isAudioSpineItem } from "../utils"
+import { AudioVisualizer, getIdleVisualizerBars } from "../visualizer"
+import {
+  getPaginationPlaybackTargets,
+  type PaginationTrackWindow,
+} from "./playbackTargetPolicy"
+import { TrackSourceResolver } from "./TrackSourceResolver"
+import { createVisibleTrackIds$ } from "./visibleTrackId"
+
+const getTrackIndexFromReference = ({
+  tracks,
+  track,
+}: {
+  tracks: AudioTrack[]
+  track: AudioTrack | number | string
+}) => {
+  if (typeof track === `number`) {
+    return tracks.findIndex(
+      ({ index }, playlistIndex) => index === track || playlistIndex === track,
+    )
+  }
+
+  if (typeof track === `string`) {
+    return tracks.findIndex(({ id }) => id === track)
+  }
+
+  return tracks.findIndex(({ id }) => id === track.id)
+}
+
+type SelectCommand = {
+  track: AudioTrack | number | string
+  options: SelectAudioTrackOptions
+}
+
+export class AudioController extends ReactiveEntity<AudioEnhancerState> {
+  private readonly audioElement = document.createElement(`audio`)
+  readonly visualizer$ = new AudioVisualizer(this.audioElement)
+  readonly visibleTrackIds$: Observable<string[]>
+  private readonly mountedObjectUrls = new Set<string>()
+  private audioElementSourceTrackId: string | undefined
+  private readonly playCommandSubject = new Subject<void>()
+  private readonly pauseCommandSubject = new Subject<void>()
+  private readonly selectCommandSubject = new Subject<SelectCommand>()
+  private readonly playbackResetSubject = new Subject<void>()
+  private readonly subscriptions = new Subscription()
+  private readonly audioElementEventsController = new AbortController()
+  private pendingPlayAfterSourceLoad = false
+  private playbackContinuationTrackId: string | undefined
+  private readonly reader: Reader
+  private readonly trackSourceResolver: TrackSourceResolver
+
+  constructor(reader: Reader) {
+    super({
+      tracks: [],
+      currentTrack: undefined,
+      isPlaying: false,
+      isLoading: false,
+      currentTime: 0,
+      duration: 0,
+    })
+    this.reader = reader
+    this.trackSourceResolver = new TrackSourceResolver(
+      reader,
+      this.mountedObjectUrls,
+    )
+    this.visibleTrackIds$ = createVisibleTrackIds$(
+      this.watch(`tracks`),
+      this.reader.pagination.state$,
+    )
+    this.audioElement.preload = `metadata`
+    this.bindAudioElementEvents()
+    this.bindControllerEvents()
+    this.bindReaderEvents()
+  }
+
+  get state() {
+    return this.value
+  }
+
+  get visualizer() {
+    return this.visualizer$.value
+  }
+
+  update(value: Partial<AudioEnhancerState>) {
+    this.mergeCompare(value)
+  }
+
+  setTracks(tracks: AudioTrack[]) {
+    const nextTrackIds = new Set(tracks.map(({ id }) => id))
+
+    for (const { id } of this.state.tracks) {
+      if (!nextTrackIds.has(id)) {
+        this.trackSourceResolver.releaseTrackSource(id)
+      }
+    }
+
+    const currentTrack =
+      this.state.currentTrack &&
+      tracks.find(({ id }) => id === this.state.currentTrack?.id)
+
+    if (!currentTrack) {
+      this.playbackResetSubject.next()
+      this.visualizer$.stop({
+        resetBars: true,
+      })
+      this.releaseTrackSourceIfInactive(this.resetAudioElementSource())
+    }
+
+    this.update({
+      tracks,
+      currentTrack,
+      isLoading: currentTrack ? this.state.isLoading : false,
+      isPlaying: currentTrack ? this.state.isPlaying : false,
+      currentTime: currentTrack ? this.state.currentTime : 0,
+      duration: currentTrack ? this.state.duration : 0,
+    })
+    this.syncVisualizer({
+      trackId: currentTrack?.id,
+      isActive: false,
+      bars: getIdleVisualizerBars(),
+    })
+  }
+
+  select(
+    track: AudioTrack | number | string,
+    options: SelectAudioTrackOptions = {},
+  ) {
+    this.selectCommandSubject.next({
+      track,
+      options,
+    })
+  }
+
+  play() {
+    this.playCommandSubject.next()
+  }
+
+  pause() {
+    this.pauseCommandSubject.next()
+  }
+
+  toggle() {
+    if (this.audioElement.paused) {
+      this.play()
+      return
+    }
+
+    this.pause()
+  }
+
+  setCurrentTime(value: number) {
+    this.update({
+      currentTime: value,
+    })
+    this.audioElement.currentTime = value
+  }
+
+  destroy() {
+    this.playbackResetSubject.next()
+    this.subscriptions.unsubscribe()
+    this.audioElementEventsController.abort()
+    this.playCommandSubject.complete()
+    this.pauseCommandSubject.complete()
+    this.selectCommandSubject.complete()
+    this.playbackResetSubject.complete()
+    this.visualizer$.destroy()
+    this.resetAudioElementSource()
+    this.trackSourceResolver.destroy()
+
+    super.destroy()
+  }
+
+  private bindControllerEvents() {
+    const playbackInterrupted$ = merge(
+      this.pauseCommandSubject,
+      this.playbackResetSubject,
+      this.selectCommandSubject.pipe(
+        filter(({ options }) => options.navigate !== false),
+        map(() => undefined),
+      ),
+    )
+
+    this.subscriptions.add(
+      playbackInterrupted$.subscribe(() => {
+        this.clearPendingPlay()
+        this.clearPlaybackContinuation()
+      }),
+    )
+
+    this.subscriptions.add(
+      this.playCommandSubject.subscribe(() => {
+        this.clearPlaybackContinuation()
+        void this.handlePlayCommand().catch(() => undefined)
+      }),
+    )
+
+    this.subscriptions.add(
+      this.pauseCommandSubject.subscribe(() => {
+        this.audioElement.pause()
+      }),
+    )
+
+    this.subscriptions.add(
+      this.selectCommandSubject
+        .pipe(
+          map(({ track, options }) => ({
+            options,
+            trackIndex: getTrackIndexFromReference({
+              tracks: this.state.tracks,
+              track,
+            }),
+          })),
+          filter(({ trackIndex }) => trackIndex >= 0),
+          switchMap(({ trackIndex, options }) =>
+            this.selectTrackByIndex$(trackIndex, options),
+          ),
+        )
+        .subscribe(),
+    )
+  }
+
+  private bindReaderEvents() {
+    this.subscriptions.add(
+      this.reader.context.manifest$
+        .pipe(
+          map((manifest) =>
+            manifest.spineItems.filter(isAudioSpineItem).map((item) => ({
+              id: item.id,
+              href: item.href,
+              index: item.index,
+              mediaType: item.mediaType,
+            })),
+          ),
+        )
+        .subscribe((tracks) => {
+          this.setTracks(tracks)
+        }),
+    )
+
+    this.subscriptions.add(
+      this.visibleTrackIds$
+        .pipe(
+          map((trackIds) => trackIds[0]),
+          distinctUntilChanged(),
+        )
+        .subscribe((trackId) => {
+          if (trackId === undefined) {
+            if (this.playbackContinuationTrackId) {
+              return
+            }
+
+            this.stopCurrentTrack()
+
+            return
+          }
+
+          const shouldContinuePlayback =
+            this.playbackContinuationTrackId === trackId &&
+            trackId !== this.state.currentTrack?.id
+
+          if (shouldContinuePlayback) {
+            this.clearPlaybackContinuation()
+          }
+
+          this.selectCommandSubject.next({
+            track: trackId,
+            options: {
+              navigate: false,
+              play: shouldContinuePlayback ? true : undefined,
+            },
+          })
+        }),
+    )
+  }
+
+  private stopCurrentTrack() {
+    if (!this.state.currentTrack && !this.state.isLoading) {
+      return
+    }
+
+    this.playbackResetSubject.next()
+    this.resetVisualizerState(undefined)
+    this.releaseTrackSourceIfInactive(this.resetAudioElementSource())
+    this.resetTrackPlaybackState({
+      currentTrack: undefined,
+      isLoading: false,
+      isPlaying: false,
+    })
+  }
+
+  private syncVisualizer(value: Partial<AudioVisualizerState>) {
+    this.visualizer$.update({
+      trackId: this.state.currentTrack?.id,
+      ...value,
+    })
+  }
+
+  private resetTrackPlaybackState({
+    currentTrack,
+    isLoading,
+    isPlaying,
+  }: {
+    currentTrack: AudioTrack | undefined
+    isLoading: boolean
+    isPlaying?: boolean
+  }) {
+    this.update({
+      currentTrack,
+      isLoading,
+      ...(isPlaying !== undefined ? { isPlaying } : undefined),
+      currentTime: 0,
+      duration: 0,
+    })
+  }
+
+  private resetVisualizerState(trackId: string | undefined) {
+    this.visualizer$.stop({
+      resetBars: true,
+    })
+    this.syncVisualizer({
+      trackId,
+      bars: getIdleVisualizerBars(),
+    })
+  }
+
+  private selectTrackByIndex$(
+    trackIndex: number,
+    options: SelectAudioTrackOptions = {},
+  ) {
+    return defer(() => {
+      const track = this.state.tracks[trackIndex]
+
+      if (!track) return EMPTY
+
+      if (options.navigate !== false) {
+        this.reader.navigation.navigate({
+          spineItem: track.index,
+          animation: `turn`,
+        })
+      }
+
+      const currentTrack = this.state.currentTrack
+      const shouldPlay =
+        options.play ??
+        (!this.audioElement.paused && currentTrack !== undefined)
+
+      if (shouldPlay) {
+        this.requestPendingPlay()
+      } else {
+        this.clearPendingPlay()
+      }
+
+      if (currentTrack?.id === track.id && this.audioElement.src) {
+        this.syncVisualizer({
+          trackId: track.id,
+        })
+
+        if (shouldPlay) {
+          this.tryPlayPendingTrack()
+        }
+
+        return EMPTY
+      }
+
+      if (!shouldPlay) {
+        if (currentTrack?.id !== track.id) {
+          this.releaseTrackSourceIfInactive(
+            this.resetAudioElementSource(),
+            track.id,
+          )
+        }
+
+        this.resetTrackPlaybackState({
+          currentTrack: track,
+          isLoading: false,
+          isPlaying: false,
+        })
+        this.resetVisualizerState(track.id)
+
+        return EMPTY
+      }
+
+      this.resetTrackPlaybackState({
+        currentTrack: track,
+        isLoading: true,
+      })
+      this.resetVisualizerState(track.id)
+
+      return this.trackSourceResolver.resolveTrackSource(track).pipe(
+        takeUntil(this.playbackResetSubject),
+        tap((source) => {
+          this.releaseTrackSourceIfInactive(
+            this.resetAudioElementSource(),
+            track.id,
+          )
+          this.audioElement.src = source
+          this.audioElementSourceTrackId = track.id
+          this.audioElement.load()
+
+          this.resetTrackPlaybackState({
+            currentTrack: track,
+            isLoading: false,
+            isPlaying: false,
+          })
+          this.resetVisualizerState(track.id)
+        }),
+        catchError(() => {
+          this.clearPendingPlay()
+          this.releaseTrackSourceIfInactive(
+            this.resetAudioElementSource(),
+            track.id,
+          )
+          this.resetTrackPlaybackState({
+            currentTrack: track,
+            isLoading: false,
+            isPlaying: false,
+          })
+          this.resetVisualizerState(track.id)
+
+          return EMPTY
+        }),
+      )
+    })
+  }
+
+  private clearPendingPlay() {
+    this.pendingPlayAfterSourceLoad = false
+  }
+
+  private requestPendingPlay() {
+    this.pendingPlayAfterSourceLoad = true
+  }
+
+  private tryPlayPendingTrack() {
+    if (!this.pendingPlayAfterSourceLoad) return
+
+    this.pendingPlayAfterSourceLoad = false
+
+    void this.audioElement.play().catch(() => undefined)
+  }
+
+  private requestPlaybackContinuation(trackId: string) {
+    this.playbackContinuationTrackId = trackId
+  }
+
+  private clearPlaybackContinuation() {
+    this.playbackContinuationTrackId = undefined
+  }
+
+  private getPaginationPlaybackTargets(pagination: PaginationTrackWindow) {
+    return getPaginationPlaybackTargets({
+      tracks: this.state.tracks,
+      pagination,
+      currentTrack: this.state.currentTrack,
+    })
+  }
+
+  private releaseTrackSourceIfInactive(
+    trackId: string | undefined,
+    activeTrackId?: string,
+  ) {
+    if (!trackId || trackId === activeTrackId) return
+
+    this.trackSourceResolver.releaseTrackSource(trackId)
+  }
+
+  private async handlePlayCommand() {
+    if (!this.audioElement.src) {
+      const initialTrack = this.state.currentTrack ?? this.state.tracks[0]
+
+      if (!initialTrack) return
+
+      const trackIndex = this.state.tracks.findIndex(
+        ({ id }) => id === initialTrack.id,
+      )
+
+      if (trackIndex < 0) return
+
+      this.selectCommandSubject.next({
+        track: trackIndex,
+        options: {
+          navigate: false,
+          play: true,
+        },
+      })
+
+      return
+    }
+
+    await this.audioElement.play()
+  }
+
+  private bindAudioElementEvents() {
+    const signal = this.audioElementEventsController.signal
+
+    this.audioElement.addEventListener(`play`, this.handlePlay, {
+      signal,
+    })
+    this.audioElement.addEventListener(`pause`, this.handlePause, {
+      signal,
+    })
+    this.audioElement.addEventListener(`timeupdate`, this.syncPlaybackState, {
+      signal,
+    })
+    this.audioElement.addEventListener(`seeking`, this.syncPlaybackState, {
+      signal,
+    })
+    this.audioElement.addEventListener(`seeked`, this.syncPlaybackState, {
+      signal,
+    })
+    this.audioElement.addEventListener(
+      `loadedmetadata`,
+      this.syncPlaybackState,
+      {
+        signal,
+      },
+    )
+    this.audioElement.addEventListener(
+      `durationchange`,
+      this.syncPlaybackState,
+      {
+        signal,
+      },
+    )
+    this.audioElement.addEventListener(`canplay`, this.handleCanPlay, {
+      signal,
+    })
+
+    const ended$ = fromEvent(this.audioElement, `ended`)
+
+    const navigateAfterEnded$ = ended$.pipe(
+      withLatestFrom(this.reader.pagination.state$),
+      tap(([, pagination]) => {
+        this.visualizer$.stop({
+          resetBars: true,
+        })
+
+        const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
+          this.getPaginationPlaybackTargets(pagination)
+
+        if (nextTrackInPaginationWindow) {
+          this.clearPlaybackContinuation()
+          this.selectCommandSubject.next({
+            track: nextTrackInPaginationWindow.id,
+            options: {
+              navigate: false,
+              play: true,
+            },
+          })
+          return
+        }
+
+        if (nextTrackAfterPageTurn) {
+          this.requestPlaybackContinuation(nextTrackAfterPageTurn.id)
+        } else {
+          this.clearPlaybackContinuation()
+        }
+
+        this.reader.navigation.goToRightOrBottomSpineItem()
+      }),
+    )
+
+    this.subscriptions.add(navigateAfterEnded$.subscribe())
+  }
+
+  private getPlaybackDuration() {
+    if (
+      Number.isFinite(this.audioElement.duration) &&
+      this.audioElement.duration > 0
+    ) {
+      return this.audioElement.duration
+    }
+
+    const seekableRangeCount = this.audioElement.seekable.length
+
+    if (seekableRangeCount > 0) {
+      const seekableDuration = this.audioElement.seekable.end(
+        seekableRangeCount - 1,
+      )
+
+      if (Number.isFinite(seekableDuration) && seekableDuration > 0) {
+        return seekableDuration
+      }
+    }
+
+    return 0
+  }
+
+  private resetAudioElementSource() {
+    const trackId = this.audioElementSourceTrackId
+
+    this.audioElement.pause()
+    this.audioElement.removeAttribute(`src`)
+    this.audioElement.load()
+    this.audioElementSourceTrackId = undefined
+
+    return trackId
+  }
+
+  private readonly handlePlay = () => {
+    this.update({
+      isPlaying: true,
+    })
+    this.visualizer$.start(this.state.currentTrack)
+  }
+
+  private readonly handlePause = () => {
+    this.update({
+      isPlaying: false,
+    })
+    this.visualizer$.stop()
+  }
+
+  private readonly handleCanPlay = () => {
+    this.syncPlaybackState()
+    this.tryPlayPendingTrack()
+  }
+
+  private readonly syncPlaybackState = () => {
+    this.update({
+      currentTime: this.audioElement.currentTime,
+      duration: this.getPlaybackDuration(),
+    })
+  }
+}

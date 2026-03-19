@@ -16,6 +16,22 @@ export const detectMimeTypeFromName = (name: string) => {
       return `image/webp`
     case `xhtml`:
       return `application/xhtml+xml`
+    case `mp3`:
+      return `audio/mpeg`
+    case `m4a`:
+    case `m4b`:
+      return `audio/mp4`
+    case `aac`:
+      return `audio/aac`
+    case `ogg`:
+    case `oga`:
+      return `audio/ogg`
+    case `wav`:
+      return `audio/wav`
+    case `flac`:
+      return `audio/flac`
+    case `opus`:
+      return `audio/opus`
   }
 
   return undefined

@@ -22,6 +22,8 @@ import {
 } from "react-icons/rx"
 import { useObserve } from "reactjrx"
 import { map } from "rxjs"
+import { AudioControlsSection } from "../audio/AudioControlsSection"
+import { useHasAudioControls } from "../audio/useHasAudioControls"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -81,6 +83,7 @@ export const BottomBar = memo(
     const isScrollingMode = settings?.computedPageTurnMode === "scrollable"
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
+    const hasAudioControls = useHasAudioControls()
     const [isExtraOpen, setIsExtraOpen] = useState(true)
 
     useEffect(() => {
@@ -111,6 +114,11 @@ export const BottomBar = memo(
         ref={boxRef}
         gap={4}
       >
+        {hasAudioControls && (
+          <HStack px={4} justifyContent="center" width="100%">
+            <AudioControlsSection maxW={400} />
+          </HStack>
+        )}
         <HStack
           flex={1}
           alignItems="center"
