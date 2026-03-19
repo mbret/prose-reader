@@ -50,7 +50,13 @@ export class ServiceWorkerStreamer extends Streamer {
           this.fetchManifest({ key, baseUrl: `${baseUrl}/${key}/` }),
         )
       } else {
-        event.respondWith(this.fetchResource({ key, resourcePath }))
+        event.respondWith(
+          this.fetchResource({
+            key,
+            resourcePath,
+            request: event.request,
+          }),
+        )
       }
     } catch (e) {
       event.respondWith(new Response(String(e), { status: 500 }))

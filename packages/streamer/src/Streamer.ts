@@ -1,12 +1,12 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
-  type Observable,
   catchError,
   finalize,
   from,
   lastValueFrom,
   map,
   mergeMap,
+  type Observable,
   of,
   switchMap,
 } from "rxjs"
@@ -14,12 +14,16 @@ import { createArchiveLoader } from "./archives/archiveLoader"
 import type { Archive } from "./archives/types"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
+import { createRangeResponse } from "./utils/createRangeResponse"
 
 type OnError = (error: unknown) => Response
 type OnManifestSuccess = (params: {
   manifest: Manifest
   archive: Archive
 }) => Observable<Manifest> | Promise<Manifest>
+type WithArchiveResponse = (
+  archive: Archive,
+) => Observable<Response> | Promise<Response>
 
 export class Streamer {
   protected epubLoader: ReturnType<typeof createArchiveLoader>
@@ -70,9 +74,33 @@ export class Streamer {
     )
   }
 
-  public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {
+  protected withArchiveResponse({
+    key,
+    getResponse,
+  }: {
+    key: string
+    getResponse: WithArchiveResponse
+  }) {
     const response$ = this.accessArchive(key).pipe(
-      mergeMap(({ archive, release }) => {
+      mergeMap(({ archive, release }) =>
+        from(getResponse(archive)).pipe(
+          finalize(() => {
+            release()
+          }),
+        ),
+      ),
+      catchError((error) => {
+        return of(this.onError(error))
+      }),
+    )
+
+    return lastValueFrom(response$)
+  }
+
+  public fetchManifest({ key, baseUrl }: { key: string; baseUrl?: string }) {
+    return this.withArchiveResponse({
+      key,
+      getResponse: (archive) => {
         const manifest$ = from(
           generateManifestFromArchive(archive, { baseUrl }),
         )
@@ -87,28 +115,23 @@ export class Streamer {
                 status: 200,
               }),
           ),
-          finalize(() => {
-            release()
-          }),
         )
-      }),
-      catchError((error) => {
-        return of(this.onError(error))
-      }),
-    )
-
-    return lastValueFrom(response$)
+      },
+    })
   }
 
   public fetchResource({
     key,
     resourcePath,
+    request,
   }: {
     key: string
     resourcePath: string
+    request?: Request
   }) {
-    const response$ = this.accessArchive(key).pipe(
-      mergeMap(({ archive, release }) => {
+    return this.withArchiveResponse({
+      key,
+      getResponse: (archive) => {
         /**
          * We commonly use file:// for manifest without baseUrl. This ensure we
          * have valid URL for the reader while flagging them as local.
@@ -122,27 +145,15 @@ export class Streamer {
         )
 
         return resource$.pipe(
-          map(
-            (resource) =>
-              new Response(resource.body, {
-                status: 200,
-                headers: {
-                  ...(resource.params.contentType && {
-                    "Content-Type": resource.params.contentType,
-                  }),
-                },
-              }),
+          map((resource) =>
+            createRangeResponse({
+              body: resource.body ?? "",
+              contentType: resource.params.contentType,
+              rangeHeader: request?.headers.get("range"),
+            }),
           ),
-          finalize(() => {
-            release()
-          }),
         )
-      }),
-      catchError((error) => {
-        return of(this.onError(error))
-      }),
-    )
-
-    return lastValueFrom(response$)
+      },
+    })
   }
 }
