@@ -25,7 +25,7 @@ export const nonEpub =
         )
 
         const mimeType =
-          parseContentType(archiveItem?.encodingFormat ?? "") ??
+          parseContentType(archiveItem?.encodingFormat ?? "") ||
           detectMimeTypeFromName(archiveItem?.basename ?? "")
 
         return {

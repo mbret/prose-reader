@@ -38,5 +38,5 @@ export const parseContentType = (str: string) => {
 
   const cut = str.indexOf(`;`)
 
-  return cut ? str.substring(0, str.indexOf(`;`)) : str
+  return cut >= 0 ? str.substring(0, cut) : str
 }
