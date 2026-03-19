@@ -226,13 +226,20 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
+    const selectionIntent$ = merge(
+      this.selectCommandSubject,
+      this.createVisibleTrackSelectionIntent$(),
+      this.createEndedSelectionIntent$(),
+    )
+
     this.subscriptions.add(
-      this.selectCommandSubject
+      selectionIntent$
         .pipe(
-          map(({ track, options }) => ({
+          withLatestFrom(this.state$),
+          map(([{ track, options }, state]) => ({
             options,
             trackIndex: getTrackIndexFromReference({
-              tracks: this.state.tracks,
+              tracks: state.tracks,
               track,
             }),
           })),
@@ -262,22 +269,20 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           this.setTracks(tracks)
         }),
     )
+  }
 
-    this.subscriptions.add(
-      this.visibleTrackIds$
-        .pipe(
-          map((trackIds) => trackIds[0]),
-          distinctUntilChanged(),
-        )
-        .subscribe((trackId) => {
+  private createVisibleTrackSelectionIntent$(): Observable<SelectCommand> {
+    return this.visibleTrackIds$.pipe(
+      map((trackIds) => trackIds[0]),
+      distinctUntilChanged(),
+      switchMap((trackId) =>
+        defer(() => {
           if (trackId === undefined) {
-            if (this.playbackContinuationTrackId) {
-              return
+            if (!this.playbackContinuationTrackId) {
+              this.stopCurrentTrack()
             }
 
-            this.stopCurrentTrack()
-
-            return
+            return EMPTY
           }
 
           const shouldContinuePlayback =
@@ -288,7 +293,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             this.clearPlaybackContinuation()
           }
 
-          this.selectCommandSubject.next({
+          return of({
             track: trackId,
             options: {
               navigate: false,
@@ -296,6 +301,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             },
           })
         }),
+      ),
     )
   }
 
@@ -557,42 +563,44 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.audioElement.addEventListener(`canplay`, this.handleCanPlay, {
       signal,
     })
+  }
 
-    const ended$ = fromEvent(this.audioElement, `ended`)
-
-    const navigateAfterEnded$ = ended$.pipe(
+  private createEndedSelectionIntent$(): Observable<SelectCommand> {
+    return fromEvent(this.audioElement, `ended`).pipe(
       withLatestFrom(this.reader.pagination.state$),
-      tap(([, pagination]) => {
-        this.visualizer$.stop({
-          resetBars: true,
-        })
-
-        const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
-          this.getPaginationPlaybackTargets(pagination)
-
-        if (nextTrackInPaginationWindow) {
-          this.clearPlaybackContinuation()
-          this.selectCommandSubject.next({
-            track: nextTrackInPaginationWindow.id,
-            options: {
-              navigate: false,
-              play: true,
-            },
+      switchMap(([, pagination]) =>
+        defer(() => {
+          this.visualizer$.stop({
+            resetBars: true,
           })
-          return
-        }
 
-        if (nextTrackAfterPageTurn) {
-          this.requestPlaybackContinuation(nextTrackAfterPageTurn.id)
-        } else {
-          this.clearPlaybackContinuation()
-        }
+          const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
+            this.getPaginationPlaybackTargets(pagination)
 
-        this.reader.navigation.goToRightOrBottomSpineItem()
-      }),
+          if (nextTrackInPaginationWindow) {
+            this.clearPlaybackContinuation()
+
+            return of({
+              track: nextTrackInPaginationWindow.id,
+              options: {
+                navigate: false,
+                play: true,
+              },
+            })
+          }
+
+          if (nextTrackAfterPageTurn) {
+            this.requestPlaybackContinuation(nextTrackAfterPageTurn.id)
+          } else {
+            this.clearPlaybackContinuation()
+          }
+
+          this.reader.navigation.goToRightOrBottomSpineItem()
+
+          return EMPTY
+        }),
+      ),
     )
-
-    this.subscriptions.add(navigateAfterEnded$.subscribe())
   }
 
   private getPlaybackDuration() {
