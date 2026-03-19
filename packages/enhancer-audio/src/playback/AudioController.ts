@@ -10,6 +10,7 @@ import {
   map,
   merge,
   type Observable,
+  of,
   Subject,
   Subscription,
   switchMap,
