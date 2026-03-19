@@ -75,17 +75,18 @@ export const createRangeResponse = ({
   rangeHeader?: string | null
 }) => {
   const headers = new Headers()
-  const responseBody = body instanceof Blob ? body : new Blob([body])
-  const size = responseBody.size
 
   if (contentType) {
     headers.set("Content-Type", contentType)
   }
 
   headers.set("Accept-Ranges", "bytes")
-  headers.set("Content-Length", String(size))
 
   if (!rangeHeader) {
+    if (body instanceof Blob) {
+      headers.set("Content-Length", String(body.size))
+    }
+
     return new Response(body, {
       status: 200,
       headers,
@@ -95,11 +96,18 @@ export const createRangeResponse = ({
   const parsedRange = parseSingleByteRange(rangeHeader)
 
   if (parsedRange.kind === "missing" || parsedRange.kind === "multi") {
+    if (body instanceof Blob) {
+      headers.set("Content-Length", String(body.size))
+    }
+
     return new Response(body, {
       status: 200,
       headers,
     })
   }
+
+  const responseBody = body instanceof Blob ? body : new Blob([body])
+  const size = responseBody.size
 
   if (parsedRange.kind === "invalid") {
     return new Response(null, {
