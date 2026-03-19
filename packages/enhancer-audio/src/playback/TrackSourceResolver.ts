@@ -105,6 +105,11 @@ export class TrackSourceResolver extends ReactiveEntity<Record<string, never>> {
     }
 
     if (resource instanceof Response) {
+      /**
+       * The resolved resource is the source of truth here.
+       * Enhancers may transform audio payloads, so we must not bypass the
+       * Response body by reusing manifest URLs or Response.url.
+       */
       return from(resource.blob()).pipe(
         map((blob) =>
           this.createCachedObjectUrl({

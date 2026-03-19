@@ -17,11 +17,12 @@ const createDeferred = <T>() => {
   }
 }
 
-const createTrack = (): AudioTrack => ({
+const createTrack = (overrides: Partial<AudioTrack> = {}): AudioTrack => ({
   id: `track-1`,
   href: `chapter-1.mp3`,
   index: 0,
   mediaType: `audio/mpeg`,
+  ...overrides,
 })
 
 const createReader = ({
@@ -74,11 +75,15 @@ describe(`TrackSourceResolver`, () => {
     })
   })
 
-  it(`caches response-backed tracks by track id`, async () => {
+  it(`caches response-backed tracks by track id from the resolved response body`, async () => {
     const track = createTrack()
-    const getResource = vi.fn(
-      async () => new Response(new Blob([`audio`], { type: `audio/mpeg` })),
-    )
+    const response = new Response(new Blob([`audio`], { type: `audio/mpeg` }))
+    Object.defineProperty(response, `url`, {
+      value: `https://example.com/chapter-1.mp3`,
+      configurable: true,
+    })
+    const getResource = vi.fn(async () => response)
+    const blob = vi.spyOn(response, `blob`)
     const createObjectUrl = vi
       .spyOn(URL, `createObjectURL`)
       .mockReturnValue(`blob:track-1`)
@@ -102,6 +107,7 @@ describe(`TrackSourceResolver`, () => {
     expect(firstSource).toBe(`blob:track-1`)
     expect(secondSource).toBe(`blob:track-1`)
     expect(getResource).toHaveBeenCalledTimes(1)
+    expect(blob).toHaveBeenCalledTimes(1)
     expect(createObjectUrl).toHaveBeenCalledTimes(1)
   })
 
