@@ -6,6 +6,7 @@ import {
   distinctUntilChanged,
   EMPTY,
   filter,
+  from,
   fromEvent,
   map,
   merge,
@@ -14,6 +15,7 @@ import {
   Subject,
   Subscription,
   switchMap,
+  take,
   takeUntil,
   tap,
   withLatestFrom,
@@ -65,12 +67,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly mountedObjectUrls = new Set<string>()
   private audioElementSourceTrackId: string | undefined
   private readonly playCommandSubject = new Subject<void>()
+  private readonly playWhenReadySubject = new Subject<void>()
+  private readonly cancelPlayWhenReadySubject = new Subject<void>()
   private readonly pauseCommandSubject = new Subject<void>()
   private readonly selectCommandSubject = new Subject<SelectCommand>()
   private readonly playbackResetSubject = new Subject<void>()
   private readonly subscriptions = new Subscription()
   private readonly audioElementEventsController = new AbortController()
-  private pendingPlayAfterSourceLoad = false
   private playbackContinuationTrackId: string | undefined
   private readonly reader: Reader
   private readonly trackSourceResolver: TrackSourceResolver
@@ -186,6 +189,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.unsubscribe()
     this.audioElementEventsController.abort()
     this.playCommandSubject.complete()
+    this.playWhenReadySubject.complete()
+    this.cancelPlayWhenReadySubject.complete()
     this.pauseCommandSubject.complete()
     this.selectCommandSubject.complete()
     this.playbackResetSubject.complete()
@@ -206,9 +211,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
     )
 
+    const playWhenReadyCanceled$ = merge(
+      playbackInterrupted$,
+      this.cancelPlayWhenReadySubject,
+    )
+
     this.subscriptions.add(
       playbackInterrupted$.subscribe(() => {
-        this.clearPendingPlay()
         this.clearPlaybackContinuation()
       }),
     )
@@ -216,7 +225,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(
       this.playCommandSubject.subscribe(() => {
         this.clearPlaybackContinuation()
-        void this.handlePlayCommand().catch(() => undefined)
+        this.handlePlayCommand()
       }),
     )
 
@@ -224,6 +233,29 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.pauseCommandSubject.subscribe(() => {
         this.audioElement.pause()
       }),
+    )
+
+    this.subscriptions.add(
+      this.playWhenReadySubject
+        .pipe(
+          switchMap(() =>
+            defer(() => {
+              if (
+                this.audioElement.readyState >=
+                HTMLMediaElement.HAVE_FUTURE_DATA
+              ) {
+                return of(undefined)
+              }
+
+              return fromEvent(this.audioElement, `canplay`).pipe(take(1))
+            }).pipe(
+              takeUntil(playWhenReadyCanceled$),
+              switchMap(() => from(this.audioElement.play())),
+              catchError(() => EMPTY),
+            ),
+          ),
+        )
+        .subscribe(),
     )
 
     const selectionIntent$ = merge(
@@ -377,19 +409,15 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         (!this.audioElement.paused && currentTrack !== undefined)
 
       if (shouldPlay) {
-        this.requestPendingPlay()
+        this.requestPlayWhenReady()
       } else {
-        this.clearPendingPlay()
+        this.cancelPlayWhenReady()
       }
 
       if (currentTrack?.id === track.id && this.audioElement.src) {
         this.syncVisualizer({
           trackId: track.id,
         })
-
-        if (shouldPlay) {
-          this.tryPlayPendingTrack()
-        }
 
         return EMPTY
       }
@@ -445,7 +473,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             return
           }
 
-          this.clearPendingPlay()
+          this.cancelPlayWhenReady()
           this.releaseTrackSourceIfInactive(
             this.resetAudioElementSource(),
             track.id,
@@ -461,20 +489,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     })
   }
 
-  private clearPendingPlay() {
-    this.pendingPlayAfterSourceLoad = false
+  private cancelPlayWhenReady() {
+    this.cancelPlayWhenReadySubject.next()
   }
 
-  private requestPendingPlay() {
-    this.pendingPlayAfterSourceLoad = true
-  }
-
-  private tryPlayPendingTrack() {
-    if (!this.pendingPlayAfterSourceLoad) return
-
-    this.pendingPlayAfterSourceLoad = false
-
-    void this.audioElement.play().catch(() => undefined)
+  private requestPlayWhenReady() {
+    this.playWhenReadySubject.next()
   }
 
   private requestPlaybackContinuation(trackId: string) {
@@ -502,7 +522,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.trackSourceResolver.releaseTrackSource(trackId)
   }
 
-  private async handlePlayCommand() {
+  private handlePlayCommand() {
     if (!this.audioElement.src) {
       const initialTrack = this.state.currentTrack ?? this.state.tracks[0]
 
@@ -525,7 +545,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       return
     }
 
-    await this.audioElement.play()
+    this.requestPlayWhenReady()
   }
 
   private bindAudioElementEvents() {
@@ -560,7 +580,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         signal,
       },
     )
-    this.audioElement.addEventListener(`canplay`, this.handleCanPlay, {
+    this.audioElement.addEventListener(`canplay`, this.syncPlaybackState, {
       signal,
     })
   }
@@ -649,11 +669,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       isPlaying: false,
     })
     this.visualizer$.stop()
-  }
-
-  private readonly handleCanPlay = () => {
-    this.syncPlaybackState()
-    this.tryPlayPendingTrack()
   }
 
   private readonly syncPlaybackState = () => {
