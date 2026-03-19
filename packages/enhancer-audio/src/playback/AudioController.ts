@@ -1,6 +1,7 @@
 import { ReactiveEntity, type Reader } from "@prose-reader/core"
 import {
   catchError,
+  defaultIfEmpty,
   defer,
   distinctUntilChanged,
   EMPTY,
@@ -411,24 +412,32 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.resetVisualizerState(track.id)
 
       return this.trackSourceResolver.resolveTrackSource(track).pipe(
-        takeUntil(this.playbackResetSubject),
-        tap((source) => {
-          this.releaseTrackSourceIfInactive(
-            this.resetAudioElementSource(),
-            track.id,
-          )
-          this.audioElement.src = source
-          this.audioElementSourceTrackId = track.id
-          this.audioElement.load()
-
-          this.resetTrackPlaybackState({
-            currentTrack: track,
-            isLoading: false,
-            isPlaying: false,
-          })
-          this.resetVisualizerState(track.id)
-        }),
+        map((source) => ({ hasSource: true as const, source })),
+        defaultIfEmpty({ hasSource: false as const }),
         catchError(() => {
+          return of({ hasSource: false as const })
+        }),
+        takeUntil(this.playbackResetSubject),
+        tap((resolution) => {
+          if (resolution.hasSource) {
+            this.releaseTrackSourceIfInactive(
+              this.resetAudioElementSource(),
+              track.id,
+            )
+            this.audioElement.src = resolution.source
+            this.audioElementSourceTrackId = track.id
+            this.audioElement.load()
+
+            this.resetTrackPlaybackState({
+              currentTrack: track,
+              isLoading: false,
+              isPlaying: false,
+            })
+            this.resetVisualizerState(track.id)
+
+            return
+          }
+
           this.clearPendingPlay()
           this.releaseTrackSourceIfInactive(
             this.resetAudioElementSource(),
@@ -440,8 +449,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             isPlaying: false,
           })
           this.resetVisualizerState(track.id)
-
-          return EMPTY
         }),
       )
     })

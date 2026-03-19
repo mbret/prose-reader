@@ -1,6 +1,6 @@
 /* @vitest-environment happy-dom */
 
-import { BehaviorSubject, of, Subject } from "rxjs"
+import { BehaviorSubject, EMPTY, of, Subject } from "rxjs"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { AudioTrack } from "../types"
 
@@ -167,6 +167,29 @@ describe(`AudioController`, () => {
     await Promise.resolve()
 
     expect(loadSpy).toHaveBeenCalledTimes(loadCallsAfterManifestReset)
+    expect(audioElement.getAttribute(`src`)).toBe(null)
+  })
+
+  it(`clears loading state when track source resolution completes without a source`, async () => {
+    resolveTrackSourceMock.mockReturnValue(EMPTY)
+
+    const { reader } = createReader({
+      spineItems: [createManifestSpineItem()],
+    })
+    const controller = new AudioController(reader)
+    const audioElement = Reflect.get(controller, `audioElement`)
+
+    controller.select(`track-1`, {
+      navigate: false,
+      play: true,
+    })
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.isLoading).toBe(false)
+    expect(controller.state.isPlaying).toBe(false)
     expect(audioElement.getAttribute(`src`)).toBe(null)
   })
 
