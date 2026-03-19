@@ -11,6 +11,7 @@
     "start:front": "lerna run dev --stream --scope prose-reader-front",
     "start:demo": "lerna run start --stream --scope demo",
     "build": "lerna run build --stream",
+    "check:react-reader-enhancers": "npm run check:enhancers --workspace @prose-reader/react-reader",
     "tsc": "lerna run tsc --parallel",
     "format": "npx @biomejs/biome format .",
     "lint": "npx @biomejs/biome lint .",

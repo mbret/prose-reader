@@ -1,3 +1,4 @@
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
@@ -46,19 +47,36 @@ export const createArchiveFromJszip = async (
 
   const archive: Archive = {
     filename: name || ``,
-    records: files.map((file) => ({
-      dir: file.dir,
-      basename: getUriBasename(file.name),
-      uri: file.name,
-      blob: () => file.async(`blob`),
-      string: () => file.async("string"),
-      ...(file.internalStream && {
-        stream: file.internalStream,
-      }),
+    records: files.map((file) => {
       // this is private API
       // @ts-expect-error
-      size: file._data.uncompressedSize,
-    })),
+      const size = file._data.uncompressedSize
+      const basename = getUriBasename(file.name)
+
+      if (file.dir) {
+        return {
+          dir: true,
+          basename,
+          uri: file.name,
+          size,
+        }
+      }
+
+      return {
+        dir: false,
+        basename: getUriBasename(file.name),
+        uri: file.name,
+        encodingFormat: detectMimeTypeFromName(file.name),
+        blob: () => file.async(`blob`),
+        string: () => file.async("string"),
+        ...(file.internalStream && {
+          stream: file.internalStream,
+        }),
+        // this is private API
+        // @ts-expect-error
+        size: file._data.uncompressedSize,
+      }
+    }),
     close: () => Promise.resolve(),
   }
 

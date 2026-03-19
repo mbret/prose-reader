@@ -3,6 +3,7 @@
  *
  * Does not work in service worker due to usage of web worker.
  */
+import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Report } from "../report"
 import type { Archive } from "./types"
 
@@ -49,6 +50,7 @@ export const createArchiveFromLibArchive = async (
     records: objArray.map((item: { file: CompressedFile; path: string }) => ({
       dir: false,
       basename: item.file.name,
+      encodingFormat: detectMimeTypeFromName(item.file.name),
       size: item.file.size,
       uri: `${item.path}${item.file.name}`,
       blob: async () => {

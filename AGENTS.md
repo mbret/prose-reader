@@ -10,7 +10,7 @@ asynchronous lookup and mechanisms that defer, batch or are fast enough to not i
 An example of common issue is `getBoundingClientRect`. Getting elements position is a common use case across prose-reader. Ideally it should always
 be in a very controlled way and with better performance alternative when possible (eg: `IntersectionObserver`)
 
-# Epub SPEC
+# Epub SPECS
 
 This library is built to support entirely and strictly the epub3 specs. You can access it at https://www.w3.org/TR/epub-33/. The spec and rules should always be enforced
 

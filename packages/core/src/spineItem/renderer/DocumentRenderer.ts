@@ -45,15 +45,11 @@ type LayoutParams = {
   minimumWidth: number
 }
 
-type DocumentRendererState =
-  | {
-      state: `error`
-      error: unknown
-    }
-  | {
-      state: `idle` | `loading` | `loaded` | `unloading`
-      error: undefined
-    }
+type DocumentRendererState = {
+  state: `idle` | `loading` | `loaded` | `unloading` | `error`
+  error: unknown | undefined
+  documentContainer: HTMLElement | undefined
+}
 
 export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererState> {
   static readonly DOCUMENT_CONTAINER_CLASS_NAME =
@@ -68,30 +64,8 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   protected containerElement: HTMLElement
   protected resourcesHandler: ResourceHandler
 
-  // protected unload$ = this.triggerSubject.pipe(
-  //   withLatestFrom(this.stateSubject),
-  //   filter(
-  //     ([trigger, state]) =>
-  //       trigger.type === `unload` && state.state !== "idle" && state.state !== "unloading",
-  //   ),
-  //   map(() => undefined),
-  //   share(),
-  // )
-
-  // protected load$ = this.triggerSubject.pipe(
-  //   withLatestFrom(this.stateSubject),
-  //   filter(
-  //     ([trigger, state]) =>
-  //       trigger.type === `load` && state.state !== "loaded" && state.state !== "loading",
-  //   ),
-  //   map(() => undefined),
-  //   share(),
-  // )
-
   public loaded$: Observable<void>
   public unloaded$: Observable<void>
-
-  private _documentContainer: HTMLElement | undefined
 
   constructor(params: {
     context: Context
@@ -105,6 +79,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     super({
       state: `idle`,
       error: undefined,
+      documentContainer: undefined,
     })
 
     this.context = params.context
@@ -130,7 +105,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         if (canBeIgnored) return EMPTY
 
-        this.next({ state: `loading`, error: undefined })
+        this.mergeCompare({ state: `loading`, error: undefined })
 
         const createDocument$ = this.onCreateDocument().pipe(first())
 
@@ -164,7 +139,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
             )
           }),
           map(() => {
-            this.next({ state: `loaded`, error: undefined })
+            this.mergeCompare({ state: `loaded`, error: undefined })
 
             return undefined
           }),
@@ -181,7 +156,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         if (canBeIgnored) return EMPTY
 
-        this.next({ state: `unloading`, error: undefined })
+        this.mergeCompare({ state: `unloading`, error: undefined })
 
         return this.context.bridgeEvent.viewportFree$.pipe(
           first(),
@@ -201,7 +176,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
             return onUnload$
           }),
           map(() => {
-            this.next({ state: `idle`, error: undefined })
+            this.mergeCompare({ state: `idle`, error: undefined })
 
             return undefined
           }),
@@ -214,7 +189,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     merge(this.loaded$, this.unloaded$)
       .pipe(
         catchError((error) => {
-          this.next({ state: `error`, error })
+          this.mergeCompare({ state: `error`, error })
 
           return EMPTY
         }),
@@ -224,10 +199,8 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }
 
   protected setDocumentContainer(element: HTMLElement) {
-    this._documentContainer = element
-    this._documentContainer.classList.add(
-      DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME,
-    )
+    element.classList.add(DocumentRenderer.DOCUMENT_CONTAINER_CLASS_NAME)
+    this.mergeCompare({ documentContainer: element })
   }
 
   protected attach() {
@@ -237,12 +210,8 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }
 
   protected detach() {
-    this._documentContainer?.remove()
-    this._documentContainer = undefined
-  }
-
-  public get state$() {
-    return this.stateSubject
+    this.documentContainer?.remove()
+    this.mergeCompare({ documentContainer: undefined })
   }
 
   public get isLoaded$() {
@@ -333,7 +302,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   abstract getDocumentFrame(): HTMLIFrameElement | undefined
 
   get documentContainer() {
-    return this._documentContainer
+    return this.value.documentContainer
   }
 
   get writingMode(): `vertical-rl` | `horizontal-tb` | undefined {

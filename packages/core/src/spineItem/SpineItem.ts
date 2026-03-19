@@ -113,7 +113,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       tap(() => {
         this.mergeCompare({
           isDirty: false,
-          isReady: this.renderer.state$.value.state === "loaded",
+          isReady: this.renderer.value.state === "loaded",
         })
       }),
       share(),
