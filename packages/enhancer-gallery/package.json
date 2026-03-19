@@ -20,7 +20,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.281.0"
+    "@prose-reader/core": "^1.282.0"
   },
   "peerDependencies": {
     "rxjs": "*"
