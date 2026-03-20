@@ -5,8 +5,10 @@ import { createRoot } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { audioSpineItemMock, createPortalMock } = vi.hoisted(() => ({
-  audioSpineItemMock: vi.fn(() => <div data-testid="audio-spine-item" />),
-  createPortalMock: vi.fn((node) => node),
+  audioSpineItemMock: vi.fn((_props?: unknown) => (
+    <div data-testid="audio-spine-item" />
+  )),
+  createPortalMock: vi.fn((node, _container) => node),
 }))
 
 vi.mock("react-dom", async () => {
@@ -65,7 +67,9 @@ describe(`SpineItem`, () => {
     await act(async () => {
       // Type assertion is required because this component reads only a tiny SpineItem subset in this test.
       root.render(
-        <SpineItem item={item as Parameters<typeof SpineItem>[0][`item`]} />,
+        <SpineItem
+          item={item as unknown as Parameters<typeof SpineItem>[0][`item`]}
+        />,
       )
     })
 
