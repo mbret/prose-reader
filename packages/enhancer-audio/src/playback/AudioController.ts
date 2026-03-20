@@ -408,13 +408,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         options.play ??
         (!this.audioElement.paused && currentTrack !== undefined)
 
-      if (shouldPlay) {
-        this.requestPlayWhenReady()
-      } else {
-        this.cancelPlayWhenReady()
-      }
-
       if (currentTrack?.id === track.id && this.audioElement.src) {
+        if (shouldPlay) {
+          this.requestPlayWhenReady()
+        } else {
+          this.cancelPlayWhenReady()
+        }
+
         this.syncVisualizer({
           trackId: track.id,
         })
@@ -423,6 +423,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }
 
       if (!shouldPlay) {
+        this.cancelPlayWhenReady()
+
         if (currentTrack?.id !== track.id) {
           this.releaseTrackSourceIfInactive(
             this.resetAudioElementSource(),
@@ -462,6 +464,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             this.audioElement.src = resolution.source
             this.audioElementSourceTrackId = track.id
             this.audioElement.load()
+            this.requestPlayWhenReady()
 
             this.resetTrackPlaybackState({
               currentTrack: track,

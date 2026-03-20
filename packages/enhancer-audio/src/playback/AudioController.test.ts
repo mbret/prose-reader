@@ -426,6 +426,76 @@ describe(`AudioController`, () => {
     expect(pauseSpy).toHaveBeenCalledTimes(pauseCallsBeforeNavigation + 1)
   })
 
+  it(`autoplays the next track after a manual page turn when the current source is already ready`, async () => {
+    resolveTrackSourceMock.mockImplementation((track: AudioTrack) =>
+      of(`blob:${track.id}`),
+    )
+
+    const { reader, paginationState$ } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: `track-1`,
+          index: 0,
+        }),
+        createManifestSpineItem({
+          id: `track-2`,
+          index: 1,
+        }),
+      ],
+    })
+    const controller = new AudioController(reader)
+    const audioElement = Reflect.get(
+      controller,
+      `audioElement`,
+    ) as HTMLAudioElement
+    const playedSources: string[] = []
+
+    Object.defineProperty(audioElement, `readyState`, {
+      configurable: true,
+      get: () => HTMLMediaElement.HAVE_FUTURE_DATA,
+    })
+
+    vi.spyOn(audioElement, `play`).mockImplementation(() => {
+      playedSources.push(audioElement.getAttribute(`src`) ?? ``)
+
+      return Promise.resolve()
+    })
+
+    paginationState$.next({
+      beginSpineItemIndex: 0,
+      endSpineItemIndex: 0,
+    })
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    controller.play()
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    audioElement.dispatchEvent(new Event(`play`))
+    await Promise.resolve()
+
+    playedSources.length = 0
+
+    Object.defineProperty(audioElement, `paused`, {
+      configurable: true,
+      get: () => false,
+    })
+
+    paginationState$.next({
+      beginSpineItemIndex: 1,
+      endSpineItemIndex: 1,
+    })
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-2`)
+    expect(playedSources).toEqual([`blob:track-2`])
+  })
+
   it(`releases the previously mounted track source when switching tracks`, async () => {
     const track1: AudioTrack = {
       id: `track-1`,
