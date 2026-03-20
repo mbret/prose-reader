@@ -103,4 +103,19 @@ describe(`AudioVisualizer`, () => {
 
     expect(FakeAudioContext.instances[0]?.close).toHaveBeenCalledTimes(1)
   })
+
+  it(`keeps the requested track id when stopped before the first sample`, () => {
+    const visualizer = new AudioVisualizer(document.createElement(`audio`))
+
+    visualizer.start(createTrack(`track-2`))
+    visualizer.stop({
+      resetLevels: true,
+    })
+
+    expect(visualizer.value).toEqual({
+      trackId: `track-2`,
+      isActive: false,
+      levels: getIdleVisualizerLevels(),
+    })
+  })
 })

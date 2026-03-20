@@ -1,43 +1,25 @@
 import { ReactiveEntity } from "@prose-reader/core"
 import {
   animationFrames,
-  BehaviorSubject,
   catchError,
   defer,
-  distinctUntilChanged,
   EMPTY,
   from,
-  fromEvent,
   map,
-  merge,
-  of,
-  Subscription,
+  type Subscription,
   switchMap,
-  takeUntil,
 } from "rxjs"
 import type { AudioTrack, AudioVisualizerState } from "../types"
 import { getIdleVisualizerLevels, getVisualizerLevels } from "./levels"
 
 const AUDIO_VISUALIZER_FFT_SIZE = 256
 
-type AudioVisualizerPlaybackState = {
-  trackId: string | undefined
-  isRunning: boolean
-  resetLevels: boolean
-}
-
 export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
   private audioContext: AudioContext | undefined
   private audioSourceNode: MediaElementAudioSourceNode | undefined
   private analyserNode: AnalyserNode | undefined
   private frequencyData: Uint8Array<ArrayBuffer> | undefined
-  private readonly playbackState$ =
-    new BehaviorSubject<AudioVisualizerPlaybackState>({
-      trackId: undefined,
-      isRunning: false,
-      resetLevels: false,
-    })
-  private readonly subscriptions = new Subscription()
+  private samplingSubscription: Subscription | undefined
 
   constructor(private readonly audioElement: HTMLAudioElement) {
     super({
@@ -45,45 +27,6 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
       isActive: false,
       trackId: undefined,
     })
-
-    this.subscriptions.add(
-      this.playbackState$
-        .pipe(
-          distinctUntilChanged(
-            (previous, next) =>
-              previous.trackId === next.trackId &&
-              previous.isRunning === next.isRunning &&
-              previous.resetLevels === next.resetLevels,
-          ),
-          switchMap(({ trackId, isRunning, resetLevels }) => {
-            if (!trackId || !isRunning) {
-              return of({
-                isActive: false,
-                ...(resetLevels
-                  ? { levels: getIdleVisualizerLevels() }
-                  : undefined),
-              })
-            }
-
-            return this.createLevels$().pipe(
-              takeUntil(
-                merge(
-                  fromEvent(this.audioElement, `pause`),
-                  fromEvent(this.audioElement, `ended`),
-                ),
-              ),
-              map((levels) => ({
-                trackId,
-                levels,
-                isActive: true,
-              })),
-            )
-          }),
-        )
-        .subscribe((value) => {
-          this.update(value)
-        }),
-    )
   }
 
   update(value: Partial<AudioVisualizerState>) {
@@ -92,18 +35,36 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
   start(currentTrack: AudioTrack | undefined) {
     if (!currentTrack) return
-    this.playbackState$.next({
+
+    if (
+      this.value.trackId === currentTrack.id &&
+      this.value.isActive &&
+      this.samplingSubscription
+    ) {
+      return
+    }
+
+    this.samplingSubscription?.unsubscribe()
+    this.update({
       trackId: currentTrack.id,
-      isRunning: true,
-      resetLevels: false,
+      isActive: true,
+    })
+    this.samplingSubscription = this.createLevels$().subscribe((levels) => {
+      this.update({
+        trackId: currentTrack.id,
+        levels,
+        isActive: true,
+      })
     })
   }
 
   stop({ resetLevels = false }: { resetLevels?: boolean } = {}) {
-    this.playbackState$.next({
+    this.samplingSubscription?.unsubscribe()
+    this.samplingSubscription = undefined
+    this.update({
       trackId: this.value.trackId,
-      isRunning: false,
-      resetLevels,
+      isActive: false,
+      ...(resetLevels ? { levels: getIdleVisualizerLevels() } : undefined),
     })
   }
 
@@ -111,8 +72,6 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.stop({
       resetLevels: true,
     })
-    this.subscriptions.unsubscribe()
-    this.playbackState$.complete()
     this.destroyAudioGraph()
 
     super.destroy()
@@ -140,9 +99,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.audioContext = audioContext
     this.audioSourceNode = audioSourceNode
     this.analyserNode = analyserNode
-    this.frequencyData = new Uint8Array(
-      new ArrayBuffer(analyserNode.frequencyBinCount),
-    )
+    this.frequencyData = new Uint8Array(analyserNode.frequencyBinCount)
 
     return true
   }
@@ -153,42 +110,36 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
         return EMPTY
       }
 
-      const resumeAudioContext$ = () => {
-        const audioContext = this.audioContext
+      const audioContext = this.audioContext
 
-        if (!audioContext) {
-          return EMPTY
-        }
-
-        if (audioContext.state !== `suspended`) {
-          return of(undefined)
-        }
-
-        return from(audioContext.resume()).pipe(
-          map(() => undefined),
-          catchError(() => of(undefined)),
-        )
+      if (!audioContext) {
+        return EMPTY
       }
 
-      return resumeAudioContext$().pipe(
-        switchMap(() => {
-          const readLevels = () => {
-            if (!this.analyserNode || !this.frequencyData) {
-              return getIdleVisualizerLevels()
-            }
+      if (audioContext.state !== `suspended`) {
+        return animationFrames().pipe(map(() => this.readLevels()))
+      }
 
-            this.analyserNode.getByteFrequencyData(this.frequencyData)
-
-            return getVisualizerLevels(this.frequencyData)
-          }
-
-          return animationFrames().pipe(map(() => readLevels()))
-        }),
+      return from(audioContext.resume()).pipe(
+        catchError(() => EMPTY),
+        switchMap(() => animationFrames().pipe(map(() => this.readLevels()))),
       )
     })
   }
 
+  private readLevels() {
+    if (!this.analyserNode || !this.frequencyData) {
+      return getIdleVisualizerLevels()
+    }
+
+    this.analyserNode.getByteFrequencyData(this.frequencyData)
+
+    return getVisualizerLevels(this.frequencyData)
+  }
+
   private destroyAudioGraph() {
+    this.samplingSubscription?.unsubscribe()
+    this.samplingSubscription = undefined
     this.audioSourceNode?.disconnect()
     this.analyserNode?.disconnect()
     this.audioContext?.close().catch(() => undefined)
