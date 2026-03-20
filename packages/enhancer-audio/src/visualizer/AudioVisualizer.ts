@@ -1,12 +1,15 @@
 import { ReactiveEntity } from "@prose-reader/core"
 import {
   animationFrames,
+  BehaviorSubject,
   catchError,
   defer,
+  distinctUntilChanged,
   EMPTY,
   from,
   map,
-  type Subscription,
+  of,
+  Subscription,
   switchMap,
 } from "rxjs"
 import type { AudioTrack, AudioVisualizerState } from "../types"
@@ -14,12 +17,24 @@ import { getIdleVisualizerLevels, getVisualizerLevels } from "./levels"
 
 const AUDIO_VISUALIZER_FFT_SIZE = 256
 
+type AudioVisualizerPlaybackState = {
+  trackId: string | undefined
+  isRunning: boolean
+  resetLevels: boolean
+}
+
 export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
   private audioContext: AudioContext | undefined
   private audioSourceNode: MediaElementAudioSourceNode | undefined
   private analyserNode: AnalyserNode | undefined
   private frequencyData: Uint8Array<ArrayBuffer> | undefined
-  private samplingSubscription: Subscription | undefined
+  private readonly playbackState$ =
+    new BehaviorSubject<AudioVisualizerPlaybackState>({
+      trackId: undefined,
+      isRunning: false,
+      resetLevels: false,
+    })
+  private readonly subscriptions = new Subscription()
 
   constructor(private readonly audioElement: HTMLAudioElement) {
     super({
@@ -27,6 +42,40 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
       isActive: false,
       trackId: undefined,
     })
+
+    this.subscriptions.add(
+      this.playbackState$
+        .pipe(
+          distinctUntilChanged(
+            (previous, next) =>
+              previous.trackId === next.trackId &&
+              previous.isRunning === next.isRunning &&
+              previous.resetLevels === next.resetLevels,
+          ),
+          switchMap(({ trackId, isRunning, resetLevels }) => {
+            if (!trackId || !isRunning) {
+              return of({
+                trackId,
+                isActive: false,
+                ...(resetLevels
+                  ? { levels: getIdleVisualizerLevels() }
+                  : undefined),
+              })
+            }
+
+            return this.createLevels$().pipe(
+              map((levels) => ({
+                trackId,
+                levels,
+                isActive: true,
+              })),
+            )
+          }),
+        )
+        .subscribe((value) => {
+          this.update(value)
+        }),
+    )
   }
 
   update(value: Partial<AudioVisualizerState>) {
@@ -35,36 +84,18 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
   start(currentTrack: AudioTrack | undefined) {
     if (!currentTrack) return
-
-    if (
-      this.value.trackId === currentTrack.id &&
-      this.value.isActive &&
-      this.samplingSubscription
-    ) {
-      return
-    }
-
-    this.samplingSubscription?.unsubscribe()
-    this.update({
+    this.playbackState$.next({
       trackId: currentTrack.id,
-      isActive: true,
-    })
-    this.samplingSubscription = this.createLevels$().subscribe((levels) => {
-      this.update({
-        trackId: currentTrack.id,
-        levels,
-        isActive: true,
-      })
+      isRunning: true,
+      resetLevels: false,
     })
   }
 
   stop({ resetLevels = false }: { resetLevels?: boolean } = {}) {
-    this.samplingSubscription?.unsubscribe()
-    this.samplingSubscription = undefined
-    this.update({
-      trackId: this.value.trackId,
-      isActive: false,
-      ...(resetLevels ? { levels: getIdleVisualizerLevels() } : undefined),
+    this.playbackState$.next({
+      trackId: this.playbackState$.value.trackId,
+      isRunning: false,
+      resetLevels,
     })
   }
 
@@ -72,6 +103,8 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.stop({
       resetLevels: true,
     })
+    this.subscriptions.unsubscribe()
+    this.playbackState$.complete()
     this.destroyAudioGraph()
 
     super.destroy()
@@ -138,8 +171,6 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
   }
 
   private destroyAudioGraph() {
-    this.samplingSubscription?.unsubscribe()
-    this.samplingSubscription = undefined
     this.audioSourceNode?.disconnect()
     this.analyserNode?.disconnect()
     this.audioContext?.close().catch(() => undefined)
