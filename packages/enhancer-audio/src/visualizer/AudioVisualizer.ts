@@ -40,7 +40,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.sample()
   }
 
-  stop({ resetBars = false }: { resetBars?: boolean } = {}) {
+  stop({ resetLevels = false }: { resetLevels?: boolean } = {}) {
     if (this.visualizerFrameId !== undefined) {
       cancelAnimationFrame(this.visualizerFrameId)
       this.visualizerFrameId = undefined
@@ -48,13 +48,13 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
     this.update({
       isActive: false,
-      ...(resetBars ? { levels: getIdleVisualizerLevels() } : undefined),
+      ...(resetLevels ? { levels: getIdleVisualizerLevels() } : undefined),
     })
   }
 
   override destroy() {
     this.stop({
-      resetBars: true,
+      resetLevels: true,
     })
     this.runtime?.destroy?.()
     this.runtime = undefined
