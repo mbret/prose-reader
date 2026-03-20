@@ -6,8 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { audioWaveCanvasMock, createPortalMock, useObserveMock, useReaderMock } =
   vi.hoisted(() => ({
-    audioWaveCanvasMock: vi.fn(() => <div data-testid="audio-wave-canvas" />),
-    createPortalMock: vi.fn((node) => node),
+    audioWaveCanvasMock: vi.fn((_props?: unknown) => (
+      <div data-testid="audio-wave-canvas" />
+    )),
+    createPortalMock: vi.fn((node, _container) => node),
     useObserveMock: vi.fn(),
     useReaderMock: vi.fn(),
   }))
@@ -107,7 +109,7 @@ describe(`AudioSpineItem`, () => {
       // Type assertion is required because this component reads only a tiny SpineItem subset in this test.
       root.render(
         <AudioSpineItem
-          item={item as Parameters<typeof AudioSpineItem>[0][`item`]}
+          item={item as unknown as Parameters<typeof AudioSpineItem>[0][`item`]}
         />,
       )
     })
@@ -137,7 +139,7 @@ describe(`AudioSpineItem`, () => {
       // Type assertion is required because this component reads only a tiny SpineItem subset in this test.
       root.render(
         <AudioSpineItem
-          item={item as Parameters<typeof AudioSpineItem>[0][`item`]}
+          item={item as unknown as Parameters<typeof AudioSpineItem>[0][`item`]}
         />,
       )
     })
@@ -176,7 +178,7 @@ describe(`AudioSpineItem`, () => {
       // Type assertion is required because this component reads only a tiny SpineItem subset in this test.
       root.render(
         <AudioSpineItem
-          item={item as Parameters<typeof AudioSpineItem>[0][`item`]}
+          item={item as unknown as Parameters<typeof AudioSpineItem>[0][`item`]}
         />,
       )
     })
