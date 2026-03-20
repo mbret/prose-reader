@@ -15,6 +15,8 @@ const createTrack = (id = `track-1`): AudioTrack => ({
 
 class FakeAudioContext {
   static instances: FakeAudioContext[] = []
+  static nextState: AudioContextState = `running`
+  static resumeImpl: () => Promise<void> = async () => undefined
 
   readonly destination = {}
   readonly sourceNode = {
@@ -31,8 +33,8 @@ class FakeAudioContext {
       data.set([0, 64, 128, 255])
     }),
   }
-  state: AudioContextState = `running`
-  readonly resume = vi.fn(async () => undefined)
+  state: AudioContextState = FakeAudioContext.nextState
+  readonly resume = vi.fn(() => FakeAudioContext.resumeImpl())
   readonly close = vi.fn(async () => undefined)
 
   constructor() {
@@ -52,6 +54,8 @@ describe(`AudioVisualizer`, () => {
   beforeEach(() => {
     vi.useFakeTimers()
     FakeAudioContext.instances = []
+    FakeAudioContext.nextState = `running`
+    FakeAudioContext.resumeImpl = async () => undefined
     vi.stubGlobal(`AudioContext`, FakeAudioContext)
     vi.stubGlobal(
       `requestAnimationFrame`,
@@ -111,6 +115,40 @@ describe(`AudioVisualizer`, () => {
     visualizer.stop({
       resetLevels: true,
     })
+
+    expect(visualizer.value).toEqual({
+      trackId: `track-2`,
+      isActive: false,
+      levels: getIdleVisualizerLevels(),
+    })
+  })
+
+  it(`stays idle when resuming the audio context fails`, async () => {
+    FakeAudioContext.nextState = `suspended`
+    FakeAudioContext.resumeImpl = async () => {
+      throw new Error(`resume failed`)
+    }
+
+    const visualizer = new AudioVisualizer(document.createElement(`audio`))
+
+    visualizer.start(createTrack(`track-3`))
+    await vi.advanceTimersByTimeAsync(16)
+
+    expect(FakeAudioContext.instances).toHaveLength(1)
+    expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalledTimes(1)
+    expect(visualizer.value).toEqual({
+      trackId: undefined,
+      isActive: false,
+      levels: getIdleVisualizerLevels(),
+    })
+  })
+
+  it(`keeps only the latest track across rapid transitions`, () => {
+    const visualizer = new AudioVisualizer(document.createElement(`audio`))
+
+    visualizer.start(createTrack(`track-1`))
+    visualizer.start(createTrack(`track-2`))
+    visualizer.reset(`track-2`)
 
     expect(visualizer.value).toEqual({
       trackId: `track-2`,

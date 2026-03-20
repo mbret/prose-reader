@@ -69,20 +69,34 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
           }),
         )
         .subscribe((value) => {
-          this.update(value)
+          this.mergeCompare(value)
         }),
     )
   }
 
-  update(value: Partial<AudioVisualizerState>) {
-    this.mergeCompare(value)
-  }
+  start(currentTrack: AudioTrack | undefined) {
+    if (!currentTrack) return
 
-  start(currentTrack: AudioTrack) {
     this.playbackState$.next({
       trackId: currentTrack.id,
       isRunning: true,
       resetLevels: false,
+    })
+  }
+
+  setTrack(trackId: string | undefined) {
+    this.playbackState$.next({
+      trackId,
+      isRunning: false,
+      resetLevels: false,
+    })
+  }
+
+  reset(trackId: string | undefined) {
+    this.playbackState$.next({
+      trackId,
+      isRunning: false,
+      resetLevels: true,
     })
   }
 
@@ -100,7 +114,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     })
     this.subscriptions.unsubscribe()
     this.playbackState$.complete()
-    this.destroyAudioGraph()
+    this.audioGraph.destroy()
 
     super.destroy()
   }
@@ -115,9 +129,5 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
         ),
       )
     })
-  }
-
-  private destroyAudioGraph() {
-    this.audioGraph.destroy()
   }
 }

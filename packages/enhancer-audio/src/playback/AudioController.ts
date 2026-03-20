@@ -23,11 +23,10 @@ import {
 import type {
   AudioEnhancerState,
   AudioTrack,
-  AudioVisualizerState,
   SelectAudioTrackOptions,
 } from "../types"
 import { isAudioSpineItem } from "../utils"
-import { AudioVisualizer, getIdleVisualizerLevels } from "../visualizer"
+import { AudioVisualizer } from "../visualizer"
 import {
   getPaginationPlaybackTargets,
   type PaginationTrackWindow,
@@ -143,11 +142,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       currentTime: currentTrack ? this.state.currentTime : 0,
       duration: currentTrack ? this.state.duration : 0,
     })
-    this.syncVisualizer({
-      trackId: currentTrack?.id,
-      isActive: false,
-      levels: getIdleVisualizerLevels(),
-    })
+    this.visualizer$.reset(currentTrack?.id)
   }
 
   select(
@@ -352,13 +347,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     })
   }
 
-  private syncVisualizer(value: Partial<AudioVisualizerState>) {
-    this.visualizer$.update({
-      trackId: this.state.currentTrack?.id,
-      ...value,
-    })
-  }
-
   private resetTrackPlaybackState({
     currentTrack,
     isLoading,
@@ -378,13 +366,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private resetVisualizerState(trackId: string | undefined) {
-    this.visualizer$.stop({
-      resetLevels: true,
-    })
-    this.syncVisualizer({
-      trackId,
-      levels: getIdleVisualizerLevels(),
-    })
+    this.visualizer$.reset(trackId)
   }
 
   private selectTrackByIndex$(
@@ -415,9 +397,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           this.cancelPlayWhenReady()
         }
 
-        this.syncVisualizer({
-          trackId: track.id,
-        })
+        this.visualizer$.setTrack(track.id)
 
         return EMPTY
       }
