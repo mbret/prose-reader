@@ -27,7 +27,7 @@ import type {
   SelectAudioTrackOptions,
 } from "../types"
 import { isAudioSpineItem } from "../utils"
-import { AudioVisualizer, getIdleVisualizerBars } from "../visualizer"
+import { AudioVisualizer, getIdleVisualizerLevels } from "../visualizer"
 import {
   getPaginationPlaybackTargets,
   type PaginationTrackWindow,
@@ -130,7 +130,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     if (!currentTrack) {
       this.playbackResetSubject.next()
       this.visualizer$.stop({
-        resetBars: true,
+        resetLevels: true,
       })
       this.releaseTrackSourceIfInactive(this.resetAudioElementSource())
     }
@@ -146,7 +146,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.syncVisualizer({
       trackId: currentTrack?.id,
       isActive: false,
-      bars: getIdleVisualizerBars(),
+      levels: getIdleVisualizerLevels(),
     })
   }
 
@@ -379,11 +379,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
   private resetVisualizerState(trackId: string | undefined) {
     this.visualizer$.stop({
-      resetBars: true,
+      resetLevels: true,
     })
     this.syncVisualizer({
       trackId,
-      bars: getIdleVisualizerBars(),
+      levels: getIdleVisualizerLevels(),
     })
   }
 
@@ -591,7 +591,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       switchMap(([, pagination]) =>
         defer(() => {
           this.visualizer$.stop({
-            resetBars: true,
+            resetLevels: true,
           })
 
           const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
