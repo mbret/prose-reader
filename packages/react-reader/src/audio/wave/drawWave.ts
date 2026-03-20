@@ -10,8 +10,8 @@ import {
 import {
   clamp,
   getDefaultDisplayBars,
-  getMirroredBars,
-  hasMeaningfulBars,
+  getMirroredDisplayBars,
+  hasMeaningfulLevels,
   smoothstep,
 } from "./shaping"
 
@@ -44,25 +44,25 @@ export const drawWave = ({
 
   context.clearRect(0, 0, width, height)
 
-  const hasPlayedBars = hasMeaningfulBars(visualizer.bars)
-  const isDefaultState = !visualizer.isActive && !hasPlayedBars
-  const bars = isDefaultState
+  const hasPlayedLevels = hasMeaningfulLevels(visualizer.levels)
+  const isDefaultState = !visualizer.isActive && !hasPlayedLevels
+  const displayBars = isDefaultState
     ? getDefaultDisplayBars(displayBarCount)
-    : getMirroredBars(visualizer.bars, displayBarCount)
+    : getMirroredDisplayBars(visualizer.levels, displayBarCount)
 
   const nextDisplayedBars =
-    displayedBars.length !== bars.length
-      ? Array.from({ length: bars.length }, () => 0)
+    displayedBars.length !== displayBars.length
+      ? Array.from({ length: displayBars.length }, () => 0)
       : displayedBars
 
   const easedBars = visualizer.isActive
     ? nextDisplayedBars.map((value, index) => {
-        const targetValue = bars[index] ?? 0
+        const targetValue = displayBars[index] ?? 0
         const easing = 0.28
 
         return value + (targetValue - value) * easing
       })
-    : [...bars]
+    : [...displayBars]
 
   const gap = Math.round(
     clamp(width / Math.max(easedBars.length, 1) / 2.8, 1, 4),

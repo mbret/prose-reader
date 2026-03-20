@@ -6,7 +6,7 @@ import { drawWave as drawWaveFrame } from "./drawWave"
 import { getNormalizedDisplayBarCount, resolveGradientColors } from "./shaping"
 
 const DEFAULT_VISUALIZER: AudioVisualizerState = {
-  bars: [],
+  levels: [],
   isActive: false,
   trackId: undefined,
 }

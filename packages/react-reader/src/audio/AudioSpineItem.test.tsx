@@ -153,7 +153,7 @@ describe(`AudioSpineItem`, () => {
   it(`renders the visualizer through the renderer portal when available`, async () => {
     const audioDocumentContainer = document.createElement(`div`)
     const visualizer = {
-      bars: [0.5, 0.25],
+      levels: [0.5, 0.25],
       isActive: true,
       trackId: `track-1`,
     }

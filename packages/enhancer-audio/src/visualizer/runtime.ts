@@ -1,4 +1,4 @@
-import { getVisualizerBars } from "./bars"
+import { getVisualizerLevels } from "./levels"
 
 const AUDIO_VISUALIZER_FFT_SIZE = 256
 
@@ -48,8 +48,8 @@ export const ensureVisualizerRuntime = ({
   }
 }
 
-export const readVisualizerBars = (runtime: AudioVisualizerRuntime) => {
+export const readVisualizerLevels = (runtime: AudioVisualizerRuntime) => {
   runtime.analyserNode.getByteFrequencyData(runtime.frequencyData)
 
-  return getVisualizerBars(runtime.frequencyData)
+  return getVisualizerLevels(runtime.frequencyData)
 }

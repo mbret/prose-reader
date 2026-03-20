@@ -1,3 +1,3 @@
 export * from "./AudioVisualizer"
-export * from "./bars"
+export * from "./levels"
 export * from "./runtime"

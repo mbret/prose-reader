@@ -17,7 +17,7 @@ export type AudioEnhancerState = {
 }
 
 export type AudioVisualizerState = {
-  bars: number[]
+  levels: number[]
   isActive: boolean
   trackId: string | undefined
 }

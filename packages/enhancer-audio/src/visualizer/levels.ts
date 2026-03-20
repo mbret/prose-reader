@@ -1,18 +1,18 @@
-const AUDIO_VISUALIZER_BAR_COUNT = 80
+const AUDIO_VISUALIZER_LEVEL_COUNT = 80
 const AUDIO_VISUALIZER_NOISE_FLOOR = 0.035
 
-export const getIdleVisualizerBars = () =>
-  Array.from({ length: AUDIO_VISUALIZER_BAR_COUNT }, () => 0)
+export const getIdleVisualizerLevels = () =>
+  Array.from({ length: AUDIO_VISUALIZER_LEVEL_COUNT }, () => 0)
 
-export const getVisualizerBars = (data: ArrayLike<number>) => {
-  if (data.length === 0) return getIdleVisualizerBars()
+export const getVisualizerLevels = (data: ArrayLike<number>) => {
+  if (data.length === 0) return getIdleVisualizerLevels()
 
   const bucketSize = Math.max(
     1,
-    Math.floor(data.length / AUDIO_VISUALIZER_BAR_COUNT),
+    Math.floor(data.length / AUDIO_VISUALIZER_LEVEL_COUNT),
   )
 
-  return Array.from({ length: AUDIO_VISUALIZER_BAR_COUNT }, (_, index) => {
+  return Array.from({ length: AUDIO_VISUALIZER_LEVEL_COUNT }, (_, index) => {
     const start = index * bucketSize
     const end = Math.min(data.length, start + bucketSize)
 

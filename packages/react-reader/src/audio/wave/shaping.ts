@@ -50,7 +50,7 @@ const getAverage = (values: number[]) => {
   return values.reduce((total, value) => total + value, 0) / values.length
 }
 
-export const hasMeaningfulBars = (values: number[]) =>
+export const hasMeaningfulLevels = (values: number[]) =>
   values.some((value) => value > 0.001)
 
 export const getNormalizedDisplayBarCount = (value: number) => {
@@ -59,7 +59,10 @@ export const getNormalizedDisplayBarCount = (value: number) => {
   return safeValue % 2 === 0 ? safeValue + 1 : safeValue
 }
 
-export const getMirroredBars = (values: number[], displayBarCount: number) => {
+export const getMirroredDisplayBars = (
+  values: number[],
+  displayBarCount: number,
+) => {
   const normalizedDisplayBarCount =
     getNormalizedDisplayBarCount(displayBarCount)
   const centerOutSeedCount = Math.floor(normalizedDisplayBarCount / 2) + 1

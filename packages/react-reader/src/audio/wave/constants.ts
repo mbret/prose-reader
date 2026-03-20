@@ -16,7 +16,7 @@ export const DEFAULT_STATE_OPACITY = 0.5
 export const DEFAULT_STATE_TEXTURE_AMOUNT = 0.34
 
 export const DEFAULT_VISUALIZER_STATE: AudioVisualizerState = {
-  bars: [],
+  levels: [],
   isActive: false,
   trackId: undefined,
 }

@@ -1,10 +1,10 @@
 import { ReactiveEntity } from "@prose-reader/core"
 import type { AudioTrack, AudioVisualizerState } from "../types"
-import { getIdleVisualizerBars } from "./bars"
+import { getIdleVisualizerLevels } from "./levels"
 import {
   type AudioVisualizerRuntime,
   ensureVisualizerRuntime,
-  readVisualizerBars,
+  readVisualizerLevels,
 } from "./runtime"
 
 export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
@@ -13,7 +13,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
   constructor(private readonly audioElement: HTMLAudioElement) {
     super({
-      bars: getIdleVisualizerBars(),
+      levels: getIdleVisualizerLevels(),
       isActive: false,
       trackId: undefined,
     })
@@ -48,7 +48,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
     this.update({
       isActive: false,
-      ...(resetBars ? { bars: getIdleVisualizerBars() } : undefined),
+      ...(resetBars ? { levels: getIdleVisualizerLevels() } : undefined),
     })
   }
 
@@ -70,7 +70,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     }
 
     this.update({
-      bars: readVisualizerBars(this.runtime),
+      levels: readVisualizerLevels(this.runtime),
       isActive: true,
     })
     this.visualizerFrameId = requestAnimationFrame(this.sample)
