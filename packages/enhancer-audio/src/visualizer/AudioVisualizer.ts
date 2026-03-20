@@ -1,15 +1,43 @@
 import { ReactiveEntity } from "@prose-reader/core"
-import type { AudioTrack, AudioVisualizerState } from "../types"
-import { getIdleVisualizerLevels } from "./levels"
 import {
-  type AudioVisualizerRuntime,
-  ensureVisualizerRuntime,
-  readVisualizerLevels,
-} from "./runtime"
+  animationFrames,
+  BehaviorSubject,
+  catchError,
+  defer,
+  distinctUntilChanged,
+  EMPTY,
+  from,
+  fromEvent,
+  map,
+  merge,
+  of,
+  Subscription,
+  switchMap,
+  takeUntil,
+} from "rxjs"
+import type { AudioTrack, AudioVisualizerState } from "../types"
+import { getIdleVisualizerLevels, getVisualizerLevels } from "./levels"
+
+const AUDIO_VISUALIZER_FFT_SIZE = 256
+
+type AudioVisualizerPlaybackState = {
+  trackId: string | undefined
+  isRunning: boolean
+  resetLevels: boolean
+}
 
 export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
-  private runtime: AudioVisualizerRuntime | undefined
-  private visualizerFrameId: number | undefined
+  private audioContext: AudioContext | undefined
+  private audioSourceNode: MediaElementAudioSourceNode | undefined
+  private analyserNode: AnalyserNode | undefined
+  private frequencyData: Uint8Array<ArrayBuffer> | undefined
+  private readonly playbackState$ =
+    new BehaviorSubject<AudioVisualizerPlaybackState>({
+      trackId: undefined,
+      isRunning: false,
+      resetLevels: false,
+    })
+  private readonly subscriptions = new Subscription()
 
   constructor(private readonly audioElement: HTMLAudioElement) {
     super({
@@ -17,6 +45,45 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
       isActive: false,
       trackId: undefined,
     })
+
+    this.subscriptions.add(
+      this.playbackState$
+        .pipe(
+          distinctUntilChanged(
+            (previous, next) =>
+              previous.trackId === next.trackId &&
+              previous.isRunning === next.isRunning &&
+              previous.resetLevels === next.resetLevels,
+          ),
+          switchMap(({ trackId, isRunning, resetLevels }) => {
+            if (!trackId || !isRunning) {
+              return of({
+                isActive: false,
+                ...(resetLevels
+                  ? { levels: getIdleVisualizerLevels() }
+                  : undefined),
+              })
+            }
+
+            return this.createLevels$().pipe(
+              takeUntil(
+                merge(
+                  fromEvent(this.audioElement, `pause`),
+                  fromEvent(this.audioElement, `ended`),
+                ),
+              ),
+              map((levels) => ({
+                trackId,
+                levels,
+                isActive: true,
+              })),
+            )
+          }),
+        )
+        .subscribe((value) => {
+          this.update(value)
+        }),
+    )
   }
 
   update(value: Partial<AudioVisualizerState>) {
@@ -25,30 +92,18 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
 
   start(currentTrack: AudioTrack | undefined) {
     if (!currentTrack) return
-
-    this.runtime = ensureVisualizerRuntime({
-      runtime: this.runtime,
-      audioElement: this.audioElement,
+    this.playbackState$.next({
+      trackId: currentTrack.id,
+      isRunning: true,
+      resetLevels: false,
     })
-
-    if (!this.runtime || this.visualizerFrameId !== undefined) return
-
-    if (this.runtime.audioContext.state === `suspended`) {
-      void this.runtime.audioContext.resume().catch(() => undefined)
-    }
-
-    this.sample()
   }
 
   stop({ resetLevels = false }: { resetLevels?: boolean } = {}) {
-    if (this.visualizerFrameId !== undefined) {
-      cancelAnimationFrame(this.visualizerFrameId)
-      this.visualizerFrameId = undefined
-    }
-
-    this.update({
-      isActive: false,
-      ...(resetLevels ? { levels: getIdleVisualizerLevels() } : undefined),
+    this.playbackState$.next({
+      trackId: this.value.trackId,
+      isRunning: false,
+      resetLevels,
     })
   }
 
@@ -56,23 +111,90 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.stop({
       resetLevels: true,
     })
-    this.runtime?.destroy?.()
-    this.runtime = undefined
+    this.subscriptions.unsubscribe()
+    this.playbackState$.complete()
+    this.destroyAudioGraph()
 
     super.destroy()
   }
 
-  private sample = () => {
-    if (!this.runtime || this.audioElement.paused) {
-      this.stop()
-
-      return
+  private ensureAudioGraph() {
+    if (this.audioContext && this.analyserNode && this.frequencyData) {
+      return true
     }
 
-    this.update({
-      levels: readVisualizerLevels(this.runtime),
-      isActive: true,
+    if (typeof window === `undefined` || !window.AudioContext) {
+      return false
+    }
+
+    const audioContext = new window.AudioContext()
+    const audioSourceNode = audioContext.createMediaElementSource(
+      this.audioElement,
+    )
+    const analyserNode = audioContext.createAnalyser()
+    analyserNode.fftSize = AUDIO_VISUALIZER_FFT_SIZE
+    analyserNode.smoothingTimeConstant = 0.8
+    audioSourceNode.connect(analyserNode)
+    analyserNode.connect(audioContext.destination)
+
+    this.audioContext = audioContext
+    this.audioSourceNode = audioSourceNode
+    this.analyserNode = analyserNode
+    this.frequencyData = new Uint8Array(
+      new ArrayBuffer(analyserNode.frequencyBinCount),
+    )
+
+    return true
+  }
+
+  private createLevels$() {
+    return defer(() => {
+      if (!this.ensureAudioGraph()) {
+        return EMPTY
+      }
+
+      const resumeAudioContext$ = () => {
+        const audioContext = this.audioContext
+
+        if (!audioContext) {
+          return EMPTY
+        }
+
+        if (audioContext.state !== `suspended`) {
+          return of(undefined)
+        }
+
+        return from(audioContext.resume()).pipe(
+          map(() => undefined),
+          catchError(() => of(undefined)),
+        )
+      }
+
+      return resumeAudioContext$().pipe(
+        switchMap(() => {
+          const readLevels = () => {
+            if (!this.analyserNode || !this.frequencyData) {
+              return getIdleVisualizerLevels()
+            }
+
+            this.analyserNode.getByteFrequencyData(this.frequencyData)
+
+            return getVisualizerLevels(this.frequencyData)
+          }
+
+          return animationFrames().pipe(map(() => readLevels()))
+        }),
+      )
     })
-    this.visualizerFrameId = requestAnimationFrame(this.sample)
+  }
+
+  private destroyAudioGraph() {
+    this.audioSourceNode?.disconnect()
+    this.analyserNode?.disconnect()
+    this.audioContext?.close().catch(() => undefined)
+    this.audioContext = undefined
+    this.audioSourceNode = undefined
+    this.analyserNode = undefined
+    this.frequencyData = undefined
   }
 }
