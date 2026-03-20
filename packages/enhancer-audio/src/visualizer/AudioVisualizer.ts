@@ -2,6 +2,8 @@ import { ReactiveEntity } from "@prose-reader/core"
 import {
   animationFrames,
   BehaviorSubject,
+  concat,
+  defaultIfEmpty,
   defer,
   distinctUntilChanged,
   EMPTY,
@@ -59,12 +61,28 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
               })
             }
 
-            return this.createLevels$().pipe(
-              map((levels) => ({
+            const shouldResetLevels = this.value.trackId !== trackId
+
+            return concat(
+              of({
                 trackId,
-                levels,
                 isActive: true,
-              })),
+                ...(shouldResetLevels
+                  ? { levels: getIdleVisualizerLevels() }
+                  : undefined),
+              }),
+              this.createLevels$().pipe(
+                map((levels) => ({
+                  trackId,
+                  levels,
+                  isActive: true,
+                })),
+                defaultIfEmpty({
+                  trackId,
+                  isActive: false,
+                  levels: getIdleVisualizerLevels(),
+                }),
+              ),
             )
           }),
         )

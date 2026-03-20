@@ -85,6 +85,12 @@ describe(`AudioVisualizer`, () => {
     visualizer.start(createTrack())
     visualizer.start(createTrack())
 
+    expect(visualizer.value).toEqual({
+      trackId: `track-1`,
+      isActive: true,
+      levels: getIdleVisualizerLevels(),
+    })
+
     await vi.advanceTimersByTimeAsync(16)
 
     expect(FakeAudioContext.instances).toHaveLength(1)
@@ -132,12 +138,19 @@ describe(`AudioVisualizer`, () => {
     const visualizer = new AudioVisualizer(document.createElement(`audio`))
 
     visualizer.start(createTrack(`track-3`))
+
+    expect(visualizer.value).toEqual({
+      trackId: `track-3`,
+      isActive: true,
+      levels: getIdleVisualizerLevels(),
+    })
+
     await vi.advanceTimersByTimeAsync(16)
 
     expect(FakeAudioContext.instances).toHaveLength(1)
     expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalledTimes(1)
     expect(visualizer.value).toEqual({
-      trackId: undefined,
+      trackId: `track-3`,
       isActive: false,
       levels: getIdleVisualizerLevels(),
     })
