@@ -664,6 +664,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.update({
       isPlaying: true,
     })
+
+    if (!this.state.currentTrack) return
+
     this.visualizer$.start(this.state.currentTrack)
   }
 

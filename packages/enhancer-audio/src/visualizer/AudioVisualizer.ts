@@ -82,8 +82,7 @@ export class AudioVisualizer extends ReactiveEntity<AudioVisualizerState> {
     this.mergeCompare(value)
   }
 
-  start(currentTrack: AudioTrack | undefined) {
-    if (!currentTrack) return
+  start(currentTrack: AudioTrack) {
     this.playbackState$.next({
       trackId: currentTrack.id,
       isRunning: true,
