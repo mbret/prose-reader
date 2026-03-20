@@ -59,6 +59,12 @@ type SelectCommand = {
   options: SelectAudioTrackOptions
 }
 
+type TrackSelectionState = {
+  currentTrack: AudioTrack | undefined
+  isLoading: boolean
+  isPlaying: boolean
+}
+
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly audioElement = document.createElement(`audio`)
   readonly visualizer$ = new AudioVisualizer(this.audioElement)
@@ -131,7 +137,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.visualizer$.stop({
         resetLevels: true,
       })
-      this.releaseTrackSourceIfInactive(this.resetAudioElementSource())
+      this.clearAudioSource()
     }
 
     this.update({
@@ -190,7 +196,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.selectCommandSubject.complete()
     this.playbackResetSubject.complete()
     this.visualizer$.destroy()
-    this.resetAudioElementSource()
+    this.clearAudioSource()
     this.trackSourceResolver.destroy()
 
     super.destroy()
@@ -332,43 +338,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
   }
 
-  private stopCurrentTrack() {
-    if (!this.state.currentTrack && !this.state.isLoading) {
-      return
-    }
-
-    this.playbackResetSubject.next()
-    this.resetVisualizerState(undefined)
-    this.releaseTrackSourceIfInactive(this.resetAudioElementSource())
-    this.resetTrackPlaybackState({
-      currentTrack: undefined,
-      isLoading: false,
-      isPlaying: false,
-    })
-  }
-
-  private resetTrackPlaybackState({
-    currentTrack,
-    isLoading,
-    isPlaying,
-  }: {
-    currentTrack: AudioTrack | undefined
-    isLoading: boolean
-    isPlaying?: boolean
-  }) {
-    this.update({
-      currentTrack,
-      isLoading,
-      ...(isPlaying !== undefined ? { isPlaying } : undefined),
-      currentTime: 0,
-      duration: 0,
-    })
-  }
-
-  private resetVisualizerState(trackId: string | undefined) {
-    this.visualizer$.reset(trackId)
-  }
-
   private selectTrackByIndex$(
     trackIndex: number,
     options: SelectAudioTrackOptions = {},
@@ -406,70 +375,83 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         this.cancelPlayWhenReady()
 
         if (currentTrack?.id !== track.id) {
-          this.releaseTrackSourceIfInactive(
-            this.resetAudioElementSource(),
-            track.id,
-          )
+          this.clearAudioSource(track.id)
         }
 
-        this.resetTrackPlaybackState({
+        this.setTrackSelectionState({
           currentTrack: track,
           isLoading: false,
           isPlaying: false,
         })
-        this.resetVisualizerState(track.id)
 
         return EMPTY
       }
 
-      this.resetTrackPlaybackState({
+      this.setTrackSelectionState({
         currentTrack: track,
         isLoading: true,
+        isPlaying: false,
       })
-      this.resetVisualizerState(track.id)
 
       return this.trackSourceResolver.resolveTrackSource(track).pipe(
-        map((source) => ({ hasSource: true as const, source })),
-        defaultIfEmpty({ hasSource: false as const }),
-        catchError(() => {
-          return of({ hasSource: false as const })
-        }),
+        map((source) => ({ source })),
+        defaultIfEmpty({ source: undefined }),
+        catchError(() => of({ source: undefined })),
         takeUntil(this.playbackResetSubject),
-        tap((resolution) => {
-          if (resolution.hasSource) {
-            this.releaseTrackSourceIfInactive(
-              this.resetAudioElementSource(),
-              track.id,
-            )
-            this.audioElement.src = resolution.source
-            this.audioElementSourceTrackId = track.id
-            this.audioElement.load()
-            this.requestPlayWhenReady()
-
-            this.resetTrackPlaybackState({
+        tap(({ source }) => {
+          if (!source) {
+            this.cancelPlayWhenReady()
+            this.clearAudioSource(track.id)
+            this.setTrackSelectionState({
               currentTrack: track,
               isLoading: false,
               isPlaying: false,
             })
-            this.resetVisualizerState(track.id)
-
             return
           }
 
-          this.cancelPlayWhenReady()
-          this.releaseTrackSourceIfInactive(
-            this.resetAudioElementSource(),
-            track.id,
-          )
-          this.resetTrackPlaybackState({
+          this.clearAudioSource(track.id)
+          this.audioElement.src = source
+          this.audioElementSourceTrackId = track.id
+          this.audioElement.load()
+          this.requestPlayWhenReady()
+          this.setTrackSelectionState({
             currentTrack: track,
             isLoading: false,
             isPlaying: false,
           })
-          this.resetVisualizerState(track.id)
         }),
       )
     })
+  }
+
+  private stopCurrentTrack() {
+    if (!this.state.currentTrack && !this.state.isLoading) {
+      return
+    }
+
+    this.playbackResetSubject.next()
+    this.clearAudioSource()
+    this.setTrackSelectionState({
+      currentTrack: undefined,
+      isLoading: false,
+      isPlaying: false,
+    })
+  }
+
+  private setTrackSelectionState({
+    currentTrack,
+    isLoading,
+    isPlaying,
+  }: TrackSelectionState) {
+    this.update({
+      currentTrack,
+      isLoading,
+      isPlaying,
+      currentTime: 0,
+      duration: 0,
+    })
+    this.visualizer$.reset(currentTrack?.id)
   }
 
   private cancelPlayWhenReady() {
@@ -494,6 +476,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       pagination,
       currentTrack: this.state.currentTrack,
     })
+  }
+
+  private clearAudioSource(activeTrackId?: string) {
+    this.releaseTrackSourceIfInactive(
+      this.resetAudioElementSource(),
+      activeTrackId,
+    )
   }
 
   private releaseTrackSourceIfInactive(
