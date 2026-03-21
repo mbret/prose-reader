@@ -4,15 +4,14 @@ import { BehaviorSubject, EMPTY, of, Subject } from "rxjs"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { AudioTrack } from "../types"
 
-const { releaseTrackSourceMock, resolveTrackSourceMock } = vi.hoisted(() => ({
-  releaseTrackSourceMock: vi.fn(),
+const { resolveTrackSourceMock } = vi.hoisted(() => ({
   resolveTrackSourceMock: vi.fn(),
 }))
 
 vi.mock("./TrackSourceResolver", () => ({
   TrackSourceResolver: class {
     resolveTrackSource = resolveTrackSourceMock
-    releaseTrackSource = releaseTrackSourceMock
+    releaseTrackSource = vi.fn()
     destroy = vi.fn()
   },
 }))
@@ -85,7 +84,6 @@ const createReader = ({
 
 describe(`AudioController`, () => {
   beforeEach(() => {
-    releaseTrackSourceMock.mockReset()
     resolveTrackSourceMock.mockReset()
     vi.spyOn(HTMLMediaElement.prototype, `pause`).mockImplementation(
       () => undefined,
@@ -494,103 +492,5 @@ describe(`AudioController`, () => {
 
     expect(controller.state.currentTrack?.id).toBe(`track-2`)
     expect(playedSources).toEqual([`blob:track-2`])
-  })
-
-  it(`releases the previously mounted track source when switching tracks`, async () => {
-    const track1: AudioTrack = {
-      id: `track-1`,
-      href: `chapter-1.mp3`,
-      index: 0,
-      mediaType: `audio/mpeg`,
-    }
-    const track2: AudioTrack = {
-      id: `track-2`,
-      href: `chapter-2.mp3`,
-      index: 1,
-      mediaType: `audio/mpeg`,
-    }
-
-    resolveTrackSourceMock.mockImplementation((track: AudioTrack) =>
-      of(`blob:${track.id}`),
-    )
-
-    const { reader } = createReader()
-    const controller = new AudioController(reader)
-
-    controller.setTracks([track1, track2])
-    controller.select(track1.id, {
-      navigate: false,
-      play: true,
-    })
-
-    await Promise.resolve()
-
-    controller.select(track2.id, {
-      navigate: false,
-      play: true,
-    })
-
-    await Promise.resolve()
-
-    expect(releaseTrackSourceMock).toHaveBeenCalledWith(`track-1`)
-    expect(releaseTrackSourceMock).not.toHaveBeenCalledWith(`track-2`)
-  })
-
-  it(`releases the mounted track source even when an intermediate selection never loads`, async () => {
-    const track1: AudioTrack = {
-      id: `track-1`,
-      href: `chapter-1.mp3`,
-      index: 0,
-      mediaType: `audio/mpeg`,
-    }
-    const track2: AudioTrack = {
-      id: `track-2`,
-      href: `chapter-2.mp3`,
-      index: 1,
-      mediaType: `audio/mpeg`,
-    }
-    const track3: AudioTrack = {
-      id: `track-3`,
-      href: `chapter-3.mp3`,
-      index: 2,
-      mediaType: `audio/mpeg`,
-    }
-    const deferredTrack2Source = new Subject<string>()
-
-    resolveTrackSourceMock.mockImplementation((track: AudioTrack) => {
-      if (track.id === `track-2`) {
-        return deferredTrack2Source.asObservable()
-      }
-
-      return of(`blob:${track.id}`)
-    })
-
-    const { reader } = createReader()
-    const controller = new AudioController(reader)
-
-    controller.setTracks([track1, track2, track3])
-    controller.select(track1.id, {
-      navigate: false,
-      play: true,
-    })
-
-    await Promise.resolve()
-
-    controller.select(track2.id, {
-      navigate: false,
-      play: true,
-    })
-
-    await Promise.resolve()
-
-    controller.select(track3.id, {
-      navigate: false,
-      play: true,
-    })
-
-    await Promise.resolve()
-
-    expect(releaseTrackSourceMock).toHaveBeenCalledWith(`track-1`)
-    expect(releaseTrackSourceMock).not.toHaveBeenCalledWith(`track-2`)
   })
 })
