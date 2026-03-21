@@ -7,8 +7,6 @@ import {
   distinctUntilChanged,
   EMPTY,
   filter,
-  from,
-  fromEvent,
   map,
   merge,
   type Observable,
@@ -17,7 +15,6 @@ import {
   Subscription,
   share,
   switchMap,
-  take,
   takeUntil,
   tap,
   withLatestFrom,
@@ -29,6 +26,7 @@ import type {
 } from "../types"
 import { isAudioSpineItem } from "../utils"
 import { AudioVisualizer } from "../visualizer"
+import { AudioElementAdapter } from "./AudioElementAdapter"
 import {
   getPaginationPlaybackTargets,
   type PaginationTrackWindow,
@@ -56,32 +54,9 @@ const getTrackIndexFromReference = ({
   return tracks.findIndex(({ id }) => id === track.id)
 }
 
-const getPlaybackDuration = (audioElement: HTMLAudioElement) => {
-  if (Number.isFinite(audioElement.duration) && audioElement.duration > 0) {
-    return audioElement.duration
-  }
-
-  const seekableRangeCount = audioElement.seekable.length
-
-  if (seekableRangeCount > 0) {
-    const seekableDuration = audioElement.seekable.end(seekableRangeCount - 1)
-
-    if (Number.isFinite(seekableDuration) && seekableDuration > 0) {
-      return seekableDuration
-    }
-  }
-
-  return 0
-}
-
 type SelectCommand = {
   track: AudioTrack | number | string
   options: SelectAudioTrackOptions
-}
-
-type PlaybackIntent = {
-  shouldPlay: boolean
-  trackId: string | undefined
 }
 
 type ControllerAction =
@@ -133,15 +108,10 @@ const getTrackSync = ({
 }
 
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
-  private readonly audioElement = document.createElement(`audio`)
-  readonly visualizer$ = new AudioVisualizer(this.audioElement)
+  private readonly audioElementAdapter: AudioElementAdapter
+  readonly visualizer$: AudioVisualizer
   readonly visibleTrackIds$: Observable<string[]>
-  private audioElementSourceTrackId: string | undefined
   private readonly actionSubject = new Subject<ControllerAction>()
-  private readonly playbackIntentSubject = new BehaviorSubject<PlaybackIntent>({
-    shouldPlay: false,
-    trackId: undefined,
-  })
   private readonly playbackContinuationTrackIdSubject = new BehaviorSubject<
     string | undefined
   >(undefined)
@@ -164,34 +134,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       reader,
       mountedObjectUrls,
     )
+    this.audioElementAdapter = new AudioElementAdapter((trackId) => {
+      this.trackSourceResolver.releaseTrackSource(trackId)
+    })
+    this.visualizer$ = new AudioVisualizer(this.audioElementAdapter.element)
     this.visibleTrackIds$ = createVisibleTrackIds$(
       this.watch(`tracks`),
       reader.pagination.state$,
     )
-    this.audioElement.preload = `metadata`
-
-    const clearPlaybackIntent = () => {
-      this.playbackIntentSubject.next({
-        shouldPlay: false,
-        trackId: undefined,
-      })
-    }
 
     const clearPlaybackContinuation = () => {
       this.playbackContinuationTrackIdSubject.next(undefined)
-    }
-
-    const clearAudioSource = (activeTrackId?: string) => {
-      const trackId = this.audioElementSourceTrackId
-
-      this.audioElement.pause()
-      this.audioElement.removeAttribute(`src`)
-      this.audioElement.load()
-      this.audioElementSourceTrackId = undefined
-
-      if (!trackId || trackId === activeTrackId) return
-
-      this.trackSourceResolver.releaseTrackSource(trackId)
     }
 
     const setTrackSelectionState = ({
@@ -212,35 +165,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       })
       this.visualizer$.reset(currentTrack?.id)
     }
-
-    const playAudio$ = () => from(this.audioElement.play())
-
-    const createPlayWhenReady$ = () =>
-      defer(() => {
-        const playbackIntent = this.playbackIntentSubject.value
-
-        if (
-          !playbackIntent.shouldPlay ||
-          playbackIntent.trackId === undefined ||
-          this.state.currentTrack === undefined ||
-          this.state.isLoading ||
-          this.state.currentTrack.id !== playbackIntent.trackId ||
-          this.audioElementSourceTrackId !== playbackIntent.trackId ||
-          !this.audioElement.src
-        ) {
-          return EMPTY
-        }
-
-        return playAudio$().pipe(
-          catchError(() =>
-            fromEvent(this.audioElement, `canplay`).pipe(
-              take(1),
-              switchMap(() => playAudio$()),
-              catchError(() => EMPTY),
-            ),
-          ),
-        )
-      })
 
     const action$ = this.actionSubject.pipe(share())
 
@@ -328,14 +252,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         const currentTrack = this.state.currentTrack
         const shouldPlay =
           options.play ??
-          (!this.audioElement.paused && currentTrack !== undefined)
+          (!this.audioElementAdapter.paused && currentTrack !== undefined)
 
-        this.playbackIntentSubject.next({
+        this.audioElementAdapter.setPlaybackIntent({
           shouldPlay,
           trackId: shouldPlay ? track.id : undefined,
         })
 
-        if (currentTrack?.id === track.id && this.audioElement.src) {
+        if (
+          currentTrack?.id === track.id &&
+          this.audioElementAdapter.hasSource
+        ) {
           this.visualizer$.setTrack(track.id)
 
           return EMPTY
@@ -343,7 +270,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
         if (!shouldPlay) {
           if (currentTrack?.id !== track.id) {
-            clearAudioSource(track.id)
+            this.audioElementAdapter.clearSource()
           }
 
           setTrackSelectionState({
@@ -368,8 +295,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           takeUntil(playbackReset$),
           tap(({ source }) => {
             if (!source) {
-              clearPlaybackIntent()
-              clearAudioSource(track.id)
+              this.audioElementAdapter.clearPlaybackIntent()
+              this.audioElementAdapter.clearSource()
               setTrackSelectionState({
                 currentTrack: track,
                 isLoading: false,
@@ -378,18 +305,14 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               return
             }
 
-            clearAudioSource(track.id)
-            this.audioElement.src = source
-            this.audioElementSourceTrackId = track.id
-            this.audioElement.load()
+            this.audioElementAdapter.setSource({
+              trackId: track.id,
+              source,
+            })
             setTrackSelectionState({
               currentTrack: track,
               isLoading: false,
               isPlaying: false,
-            })
-            this.playbackIntentSubject.next({
-              shouldPlay: true,
-              trackId: track.id,
             })
           }),
         )
@@ -407,7 +330,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
                 this.actionSubject.next({
                   type: `reset`,
                 })
-                clearAudioSource()
+                this.audioElementAdapter.clearSource()
                 setTrackSelectionState({
                   currentTrack: undefined,
                   isLoading: false,
@@ -438,7 +361,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
     )
 
-    const endedSelectionIntent$ = fromEvent(this.audioElement, `ended`).pipe(
+    const endedSelectionIntent$ = this.audioElementAdapter.ended$.pipe(
       withLatestFrom(reader.pagination.state$),
       switchMap(([, pagination]) =>
         defer(() => {
@@ -471,7 +394,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             )
           } else {
             clearPlaybackContinuation()
-            clearPlaybackIntent()
+            this.audioElementAdapter.clearPlaybackIntent()
           }
 
           reader.navigation.goToRightOrBottomSpineItem()
@@ -488,7 +411,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      playbackReset$.pipe(tap(() => clearPlaybackIntent())).subscribe(),
+      playbackReset$
+        .pipe(
+          tap(() => {
+            this.audioElementAdapter.clearPlaybackIntent()
+          }),
+        )
+        .subscribe(),
     )
 
     this.subscriptions.add(
@@ -505,7 +434,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             this.visualizer$.stop({
               resetLevels: true,
             })
-            clearAudioSource()
+            this.audioElementAdapter.clearSource()
           }),
           tap(({ tracks, currentTrack }) => {
             this.update({
@@ -528,13 +457,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           tap(() => {
             clearPlaybackContinuation()
 
-            if (!this.audioElement.src) {
+            if (!this.audioElementAdapter.hasSource) {
               const initialTrack =
                 this.state.currentTrack ?? this.state.tracks[0]
 
               if (!initialTrack) return
 
-              this.playbackIntentSubject.next({
+              this.audioElementAdapter.setPlaybackIntent({
                 shouldPlay: true,
                 trackId: initialTrack.id,
               })
@@ -559,7 +488,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               return
             }
 
-            this.playbackIntentSubject.next({
+            this.audioElementAdapter.setPlaybackIntent({
               shouldPlay: true,
               trackId: this.state.currentTrack?.id,
             })
@@ -572,16 +501,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       pauseAction$
         .pipe(
           tap(() => {
-            clearPlaybackIntent()
-            this.audioElement.pause()
+            this.audioElementAdapter.clearPlaybackIntent()
+            this.audioElementAdapter.pause()
           }),
         )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      this.playbackIntentSubject
-        .pipe(switchMap(() => createPlayWhenReady$()))
         .subscribe(),
     )
 
@@ -626,12 +549,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      fromEvent(this.audioElement, `play`)
+      this.audioElementAdapter.isPlaying$
         .pipe(
-          tap(() => {
+          tap((isPlaying) => {
             this.update({
-              isPlaying: true,
+              isPlaying,
             })
+
+            if (!isPlaying) {
+              this.visualizer$.stop()
+              return
+            }
 
             if (!this.state.currentTrack) return
 
@@ -642,32 +570,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      fromEvent(this.audioElement, `pause`)
+      this.audioElementAdapter.metrics$
         .pipe(
-          tap(() => {
+          tap(({ currentTime, duration }) => {
             this.update({
-              isPlaying: false,
-            })
-            this.visualizer$.stop()
-          }),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      merge(
-        fromEvent(this.audioElement, `timeupdate`),
-        fromEvent(this.audioElement, `seeking`),
-        fromEvent(this.audioElement, `seeked`),
-        fromEvent(this.audioElement, `loadedmetadata`),
-        fromEvent(this.audioElement, `durationchange`),
-        fromEvent(this.audioElement, `canplay`),
-      )
-        .pipe(
-          tap(() => {
-            this.update({
-              currentTime: this.audioElement.currentTime,
-              duration: getPlaybackDuration(this.audioElement),
+              currentTime,
+              duration,
             })
           }),
         )
@@ -677,6 +585,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
   get state() {
     return this.value
+  }
+
+  get audioElement() {
+    return this.audioElementAdapter.element
   }
 
   get visualizer() {
@@ -720,7 +632,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   toggle() {
-    if (this.audioElement.paused) {
+    if (this.audioElementAdapter.paused) {
       this.play()
       return
     }
@@ -732,7 +644,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.update({
       currentTime: value,
     })
-    this.audioElement.currentTime = value
+    this.audioElementAdapter.setCurrentTime(value)
   }
 
   destroy() {
@@ -741,21 +653,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     })
     this.subscriptions.unsubscribe()
     this.actionSubject.complete()
-    this.playbackIntentSubject.complete()
     this.playbackContinuationTrackIdSubject.complete()
     this.visualizer$.destroy()
-
-    const trackId = this.audioElementSourceTrackId
-
-    this.audioElement.pause()
-    this.audioElement.removeAttribute(`src`)
-    this.audioElement.load()
-    this.audioElementSourceTrackId = undefined
-
-    if (trackId) {
-      this.trackSourceResolver.releaseTrackSource(trackId)
-    }
-
+    this.audioElementAdapter.destroy()
     this.trackSourceResolver.destroy()
 
     super.destroy()
