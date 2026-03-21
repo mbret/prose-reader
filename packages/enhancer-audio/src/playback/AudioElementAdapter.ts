@@ -18,7 +18,7 @@ import {
   tap,
 } from "rxjs"
 
-export type PlaybackIntent = {
+type PlaybackIntent = {
   shouldPlay: boolean
   trackId: string | undefined
 }
@@ -117,7 +117,9 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
       pairwise(),
       tap(([previousMountedSource, nextMountedSource]) => {
         if (previousMountedSource) {
-          this.element.pause()
+          if (this.stateSubject.value.playbackIntent.shouldPlay) {
+            this.element.pause()
+          }
           this.element.removeAttribute(`src`)
           this.element.load()
         }
@@ -169,16 +171,25 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
     return this.element.paused
   }
 
-  setPlaybackIntent(playbackIntent: PlaybackIntent) {
+  play(
+    trackId: string | undefined = this.stateSubject.value.mountedSource
+      ?.trackId,
+  ) {
+    if (!trackId) return
+
     this.mergeCompare({
-      playbackIntent,
+      playbackIntent: {
+        shouldPlay: true,
+        trackId,
+      },
     })
   }
 
-  clearPlaybackIntent() {
+  pause() {
     this.mergeCompare({
       playbackIntent: initialPlaybackIntent,
     })
+    this.element.pause()
   }
 
   setSource({ trackId, source }: { trackId: string; source: string }) {
@@ -188,10 +199,6 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
         source,
       },
     })
-  }
-
-  pause() {
-    this.element.pause()
   }
 
   clearSource() {

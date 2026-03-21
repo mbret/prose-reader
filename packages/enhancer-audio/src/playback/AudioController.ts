@@ -254,10 +254,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           options.play ??
           (!this.audioElementAdapter.paused && currentTrack !== undefined)
 
-        this.audioElementAdapter.setPlaybackIntent({
-          shouldPlay,
-          trackId: shouldPlay ? track.id : undefined,
-        })
+        if (shouldPlay) {
+          this.audioElementAdapter.play(track.id)
+        } else {
+          this.audioElementAdapter.pause()
+        }
 
         if (
           currentTrack?.id === track.id &&
@@ -295,7 +296,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           takeUntil(playbackReset$),
           tap(({ source }) => {
             if (!source) {
-              this.audioElementAdapter.clearPlaybackIntent()
+              this.audioElementAdapter.pause()
               this.audioElementAdapter.clearSource()
               setTrackSelectionState({
                 currentTrack: track,
@@ -394,7 +395,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             )
           } else {
             clearPlaybackContinuation()
-            this.audioElementAdapter.clearPlaybackIntent()
+            this.audioElementAdapter.pause()
           }
 
           reader.navigation.goToRightOrBottomSpineItem()
@@ -438,7 +439,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       playbackReset$
         .pipe(
           tap(() => {
-            this.audioElementAdapter.clearPlaybackIntent()
+            this.audioElementAdapter.pause()
           }),
         )
         .subscribe(),
@@ -447,10 +448,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(
       trackSync$
         .pipe(
-          withLatestFrom(this.audioElementAdapter),
-          tap(([{ removedTrackIds }, audioElementAdapter]) => {
-            const mountedTrackId = audioElementAdapter.mountedSource?.trackId
-
+          withLatestFrom(this.audioElementAdapter.mountedTrackId$),
+          tap(([{ removedTrackIds }, mountedTrackId]) => {
             for (const trackId of removedTrackIds) {
               if (trackId === mountedTrackId) continue
 
@@ -492,10 +491,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
               if (!initialTrack) return
 
-              this.audioElementAdapter.setPlaybackIntent({
-                shouldPlay: true,
-                trackId: initialTrack.id,
-              })
+              this.audioElementAdapter.play(initialTrack.id)
 
               const trackIndex = this.state.tracks.findIndex(
                 ({ id }) => id === initialTrack.id,
@@ -517,10 +513,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               return
             }
 
-            this.audioElementAdapter.setPlaybackIntent({
-              shouldPlay: true,
-              trackId: this.state.currentTrack?.id,
-            })
+            this.audioElementAdapter.play(this.state.currentTrack?.id)
           }),
         )
         .subscribe(),
@@ -530,7 +523,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       pauseAction$
         .pipe(
           tap(() => {
-            this.audioElementAdapter.clearPlaybackIntent()
             this.audioElementAdapter.pause()
           }),
         )

@@ -74,10 +74,7 @@ describe(`AudioElementAdapter`, () => {
       .mockRejectedValueOnce(new Error(`not ready`))
       .mockResolvedValueOnce(undefined)
 
-    adapter.setPlaybackIntent({
-      shouldPlay: true,
-      trackId: `track-1`,
-    })
+    adapter.play(`track-1`)
     adapter.setSource({
       trackId: `track-1`,
       source: `blob:track-1`,
@@ -100,10 +97,7 @@ describe(`AudioElementAdapter`, () => {
       .spyOn(adapter.element, `play`)
       .mockResolvedValue(undefined)
 
-    adapter.setPlaybackIntent({
-      shouldPlay: true,
-      trackId: `track-1`,
-    })
+    adapter.play(`track-1`)
     adapter.setSource({
       trackId: `track-1`,
       source: `blob:track-1`,
