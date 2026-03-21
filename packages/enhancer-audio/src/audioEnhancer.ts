@@ -54,7 +54,7 @@ export const audioEnhancer =
         pause: () => controller.pause(),
         toggle: () => controller.toggle(),
         setCurrentTime: (value) => controller.setCurrentTime(value),
-        select: (track, options) => controller.select(track, options),
+        select: (trackId, options) => controller.select(trackId, options),
       },
     }
   }

@@ -46,10 +46,7 @@ export type AudioEnhancerAPI = {
     pause: () => void
     toggle: () => void
     setCurrentTime: (value: number) => void
-    select: (
-      track: AudioTrack | number | string,
-      options?: SelectAudioTrackOptions,
-    ) => void
+    select: (trackId: string, options?: SelectAudioTrackOptions) => void
   }
 }
 

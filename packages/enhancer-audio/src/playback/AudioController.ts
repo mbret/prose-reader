@@ -36,28 +36,8 @@ import {
 import { TrackSourceResolver } from "./TrackSourceResolver"
 import { createVisibleTrackIds$ } from "./visibleTrackId"
 
-const getTrackIndexFromReference = ({
-  tracks,
-  track,
-}: {
-  tracks: AudioTrack[]
-  track: AudioTrack | number | string
-}) => {
-  if (typeof track === `number`) {
-    return tracks.findIndex(
-      ({ index }, playlistIndex) => index === track || playlistIndex === track,
-    )
-  }
-
-  if (typeof track === `string`) {
-    return tracks.findIndex(({ id }) => id === track)
-  }
-
-  return tracks.findIndex(({ id }) => id === track.id)
-}
-
 type SelectCommand = {
-  track: AudioTrack | number | string
+  trackId: string
   options: SelectAudioTrackOptions
 }
 
@@ -233,12 +213,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
     )
 
-    const selectTrackByIndex$ = (
-      trackIndex: number,
+    const selectTrackById$ = (
+      trackId: string,
       options: SelectAudioTrackOptions,
     ) =>
       defer(() => {
-        const track = this.state.tracks[trackIndex]
+        const track = this.state.tracks.find(({ id }) => id === trackId)
 
         if (!track) return EMPTY
 
@@ -352,7 +332,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           }
 
           return of({
-            track: trackId,
+            trackId,
             options: {
               navigate: false,
               play: shouldContinuePlayback ? true : undefined,
@@ -381,7 +361,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             clearPlaybackContinuation()
 
             return of({
-              track: nextTrackInPaginationWindow.id,
+              trackId: nextTrackInPaginationWindow.id,
               options: {
                 navigate: false,
                 play: true,
@@ -493,16 +473,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
               this.audioElementAdapter.play(initialTrack.id)
 
-              const trackIndex = this.state.tracks.findIndex(
-                ({ id }) => id === initialTrack.id,
-              )
-
-              if (trackIndex < 0) return
-
               this.actionSubject.next({
                 type: `select`,
                 command: {
-                  track: trackIndex,
+                  trackId: initialTrack.id,
                   options: {
                     navigate: false,
                     play: true,
@@ -532,17 +506,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(
       merge(selectAction$, visibleTrackSelectionIntent$, endedSelectionIntent$)
         .pipe(
-          withLatestFrom(this.state$),
-          map(([{ track, options }, state]) => ({
-            options,
-            trackIndex: getTrackIndexFromReference({
-              tracks: state.tracks,
-              track,
-            }),
-          })),
-          filter(({ trackIndex }) => trackIndex >= 0),
-          switchMap(({ trackIndex, options }) =>
-            selectTrackByIndex$(trackIndex, options),
+          switchMap(({ trackId, options }) =>
+            selectTrackById$(trackId, options),
           ),
         )
         .subscribe(),
@@ -627,14 +592,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     })
   }
 
-  select(
-    track: AudioTrack | number | string,
-    options: SelectAudioTrackOptions = {},
-  ) {
+  select(trackId: string, options: SelectAudioTrackOptions = {}) {
     this.actionSubject.next({
       type: `select`,
       command: {
-        track,
+        trackId,
         options,
       },
     })
