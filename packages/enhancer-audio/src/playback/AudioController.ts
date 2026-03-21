@@ -146,6 +146,28 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.visualizer$.reset(currentTrack?.id)
     }
 
+    const resetPlaybackSelection = ({
+      tracks = this.state.tracks,
+      currentTrack = undefined,
+    }: {
+      tracks?: AudioTrack[]
+      currentTrack?: AudioTrack | undefined
+    } = {}) => {
+      this.visualizer$.stop({
+        resetLevels: true,
+      })
+      this.audioElementAdapter.clearSource()
+      this.update({
+        tracks,
+        currentTrack,
+        isLoading: false,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+      })
+      this.visualizer$.reset(currentTrack?.id)
+    }
+
     const action$ = this.actionSubject.pipe(share())
 
     const playAction$ = action$.pipe(
@@ -311,12 +333,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
                 this.actionSubject.next({
                   type: `reset`,
                 })
-                this.audioElementAdapter.clearSource()
-                setTrackSelectionState({
-                  currentTrack: undefined,
-                  isLoading: false,
-                  isPlaying: false,
-                })
+                resetPlaybackSelection()
               }
             }
 
@@ -436,15 +453,16 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               this.trackSourceResolver.releaseTrackSource(trackId)
             }
           }),
-          tap(([{ shouldResetPlayback }]) => {
+          tap(([{ shouldResetPlayback, tracks }]) => {
             if (!shouldResetPlayback) return
 
-            this.visualizer$.stop({
-              resetLevels: true,
+            resetPlaybackSelection({
+              tracks,
             })
-            this.audioElementAdapter.clearSource()
           }),
-          tap(([{ tracks, currentTrack }]) => {
+          tap(([{ shouldResetPlayback, tracks, currentTrack }]) => {
+            if (shouldResetPlayback) return
+
             this.update({
               tracks,
               currentTrack,
