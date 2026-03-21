@@ -471,8 +471,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
               if (!initialTrack) return
 
-              this.audioElementAdapter.play(initialTrack.id)
-
               this.actionSubject.next({
                 type: `select`,
                 command: {
