@@ -573,10 +573,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     return this.value
   }
 
-  get audioElement() {
-    return this.audioElementAdapter.element
-  }
-
   get visualizer() {
     return this.visualizer$.value
   }
