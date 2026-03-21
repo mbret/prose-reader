@@ -41,6 +41,13 @@ const createManifestSpineItem = ({
   mediaType: `audio/mpeg`,
 })
 
+const getAudioElement = (controller: AudioController) =>
+  (
+    Reflect.get(controller, `audioElementAdapter`) as {
+      element: HTMLAudioElement
+    }
+  ).element
+
 const createReader = ({
   spineItems = [],
 }: {
@@ -103,7 +110,7 @@ describe(`AudioController`, () => {
     const { reader } = createReader()
     const controller = new AudioController(reader)
     const track = createTrack()
-    const audioElement = Reflect.get(controller, `audioElement`)
+    const audioElement = getAudioElement(controller)
     const loadSpy = vi.spyOn(audioElement, `load`)
 
     controller.setTracks([track])
@@ -135,7 +142,7 @@ describe(`AudioController`, () => {
       spineItems: [createManifestSpineItem()],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(controller, `audioElement`)
+    const audioElement = getAudioElement(controller)
     const loadSpy = vi.spyOn(audioElement, `load`)
 
     controller.select(`track-1`, {
@@ -177,7 +184,7 @@ describe(`AudioController`, () => {
       spineItems: [createManifestSpineItem()],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(controller, `audioElement`)
+    const audioElement = getAudioElement(controller)
 
     controller.select(`track-1`, {
       navigate: false,
@@ -219,10 +226,7 @@ describe(`AudioController`, () => {
       ],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(
-      controller,
-      `audioElement`,
-    ) as HTMLAudioElement
+    const audioElement = getAudioElement(controller)
     const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
 
     paginationState$.next({
@@ -281,10 +285,7 @@ describe(`AudioController`, () => {
       ],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(
-      controller,
-      `audioElement`,
-    ) as HTMLAudioElement
+    const audioElement = getAudioElement(controller)
     const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
 
     paginationState$.next({
@@ -328,10 +329,7 @@ describe(`AudioController`, () => {
       ],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(
-      controller,
-      `audioElement`,
-    ) as HTMLAudioElement
+    const audioElement = getAudioElement(controller)
     const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
 
     paginationState$.next({
@@ -381,10 +379,7 @@ describe(`AudioController`, () => {
       ],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(
-      controller,
-      `audioElement`,
-    ) as HTMLAudioElement
+    const audioElement = getAudioElement(controller)
     const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
     const pauseSpy = vi.spyOn(audioElement, `pause`)
 
@@ -444,10 +439,7 @@ describe(`AudioController`, () => {
       ],
     })
     const controller = new AudioController(reader)
-    const audioElement = Reflect.get(
-      controller,
-      `audioElement`,
-    ) as HTMLAudioElement
+    const audioElement = getAudioElement(controller)
     const playedSources: string[] = []
 
     Object.defineProperty(audioElement, `readyState`, {
