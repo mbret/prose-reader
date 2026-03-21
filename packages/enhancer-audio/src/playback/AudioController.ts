@@ -1,4 +1,5 @@
 import { ReactiveEntity, type Reader } from "@prose-reader/core"
+import { isDefined } from "reactjrx"
 import {
   BehaviorSubject,
   catchError,
@@ -11,6 +12,7 @@ import {
   merge,
   type Observable,
   of,
+  pairwise,
   Subject,
   Subscription,
   share,
@@ -134,9 +136,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       reader,
       mountedObjectUrls,
     )
-    this.audioElementAdapter = new AudioElementAdapter((trackId) => {
-      this.trackSourceResolver.releaseTrackSource(trackId)
-    })
+    this.audioElementAdapter = new AudioElementAdapter()
     this.visualizer$ = new AudioVisualizer(this.audioElementAdapter.element)
     this.visibleTrackIds$ = createVisibleTrackIds$(
       this.watch(`tracks`),
@@ -404,6 +404,30 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
     )
 
+    const audioAdapterUnMountedTrackId$ =
+      this.audioElementAdapter.mountedTrackId$.pipe(
+        pairwise(),
+        map(([previousMountedTrackId, nextMountedTrackId]) => {
+          if (
+            !previousMountedTrackId ||
+            previousMountedTrackId === nextMountedTrackId
+          ) {
+            return
+          }
+
+          return previousMountedTrackId
+        }),
+        filter(isDefined),
+      )
+
+    const releaseTrackSource$ = audioAdapterUnMountedTrackId$.pipe(
+      tap((previousMountedTrackId) => {
+        this.trackSourceResolver.releaseTrackSource(previousMountedTrackId)
+      }),
+    )
+
+    this.subscriptions.add(releaseTrackSource$.subscribe())
+
     this.subscriptions.add(
       playbackInterrupted$
         .pipe(tap(() => clearPlaybackContinuation()))
@@ -423,12 +447,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(
       trackSync$
         .pipe(
-          tap(({ removedTrackIds }) => {
+          withLatestFrom(this.audioElementAdapter),
+          tap(([{ removedTrackIds }, audioElementAdapter]) => {
+            const mountedTrackId = audioElementAdapter.mountedSource?.trackId
+
             for (const trackId of removedTrackIds) {
+              if (trackId === mountedTrackId) continue
+
               this.trackSourceResolver.releaseTrackSource(trackId)
             }
           }),
-          tap(({ shouldResetPlayback }) => {
+          tap(([{ shouldResetPlayback }]) => {
             if (!shouldResetPlayback) return
 
             this.visualizer$.stop({
@@ -436,7 +465,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             })
             this.audioElementAdapter.clearSource()
           }),
-          tap(({ tracks, currentTrack }) => {
+          tap(([{ tracks, currentTrack }]) => {
             this.update({
               tracks,
               currentTrack,

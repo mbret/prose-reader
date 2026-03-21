@@ -23,8 +23,7 @@ describe(`AudioElementAdapter`, () => {
   })
 
   it(`mounts and clears the active source`, () => {
-    const releaseTrackSource = vi.fn()
-    const adapter = new AudioElementAdapter(releaseTrackSource)
+    const adapter = new AudioElementAdapter()
 
     adapter.setSource({
       trackId: `track-1`,
@@ -38,12 +37,15 @@ describe(`AudioElementAdapter`, () => {
 
     expect(adapter.hasSource).toBe(false)
     expect(adapter.element.getAttribute(`src`)).toBe(null)
-    expect(releaseTrackSource).toHaveBeenCalledWith(`track-1`)
   })
 
-  it(`releases the previously mounted track source when switching tracks`, () => {
-    const releaseTrackSource = vi.fn()
-    const adapter = new AudioElementAdapter(releaseTrackSource)
+  it(`emits mounted track id transitions when sources change`, () => {
+    const adapter = new AudioElementAdapter()
+    const mountedTrackIds: Array<string | undefined> = []
+
+    const subscription = adapter.mountedTrackId$.subscribe((mountedTrackId) => {
+      mountedTrackIds.push(mountedTrackId)
+    })
 
     adapter.setSource({
       trackId: `track-1`,
@@ -53,13 +55,20 @@ describe(`AudioElementAdapter`, () => {
       trackId: `track-2`,
       source: `blob:track-2`,
     })
+    adapter.clearSource()
 
-    expect(releaseTrackSource).toHaveBeenCalledWith(`track-1`)
-    expect(releaseTrackSource).not.toHaveBeenCalledWith(`track-2`)
+    expect(mountedTrackIds).toEqual([
+      undefined,
+      `track-1`,
+      `track-2`,
+      undefined,
+    ])
+
+    subscription.unsubscribe()
   })
 
   it(`retries playback once on canplay after a failed play attempt`, async () => {
-    const adapter = new AudioElementAdapter(vi.fn())
+    const adapter = new AudioElementAdapter()
     const playSpy = vi
       .spyOn(adapter.element, `play`)
       .mockRejectedValueOnce(new Error(`not ready`))
@@ -86,7 +95,7 @@ describe(`AudioElementAdapter`, () => {
   })
 
   it(`does not replay on canplay after a successful play attempt`, async () => {
-    const adapter = new AudioElementAdapter(vi.fn())
+    const adapter = new AudioElementAdapter()
     const playSpy = vi
       .spyOn(adapter.element, `play`)
       .mockResolvedValue(undefined)
@@ -111,9 +120,8 @@ describe(`AudioElementAdapter`, () => {
     expect(playSpy).toHaveBeenCalledTimes(1)
   })
 
-  it(`releases the mounted source on destroy`, () => {
-    const releaseTrackSource = vi.fn()
-    const adapter = new AudioElementAdapter(releaseTrackSource)
+  it(`clears the element source on destroy`, () => {
+    const adapter = new AudioElementAdapter()
 
     adapter.setSource({
       trackId: `track-1`,
@@ -122,6 +130,6 @@ describe(`AudioElementAdapter`, () => {
 
     adapter.destroy()
 
-    expect(releaseTrackSource).toHaveBeenCalledWith(`track-1`)
+    expect(adapter.element.getAttribute(`src`)).toBe(null)
   })
 })

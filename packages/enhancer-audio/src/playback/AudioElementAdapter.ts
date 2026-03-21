@@ -1,4 +1,4 @@
-import { ReactiveEntity } from "@prose-reader/core"
+import { isShallowEqual, ReactiveEntity } from "@prose-reader/core"
 import {
   catchError,
   defer,
@@ -66,10 +66,11 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
   readonly ended$: Observable<void>
   readonly isPlaying$: Observable<boolean>
   readonly metrics$: Observable<AudioElementMetrics>
+  readonly mountedTrackId$: Observable<string | undefined>
 
   private readonly subscriptions = new Subscription()
 
-  constructor(private readonly releaseTrackSource: (trackId: string) => void) {
+  constructor() {
     super({
       playbackIntent: initialPlaybackIntent,
       mountedSource: undefined,
@@ -102,13 +103,14 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
 
     const canPlay$ = fromEvent(this.element, `canplay`).pipe(share())
 
-    const mountedSource$ = this.stateSubject.pipe(
+    const mountedSource$ = this.pipe(
       map(({ mountedSource }) => mountedSource),
-      distinctUntilChanged(
-        (previousMountedSource, nextMountedSource) =>
-          previousMountedSource?.trackId === nextMountedSource?.trackId &&
-          previousMountedSource?.source === nextMountedSource?.source,
-      ),
+      distinctUntilChanged(isShallowEqual),
+    )
+
+    this.mountedTrackId$ = mountedSource$.pipe(
+      map((mountedSource) => mountedSource?.trackId),
+      distinctUntilChanged(),
     )
 
     const sourceApplied$ = mountedSource$.pipe(
@@ -118,10 +120,6 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
           this.element.pause()
           this.element.removeAttribute(`src`)
           this.element.load()
-
-          if (previousMountedSource.trackId !== nextMountedSource?.trackId) {
-            this.releaseTrackSource(previousMountedSource.trackId)
-          }
         }
 
         if (!nextMountedSource) return
@@ -207,16 +205,10 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
   }
 
   destroy() {
-    const trackId = this.stateSubject.value.mountedSource?.trackId
-
     this.subscriptions.unsubscribe()
     this.stateSubject.complete()
     this.element.pause()
     this.element.removeAttribute(`src`)
     this.element.load()
-
-    if (trackId) {
-      this.releaseTrackSource(trackId)
-    }
   }
 }
