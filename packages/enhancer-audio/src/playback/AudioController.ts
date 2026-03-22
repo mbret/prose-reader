@@ -1,7 +1,6 @@
 import { ReactiveEntity, type Reader } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 import {
-  BehaviorSubject,
   catchError,
   defaultIfEmpty,
   defer,
@@ -90,9 +89,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   readonly visualizer$: AudioVisualizer
   readonly visibleTrackIds$: Observable<string[]>
   private readonly actionSubject = new Subject<ControllerAction>()
-  private readonly playbackContinuationTrackIdSubject = new BehaviorSubject<
-    string | undefined
-  >(undefined)
+  private playbackContinuationTrackId: string | undefined
   private readonly subscriptions = new Subscription()
   private readonly trackSourceResolver: TrackSourceResolver
 
@@ -120,7 +117,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const clearPlaybackContinuation = () => {
-      this.playbackContinuationTrackIdSubject.next(undefined)
+      this.playbackContinuationTrackId = undefined
     }
 
     const setTrackSelectionState = ({
@@ -216,18 +213,22 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     const visibleTrackContext$ = this.visibleTrackIds$.pipe(
       map((trackIds) => trackIds[0]),
       distinctUntilChanged(),
-      withLatestFrom(this.playbackContinuationTrackIdSubject, this.state$),
-      map(([trackId, playbackContinuationTrackId, state]) => ({
-        trackId,
-        tracks: state.tracks,
-        playbackContinuationTrackId,
-        currentTrackId: state.currentTrack?.id,
-        isLoading: state.isLoading,
-        shouldContinuePlayback:
-          trackId !== undefined &&
-          playbackContinuationTrackId === trackId &&
-          trackId !== state.currentTrack?.id,
-      })),
+      withLatestFrom(this.state$),
+      map(([trackId, state]) => {
+        const playbackContinuationTrackId = this.playbackContinuationTrackId
+
+        return {
+          trackId,
+          tracks: state.tracks,
+          playbackContinuationTrackId,
+          currentTrackId: state.currentTrack?.id,
+          isLoading: state.isLoading,
+          shouldContinuePlayback:
+            trackId !== undefined &&
+            playbackContinuationTrackId === trackId &&
+            trackId !== state.currentTrack?.id,
+        }
+      }),
       share(),
     )
 
@@ -388,9 +389,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           }
 
           if (nextTrackAfterPageTurn) {
-            this.playbackContinuationTrackIdSubject.next(
-              nextTrackAfterPageTurn.id,
-            )
+            this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
           } else {
             clearPlaybackContinuation()
             this.audioElementAdapter.pause()
@@ -613,7 +612,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   destroy() {
     this.subscriptions.unsubscribe()
     this.actionSubject.complete()
-    this.playbackContinuationTrackIdSubject.complete()
     this.visualizer$.destroy()
     this.audioElementAdapter.destroy()
     this.trackSourceResolver.destroy()
