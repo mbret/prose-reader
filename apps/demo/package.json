@@ -18,6 +18,7 @@
     "@chakra-ui/styled-system": "2.12.0",
     "@emotion/react": "^11.14.0",
     "@prose-reader/core": "^1.242.0",
+    "@prose-reader/enhancer-audio": "^1.242.0",
     "@prose-reader/enhancer-annotations": "^1.242.0",
     "@prose-reader/enhancer-gestures": "^1.242.0",
     "@prose-reader/enhancer-pdf": "^1.242.0",
