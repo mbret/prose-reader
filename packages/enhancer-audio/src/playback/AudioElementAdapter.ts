@@ -18,7 +18,7 @@ import {
   tap,
 } from "rxjs"
 
-type PlaybackIntent = {
+type DesiredPlayback = {
   shouldPlay: boolean
   trackId: string | undefined
 }
@@ -34,11 +34,11 @@ type MountedSource = {
 }
 
 type AudioElementState = {
-  playbackIntent: PlaybackIntent
+  desiredPlayback: DesiredPlayback
   mountedSource: MountedSource | undefined
 }
 
-const initialPlaybackIntent: PlaybackIntent = {
+const initialDesiredPlayback: DesiredPlayback = {
   shouldPlay: false,
   trackId: undefined,
 }
@@ -72,7 +72,7 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
 
   constructor() {
     super({
-      playbackIntent: initialPlaybackIntent,
+      desiredPlayback: initialDesiredPlayback,
       mountedSource: undefined,
     })
 
@@ -117,7 +117,7 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
       pairwise(),
       tap(([previousMountedSource, nextMountedSource]) => {
         if (previousMountedSource) {
-          if (this.stateSubject.value.playbackIntent.shouldPlay) {
+          if (this.stateSubject.value.desiredPlayback.shouldPlay) {
             this.element.pause()
           }
           this.element.removeAttribute(`src`)
@@ -133,17 +133,17 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
       share(),
     )
 
-    const playTrigger$ = merge(this.watch(`playbackIntent`), sourceApplied$)
+    const playTrigger$ = merge(this.watch(`desiredPlayback`), sourceApplied$)
 
     const playAudio$ = playTrigger$.pipe(
       switchMap(() => {
         return defer(() => {
-          const { mountedSource, playbackIntent } = this.stateSubject.value
+          const { mountedSource, desiredPlayback } = this.stateSubject.value
 
           if (
-            !playbackIntent.shouldPlay ||
-            playbackIntent.trackId === undefined ||
-            mountedSource?.trackId !== playbackIntent.trackId ||
+            !desiredPlayback.shouldPlay ||
+            desiredPlayback.trackId === undefined ||
+            mountedSource?.trackId !== desiredPlayback.trackId ||
             !this.element.src
           ) {
             return EMPTY
@@ -178,7 +178,7 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
     if (!trackId) return
 
     this.mergeCompare({
-      playbackIntent: {
+      desiredPlayback: {
         shouldPlay: true,
         trackId,
       },
@@ -187,7 +187,7 @@ export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
 
   pause() {
     this.mergeCompare({
-      playbackIntent: initialPlaybackIntent,
+      desiredPlayback: initialDesiredPlayback,
     })
     this.element.pause()
   }
