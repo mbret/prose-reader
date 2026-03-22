@@ -107,13 +107,20 @@ describe(`AudioController`, () => {
 
     resolveTrackSourceMock.mockReturnValue(deferredSource.asObservable())
 
-    const { reader } = createReader()
-    const controller = new AudioController(reader)
     const track = createTrack()
+    const { reader } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: track.id,
+          href: track.href,
+          index: track.index,
+        }),
+      ],
+    })
+    const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
     const loadSpy = vi.spyOn(audioElement, `load`)
 
-    controller.setTracks([track])
     controller.select(track.id, {
       navigate: false,
       play: true,
@@ -506,10 +513,22 @@ describe(`AudioController`, () => {
       of(`blob:${track.id}`),
     )
 
-    const { reader } = createReader()
+    const { reader } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: track1.id,
+          href: track1.href,
+          index: track1.index,
+        }),
+        createManifestSpineItem({
+          id: track2.id,
+          href: track2.href,
+          index: track2.index,
+        }),
+      ],
+    })
     const controller = new AudioController(reader)
 
-    controller.setTracks([track1, track2])
     controller.select(track1.id, {
       navigate: false,
       play: true,
@@ -557,10 +576,27 @@ describe(`AudioController`, () => {
       return of(`blob:${track.id}`)
     })
 
-    const { reader } = createReader()
+    const { reader } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: track1.id,
+          href: track1.href,
+          index: track1.index,
+        }),
+        createManifestSpineItem({
+          id: track2.id,
+          href: track2.href,
+          index: track2.index,
+        }),
+        createManifestSpineItem({
+          id: track3.id,
+          href: track3.href,
+          index: track3.index,
+        }),
+      ],
+    })
     const controller = new AudioController(reader)
 
-    controller.setTracks([track1, track2, track3])
     controller.select(track1.id, {
       navigate: false,
       play: true,

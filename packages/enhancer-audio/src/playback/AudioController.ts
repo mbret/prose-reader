@@ -16,6 +16,7 @@ import {
   Subject,
   Subscription,
   share,
+  shareReplay,
   switchMap,
   takeUntil,
   tap,
@@ -54,10 +55,6 @@ type ControllerAction =
   | {
       type: `select`
       command: SelectCommand
-    }
-  | {
-      type: `tracks`
-      tracks: AudioTrack[]
     }
 
 type TrackSync = {
@@ -169,6 +166,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     }
 
     const action$ = this.actionSubject.pipe(share())
+    const tracks$ = reader.context.manifest$.pipe(
+      map((manifest) =>
+        manifest.spineItems.filter(isAudioSpineItem).map((item) => ({
+          id: item.id,
+          href: item.href,
+          index: item.index,
+          mediaType: item.mediaType,
+        })),
+      ),
+      share(),
+    )
 
     const playAction$ = action$.pipe(
       filter(
@@ -198,16 +206,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       map(({ command }) => command),
       share(),
     )
-    const tracksAction$ = action$.pipe(
-      filter(
-        (action): action is Extract<ControllerAction, { type: `tracks` }> =>
-          action.type === `tracks`,
-      ),
-      map(({ tracks }) => tracks),
-      share(),
-    )
 
-    const trackSync$ = tracksAction$.pipe(
+    const trackSync$ = tracks$.pipe(
       withLatestFrom(this.state$),
       map(([tracks, state]) =>
         getTrackSync({
@@ -215,7 +215,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           tracks,
         }),
       ),
-      share(),
+      shareReplay({
+        bufferSize: 1,
+        refCount: true,
+      }),
     )
 
     const playbackReset$ = merge(
@@ -530,27 +533,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      reader.context.manifest$
-        .pipe(
-          map((manifest) =>
-            manifest.spineItems.filter(isAudioSpineItem).map((item) => ({
-              id: item.id,
-              href: item.href,
-              index: item.index,
-              mediaType: item.mediaType,
-            })),
-          ),
-          tap((tracks) => {
-            this.actionSubject.next({
-              type: `tracks`,
-              tracks,
-            })
-          }),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
       this.audioElementAdapter.isPlaying$
         .pipe(
           tap((isPlaying) => {
@@ -595,13 +577,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
   update(value: Partial<AudioEnhancerState>) {
     this.mergeCompare(value)
-  }
-
-  setTracks(tracks: AudioTrack[]) {
-    this.actionSubject.next({
-      type: `tracks`,
-      tracks,
-    })
   }
 
   select(trackId: string, options: SelectAudioTrackOptions = {}) {
