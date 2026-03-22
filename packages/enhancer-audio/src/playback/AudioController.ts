@@ -46,9 +46,6 @@ type ControllerAction =
       type: `play`
     }
   | {
-      type: `pause`
-    }
-  | {
       type: `select`
       command: SelectCommand
     }
@@ -89,6 +86,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   readonly visualizer$: AudioVisualizer
   readonly visibleTrackIds$: Observable<string[]>
   private readonly actionSubject = new Subject<ControllerAction>()
+  private readonly pauseActionSubject = new Subject<void>()
   private playbackContinuationTrackId: string | undefined
   private readonly subscriptions = new Subscription()
   private readonly trackSourceResolver: TrackSourceResolver
@@ -139,29 +137,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.visualizer$.reset(currentTrack?.id)
     }
 
-    const resetPlaybackSelection = ({
-      tracks = this.state.tracks,
-      currentTrack = undefined,
-    }: {
-      tracks?: AudioTrack[]
-      currentTrack?: AudioTrack | undefined
-    } = {}) => {
-      this.visualizer$.stop({
-        resetLevels: true,
-      })
-      this.audioElementAdapter.pause()
-      this.audioElementAdapter.clearSource()
-      this.update({
-        tracks,
-        currentTrack,
-        isLoading: false,
-        isPlaying: false,
-        currentTime: 0,
-        duration: 0,
-      })
-      this.visualizer$.reset(currentTrack?.id)
-    }
-
     const action$ = this.actionSubject.pipe(share())
     const tracks$ = reader.context.manifest$.pipe(
       map((manifest) =>
@@ -179,12 +154,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       filter(
         (action): action is Extract<ControllerAction, { type: `play` }> =>
           action.type === `play`,
-      ),
-    )
-    const pauseAction$ = action$.pipe(
-      filter(
-        (action): action is Extract<ControllerAction, { type: `pause` }> =>
-          action.type === `pause`,
       ),
     )
     const selectAction$ = action$.pipe(
@@ -267,7 +236,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     ).pipe(share())
 
     const playbackInterrupted$ = merge(
-      pauseAction$.pipe(map(() => undefined)),
+      this.pauseActionSubject,
       playbackReset$.pipe(map(() => undefined)),
       selectAction$.pipe(
         filter(({ options }) => options.navigate !== false),
@@ -433,18 +402,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      playbackReset$
-        .pipe(
-          tap((tracks) => {
-            resetPlaybackSelection({
-              tracks,
-            })
-          }),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
       trackSync$
         .pipe(
           withLatestFrom(this.audioElementAdapter.mountedTrackId$),
@@ -504,11 +461,31 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         .subscribe(),
     )
 
+    const paused$ = merge(this.pauseActionSubject, playbackReset$).pipe(
+      tap(() => {
+        this.audioElementAdapter.pause()
+      }),
+    )
+
+    this.subscriptions.add(paused$.subscribe())
+
     this.subscriptions.add(
-      pauseAction$
+      playbackReset$
         .pipe(
-          tap(() => {
-            this.audioElementAdapter.pause()
+          tap((tracks) => {
+            this.visualizer$.stop({
+              resetLevels: true,
+            })
+            this.audioElementAdapter.clearSource()
+            this.update({
+              tracks,
+              currentTrack: undefined,
+              isLoading: false,
+              isPlaying: false,
+              currentTime: 0,
+              duration: 0,
+            })
+            this.visualizer$.reset(undefined)
           }),
         )
         .subscribe(),
@@ -588,9 +565,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   pause() {
-    this.actionSubject.next({
-      type: `pause`,
-    })
+    this.pauseActionSubject.next()
   }
 
   toggle() {
@@ -612,6 +587,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   destroy() {
     this.subscriptions.unsubscribe()
     this.actionSubject.complete()
+    this.pauseActionSubject.complete()
     this.visualizer$.destroy()
     this.audioElementAdapter.destroy()
     this.trackSourceResolver.destroy()
