@@ -74,12 +74,14 @@ const getTrackSync = ({
     .map(({ id }) => id)
   const currentTrack =
     state.currentTrack && tracks.find(({ id }) => id === state.currentTrack?.id)
+  const shouldResetPlayback =
+    state.currentTrack !== undefined && currentTrack === undefined
 
   return {
     tracks,
     currentTrack,
     removedTrackIds,
-    shouldResetPlayback: !currentTrack,
+    shouldResetPlayback,
   }
 }
 
@@ -88,7 +90,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   readonly visualizer$: AudioVisualizer
   readonly visibleTrackIds$: Observable<string[]>
   private readonly actionSubject = new Subject<ControllerAction>()
-  private readonly resetSubject = new Subject<void>()
   private readonly playbackContinuationTrackIdSubject = new BehaviorSubject<
     string | undefined
   >(undefined)
@@ -151,6 +152,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.visualizer$.stop({
         resetLevels: true,
       })
+      this.audioElementAdapter.pause()
       this.audioElementAdapter.clearSource()
       this.update({
         tracks,
@@ -211,17 +213,61 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
+    const visibleTrackContext$ = this.visibleTrackIds$.pipe(
+      map((trackIds) => trackIds[0]),
+      distinctUntilChanged(),
+      withLatestFrom(this.playbackContinuationTrackIdSubject, this.state$),
+      map(([trackId, playbackContinuationTrackId, state]) => ({
+        trackId,
+        tracks: state.tracks,
+        playbackContinuationTrackId,
+        currentTrackId: state.currentTrack?.id,
+        isLoading: state.isLoading,
+        shouldContinuePlayback:
+          trackId !== undefined &&
+          playbackContinuationTrackId === trackId &&
+          trackId !== state.currentTrack?.id,
+      })),
+      share(),
+    )
+
+    const visibleTrackReset$ = visibleTrackContext$.pipe(
+      filter(
+        ({ trackId, playbackContinuationTrackId, currentTrackId, isLoading }) =>
+          trackId === undefined &&
+          !playbackContinuationTrackId &&
+          (currentTrackId !== undefined || isLoading),
+      ),
+      map(({ tracks }) => tracks),
+    )
+
+    const visibleTrackSelectionIntent$ = visibleTrackContext$.pipe(
+      filter(({ trackId }) => trackId !== undefined),
+      tap(({ shouldContinuePlayback }) => {
+        if (shouldContinuePlayback) {
+          clearPlaybackContinuation()
+        }
+      }),
+      map(({ trackId, shouldContinuePlayback }) => ({
+        trackId: trackId as string,
+        options: {
+          navigate: false,
+          play: shouldContinuePlayback ? true : undefined,
+        },
+      })),
+    )
+
     const playbackReset$ = merge(
-      this.resetSubject,
+      visibleTrackReset$,
       trackSync$.pipe(
         filter(({ shouldResetPlayback }) => shouldResetPlayback),
-        map(() => undefined),
+        map(({ tracks }) => tracks),
       ),
     ).pipe(share())
 
     const playbackInterrupted$ = merge(
       pauseAction$.pipe(map(() => undefined)),
-      playbackReset$,
+      playbackReset$.pipe(map(() => undefined)),
       selectAction$.pipe(
         filter(({ options }) => options.navigate !== false),
         map(() => undefined),
@@ -314,42 +360,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         )
       })
 
-    const visibleTrackSelectionIntent$ = this.visibleTrackIds$.pipe(
-      map((trackIds) => trackIds[0]),
-      distinctUntilChanged(),
-      withLatestFrom(this.playbackContinuationTrackIdSubject),
-      switchMap(([trackId, playbackContinuationTrackId]) =>
-        defer(() => {
-          if (trackId === undefined) {
-            if (!playbackContinuationTrackId) {
-              if (this.state.currentTrack || this.state.isLoading) {
-                this.resetSubject.next()
-                resetPlaybackSelection()
-              }
-            }
-
-            return EMPTY
-          }
-
-          const shouldContinuePlayback =
-            playbackContinuationTrackId === trackId &&
-            trackId !== this.state.currentTrack?.id
-
-          if (shouldContinuePlayback) {
-            clearPlaybackContinuation()
-          }
-
-          return of({
-            trackId,
-            options: {
-              navigate: false,
-              play: shouldContinuePlayback ? true : undefined,
-            },
-          })
-        }),
-      ),
-    )
-
     const endedSelectionIntent$ = this.audioElementAdapter.ended$.pipe(
       withLatestFrom(reader.pagination.state$),
       switchMap(([, pagination]) =>
@@ -426,8 +436,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(
       playbackReset$
         .pipe(
-          tap(() => {
-            this.audioElementAdapter.pause()
+          tap((tracks) => {
+            resetPlaybackSelection({
+              tracks,
+            })
           }),
         )
         .subscribe(),
@@ -443,13 +455,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
               this.trackSourceResolver.releaseTrackSource(trackId)
             }
-          }),
-          tap(([{ shouldResetPlayback, tracks }]) => {
-            if (!shouldResetPlayback) return
-
-            resetPlaybackSelection({
-              tracks,
-            })
           }),
           tap(([{ shouldResetPlayback, tracks, currentTrack }]) => {
             if (shouldResetPlayback) return
@@ -606,10 +611,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   destroy() {
-    this.resetSubject.next()
     this.subscriptions.unsubscribe()
     this.actionSubject.complete()
-    this.resetSubject.complete()
     this.playbackContinuationTrackIdSubject.complete()
     this.visualizer$.destroy()
     this.audioElementAdapter.destroy()
