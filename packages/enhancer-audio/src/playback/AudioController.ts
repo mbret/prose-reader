@@ -50,9 +50,6 @@ type ControllerAction =
       type: `pause`
     }
   | {
-      type: `reset`
-    }
-  | {
       type: `select`
       command: SelectCommand
     }
@@ -91,6 +88,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   readonly visualizer$: AudioVisualizer
   readonly visibleTrackIds$: Observable<string[]>
   private readonly actionSubject = new Subject<ControllerAction>()
+  private readonly resetSubject = new Subject<void>()
   private readonly playbackContinuationTrackIdSubject = new BehaviorSubject<
     string | undefined
   >(undefined)
@@ -190,14 +188,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           action.type === `pause`,
       ),
     )
-    const resetAction$ = action$.pipe(
-      filter(
-        (action): action is Extract<ControllerAction, { type: `reset` }> =>
-          action.type === `reset`,
-      ),
-      map(() => undefined),
-      share(),
-    )
     const selectAction$ = action$.pipe(
       filter(
         (action): action is Extract<ControllerAction, { type: `select` }> =>
@@ -222,7 +212,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const playbackReset$ = merge(
-      resetAction$,
+      this.resetSubject,
       trackSync$.pipe(
         filter(({ shouldResetPlayback }) => shouldResetPlayback),
         map(() => undefined),
@@ -333,9 +323,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           if (trackId === undefined) {
             if (!playbackContinuationTrackId) {
               if (this.state.currentTrack || this.state.isLoading) {
-                this.actionSubject.next({
-                  type: `reset`,
-                })
+                this.resetSubject.next()
                 resetPlaybackSelection()
               }
             }
@@ -618,11 +606,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   destroy() {
-    this.actionSubject.next({
-      type: `reset`,
-    })
+    this.resetSubject.next()
     this.subscriptions.unsubscribe()
     this.actionSubject.complete()
+    this.resetSubject.complete()
     this.playbackContinuationTrackIdSubject.complete()
     this.visualizer$.destroy()
     this.audioElementAdapter.destroy()
