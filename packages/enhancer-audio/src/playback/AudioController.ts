@@ -147,7 +147,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private shouldPlay = false
   private playbackContinuationTrackId: string | undefined
 
-  private readonly sourceByTrackId = new Map<string, string>()
   private readonly pendingSourceByTrackId = new Map<
     string,
     Observable<string>
@@ -655,12 +654,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private resolveTrackSource(track: AudioTrack) {
-    const cachedSource = this.sourceByTrackId.get(track.id)
-
-    if (cachedSource) {
-      return of(cachedSource)
-    }
-
     const pendingSource = this.pendingSourceByTrackId.get(track.id)
 
     if (pendingSource) {
@@ -674,16 +667,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     ).pipe(
       filter(isDefined),
       switchMap((spineItem) =>
-        defer(() =>
-          from(Promise.resolve(spineItem.resourcesHandler.getResource())),
+        this.resourcesResolver.getTrackResourceUrl$(
+          track,
+          spineItem.resourcesHandler,
         ),
       ),
-      switchMap((resource) =>
-        this.resourcesResolver.getTrackResourceUrl$(track, resource),
-      ),
-      tap((source) => {
-        this.sourceByTrackId.set(track.id, source)
-      }),
       finalize(() => {
         if (this.pendingSourceByTrackId.get(track.id) === source$) {
           this.pendingSourceByTrackId.delete(track.id)
@@ -701,16 +689,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private releaseTrackSource(trackId: string) {
-    this.sourceByTrackId.delete(trackId)
     this.pendingSourceByTrackId.delete(trackId)
-
-    const cachedObjectUrl =
-      this.resourcesResolver.cachedObjectUrlByTrackId.get(trackId)
-
-    if (!cachedObjectUrl) return
-
-    this.resourcesResolver.cachedObjectUrlByTrackId.delete(trackId)
-    URL.revokeObjectURL(cachedObjectUrl)
+    this.resourcesResolver.releaseTrackSource(trackId)
   }
 
   private selectTrack$({
@@ -847,16 +827,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.visualizer$.destroy()
     this.pauseAudio()
     this.clearMountedSource()
-
-    const trackIds = new Set([
-      ...this.sourceByTrackId.keys(),
-      ...this.pendingSourceByTrackId.keys(),
-      ...this.resourcesResolver.cachedObjectUrlByTrackId.keys(),
-    ])
-
-    for (const trackId of trackIds) {
-      this.releaseTrackSource(trackId)
-    }
+    this.pendingSourceByTrackId.clear()
+    this.resourcesResolver.destroy()
 
     super.destroy()
   }

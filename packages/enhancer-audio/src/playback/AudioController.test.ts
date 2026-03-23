@@ -298,10 +298,6 @@ describe(`AudioController`, () => {
     const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
     const createObjectUrl = vi.spyOn(URL, `createObjectURL`)
-    const sourceByTrackId = Reflect.get(controller, `sourceByTrackId`) as Map<
-      string,
-      string
-    >
 
     controller.select(`track-1`, {
       navigate: false,
@@ -333,7 +329,9 @@ describe(`AudioController`, () => {
       `https://example.com/track-2.mp3`,
     )
     expect(createObjectUrl).not.toHaveBeenCalled()
-    expect(sourceByTrackId.has(`track-1`)).toBe(false)
+    expect(
+      controller.resourcesResolver.cachedSourceByTrackId.has(`track-1`),
+    ).toBe(false)
   })
 
   /**

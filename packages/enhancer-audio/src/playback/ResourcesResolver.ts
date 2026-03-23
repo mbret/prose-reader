@@ -1,54 +1,77 @@
-import { from, map, of } from "rxjs"
+import type { ResourceHandler } from "@prose-reader/core"
+import { defer, from, map, of, switchMap } from "rxjs"
 import type { AudioTrack } from "../types"
 
+type CachedTrackSource = {
+  url: string
+  release?: () => void
+}
+
 export class ResourcesResolver {
-  public readonly cachedObjectUrlByTrackId = new Map<string, string>()
+  public readonly cachedSourceByTrackId = new Map<string, CachedTrackSource>()
 
   public getTrackResourceUrl$ = (
     track: AudioTrack,
-    resource:
-      | URL
-      | Response
-      | {
-          custom: true
-          data: unknown
-        },
+    resourcesHandler: Pick<ResourceHandler, "getResource">,
   ) => {
-    if (resource instanceof URL) {
-      return of(resource.href)
+    const cachedSource = this.cachedSourceByTrackId.get(track.id)
+
+    if (cachedSource) {
+      return of(cachedSource.url)
     }
 
-    if (resource instanceof Response) {
-      return this.getTrackResourceUrlFromResponse$({
-        trackId: track.id,
-        resource,
-      })
-    }
+    const resource$ = defer(() =>
+      from(Promise.resolve(resourcesHandler.getResource())),
+    )
 
-    return of(track.href)
-  }
+    return resource$.pipe(
+      switchMap((resource) => {
+        if (resource instanceof URL) {
+          this.cachedSourceByTrackId.set(track.id, {
+            url: resource.href,
+          })
 
-  private getTrackResourceUrlFromResponse$({
-    trackId,
-    resource,
-  }: {
-    trackId: string
-    resource: Response
-  }) {
-    const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(trackId)
+          return of(resource.href)
+        }
 
-    if (cachedObjectUrl) {
-      return of(cachedObjectUrl)
-    }
+        if (resource instanceof Response) {
+          return from(resource.blob()).pipe(
+            map((blob) => {
+              const objectUrl = URL.createObjectURL(blob)
 
-    return from(resource.blob()).pipe(
-      map((blob) => {
-        const objectUrl = URL.createObjectURL(blob)
+              this.cachedSourceByTrackId.set(track.id, {
+                url: objectUrl,
+                release: () => {
+                  URL.revokeObjectURL(objectUrl)
+                },
+              })
 
-        this.cachedObjectUrlByTrackId.set(trackId, objectUrl)
+              return objectUrl
+            }),
+          )
+        }
 
-        return objectUrl
+        this.cachedSourceByTrackId.set(track.id, {
+          url: track.href,
+        })
+
+        return of(track.href)
       }),
     )
+  }
+
+  public releaseTrackSource(trackId: string) {
+    const cachedSource = this.cachedSourceByTrackId.get(trackId)
+
+    if (!cachedSource) return
+
+    this.cachedSourceByTrackId.delete(trackId)
+    cachedSource.release?.()
+  }
+
+  public destroy() {
+    for (const trackId of this.cachedSourceByTrackId.keys()) {
+      this.releaseTrackSource(trackId)
+    }
   }
 }
