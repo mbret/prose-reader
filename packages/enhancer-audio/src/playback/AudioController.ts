@@ -15,7 +15,7 @@ import {
   fromEvent,
   map,
   merge,
-  Observable,
+  type Observable,
   of,
   retry,
   Subject,
@@ -673,6 +673,39 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
   }
 
+  private resolveResponseTrackSource$({
+    trackId,
+    resource,
+    version,
+  }: {
+    trackId: string
+    resource: Response
+    version: number
+  }) {
+    const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(trackId)
+
+    if (cachedObjectUrl) {
+      return of(cachedObjectUrl)
+    }
+
+    return defer(() => from(resource.blob())).pipe(
+      filter(() => this.isTrackSourceRequestActive(trackId, version)),
+      map((blob) => URL.createObjectURL(blob)),
+      switchMap((objectUrl) => {
+        if (!this.isTrackSourceRequestActive(trackId, version)) {
+          URL.revokeObjectURL(objectUrl)
+          return EMPTY
+        }
+
+        return of(objectUrl).pipe(
+          tap((nextObjectUrl) => {
+            this.cachedObjectUrlByTrackId.set(trackId, nextObjectUrl)
+          }),
+        )
+      }),
+    )
+  }
+
   private resolveTrackSource(track: AudioTrack) {
     const cachedSource = this.sourceByTrackId.get(track.id)
 
@@ -689,111 +722,36 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     const version = this.getNextTrackSourceVersion(track.id)
     let source$: Observable<string>
 
-    source$ = new Observable<string>((subscriber) => {
-      let isCancelled = false
-
-      const emitTrackSource = (source: string) => {
-        if (
-          isCancelled ||
-          subscriber.closed ||
-          !this.isTrackSourceRequestActive(track.id, version)
-        ) {
-          return
+    source$ = defer(() =>
+      from(Promise.resolve(this.reader.spineItemsManager.get(track.index))),
+    ).pipe(
+      filter(isDefined),
+      filter(() => this.isTrackSourceRequestActive(track.id, version)),
+      switchMap((spineItem) =>
+        defer(() =>
+          from(Promise.resolve(spineItem.resourcesHandler.getResource())),
+        ),
+      ),
+      filter(() => this.isTrackSourceRequestActive(track.id, version)),
+      switchMap((resource: TrackResource) => {
+        if (resource instanceof URL) {
+          return of(resource.href)
         }
 
+        if (resource instanceof Response) {
+          return this.resolveResponseTrackSource$({
+            trackId: track.id,
+            resource,
+            version,
+          })
+        }
+
+        return of(track.href)
+      }),
+      filter(() => this.isTrackSourceRequestActive(track.id, version)),
+      tap((source) => {
         this.sourceByTrackId.set(track.id, source)
-        subscriber.next(source)
-        subscriber.complete()
-      }
-
-      const completeIfInactive = () => {
-        if (
-          !isCancelled &&
-          !subscriber.closed &&
-          this.isTrackSourceRequestActive(track.id, version)
-        ) {
-          subscriber.complete()
-        }
-      }
-
-      const resolveResponseSource = async (resource: Response) => {
-        const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(track.id)
-
-        if (cachedObjectUrl) {
-          emitTrackSource(cachedObjectUrl)
-          return
-        }
-
-        const blob = await resource.blob()
-
-        if (
-          !this.isTrackSourceRequestActive(track.id, version) ||
-          isCancelled
-        ) {
-          completeIfInactive()
-          return
-        }
-
-        const objectUrl = URL.createObjectURL(blob)
-
-        if (
-          !this.isTrackSourceRequestActive(track.id, version) ||
-          isCancelled
-        ) {
-          URL.revokeObjectURL(objectUrl)
-          completeIfInactive()
-          return
-        }
-
-        this.cachedObjectUrlByTrackId.set(track.id, objectUrl)
-        emitTrackSource(objectUrl)
-      }
-
-      void Promise.resolve(this.reader.spineItemsManager.get(track.index))
-        .then((spineItem) => {
-          if (
-            !spineItem ||
-            isCancelled ||
-            !this.isTrackSourceRequestActive(track.id, version)
-          ) {
-            completeIfInactive()
-            return
-          }
-
-          return Promise.resolve(spineItem.resourcesHandler.getResource()).then(
-            (resource: TrackResource) => {
-              if (
-                isCancelled ||
-                !this.isTrackSourceRequestActive(track.id, version)
-              ) {
-                completeIfInactive()
-                return
-              }
-
-              if (resource instanceof URL) {
-                emitTrackSource(resource.href)
-                return
-              }
-
-              if (resource instanceof Response) {
-                return resolveResponseSource(resource)
-              }
-
-              emitTrackSource(track.href)
-              return
-            },
-          )
-        })
-        .catch((error) => {
-          if (!isCancelled && !subscriber.closed) {
-            subscriber.error(error)
-          }
-        })
-
-      return () => {
-        isCancelled = true
-      }
-    }).pipe(
+      }),
       finalize(() => {
         if (this.pendingSourceByTrackId.get(track.id) === source$) {
           this.pendingSourceByTrackId.delete(track.id)

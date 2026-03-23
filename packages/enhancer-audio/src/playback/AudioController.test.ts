@@ -278,6 +278,64 @@ describe(`AudioController`, () => {
     expect(controller.state.duration).toBe(42.5)
   })
 
+  it(`does not create or cache a blob url for a source that was cancelled upstream`, async () => {
+    const deferredTrack1Source = createDeferred<Response>()
+    const { reader } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: `track-1`,
+          index: 0,
+        }),
+        createManifestSpineItem({
+          id: `track-2`,
+          index: 1,
+        }),
+      ],
+      spineItemResources: new Map<number, (() => unknown) | undefined>([
+        [0, () => deferredTrack1Source.promise],
+      ]),
+    })
+    const controller = new AudioController(reader)
+    const audioElement = getAudioElement(controller)
+    const createObjectUrl = vi.spyOn(URL, `createObjectURL`)
+    const sourceByTrackId = Reflect.get(controller, `sourceByTrackId`) as Map<
+      string,
+      string
+    >
+
+    controller.select(`track-1`, {
+      navigate: false,
+      play: true,
+    })
+
+    await flush()
+
+    controller.select(`track-2`, {
+      navigate: false,
+      play: true,
+    })
+
+    await flush()
+    await flush()
+
+    expect(audioElement.getAttribute(`src`)).toBe(
+      `https://example.com/track-2.mp3`,
+    )
+
+    deferredTrack1Source.resolve(
+      new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
+    )
+
+    await flush()
+    await flush()
+
+    expect(audioElement.getAttribute(`src`)).toBe(
+      `https://example.com/track-2.mp3`,
+    )
+    expect(createObjectUrl).not.toHaveBeenCalled()
+    expect(sourceByTrackId.has(`track-1`)).toBe(false)
+  })
+
   /**
    * Regression test for the auto-advance race reported in review:
    * if page navigation updates pagination synchronously after `ended`,
