@@ -1,5 +1,6 @@
 import type { Reader, ResourceHandler } from "@prose-reader/core"
 import { ReactiveEntity } from "@prose-reader/core"
+import { arrayEqual } from "@prose-reader/shared"
 import { isDefined } from "reactjrx"
 import {
   catchError,
@@ -77,32 +78,13 @@ const initialState: AudioEnhancerState = {
   isPlaying: false,
   isLoading: false,
   currentTime: 0,
-  duration: 0,
-}
-
-const areTrackIdsEqual = (previous: string[], next: string[]) => {
-  return (
-    previous.length === next.length &&
-    previous.every((trackId, index) => trackId === next[index])
-  )
+  duration: undefined,
 }
 
 const getPlaybackDuration = (audioElement: HTMLAudioElement) => {
-  if (Number.isFinite(audioElement.duration) && audioElement.duration > 0) {
-    return audioElement.duration
-  }
-
-  const seekableRangeCount = audioElement.seekable.length
-
-  if (seekableRangeCount > 0) {
-    const seekableDuration = audioElement.seekable.end(seekableRangeCount - 1)
-
-    if (Number.isFinite(seekableDuration) && seekableDuration > 0) {
-      return seekableDuration
-    }
-  }
-
-  return 0
+  return Number.isFinite(audioElement.duration)
+    ? audioElement.duration
+    : undefined
 }
 
 const getTrackSync = ({
@@ -280,7 +262,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           currentTrack: undefined,
         }).visibleTracks.map(({ id }) => id),
       ),
-      distinctUntilChanged(areTrackIdsEqual),
+      distinctUntilChanged(arrayEqual),
       shareReplay({
         bufferSize: 1,
         refCount: true,
@@ -509,7 +491,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               isLoading: false,
               isPlaying: false,
               currentTime: 0,
-              duration: 0,
+              duration: undefined,
             })
             this.visualizer$.reset(undefined)
           }),
@@ -535,7 +517,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
               isLoading: currentTrack ? this.state.isLoading : false,
               isPlaying: currentTrack ? this.state.isPlaying : false,
               currentTime: currentTrack ? this.state.currentTime : 0,
-              duration: currentTrack ? this.state.duration : 0,
+              duration: currentTrack ? this.state.duration : undefined,
             })
             this.visualizer$.reset(currentTrack?.id)
           }),
@@ -612,7 +594,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       isLoading,
       isPlaying,
       currentTime: 0,
-      duration: 0,
+      duration: undefined,
     })
     this.visualizer$.reset(currentTrack?.id)
   }

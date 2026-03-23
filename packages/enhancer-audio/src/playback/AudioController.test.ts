@@ -232,6 +232,52 @@ describe(`AudioController`, () => {
     expect(audioElement.getAttribute(`src`)).toBe(null)
   })
 
+  it(`mirrors native duration semantics for unknown and finite values`, async () => {
+    const { reader } = createReader()
+    const controller = new AudioController(reader)
+    const audioElement = getAudioElement(controller)
+
+    Object.defineProperty(audioElement, `duration`, {
+      configurable: true,
+      get: () => Number.NaN,
+    })
+
+    audioElement.dispatchEvent(new Event(`durationchange`))
+    await flush()
+
+    expect(controller.state.duration).toBeUndefined()
+
+    Object.defineProperty(audioElement, `duration`, {
+      configurable: true,
+      get: () => Number.POSITIVE_INFINITY,
+    })
+
+    audioElement.dispatchEvent(new Event(`durationchange`))
+    await flush()
+
+    expect(controller.state.duration).toBeUndefined()
+
+    Object.defineProperty(audioElement, `duration`, {
+      configurable: true,
+      get: () => 0,
+    })
+
+    audioElement.dispatchEvent(new Event(`durationchange`))
+    await flush()
+
+    expect(controller.state.duration).toBe(0)
+
+    Object.defineProperty(audioElement, `duration`, {
+      configurable: true,
+      get: () => 42.5,
+    })
+
+    audioElement.dispatchEvent(new Event(`durationchange`))
+    await flush()
+
+    expect(controller.state.duration).toBe(42.5)
+  })
+
   /**
    * Regression test for the auto-advance race reported in review:
    * if page navigation updates pagination synchronously after `ended`,
