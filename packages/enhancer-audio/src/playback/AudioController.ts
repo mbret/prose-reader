@@ -1,4 +1,4 @@
-import type { Reader, ResourceHandler } from "@prose-reader/core"
+import type { Reader } from "@prose-reader/core"
 import { ReactiveEntity } from "@prose-reader/core"
 import { arrayEqual } from "@prose-reader/shared"
 import { isDefined } from "reactjrx"
@@ -35,8 +35,7 @@ import type {
 } from "../types"
 import { isAudioSpineItem } from "../utils"
 import { AudioVisualizer } from "../visualizer"
-
-type TrackResource = Awaited<ReturnType<ResourceHandler["getResource"]>>
+import { ResourcesResolver } from "./ResourcesResolver"
 
 type SelectCommand = {
   trackId: string
@@ -137,6 +136,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly reader: Reader
   private readonly audioElement = document.createElement(`audio`)
   readonly visualizer$: AudioVisualizer
+  readonly resourcesResolver = new ResourcesResolver()
   readonly visibleTrackIds$: Observable<string[]>
 
   private readonly commandSubject = new Subject<ControllerCommand>()
@@ -153,7 +153,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     string,
     Observable<string>
   >()
-  private readonly cachedObjectUrlByTrackId = new Map<string, string>()
   private readonly sourceRequestVersionByTrackId = new Map<string, number>()
 
   constructor(reader: Reader) {
@@ -673,30 +672,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
   }
 
-  private getTrackResourceUrlFromResponse$({
-    trackId,
-    resource,
-  }: {
-    trackId: string
-    resource: Response
-  }) {
-    const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(trackId)
-
-    if (cachedObjectUrl) {
-      return of(cachedObjectUrl)
-    }
-
-    return from(resource.blob()).pipe(
-      map((blob) => {
-        const objectUrl = URL.createObjectURL(blob)
-
-        this.cachedObjectUrlByTrackId.set(trackId, objectUrl)
-
-        return objectUrl
-      }),
-    )
-  }
-
   private resolveTrackSource(track: AudioTrack) {
     const cachedSource = this.sourceByTrackId.get(track.id)
 
@@ -724,20 +699,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         ),
       ),
       filter(() => this.isTrackSourceRequestActive(track.id, version)),
-      switchMap((resource: TrackResource) => {
-        if (resource instanceof URL) {
-          return of(resource.href)
-        }
-
-        if (resource instanceof Response) {
-          return this.getTrackResourceUrlFromResponse$({
-            trackId: track.id,
-            resource,
-          })
-        }
-
-        return of(track.href)
-      }),
+      switchMap((resource) =>
+        this.resourcesResolver.getTrackResourceUrl$(track, resource),
+      ),
       filter(() => this.isTrackSourceRequestActive(track.id, version)),
       tap((source) => {
         this.sourceByTrackId.set(track.id, source)
@@ -763,11 +727,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.sourceByTrackId.delete(trackId)
     this.pendingSourceByTrackId.delete(trackId)
 
-    const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(trackId)
+    const cachedObjectUrl =
+      this.resourcesResolver.cachedObjectUrlByTrackId.get(trackId)
 
     if (!cachedObjectUrl) return
 
-    this.cachedObjectUrlByTrackId.delete(trackId)
+    this.resourcesResolver.cachedObjectUrlByTrackId.delete(trackId)
     URL.revokeObjectURL(cachedObjectUrl)
   }
 
@@ -910,7 +875,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     const trackIds = new Set([
       ...this.sourceByTrackId.keys(),
       ...this.pendingSourceByTrackId.keys(),
-      ...this.cachedObjectUrlByTrackId.keys(),
+      ...this.resourcesResolver.cachedObjectUrlByTrackId.keys(),
       ...this.sourceRequestVersionByTrackId.keys(),
     ])
 
