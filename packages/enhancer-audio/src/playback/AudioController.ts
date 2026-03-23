@@ -673,14 +673,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
   }
 
-  private resolveResponseTrackSource$({
+  private getTrackResourceUrlFromResponse$({
     trackId,
     resource,
-    version,
   }: {
     trackId: string
     resource: Response
-    version: number
   }) {
     const cachedObjectUrl = this.cachedObjectUrlByTrackId.get(trackId)
 
@@ -688,20 +686,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       return of(cachedObjectUrl)
     }
 
-    return defer(() => from(resource.blob())).pipe(
-      filter(() => this.isTrackSourceRequestActive(trackId, version)),
-      map((blob) => URL.createObjectURL(blob)),
-      switchMap((objectUrl) => {
-        if (!this.isTrackSourceRequestActive(trackId, version)) {
-          URL.revokeObjectURL(objectUrl)
-          return EMPTY
-        }
+    return from(resource.blob()).pipe(
+      map((blob) => {
+        const objectUrl = URL.createObjectURL(blob)
 
-        return of(objectUrl).pipe(
-          tap((nextObjectUrl) => {
-            this.cachedObjectUrlByTrackId.set(trackId, nextObjectUrl)
-          }),
-        )
+        this.cachedObjectUrlByTrackId.set(trackId, objectUrl)
+
+        return objectUrl
       }),
     )
   }
@@ -739,10 +730,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         }
 
         if (resource instanceof Response) {
-          return this.resolveResponseTrackSource$({
+          return this.getTrackResourceUrlFromResponse$({
             trackId: track.id,
             resource,
-            version,
           })
         }
 
