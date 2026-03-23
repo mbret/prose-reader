@@ -65,13 +65,6 @@ type MountedSource = {
   source: string
 }
 
-type TrackSync = {
-  tracks: AudioTrack[]
-  currentTrack: AudioTrack | undefined
-  removedTrackIds: string[]
-  shouldResetPlayback: boolean
-}
-
 const initialState: AudioEnhancerState = {
   tracks: [],
   currentTrack: undefined,
@@ -79,36 +72,6 @@ const initialState: AudioEnhancerState = {
   isLoading: false,
   currentTime: 0,
   duration: undefined,
-}
-
-const getPlaybackDuration = (audioElement: HTMLAudioElement) => {
-  return Number.isFinite(audioElement.duration)
-    ? audioElement.duration
-    : undefined
-}
-
-const getTrackSync = ({
-  state,
-  tracks,
-}: {
-  state: AudioEnhancerState
-  tracks: AudioTrack[]
-}): TrackSync => {
-  const nextTrackIds = new Set(tracks.map(({ id }) => id))
-  const removedTrackIds = state.tracks
-    .filter(({ id }) => !nextTrackIds.has(id))
-    .map(({ id }) => id)
-  const currentTrack =
-    state.currentTrack && tracks.find(({ id }) => id === state.currentTrack?.id)
-  const shouldResetPlayback =
-    state.currentTrack !== undefined && currentTrack === undefined
-
-  return {
-    tracks,
-    currentTrack,
-    removedTrackIds,
-    shouldResetPlayback,
-  }
 }
 
 const getTrackAtSpineItemIndex = ({
@@ -288,19 +251,33 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     ).pipe(
       map(() => ({
         currentTime: this.audioElement.currentTime,
-        duration: getPlaybackDuration(this.audioElement),
+        duration: Number.isFinite(this.audioElement.duration)
+          ? this.audioElement.duration
+          : undefined,
       })),
       share(),
     )
 
     const trackSync$ = tracks$.pipe(
       withLatestFrom(this.state$),
-      map(([tracks, state]) =>
-        getTrackSync({
-          state,
+      map(([tracks, state]) => {
+        const nextTrackIds = new Set(tracks.map(({ id }) => id))
+        const removedTrackIds = state.tracks
+          .filter(({ id }) => !nextTrackIds.has(id))
+          .map(({ id }) => id)
+        const currentTrack =
+          state.currentTrack &&
+          tracks.find(({ id }) => id === state.currentTrack?.id)
+        const shouldResetPlayback =
+          state.currentTrack !== undefined && currentTrack === undefined
+
+        return {
           tracks,
-        }),
-      ),
+          currentTrack,
+          removedTrackIds,
+          shouldResetPlayback,
+        }
+      }),
       shareReplay({
         bufferSize: 1,
         refCount: true,
