@@ -146,14 +146,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private desiredPlaybackTrackId: string | undefined
   private shouldPlay = false
   private playbackContinuationTrackId: string | undefined
-  private isDestroyed = false
 
   private readonly sourceByTrackId = new Map<string, string>()
   private readonly pendingSourceByTrackId = new Map<
     string,
     Observable<string>
   >()
-  private readonly sourceRequestVersionByTrackId = new Map<string, number>()
 
   constructor(reader: Reader) {
     super(initialState)
@@ -656,22 +654,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
   }
 
-  private getNextTrackSourceVersion(trackId: string) {
-    const nextVersion =
-      (this.sourceRequestVersionByTrackId.get(trackId) ?? 0) + 1
-
-    this.sourceRequestVersionByTrackId.set(trackId, nextVersion)
-
-    return nextVersion
-  }
-
-  private isTrackSourceRequestActive(trackId: string, version: number) {
-    return (
-      !this.isDestroyed &&
-      this.sourceRequestVersionByTrackId.get(trackId) === version
-    )
-  }
-
   private resolveTrackSource(track: AudioTrack) {
     const cachedSource = this.sourceByTrackId.get(track.id)
 
@@ -685,24 +667,20 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       return pendingSource
     }
 
-    const version = this.getNextTrackSourceVersion(track.id)
     let source$: Observable<string>
 
     source$ = defer(() =>
       from(Promise.resolve(this.reader.spineItemsManager.get(track.index))),
     ).pipe(
       filter(isDefined),
-      filter(() => this.isTrackSourceRequestActive(track.id, version)),
       switchMap((spineItem) =>
         defer(() =>
           from(Promise.resolve(spineItem.resourcesHandler.getResource())),
         ),
       ),
-      filter(() => this.isTrackSourceRequestActive(track.id, version)),
       switchMap((resource) =>
         this.resourcesResolver.getTrackResourceUrl$(track, resource),
       ),
-      filter(() => this.isTrackSourceRequestActive(track.id, version)),
       tap((source) => {
         this.sourceByTrackId.set(track.id, source)
       }),
@@ -723,7 +701,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private releaseTrackSource(trackId: string) {
-    this.getNextTrackSourceVersion(trackId)
     this.sourceByTrackId.delete(trackId)
     this.pendingSourceByTrackId.delete(trackId)
 
@@ -865,7 +842,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   destroy() {
-    this.isDestroyed = true
     this.subscriptions.unsubscribe()
     this.commandSubject.complete()
     this.visualizer$.destroy()
@@ -876,7 +852,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ...this.sourceByTrackId.keys(),
       ...this.pendingSourceByTrackId.keys(),
       ...this.resourcesResolver.cachedObjectUrlByTrackId.keys(),
-      ...this.sourceRequestVersionByTrackId.keys(),
     ])
 
     for (const trackId of trackIds) {
