@@ -52,10 +52,10 @@ const getAudioElement = (controller: AudioController) =>
 
 const createReader = ({
   spineItems = [],
-  spineItemResources = new Map<number, (() => unknown) | undefined>(),
+  spineItemResources = new Map<number, (() => Promise<unknown>) | undefined>(),
 }: {
   spineItems?: Array<ReturnType<typeof createManifestSpineItem>>
-  spineItemResources?: Map<number, (() => unknown) | undefined>
+  spineItemResources?: Map<number, (() => Promise<unknown>) | undefined>
 } = {}) => {
   const manifest$ = new BehaviorSubject({
     spineItems,
@@ -70,7 +70,7 @@ const createReader = ({
 
   for (const spineItem of spineItems) {
     if (!spineItemResources.has(spineItem.index)) {
-      spineItemResources.set(spineItem.index, () =>
+      spineItemResources.set(spineItem.index, async () =>
         createUrlResource(spineItem.href),
       )
     }
@@ -137,9 +137,9 @@ describe(`AudioController`, () => {
           index: track.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
-        [track.index, () => deferredSource.promise],
-      ]),
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[track.index, () => deferredSource.promise]],
+      ),
     })
     const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
@@ -168,9 +168,9 @@ describe(`AudioController`, () => {
     const deferredSource = createDeferred<URL>()
     const { reader, manifest$ } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
-        [0, () => deferredSource.promise],
-      ]),
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[0, () => deferredSource.promise]],
+      ),
     })
     const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
@@ -211,9 +211,9 @@ describe(`AudioController`, () => {
   it(`clears loading state when track source resolution completes without a source`, async () => {
     const { reader } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
-        [0, undefined],
-      ]),
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[0, undefined]],
+      ),
     })
     const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
@@ -291,9 +291,9 @@ describe(`AudioController`, () => {
           index: 1,
         }),
       ],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
-        [0, () => deferredTrack1Source.promise],
-      ]),
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[0, () => deferredTrack1Source.promise]],
+      ),
     })
     const controller = new AudioController(reader)
     const audioElement = getAudioElement(controller)
@@ -619,16 +619,20 @@ describe(`AudioController`, () => {
           index: track2.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
         [
-          track1.index,
-          () => new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
+          [
+            track1.index,
+            async () =>
+              new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
+          ],
+          [
+            track2.index,
+            async () =>
+              new Response(new Blob([`audio-2`], { type: `audio/mpeg` })),
+          ],
         ],
-        [
-          track2.index,
-          () => new Response(new Blob([`audio-2`], { type: `audio/mpeg` })),
-        ],
-      ]),
+      ),
     })
     const controller = new AudioController(reader)
 
@@ -696,17 +700,21 @@ describe(`AudioController`, () => {
           index: track3.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => unknown) | undefined>([
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
         [
-          track1.index,
-          () => new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
+          [
+            track1.index,
+            async () =>
+              new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
+          ],
+          [track2.index, () => deferredTrack2Source.promise],
+          [
+            track3.index,
+            async () =>
+              new Response(new Blob([`audio-3`], { type: `audio/mpeg` })),
+          ],
         ],
-        [track2.index, () => deferredTrack2Source.promise],
-        [
-          track3.index,
-          () => new Response(new Blob([`audio-3`], { type: `audio/mpeg` })),
-        ],
-      ]),
+      ),
     })
     const controller = new AudioController(reader)
 

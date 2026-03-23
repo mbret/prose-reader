@@ -1,5 +1,5 @@
 import type { ResourceHandler } from "@prose-reader/core"
-import { defer, from, map, of, switchMap } from "rxjs"
+import { from, map, of, switchMap } from "rxjs"
 import type { AudioTrack } from "../types"
 
 type CachedTrackSource = {
@@ -20,9 +20,7 @@ export class ResourcesResolver {
       return of(cachedSource.url)
     }
 
-    const resource$ = defer(() =>
-      from(Promise.resolve(resourcesHandler.getResource())),
-    )
+    const resource$ = from(resourcesHandler.getResource())
 
     return resource$.pipe(
       switchMap((resource) => {
