@@ -102,14 +102,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const visibleTrackSelectionIntent$ = firstVisibleTrackId$.pipe(
+      filter((trackId): trackId is string => trackId !== undefined),
       withLatestFrom(this.state$),
       map(([trackId, state]) => {
-        const shouldContinuePlayback = {
-          trackId,
-          shouldContinuePlayback:
-            this.playbackContinuationTrackId === trackId &&
-            trackId !== state.currentTrack?.id,
-        }
+        const shouldContinuePlayback =
+          this.playbackContinuationTrackId === trackId &&
+          trackId !== state.currentTrack?.id
 
         if (shouldContinuePlayback) {
           this.playbackContinuationTrackId = undefined
@@ -125,7 +123,35 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
-    const playbackReset$ = merge(visibleTrackReset$, tracks$).pipe(share())
+    const tracksChanged$ = tracks$.pipe(
+      tap(() => this.resourcesResolver.releaseAll()),
+    )
+
+    const playbackReset$ = merge(visibleTrackReset$, tracksChanged$).pipe(
+      tap((tracks) => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+        this.visualizer$.stop({ resetLevels: true })
+
+        const previousTrackId = this.mountedSource?.trackId
+
+        this.unmountCurrentSource()
+
+        if (previousTrackId) {
+          this.releaseTrackSource(previousTrackId)
+        }
+
+        this.mergeCompare({
+          tracks,
+          currentTrack: undefined,
+          isLoading: false,
+          isPlaying: false,
+          currentTime: 0,
+          duration: undefined,
+        })
+        this.visualizer$.reset(undefined)
+      }),
+      share(),
+    )
 
     const playSelectionIntent$ = this.playCommandSubject.pipe(
       filter(() => !this.hasSource),
@@ -234,31 +260,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       switchMap(() => this.playAudio$()),
     )
 
-    this.subscriptions.add(
-      playbackReset$.subscribe((tracks) => {
-        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-        this.visualizer$.stop({ resetLevels: true })
-
-        const previousTrackId = this.mountedSource?.trackId
-
-        this.unmountCurrentSource()
-
-        if (previousTrackId) {
-          this.releaseTrackSource(previousTrackId)
-        }
-
-        this.mergeCompare({
-          tracks,
-          currentTrack: undefined,
-          isLoading: false,
-          isPlaying: false,
-          currentTime: 0,
-          duration: undefined,
-        })
-        this.visualizer$.reset(undefined)
-      }),
-    )
-
     this.subscriptions.add(playbackInterrupted$.subscribe())
     this.subscriptions.add(playback$.subscribe())
 
@@ -267,12 +268,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
       }),
     )
-
-    const releaseAllSourcesOnTracksChange$ = tracks$.pipe(
-      map(() => this.resourcesResolver.releaseAll()),
-    )
-
-    this.subscriptions.add(releaseAllSourcesOnTracksChange$.subscribe())
 
     this.subscriptions.add(
       this.audio.isPlaying$.subscribe((isPlaying) => {
