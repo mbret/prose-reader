@@ -251,7 +251,15 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       playbackReset$.subscribe((tracks) => {
         this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
         this.visualizer$.stop({ resetLevels: true })
-        this.applyMountedSource(undefined)
+
+        const previousTrackId = this.mountedSource?.trackId
+
+        this.unmountCurrentSource()
+
+        if (previousTrackId) {
+          this.releaseTrackSource(previousTrackId)
+        }
+
         this.mergeCompare({
           tracks,
           currentTrack: undefined,
@@ -273,11 +281,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
-    this.subscriptions.add(
-      tracks$.subscribe(() => {
-        this.resourcesResolver.releaseAll()
-      }),
+    const releaseAllSourcesOnTracksChange$ = tracks$.pipe(
+      map(() => this.resourcesResolver.releaseAll()),
     )
+
+    this.subscriptions.add(releaseAllSourcesOnTracksChange$.subscribe())
 
     this.subscriptions.add(
       this.audio.isPlaying$.subscribe((isPlaying) => {
@@ -345,36 +353,21 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     }
   }
 
-  private applyMountedSource(nextMountedSource: MountedSource | undefined) {
-    const previousMountedSource = this.mountedSource
+  private unmountCurrentSource() {
+    if (!this.mountedSource) return
 
-    if (
-      previousMountedSource?.trackId === nextMountedSource?.trackId &&
-      previousMountedSource?.source === nextMountedSource?.source
-    ) {
-      return
+    if (this.shouldPlay) {
+      this.audio.pause()
     }
 
-    this.mountedSource = nextMountedSource
+    this.audio.unloadSource()
+    this.mountedSource = undefined
+  }
 
-    if (previousMountedSource) {
-      if (this.shouldPlay) {
-        this.audio.pause()
-      }
-
-      this.audio.unloadSource()
-    }
-
-    if (nextMountedSource) {
-      this.audio.loadSource(nextMountedSource.source)
-    }
-
-    if (
-      previousMountedSource &&
-      previousMountedSource.trackId !== nextMountedSource?.trackId
-    ) {
-      this.releaseTrackSource(previousMountedSource.trackId)
-    }
+  private mountSource(nextSource: MountedSource) {
+    this.unmountCurrentSource()
+    this.mountedSource = nextSource
+    this.audio.loadSource(nextSource.source)
   }
 
   private playAudio$() {
@@ -439,11 +432,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       catchError(() => of({ source: undefined })),
       takeUntil(playbackReset$),
       tap(({ source }) => {
+        const previousTrackId = this.mountedSource?.trackId
+
         if (!source) {
           this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-          this.applyMountedSource(undefined)
+          this.unmountCurrentSource()
         } else {
-          this.applyMountedSource({ trackId: track.id, source })
+          this.mountSource({ trackId: track.id, source })
+        }
+
+        if (previousTrackId && previousTrackId !== track.id) {
+          this.releaseTrackSource(previousTrackId)
         }
 
         this.mergeCompare({ isLoading: false })
@@ -486,7 +485,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.selectCommandSubject.complete()
     this.visualizer$.destroy()
     this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-    this.applyMountedSource(undefined)
+    this.unmountCurrentSource()
     this.resourcesResolver.destroy()
 
     super.destroy()
