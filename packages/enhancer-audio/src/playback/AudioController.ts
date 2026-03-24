@@ -450,11 +450,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           this.applyMountedSource({ trackId: track.id, source })
         }
 
-        this.resetTrackSelection({
-          currentTrack: track,
-          isLoading: false,
-          isPlaying: false,
-        })
+        this.mergeCompare({ isLoading: false })
       }),
       filter(({ source }) => source !== undefined),
       map(() => undefined),
