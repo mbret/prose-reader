@@ -15,8 +15,8 @@ describe("normalizeFilenameAsTitle", () => {
 })
 
 describe("buildAudiobookToc", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: test helper
   const fakeContent = {
+    // biome-ignore lint/suspicious/noExplicitAny: test helper
     blob: () => Promise.resolve({} as any),
     string: () => Promise.resolve(""),
   }
@@ -125,8 +125,8 @@ describe("buildAudiobookToc", () => {
 })
 
 describe("tocHook with audiobook", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: test helper
   const fakeContent = {
+    // biome-ignore lint/suspicious/noExplicitAny: test helper
     blob: () => Promise.resolve({} as any),
     string: () => Promise.resolve(""),
   }
