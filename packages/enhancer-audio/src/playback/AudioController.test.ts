@@ -1,9 +1,12 @@
 /* @vitest-environment happy-dom */
 
+import type { PaginationInfo, ResourceHandler } from "@prose-reader/core"
+import type { Manifest } from "@prose-reader/shared"
 import { BehaviorSubject } from "rxjs"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { AudioTrack } from "../types"
 import { AudioController } from "./AudioController"
+import { AudioElementAdapter } from "./AudioElementAdapter"
 
 const flush = async () => {
   await Promise.resolve()
@@ -44,29 +47,65 @@ const createManifestSpineItem = ({
   mediaType: `audio/mpeg`,
 })
 
+const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
+  filename: ``,
+  title: ``,
+  renditionLayout: undefined,
+  renditionSpread: undefined,
+  readingDirection: `ltr`,
+  spineItems,
+  items: [],
+})
+
+const createPaginationState = ({
+  beginSpineItemIndex,
+  endSpineItemIndex,
+}: Pick<
+  PaginationInfo,
+  "beginSpineItemIndex" | "endSpineItemIndex"
+>): PaginationInfo => ({
+  beginPageIndexInSpineItem: undefined,
+  beginNumberOfPagesInSpineItem: 0,
+  beginCfi: undefined,
+  beginSpineItemIndex,
+  endPageIndexInSpineItem: undefined,
+  endNumberOfPagesInSpineItem: 0,
+  endCfi: undefined,
+  endSpineItemIndex,
+})
+
 const createUrlResource = (href: string) =>
   new URL(`https://example.com/${href}`)
 
-const getAudioElement = (controller: AudioController) =>
-  (Reflect.get(controller, `audio`) as { element: HTMLAudioElement }).element
+const createAudio = () => {
+  const audio = new AudioElementAdapter()
+  const pauseSpy = vi
+    .spyOn(audio.element, `pause`)
+    .mockImplementation(() => undefined)
+  const loadSpy = vi
+    .spyOn(audio.element, `load`)
+    .mockImplementation(() => undefined)
+
+  return { audio, pauseSpy, loadSpy }
+}
 
 const createReader = ({
   spineItems = [],
-  spineItemResources = new Map<number, (() => Promise<unknown>) | undefined>(),
+  spineItemResources = new Map<
+    number,
+    ResourceHandler["getResource"] | undefined
+  >(),
 }: {
   spineItems?: Array<ReturnType<typeof createManifestSpineItem>>
-  spineItemResources?: Map<number, (() => Promise<unknown>) | undefined>
+  spineItemResources?: Map<number, ResourceHandler["getResource"] | undefined>
 } = {}) => {
-  const manifest$ = new BehaviorSubject({
-    spineItems,
-  })
-  const paginationState$ = new BehaviorSubject<{
-    beginSpineItemIndex: number | undefined
-    endSpineItemIndex: number | undefined
-  }>({
-    beginSpineItemIndex: undefined,
-    endSpineItemIndex: undefined,
-  })
+  const manifest$ = new BehaviorSubject(createManifest(spineItems))
+  const paginationState$ = new BehaviorSubject(
+    createPaginationState({
+      beginSpineItemIndex: undefined,
+      endSpineItemIndex: undefined,
+    }),
+  )
 
   for (const spineItem of spineItems) {
     if (!spineItemResources.has(spineItem.index)) {
@@ -105,25 +144,30 @@ const createReader = ({
   return {
     manifest$,
     paginationState$,
-    // Test double only exposes the reader surface exercised by AudioController.
-    reader: reader as unknown as ConstructorParameters<
-      typeof AudioController
-    >[0],
+    reader,
   }
 }
 
 describe(`AudioController`, () => {
-  beforeEach(() => {
-    vi.spyOn(HTMLMediaElement.prototype, `pause`).mockImplementation(
-      () => undefined,
-    )
-    vi.spyOn(HTMLMediaElement.prototype, `load`).mockImplementation(
-      () => undefined,
-    )
-  })
-
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it(`populates tracks from the initial manifest on construction`, () => {
+    const { reader } = createReader({
+      spineItems: [createManifestSpineItem()],
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+
+    expect(controller.state.tracks).toEqual([
+      {
+        id: `track-1`,
+        href: `track-1.mp3`,
+        index: 0,
+        mediaType: `audio/mpeg`,
+      },
+    ])
   })
 
   it(`does not resume an in-flight source load after destroy`, async () => {
@@ -137,13 +181,13 @@ describe(`AudioController`, () => {
           index: track.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[track.index, () => deferredSource.promise]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[track.index, () => deferredSource.promise]]),
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const loadSpy = vi.spyOn(audioElement, `load`)
+    const { audio, loadSpy } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(track.id, {
       navigate: false,
@@ -154,27 +198,27 @@ describe(`AudioController`, () => {
 
     controller.destroy()
     const loadCallsAfterDestroy = loadSpy.mock.calls.length
-    const sourceAfterDestroy = audioElement.getAttribute(`src`)
+    const sourceAfterDestroy = audio.element.getAttribute(`src`)
 
     deferredSource.resolve(createUrlResource(track.href))
 
     await flush()
 
     expect(loadSpy).toHaveBeenCalledTimes(loadCallsAfterDestroy)
-    expect(audioElement.getAttribute(`src`)).toBe(sourceAfterDestroy)
+    expect(audio.element.getAttribute(`src`)).toBe(sourceAfterDestroy)
   })
 
   it(`resets loading state when manifest updates remove the pending track`, async () => {
     const deferredSource = createDeferred<URL>()
     const { reader, manifest$ } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[0, () => deferredSource.promise]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[0, () => deferredSource.promise]]),
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const loadSpy = vi.spyOn(audioElement, `load`)
+    const { audio, loadSpy } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(`track-1`, {
       navigate: false,
@@ -186,9 +230,7 @@ describe(`AudioController`, () => {
     expect(controller.state.isLoading).toBe(true)
     expect(controller.state.currentTrack?.id).toBe(`track-1`)
 
-    manifest$.next({
-      spineItems: [],
-    })
+    manifest$.next(createManifest([]))
 
     await flush()
 
@@ -196,7 +238,7 @@ describe(`AudioController`, () => {
     expect(controller.state.currentTrack).toBeUndefined()
     expect(controller.state.isLoading).toBe(false)
     expect(controller.state.isPlaying).toBe(false)
-    expect(audioElement.getAttribute(`src`)).toBe(null)
+    expect(audio.element.getAttribute(`src`)).toBe(null)
 
     const loadCallsAfterManifestReset = loadSpy.mock.calls.length
 
@@ -205,18 +247,19 @@ describe(`AudioController`, () => {
     await flush()
 
     expect(loadSpy).toHaveBeenCalledTimes(loadCallsAfterManifestReset)
-    expect(audioElement.getAttribute(`src`)).toBe(null)
+    expect(audio.element.getAttribute(`src`)).toBe(null)
   })
 
   it(`clears loading state when track source resolution completes without a source`, async () => {
     const { reader } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[0, undefined]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[0, undefined]]),
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(`track-1`, {
       navigate: false,
@@ -229,7 +272,7 @@ describe(`AudioController`, () => {
     expect(controller.state.currentTrack?.id).toBe(`track-1`)
     expect(controller.state.isLoading).toBe(false)
     expect(controller.state.isPlaying).toBe(false)
-    expect(audioElement.getAttribute(`src`)).toBe(null)
+    expect(audio.element.getAttribute(`src`)).toBe(null)
   })
 
   it(`does not restart source resolution when play is pressed again for the same loading track`, async () => {
@@ -237,11 +280,13 @@ describe(`AudioController`, () => {
     const getResource = vi.fn(() => deferredSource.promise)
     const { reader } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[0, getResource]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[0, getResource]]),
     })
-    const controller = new AudioController(reader)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(`track-1`, {
       navigate: false,
@@ -275,11 +320,13 @@ describe(`AudioController`, () => {
     const getResource = vi.fn(() => deferredSource.promise)
     const { reader } = createReader({
       spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[0, getResource]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[0, getResource]]),
     })
-    const controller = new AudioController(reader)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(`track-1`, {
       navigate: false,
@@ -312,45 +359,45 @@ describe(`AudioController`, () => {
 
   it(`mirrors native duration semantics for unknown and finite values`, async () => {
     const { reader } = createReader()
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
-    Object.defineProperty(audioElement, `duration`, {
+    Object.defineProperty(audio.element, `duration`, {
       configurable: true,
       get: () => Number.NaN,
     })
 
-    audioElement.dispatchEvent(new Event(`durationchange`))
+    audio.element.dispatchEvent(new Event(`durationchange`))
     await flush()
 
     expect(controller.state.duration).toBeUndefined()
 
-    Object.defineProperty(audioElement, `duration`, {
+    Object.defineProperty(audio.element, `duration`, {
       configurable: true,
       get: () => Number.POSITIVE_INFINITY,
     })
 
-    audioElement.dispatchEvent(new Event(`durationchange`))
+    audio.element.dispatchEvent(new Event(`durationchange`))
     await flush()
 
     expect(controller.state.duration).toBeUndefined()
 
-    Object.defineProperty(audioElement, `duration`, {
+    Object.defineProperty(audio.element, `duration`, {
       configurable: true,
       get: () => 0,
     })
 
-    audioElement.dispatchEvent(new Event(`durationchange`))
+    audio.element.dispatchEvent(new Event(`durationchange`))
     await flush()
 
     expect(controller.state.duration).toBe(0)
 
-    Object.defineProperty(audioElement, `duration`, {
+    Object.defineProperty(audio.element, `duration`, {
       configurable: true,
       get: () => 42.5,
     })
 
-    audioElement.dispatchEvent(new Event(`durationchange`))
+    audio.element.dispatchEvent(new Event(`durationchange`))
     await flush()
 
     expect(controller.state.duration).toBe(42.5)
@@ -369,12 +416,13 @@ describe(`AudioController`, () => {
           index: 1,
         }),
       ],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
-        [[0, () => deferredTrack1Source.promise]],
-      ),
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([[0, () => deferredTrack1Source.promise]]),
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
     const createObjectUrl = vi.spyOn(URL, `createObjectURL`)
 
     controller.select(`track-1`, {
@@ -392,7 +440,7 @@ describe(`AudioController`, () => {
     await flush()
     await flush()
 
-    expect(audioElement.getAttribute(`src`)).toBe(
+    expect(audio.element.getAttribute(`src`)).toBe(
       `https://example.com/track-2.mp3`,
     )
 
@@ -403,7 +451,7 @@ describe(`AudioController`, () => {
     await flush()
     await flush()
 
-    expect(audioElement.getAttribute(`src`)).toBe(
+    expect(audio.element.getAttribute(`src`)).toBe(
       `https://example.com/track-2.mp3`,
     )
     expect(createObjectUrl).not.toHaveBeenCalled()
@@ -433,14 +481,16 @@ describe(`AudioController`, () => {
         }),
       ],
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playSpy = vi.spyOn(audio.element, `play`).mockResolvedValue(undefined)
 
-    paginationState$.next({
-      beginSpineItemIndex: 0,
-      endSpineItemIndex: 0,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
 
     await flush()
 
@@ -448,18 +498,20 @@ describe(`AudioController`, () => {
 
     vi.mocked(reader.navigation.goToRightOrBottomSpineItem).mockImplementation(
       () => {
-        paginationState$.next({
-          beginSpineItemIndex: 1,
-          endSpineItemIndex: 1,
-        })
+        paginationState$.next(
+          createPaginationState({
+            beginSpineItemIndex: 1,
+            endSpineItemIndex: 1,
+          }),
+        )
       },
     )
 
-    audioElement.dispatchEvent(new Event(`ended`))
+    audio.element.dispatchEvent(new Event(`ended`))
 
     await flush()
 
-    audioElement.dispatchEvent(new Event(`canplay`))
+    audio.element.dispatchEvent(new Event(`canplay`))
     await flush()
 
     expect(reader.navigation.goToRightOrBottomSpineItem).toHaveBeenCalledTimes(
@@ -486,24 +538,26 @@ describe(`AudioController`, () => {
         }),
       ],
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playSpy = vi.spyOn(audio.element, `play`).mockResolvedValue(undefined)
 
-    paginationState$.next({
-      beginSpineItemIndex: 0,
-      endSpineItemIndex: 1,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 1,
+      }),
+    )
 
     await flush()
 
     expect(controller.state.currentTrack?.id).toBe(`track-1`)
 
-    audioElement.dispatchEvent(new Event(`ended`))
+    audio.element.dispatchEvent(new Event(`ended`))
 
     await flush()
 
-    audioElement.dispatchEvent(new Event(`canplay`))
+    audio.element.dispatchEvent(new Event(`canplay`))
     await flush()
 
     expect(reader.navigation.goToRightOrBottomSpineItem).not.toHaveBeenCalled()
@@ -524,31 +578,35 @@ describe(`AudioController`, () => {
         }),
       ],
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playSpy = vi.spyOn(audio.element, `play`).mockResolvedValue(undefined)
 
-    paginationState$.next({
-      beginSpineItemIndex: 1,
-      endSpineItemIndex: 1,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 1,
+        endSpineItemIndex: 1,
+      }),
+    )
 
     await flush()
 
     expect(controller.state.currentTrack?.id).toBe(`track-2`)
 
-    audioElement.dispatchEvent(new Event(`ended`))
+    audio.element.dispatchEvent(new Event(`ended`))
 
     await flush()
 
-    paginationState$.next({
-      beginSpineItemIndex: 0,
-      endSpineItemIndex: 0,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
 
     await flush()
 
-    audioElement.dispatchEvent(new Event(`canplay`))
+    audio.element.dispatchEvent(new Event(`canplay`))
     await flush()
 
     expect(reader.navigation.goToRightOrBottomSpineItem).toHaveBeenCalledTimes(
@@ -567,15 +625,16 @@ describe(`AudioController`, () => {
         }),
       ],
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
-    const playSpy = vi.spyOn(audioElement, `play`).mockResolvedValue(undefined)
-    const pauseSpy = vi.spyOn(audioElement, `pause`)
+    const { audio, pauseSpy } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playSpy = vi.spyOn(audio.element, `play`).mockResolvedValue(undefined)
 
-    paginationState$.next({
-      beginSpineItemIndex: 0,
-      endSpineItemIndex: 0,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
 
     await flush()
 
@@ -583,7 +642,7 @@ describe(`AudioController`, () => {
 
     await flush()
 
-    audioElement.dispatchEvent(new Event(`play`))
+    audio.element.dispatchEvent(new Event(`play`))
     await flush()
 
     expect(controller.state.currentTrack?.id).toBe(`track-1`)
@@ -592,16 +651,18 @@ describe(`AudioController`, () => {
 
     const pauseCallsBeforeNavigation = pauseSpy.mock.calls.length
 
-    paginationState$.next({
-      beginSpineItemIndex: 1,
-      endSpineItemIndex: 1,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 1,
+        endSpineItemIndex: 1,
+      }),
+    )
 
     await flush()
 
     expect(controller.state.currentTrack).toBeUndefined()
     expect(controller.state.isPlaying).toBe(false)
-    expect(audioElement.getAttribute(`src`)).toBe(null)
+    expect(audio.element.getAttribute(`src`)).toBe(null)
     expect(pauseSpy).toHaveBeenCalledTimes(pauseCallsBeforeNavigation + 1)
   })
 
@@ -618,25 +679,27 @@ describe(`AudioController`, () => {
         }),
       ],
     })
-    const controller = new AudioController(reader)
-    const audioElement = getAudioElement(controller)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
     const playedSources: string[] = []
 
-    Object.defineProperty(audioElement, `readyState`, {
+    Object.defineProperty(audio.element, `readyState`, {
       configurable: true,
       get: () => HTMLMediaElement.HAVE_FUTURE_DATA,
     })
 
-    vi.spyOn(audioElement, `play`).mockImplementation(() => {
-      playedSources.push(audioElement.getAttribute(`src`) ?? ``)
+    vi.spyOn(audio.element, `play`).mockImplementation(() => {
+      playedSources.push(audio.element.getAttribute(`src`) ?? ``)
 
       return Promise.resolve()
     })
 
-    paginationState$.next({
-      beginSpineItemIndex: 0,
-      endSpineItemIndex: 0,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
 
     await flush()
 
@@ -644,20 +707,22 @@ describe(`AudioController`, () => {
 
     await flush()
 
-    audioElement.dispatchEvent(new Event(`play`))
+    audio.element.dispatchEvent(new Event(`play`))
     await flush()
 
     playedSources.length = 0
 
-    Object.defineProperty(audioElement, `paused`, {
+    Object.defineProperty(audio.element, `paused`, {
       configurable: true,
       get: () => false,
     })
 
-    paginationState$.next({
-      beginSpineItemIndex: 1,
-      endSpineItemIndex: 1,
-    })
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 1,
+        endSpineItemIndex: 1,
+      }),
+    )
 
     await flush()
 
@@ -697,22 +762,24 @@ describe(`AudioController`, () => {
           index: track2.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([
         [
-          [
-            track1.index,
-            async () =>
-              new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
-          ],
-          [
-            track2.index,
-            async () =>
-              new Response(new Blob([`audio-2`], { type: `audio/mpeg` })),
-          ],
+          track1.index,
+          async () =>
+            new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
         ],
-      ),
+        [
+          track2.index,
+          async () =>
+            new Response(new Blob([`audio-2`], { type: `audio/mpeg` })),
+        ],
+      ]),
     })
-    const controller = new AudioController(reader)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(track1.id, {
       navigate: false,
@@ -778,23 +845,25 @@ describe(`AudioController`, () => {
           index: track3.index,
         }),
       ],
-      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+      spineItemResources: new Map<
+        number,
+        ResourceHandler["getResource"] | undefined
+      >([
         [
-          [
-            track1.index,
-            async () =>
-              new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
-          ],
-          [track2.index, () => deferredTrack2Source.promise],
-          [
-            track3.index,
-            async () =>
-              new Response(new Blob([`audio-3`], { type: `audio/mpeg` })),
-          ],
+          track1.index,
+          async () =>
+            new Response(new Blob([`audio-1`], { type: `audio/mpeg` })),
         ],
-      ),
+        [track2.index, () => deferredTrack2Source.promise],
+        [
+          track3.index,
+          async () =>
+            new Response(new Blob([`audio-3`], { type: `audio/mpeg` })),
+        ],
+      ]),
     })
-    const controller = new AudioController(reader)
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
 
     controller.select(track1.id, {
       navigate: false,

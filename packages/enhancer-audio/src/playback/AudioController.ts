@@ -1,4 +1,3 @@
-import type { Reader } from "@prose-reader/core"
 import { ReactiveEntity } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 import {
@@ -14,7 +13,6 @@ import {
   Subject,
   Subscription,
   share,
-  skip,
   switchMap,
   takeUntil,
   tap,
@@ -29,6 +27,7 @@ import { AudioVisualizer } from "../visualizer"
 import { AudioElementAdapter } from "./AudioElementAdapter"
 import { ResourcesResolver } from "./ResourcesResolver"
 import { createTrackStreams } from "./trackStreams"
+import type { AudioControllerReader } from "./types"
 
 type SelectCommand = {
   trackId: string
@@ -49,9 +48,11 @@ const initialState: AudioEnhancerState = {
   duration: undefined,
 }
 
+export type { AudioControllerReader }
+
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
-  private readonly reader: Reader
-  private readonly audio = new AudioElementAdapter()
+  private readonly reader: AudioControllerReader
+  private readonly audio: AudioElementAdapter
   readonly visualizer$: AudioVisualizer
   readonly resourcesResolver = new ResourcesResolver()
   readonly visibleTrackIds$: Observable<string[]>
@@ -66,10 +67,14 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private shouldPlay = false
   private playbackContinuationTrackId: string | undefined
 
-  constructor(reader: Reader) {
+  constructor(
+    reader: AudioControllerReader,
+    audio = new AudioElementAdapter(),
+  ) {
     super(initialState)
 
     this.reader = reader
+    this.audio = audio
     this.visualizer$ = new AudioVisualizer(this.audio.element)
 
     const playCommand$ = this.playCommandSubject
@@ -133,10 +138,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       })),
     )
 
-    const playbackReset$ = merge(
-      visibleTrackReset$,
-      tracks$.pipe(skip(1)),
-    ).pipe(share())
+    const playbackReset$ = merge(visibleTrackReset$, tracks$).pipe(share())
 
     const playSelectionIntent$ = playCommand$.pipe(
       filter(() => !this.hasSource),
@@ -246,15 +248,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       switchMap(() => this.playAudio$()),
     )
 
-    this.subscriptions.add(playbackInterrupted$.subscribe())
-    this.subscriptions.add(playback$.subscribe())
-
-    this.subscriptions.add(
-      pauseCommand$.subscribe(() => {
-        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-      }),
-    )
-
     this.subscriptions.add(
       playbackReset$.subscribe((tracks) => {
         this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
@@ -272,10 +265,18 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
+    this.subscriptions.add(playbackInterrupted$.subscribe())
+    this.subscriptions.add(playback$.subscribe())
+
     this.subscriptions.add(
-      tracks$.subscribe((tracks) => {
+      pauseCommand$.subscribe(() => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+      }),
+    )
+
+    this.subscriptions.add(
+      tracks$.subscribe(() => {
         this.resourcesResolver.releaseAll()
-        this.mergeCompare({ tracks })
       }),
     )
 

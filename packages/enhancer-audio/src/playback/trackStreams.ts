@@ -1,4 +1,3 @@
-import type { Reader } from "@prose-reader/core"
 import { mapKeysTo } from "@prose-reader/core"
 import { arrayEqual, isShallowEqual } from "@prose-reader/shared"
 import {
@@ -10,6 +9,7 @@ import {
 } from "rxjs"
 import type { AudioEnhancerState, AudioTrack } from "../types"
 import { isAudioSpineItem } from "../utils"
+import type { AudioControllerReader } from "./types"
 
 type PaginationTrackWindow = {
   beginSpineItemIndex: number | undefined
@@ -45,7 +45,7 @@ const getVisibleTracks = (
 }
 
 export function createTrackStreams(
-  reader: Reader,
+  reader: Pick<AudioControllerReader, "context" | "pagination">,
   state$: Observable<AudioEnhancerState>,
 ) {
   const tracks$ = reader.context.manifest$.pipe(
