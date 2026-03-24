@@ -203,7 +203,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       fromEvent(this.audioElement, `seeked`),
       fromEvent(this.audioElement, `loadedmetadata`),
       fromEvent(this.audioElement, `durationchange`),
-      fromEvent(this.audioElement, `canplay`),
+      canPlay$,
     ).pipe(
       map(() => ({
         currentTime: this.audioElement.currentTime,
