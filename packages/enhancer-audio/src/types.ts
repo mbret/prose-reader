@@ -13,7 +13,7 @@ export type AudioEnhancerState = {
   isPlaying: boolean
   isLoading: boolean
   currentTime: number
-  duration: number
+  duration: number | undefined
 }
 
 export type AudioVisualizerState = {

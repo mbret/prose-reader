@@ -31,11 +31,14 @@ export const AudioControlsSection = (props: ComponentProps<typeof HStack>) => {
   const audioState = useAudioState()
   const hasPlayableTrack =
     !!audioState?.currentTrack || (audioState?.tracks.length ?? 0) > 0
-  const duration = Math.max(0, audioState?.duration ?? 0)
-  const hasKnownDuration = duration > 0
-  const sliderMax = hasKnownDuration ? duration : 1
+  const duration = audioState?.duration
+  const displayDuration = Math.max(0, duration ?? 0)
+  const knownDuration =
+    typeof duration === `number` && duration > 0 ? duration : undefined
+  const hasKnownDuration = knownDuration !== undefined
+  const sliderMax = knownDuration ?? 1
   const currentTime = hasKnownDuration
-    ? Math.min(Math.max(0, audioState?.currentTime ?? 0), sliderMax)
+    ? Math.min(Math.max(0, audioState?.currentTime ?? 0), knownDuration)
     : 0
   const isSliderDisabled =
     !hasPlayableTrack || !!audioState?.isLoading || !hasKnownDuration
@@ -130,7 +133,7 @@ export const AudioControlsSection = (props: ComponentProps<typeof HStack>) => {
               : formatPlaybackTime(draftCurrentTime)}
           </Text>
           <Text fontSize="xs" color="fg.muted">
-            {formatPlaybackTime(duration)}
+            {formatPlaybackTime(displayDuration)}
           </Text>
         </HStack>
       </Stack>

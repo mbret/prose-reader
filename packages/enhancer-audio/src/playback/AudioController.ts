@@ -1,9 +1,8 @@
-import { ReactiveEntity, type Reader } from "@prose-reader/core"
+import { ReactiveEntity } from "@prose-reader/core"
 import { isDefined } from "reactjrx"
 import {
   catchError,
   defaultIfEmpty,
-  defer,
   distinctUntilChanged,
   EMPTY,
   filter,
@@ -11,11 +10,9 @@ import {
   merge,
   type Observable,
   of,
-  pairwise,
   Subject,
   Subscription,
   share,
-  shareReplay,
   switchMap,
   takeUntil,
   tap,
@@ -26,513 +23,236 @@ import type {
   AudioTrack,
   SelectAudioTrackOptions,
 } from "../types"
-import { isAudioSpineItem } from "../utils"
 import { AudioVisualizer } from "../visualizer"
 import { AudioElementAdapter } from "./AudioElementAdapter"
-import {
-  getPaginationPlaybackTargets,
-  type PaginationTrackWindow,
-} from "./playbackTargetPolicy"
-import { TrackSourceResolver } from "./TrackSourceResolver"
-import { createVisibleTrackIds$ } from "./visibleTrackId"
+import { ResourcesResolver } from "./ResourcesResolver"
+import { createTrackStreams } from "./trackStreams"
+import type { AudioControllerReader } from "./types"
 
 type SelectCommand = {
   trackId: string
   options: SelectAudioTrackOptions
 }
 
-type ControllerAction =
-  | {
-      type: `play`
-    }
-  | {
-      type: `select`
-      command: SelectCommand
-    }
-
-type TrackSync = {
-  tracks: AudioTrack[]
-  currentTrack: AudioTrack | undefined
-  removedTrackIds: string[]
-  shouldResetPlayback: boolean
+const initialState: AudioEnhancerState = {
+  tracks: [],
+  currentTrack: undefined,
+  isPlaying: false,
+  isLoading: false,
+  currentTime: 0,
+  duration: undefined,
 }
 
-const getTrackSync = ({
-  state,
-  tracks,
-}: {
-  state: AudioEnhancerState
-  tracks: AudioTrack[]
-}): TrackSync => {
-  const nextTrackIds = new Set(tracks.map(({ id }) => id))
-  const removedTrackIds = state.tracks
-    .filter(({ id }) => !nextTrackIds.has(id))
-    .map(({ id }) => id)
-  const currentTrack =
-    state.currentTrack && tracks.find(({ id }) => id === state.currentTrack?.id)
-  const shouldResetPlayback =
-    state.currentTrack !== undefined && currentTrack === undefined
-
-  return {
-    tracks,
-    currentTrack,
-    removedTrackIds,
-    shouldResetPlayback,
-  }
-}
+export type { AudioControllerReader }
 
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
-  private readonly audioElementAdapter: AudioElementAdapter
+  private readonly reader: AudioControllerReader
+  private readonly audio: AudioElementAdapter
   readonly visualizer$: AudioVisualizer
+  readonly resourcesResolver = new ResourcesResolver()
   readonly visibleTrackIds$: Observable<string[]>
-  private readonly actionSubject = new Subject<ControllerAction>()
-  private readonly pauseActionSubject = new Subject<void>()
-  private playbackContinuationTrackId: string | undefined
+
+  private readonly playCommandSubject = new Subject<void>()
+  private readonly pauseCommandSubject = new Subject<void>()
+  private readonly selectCommandSubject = new Subject<SelectCommand>()
   private readonly subscriptions = new Subscription()
-  private readonly trackSourceResolver: TrackSourceResolver
 
-  constructor(reader: Reader) {
-    super({
-      tracks: [],
-      currentTrack: undefined,
-      isPlaying: false,
-      isLoading: false,
-      currentTime: 0,
-      duration: 0,
-    })
+  private desiredPlaybackTrackId: string | undefined
+  private shouldPlay = false
 
-    const mountedObjectUrls = new Set<string>()
+  constructor(
+    reader: AudioControllerReader,
+    audio = new AudioElementAdapter(),
+  ) {
+    super(initialState)
 
-    this.trackSourceResolver = new TrackSourceResolver(
-      reader,
-      mountedObjectUrls,
-    )
-    this.audioElementAdapter = new AudioElementAdapter()
-    this.visualizer$ = new AudioVisualizer(this.audioElementAdapter.element)
-    this.visibleTrackIds$ = createVisibleTrackIds$(
-      this.watch(`tracks`),
-      reader.pagination.state$,
+    this.reader = reader
+    this.audio = audio
+    this.visualizer$ = new AudioVisualizer(this.audio.element)
+
+    const { tracks$, visibleTrackIds$, nextTrack$ } = createTrackStreams(
+      this.reader,
+      this.state$,
     )
 
-    const clearPlaybackContinuation = () => {
-      this.playbackContinuationTrackId = undefined
-    }
+    this.visibleTrackIds$ = visibleTrackIds$
 
-    const setTrackSelectionState = ({
-      currentTrack,
-      isLoading,
-      isPlaying,
-    }: {
-      currentTrack: AudioTrack | undefined
-      isLoading: boolean
-      isPlaying: boolean
-    }) => {
-      this.update({
-        currentTrack,
-        isLoading,
-        isPlaying,
-        currentTime: 0,
-        duration: 0,
-      })
-      this.visualizer$.reset(currentTrack?.id)
-    }
-
-    const action$ = this.actionSubject.pipe(share())
-    const tracks$ = reader.context.manifest$.pipe(
-      map((manifest) =>
-        manifest.spineItems.filter(isAudioSpineItem).map((item) => ({
-          id: item.id,
-          href: item.href,
-          index: item.index,
-          mediaType: item.mediaType,
-        })),
-      ),
-      share(),
-    )
-
-    const playAction$ = action$.pipe(
-      filter(
-        (action): action is Extract<ControllerAction, { type: `play` }> =>
-          action.type === `play`,
-      ),
-    )
-    const selectAction$ = action$.pipe(
-      filter(
-        (action): action is Extract<ControllerAction, { type: `select` }> =>
-          action.type === `select`,
-      ),
-      map(({ command }) => command),
-      share(),
-    )
-
-    const trackSync$ = tracks$.pipe(
-      withLatestFrom(this.state$),
-      map(([tracks, state]) =>
-        getTrackSync({
-          state,
-          tracks,
-        }),
-      ),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
-    )
-
-    const visibleTrackContext$ = this.visibleTrackIds$.pipe(
+    const firstVisibleTrackId$ = this.visibleTrackIds$.pipe(
       map((trackIds) => trackIds[0]),
       distinctUntilChanged(),
-      withLatestFrom(this.state$),
-      map(([trackId, state]) => {
-        const playbackContinuationTrackId = this.playbackContinuationTrackId
-
-        return {
-          trackId,
-          tracks: state.tracks,
-          playbackContinuationTrackId,
-          currentTrackId: state.currentTrack?.id,
-          isLoading: state.isLoading,
-          shouldContinuePlayback:
-            trackId !== undefined &&
-            playbackContinuationTrackId === trackId &&
-            trackId !== state.currentTrack?.id,
-        }
-      }),
       share(),
     )
 
-    const visibleTrackReset$ = visibleTrackContext$.pipe(
+    const visibleTrackReset$ = firstVisibleTrackId$.pipe(
+      withLatestFrom(this.state$),
       filter(
-        ({ trackId, playbackContinuationTrackId, currentTrackId, isLoading }) =>
+        ([trackId, state]) =>
           trackId === undefined &&
-          !playbackContinuationTrackId &&
-          (currentTrackId !== undefined || isLoading),
+          (state.currentTrack?.id !== undefined || state.isLoading),
       ),
-      map(({ tracks }) => tracks),
+      map(([, state]) => state.tracks),
     )
 
-    const visibleTrackSelectionIntent$ = visibleTrackContext$.pipe(
-      filter(({ trackId }) => trackId !== undefined),
-      tap(({ shouldContinuePlayback }) => {
-        if (shouldContinuePlayback) {
-          clearPlaybackContinuation()
-        }
-      }),
-      map(({ trackId, shouldContinuePlayback }) => ({
-        trackId: trackId as string,
+    const visibleTrackSelectionIntent$ = firstVisibleTrackId$.pipe(
+      filter((trackId): trackId is string => trackId !== undefined),
+      map((trackId) => ({
+        trackId,
         options: {
           navigate: false,
-          play: shouldContinuePlayback ? true : undefined,
+          play: this.shouldPlay ? true : undefined,
         },
       })),
     )
 
-    const playbackReset$ = merge(
-      visibleTrackReset$,
-      trackSync$.pipe(
-        filter(({ shouldResetPlayback }) => shouldResetPlayback),
-        map(({ tracks }) => tracks),
-      ),
-    ).pipe(share())
+    const tracksChanged$ = tracks$.pipe(
+      tap(() => this.resourcesResolver.releaseAll()),
+    )
 
-    const playbackInterrupted$ = merge(
-      this.pauseActionSubject,
-      playbackReset$.pipe(map(() => undefined)),
-      selectAction$.pipe(
-        filter(({ options }) => options.navigate !== false),
-        map(() => undefined),
+    const playbackReset$ = merge(visibleTrackReset$, tracksChanged$).pipe(
+      tap((tracks) => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+        this.visualizer$.stop({ resetLevels: true })
+        this.unmountCurrentSource()
+
+        this.mergeCompare({
+          tracks,
+          currentTrack: undefined,
+          isLoading: false,
+          isPlaying: false,
+          currentTime: 0,
+          duration: undefined,
+        })
+        this.visualizer$.reset(undefined)
+      }),
+      share(),
+    )
+
+    const playSelectionIntent$ = this.playCommandSubject.pipe(
+      filter(() => !this.audio.hasSource),
+      map(() => this.state.currentTrack ?? this.state.tracks[0]),
+      filter(isDefined),
+      map((track) => ({
+        trackId: track.id,
+        options: { navigate: false, play: true },
+      })),
+    )
+
+    const resumePlayback$ = this.playCommandSubject.pipe(
+      filter(() => this.audio.hasSource),
+      tap(() => {
+        this.setDesiredPlayback({
+          shouldPlay: true,
+          trackId: this.state.currentTrack?.id,
+        })
+      }),
+    )
+
+    const endedSelectionIntent$ = this.audio.ended$.pipe(
+      withLatestFrom(nextTrack$),
+      switchMap(
+        ([, { nextTrackAfterCurrentTrack, nextTrackInPaginationWindow }]) => {
+          this.visualizer$.stop({ resetLevels: true })
+
+          if (nextTrackInPaginationWindow) {
+            return of({
+              trackId: nextTrackInPaginationWindow.id,
+              options: { navigate: false, play: true },
+            })
+          }
+
+          if (!nextTrackAfterCurrentTrack) {
+            this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+          }
+
+          this.reader.navigation.goToRightOrBottomSpineItem()
+
+          return EMPTY
+        },
       ),
     )
 
-    const selectTrackById$ = (
-      trackId: string,
-      options: SelectAudioTrackOptions,
-    ) =>
-      defer(() => {
-        const track = this.state.tracks.find(({ id }) => id === trackId)
-
-        if (!track) return EMPTY
-
-        if (options.navigate !== false) {
-          reader.navigation.navigate({
-            spineItem: track.index,
+    const selection$ = merge(
+      this.selectCommandSubject,
+      visibleTrackSelectionIntent$,
+      endedSelectionIntent$,
+      playSelectionIntent$,
+    ).pipe(
+      withLatestFrom(this.state$),
+      filter(([selectionIntent, state]) =>
+        state.tracks.some(({ id }) => id === selectionIntent.trackId),
+      ),
+      map(([selectionIntent, state]) => ({
+        selectionIntent,
+        state,
+        isReselectionWhileLoading:
+          state.currentTrack?.id === selectionIntent.trackId && state.isLoading,
+      })),
+      tap(({ selectionIntent, state, isReselectionWhileLoading }) => {
+        if (selectionIntent.options.navigate !== false) {
+          this.reader.navigation.navigate({
+            spineItem: selectionIntent.trackId,
             animation: `turn`,
           })
         }
 
-        const currentTrack = this.state.currentTrack
-        const shouldPlay =
-          options.play ??
-          (!this.audioElementAdapter.paused && currentTrack !== undefined)
-
-        if (shouldPlay) {
-          this.audioElementAdapter.play(track.id)
-        } else {
-          this.audioElementAdapter.pause()
-        }
-
         if (
-          currentTrack?.id === track.id &&
-          this.audioElementAdapter.hasSource
+          isReselectionWhileLoading &&
+          selectionIntent.options.play !== undefined
         ) {
-          this.visualizer$.setTrack(track.id)
-
-          return EMPTY
-        }
-
-        if (!shouldPlay) {
-          if (currentTrack?.id !== track.id) {
-            this.audioElementAdapter.clearSource()
-          }
-
-          setTrackSelectionState({
-            currentTrack: track,
-            isLoading: false,
-            isPlaying: false,
+          this.setDesiredPlayback({
+            shouldPlay: selectionIntent.options.play,
+            trackId: state.currentTrack?.id,
           })
-
-          return EMPTY
         }
-
-        setTrackSelectionState({
-          currentTrack: track,
-          isLoading: true,
-          isPlaying: false,
-        })
-
-        return this.trackSourceResolver.resolveTrackSource(track).pipe(
-          map((source) => ({ source })),
-          defaultIfEmpty({ source: undefined }),
-          catchError(() => of({ source: undefined })),
-          takeUntil(playbackReset$),
-          tap(({ source }) => {
-            if (!source) {
-              this.audioElementAdapter.pause()
-              this.audioElementAdapter.clearSource()
-              setTrackSelectionState({
-                currentTrack: track,
-                isLoading: false,
-                isPlaying: false,
-              })
-              return
-            }
-
-            this.audioElementAdapter.setSource({
-              trackId: track.id,
-              source,
-            })
-            setTrackSelectionState({
-              currentTrack: track,
-              isLoading: false,
-              isPlaying: false,
-            })
-          }),
-        )
-      })
-
-    const endedSelectionIntent$ = this.audioElementAdapter.ended$.pipe(
-      withLatestFrom(reader.pagination.state$),
-      switchMap(([, pagination]) =>
-        defer(() => {
-          this.visualizer$.stop({
-            resetLevels: true,
-          })
-
-          const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
-            getPaginationPlaybackTargets({
-              tracks: this.state.tracks,
-              pagination: pagination as PaginationTrackWindow,
-              currentTrack: this.state.currentTrack,
-            })
-
-          if (nextTrackInPaginationWindow) {
-            clearPlaybackContinuation()
-
-            return of({
-              trackId: nextTrackInPaginationWindow.id,
-              options: {
-                navigate: false,
-                play: true,
-              },
-            })
-          }
-
-          if (nextTrackAfterPageTurn) {
-            this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
-          } else {
-            clearPlaybackContinuation()
-            this.audioElementAdapter.pause()
-          }
-
-          reader.navigation.goToRightOrBottomSpineItem()
-
-          return EMPTY
-        }),
+      }),
+      filter(({ isReselectionWhileLoading }) => !isReselectionWhileLoading),
+      switchMap(({ selectionIntent: { trackId, options } }) =>
+        this.selectTrack$({ trackId, options, playbackReset$ }),
       ),
     )
 
-    const audioAdapterUnMountedTrackId$ =
-      this.audioElementAdapter.mountedTrackId$.pipe(
-        pairwise(),
-        map(([previousMountedTrackId, nextMountedTrackId]) => {
-          if (
-            !previousMountedTrackId ||
-            previousMountedTrackId === nextMountedTrackId
-          ) {
-            return
-          }
+    const playback$ = merge(resumePlayback$, selection$).pipe(
+      switchMap(() => {
+        if (
+          !this.shouldPlay ||
+          !this.audio.hasSource ||
+          this.state.currentTrack?.id !== this.desiredPlaybackTrackId
+        ) {
+          return EMPTY
+        }
 
-          return previousMountedTrackId
-        }),
-        filter(isDefined),
-      )
-
-    const releaseTrackSource$ = audioAdapterUnMountedTrackId$.pipe(
-      tap((previousMountedTrackId) => {
-        this.trackSourceResolver.releaseTrackSource(previousMountedTrackId)
+        return this.audio.play$()
       }),
     )
 
-    this.subscriptions.add(releaseTrackSource$.subscribe())
+    this.subscriptions.add(playbackReset$.subscribe())
+    this.subscriptions.add(playback$.subscribe())
 
     this.subscriptions.add(
-      playbackInterrupted$
-        .pipe(tap(() => clearPlaybackContinuation()))
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      trackSync$
-        .pipe(
-          withLatestFrom(this.audioElementAdapter.mountedTrackId$),
-          tap(([{ removedTrackIds }, mountedTrackId]) => {
-            for (const trackId of removedTrackIds) {
-              if (trackId === mountedTrackId) continue
-
-              this.trackSourceResolver.releaseTrackSource(trackId)
-            }
-          }),
-          tap(([{ shouldResetPlayback, tracks, currentTrack }]) => {
-            if (shouldResetPlayback) return
-
-            this.update({
-              tracks,
-              currentTrack,
-              isLoading: currentTrack ? this.state.isLoading : false,
-              isPlaying: currentTrack ? this.state.isPlaying : false,
-              currentTime: currentTrack ? this.state.currentTime : 0,
-              duration: currentTrack ? this.state.duration : 0,
-            })
-            this.visualizer$.reset(currentTrack?.id)
-          }),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      playAction$
-        .pipe(
-          tap(() => {
-            clearPlaybackContinuation()
-
-            if (!this.audioElementAdapter.hasSource) {
-              const initialTrack =
-                this.state.currentTrack ?? this.state.tracks[0]
-
-              if (!initialTrack) return
-
-              this.actionSubject.next({
-                type: `select`,
-                command: {
-                  trackId: initialTrack.id,
-                  options: {
-                    navigate: false,
-                    play: true,
-                  },
-                },
-              })
-
-              return
-            }
-
-            this.audioElementAdapter.play(this.state.currentTrack?.id)
-          }),
-        )
-        .subscribe(),
-    )
-
-    const paused$ = merge(this.pauseActionSubject, playbackReset$).pipe(
-      tap(() => {
-        this.audioElementAdapter.pause()
+      this.pauseCommandSubject.subscribe(() => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
       }),
     )
 
-    this.subscriptions.add(paused$.subscribe())
-
     this.subscriptions.add(
-      playbackReset$
-        .pipe(
-          tap((tracks) => {
-            this.visualizer$.stop({
-              resetLevels: true,
-            })
-            this.audioElementAdapter.clearSource()
-            this.update({
-              tracks,
-              currentTrack: undefined,
-              isLoading: false,
-              isPlaying: false,
-              currentTime: 0,
-              duration: 0,
-            })
-            this.visualizer$.reset(undefined)
-          }),
-        )
-        .subscribe(),
+      this.audio.isPlaying$.subscribe((isPlaying) => {
+        this.mergeCompare({ isPlaying })
+
+        if (!isPlaying) {
+          this.visualizer$.stop()
+          return
+        }
+
+        if (!this.state.currentTrack) return
+
+        this.visualizer$.start(this.state.currentTrack)
+      }),
     )
 
     this.subscriptions.add(
-      merge(selectAction$, visibleTrackSelectionIntent$, endedSelectionIntent$)
-        .pipe(
-          switchMap(({ trackId, options }) =>
-            selectTrackById$(trackId, options),
-          ),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      this.audioElementAdapter.isPlaying$
-        .pipe(
-          tap((isPlaying) => {
-            this.update({
-              isPlaying,
-            })
-
-            if (!isPlaying) {
-              this.visualizer$.stop()
-              return
-            }
-
-            if (!this.state.currentTrack) return
-
-            this.visualizer$.start(this.state.currentTrack)
-          }),
-        )
-        .subscribe(),
-    )
-
-    this.subscriptions.add(
-      this.audioElementAdapter.metrics$
-        .pipe(
-          tap(({ currentTime, duration }) => {
-            this.update({
-              currentTime,
-              duration,
-            })
-          }),
-        )
-        .subscribe(),
+      this.audio.metrics$.subscribe(({ currentTime, duration }) => {
+        this.mergeCompare({ currentTime, duration })
+      }),
     )
   }
 
@@ -544,32 +264,135 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     return this.visualizer$.value
   }
 
-  update(value: Partial<AudioEnhancerState>) {
-    this.mergeCompare(value)
+  private resetTrackSelection({
+    currentTrack,
+    isLoading,
+  }: {
+    currentTrack: AudioTrack
+    isLoading: boolean
+  }) {
+    this.mergeCompare({
+      currentTrack,
+      isLoading,
+      isPlaying: false,
+      currentTime: 0,
+      duration: undefined,
+    })
+    this.visualizer$.reset(currentTrack?.id)
+  }
+
+  private setDesiredPlayback({
+    shouldPlay,
+    trackId,
+  }: {
+    shouldPlay: boolean
+    trackId: string | undefined
+  }) {
+    this.shouldPlay = shouldPlay
+    this.desiredPlaybackTrackId = shouldPlay ? trackId : undefined
+
+    if (!shouldPlay) {
+      this.audio.pause()
+    }
+  }
+
+  private unmountCurrentSource() {
+    if (!this.audio.hasSource) return
+
+    const trackId = this.state.currentTrack?.id
+
+    if (this.shouldPlay) {
+      this.audio.pause()
+    }
+
+    this.audio.unloadSource()
+
+    if (trackId) {
+      this.resourcesResolver.releaseTrackSource(trackId)
+    }
+  }
+
+  private mountSource(source: string) {
+    this.unmountCurrentSource()
+    this.audio.loadSource(source)
+  }
+
+  private resolveTrackSource(track: AudioTrack) {
+    const spineItem = this.reader.spineItemsManager.get(track.index)
+
+    if (!spineItem) return EMPTY
+
+    return this.resourcesResolver.getTrackResourceUrl$(
+      track,
+      spineItem.resourcesHandler,
+    )
+  }
+
+  private selectTrack$({
+    trackId,
+    options,
+    playbackReset$,
+  }: {
+    trackId: string
+    options: SelectAudioTrackOptions
+    playbackReset$: Observable<AudioTrack[]>
+  }) {
+    const track = this.state.tracks.find(({ id }) => id === trackId)
+
+    if (!track) return EMPTY
+
+    const currentTrack = this.state.currentTrack
+    const shouldPlay =
+      options.play ?? (!this.audio.paused && currentTrack !== undefined)
+
+    this.setDesiredPlayback({ shouldPlay, trackId: track.id })
+
+    if (currentTrack?.id === track.id && this.audio.hasSource) {
+      this.visualizer$.setTrack(track.id)
+
+      return shouldPlay ? of(undefined) : EMPTY
+    }
+
+    this.unmountCurrentSource()
+
+    this.resetTrackSelection({
+      currentTrack: track,
+      isLoading: true,
+    })
+
+    return this.resolveTrackSource(track).pipe(
+      map((source) => ({ source })),
+      defaultIfEmpty({ source: undefined }),
+      catchError(() => of({ source: undefined })),
+      takeUntil(playbackReset$),
+      tap(({ source }) => {
+        if (!source) {
+          this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+        } else {
+          this.mountSource(source)
+        }
+
+        this.mergeCompare({ isLoading: false })
+      }),
+      filter(({ source }) => source !== undefined),
+      map(() => undefined),
+    )
   }
 
   select(trackId: string, options: SelectAudioTrackOptions = {}) {
-    this.actionSubject.next({
-      type: `select`,
-      command: {
-        trackId,
-        options,
-      },
-    })
+    this.selectCommandSubject.next({ trackId, options })
   }
 
   play() {
-    this.actionSubject.next({
-      type: `play`,
-    })
+    this.playCommandSubject.next()
   }
 
   pause() {
-    this.pauseActionSubject.next()
+    this.pauseCommandSubject.next()
   }
 
   toggle() {
-    if (this.audioElementAdapter.paused) {
+    if (this.audio.paused) {
       this.play()
       return
     }
@@ -578,19 +401,19 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   setCurrentTime(value: number) {
-    this.update({
-      currentTime: value,
-    })
-    this.audioElementAdapter.setCurrentTime(value)
+    this.mergeCompare({ currentTime: value })
+    this.audio.setCurrentTime(value)
   }
 
   destroy() {
     this.subscriptions.unsubscribe()
-    this.actionSubject.complete()
-    this.pauseActionSubject.complete()
+    this.playCommandSubject.complete()
+    this.pauseCommandSubject.complete()
+    this.selectCommandSubject.complete()
     this.visualizer$.destroy()
-    this.audioElementAdapter.destroy()
-    this.trackSourceResolver.destroy()
+    this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+    this.unmountCurrentSource()
+    this.resourcesResolver.destroy()
 
     super.destroy()
   }

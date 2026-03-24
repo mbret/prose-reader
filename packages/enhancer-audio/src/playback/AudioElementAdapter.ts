@@ -1,221 +1,92 @@
-import { isShallowEqual, ReactiveEntity } from "@prose-reader/core"
 import {
   catchError,
   defer,
-  distinctUntilChanged,
   EMPTY,
   from,
   fromEvent,
   map,
   merge,
   type Observable,
-  pairwise,
   retry,
-  Subscription,
   share,
-  switchMap,
   take,
-  tap,
 } from "rxjs"
 
-type DesiredPlayback = {
-  shouldPlay: boolean
-  trackId: string | undefined
-}
-
-export type AudioElementMetrics = {
+export type AudioMetrics = {
   currentTime: number
-  duration: number
+  duration: number | undefined
 }
 
-type MountedSource = {
-  trackId: string
-  source: string
-}
-
-type AudioElementState = {
-  desiredPlayback: DesiredPlayback
-  mountedSource: MountedSource | undefined
-}
-
-const initialDesiredPlayback: DesiredPlayback = {
-  shouldPlay: false,
-  trackId: undefined,
-}
-
-const getPlaybackDuration = (audioElement: HTMLAudioElement) => {
-  if (Number.isFinite(audioElement.duration) && audioElement.duration > 0) {
-    return audioElement.duration
-  }
-
-  const seekableRangeCount = audioElement.seekable.length
-
-  if (seekableRangeCount > 0) {
-    const seekableDuration = audioElement.seekable.end(seekableRangeCount - 1)
-
-    if (Number.isFinite(seekableDuration) && seekableDuration > 0) {
-      return seekableDuration
-    }
-  }
-
-  return 0
-}
-
-export class AudioElementAdapter extends ReactiveEntity<AudioElementState> {
-  readonly element = document.createElement(`audio`)
-  readonly ended$: Observable<void>
+export class AudioElementAdapter {
+  readonly element: HTMLAudioElement
+  readonly canPlay$: Observable<Event>
+  readonly ended$: Observable<Event>
   readonly isPlaying$: Observable<boolean>
-  readonly metrics$: Observable<AudioElementMetrics>
-  readonly mountedTrackId$: Observable<string | undefined>
-
-  private readonly subscriptions = new Subscription()
+  readonly metrics$: Observable<AudioMetrics>
 
   constructor() {
-    super({
-      desiredPlayback: initialDesiredPlayback,
-      mountedSource: undefined,
-    })
-
+    this.element = document.createElement(`audio`)
     this.element.preload = `metadata`
 
-    this.ended$ = fromEvent(this.element, `ended`).pipe(
-      map(() => undefined),
-      share(),
-    )
+    this.canPlay$ = fromEvent(this.element, `canplay`).pipe(share())
+    this.ended$ = fromEvent(this.element, `ended`).pipe(share())
+
     this.isPlaying$ = merge(
       fromEvent(this.element, `play`).pipe(map(() => true)),
       fromEvent(this.element, `pause`).pipe(map(() => false)),
     ).pipe(share())
+
     this.metrics$ = merge(
       fromEvent(this.element, `timeupdate`),
       fromEvent(this.element, `seeking`),
       fromEvent(this.element, `seeked`),
       fromEvent(this.element, `loadedmetadata`),
       fromEvent(this.element, `durationchange`),
-      fromEvent(this.element, `canplay`),
+      this.canPlay$,
     ).pipe(
       map(() => ({
         currentTime: this.element.currentTime,
-        duration: getPlaybackDuration(this.element),
+        duration: Number.isFinite(this.element.duration)
+          ? this.element.duration
+          : undefined,
       })),
       share(),
     )
-
-    const canPlay$ = fromEvent(this.element, `canplay`).pipe(share())
-
-    const mountedSource$ = this.pipe(
-      map(({ mountedSource }) => mountedSource),
-      distinctUntilChanged(isShallowEqual),
-    )
-
-    this.mountedTrackId$ = mountedSource$.pipe(
-      map((mountedSource) => mountedSource?.trackId),
-      distinctUntilChanged(),
-    )
-
-    const sourceApplied$ = mountedSource$.pipe(
-      pairwise(),
-      tap(([previousMountedSource, nextMountedSource]) => {
-        if (previousMountedSource) {
-          if (this.stateSubject.value.desiredPlayback.shouldPlay) {
-            this.element.pause()
-          }
-          this.element.removeAttribute(`src`)
-          this.element.load()
-        }
-
-        if (!nextMountedSource) return
-
-        this.element.src = nextMountedSource.source
-        this.element.load()
-      }),
-      map(() => undefined),
-      share(),
-    )
-
-    const playTrigger$ = merge(this.watch(`desiredPlayback`), sourceApplied$)
-
-    const playAudio$ = playTrigger$.pipe(
-      switchMap(() => {
-        return defer(() => {
-          const { mountedSource, desiredPlayback } = this.stateSubject.value
-
-          if (
-            !desiredPlayback.shouldPlay ||
-            desiredPlayback.trackId === undefined ||
-            mountedSource?.trackId !== desiredPlayback.trackId ||
-            !this.element.src
-          ) {
-            return EMPTY
-          }
-
-          return from(this.element.play())
-        }).pipe(
-          retry({
-            count: 1,
-            delay: () => canPlay$.pipe(take(1)),
-          }),
-          catchError(() => EMPTY),
-        )
-      }),
-    )
-
-    this.subscriptions.add(playAudio$.subscribe())
-  }
-
-  get hasSource() {
-    return this.stateSubject.value.mountedSource !== undefined
   }
 
   get paused() {
     return this.element.paused
   }
 
-  play(
-    trackId: string | undefined = this.stateSubject.value.mountedSource
-      ?.trackId,
-  ) {
-    if (!trackId) return
+  get hasSource() {
+    return this.element.hasAttribute(`src`)
+  }
 
-    this.mergeCompare({
-      desiredPlayback: {
-        shouldPlay: true,
-        trackId,
-      },
-    })
+  play$() {
+    return defer(() => from(this.element.play())).pipe(
+      retry({
+        count: 1,
+        delay: () => this.canPlay$.pipe(take(1)),
+      }),
+      catchError(() => EMPTY),
+    )
   }
 
   pause() {
-    this.mergeCompare({
-      desiredPlayback: initialDesiredPlayback,
-    })
     this.element.pause()
   }
 
-  setSource({ trackId, source }: { trackId: string; source: string }) {
-    this.mergeCompare({
-      mountedSource: {
-        trackId,
-        source,
-      },
-    })
+  loadSource(src: string) {
+    this.element.src = src
+    this.element.load()
   }
 
-  clearSource() {
-    this.mergeCompare({
-      mountedSource: undefined,
-    })
+  unloadSource() {
+    this.element.removeAttribute(`src`)
+    this.element.load()
   }
 
   setCurrentTime(value: number) {
     this.element.currentTime = value
-  }
-
-  destroy() {
-    this.subscriptions.unsubscribe()
-    this.stateSubject.complete()
-    this.element.pause()
-    this.element.removeAttribute(`src`)
-    this.element.load()
   }
 }
