@@ -8,7 +8,7 @@ export const usePagination = () => {
   return useObserve(() => reader?.pagination.state$, [reader])
 }
 
-export const useIsPrepaginated = () => {
+export const useIsPrePaginated = () => {
   const { reader } = useReader()
   const { data: manifest } = useObserve(
     () => reader?.context.manifest$,
@@ -29,10 +29,10 @@ export const useIsComics = () => {
     () => reader?.context.manifest$,
     [reader],
   )
-  const isPrepaginated = useIsPrepaginated()
+  const isPrePaginated = useIsPrePaginated()
 
   return (
-    isPrepaginated ||
+    isPrePaginated ||
     // webtoon
     (manifest?.renditionFlow === `scrolled-continuous` &&
       manifest.renditionLayout === `reflowable` &&
