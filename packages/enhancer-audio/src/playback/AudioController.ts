@@ -316,16 +316,14 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private resetTrackSelection({
     currentTrack,
     isLoading,
-    isPlaying,
   }: {
-    currentTrack: AudioTrack | undefined
+    currentTrack: AudioTrack
     isLoading: boolean
-    isPlaying: boolean
   }) {
     this.mergeCompare({
       currentTrack,
       isLoading,
-      isPlaying,
+      isPlaying: false,
       currentTime: 0,
       duration: undefined,
     })
@@ -382,7 +380,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private playAudio$() {
     if (
       !this.shouldPlay ||
-      this.desiredPlaybackTrackId === undefined ||
       this.mountedSource?.trackId !== this.desiredPlaybackTrackId
     ) {
       return EMPTY
@@ -434,7 +431,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.resetTrackSelection({
       currentTrack: track,
       isLoading: true,
-      isPlaying: false,
     })
 
     return this.resolveTrackSource(track).pipe(
