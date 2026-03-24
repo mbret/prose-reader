@@ -1,7 +1,5 @@
 import {
-  catchError,
   defer,
-  EMPTY,
   from,
   fromEvent,
   map,
@@ -68,7 +66,6 @@ export class AudioElementAdapter {
         count: 1,
         delay: () => this.canPlay$.pipe(take(1)),
       }),
-      catchError(() => EMPTY),
     )
   }
 

@@ -12,6 +12,7 @@ export type AudioEnhancerState = {
   currentTrack: AudioTrack | undefined
   isPlaying: boolean
   isLoading: boolean
+  hasError: boolean
   currentTime: number
   duration: number | undefined
 }

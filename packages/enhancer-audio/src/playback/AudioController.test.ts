@@ -960,4 +960,113 @@ describe(`AudioController`, () => {
     expect(revokeObjectUrl).toHaveBeenCalledWith(`blob:track-1`)
     expect(revokeObjectUrl).not.toHaveBeenCalledWith(`blob:track-2`)
   })
+
+  it(`sets hasError when play fails after retry`, async () => {
+    const { reader, paginationState$ } = createReader({
+      spineItems: [createManifestSpineItem()],
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+
+    vi.spyOn(audio.element, `play`).mockRejectedValue(
+      new DOMException(``, `NotSupportedError`),
+    )
+
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.hasError).toBe(false)
+
+    controller.play()
+    await flush()
+
+    audio.element.dispatchEvent(new Event(`canplay`))
+    await flush()
+
+    expect(controller.state.hasError).toBe(true)
+    expect(controller.state.isPlaying).toBe(false)
+  })
+
+  it(`clears hasError when selecting a new track after a play failure`, async () => {
+    const { reader, paginationState$ } = createReader({
+      spineItems: [
+        createManifestSpineItem({ id: `track-1`, index: 0 }),
+        createManifestSpineItem({ id: `track-2`, index: 1 }),
+      ],
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+
+    vi.spyOn(audio.element, `play`).mockRejectedValue(
+      new DOMException(``, `NotSupportedError`),
+    )
+
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
+
+    await flush()
+
+    controller.play()
+    await flush()
+
+    audio.element.dispatchEvent(new Event(`canplay`))
+    await flush()
+
+    expect(controller.state.hasError).toBe(true)
+
+    controller.select(`track-2`, { navigate: false })
+
+    await flush()
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-2`)
+    expect(controller.state.hasError).toBe(false)
+  })
+
+  it(`clears hasError when retrying play succeeds`, async () => {
+    const { reader, paginationState$ } = createReader({
+      spineItems: [createManifestSpineItem()],
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+
+    const playSpy = vi
+      .spyOn(audio.element, `play`)
+      .mockRejectedValue(new DOMException(``, `NotSupportedError`))
+
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
+
+    await flush()
+
+    controller.play()
+    await flush()
+
+    audio.element.dispatchEvent(new Event(`canplay`))
+    await flush()
+
+    expect(controller.state.hasError).toBe(true)
+
+    playSpy.mockResolvedValue(undefined)
+
+    controller.play()
+    await flush()
+
+    expect(controller.state.hasError).toBe(false)
+  })
 })

@@ -38,6 +38,7 @@ const initialState: AudioEnhancerState = {
   currentTrack: undefined,
   isPlaying: false,
   isLoading: false,
+  hasError: false,
   currentTime: 0,
   duration: undefined,
 }
@@ -118,6 +119,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           currentTrack: undefined,
           isLoading: false,
           isPlaying: false,
+          hasError: false,
           currentTime: 0,
           duration: undefined,
         })
@@ -220,7 +222,15 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           return EMPTY
         }
 
-        return this.audio.play$()
+        this.mergeCompare({ hasError: false })
+
+        return this.audio.play$().pipe(
+          catchError(() => {
+            this.mergeCompare({ hasError: true })
+
+            return EMPTY
+          }),
+        )
       }),
     )
 
@@ -274,6 +284,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       currentTrack,
       isLoading,
       isPlaying: false,
+      hasError: false,
       currentTime: 0,
       duration: undefined,
     })
