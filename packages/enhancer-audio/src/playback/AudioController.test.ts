@@ -496,6 +496,11 @@ describe(`AudioController`, () => {
 
     expect(controller.state.currentTrack?.id).toBe(`track-1`)
 
+    controller.play()
+    await flush()
+
+    playSpy.mockClear()
+
     vi.mocked(reader.navigation.goToRightOrBottomSpineItem).mockImplementation(
       () => {
         paginationState$.next(
