@@ -65,16 +65,10 @@ const getTrackAtSpineItemIndex = (
   return tracks.find((track) => track.index === index)
 }
 
-const getPaginationPlaybackTargets = ({
-  currentTrack,
-  pagination,
-  tracks,
-}: {
-  currentTrack: AudioTrack | undefined
-  pagination: PaginationTrackWindow
-  tracks: AudioTrack[]
-}) => {
-  const { endSpineItemIndex } = pagination
+const getVisibleTracks = (
+  tracks: AudioTrack[],
+  pagination: PaginationTrackWindow,
+) => {
   const beginTrack = getTrackAtSpineItemIndex(
     tracks,
     pagination.beginSpineItemIndex,
@@ -83,25 +77,11 @@ const getPaginationPlaybackTargets = ({
     tracks,
     pagination.endSpineItemIndex,
   )
-  const visibleTracks = [beginTrack, endTrack].filter(
+
+  return [beginTrack, endTrack].filter(
     (track, i, arr): track is AudioTrack =>
       track !== undefined && arr.indexOf(track) === i,
   )
-
-  const nextTrackInPaginationWindow =
-    currentTrack && endSpineItemIndex !== undefined
-      ? tracks.find(
-          ({ index }) =>
-            index > currentTrack.index && index <= endSpineItemIndex,
-        )
-      : undefined
-
-  const nextTrackAfterPageTurn = getTrackAtSpineItemIndex(
-    tracks,
-    currentTrack ? currentTrack.index + 1 : undefined,
-  )
-
-  return { visibleTracks, nextTrackInPaginationWindow, nextTrackAfterPageTurn }
 }
 
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
@@ -151,13 +131,38 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     this.visibleTrackIds$ = combineLatest([tracks$, pagination$]).pipe(
       map(([tracks, pagination]) =>
-        getPaginationPlaybackTargets({
-          tracks,
-          pagination,
-          currentTrack: undefined,
-        }).visibleTracks.map(({ id }) => id),
+        getVisibleTracks(tracks, pagination).map(({ id }) => id),
       ),
       distinctUntilChanged(arrayEqual),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    )
+
+    const currentTrack$ = this.state$.pipe(
+      map((state) => state.currentTrack),
+      distinctUntilChanged(),
+    )
+
+    const nextTrack$ = combineLatest([
+      tracks$,
+      pagination$,
+      currentTrack$,
+    ]).pipe(
+      map(([tracks, { endSpineItemIndex }, currentTrack]) => {
+        const nextTrackInPaginationWindow =
+          currentTrack && endSpineItemIndex !== undefined
+            ? tracks.find(
+                ({ index }) =>
+                  index > currentTrack.index && index <= endSpineItemIndex,
+              )
+            : undefined
+
+        const nextTrackAfterCurrentTrack = getTrackAtSpineItemIndex(
+          tracks,
+          currentTrack ? currentTrack.index + 1 : undefined,
+        )
+
+        return { nextTrackInPaginationWindow, nextTrackAfterCurrentTrack }
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
@@ -258,37 +263,32 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const endedSelectionIntent$ = this.audio.ended$.pipe(
-      withLatestFrom(pagination$),
-      switchMap(([, pagination]) => {
-        this.visualizer$.stop({ resetLevels: true })
+      withLatestFrom(nextTrack$),
+      switchMap(
+        ([, { nextTrackAfterCurrentTrack, nextTrackInPaginationWindow }]) => {
+          this.visualizer$.stop({ resetLevels: true })
 
-        const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
-          getPaginationPlaybackTargets({
-            tracks: this.state.tracks,
-            pagination,
-            currentTrack: this.state.currentTrack,
-          })
+          if (nextTrackInPaginationWindow) {
+            this.playbackContinuationTrackId = undefined
 
-        if (nextTrackInPaginationWindow) {
-          this.playbackContinuationTrackId = undefined
+            return of({
+              trackId: nextTrackInPaginationWindow.id,
+              options: { navigate: false, play: true },
+            })
+          }
 
-          return of({
-            trackId: nextTrackInPaginationWindow.id,
-            options: { navigate: false, play: true },
-          })
-        }
+          if (nextTrackAfterCurrentTrack) {
+            this.playbackContinuationTrackId = nextTrackAfterCurrentTrack.id
+          } else {
+            this.playbackContinuationTrackId = undefined
+            this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+          }
 
-        if (nextTrackAfterPageTurn) {
-          this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
-        } else {
-          this.playbackContinuationTrackId = undefined
-          this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-        }
+          this.reader.navigation.goToRightOrBottomSpineItem()
 
-        this.reader.navigation.goToRightOrBottomSpineItem()
-
-        return EMPTY
-      }),
+          return EMPTY
+        },
+      ),
     )
 
     const playbackInterrupted$ = merge(
