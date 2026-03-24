@@ -58,6 +58,10 @@ export class AudioElementAdapter {
     return this.element.paused
   }
 
+  get hasSource() {
+    return this.element.hasAttribute(`src`)
+  }
+
   play$() {
     return defer(() => from(this.element.play())).pipe(
       retry({

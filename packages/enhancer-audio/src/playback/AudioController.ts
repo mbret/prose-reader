@@ -34,11 +34,6 @@ type SelectCommand = {
   options: SelectAudioTrackOptions
 }
 
-type MountedSource = {
-  trackId: string
-  source: string
-}
-
 const initialState: AudioEnhancerState = {
   tracks: [],
   currentTrack: undefined,
@@ -62,7 +57,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly selectCommandSubject = new Subject<SelectCommand>()
   private readonly subscriptions = new Subscription()
 
-  private mountedSource: MountedSource | undefined
   private desiredPlaybackTrackId: string | undefined
   private shouldPlay = false
   private playbackContinuationTrackId: string | undefined
@@ -250,7 +244,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const playback$ = merge(resumePlayback$, selection$).pipe(
-      switchMap(() => this.playAudio$()),
+      switchMap(() => {
+        if (
+          !this.shouldPlay ||
+          !this.hasSource ||
+          this.state.currentTrack?.id !== this.desiredPlaybackTrackId
+        ) {
+          return EMPTY
+        }
+
+        return this.audio.play$()
+      }),
     )
 
     this.subscriptions.add(playbackInterrupted$.subscribe())
@@ -293,7 +297,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private get hasSource() {
-    return this.mountedSource !== undefined
+    return this.audio.hasSource
   }
 
   private resetTrackSelection({
@@ -329,35 +333,24 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private unmountCurrentSource() {
-    if (!this.mountedSource) return
+    if (!this.hasSource) return
 
-    const { trackId } = this.mountedSource
+    const trackId = this.state.currentTrack?.id
 
     if (this.shouldPlay) {
       this.audio.pause()
     }
 
     this.audio.unloadSource()
-    this.mountedSource = undefined
 
-    this.resourcesResolver.releaseTrackSource(trackId)
-  }
-
-  private mountSource(nextSource: MountedSource) {
-    this.unmountCurrentSource()
-    this.mountedSource = nextSource
-    this.audio.loadSource(nextSource.source)
-  }
-
-  private playAudio$() {
-    if (
-      !this.shouldPlay ||
-      this.mountedSource?.trackId !== this.desiredPlaybackTrackId
-    ) {
-      return EMPTY
+    if (trackId) {
+      this.resourcesResolver.releaseTrackSource(trackId)
     }
+  }
 
-    return this.audio.play$()
+  private mountSource(source: string) {
+    this.unmountCurrentSource()
+    this.audio.loadSource(source)
   }
 
   private resolveTrackSource(track: AudioTrack) {
@@ -396,6 +389,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       return shouldPlay ? of(undefined) : EMPTY
     }
 
+    this.unmountCurrentSource()
+
     this.resetTrackSelection({
       currentTrack: track,
       isLoading: true,
@@ -409,9 +404,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       tap(({ source }) => {
         if (!source) {
           this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
-          this.unmountCurrentSource()
         } else {
-          this.mountSource({ trackId: track.id, source })
+          this.mountSource(source)
         }
 
         this.mergeCompare({ isLoading: false })
