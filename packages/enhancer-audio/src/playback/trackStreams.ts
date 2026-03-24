@@ -7,7 +7,6 @@ import {
   map,
   type Observable,
   shareReplay,
-  withLatestFrom,
 } from "rxjs"
 import type { AudioEnhancerState, AudioTrack } from "../types"
 import { isAudioSpineItem } from "../utils"
@@ -100,27 +99,9 @@ export function createTrackStreams(
     shareReplay({ bufferSize: 1, refCount: true }),
   )
 
-  const trackSync$ = tracks$.pipe(
-    withLatestFrom(state$),
-    map(([tracks, state]) => {
-      const nextTrackIds = new Set(tracks.map(({ id }) => id))
-      const removedTrackIds = state.tracks
-        .filter(({ id }) => !nextTrackIds.has(id))
-        .map(({ id }) => id)
-      const currentTrack =
-        state.currentTrack &&
-        tracks.find(({ id }) => id === state.currentTrack?.id)
-      const shouldResetPlayback =
-        state.currentTrack !== undefined && currentTrack === undefined
-
-      return { tracks, currentTrack, removedTrackIds, shouldResetPlayback }
-    }),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  )
-
   return {
+    tracks$,
     visibleTrackIds$,
     nextTrack$,
-    trackSync$,
   }
 }

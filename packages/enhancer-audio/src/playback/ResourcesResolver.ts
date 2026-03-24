@@ -67,9 +67,13 @@ export class ResourcesResolver {
     cachedSource.release?.()
   }
 
-  public destroy() {
+  public releaseAll() {
     for (const trackId of this.cachedSourceByTrackId.keys()) {
       this.releaseTrackSource(trackId)
     }
+  }
+
+  public destroy() {
+    this.releaseAll()
   }
 }

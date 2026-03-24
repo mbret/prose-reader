@@ -14,6 +14,7 @@ import {
   Subject,
   Subscription,
   share,
+  skip,
   switchMap,
   takeUntil,
   tap,
@@ -75,7 +76,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     const pauseCommand$ = this.pauseCommandSubject
     const userSelect$ = this.selectCommandSubject
 
-    const { visibleTrackIds$, nextTrack$, trackSync$ } = createTrackStreams(
+    const { tracks$, visibleTrackIds$, nextTrack$ } = createTrackStreams(
       this.reader,
       this.state$,
     )
@@ -134,10 +135,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     const playbackReset$ = merge(
       visibleTrackReset$,
-      trackSync$.pipe(
-        filter(({ shouldResetPlayback }) => shouldResetPlayback),
-        map(({ tracks }) => tracks),
-      ),
+      tracks$.pipe(skip(1)),
     ).pipe(share())
 
     const playSelectionIntent$ = playCommand$.pipe(
@@ -275,28 +273,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      trackSync$
-        .pipe(
-          tap(({ removedTrackIds }) => {
-            for (const trackId of removedTrackIds) {
-              if (trackId === this.mountedSource?.trackId) continue
-
-              this.releaseTrackSource(trackId)
-            }
-          }),
-          filter(({ shouldResetPlayback }) => !shouldResetPlayback),
-        )
-        .subscribe(({ tracks, currentTrack }) => {
-          this.mergeCompare({
-            tracks,
-            currentTrack,
-            isLoading: currentTrack ? this.state.isLoading : false,
-            isPlaying: currentTrack ? this.state.isPlaying : false,
-            currentTime: currentTrack ? this.state.currentTime : 0,
-            duration: currentTrack ? this.state.duration : undefined,
-          })
-          this.visualizer$.reset(currentTrack?.id)
-        }),
+      tracks$.subscribe((tracks) => {
+        this.resourcesResolver.releaseAll()
+        this.mergeCompare({ tracks })
+      }),
     )
 
     this.subscriptions.add(
