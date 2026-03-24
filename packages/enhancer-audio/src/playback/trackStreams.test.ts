@@ -32,6 +32,7 @@ const createState = (
   isLoading: false,
   currentTime: 0,
   duration: undefined,
+  hasError: false,
   ...overrides,
 })
 
