@@ -457,9 +457,7 @@ describe(`AudioController`, () => {
       `https://example.com/track-2.mp3`,
     )
     expect(createObjectUrl).not.toHaveBeenCalled()
-    expect(
-      controller.resourcesResolver.cachedSourceByTrackId.has(`track-1`),
-    ).toBe(false)
+    expect(controller.resourcesResolver.hasCachedSource(`track-1`)).toBe(false)
   })
 
   /**

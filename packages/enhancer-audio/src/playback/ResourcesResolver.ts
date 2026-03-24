@@ -8,7 +8,11 @@ type CachedTrackSource = {
 }
 
 export class ResourcesResolver {
-  public readonly cachedSourceByTrackId = new Map<string, CachedTrackSource>()
+  private readonly cachedSourceByTrackId = new Map<string, CachedTrackSource>()
+
+  public hasCachedSource(trackId: string): boolean {
+    return this.cachedSourceByTrackId.has(trackId)
+  }
 
   public getTrackResourceUrl$ = (
     track: AudioTrack,
