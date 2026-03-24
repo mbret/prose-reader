@@ -41,18 +41,6 @@ type SelectCommand = {
   options: SelectAudioTrackOptions
 }
 
-type ControllerCommand =
-  | {
-      type: `play`
-    }
-  | {
-      type: `pause`
-    }
-  | {
-      type: `select`
-      command: SelectCommand
-    }
-
 type PaginationTrackWindow = {
   beginSpineItemIndex: number | undefined
   endSpineItemIndex: number | undefined
@@ -138,7 +126,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   readonly resourcesResolver = new ResourcesResolver()
   readonly visibleTrackIds$: Observable<string[]>
 
-  private readonly commandSubject = new Subject<ControllerCommand>()
+  private readonly playCommandSubject = new Subject<void>()
+  private readonly pauseCommandSubject = new Subject<void>()
+  private readonly selectCommandSubject = new Subject<SelectCommand>()
   private readonly subscriptions = new Subscription()
 
   private mountedSource: MountedSource | undefined
@@ -153,29 +143,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.audioElement.preload = `metadata`
     this.visualizer$ = new AudioVisualizer(this.audioElement)
 
-    const command$ = this.commandSubject.pipe(share())
-    const playCommand$ = command$.pipe(
-      filter(
-        (command): command is Extract<ControllerCommand, { type: `play` }> =>
-          command.type === `play`,
-      ),
-      share(),
-    )
-    const pauseCommand$ = command$.pipe(
-      filter(
-        (command): command is Extract<ControllerCommand, { type: `pause` }> =>
-          command.type === `pause`,
-      ),
-      share(),
-    )
-    const userSelect$ = command$.pipe(
-      filter(
-        (command): command is Extract<ControllerCommand, { type: `select` }> =>
-          command.type === `select`,
-      ),
-      map(({ command }) => command),
-      share(),
-    )
+    const playCommand$ = this.playCommandSubject.pipe(share())
+    const pauseCommand$ = this.pauseCommandSubject.pipe(share())
+    const userSelect$ = this.selectCommandSubject.pipe(share())
 
     const tracks$ = this.reader.context.manifest$.pipe(
       map((manifest) =>
@@ -306,14 +276,20 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const visibleTrackSelectionIntent$ = visibleTrackContext$.pipe(
-      filter(({ trackId }) => trackId !== undefined),
+      filter(
+        (
+          value,
+        ): value is typeof value & {
+          trackId: string
+        } => value.trackId !== undefined,
+      ),
       tap(({ shouldContinuePlayback }) => {
         if (shouldContinuePlayback) {
           this.clearPlaybackContinuation()
         }
       }),
       map(({ trackId, shouldContinuePlayback }) => ({
-        trackId: trackId as string,
+        trackId,
         options: {
           navigate: false,
           play: shouldContinuePlayback ? true : undefined,
@@ -768,25 +744,18 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   select(trackId: string, options: SelectAudioTrackOptions = {}) {
-    this.commandSubject.next({
-      type: `select`,
-      command: {
-        trackId,
-        options,
-      },
+    this.selectCommandSubject.next({
+      trackId,
+      options,
     })
   }
 
   play() {
-    this.commandSubject.next({
-      type: `play`,
-    })
+    this.playCommandSubject.next()
   }
 
   pause() {
-    this.commandSubject.next({
-      type: `pause`,
-    })
+    this.pauseCommandSubject.next()
   }
 
   toggle() {
@@ -807,7 +776,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
   destroy() {
     this.subscriptions.unsubscribe()
-    this.commandSubject.complete()
+    this.playCommandSubject.complete()
+    this.pauseCommandSubject.complete()
+    this.selectCommandSubject.complete()
     this.visualizer$.destroy()
     this.pauseAudio()
     this.clearMountedSource()
