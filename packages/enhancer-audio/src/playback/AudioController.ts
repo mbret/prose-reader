@@ -77,10 +77,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.audio = audio
     this.visualizer$ = new AudioVisualizer(this.audio.element)
 
-    const playCommand$ = this.playCommandSubject
-    const pauseCommand$ = this.pauseCommandSubject
-    const userSelect$ = this.selectCommandSubject
-
     const { tracks$, visibleTrackIds$, nextTrack$ } = createTrackStreams(
       this.reader,
       this.state$,
@@ -140,7 +136,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     const playbackReset$ = merge(visibleTrackReset$, tracks$).pipe(share())
 
-    const playSelectionIntent$ = playCommand$.pipe(
+    const playSelectionIntent$ = this.playCommandSubject.pipe(
       filter(() => !this.hasSource),
       map(() => this.state.currentTrack ?? this.state.tracks[0]),
       filter(isDefined),
@@ -150,7 +146,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       })),
     )
 
-    const resumePlayback$ = playCommand$.pipe(
+    const resumePlayback$ = this.playCommandSubject.pipe(
       filter(() => this.hasSource),
       tap(() => {
         this.setDesiredPlayback({
@@ -190,10 +186,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const playbackInterrupted$ = merge(
-      playCommand$,
-      pauseCommand$,
+      this.playCommandSubject,
+      this.pauseCommandSubject,
       playbackReset$.pipe(map(() => undefined)),
-      userSelect$.pipe(
+      this.selectCommandSubject.pipe(
         filter(({ options }) => options.navigate !== false),
         map(() => undefined),
       ),
@@ -204,7 +200,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const selection$ = merge(
-      userSelect$,
+      this.selectCommandSubject,
       visibleTrackSelectionIntent$,
       endedSelectionIntent$,
       playSelectionIntent$,
@@ -276,7 +272,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(playback$.subscribe())
 
     this.subscriptions.add(
-      pauseCommand$.subscribe(() => {
+      this.pauseCommandSubject.subscribe(() => {
         this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
       }),
     )
