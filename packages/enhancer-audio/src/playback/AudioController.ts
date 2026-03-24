@@ -57,6 +57,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly selectCommandSubject = new Subject<SelectCommand>()
   private readonly subscriptions = new Subscription()
 
+  /**
+   * Read synchronously inside stream closures. This relies on RxJS
+   * default (synchronous) scheduling — if an async scheduler or
+   * time-based operator is introduced between a mutation of these
+   * fields and a closure that reads them, the read may be stale.
+   */
   private desiredPlaybackTrackId: string | undefined
   private shouldPlay = false
 
