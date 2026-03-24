@@ -416,19 +416,23 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     ).pipe(share())
     const selection$ = selectionIntent$.pipe(
       withLatestFrom(this.state$),
+      filter(([selectionIntent, state]) =>
+        state.tracks.some(({ id }) => id === selectionIntent.trackId),
+      ),
+      tap(([selectionIntent]) => {
+        if (selectionIntent.options.navigate === false) return
+
+        this.reader.navigation.navigate({
+          spineItem: selectionIntent.trackId,
+          animation: `turn`,
+        })
+      }),
       tap(([selectionIntent, state]) => {
         if (
           state.currentTrack?.id !== selectionIntent.trackId ||
           !state.isLoading
         ) {
           return
-        }
-
-        if (selectionIntent.options.navigate !== false) {
-          this.reader.navigation.navigate({
-            spineItem: state.currentTrack.index,
-            animation: `turn`,
-          })
         }
 
         if (selectionIntent.options.play !== undefined) {
@@ -707,13 +711,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       const track = this.state.tracks.find(({ id }) => id === trackId)
 
       if (!track) return EMPTY
-
-      if (options.navigate !== false) {
-        this.reader.navigation.navigate({
-          spineItem: track.index,
-          animation: `turn`,
-        })
-      }
 
       const currentTrack = this.state.currentTrack
       const shouldPlay =
