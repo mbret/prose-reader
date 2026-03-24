@@ -60,24 +60,13 @@ const initialState: AudioEnhancerState = {
   duration: undefined,
 }
 
-const getTrackAtSpineItemIndex = ({
-  index,
-  tracks,
-}: {
-  index: number | undefined
-  tracks: AudioTrack[]
-}) => {
+const getTrackAtSpineItemIndex = (
+  tracks: AudioTrack[],
+  index: number | undefined,
+) => {
   if (index === undefined) return undefined
 
   return tracks.find((track) => track.index === index)
-}
-
-const isUniqueDefinedTrack = (
-  track: AudioTrack | undefined,
-  index: number,
-  values: Array<AudioTrack | undefined>,
-): track is AudioTrack => {
-  return track !== undefined && values.indexOf(track) === index
 }
 
 const getPaginationPlaybackTargets = ({
@@ -89,17 +78,20 @@ const getPaginationPlaybackTargets = ({
   pagination: PaginationTrackWindow
   tracks: AudioTrack[]
 }) => {
-  const endSpineItemIndex = pagination.endSpineItemIndex
-  const visibleTracks = [
-    getTrackAtSpineItemIndex({
-      tracks,
-      index: pagination.beginSpineItemIndex,
-    }),
-    getTrackAtSpineItemIndex({
-      tracks,
-      index: pagination.endSpineItemIndex,
-    }),
-  ].filter(isUniqueDefinedTrack)
+  const { endSpineItemIndex } = pagination
+  const beginTrack = getTrackAtSpineItemIndex(
+    tracks,
+    pagination.beginSpineItemIndex,
+  )
+  const endTrack = getTrackAtSpineItemIndex(
+    tracks,
+    pagination.endSpineItemIndex,
+  )
+  const visibleTracks = [beginTrack, endTrack].filter(
+    (track, i, arr): track is AudioTrack =>
+      track !== undefined && arr.indexOf(track) === i,
+  )
+
   const nextTrackInPaginationWindow =
     currentTrack && endSpineItemIndex !== undefined
       ? tracks.find(
@@ -107,16 +99,13 @@ const getPaginationPlaybackTargets = ({
             index > currentTrack.index && index <= endSpineItemIndex,
         )
       : undefined
-  const nextTrackAfterPageTurn = getTrackAtSpineItemIndex({
-    tracks,
-    index: currentTrack ? currentTrack.index + 1 : undefined,
-  })
 
-  return {
-    visibleTracks,
-    nextTrackInPaginationWindow,
-    nextTrackAfterPageTurn,
-  }
+  const nextTrackAfterPageTurn = getTrackAtSpineItemIndex(
+    tracks,
+    currentTrack ? currentTrack.index + 1 : undefined,
+  )
+
+  return { visibleTracks, nextTrackInPaginationWindow, nextTrackAfterPageTurn }
 }
 
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
@@ -156,19 +145,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           mediaType: item.mediaType,
         })),
       ),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     )
 
     const pagination$ = this.reader.pagination.state$.pipe(
       mapKeysTo([`beginSpineItemIndex`, `endSpineItemIndex`]),
       distinctUntilChanged(isShallowEqual),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     )
 
     this.visibleTrackIds$ = combineLatest([tracks$, pagination$]).pipe(
@@ -180,39 +163,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         }).visibleTracks.map(({ id }) => id),
       ),
       distinctUntilChanged(arrayEqual),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     )
 
-    const canPlay$ = fromEvent(this.audioElement, `canplay`).pipe(share())
-    const ended$ = fromEvent(this.audioElement, `ended`).pipe(
-      map(() => undefined),
-      share(),
-    )
-
-    const isPlaying$ = merge(
-      fromEvent(this.audioElement, `play`).pipe(map(() => true)),
-      fromEvent(this.audioElement, `pause`).pipe(map(() => false)),
-    ).pipe(share())
-
-    const metrics$ = merge(
-      fromEvent(this.audioElement, `timeupdate`),
-      fromEvent(this.audioElement, `seeking`),
-      fromEvent(this.audioElement, `seeked`),
-      fromEvent(this.audioElement, `loadedmetadata`),
-      fromEvent(this.audioElement, `durationchange`),
-      canPlay$,
-    ).pipe(
-      map(() => ({
-        currentTime: this.audioElement.currentTime,
-        duration: Number.isFinite(this.audioElement.duration)
-          ? this.audioElement.duration
-          : undefined,
-      })),
-      share(),
-    )
+    const { canPlay$, ended$, isPlaying$, metrics$ } =
+      this.createAudioEventStreams()
 
     const trackSync$ = tracks$.pipe(
       withLatestFrom(this.state$),
@@ -227,17 +182,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         const shouldResetPlayback =
           state.currentTrack !== undefined && currentTrack === undefined
 
-        return {
-          tracks,
-          currentTrack,
-          removedTrackIds,
-          shouldResetPlayback,
-        }
+        return { tracks, currentTrack, removedTrackIds, shouldResetPlayback }
       }),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
     )
 
     const visibleTrackContext$ = this.visibleTrackIds$.pipe(
@@ -273,11 +220,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     const visibleTrackSelectionIntent$ = visibleTrackContext$.pipe(
       filter(
-        (
-          value,
-        ): value is typeof value & {
-          trackId: string
-        } => value.trackId !== undefined,
+        (value): value is typeof value & { trackId: string } =>
+          value.trackId !== undefined,
       ),
       tap(({ shouldContinuePlayback }) => {
         if (shouldContinuePlayback) {
@@ -307,10 +251,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       filter(isDefined),
       map((track) => ({
         trackId: track.id,
-        options: {
-          navigate: false,
-          play: true,
-        },
+        options: { navigate: false, play: true },
       })),
     )
 
@@ -322,51 +263,40 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           trackId: this.state.currentTrack?.id,
         })
       }),
-      map(() => undefined),
     )
 
     const endedSelectionIntent$ = ended$.pipe(
       withLatestFrom(pagination$),
-      switchMap(([, pagination]) =>
-        defer(() => {
-          this.visualizer$.stop({
-            resetLevels: true,
+      switchMap(([, pagination]) => {
+        this.visualizer$.stop({ resetLevels: true })
+
+        const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
+          getPaginationPlaybackTargets({
+            tracks: this.state.tracks,
+            pagination,
+            currentTrack: this.state.currentTrack,
           })
 
-          const { nextTrackAfterPageTurn, nextTrackInPaginationWindow } =
-            getPaginationPlaybackTargets({
-              tracks: this.state.tracks,
-              pagination,
-              currentTrack: this.state.currentTrack,
-            })
+        if (nextTrackInPaginationWindow) {
+          this.playbackContinuationTrackId = undefined
 
-          if (nextTrackInPaginationWindow) {
-            this.playbackContinuationTrackId = undefined
+          return of({
+            trackId: nextTrackInPaginationWindow.id,
+            options: { navigate: false, play: true },
+          })
+        }
 
-            return of({
-              trackId: nextTrackInPaginationWindow.id,
-              options: {
-                navigate: false,
-                play: true,
-              },
-            })
-          }
+        if (nextTrackAfterPageTurn) {
+          this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
+        } else {
+          this.playbackContinuationTrackId = undefined
+          this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+        }
 
-          if (nextTrackAfterPageTurn) {
-            this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
-          } else {
-            this.playbackContinuationTrackId = undefined
-            this.setDesiredPlayback({
-              shouldPlay: false,
-              trackId: undefined,
-            })
-          }
+        this.reader.navigation.goToRightOrBottomSpineItem()
 
-          this.reader.navigation.goToRightOrBottomSpineItem()
-
-          return EMPTY
-        }),
-      ),
+        return EMPTY
+      }),
     )
 
     const playbackInterrupted$ = merge(
@@ -383,34 +313,29 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
-    const selectionIntent$ = merge(
+    const selection$ = merge(
       userSelect$,
       visibleTrackSelectionIntent$,
       endedSelectionIntent$,
       playSelectionIntent$,
-    ).pipe(share())
-    const selection$ = selectionIntent$.pipe(
+    ).pipe(
       withLatestFrom(this.state$),
       filter(([selectionIntent, state]) =>
         state.tracks.some(({ id }) => id === selectionIntent.trackId),
       ),
-      tap(([selectionIntent]) => {
-        if (selectionIntent.options.navigate === false) return
-
-        this.reader.navigation.navigate({
-          spineItem: selectionIntent.trackId,
-          animation: `turn`,
-        })
-      }),
       tap(([selectionIntent, state]) => {
-        if (
-          state.currentTrack?.id !== selectionIntent.trackId ||
-          !state.isLoading
-        ) {
-          return
+        if (selectionIntent.options.navigate !== false) {
+          this.reader.navigation.navigate({
+            spineItem: selectionIntent.trackId,
+            animation: `turn`,
+          })
         }
 
-        if (selectionIntent.options.play !== undefined) {
+        if (
+          state.currentTrack?.id === selectionIntent.trackId &&
+          state.isLoading &&
+          selectionIntent.options.play !== undefined
+        ) {
           this.setDesiredPlayback({
             shouldPlay: selectionIntent.options.play,
             trackId: state.currentTrack.id,
@@ -425,13 +350,8 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           ),
       ),
       switchMap(([{ trackId, options }]) =>
-        this.selectTrack$({
-          trackId,
-          options,
-          playbackReset$,
-        }),
+        this.selectTrack$({ trackId, options, playbackReset$ }),
       ),
-      share(),
     )
 
     const playback$ = merge(resumePlayback$, selection$).pipe(
@@ -442,42 +362,26 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.subscriptions.add(playback$.subscribe())
 
     this.subscriptions.add(
-      pauseCommand$
-        .pipe(
-          tap(() => {
-            this.setDesiredPlayback({
-              shouldPlay: false,
-              trackId: undefined,
-            })
-          }),
-        )
-        .subscribe(),
+      pauseCommand$.subscribe(() => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+      }),
     )
 
     this.subscriptions.add(
-      playbackReset$
-        .pipe(
-          tap((tracks) => {
-            this.setDesiredPlayback({
-              shouldPlay: false,
-              trackId: undefined,
-            })
-            this.visualizer$.stop({
-              resetLevels: true,
-            })
-            this.applyMountedSource(undefined)
-            this.mergeCompare({
-              tracks,
-              currentTrack: undefined,
-              isLoading: false,
-              isPlaying: false,
-              currentTime: 0,
-              duration: undefined,
-            })
-            this.visualizer$.reset(undefined)
-          }),
-        )
-        .subscribe(),
+      playbackReset$.subscribe((tracks) => {
+        this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+        this.visualizer$.stop({ resetLevels: true })
+        this.applyMountedSource(undefined)
+        this.mergeCompare({
+          tracks,
+          currentTrack: undefined,
+          isLoading: false,
+          isPlaying: false,
+          currentTime: 0,
+          duration: undefined,
+        })
+        this.visualizer$.reset(undefined)
+      }),
     )
 
     this.subscriptions.add(
@@ -491,54 +395,69 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             }
           }),
           filter(({ shouldResetPlayback }) => !shouldResetPlayback),
-          tap(({ tracks, currentTrack }) => {
-            this.mergeCompare({
-              tracks,
-              currentTrack,
-              isLoading: currentTrack ? this.state.isLoading : false,
-              isPlaying: currentTrack ? this.state.isPlaying : false,
-              currentTime: currentTrack ? this.state.currentTime : 0,
-              duration: currentTrack ? this.state.duration : undefined,
-            })
-            this.visualizer$.reset(currentTrack?.id)
-          }),
         )
-        .subscribe(),
+        .subscribe(({ tracks, currentTrack }) => {
+          this.mergeCompare({
+            tracks,
+            currentTrack,
+            isLoading: currentTrack ? this.state.isLoading : false,
+            isPlaying: currentTrack ? this.state.isPlaying : false,
+            currentTime: currentTrack ? this.state.currentTime : 0,
+            duration: currentTrack ? this.state.duration : undefined,
+          })
+          this.visualizer$.reset(currentTrack?.id)
+        }),
     )
 
     this.subscriptions.add(
-      isPlaying$
-        .pipe(
-          tap((isPlaying) => {
-            this.mergeCompare({
-              isPlaying,
-            })
+      isPlaying$.subscribe((isPlaying) => {
+        this.mergeCompare({ isPlaying })
 
-            if (!isPlaying) {
-              this.visualizer$.stop()
-              return
-            }
+        if (!isPlaying) {
+          this.visualizer$.stop()
+          return
+        }
 
-            if (!this.state.currentTrack) return
+        if (!this.state.currentTrack) return
 
-            this.visualizer$.start(this.state.currentTrack)
-          }),
-        )
-        .subscribe(),
+        this.visualizer$.start(this.state.currentTrack)
+      }),
     )
 
     this.subscriptions.add(
-      metrics$
-        .pipe(
-          tap(({ currentTime, duration }) => {
-            this.mergeCompare({
-              currentTime,
-              duration,
-            })
-          }),
-        )
-        .subscribe(),
+      metrics$.subscribe(({ currentTime, duration }) => {
+        this.mergeCompare({ currentTime, duration })
+      }),
     )
+  }
+
+  private createAudioEventStreams() {
+    const canPlay$ = fromEvent(this.audioElement, `canplay`).pipe(share())
+    const ended$ = fromEvent(this.audioElement, `ended`).pipe(share())
+
+    const isPlaying$ = merge(
+      fromEvent(this.audioElement, `play`).pipe(map(() => true)),
+      fromEvent(this.audioElement, `pause`).pipe(map(() => false)),
+    ).pipe(share())
+
+    const metrics$ = merge(
+      fromEvent(this.audioElement, `timeupdate`),
+      fromEvent(this.audioElement, `seeking`),
+      fromEvent(this.audioElement, `seeked`),
+      fromEvent(this.audioElement, `loadedmetadata`),
+      fromEvent(this.audioElement, `durationchange`),
+      canPlay$,
+    ).pipe(
+      map(() => ({
+        currentTime: this.audioElement.currentTime,
+        duration: Number.isFinite(this.audioElement.duration)
+          ? this.audioElement.duration
+          : undefined,
+      })),
+      share(),
+    )
+
+    return { canPlay$, ended$, isPlaying$, metrics$ }
   }
 
   get state() {
@@ -586,6 +505,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.audioElement.pause()
     }
   }
+
   private applyMountedSource(nextMountedSource: MountedSource | undefined) {
     const previousMountedSource = this.mountedSource
 
@@ -642,16 +562,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private resolveTrackSource(track: AudioTrack) {
-    return defer(() =>
-      from(Promise.resolve(this.reader.spineItemsManager.get(track.index))),
-    ).pipe(
-      filter(isDefined),
-      switchMap((spineItem) =>
-        this.resourcesResolver.getTrackResourceUrl$(
-          track,
-          spineItem.resourcesHandler,
-        ),
-      ),
+    const spineItem = this.reader.spineItemsManager.get(track.index)
+
+    if (!spineItem) return EMPTY
+
+    return this.resourcesResolver.getTrackResourceUrl$(
+      track,
+      spineItem.resourcesHandler,
     )
   }
 
@@ -668,74 +585,54 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     options: SelectAudioTrackOptions
     playbackReset$: Observable<AudioTrack[]>
   }) {
-    return defer(() => {
-      const track = this.state.tracks.find(({ id }) => id === trackId)
+    const track = this.state.tracks.find(({ id }) => id === trackId)
 
-      if (!track) return EMPTY
+    if (!track) return EMPTY
 
-      const currentTrack = this.state.currentTrack
-      const shouldPlay =
-        options.play ??
-        (!this.audioElement.paused && currentTrack !== undefined)
+    const currentTrack = this.state.currentTrack
+    const shouldPlay =
+      options.play ?? (!this.audioElement.paused && currentTrack !== undefined)
 
-      this.setDesiredPlayback({
-        shouldPlay,
-        trackId: track.id,
-      })
+    this.setDesiredPlayback({ shouldPlay, trackId: track.id })
 
-      if (currentTrack?.id === track.id && this.hasSource) {
-        this.visualizer$.setTrack(track.id)
+    if (currentTrack?.id === track.id && this.hasSource) {
+      this.visualizer$.setTrack(track.id)
 
-        return shouldPlay ? of(undefined) : EMPTY
-      }
+      return shouldPlay ? of(undefined) : EMPTY
+    }
 
-      this.resetTrackSelection({
-        currentTrack: track,
-        isLoading: true,
-        isPlaying: false,
-      })
-
-      return this.resolveTrackSource(track).pipe(
-        map((source) => ({ source })),
-        defaultIfEmpty({ source: undefined }),
-        catchError(() => of({ source: undefined })),
-        takeUntil(playbackReset$),
-        tap(({ source }) => {
-          if (!source) {
-            this.setDesiredPlayback({
-              shouldPlay: false,
-              trackId: undefined,
-            })
-            this.applyMountedSource(undefined)
-            this.resetTrackSelection({
-              currentTrack: track,
-              isLoading: false,
-              isPlaying: false,
-            })
-            return
-          }
-
-          this.applyMountedSource({
-            trackId: track.id,
-            source,
-          })
-          this.resetTrackSelection({
-            currentTrack: track,
-            isLoading: false,
-            isPlaying: false,
-          })
-        }),
-        filter(({ source }) => source !== undefined),
-        map(() => undefined),
-      )
+    this.resetTrackSelection({
+      currentTrack: track,
+      isLoading: true,
+      isPlaying: false,
     })
+
+    return this.resolveTrackSource(track).pipe(
+      map((source) => ({ source })),
+      defaultIfEmpty({ source: undefined }),
+      catchError(() => of({ source: undefined })),
+      takeUntil(playbackReset$),
+      tap(({ source }) => {
+        if (!source) {
+          this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
+          this.applyMountedSource(undefined)
+        } else {
+          this.applyMountedSource({ trackId: track.id, source })
+        }
+
+        this.resetTrackSelection({
+          currentTrack: track,
+          isLoading: false,
+          isPlaying: false,
+        })
+      }),
+      filter(({ source }) => source !== undefined),
+      map(() => undefined),
+    )
   }
 
   select(trackId: string, options: SelectAudioTrackOptions = {}) {
-    this.selectCommandSubject.next({
-      trackId,
-      options,
-    })
+    this.selectCommandSubject.next({ trackId, options })
   }
 
   play() {
@@ -756,9 +653,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   setCurrentTime(value: number) {
-    this.mergeCompare({
-      currentTime: value,
-    })
+    this.mergeCompare({ currentTime: value })
     this.audioElement.currentTime = value
   }
 
@@ -768,10 +663,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.pauseCommandSubject.complete()
     this.selectCommandSubject.complete()
     this.visualizer$.destroy()
-    this.setDesiredPlayback({
-      shouldPlay: false,
-      trackId: undefined,
-    })
+    this.setDesiredPlayback({ shouldPlay: false, trackId: undefined })
     this.applyMountedSource(undefined)
     this.resourcesResolver.destroy()
 
