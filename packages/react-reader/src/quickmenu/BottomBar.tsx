@@ -23,7 +23,7 @@ import {
 import { useObserve } from "reactjrx"
 import { map } from "rxjs"
 import { AudioControlsSection } from "../audio/AudioControlsSection"
-import { useHasAudioControls } from "../audio/useHasAudioControls"
+import { useHasVisibleAudioTracks } from "../audio/useHasVisibleAudioTracks"
 import {
   hasAnnotationsEnhancer,
   hasGalleryEnhancer,
@@ -83,7 +83,7 @@ export const BottomBar = memo(
     const isScrollingMode = settings?.computedPageTurnMode === "scrollable"
     const isVerticalDirection =
       settings?.computedPageTurnDirection === "vertical"
-    const hasAudioControls = useHasAudioControls()
+    const hasAudioControls = useHasVisibleAudioTracks()
     const [isExtraOpen, setIsExtraOpen] = useState(true)
 
     useEffect(() => {
