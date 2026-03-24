@@ -6,23 +6,18 @@ import {
   catchError,
   combineLatest,
   defaultIfEmpty,
-  defer,
   distinctUntilChanged,
   EMPTY,
   filter,
-  from,
-  fromEvent,
   map,
   merge,
   type Observable,
   of,
-  retry,
   Subject,
   Subscription,
   share,
   shareReplay,
   switchMap,
-  take,
   takeUntil,
   tap,
   withLatestFrom,
@@ -34,6 +29,7 @@ import type {
 } from "../types"
 import { isAudioSpineItem } from "../utils"
 import { AudioVisualizer } from "../visualizer"
+import { AudioElementAdapter } from "./AudioElementAdapter"
 import { ResourcesResolver } from "./ResourcesResolver"
 
 type SelectCommand = {
@@ -110,7 +106,7 @@ const getPaginationPlaybackTargets = ({
 
 export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private readonly reader: Reader
-  private readonly audioElement = document.createElement(`audio`)
+  private readonly audio = new AudioElementAdapter()
   readonly visualizer$: AudioVisualizer
   readonly resourcesResolver = new ResourcesResolver()
   readonly visibleTrackIds$: Observable<string[]>
@@ -129,8 +125,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     super(initialState)
 
     this.reader = reader
-    this.audioElement.preload = `metadata`
-    this.visualizer$ = new AudioVisualizer(this.audioElement)
+    this.visualizer$ = new AudioVisualizer(this.audio.element)
 
     const playCommand$ = this.playCommandSubject
     const pauseCommand$ = this.pauseCommandSubject
@@ -165,9 +160,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       distinctUntilChanged(arrayEqual),
       shareReplay({ bufferSize: 1, refCount: true }),
     )
-
-    const { canPlay$, ended$, isPlaying$, metrics$ } =
-      this.createAudioEventStreams()
 
     const trackSync$ = tracks$.pipe(
       withLatestFrom(this.state$),
@@ -265,7 +257,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       }),
     )
 
-    const endedSelectionIntent$ = ended$.pipe(
+    const endedSelectionIntent$ = this.audio.ended$.pipe(
       withLatestFrom(pagination$),
       switchMap(([, pagination]) => {
         this.visualizer$.stop({ resetLevels: true })
@@ -355,7 +347,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     const playback$ = merge(resumePlayback$, selection$).pipe(
-      switchMap(() => this.playAudio$(canPlay$)),
+      switchMap(() => this.playAudio$()),
     )
 
     this.subscriptions.add(playbackInterrupted$.subscribe())
@@ -410,7 +402,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      isPlaying$.subscribe((isPlaying) => {
+      this.audio.isPlaying$.subscribe((isPlaying) => {
         this.mergeCompare({ isPlaying })
 
         if (!isPlaying) {
@@ -425,39 +417,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     )
 
     this.subscriptions.add(
-      metrics$.subscribe(({ currentTime, duration }) => {
+      this.audio.metrics$.subscribe(({ currentTime, duration }) => {
         this.mergeCompare({ currentTime, duration })
       }),
     )
-  }
-
-  private createAudioEventStreams() {
-    const canPlay$ = fromEvent(this.audioElement, `canplay`).pipe(share())
-    const ended$ = fromEvent(this.audioElement, `ended`).pipe(share())
-
-    const isPlaying$ = merge(
-      fromEvent(this.audioElement, `play`).pipe(map(() => true)),
-      fromEvent(this.audioElement, `pause`).pipe(map(() => false)),
-    ).pipe(share())
-
-    const metrics$ = merge(
-      fromEvent(this.audioElement, `timeupdate`),
-      fromEvent(this.audioElement, `seeking`),
-      fromEvent(this.audioElement, `seeked`),
-      fromEvent(this.audioElement, `loadedmetadata`),
-      fromEvent(this.audioElement, `durationchange`),
-      canPlay$,
-    ).pipe(
-      map(() => ({
-        currentTime: this.audioElement.currentTime,
-        duration: Number.isFinite(this.audioElement.duration)
-          ? this.audioElement.duration
-          : undefined,
-      })),
-      share(),
-    )
-
-    return { canPlay$, ended$, isPlaying$, metrics$ }
   }
 
   get state() {
@@ -502,7 +465,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.desiredPlaybackTrackId = shouldPlay ? trackId : undefined
 
     if (!shouldPlay) {
-      this.audioElement.pause()
+      this.audio.pause()
     }
   }
 
@@ -520,16 +483,14 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     if (previousMountedSource) {
       if (this.shouldPlay) {
-        this.audioElement.pause()
+        this.audio.pause()
       }
 
-      this.audioElement.removeAttribute(`src`)
-      this.audioElement.load()
+      this.audio.unloadSource()
     }
 
     if (nextMountedSource) {
-      this.audioElement.src = nextMountedSource.source
-      this.audioElement.load()
+      this.audio.loadSource(nextMountedSource.source)
     }
 
     if (
@@ -540,25 +501,16 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     }
   }
 
-  private playAudio$(canPlay$: Observable<Event>) {
-    return defer(() => {
-      if (
-        !this.shouldPlay ||
-        this.desiredPlaybackTrackId === undefined ||
-        this.mountedSource?.trackId !== this.desiredPlaybackTrackId ||
-        !this.audioElement.src
-      ) {
-        return EMPTY
-      }
+  private playAudio$() {
+    if (
+      !this.shouldPlay ||
+      this.desiredPlaybackTrackId === undefined ||
+      this.mountedSource?.trackId !== this.desiredPlaybackTrackId
+    ) {
+      return EMPTY
+    }
 
-      return from(this.audioElement.play())
-    }).pipe(
-      retry({
-        count: 1,
-        delay: () => canPlay$.pipe(take(1)),
-      }),
-      catchError(() => EMPTY),
-    )
+    return this.audio.play$()
   }
 
   private resolveTrackSource(track: AudioTrack) {
@@ -591,7 +543,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     const currentTrack = this.state.currentTrack
     const shouldPlay =
-      options.play ?? (!this.audioElement.paused && currentTrack !== undefined)
+      options.play ?? (!this.audio.paused && currentTrack !== undefined)
 
     this.setDesiredPlayback({ shouldPlay, trackId: track.id })
 
@@ -644,7 +596,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   toggle() {
-    if (this.audioElement.paused) {
+    if (this.audio.paused) {
       this.play()
       return
     }
@@ -654,7 +606,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
   setCurrentTime(value: number) {
     this.mergeCompare({ currentTime: value })
-    this.audioElement.currentTime = value
+    this.audio.setCurrentTime(value)
   }
 
   destroy() {

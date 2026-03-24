@@ -48,7 +48,7 @@ const createUrlResource = (href: string) =>
   new URL(`https://example.com/${href}`)
 
 const getAudioElement = (controller: AudioController) =>
-  Reflect.get(controller, `audioElement`) as HTMLAudioElement
+  (Reflect.get(controller, `audio`) as { element: HTMLAudioElement }).element
 
 const createReader = ({
   spineItems = [],
