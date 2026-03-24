@@ -36,15 +36,17 @@ const createManifestSpineItem = ({
   id = `track-1`,
   href = `${id}.mp3`,
   index = 0,
+  mediaType = `audio/mpeg`,
 }: {
   id?: string
   href?: string
   index?: number
+  mediaType?: string
 } = {}) => ({
   id,
   href,
   index,
-  mediaType: `audio/mpeg`,
+  mediaType,
 })
 
 const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
@@ -507,6 +509,70 @@ describe(`AudioController`, () => {
           createPaginationState({
             beginSpineItemIndex: 1,
             endSpineItemIndex: 1,
+          }),
+        )
+      },
+    )
+
+    audio.element.dispatchEvent(new Event(`ended`))
+
+    await flush()
+
+    audio.element.dispatchEvent(new Event(`canplay`))
+    await flush()
+
+    expect(reader.navigation.goToRightOrBottomSpineItem).toHaveBeenCalledTimes(
+      1,
+    )
+    expect(controller.state.currentTrack?.id).toBe(`track-2`)
+    expect(playSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it(`auto-advances across non-contiguous audio spine indices`, async () => {
+    const { reader, paginationState$ } = createReader({
+      spineItems: [
+        createManifestSpineItem({
+          id: `track-1`,
+          index: 0,
+        }),
+        createManifestSpineItem({
+          id: `text-1`,
+          href: `text-1.xhtml`,
+          index: 1,
+          mediaType: `application/xhtml+xml`,
+        }),
+        createManifestSpineItem({
+          id: `track-2`,
+          index: 2,
+        }),
+      ],
+    })
+    const { audio } = createAudio()
+    const controller = new AudioController(reader, audio)
+    const playSpy = vi.spyOn(audio.element, `play`).mockResolvedValue(undefined)
+
+    paginationState$.next(
+      createPaginationState({
+        beginSpineItemIndex: 0,
+        endSpineItemIndex: 0,
+      }),
+    )
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+
+    controller.play()
+    await flush()
+
+    playSpy.mockClear()
+
+    vi.mocked(reader.navigation.goToRightOrBottomSpineItem).mockImplementation(
+      () => {
+        paginationState$.next(
+          createPaginationState({
+            beginSpineItemIndex: 2,
+            endSpineItemIndex: 2,
           }),
         )
       },

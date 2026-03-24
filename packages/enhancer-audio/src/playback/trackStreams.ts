@@ -89,10 +89,9 @@ export function createTrackStreams(
             )
           : undefined
 
-      const nextTrackAfterCurrentTrack = getTrackAtSpineItemIndex(
-        tracks,
-        currentTrack ? currentTrack.index + 1 : undefined,
-      )
+      const nextTrackAfterCurrentTrack = currentTrack
+        ? tracks.find(({ index }) => index > currentTrack.index)
+        : undefined
 
       return { nextTrackInPaginationWindow, nextTrackAfterCurrentTrack }
     }),
