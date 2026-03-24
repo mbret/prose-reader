@@ -281,7 +281,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
       tap(({ shouldContinuePlayback }) => {
         if (shouldContinuePlayback) {
-          this.clearPlaybackContinuation()
+          this.playbackContinuationTrackId = undefined
         }
       }),
       map(({ trackId, shouldContinuePlayback }) => ({
@@ -341,7 +341,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
             })
 
           if (nextTrackInPaginationWindow) {
-            this.clearPlaybackContinuation()
+            this.playbackContinuationTrackId = undefined
 
             return of({
               trackId: nextTrackInPaginationWindow.id,
@@ -355,8 +355,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           if (nextTrackAfterPageTurn) {
             this.playbackContinuationTrackId = nextTrackAfterPageTurn.id
           } else {
-            this.clearPlaybackContinuation()
-            this.pauseAudio()
+            this.playbackContinuationTrackId = undefined
+            this.setDesiredPlayback({
+              shouldPlay: false,
+              trackId: undefined,
+            })
           }
 
           this.reader.navigation.goToRightOrBottomSpineItem()
@@ -376,7 +379,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       ),
     ).pipe(
       tap(() => {
-        this.clearPlaybackContinuation()
+        this.playbackContinuationTrackId = undefined
       }),
     )
 
@@ -442,7 +445,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       pauseCommand$
         .pipe(
           tap(() => {
-            this.pauseAudio()
+            this.setDesiredPlayback({
+              shouldPlay: false,
+              trackId: undefined,
+            })
           }),
         )
         .subscribe(),
@@ -452,12 +458,15 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       playbackReset$
         .pipe(
           tap((tracks) => {
-            this.pauseAudio()
+            this.setDesiredPlayback({
+              shouldPlay: false,
+              trackId: undefined,
+            })
             this.visualizer$.stop({
               resetLevels: true,
             })
-            this.clearMountedSource()
-            this.patchState({
+            this.applyMountedSource(undefined)
+            this.mergeCompare({
               tracks,
               currentTrack: undefined,
               isLoading: false,
@@ -483,7 +492,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           }),
           filter(({ shouldResetPlayback }) => !shouldResetPlayback),
           tap(({ tracks, currentTrack }) => {
-            this.patchState({
+            this.mergeCompare({
               tracks,
               currentTrack,
               isLoading: currentTrack ? this.state.isLoading : false,
@@ -501,7 +510,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       isPlaying$
         .pipe(
           tap((isPlaying) => {
-            this.patchState({
+            this.mergeCompare({
               isPlaying,
             })
 
@@ -522,7 +531,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       metrics$
         .pipe(
           tap(({ currentTime, duration }) => {
-            this.patchState({
+            this.mergeCompare({
               currentTime,
               duration,
             })
@@ -544,14 +553,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     return this.mountedSource !== undefined
   }
 
-  private clearPlaybackContinuation() {
-    this.playbackContinuationTrackId = undefined
-  }
-
-  private patchState(value: Partial<AudioEnhancerState>) {
-    this.mergeCompare(value)
-  }
-
   private resetTrackSelection({
     currentTrack,
     isLoading,
@@ -561,7 +562,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     isLoading: boolean
     isPlaying: boolean
   }) {
-    this.patchState({
+    this.mergeCompare({
       currentTrack,
       isLoading,
       isPlaying,
@@ -585,14 +586,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       this.audioElement.pause()
     }
   }
-
-  private pauseAudio() {
-    this.setDesiredPlayback({
-      shouldPlay: false,
-      trackId: undefined,
-    })
-  }
-
   private applyMountedSource(nextMountedSource: MountedSource | undefined) {
     const previousMountedSource = this.mountedSource
 
@@ -625,10 +618,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     ) {
       this.releaseTrackSource(previousMountedSource.trackId)
     }
-  }
-
-  private clearMountedSource() {
-    this.applyMountedSource(undefined)
   }
 
   private playAudio$(canPlay$: Observable<Event>) {
@@ -713,8 +702,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         takeUntil(playbackReset$),
         tap(({ source }) => {
           if (!source) {
-            this.pauseAudio()
-            this.clearMountedSource()
+            this.setDesiredPlayback({
+              shouldPlay: false,
+              trackId: undefined,
+            })
+            this.applyMountedSource(undefined)
             this.resetTrackSelection({
               currentTrack: track,
               isLoading: false,
@@ -764,7 +756,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   setCurrentTime(value: number) {
-    this.patchState({
+    this.mergeCompare({
       currentTime: value,
     })
     this.audioElement.currentTime = value
@@ -776,8 +768,11 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.pauseCommandSubject.complete()
     this.selectCommandSubject.complete()
     this.visualizer$.destroy()
-    this.pauseAudio()
-    this.clearMountedSource()
+    this.setDesiredPlayback({
+      shouldPlay: false,
+      trackId: undefined,
+    })
+    this.applyMountedSource(undefined)
     this.resourcesResolver.destroy()
 
     super.destroy()
