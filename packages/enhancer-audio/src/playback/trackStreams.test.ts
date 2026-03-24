@@ -52,6 +52,7 @@ const createReader = ({
   const reader = {
     context: { manifest$ },
     pagination: { state$: paginationState$ },
+    // Only the subset of Reader used by trackStreams is stubbed; full Reader cannot be constructed in a unit test.
   } as unknown as Reader
 
   return { manifest$, paginationState$, reader }

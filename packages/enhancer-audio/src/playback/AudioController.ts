@@ -1,5 +1,4 @@
-import { ReactiveEntity } from "@prose-reader/core"
-import { isDefined } from "reactjrx"
+import { isDefined, ReactiveEntity } from "@prose-reader/core"
 import {
   catchError,
   defaultIfEmpty,

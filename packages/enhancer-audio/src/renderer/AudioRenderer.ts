@@ -51,6 +51,11 @@ export class AudioRenderer extends DocumentRenderer {
     return undefined
   }
 
+  /**
+   * Audio spine items are always pre-paginated (one track per page).
+   * Mixed audio/text books with reflowable audio chapters may need
+   * to revisit this if that use case arises.
+   */
   get renditionLayout(): `pre-paginated` {
     return `pre-paginated`
   }
