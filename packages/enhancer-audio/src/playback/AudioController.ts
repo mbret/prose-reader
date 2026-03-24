@@ -143,9 +143,9 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.audioElement.preload = `metadata`
     this.visualizer$ = new AudioVisualizer(this.audioElement)
 
-    const playCommand$ = this.playCommandSubject.pipe(share())
-    const pauseCommand$ = this.pauseCommandSubject.pipe(share())
-    const userSelect$ = this.selectCommandSubject.pipe(share())
+    const playCommand$ = this.playCommandSubject
+    const pauseCommand$ = this.pauseCommandSubject
+    const userSelect$ = this.selectCommandSubject
 
     const tracks$ = this.reader.context.manifest$.pipe(
       map((manifest) =>
