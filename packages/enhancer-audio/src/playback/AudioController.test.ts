@@ -232,6 +232,84 @@ describe(`AudioController`, () => {
     expect(audioElement.getAttribute(`src`)).toBe(null)
   })
 
+  it(`does not restart source resolution when play is pressed again for the same loading track`, async () => {
+    const deferredSource = createDeferred<URL>()
+    const getResource = vi.fn(() => deferredSource.promise)
+    const { reader } = createReader({
+      spineItems: [createManifestSpineItem()],
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[0, getResource]],
+      ),
+    })
+    const controller = new AudioController(reader)
+
+    controller.select(`track-1`, {
+      navigate: false,
+      play: true,
+    })
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.isLoading).toBe(true)
+    expect(getResource).toHaveBeenCalledTimes(1)
+
+    controller.play()
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.isLoading).toBe(true)
+    expect(getResource).toHaveBeenCalledTimes(1)
+
+    deferredSource.resolve(createUrlResource(`track-1.mp3`))
+
+    await flush()
+    await flush()
+
+    expect(controller.state.isLoading).toBe(false)
+  })
+
+  it(`does not restart or cancel source resolution when selecting the same loading track again`, async () => {
+    const deferredSource = createDeferred<URL>()
+    const getResource = vi.fn(() => deferredSource.promise)
+    const { reader } = createReader({
+      spineItems: [createManifestSpineItem()],
+      spineItemResources: new Map<number, (() => Promise<unknown>) | undefined>(
+        [[0, getResource]],
+      ),
+    })
+    const controller = new AudioController(reader)
+
+    controller.select(`track-1`, {
+      navigate: false,
+      play: true,
+    })
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.isLoading).toBe(true)
+    expect(getResource).toHaveBeenCalledTimes(1)
+
+    controller.select(`track-1`, {
+      navigate: false,
+    })
+
+    await flush()
+
+    expect(controller.state.currentTrack?.id).toBe(`track-1`)
+    expect(controller.state.isLoading).toBe(true)
+    expect(getResource).toHaveBeenCalledTimes(1)
+
+    deferredSource.resolve(createUrlResource(`track-1.mp3`))
+
+    await flush()
+    await flush()
+
+    expect(controller.state.isLoading).toBe(false)
+  })
+
   it(`mirrors native duration semantics for unknown and finite values`, async () => {
     const { reader } = createReader()
     const controller = new AudioController(reader)

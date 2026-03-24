@@ -10,7 +10,6 @@ import {
   distinctUntilChanged,
   EMPTY,
   filter,
-  finalize,
   from,
   fromEvent,
   map,
@@ -146,11 +145,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   private desiredPlaybackTrackId: string | undefined
   private shouldPlay = false
   private playbackContinuationTrackId: string | undefined
-
-  private readonly pendingSourceByTrackId = new Map<
-    string,
-    Observable<string>
-  >()
 
   constructor(reader: Reader) {
     super(initialState)
@@ -420,9 +414,38 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       endedSelectionIntent$,
       playSelectionIntent$,
     ).pipe(share())
-
     const selection$ = selectionIntent$.pipe(
-      switchMap(({ trackId, options }) =>
+      withLatestFrom(this.state$),
+      tap(([selectionIntent, state]) => {
+        if (
+          state.currentTrack?.id !== selectionIntent.trackId ||
+          !state.isLoading
+        ) {
+          return
+        }
+
+        if (selectionIntent.options.navigate !== false) {
+          this.reader.navigation.navigate({
+            spineItem: state.currentTrack.index,
+            animation: `turn`,
+          })
+        }
+
+        if (selectionIntent.options.play !== undefined) {
+          this.setDesiredPlayback({
+            shouldPlay: selectionIntent.options.play,
+            trackId: state.currentTrack.id,
+          })
+        }
+      }),
+      filter(
+        ([selectionIntent, state]) =>
+          !(
+            state.currentTrack?.id === selectionIntent.trackId &&
+            state.isLoading
+          ),
+      ),
+      switchMap(([{ trackId, options }]) =>
         this.selectTrack$({
           trackId,
           options,
@@ -654,15 +677,7 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
   }
 
   private resolveTrackSource(track: AudioTrack) {
-    const pendingSource = this.pendingSourceByTrackId.get(track.id)
-
-    if (pendingSource) {
-      return pendingSource
-    }
-
-    let source$: Observable<string>
-
-    source$ = defer(() =>
+    return defer(() =>
       from(Promise.resolve(this.reader.spineItemsManager.get(track.index))),
     ).pipe(
       filter(isDefined),
@@ -672,24 +687,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
           spineItem.resourcesHandler,
         ),
       ),
-      finalize(() => {
-        if (this.pendingSourceByTrackId.get(track.id) === source$) {
-          this.pendingSourceByTrackId.delete(track.id)
-        }
-      }),
-      shareReplay({
-        bufferSize: 1,
-        refCount: true,
-      }),
     )
-
-    this.pendingSourceByTrackId.set(track.id, source$)
-
-    return source$
   }
 
   private releaseTrackSource(trackId: string) {
-    this.pendingSourceByTrackId.delete(trackId)
     this.resourcesResolver.releaseTrackSource(trackId)
   }
 
@@ -728,20 +729,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         this.visualizer$.setTrack(track.id)
 
         return shouldPlay ? of(undefined) : EMPTY
-      }
-
-      if (!shouldPlay) {
-        if (currentTrack?.id !== track.id) {
-          this.clearMountedSource()
-        }
-
-        this.resetTrackSelection({
-          currentTrack: track,
-          isLoading: false,
-          isPlaying: false,
-        })
-
-        return EMPTY
       }
 
       this.resetTrackSelection({
@@ -827,7 +814,6 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
     this.visualizer$.destroy()
     this.pauseAudio()
     this.clearMountedSource()
-    this.pendingSourceByTrackId.clear()
     this.resourcesResolver.destroy()
 
     super.destroy()
