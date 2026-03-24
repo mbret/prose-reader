@@ -1,6 +1,6 @@
 import type { Reader } from "@prose-reader/core"
-import { ReactiveEntity } from "@prose-reader/core"
-import { arrayEqual } from "@prose-reader/shared"
+import { mapKeysTo, ReactiveEntity } from "@prose-reader/core"
+import { arrayEqual, isShallowEqual } from "@prose-reader/shared"
 import { isDefined } from "reactjrx"
 import {
   catchError,
@@ -161,16 +161,10 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         refCount: true,
       }),
     )
+
     const pagination$ = this.reader.pagination.state$.pipe(
-      map(({ beginSpineItemIndex, endSpineItemIndex }) => ({
-        beginSpineItemIndex,
-        endSpineItemIndex,
-      })),
-      distinctUntilChanged(
-        (previous, next) =>
-          previous.beginSpineItemIndex === next.beginSpineItemIndex &&
-          previous.endSpineItemIndex === next.endSpineItemIndex,
-      ),
+      mapKeysTo([`beginSpineItemIndex`, `endSpineItemIndex`]),
+      distinctUntilChanged(isShallowEqual),
       shareReplay({
         bufferSize: 1,
         refCount: true,
@@ -197,10 +191,12 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       map(() => undefined),
       share(),
     )
+
     const isPlaying$ = merge(
       fromEvent(this.audioElement, `play`).pipe(map(() => true)),
       fromEvent(this.audioElement, `pause`).pipe(map(() => false)),
     ).pipe(share())
+
     const metrics$ = merge(
       fromEvent(this.audioElement, `timeupdate`),
       fromEvent(this.audioElement, `seeking`),
