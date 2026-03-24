@@ -213,7 +213,13 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
       filter(([selectionIntent, state]) =>
         state.tracks.some(({ id }) => id === selectionIntent.trackId),
       ),
-      tap(([selectionIntent, state]) => {
+      map(([selectionIntent, state]) => ({
+        selectionIntent,
+        state,
+        isReselectionWhileLoading:
+          state.currentTrack?.id === selectionIntent.trackId && state.isLoading,
+      })),
+      tap(({ selectionIntent, state, isReselectionWhileLoading }) => {
         if (selectionIntent.options.navigate !== false) {
           this.reader.navigation.navigate({
             spineItem: selectionIntent.trackId,
@@ -222,24 +228,17 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
         }
 
         if (
-          state.currentTrack?.id === selectionIntent.trackId &&
-          state.isLoading &&
+          isReselectionWhileLoading &&
           selectionIntent.options.play !== undefined
         ) {
           this.setDesiredPlayback({
             shouldPlay: selectionIntent.options.play,
-            trackId: state.currentTrack.id,
+            trackId: state.currentTrack?.id,
           })
         }
       }),
-      filter(
-        ([selectionIntent, state]) =>
-          !(
-            state.currentTrack?.id === selectionIntent.trackId &&
-            state.isLoading
-          ),
-      ),
-      switchMap(([{ trackId, options }]) =>
+      filter(({ isReselectionWhileLoading }) => !isReselectionWhileLoading),
+      switchMap(({ selectionIntent: { trackId, options } }) =>
         this.selectTrack$({ trackId, options, playbackReset$ }),
       ),
     )
