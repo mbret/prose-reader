@@ -84,54 +84,45 @@ export class AudioController extends ReactiveEntity<AudioEnhancerState> {
 
     this.visibleTrackIds$ = visibleTrackIds$
 
-    const visibleTrackContext$ = this.visibleTrackIds$.pipe(
+    const firstVisibleTrackId$ = this.visibleTrackIds$.pipe(
       map((trackIds) => trackIds[0]),
       distinctUntilChanged(),
-      withLatestFrom(this.state$),
-      map(([trackId, state]) => {
-        const shouldContinuePlayback =
-          trackId !== undefined &&
-          this.playbackContinuationTrackId === trackId &&
-          trackId !== state.currentTrack?.id
-
-        return {
-          trackId,
-          tracks: state.tracks,
-          currentTrackId: state.currentTrack?.id,
-          isLoading: state.isLoading,
-          shouldContinuePlayback,
-        }
-      }),
       share(),
     )
 
-    const visibleTrackReset$ = visibleTrackContext$.pipe(
+    const visibleTrackReset$ = firstVisibleTrackId$.pipe(
+      withLatestFrom(this.state$),
       filter(
-        ({ trackId, currentTrackId, isLoading }) =>
+        ([trackId, state]) =>
           trackId === undefined &&
           !this.playbackContinuationTrackId &&
-          (currentTrackId !== undefined || isLoading),
+          (state.currentTrack?.id !== undefined || state.isLoading),
       ),
-      map(({ tracks }) => tracks),
+      map(([, state]) => state.tracks),
     )
 
-    const visibleTrackSelectionIntent$ = visibleTrackContext$.pipe(
-      filter(
-        (value): value is typeof value & { trackId: string } =>
-          value.trackId !== undefined,
-      ),
-      tap(({ shouldContinuePlayback }) => {
+    const visibleTrackSelectionIntent$ = firstVisibleTrackId$.pipe(
+      withLatestFrom(this.state$),
+      map(([trackId, state]) => {
+        const shouldContinuePlayback = {
+          trackId,
+          shouldContinuePlayback:
+            this.playbackContinuationTrackId === trackId &&
+            trackId !== state.currentTrack?.id,
+        }
+
         if (shouldContinuePlayback) {
           this.playbackContinuationTrackId = undefined
         }
+
+        return {
+          trackId,
+          options: {
+            navigate: false,
+            play: shouldContinuePlayback ? true : undefined,
+          },
+        }
       }),
-      map(({ trackId, shouldContinuePlayback }) => ({
-        trackId,
-        options: {
-          navigate: false,
-          play: shouldContinuePlayback ? true : undefined,
-        },
-      })),
     )
 
     const playbackReset$ = merge(visibleTrackReset$, tracks$).pipe(share())
