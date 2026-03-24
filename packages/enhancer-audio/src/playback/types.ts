@@ -1,4 +1,8 @@
-import type { PaginationInfo, Reader, SpineItem } from "@prose-reader/core"
+import type {
+  PaginationInfo,
+  Reader,
+  ResourceHandler,
+} from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import type { Observable } from "rxjs"
 
@@ -14,6 +18,8 @@ export type AudioControllerReader = {
     "navigate" | "goToRightOrBottomSpineItem"
   >
   spineItemsManager: {
-    get: (index: number) => Pick<SpineItem, "resourcesHandler"> | undefined
+    get: (
+      index: number,
+    ) => { resourcesHandler: Pick<ResourceHandler, "getResource"> } | undefined
   }
 }
