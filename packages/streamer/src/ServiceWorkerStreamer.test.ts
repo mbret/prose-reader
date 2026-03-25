@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest"
-import {
-  type Archive,
-  generateManifestFromArchive,
-  ServiceWorkerStreamer,
-} from "."
+import type { Archive } from "./archives/types"
+import { generateManifestFromArchive } from "./generators/manifest"
+import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 
 const archiveResourceBody = `bar/foo.jpg`
 
