@@ -3,11 +3,16 @@ import { useQuery } from "@tanstack/react-query"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { getStreamerBaseUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
+import { useServiceWorkerReady } from "../useServiceWorkerReady"
 
-export const useManifest = (epubKey: string) =>
-  useQuery({
+export const useManifest = (epubKey: string) => {
+  const serviceWorkerReady = useServiceWorkerReady()
+  const isPdf = atob(epubKey).endsWith(".pdf")
+
+  return useQuery({
     queryKey: ["manifest", epubKey],
     retry: false,
+    enabled: isPdf || serviceWorkerReady,
     queryFn: async () => {
       const demoEpubUrl = atob(epubKey)
 
@@ -46,3 +51,4 @@ export const useManifest = (epubKey: string) =>
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   })
+}

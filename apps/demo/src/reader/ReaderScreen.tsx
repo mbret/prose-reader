@@ -9,6 +9,7 @@ import {
 } from "react"
 import { useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
+import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
@@ -27,6 +28,7 @@ export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
   const { reader } = useReader()
   const epubKey = url
+  const serviceWorkerReady = useServiceWorkerReady()
   const { data: manifest, error: manifestError } = useManifest(epubKey)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useSettings()
@@ -132,7 +134,9 @@ export const ReaderScreen = memo(() => {
       >
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
-        {bookState !== "ready" && !manifestError && <BookLoading />}
+        {bookState !== "ready" && !manifestError && (
+          <BookLoading serviceWorkerReady={serviceWorkerReady} />
+        )}
         <MenuDialog
           localSettings={localSettings}
           setLocalSettings={setLocalSettings}
