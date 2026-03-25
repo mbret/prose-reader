@@ -65,6 +65,34 @@ const parseSingleByteRange = (rangeHeader: string) => {
   }
 }
 
+/**
+ * Normalize the body into a sliceable form that avoids passing a
+ * `Blob.slice()` result directly to `new Response()`. Some Node.js
+ * versions do not recognise sliced Blobs as valid `BodyInit`,
+ * producing `"[object Blob]"` instead of the actual content.
+ */
+const materializeForSlicing = (body: Blob | string) => {
+  if (body instanceof Blob) {
+    return {
+      size: body.size,
+      slice: (start: number, endExclusive: number) => {
+        const part = body.slice(start, endExclusive)
+        return { content: part, length: part.size }
+      },
+    }
+  }
+
+  const bytes = new TextEncoder().encode(body)
+
+  return {
+    size: bytes.byteLength,
+    slice: (start: number, endExclusive: number) => {
+      const part = bytes.slice(start, endExclusive)
+      return { content: part, length: part.byteLength }
+    },
+  }
+}
+
 export const createRangeResponse = ({
   body,
   contentType,
@@ -106,8 +134,8 @@ export const createRangeResponse = ({
     })
   }
 
-  const responseBody = body instanceof Blob ? body : new Blob([body])
-  const size = responseBody.size
+  const rangeBody = materializeForSlicing(body)
+  const size = rangeBody.size
 
   if (parsedRange.kind === "invalid") {
     return new Response(null, {
@@ -147,12 +175,12 @@ export const createRangeResponse = ({
     })
   }
 
-  const partialBody = responseBody.slice(start, end + 1)
+  const partial = rangeBody.slice(start, end + 1)
 
-  headers.set("Content-Length", String(partialBody.size))
+  headers.set("Content-Length", String(partial.length))
   headers.set("Content-Range", `bytes ${start}-${end}/${size}`)
 
-  return new Response(partialBody, {
+  return new Response(partial.content, {
     status: 206,
     headers,
   })
