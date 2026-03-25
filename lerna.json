@@ -3,7 +3,8 @@
   "version": "1.284.0",
   "command": {
     "publish": {
-      "graphType": "all"
+      "graphType": "all",
+      "access": "public"
     }
   },
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"
