@@ -1,9 +1,37 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { createRangeResponse } from "./createRangeResponse"
 
 describe("createRangeResponse", () => {
   describe("when the body is a string", () => {
     const body = "bar/foo.jpg"
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it("returns a normal response without materializing a blob when no range is requested", async () => {
+      const OriginalBlob = globalThis.Blob
+      let blobCreationCount = 0
+
+      class TrackingBlob extends OriginalBlob {
+        constructor(blobParts?: BlobPart[], options?: BlobPropertyBag) {
+          super(blobParts, options)
+          blobCreationCount += 1
+        }
+      }
+
+      vi.stubGlobal("Blob", TrackingBlob)
+
+      const response = createRangeResponse({
+        body,
+        contentType: "text/plain; charset=UTF-8",
+      })
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get("Accept-Ranges")).toBe("bytes")
+      expect(await response.text()).toBe(body)
+      expect(blobCreationCount).toBe(0)
+    })
 
     it("returns partial content for explicit byte ranges", async () => {
       const response = createRangeResponse({

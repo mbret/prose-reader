@@ -1,5 +1,6 @@
 import {
   detectMimeTypeFromName,
+  isMediaContentMimeType,
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
@@ -30,9 +31,10 @@ export const nonEpub =
 
         return {
           ...spineItem,
-          renditionLayout: mimeType?.startsWith(`image/`)
-            ? `pre-paginated`
-            : spineItem.renditionLayout,
+          renditionLayout:
+            mimeType && isMediaContentMimeType(mimeType)
+              ? `pre-paginated`
+              : spineItem.renditionLayout,
         }
       }),
     }

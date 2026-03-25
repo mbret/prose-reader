@@ -197,6 +197,62 @@ describe("Given non-epub image archive items with encodingFormat", () => {
   })
 })
 
+describe("Given non-epub audio archive items with encodingFormat", () => {
+  it("should mark audio spine items as pre-paginated", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "track_1.mp3",
+          uri: "track_1.mp3",
+          dir: false,
+          size: 1,
+          encodingFormat: "audio/mpeg",
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems).toEqual([
+      {
+        href: "file://track_1.mp3",
+        id: "0.track_1.mp3",
+        index: 0,
+        mediaType: "audio/mpeg",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: undefined,
+        progressionWeight: 1,
+        renditionLayout: "pre-paginated",
+      },
+    ])
+  })
+})
+
+describe("Given non-epub audio archive items without encodingFormat", () => {
+  it("should detect audio from filename and mark as pre-paginated", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "track_1.mp3",
+          uri: "track_1.mp3",
+          dir: false,
+          size: 1,
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems[0]?.renditionLayout).toBe("pre-paginated")
+  })
+})
+
 describe("Given archive with folders", () => {
   it("should create correct toc", async () => {
     const archive: Archive = {

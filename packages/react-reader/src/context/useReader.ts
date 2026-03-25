@@ -1,5 +1,6 @@
 import type { Reader } from "@prose-reader/core"
 import type { AnnotationsEnhancerAPI } from "@prose-reader/enhancer-annotations"
+import type { AudioEnhancerAPI } from "@prose-reader/enhancer-audio"
 import type { GalleryEnhancerAPI } from "@prose-reader/enhancer-gallery"
 import type { RefitEnhancerAPI } from "@prose-reader/enhancer-refit"
 import type { SearchEnhancerAPI } from "@prose-reader/enhancer-search"
@@ -15,6 +16,12 @@ export const hasSearchEnhancer = (
   reader?: Reader,
 ): reader is Reader & SearchEnhancerAPI => {
   return !!reader && "__PROSE_READER_ENHANCER_SEARCH" in reader
+}
+
+export const hasAudioEnhancer = (
+  reader?: Reader,
+): reader is Reader & AudioEnhancerAPI => {
+  return !!reader && "__PROSE_READER_ENHANCER_AUDIO" in reader
 }
 
 export const hasAnnotationsEnhancer = (

@@ -34,6 +34,14 @@ export const PDFS = [
   },
 ]
 
+export const AUDIOBOOKS = [
+  {
+    name: `Aesop Fables, Volume One (LibriVox)`,
+    type: `EN - LTR - AUDIO`,
+    link: `/reader/${btoa(`${window.location.origin}/epubs/aesop_fables_volume_one_librivox.zip`)}`,
+  },
+]
+
 export const EPUBS = [
   {
     name: `accessible_epub_3.epub`,

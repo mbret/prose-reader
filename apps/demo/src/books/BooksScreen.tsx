@@ -11,10 +11,10 @@ import localforage from "localforage"
 import { MdDelete } from "react-icons/md"
 import { Link } from "react-router"
 import { BookTable } from "./BookTable"
+import { AUDIOBOOKS, COMICS, EPUBS, PDFS } from "./constants"
 import { Glossary } from "./Glossary"
 import { NavigationBreadcrumb } from "./NavigationBreadcrumb"
 import { UploadBook } from "./UploadBook"
-import { COMICS, EPUBS, PDFS } from "./constants"
 import { useUploadedBooks } from "./useUploadedBooks"
 
 export const BooksScreen = () => {
@@ -83,6 +83,7 @@ export const BooksScreen = () => {
         </Table.Root>
         <BookTable items={COMICS} title="Comics" />
         <BookTable items={PDFS} title="PDF" />
+        <BookTable items={AUDIOBOOKS} title="Audiobooks" />
         <BookTable items={EPUBS} title="Epubs" />
       </Stack>
     </Container>

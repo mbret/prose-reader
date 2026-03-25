@@ -4,6 +4,7 @@ import type { Archive } from "../../../archives/types"
 import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
 import { parseToc } from "../../../parsers/nav"
 import { sortByTitleComparator } from "../../../utils/sortByTitleComparator"
+import { buildAudiobookToc } from "./audiobookToc"
 
 type Toc = NonNullable<Manifest["nav"]>["toc"]
 type TocItem = NonNullable<Manifest["nav"]>["toc"][number]
@@ -109,6 +110,7 @@ const buildFolderFallbackToc = (
 
 const resolveTocFromArchive = async (
   archive: Archive,
+  manifest: Manifest,
   { baseUrl }: { baseUrl: string },
 ): Promise<Toc | undefined> => {
   const { data: opfFile } = getArchiveOpfInfo(archive) || {}
@@ -120,6 +122,9 @@ const resolveTocFromArchive = async (
     // Keep explicit empty TOC for EPUB-like inputs even when there is no nav file.
     return toc || []
   }
+
+  const audiobookToc = buildAudiobookToc(manifest, archive)
+  if (audiobookToc) return audiobookToc
 
   const toc = buildFolderFallbackToc(archive, { baseUrl })
 
@@ -139,7 +144,7 @@ export const tocHook =
   async (manifest: Manifest): Promise<Manifest> => {
     if (manifest.nav) return manifest
 
-    const toc = await resolveTocFromArchive(archive, { baseUrl })
+    const toc = await resolveTocFromArchive(archive, manifest, { baseUrl })
     if (!toc) return manifest
 
     return {

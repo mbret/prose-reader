@@ -1,5 +1,6 @@
 import { createReader } from "@prose-reader/core"
 import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
+import { audioEnhancer } from "@prose-reader/enhancer-audio"
 import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
@@ -22,8 +23,10 @@ export const createAppReader = refitEnhancer(
       annotationsEnhancer(
         gesturesEnhancer(
           searchEnhancer(
-            // __
-            createReader,
+            audioEnhancer(
+              // __
+              createReader,
+            ),
           ),
         ),
       ),
