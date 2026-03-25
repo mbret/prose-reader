@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-audio",
-  "version": "1.280.0",
+  "version": "1.284.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.280.0"
+    "@prose-reader/core": "^1.284.0"
   },
   "peerDependencies": {
     "rxjs": "*"
