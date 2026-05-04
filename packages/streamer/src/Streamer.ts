@@ -140,6 +140,11 @@ export class Streamer {
          */
         const cleanedResourcePath = resourcePath.replaceAll(`file://`, ``)
 
+        /**
+         * Reader hot path: one `generateResourceFromArchive` per request. For
+         * EPUBs, `defaultHook` re-reads and re-parses the package OPF each time
+         * (no `archiveOpf` threading yet). See `generateResourceFromArchive` JSDoc.
+         */
         const resource$ = from(
           generateResourceFromArchive(archive, cleanedResourcePath),
         )

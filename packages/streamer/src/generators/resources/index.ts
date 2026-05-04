@@ -6,6 +6,18 @@ import { defaultHook } from "./hooks/defaultHook"
 import { selfClosingTagsFixHook } from "./hooks/selfClosingTagsFixHook"
 import type { HookResource } from "./hooks/types"
 
+/**
+ * Builds one streamed asset from `archive` (hot path: typically once per
+ * fetched file in the reader).
+ *
+ * **OPF limitation:** Unlike manifest generation, this API does not take
+ * `ArchiveOpfParsed`. `defaultHook` calls `readArchiveOpf(archive)` to resolve
+ * `media-type` from the package document, so EPUBs repeat OPF I/O + parse per
+ * resource. Usually fine (small OPF); if profiling shows regressions, address
+ * explicitly—e.g. optional `archiveOpf` (or equivalent) threaded from
+ * `Streamer.fetchResource` / manifest, or an opt-in cache on `Archive` wired at
+ * construction time—rather than hidden process-wide memoization.
+ */
 export const generateResourceFromArchive = async (
   archive: Archive,
   resourcePath: string,
@@ -22,6 +34,10 @@ export const generateResourceFromArchive = async (
     params: {},
   }
 
+  /**
+   * EPUB: first hook calls `readArchiveOpf` → repeated OPF I/O + parse per
+   * resource until we thread `ArchiveOpfParsed` here (see export JSDoc).
+   */
   const hooks = [
     defaultHook({ archive, resourcePath }),
     selfClosingTagsFixHook({ archive, resourcePath }),
