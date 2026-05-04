@@ -1,7 +1,8 @@
 import type { Archive } from "../../archives/types"
+import { readArchiveOpf } from "../../epubs/readArchiveOpf"
 import { Report } from "../../report"
 import { apple } from "./hooks/apple"
-import { comicInfoHook } from "./hooks/comicInfo"
+import { comicInfo } from "./hooks/comicInfo"
 import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub/epub"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
@@ -13,14 +14,16 @@ export const generateManifestFromArchive = async (
   archive: Archive,
   { baseUrl = `` }: { baseUrl?: string } = {},
 ) => {
+  const archiveOpf = await readArchiveOpf(archive)
+
   const hooks = [
-    epubHook({ archive, baseUrl }),
-    kobo({ archive, baseUrl }),
+    epubHook({ archive, baseUrl, archiveOpf }),
+    comicInfo({ archive, baseUrl }),
     apple({ archive, baseUrl }),
     nonEpub({ archive, baseUrl }),
-    epubOptimizerHook({ archive, baseUrl }),
-    comicInfoHook({ archive, baseUrl }),
-    tocHook({ archive, baseUrl }),
+    epubOptimizerHook({ archive, baseUrl, archiveOpf }),
+    kobo({ archive, baseUrl }),
+    tocHook({ archive, baseUrl, archiveOpf }),
   ]
 
   try {

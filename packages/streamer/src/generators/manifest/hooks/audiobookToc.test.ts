@@ -162,7 +162,11 @@ describe("tocHook with audiobook", () => {
       ],
     }
 
-    const manifest = await tocHook({ archive, baseUrl: "" })({
+    const manifest = await tocHook({
+      archive,
+      baseUrl: "",
+      archiveOpf: undefined,
+    })({
       ...baseManifest,
       spineItems: [
         {
@@ -216,7 +220,11 @@ describe("tocHook with audiobook", () => {
       ],
     }
 
-    const manifest = await tocHook({ archive, baseUrl: "" })({
+    const manifest = await tocHook({
+      archive,
+      baseUrl: "",
+      archiveOpf: undefined,
+    })({
       ...baseManifest,
       spineItems: [
         {

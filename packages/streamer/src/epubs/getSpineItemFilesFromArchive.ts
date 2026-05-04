@@ -1,36 +1,22 @@
-import { XmlDocument } from "xmldoc"
 import type { Archive } from "../archives/types"
-import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
+import type { ArchiveOpfParsed } from "./readArchiveOpf"
 
 export const getSpineItemFilesFromArchive = async ({
   archive,
+  archiveOpf,
 }: {
   archive: Archive
+  archiveOpf: ArchiveOpfParsed | undefined
 }) => {
-  const { data: opsFile, basePath: opfBasePath } =
-    getArchiveOpfInfo(archive) || {}
+  if (!archiveOpf) return []
 
-  const data = await opsFile?.string()
-
-  if (!data) return []
-
-  const _opfXmlDoc = new XmlDocument(data)
-
-  const manifestElm = _opfXmlDoc.childNamed(`manifest`)
-  const spineElm = _opfXmlDoc.childNamed(`spine`)
-
-  const spineItemIds = spineElm
-    ?.childrenNamed(`itemref`)
-    .map((item) => item.attr.idref) as string[]
-  const manifestItemsFromSpine =
-    manifestElm
-      ?.childrenNamed(`item`)
-      .filter((item) => spineItemIds.includes(item.attr.id || ``)) || []
+  const { opf, basePath: opfBasePath } = archiveOpf
+  const { spineRows } = opf
 
   const archiveSpineItems = archive.records.filter((file) => {
-    return manifestItemsFromSpine.find((item) => {
-      if (!opfBasePath) return `${item.attr.href}` === file.uri
-      return `${opfBasePath}/${item.attr.href}` === file.uri
+    return spineRows.find((item) => {
+      if (!opfBasePath) return `${item.href}` === file.uri
+      return `${opfBasePath}/${item.href}` === file.uri
     })
   })
 

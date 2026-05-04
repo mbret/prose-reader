@@ -1,6 +1,4 @@
-import { XmlTextNode } from "xmldoc"
-
-import { XmlElement } from "xmldoc"
+import { XmlElement, XmlTextNode } from "xmldoc"
 
 export const getXmlElementInnerText = (
   node: XmlElement | undefined,

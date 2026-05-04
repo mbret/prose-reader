@@ -1,7 +1,8 @@
-import { type Manifest, isXmlBasedMimeType } from "@prose-reader/shared"
+import { isXmlBasedMimeType, type Manifest } from "@prose-reader/shared"
 import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
 import { getSpineItemFilesFromArchive } from "../../../epubs/getSpineItemFilesFromArchive"
+import type { ArchiveOpfParsed } from "../../../epubs/readArchiveOpf"
 
 const hasDocMetaViewport = (doc: XmlDocument) => {
   const metaElm = doc
@@ -35,14 +36,24 @@ const allFilesHaveViewportMeta = (files: Archive["records"]) =>
   }, Promise.resolve(true))
 
 export const epubOptimizerHook =
-  ({ archive }: { archive: Archive; baseUrl: string }) =>
+  ({
+    archive,
+    archiveOpf,
+  }: {
+    archive: Archive
+    baseUrl: string
+    archiveOpf: ArchiveOpfParsed | undefined
+  }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const bookIsFullReflowable =
       manifest.renditionLayout === "reflowable" &&
       manifest.spineItems.every((item) => item.renditionLayout === "reflowable")
 
     if (bookIsFullReflowable) {
-      const files = await getSpineItemFilesFromArchive({ archive })
+      const files = await getSpineItemFilesFromArchive({
+        archive,
+        archiveOpf,
+      })
 
       const hasAllViewport = await allFilesHaveViewportMeta(files)
 

@@ -1,3 +1,4 @@
+import type { OpfMetadata } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
 import { urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"
@@ -7,6 +8,17 @@ import { getXmlElementInnerText } from "./xml"
 
 type Toc = NonNullable<Manifest[`nav`]>[`toc`]
 type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
+
+const manifestItemIsNavDocument = (item: {
+  readonly properties?: string
+}): boolean => {
+  const tokens =
+    item.properties
+      ?.trim()
+      .split(/\s+/)
+      .filter((t) => t.length > 0) ?? []
+  return tokens.includes(`nav`)
+}
 
 /**
  * @see https://www.w3.org/TR/epub-33/#sec-nav-def-model
@@ -82,19 +94,15 @@ const buildTOCFromNav = (
 }
 
 const parseTocFromNavPath = async (
-  opfXmlDoc: XmlDocument,
+  opf: OpfMetadata,
   archive: Archive,
   { baseUrl }: { baseUrl: string },
 ) => {
-  // Try to detect if there is a nav item
-  const navItem = opfXmlDoc
-    .childNamed(`manifest`)
-    ?.childrenNamed(`item`)
-    .find((child) => child.attr.properties === `nav`)
+  const navItem = opf.manifestItems.find(manifestItemIsNavDocument)
 
-  if (navItem) {
+  if (navItem?.href) {
     const tocFile = Object.values(archive.records).find((item) =>
-      item.uri.endsWith(navItem.attr.href || ``),
+      item.uri.endsWith(navItem.href),
     )
 
     if (tocFile && !tocFile.dir) {
@@ -161,27 +169,23 @@ const buildTOCFromNCX = (
 }
 
 const parseTocFromNcx = async ({
-  opfData,
+  opf,
   opfBasePath,
   baseUrl,
   archive,
 }: {
-  opfData: XmlDocument
+  opf: OpfMetadata
   opfBasePath: string
   archive: Archive
   baseUrl: string
 }) => {
-  const spine = opfData.childNamed(`spine`)
-  const ncxId = spine?.attr.toc
+  const ncxId = opf.spineTocIdref
 
   if (ncxId) {
-    const ncxItem = opfData
-      .childNamed(`manifest`)
-      ?.childrenNamed(`item`)
-      .find((item) => item.attr.id === ncxId)
+    const ncxItem = opf.manifestItems.find((item) => item.id === ncxId)
 
     if (ncxItem) {
-      const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.attr.href}`
+      const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.href}`
 
       const file = Object.values(archive.records).find((item) =>
         item.uri.endsWith(ncxPath),
@@ -197,13 +201,13 @@ const parseTocFromNcx = async ({
 }
 
 export const parseToc = async (
-  opfXmlDoc: XmlDocument,
+  opf: OpfMetadata,
   archive: Archive,
   { baseUrl }: { baseUrl: string },
 ) => {
   const { basePath: opfBasePath } = getArchiveOpfInfo(archive) || {}
 
-  const tocFromNav = await parseTocFromNavPath(opfXmlDoc, archive, {
+  const tocFromNav = await parseTocFromNavPath(opf, archive, {
     baseUrl,
   })
 
@@ -212,8 +216,8 @@ export const parseToc = async (
   }
 
   const tocFromNcx = await parseTocFromNcx({
-    opfData: opfXmlDoc,
-    opfBasePath,
+    opf,
+    opfBasePath: opfBasePath ?? ``,
     archive,
     baseUrl,
   })

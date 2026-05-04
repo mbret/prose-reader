@@ -1,4 +1,4 @@
-import { XmlDocument } from "xmldoc"
+import { parseOpf } from "@prose-reader/archive-parser"
 import type { Archive } from "../../../archives/types"
 import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
 import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
@@ -14,8 +14,8 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
   const data = await opfInfo.data?.string()
 
   if (data) {
-    const opfXmlDoc = new XmlDocument(data)
-    const items = getItemsFromDoc(opfXmlDoc, archive, () => "")
+    const opf = parseOpf(data)
+    const items = getItemsFromDoc(opf.manifestItems, archive, () => "")
 
     // we are comparing opf items relative absolute path in epub archive
     // against resourcePatch (which are absolute path in archive).
@@ -63,44 +63,6 @@ export const defaultHook =
     )
 
     if (!file || file.dir) return resource
-
-    // if (file.stream) {
-    //   const stream = file.stream()
-
-    //   console.log(file, stream)
-    //   stream.on(`data`, data => {
-    //     console.log(`data`, data)
-    //   })
-    //   stream.on(`error`, data => {
-    //     console.error(`error`, data)
-    //   })
-    //   stream.on(`end`, () => {
-    //     console.log(`end`)
-    //   })
-
-    // }
-
-    // const stream = file.stream!()
-
-    // const readableStream = new ReadableStream({
-    //   start(controller) {
-    //     function push() {
-    //       stream.on(`data`, data => {
-    //         controller.enqueue(data)
-    //       })
-    //       stream.on(`error`, data => {
-    //         console.error(`error`, data)
-    //       })
-    //       stream.on(`end`, () => {
-    //         controller.close()
-    //       })
-
-    //       stream.resume()
-    //     }
-
-    //     push();
-    //   }
-    // })
 
     const metadata = await getMetadata(archive, resourcePath)
 

@@ -1,40 +1,40 @@
+import {
+  APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME,
+  parseAppleDisplayOptionsXml,
+  resolveArchiveMetadata,
+} from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
-import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
+
+const appleDisplayOptionsBasename =
+  APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME.toLowerCase()
 
 export const apple =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     const infoFile = archive.records.find(
       (file) =>
-        file.basename.toLowerCase() === `com.apple.ibooks.display-options.xml`,
+        !file.dir &&
+        file.basename.toLowerCase() === appleDisplayOptionsBasename,
     )
 
     if (!infoFile || infoFile.dir) {
       return manifest
     }
 
-    const content = await (await infoFile.blob()).text()
+    const content = await infoFile.string()
 
     try {
-      const xmlDoc = new XmlDocument(content)
-      const platformElement = xmlDoc.childNamed(`platform`)
-      const fixedLayoutOption =
-        platformElement
-          ?.childrenNamed("option")
-          ?.find((option) => option.attr.name === "fixed-layout")?.val ||
-        "false"
+      const parsed = parseAppleDisplayOptionsXml(content)
+      const { renditionLayout } = resolveArchiveMetadata(parsed)
 
       return {
         ...manifest,
-        renditionLayout:
-          fixedLayoutOption === `true`
-            ? `pre-paginated`
-            : manifest.renditionLayout,
+        renditionLayout: manifest.renditionLayout ?? renditionLayout,
       }
     } catch (e) {
       console.error(
-        "Unable to parse com.apple.ibooks.display-options.xml for content\n",
+        `Unable to parse ${APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME} for content\n`,
         content,
       )
       console.error(e)

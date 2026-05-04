@@ -1,45 +1,39 @@
+import {
+  KOBO_DISPLAY_OPTIONS_FILENAME,
+  type KoboMetadata,
+  parseKoboXml,
+  resolveArchiveMetadata,
+} from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
-import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
+
+const extractKoboInformationFromArchive = async (
+  archive: Archive,
+): Promise<KoboMetadata> => {
+  let renditionLayout: KoboMetadata["renditionLayout"]
+
+  await Promise.all(
+    archive.records.map(async (file) => {
+      if (file.dir || !file.uri.endsWith(KOBO_DISPLAY_OPTIONS_FILENAME)) return
+      const { renditionLayout: layout } = parseKoboXml(await file.string())
+      if (layout) renditionLayout = layout
+    }),
+  )
+
+  return {
+    kind: `kobo`,
+    ...(renditionLayout !== undefined ? { renditionLayout } : {}),
+  }
+}
 
 export const kobo =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const comicInfoFile = archive.records.find(
-      (file) => file.basename.toLowerCase() === `comicinfo.xml` && !file.dir,
-    )
+    const koboMeta = await extractKoboInformationFromArchive(archive)
+    const { renditionLayout } = resolveArchiveMetadata(koboMeta)
 
-    if (!comicInfoFile || comicInfoFile.dir) {
-      return manifest
-    }
-
-    const manifestWithoutComicInfo = {
+    return {
       ...manifest,
-      spineItems: manifest.spineItems
-        .filter((item) => !item.id.toLowerCase().endsWith(`comicinfo.xml`))
-        .map((item, _, items) => ({
-          ...item,
-          progressionWeight: 1 / items.length,
-        })),
-    }
-
-    // @todo handle more meta
-    const content = await comicInfoFile.string()
-
-    try {
-      const xmlDoc = new XmlDocument(content)
-
-      const mangaVal =
-        (xmlDoc.childNamed(`Manga`)?.val as `YesAndRightToLeft`) || `unknown`
-
-      return {
-        ...manifestWithoutComicInfo,
-        readingDirection: mangaVal === `YesAndRightToLeft` ? `rtl` : `ltr`,
-      }
-    } catch (e) {
-      console.error("Unable to parse comicinfo.xml for content\n", content)
-      console.error(e)
-
-      return manifestWithoutComicInfo
+      renditionLayout: manifest.renditionLayout ?? renditionLayout,
     }
   }

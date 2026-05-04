@@ -4,6 +4,5 @@ import { name } from "./package.json"
 export default defineLibConfig({
   packageDir: __dirname,
   packageName: name,
-  minify: false,
-  target: "esnext",
+  umdGlobals: { xmldoc: "xmldoc" },
 })
