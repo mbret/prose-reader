@@ -1,21 +1,19 @@
-import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
-import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
+import { readArchiveOpf } from "../../../epubs/readArchiveOpf"
 import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import type { HookResource } from "./types"
 
 /**
- * We are trying to metadata from opf file in epub archive.
- *
- * Otherwise we fallback on what we can know from the archive.
+ * Resolves `contentType` from the package OPF when possible, else from the URI.
+ * Uses `readArchiveOpf` each time — see `generateResourceFromArchive` JSDoc for
+ * why that can mean repeated OPF work on the resource path.
  */
 const getMetadata = async (archive: Archive, resourcePath: string) => {
-  const opfInfo = getArchiveOpfInfo(archive)
-  const data = await opfInfo.data?.string()
+  const parsed = await readArchiveOpf(archive)
 
-  if (data) {
-    const opfXmlDoc = new XmlDocument(data)
-    const items = getItemsFromDoc(opfXmlDoc, archive, () => "")
+  if (parsed) {
+    const { opf } = parsed
+    const items = getItemsFromDoc(opf.manifestItems, archive, () => "")
 
     // we are comparing opf items relative absolute path in epub archive
     // against resourcePatch (which are absolute path in archive).
@@ -63,44 +61,6 @@ export const defaultHook =
     )
 
     if (!file || file.dir) return resource
-
-    // if (file.stream) {
-    //   const stream = file.stream()
-
-    //   console.log(file, stream)
-    //   stream.on(`data`, data => {
-    //     console.log(`data`, data)
-    //   })
-    //   stream.on(`error`, data => {
-    //     console.error(`error`, data)
-    //   })
-    //   stream.on(`end`, () => {
-    //     console.log(`end`)
-    //   })
-
-    // }
-
-    // const stream = file.stream!()
-
-    // const readableStream = new ReadableStream({
-    //   start(controller) {
-    //     function push() {
-    //       stream.on(`data`, data => {
-    //         controller.enqueue(data)
-    //       })
-    //       stream.on(`error`, data => {
-    //         console.error(`error`, data)
-    //       })
-    //       stream.on(`end`, () => {
-    //         controller.close()
-    //       })
-
-    //       stream.resume()
-    //     }
-
-    //     push();
-    //   }
-    // })
 
     const metadata = await getMetadata(archive, resourcePath)
 

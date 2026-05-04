@@ -1,7 +1,6 @@
 import { type Manifest, urlJoin } from "@prose-reader/shared"
-import { XmlDocument } from "xmldoc"
 import type { Archive } from "../../../archives/types"
-import { getArchiveOpfInfo } from "../../../epubs/getArchiveOpfInfo"
+import type { ArchiveOpfParsed } from "../../../epubs/readArchiveOpf"
 import { parseToc } from "../../../parsers/nav"
 import { sortByTitleComparator } from "../../../utils/sortByTitleComparator"
 import { buildAudiobookToc } from "./audiobookToc"
@@ -111,13 +110,13 @@ const buildFolderFallbackToc = (
 const resolveTocFromArchive = async (
   archive: Archive,
   manifest: Manifest,
-  { baseUrl }: { baseUrl: string },
+  {
+    baseUrl,
+    archiveOpf,
+  }: { baseUrl: string; archiveOpf: ArchiveOpfParsed | undefined },
 ): Promise<Toc | undefined> => {
-  const { data: opfFile } = getArchiveOpfInfo(archive) || {}
-
-  if (opfFile && !opfFile.dir) {
-    const opfXmlDoc = new XmlDocument(await opfFile.string())
-    const toc = await parseToc(opfXmlDoc, archive, { baseUrl })
+  if (archiveOpf) {
+    const toc = await parseToc(archiveOpf.opf, archive, { baseUrl })
 
     // Keep explicit empty TOC for EPUB-like inputs even when there is no nav file.
     return toc || []
@@ -140,11 +139,22 @@ const resolveTocFromArchive = async (
  * Internally handles EPUB nav, NCX, and folder fallback.
  */
 export const tocHook =
-  ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
+  ({
+    archive,
+    baseUrl,
+    archiveOpf,
+  }: {
+    archive: Archive
+    baseUrl: string
+    archiveOpf: ArchiveOpfParsed | undefined
+  }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     if (manifest.nav) return manifest
 
-    const toc = await resolveTocFromArchive(archive, manifest, { baseUrl })
+    const toc = await resolveTocFromArchive(archive, manifest, {
+      baseUrl,
+      archiveOpf,
+    })
     if (!toc) return manifest
 
     return {

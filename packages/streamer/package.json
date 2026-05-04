@@ -23,6 +23,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
+    "@prose-reader/archive-parser": "^1.285.0",
     "@prose-reader/shared": "^1.286.0",
     "xmldoc": "^2.0.0"
   },

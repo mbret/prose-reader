@@ -55,6 +55,7 @@ it("should create valid toc", async () => {
       ],
     },
     baseUrl: "",
+    archiveOpf: undefined,
   })({
     filename: "",
     items: [],

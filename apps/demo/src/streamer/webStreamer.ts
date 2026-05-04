@@ -1,9 +1,8 @@
 import { createArchiveFromPdf } from "@prose-reader/enhancer-pdf"
 import { Streamer } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
-import { getBlobFromKey } from "./utils.shared"
-
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
+import { getBlobFromKey } from "./utils.shared"
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   pdfWorkerUrl,

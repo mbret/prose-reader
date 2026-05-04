@@ -26,7 +26,7 @@ type WithArchiveResponse = (
 ) => Observable<Response> | Promise<Response>
 
 export class Streamer {
-  protected epubLoader: ReturnType<typeof createArchiveLoader>
+  protected archiveLoader: ReturnType<typeof createArchiveLoader>
   protected onError: OnError = (error) => {
     console.error(error)
 
@@ -43,7 +43,7 @@ export class Streamer {
     onError?: OnError
     onManifestSuccess?: OnManifestSuccess
   }) {
-    this.epubLoader = createArchiveLoader(rest)
+    this.archiveLoader = createArchiveLoader(rest)
 
     this.onManifestSuccess =
       onManifestSuccess ?? (({ manifest }) => Promise.resolve(manifest))
@@ -51,17 +51,17 @@ export class Streamer {
   }
 
   public prune() {
-    this.epubLoader.purge()
+    this.archiveLoader.purge()
   }
 
   public accessArchive(key: string) {
     if (this.lastAccessedKey !== undefined && this.lastAccessedKey !== key) {
-      this.epubLoader.purge()
+      this.archiveLoader.purge()
     }
 
     this.lastAccessedKey = key
 
-    return this.epubLoader.access(key)
+    return this.archiveLoader.access(key)
   }
 
   public accessArchiveWithoutLock(key: string) {
@@ -140,6 +140,11 @@ export class Streamer {
          */
         const cleanedResourcePath = resourcePath.replaceAll(`file://`, ``)
 
+        /**
+         * Reader hot path: one `generateResourceFromArchive` per request. For
+         * EPUBs, `defaultHook` re-reads and re-parses the package OPF each time
+         * (no `archiveOpf` threading yet). See `generateResourceFromArchive` JSDoc.
+         */
         const resource$ = from(
           generateResourceFromArchive(archive, cleanedResourcePath),
         )

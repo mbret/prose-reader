@@ -1,7 +1,8 @@
+import { describe, expect, it } from "vitest"
+import { createArchiveFromText } from "../../../archives/createArchiveFromText"
+import { readArchiveOpf } from "../../../epubs/readArchiveOpf"
 import { generateManifestFromArchive } from "../index"
 import { epubOptimizerHook } from "./epubOptimizer"
-import { createArchiveFromText } from "../../../archives/createArchiveFromText"
-import { describe, expect, it } from "vitest"
 
 describe(`Given a xml document`, () => {
   describe(`when there is a meta viewport`, () => {
@@ -30,10 +31,13 @@ describe(`Given a xml document`, () => {
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
+      const archiveOpf = await readArchiveOpf(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
-        firstManifest,
-      )
+      const manifest = await epubOptimizerHook({
+        archive,
+        baseUrl: "",
+        archiveOpf,
+      })(firstManifest)
 
       expect(manifest).toEqual({
         ...firstManifest,
@@ -67,10 +71,13 @@ describe(`Given a xml document`, () => {
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
+      const archiveOpf = await readArchiveOpf(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
-        firstManifest,
-      )
+      const manifest = await epubOptimizerHook({
+        archive,
+        baseUrl: "",
+        archiveOpf,
+      })(firstManifest)
 
       expect(manifest).toEqual(firstManifest)
     })
@@ -99,10 +106,13 @@ describe(`Given a xml document`, () => {
       )
 
       const firstManifest = await generateManifestFromArchive(archive)
+      const archiveOpf = await readArchiveOpf(archive)
 
-      const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
-        firstManifest,
-      )
+      const manifest = await epubOptimizerHook({
+        archive,
+        baseUrl: "",
+        archiveOpf,
+      })(firstManifest)
 
       expect(manifest).toEqual({
         ...firstManifest,
@@ -117,10 +127,13 @@ describe(`Given a non xml resource`, () => {
     const archive = await createArchiveFromText(`I am just text`)
 
     const firstManifest = await generateManifestFromArchive(archive)
+    const archiveOpf = await readArchiveOpf(archive)
 
-    const manifest = await epubOptimizerHook({ archive, baseUrl: "" })(
-      firstManifest,
-    )
+    const manifest = await epubOptimizerHook({
+      archive,
+      baseUrl: "",
+      archiveOpf,
+    })(firstManifest)
 
     expect(manifest).toEqual(firstManifest)
   })
