@@ -1,3 +1,5 @@
+import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList"
+
 export type OpfItemrefLayoutHints = {
   readonly renditionLayout?: `reflowable` | `pre-paginated`
   readonly pageSpreadLeft?: true
@@ -12,11 +14,10 @@ export type OpfItemrefLayoutHints = {
 export const layoutHintsFromItemrefProperties = (
   properties: string | undefined,
 ): OpfItemrefLayoutHints => {
-  if (properties === undefined || properties.trim().length === 0) {
+  const tokens = tokenizeXmlSpaceSeparatedList(properties)
+  if (tokens.length === 0) {
     return {}
   }
-
-  const tokens = properties.split(/\s+/).filter((t) => t.length > 0)
 
   let renditionLayout: `reflowable` | `pre-paginated` | undefined
   if (tokens.includes(`rendition:layout-reflowable`)) {

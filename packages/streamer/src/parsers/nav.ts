@@ -1,4 +1,7 @@
-import type { OpfMetadata } from "@prose-reader/archive-parser"
+import {
+  type OpfMetadata,
+  tokenizeXmlSpaceSeparatedList,
+} from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
 import { urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"
@@ -11,14 +14,7 @@ type TocItem = NonNullable<Manifest[`nav`]>[`toc`][number]
 
 const manifestItemIsNavDocument = (item: {
   readonly properties?: string
-}): boolean => {
-  const tokens =
-    item.properties
-      ?.trim()
-      .split(/\s+/)
-      .filter((t) => t.length > 0) ?? []
-  return tokens.includes(`nav`)
-}
+}): boolean => tokenizeXmlSpaceSeparatedList(item.properties).includes(`nav`)
 
 /**
  * @see https://www.w3.org/TR/epub-33/#sec-nav-def-model
