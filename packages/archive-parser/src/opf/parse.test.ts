@@ -190,4 +190,47 @@ describe("parseOpf", () => {
       spineTocIdref: "ncx",
     })
   })
+
+  it("matches package children by local name when roots use a namespace prefix", () => {
+    const xml =
+      `<?xml version="1.0"?>` +
+      `<package version="3.0" unique-identifier="bookid" xmlns="http://www.idpf.org/2007/opf" xmlns:p="http://www.idpf.org/2007/opf">` +
+      `<p:metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+      `<dc:title>Prefixed roots</dc:title>` +
+      `<p:meta property="rendition:layout">reflowable</p:meta>` +
+      `</p:metadata>` +
+      `<p:manifest>` +
+      `<p:item id="x" href="x.xhtml" media-type="application/xhtml+xml"/>` +
+      `</p:manifest>` +
+      `<p:spine toc="ncx">` +
+      `<p:itemref idref="x"/>` +
+      `</p:spine>` +
+      `<p:guide>` +
+      `<p:reference href="c.xhtml" title="Cover" type="cover"/>` +
+      `</p:guide>` +
+      `</package>`
+
+    expect(parseOpf(xml)).toEqual({
+      kind: "opf",
+      manifestItems: [
+        { id: "x", href: "x.xhtml", mediaType: "application/xhtml+xml" },
+      ],
+      spineRows: [
+        {
+          idref: "x",
+          id: "x",
+          href: "x.xhtml",
+          mediaType: "application/xhtml+xml",
+        },
+      ],
+      identifiers: [],
+      title: "Prefixed roots",
+      renditionLayoutMeta: "reflowable",
+      renditionFlowMeta: undefined,
+      renditionSpreadMeta: undefined,
+      pageProgressionDirection: undefined,
+      spineTocIdref: "ncx",
+      guide: [{ href: "c.xhtml", title: "Cover", type: "cover" }],
+    })
+  })
 })

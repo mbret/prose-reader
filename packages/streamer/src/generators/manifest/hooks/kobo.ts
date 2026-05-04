@@ -15,8 +15,19 @@ const extractKoboInformationFromArchive = async (
   await Promise.all(
     archive.records.map(async (file) => {
       if (file.dir || !file.uri.endsWith(KOBO_DISPLAY_OPTIONS_FILENAME)) return
-      const { renditionLayout: layout } = parseKoboXml(await file.string())
-      if (layout) renditionLayout = layout
+
+      const content = await file.string()
+
+      try {
+        const { renditionLayout: layout } = parseKoboXml(content)
+        if (layout) renditionLayout = layout
+      } catch (e) {
+        console.error(
+          `Unable to parse ${KOBO_DISPLAY_OPTIONS_FILENAME} for content\n`,
+          content,
+        )
+        console.error(e)
+      }
     }),
   )
 

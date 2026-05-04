@@ -34,6 +34,32 @@ export type OpfGuideReference = {
 const elementLocalName = (name: string): string =>
   name.includes(":") ? name.slice(name.lastIndexOf(":") + 1) : name
 
+const localNameEq = (elementName: string, wantLocal: string): boolean =>
+  elementLocalName(elementName).toLowerCase() === wantLocal.toLowerCase()
+
+const childNamedLocal = (
+  parent: XmlElement,
+  localName: string,
+): XmlElement | undefined => {
+  for (const node of parent.children) {
+    if (node.type !== "element") continue
+    if (localNameEq(node.name, localName)) return node
+  }
+  return undefined
+}
+
+const childrenNamedLocal = (
+  parent: XmlElement,
+  localName: string,
+): XmlElement[] => {
+  const out: XmlElement[] = []
+  for (const node of parent.children) {
+    if (node.type !== "element") continue
+    if (localNameEq(node.name, localName)) out.push(node)
+  }
+  return out
+}
+
 const identifiersFromMetadata = (metadataEl: XmlElement): OpfIdentifier[] => {
   const identifiers: OpfIdentifier[] = []
 
@@ -73,21 +99,21 @@ const metaValByProperty = (
   metadataEl: XmlElement,
   property: string,
 ): string | undefined => {
-  const meta = metadataEl
-    .childrenNamed("meta")
-    .find((m) => m.attr.property === property)
+  const meta = childrenNamedLocal(metadataEl, "meta").find(
+    (m) => m.attr.property === property,
+  )
   const raw = meta?.val
   if (raw === undefined || raw.trim().length === 0) return undefined
   return raw
 }
 
-const guideFromPackage = (doc: XmlDocument): OpfGuideReference[] => {
-  const guideEl = doc.childNamed("guide")
+const guideFromPackage = (doc: XmlElement): OpfGuideReference[] => {
+  const guideEl = childNamedLocal(doc, "guide")
   if (guideEl === undefined) return []
 
   const refs: OpfGuideReference[] = []
 
-  for (const ref of guideEl.childrenNamed("reference")) {
+  for (const ref of childrenNamedLocal(guideEl, "reference")) {
     const href = ref.attr.href?.trim()
     if (href === undefined || href.length === 0) continue
     refs.push({
@@ -105,7 +131,7 @@ const manifestItemsFromElement = (
 ): OpfSpineManifestItem[] => {
   const items: OpfSpineManifestItem[] = []
 
-  for (const item of manifestEl.childrenNamed("item")) {
+  for (const item of childrenNamedLocal(manifestEl, "item")) {
     const id = item.attr.id
     const href = item.attr.href
     if (id === undefined || id.length === 0) continue
@@ -132,7 +158,7 @@ const spineRowsFromRoots = (
 ): OpfSpineRow[] => {
   const byId = new Map<string, OpfSpineManifestItem>()
 
-  for (const item of manifestEl.childrenNamed("item")) {
+  for (const item of childrenNamedLocal(manifestEl, "item")) {
     const id = item.attr.id
     const href = item.attr.href
     if (id === undefined || id.length === 0) continue
@@ -152,7 +178,7 @@ const spineRowsFromRoots = (
 
   const rows: OpfSpineRow[] = []
 
-  for (const itemref of spineEl.childrenNamed("itemref")) {
+  for (const itemref of childrenNamedLocal(spineEl, "itemref")) {
     const idref = itemref.attr.idref
     if (idref === undefined || idref.trim().length === 0) continue
 
@@ -202,12 +228,23 @@ export type OpfMetadata = {
 
 export const parseOpf = (opfXml: string): OpfMetadata => {
   const doc = new XmlDocument(opfXml)
-  const manifestEl = doc.childNamed("manifest")
-  const spineEl = doc.childNamed("spine")
-  const metadataEl = doc.childNamed("metadata")
+  const manifestEl = childNamedLocal(doc, "manifest")
+  const spineEl = childNamedLocal(doc, "spine")
+  const metadataEl = childNamedLocal(doc, "metadata")
 
   const manifestItems =
     manifestEl !== undefined ? manifestItemsFromElement(manifestEl) : []
+  /**
+   * Parses an EPUB package document (OPF) into structured metadata.
+   *
+   * Direct children of `package` (`metadata`, `manifest`, `spine`, `guide`) and
+   * their structural children (`item`, `itemref`, `reference`, `meta`) are
+   * matched by **local name** (ASCII case-insensitive), so prefixed tags such as
+   * `opf:manifest` are supported the same as unprefixed `manifest`.
+   *
+   * Attribute names on `spine` / `itemref` are still read as emitted by xmldoc
+   * (no QName normalization).
+   */
 
   const spineRows =
     manifestEl !== undefined && spineEl !== undefined
