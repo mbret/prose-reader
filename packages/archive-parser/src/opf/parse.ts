@@ -1,4 +1,4 @@
-import type { XmlElement } from "xmldoc"
+import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties"
 
@@ -37,12 +37,15 @@ const elementLocalName = (name: string): string =>
 const localNameEq = (elementName: string, wantLocal: string): boolean =>
   elementLocalName(elementName).toLowerCase() === wantLocal.toLowerCase()
 
+const isXmlElement = (node: XmlNodeBase): node is XmlElement =>
+  node.type === "element"
+
 const childNamedLocal = (
   parent: XmlElement,
   localName: string,
 ): XmlElement | undefined => {
   for (const node of parent.children) {
-    if (node.type !== "element") continue
+    if (!isXmlElement(node)) continue
     if (localNameEq(node.name, localName)) return node
   }
   return undefined
@@ -54,7 +57,7 @@ const childrenNamedLocal = (
 ): XmlElement[] => {
   const out: XmlElement[] = []
   for (const node of parent.children) {
-    if (node.type !== "element") continue
+    if (!isXmlElement(node)) continue
     if (localNameEq(node.name, localName)) out.push(node)
   }
   return out
@@ -126,56 +129,49 @@ const guideFromPackage = (doc: XmlElement): OpfGuideReference[] => {
   return refs
 }
 
-const manifestItemsFromElement = (
-  manifestEl: XmlElement,
-): OpfSpineManifestItem[] => {
-  const items: OpfSpineManifestItem[] = []
+const manifestItemFromXmlElement = (
+  item: XmlElement,
+): OpfSpineManifestItem | undefined => {
+  const id = item.attr.id
+  const href = item.attr.href
+  if (id === undefined || id.length === 0) return undefined
+  if (href === undefined || href.length === 0) return undefined
 
-  for (const item of childrenNamedLocal(manifestEl, "item")) {
-    const id = item.attr.id
-    const href = item.attr.href
-    if (id === undefined || id.length === 0) continue
-    if (href === undefined || href.length === 0) continue
-
-    const mediaType = item.attr["media-type"]
-    const properties = item.attr.properties?.trim()
-    items.push({
-      id,
-      href,
-      ...(mediaType !== undefined && mediaType.length > 0 ? { mediaType } : {}),
-      ...(properties !== undefined && properties.length > 0
-        ? { properties }
-        : {}),
-    })
+  const mediaType = item.attr["media-type"]
+  const properties = item.attr.properties?.trim()
+  return {
+    id,
+    href,
+    ...(mediaType !== undefined && mediaType.length > 0 ? { mediaType } : {}),
+    ...(properties !== undefined && properties.length > 0
+      ? { properties }
+      : {}),
   }
-
-  return items
 }
 
-const spineRowsFromRoots = (
+const manifestItemsAndById = (
   manifestEl: XmlElement,
-  spineEl: XmlElement,
-): OpfSpineRow[] => {
+): {
+  items: OpfSpineManifestItem[]
+  byId: Map<string, OpfSpineManifestItem>
+} => {
+  const items: OpfSpineManifestItem[] = []
   const byId = new Map<string, OpfSpineManifestItem>()
 
-  for (const item of childrenNamedLocal(manifestEl, "item")) {
-    const id = item.attr.id
-    const href = item.attr.href
-    if (id === undefined || id.length === 0) continue
-    if (href === undefined || href.length === 0) continue
-
-    const mediaType = item.attr["media-type"]
-    const properties = item.attr.properties?.trim()
-    byId.set(id, {
-      id,
-      href,
-      ...(mediaType !== undefined && mediaType.length > 0 ? { mediaType } : {}),
-      ...(properties !== undefined && properties.length > 0
-        ? { properties }
-        : {}),
-    })
+  for (const el of childrenNamedLocal(manifestEl, "item")) {
+    const parsed = manifestItemFromXmlElement(el)
+    if (parsed === undefined) continue
+    items.push(parsed)
+    byId.set(parsed.id, parsed)
   }
 
+  return { items, byId }
+}
+
+const spineRowsFromByIdAndSpine = (
+  byId: Map<string, OpfSpineManifestItem>,
+  spineEl: XmlElement,
+): OpfSpineRow[] => {
   const rows: OpfSpineRow[] = []
 
   for (const itemref of childrenNamedLocal(spineEl, "itemref")) {
@@ -226,30 +222,33 @@ export type OpfMetadata = {
   readonly guide: ReadonlyArray<OpfGuideReference>
 }
 
+/**
+ * Parses an EPUB package document (OPF) into structured metadata.
+ *
+ * Direct children of `package` (`metadata`, `manifest`, `spine`, `guide`) and
+ * their structural children (`item`, `itemref`, `reference`, `meta`) are
+ * matched by **local name** (ASCII case-insensitive), so prefixed tags such as
+ * `opf:manifest` are supported the same as unprefixed `manifest`.
+ *
+ * Attribute names on `spine` / `itemref` are still read as emitted by xmldoc
+ * (no QName normalization).
+ */
 export const parseOpf = (opfXml: string): OpfMetadata => {
   const doc = new XmlDocument(opfXml)
   const manifestEl = childNamedLocal(doc, "manifest")
   const spineEl = childNamedLocal(doc, "spine")
   const metadataEl = childNamedLocal(doc, "metadata")
 
-  const manifestItems =
-    manifestEl !== undefined ? manifestItemsFromElement(manifestEl) : []
-  /**
-   * Parses an EPUB package document (OPF) into structured metadata.
-   *
-   * Direct children of `package` (`metadata`, `manifest`, `spine`, `guide`) and
-   * their structural children (`item`, `itemref`, `reference`, `meta`) are
-   * matched by **local name** (ASCII case-insensitive), so prefixed tags such as
-   * `opf:manifest` are supported the same as unprefixed `manifest`.
-   *
-   * Attribute names on `spine` / `itemref` are still read as emitted by xmldoc
-   * (no QName normalization).
-   */
+  let manifestItems: OpfSpineManifestItem[] = []
+  let spineRows: OpfSpineRow[] = []
 
-  const spineRows =
-    manifestEl !== undefined && spineEl !== undefined
-      ? spineRowsFromRoots(manifestEl, spineEl)
-      : []
+  if (manifestEl !== undefined) {
+    const { items, byId } = manifestItemsAndById(manifestEl)
+    manifestItems = items
+    if (spineEl !== undefined) {
+      spineRows = spineRowsFromByIdAndSpine(byId, spineEl)
+    }
+  }
 
   const pageProgressionDirectionRaw =
     spineEl?.attr["page-progression-direction"]

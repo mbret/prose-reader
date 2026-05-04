@@ -191,6 +191,33 @@ describe("parseOpf", () => {
     })
   })
 
+  it("uses the last manifest item when duplicate item ids appear", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="x" href="first.xhtml" media-type="application/xhtml+xml"/>` +
+        `<item id="x" href="second.xhtml" media-type="application/xhtml+xml"/>` +
+        `</manifest>` +
+        `<spine><itemref idref="x"/></spine>`,
+    )
+
+    expect(parseOpf(xml)).toEqual({
+      kind: "opf",
+      manifestItems: [
+        { id: "x", href: "first.xhtml", mediaType: "application/xhtml+xml" },
+        { id: "x", href: "second.xhtml", mediaType: "application/xhtml+xml" },
+      ],
+      spineRows: [
+        {
+          idref: "x",
+          id: "x",
+          href: "second.xhtml",
+          mediaType: "application/xhtml+xml",
+        },
+      ],
+      ...noPackageMetadata,
+    })
+  })
+
   it("matches package children by local name when roots use a namespace prefix", () => {
     const xml =
       `<?xml version="1.0"?>` +
