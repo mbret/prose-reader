@@ -191,6 +191,19 @@ describe("parseOpf", () => {
     })
   })
 
+  it("does not resolve spine direction when page-progression-direction uses a prefixed attribute name", () => {
+    const xml =
+      `<?xml version="1.0"?>` +
+      `<package version="3.0" unique-identifier="bookid" xmlns="http://www.idpf.org/2007/opf" xmlns:p="http://www.idpf.org/2007/opf">` +
+      `<manifest><item id="x" href="x.xhtml"/></manifest>` +
+      `<spine p:page-progression-direction="rtl"><itemref idref="x"/></spine>` +
+      `</package>`
+
+    const parsed = parseOpf(xml)
+    expect(parsed.pageProgressionDirection).toBeUndefined()
+    expect(parsed.spineRows).toEqual([{ idref: "x", id: "x", href: "x.xhtml" }])
+  })
+
   it("uses the last manifest item when duplicate item ids appear", () => {
     const xml = opfWrap(
       `<manifest>` +
