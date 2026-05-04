@@ -6,12 +6,11 @@ import type { OpfIdentifier, OpfMetadata } from "./parse"
 const rawIdentifierValueForIsbn = (
   identifiers: ReadonlyArray<OpfIdentifier>,
 ): string | undefined => {
-  if (identifiers.length === 0) return undefined
-
-  const withIsbnScheme = identifiers.find(
-    (i) => i.scheme !== undefined && i.scheme.trim().toLowerCase() === "isbn",
-  )
-  if (withIsbnScheme !== undefined) return withIsbnScheme.value
+  for (const i of identifiers) {
+    if (i.scheme !== undefined && i.scheme.trim().toLowerCase() === "isbn") {
+      if (normalizeIsbn(i.value) !== undefined) return i.value
+    }
+  }
 
   for (const i of identifiers) {
     if (normalizeIsbn(i.value) !== undefined) return i.value

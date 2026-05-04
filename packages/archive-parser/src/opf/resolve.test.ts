@@ -84,4 +84,34 @@ describe("resolveOpf", () => {
       isbn: "9783161484100",
     })
   })
+
+  it("ignores ISBN-scheme identifiers that do not normalize, then scans the rest", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [
+          { scheme: "ISBN", value: "not-a-real-isbn" },
+          { value: "978-3-16-148410-0" },
+        ],
+      }),
+    ).toEqual({
+      gtin: "9783161484100",
+      isbn: "9783161484100",
+    })
+  })
+
+  it("uses the first ISBN-scheme identifier whose value normalizes", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [
+          { scheme: "ISBN", value: "garbage" },
+          { scheme: "ISBN", value: "978-3-16-148410-0" },
+        ],
+      }),
+    ).toEqual({
+      gtin: "9783161484100",
+      isbn: "9783161484100",
+    })
+  })
 })
