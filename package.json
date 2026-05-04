@@ -34,7 +34,7 @@
     "husky": "^9.1.7",
     "lerna": "^8.1.2",
     "lint-staged": "^16.1.2",
-    "rollup-plugin-node-externals": "^8.0.0",
+    "rollup-plugin-node-externals": "^9.0.0",
     "rxjs": "*",
     "serve": "^14.2.0",
     "vite": "^7",

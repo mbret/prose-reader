@@ -27,8 +27,6 @@ interface LibConfigOptions {
    * Avoids "No name was provided for external module … in output.globals".
    */
   umdGlobals?: Record<string, string>
-  /** Disable the `rollup-plugin-node-externals` plugin. @default true */
-  externalize?: boolean
   /** Extra config deep-merged on top of the defaults (extra plugins, custom test config, etc.). */
   override?: UserConfig
 }
@@ -54,7 +52,6 @@ export const defineLibConfig = (input: LibConfigInput) =>
       target,
       dts: dtsOptions,
       umdGlobals,
-      externalize = true,
       override,
     } = opts
 
@@ -83,9 +80,8 @@ export const defineLibConfig = (input: LibConfigInput) =>
         },
       },
       plugins: [
-        ...(externalize
-          ? [externals({ peerDeps: true, deps: true, devDeps: true })]
-          : []),
+        // never build any deps inside. prose should always use peer or self deps.
+        externals({ peerDeps: true, deps: true, devDeps: true }),
         dts({
           entryRoot: "src",
           ...dtsOptions,
