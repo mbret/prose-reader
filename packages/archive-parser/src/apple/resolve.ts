@@ -6,12 +6,20 @@ export const resolveApple = (input: AppleMetadata): ArchiveResolveResult => {
     (o) => o.name === "fixed-layout",
   )?.value
 
-  if (fixedLayout === undefined) return {}
-
   const renditionLayout =
-    fixedLayout.trim().toLowerCase() === "true"
-      ? ("pre-paginated" as const)
-      : undefined
+    fixedLayout?.trim().toLowerCase() === "true" ? "pre-paginated" : undefined
 
-  return renditionLayout !== undefined ? { renditionLayout } : {}
+  return {
+    gtin: undefined,
+    isbn: undefined,
+    readingDirection: undefined,
+    renditionLayout,
+    title: undefined,
+    authors: undefined,
+    publisher: undefined,
+    rights: undefined,
+    languages: undefined,
+    date: undefined,
+    subjects: undefined,
+  }
 }

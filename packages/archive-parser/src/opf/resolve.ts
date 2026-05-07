@@ -1,6 +1,7 @@
 import type { ArchiveResolveResult } from "../types/archiveResolve"
 import { normalizeGtin } from "../utils/normalizeGtin"
 import { normalizeIsbn } from "../utils/normalizeIsbn"
+import { parseW3cDtfDate } from "../utils/parseW3cDtfDate"
 import type { OpfIdentifier, OpfMetadata } from "./parse"
 
 const rawIdentifierValueForIsbn = (
@@ -28,13 +29,18 @@ export const resolveOpf = (input: OpfMetadata): ArchiveResolveResult => {
     rl === "reflowable" || rl === "pre-paginated" ? rl : undefined
 
   const raw = rawIdentifierValueForIsbn(input.identifiers)
-  const isbn = normalizeIsbn(raw)
-  const gtin = normalizeGtin(raw)
 
   return {
-    ...(gtin !== undefined ? { gtin } : {}),
-    ...(isbn !== undefined ? { isbn } : {}),
-    ...(readingDirection !== undefined ? { readingDirection } : {}),
-    ...(renditionLayout !== undefined ? { renditionLayout } : {}),
+    gtin: normalizeGtin(raw),
+    isbn: normalizeIsbn(raw),
+    readingDirection,
+    renditionLayout,
+    title: input.title,
+    authors: input.creators.length > 0 ? [...input.creators] : undefined,
+    publisher: input.publisher,
+    rights: input.rights,
+    languages: input.languages.length > 0 ? [...input.languages] : undefined,
+    date: parseW3cDtfDate(input.date),
+    subjects: input.subjects.length > 0 ? [...input.subjects] : undefined,
   }
 }

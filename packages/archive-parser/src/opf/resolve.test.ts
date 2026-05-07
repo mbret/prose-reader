@@ -9,6 +9,13 @@ const emptyOpf = (): OpfMetadata => ({
   spineTocIdref: undefined,
   identifiers: [],
   title: undefined,
+  creators: [],
+  publisher: undefined,
+  rights: undefined,
+  languages: [],
+  subjects: [],
+  date: undefined,
+  coverHref: undefined,
   renditionLayoutMeta: undefined,
   renditionFlowMeta: undefined,
   renditionSpreadMeta: undefined,
@@ -113,5 +120,63 @@ describe("resolveOpf", () => {
       gtin: "9783161484100",
       isbn: "9783161484100",
     })
+  })
+
+  it("forwards title, publisher, rights, languages, subjects, and authors", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        title: "Norwegian Wood",
+        creators: ["Haruki Murakami", "Jay Rubin"],
+        publisher: "Vintage",
+        rights: "Copyright 2024",
+        languages: ["en", "ja"],
+        subjects: ["Fiction", "Modern Japanese Literature"],
+      }),
+    ).toEqual({
+      title: "Norwegian Wood",
+      authors: ["Haruki Murakami", "Jay Rubin"],
+      publisher: "Vintage",
+      rights: "Copyright 2024",
+      languages: ["en", "ja"],
+      subjects: ["Fiction", "Modern Japanese Literature"],
+    })
+  })
+
+  it("omits authors / languages / subjects when the parsed lists are empty", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        creators: [],
+        languages: [],
+        subjects: [],
+      }),
+    ).toEqual({})
+  })
+
+  it("parses W3CDTF dc:date down to year / month / day", () => {
+    expect(
+      resolveOpf({ ...emptyOpf(), date: "2024-12-25T12:00:00Z" }).date,
+    ).toEqual({ year: 2024, month: 12, day: 25 })
+  })
+
+  it("preserves a year-only dc:date", () => {
+    expect(resolveOpf({ ...emptyOpf(), date: "1997" }).date).toEqual({
+      year: 1997,
+    })
+  })
+
+  it("omits date when dc:date is unparseable", () => {
+    expect(resolveOpf({ ...emptyOpf(), date: "sometime in 2024" }).date).toBe(
+      undefined,
+    )
+  })
+
+  it("returns a defensively-copied authors array", () => {
+    const creators = ["Alice"]
+    const result = resolveOpf({ ...emptyOpf(), creators })
+
+    expect(result.authors).toEqual(["Alice"])
+    expect(result.authors).not.toBe(creators)
   })
 })

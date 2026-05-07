@@ -12,6 +12,13 @@ const noPackageMetadata: Pick<
   OpfMetadata,
   | "identifiers"
   | "title"
+  | "creators"
+  | "publisher"
+  | "rights"
+  | "languages"
+  | "subjects"
+  | "date"
+  | "coverHref"
   | "renditionLayoutMeta"
   | "renditionFlowMeta"
   | "renditionSpreadMeta"
@@ -21,6 +28,13 @@ const noPackageMetadata: Pick<
 > = {
   identifiers: [],
   title: undefined,
+  creators: [],
+  publisher: undefined,
+  rights: undefined,
+  languages: [],
+  subjects: [],
+  date: undefined,
+  coverHref: undefined,
   renditionLayoutMeta: undefined,
   renditionFlowMeta: undefined,
   renditionSpreadMeta: undefined,
@@ -139,6 +153,7 @@ describe("parseOpf", () => {
     )
 
     expect(parseOpf(xml)).toEqual({
+      ...noPackageMetadata,
       kind: "opf",
       manifestItems: [{ id: "x", href: "x.xhtml" }],
       spineRows: [{ idref: "x", id: "x", href: "x.xhtml" }],
@@ -148,7 +163,6 @@ describe("parseOpf", () => {
       renditionFlowMeta: "paginated",
       renditionSpreadMeta: "both",
       pageProgressionDirection: "rtl",
-      spineTocIdref: undefined,
       guide: [{ href: "cover.xhtml", title: "Cover", type: "cover" }],
     })
   })
@@ -251,6 +265,7 @@ describe("parseOpf", () => {
       `</package>`
 
     expect(parseOpf(xml)).toEqual({
+      ...noPackageMetadata,
       kind: "opf",
       manifestItems: [
         { id: "x", href: "x.xhtml", mediaType: "application/xhtml+xml" },
@@ -263,14 +278,212 @@ describe("parseOpf", () => {
           mediaType: "application/xhtml+xml",
         },
       ],
-      identifiers: [],
       title: "Prefixed roots",
       renditionLayoutMeta: "reflowable",
-      renditionFlowMeta: undefined,
-      renditionSpreadMeta: undefined,
-      pageProgressionDirection: undefined,
       spineTocIdref: "ncx",
       guide: [{ href: "c.xhtml", title: "Cover", type: "cover" }],
     })
+  })
+})
+
+describe("parseOpf — Dublin Core fields", () => {
+  it("collects every dc:creator in document order", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:creator>Haruki Murakami</dc:creator>` +
+        `<dc:creator>Jay Rubin</dc:creator>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).creators).toEqual(["Haruki Murakami", "Jay Rubin"])
+  })
+
+  it("trims and drops empty dc:creator values", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:creator>  Haruki Murakami  </dc:creator>` +
+        `<dc:creator>   </dc:creator>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).creators).toEqual(["Haruki Murakami"])
+  })
+
+  it("returns the first non-empty dc:publisher", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:publisher>Vintage</dc:publisher>` +
+        `<dc:publisher>Other</dc:publisher>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).publisher).toBe("Vintage")
+  })
+
+  it("returns the first non-empty dc:rights", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:rights>Copyright 2024</dc:rights>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).rights).toBe("Copyright 2024")
+  })
+
+  it("collects every dc:language in document order, preserving BCP 47 tags", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:language>zh-Hant</dc:language>` +
+        `<dc:language>zh-Hans</dc:language>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).languages).toEqual(["zh-Hant", "zh-Hans"])
+  })
+
+  it("collects every dc:subject in document order", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:subject>Fiction</dc:subject>` +
+        `<dc:subject>Romance</dc:subject>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).subjects).toEqual(["Fiction", "Romance"])
+  })
+
+  it("returns the first non-empty dc:date raw, preserving the W3CDTF literal", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:date>2024-12-25T12:00:00Z</dc:date>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).date).toBe("2024-12-25T12:00:00Z")
+  })
+
+  it("matches Dublin Core tags by local name when the prefix is unconventional", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dcterms="http://purl.org/dc/terms/">` +
+        `<dcterms:publisher>Acme</dcterms:publisher>` +
+        `<dcterms:creator>Alice</dcterms:creator>` +
+        `</metadata>`,
+    )
+
+    const parsed = parseOpf(xml)
+    expect(parsed.publisher).toBe("Acme")
+    expect(parsed.creators).toEqual(["Alice"])
+  })
+
+  it("returns empty / undefined defaults when metadata is absent", () => {
+    expect(parseOpf(opfWrap(""))).toMatchObject({
+      creators: [],
+      publisher: undefined,
+      rights: undefined,
+      languages: [],
+      subjects: [],
+      date: undefined,
+    })
+  })
+})
+
+describe("parseOpf — cover image resolution", () => {
+  it("resolves coverHref via the EPUB 3 cover-image manifest property", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="ci" href="images/cover.svg" media-type="image/svg+xml" properties="cover-image"/>` +
+        `<item id="other" href="images/page.png" media-type="image/png"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBe("images/cover.svg")
+  })
+
+  it("matches cover-image even when bundled with other space-separated properties", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="ci" href="cover.png" media-type="image/png" properties="svg cover-image scripted"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBe("cover.png")
+  })
+
+  it("ignores cover-image on a non-image manifest item even when an unrelated image exists", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="x" href="cover.xhtml" media-type="application/xhtml+xml" properties="cover-image"/>` +
+        `<item id="img" href="page.png" media-type="image/png"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBeUndefined()
+  })
+
+  it('falls back to the EPUB 2 <meta name="cover"> convention', () => {
+    const xml = opfWrap(
+      `<metadata>` +
+        `<meta name="cover" content="cover-img"/>` +
+        `</metadata>` +
+        `<manifest>` +
+        `<item id="cover-img" href="cover.jpg" media-type="image/jpeg"/>` +
+        `<item id="other" href="page.png" media-type="image/png"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBe("cover.jpg")
+  })
+
+  it("prefers the EPUB 3 cover-image property over the EPUB 2 meta convention", () => {
+    const xml = opfWrap(
+      `<metadata>` +
+        `<meta name="cover" content="legacy-cover"/>` +
+        `</metadata>` +
+        `<manifest>` +
+        `<item id="legacy-cover" href="legacy.jpg" media-type="image/jpeg"/>` +
+        `<item id="ci" href="modern.png" media-type="image/png" properties="cover-image"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBe("modern.png")
+  })
+
+  it("falls back to a manifest item whose id contains 'cover'", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="page-1" href="p1.jpg" media-type="image/jpeg"/>` +
+        `<item id="my-cover" href="cv.jpg" media-type="image/jpeg"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBe("cv.jpg")
+  })
+
+  it("returns coverHref undefined when the manifest has no image candidate", () => {
+    const xml = opfWrap(
+      `<manifest>` +
+        `<item id="page-1" href="p1.xhtml" media-type="application/xhtml+xml"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBeUndefined()
+  })
+
+  it("returns coverHref undefined when there is no manifest at all", () => {
+    expect(parseOpf(opfWrap("")).coverHref).toBeUndefined()
+  })
+
+  it('ignores a meta name="cover" pointing at a non-image manifest item', () => {
+    const xml = opfWrap(
+      `<metadata>` +
+        `<meta name="cover" content="cover-id"/>` +
+        `</metadata>` +
+        `<manifest>` +
+        `<item id="cover-id" href="cover.xhtml" media-type="application/xhtml+xml"/>` +
+        `<item id="other" href="page.png" media-type="image/png"/>` +
+        `</manifest>`,
+    )
+
+    expect(parseOpf(xml).coverHref).toBeUndefined()
   })
 })

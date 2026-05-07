@@ -1,5 +1,6 @@
 import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
+import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties"
 
 export type OpfSpineManifestItem = {
@@ -87,15 +88,98 @@ const identifiersFromMetadata = (metadataEl: XmlElement): OpfIdentifier[] => {
   return identifiers
 }
 
-const titleFromMetadata = (metadataEl: XmlElement): string | undefined => {
+const firstTextByLocalName = (
+  metadataEl: XmlElement,
+  localName: string,
+): string | undefined => {
   let found: string | undefined
   metadataEl.eachChild((child) => {
     if (found !== undefined) return
-    if (elementLocalName(child.name).toLowerCase() !== "title") return
+    if (elementLocalName(child.name).toLowerCase() !== localName.toLowerCase())
+      return
     const t = child.val.trim()
     if (t.length > 0) found = t
   })
   return found
+}
+
+const textsByLocalName = (
+  metadataEl: XmlElement,
+  localName: string,
+): string[] => {
+  const out: string[] = []
+  metadataEl.eachChild((child) => {
+    if (elementLocalName(child.name).toLowerCase() !== localName.toLowerCase())
+      return
+    const t = child.val.trim()
+    if (t.length > 0) out.push(t)
+  })
+  return out
+}
+
+const coverContentIdFromMetadata = (
+  metadataEl: XmlElement,
+): string | undefined => {
+  let coverId: string | undefined
+  metadataEl.eachChild((child) => {
+    if (coverId !== undefined) return
+    if (elementLocalName(child.name).toLowerCase() !== "meta") return
+    if (child.attr.name?.toLowerCase() !== "cover") return
+    const content = child.attr.content?.trim()
+    if (content !== undefined && content.length > 0) coverId = content
+  })
+  return coverId
+}
+
+/**
+ * EPUB cover image inside the manifest. Resolution order, matching
+ * what the spec lays out and what the bulk of EPUB producers in the
+ * wild rely on:
+ *
+ *  1. EPUB 3 — the manifest item carrying the `cover-image` token in
+ *     its `properties` attribute (§ D.6.1).
+ *  2. EPUB 2 — `<meta name="cover" content="ID"/>` in `metadata`,
+ *     resolved to the manifest item with that `id`.
+ *  3. Last-resort fallback — any image manifest item whose `id`
+ *     contains the substring `cover` (case-insensitive); covers the
+ *     long tail of producers that emit neither the EPUB 3 property
+ *     nor the EPUB 2 meta.
+ *
+ * Each step requires the candidate manifest item to advertise an
+ * `image/*` media type so non-image artefacts named `cover` (XHTML
+ * cover pages, NCX entries) don't slip through.
+ */
+const coverHrefFromManifestAndMetadata = ({
+  manifestItems,
+  metadataEl,
+}: {
+  manifestItems: ReadonlyArray<OpfSpineManifestItem>
+  metadataEl: XmlElement | undefined
+}): string | undefined => {
+  const isImage = (item: OpfSpineManifestItem): boolean =>
+    item.mediaType?.toLowerCase().includes("image/") === true
+
+  const byCoverImageProperty = manifestItems.find((item) => {
+    if (!isImage(item)) return false
+    return tokenizeXmlSpaceSeparatedList(item.properties).includes(
+      "cover-image",
+    )
+  })
+  if (byCoverImageProperty !== undefined) return byCoverImageProperty.href
+
+  if (metadataEl !== undefined) {
+    const coverContentId = coverContentIdFromMetadata(metadataEl)
+    if (coverContentId !== undefined) {
+      const match = manifestItems.find(
+        (item) => item.id === coverContentId && isImage(item),
+      )
+      if (match !== undefined) return match.href
+    }
+  }
+
+  return manifestItems.find(
+    (item) => item.id.toLowerCase().includes("cover") && isImage(item),
+  )?.href
 }
 
 const metaValByProperty = (
@@ -215,6 +299,31 @@ export type OpfMetadata = {
   readonly spineTocIdref: string | undefined
   readonly identifiers: ReadonlyArray<OpfIdentifier>
   readonly title: string | undefined
+  /** `dc:creator` values, in document order, trimmed; empty when none. */
+  readonly creators: ReadonlyArray<string>
+  /** First non-empty `dc:publisher`, trimmed. */
+  readonly publisher: string | undefined
+  /** First non-empty `dc:rights`, trimmed. */
+  readonly rights: string | undefined
+  /** `dc:language` values, in document order, trimmed; empty when none. */
+  readonly languages: ReadonlyArray<string>
+  /** `dc:subject` values, in document order, trimmed; empty when none. */
+  readonly subjects: ReadonlyArray<string>
+  /**
+   * Raw `dc:date` value as authored. EPUB 3 requires W3CDTF (a profile
+   * of ISO 8601), but real-world publishers also ship free text here,
+   * so the value is exposed verbatim and consumers normalize as needed.
+   */
+  readonly date: string | undefined
+  /**
+   * Manifest-relative `href` of the cover image, when one can be
+   * resolved from `cover-image` properties (EPUB 3), the EPUB 2
+   * `<meta name="cover">` convention, or an `id` that contains
+   * `cover` on an image manifest item. The href is returned exactly
+   * as it appears in the manifest — callers own folder-prefix
+   * resolution against the OPF's location in the archive.
+   */
+  readonly coverHref: string | undefined
   readonly renditionLayoutMeta: string | undefined
   readonly renditionFlowMeta: string | undefined
   readonly renditionSpreadMeta: string | undefined
@@ -265,18 +374,35 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
       : undefined
 
   let title: string | undefined
+  let publisher: string | undefined
+  let rights: string | undefined
+  let date: string | undefined
+  let creators: string[] = []
+  let languages: string[] = []
+  let subjects: string[] = []
   let renditionLayoutMeta: string | undefined
   let renditionFlowMeta: string | undefined
   let renditionSpreadMeta: string | undefined
   const identifiers: OpfIdentifier[] = []
 
   if (metadataEl !== undefined) {
-    title = titleFromMetadata(metadataEl)
+    title = firstTextByLocalName(metadataEl, "title")
+    publisher = firstTextByLocalName(metadataEl, "publisher")
+    rights = firstTextByLocalName(metadataEl, "rights")
+    date = firstTextByLocalName(metadataEl, "date")
+    creators = textsByLocalName(metadataEl, "creator")
+    languages = textsByLocalName(metadataEl, "language")
+    subjects = textsByLocalName(metadataEl, "subject")
     renditionLayoutMeta = metaValByProperty(metadataEl, "rendition:layout")
     renditionFlowMeta = metaValByProperty(metadataEl, "rendition:flow")
     renditionSpreadMeta = metaValByProperty(metadataEl, "rendition:spread")
     identifiers.push(...identifiersFromMetadata(metadataEl))
   }
+
+  const coverHref = coverHrefFromManifestAndMetadata({
+    manifestItems,
+    metadataEl,
+  })
 
   const guide = guideFromPackage(doc)
 
@@ -287,6 +413,13 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     spineTocIdref,
     identifiers,
     title,
+    creators,
+    publisher,
+    rights,
+    languages,
+    subjects,
+    date,
+    coverHref,
     renditionLayoutMeta,
     renditionFlowMeta,
     renditionSpreadMeta,
