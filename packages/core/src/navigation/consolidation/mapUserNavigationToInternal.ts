@@ -50,12 +50,11 @@ export const mapUserNavigationToInternal =
            * the resolved `position` is guaranteed to be renderable in the
            * current viewport (viewport rectangle fits inside the spine).
            *
-           * Use `clampPositionToFitViewportInSpine` rather than the lighter
-           * `clampPositionWithinSpineBounds`: the latter only ensures the
-           * point itself is inside the spine, which lets the viewport spill
-           * past the end by `~viewportSize` and causes the navigator's
-           * stored position to diverge from where the DOM scroll actually
-           * lands in scrollable mode.
+           * The full viewport rectangle must fit, not just the top-left
+           * point: a point-only clamp lets the viewport spill past the end
+           * by `~viewportSize` and causes the navigator's stored position
+           * to diverge from where the DOM scroll actually lands in
+           * scrollable mode.
            */
           position: userNavigation.position
             ? navigationResolver.clampPositionToFitViewportInSpine(

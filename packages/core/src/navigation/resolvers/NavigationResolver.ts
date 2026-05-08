@@ -11,7 +11,6 @@ import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
 import { clampPositionToFitViewportInSpine } from "./clampPositionToFitViewportInSpine"
-import { clampPositionWithinSpineBounds } from "./clampPositionWithinSpineBounds"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
@@ -224,16 +223,6 @@ export const createNavigationResolver = ({
         visibleAreaRectWidth: viewport.absoluteViewport.width,
         spineItemsManager,
         spine,
-      }),
-    clampPositionWithinSpineBounds: (
-      position: SpinePosition | UnboundSpinePosition,
-    ) =>
-      clampPositionWithinSpineBounds({
-        position,
-        isRTL: context.isRTL(),
-        spineItemsManager,
-        spine,
-        viewportWidth: viewport.absoluteViewport.width,
       }),
     isNavigationGoingForwardFrom,
     arePositionsDifferent,
