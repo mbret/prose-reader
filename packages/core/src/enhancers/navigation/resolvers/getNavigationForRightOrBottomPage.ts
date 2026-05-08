@@ -7,7 +7,7 @@ import type {
 } from "../../../settings/types"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import type { SpinePosition, UnboundSpinePosition } from "../../../spine/types"
+import { type SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { SpineItem } from "../../../spineItem/SpineItem"
 import type { Viewport } from "../../../viewport/Viewport"
 import { getNavigationForRightOrBottomSinglePage } from "./getNavigationForRightOrBottomSinglePage"
@@ -42,7 +42,7 @@ export const getNavigationForRightOrBottomPage = ({
     CoreInputSettings,
     CoreInputSettings & ComputedCoreSettings
   >
-}): SpinePosition => {
+}): SpinePosition | UnboundSpinePosition => {
   const navigation = getNavigationForRightOrBottomSinglePage({
     position,
     viewport,
@@ -64,17 +64,15 @@ export const getNavigationForRightOrBottomPage = ({
     // for the next item in case it's also a vertical content
     if (spineItem?.isUsingVerticalWriting() && position.x !== navigation.x) {
       return navigationResolver.getAdjustedPositionForSpread(
-        navigationResolver.fromUnboundSpinePosition(
-          context.isRTL()
-            ? {
-                ...navigation,
-                x: navigation.x - viewport.pageSize.width,
-              }
-            : {
-                ...navigation,
-                x: navigation.x + viewport.pageSize.width,
-              },
-        ),
+        context.isRTL()
+          ? new UnboundSpinePosition({
+              x: navigation.x - viewport.pageSize.width,
+              y: navigation.y,
+            })
+          : new UnboundSpinePosition({
+              x: navigation.x + viewport.pageSize.width,
+              y: navigation.y,
+            }),
       )
     }
 

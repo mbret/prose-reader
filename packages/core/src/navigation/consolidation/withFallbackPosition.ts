@@ -52,7 +52,7 @@ export const withFallbackPosition =
           return {
             navigation: {
               ...navigation,
-              position: navigationResolver.fromUnboundSpinePosition(
+              position: navigationResolver.clampPositionToFitViewportInSpine(
                 navigation.position,
               ),
             },
@@ -86,7 +86,7 @@ export const withFallbackPosition =
                 x: position.x + rest.previousNavigation.position.x,
                 y: position.y,
               })
-            : navigationResolver.fromUnboundSpinePosition(position)
+            : navigationResolver.clampPositionToFitViewportInSpine(position)
 
         return {
           navigation: {

@@ -63,6 +63,18 @@ export type InternalNavigationEntry = {
   meta: {
     triggeredBy: `user` | `restoration` | `pagination`
   }
+  /**
+   * The user-facing navigation that produced this entry, captured before the
+   * navigator clamped, restored, or otherwise resolved it. For user-driven
+   * entries this is the original `UserNavigationEntry` passed to
+   * `reader.navigation.navigate(...)`; for restoration / pagination cycles
+   * (which are self-driven) it mirrors the resolved `position` so the entry
+   * is, by definition, in-bounds with respect to its own request.
+   *
+   * Comparing `requestedNavigation.position` to `position` is the canonical
+   * way to detect that a request was clamped at a spine boundary.
+   */
+  requestedNavigation: UserNavigationEntry
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
   // direction?: "left" | "right" | "top" | "bottom"
@@ -78,4 +90,7 @@ export type InternalNavigationInput = Omit<
   position?: SpinePosition | UnboundSpinePosition
 }
 
-export type Navigation = Pick<InternalNavigationEntry, "position" | "id">
+export type Navigation = Pick<
+  InternalNavigationEntry,
+  "position" | "id" | "requestedNavigation"
+>

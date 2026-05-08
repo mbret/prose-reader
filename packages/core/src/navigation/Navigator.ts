@@ -1,5 +1,11 @@
 import { combineLatest, Subject } from "rxjs"
-import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  tap,
+} from "rxjs/operators"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { Report } from "../report"
@@ -32,11 +38,12 @@ export const createNavigator = ({
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
   /**
-   * Allow automatic restoration to happens.
-   * - correction of position
-   * - restoration of position
+   * Tracks whether a user-driven hold is currently active on the navigator
+   * (pan, throttle, scroll-debounce, …). While held, the engine defers
+   * automatic adjustments such as restoration so they don't fight the user's
+   * direct manipulation; once released, those adjustments resume.
    */
-  const restorationLocker = new Locker()
+  const userInteractionLock = new Locker()
   const navigationResolver = createNavigationResolver({
     context,
     settings,
@@ -70,16 +77,47 @@ export const createNavigator = ({
     scrollNavigationController,
     navigationResolver,
     spine,
-    restorationLocker.isLocked$,
+    userInteractionLock.isLocked$,
   )
 
   const navigationState$ = combineLatest([
     controlledNavigationController.isNavigating$,
     scrollNavigationController.isNavigating$,
-    restorationLocker.isLocked$,
+    userInteractionLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
+    tap((states) => {
+      console.log("states", states)
+    }),
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
+    distinctUntilChanged(),
+    shareReplay(1),
+  )
+
+  /**
+   * Emits navigation entries once the navigator pipeline has fully settled
+   * (`navigationState$ === "free"`): no held lock, no in-flight viewport
+   * animation, no pending unlock-driven restoration.
+   *
+   * This is the canonical "do work after navigation" stream. Per-frame
+   * pan/throttle emissions and mid-animation states are filtered out at the
+   * source.
+   *
+   * Each emission corresponds to a distinct navigation entry from
+   * `navigation$` (already deduped on `(id, position, requestedNavigation)`).
+   * Consumers that need stricter dedup semantics (e.g. ignore changes in
+   * `requestedNavigation`, collapse on `position` only) should layer their
+   * own `distinctUntilChanged` on top.
+   *
+   * Use this instead of subscribing to `navigation$` directly when you only
+   * care about navigation events whose viewport effect has finished.
+   */
+  const settledNavigation$ = combineLatest([
+    internalNavigator.navigation$,
+    navigationState$,
+  ]).pipe(
+    filter(([, state]) => state === "free"),
+    map(([navigation]) => navigation),
     distinctUntilChanged(),
     shareReplay(1),
   )
@@ -101,18 +139,31 @@ export const createNavigator = ({
     internalNavigator,
     scrollNavigationController,
     controlledNavigationController,
-    locker: restorationLocker,
     navigationState$,
     navigate,
     /**
      * Prevent further navigation until the lock is released.
      * Useful if you want to start navigation by panning for example.
      */
-    lock() {
-      return restorationLocker.lock()
-    },
+    lock: () => userInteractionLock.lock(),
+    /**
+     * Emits whether a user-driven hold is currently active on the navigator
+     * (pan, throttle, scroll-debounce, …) — anything acquired via `lock()`.
+     *
+     * Distinct from `navigationState$`:
+     * - `isLocked$` does NOT include in-flight viewport animation, so it
+     *   releases as soon as the user lets go.
+     * - `navigationState$ === "free"` waits for everything to settle,
+     *   including animation and the unlock-driven restoration cycle.
+     *
+     * Use `isLocked$` for "defer until the user is done interacting" (e.g.
+     * heavier pagination updates). Use `navigationState$` for "everything has
+     * stopped" (e.g. boundary reporting, post-navigation calculations).
+     */
+    isLocked$: userInteractionLock.isLocked$,
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,
+    settledNavigation$,
   }
 }
 

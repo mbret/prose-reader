@@ -64,6 +64,49 @@ export const isShallowEqual = <T = any, R = any>(
   return true
 }
 
+/**
+ * Recursively compare two values. Primitives are compared with `Object.is`;
+ * plain objects, arrays, and class instances are compared key-by-key with
+ * the same rules. Symbols are compared by reference.
+ *
+ * Use this when the input shape is small and well-known. For deeply nested
+ * or large structures prefer a structural diff instead.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: TODO
+export const isDeepEqual = <T = any, R = any>(
+  objectA: T,
+  objectB: R,
+): boolean => {
+  if (is(objectA, objectB)) {
+    return true
+  }
+  if (typeof objectA !== "object" || objectA === null) {
+    return false
+  }
+  if (typeof objectB !== "object" || objectB === null) {
+    return false
+  }
+
+  const keysA = Object.keys(objectA)
+  const keysB = Object.keys(objectB)
+
+  if (keysA.length !== keysB.length) {
+    return false
+  }
+
+  for (const key of keysA) {
+    if (
+      !hasOwn.call(objectB, key) ||
+      // @ts-expect-error
+      !isDeepEqual(objectA[key], objectB[key])
+    ) {
+      return false
+    }
+  }
+
+  return true
+}
+
 // biome-ignore lint/suspicious/noExplicitAny: TODO
 export const groupBy = <T, K extends keyof any>(
   list: T[],

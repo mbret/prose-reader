@@ -83,6 +83,9 @@ describe(`Given a backward navigation to a new item`, () => {
                 x: 0,
                 y: 0,
               }),
+              requestedNavigation: {
+                position: new SpinePosition({ x: 0, y: 0 }),
+              },
               spineItem: 0,
               spineItemWidth: 50,
               directionFromLastNavigation: "backward",

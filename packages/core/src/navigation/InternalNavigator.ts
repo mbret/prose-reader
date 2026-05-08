@@ -11,7 +11,6 @@ import {
   of,
   share,
   shareReplay,
-  skip,
   switchMap,
   takeUntil,
   tap,
@@ -23,7 +22,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import { SpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { isShallowEqual } from "../utils/objects"
+import { isDeepEqual } from "../utils/objects"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -58,26 +57,19 @@ export class InternalNavigator extends DestroyableClass {
     meta: {
       triggeredBy: "user",
     },
+    requestedNavigation: { position: new SpinePosition({ x: 0, y: 0 }) },
     spineItemIsReady: false,
     type: "api",
-    id: Symbol(),
+    id: Symbol(crypto.randomUUID()),
   })
 
-  public navigated$ = this.navigationSubject.pipe(skip(1))
-
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id }) => ({
+    map(({ position, id, requestedNavigation }) => ({
       position,
       id,
+      requestedNavigation,
     })),
-    distinctUntilChanged(
-      (
-        { position: previousPosition, ...previousRest },
-        { position: currentPosition, ...currentRest },
-      ) =>
-        isShallowEqual(previousRest, currentRest) &&
-        isShallowEqual(previousPosition, currentPosition),
-    ),
+    distinctUntilChanged(isDeepEqual),
     shareReplay(1),
   )
 
@@ -92,11 +84,13 @@ export class InternalNavigator extends DestroyableClass {
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     /**
-     * Allow automatic restoration to happens.
-     * - correction of position
-     * - restoration of position
+     * Whether a user-driven hold is currently active on the navigator
+     * (pan, throttle, scroll-debounce, …). While held, automatic position
+     * adjustments (correction, restoration) are deferred so they don't fight
+     * the user's direct manipulation; once released, restoration runs to
+     * snap the viewport back to a valid position.
      */
-    protected isRestorationLocked$: Observable<boolean>,
+    protected isUserInteractionLocked$: Observable<boolean>,
   ) {
     super()
 
@@ -144,7 +138,7 @@ export class InternalNavigator extends DestroyableClass {
           spineItemsManager: spine.spineItemsManager,
           settings,
         }),
-        withLatestFrom(isRestorationLocked$),
+        withLatestFrom(isUserInteractionLocked$),
         switchMap(([params, isUserLocked]) => {
           const shouldNotAlterPosition =
             params.navigation.cfi ||
@@ -174,13 +168,13 @@ export class InternalNavigator extends DestroyableClass {
       )
 
     const navigationUpdateFollowingUserUnlock$ = navigationFromUser$.pipe(
-      withLatestFrom(isRestorationLocked$),
+      withLatestFrom(isUserInteractionLocked$),
       filter(([, isUserLocked]) => isUserLocked),
       switchMap(([navigation]) => {
         // @todo emit true/false to keep stream pure
         const unlock = this.locker.lock()
 
-        return isRestorationLocked$.pipe(
+        return isUserInteractionLocked$.pipe(
           filter((isUserLocked) => !isUserLocked),
           first(),
           map(
@@ -219,7 +213,7 @@ export class InternalNavigator extends DestroyableClass {
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>
-            isRestorationLocked$.pipe(
+            isUserInteractionLocked$.pipe(
               filter((isLocked) => !isLocked),
               first(),
             ),
@@ -259,6 +253,15 @@ export class InternalNavigator extends DestroyableClass {
           meta: {
             triggeredBy: `restoration`,
           },
+          /**
+           * Restoration is self-driven: the navigator is correcting back to
+           * a valid position, not honoring a pending user request. Reset the
+           * requested navigation to mirror the resolved position so the
+           * entry is, by definition, in-bounds — preventing stale "user
+           * pushed past the edge" signals from leaking into boundary
+           * detection on the unlock-driven snap or layout corrections.
+           */
+          requestedNavigation: { position: params.navigation.position },
         }
 
         return {
@@ -329,23 +332,27 @@ export class InternalNavigator extends DestroyableClass {
       stream: Observable<[InternalNavigationEntry, InternalNavigationEntry]>,
     ) =>
       stream.pipe(
-        tap(([currentNavigation, previousNavigation]) => {
+        tap(([currentNavigation]) => {
           const isScrollFromUser = currentNavigation.type === `scroll`
           const isPaginationUpdate =
             currentNavigation.meta.triggeredBy === "pagination"
           const isRestoration =
             currentNavigation.meta.triggeredBy === "restoration"
-          const positionIsSame = isShallowEqual(
-            previousNavigation.position,
-            currentNavigation.position,
-          )
 
-          if (
-            (isScrollFromUser && !isRestoration) ||
-            isPaginationUpdate ||
-            positionIsSame
-          )
-            return
+          /**
+           * Skip navigation that originate from the surface itself (user
+           * scroll feedback) and pagination self-updates. Both of those
+           * already reflect the rendered viewport, so re-driving it would
+           * either fight the user's gesture or loop on our own writes.
+           *
+           * Crucially, we do NOT dedupe on `position` equality here.
+           * Two navigation with the same spine position can still require
+           * a viewport update (e.g. zoom changed the scale factor, layout
+           * reflowed, the DOM scroll drifted). The controller owns the
+           * surface and is the only thing that can authoritatively decide
+           * whether the DOM is already in the desired state — let it.
+           */
+          if ((isScrollFromUser && !isRestoration) || isPaginationUpdate) return
 
           const navigation = {
             position: currentNavigation.position,

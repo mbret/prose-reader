@@ -1,4 +1,13 @@
-import { merge, switchMap, take, takeUntil, tap, withLatestFrom } from "rxjs"
+import {
+  filter,
+  merge,
+  type Observable,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+  withLatestFrom,
+} from "rxjs"
 import { generateCfiForSpineItemPage, generateRootCfi, isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { Spine } from "../spine/Spine"
@@ -17,6 +26,7 @@ export class PaginationController extends DestroyableClass {
     protected spineItemsManager: SpineItemsManager,
     protected spine: Spine,
     protected spineItemLocator: ReturnType<typeof createSpineItemLocator>,
+    protected isNavigationLocked$: Observable<boolean>,
   ) {
     super()
 
@@ -55,16 +65,17 @@ export class PaginationController extends DestroyableClass {
         /**
          * @important
          *
-         * It's important to soft update pagination immediatly.
+         * It's important to soft update pagination immediately.
          * This will avoid delay in potential user feedbacks (navigation buttons).
          *
          * However we wait for the navigator to be unlocked, this avoid updating the pagination
-         * while the user is panning for exemple. We consider a locked navigator as unfinished
+         * while the user is panning for example. We consider a locked navigator as unfinished
          * navigation.
          *
          * Nothing here should be heavier than layout lookup.
          */
-        return this.context.bridgeEvent.navigationUnlocked$.pipe(
+        return this.isNavigationLocked$.pipe(
+          filter((isLocked) => !isLocked),
           take(1),
           withLatestFrom(this.context.bridgeEvent.navigation$),
           tap(([, navigation]) => {

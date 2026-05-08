@@ -21,29 +21,44 @@ export const mapUserNavigationToInternal =
           meta: {
             triggeredBy: "user",
           },
-          id: Symbol(),
+          /**
+           * @important
+           * Mint a fresh id for every navigation request, even when the
+           * resolved position ends up identical to the current one (e.g. a
+           * page turn clamped at a book boundary, or an explicit
+           * `goToCfi(currentCfi)`). Downstream `navigation$` keys
+           * `distinctUntilChanged` on `id` so consumers can observe every
+           * navigation request as a discrete event — including no-op ones
+           * that don't move the viewport. Restoration / pagination cycles
+           * deliberately preserve the existing id and stay deduplicated.
+           */
+          id: Symbol(crypto.randomUUID()),
           animation: "turn",
           ...userNavigation,
           /**
+           * Snapshot the original user request before the resolver clamps
+           * `position` below. Downstream consumers (e.g. boundary detection)
+           * compare the requested vs. resolved position to know whether the
+           * request was pushed past a spine edge.
+           */
+          requestedNavigation: { ...userNavigation },
+          /**
            * @important
-           * For now we do not allow out of bounds positions. (this happens when scroll mode with a zoom out).
-           * Although it's technically possible to be out of bounds, in terms of navigation and the rest of the app
-           * it's hard to predict what will happens with negative x/y. spine item will not be retrieved, the spine position might
-           * not be within anything (although the viewport slice is).
+           * The navigator owns clamping. Callers (manual page-turn, gesture
+           * recognizers, programmatic `navigate(...)`, etc.) are free to
+           * pass any coordinate — including overshoots past the spine — and
+           * the resolved `position` is guaranteed to be renderable in the
+           * current viewport (viewport rectangle fits inside the spine).
            *
-           * Spine position should ideally be within the spine (even when viewport is scaled down/up). That's why we have viewport
-           * on top of the spine.
-           *
-           * For now having things centered (negative x) on zoom out in scroll mode can be achieved with transform origin for example.
-           * This "limitation" is here at the moment to avoid unexpected behaviors.
-           *
-           * @note
-           * Has a bug where scaling from < 1 to 1 was creating positive x offset. This is "expected" since on scroll mode the viewport
-           * is at the offset 0 at scale 0.2 for eg: then when calculating new scroll delta, we get positive x offset. Anyway, to prevent
-           * out of bounds position this should make sure we always stay within an item.
+           * Use `clampPositionToFitViewportInSpine` rather than the lighter
+           * `clampPositionWithinSpineBounds`: the latter only ensures the
+           * point itself is inside the spine, which lets the viewport spill
+           * past the end by `~viewportSize` and causes the navigator's
+           * stored position to diverge from where the DOM scroll actually
+           * lands in scrollable mode.
            */
           position: userNavigation.position
-            ? navigationResolver.fromOutOfBoundsSpinePosition(
+            ? navigationResolver.clampPositionToFitViewportInSpine(
                 userNavigation.position,
               )
             : undefined,

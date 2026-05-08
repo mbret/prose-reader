@@ -57,17 +57,22 @@ export const getNavigationForRightOrBottomSinglePage = ({
   )
 
   if (!positionsAreDifferent) {
-    return navigationResolver.fromUnboundSpinePosition(
-      pageTurnDirection === `horizontal`
-        ? new UnboundSpinePosition({
-            x: position.x + viewport.pageSize.width,
-            y: 0,
-          })
-        : new UnboundSpinePosition({
-            y: position.y + viewport.pageSize.height,
-            x: 0,
-          }),
-    )
+    /**
+     * Return the *theoretical* one-page-to-the-right position without
+     * clamping it to spine bounds. The navigator clamps centrally in
+     * `mapUserNavigationToInternal`, and preserving the unclamped value
+     * here lets it flow through as `requestedNavigation` so consumers (e.g.
+     * boundary detection) can tell that the user pushed past the edge.
+     */
+    return pageTurnDirection === `horizontal`
+      ? new UnboundSpinePosition({
+          x: position.x + viewport.pageSize.width,
+          y: 0,
+        })
+      : new UnboundSpinePosition({
+          y: position.y + viewport.pageSize.height,
+          x: 0,
+        })
   }
 
   const readingOrderPosition =

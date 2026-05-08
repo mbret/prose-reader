@@ -1,11 +1,21 @@
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
-import { fromOutOfBoundsSpinePosition } from "./fromOutOfBoundsSpinePosition"
+import { clampPositionWithinSpineBounds } from "./clampPositionWithinSpineBounds"
 
 export const NAMESPACE = `spineNavigator`
 
-export const fromUnboundSpinePosition = ({
+/**
+ * Treat `position` as the top-left of a viewport (size
+ * `visibleAreaRectWidth` × `pageSizeHeight`) and clamp it so the entire
+ * viewport rectangle fits inside the spine.
+ *
+ * Composed on top of `clampPositionWithinSpineBounds`: it first ensures the
+ * point is inside the spine, then tightens the upper bound by the viewport
+ * size on each axis. Use this when you're about to render and need the
+ * viewport flush with the book edge (e.g. paginated page-turn at end of book).
+ */
+export const clampPositionToFitViewportInSpine = ({
   position,
   isRTL,
   pageSizeHeight,
@@ -20,7 +30,7 @@ export const fromUnboundSpinePosition = ({
   visibleAreaRectWidth: number
   spine: Spine
 }) => {
-  const unboundPosition = fromOutOfBoundsSpinePosition({
+  const unboundPosition = clampPositionWithinSpineBounds({
     position,
     isRTL,
     spineItemsManager,

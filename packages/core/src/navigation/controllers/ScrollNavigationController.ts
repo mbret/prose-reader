@@ -161,6 +161,13 @@ export class ScrollNavigationController extends ReactiveEntity<{
   /**
    * Usually occurs due to navigation.
    *
+   * Authoritative dedup: this controller owns the surface, so it's the only
+   * place that knows whether the DOM scroll already matches the requested
+   * position. Skipping here when the DOM is already in the desired state is
+   * safe; deduping further upstream (e.g. on spine-position equality alone)
+   * is not, because the same spine position can map to different DOM scroll
+   * targets after a scale change, layout reflow, or external scroll drift.
+   *
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
@@ -169,11 +176,22 @@ export class ScrollNavigationController extends ReactiveEntity<{
   }: ScrollNavigationViewportNavigationEntry) => {
     const element = this.value.element
 
-    this.scrollingSubject.next(true)
+    if (!element) return
 
     const scaledPosition = this.fromSpinePosition(position)
 
-    element?.scrollTo({
+    console.log("scaledPosition", scaledPosition)
+
+    if (
+      Math.round(scaledPosition.x) === element.scrollLeft &&
+      Math.round(scaledPosition.y) === element.scrollTop
+    ) {
+      return
+    }
+
+    this.scrollingSubject.next(true)
+
+    element.scrollTo({
       left: scaledPosition.x,
       top: scaledPosition.y,
       behavior: "instant",

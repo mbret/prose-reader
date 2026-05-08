@@ -51,6 +51,8 @@ export const observeState = (reader: Reader) => {
             computedPageTurnDirection !== "vertical" &&
             ((readingDirection === "ltr" && !isAtAbsoluteEnd) ||
               (readingDirection === "rtl" && !isAtBeginSpineItem)),
+          isAtBookStart: isAtAbsoluteBeginning && isAtBeginFirstPage,
+          isAtBookEnd: isAtAbsoluteEnd && isAtEndLastPage,
         }
       },
     ),

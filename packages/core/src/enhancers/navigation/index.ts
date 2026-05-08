@@ -5,6 +5,7 @@ import type {
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
+import { observeBoundaryReached } from "./boundary"
 import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
@@ -25,11 +26,12 @@ export const navigationEnhancer =
   ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
     const reader = next(options)
     const state$ = observeState(reader)
+    const boundaryReached$ = observeBoundaryReached(reader)
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
     const userScrollNavigation = new UserScrollNavigation(
       reader.navigation.scrollNavigationController,
-      reader.navigation.locker,
+      reader.navigation.lock,
     )
 
     const linksNavigation$ = handleLinksNavigation(reader, manualNavigator)
@@ -65,6 +67,7 @@ export const navigationEnhancer =
       navigation: {
         ...reader.navigation,
         state$,
+        boundaryReached$,
         throttleLock: ({ duration, trigger }) =>
           trigger.pipe(throttleLock({ duration, reader })),
         panNavigator,

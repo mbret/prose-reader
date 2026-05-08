@@ -5,6 +5,9 @@
   "main": "index.js",
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "lerna run start --stream --ignore prose-reader-front",
     "start:lib": "lerna run start --stream --scope @prose-reader/* --concurrency 15",

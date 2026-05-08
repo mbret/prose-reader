@@ -10,8 +10,8 @@ import { createNavigationResolver as createSpineItemNavigator } from "../../spin
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
-import { fromOutOfBoundsSpinePosition } from "./fromOutOfBoundsSpinePosition"
-import { fromUnboundSpinePosition } from "./fromUnboundSpinePosition"
+import { clampPositionToFitViewportInSpine } from "./clampPositionToFitViewportInSpine"
+import { clampPositionWithinSpineBounds } from "./clampPositionWithinSpineBounds"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
@@ -131,7 +131,7 @@ export const createNavigationResolver = ({
         ? 0
         : viewportPosition.y +
           viewport.absoluteViewport.height * triggerPercentage
-    const midScreenPositionSafePosition = fromUnboundSpinePosition({
+    const midScreenPositionSafePosition = clampPositionToFitViewportInSpine({
       position: new SpinePosition({
         x: triggerXPosition,
         y: triggerYPosition,
@@ -214,10 +214,10 @@ export const createNavigationResolver = ({
         viewport,
       }),
     getMostPredominantNavigationForPosition,
-    fromUnboundSpinePosition: (
+    clampPositionToFitViewportInSpine: (
       position: SpinePosition | UnboundSpinePosition,
     ) =>
-      fromUnboundSpinePosition({
+      clampPositionToFitViewportInSpine({
         position,
         isRTL: context.isRTL(),
         pageSizeHeight: viewport.pageSize.height,
@@ -225,10 +225,10 @@ export const createNavigationResolver = ({
         spineItemsManager,
         spine,
       }),
-    fromOutOfBoundsSpinePosition: (
+    clampPositionWithinSpineBounds: (
       position: SpinePosition | UnboundSpinePosition,
     ) =>
-      fromOutOfBoundsSpinePosition({
+      clampPositionWithinSpineBounds({
         position,
         isRTL: context.isRTL(),
         spineItemsManager,

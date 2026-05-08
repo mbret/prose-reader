@@ -1,9 +1,4 @@
-import {
-  BehaviorSubject,
-  distinctUntilChanged,
-  filter,
-  ReplaySubject,
-} from "rxjs"
+import { BehaviorSubject, filter, ReplaySubject } from "rxjs"
 import type { Navigation } from "../navigation/types"
 import type { PaginationInfo } from "../pagination/types"
 
@@ -21,20 +16,11 @@ export class BridgeEvent {
   public navigationSubject = new ReplaySubject<Navigation>(1)
   public viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
   public paginationSubject = new ReplaySubject<PaginationInfo>()
-  public navigationIsLockedSubject = new BehaviorSubject(false)
 
   /**
    * Replay last pagination and emit next changes
    */
   public pagination$ = this.paginationSubject.asObservable()
-
-  /**
-   * Emit whenever the navigation is unlocked.
-   */
-  public navigationUnlocked$ = this.navigationIsLockedSubject.pipe(
-    distinctUntilChanged(),
-    filter((isLocked) => !isLocked),
-  )
 
   /**
    * Replay and emit viewport state

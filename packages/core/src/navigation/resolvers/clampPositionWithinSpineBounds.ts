@@ -11,28 +11,35 @@ type SharedParams = {
   viewportWidth: number
 }
 
-export function fromOutOfBoundsSpinePosition(
+export function clampPositionWithinSpineBounds(
   params: SharedParams & {
     position: SpinePosition
   },
 ): SpinePosition
 
-export function fromOutOfBoundsSpinePosition(
+export function clampPositionWithinSpineBounds(
   params: SharedParams & {
     position: UnboundSpinePosition
   },
 ): UnboundSpinePosition
 
-export function fromOutOfBoundsSpinePosition(
+export function clampPositionWithinSpineBounds(
   params: SharedParams & {
     position: UnboundSpinePosition | SpinePosition
   },
 ): UnboundSpinePosition | SpinePosition
 
 /**
- * Only make sure x/y are not out of the bounds of the spine.
+ * Treat `position` as a single point and clamp it to the spine rectangle.
+ *
+ * The result is guaranteed to lie inside `[0, lastSpineRight - 1]` × `[0, lastSpineBottom - 1]`
+ * (RTL clamps x to `[lastSpineLeft, viewportWidth]` instead). Use this when you
+ * need a valid coordinate inside the spine — e.g. resolving a CFI, identifying
+ * which spine item contains the position. Does *not* guarantee that a viewport
+ * rendered at this position fits inside the spine; for that, use
+ * `clampPositionToFitViewportInSpine` instead.
  */
-export function fromOutOfBoundsSpinePosition({
+export function clampPositionWithinSpineBounds({
   position,
   isRTL,
   spineItemsManager,

@@ -10,6 +10,7 @@ import {
   mergeMap,
   type Observable,
   of,
+  pairwise,
   Subject,
   share,
   shareReplay,
@@ -28,6 +29,7 @@ import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
+import { isShallowEqual } from "../../utils/objects"
 import type { Viewport } from "../../viewport/Viewport"
 import {
   spinePositionToTranslation,
@@ -119,12 +121,30 @@ export class ControlledNavigationController extends DestroyableClass {
     )
 
     this.isNavigating$ = navigate$.pipe(
-      map(({ animation, position }) => {
-        const shouldAnimate = !(
-          !animation ||
-          (animation === `turn` &&
-            settings.values.computedPageTurnAnimation === `none`)
-        )
+      startWith<ViewportNavigationEntry>({
+        position: new SpinePosition({ x: 0, y: 0 }),
+        animation: false,
+      }),
+      pairwise(),
+      map(([previous, { animation, position }]) => {
+        /**
+         * Skip the animation pipeline when the requested target matches
+         * the previous one. The transform is still applied below (so
+         * layout/zoom drift gets re-anchored), we just don't burn
+         * `animationDuration` ms transitioning to a position we're
+         * already at — which would otherwise hold `isNavigating$` true
+         * for the full animation, gating any consumer of
+         * `navigationState$ === "free"` (e.g. boundary detection) on a
+         * visually no-op turn at a spine boundary.
+         */
+        const positionUnchanged = isShallowEqual(previous.position, position)
+        const shouldAnimate =
+          !positionUnchanged &&
+          !(
+            !animation ||
+            (animation === `turn` &&
+              settings.values.computedPageTurnAnimation === `none`)
+          )
 
         return {
           type: `manualAdjust` as const,
