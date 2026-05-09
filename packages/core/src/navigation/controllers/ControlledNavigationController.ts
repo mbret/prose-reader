@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   combineLatest,
   delay,
+  distinctUntilChanged,
   filter,
   identity,
   map,
@@ -10,7 +11,6 @@ import {
   mergeMap,
   type Observable,
   of,
-  pairwise,
   Subject,
   share,
   shareReplay,
@@ -114,32 +114,16 @@ export class ControlledNavigationController extends DestroyableClass {
       share(),
     )
 
-    const navigate$ = this.navigateSubject.pipe(
-      tap((navigation) => {
-        report.info(`Navigation requested`, navigation)
-      }),
-    )
+    this.isNavigating$ = this.navigateSubject.pipe(
+      distinctUntilChanged((a, b) => isShallowEqual(a.position, b.position)),
+      map(({ animation, position }) => {
+        report.info(`Navigation requested`, { animation, position })
 
-    this.isNavigating$ = navigate$.pipe(
-      startWith<ViewportNavigationEntry>({
-        position: new SpinePosition({ x: 0, y: 0 }),
-        animation: false,
-      }),
-      pairwise(),
-      map(([previous, { animation, position }]) => {
-        // Skip animation when the target hasn't moved: the transform still
-        // runs below (re-anchors after layout/zoom drift), but we don't
-        // hold `isNavigating$` true for `animationDuration` on a visually
-        // no-op turn at a spine boundary, which would gate any consumer
-        // of `navigationState$ === "free"`.
-        const positionUnchanged = isShallowEqual(previous.position, position)
-        const shouldAnimate =
-          !positionUnchanged &&
-          !(
-            !animation ||
-            (animation === `turn` &&
-              settings.values.computedPageTurnAnimation === `none`)
-          )
+        const shouldAnimate = !(
+          !animation ||
+          (animation === `turn` &&
+            settings.values.computedPageTurnAnimation === `none`)
+        )
 
         return {
           type: `manualAdjust` as const,
