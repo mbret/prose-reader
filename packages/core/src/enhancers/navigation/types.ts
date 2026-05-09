@@ -9,7 +9,7 @@ export type NavigationEnhancerOutput = {
   load: (options: Parameters<Reader["load"]>[0] & { cfi?: string }) => void
   navigation: {
     state$: ReturnType<typeof observeState>
-    boundaryReached$: ReturnType<typeof outOfSpineBoundary>
+    outOfSpineBoundary$: ReturnType<typeof outOfSpineBoundary>
     throttleLock: <T>(params: {
       duration: number
       trigger: Observable<T>

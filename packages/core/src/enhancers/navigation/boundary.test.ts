@@ -77,8 +77,7 @@ const createTestReader = ({
   )
   spineItemsManager.addMany(items)
 
-  // Cast to Reader is safe here: only the fields read by `outOfSpineBoundary`
-  // and friends are wired up (navigation, spineItemsManager, spine, context).
+  // Cast: only the fields read by `outOfSpineBoundary` are wired up.
   const reader = {
     navigation: navigator,
     spineItemsManager,
@@ -130,9 +129,6 @@ describe("outOfSpineBoundary", () => {
     })
 
     it("emits 'end' when the requested x is exactly at layout.right", async () => {
-      // 2 items × 100px = layout.right = 200; an x === 200 request is the
-      // "first pixel past content" case, which the half-open extent treats
-      // as past end.
       const { reader, navigator } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)
 
@@ -193,10 +189,6 @@ describe("outOfSpineBoundary", () => {
     })
 
     it("does not emit on restoration / pagination cycles whose requested position mirrors the resolved one", async () => {
-      // First nav: in-bounds, settles. Then trigger a fresh layout, which
-      // produces a restoration entry where `requestedPosition` is mirrored
-      // to the resolved position by construction (see `InternalNavigator`'s
-      // restoration branch). Boundary must not fire for that.
       const { reader, navigator, spine } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)
 

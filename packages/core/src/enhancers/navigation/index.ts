@@ -26,7 +26,7 @@ export const navigationEnhancer =
   ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
     const reader = next(options)
     const state$ = observeState(reader)
-    const boundaryReached$ = outOfSpineBoundary(reader)
+    const outOfSpineBoundary$ = outOfSpineBoundary(reader)
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
     const userScrollNavigation = new UserScrollNavigation(
@@ -67,7 +67,7 @@ export const navigationEnhancer =
       navigation: {
         ...reader.navigation,
         state$,
-        boundaryReached$,
+        outOfSpineBoundary$,
         throttleLock: ({ duration, trigger }) =>
           trigger.pipe(throttleLock({ duration, reader })),
         panNavigator,

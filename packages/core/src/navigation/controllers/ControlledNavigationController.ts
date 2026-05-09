@@ -127,16 +127,11 @@ export class ControlledNavigationController extends DestroyableClass {
       }),
       pairwise(),
       map(([previous, { animation, position }]) => {
-        /**
-         * Skip the animation pipeline when the requested target matches
-         * the previous one. The transform is still applied below (so
-         * layout/zoom drift gets re-anchored), we just don't burn
-         * `animationDuration` ms transitioning to a position we're
-         * already at — which would otherwise hold `isNavigating$` true
-         * for the full animation, gating any consumer of
-         * `navigationState$ === "free"` (e.g. boundary detection) on a
-         * visually no-op turn at a spine boundary.
-         */
+        // Skip animation when the target hasn't moved: the transform still
+        // runs below (re-anchors after layout/zoom drift), but we don't
+        // hold `isNavigating$` true for `animationDuration` on a visually
+        // no-op turn at a spine boundary, which would gate any consumer
+        // of `navigationState$ === "free"`.
         const positionUnchanged = isShallowEqual(previous.position, position)
         const shouldAnimate =
           !positionUnchanged &&

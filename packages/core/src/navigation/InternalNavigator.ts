@@ -51,12 +51,6 @@ const isSamePosition = (
   b: SpinePosition | UnboundSpinePosition | undefined,
 ) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y)
 
-/**
- * Dedup comparator for the `navigation$` projection. Tailored to the exact
- * shape (`Navigation`) so the hot path stays allocation-free and
- * type-checked: a new field on the projection forces an explicit decision
- * here instead of being silently folded into the dedup key.
- */
 const isSameNavigation = (a: Navigation, b: Navigation) =>
   a.id === b.id &&
   isSamePosition(a.position, b.position) &&
@@ -103,11 +97,8 @@ export class InternalNavigator extends DestroyableClass {
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     /**
-     * Whether a user-driven hold is currently active on the navigator
-     * (pan, throttle, scroll-debounce, …). While held, automatic position
-     * adjustments (correction, restoration) are deferred so they don't fight
-     * the user's direct manipulation; once released, restoration runs to
-     * snap the viewport back to a valid position.
+     * While held, automatic position adjustments (correction, restoration)
+     * are deferred so they don't fight the user's direct manipulation.
      */
     protected isUserInteractionLocked$: Observable<boolean>,
   ) {
@@ -272,14 +263,6 @@ export class InternalNavigator extends DestroyableClass {
           meta: {
             triggeredBy: `restoration`,
           },
-          /**
-           * Restoration is self-driven: the navigator is correcting back to
-           * a valid position, not honoring a pending user request. Mirror
-           * the resolved position so the entry is, by definition, in-bounds
-           * — preventing stale "user pushed past the edge" signals from
-           * leaking into boundary detection on the unlock-driven snap or
-           * layout corrections.
-           */
           requestedPosition: params.navigation.position,
         }
 
@@ -358,19 +341,10 @@ export class InternalNavigator extends DestroyableClass {
           const isRestoration =
             currentNavigation.meta.triggeredBy === "restoration"
 
-          /**
-           * Skip navigation that originate from the surface itself (user
-           * scroll feedback) and pagination self-updates. Both of those
-           * already reflect the rendered viewport, so re-driving it would
-           * either fight the user's gesture or loop on our own writes.
-           *
-           * Crucially, we do NOT dedupe on `position` equality here.
-           * Two navigation with the same spine position can still require
-           * a viewport update (e.g. zoom changed the scale factor, layout
-           * reflowed, the DOM scroll drifted). The controller owns the
-           * surface and is the only thing that can authoritatively decide
-           * whether the DOM is already in the desired state — let it.
-           */
+          // Do NOT add a `position`-equality short-circuit here: the same
+          // spine position can map to a different DOM scroll target after
+          // a scale change, layout reflow, or external scroll drift. Only
+          // the controller owns surface state — let it dedup.
           if ((isScrollFromUser && !isRestoration) || isPaginationUpdate) return
 
           const navigation = {

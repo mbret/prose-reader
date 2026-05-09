@@ -18,11 +18,6 @@ import {
   observeBookBoundaryReached,
 } from "./bookBoundary"
 
-/**
- * Force the last spine item's `isReady$` to a controllable subject so the
- * tests can simulate "loading" vs "ready" without going through the real
- * renderer pipeline.
- */
 const overrideLastItemReadiness = (
   spineItemsManager: SpineItemsManager,
   initial: boolean,
@@ -159,7 +154,7 @@ describe("observeBookBoundaryReached", () => {
       })
 
       await waitFor(50)
-      expect(events).toEqual([]) // gated, nothing yet
+      expect(events).toEqual([])
 
       readiness.setReady(true)
       await waitFor(20)
@@ -189,8 +184,8 @@ describe("observeBookBoundaryReached", () => {
     })
 
     // Regression: `setTimeout(fn, Infinity)` is clamped to ~1ms in Node, so
-    // naively passing `Infinity` into RxJS `timeout` would drop the pending
-    // event instead of waiting. The operator must be skipped entirely.
+    // naively passing `Infinity` into RxJS `timeout` would drop the event
+    // instead of waiting. The operator must be skipped entirely.
     it("waits indefinitely when itemReadinessTimeoutMs is Infinity", async () => {
       const { reader, navigator, spineItemsManager } = createTestReader()
       const readiness = overrideLastItemReadiness(spineItemsManager, false)
@@ -205,10 +200,9 @@ describe("observeBookBoundaryReached", () => {
         animation: false,
       })
 
-      // Wait long enough that a clamped `Infinity` timeout would have fired
-      // and routed to `EMPTY`, completing the inner observable.
+      // Long enough that a clamped `Infinity` timeout would have fired.
       await waitFor(100)
-      expect(events).toEqual([]) // still pending, not dropped
+      expect(events).toEqual([])
 
       readiness.setReady(true)
       await waitFor(20)
@@ -220,7 +214,6 @@ describe("observeBookBoundaryReached", () => {
 
   describe("Given the start side", () => {
     it("emits 'start' immediately, regardless of last-item readiness", async () => {
-      // Start side never gates on readiness: x = 0 is always the start.
       const { reader, navigator, spineItemsManager } = createTestReader()
       overrideLastItemReadiness(spineItemsManager, false)
 
@@ -251,27 +244,22 @@ describe("observeBookBoundaryReached", () => {
         events.push(e),
       )
 
-      // First overshoot — gated.
       navigator.navigate({
         position: new SpinePosition({ x: 9999, y: 0 }),
         animation: false,
       })
       await waitFor(20)
 
-      // Second overshoot before readiness arrives — should cancel the first wait.
       navigator.navigate({
         position: new SpinePosition({ x: 9999, y: 0 }),
         animation: false,
       })
       await waitFor(20)
 
-      // Readiness arrives — only the latest wait should consume it.
       readiness.setReady(true)
       await waitFor(20)
       subscription.unsubscribe()
 
-      // Both attempts produced settled navigations, but switchMap collapses
-      // the in-flight readiness wait so we get exactly one emission.
       expect(events).toEqual([{ boundary: "end" }])
     })
   })

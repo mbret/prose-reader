@@ -159,14 +159,11 @@ export class ScrollNavigationController extends ReactiveEntity<{
   }
 
   /**
-   * Usually occurs due to navigation.
-   *
-   * Authoritative dedup: this controller owns the surface, so it's the only
-   * place that knows whether the DOM scroll already matches the requested
-   * position. Skipping here when the DOM is already in the desired state is
-   * safe; deduping further upstream (e.g. on spine-position equality alone)
-   * is not, because the same spine position can map to different DOM scroll
-   * targets after a scale change, layout reflow, or external scroll drift.
+   * Authoritative DOM-scroll dedup: this controller owns the surface and
+   * is the only place that can compare against the actual scaled scroll
+   * target. Upstream same-`SpinePosition` dedup is unsafe because the same
+   * spine position maps to different DOM scroll targets after a scale
+   * change, layout reflow, or external scroll drift.
    *
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing

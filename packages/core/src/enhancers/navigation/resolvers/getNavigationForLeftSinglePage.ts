@@ -48,13 +48,6 @@ export const getNavigationForLeftSinglePage = ({
   )
 
   if (!isNewNavigationInCurrentItem) {
-    /**
-     * Return the *theoretical* one-page-to-the-left position without
-     * clamping it to spine bounds. The navigator clamps centrally in
-     * `mapUserNavigationToInternal`, and preserving the unclamped value
-     * here lets it flow through as `requestedPosition` so consumers (e.g.
-     * boundary detection) can tell that the user pushed past the edge.
-     */
     return pageTurnDirection === `horizontal`
       ? new UnboundSpinePosition({
           x: position.x - viewport.pageSize.width,

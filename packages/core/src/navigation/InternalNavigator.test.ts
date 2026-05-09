@@ -235,13 +235,6 @@ describe(`Given loaded book`, () => {
   })
 
   describe("Given navigate() with a position past the end of the book", () => {
-    /**
-     * Pins the navigator contract: callers may pass any coordinate (including
-     * overshoots past the spine) and the resolved position is guaranteed to
-     * be renderable — viewport flush with the book edge, not 1px past it.
-     * Captures the original `requestedPosition` so boundary detection can
-     * still tell the request was clamped.
-     */
     it.each([
       ["paginated", "controlled" as const],
       ["scrollable", "scrollable" as const],
@@ -302,24 +295,11 @@ describe(`Given loaded book`, () => {
   })
 
   describe("Given two consecutive user navigations resolving to the same position in scrollable mode", () => {
-    /**
-     * Regression: in scrollable mode with the thumbnail (zoom) toggle,
-     * the second `navigate(...)` call resolved to the same spine position
-     * as the first but needed to produce a different DOM scroll because
-     * the scale factor changed in between. The previous `positionIsSame`
-     * gate in `navigateViewport` short-circuited the second call entirely,
-     * so the controller never got the chance to re-sync the DOM scroll
-     * for the new scale and the user landed on the wrong page (e.g. page
-     * 5 instead of page 11).
-     *
-     * The fix forwards every user navigation to the controller; the
-     * controller is the only authority on DOM state and dedups locally
-     * based on the actual scaled position.
-     *
-     * Pins the contract: two consecutive user navigations whose resolved
-     * positions are equal must both reach
-     * `scrollNavigationController.navigate`.
-     */
+    // Regression: with the thumbnail/zoom toggle in scrollable mode, the
+    // second call resolved to the same spine position as the first but
+    // needed a different DOM scroll because the scale factor changed in
+    // between. A `position`-equality short-circuit in `navigateViewport`
+    // dropped the second call and the user landed on the wrong page.
     it("should forward both to scrollNavigationController.navigate", async () => {
       const {
         spine,

@@ -36,18 +36,13 @@ async function run() {
     },
   })
 
-  /**
-   * Tests assert against this hidden marker rather than any fragile
-   * spy — the navigation primitive `boundaryReached$` toggles a couple
-   * of `data-*` attributes that Playwright can read deterministically.
-   *
-   * `data-count`: total number of boundary events fired so far.
-   * `data-last` : the last boundary value that fired ("start" | "end" | "").
-   */
+  // Hidden marker the spec asserts against. `data-count` is the total
+  // number of boundary events; `data-last` is the most recent boundary
+  // value ("start" | "end" | "").
   // biome-ignore lint/style/noNonNullAssertion: marker is in index.html
   const marker = document.getElementById("boundary-marker")!
 
-  reader.navigation.boundaryReached$.subscribe(({ boundary }) => {
+  reader.navigation.outOfSpineBoundary$.subscribe(({ boundary }) => {
     const count = Number(marker.dataset.count ?? "0") + 1
     marker.dataset.count = String(count)
     marker.dataset.last = boundary

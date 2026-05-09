@@ -11,12 +11,8 @@ const LAST_SPINE_INDEX = 11 // sample.cbz has 12 single-page spine items
 
 const marker = (page: Page) => page.locator("#boundary-marker")
 
-/**
- * After any user interaction, settled navigation is asynchronous. We give
- * the boundary stream a generous window to either fire or not fire before
- * asserting on `data-count`. This is also what the existing nav specs do
- * (e.g. they `expect(...).toBeInViewport(...)` which polls).
- */
+// Window to give settled navigation time to either fire a boundary event
+// or not, before asserting on `data-count`.
 const SETTLE_DELAY_MS = 250
 
 const setup = async (page: Page) => {
@@ -45,9 +41,6 @@ test.describe("Given the user is on the last page (end of book)", () => {
     await navigateToSpineItem({ page, index: LAST_SPINE_INDEX })
     await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
 
-    // Reset the marker after the goToSpineItem navigation. That nav itself
-    // is in-bounds and shouldn't have produced a boundary, but we're
-    // explicit about the precondition for this test.
     await page.evaluate(() => {
       const el = document.getElementById("boundary-marker")
       if (!el) return
@@ -78,13 +71,9 @@ test.describe("Given the user is at an edge and navigates back then forward", ()
       el.dataset.last = ""
     })
 
-    // Step away from the edge: in-bounds, no boundary.
     await turnLeft({ page })
     await waitForSpineItemReady(page, [LAST_SPINE_INDEX - 1])
 
-    // Step back onto the edge: also in-bounds (the resolved position lands
-    // on the last item, but the requested target is in-bounds — not an
-    // overshoot of the spine).
     await turnRight({ page })
     await waitForSpineItemReady(page, [LAST_SPINE_INDEX])
 
@@ -101,11 +90,9 @@ test.describe("Given the user is at an edge and starts a small pan that doesn't 
   }) => {
     await setup(page)
 
-    // We start on the first page (the start edge). The pan is intentionally
-    // smaller than the gesture enhancer's pan recognizer threshold
-    // (`posThreshold: 20`), and is positioned in the middle of the screen
-    // (outside the left/right tap zones), so neither pan navigation nor a
-    // fallback tap navigation will be issued.
+    // Pan distance (5px) stays below `gesturesEnhancer`'s pan recognizer
+    // `posThreshold: 20` and the move sits in the middle of the screen
+    // (outside the tap zones), so no navigation is issued.
     await page.evaluate(() => {
       const el = document.getElementById("boundary-marker")
       if (!el) return

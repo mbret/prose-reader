@@ -12,20 +12,9 @@ export type ClampRectInSpineParams = {
 }
 
 /**
- * Clamp a rectangle of the given `size`, positioned at `position` (top-left),
- * so that the rectangle fits inside the spine's bounding box.
- *
- * Special cases:
- * - With `size = { width: 1, height: 1 }` this is a "point clamp": the
- *   coordinate itself is forced inside the spine.
- * - With `size` set to the visible viewport dimensions this ensures the
- *   entire viewport rectangle lies inside the spine — see
- *   `clampPositionToFitViewportInSpine`.
- *
- * Coordinate convention:
- * - LTR: spine spreads positively from `x = 0` to `lastItem.right`.
- * - RTL: spine spreads negatively from `x = lastItem.left` (≤ 0) up to the
- *   right edge at `viewportWidth`, so positions are typically ≤ 0.
+ * Clamp a rectangle (`size` at `position` top-left) so it fits inside the
+ * spine's bounding box. RTL spines extend negatively from `lastItem.left`
+ * (≤ 0) up to `viewportWidth`, so RTL positions are typically ≤ 0.
  */
 export const clampRectInSpine = ({
   position,

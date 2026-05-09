@@ -64,26 +64,15 @@ export type InternalNavigationEntry = {
     triggeredBy: `user` | `restoration` | `pagination`
   }
   /**
-   * The originally-requested viewport position, captured before the navigator
-   * clamped or otherwise resolved it. `undefined` when the user navigated
-   * by `cfi` / `url` / `spineItem` (no position component to compare).
+   * Original viewport position, captured before the navigator clamped or
+   * otherwise resolved it. `undefined` for `cfi` / `url` / `spineItem`
+   * navigations (no position component to compare).
    *
-   * Comparing `requestedPosition` to `position` is the canonical way to
-   * detect that a request was clamped at a spine boundary (see
-   * `outOfSpineBoundary` in `enhancers/navigation/boundary.ts`).
-   *
-   * Writers — keep these aligned, boundary detection depends on it:
-   * - `mapUserNavigationToInternal` — passes through the original
-   *   `userNavigation.position` so out-of-bounds intent survives clamping.
-   * - `InternalNavigator` restoration branch — mirrors the resolved
-   *   `navigation.position` so self-driven corrections never look like
-   *   overshoots.
-   * - `consolidateWithPagination` — same mirroring as restoration, for the
-   *   pagination-driven refresh cycle.
-   *
-   * If a new writer is added, it must follow one of these two contracts
-   * (preserve user intent, or mirror the resolved position) — anything in
-   * between will silently break boundary detection.
+   * Boundary detection (`outOfSpineBoundary`) compares this against the
+   * resolved `position`. New writers of internal entries must either
+   * preserve the user's original request (user-driven path) or mirror the
+   * resolved `position` (self-driven path: restoration, pagination) —
+   * anything in between silently breaks boundary detection.
    */
   requestedPosition?: SpinePosition | UnboundSpinePosition
   type: `api` | `scroll`

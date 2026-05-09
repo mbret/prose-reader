@@ -10,9 +10,6 @@
  * Pass `customEqual` to override the per-value comparator (e.g. to recurse
  * one level deeper, or to compare specific value types by content).
  */
-// Public generics preserved (with `unknown` defaults) so call-sites like
-// `distinctUntilChanged(isShallowEqual)` still flow the upstream type through
-// the comparator. The body narrows internally.
 export const isShallowEqual = <A = unknown, B = unknown>(
   objectA: A,
   objectB: B,
@@ -41,10 +38,9 @@ export const isShallowEqual = <A = unknown, B = unknown>(
 
   const isEqual = options?.customEqual ?? Object.is
 
-  // Cast required after narrowing to non-null `object`: TypeScript doesn't
-  // widen `object` to an indexable shape, but we've already verified each
-  // key is an own enumerable property of both sides via `Object.keys` /
-  // `Object.hasOwn`.
+  // Indexable cast after narrowing to non-null `object`: TypeScript doesn't
+  // widen `object` itself, but every iterated key is verified as own via
+  // `Object.keys` / `Object.hasOwn`.
   const a = objectA as Record<string, unknown>
   const b = objectB as Record<string, unknown>
 

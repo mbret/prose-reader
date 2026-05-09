@@ -52,12 +52,6 @@ export const consolidateWithPagination = (
           meta: {
             triggeredBy: "pagination",
           },
-          /**
-           * Pagination cycles are self-driven (the navigator refreshes its
-           * own metadata when pagination updates), so the entry is by
-           * definition in-bounds with respect to its own request — never an
-           * "out of bounds" attempt.
-           */
           requestedPosition: navigation.position,
         }) satisfies InternalNavigationEntry,
     ),

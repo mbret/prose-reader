@@ -50,11 +50,6 @@ export class BridgeEvent {
    */
   public navigation$ = this.navigationSubject.asObservable()
 
-  /**
-   * Replay and emit the resolved viewport position, deduped on shallow
-   * equality. Mirrors `Navigator.position$`. Use this instead of deriving
-   * from `navigation$` in core internals that only care about
-   * position-effective changes.
-   */
+  /** Mirror of `Navigator.position$` for cross-module use. */
   public position$ = this.positionSubject.asObservable()
 }
