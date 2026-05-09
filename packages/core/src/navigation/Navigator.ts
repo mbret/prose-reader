@@ -5,7 +5,6 @@ import {
   map,
   Subject,
   shareReplay,
-  tap,
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
@@ -87,9 +86,6 @@ export const createNavigator = ({
     userInteractionLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
-    tap((states) => {
-      console.log("states", states)
-    }),
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
     distinctUntilChanged(),
     shareReplay(1),

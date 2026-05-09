@@ -180,8 +180,6 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     const scaledPosition = this.fromSpinePosition(position)
 
-    console.log("scaledPosition", scaledPosition)
-
     if (
       Math.round(scaledPosition.x) === element.scrollLeft &&
       Math.round(scaledPosition.y) === element.scrollTop
