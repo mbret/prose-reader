@@ -110,6 +110,7 @@ const createTestReader = ({
     spineItemsManager,
     spine,
     context,
+    viewport,
   } as unknown as Reader
 
   return { reader, navigator, spine, context, settings, spineItemsManager }
@@ -234,45 +235,14 @@ describe("observeBookBoundaryReached", () => {
     })
   })
 
-  describe("Given a repeated overshoot at the same boundary while waiting", () => {
-    it("does not pile up — distinctUntilChanged collapses to a single emission", async () => {
-      const { reader, navigator, spineItemsManager } = createTestReader()
-      const readiness = overrideLastItemReadiness(spineItemsManager, false)
-
-      const events: BookBoundaryReachedEvent[] = []
-      const subscription = observeBookBoundaryReached(reader).subscribe((e) =>
-        events.push(e),
-      )
-
-      navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
-        animation: false,
-      })
-      await waitFor(20)
-
-      navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
-        animation: false,
-      })
-      await waitFor(20)
-
-      readiness.setReady(true)
-      await waitFor(20)
-      subscription.unsubscribe()
-
-      expect(events).toEqual([{ boundary: "end" }])
-    })
-  })
-
   describe("Given an in-bounds navigation arrives while an 'end' wait is pending", () => {
     /**
      * Regression: the wait used to be triggered only by boundary events,
      * so an in-bounds navigation couldn't cancel it. The pending wait
      * would then spuriously fire when readiness eventually arrived, even
      * though the user had since moved away from the edge. Driving the
-     * switch from `settledNavigation$` (with `distinctUntilChanged` on
-     * the boundary classification) ensures any non-boundary navigation
-     * tears down the pending wait.
+     * `takeUntilNextNavigationSettled` ensures any later non-boundary
+     * navigation tears down the pending wait.
      */
     it("cancels the pending wait so it does not fire when readiness eventually arrives", async () => {
       const { reader, navigator, spineItemsManager } = createTestReader()

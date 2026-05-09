@@ -1,33 +1,8 @@
 import { filter, map, type Observable, share } from "rxjs"
+import { waitForNavigationSettled } from "../../navigation/operators"
 import type { Reader } from "../../reader"
-import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 
 export type BoundaryReachedEvent = { boundary: "start" | "end" }
-
-const detectOutOfBoundsBoundary = (
-  reader: Reader,
-  requested: SpinePosition | UnboundSpinePosition,
-): "start" | "end" | undefined => {
-  const items = reader.spineItemsManager.items
-  const lastItem = items[items.length - 1]
-  if (!lastItem) return undefined
-
-  const layout = reader.spine.getSpineItemSpineLayoutInfo(lastItem)
-  const isRTL = reader.context.isRTL()
-
-  if (requested.y < 0) return "start"
-  if (requested.y >= layout.bottom) return "end"
-
-  if (isRTL) {
-    if (requested.x > 0) return "start"
-    if (requested.x < layout.left) return "end"
-  } else {
-    if (requested.x < 0) return "start"
-    if (requested.x >= layout.right) return "end"
-  }
-
-  return undefined
-}
 
 /**
  * Emits when a navigation request targets a position outside the spine's
@@ -38,11 +13,14 @@ const detectOutOfBoundsBoundary = (
 export const outOfSpineBoundary = (
   reader: Reader,
 ): Observable<BoundaryReachedEvent> =>
-  reader.navigation.settledNavigation$.pipe(
+  reader.navigation.navigation$.pipe(
+    filter((navigation) => navigation.triggeredBy === "user"),
+    waitForNavigationSettled(reader.navigation.navigationState$),
     map((navigation) => {
       const requested = navigation.requestedPosition
+
       return requested
-        ? detectOutOfBoundsBoundary(reader, requested)
+        ? reader.navigation.navigationResolver.getBoundaryForPosition(requested)
         : undefined
     }),
     filter((boundary): boundary is "start" | "end" => boundary !== undefined),

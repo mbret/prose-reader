@@ -78,10 +78,11 @@ export class InternalNavigator extends DestroyableClass {
   })
 
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id, requestedPosition }) => ({
+    map(({ position, id, requestedPosition, meta }) => ({
       position,
       id,
       requestedPosition,
+      triggeredBy: meta.triggeredBy,
     })),
     distinctUntilChanged(isSameNavigation),
     shareReplay(1),
@@ -192,12 +193,12 @@ export class InternalNavigator extends DestroyableClass {
         return isUserInteractionLocked$.pipe(
           filter((isUserLocked) => !isUserLocked),
           first(),
-          map(
-            (): InternalNavigationEntry => ({
+          map(() => ({
+            navigation: {
               ...navigation,
               animation: "snap" as const,
-            }),
-          ),
+            },
+          })),
           finalize(() => {
             unlock()
           }),
@@ -233,12 +234,12 @@ export class InternalNavigator extends DestroyableClass {
               first(),
             ),
           ),
-          map(
-            (): InternalNavigationEntry => ({
+          map(() => ({
+            navigation: {
               ...this.navigationSubject.getValue(),
-              animation: false,
-            }),
-          ),
+              animation: false as const,
+            },
+          })),
           /**
            * We need to cancel the restoration as soon as there is
            * another navigation. Whether it's user or internal, it means
@@ -255,26 +256,22 @@ export class InternalNavigator extends DestroyableClass {
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
-      map((navigation) => ({ navigation })),
       withRestoredPosition({
         navigationResolver,
         settings,
         context,
         spine,
       }),
-      map((params) => {
-        const navigation: InternalNavigationEntry = {
-          ...params.navigation,
+      map(({ navigation }) => {
+        const updated: InternalNavigationEntry = {
+          ...navigation,
           meta: {
             triggeredBy: `restoration`,
           },
-          requestedPosition: params.navigation.position,
+          requestedPosition: navigation.position,
         }
 
-        return {
-          ...params,
-          navigation,
-        }
+        return { navigation: updated }
       }),
       /**
        * The spine item may be undefined after a restoration.

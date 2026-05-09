@@ -2,7 +2,6 @@ import { isShallowEqual } from "@prose-reader/shared"
 import {
   combineLatest,
   distinctUntilChanged,
-  filter,
   map,
   Subject,
   shareReplay,
@@ -88,33 +87,11 @@ export const createNavigator = ({
   )
 
   /**
-   * Emits navigation entries once the navigator pipeline has fully settled
-   * (`navigationState$ === "free"`): no held lock, no in-flight viewport
-   * animation, no pending unlock-driven restoration.
-   */
-  const settledNavigation$ = combineLatest([
-    internalNavigator.navigation$,
-    navigationState$,
-  ]).pipe(
-    filter(([, state]) => state === "free"),
-    map(([navigation]) => navigation),
-    distinctUntilChanged(),
-    shareReplay(1),
-  )
-
-  /**
    * Resolved viewport position, deduped on shallow equality. Re-emits only
    * when the position effectively changes — collapses the
    * per-`navigate(...)` re-emissions that `navigation$` produces.
    */
   const position$ = internalNavigator.navigation$.pipe(
-    map(({ position }) => position),
-    distinctUntilChanged(isShallowEqual),
-    shareReplay(1),
-  )
-
-  /** {@link position$} gated on {@link settledNavigation$}. */
-  const settledPosition$ = settledNavigation$.pipe(
     map(({ position }) => position),
     distinctUntilChanged(isShallowEqual),
     shareReplay(1),
@@ -152,9 +129,7 @@ export const createNavigator = ({
     isLocked$: userInteractionLock.isLocked$,
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,
-    settledNavigation$,
     position$,
-    settledPosition$,
   }
 }
 

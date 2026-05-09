@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
+import { observeSettledNavigation } from "../../navigation/operators"
 import { generateItems } from "../../navigation/tests/utils"
 import { Pagination } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
@@ -87,6 +88,7 @@ const createTestReader = ({
     spineItemsManager,
     spine,
     context,
+    viewport,
   } as unknown as Reader
 
   return { reader, navigator, spine, context, settings, viewport, items }
@@ -132,7 +134,7 @@ describe("outOfSpineBoundary", () => {
       expect(events).toEqual([{ boundary: "end" }])
     })
 
-    it("emits 'end' when the requested x is exactly at layout.right", async () => {
+    it("emits 'end' when the requested x is exactly at layout.right (a full viewport past the last valid position)", async () => {
       const { reader, navigator } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)
 
@@ -145,6 +147,45 @@ describe("outOfSpineBoundary", () => {
       unsubscribe()
 
       expect(events).toEqual([{ boundary: "end" }])
+    })
+
+    /**
+     * Regression: `requested.x` is the viewport's left edge, so the user
+     * is past end as soon as `x > layout.right - viewport.width` (the
+     * viewport's right edge crosses the spine's right edge). A previous
+     * implementation compared `x >= layout.right` instead, which never
+     * fired during a real pan past end — typical pan motion only inches
+     * `x` forward by a few pixels at a time, so it sat in the
+     * `(xMax, layout.right)` gap and the boundary detector stayed silent.
+     */
+    it("emits 'end' on a pan past the right edge whose x falls between xMax and layout.right", async () => {
+      const { reader, navigator } = createTestReader()
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 150, y: 0 }),
+        animation: false,
+      })
+
+      await waitFor(50)
+      unsubscribe()
+
+      expect(events).toEqual([{ boundary: "end" }])
+    })
+
+    it("does NOT emit when the requested x is exactly at xMax (the last valid position of the last LTR spine item)", async () => {
+      const { reader, navigator } = createTestReader()
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 100, y: 0 }),
+        animation: false,
+      })
+
+      await waitFor(50)
+      unsubscribe()
+
+      expect(events).toEqual([])
     })
 
     it("emits 'start' when the requested x is negative", async () => {
@@ -209,6 +250,95 @@ describe("outOfSpineBoundary", () => {
       unsubscribe()
 
       expect(events).toEqual([])
+    })
+
+    /**
+     * Regression: pan navigation holds `reader.navigation.lock()`. While
+     * the lock is held the user-driven entry is deferred via
+     * `navigationUpdateFollowingUserUnlock$`; on unlock the navigator
+     * runs a restoration cycle. Previously that cycle unconditionally
+     * rewrote `requestedPosition` to the resolved `position`, so a pan
+     * past start/end never reached `outOfSpineBoundary`. The fix
+     * preserves the user's raw `requestedPosition` through the
+     * unlock-driven restoration path so the boundary fires once the
+     * snap-back animation settles.
+     */
+    it("emits 'end' once the snap-back settles after a pan past the right edge releases its lock", async () => {
+      const { reader, navigator } = createTestReader()
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      const releaseLock = navigator.lock()
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 9999, y: 0 }),
+        animation: false,
+      })
+
+      // While the lock is held, the deferred entry never settles —
+      // equivalent to the "still panning" phase.
+      await waitFor(50)
+      expect(events).toEqual([])
+
+      releaseLock()
+
+      // The unlock-driven restoration runs a snap animation back to the
+      // clamped position; the boundary fires once it settles
+      // (default `snapAnimationDuration` is 300ms).
+      await waitFor(500)
+      unsubscribe()
+
+      expect(events).toEqual([{ boundary: "end" }])
+    })
+
+    it("emits 'start' once the snap-back settles after a pan past the left edge releases its lock", async () => {
+      const { reader, navigator } = createTestReader()
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      const releaseLock = navigator.lock()
+
+      navigator.navigate({
+        position: new SpinePosition({ x: -10, y: 0 }),
+        animation: false,
+      })
+
+      await waitFor(50)
+      releaseLock()
+
+      await waitFor(500)
+      unsubscribe()
+
+      expect(events).toEqual([{ boundary: "start" }])
+    })
+
+    /**
+     * Once the user-unlock restoration has fired the boundary event,
+     * subsequent self-driven cycles (layout reflow, pagination
+     * consolidation) must not re-fire it for the same stale user
+     * intent. This is exactly why the post-restoration map mirrors
+     * `requestedPosition` to the resolved `position` on the layout
+     * path: it consumes the raw request after the boundary detector
+     * has had its single fire.
+     */
+    it("does not re-fire 'end' on a subsequent layout reflow after a locked pan past the right edge", async () => {
+      const { reader, navigator, spine } = createTestReader()
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      const releaseLock = navigator.lock()
+      navigator.navigate({
+        position: new SpinePosition({ x: 9999, y: 0 }),
+        animation: false,
+      })
+      await waitFor(50)
+      releaseLock()
+      await waitFor(500)
+      expect(events).toEqual([{ boundary: "end" }])
+
+      spine.layout()
+      await firstValueFrom(spine.layout$)
+      await waitFor(500)
+      unsubscribe()
+
+      expect(events).toEqual([{ boundary: "end" }])
     })
   })
 
@@ -345,6 +475,63 @@ describe("outOfSpineBoundary", () => {
 
       await waitFor(50)
       unsubscribe()
+
+      expect(events).toEqual([{ boundary: "start" }])
+    })
+
+    /**
+     * Regression: a previous implementation pulled the user-driven
+     * entry via `withLatestFrom(latestUserNavigation$)`. That works
+     * only as long as the user-filter subscribes `navigation$` BEFORE
+     * the settled side does — `withLatestFrom` itself subscribes its
+     * secondary first, so in isolation the user-filter is subscriber 1
+     * and stays fresh. But once any *other* consumer has already
+     * subscribed to settled-navigation observation (pagination, UI,
+     * gestures, etc., routine in real apps), its `combineLatest` is
+     * already `navigation$`'s subscriber 1 and the user-filter ends up
+     * subscriber 2 — settled-side fires first on every emission, so
+     * `withLatestFrom` resolves to the *previous* user nav. Boundary
+     * detection then lags by one navigation: forward → back → back-
+     * past-start emits no event, only the *next* back finally fires
+     * (evaluating the prior request). The fix uses `combineLatest`,
+     * which keeps both inputs at their latest cached values regardless
+     * of subscriber order, with a downstream `distinctUntilChanged` on
+     * the user-nav id collapsing the multiple intermediate emissions
+     * to a single check per user request.
+     */
+    it("emits 'start' on the FIRST back-past-start after a forward+back sequence even when settled navigation already has a prior subscriber", async () => {
+      const { reader, navigator, spine, items } = createTestReader({
+        readingDirection: "rtl",
+      })
+      setupRTLLayout(spine, items, reader.spineItemsManager, 100)
+
+      const priorSubscription = observeSettledNavigation(
+        reader.navigation,
+      ).subscribe()
+
+      const { events, unsubscribe } = collectBoundaries(reader)
+
+      navigator.navigate({
+        position: new SpinePosition({ x: -100, y: 0 }),
+        animation: false,
+      })
+      await waitFor(50)
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 0, y: 0 }),
+        animation: false,
+      })
+      await waitFor(50)
+
+      expect(events).toEqual([])
+
+      navigator.navigate({
+        position: new UnboundSpinePosition({ x: 100, y: 0 }),
+        animation: false,
+      })
+      await waitFor(50)
+      unsubscribe()
+      priorSubscription.unsubscribe()
 
       expect(events).toEqual([{ boundary: "start" }])
     })

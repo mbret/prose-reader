@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition, UnboundSpinePosition } from "../../spine/types"
-import { clampRectInSpine } from "./clampRectInSpine"
+import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 
 type LayoutInfo = {
   left: number
@@ -57,11 +57,13 @@ describe(`clampRectInSpine`, () => {
     const spineItemsManager = {
       get: () => undefined,
       items: { length: 0 },
+      // Cast: minimal spine items manager mock for boundary helper tests.
     } as unknown as SpineItemsManager
     const spine = {
       getSpineItemSpineLayoutInfo: () => {
         throw new Error(`should not be invoked when there are no spine items`)
       },
+      // Cast: minimal spine mock; layout lookup must not be reached here.
     } as unknown as Spine
 
     it(`returns the origin without consulting layout info`, () => {
@@ -241,6 +243,122 @@ describe(`clampRectInSpine`, () => {
 
         expect(result).toEqual(new UnboundSpinePosition({ x: 0, y: 0 }))
       })
+    })
+  })
+})
+
+describe(`getBoundaryForRectInSpine`, () => {
+  describe(`empty spine`, () => {
+    // Cast: minimal spine items manager mock for boundary helper tests.
+    const spineItemsManager = {
+      get: () => undefined,
+      items: { length: 0 },
+    } as unknown as SpineItemsManager
+    // Cast: minimal spine mock; layout lookup must not be reached here.
+    const spine = {
+      getSpineItemSpineLayoutInfo: () => {
+        throw new Error(`should not be invoked when there are no spine items`)
+      },
+    } as unknown as Spine
+
+    it(`returns undefined without consulting layout info`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new SpinePosition({ x: 9999, y: 9999 }),
+        size: { width: 200, height: 100 },
+        isRTL: false,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe(`LTR`, () => {
+    const { spineItemsManager, spine } = buildFixture({
+      left: 0,
+      right: 1000,
+      bottom: 600,
+    })
+
+    it(`classifies positions before the lower edge as start`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new UnboundSpinePosition({ x: -1, y: 0 }),
+        size: { width: 200, height: 100 },
+        isRTL: false,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBe("start")
+    })
+
+    it(`classifies positions after the upper edge as end`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new UnboundSpinePosition({ x: 801, y: 0 }),
+        size: { width: 200, height: 100 },
+        isRTL: false,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBe("end")
+    })
+
+    it(`returns undefined for an in-bounds position`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new SpinePosition({ x: 800, y: 500 }),
+        size: { width: 200, height: 100 },
+        isRTL: false,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe(`RTL`, () => {
+    const { spineItemsManager, spine } = buildFixture({
+      left: -1000,
+      right: 200,
+      bottom: 600,
+    })
+
+    it(`classifies positions after the right edge as start`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new UnboundSpinePosition({ x: 1, y: 0 }),
+        size: { width: 200, height: 100 },
+        isRTL: true,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBe("start")
+    })
+
+    it(`classifies positions before the left edge as end`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new UnboundSpinePosition({ x: -1001, y: 0 }),
+        size: { width: 200, height: 100 },
+        isRTL: true,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBe("end")
+    })
+
+    it(`returns undefined for an in-bounds position`, () => {
+      const result = getBoundaryForRectInSpine({
+        position: new SpinePosition({ x: 0, y: 500 }),
+        size: { width: 200, height: 100 },
+        isRTL: true,
+        spineItemsManager,
+        spine,
+      })
+
+      expect(result).toBeUndefined()
     })
   })
 })

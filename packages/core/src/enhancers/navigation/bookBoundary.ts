@@ -7,11 +7,10 @@ import {
   type Observable,
   of,
   share,
-  skip,
   switchMap,
-  takeUntil,
   timeout,
 } from "rxjs"
+import { takeUntilNextNavigationSettled } from "../../navigation/operators"
 import type { Reader } from "../../reader"
 import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
@@ -62,7 +61,7 @@ export const observeBookBoundaryReached = (
               first: itemReadinessTimeoutMs,
               with: () => EMPTY,
             }),
-        takeUntil(reader.navigation.settledNavigation$.pipe(skip(1))),
+        takeUntilNextNavigationSettled(reader.navigation),
       )
     }),
     share(),

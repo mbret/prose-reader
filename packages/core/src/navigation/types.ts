@@ -64,15 +64,21 @@ export type InternalNavigationEntry = {
     triggeredBy: `user` | `restoration` | `pagination`
   }
   /**
-   * Original viewport position, captured before the navigator clamped or
+   * What *this entry* asked for — before the navigator clamped or
    * otherwise resolved it. `undefined` for `cfi` / `url` / `spineItem`
    * navigations (no position component to compare).
    *
-   * Boundary detection (`outOfSpineBoundary`) compares this against the
-   * resolved `position`. New writers of internal entries must either
-   * preserve the user's original request (user-driven path) or mirror the
-   * resolved `position` (self-driven path: restoration, pagination) —
-   * anything in between silently breaks boundary detection.
+   * Each entry's `requestedPosition` reflects only that entry's intent:
+   * - User entries: the raw user position (may be out of bounds).
+   * - Restoration / pagination entries: the resolved `position` itself,
+   *   because the entry's "request" *is* the resolved snap-back / page
+   *   anchor — there is no separate intent to preserve.
+   *
+   * Consumers needing the user's latest raw intent (e.g. boundary
+   * detection for a pan past start/end whose clamping was deferred
+   * behind a lock) should filter the navigation stream by
+   * {@link Navigation.triggeredBy} === `"user"` rather than reading
+   * any restoration entry's `requestedPosition`.
    */
   requestedPosition?: SpinePosition | UnboundSpinePosition
   type: `api` | `scroll`
@@ -92,4 +98,6 @@ export type InternalNavigationInput = Omit<
 export type Navigation = Pick<
   InternalNavigationEntry,
   "position" | "id" | "requestedPosition"
->
+> & {
+  triggeredBy: InternalNavigationEntry["meta"]["triggeredBy"]
+}
