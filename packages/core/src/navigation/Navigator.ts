@@ -1,3 +1,4 @@
+import { isShallowEqual } from "@prose-reader/shared"
 import {
   combineLatest,
   distinctUntilChanged,
@@ -119,6 +120,37 @@ export const createNavigator = ({
     shareReplay(1),
   )
 
+  /**
+   * Deduped projection of `navigation$.position`. Re-emits only when the
+   * resolved viewport position effectively changes — collapses the
+   * per-`navigate(...)` re-emissions that `navigation$` produces for
+   * boundary-detection purposes.
+   *
+   * Use this when your consumer's behavior is purely position-driven
+   * (e.g. spine load/unload, scroll sync). Use `navigation$` when you need
+   * to observe every navigation request as a discrete event (e.g.
+   * boundary detection on `requestedPosition`).
+   */
+  const position$ = internalNavigator.navigation$.pipe(
+    map(({ position }) => position),
+    distinctUntilChanged(isShallowEqual),
+    shareReplay(1),
+  )
+
+  /**
+   * Deduped projection of `settledNavigation$.position`. Combines the
+   * "everything settled" gating of `settledNavigation$` with the
+   * position-only dedup of `position$`.
+   *
+   * Use this for post-settle, position-driven work (e.g. pagination
+   * progression updates).
+   */
+  const settledPosition$ = settledNavigation$.pipe(
+    map(({ position }) => position),
+    distinctUntilChanged(isShallowEqual),
+    shareReplay(1),
+  )
+
   const navigate = (to: UserNavigationEntry) => {
     Report.info("User navigation", to)
 
@@ -161,6 +193,8 @@ export const createNavigator = ({
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,
     settledNavigation$,
+    position$,
+    settledPosition$,
   }
 }
 

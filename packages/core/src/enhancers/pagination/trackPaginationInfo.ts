@@ -272,15 +272,10 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     })),
   )
 
-  const settledPosition$ = reader.navigation.settledNavigation$.pipe(
-    map(({ position }) => position),
-    distinctUntilChanged(isShallowEqual),
-  )
-
   const progression$ = combineLatest([
     pagination$,
     reader.layout$,
-    settledPosition$,
+    reader.navigation.settledPosition$,
     reader.context.manifest$,
   ]).pipe(
     switchMap(([paginationInfo, _layout, navigationPosition, manifest]) =>

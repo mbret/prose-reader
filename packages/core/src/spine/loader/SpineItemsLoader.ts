@@ -1,4 +1,4 @@
-import { arrayEqual, isShallowEqual } from "@prose-reader/shared"
+import { arrayEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   debounceTime,
@@ -38,21 +38,8 @@ export class SpineItemsLoader extends DestroyableClass {
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
-    /**
-     * `navigation$` re-emits for every `navigate(...)` call (including
-     * no-ops that resolve to the same position) so consumers can observe
-     * each request as a discrete event. Spine load/unload decisions are
-     * purely position-driven, so collapse to position-only changes here —
-     * mirrors `trackPaginationInfo`'s `settledPosition$`.
-     */
-    const navigationPositionChanged$ =
-      this.context.bridgeEvent.navigation$.pipe(
-        map(({ position }) => position),
-        distinctUntilChanged(isShallowEqual),
-      )
-
     const shouldReloadSpineItems$ = merge(
-      navigationPositionChanged$,
+      this.context.bridgeEvent.position$,
       this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
@@ -79,13 +66,13 @@ export class SpineItemsLoader extends DestroyableClass {
       // be dangerous.
       debounceTime(100),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      withLatestFrom(this.context.bridgeEvent.navigation$, forcedOpen$),
-      map(([, navigation, forcedOpenIndexes]) => {
+      withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
+      map(([, position, forcedOpenIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
         // these are real visible items to load
         const { beginIndex = 0, endIndex = 0 } =
           spineLocator.getVisibleSpineItemsFromPosition({
-            position: navigation.position,
+            position,
             threshold: { type: "percentage", value: 0 },
             useAbsoluteViewport: false,
           }) || {}
