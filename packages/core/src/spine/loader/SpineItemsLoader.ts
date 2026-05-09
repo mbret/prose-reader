@@ -1,4 +1,4 @@
-import { arrayEqual } from "@prose-reader/shared"
+import { arrayEqual, isShallowEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   debounceTime,
@@ -38,8 +38,21 @@ export class SpineItemsLoader extends DestroyableClass {
       shareReplay({ bufferSize: 1, refCount: true }),
     )
 
+    /**
+     * `navigation$` re-emits for every `navigate(...)` call (including
+     * no-ops that resolve to the same position) so consumers can observe
+     * each request as a discrete event. Spine load/unload decisions are
+     * purely position-driven, so collapse to position-only changes here —
+     * mirrors `trackPaginationInfo`'s `settledPosition$`.
+     */
+    const navigationPositionChanged$ =
+      this.context.bridgeEvent.navigation$.pipe(
+        map(({ position }) => position),
+        distinctUntilChanged(isShallowEqual),
+      )
+
     const shouldReloadSpineItems$ = merge(
-      this.context.bridgeEvent.navigation$,
+      navigationPositionChanged$,
       this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),

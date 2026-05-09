@@ -32,7 +32,7 @@ export const mapUserNavigationToInternal =
            * that don't move the viewport. Restoration / pagination cycles
            * deliberately preserve the existing id and stay deduplicated.
            */
-          id: Symbol(crypto.randomUUID()),
+          id: Symbol("user"),
           animation: "turn",
           ...userNavigation,
           /**

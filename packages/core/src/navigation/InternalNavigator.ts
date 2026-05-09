@@ -60,7 +60,7 @@ export class InternalNavigator extends DestroyableClass {
     requestedPosition: new SpinePosition({ x: 0, y: 0 }),
     spineItemIsReady: false,
     type: "api",
-    id: Symbol(crypto.randomUUID()),
+    id: Symbol("init"),
   })
 
   public navigation$ = this.navigationSubject.pipe(
