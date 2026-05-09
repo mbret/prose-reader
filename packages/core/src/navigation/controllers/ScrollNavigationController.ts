@@ -8,7 +8,6 @@ import {
   merge,
   NEVER,
   type Observable,
-  of,
   Subject,
   share,
   shareReplay,
@@ -48,7 +47,6 @@ export class ScrollNavigationController extends ReactiveEntity<{
     new Subject<ScrollNavigationViewportNavigationEntry>()
   protected scrollingSubject = new BehaviorSubject(false)
 
-  public isScrolling$ = this.scrollingSubject.asObservable()
   public isNavigating$: Observable<boolean>
   public userScroll$: Observable<Event>
 
@@ -92,13 +90,11 @@ export class ScrollNavigationController extends ReactiveEntity<{
       }),
     )
 
-    const navigate$ = this.navigateSubject.pipe(tap(this.setViewportPosition))
-
-    this.isNavigating$ = this.navigateSubject.pipe(
-      startWith(false),
-      switchMap(() => merge(of(true), of(false))),
-      shareReplay(1),
+    const updateScrollPositionOnNavigation$ = this.navigateSubject.pipe(
+      tap(this.setViewportPosition),
     )
+
+    this.isNavigating$ = this.scrollingSubject.asObservable()
 
     // might be a bit overkill but we want to be sure of sure
     const isSpineScrolling$ = merge(
@@ -124,7 +120,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
 
     const scrollHappeningFromBrowser$ = combineLatest([
       isSpineScrolling$,
-      this.isScrolling$,
+      this.isNavigating$,
     ]).pipe(
       map(
         ([spineScrolling, viewportScrolling]) =>
@@ -153,7 +149,11 @@ export class ScrollNavigationController extends ReactiveEntity<{
       share(),
     )
 
-    merge(elementCreation$, toggleElementDisplay$, navigate$)
+    merge(
+      elementCreation$,
+      toggleElementDisplay$,
+      updateScrollPositionOnNavigation$,
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }

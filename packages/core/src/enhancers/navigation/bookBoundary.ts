@@ -2,6 +2,7 @@ import {
   EMPTY,
   filter,
   first,
+  identity,
   map,
   type Observable,
   of,
@@ -75,10 +76,16 @@ export const observeBookBoundaryReached = (
         filter(Boolean),
         first(),
         map(() => event),
-        timeout({
-          first: itemReadinessTimeoutMs,
-          with: () => EMPTY,
-        }),
+        // `Infinity` is the documented opt-out: bypass `timeout` entirely
+        // because RxJS forwards the delay to `setTimeout`, which clamps
+        // `Infinity` to ~1ms (Node) / 2^31-1 ms (browsers) and would
+        // silently drop the pending end-boundary instead of waiting.
+        itemReadinessTimeoutMs === Infinity
+          ? identity
+          : timeout({
+              first: itemReadinessTimeoutMs,
+              with: () => EMPTY,
+            }),
       )
     }),
     share(),

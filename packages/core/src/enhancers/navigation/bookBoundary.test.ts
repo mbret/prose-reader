@@ -187,6 +187,35 @@ describe("observeBookBoundaryReached", () => {
 
       expect(events).toEqual([])
     })
+
+    // Regression: `setTimeout(fn, Infinity)` is clamped to ~1ms in Node, so
+    // naively passing `Infinity` into RxJS `timeout` would drop the pending
+    // event instead of waiting. The operator must be skipped entirely.
+    it("waits indefinitely when itemReadinessTimeoutMs is Infinity", async () => {
+      const { reader, navigator, spineItemsManager } = createTestReader()
+      const readiness = overrideLastItemReadiness(spineItemsManager, false)
+
+      const events: BookBoundaryReachedEvent[] = []
+      const subscription = observeBookBoundaryReached(reader, {
+        itemReadinessTimeoutMs: Number.POSITIVE_INFINITY,
+      }).subscribe((e) => events.push(e))
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 9999, y: 0 }),
+        animation: false,
+      })
+
+      // Wait long enough that a clamped `Infinity` timeout would have fired
+      // and routed to `EMPTY`, completing the inner observable.
+      await waitFor(100)
+      expect(events).toEqual([]) // still pending, not dropped
+
+      readiness.setReady(true)
+      await waitFor(20)
+      subscription.unsubscribe()
+
+      expect(events).toEqual([{ boundary: "end" }])
+    })
   })
 
   describe("Given the start side", () => {
