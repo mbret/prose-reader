@@ -10,7 +10,7 @@ import { createNavigationResolver as createSpineItemNavigator } from "../../spin
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
-import { clampPositionToFitViewportInSpine } from "./clampPositionToFitViewportInSpine"
+import { clampRectInSpine } from "./clampRectInSpine"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
@@ -130,14 +130,13 @@ export const createNavigationResolver = ({
         ? 0
         : viewportPosition.y +
           viewport.absoluteViewport.height * triggerPercentage
-    const midScreenPositionSafePosition = clampPositionToFitViewportInSpine({
+    const midScreenPositionSafePosition = clampRectInSpine({
       position: new SpinePosition({
         x: triggerXPosition,
         y: triggerYPosition,
       }),
+      size: viewport.absoluteViewport,
       isRTL: context.isRTL(),
-      pageSizeHeight: viewport.pageSize.height,
-      visibleAreaRectWidth: viewport.absoluteViewport.width,
       spineItemsManager,
       spine,
     })
@@ -213,14 +212,14 @@ export const createNavigationResolver = ({
         viewport,
       }),
     getMostPredominantNavigationForPosition,
-    clampPositionToFitViewportInSpine: (
+    clampPositionInSpine: (
       position: SpinePosition | UnboundSpinePosition,
+      size: { width: number; height: number },
     ) =>
-      clampPositionToFitViewportInSpine({
+      clampRectInSpine({
         position,
+        size,
         isRTL: context.isRTL(),
-        pageSizeHeight: viewport.pageSize.height,
-        visibleAreaRectWidth: viewport.absoluteViewport.width,
         spineItemsManager,
         spine,
       }),

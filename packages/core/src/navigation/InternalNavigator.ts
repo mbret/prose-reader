@@ -22,6 +22,7 @@ import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
 import { SpinePosition, type UnboundSpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import type { Viewport } from "../viewport/Viewport"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -96,6 +97,7 @@ export class InternalNavigator extends DestroyableClass {
     protected scrollNavigationController: ScrollNavigationController,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
+    protected viewport: Viewport,
     /**
      * While held, automatic position adjustments (correction, restoration)
      * are deferred so they don't fight the user's direct manipulation.
@@ -109,6 +111,8 @@ export class InternalNavigator extends DestroyableClass {
         withLatestFrom(this.navigationSubject),
         mapUserNavigationToInternal({
           navigationResolver,
+          settings,
+          viewport,
         }),
         /**
          * Url lookup is heavier so we start with it to fill
@@ -147,6 +151,7 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
           spineItemsManager: spine.spineItemsManager,
           settings,
+          viewport,
         }),
         withLatestFrom(isUserInteractionLocked$),
         switchMap(([params, isUserLocked]) => {

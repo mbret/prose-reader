@@ -1,4 +1,6 @@
 import { map, type Observable } from "rxjs"
+import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import type { Viewport } from "../../viewport/Viewport"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type {
   InternalNavigationEntry,
@@ -7,7 +9,15 @@ import type {
 } from "../types"
 
 export const mapUserNavigationToInternal =
-  ({ navigationResolver }: { navigationResolver: NavigationResolver }) =>
+  ({
+    navigationResolver,
+    settings,
+    viewport,
+  }: {
+    navigationResolver: NavigationResolver
+    settings: ReaderSettingsManager
+    viewport: Viewport
+  }) =>
   (
     stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
   ): Observable<{
@@ -16,6 +26,11 @@ export const mapUserNavigationToInternal =
   }> => {
     return stream.pipe(
       map(([userNavigation, previousNavigation]) => {
+        const visibleArea =
+          settings.values.computedPageTurnMode === "scrollable"
+            ? viewport.relativeViewport
+            : viewport.absoluteViewport
+
         const navigation: InternalNavigationInput = {
           type: "api",
           meta: {
@@ -34,8 +49,9 @@ export const mapUserNavigationToInternal =
           // `~viewportSize` and the stored position diverges from where the
           // DOM scroll actually lands in scrollable mode.
           position: userNavigation.position
-            ? navigationResolver.clampPositionToFitViewportInSpine(
+            ? navigationResolver.clampPositionInSpine(
                 userNavigation.position,
+                visibleArea,
               )
             : undefined,
         }

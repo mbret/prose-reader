@@ -72,6 +72,7 @@ export const createNavigator = ({
     scrollNavigationController,
     navigationResolver,
     spine,
+    viewport,
     userInteractionLock.isLocked$,
   )
 

@@ -1,6 +1,7 @@
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import { SpinePosition, type UnboundSpinePosition } from "../../spine/types"
+import type { SpinePosition } from "../../spine/types"
+import { UnboundSpinePosition } from "../../spine/types"
 
 export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition
@@ -8,13 +9,11 @@ export type ClampRectInSpineParams = {
   isRTL: boolean
   spineItemsManager: SpineItemsManager
   spine: Spine
-  viewportWidth: number
 }
 
 /**
  * Clamp a rectangle (`size` at `position` top-left) so it fits inside the
- * spine's bounding box. RTL spines extend negatively from `lastItem.left`
- * (≤ 0) up to `viewportWidth`, so RTL positions are typically ≤ 0.
+ * spine's bounding box.
  */
 export const clampRectInSpine = ({
   position,
@@ -22,15 +21,14 @@ export const clampRectInSpine = ({
   isRTL,
   spineItemsManager,
   spine,
-  viewportWidth,
-}: ClampRectInSpineParams): SpinePosition => {
+}: ClampRectInSpineParams): UnboundSpinePosition => {
   // @todo use container width instead to increase performances
   const lastSpineItem = spineItemsManager.get(
     spineItemsManager.items.length - 1,
   )
 
   if (!lastSpineItem) {
-    return new SpinePosition({ x: 0, y: 0 })
+    return new UnboundSpinePosition({ x: 0, y: 0 })
   }
 
   const last = spine.getSpineItemSpineLayoutInfo(lastSpineItem)
@@ -39,14 +37,18 @@ export const clampRectInSpine = ({
   const y = Math.min(Math.max(0, position.y), yMax)
 
   if (isRTL) {
-    const xMax = Math.max(0, viewportWidth - size.width)
+    const firstSpineItem = spineItemsManager.get(0)
+    const right = firstSpineItem
+      ? spine.getSpineItemSpineLayoutInfo(firstSpineItem).right
+      : 0
+    const xMax = Math.max(0, right - size.width)
     const x = Math.max(last.left, Math.min(xMax, position.x))
 
-    return new SpinePosition({ x, y })
+    return new UnboundSpinePosition({ x, y })
   }
 
   const xMax = Math.max(0, last.right - size.width)
   const x = Math.min(Math.max(0, position.x), xMax)
 
-  return new SpinePosition({ x, y })
+  return new UnboundSpinePosition({ x, y })
 }

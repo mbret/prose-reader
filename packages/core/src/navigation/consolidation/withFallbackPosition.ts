@@ -2,6 +2,7 @@ import { map, type Observable } from "rxjs"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { UnboundSpinePosition } from "../../spine/types"
+import type { Viewport } from "../../viewport/Viewport"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type { InternalNavigationEntry, InternalNavigationInput } from "../types"
 
@@ -10,10 +11,12 @@ export const withFallbackPosition =
     spineItemsManager,
     navigationResolver,
     settings,
+    viewport,
   }: {
     spineItemsManager: SpineItemsManager
     navigationResolver: NavigationResolver
     settings: ReaderSettingsManager
+    viewport: Viewport
   }) =>
   <
     Navigation extends {
@@ -47,13 +50,16 @@ export const withFallbackPosition =
 
           /**
            * We have been given position, we just make sure to prevent navigation
-           * in outer edges.
+           * in outer edges. Controlled mode clamps against the absolute (page-
+           * aligned) viewport — pages are atomic and navigation targets must
+           * stay reachable independently of zoom.
            */
           return {
             navigation: {
               ...navigation,
-              position: navigationResolver.clampPositionToFitViewportInSpine(
+              position: navigationResolver.clampPositionInSpine(
                 navigation.position,
+                viewport.absoluteViewport,
               ),
             },
             ...rest,
@@ -86,7 +92,10 @@ export const withFallbackPosition =
                 x: position.x + rest.previousNavigation.position.x,
                 y: position.y,
               })
-            : navigationResolver.clampPositionToFitViewportInSpine(position)
+            : navigationResolver.clampPositionInSpine(
+                position,
+                viewport.absoluteViewport,
+              )
 
         return {
           navigation: {

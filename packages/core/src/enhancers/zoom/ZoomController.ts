@@ -174,6 +174,8 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     userScale: number,
     options?: { constrain?: "within-viewport" },
   ): void {
+    if (!this.value.isZooming) return
+
     // make sure to prevent animation before applying the new position
     this.viewport.element.style.transition = ``
 
