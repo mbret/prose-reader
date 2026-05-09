@@ -234,8 +234,8 @@ describe("observeBookBoundaryReached", () => {
     })
   })
 
-  describe("Given a fresh boundary while a previous wait is still pending", () => {
-    it("cancels the pending wait and starts a new one (switchMap semantics)", async () => {
+  describe("Given a repeated overshoot at the same boundary while waiting", () => {
+    it("does not pile up — distinctUntilChanged collapses to a single emission", async () => {
       const { reader, navigator, spineItemsManager } = createTestReader()
       const readiness = overrideLastItemReadiness(spineItemsManager, false)
 
@@ -261,6 +261,49 @@ describe("observeBookBoundaryReached", () => {
       subscription.unsubscribe()
 
       expect(events).toEqual([{ boundary: "end" }])
+    })
+  })
+
+  describe("Given an in-bounds navigation arrives while an 'end' wait is pending", () => {
+    /**
+     * Regression: the wait used to be triggered only by boundary events,
+     * so an in-bounds navigation couldn't cancel it. The pending wait
+     * would then spuriously fire when readiness eventually arrived, even
+     * though the user had since moved away from the edge. Driving the
+     * switch from `settledNavigation$` (with `distinctUntilChanged` on
+     * the boundary classification) ensures any non-boundary navigation
+     * tears down the pending wait.
+     */
+    it("cancels the pending wait so it does not fire when readiness eventually arrives", async () => {
+      const { reader, navigator, spineItemsManager } = createTestReader()
+      const readiness = overrideLastItemReadiness(spineItemsManager, false)
+
+      const events: BookBoundaryReachedEvent[] = []
+      const subscription = observeBookBoundaryReached(reader).subscribe((e) =>
+        events.push(e),
+      )
+
+      // Overshoot end while loading — wait starts.
+      navigator.navigate({
+        position: new SpinePosition({ x: 9999, y: 0 }),
+        animation: false,
+      })
+      await waitFor(20)
+      expect(events).toEqual([])
+
+      // User navigates back in-bounds before readiness arrives.
+      navigator.navigate({
+        position: new SpinePosition({ x: 0, y: 0 }),
+        animation: false,
+      })
+      await waitFor(20)
+
+      // Readiness arrives — the cancelled wait must not fire.
+      readiness.setReady(true)
+      await waitFor(50)
+      subscription.unsubscribe()
+
+      expect(events).toEqual([])
     })
   })
 })

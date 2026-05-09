@@ -4,12 +4,6 @@ import type { SpinePosition, UnboundSpinePosition } from "../../spine/types"
 
 export type BoundaryReachedEvent = { boundary: "start" | "end" }
 
-/**
- * Spine extent is treated as half-open (`[left, right)` × `[top, bottom)`)
- * to match `getSpineItemFromPosition` hit-testing — a request at exactly
- * `layout.right` (what `position + pageWidth` resolves to when turning past
- * the last page) is therefore classified as past the end.
- */
 const detectOutOfBoundsBoundary = (
   reader: Reader,
   requested: SpinePosition | UnboundSpinePosition,
@@ -26,7 +20,7 @@ const detectOutOfBoundsBoundary = (
 
   if (isRTL) {
     if (requested.x > 0) return "start"
-    if (requested.x <= layout.left) return "end"
+    if (requested.x < layout.left) return "end"
   } else {
     if (requested.x < 0) return "start"
     if (requested.x >= layout.right) return "end"

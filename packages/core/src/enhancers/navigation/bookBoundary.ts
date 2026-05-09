@@ -7,7 +7,9 @@ import {
   type Observable,
   of,
   share,
+  skip,
   switchMap,
+  takeUntil,
   timeout,
 } from "rxjs"
 import type { Reader } from "../../reader"
@@ -30,9 +32,9 @@ export type BookBoundaryReachedEvent = BoundaryReachedEvent
 
 /**
  * Product-level "user reached the start/end of the book" signal: composes
- * {@link outOfSpineBoundary} with last-item readiness so `"end"` events
- * are withheld while the spine is still growing through lazy loads.
- * `"start"` passes through immediately.
+ * {@link outOfSpineBoundary} with last-item readiness so `"end"` events are
+ * withheld while the spine is still growing through lazy loads. `"start"`
+ * passes through immediately.
  */
 export const observeBookBoundaryReached = (
   reader: Reader,
@@ -54,15 +56,13 @@ export const observeBookBoundaryReached = (
         filter(Boolean),
         first(),
         map(() => event),
-        // RxJS `timeout` forwards the delay to `setTimeout`, which clamps
-        // `Infinity` to ~1ms (Node) / 2^31-1 ms (browsers); skip the
-        // operator entirely so the pending event isn't silently dropped.
         itemReadinessTimeoutMs === Infinity
           ? identity
           : timeout({
               first: itemReadinessTimeoutMs,
               with: () => EMPTY,
             }),
+        takeUntil(reader.navigation.settledNavigation$.pipe(skip(1))),
       )
     }),
     share(),
