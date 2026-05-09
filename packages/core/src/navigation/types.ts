@@ -64,34 +64,30 @@ export type InternalNavigationEntry = {
     triggeredBy: `user` | `restoration` | `pagination`
   }
   /**
-   * The user-facing navigation that produced this entry, captured before the
-   * navigator clamped, restored, or otherwise resolved it. For user-driven
-   * entries this is the original `UserNavigationEntry` passed to
-   * `reader.navigation.navigate(...)`; for restoration / pagination cycles
-   * (which are self-driven) it mirrors the resolved `position` so the entry
-   * is, by definition, in-bounds with respect to its own request.
+   * The originally-requested viewport position, captured before the navigator
+   * clamped or otherwise resolved it. `undefined` when the user navigated
+   * by `cfi` / `url` / `spineItem` (no position component to compare).
    *
-   * Comparing `requestedNavigation.position` to `position` is the canonical
-   * way to detect that a request was clamped at a spine boundary
-   * (see `observeBoundaryReached` in `enhancers/navigation/boundary.ts`).
+   * Comparing `requestedPosition` to `position` is the canonical way to
+   * detect that a request was clamped at a spine boundary (see
+   * `observeBoundaryReached` in `enhancers/navigation/boundary.ts`).
    *
    * Writers — keep these aligned, boundary detection depends on it:
-   * - `mapUserNavigationToInternal` — copies the original `UserNavigationEntry`
-   *   verbatim so out-of-bounds intent survives clamping.
-   * - `InternalNavigator` restoration branch — synthesizes
-   *   `{ position: navigation.position }` so self-driven corrections never
-   *   look like overshoots.
-   * - `consolidateWithPagination` — same synthesis as restoration, for the
+   * - `mapUserNavigationToInternal` — passes through the original
+   *   `userNavigation.position` so out-of-bounds intent survives clamping.
+   * - `InternalNavigator` restoration branch — mirrors the resolved
+   *   `navigation.position` so self-driven corrections never look like
+   *   overshoots.
+   * - `consolidateWithPagination` — same mirroring as restoration, for the
    *   pagination-driven refresh cycle.
    *
    * If a new writer is added, it must follow one of these two contracts
    * (preserve user intent, or mirror the resolved position) — anything in
    * between will silently break boundary detection.
    */
-  requestedNavigation: UserNavigationEntry
+  requestedPosition?: SpinePosition | UnboundSpinePosition
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
-  // direction?: "left" | "right" | "top" | "bottom"
   url?: string | URL
   spineItem?: string | number
   cfi?: string
@@ -106,5 +102,5 @@ export type InternalNavigationInput = Omit<
 
 export type Navigation = Pick<
   InternalNavigationEntry,
-  "position" | "id" | "requestedNavigation"
+  "position" | "id" | "requestedPosition"
 >

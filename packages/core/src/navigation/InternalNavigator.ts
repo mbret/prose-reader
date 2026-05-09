@@ -57,17 +57,17 @@ export class InternalNavigator extends DestroyableClass {
     meta: {
       triggeredBy: "user",
     },
-    requestedNavigation: { position: new SpinePosition({ x: 0, y: 0 }) },
+    requestedPosition: new SpinePosition({ x: 0, y: 0 }),
     spineItemIsReady: false,
     type: "api",
     id: Symbol(crypto.randomUUID()),
   })
 
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id, requestedNavigation }) => ({
+    map(({ position, id, requestedPosition }) => ({
       position,
       id,
-      requestedNavigation,
+      requestedPosition,
     })),
     distinctUntilChanged(isDeepEqual),
     shareReplay(1),
@@ -255,13 +255,13 @@ export class InternalNavigator extends DestroyableClass {
           },
           /**
            * Restoration is self-driven: the navigator is correcting back to
-           * a valid position, not honoring a pending user request. Reset the
-           * requested navigation to mirror the resolved position so the
-           * entry is, by definition, in-bounds — preventing stale "user
-           * pushed past the edge" signals from leaking into boundary
-           * detection on the unlock-driven snap or layout corrections.
+           * a valid position, not honoring a pending user request. Mirror
+           * the resolved position so the entry is, by definition, in-bounds
+           * — preventing stale "user pushed past the edge" signals from
+           * leaking into boundary detection on the unlock-driven snap or
+           * layout corrections.
            */
-          requestedNavigation: { position: params.navigation.position },
+          requestedPosition: params.navigation.position,
         }
 
         return {

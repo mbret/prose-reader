@@ -58,7 +58,7 @@ export const consolidateWithPagination = (
            * definition in-bounds with respect to its own request — never an
            * "out of bounds" attempt.
            */
-          requestedNavigation: { position: navigation.position },
+          requestedPosition: navigation.position,
         }) satisfies InternalNavigationEntry,
     ),
   )

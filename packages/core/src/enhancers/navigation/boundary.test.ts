@@ -177,7 +177,7 @@ describe("observeBoundaryReached", () => {
       expect(events).toEqual([{ boundary: "start" }])
     })
 
-    it("does not emit for a CFI-only navigation (no requestedNavigation.position)", async () => {
+    it("does not emit for a CFI-only navigation (no requestedPosition)", async () => {
       const { reader, navigator } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)
 
@@ -194,10 +194,9 @@ describe("observeBoundaryReached", () => {
 
     it("does not emit on restoration / pagination cycles whose requested position mirrors the resolved one", async () => {
       // First nav: in-bounds, settles. Then trigger a fresh layout, which
-      // produces a restoration entry where `requestedNavigation.position`
-      // is reset to mirror the resolved position by construction (see
-      // `InternalNavigator`'s restoration branch). Boundary must not fire
-      // for that.
+      // produces a restoration entry where `requestedPosition` is mirrored
+      // to the resolved position by construction (see `InternalNavigator`'s
+      // restoration branch). Boundary must not fire for that.
       const { reader, navigator, spine } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)
 

@@ -239,7 +239,7 @@ describe(`Given loaded book`, () => {
      * Pins the navigator contract: callers may pass any coordinate (including
      * overshoots past the spine) and the resolved position is guaranteed to
      * be renderable — viewport flush with the book edge, not 1px past it.
-     * Captures the original `requestedNavigation` so boundary detection can
+     * Captures the original `requestedPosition` so boundary detection can
      * still tell the request was clamped.
      */
     it.each([
@@ -294,7 +294,7 @@ describe(`Given loaded book`, () => {
       expect(navigations.length).toBe(1)
       expect(navigations[0]).toMatchObject({
         position: { x: 100, y: 0 },
-        requestedNavigation: { position: { x: 9999, y: 0 } },
+        requestedPosition: { x: 9999, y: 0 },
         meta: { triggeredBy: "user" },
         type: "api",
       })

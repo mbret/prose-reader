@@ -57,10 +57,10 @@ const detectOutOfBoundsBoundary = (
  * @remarks
  * Pure navigation primitive: triggered by intent + spine geometry, with no
  * content-lifecycle semantics. Detection is a direct sign-of-overshoot
- * check on `requestedNavigation.position` against the spine extent — no
- * comparison with the resolved `position` (it gets shifted around by
- * restoration, spread-snap, viewport-fit clamping, etc. for perfectly
- * legitimate in-bounds turns).
+ * check on `requestedPosition` against the spine extent — no comparison
+ * with the resolved `position` (it gets shifted around by restoration,
+ * spread-snap, viewport-fit clamping, etc. for perfectly legitimate
+ * in-bounds turns).
  *
  * "Spine's current extent" is the operative phrase: while a lazy-loaded
  * spine item is still loading, its `layoutInfo` is preliminary (often
@@ -73,9 +73,9 @@ const detectOutOfBoundsBoundary = (
  * (e.g. wait for `lastItem.isReady$` before treating an `"end"` boundary
  * as final).
  *
- * Restoration / pagination cycles are self-driven: the navigator resets
- * `requestedNavigation` to mirror the resolved `position`, so they are
- * in-bounds by construction and never trip the sign check.
+ * Restoration / pagination cycles are self-driven: the navigator mirrors
+ * `requestedPosition` to the resolved `position`, so they are in-bounds
+ * by construction and never trip the sign check.
  *
  * The source stream is `settledNavigation$`, so per-frame pan/throttle
  * `navigate()` calls and in-flight viewport animations are filtered out at
@@ -86,7 +86,7 @@ export const observeBoundaryReached = (
 ): Observable<BoundaryReachedEvent> =>
   reader.navigation.settledNavigation$.pipe(
     map((navigation) => {
-      const requested = navigation.requestedNavigation.position
+      const requested = navigation.requestedPosition
       return requested
         ? detectOutOfBoundsBoundary(reader, requested)
         : undefined

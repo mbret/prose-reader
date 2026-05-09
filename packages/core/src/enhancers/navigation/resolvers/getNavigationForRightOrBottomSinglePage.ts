@@ -61,7 +61,7 @@ export const getNavigationForRightOrBottomSinglePage = ({
      * Return the *theoretical* one-page-to-the-right position without
      * clamping it to spine bounds. The navigator clamps centrally in
      * `mapUserNavigationToInternal`, and preserving the unclamped value
-     * here lets it flow through as `requestedNavigation` so consumers (e.g.
+     * here lets it flow through as `requestedPosition` so consumers (e.g.
      * boundary detection) can tell that the user pushed past the edge.
      */
     return pageTurnDirection === `horizontal`

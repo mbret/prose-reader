@@ -119,7 +119,7 @@ describe(`isDeepEqual`, () => {
     const make = () => ({
       position: new SpinePosition(0, 0),
       id,
-      requestedNavigation: { position: new SpinePosition(0, 0) },
+      requestedPosition: new SpinePosition(0, 0),
     })
 
     expect(isDeepEqual(make(), make())).toBe(true)
@@ -129,6 +129,15 @@ describe(`isDeepEqual`, () => {
         ...make(),
         position: new SpinePosition(0, 1),
       }),
+    ).toBe(false)
+    expect(
+      isDeepEqual(make(), {
+        ...make(),
+        requestedPosition: new SpinePosition(9999, 0),
+      }),
+    ).toBe(false)
+    expect(
+      isDeepEqual(make(), { ...make(), requestedPosition: undefined }),
     ).toBe(false)
   })
 })

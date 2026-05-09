@@ -36,12 +36,12 @@ export const mapUserNavigationToInternal =
           animation: "turn",
           ...userNavigation,
           /**
-           * Snapshot the original user request before the resolver clamps
+           * Snapshot the original user position before the resolver clamps
            * `position` below. Downstream consumers (e.g. boundary detection)
            * compare the requested vs. resolved position to know whether the
            * request was pushed past a spine edge.
            */
-          requestedNavigation: { ...userNavigation },
+          requestedPosition: userNavigation.position,
           /**
            * @important
            * The navigator owns clamping. Callers (manual page-turn, gesture

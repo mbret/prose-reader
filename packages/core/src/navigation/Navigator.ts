@@ -101,9 +101,9 @@ export const createNavigator = ({
    * source.
    *
    * Each emission corresponds to a distinct navigation entry from
-   * `navigation$` (already deduped on `(id, position, requestedNavigation)`).
+   * `navigation$` (already deduped on `(id, position, requestedPosition)`).
    * Consumers that need stricter dedup semantics (e.g. ignore changes in
-   * `requestedNavigation`, collapse on `position` only) should layer their
+   * `requestedPosition`, collapse on `position` only) should layer their
    * own `distinctUntilChanged` on top.
    *
    * Use this instead of subscribing to `navigation$` directly when you only
