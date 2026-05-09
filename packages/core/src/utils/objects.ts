@@ -1,4 +1,4 @@
-export { isDeepEqual, isShallowEqual } from "@prose-reader/shared"
+export { isShallowEqual } from "@prose-reader/shared"
 
 export const getBase64FromBlob = (data: Blob) => {
   const reader = new FileReader()

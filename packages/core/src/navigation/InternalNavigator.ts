@@ -20,9 +20,8 @@ import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
-import { SpinePosition } from "../spine/types"
+import { SpinePosition, type UnboundSpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { isDeepEqual } from "../utils/objects"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -37,11 +36,31 @@ import type { ScrollNavigationController } from "./controllers/ScrollNavigationC
 import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
-import type { InternalNavigationEntry, UserNavigationEntry } from "./types"
+import type {
+  InternalNavigationEntry,
+  Navigation,
+  UserNavigationEntry,
+} from "./types"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
+
+const isSamePosition = (
+  a: SpinePosition | UnboundSpinePosition | undefined,
+  b: SpinePosition | UnboundSpinePosition | undefined,
+) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y)
+
+/**
+ * Dedup comparator for the `navigation$` projection. Tailored to the exact
+ * shape (`Navigation`) so the hot path stays allocation-free and
+ * type-checked: a new field on the projection forces an explicit decision
+ * here instead of being silently folded into the dedup key.
+ */
+const isSameNavigation = (a: Navigation, b: Navigation) =>
+  a.id === b.id &&
+  isSamePosition(a.position, b.position) &&
+  isSamePosition(a.requestedPosition, b.requestedPosition)
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -69,7 +88,7 @@ export class InternalNavigator extends DestroyableClass {
       id,
       requestedPosition,
     })),
-    distinctUntilChanged(isDeepEqual),
+    distinctUntilChanged(isSameNavigation),
     shareReplay(1),
   )
 

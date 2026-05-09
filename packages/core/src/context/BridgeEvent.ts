@@ -19,7 +19,7 @@ export class BridgeEvent {
     SpinePosition | UnboundSpinePosition
   >(1)
   public viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
-  public paginationSubject = new ReplaySubject<PaginationInfo>()
+  public paginationSubject = new ReplaySubject<PaginationInfo>(1)
 
   /**
    * Replay last pagination and emit next changes
