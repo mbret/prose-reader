@@ -39,7 +39,12 @@ export const clampRectInSpine = ({
   const lastSpineItem = spineItemsManager.get(
     spineItemsManager.items.length - 1,
   )
-  const last = spine.getSpineItemSpineLayoutInfo(lastSpineItem || 0)
+
+  if (!lastSpineItem) {
+    return new SpinePosition({ x: 0, y: 0 })
+  }
+
+  const last = spine.getSpineItemSpineLayoutInfo(lastSpineItem)
 
   const yMax = last.bottom - size.height
   const y = Math.min(Math.max(0, position.y), yMax)

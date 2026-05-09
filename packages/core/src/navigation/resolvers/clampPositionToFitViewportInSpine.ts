@@ -10,6 +10,11 @@ export const NAMESPACE = `spineNavigator`
  * `visibleAreaRectWidth` × `pageSizeHeight`) and clamp it so the entire
  * viewport rectangle fits inside the spine.
  *
+ * Post-conditions on the returned `position.x` (because `size.width`
+ * matches `viewportWidth`, the inner upper bound collapses to 0):
+ * - LTR: `x ∈ [0, last.right - visibleAreaRectWidth]`
+ * - RTL: `x ∈ [last.left, 0]`
+ *
  * Use this when you're about to render and need the viewport flush with the
  * book edge (e.g. paginated page-turn at end of book).
  */

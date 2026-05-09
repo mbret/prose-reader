@@ -72,7 +72,21 @@ export type InternalNavigationEntry = {
    * is, by definition, in-bounds with respect to its own request.
    *
    * Comparing `requestedNavigation.position` to `position` is the canonical
-   * way to detect that a request was clamped at a spine boundary.
+   * way to detect that a request was clamped at a spine boundary
+   * (see `observeBoundaryReached` in `enhancers/navigation/boundary.ts`).
+   *
+   * Writers — keep these aligned, boundary detection depends on it:
+   * - `mapUserNavigationToInternal` — copies the original `UserNavigationEntry`
+   *   verbatim so out-of-bounds intent survives clamping.
+   * - `InternalNavigator` restoration branch — synthesizes
+   *   `{ position: navigation.position }` so self-driven corrections never
+   *   look like overshoots.
+   * - `consolidateWithPagination` — same synthesis as restoration, for the
+   *   pagination-driven refresh cycle.
+   *
+   * If a new writer is added, it must follow one of these two contracts
+   * (preserve user intent, or mirror the resolved position) — anything in
+   * between will silently break boundary detection.
    */
   requestedNavigation: UserNavigationEntry
   type: `api` | `scroll`

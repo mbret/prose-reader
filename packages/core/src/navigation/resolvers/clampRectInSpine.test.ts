@@ -51,6 +51,31 @@ const buildFixture = (lastItemLayout: Partial<LayoutInfo>): Fixture => {
 }
 
 describe(`clampRectInSpine`, () => {
+  describe(`empty spine`, () => {
+    const spineItemsManager = {
+      get: () => undefined,
+      items: { length: 0 },
+    } as unknown as SpineItemsManager
+    const spine = {
+      getSpineItemSpineLayoutInfo: () => {
+        throw new Error(`should not be invoked when there are no spine items`)
+      },
+    } as unknown as Spine
+
+    it(`returns the origin without consulting layout info`, () => {
+      const result = clampRectInSpine({
+        position: new SpinePosition({ x: 9999, y: 9999 }),
+        size: { width: 200, height: 100 },
+        isRTL: false,
+        spineItemsManager,
+        spine,
+        viewportWidth: 200,
+      })
+
+      expect(result).toEqual(new SpinePosition({ x: 0, y: 0 }))
+    })
+  })
+
   describe(`LTR`, () => {
     const { spineItemsManager, spine } = buildFixture({
       left: 0,

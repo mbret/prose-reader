@@ -1,3 +1,4 @@
+import { observeBookBoundaryReached } from "@prose-reader/core"
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import { toaster } from "../../components/ui/toaster"
@@ -17,10 +18,10 @@ const TOAST_BY_BOUNDARY = {
 export const useBoundaryReachedToast = () => {
   const { reader } = useReader()
 
-  const boundaryReached = useCallback(() => {
+  const subscribeToBoundary = useCallback(() => {
     if (!reader) return
 
-    return reader.navigation.boundaryReached$.subscribe(({ boundary }) => {
+    return observeBookBoundaryReached(reader).subscribe(({ boundary }) => {
       toaster.create({
         ...TOAST_BY_BOUNDARY[boundary],
         type: "info",
@@ -29,5 +30,5 @@ export const useBoundaryReachedToast = () => {
     })
   }, [reader])
 
-  useSubscribe(boundaryReached)
+  useSubscribe(subscribeToBoundary)
 }

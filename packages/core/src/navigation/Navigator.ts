@@ -1,11 +1,12 @@
-import { combineLatest, Subject } from "rxjs"
 import {
+  combineLatest,
   distinctUntilChanged,
   filter,
   map,
+  Subject,
   shareReplay,
   tap,
-} from "rxjs/operators"
+} from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { Report } from "../report"
