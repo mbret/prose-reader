@@ -10,7 +10,7 @@ import {
   timeout,
 } from "rxjs"
 import type { Reader } from "../../reader"
-import { type BoundaryReachedEvent, observeBoundaryReached } from "./boundary"
+import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
 const DEFAULT_ITEM_READINESS_TIMEOUT_MS = 5_000
 
@@ -35,12 +35,12 @@ export type BookBoundaryReachedEvent = BoundaryReachedEvent
  * Emits whenever the user has demonstrably reached a boundary of the book —
  * either the start or the end — with content semantics applied. Use this
  * when you want product-level "the user finished the book" / "the user is
- * back at the beginning" signals; use {@link observeBoundaryReached}
+ * back at the beginning" signals; use {@link outOfSpineBoundary}
  * directly when you want the raw navigation primitive that fires on every
  * out-of-spine navigation regardless of load state.
  *
  * @remarks
- * Composed on top of {@link observeBoundaryReached}, with asymmetric
+ * Composed on top of {@link outOfSpineBoundary}, with asymmetric
  * gating per boundary side:
  *
  * - **`"start"`** passes through immediately. The start of the book is
@@ -61,7 +61,7 @@ export const observeBookBoundaryReached = (
     itemReadinessTimeoutMs = DEFAULT_ITEM_READINESS_TIMEOUT_MS,
   }: BookBoundaryReachedOptions = {},
 ): Observable<BookBoundaryReachedEvent> =>
-  observeBoundaryReached(reader).pipe(
+  outOfSpineBoundary(reader).pipe(
     switchMap((event) => {
       if (event.boundary === "start") return of(event)
 

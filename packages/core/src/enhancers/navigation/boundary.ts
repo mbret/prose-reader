@@ -81,7 +81,7 @@ const detectOutOfBoundsBoundary = (
  * `navigate()` calls and in-flight viewport animations are filtered out at
  * the source.
  */
-export const observeBoundaryReached = (
+export const outOfSpineBoundary = (
   reader: Reader,
 ): Observable<BoundaryReachedEvent> =>
   reader.navigation.settledNavigation$.pipe(

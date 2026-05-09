@@ -5,7 +5,7 @@ import type {
   EnhancerOutput,
   RootEnhancer,
 } from "../types/enhancer"
-import { observeBoundaryReached } from "./boundary"
+import { outOfSpineBoundary } from "./boundary"
 import { handleLinksNavigation } from "./links"
 import { ManualNavigator } from "./navigators/manualNavigator"
 import { PanNavigator } from "./navigators/panNavigator"
@@ -26,7 +26,7 @@ export const navigationEnhancer =
   ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
     const reader = next(options)
     const state$ = observeState(reader)
-    const boundaryReached$ = observeBoundaryReached(reader)
+    const boundaryReached$ = outOfSpineBoundary(reader)
     const manualNavigator = new ManualNavigator(reader)
     const panNavigator = new PanNavigator(reader)
     const userScrollNavigation = new UserScrollNavigation(

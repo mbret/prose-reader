@@ -70,7 +70,7 @@ export type InternalNavigationEntry = {
    *
    * Comparing `requestedPosition` to `position` is the canonical way to
    * detect that a request was clamped at a spine boundary (see
-   * `observeBoundaryReached` in `enhancers/navigation/boundary.ts`).
+   * `outOfSpineBoundary` in `enhancers/navigation/boundary.ts`).
    *
    * Writers — keep these aligned, boundary detection depends on it:
    * - `mapUserNavigationToInternal` — passes through the original

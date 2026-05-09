@@ -13,7 +13,7 @@ import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
 import { waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
-import { type BoundaryReachedEvent, observeBoundaryReached } from "./boundary"
+import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
 const createTestReader = ({
   itemSize = 100,
@@ -77,7 +77,7 @@ const createTestReader = ({
   )
   spineItemsManager.addMany(items)
 
-  // Cast to Reader is safe here: only the fields read by `observeBoundaryReached`
+  // Cast to Reader is safe here: only the fields read by `outOfSpineBoundary`
   // and friends are wired up (navigation, spineItemsManager, spine, context).
   const reader = {
     navigation: navigator,
@@ -91,13 +91,13 @@ const createTestReader = ({
 
 const collectBoundaries = (reader: Reader) => {
   const events: BoundaryReachedEvent[] = []
-  const subscription = observeBoundaryReached(reader).subscribe((event) => {
+  const subscription = outOfSpineBoundary(reader).subscribe((event) => {
     events.push(event)
   })
   return { events, unsubscribe: () => subscription.unsubscribe() }
 }
 
-describe("observeBoundaryReached", () => {
+describe("outOfSpineBoundary", () => {
   describe("Given an LTR horizontal book", () => {
     it("does not emit for an in-bounds navigation", async () => {
       const { reader, navigator } = createTestReader()
