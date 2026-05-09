@@ -169,6 +169,89 @@ describe(`clampRectInSpine`, () => {
       expect(result).toEqual(new SpinePosition({ x: -100, y: 500 }))
     })
   })
+
+  /**
+   * The `Math.max(0, …)` floors guarantee the function honours its
+   * contract ("position … inside the spine") even when the viewport
+   * rectangle is larger than the spine on either axis. Without them,
+   * `last.right - size.width` (LTR) / `viewportWidth - size.width`
+   * (RTL) / `last.bottom - size.height` go negative and pull the
+   * clamped position outside the spine on the wrong side.
+   *
+   * Real layouts that hit this:
+   *   - spread mode with a single (or short) book — `visibleAreaRectWidth`
+   *     spans two pages, the spine spans one
+   *   - any spine item shorter than the viewport on the y-axis
+   */
+  describe(`viewport larger than spine`, () => {
+    describe(`LTR`, () => {
+      const { spineItemsManager, spine } = buildFixture({
+        left: 0,
+        right: 100,
+        bottom: 50,
+      })
+
+      it(`floors xMax at 0 when size.width exceeds last.right`, () => {
+        const result = clampRectInSpine({
+          position: new SpinePosition({ x: 9999, y: 0 }),
+          size: { width: 200, height: 30 },
+          isRTL: false,
+          spineItemsManager,
+          spine,
+          viewportWidth: 200,
+        })
+
+        expect(result).toEqual(new SpinePosition({ x: 0, y: 0 }))
+      })
+
+      it(`floors yMax at 0 when size.height exceeds last.bottom`, () => {
+        const result = clampRectInSpine({
+          position: new SpinePosition({ x: 0, y: 9999 }),
+          size: { width: 50, height: 100 },
+          isRTL: false,
+          spineItemsManager,
+          spine,
+          viewportWidth: 50,
+        })
+
+        expect(result).toEqual(new SpinePosition({ x: 0, y: 0 }))
+      })
+    })
+
+    describe(`RTL`, () => {
+      const { spineItemsManager, spine } = buildFixture({
+        left: -100,
+        right: 50,
+        bottom: 50,
+      })
+
+      it(`floors xMax at 0 when size.width exceeds viewportWidth`, () => {
+        const result = clampRectInSpine({
+          position: new UnboundSpinePosition({ x: 9999, y: 0 }),
+          size: { width: 200, height: 30 },
+          isRTL: true,
+          spineItemsManager,
+          spine,
+          viewportWidth: 50,
+        })
+
+        expect(result).toEqual(new SpinePosition({ x: 0, y: 0 }))
+      })
+
+      it(`floors yMax at 0 when size.height exceeds last.bottom`, () => {
+        const result = clampRectInSpine({
+          position: new UnboundSpinePosition({ x: 0, y: 9999 }),
+          size: { width: 50, height: 100 },
+          isRTL: true,
+          spineItemsManager,
+          spine,
+          viewportWidth: 50,
+        })
+
+        expect(result).toEqual(new SpinePosition({ x: 0, y: 0 }))
+      })
+    })
+  })
 })
 
 describe(`clampRectInSpine with size 1×1 (point clamp)`, () => {

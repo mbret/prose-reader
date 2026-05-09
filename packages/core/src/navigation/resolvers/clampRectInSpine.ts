@@ -35,17 +35,17 @@ export const clampRectInSpine = ({
 
   const last = spine.getSpineItemSpineLayoutInfo(lastSpineItem)
 
-  const yMax = last.bottom - size.height
+  const yMax = Math.max(0, last.bottom - size.height)
   const y = Math.min(Math.max(0, position.y), yMax)
 
   if (isRTL) {
-    const xMax = viewportWidth - size.width
+    const xMax = Math.max(0, viewportWidth - size.width)
     const x = Math.max(last.left, Math.min(xMax, position.x))
 
     return new SpinePosition({ x, y })
   }
 
-  const xMax = last.right - size.width
+  const xMax = Math.max(0, last.right - size.width)
   const x = Math.min(Math.max(0, position.x), xMax)
 
   return new SpinePosition({ x, y })
