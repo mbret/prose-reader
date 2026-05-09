@@ -14,6 +14,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { waitForSwitch } from "../../utils/rxjs"
+import type { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
@@ -29,6 +30,7 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
     protected spineLayout: SpineLayout,
+    protected viewport: Viewport,
   ) {
     super()
 
@@ -40,6 +42,7 @@ export class SpineItemsLoader extends DestroyableClass {
 
     const shouldReloadSpineItems$ = merge(
       this.context.bridgeEvent.position$,
+      this.viewport.layout$,
       this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),

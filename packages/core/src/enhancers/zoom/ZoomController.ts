@@ -240,6 +240,8 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
         this.viewport.element,
       )
     }
+
+    this.reader.viewport.layout()
   }
 
   protected get isControlled() {

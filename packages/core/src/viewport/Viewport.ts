@@ -1,4 +1,4 @@
-import { merge, takeUntil, tap } from "rxjs"
+import { merge, Subject, takeUntil, tap } from "rxjs"
 import { HTML_PREFIX_VIEWPORT } from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -27,6 +27,9 @@ type State = {
 }
 
 export class Viewport extends ReactiveEntity<State> {
+  private layoutSubject = new Subject<void>()
+  public readonly layout$ = this.layoutSubject.asObservable()
+
   constructor(
     protected context: Context,
     protected settingsManager: ReaderSettingsManager,
@@ -77,6 +80,15 @@ export class Viewport extends ReactiveEntity<State> {
     return pageSize
   }
 
+  /**
+   * Re-measure the viewport and notify viewport-geometry dependents.
+   *
+   * This is the lighter sub-layout used when the viewport's visual mapping may
+   * have changed while spine geometry is still valid (for example after a CSS
+   * transform/scale). `reader.layout()` calls this before `spine.layout()`
+   * because spine/page layout depends on the viewport size. This method should
+   * stay one-way and must not trigger a full reader layout by itself.
+   */
   public layout() {
     const layout = {
       width: this.value.element.clientWidth,
@@ -87,6 +99,7 @@ export class Viewport extends ReactiveEntity<State> {
       pageSize: this.calculatePageSize(layout),
       ...layout,
     })
+    this.layoutSubject.next()
   }
 
   public get absoluteViewport() {
@@ -137,5 +150,10 @@ export class Viewport extends ReactiveEntity<State> {
       width: absoluteViewport.width / relativeScale,
       height: absoluteViewport.height / relativeScale,
     })
+  }
+
+  public destroy() {
+    super.destroy()
+    this.layoutSubject.complete()
   }
 }
