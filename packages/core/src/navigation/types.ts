@@ -4,6 +4,8 @@ import type {
   UnboundSpineItemPagePosition,
 } from "../spineItem/types"
 
+export type SpineBoundary = "start" | "end"
+
 export type UserNavigationEntry = {
   position?: SpinePosition | UnboundSpinePosition
   spineItem?: number | string

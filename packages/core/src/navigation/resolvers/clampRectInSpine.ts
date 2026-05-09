@@ -2,6 +2,7 @@ import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpinePosition } from "../../spine/types"
 import { UnboundSpinePosition } from "../../spine/types"
+import type { SpineBoundary } from "../types"
 
 export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition
@@ -19,8 +20,6 @@ type RectBoundsInSpine = {
   yMin: number
   yMax: number
 }
-
-export type SpineBoundary = "start" | "end"
 
 const getRectBoundsInSpine = ({
   size,
