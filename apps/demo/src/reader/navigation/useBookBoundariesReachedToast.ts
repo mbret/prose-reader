@@ -15,7 +15,7 @@ const TOAST_BY_BOUNDARY = {
   },
 } as const
 
-export const useBoundaryReachedToast = () => {
+export const useBookBoundariesReachedToast = () => {
   const { reader } = useReader()
 
   const subscribeToBoundary = useCallback(() => {
