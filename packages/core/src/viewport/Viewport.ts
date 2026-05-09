@@ -102,11 +102,17 @@ export class Viewport extends ReactiveEntity<State> {
 
   public get scaleFactor() {
     const absoluteViewport = this.absoluteViewport
-    const viewportRect = this.value.element.getBoundingClientRect()
-    const relativeScale =
-      (viewportRect?.width ?? absoluteViewport.width) / absoluteViewport.width
 
-    return relativeScale
+    if (!absoluteViewport.width) return 1
+
+    const viewportRect = this.value.element.getBoundingClientRect()
+    // Fall back to no-zoom (`1`) when the rendered rect is unavailable
+    // (detached element, `display: none`, jsdom). A 0-width rect would
+    // otherwise yield a 0 scale and propagate `Infinity` through every
+    // consumer that divides by `scaleFactor` (e.g. spine-coord clamping).
+    const measuredWidth = viewportRect?.width || absoluteViewport.width
+
+    return measuredWidth / absoluteViewport.width
   }
 
   /**
