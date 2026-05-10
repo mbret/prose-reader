@@ -29,6 +29,7 @@ export const paginationEnhancer =
     const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>({
       ...reader.pagination.state,
       beginChapterInfo: undefined,
+      beginHasAdjacentSpreadPage: false,
       beginCfi: undefined,
       beginPageIndexInSpineItem: undefined,
       isUsingSpread: false,
@@ -39,6 +40,7 @@ export const paginationEnhancer =
       beginSpineItemIndex: undefined,
       endCfi: undefined,
       endChapterInfo: undefined,
+      endHasAdjacentSpreadPage: false,
       endSpineItemReadingDirection: undefined,
       percentageEstimateOfBook: 0,
     })

@@ -1,5 +1,6 @@
 import { Box, useBreakpointValue } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
+import "@prose-reader/react-reader/index.css"
 import {
   type ComponentProps,
   memo,

@@ -1,0 +1,47 @@
+.pulse {
+  animation: pulse 900ms ease-in-out 1;
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.72;
+    transform: rotate(0deg) scale(1);
+  }
+
+  40% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1.12);
+  }
+
+  48% {
+    opacity: 1;
+    transform: rotate(-7deg) scale(1.14);
+  }
+
+  56% {
+    opacity: 1;
+    transform: rotate(7deg) scale(1.14);
+  }
+
+  64% {
+    opacity: 1;
+    transform: rotate(-4deg) scale(1.12);
+  }
+
+  72% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1.08);
+  }
+
+  100% {
+    opacity: 0.72;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

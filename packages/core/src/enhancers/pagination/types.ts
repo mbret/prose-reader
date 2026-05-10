@@ -7,9 +7,11 @@ import type { ResourcesLocator } from "./ResourcesLocator"
 
 export type ExtraPaginationInfo = {
   beginChapterInfo: ChapterInfo | undefined
+  beginHasAdjacentSpreadPage: boolean
   beginSpineItemReadingDirection: `rtl` | `ltr` | undefined
   beginAbsolutePageIndex: number | undefined
   endChapterInfo: ChapterInfo | undefined
+  endHasAdjacentSpreadPage: boolean
   endSpineItemReadingDirection: `rtl` | `ltr` | undefined
   endAbsolutePageIndex: number | undefined
   percentageEstimateOfBook: number | undefined
