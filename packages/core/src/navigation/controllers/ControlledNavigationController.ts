@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   combineLatest,
   delay,
+  distinctUntilChanged,
   filter,
   identity,
   map,
@@ -28,23 +29,28 @@ import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
+import { isShallowEqual } from "../../utils/objects"
 import type { Viewport } from "../../viewport/Viewport"
+import type {
+  NavigationModeController,
+  NavigationModeControllerNavigationEntry,
+} from "../types"
 import {
   spinePositionToTranslation,
   translationToSpinePosition,
 } from "./positions"
 
-const NAMESPACE = `navigation/ViewportNavigator`
+const NAMESPACE = `navigation/ControlledNavigationController`
 
 const report = Report.namespace(NAMESPACE)
 
-export type ViewportNavigationEntry = {
-  position: SpinePosition
-  animation?: boolean | "turn" | "snap"
-}
+export type ControlledNavigationEntry = NavigationModeControllerNavigationEntry
 
-export class ControlledNavigationController extends DestroyableClass {
-  protected navigateSubject = new Subject<ViewportNavigationEntry>()
+export class ControlledNavigationController
+  extends DestroyableClass
+  implements NavigationModeController
+{
+  protected navigateSubject = new Subject<ControlledNavigationEntry>()
 
   public readonly element$ = new BehaviorSubject<HTMLElement>(
     document.createElement(`div`),
@@ -112,14 +118,11 @@ export class ControlledNavigationController extends DestroyableClass {
       share(),
     )
 
-    const navigate$ = this.navigateSubject.pipe(
-      tap((navigation) => {
-        report.info(`Navigation requested`, navigation)
-      }),
-    )
-
-    this.isNavigating$ = navigate$.pipe(
+    this.isNavigating$ = this.navigateSubject.pipe(
+      distinctUntilChanged((a, b) => isShallowEqual(a.position, b.position)),
       map(({ animation, position }) => {
+        report.info(`Navigation requested`, { animation, position })
+
         const shouldAnimate = !(
           !animation ||
           (animation === `turn` &&
@@ -203,7 +206,7 @@ export class ControlledNavigationController extends DestroyableClass {
                  */
                 tap((data) => {
                   if (pageTurnAnimation !== `fade`) {
-                    this.setViewportPosition(data.position)
+                    this.applyNavigationPosition(data.position)
                   }
                 }),
                 currentEvent.shouldAnimate
@@ -213,7 +216,7 @@ export class ControlledNavigationController extends DestroyableClass {
                   const element = this.element$.getValue()
 
                   if (pageTurnAnimation === `fade`) {
-                    this.setViewportPosition(data.position)
+                    this.applyNavigationPosition(data.position)
                     element.style.setProperty(`opacity`, `1`)
                   }
                 }),
@@ -222,7 +225,7 @@ export class ControlledNavigationController extends DestroyableClass {
                   : identity,
                 tap((data) => {
                   if (pageTurnAnimation === `fade`) {
-                    this.setViewportPosition(data.position)
+                    this.applyNavigationPosition(data.position)
                   }
                 }),
               )
@@ -241,14 +244,16 @@ export class ControlledNavigationController extends DestroyableClass {
   }
 
   /**
-   * Programmatically set the viewport position.
+   * Apply a resolved navigation position to this controller's DOM layer.
    *
    * Usually occurs due to navigation.
    *
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected setViewportPosition(position: SpinePosition) {
+  protected applyNavigationPosition(
+    position: ControlledNavigationEntry["position"],
+  ) {
     const element = this.element$.getValue()
 
     const translation = spinePositionToTranslation(position)
@@ -257,9 +262,15 @@ export class ControlledNavigationController extends DestroyableClass {
     this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
   }
 
-  navigate(navigation: ViewportNavigationEntry) {
+  navigate(navigation: NavigationModeControllerNavigationEntry) {
     this.navigateSubject.next(navigation)
   }
+
+  public isActive = () => {
+    return this.settings.values.computedPageTurnMode === "controlled"
+  }
+
+  public getNavigationVisibleArea = () => this.viewport.absoluteViewport
 
   /**
    * @important The reason we use computed transform and not bounding client is to avoid

@@ -14,6 +14,7 @@ import { restoreAnnotations, usePersistAnnotations } from "./annotations"
 import { BookError } from "./BookError"
 import { BookLoading } from "./BookLoading"
 import { isMenuOpenSignal, MenuDialog } from "./navigation/MenuDialog"
+import { useBookBoundariesReachedToast } from "./navigation/useBookBoundariesReachedToast"
 import { useBookSettings } from "./settings/useBookSettings"
 import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
@@ -52,6 +53,7 @@ export const ReaderScreen = memo(() => {
   usePersistCurrentPagination()
   useResetStateOnUnMount()
   usePersistAnnotations(annotationsSignal, epubKey)
+  useBookBoundariesReachedToast()
 
   const {
     fontSizeScopeReference,

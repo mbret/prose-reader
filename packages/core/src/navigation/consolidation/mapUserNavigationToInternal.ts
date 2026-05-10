@@ -3,11 +3,18 @@ import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
+  NavigationVisibleArea,
   UserNavigationEntry,
 } from "../types"
 
 export const mapUserNavigationToInternal =
-  ({ navigationResolver }: { navigationResolver: NavigationResolver }) =>
+  ({
+    navigationResolver,
+    getNavigationVisibleArea,
+  }: {
+    navigationResolver: NavigationResolver
+    getNavigationVisibleArea: () => NavigationVisibleArea
+  }) =>
   (
     stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
   ): Observable<{
@@ -16,37 +23,37 @@ export const mapUserNavigationToInternal =
   }> => {
     return stream.pipe(
       map(([userNavigation, previousNavigation]) => {
+        const requestedPosition = userNavigation.position
+        const visibleArea = requestedPosition
+          ? getNavigationVisibleArea()
+          : undefined
+        const position =
+          requestedPosition && visibleArea
+            ? navigationResolver.clampPositionInSpine(
+                requestedPosition,
+                visibleArea,
+              )
+            : undefined
+
         const navigation: InternalNavigationInput = {
           type: "api",
           meta: {
             triggeredBy: "user",
           },
-          id: Symbol(),
+          // Fresh id per request so `navigation$` consumers see every user
+          // call as a discrete event, including no-ops at a boundary.
+          // Restoration / pagination cycles deliberately preserve the
+          // existing id to stay deduplicated.
+          id: Symbol("user"),
           animation: "turn",
           ...userNavigation,
-          /**
-           * @important
-           * For now we do not allow out of bounds positions. (this happens when scroll mode with a zoom out).
-           * Although it's technically possible to be out of bounds, in terms of navigation and the rest of the app
-           * it's hard to predict what will happens with negative x/y. spine item will not be retrieved, the spine position might
-           * not be within anything (although the viewport slice is).
-           *
-           * Spine position should ideally be within the spine (even when viewport is scaled down/up). That's why we have viewport
-           * on top of the spine.
-           *
-           * For now having things centered (negative x) on zoom out in scroll mode can be achieved with transform origin for example.
-           * This "limitation" is here at the moment to avoid unexpected behaviors.
-           *
-           * @note
-           * Has a bug where scaling from < 1 to 1 was creating positive x offset. This is "expected" since on scroll mode the viewport
-           * is at the offset 0 at scale 0.2 for eg: then when calculating new scroll delta, we get positive x offset. Anyway, to prevent
-           * out of bounds position this should make sure we always stay within an item.
-           */
-          position: userNavigation.position
-            ? navigationResolver.fromOutOfBoundsSpinePosition(
-                userNavigation.position,
-              )
-            : undefined,
+          requestedPosition,
+          requestedVisibleArea: visibleArea,
+          // Clamp the full viewport rectangle, not just the top-left point:
+          // a point-only clamp lets the viewport spill past the end by
+          // `~viewportSize` and the stored position diverges from where the
+          // DOM scroll actually lands in scrollable mode.
+          position,
         }
 
         return {

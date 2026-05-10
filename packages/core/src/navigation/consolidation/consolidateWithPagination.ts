@@ -52,6 +52,7 @@ export const consolidateWithPagination = (
           meta: {
             triggeredBy: "pagination",
           },
+          requestedPosition: navigation.position,
         }) satisfies InternalNavigationEntry,
     ),
   )

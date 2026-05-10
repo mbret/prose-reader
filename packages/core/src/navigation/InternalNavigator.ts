@@ -11,7 +11,6 @@ import {
   of,
   share,
   shareReplay,
-  skip,
   switchMap,
   takeUntil,
   tap,
@@ -21,9 +20,9 @@ import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { Spine } from "../spine/Spine"
-import { SpinePosition } from "../spine/types"
+import { SpinePosition, type UnboundSpinePosition } from "../spine/types"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { isShallowEqual } from "../utils/objects"
+import type { Viewport } from "../viewport/Viewport"
 import { consolidateWithPagination } from "./consolidation/consolidateWithPagination"
 import { mapUserNavigationToInternal } from "./consolidation/mapUserNavigationToInternal"
 import { withCfiPosition } from "./consolidation/withCfiPosition"
@@ -33,16 +32,36 @@ import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
-import type { ControlledNavigationController } from "./controllers/ControlledNavigationController"
-import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
-import type { InternalNavigationEntry, UserNavigationEntry } from "./types"
+import type {
+  InternalNavigationEntry,
+  Navigation,
+  NavigationModeController,
+  NavigationVisibleArea,
+  UserNavigationEntry,
+} from "./types"
 
 const NAMESPACE = `navigation/InternalNavigator`
 
 const report = Report.namespace(NAMESPACE)
+
+const isSamePosition = (
+  a: SpinePosition | UnboundSpinePosition | undefined,
+  b: SpinePosition | UnboundSpinePosition | undefined,
+) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y)
+
+const isSameVisibleArea = (
+  a: NavigationVisibleArea | undefined,
+  b: NavigationVisibleArea | undefined,
+) => a === b || (!!a && !!b && a.width === b.width && a.height === b.height)
+
+const isSameNavigation = (a: Navigation, b: Navigation) =>
+  a.id === b.id &&
+  isSamePosition(a.position, b.position) &&
+  isSamePosition(a.requestedPosition, b.requestedPosition) &&
+  isSameVisibleArea(a.requestedVisibleArea, b.requestedVisibleArea)
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -58,26 +77,21 @@ export class InternalNavigator extends DestroyableClass {
     meta: {
       triggeredBy: "user",
     },
+    requestedPosition: new SpinePosition({ x: 0, y: 0 }),
     spineItemIsReady: false,
     type: "api",
-    id: Symbol(),
+    id: Symbol("init"),
   })
 
-  public navigated$ = this.navigationSubject.pipe(skip(1))
-
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id }) => ({
+    map(({ position, id, requestedPosition, requestedVisibleArea, meta }) => ({
       position,
       id,
+      requestedPosition,
+      requestedVisibleArea,
+      triggeredBy: meta.triggeredBy,
     })),
-    distinctUntilChanged(
-      (
-        { position: previousPosition, ...previousRest },
-        { position: currentPosition, ...currentRest },
-      ) =>
-        isShallowEqual(previousRest, currentRest) &&
-        isShallowEqual(previousPosition, currentPosition),
-    ),
+    distinctUntilChanged(isSameNavigation),
     shareReplay(1),
   )
 
@@ -87,24 +101,28 @@ export class InternalNavigator extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected context: Context,
     protected userNavigation$: Observable<UserNavigationEntry>,
-    protected controlledNavigationController: ControlledNavigationController,
-    protected scrollNavigationController: ScrollNavigationController,
+    protected getActiveNavigationModeController: () => NavigationModeController,
+    protected navigationModeLayout$: Observable<unknown>,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
+    protected viewport: Viewport,
     /**
-     * Allow automatic restoration to happens.
-     * - correction of position
-     * - restoration of position
+     * While held, automatic position adjustments (correction, restoration)
+     * are deferred so they don't fight the user's direct manipulation.
      */
-    protected isRestorationLocked$: Observable<boolean>,
+    protected isUserInteractionLocked$: Observable<boolean>,
   ) {
     super()
+
+    const getNavigationVisibleArea = () =>
+      getActiveNavigationModeController().getNavigationVisibleArea()
 
     const navigationFromUser$ = userNavigation$
       .pipe(
         withLatestFrom(this.navigationSubject),
         mapUserNavigationToInternal({
           navigationResolver,
+          getNavigationVisibleArea,
         }),
         /**
          * Url lookup is heavier so we start with it to fill
@@ -143,8 +161,9 @@ export class InternalNavigator extends DestroyableClass {
           navigationResolver,
           spineItemsManager: spine.spineItemsManager,
           settings,
+          viewport,
         }),
-        withLatestFrom(isRestorationLocked$),
+        withLatestFrom(isUserInteractionLocked$),
         switchMap(([params, isUserLocked]) => {
           const shouldNotAlterPosition =
             params.navigation.cfi ||
@@ -174,21 +193,21 @@ export class InternalNavigator extends DestroyableClass {
       )
 
     const navigationUpdateFollowingUserUnlock$ = navigationFromUser$.pipe(
-      withLatestFrom(isRestorationLocked$),
+      withLatestFrom(isUserInteractionLocked$),
       filter(([, isUserLocked]) => isUserLocked),
       switchMap(([navigation]) => {
         // @todo emit true/false to keep stream pure
         const unlock = this.locker.lock()
 
-        return isRestorationLocked$.pipe(
+        return isUserInteractionLocked$.pipe(
           filter((isUserLocked) => !isUserLocked),
           first(),
-          map(
-            (): InternalNavigationEntry => ({
+          map(() => ({
+            navigation: {
               ...navigation,
               animation: "snap" as const,
-            }),
-          ),
+            },
+          })),
           finalize(() => {
             unlock()
           }),
@@ -213,23 +232,23 @@ export class InternalNavigator extends DestroyableClass {
      * This is responsibility of other components.
      */
     const navigationUpdateFromLayout$ = merge(
-      controlledNavigationController.layout$,
+      navigationModeLayout$,
       spine.layout$,
     ).pipe(
       switchMap(() => {
         return of(null).pipe(
           switchMap(() =>
-            isRestorationLocked$.pipe(
+            isUserInteractionLocked$.pipe(
               filter((isLocked) => !isLocked),
               first(),
             ),
           ),
-          map(
-            (): InternalNavigationEntry => ({
+          map(() => ({
+            navigation: {
               ...this.navigationSubject.getValue(),
-              animation: false,
-            }),
-          ),
+              animation: false as const,
+            },
+          })),
           /**
            * We need to cancel the restoration as soon as there is
            * another navigation. Whether it's user or internal, it means
@@ -246,25 +265,22 @@ export class InternalNavigator extends DestroyableClass {
       navigationUpdateFromLayout$,
       navigationUpdateFollowingUserUnlock$,
     ).pipe(
-      map((navigation) => ({ navigation })),
       withRestoredPosition({
         navigationResolver,
         settings,
         context,
         spine,
       }),
-      map((params) => {
-        const navigation: InternalNavigationEntry = {
-          ...params.navigation,
+      map(({ navigation }) => {
+        const updated: InternalNavigationEntry = {
+          ...navigation,
           meta: {
             triggeredBy: `restoration`,
           },
+          requestedPosition: navigation.position,
         }
 
-        return {
-          ...params,
-          navigation,
-        }
+        return { navigation: updated }
       }),
       /**
        * The spine item may be undefined after a restoration.
@@ -325,46 +341,29 @@ export class InternalNavigator extends DestroyableClass {
         }),
       )
 
-    const navigateViewport = (
+    const navigateActiveModeController = (
       stream: Observable<[InternalNavigationEntry, InternalNavigationEntry]>,
     ) =>
       stream.pipe(
-        tap(([currentNavigation, previousNavigation]) => {
+        tap(([currentNavigation]) => {
           const isScrollFromUser = currentNavigation.type === `scroll`
           const isPaginationUpdate =
             currentNavigation.meta.triggeredBy === "pagination"
           const isRestoration =
             currentNavigation.meta.triggeredBy === "restoration"
-          const positionIsSame = isShallowEqual(
-            previousNavigation.position,
-            currentNavigation.position,
-          )
 
-          if (
-            (isScrollFromUser && !isRestoration) ||
-            isPaginationUpdate ||
-            positionIsSame
-          )
-            return
+          // Do NOT add a `position`-equality short-circuit here: the same
+          // spine position can map to a different DOM scroll target after
+          // a scale change, layout reflow, or external scroll drift. Only
+          // the controller owns surface state — let it dedup.
+          if ((isScrollFromUser && !isRestoration) || isPaginationUpdate) return
 
           const navigation = {
             position: currentNavigation.position,
             animation: currentNavigation.animation,
           }
 
-          if (settings.values.computedPageTurnMode === `scrollable`) {
-            this.scrollNavigationController.navigate(navigation)
-          } else {
-            this.controlledNavigationController.navigate({
-              ...navigation,
-              /**
-               * @important
-               * Explicitly trust the unbound position to be valid at this point.
-               * Thanks to consolidation and restoration.
-               */
-              position: SpinePosition.from(navigation.position),
-            })
-          }
+          this.getActiveNavigationModeController().navigate(navigation)
         }),
       )
 
@@ -374,11 +373,10 @@ export class InternalNavigator extends DestroyableClass {
         /**
          * @important
          *
-         * We need to start navigating viewport before notifying navigation
-         * change, this is to keep viewportState sync and avoid a "free" ping
-         * in between.
+         * We need to start navigation before notifying navigation change, this
+         * keeps navigationState sync and avoids a "free" ping in between.
          */
-        navigateViewport,
+        navigateActiveModeController,
         notifyNavigationUpdate,
         takeUntil(this.destroy$),
       )

@@ -10,8 +10,8 @@ import { createNavigationResolver as createSpineItemNavigator } from "../../spin
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
-import { fromOutOfBoundsSpinePosition } from "./fromOutOfBoundsSpinePosition"
-import { fromUnboundSpinePosition } from "./fromUnboundSpinePosition"
+import type { NavigationVisibleArea } from "../types"
+import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
 import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
@@ -131,14 +131,13 @@ export const createNavigationResolver = ({
         ? 0
         : viewportPosition.y +
           viewport.absoluteViewport.height * triggerPercentage
-    const midScreenPositionSafePosition = fromUnboundSpinePosition({
+    const midScreenPositionSafePosition = clampRectInSpine({
       position: new SpinePosition({
         x: triggerXPosition,
         y: triggerYPosition,
       }),
+      size: viewport.absoluteViewport,
       isRTL: context.isRTL(),
-      pageSizeHeight: viewport.pageSize.height,
-      visibleAreaRectWidth: viewport.absoluteViewport.width,
       spineItemsManager,
       spine,
     })
@@ -214,26 +213,27 @@ export const createNavigationResolver = ({
         viewport,
       }),
     getMostPredominantNavigationForPosition,
-    fromUnboundSpinePosition: (
+    clampPositionInSpine: (
       position: SpinePosition | UnboundSpinePosition,
+      size: NavigationVisibleArea,
     ) =>
-      fromUnboundSpinePosition({
+      clampRectInSpine({
         position,
+        size,
         isRTL: context.isRTL(),
-        pageSizeHeight: viewport.pageSize.height,
-        visibleAreaRectWidth: viewport.absoluteViewport.width,
         spineItemsManager,
         spine,
       }),
-    fromOutOfBoundsSpinePosition: (
+    getBoundaryForPosition: (
       position: SpinePosition | UnboundSpinePosition,
+      size: NavigationVisibleArea = viewport.absoluteViewport,
     ) =>
-      fromOutOfBoundsSpinePosition({
+      getBoundaryForRectInSpine({
         position,
+        size,
         isRTL: context.isRTL(),
         spineItemsManager,
         spine,
-        viewportWidth: viewport.absoluteViewport.width,
       }),
     isNavigationGoingForwardFrom,
     arePositionsDifferent,

@@ -57,17 +57,15 @@ export const getNavigationForRightOrBottomSinglePage = ({
   )
 
   if (!positionsAreDifferent) {
-    return navigationResolver.fromUnboundSpinePosition(
-      pageTurnDirection === `horizontal`
-        ? new UnboundSpinePosition({
-            x: position.x + viewport.pageSize.width,
-            y: 0,
-          })
-        : new UnboundSpinePosition({
-            y: position.y + viewport.pageSize.height,
-            x: 0,
-          }),
-    )
+    return pageTurnDirection === `horizontal`
+      ? new UnboundSpinePosition({
+          x: position.x + viewport.pageSize.width,
+          y: 0,
+        })
+      : new UnboundSpinePosition({
+          y: position.y + viewport.pageSize.height,
+          x: 0,
+        })
   }
 
   const readingOrderPosition =

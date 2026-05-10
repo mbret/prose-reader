@@ -1,7 +1,5 @@
-// import { isShallowEqual } from "./objects"
-
-import { isShallowEqual } from "./objects"
 import { expect, test } from "vitest"
+import { isShallowEqual } from "./objects"
 
 test(`shallow comparision`, () => {
   const base = { a: 1, b: 2 }

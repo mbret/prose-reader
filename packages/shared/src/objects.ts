@@ -1,43 +1,31 @@
-// MIT © 2017 azu
-const hasOwn = Object.prototype.hasOwnProperty
-
-// Object.is polyfill
-// biome-ignore lint/suspicious/noExplicitAny: TODO
-export const is = (x: any, y: any): boolean => {
-  if (x === y) {
-    return x !== 0 || y !== 0 || 1 / x === 1 / y
-  }
-  return false
-}
-
 /**
- * Return true, if `objectA` is shallow equal to `objectB`.
- * Pass Custom equality function to `customEqual`.
- * Default equality is `Object.is`
- * Support Array
+ * Return true if `objectA` is shallow equal to `objectB`.
  *
- * Options:
+ * - Primitives are compared with `Object.is` (so `NaN === NaN`, `+0 ≠ -0`).
+ * - Objects and arrays are compared by their own enumerable string keys,
+ *   each value pair compared with `Object.is` (or `customEqual`).
+ * - Two objects with the same keys but different prototypes are considered
+ *   equal — class identity is not checked.
  *
- * - `customEqual`: function should return true if the `a` value is equal to `b` value.
- * - `debug`: enable debug info to console log. This log will be disable in production build
+ * Pass `customEqual` to override the per-value comparator (e.g. to recurse
+ * one level deeper, or to compare specific value types by content).
  */
-
-// biome-ignore lint/suspicious/noExplicitAny: TODO
-export const isShallowEqual = <T = any, R = any>(
-  objectA: T,
-  objectB: R,
+export const isShallowEqual = <A = unknown, B = unknown>(
+  objectA: A,
+  objectB: B,
   options?: {
-    customEqual?: <T>(a: T, b: T) => boolean
+    customEqual?: (a: unknown, b: unknown) => boolean
   },
 ): boolean => {
-  // @ts-expect-error
-  if (objectA === objectB) {
+  if (Object.is(objectA, objectB)) {
     return true
   }
-  if (typeof objectA !== "object" || objectA === null) {
-    return false
-  }
-  if (typeof objectB !== "object" || objectB === null) {
+  if (
+    typeof objectA !== "object" ||
+    objectA === null ||
+    typeof objectB !== "object" ||
+    objectB === null
+  ) {
     return false
   }
 
@@ -48,15 +36,16 @@ export const isShallowEqual = <T = any, R = any>(
     return false
   }
 
-  const isEqual =
-    options && typeof options.customEqual === "function"
-      ? options.customEqual
-      : is
+  const isEqual = options?.customEqual ?? Object.is
 
-  for (let i = 0; i < keysA.length; i++) {
-    const key = keysA[i] || ``
-    // @ts-expect-error
-    if (!hasOwn.call(objectB, key) || !isEqual(objectA[key], objectB[key])) {
+  // Indexable cast after narrowing to non-null `object`: TypeScript doesn't
+  // widen `object` itself, but every iterated key is verified as own via
+  // `Object.keys` / `Object.hasOwn`.
+  const a = objectA as Record<string, unknown>
+  const b = objectB as Record<string, unknown>
+
+  for (const key of keysA) {
+    if (!Object.hasOwn(b, key) || !isEqual(a[key], b[key])) {
       return false
     }
   }

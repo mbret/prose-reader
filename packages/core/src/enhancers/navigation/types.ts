@@ -1,5 +1,6 @@
 import type { Observable } from "rxjs"
 import type { Reader } from "../../reader"
+import type { outOfSpineBoundary } from "./boundary"
 import type { ManualNavigator } from "./navigators/manualNavigator"
 import type { PanNavigator } from "./navigators/panNavigator"
 import type { observeState } from "./state"
@@ -8,6 +9,7 @@ export type NavigationEnhancerOutput = {
   load: (options: Parameters<Reader["load"]>[0] & { cfi?: string }) => void
   navigation: {
     state$: ReturnType<typeof observeState>
+    outOfSpineBoundary$: ReturnType<typeof outOfSpineBoundary>
     throttleLock: <T>(params: {
       duration: number
       trigger: Observable<T>

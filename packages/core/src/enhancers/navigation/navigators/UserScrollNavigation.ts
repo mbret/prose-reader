@@ -11,7 +11,6 @@ import {
   tap,
 } from "rxjs"
 import type { ScrollNavigationController } from "../../../navigation/controllers/ScrollNavigationController"
-import type { Locker } from "../../../navigation/Locker"
 import type { UserNavigationEntry } from "../../../navigation/types"
 import { DestroyableClass } from "../../../utils/DestroyableClass"
 
@@ -30,7 +29,7 @@ export class UserScrollNavigation extends DestroyableClass {
 
   constructor(
     protected scrollNavigationController: ScrollNavigationController,
-    protected locker: Locker,
+    protected lock: () => () => void,
   ) {
     super()
 
@@ -42,7 +41,7 @@ export class UserScrollNavigation extends DestroyableClass {
      */
     const navigateOnScroll$ = this.scrollNavigationController.userScroll$.pipe(
       exhaustMap((event) => {
-        const unlock = this.locker.lock()
+        const unlock = this.lock()
 
         return merge(
           this.scrollNavigationController.userScroll$,

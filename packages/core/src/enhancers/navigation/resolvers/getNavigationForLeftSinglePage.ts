@@ -1,7 +1,7 @@
 import type { NavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
 import type { SpineLocator } from "../../../spine/locator/SpineLocator"
 import type { SpineItemsManager } from "../../../spine/SpineItemsManager"
-import { SpinePosition, type UnboundSpinePosition } from "../../../spine/types"
+import { type SpinePosition, UnboundSpinePosition } from "../../../spine/types"
 import type { Viewport } from "../../../viewport/Viewport"
 import { getSpineItemPositionForLeftPage } from "./getSpineItemPositionForLeftPage"
 
@@ -48,17 +48,15 @@ export const getNavigationForLeftSinglePage = ({
   )
 
   if (!isNewNavigationInCurrentItem) {
-    return navigationResolver.fromUnboundSpinePosition(
-      pageTurnDirection === `horizontal`
-        ? new SpinePosition({
-            x: position.x - viewport.pageSize.width,
-            y: 0,
-          })
-        : new SpinePosition({
-            y: position.y - viewport.pageSize.height,
-            x: 0,
-          }),
-    )
+    return pageTurnDirection === `horizontal`
+      ? new UnboundSpinePosition({
+          x: position.x - viewport.pageSize.width,
+          y: 0,
+        })
+      : new UnboundSpinePosition({
+          y: position.y - viewport.pageSize.height,
+          x: 0,
+        })
   }
   const readingOrderPosition =
     spineLocator.getSpinePositionFromSpineItemPosition({

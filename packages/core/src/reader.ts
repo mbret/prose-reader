@@ -78,14 +78,13 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spineItemsManager,
     spine,
     spineItemLocator,
+    navigator.isLocked$,
   )
 
   // bridge all navigation stream with reader so they can be shared across app
   navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
   navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
-  navigator.locker.isLocked$.subscribe(
-    context.bridgeEvent.navigationIsLockedSubject,
-  )
+  navigator.position$.subscribe(context.bridgeEvent.positionSubject)
   pagination.subscribe(context.bridgeEvent.paginationSubject)
 
   const layout = () => {

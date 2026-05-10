@@ -1,11 +1,7 @@
-import {
-  BehaviorSubject,
-  distinctUntilChanged,
-  filter,
-  ReplaySubject,
-} from "rxjs"
+import { BehaviorSubject, filter, ReplaySubject } from "rxjs"
 import type { Navigation } from "../navigation/types"
 import type { PaginationInfo } from "../pagination/types"
+import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 
 /**
  * Bridge events that are transverse to the project and needed across several
@@ -19,22 +15,16 @@ import type { PaginationInfo } from "../pagination/types"
  */
 export class BridgeEvent {
   public navigationSubject = new ReplaySubject<Navigation>(1)
+  public positionSubject = new ReplaySubject<
+    SpinePosition | UnboundSpinePosition
+  >(1)
   public viewportStateSubject = new BehaviorSubject<`free` | `busy`>(`free`)
-  public paginationSubject = new ReplaySubject<PaginationInfo>()
-  public navigationIsLockedSubject = new BehaviorSubject(false)
+  public paginationSubject = new ReplaySubject<PaginationInfo>(1)
 
   /**
    * Replay last pagination and emit next changes
    */
   public pagination$ = this.paginationSubject.asObservable()
-
-  /**
-   * Emit whenever the navigation is unlocked.
-   */
-  public navigationUnlocked$ = this.navigationIsLockedSubject.pipe(
-    distinctUntilChanged(),
-    filter((isLocked) => !isLocked),
-  )
 
   /**
    * Replay and emit viewport state
@@ -59,4 +49,7 @@ export class BridgeEvent {
    * Replay and emit navigation
    */
   public navigation$ = this.navigationSubject.asObservable()
+
+  /** Mirror of `Navigator.position$` for cross-module use. */
+  public position$ = this.positionSubject.asObservable()
 }

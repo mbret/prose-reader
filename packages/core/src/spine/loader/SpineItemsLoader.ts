@@ -14,6 +14,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { waitForSwitch } from "../../utils/rxjs"
+import type { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
 import type { SpineLayout } from "../SpineLayout"
@@ -29,6 +30,7 @@ export class SpineItemsLoader extends DestroyableClass {
     protected spineLocator: SpineLocator,
     protected settings: ReaderSettingsManager,
     protected spineLayout: SpineLayout,
+    protected viewport: Viewport,
   ) {
     super()
 
@@ -39,7 +41,8 @@ export class SpineItemsLoader extends DestroyableClass {
     )
 
     const shouldReloadSpineItems$ = merge(
-      this.context.bridgeEvent.navigation$,
+      this.context.bridgeEvent.position$,
+      this.viewport.layout$,
       this.spineLayout.layout$,
       forcedOpen$,
       settings.watch(["numberOfAdjacentSpineItemToPreLoad"]),
@@ -66,13 +69,13 @@ export class SpineItemsLoader extends DestroyableClass {
       // be dangerous.
       debounceTime(100),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      withLatestFrom(this.context.bridgeEvent.navigation$, forcedOpen$),
-      map(([, navigation, forcedOpenIndexes]) => {
+      withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
+      map(([, position, forcedOpenIndexes]) => {
         const { numberOfAdjacentSpineItemToPreLoad } = settings.values
         // these are real visible items to load
         const { beginIndex = 0, endIndex = 0 } =
           spineLocator.getVisibleSpineItemsFromPosition({
-            position: navigation.position,
+            position,
             threshold: { type: "percentage", value: 0 },
             useAbsoluteViewport: false,
           }) || {}

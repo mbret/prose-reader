@@ -1,5 +1,12 @@
-import { combineLatest, Subject } from "rxjs"
-import { distinctUntilChanged, map, shareReplay } from "rxjs/operators"
+import { isShallowEqual } from "@prose-reader/shared"
+import {
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  merge,
+  Subject,
+  shareReplay,
+} from "rxjs"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { Report } from "../report"
@@ -12,7 +19,7 @@ import { ScrollNavigationController } from "./controllers/ScrollNavigationContro
 import { InternalNavigator } from "./InternalNavigator"
 import { Locker } from "./Locker"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
-import type { UserNavigationEntry } from "./types"
+import type { NavigationModeController, UserNavigationEntry } from "./types"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -31,12 +38,7 @@ export const createNavigator = ({
 }) => {
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
-  /**
-   * Allow automatic restoration to happens.
-   * - correction of position
-   * - restoration of position
-   */
-  const restorationLocker = new Locker()
+  const userInteractionLock = new Locker()
   const navigationResolver = createNavigationResolver({
     context,
     settings,
@@ -62,25 +64,51 @@ export const createNavigator = ({
     context,
   )
 
+  const navigationModeControllers: NavigationModeController[] = [
+    scrollNavigationController,
+    controlledNavigationController,
+  ]
+
+  const getActiveNavigationModeController = () =>
+    navigationModeControllers.find((controller) => controller.isActive()) ??
+    controlledNavigationController
+
+  const navigationModeLayout$ = merge(
+    ...navigationModeControllers.flatMap((controller) =>
+      controller.layout$ ? [controller.layout$] : [],
+    ),
+  )
+
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigation$,
-    controlledNavigationController,
-    scrollNavigationController,
+    getActiveNavigationModeController,
+    navigationModeLayout$,
     navigationResolver,
     spine,
-    restorationLocker.isLocked$,
+    viewport,
+    userInteractionLock.isLocked$,
   )
 
   const navigationState$ = combineLatest([
-    controlledNavigationController.isNavigating$,
-    scrollNavigationController.isNavigating$,
-    restorationLocker.isLocked$,
+    ...navigationModeControllers.map((controller) => controller.isNavigating$),
+    userInteractionLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
     distinctUntilChanged(),
+    shareReplay(1),
+  )
+
+  /**
+   * Resolved viewport position, deduped on shallow equality. Re-emits only
+   * when the position effectively changes — collapses the
+   * per-`navigate(...)` re-emissions that `navigation$` produces.
+   */
+  const position$ = internalNavigator.navigation$.pipe(
+    map(({ position }) => position),
+    distinctUntilChanged(isShallowEqual),
     shareReplay(1),
   )
 
@@ -91,7 +119,9 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
-    controlledNavigationController.destroy()
+    navigationModeControllers.forEach((controller) => {
+      controller.destroy()
+    })
     internalNavigator.destroy()
   }
 
@@ -101,18 +131,22 @@ export const createNavigator = ({
     internalNavigator,
     scrollNavigationController,
     controlledNavigationController,
-    locker: restorationLocker,
     navigationState$,
     navigate,
     /**
      * Prevent further navigation until the lock is released.
      * Useful if you want to start navigation by panning for example.
      */
-    lock() {
-      return restorationLocker.lock()
-    },
+    lock: () => userInteractionLock.lock(),
+    /**
+     * `true` while a `lock()` is held. Releases as soon as the user lets
+     * go — does NOT include in-flight viewport animation or the
+     * unlock-driven restoration cycle (use `navigationState$` for that).
+     */
+    isLocked$: userInteractionLock.isLocked$,
     navigationResolver: navigationResolver,
     navigation$: internalNavigator.navigation$,
+    position$,
   }
 }
 
