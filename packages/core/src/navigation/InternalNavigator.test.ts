@@ -298,8 +298,8 @@ describe(`Given loaded book`, () => {
     // Regression: with the thumbnail/zoom toggle in scrollable mode, the
     // second call resolved to the same spine position as the first but
     // needed a different DOM scroll because the scale factor changed in
-    // between. A `position`-equality short-circuit in `navigateViewport`
-    // dropped the second call and the user landed on the wrong page.
+    // between. A `position`-equality short-circuit before the active mode
+    // controller dropped the second call and the user landed on the wrong page.
     it("should forward both to scrollNavigationController.navigate", async () => {
       const {
         spine,

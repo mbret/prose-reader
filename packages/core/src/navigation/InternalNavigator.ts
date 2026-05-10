@@ -32,14 +32,14 @@ import { withSpineItem } from "./consolidation/withSpineItem"
 import { withSpineItemLayoutInfo } from "./consolidation/withSpineItemLayoutInfo"
 import { withSpineItemPosition } from "./consolidation/withSpineItemPosition"
 import { withUrlInfo } from "./consolidation/withUrlInfo"
-import type { ControlledNavigationController } from "./controllers/ControlledNavigationController"
-import type { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { Locker } from "./Locker"
 import type { createNavigationResolver } from "./resolvers/NavigationResolver"
 import { withRestoredPosition } from "./restoration/withRestoredPosition"
 import type {
   InternalNavigationEntry,
   Navigation,
+  NavigationModeController,
+  NavigationVisibleArea,
   UserNavigationEntry,
 } from "./types"
 
@@ -52,10 +52,16 @@ const isSamePosition = (
   b: SpinePosition | UnboundSpinePosition | undefined,
 ) => a === b || (!!a && !!b && a.x === b.x && a.y === b.y)
 
+const isSameVisibleArea = (
+  a: NavigationVisibleArea | undefined,
+  b: NavigationVisibleArea | undefined,
+) => a === b || (!!a && !!b && a.width === b.width && a.height === b.height)
+
 const isSameNavigation = (a: Navigation, b: Navigation) =>
   a.id === b.id &&
   isSamePosition(a.position, b.position) &&
-  isSamePosition(a.requestedPosition, b.requestedPosition)
+  isSamePosition(a.requestedPosition, b.requestedPosition) &&
+  isSameVisibleArea(a.requestedVisibleArea, b.requestedVisibleArea)
 
 export class InternalNavigator extends DestroyableClass {
   /**
@@ -78,10 +84,11 @@ export class InternalNavigator extends DestroyableClass {
   })
 
   public navigation$ = this.navigationSubject.pipe(
-    map(({ position, id, requestedPosition, meta }) => ({
+    map(({ position, id, requestedPosition, requestedVisibleArea, meta }) => ({
       position,
       id,
       requestedPosition,
+      requestedVisibleArea,
       triggeredBy: meta.triggeredBy,
     })),
     distinctUntilChanged(isSameNavigation),
@@ -94,8 +101,8 @@ export class InternalNavigator extends DestroyableClass {
     protected settings: ReaderSettingsManager,
     protected context: Context,
     protected userNavigation$: Observable<UserNavigationEntry>,
-    protected controlledNavigationController: ControlledNavigationController,
-    protected scrollNavigationController: ScrollNavigationController,
+    protected getActiveNavigationModeController: () => NavigationModeController,
+    protected navigationModeLayout$: Observable<unknown>,
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     protected viewport: Viewport,
@@ -107,13 +114,15 @@ export class InternalNavigator extends DestroyableClass {
   ) {
     super()
 
+    const getNavigationVisibleArea = () =>
+      getActiveNavigationModeController().getNavigationVisibleArea()
+
     const navigationFromUser$ = userNavigation$
       .pipe(
         withLatestFrom(this.navigationSubject),
         mapUserNavigationToInternal({
           navigationResolver,
-          settings,
-          viewport,
+          getNavigationVisibleArea,
         }),
         /**
          * Url lookup is heavier so we start with it to fill
@@ -223,7 +232,7 @@ export class InternalNavigator extends DestroyableClass {
      * This is responsibility of other components.
      */
     const navigationUpdateFromLayout$ = merge(
-      controlledNavigationController.layout$,
+      navigationModeLayout$,
       spine.layout$,
     ).pipe(
       switchMap(() => {
@@ -332,7 +341,7 @@ export class InternalNavigator extends DestroyableClass {
         }),
       )
 
-    const navigateViewport = (
+    const navigateActiveModeController = (
       stream: Observable<[InternalNavigationEntry, InternalNavigationEntry]>,
     ) =>
       stream.pipe(
@@ -354,19 +363,7 @@ export class InternalNavigator extends DestroyableClass {
             animation: currentNavigation.animation,
           }
 
-          if (settings.values.computedPageTurnMode === `scrollable`) {
-            this.scrollNavigationController.navigate(navigation)
-          } else {
-            this.controlledNavigationController.navigate({
-              ...navigation,
-              /**
-               * @important
-               * Explicitly trust the unbound position to be valid at this point.
-               * Thanks to consolidation and restoration.
-               */
-              position: SpinePosition.from(navigation.position),
-            })
-          }
+          this.getActiveNavigationModeController().navigate(navigation)
         }),
       )
 
@@ -376,11 +373,10 @@ export class InternalNavigator extends DestroyableClass {
         /**
          * @important
          *
-         * We need to start navigating viewport before notifying navigation
-         * change, this is to keep viewportState sync and avoid a "free" ping
-         * in between.
+         * We need to start navigation before notifying navigation change, this
+         * keeps navigationState sync and avoids a "free" ping in between.
          */
-        navigateViewport,
+        navigateActiveModeController,
         notifyNavigationUpdate,
         takeUntil(this.destroy$),
       )

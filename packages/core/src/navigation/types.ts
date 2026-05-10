@@ -1,3 +1,4 @@
+import type { Observable } from "rxjs"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type {
   SpineItemPosition,
@@ -5,6 +6,11 @@ import type {
 } from "../spineItem/types"
 
 export type SpineBoundary = "start" | "end"
+
+export type NavigationVisibleArea = {
+  width: number
+  height: number
+}
 
 export type UserNavigationEntry = {
   position?: SpinePosition | UnboundSpinePosition
@@ -19,6 +25,11 @@ export type UserNavigationEntry = {
    * last navigation (finger release)
    */
   direction?: "left" | "right" | "top" | "bottom"
+}
+
+export type NavigationModeControllerNavigationEntry = {
+  position: SpinePosition | UnboundSpinePosition
+  animation?: boolean | "turn" | "snap"
 }
 
 export type NavigationConsolidation = {
@@ -83,12 +94,46 @@ export type InternalNavigationEntry = {
    * any restoration entry's `requestedPosition`.
    */
   requestedPosition?: SpinePosition | UnboundSpinePosition
+  /**
+   * The viewport/surface rectangle that gives meaning to
+   * `requestedPosition`. This is captured at request time so later consumers
+   * do not need to know which navigation surface was active, and so a later
+   * zoom/mode change cannot reinterpret the original request.
+   */
+  requestedVisibleArea?: NavigationVisibleArea
   type: `api` | `scroll`
   animation?: boolean | `turn` | `snap`
   url?: string | URL
   spineItem?: string | number
   cfi?: string
 } & NavigationConsolidation
+
+/**
+ * A navigation surface describes the viewport rectangle that gives meaning to
+ * a requested spine position.
+ *
+ * It intentionally knows nothing about how navigation is performed. Capturing
+ * this area with a user request keeps boundary detection and clamping generic,
+ * and prevents later viewport or mode changes from reinterpreting the original
+ * request.
+ */
+export type NavigationSurface = {
+  getNavigationVisibleArea: () => NavigationVisibleArea
+}
+
+/**
+ * A navigation mode controller applies resolved navigation to its own rendering
+ * layer. It also exposes the surface geometry used to interpret navigation
+ * requests, while owning mode-specific concerns like activity, layout, busy
+ * state, and DOM movement.
+ */
+export type NavigationModeController = NavigationSurface & {
+  isActive: () => boolean
+  isNavigating$: Observable<boolean>
+  layout$?: Observable<unknown>
+  navigate: (navigation: NavigationModeControllerNavigationEntry) => void
+  destroy: () => void
+}
 
 export type InternalNavigationInput = Omit<
   InternalNavigationEntry,
@@ -99,7 +144,7 @@ export type InternalNavigationInput = Omit<
 
 export type Navigation = Pick<
   InternalNavigationEntry,
-  "position" | "id" | "requestedPosition"
+  "position" | "id" | "requestedPosition" | "requestedVisibleArea"
 > & {
   triggeredBy: InternalNavigationEntry["meta"]["triggeredBy"]
 }

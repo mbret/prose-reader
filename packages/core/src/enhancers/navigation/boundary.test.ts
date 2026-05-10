@@ -218,6 +218,51 @@ describe("outOfSpineBoundary", () => {
       expect(events).toEqual([{ boundary: "end" }])
     })
 
+    it("uses the visible area captured at request time when the viewport changes before settle", async () => {
+      const { reader, navigator, settings, viewport } = createTestReader()
+      settings.update({ pageTurnMode: "scrollable" })
+      const rect = vi.spyOn(viewport.value.element, "getBoundingClientRect")
+      rect.mockReturnValue({
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        top: 0,
+        right: 50,
+        bottom: 50,
+        left: 0,
+        toJSON: () => ({}),
+      })
+      const { events, unsubscribe } = collectBoundaries(reader)
+      const releaseLock = navigator.lock()
+
+      navigator.navigate({
+        position: new SpinePosition({ x: 50, y: 0 }),
+        animation: false,
+      })
+
+      await waitFor(50)
+      expect(events).toEqual([])
+
+      rect.mockReturnValue({
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        top: 0,
+        right: 100,
+        bottom: 100,
+        left: 0,
+        toJSON: () => ({}),
+      })
+      releaseLock()
+
+      await waitFor(500)
+      unsubscribe()
+
+      expect(events).toEqual([{ boundary: "end" }])
+    })
+
     it("emits 'start' when the requested x is negative", async () => {
       const { reader, navigator } = createTestReader()
       const { events, unsubscribe } = collectBoundaries(reader)

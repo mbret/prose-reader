@@ -1,11 +1,16 @@
 import { SpinePosition } from "../../spine/types"
 
+type SpinePositionLike = {
+  x: number
+  y: number
+}
+
 /**
  * LTR uses positive spine position and translate to negative translation.
  * Works both way for RTL.
  * @returns
  */
-export const spinePositionToTranslation = (position: SpinePosition) => {
+export const spinePositionToTranslation = (position: SpinePositionLike) => {
   return {
     x: -position.x,
     y: -position.y,

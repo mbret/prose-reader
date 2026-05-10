@@ -54,7 +54,7 @@ describe("ControlledNavigationController", () => {
      * a spine boundary, where the resolver kept returning the same
      * target), the controller re-entered its `switchMap`, ran the
      * unconditional cleanup (`transition: none`, then re-applied the
-     * transform via `setViewportPosition`), and the rendered position
+     * transform via `applyNavigationPosition`), and the rendered position
      * snapped to the target — visually cutting the running CSS
      * transition.
      *

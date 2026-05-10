@@ -30,21 +30,25 @@ import { isDefined } from "../../utils/isDefined"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { observeResize, watchKeys } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
+import type {
+  NavigationModeController,
+  NavigationModeControllerNavigationEntry,
+} from "../types"
 
 export class ScrollPosition extends AbstractPosition {}
 export class UnboundScrollPosition extends AbstractPosition {
   public readonly __symbol = Symbol(`UnboundScrollPosition`)
 }
 
-export type ScrollNavigationViewportNavigationEntry = {
-  position: UnboundSpinePosition | SpinePosition
-}
+export type ScrollNavigationEntry = NavigationModeControllerNavigationEntry
 
-export class ScrollNavigationController extends ReactiveEntity<{
-  element: HTMLElement | undefined
-}> {
-  protected navigateSubject =
-    new Subject<ScrollNavigationViewportNavigationEntry>()
+export class ScrollNavigationController
+  extends ReactiveEntity<{
+    element: HTMLElement | undefined
+  }>
+  implements NavigationModeController
+{
+  protected navigateSubject = new Subject<ScrollNavigationEntry>()
   protected scrollingSubject = new BehaviorSubject(false)
 
   public isNavigating$: Observable<boolean>
@@ -91,7 +95,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
     )
 
     const updateScrollPositionOnNavigation$ = this.navigateSubject.pipe(
-      tap(this.setViewportPosition),
+      tap(this.applyNavigationPosition),
     )
 
     this.isNavigating$ = this.scrollingSubject.asObservable()
@@ -168,9 +172,7 @@ export class ScrollNavigationController extends ReactiveEntity<{
    * @see https://stackoverflow.com/questions/22111256/translate3d-vs-translate-performance
    * for remark about flicker / fonts smoothing
    */
-  protected setViewportPosition = ({
-    position,
-  }: ScrollNavigationViewportNavigationEntry) => {
+  protected applyNavigationPosition = ({ position }: ScrollNavigationEntry) => {
     const element = this.value.element
 
     if (!element) return
@@ -212,9 +214,15 @@ export class ScrollNavigationController extends ReactiveEntity<{
     this.mergeCompare(value)
   }
 
-  navigate(navigation: ScrollNavigationViewportNavigationEntry) {
+  navigate(navigation: NavigationModeControllerNavigationEntry) {
     this.navigateSubject.next(navigation)
   }
+
+  public isActive = () => {
+    return this.settings.values.computedPageTurnMode === "scrollable"
+  }
+
+  public getNavigationVisibleArea = () => this.viewport.relativeViewport
 
   public fromScrollPosition(position: UnboundScrollPosition | ScrollPosition) {
     const scaleFactor = this.viewport.scaleFactor

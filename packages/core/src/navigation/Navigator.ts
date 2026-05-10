@@ -3,6 +3,7 @@ import {
   combineLatest,
   distinctUntilChanged,
   map,
+  merge,
   Subject,
   shareReplay,
 } from "rxjs"
@@ -18,7 +19,7 @@ import { ScrollNavigationController } from "./controllers/ScrollNavigationContro
 import { InternalNavigator } from "./InternalNavigator"
 import { Locker } from "./Locker"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
-import type { UserNavigationEntry } from "./types"
+import type { NavigationModeController, UserNavigationEntry } from "./types"
 
 export const createNavigator = ({
   spineItemsManager,
@@ -63,12 +64,27 @@ export const createNavigator = ({
     context,
   )
 
+  const navigationModeControllers: NavigationModeController[] = [
+    scrollNavigationController,
+    controlledNavigationController,
+  ]
+
+  const getActiveNavigationModeController = () =>
+    navigationModeControllers.find((controller) => controller.isActive()) ??
+    controlledNavigationController
+
+  const navigationModeLayout$ = merge(
+    ...navigationModeControllers.flatMap((controller) =>
+      controller.layout$ ? [controller.layout$] : [],
+    ),
+  )
+
   const internalNavigator = new InternalNavigator(
     settings,
     context,
     userNavigation$,
-    controlledNavigationController,
-    scrollNavigationController,
+    getActiveNavigationModeController,
+    navigationModeLayout$,
     navigationResolver,
     spine,
     viewport,
@@ -76,8 +92,7 @@ export const createNavigator = ({
   )
 
   const navigationState$ = combineLatest([
-    controlledNavigationController.isNavigating$,
-    scrollNavigationController.isNavigating$,
+    ...navigationModeControllers.map((controller) => controller.isNavigating$),
     userInteractionLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
@@ -104,7 +119,9 @@ export const createNavigator = ({
   }
 
   const destroy = () => {
-    controlledNavigationController.destroy()
+    navigationModeControllers.forEach((controller) => {
+      controller.destroy()
+    })
     internalNavigator.destroy()
   }
 

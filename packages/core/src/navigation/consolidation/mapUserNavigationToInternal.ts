@@ -1,22 +1,19 @@
 import { map, type Observable } from "rxjs"
-import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import type { Viewport } from "../../viewport/Viewport"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
 import type {
   InternalNavigationEntry,
   InternalNavigationInput,
+  NavigationVisibleArea,
   UserNavigationEntry,
 } from "../types"
 
 export const mapUserNavigationToInternal =
   ({
     navigationResolver,
-    settings,
-    viewport,
+    getNavigationVisibleArea,
   }: {
     navigationResolver: NavigationResolver
-    settings: ReaderSettingsManager
-    viewport: Viewport
+    getNavigationVisibleArea: () => NavigationVisibleArea
   }) =>
   (
     stream: Observable<[UserNavigationEntry, InternalNavigationEntry]>,
@@ -26,10 +23,17 @@ export const mapUserNavigationToInternal =
   }> => {
     return stream.pipe(
       map(([userNavigation, previousNavigation]) => {
-        const visibleArea =
-          settings.values.computedPageTurnMode === "scrollable"
-            ? viewport.relativeViewport
-            : viewport.absoluteViewport
+        const requestedPosition = userNavigation.position
+        const visibleArea = requestedPosition
+          ? getNavigationVisibleArea()
+          : undefined
+        const position =
+          requestedPosition && visibleArea
+            ? navigationResolver.clampPositionInSpine(
+                requestedPosition,
+                visibleArea,
+              )
+            : undefined
 
         const navigation: InternalNavigationInput = {
           type: "api",
@@ -43,17 +47,13 @@ export const mapUserNavigationToInternal =
           id: Symbol("user"),
           animation: "turn",
           ...userNavigation,
-          requestedPosition: userNavigation.position,
+          requestedPosition,
+          requestedVisibleArea: visibleArea,
           // Clamp the full viewport rectangle, not just the top-left point:
           // a point-only clamp lets the viewport spill past the end by
           // `~viewportSize` and the stored position diverges from where the
           // DOM scroll actually lands in scrollable mode.
-          position: userNavigation.position
-            ? navigationResolver.clampPositionInSpine(
-                userNavigation.position,
-                visibleArea,
-              )
-            : undefined,
+          position,
         }
 
         return {

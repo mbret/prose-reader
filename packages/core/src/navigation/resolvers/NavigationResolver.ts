@@ -10,6 +10,7 @@ import { createNavigationResolver as createSpineItemNavigator } from "../../spin
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { Viewport } from "../../viewport/Viewport"
+import type { NavigationVisibleArea } from "../types"
 import { clampRectInSpine, getBoundaryForRectInSpine } from "./clampRectInSpine"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 import { getNavigationForPosition } from "./getNavigationForPosition"
@@ -214,7 +215,7 @@ export const createNavigationResolver = ({
     getMostPredominantNavigationForPosition,
     clampPositionInSpine: (
       position: SpinePosition | UnboundSpinePosition,
-      size: { width: number; height: number },
+      size: NavigationVisibleArea,
     ) =>
       clampRectInSpine({
         position,
@@ -225,7 +226,7 @@ export const createNavigationResolver = ({
       }),
     getBoundaryForPosition: (
       position: SpinePosition | UnboundSpinePosition,
-      size: { width: number; height: number } = viewport.absoluteViewport,
+      size: NavigationVisibleArea = viewport.absoluteViewport,
     ) =>
       getBoundaryForRectInSpine({
         position,

@@ -2,11 +2,11 @@ import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpinePosition } from "../../spine/types"
 import { UnboundSpinePosition } from "../../spine/types"
-import type { SpineBoundary } from "../types"
+import type { NavigationVisibleArea, SpineBoundary } from "../types"
 
 export type ClampRectInSpineParams = {
   position: SpinePosition | UnboundSpinePosition
-  size: { width: number; height: number }
+  size: NavigationVisibleArea
   isRTL: boolean
   spineItemsManager: SpineItemsManager
   spine: Spine
