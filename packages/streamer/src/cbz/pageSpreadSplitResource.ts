@@ -14,6 +14,16 @@ type CropRect = {
   height: number
 }
 
+type ImageDimensions = {
+  width: number
+  height: number
+}
+
+const imageDimensionsCache = new WeakMap<
+  Archive,
+  Map<string, ImageDimensions>
+>()
+
 const decodeOriginalUriSegment = (encoded: string): string | undefined => {
   try {
     return decodeURIComponent(encoded)
@@ -86,15 +96,7 @@ const getRelativeOriginalImageSrc = (originalUri: string) => {
   return `../../../${encodeURI(originalUri)}`
 }
 
-export const createPageSpreadSplitXhtml = async ({
-  cropSide,
-  originalUri,
-  source,
-}: {
-  source: Blob
-  cropSide: PageSpreadCropSide
-  originalUri: string
-}): Promise<string> => {
+const readImageDimensions = async (source: Blob): Promise<ImageDimensions> => {
   if (typeof createImageBitmap !== `function`) {
     throw new Error(`Page spread XHTML generation requires createImageBitmap`)
   }
@@ -102,17 +104,35 @@ export const createPageSpreadSplitXhtml = async ({
   const bitmap = await createImageBitmap(source)
 
   try {
-    if (bitmap.width < 2) {
-      throw new Error(`Page spread image is too narrow to split`)
+    return {
+      height: bitmap.height,
+      width: bitmap.width,
     }
+  } finally {
+    bitmap.close()
+  }
+}
 
-    const crop = cropRectForSide({
-      cropSide,
-      imageHeight: bitmap.height,
-      imageWidth: bitmap.width,
-    })
+export const createPageSpreadSplitXhtml = ({
+  cropSide,
+  imageDimensions,
+  originalUri,
+}: {
+  cropSide: PageSpreadCropSide
+  imageDimensions: ImageDimensions
+  originalUri: string
+}): string => {
+  if (imageDimensions.width < 2) {
+    throw new Error(`Page spread image is too narrow to split`)
+  }
 
-    return `<?xml version="1.0" encoding="UTF-8"?>
+  const crop = cropRectForSide({
+    cropSide,
+    imageHeight: imageDimensions.height,
+    imageWidth: imageDimensions.width,
+  })
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta name="viewport" content="width=${crop.width}, height=${crop.height}" />
@@ -127,8 +147,8 @@ export const createPageSpreadSplitXhtml = async ({
 
       img {
         display: block;
-        width: ${bitmap.width}px;
-        height: ${bitmap.height}px;
+        width: ${imageDimensions.width}px;
+        height: ${imageDimensions.height}px;
         max-width: none;
         transform: translateX(-${crop.x}px);
         user-select: none;
@@ -140,9 +160,6 @@ export const createPageSpreadSplitXhtml = async ({
     <img src="${escapeXmlAttributeValue(getRelativeOriginalImageSrc(originalUri))}" alt="" />
   </body>
 </html>`
-  } finally {
-    bitmap.close()
-  }
 }
 
 const generatePageSpreadSplitResource = async ({
@@ -166,10 +183,22 @@ const generatePageSpreadSplitResource = async ({
     )
   }
 
-  const body = await createPageSpreadSplitXhtml({
+  const archiveCache = imageDimensionsCache.get(archive) ?? new Map()
+
+  if (!imageDimensionsCache.has(archive)) {
+    imageDimensionsCache.set(archive, archiveCache)
+  }
+
+  const imageDimensions =
+    archiveCache.get(virtualResource.originalUri) ??
+    (await readImageDimensions(await file.blob()))
+
+  archiveCache.set(virtualResource.originalUri, imageDimensions)
+
+  const body = createPageSpreadSplitXhtml({
     cropSide: virtualResource.cropSide,
+    imageDimensions,
     originalUri: virtualResource.originalUri,
-    source: await file.blob(),
   })
 
   return {

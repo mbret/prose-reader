@@ -2,7 +2,9 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import type { Archive } from "../archives/types"
 import {
+  buildVirtualPageSpreadResourcePath,
   isPageSpreadSplitSupportedArchiveRecord,
+  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
   pageSpreadSplit,
 } from "./pageSpreadSplitManifest"
 
@@ -122,5 +124,55 @@ describe("pageSpreadSplit", () => {
     await expect(
       pageSpreadSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toBe(manifest)
+  })
+
+  it("should match archive records by exact resource path instead of suffix", async () => {
+    const nestedUri = "bonus/p006-007.jpg"
+    const archive = createArchive([
+      {
+        ...fakeContent,
+        basename: "p006-007.jpg",
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: "p006-007.jpg",
+      },
+      {
+        ...fakeContent,
+        basename: "p006-007.jpg",
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: nestedUri,
+      },
+    ])
+    const manifest = createManifest({
+      href: `file://${nestedUri}`,
+      id: "1.p006-007.jpg",
+      mediaType: "image/jpeg",
+    })
+    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "left",
+      originalUri: nestedUri,
+    })
+    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "right",
+      originalUri: nestedUri,
+    })
+
+    await expect(
+      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+    ).resolves.toMatchObject({
+      spineItems: [
+        {
+          href: encodeURI(`file://${leftResourcePath}`),
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+        },
+        {
+          href: encodeURI(`file://${rightResourcePath}`),
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+        },
+      ],
+    })
   })
 })

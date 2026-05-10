@@ -104,4 +104,50 @@ describe("generateResourceFromArchive", () => {
     expect(createImageBitmap).toHaveBeenCalledWith(source)
     expect(close).toHaveBeenCalled()
   })
+
+  it("should cache virtual page spread image dimensions by archive and original URI", async () => {
+    const source = new Blob(["source"], { type: "image/jpeg" })
+    const blob = vi.fn(() => Promise.resolve(source))
+    const originalUri = "p006-007.jpg"
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          basename: originalUri,
+          blob,
+          dir: false,
+          encodingFormat: "image/jpeg",
+          size: source.size,
+          string: () => Promise.resolve(""),
+          uri: originalUri,
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+    const close = vi.fn()
+    const bitmap = {
+      close,
+      height: 20,
+      width: 100,
+    }
+    const createImageBitmap = vi.fn(() => Promise.resolve(bitmap))
+
+    vi.stubGlobal("createImageBitmap", createImageBitmap)
+
+    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "left",
+      originalUri,
+    })
+    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "right",
+      originalUri,
+    })
+
+    await generateResourceFromArchive(archive, leftResourcePath)
+    await generateResourceFromArchive(archive, rightResourcePath)
+
+    expect(blob).toHaveBeenCalledTimes(1)
+    expect(createImageBitmap).toHaveBeenCalledTimes(1)
+    expect(close).toHaveBeenCalledTimes(1)
+  })
 })

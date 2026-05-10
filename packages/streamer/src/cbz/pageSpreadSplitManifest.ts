@@ -110,14 +110,51 @@ const createVirtualManifestItem = ({
 
 export const getArchiveRecordForManifestItem = ({
   archive,
+  baseUrl,
   spineItem,
 }: {
   archive: Archive
+  baseUrl: string
   spineItem: Manifest["spineItems"][number]
-}) =>
-  archive.records.find(
-    (item) => !item.dir && decodeURI(spineItem.href).endsWith(item.uri),
+}) => {
+  const hrefCandidates = [spineItem.href, decodeManifestHref(spineItem.href)]
+  const resourcePathCandidates = new Set(
+    hrefCandidates.flatMap((href) => getResourcePathCandidates(href, baseUrl)),
   )
+
+  return archive.records.find(
+    (item) => !item.dir && resourcePathCandidates.has(item.uri),
+  )
+}
+
+const decodeManifestHref = (href: string) => {
+  try {
+    return decodeURI(href)
+  } catch {
+    return href
+  }
+}
+
+const normalizeBaseUrl = (baseUrl: string) =>
+  baseUrl.endsWith(`/`) ? baseUrl : `${baseUrl}/`
+
+const getResourcePathCandidates = (href: string, baseUrl: string) => {
+  const candidates = [href]
+
+  if (href.startsWith(`file://`)) {
+    candidates.push(href.slice(`file://`.length))
+  }
+
+  if (baseUrl) {
+    const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+
+    if (href.startsWith(normalizedBaseUrl)) {
+      candidates.push(href.slice(normalizedBaseUrl.length))
+    }
+  }
+
+  return candidates
+}
 
 export const mediaTypeFromArchiveRecord = (
   record:
@@ -156,6 +193,7 @@ export const pageSpreadSplit =
     const spineItems = manifest.spineItems.flatMap((spineItem) => {
       const archiveRecord = getArchiveRecordForManifestItem({
         archive,
+        baseUrl,
         spineItem,
       })
 
