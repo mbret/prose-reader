@@ -110,6 +110,7 @@ const createTestReader = ({
     spineItemsManager,
     spine,
     context,
+    settings,
     viewport,
   } as unknown as Reader
 

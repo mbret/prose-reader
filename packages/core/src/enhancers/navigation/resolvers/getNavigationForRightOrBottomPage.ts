@@ -43,6 +43,16 @@ export const getNavigationForRightOrBottomPage = ({
     CoreInputSettings & ComputedCoreSettings
   >
 }): SpinePosition | UnboundSpinePosition => {
+  if (
+    settings.values.computedPageTurnMode === "scrollable" &&
+    computedPageTurnDirection === "vertical"
+  ) {
+    return new UnboundSpinePosition({
+      x: position.x,
+      y: position.y + viewport.pageSize.height,
+    })
+  }
+
   const navigation = getNavigationForRightOrBottomSinglePage({
     position,
     viewport,

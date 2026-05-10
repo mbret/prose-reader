@@ -18,9 +18,16 @@ export const outOfSpineBoundary = (
     waitForNavigationSettled(reader.navigation.navigationState$),
     map((navigation) => {
       const requested = navigation.requestedPosition
+      const visibleArea =
+        reader.settings.values.computedPageTurnMode === "scrollable"
+          ? reader.viewport.relativeViewport
+          : reader.viewport.absoluteViewport
 
       return requested
-        ? reader.navigation.navigationResolver.getBoundaryForPosition(requested)
+        ? reader.navigation.navigationResolver.getBoundaryForPosition(
+            requested,
+            visibleArea,
+          )
         : undefined
     }),
     filter((boundary): boundary is "start" | "end" => boundary !== undefined),
