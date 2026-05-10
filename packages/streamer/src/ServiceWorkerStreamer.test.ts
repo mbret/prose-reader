@@ -96,6 +96,28 @@ describe("Given valid resource from archive", () => {
     expect(await resource.text()).toBe(archiveResourceBody)
   })
 
+  it("should return response from an encoded file href", async () => {
+    const streamer = new ServiceWorkerStreamer({
+      getUriInfo: () => {
+        return { baseUrl: "https://foo.bar/streamer/" }
+      },
+      cleanArchiveAfter: 1,
+      getArchive: async () => archive,
+    })
+
+    const resource = await new Promise<Response>((resolve) => {
+      streamer.fetchEventListener({
+        request: new Request(
+          "https://foo.bar/streamer/foo/file%3A%2F%2Fbar%2Ffoo.jpg",
+        ),
+        respondWith: resolve,
+      })
+    })
+
+    expect(resource.status).toBe(200)
+    expect(await resource.text()).toBe(archiveResourceBody)
+  })
+
   describe("and it requests byte ranges", () => {
     const fetchRangedResource = async (range: string) => {
       const streamer = new ServiceWorkerStreamer({

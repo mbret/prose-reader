@@ -25,6 +25,32 @@ type WithArchiveResponse = (
   archive: Archive,
 ) => Observable<Response> | Promise<Response>
 
+const fileProtocol = `file://`
+const httpProtocolPattern = /^https?:\/\//
+
+const decodeResourcePath = (resourcePath: string) => {
+  try {
+    return decodeURIComponent(resourcePath)
+  } catch {
+    return resourcePath
+  }
+}
+
+const stripFileProtocol = (resourcePath: string) =>
+  resourcePath.startsWith(fileProtocol)
+    ? resourcePath.slice(fileProtocol.length)
+    : resourcePath
+
+const normalizeResourcePath = (resourcePath: string) => {
+  const resourcePathWithoutFileProtocol = stripFileProtocol(resourcePath)
+
+  if (httpProtocolPattern.test(resourcePathWithoutFileProtocol)) {
+    return resourcePathWithoutFileProtocol
+  }
+
+  return stripFileProtocol(decodeResourcePath(resourcePathWithoutFileProtocol))
+}
+
 export class Streamer {
   protected archiveLoader: ReturnType<typeof createArchiveLoader>
   protected onError: OnError = (error) => {
@@ -138,7 +164,7 @@ export class Streamer {
          *
          * However, we obviously don't have the file:// prefix on the archive.
          */
-        const cleanedResourcePath = resourcePath.replaceAll(`file://`, ``)
+        const cleanedResourcePath = normalizeResourcePath(resourcePath)
 
         /**
          * Reader hot path: one `generateResourceFromArchive` per request. For
