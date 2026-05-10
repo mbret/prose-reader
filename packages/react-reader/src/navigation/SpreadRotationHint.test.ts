@@ -1,10 +1,10 @@
 /* @vitest-environment happy-dom */
 
+import type { ExtraPaginationInfo, PaginationInfo } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import {
   getSpreadRotationHintTargetKey,
-  type SpreadRotationHintPagination,
   wouldRotationUseComputedSpreadMode,
 } from "./SpreadRotationHint"
 
@@ -34,13 +34,28 @@ const createManifest = (
   ...overrides,
 })
 
-const createPagination = (index: number): SpreadRotationHintPagination => ({
+const createPagination = (
+  index: number,
+): PaginationInfo & ExtraPaginationInfo => ({
+  beginAbsolutePageIndex: 0,
+  beginCfi: undefined,
+  beginChapterInfo: undefined,
   beginHasAdjacentSpreadPage: true,
+  beginNumberOfPagesInSpineItem: 1,
   beginPageIndexInSpineItem: 0,
+  beginSpineItemReadingDirection: `ltr`,
   beginSpineItemIndex: index,
+  endAbsolutePageIndex: 0,
+  endCfi: undefined,
+  endChapterInfo: undefined,
   endHasAdjacentSpreadPage: false,
+  endNumberOfPagesInSpineItem: 1,
   endPageIndexInSpineItem: 0,
+  endSpineItemReadingDirection: `ltr`,
   endSpineItemIndex: index,
+  isUsingSpread: false,
+  numberOfTotalPages: 1,
+  percentageEstimateOfBook: 0,
 })
 
 describe(`SpreadRotationHint`, () => {

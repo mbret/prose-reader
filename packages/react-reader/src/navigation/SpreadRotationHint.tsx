@@ -3,6 +3,7 @@ import {
   type ExtraPaginationInfo,
   type PaginationInfo,
   shouldUseComputedSpreadModeForViewport,
+  watchKeys,
 } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { memo } from "react"
@@ -14,7 +15,10 @@ import {
   distinctUntilChanged,
   map,
   NEVER,
-  startWith,
+  type Observable,
+  of,
+  shareReplay,
+  switchMap,
 } from "rxjs"
 import { useTransientValue } from "../common/useTransientValue"
 import { useReader } from "../context/useReader"
@@ -32,6 +36,18 @@ type ViewportDimensions = {
 
 type ViewportState = `busy` | `free`
 
+type HintPagination = Pick<
+  PaginationInfo & ExtraPaginationInfo,
+  | `beginHasAdjacentSpreadPage`
+  | `beginPageIndexInSpineItem`
+  | `beginSpineItemIndex`
+  | `endHasAdjacentSpreadPage`
+  | `endPageIndexInSpineItem`
+  | `endSpineItemIndex`
+>
+
+type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
+
 export const wouldRotationUseComputedSpreadMode = ({
   manifest,
   viewport,
@@ -43,7 +59,10 @@ export const wouldRotationUseComputedSpreadMode = ({
 
   return shouldUseComputedSpreadModeForViewport({
     manifest,
-    viewport,
+    viewport: {
+      height: viewport.width,
+      width: viewport.height,
+    },
   })
 }
 
@@ -55,7 +74,7 @@ export const getSpreadRotationHintTargetKey = ({
   viewport,
 }: {
   manifest: Manifest
-  pagination: PaginationInfo & ExtraPaginationInfo
+  pagination: HintPagination
   computedSpreadMode: boolean
   viewportState: ViewportState
   viewport: ViewportDimensions
@@ -81,47 +100,76 @@ export const getSpreadRotationHintTargetKey = ({
     .join(`:`)
 }
 
+const observeHintPagination = (reader: ReaderWithSpreadHintStreams) =>
+  reader.pagination.state$.pipe(
+    watchKeys([
+      `beginHasAdjacentSpreadPage`,
+      `beginPageIndexInSpineItem`,
+      `beginSpineItemIndex`,
+      `endHasAdjacentSpreadPage`,
+      `endPageIndexInSpineItem`,
+      `endSpineItemIndex`,
+    ]),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  )
+
+const observeBeginSpineItemReady = ({
+  pagination$,
+  reader,
+}: {
+  pagination$: Observable<HintPagination>
+  reader: ReaderWithSpreadHintStreams
+}) =>
+  combineLatest([pagination$, reader.spineItemsManager.items$]).pipe(
+    map(([{ beginSpineItemIndex }, spineItems]) =>
+      beginSpineItemIndex === undefined
+        ? undefined
+        : spineItems[beginSpineItemIndex],
+    ),
+    distinctUntilChanged(),
+    switchMap((spineItem) => spineItem?.isReady$ ?? of(false)),
+  )
+
+const observeSpreadRotationHintTargetKey = (
+  reader: ReaderWithSpreadHintStreams,
+) => {
+  const pagination$ = observeHintPagination(reader)
+  const beginSpineItemReady$ = observeBeginSpineItemReady({
+    pagination$,
+    reader,
+  })
+
+  return combineLatest([
+    pagination$,
+    reader.context.manifest$,
+    reader.settings.watch([`computedSpreadMode`]),
+    reader.viewportState$,
+    reader.viewport.watch([`width`, `height`]),
+    beginSpineItemReady$,
+  ]).pipe(
+    debounceTime(HINT_TARGET_DEBOUNCE_MS),
+    map(
+      ([pagination, manifest, settings, viewportState, viewport, isReady]) => {
+        if (!isReady) return undefined
+
+        return getSpreadRotationHintTargetKey({
+          manifest,
+          pagination,
+          computedSpreadMode: settings.computedSpreadMode ?? false,
+          viewportState,
+          viewport,
+        })
+      },
+    ),
+    distinctUntilChanged(),
+  )
+}
+
 const useSpreadRotationHintTargetKey = () => {
   const reader = useReader()
 
   return useObserve(
-    () =>
-      !reader
-        ? NEVER
-        : combineLatest([
-            reader.pagination.state$,
-            reader.context.manifest$,
-            reader.settings.watch([`computedSpreadMode`]),
-            reader.viewportState$,
-            reader.viewport.watch([`width`, `height`]),
-            reader.spineItemsObserver.states$.pipe(startWith(undefined)),
-          ]).pipe(
-            debounceTime(HINT_TARGET_DEBOUNCE_MS),
-            map(([pagination, manifest, settings, viewportState, viewport]) => {
-              const hintTargetKey = getSpreadRotationHintTargetKey({
-                manifest,
-                pagination,
-                computedSpreadMode: settings.computedSpreadMode ?? false,
-                viewportState,
-                viewport,
-              })
-
-              if (hintTargetKey === undefined) return undefined
-
-              const spineItemIndex = pagination.beginSpineItemIndex
-
-              if (
-                spineItemIndex === undefined ||
-                reader.spineItemsManager.get(spineItemIndex)?.value.isReady !==
-                  true
-              ) {
-                return undefined
-              }
-
-              return hintTargetKey
-            }),
-            distinctUntilChanged(),
-          ),
+    () => (reader ? observeSpreadRotationHintTargetKey(reader) : NEVER),
     [reader],
   ).data
 }
