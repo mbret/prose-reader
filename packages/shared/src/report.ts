@@ -1,3 +1,9 @@
+/**
+ * This report class needs to be fast because it is used in hot path. The disabled state
+ * should not trigger any i/o and be no op operations.
+ * The logging should keep the original stack trace.
+ */
+
 declare global {
   interface Window {
     __PROSE_READER_DEBUG?: boolean | string
@@ -18,10 +24,30 @@ function isGlobalDebugEnabled() {
   return debug === true || debug === "true"
 }
 
+export type ReportOptions = {
+  color?: string
+}
+
+export type ReportNamespaceOptions = ReportOptions & {
+  enabled?: boolean
+}
+
+type ReportNamespace = {
+  (namespace: string, enabled?: boolean, options?: ReportOptions): Report
+  (namespace: string, options?: ReportNamespaceOptions): Report
+}
+
+type ReportGroupArgs = [label: string, ...styles: string[]]
+
+type NamespaceSegment = {
+  label: string
+  color?: string
+}
+
 export type Report = {
   enable: (enabled: boolean) => void
   isEnabled: () => boolean
-  namespace: (namespace: string, enabled?: boolean) => Report
+  namespace: ReportNamespace
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   debug: (...args: any[]) => void
   // biome-ignore lint/suspicious/noExplicitAny: TODO
@@ -31,40 +57,109 @@ export type Report = {
   /** Use with getGroupArgs for namespace + color. Preserves call site. */
   groupCollapsed: (...args: unknown[]) => void
   groupEnd: () => void
-  /** Returns [label, style?] to pass to groupCollapsed for namespace + color. */
-  getGroupArgs: (title: string) => [string, string?] | [string]
+  /** Returns [label, ...styles] to pass to groupCollapsed for namespace + color. */
+  getGroupArgs: (title: string) => ReportGroupArgs
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   warn: (...args: any[]) => void
   // biome-ignore lint/suspicious/noExplicitAny: TODO
   error: (...args: any[]) => void
 }
 
+const getNamespaceArgs = (
+  enabledOrOptions?: boolean | ReportNamespaceOptions,
+  options?: ReportOptions,
+) => {
+  if (typeof enabledOrOptions === "boolean") {
+    return {
+      enabled: enabledOrOptions,
+      options,
+    }
+  }
+
+  return {
+    enabled: enabledOrOptions?.enabled,
+    options: enabledOrOptions ?? options,
+  }
+}
+
+const getCurrentColor = (namespaceSegments: NamespaceSegment[]) =>
+  namespaceSegments.at(-1)?.color
+
+const getStyledNamespaceArgs = (
+  namespaceSegments: NamespaceSegment[],
+): ReportGroupArgs | undefined => {
+  if (!namespaceSegments.length) {
+    return undefined
+  }
+
+  if (!namespaceSegments.some((segment) => segment.color)) {
+    return [namespaceSegments.map((segment) => segment.label).join(" ")]
+  }
+
+  let label = ""
+  const styles: string[] = []
+
+  for (const namespaceSegment of namespaceSegments) {
+    label += `%c${label ? ` ${namespaceSegment.label}` : namespaceSegment.label}`
+    styles.push(
+      namespaceSegment.color ? `color: ${namespaceSegment.color}` : "",
+    )
+  }
+
+  return [label, ...styles]
+}
+
 const createReport = (
-  namespace?: string,
+  namespaceSegments: NamespaceSegment[] = [],
   enabled = isGlobalDebugEnabled(),
-  options?: {
-    color?: string
-  },
 ): Report => {
   let reportEnabled = enabled
-  const color = options?.color ? `color: ${options.color}` : undefined
 
   const report: Report = {
     enable: (enabled: boolean) => {
       setEnabled(enabled)
     },
-    namespace: (_namespace: string, enabled?: boolean) =>
-      createReport(`${namespace} [${_namespace}]`, enabled, options),
+    namespace: (
+      _namespace: string,
+      enabledOrOptions?: boolean | ReportNamespaceOptions,
+      namespaceOptions?: ReportOptions,
+    ) => {
+      const childNamespaceArgs = getNamespaceArgs(
+        enabledOrOptions,
+        namespaceOptions,
+      )
+
+      const childColor =
+        childNamespaceArgs.options?.color ?? getCurrentColor(namespaceSegments)
+
+      return createReport(
+        [
+          ...namespaceSegments,
+          {
+            label: `[${_namespace}]`,
+            color: childColor,
+          },
+        ],
+        childNamespaceArgs.enabled ?? reportEnabled,
+      )
+    },
     isEnabled: () => reportEnabled,
     debug: () => {},
     info: () => {},
     log: () => {},
     groupCollapsed: () => {},
     groupEnd: () => {},
-    getGroupArgs: (title: string) =>
-      color
-        ? [`%c${namespace ? `${namespace} ${title}` : title}`, color]
-        : [namespace ? `${namespace} ${title}` : title],
+    getGroupArgs: (title: string) => {
+      const namespaceArgs = getStyledNamespaceArgs(namespaceSegments)
+
+      if (!namespaceArgs) {
+        return [title]
+      }
+
+      const [namespaceLabel, ...namespaceStyles] = namespaceArgs
+
+      return [`${namespaceLabel} ${title}`, ...namespaceStyles]
+    },
     warn: () => {},
     error: () => {},
   }
@@ -85,34 +180,23 @@ const createReport = (
       return
     }
 
-    report.debug = namespace
-      ? Function.prototype.bind.call(
-          console.debug,
-          console,
-          namespace,
-          `%c${namespace}`,
-          color,
-        )
-      : Function.prototype.bind.call(
-          console.debug,
-          console,
-          `%c${namespace}`,
-          color,
-        )
+    const namespaceArgs = getStyledNamespaceArgs(namespaceSegments) ?? []
+
+    report.debug = Function.prototype.bind.call(
+      console.debug,
+      console,
+      ...namespaceArgs,
+    )
     report.info = Function.prototype.bind.call(
       console.info,
       console,
-      `%c${namespace}`,
-      color,
+      ...namespaceArgs,
     )
-    report.log = namespace
-      ? Function.prototype.bind.call(
-          console.log,
-          console,
-          `%c${namespace}`,
-          color,
-        )
-      : Function.prototype.bind.call(console.log, console)
+    report.log = Function.prototype.bind.call(
+      console.log,
+      console,
+      ...namespaceArgs,
+    )
     report.groupCollapsed = Function.prototype.bind.call(
       console.groupCollapsed,
       console,
@@ -121,14 +205,12 @@ const createReport = (
     report.warn = Function.prototype.bind.call(
       console.warn,
       console,
-      `%c${namespace}`,
-      color,
+      ...namespaceArgs,
     )
     report.error = Function.prototype.bind.call(
       console.error,
       console,
-      `%c${namespace}`,
-      color,
+      ...namespaceArgs,
     )
   }
 
@@ -146,13 +228,4 @@ const createReport = (
   return report
 }
 
-export const Report = {
-  ...createReport(),
-  namespace: (
-    namespace: string,
-    enabled?: boolean,
-    options?: {
-      color?: string
-    },
-  ) => createReport(`[${namespace}]`, enabled, options),
-}
+export const Report = createReport()
