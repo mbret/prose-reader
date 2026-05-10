@@ -1,5 +1,5 @@
 export type HookResource = {
-  body?: string
+  body?: Blob | string
   params: {
     contentType?: string
   }

@@ -1,4 +1,5 @@
 import type { Archive } from "../.."
+import { pageSpreadSplitResourceHook } from "../../cbz/pageSpreadSplitResource"
 import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"
 import { cssFixHook } from "./hooks/cssFixHook"
@@ -22,23 +23,16 @@ export const generateResourceFromArchive = async (
   archive: Archive,
   resourcePath: string,
 ) => {
-  const file = Object.values(archive.records).find(
-    (file) => file.uri === resourcePath && !file.dir,
-  )
-
-  if (!file || file.dir) {
-    throw new Error(`no file found for resourcePath:${resourcePath}`)
-  }
-
   const defaultResource: HookResource = {
     params: {},
   }
 
   /**
-   * EPUB: first hook calls `readArchiveOpf` → repeated OPF I/O + parse per
+   * EPUB: `defaultHook` calls `readArchiveOpf` → repeated OPF I/O + parse per
    * resource until we thread `ArchiveOpfParsed` here (see export JSDoc).
    */
   const hooks = [
+    pageSpreadSplitResourceHook({ archive, resourcePath }),
     defaultHook({ archive, resourcePath }),
     selfClosingTagsFixHook({ archive, resourcePath }),
     cssFixHook({ archive, resourcePath }),
@@ -52,9 +46,21 @@ export const generateResourceFromArchive = async (
 
     Report.log("Generated resource", resourcePath, resource)
 
+    if (resource.body !== undefined) {
+      return resource
+    }
+
+    const file = Object.values(archive.records).find(
+      (file) => file.uri === resourcePath && !file.dir,
+    )
+
+    if (!file || file.dir) {
+      throw new Error(`no file found for resourcePath:${resourcePath}`)
+    }
+
     return {
       ...resource,
-      body: resource.body ?? (await file.blob()),
+      body: await file.blob(),
     }
   } catch (e) {
     Report.error(e)

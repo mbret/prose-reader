@@ -1,4 +1,5 @@
 import type { Archive } from "../../archives/types"
+import { pageSpreadSplit } from "../../cbz/pageSpreadSplitManifest"
 import { readArchiveOpf } from "../../epubs/readArchiveOpf"
 import { Report } from "../../report"
 import { apple } from "./hooks/apple"
@@ -10,24 +11,35 @@ import { kobo } from "./hooks/kobo"
 import { nonEpub } from "./hooks/nonEpub"
 import { tocHook } from "./hooks/toc"
 
+const normalizeBaseUrl = (baseUrl: string | undefined) => {
+  if (!baseUrl) return ``
+
+  return baseUrl.endsWith(`/`) ? baseUrl : `${baseUrl}/`
+}
+
 export const generateManifestFromArchive = async (
   archive: Archive,
   { baseUrl = `` }: { baseUrl?: string } = {},
 ) => {
   const archiveOpf = await readArchiveOpf(archive)
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
 
   const hooks = [
-    epubHook({ archive, baseUrl, archiveOpf }),
-    comicInfo({ archive, baseUrl }),
-    apple({ archive, baseUrl }),
-    nonEpub({ archive, baseUrl }),
-    epubOptimizerHook({ archive, baseUrl, archiveOpf }),
-    kobo({ archive, baseUrl }),
-    tocHook({ archive, baseUrl, archiveOpf }),
+    epubHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
+    comicInfo({ archive, baseUrl: normalizedBaseUrl }),
+    apple({ archive, baseUrl: normalizedBaseUrl }),
+    nonEpub({ archive, baseUrl: normalizedBaseUrl }),
+    pageSpreadSplit({ archive, baseUrl: normalizedBaseUrl }),
+    epubOptimizerHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
+    kobo({ archive, baseUrl: normalizedBaseUrl }),
+    tocHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
   ]
 
   try {
-    const baseManifestPromise = defaultHook({ archive, baseUrl })()
+    const baseManifestPromise = defaultHook({
+      archive,
+      baseUrl: normalizedBaseUrl,
+    })()
 
     const manifest = await hooks.reduce(async (manifest, gen) => {
       return await gen(await manifest)

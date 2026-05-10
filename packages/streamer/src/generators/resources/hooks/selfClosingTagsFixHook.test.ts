@@ -44,7 +44,11 @@ describe("Given a book with invalid self closing tag", () => {
       params: {},
     })
 
-    expect(response.body?.replace(/>\s*/g, ">").replace(/\s*</g, "<")).toEqual(
+    if (typeof response.body !== "string") {
+      throw new Error("Expected fixed self-closing tag body to be a string")
+    }
+
+    expect(response.body.replace(/>\s*/g, ">").replace(/\s*</g, "<")).toEqual(
       `
       <?xml version="1.0" encoding="UTF-8"?>
       <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">

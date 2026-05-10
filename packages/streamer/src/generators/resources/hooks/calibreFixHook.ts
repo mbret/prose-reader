@@ -30,7 +30,8 @@ const fixBuggyCover =
     )
 
     if (file && !file.dir && file.basename.endsWith(`.xhtml`)) {
-      const bodyToParse = resource.body ?? (await file.string())
+      const bodyToParse =
+        typeof resource.body === `string` ? resource.body : await file.string()
 
       const opfXmlDoc = new XmlDocument(bodyToParse)
 

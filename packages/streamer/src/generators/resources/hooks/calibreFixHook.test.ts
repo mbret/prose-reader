@@ -38,7 +38,11 @@ describe("Given a book from calibre", () => {
       params: {},
     })
 
-    expect(response.body?.replace(/>\s*/g, ">").replace(/\s*</g, "<")).toEqual(
+    if (typeof response.body !== "string") {
+      throw new Error("Expected fixed calibre body to be a string")
+    }
+
+    expect(response.body.replace(/>\s*/g, ">").replace(/\s*</g, "<")).toEqual(
       `
       <html>
         <head>

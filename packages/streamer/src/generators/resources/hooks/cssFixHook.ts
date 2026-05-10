@@ -9,7 +9,8 @@ export const cssFixHook =
     )
 
     if (file && !file.dir && file.basename.endsWith(`.css`)) {
-      const bodyToParse = resource.body ?? (await file.string())
+      const bodyToParse =
+        typeof resource.body === `string` ? resource.body : await file.string()
 
       /**
        * Fix the potentially invalid writing mode present on some vertical book.
