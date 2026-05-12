@@ -81,15 +81,7 @@ export const registerTaps = ({
                 reader.zoom.state.isZooming &&
                 reader.zoom.state.currentScale > 1
 
-              if (
-                computedPageTurnMode === "scrollable" ||
-                /**
-                 * We don't want to navigate from gestures when the user is
-                 * zoomed in. Zoomed-out (thumbnail/overview) states should
-                 * still allow tap-to-navigate.
-                 */
-                isZoomedIn
-              ) {
+              if (computedPageTurnMode === "scrollable" || isZoomedIn) {
                 return {
                   type: "tap" as const,
                   gestureEvent: event,
