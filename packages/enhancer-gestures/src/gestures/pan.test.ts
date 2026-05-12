@@ -145,8 +145,8 @@ describe("registerPan", () => {
     expect(panEvents.map(({ type }) => type)).toEqual(["panStart", "panMove"])
   })
 
-  it("does not emit or navigate for disabled pan navigation outside zoom", () => {
-    const { events$, move, panEvents, start, subscription } = createHarness({
+  it("does not navigate for disabled pan navigation outside zoom", () => {
+    const { events$, move, start, subscription } = createHarness({
       currentScale: 1,
       isZooming: false,
       panNavigation: false,
@@ -159,6 +159,5 @@ describe("registerPan", () => {
 
     expect(move).not.toHaveBeenCalled()
     expect(start).not.toHaveBeenCalled()
-    expect(panEvents).toEqual([])
   })
 })

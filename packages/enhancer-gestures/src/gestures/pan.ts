@@ -1,6 +1,6 @@
 import type { HookManager, Reader } from "@prose-reader/core"
 import type { PanRecognizer } from "gesturx"
-import { filter, map, merge, of, switchMap } from "rxjs"
+import { filter, map, merge, of, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
 import type { Hook } from "../types"
 
@@ -39,7 +39,7 @@ export const registerPan = ({
           let lastDelta = { x: 0, y: 0 }
 
           const moveAndEnd$ = merge(panMove$, panEnd$).pipe(
-            map((event) => {
+            tap((event) => {
               const isZooming = reader.zoom.state.isZooming
               const isZoomingIn = reader.zoom.state.currentScale > 1
 
@@ -67,12 +67,10 @@ export const registerPan = ({
                   },
                 )
 
-                return { event, handled: true }
+                return
               }
 
-              if (panNavigation !== "pan") {
-                return { event, handled: false }
-              }
+              if (panNavigation !== "pan") return
 
               if (event.type === `panMove`) {
                 if (!reader.navigation.panNavigator.value.isStarted) {
@@ -81,7 +79,7 @@ export const registerPan = ({
                     y: event.deltaY,
                   })
 
-                  return { event, handled: true }
+                  return
                 }
 
                 reader.navigation.panNavigator.panMoveTo({
@@ -89,7 +87,7 @@ export const registerPan = ({
                   y: event.deltaY,
                 })
 
-                return { event, handled: true }
+                return
               }
 
               if (
@@ -100,25 +98,15 @@ export const registerPan = ({
                   x: event.deltaX,
                   y: event.deltaY,
                 })
-
-                return { event, handled: true }
               }
-
-              return { event, handled: false }
             }),
-            filter(({ handled }) => handled),
-            map(({ event }) => event),
           )
 
-          const isZoomingIn =
-            reader.zoom.state.isZooming && reader.zoom.state.currentScale > 1
-          const panStartHandled = panNavigation === "pan" || isZoomingIn
-
-          return merge(
-            of(panStartEvent).pipe(filter(() => panStartHandled)),
-            moveAndEnd$,
-          ).pipe(
-            map((event) => ({ type: "pan" as const, gestureEvent: event })),
+          return merge(of(panStartEvent), moveAndEnd$).pipe(
+            map((event) => ({
+              type: "pan" as const,
+              gestureEvent: event,
+            })),
           )
         }),
       )
