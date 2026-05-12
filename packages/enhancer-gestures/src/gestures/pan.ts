@@ -1,6 +1,6 @@
 import type { HookManager, Reader } from "@prose-reader/core"
 import type { PanRecognizer } from "gesturx"
-import { EMPTY, filter, map, merge, of, switchMap } from "rxjs"
+import { filter, map, merge, of, switchMap, tap } from "rxjs"
 import type { GesturesSettingsManager } from "../SettingsManager"
 import type { Hook } from "../types"
 
@@ -16,8 +16,6 @@ export const registerPan = ({
 }) => {
   const gestures$ = settingsManager.values$.pipe(
     switchMap(({ panNavigation }) => {
-      if (panNavigation !== "pan") return EMPTY
-
       const panStart$ = recognizer.events$.pipe(
         filter((event) => event.type === `panStart`),
       )
@@ -41,13 +39,14 @@ export const registerPan = ({
           let lastDelta = { x: 0, y: 0 }
 
           const moveAndEnd$ = merge(panMove$, panEnd$).pipe(
-            map((event) => {
+            tap((event) => {
               const isZooming = reader.zoom.state.isZooming
               const isZoomingIn = reader.zoom.state.currentScale > 1
 
               /**
                * When user is zooming in, we don't navigate anymore.
-               * The gestures is gonna be handled by the pinch and viewport.
+               * We still allow the pan gesture to move the zoomed controlled
+               * viewport even when pan navigation itself is disabled.
                */
               if (isZooming && isZoomingIn) {
                 const deltaX = event.deltaX - lastDelta.x
@@ -68,8 +67,10 @@ export const registerPan = ({
                   },
                 )
 
-                return event
+                return
               }
+
+              if (panNavigation !== "pan") return
 
               if (event.type === `panMove`) {
                 if (!reader.navigation.panNavigator.value.isStarted) {
@@ -78,7 +79,7 @@ export const registerPan = ({
                     y: event.deltaY,
                   })
 
-                  return event
+                  return
                 }
 
                 reader.navigation.panNavigator.panMoveTo({
@@ -86,7 +87,7 @@ export const registerPan = ({
                   y: event.deltaY,
                 })
 
-                return event
+                return
               }
 
               if (
@@ -97,16 +98,15 @@ export const registerPan = ({
                   x: event.deltaX,
                   y: event.deltaY,
                 })
-
-                return event
               }
-
-              return event
             }),
           )
 
           return merge(of(panStartEvent), moveAndEnd$).pipe(
-            map((event) => ({ type: "pan" as const, gestureEvent: event })),
+            map((event) => ({
+              type: "pan" as const,
+              gestureEvent: event,
+            })),
           )
         }),
       )

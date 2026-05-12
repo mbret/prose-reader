@@ -77,13 +77,11 @@ export const registerTaps = ({
             first(),
             filter((results) => !results.some((result) => result === false)),
             map(() => {
-              if (
-                computedPageTurnMode === "scrollable" ||
-                /**
-                 * We don't want to navigate from gestures when the user is zooming.
-                 */
-                reader.zoom.state.isZooming
-              ) {
+              const isZoomedIn =
+                reader.zoom.state.isZooming &&
+                reader.zoom.state.currentScale > 1
+
+              if (computedPageTurnMode === "scrollable" || isZoomedIn) {
                 return {
                   type: "tap" as const,
                   gestureEvent: event,
