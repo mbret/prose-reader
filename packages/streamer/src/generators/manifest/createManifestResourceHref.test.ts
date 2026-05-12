@@ -15,10 +15,10 @@ describe("createManifestResourceHref", () => {
       createManifestResourceHref({
         baseUrl: "http://localhost:9000/streamer/book",
         resourcePath:
-          "__prose-reader__/page-spread/folder%2Fpage.jpg/left.xhtml",
+          "__prose-reader__/image-wrapper/pr-img-Zm9sZGVyL3BhZ2UuanBn.xhtml",
       }),
     ).toBe(
-      "http://localhost:9000/streamer/book/__prose-reader__/page-spread/folder%252Fpage.jpg/left.xhtml",
+      "http://localhost:9000/streamer/book/__prose-reader__/image-wrapper/pr-img-Zm9sZGVyL3BhZ2UuanBn.xhtml",
     )
   })
 

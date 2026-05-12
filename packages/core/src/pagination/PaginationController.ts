@@ -193,12 +193,16 @@ export class PaginationController extends DestroyableClass {
             ? generateCfiForSpineItemPage({
                 spineItem: beginSpineItem.item,
                 pageNode: beginPageEntry?.firstVisibleNode,
+                pageIndex: beginPageIndexInSpineItem,
+                readingDirection: this.context.manifest?.readingDirection,
               })
             : generateRootCfi(beginSpineItem.item),
           endCfi: endPageEntry?.firstVisibleNode
             ? generateCfiForSpineItemPage({
                 spineItem: endSpineItem.item,
                 pageNode: endPageEntry?.firstVisibleNode,
+                pageIndex: endPageIndexInSpineItem,
+                readingDirection: this.context.manifest?.readingDirection,
               })
             : generateRootCfi(endSpineItem.item),
         })

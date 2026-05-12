@@ -22,6 +22,11 @@ export type OpfSpineRow = {
   readonly mediaType?: string
   readonly properties?: string
   readonly renditionLayout?: `reflowable` | `pre-paginated`
+  readonly renditionFlow?:
+    | `scrolled-continuous`
+    | `scrolled-doc`
+    | `paginated`
+    | `auto`
   readonly pageSpreadLeft?: true
   readonly pageSpreadRight?: true
 }
@@ -279,6 +284,9 @@ const spineRowsFromByIdAndSpine = (
         : {}),
       ...(hints.renditionLayout !== undefined
         ? { renditionLayout: hints.renditionLayout }
+        : {}),
+      ...(hints.renditionFlow !== undefined
+        ? { renditionFlow: hints.renditionFlow }
         : {}),
       ...(hints.pageSpreadLeft !== undefined
         ? { pageSpreadLeft: hints.pageSpreadLeft }

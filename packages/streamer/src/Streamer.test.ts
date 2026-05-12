@@ -57,8 +57,14 @@ describe("Given a manifest href with encoded local characters", () => {
       resourcePath: spineItem.href,
     })
 
-    expect(spineItem.href).toBe("file://Chapter%201/page%20%5B1%5D.jpg")
-    expect(await resourceResponse.text()).toBe(body)
-    expect(resourceResponse.headers.get("Content-Type")).toBe("image/jpg")
+    expect(spineItem.href).toContain(
+      "file://__prose-reader__/image-wrapper/pr-img-",
+    )
+    expect(await resourceResponse.text()).toContain(
+      `<img src="../../Chapter%201/page%20%5B1%5D.jpg" alt="" />`,
+    )
+    expect(resourceResponse.headers.get("Content-Type")).toBe(
+      "application/xhtml+xml",
+    )
   })
 })

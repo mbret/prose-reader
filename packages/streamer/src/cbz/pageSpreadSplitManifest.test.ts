@@ -2,9 +2,11 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import type { Archive } from "../archives/types"
 import {
-  buildVirtualPageSpreadResourcePath,
+  buildImageWrapperIdFromOriginalUri,
+  buildImageWrapperResourcePathFromOriginalUri,
+  decodeImageWrapperIdToOriginalUri,
+  IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
   isPageSpreadSplitSupportedArchiveRecord,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
   pageSpreadSplit,
 } from "./pageSpreadSplitManifest"
 
@@ -104,7 +106,7 @@ describe("pageSpreadSplit", () => {
     ).resolves.toBe(manifest)
   })
 
-  it("should not split matching non-image resource paths", async () => {
+  it("should not wrap matching non-image resource paths", async () => {
     const archive = createArchive([
       {
         ...fakeContent,
@@ -151,12 +153,8 @@ describe("pageSpreadSplit", () => {
       id: "1.p006-007.jpg",
       mediaType: "image/jpeg",
     })
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: nestedUri,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
+    const wrapperId = buildImageWrapperIdFromOriginalUri(nestedUri)
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri: nestedUri,
     })
 
@@ -165,14 +163,15 @@ describe("pageSpreadSplit", () => {
     ).resolves.toMatchObject({
       spineItems: [
         {
-          href: encodeURI(`file://${leftResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-        },
-        {
-          href: encodeURI(`file://${rightResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          href: encodeURI(`file://${resourcePath}`),
+          id: wrapperId,
+          mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+          renditionFlow: "paginated",
+          renditionLayout: "reflowable",
         },
       ],
     })
+
+    expect(decodeImageWrapperIdToOriginalUri(wrapperId)).toBe(nestedUri)
   })
 })

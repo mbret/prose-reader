@@ -50,7 +50,11 @@ export const createNavigationResolver = ({
 
   const getNavigationForCfi = (cfi: string): SpinePosition | undefined => {
     const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
-    const { node, offset = 0 } = resolveCfi({
+    const {
+      node,
+      offset = 0,
+      spatial,
+    } = resolveCfi({
       cfi,
       spineItemsManager,
     })
@@ -62,7 +66,12 @@ export const createNavigationResolver = ({
     }
 
     const spineItemNavigation = node
-      ? spineItemNavigator.getNavigationFromNode(spineItem, node, offset)
+      ? spineItemNavigator.getNavigationFromNode(
+          spineItem,
+          node,
+          offset,
+          spatial,
+        )
       : new SpineItemPosition({ x: 0, y: 0 })
     const readingPosition = locator.getSpinePositionFromSpineItemPosition({
       spineItemPosition: spineItemNavigation,

@@ -100,6 +100,45 @@ export const buildStyleForReflowableImageOnly = ({
     `
 }
 
+export const buildStyleForPaginatedSpreadImage = ({
+  pageHeight,
+  pageWidth,
+}: {
+  pageHeight: number
+  pageWidth: number
+}) => {
+  const spreadWidth = pageWidth * 2
+
+  return `
+      html,
+      body {
+        width: ${spreadWidth}px !important;
+        height: ${pageHeight}px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        touch-action: none;
+      }
+      body > div {
+        width: ${spreadWidth}px !important;
+        height: ${pageHeight}px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
+      #spread-image {
+        display: block !important;
+        width: ${spreadWidth}px !important;
+        height: ${pageHeight}px !important;
+        max-width: none !important;
+        max-height: none !important;
+        object-fit: contain !important;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+    `
+}
+
 /**
  * Item is:
  * - regular html document

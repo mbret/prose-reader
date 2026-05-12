@@ -85,6 +85,7 @@ export const consolidate = (
         node = null,
         offset: startOffset,
         range,
+        spatial,
       } = isSpineItemReady ? reader.cfi.resolveCfi({ cfi: resource.cfi }) : {}
 
       const reflowableItemWithFoundNode =
@@ -96,6 +97,7 @@ export const consolidate = (
             node,
             startOffset ?? 0,
             spineItem,
+            spatial,
           ) ?? itemPageIndex
       }
 

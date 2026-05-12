@@ -13,15 +13,13 @@ export {
   detectPageSpreadFromBasename,
 } from "./detectPageSpreadFromBasename"
 
-export type PageSpreadCropSide = "left" | "right"
-
-export type VirtualPageSpreadResource = {
+export type ImageWrapperResource = {
   originalUri: string
-  cropSide: PageSpreadCropSide
 }
 
-export const PAGE_SPREAD_RESOURCE_PREFIX = `__prose-reader__/page-spread`
-export const PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE = `application/xhtml+xml`
+export const IMAGE_WRAPPER_ID_PREFIX = `pr-img-`
+export const IMAGE_WRAPPER_RESOURCE_PREFIX = `__prose-reader__/image-wrapper`
+export const IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE = `application/xhtml+xml`
 
 const supportedImageMediaTypes = new Set([
   `image/jpg`,
@@ -43,62 +41,132 @@ type ManifestItem = Manifest["items"][number]
 type ArchiveRecord = Archive["records"][number]
 type ArchiveFileRecord = Extract<ArchiveRecord, { dir: false }>
 
-const encodeOriginalUriSegment = (uri: string) => encodeURIComponent(uri)
+const base64UrlAlphabet =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
-export const buildVirtualPageSpreadResourcePath = ({
-  cropSide,
-  originalUri,
-}: {
-  originalUri: string
-  cropSide: PageSpreadCropSide
-}) => {
-  return `${PAGE_SPREAD_RESOURCE_PREFIX}/${encodeOriginalUriSegment(originalUri)}/${cropSide}.xhtml`
+const base64UrlValueByChar = new Map(
+  [...base64UrlAlphabet].map((char, value) => [char, value]),
+)
+
+const encodeBase64Url = (value: string) => {
+  const bytes = new TextEncoder().encode(value)
+  let encoded = ``
+
+  for (let i = 0; i < bytes.length; i += 3) {
+    const first = bytes[i]
+    if (first === undefined) continue
+
+    const second = bytes[i + 1]
+    const third = bytes[i + 2]
+
+    encoded += base64UrlAlphabet[first >> 2]
+
+    if (second === undefined) {
+      encoded += base64UrlAlphabet[(first & 3) << 4]
+      break
+    }
+
+    encoded += base64UrlAlphabet[((first & 3) << 4) | (second >> 4)]
+
+    if (third === undefined) {
+      encoded += base64UrlAlphabet[(second & 15) << 2]
+      break
+    }
+
+    encoded += base64UrlAlphabet[((second & 15) << 2) | (third >> 6)]
+    encoded += base64UrlAlphabet[third & 63]
+  }
+
+  return encoded
 }
 
-const spreadPropertiesForSide = (
-  side: PageSpreadCropSide,
-): Pick<SpineItem, "pageSpreadLeft" | "pageSpreadRight"> =>
-  side === `left`
-    ? { pageSpreadLeft: true, pageSpreadRight: undefined }
-    : { pageSpreadLeft: undefined, pageSpreadRight: true }
+const decodeBase64Url = (value: string): string | undefined => {
+  const bytes: number[] = []
+  let buffer = 0
+  let bits = 0
 
-const cropSidesInReadingOrder = (
-  readingDirection: Manifest["readingDirection"],
-): [PageSpreadCropSide, PageSpreadCropSide] =>
-  readingDirection === `rtl` ? [`right`, `left`] : [`left`, `right`]
+  for (const char of value) {
+    const charValue = base64UrlValueByChar.get(char)
 
-const createVirtualSpineItem = ({
-  baseUrl,
-  cropSide,
-  label,
-  originalSpineItem,
-  originalUri,
-  progressionWeight,
-}: {
-  baseUrl: string
-  originalSpineItem: SpineItem
-  originalUri: string
-  label: string
-  cropSide: PageSpreadCropSide
-  progressionWeight: number | undefined
-}): SpineItem => {
-  const resourcePath = buildVirtualPageSpreadResourcePath({
-    cropSide,
-    originalUri,
-  })
+    if (charValue === undefined) return undefined
 
-  return {
-    ...originalSpineItem,
-    id: `${originalSpineItem.id}.${label}`,
-    href: createManifestResourceHref({ baseUrl, resourcePath }),
-    mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-    progressionWeight,
-    renditionLayout: `pre-paginated`,
-    ...spreadPropertiesForSide(cropSide),
+    buffer = (buffer << 6) | charValue
+    bits += 6
+
+    if (bits >= 8) {
+      bits -= 8
+      bytes.push((buffer >> bits) & 255)
+    }
+  }
+
+  try {
+    return new TextDecoder().decode(new Uint8Array(bytes))
+  } catch {
+    return undefined
   }
 }
 
-const createVirtualManifestItem = ({
+export const buildImageWrapperIdFromOriginalUri = (originalUri: string) =>
+  `${IMAGE_WRAPPER_ID_PREFIX}${encodeBase64Url(originalUri)}`
+
+export const decodeImageWrapperIdToOriginalUri = (
+  wrapperId: string,
+): string | undefined => {
+  if (!wrapperId.startsWith(IMAGE_WRAPPER_ID_PREFIX)) return undefined
+
+  return decodeBase64Url(wrapperId.slice(IMAGE_WRAPPER_ID_PREFIX.length))
+}
+
+export const buildImageWrapperResourcePath = ({
+  wrapperId,
+}: {
+  wrapperId: string
+}) => `${IMAGE_WRAPPER_RESOURCE_PREFIX}/${wrapperId}.xhtml`
+
+export const buildImageWrapperResourcePathFromOriginalUri = ({
+  originalUri,
+}: {
+  originalUri: string
+}) =>
+  buildImageWrapperResourcePath({
+    wrapperId: buildImageWrapperIdFromOriginalUri(originalUri),
+  })
+
+const createImageWrapperSpineItem = ({
+  baseUrl,
+  isSpread,
+  originalSpineItem,
+  originalUri,
+}: {
+  baseUrl: string
+  isSpread: boolean
+  originalSpineItem: SpineItem
+  originalUri: string
+}): SpineItem => {
+  const id = buildImageWrapperIdFromOriginalUri(originalUri)
+  const resourcePath = buildImageWrapperResourcePath({
+    wrapperId: id,
+  })
+  const spreadRenditionFlow: NonNullable<SpineItem["renditionFlow"]> =
+    `paginated`
+
+  return {
+    ...originalSpineItem,
+    id,
+    href: createManifestResourceHref({ baseUrl, resourcePath }),
+    mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+    pageSpreadLeft: undefined,
+    pageSpreadRight: undefined,
+    ...(isSpread
+      ? { renditionFlow: spreadRenditionFlow }
+      : originalSpineItem.renditionFlow !== undefined
+        ? { renditionFlow: originalSpineItem.renditionFlow }
+        : {}),
+    renditionLayout: isSpread ? `reflowable` : `pre-paginated`,
+  }
+}
+
+const createImageWrapperManifestItem = ({
   href,
   id,
   mediaType,
@@ -189,8 +257,8 @@ export const pageSpreadSplit =
   async (manifest: Manifest): Promise<Manifest> => {
     if (isArchiveEpub(archive)) return manifest
 
-    const virtualManifestItems: ManifestItem[] = []
-    const spineItems = manifest.spineItems.flatMap((spineItem) => {
+    const imageWrapperManifestItems: ManifestItem[] = []
+    const spineItems = manifest.spineItems.map((spineItem) => {
       const archiveRecord = getArchiveRecordForManifestItem({
         archive,
         baseUrl,
@@ -198,46 +266,25 @@ export const pageSpreadSplit =
       })
 
       if (!isPageSpreadSplitSupportedArchiveRecord(archiveRecord)) {
-        return [spineItem]
+        return spineItem
       }
 
       const detected = detectPageSpreadFromBasename(archiveRecord.basename)
-
-      if (detected === undefined) return [spineItem]
-
-      const [firstCropSide, secondCropSide] = cropSidesInReadingOrder(
-        manifest.readingDirection,
-      )
-      const splitProgressionWeight =
-        spineItem.progressionWeight !== undefined
-          ? spineItem.progressionWeight / 2
-          : undefined
-      const firstSpineItem = createVirtualSpineItem({
+      const wrapperSpineItem = createImageWrapperSpineItem({
         baseUrl,
-        cropSide: firstCropSide,
-        label: detected.firstPageLabel,
+        isSpread: detected !== undefined,
         originalSpineItem: spineItem,
         originalUri: archiveRecord.uri,
-        progressionWeight: splitProgressionWeight,
-      })
-      const secondSpineItem = createVirtualSpineItem({
-        baseUrl,
-        cropSide: secondCropSide,
-        label: detected.secondPageLabel,
-        originalSpineItem: spineItem,
-        originalUri: archiveRecord.uri,
-        progressionWeight: splitProgressionWeight,
       })
 
-      virtualManifestItems.push(
-        createVirtualManifestItem(firstSpineItem),
-        createVirtualManifestItem(secondSpineItem),
+      imageWrapperManifestItems.push(
+        createImageWrapperManifestItem(wrapperSpineItem),
       )
 
-      return [firstSpineItem, secondSpineItem]
+      return wrapperSpineItem
     })
 
-    if (virtualManifestItems.length === 0) return manifest
+    if (imageWrapperManifestItems.length === 0) return manifest
 
     return {
       ...manifest,
@@ -245,6 +292,6 @@ export const pageSpreadSplit =
         ...spineItem,
         index,
       })),
-      items: [...manifest.items, ...virtualManifestItems],
+      items: [...manifest.items, ...imageWrapperManifestItems],
     }
   }

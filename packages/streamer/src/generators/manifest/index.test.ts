@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 import type { Archive } from "../../archives/types"
 import {
-  buildVirtualPageSpreadResourcePath,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+  buildImageWrapperIdFromOriginalUri,
+  buildImageWrapperResourcePathFromOriginalUri,
+  decodeImageWrapperIdToOriginalUri,
+  IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
 } from "../../cbz/pageSpreadSplitManifest"
 import { generateManifestFromArchive } from "./index"
 
@@ -130,18 +132,28 @@ describe("Given archive with a folder containing a space", () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
+    const wrapperId = buildImageWrapperIdFromOriginalUri("Chapter 1/page_1.jpg")
+
     expect(manifest.spineItems).toEqual([
       {
-        href: "file://Chapter%201/page_1.jpg",
-        id: "0.page_1.jpg",
+        href: encodeURI(
+          `file://${buildImageWrapperResourcePathFromOriginalUri({
+            originalUri: "Chapter 1/page_1.jpg",
+          })}`,
+        ),
+        id: wrapperId,
         index: 0,
-        mediaType: undefined,
+        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1,
         renditionLayout: "pre-paginated",
       },
     ])
+
+    expect(decodeImageWrapperIdToOriginalUri(wrapperId)).toBe(
+      "Chapter 1/page_1.jpg",
+    )
   })
 })
 
@@ -168,7 +180,7 @@ describe("Given archive with no folders", () => {
 })
 
 describe("Given non-epub image archive items with encodingFormat", () => {
-  it("should keep image spine items pre-paginated", async () => {
+  it("should expose image spine items through pre-paginated XHTML wrappers", async () => {
     const archive: Archive = {
       filename: "",
       records: [
@@ -186,12 +198,18 @@ describe("Given non-epub image archive items with encodingFormat", () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
+    const wrapperId = buildImageWrapperIdFromOriginalUri("page_1.jpeg")
+
     expect(manifest.spineItems).toEqual([
       {
-        href: "file://page_1.jpeg",
-        id: "0.page_1.jpeg",
+        href: encodeURI(
+          `file://${buildImageWrapperResourcePathFromOriginalUri({
+            originalUri: "page_1.jpeg",
+          })}`,
+        ),
+        id: wrapperId,
         index: 0,
-        mediaType: "image/jpeg",
+        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1,
@@ -202,7 +220,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
 })
 
 describe("Given a non-epub image archive with a two-page spread filename", () => {
-  it("should expose two virtual pre-paginated spine items", async () => {
+  it("should expose one reflowable paginated wrapper spine item for the spread", async () => {
     const spreadBasename = "p006-007 [dig] [Seven Seas] [danke-Empire] {HQ}.jpg"
     const archive: Archive = {
       filename: "",
@@ -235,52 +253,50 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
       close: () => Promise.resolve(),
     }
 
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: spreadBasename,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
-      originalUri: spreadBasename,
-    })
     const manifest = await generateManifestFromArchive(archive)
+    const page005Id = buildImageWrapperIdFromOriginalUri("p005.jpg")
+    const spreadId = buildImageWrapperIdFromOriginalUri(spreadBasename)
+    const page008Id = buildImageWrapperIdFromOriginalUri("p008.jpg")
 
     expect(manifest.spineItems).toEqual([
       {
-        href: "file://p005.jpg",
-        id: "0.p005.jpg",
+        href: encodeURI(
+          `file://${buildImageWrapperResourcePathFromOriginalUri({
+            originalUri: "p005.jpg",
+          })}`,
+        ),
+        id: page005Id,
         index: 0,
-        mediaType: "image/jpeg",
+        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1 / 3,
         renditionLayout: "pre-paginated",
       },
       {
-        href: encodeURI(`file://${leftResourcePath}`),
-        id: `1.${spreadBasename}.006`,
+        href: encodeURI(
+          `file://${buildImageWrapperResourcePathFromOriginalUri({
+            originalUri: spreadBasename,
+          })}`,
+        ),
+        id: spreadId,
         index: 1,
-        mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-        pageSpreadLeft: true,
-        pageSpreadRight: undefined,
-        progressionWeight: 1 / 6,
-        renditionLayout: "pre-paginated",
-      },
-      {
-        href: encodeURI(`file://${rightResourcePath}`),
-        id: `1.${spreadBasename}.007`,
-        index: 2,
-        mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
-        pageSpreadRight: true,
-        progressionWeight: 1 / 6,
-        renditionLayout: "pre-paginated",
+        pageSpreadRight: undefined,
+        progressionWeight: 1 / 3,
+        renditionFlow: "paginated",
+        renditionLayout: "reflowable",
       },
       {
-        href: encodeURI("file://p008.jpg"),
-        id: "2.p008.jpg",
-        index: 3,
-        mediaType: "image/jpeg",
+        href: encodeURI(
+          `file://${buildImageWrapperResourcePathFromOriginalUri({
+            originalUri: "p008.jpg",
+          })}`,
+        ),
+        id: page008Id,
+        index: 2,
+        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1 / 3,
@@ -289,18 +305,17 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     ])
 
     expect(manifest.items).toContainEqual({
-      href: encodeURI(`file://${leftResourcePath}`),
-      id: `1.${spreadBasename}.006`,
-      mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-    })
-    expect(manifest.items).toContainEqual({
-      href: encodeURI(`file://${rightResourcePath}`),
-      id: `1.${spreadBasename}.007`,
-      mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+      href: encodeURI(
+        `file://${buildImageWrapperResourcePathFromOriginalUri({
+          originalUri: spreadBasename,
+        })}`,
+      ),
+      id: spreadId,
+      mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
     })
   })
 
-  it("should map the lower page to the right slot for RTL manga", async () => {
+  it("should keep one spread spine item for RTL manga", async () => {
     const spreadBasename = "p006-007.jpg"
     const archive: Archive = {
       filename: "",
@@ -329,18 +344,16 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     }
 
     const manifest = await generateManifestFromArchive(archive)
+    const spreadId = buildImageWrapperIdFromOriginalUri(spreadBasename)
 
     expect(manifest.readingDirection).toBe("rtl")
     expect(manifest.spineItems).toMatchObject([
       {
-        id: `1.${spreadBasename}.006`,
+        id: spreadId,
         pageSpreadLeft: undefined,
-        pageSpreadRight: true,
-      },
-      {
-        id: `1.${spreadBasename}.007`,
-        pageSpreadLeft: true,
         pageSpreadRight: undefined,
+        renditionFlow: "paginated",
+        renditionLayout: "reflowable",
       },
     ])
   })
@@ -362,12 +375,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
       close: () => Promise.resolve(),
     }
     const baseUrl = "http://localhost:9000/streamer/book"
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: spreadBasename,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri: spreadBasename,
     })
 
@@ -375,10 +383,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
 
     expect(manifest.spineItems).toMatchObject([
       {
-        href: encodeURI(`${baseUrl}/${leftResourcePath}`),
-      },
-      {
-        href: encodeURI(`${baseUrl}/${rightResourcePath}`),
+        href: encodeURI(`${baseUrl}/${resourcePath}`),
       },
     ])
   })
