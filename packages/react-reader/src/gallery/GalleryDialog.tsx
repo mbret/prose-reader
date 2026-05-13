@@ -57,7 +57,8 @@ const GalleryItem = memo(
           left="0"
           right="0"
           textAlign="center"
-          bgColor="white"
+          bgColor="bg.panel"
+          color="fg"
           p={4}
           fontSize="xs"
         >
