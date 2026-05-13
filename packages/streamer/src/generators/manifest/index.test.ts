@@ -5,7 +5,6 @@ import type { Archive } from "../../archives/types"
 import {
   buildImageWrapperIdFromOriginalUri,
   buildImageWrapperResourcePathFromOriginalUri,
-  decodeImageWrapperIdToOriginalUri,
   IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
 } from "../../cbz/pageSpreadSplitManifest"
 import { generateManifestFromArchive } from "./index"
@@ -132,28 +131,18 @@ describe("Given archive with a folder containing a space", () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
-    const wrapperId = buildImageWrapperIdFromOriginalUri("Chapter 1/page_1.jpg")
-
     expect(manifest.spineItems).toEqual([
       {
-        href: encodeURI(
-          `file://${buildImageWrapperResourcePathFromOriginalUri({
-            originalUri: "Chapter 1/page_1.jpg",
-          })}`,
-        ),
-        id: wrapperId,
+        href: "file://Chapter%201/page_1.jpg",
+        id: "0.page_1.jpg",
         index: 0,
-        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+        mediaType: undefined,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1,
         renditionLayout: "pre-paginated",
       },
     ])
-
-    expect(decodeImageWrapperIdToOriginalUri(wrapperId)).toBe(
-      "Chapter 1/page_1.jpg",
-    )
   })
 })
 
@@ -180,7 +169,7 @@ describe("Given archive with no folders", () => {
 })
 
 describe("Given non-epub image archive items with encodingFormat", () => {
-  it("should expose image spine items through pre-paginated XHTML wrappers", async () => {
+  it("should leave non-spread image spine items untouched", async () => {
     const archive: Archive = {
       filename: "",
       records: [
@@ -198,18 +187,12 @@ describe("Given non-epub image archive items with encodingFormat", () => {
 
     const manifest = await generateManifestFromArchive(archive)
 
-    const wrapperId = buildImageWrapperIdFromOriginalUri("page_1.jpeg")
-
     expect(manifest.spineItems).toEqual([
       {
-        href: encodeURI(
-          `file://${buildImageWrapperResourcePathFromOriginalUri({
-            originalUri: "page_1.jpeg",
-          })}`,
-        ),
-        id: wrapperId,
+        href: "file://page_1.jpeg",
+        id: "0.page_1.jpeg",
         index: 0,
-        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+        mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1,
@@ -254,20 +237,14 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     }
 
     const manifest = await generateManifestFromArchive(archive)
-    const page005Id = buildImageWrapperIdFromOriginalUri("p005.jpg")
     const spreadId = buildImageWrapperIdFromOriginalUri(spreadBasename)
-    const page008Id = buildImageWrapperIdFromOriginalUri("p008.jpg")
 
     expect(manifest.spineItems).toEqual([
       {
-        href: encodeURI(
-          `file://${buildImageWrapperResourcePathFromOriginalUri({
-            originalUri: "p005.jpg",
-          })}`,
-        ),
-        id: page005Id,
+        href: "file://p005.jpg",
+        id: "0.p005.jpg",
         index: 0,
-        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+        mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1 / 3,
@@ -289,14 +266,10 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
         renditionLayout: "reflowable",
       },
       {
-        href: encodeURI(
-          `file://${buildImageWrapperResourcePathFromOriginalUri({
-            originalUri: "p008.jpg",
-          })}`,
-        ),
-        id: page008Id,
+        href: "file://p008.jpg",
+        id: "2.p008.jpg",
         index: 2,
-        mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+        mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1 / 3,

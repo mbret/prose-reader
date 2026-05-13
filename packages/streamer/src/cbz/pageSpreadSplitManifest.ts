@@ -134,12 +134,10 @@ export const buildImageWrapperResourcePathFromOriginalUri = ({
 
 const createImageWrapperSpineItem = ({
   baseUrl,
-  isSpread,
   originalSpineItem,
   originalUri,
 }: {
   baseUrl: string
-  isSpread: boolean
   originalSpineItem: SpineItem
   originalUri: string
 }): SpineItem => {
@@ -147,8 +145,6 @@ const createImageWrapperSpineItem = ({
   const resourcePath = buildImageWrapperResourcePath({
     wrapperId: id,
   })
-  const spreadRenditionFlow: NonNullable<SpineItem["renditionFlow"]> =
-    `paginated`
 
   return {
     ...originalSpineItem,
@@ -157,12 +153,8 @@ const createImageWrapperSpineItem = ({
     mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
     pageSpreadLeft: undefined,
     pageSpreadRight: undefined,
-    ...(isSpread
-      ? { renditionFlow: spreadRenditionFlow }
-      : originalSpineItem.renditionFlow !== undefined
-        ? { renditionFlow: originalSpineItem.renditionFlow }
-        : {}),
-    renditionLayout: isSpread ? `reflowable` : `pre-paginated`,
+    renditionFlow: `paginated`,
+    renditionLayout: `reflowable`,
   }
 }
 
@@ -270,9 +262,11 @@ export const pageSpreadSplit =
       }
 
       const detected = detectPageSpreadFromBasename(archiveRecord.basename)
+
+      if (detected === undefined) return spineItem
+
       const wrapperSpineItem = createImageWrapperSpineItem({
         baseUrl,
-        isSpread: detected !== undefined,
         originalSpineItem: spineItem,
         originalUri: archiveRecord.uri,
       })

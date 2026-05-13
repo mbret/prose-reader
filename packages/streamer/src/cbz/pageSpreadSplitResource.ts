@@ -1,7 +1,6 @@
 import { escapeXmlAttributeValue } from "@prose-reader/shared"
 import type { Archive } from "../archives/types"
 import type { HookResource } from "../generators/resources/hooks/types"
-import { detectPageSpreadFromBasename } from "./detectPageSpreadFromBasename"
 import {
   decodeImageWrapperIdToOriginalUri,
   IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
@@ -53,18 +52,15 @@ const getRelativeOriginalImageSrc = (originalUri: string) => {
 }
 
 export const createImageWrapperXhtml = ({
-  isSpread,
   originalUri,
 }: {
-  isSpread: boolean
   originalUri: string
 }): string => {
   const escapedSrc = escapeXmlAttributeValue(
     getRelativeOriginalImageSrc(originalUri),
   )
 
-  if (isSpread) {
-    return `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <style>
@@ -84,34 +80,6 @@ export const createImageWrapperXhtml = ({
     <div>
       <img id="spread-image" src="${escapedSrc}" alt="" />
     </div>
-  </body>
-</html>`
-  }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <style>
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-      }
-
-      img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        user-select: none;
-        -webkit-user-drag: none;
-      }
-    </style>
-  </head>
-  <body>
-    <img src="${escapedSrc}" alt="" />
   </body>
 </html>`
 }
@@ -138,7 +106,6 @@ const generateImageWrapperResource = async ({
   }
 
   const body = createImageWrapperXhtml({
-    isSpread: detectPageSpreadFromBasename(file.basename) !== undefined,
     originalUri: virtualResource.originalUri,
   })
 

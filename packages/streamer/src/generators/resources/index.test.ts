@@ -77,7 +77,7 @@ describe("generateResourceFromArchive", () => {
     }
 
     expect(resource.body).toContain(
-      `<img src="../../folder/p006%20&amp;%20007%20%5Bx%5D.jpg" alt="" />`,
+      `<img id="spread-image" src="../../folder/p006%20&amp;%20007%20%5Bx%5D.jpg" alt="" />`,
     )
     expect(blob).not.toHaveBeenCalled()
   })

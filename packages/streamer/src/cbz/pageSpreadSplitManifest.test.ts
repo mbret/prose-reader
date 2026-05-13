@@ -128,6 +128,28 @@ describe("pageSpreadSplit", () => {
     ).resolves.toBe(manifest)
   })
 
+  it("should not wrap image resource paths whose basename is not a page spread", async () => {
+    const archive = createArchive([
+      {
+        ...fakeContent,
+        basename: "p001.jpg",
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: "p001.jpg",
+      },
+    ])
+    const manifest = createManifest({
+      href: "file://p001.jpg",
+      id: "0.p001.jpg",
+      mediaType: "image/jpeg",
+    })
+
+    await expect(
+      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+    ).resolves.toBe(manifest)
+  })
+
   it("should match archive records by exact resource path instead of suffix", async () => {
     const nestedUri = "bonus/p006-007.jpg"
     const archive = createArchive([
