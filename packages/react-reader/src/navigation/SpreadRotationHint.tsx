@@ -199,7 +199,7 @@ export const SpreadRotationHint = memo(() => {
           alignItems="center"
           bg="rgba(12, 12, 12, 0.56)"
           borderRadius="full"
-          boxShadow="0 16px 40px rgba(0, 0, 0, 0.24)"
+          shadow="2xl"
           className={styles.pulse}
           color="white"
           display="flex"
