@@ -7,6 +7,7 @@ import {
   Subject,
   shareReplay,
 } from "rxjs"
+import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import type { HookManager } from "../hooks/HookManager"
 import { Report } from "../report"
@@ -28,7 +29,9 @@ export const createNavigator = ({
   spine,
   settings,
   viewport,
+  cfi,
 }: {
+  cfi: CfiManager
   spineItemsManager: SpineItemsManager
   context: Context
   hookManager: HookManager
@@ -39,7 +42,9 @@ export const createNavigator = ({
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
   const userInteractionLock = new Locker()
+  const cfiManager = cfi
   const navigationResolver = createNavigationResolver({
+    cfi: cfiManager,
     context,
     settings,
     spineItemsManager,
@@ -88,6 +93,7 @@ export const createNavigator = ({
     navigationResolver,
     spine,
     viewport,
+    cfiManager,
     userInteractionLock.isLocked$,
   )
 

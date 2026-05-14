@@ -31,7 +31,9 @@
     "vite": "^7"
   },
   "peerDependencies": {
+    "@prose-reader/cfi": "^1.296.0",
     "@prose-reader/shared": "^1.296.0",
-    "@prose-reader/streamer": "^1.296.0"
+    "@prose-reader/streamer": "^1.296.0",
+    "@prose-reader/core": "^1.296.0"
   }
 }

@@ -1,17 +1,17 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
   catchError,
-  combineLatest,
   defer,
   EMPTY,
   endWith,
   filter,
   finalize,
   first,
+  from,
   map,
   merge,
   mergeMap,
-  Observable,
+  type Observable,
   of,
   Subject,
   share,
@@ -111,7 +111,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         return createDocument$.pipe(
           mergeMap((documentContainer) => {
-            this.hookManager.execute(`item.onDocumentCreated`, this.item.id, {
+            this.hookManager.execute(`item.onDocumentCreated`, {
               itemId: this.item.id,
               documentContainer,
             })
@@ -123,19 +123,16 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
             return loadDocument$.pipe(
               waitForSwitch(this.context.bridgeEvent.viewportFree$),
-              switchMap(() => {
-                const hookResults = this.hookManager
-                  .execute(`item.onDocumentLoad`, this.item.id, {
+              switchMap(() =>
+                this.hookManager.fromExecuteAsync(
+                  `item.onDocumentLoad`,
+                  this.item.id,
+                  {
                     itemId: this.item.id,
                     documentContainer,
-                  })
-                  .filter(
-                    (result): result is Observable<void> =>
-                      result instanceof Observable,
-                  )
-
-                return combineLatest([of(null), ...hookResults]).pipe(first())
-              }),
+                  },
+                ),
+              ),
             )
           }),
           map(() => {
@@ -161,9 +158,20 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
         return this.context.bridgeEvent.viewportFree$.pipe(
           first(),
           switchMap(() => {
-            this.hookManager.destroy(`item.onDocumentLoad`, this.item.id)
+            const documentContainer = this.value.documentContainer
 
-            const onUnload$ = defer(() => this.onUnload()).pipe(
+            const onDocumentUnloadPromise = documentContainer
+              ? // we voluntarily don't use fromExecuteAsync here because we want to ensure that the hook is executed even if the unload is cancelled
+                this.hookManager
+                  .executeAsync(`item.onDocumentUnload`, this.item.id, {
+                    itemId: this.item.id,
+                    documentContainer,
+                  })
+                  .then(() => null)
+              : Promise.resolve(null)
+
+            return from(onDocumentUnloadPromise).pipe(
+              switchMap(() => this.onUnload()),
               endWith(null),
               first(),
               catchError((error) => {
@@ -172,8 +180,6 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
                 return of(null)
               }),
             )
-
-            return onUnload$
           }),
           map(() => {
             this.mergeCompare({ state: `idle`, error: undefined })

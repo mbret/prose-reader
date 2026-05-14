@@ -1,8 +1,4 @@
-import {
-  generateRootCfi,
-  isShallowEqual,
-  type Reader,
-} from "@prose-reader/core"
+import { isShallowEqual, type Reader } from "@prose-reader/core"
 import {
   combineLatest,
   debounceTime,
@@ -135,7 +131,7 @@ export const annotationsEnhancer =
               spineItem: spineItem.item,
               pageNode: pageEntry.firstVisibleNode,
             })
-          : generateRootCfi(spineItem.item)
+          : reader.cfi.generateRootCfi(spineItem.item)
 
       const highlight = {
         cfi: cfiWithRangeOrFirstNodeOrRoot,

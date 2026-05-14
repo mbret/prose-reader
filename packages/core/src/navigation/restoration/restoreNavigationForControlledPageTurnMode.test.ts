@@ -1,5 +1,6 @@
 import { firstValueFrom, lastValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { CfiManager } from "../../cfi"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { Pagination } from "../../pagination/Pagination"
@@ -20,10 +21,11 @@ describe(`Given a backward navigation to a new item`, () => {
       it(`should restore position at the last page`, async () => {
         const context = new Context()
         const settings = new ReaderSettingsManager({}, context)
+        const hooksManager = new HookManager()
         const spineItemsManager = new SpineItemsManager(context, settings)
+        const cfi = new CfiManager(hooksManager, spineItemsManager)
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         const pagination = new Pagination(context, spineItemsManager as any)
-        const hooksManager = new HookManager()
         const viewport = new Viewport(context, settings)
         const spineItemLocator = createSpineItemLocator({
           context,
@@ -41,6 +43,7 @@ describe(`Given a backward navigation to a new item`, () => {
           viewport,
         )
         const navigationResolver = createNavigationResolver({
+          cfi,
           context,
           locator: spine.locator,
           settings,

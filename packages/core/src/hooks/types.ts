@@ -1,13 +1,23 @@
 import type { Manifest } from "@prose-reader/shared"
 import type { Observable } from "rxjs"
 
-// biome-ignore lint/suspicious/noConfusingVoidType: TODO
-export type UserDestroyFn = () => void | Observable<unknown>
+export type AsyncHookParams = {
+  signal: AbortSignal
+}
 
-export interface Hook<Name, Params, Result> {
+export interface SyncHook<Name, Params, Result> {
   name: Name
   runFn: (params: Params) => Result
 }
+
+export interface AsyncHook<Name, Params, Result> {
+  name: Name
+  runFn: (params: AsyncHookParams & Params) => Promise<Result>
+}
+
+export type Hook<Name, Params, Result> =
+  | SyncHook<Name, Params, Result>
+  | AsyncHook<Name, Params, Result>
 
 export type CoreHook =
   | {
@@ -21,23 +31,46 @@ export type CoreHook =
       runFn: (params: {
         itemId: string
         documentContainer: HTMLElement
-      }) => Observable<void> | void
+      }) => void
+    }
+  | {
+      name: "cfi.afterGenerate"
+      runFn: (params: {
+        cfi: string
+        spineItem: Manifest["spineItems"][number]
+      }) => string | undefined
+    }
+  | {
+      name: "cfi.beforeResolve"
+      runFn: (params: { cfi: string }) => string | undefined
     }
   | {
       /**
        * Hook called as soon as the document is loaded.
        * You can take advantage of this hook to manipulate the loaded document, add styles,
-       * update things arounds such as the dom etc. Note that the document is already
+       * update things around such as the dom etc. Note that the document is already
        * attached to the dom at this stage. If your operations can be done on the prepared layers
        * you should try to do so as much as possible.
        */
       name: `item.onDocumentLoad`
-      runFn: (params: {
-        destroy$: Observable<void>
-        destroy: (fn: UserDestroyFn) => void
-        itemId: string
-        documentContainer: HTMLElement
-      }) => Observable<void> | void
+      runFn: (
+        params: AsyncHookParams & {
+          itemId: string
+          documentContainer: HTMLElement
+        },
+      ) => Promise<void>
+    }
+  | {
+      /**
+       * Hook called before the loaded document is unloaded.
+       */
+      name: `item.onDocumentUnload`
+      runFn: (
+        params: AsyncHookParams & {
+          itemId: string
+          documentContainer: HTMLElement
+        },
+      ) => Promise<void>
     }
   | {
       name: "item.onBeforeLayout"
@@ -84,5 +117,39 @@ export type HookFrom<
     ? HK["name"] extends Name
       ? HK
       : never
+    : never
+  : never
+
+export type HookParams<
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  H extends Hook<any, any, any>,
+  Name extends H["name"],
+> = Parameters<HookFrom<H, Name>["runFn"]>[0]
+
+export type HookResult<
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  H extends Hook<any, any, any>,
+  Name extends H["name"],
+> = ReturnType<HookFrom<H, Name>["runFn"]>
+
+export type AsyncHookName<
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  H extends Hook<any, any, any>,
+> = H extends infer HK
+  ? HK extends H
+    ? ReturnType<HK["runFn"]> extends Promise<unknown>
+      ? HK["name"]
+      : never
+    : never
+  : never
+
+export type SyncHookName<
+  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  H extends Hook<any, any, any>,
+> = H extends infer HK
+  ? HK extends H
+    ? ReturnType<HK["runFn"]> extends Promise<unknown>
+      ? never
+      : HK["name"]
     : never
   : never

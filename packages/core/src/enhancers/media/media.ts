@@ -70,37 +70,47 @@ export const mediaEnhancer =
       },
     )
 
-    reader.hookManager.register(
-      `item.onDocumentLoad`,
-      ({ destroy, itemId }) => {
-        const frame = reader.spineItemsManager
-          .get(itemId)
-          ?.renderer.getDocumentFrame()
+    const cleanupByItemId = new Map<string, () => void>()
 
-        if (!frame) return
+    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
 
-        frameObserver.observe(frame)
+      const frame = reader.spineItemsManager
+        .get(itemId)
+        ?.renderer.getDocumentFrame()
 
-        const videos = frame.contentDocument?.body.getElementsByTagName(`video`)
+      if (!frame) return
 
-        const unobserveElements = Array.from(videos || []).map((element) => {
-          elementObserver.observe(element)
+      frameObserver.observe(frame)
 
-          return () => elementObserver.unobserve(element)
+      const videos = frame.contentDocument?.body.getElementsByTagName(`video`)
+
+      const unobserveElements = Array.from(videos || []).map((element) => {
+        elementObserver.observe(element)
+
+        return () => elementObserver.unobserve(element)
+      })
+
+      const cleanup = () => {
+        frameObserver.unobserve(frame)
+        unobserveElements.forEach((unobserve) => {
+          unobserve()
         })
+      }
 
-        destroy(() => {
-          frameObserver.unobserve(frame)
-          unobserveElements.forEach((unobserve) => {
-            unobserve()
-          })
-        })
-      },
-    )
+      cleanupByItemId.set(itemId, cleanup)
+    })
+
+    reader.hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
+    })
 
     const destroy = () => {
       frameObserver.disconnect()
       elementObserver.disconnect()
+      cleanupByItemId.clear()
       reader.destroy()
     }
 

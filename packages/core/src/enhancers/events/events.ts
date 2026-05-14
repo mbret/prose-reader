@@ -21,59 +21,67 @@ export const eventsEnhancer =
   ) =>
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
+    const cleanupByItemId = new Map<string, () => void>()
 
-    reader.hookManager.register(
-      `item.onDocumentLoad`,
-      ({ destroy, itemId }) => {
-        const item = reader.spineItemsManager.get(itemId)
+    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
 
-        const frame = item?.renderer.getDocumentFrame()
+      const item = reader.spineItemsManager.get(itemId)
 
-        if (!frame || !item) return
+      const frame = item?.renderer.getDocumentFrame()
 
-        /**
-         * Register event listener for all mouse/pointer event in order to
-         * passthrough events to main document
-         */
-        const unregister = passthroughEvents.map((event) => {
-          const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
-            let convertedEvent = e
-            /**
-             * We have to create a new fake event since the original one is already dispatched
-             * on original frame.
-             *
-             * @see Failed to execute 'dispatchEvent' on 'EventTarget': The event is already being dispatched.
-             */
-            if (isPointerEvent(e)) {
-              convertedEvent = new PointerEvent(e.type, e)
-            }
+      if (!frame || !item) return
 
-            if (convertedEvent !== e) {
-              const normalizedEvent = normalizeEventForViewport(
-                convertedEvent,
-                e,
-                reader.spine.locator,
-                reader.viewport,
-              )
-
-              reader.context.value.rootElement?.dispatchEvent(normalizedEvent)
-            }
+      /**
+       * Register event listener for all mouse/pointer event in order to
+       * passthrough events to main document
+       */
+      const unregister = passthroughEvents.map((event) => {
+        const listener = (e: MouseEvent | PointerEvent | TouchEvent) => {
+          let convertedEvent = e
+          /**
+           * We have to create a new fake event since the original one is already dispatched
+           * on original frame.
+           *
+           * @see Failed to execute 'dispatchEvent' on 'EventTarget': The event is already being dispatched.
+           */
+          if (isPointerEvent(e)) {
+            convertedEvent = new PointerEvent(e.type, e)
           }
 
-          frame.contentDocument?.addEventListener(event, listener)
+          if (convertedEvent !== e) {
+            const normalizedEvent = normalizeEventForViewport(
+              convertedEvent,
+              e,
+              reader.spine.locator,
+              reader.viewport,
+            )
 
-          return () => {
-            frame.contentDocument?.removeEventListener(event, listener)
+            reader.context.value.rootElement?.dispatchEvent(normalizedEvent)
           }
-        })
+        }
 
-        destroy(() => {
-          unregister.forEach((cb) => {
-            cb()
-          })
+        frame.contentDocument?.addEventListener(event, listener)
+
+        return () => {
+          frame.contentDocument?.removeEventListener(event, listener)
+        }
+      })
+
+      const cleanup = () => {
+        unregister.forEach((cb) => {
+          cb()
         })
-      },
-    )
+      }
+
+      cleanupByItemId.set(itemId, cleanup)
+    })
+
+    reader.hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
+    })
 
     return reader
   }

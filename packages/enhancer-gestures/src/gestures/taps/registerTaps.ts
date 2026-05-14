@@ -67,11 +67,9 @@ export const registerTaps = ({
               )
             : undefined
 
-          const beforeTapResults$ = hookManager.execute(
-            "beforeTapGesture",
-            undefined,
-            { event$: of({ event, page: spineItemPageInfo }) },
-          )
+          const beforeTapResults$ = hookManager.execute("beforeTapGesture", {
+            event$: of({ event, page: spineItemPageInfo }),
+          })
 
           return combineLatest([...beforeTapResults$, of(true)]).pipe(
             first(),

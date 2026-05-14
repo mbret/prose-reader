@@ -10,7 +10,7 @@ export const fixIframeScrollbar = (reader: Reader) => {
    * element but I feel like this could have side effects and therefore it's better
    * to just disable it the old way even if this is deprecated.
    */
-  reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+  reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
     const spineItem = reader.spineItemsManager.get(itemId)
     const element = spineItem?.renderer.getDocumentFrame()
 

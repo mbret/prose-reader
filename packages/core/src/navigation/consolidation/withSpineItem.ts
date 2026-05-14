@@ -1,4 +1,5 @@
 import { map, type Observable } from "rxjs"
+import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
@@ -16,7 +17,9 @@ export const withSpineItem =
     spineItemsManager,
     navigationResolver,
     spineLocator,
+    cfi: cfiManager,
   }: {
+    cfi: CfiManager
     context: Context
     settings: ReaderSettingsManager
     spineItemsManager: SpineItemsManager
@@ -60,7 +63,7 @@ export const withSpineItem =
        * - we can grab safely the item
        */
       if (cfi) {
-        const existingSpineItem = spineItemsManager.getSpineItemFromCfi(cfi)
+        const existingSpineItem = cfiManager.getSpineItemFromCfi(cfi)
 
         if (existingSpineItem) return existingSpineItem
       }

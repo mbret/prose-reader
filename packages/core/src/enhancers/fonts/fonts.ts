@@ -1,8 +1,8 @@
 import {
+  map,
   type Observable,
   type ObservedValueOf,
   Subject,
-  map,
   takeUntil,
 } from "rxjs"
 import { pairwise, tap } from "rxjs/operators"
@@ -110,7 +110,7 @@ export const fontsEnhancer =
     /**
      * Make sure we apply the style to any new item loaded.
      */
-    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
 
       if (item?.renditionLayout !== `pre-paginated`) {

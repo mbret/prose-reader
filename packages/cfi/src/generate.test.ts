@@ -529,7 +529,7 @@ describe("CFI Generation", () => {
 
       // Skip further tests if the parsed result doesn't have the expected structure
       if (!("parent" in parsed)) return
-      if (!parsed.start || !parsed.start[0]) return
+      if (!parsed.start?.[0]) return
 
       // Check text assertions in the start part
       const startParts = parsed.start[0]
@@ -664,7 +664,7 @@ describe("CFI Generation", () => {
   })
 
   describe("indirection", () => {
-    it("should generate a CFI with spine indirection", () => {
+    it("should generate a CFI with spine itemref reference", () => {
       const parser = new DOMParser()
       const doc = parser.parseFromString(
         `<html xmlns="http://www.w3.org/1999/xhtml">
@@ -686,7 +686,7 @@ describe("CFI Generation", () => {
       expect(cfi).toBe("epubcfi(/6/4[chap01ref]!/2[body01]/2[para01])")
     })
 
-    it("should generate a CFI with spine indirection and offset", () => {
+    it("should generate a CFI with spine itemref reference and offset", () => {
       const parser = new DOMParser()
       const doc = parser.parseFromString(
         `<html xmlns="http://www.w3.org/1999/xhtml">
@@ -709,7 +709,7 @@ describe("CFI Generation", () => {
       expect(cfi).toBe("epubcfi(/6/4[chap01ref]!/2[body01]/2[para01]:5)")
     })
 
-    it("should generate a range CFI with spine indirection", () => {
+    it("should generate a range CFI with spine itemref reference", () => {
       const parser = new DOMParser()
       const doc = parser.parseFromString(
         `<html xmlns="http://www.w3.org/1999/xhtml">
@@ -748,7 +748,7 @@ describe("CFI Generation", () => {
       )
     })
 
-    it("should generate a CFI with spine indirection and extensions", () => {
+    it("should generate a CFI with spine itemref reference and extensions", () => {
       const div = document.createElement("div")
       div.id = "test"
       document.body.appendChild(div)

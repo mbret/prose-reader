@@ -203,7 +203,7 @@ export class ScrollNavigationController
       )
       .subscribe()
 
-    this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
+    this.hookManager.execute("onViewportOffsetAdjust", undefined)
   }
 
   public update(

@@ -16,6 +16,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
+import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import { Report } from "../report"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -106,6 +107,7 @@ export class InternalNavigator extends DestroyableClass {
     protected navigationResolver: ReturnType<typeof createNavigationResolver>,
     protected spine: Spine,
     protected viewport: Viewport,
+    protected cfiManager: CfiManager,
     /**
      * While held, automatic position adjustments (correction, restoration)
      * are deferred so they don't fight the user's direct manipulation.
@@ -141,6 +143,7 @@ export class InternalNavigator extends DestroyableClass {
         withDirection({ context, settings }),
         withSpineItem({
           context,
+          cfi: cfiManager,
           navigationResolver,
           settings,
           spineItemsManager: spine.spineItemsManager,
@@ -289,6 +292,7 @@ export class InternalNavigator extends DestroyableClass {
        */
       withSpineItem({
         context,
+        cfi: cfiManager,
         navigationResolver,
         settings,
         spineItemsManager: spine.spineItemsManager,

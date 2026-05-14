@@ -8,7 +8,8 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs"
-import { generateCfiForSpineItemPage, generateRootCfi, isRootCfi } from "../cfi"
+import type { CfiManager } from "../cfi"
+import { isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -27,6 +28,7 @@ export class PaginationController extends DestroyableClass {
     protected spine: Spine,
     protected spineItemLocator: ReturnType<typeof createSpineItemLocator>,
     protected isNavigationLocked$: Observable<boolean>,
+    protected cfi: CfiManager,
   ) {
     super()
 
@@ -123,11 +125,11 @@ export class PaginationController extends DestroyableClass {
               isRootCfi(endLastCfi)
 
             const beginCfi = shouldUpdateBeginCfi
-              ? generateRootCfi(beginSpineItem.item)
+              ? this.cfi.generateRootCfi(beginSpineItem.item)
               : beginLastCfi
 
             const endCfi = shouldUpdateEndCfi
-              ? generateRootCfi(endSpineItem.item)
+              ? this.cfi.generateRootCfi(endSpineItem.item)
               : endLastCfi
 
             const beginNumberOfPagesInSpineItem = beginSpineItem.numberOfPages
@@ -190,17 +192,17 @@ export class PaginationController extends DestroyableClass {
         // @todo only update long cfi if the item layout change but specifically its content
         this.pagination.update({
           beginCfi: beginPageEntry?.firstVisibleNode
-            ? generateCfiForSpineItemPage({
+            ? this.cfi.generateCfiForSpineItemPage({
                 spineItem: beginSpineItem.item,
                 pageNode: beginPageEntry?.firstVisibleNode,
               })
-            : generateRootCfi(beginSpineItem.item),
+            : this.cfi.generateRootCfi(beginSpineItem.item),
           endCfi: endPageEntry?.firstVisibleNode
-            ? generateCfiForSpineItemPage({
+            ? this.cfi.generateCfiForSpineItemPage({
                 spineItem: endSpineItem.item,
                 pageNode: endPageEntry?.firstVisibleNode,
               })
-            : generateRootCfi(endSpineItem.item),
+            : this.cfi.generateRootCfi(endSpineItem.item),
         })
       }),
     )

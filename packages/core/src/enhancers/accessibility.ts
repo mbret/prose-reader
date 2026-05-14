@@ -21,21 +21,24 @@ export const accessibilityEnhancer =
       })
     }, {})
 
-    reader.hookManager.register(
-      `item.onDocumentLoad`,
-      ({ itemId, destroy }) => {
-        const item = reader.spineItemsManager.get(itemId)
+    const cleanupByItemId = new Map<string, () => void>()
 
-        if (!item) return
+    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
 
-        const frame = item.renderer.getDocumentFrame()
+      const item = reader.spineItemsManager.get(itemId)
 
-        if (!frame) return
+      if (!item) return
 
-        upsertCSSToFrame(
-          frame,
-          `prose-reader-accessibility`,
-          `
+      const frame = item.renderer.getDocumentFrame()
+
+      if (!frame) return
+
+      upsertCSSToFrame(
+        frame,
+        `prose-reader-accessibility`,
+        `
               :focus-visible {
                 ${
                   /*
@@ -46,21 +49,27 @@ export const accessibilityEnhancer =
                 outline: -webkit-focus-ring-color auto 1px;
               }
             `,
-        )
+      )
 
-        const links = frame.contentDocument?.body.querySelectorAll(`a`)
+      const links = frame.contentDocument?.body.querySelectorAll(`a`)
 
+      links?.forEach((link) => {
+        observer.observe(link)
+      })
+
+      const cleanup = () => {
         links?.forEach((link) => {
-          observer.observe(link)
+          observer.unobserve(link)
         })
+      }
 
-        destroy(() => {
-          links?.forEach((link) => {
-            observer.unobserve(link)
-          })
-        })
-      },
-    )
+      cleanupByItemId.set(itemId, cleanup)
+    })
+
+    reader.hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
+    })
 
     return {
       ...reader,

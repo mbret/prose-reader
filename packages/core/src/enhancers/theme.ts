@@ -109,7 +109,7 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
   /**
    * Make sure to apply theme on item load
    */
-  reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+  reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
     const item = reader.spineItemsManager.get(itemId)
 
     /**

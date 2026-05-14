@@ -525,7 +525,7 @@ const generateSpineCfi = (
  * });
  *
  * @example
- * // Generate a CFI with spine indirection
+ * // Generate a CFI with spine itemref reference
  * const cfi = generate({
  *   node: chapterNode,
  *   spineIndex: 1,
@@ -559,7 +559,7 @@ export function generate(
 
   // Non Range case
   if (!("start" in position)) {
-    // Add spine indirection if specified
+    // Add spine itemref reference if specified
     if (position.spineIndex !== undefined) {
       cfi = generateSpineCfi(
         position.spineIndex,
@@ -587,7 +587,7 @@ export function generate(
   // Range case
   const { start, end } = position
 
-  // Add spine indirection if specified (use start position's spine info)
+  // Add spine itemref reference if specified (use start position's spine info)
   if (start.spineIndex !== undefined) {
     cfi = generateSpineCfi(
       start.spineIndex,

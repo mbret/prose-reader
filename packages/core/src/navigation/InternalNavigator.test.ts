@@ -1,5 +1,6 @@
 import { firstValueFrom, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
+import { CfiManager } from "../cfi"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { Pagination } from "../pagination/Pagination"
@@ -17,8 +18,9 @@ import type { InternalNavigationEntry } from "./types"
 const createNavigatorContext = () => {
   const context = new Context()
   const settings = new ReaderSettingsManager({}, context)
-  const spineItemsManager = new SpineItemsManager(context, settings)
   const hookManager = new HookManager()
+  const spineItemsManager = new SpineItemsManager(context, settings)
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
@@ -36,6 +38,7 @@ const createNavigatorContext = () => {
     viewport,
   )
   const navigator = createNavigator({
+    cfi,
     context,
     settings,
     spineItemsManager,

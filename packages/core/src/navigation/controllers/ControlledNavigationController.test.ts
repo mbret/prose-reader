@@ -15,8 +15,8 @@ const createTestController = () => {
   const context = new Context()
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
-  const viewport = new Viewport(context, settings)
   const spineItemsManager = new SpineItemsManager(context, settings)
+  const viewport = new Viewport(context, settings)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,

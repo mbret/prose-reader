@@ -23,9 +23,14 @@ export class ReaderHighlights extends DestroyableClass {
   ) {
     super()
 
+    const cleanupByItemId = new Map<string, () => void>()
+
     this.reader.hookManager.register(
       "item.onDocumentLoad",
-      ({ itemId, destroy }) => {
+      async ({ itemId }) => {
+        cleanupByItemId.get(itemId)?.()
+        cleanupByItemId.delete(itemId)
+
         const spineItem = reader.spineItemsManager.get(itemId)
 
         if (!spineItem) return
@@ -50,7 +55,7 @@ export class ReaderHighlights extends DestroyableClass {
           spineItemHighlights,
         ])
 
-        destroy(() => {
+        const cleanup = () => {
           this.spineItemHighlights.next(
             this.spineItemHighlights
               .getValue()
@@ -58,7 +63,17 @@ export class ReaderHighlights extends DestroyableClass {
           )
 
           spineItemHighlights.destroy()
-        })
+        }
+
+        cleanupByItemId.set(itemId, cleanup)
+      },
+    )
+
+    this.reader.hookManager.register(
+      "item.onDocumentUnload",
+      async ({ itemId }) => {
+        cleanupByItemId.get(itemId)?.()
+        cleanupByItemId.delete(itemId)
       },
     )
 

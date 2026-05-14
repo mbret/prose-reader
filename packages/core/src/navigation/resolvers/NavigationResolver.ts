@@ -1,4 +1,4 @@
-import { resolveCfi } from "../../cfi"
+import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import { Report } from "../../report"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -29,7 +29,9 @@ export const createNavigationResolver = ({
   settings,
   spine,
   viewport,
+  cfi: cfiManager,
 }: {
+  cfi: CfiManager
   context: Context
   spineItemsManager: SpineItemsManager
   locator: SpineLocator
@@ -49,10 +51,12 @@ export const createNavigationResolver = ({
   ) => a.x !== b.x || a.y !== b.y
 
   const getNavigationForCfi = (cfi: string): SpinePosition | undefined => {
-    const spineItem = spineItemsManager.getSpineItemFromCfi(cfi)
-    const { node, offset = 0 } = resolveCfi({
+    const {
+      node,
+      offset = 0,
+      spineItem,
+    } = cfiManager.resolveCfi({
       cfi,
-      spineItemsManager,
     })
 
     if (!spineItem) {

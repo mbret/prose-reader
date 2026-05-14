@@ -259,7 +259,7 @@ export class ControlledNavigationController
     const translation = spinePositionToTranslation(position)
     element.style.transform = `translate(${translation.x}px, ${translation.y}px)`
 
-    this.hookManager.execute("onViewportOffsetAdjust", undefined, {})
+    this.hookManager.execute("onViewportOffsetAdjust", undefined)
   }
 
   navigate(navigation: NavigationModeControllerNavigationEntry) {

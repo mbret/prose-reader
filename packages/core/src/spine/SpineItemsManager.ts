@@ -1,5 +1,4 @@
 import { BehaviorSubject } from "rxjs"
-import { parseCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem, type SpineItemReference } from "../spineItem/SpineItem"
@@ -59,17 +58,6 @@ export class SpineItemsManager extends DestroyableClass {
       ...this.orderedSpineItemsSubject.getValue(),
       ...spineItems,
     ])
-  }
-
-  // @todo move
-  getSpineItemFromCfi(cfi: string) {
-    const { itemIndex } = parseCfi(cfi)
-
-    if (itemIndex !== undefined) {
-      return this.get(itemIndex)
-    }
-
-    return undefined
   }
 
   get items() {

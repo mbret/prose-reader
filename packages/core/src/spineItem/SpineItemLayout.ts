@@ -54,7 +54,7 @@ export class SpineItemLayout extends DestroyableClass {
           const { blankPagePosition, minimumWidth } =
             this.computeLayoutInformation({ horizontalOffset, isLastItem })
 
-          this.hookManager.execute(`item.onBeforeLayout`, undefined, {
+          this.hookManager.execute(`item.onBeforeLayout`, {
             blankPagePosition,
             item: this.item,
             minimumWidth,
@@ -80,7 +80,7 @@ export class SpineItemLayout extends DestroyableClass {
                 edgeY,
               }),
               map((data) => {
-                this.hookManager.execute(`item.onAfterLayout`, undefined, {
+                this.hookManager.execute(`item.onAfterLayout`, {
                   blankPagePosition,
                   item: this.item,
                   minimumWidth,

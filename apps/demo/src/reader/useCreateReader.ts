@@ -1,3 +1,4 @@
+import { cbzEnhancer } from "@prose-reader/cbz"
 import { createReader } from "@prose-reader/core"
 import { annotationsEnhancer } from "@prose-reader/enhancer-annotations"
 import { audioEnhancer } from "@prose-reader/enhancer-audio"
@@ -25,7 +26,7 @@ export const createAppReader = refitEnhancer(
           searchEnhancer(
             audioEnhancer(
               // __
-              createReader,
+              cbzEnhancer(createReader),
             ),
           ),
         ),

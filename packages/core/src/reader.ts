@@ -1,11 +1,6 @@
 import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
 import { map, skip, takeUntil, tap } from "rxjs/operators"
-import {
-  generateCfiForSpineItemPage,
-  generateCfiFromRange,
-  parseCfi,
-} from "./cfi"
-import { resolveCfi } from "./cfi/resolve"
+import { CfiManager } from "./cfi"
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,
   HTML_PREFIX,
@@ -48,6 +43,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settingsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -65,6 +61,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     viewport,
   )
   const navigator = createNavigator({
+    cfi,
     context,
     spineItemsManager,
     hookManager,
@@ -79,6 +76,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spine,
     spineItemLocator,
     navigator.isLocked$,
+    cfi,
   )
 
   // bridge all navigation stream with reader so they can be shared across app
@@ -169,14 +167,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     context,
     spine,
     hookManager,
-    cfi: {
-      generateCfiFromRange,
-      parseCfi,
-      generateCfiForSpineItemPage,
-      resolveCfi: (
-        params: Omit<Parameters<typeof resolveCfi>[0], "spineItemsManager">,
-      ) => resolveCfi({ ...params, spineItemsManager }),
-    },
+    cfi,
     navigation: navigator,
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,

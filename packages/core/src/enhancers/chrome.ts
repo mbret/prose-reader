@@ -55,7 +55,7 @@ export const chromeEnhancer =
         rootElement.addEventListener(`scroll`, onScroll)
       })
 
-    reader.hookManager.register(`item.onDocumentLoad`, ({ itemId }) => {
+    reader.hookManager.register(`item.onDocumentLoad`, async ({ itemId }) => {
       const item = reader.spineItemsManager.get(itemId)
       const frame = item?.renderer.getDocumentFrame()
 

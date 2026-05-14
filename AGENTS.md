@@ -29,3 +29,23 @@ Actions such as navigation can happens anytime (eg: user tap the screen) and in 
 - When you need to use `as`, always add a code comment explaining why it is required in that context.
 - Prefer type guards, runtime validation, and stricter data structures to ensure type safety and clarity instead of using type assertions.
 - Rationale: Overuse of `as` can hide bugs, undermine type safety, and reduce code maintainability and refactorability.
+
+## Avoid redundant DOM writes
+
+When writing frontend code, avoid setting DOM attributes or properties to the same value they already have, especially in hot paths.
+
+Redundant DOM writes can still have costs: they may update internal attribute state, notify mutation observers, trigger custom element reactions, invalidate style/layout work, or cause unnecessary accessibility/rendering updates.
+
+### Applies to
+
+Be careful with repeated writes such as:
+
+```ts
+element.setAttribute(name, value);
+element.removeAttribute(name);
+element.className = nextClassName;
+element.textContent = nextText;
+input.value = nextValue;
+input.checked = nextChecked;
+element.hidden = nextHidden;
+```

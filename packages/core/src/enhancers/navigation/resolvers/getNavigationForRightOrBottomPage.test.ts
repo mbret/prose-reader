@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { CfiManager } from "../../../cfi"
 import { Context } from "../../../context/Context"
 import { HookManager } from "../../../hooks/HookManager"
 import { createNavigationResolver } from "../../../navigation/resolvers/NavigationResolver"
@@ -24,8 +25,9 @@ const createContext = () => {
     },
     context,
   )
-  const spineItemsManager = new SpineItemsManager(context, settings)
   const hookManager = new HookManager()
+  const spineItemsManager = new SpineItemsManager(context, settings)
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
@@ -80,6 +82,7 @@ const createContext = () => {
   spineItemsManager.addMany([spineItem])
 
   const navigationResolver = createNavigationResolver({
+    cfi,
     context,
     locator: spine.locator,
     settings,

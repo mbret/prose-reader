@@ -11,11 +11,7 @@ import {
   switchScan,
   withLatestFrom,
 } from "rxjs"
-import {
-  generateRootCfi,
-  type ProseParsedCfi,
-  type resolveCfi,
-} from "../../cfi"
+import type { ProseParsedCfi } from "../../cfi"
 import type { Reader } from "../../reader"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { deferIdle, idle } from "../../utils/rxjs"
@@ -26,7 +22,7 @@ type CfiLocatableResource = {
 
 export type LocatableResource = SpineItem | CfiLocatableResource
 
-export type ConsolidatedResource = ReturnType<typeof resolveCfi> &
+export type ConsolidatedResource = ReturnType<Reader["cfi"]["resolveCfi"]> &
   ProseParsedCfi &
   CfiLocatableResource & {
     itemPageIndex?: number
@@ -56,13 +52,13 @@ const toCfiLocatableResource = (
     throw new Error(`Spine item not found`)
   }
 
-  const cfi = generateRootCfi(item.item)
+  const cfi = reader.cfi.generateRootCfi(item.item)
 
   const parsedCfi = reader.cfi.parseCfi(cfi)
 
   return {
     ...parsedCfi,
-    cfi: generateRootCfi(item.item),
+    cfi,
     itemIndex: item.index,
     node: null,
   }
