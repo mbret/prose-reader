@@ -2,6 +2,11 @@ import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparate
 
 export type OpfItemrefLayoutHints = {
   readonly renditionLayout?: `reflowable` | `pre-paginated`
+  readonly renditionFlow?:
+    | `scrolled-continuous`
+    | `scrolled-doc`
+    | `paginated`
+    | `auto`
   readonly pageSpreadLeft?: true
   readonly pageSpreadRight?: true
 }
@@ -27,8 +32,23 @@ export const layoutHintsFromItemrefProperties = (
     renditionLayout = `pre-paginated`
   }
 
+  let renditionFlow: OpfItemrefLayoutHints["renditionFlow"]
+  if (tokens.includes(`rendition:flow-auto`)) {
+    renditionFlow = `auto`
+  }
+  if (tokens.includes(`rendition:flow-paginated`)) {
+    renditionFlow = `paginated`
+  }
+  if (tokens.includes(`rendition:flow-scrolled-doc`)) {
+    renditionFlow = `scrolled-doc`
+  }
+  if (tokens.includes(`rendition:flow-scrolled-continuous`)) {
+    renditionFlow = `scrolled-continuous`
+  }
+
   return {
     ...(renditionLayout !== undefined ? { renditionLayout } : {}),
+    ...(renditionFlow !== undefined ? { renditionFlow } : {}),
     ...(tokens.includes(`page-spread-left`)
       ? { pageSpreadLeft: true as const }
       : {}),

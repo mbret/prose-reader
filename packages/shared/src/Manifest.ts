@@ -63,6 +63,14 @@ export type Manifest = {
      * @see https://www.w3.org/TR/epub-33/#property-layout-global
      */
     renditionLayout?: `reflowable` | `pre-paginated`
+    /**
+     * @see https://www.w3.org/TR/epub-33/#property-flow-global
+     */
+    renditionFlow?:
+      | `scrolled-continuous`
+      | `scrolled-doc`
+      | `paginated`
+      | `auto`
     progressionWeight?: number
     pageSpreadLeft?: true | undefined
     pageSpreadRight?: true | undefined

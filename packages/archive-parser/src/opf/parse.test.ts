@@ -124,7 +124,7 @@ describe("parseOpf", () => {
   it("parses itemref properties into spine row hints", () => {
     const xml = opfWrap(
       `<manifest><item id="x" href="x.xhtml"/></manifest>` +
-        `<spine><itemref idref="x" properties="rendition:layout-pre-paginated page-spread-left"/></spine>`,
+        `<spine><itemref idref="x" properties="rendition:layout-pre-paginated rendition:flow-paginated page-spread-left"/></spine>`,
     )
 
     expect(parseOpf(xml).spineRows).toEqual([
@@ -133,6 +133,7 @@ describe("parseOpf", () => {
         id: "x",
         href: "x.xhtml",
         renditionLayout: `pre-paginated`,
+        renditionFlow: `paginated`,
         pageSpreadLeft: true,
       },
     ])
