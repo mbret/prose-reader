@@ -1,3 +1,4 @@
+import { streamerHooks } from "@prose-reader/cbz"
 import { createArchiveFromPdf } from "@prose-reader/enhancer-pdf"
 import { Streamer } from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
@@ -10,6 +11,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 export const webStreamer = new Streamer({
+  hooks: {
+    manifest: {
+      spine: streamerHooks.manifest.spine,
+    },
+    resource: streamerHooks.resource,
+  },
   /**
    * Local streamer is usually used for non serializable resources
    * and therefore requires the archive to be long lived. It usually should

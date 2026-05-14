@@ -2,10 +2,6 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 import type { Archive } from "../../archives/types"
-import {
-  buildVirtualPageSpreadResourcePath,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-} from "../../cbz/pageSpreadSplitManifest"
 import { generateManifestFromArchive } from "./index"
 
 const fakeContent = {
@@ -202,31 +198,15 @@ describe("Given non-epub image archive items with encodingFormat", () => {
 })
 
 describe("Given a non-epub image archive with a two-page spread filename", () => {
-  it("should expose two virtual pre-paginated spine items", async () => {
-    const spreadBasename = "p006-007 [dig] [Seven Seas] [danke-Empire] {HQ}.jpg"
+  it("should keep the original spine item without external streamer hooks", async () => {
+    const spreadBasename = "p006-007.jpg"
     const archive: Archive = {
       filename: "",
       records: [
         {
           ...fakeContent,
-          basename: "p005.jpg",
-          uri: "p005.jpg",
-          dir: false,
-          size: 1,
-          encodingFormat: "image/jpeg",
-        },
-        {
-          ...fakeContent,
           basename: spreadBasename,
           uri: spreadBasename,
-          dir: false,
-          size: 2,
-          encodingFormat: "image/jpeg",
-        },
-        {
-          ...fakeContent,
-          basename: "p008.jpg",
-          uri: "p008.jpg",
           dir: false,
           size: 1,
           encodingFormat: "image/jpeg",
@@ -235,150 +215,18 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
       close: () => Promise.resolve(),
     }
 
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: spreadBasename,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
-      originalUri: spreadBasename,
-    })
     const manifest = await generateManifestFromArchive(archive)
 
     expect(manifest.spineItems).toEqual([
       {
-        href: "file://p005.jpg",
-        id: "0.p005.jpg",
+        href: "file://p006-007.jpg",
+        id: "0.p006-007.jpg",
         index: 0,
         mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
-        progressionWeight: 1 / 3,
+        progressionWeight: 1,
         renditionLayout: "pre-paginated",
-      },
-      {
-        href: encodeURI(`file://${leftResourcePath}`),
-        id: `1.${spreadBasename}.006`,
-        index: 1,
-        mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-        pageSpreadLeft: true,
-        pageSpreadRight: undefined,
-        progressionWeight: 1 / 6,
-        renditionLayout: "pre-paginated",
-      },
-      {
-        href: encodeURI(`file://${rightResourcePath}`),
-        id: `1.${spreadBasename}.007`,
-        index: 2,
-        mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-        pageSpreadLeft: undefined,
-        pageSpreadRight: true,
-        progressionWeight: 1 / 6,
-        renditionLayout: "pre-paginated",
-      },
-      {
-        href: encodeURI("file://p008.jpg"),
-        id: "2.p008.jpg",
-        index: 3,
-        mediaType: "image/jpeg",
-        pageSpreadLeft: undefined,
-        pageSpreadRight: undefined,
-        progressionWeight: 1 / 3,
-        renditionLayout: "pre-paginated",
-      },
-    ])
-
-    expect(manifest.items).toContainEqual({
-      href: encodeURI(`file://${leftResourcePath}`),
-      id: `1.${spreadBasename}.006`,
-      mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-    })
-    expect(manifest.items).toContainEqual({
-      href: encodeURI(`file://${rightResourcePath}`),
-      id: `1.${spreadBasename}.007`,
-      mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-    })
-  })
-
-  it("should map the lower page to the right slot for RTL manga", async () => {
-    const spreadBasename = "p006-007.jpg"
-    const archive: Archive = {
-      filename: "",
-      records: [
-        {
-          ...fakeContent,
-          basename: "ComicInfo.xml",
-          uri: "ComicInfo.xml",
-          dir: false,
-          size: 1,
-          string: () =>
-            Promise.resolve(
-              `<ComicInfo><Manga>YesAndRightToLeft</Manga></ComicInfo>`,
-            ),
-        },
-        {
-          ...fakeContent,
-          basename: spreadBasename,
-          uri: spreadBasename,
-          dir: false,
-          size: 1,
-          encodingFormat: "image/jpeg",
-        },
-      ],
-      close: () => Promise.resolve(),
-    }
-
-    const manifest = await generateManifestFromArchive(archive)
-
-    expect(manifest.readingDirection).toBe("rtl")
-    expect(manifest.spineItems).toMatchObject([
-      {
-        id: `1.${spreadBasename}.006`,
-        pageSpreadLeft: undefined,
-        pageSpreadRight: true,
-      },
-      {
-        id: `1.${spreadBasename}.007`,
-        pageSpreadLeft: true,
-        pageSpreadRight: undefined,
-      },
-    ])
-  })
-
-  it("should create virtual hrefs when baseUrl has no trailing slash", async () => {
-    const spreadBasename = "p006-007.jpg"
-    const archive: Archive = {
-      filename: "",
-      records: [
-        {
-          ...fakeContent,
-          basename: spreadBasename,
-          uri: spreadBasename,
-          dir: false,
-          size: 1,
-          encodingFormat: "image/jpeg",
-        },
-      ],
-      close: () => Promise.resolve(),
-    }
-    const baseUrl = "http://localhost:9000/streamer/book"
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: spreadBasename,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
-      originalUri: spreadBasename,
-    })
-
-    const manifest = await generateManifestFromArchive(archive, { baseUrl })
-
-    expect(manifest.spineItems).toMatchObject([
-      {
-        href: encodeURI(`${baseUrl}/${leftResourcePath}`),
-      },
-      {
-        href: encodeURI(`${baseUrl}/${rightResourcePath}`),
       },
     ])
   })
@@ -441,6 +289,72 @@ describe("Given non-epub audio archive items without encodingFormat", () => {
 })
 
 describe("Given archive with folders", () => {
+  it("should run spine hooks after content normalization and before derived metadata", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "Chapter 1/",
+          uri: "Chapter 1/",
+          dir: true,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "Chapter 1/page_1.jpg",
+          dir: false,
+          encodingFormat: "image/jpeg",
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "com.kobobooks.display-options.xml",
+          uri: "com.kobobooks.display-options.xml",
+          dir: false,
+          size: 1,
+          string: () =>
+            Promise.resolve(
+              `<display_options><platform name="*"><option name="fixed-layout">true</option></platform></display_options>`,
+            ),
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+    const stateSeenByHook: Array<{
+      nav: Manifest["nav"]
+      renditionLayout: Manifest["renditionLayout"]
+      spineItemRenditionLayout: Manifest["spineItems"][number]["renditionLayout"]
+    }> = []
+
+    const manifest = await generateManifestFromArchive(archive, {
+      hooks: {
+        spine: [
+          () => async (manifest) => {
+            stateSeenByHook.push({
+              nav: manifest.nav,
+              renditionLayout: manifest.renditionLayout,
+              spineItemRenditionLayout: manifest.spineItems[0]?.renditionLayout,
+            })
+
+            return manifest
+          },
+        ],
+      },
+    })
+
+    expect(stateSeenByHook).toEqual([
+      {
+        nav: undefined,
+        renditionLayout: undefined,
+        spineItemRenditionLayout: "pre-paginated",
+      },
+    ])
+    expect(manifest.renditionLayout).toBe("pre-paginated")
+    expect(manifest.nav?.toc).toHaveLength(1)
+  })
+
   it("should create correct toc", async () => {
     const archive: Archive = {
       filename: "",

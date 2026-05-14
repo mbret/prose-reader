@@ -1,6 +1,5 @@
 import { escapeXmlAttributeValue } from "@prose-reader/shared"
-import type { Archive } from "../archives/types"
-import type { HookResource } from "../generators/resources/hooks/types"
+import type { Archive, HookResource } from "@prose-reader/streamer"
 import {
   PAGE_SPREAD_RESOURCE_PREFIX,
   PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,

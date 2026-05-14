@@ -1,6 +1,6 @@
 import type { Manifest } from "@prose-reader/shared"
+import type { Archive } from "@prose-reader/streamer"
 import { describe, expect, it } from "vitest"
-import type { Archive } from "../archives/types"
 import {
   buildVirtualPageSpreadResourcePath,
   isPageSpreadSplitSupportedArchiveRecord,
@@ -75,6 +75,114 @@ describe("isPageSpreadSplitSupportedArchiveRecord", () => {
 })
 
 describe("pageSpreadSplit", () => {
+  it("should expose two virtual pre-paginated spine items", async () => {
+    const spreadBasename = "p006-007 [dig] [Seven Seas] [danke-Empire] {HQ}.jpg"
+    const archive = createArchive([
+      {
+        ...fakeContent,
+        basename: spreadBasename,
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: spreadBasename,
+      },
+    ])
+    const manifest = createManifest({
+      href: `file://${spreadBasename}`,
+      id: `0.${spreadBasename}`,
+      mediaType: "image/jpeg",
+    })
+    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "left",
+      originalUri: spreadBasename,
+    })
+    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+      cropSide: "right",
+      originalUri: spreadBasename,
+    })
+
+    await expect(
+      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+    ).resolves.toMatchObject({
+      spineItems: [
+        {
+          href: encodeURI(`file://${leftResourcePath}`),
+          id: `0.${spreadBasename}.006`,
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          pageSpreadLeft: true,
+          pageSpreadRight: undefined,
+          progressionWeight: 1 / 2,
+          renditionLayout: "pre-paginated",
+        },
+        {
+          href: encodeURI(`file://${rightResourcePath}`),
+          id: `0.${spreadBasename}.007`,
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          pageSpreadLeft: undefined,
+          pageSpreadRight: true,
+          progressionWeight: 1 / 2,
+          renditionLayout: "pre-paginated",
+        },
+      ],
+      items: [
+        {
+          href: `file://${spreadBasename}`,
+          id: `0.${spreadBasename}`,
+          mediaType: "image/jpeg",
+        },
+        {
+          href: encodeURI(`file://${leftResourcePath}`),
+          id: `0.${spreadBasename}.006`,
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+        },
+        {
+          href: encodeURI(`file://${rightResourcePath}`),
+          id: `0.${spreadBasename}.007`,
+          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+        },
+      ],
+    })
+  })
+
+  it("should map the lower page to the right slot for RTL manga", async () => {
+    const spreadBasename = "p006-007.jpg"
+    const archive = createArchive([
+      {
+        ...fakeContent,
+        basename: spreadBasename,
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: spreadBasename,
+      },
+    ])
+    const manifest: Manifest = {
+      ...createManifest({
+        href: `file://${spreadBasename}`,
+        id: `0.${spreadBasename}`,
+        mediaType: "image/jpeg",
+      }),
+      readingDirection: "rtl",
+    }
+
+    await expect(
+      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+    ).resolves.toMatchObject({
+      spineItems: [
+        {
+          id: `0.${spreadBasename}.006`,
+          pageSpreadLeft: undefined,
+          pageSpreadRight: true,
+        },
+        {
+          id: `0.${spreadBasename}.007`,
+          pageSpreadLeft: true,
+          pageSpreadRight: undefined,
+        },
+      ],
+    })
+  })
+
   it("should not check archives containing an OPF file", async () => {
     const archive = createArchive([
       {

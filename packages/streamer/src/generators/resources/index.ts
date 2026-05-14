@@ -1,5 +1,5 @@
 import type { Archive } from "../.."
-import { pageSpreadSplitResourceHook } from "../../cbz/pageSpreadSplitResource"
+import type { StreamerResourceHookFactory } from "../../hooks"
 import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"
 import { cssFixHook } from "./hooks/cssFixHook"
@@ -22,17 +22,19 @@ import type { HookResource } from "./hooks/types"
 export const generateResourceFromArchive = async (
   archive: Archive,
   resourcePath: string,
+  { hooks = [] }: { hooks?: StreamerResourceHookFactory[] } = {},
 ) => {
   const defaultResource: HookResource = {
     params: {},
   }
+  const externalHooks = hooks.map((hook) => hook({ archive, resourcePath }))
 
   /**
    * EPUB: `defaultHook` calls `readArchiveOpf` → repeated OPF I/O + parse per
    * resource until we thread `ArchiveOpfParsed` here (see export JSDoc).
    */
-  const hooks = [
-    pageSpreadSplitResourceHook({ archive, resourcePath }),
+  const resourceHooks = [
+    ...externalHooks,
     defaultHook({ archive, resourcePath }),
     selfClosingTagsFixHook({ archive, resourcePath }),
     cssFixHook({ archive, resourcePath }),
@@ -40,7 +42,7 @@ export const generateResourceFromArchive = async (
   ]
 
   try {
-    const resource = await hooks.reduce(async (manifest, gen) => {
+    const resource = await resourceHooks.reduce(async (manifest, gen) => {
       return await gen(await manifest)
     }, Promise.resolve(defaultResource))
 

@@ -9,6 +9,17 @@ export { configure } from "./configure"
 export { getArchiveOpfInfo } from "./epubs/getArchiveOpfInfo"
 export { generateManifestFromArchive } from "./generators/manifest"
 export { generateResourceFromArchive } from "./generators/resources"
+export type {
+  HookResource,
+  StreamerHooks,
+  StreamerManifestHook,
+  StreamerManifestHookContext,
+  StreamerManifestHookFactory,
+  StreamerManifestHooks,
+  StreamerResourceHook,
+  StreamerResourceHookContext,
+  StreamerResourceHookFactory,
+} from "./hooks"
 export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 export { Streamer } from "./Streamer"
 

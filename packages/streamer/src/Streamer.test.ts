@@ -62,3 +62,49 @@ describe("Given a manifest href with encoded local characters", () => {
     expect(resourceResponse.headers.get("Content-Type")).toBe("image/jpg")
   })
 })
+
+describe("Given streamer hooks", () => {
+  it("should thread hooks into manifest and resource generation", async () => {
+    const archive: Archive = {
+      close: () => Promise.resolve(),
+      filename: "",
+      records: [],
+    }
+    const streamer = new Streamer({
+      cleanArchiveAfter: Infinity,
+      getArchive: async () => archive,
+      hooks: {
+        manifest: {
+          spine: [
+            () => async (manifest) => ({
+              ...manifest,
+              title: "hooked manifest",
+            }),
+          ],
+        },
+        resource: [
+          () => async (resource) => ({
+            ...resource,
+            body: "hooked resource",
+            params: {
+              ...resource.params,
+              contentType: "text/plain",
+            },
+          }),
+        ],
+      },
+    })
+
+    const manifestResponse = await streamer.fetchManifest({ key: "book" })
+    const resourceResponse = await streamer.fetchResource({
+      key: "book",
+      resourcePath: "virtual.txt",
+    })
+
+    expect(await manifestResponse.json()).toMatchObject({
+      title: "hooked manifest",
+    })
+    expect(await resourceResponse.text()).toBe("hooked resource")
+    expect(resourceResponse.headers.get("Content-Type")).toBe("text/plain")
+  })
+})

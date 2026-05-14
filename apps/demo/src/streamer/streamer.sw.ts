@@ -1,3 +1,4 @@
+import { streamerHooks } from "@prose-reader/cbz"
 import {
   createArchiveFromJszip,
   createArchiveFromText,
@@ -9,6 +10,12 @@ import { getBlobFromKey, getStreamerBaseUrl } from "./utils.shared"
 
 export const swStreamer = new ServiceWorkerStreamer({
   cleanArchiveAfter: 5 * 60 * 1000,
+  hooks: {
+    manifest: {
+      spine: streamerHooks.manifest.spine,
+    },
+    resource: streamerHooks.resource,
+  },
   getUriInfo: (event) => {
     const url = new URL(event.request.url)
 

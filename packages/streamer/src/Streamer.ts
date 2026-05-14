@@ -14,6 +14,7 @@ import { createArchiveLoader } from "./archives/archiveLoader"
 import type { Archive } from "./archives/types"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
+import type { StreamerHooks } from "./hooks"
 import { createRangeResponse } from "./utils/createRangeResponse"
 
 type OnError = (error: unknown) => Response
@@ -58,18 +59,22 @@ export class Streamer {
 
     return new Response(String(error), { status: 500 })
   }
+  protected hooks: StreamerHooks
   protected onManifestSuccess: OnManifestSuccess
   protected lastAccessedKey: string | undefined
 
   constructor({
+    hooks,
     onError,
     onManifestSuccess,
     ...rest
   }: Parameters<typeof createArchiveLoader>[0] & {
+    hooks?: StreamerHooks
     onError?: OnError
     onManifestSuccess?: OnManifestSuccess
   }) {
     this.archiveLoader = createArchiveLoader(rest)
+    this.hooks = hooks ?? {}
 
     this.onManifestSuccess =
       onManifestSuccess ?? (({ manifest }) => Promise.resolve(manifest))
@@ -128,7 +133,10 @@ export class Streamer {
       key,
       getResponse: (archive) => {
         const manifest$ = from(
-          generateManifestFromArchive(archive, { baseUrl }),
+          generateManifestFromArchive(archive, {
+            baseUrl,
+            hooks: this.hooks.manifest,
+          }),
         )
 
         return manifest$.pipe(
@@ -172,7 +180,9 @@ export class Streamer {
          * (no `archiveOpf` threading yet). See `generateResourceFromArchive` JSDoc.
          */
         const resource$ = from(
-          generateResourceFromArchive(archive, cleanedResourcePath),
+          generateResourceFromArchive(archive, cleanedResourcePath, {
+            hooks: this.hooks.resource,
+          }),
         )
 
         return resource$.pipe(

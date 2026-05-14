@@ -3,9 +3,7 @@ import {
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import type { Archive } from "../archives/types"
-import { isArchiveEpub } from "../epubs/isArchiveEpub"
-import { createManifestResourceHref } from "../generators/manifest/createManifestResourceHref"
+import type { Archive } from "@prose-reader/streamer"
 import { detectPageSpreadFromBasename } from "./detectPageSpreadFromBasename"
 
 export {
@@ -44,6 +42,33 @@ type ArchiveRecord = Archive["records"][number]
 type ArchiveFileRecord = Extract<ArchiveRecord, { dir: false }>
 
 const encodeOriginalUriSegment = (uri: string) => encodeURIComponent(uri)
+
+const createManifestResourceHref = ({
+  baseUrl = ``,
+  resourcePath,
+}: {
+  baseUrl?: string
+  resourcePath: string
+}) => {
+  if (!baseUrl && /^https?:\/\//.test(resourcePath)) {
+    return encodeURI(resourcePath)
+  }
+
+  const hrefBaseUrl = baseUrl
+    ? `${baseUrl}${baseUrl.endsWith(`/`) ? `` : `/`}`
+    : `file://`
+
+  return encodeURI(`${hrefBaseUrl}${resourcePath}`)
+}
+
+const hasOpfExtension = (path: string) => path.toLowerCase().endsWith(`.opf`)
+
+const isArchiveEpub = (archive: Archive) =>
+  archive.records.some(
+    (file) =>
+      !file.dir &&
+      (hasOpfExtension(file.basename) || hasOpfExtension(file.uri)),
+  )
 
 export const buildVirtualPageSpreadResourcePath = ({
   cropSide,
@@ -116,7 +141,7 @@ export const getArchiveRecordForManifestItem = ({
   archive: Archive
   baseUrl: string
   spineItem: Manifest["spineItems"][number]
-}) => {
+}): ArchiveRecord | undefined => {
   const hrefCandidates = [spineItem.href, decodeManifestHref(spineItem.href)]
   const resourcePathCandidates = new Set(
     hrefCandidates.flatMap((href) => getResourcePathCandidates(href, baseUrl)),

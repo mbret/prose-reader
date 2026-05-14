@@ -1,6 +1,6 @@
 import type { Archive } from "../../archives/types"
-import { pageSpreadSplit } from "../../cbz/pageSpreadSplitManifest"
 import { readArchiveOpf } from "../../epubs/readArchiveOpf"
+import type { StreamerManifestHooks } from "../../hooks"
 import { Report } from "../../report"
 import { apple } from "./hooks/apple"
 import { comicInfo } from "./hooks/comicInfo"
@@ -19,20 +19,42 @@ const normalizeBaseUrl = (baseUrl: string | undefined) => {
 
 export const generateManifestFromArchive = async (
   archive: Archive,
-  { baseUrl = `` }: { baseUrl?: string } = {},
+  {
+    baseUrl = ``,
+    hooks = {},
+  }: { baseUrl?: string; hooks?: StreamerManifestHooks } = {},
 ) => {
   const archiveOpf = await readArchiveOpf(archive)
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+  const createExternalHooks = (
+    hookFactories: StreamerManifestHooks[keyof StreamerManifestHooks],
+  ) =>
+    (hookFactories ?? []).map((hook) =>
+      hook({ archive, baseUrl: normalizedBaseUrl }),
+    )
 
-  const hooks = [
+  const contentHooks = [
     epubHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
     comicInfo({ archive, baseUrl: normalizedBaseUrl }),
     apple({ archive, baseUrl: normalizedBaseUrl }),
     nonEpub({ archive, baseUrl: normalizedBaseUrl }),
-    pageSpreadSplit({ archive, baseUrl: normalizedBaseUrl }),
+    ...createExternalHooks(hooks.content),
+  ]
+  const spineHooks = createExternalHooks(hooks.spine)
+  const presentationHooks = [
     epubOptimizerHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
     kobo({ archive, baseUrl: normalizedBaseUrl }),
+    ...createExternalHooks(hooks.presentation),
+  ]
+  const navigationHooks = [
     tocHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
+    ...createExternalHooks(hooks.navigation),
+  ]
+  const manifestHooks = [
+    ...contentHooks,
+    ...spineHooks,
+    ...presentationHooks,
+    ...navigationHooks,
   ]
 
   try {
@@ -41,7 +63,7 @@ export const generateManifestFromArchive = async (
       baseUrl: normalizedBaseUrl,
     })()
 
-    const manifest = await hooks.reduce(async (manifest, gen) => {
+    const manifest = await manifestHooks.reduce(async (manifest, gen) => {
       return await gen(await manifest)
     }, baseManifestPromise)
 
