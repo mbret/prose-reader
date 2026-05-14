@@ -29,7 +29,7 @@ describe("generateCfiForSpineItemPage", () => {
   }
 
   const spreadSpineItem: Manifest["spineItems"][number] = {
-    id: "pr-img-c3ByZWFkLmpwZw",
+    id: "1.spread.jpg",
     href: "wrapper.xhtml",
     index: 1,
     renditionLayout: "reflowable",
@@ -46,7 +46,7 @@ describe("generateCfiForSpineItemPage", () => {
         pageIndex: 0,
         readingDirection: "ltr",
       }),
-    ).toBe("epubcfi(/6/4[pr-img-c3ByZWFkLmpwZw]!/4/2/2[spread-image]@25:50)")
+    ).toBe("epubcfi(/6/4[1.spread.jpg]!/4/2/2[spread-image]@25:50)")
   })
 
   it("should reverse spread spatial offsets for right-to-left reading", () => {
@@ -59,6 +59,6 @@ describe("generateCfiForSpineItemPage", () => {
         pageIndex: 0,
         readingDirection: "rtl",
       }),
-    ).toBe("epubcfi(/6/4[pr-img-c3ByZWFkLmpwZw]!/4/2/2[spread-image]@75:50)")
+    ).toBe("epubcfi(/6/4[1.spread.jpg]!/4/2/2[spread-image]@75:50)")
   })
 })

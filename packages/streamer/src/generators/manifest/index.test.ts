@@ -237,7 +237,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     }
 
     const manifest = await generateManifestFromArchive(archive)
-    const spreadId = buildImageWrapperIdFromOriginalUri(spreadBasename)
+    const wrapperId = buildImageWrapperIdFromOriginalUri(spreadBasename)
 
     expect(manifest.spineItems).toEqual([
       {
@@ -256,7 +256,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
             originalUri: spreadBasename,
           })}`,
         ),
-        id: spreadId,
+        id: `1.${spreadBasename}`,
         index: 1,
         mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         pageSpreadLeft: undefined,
@@ -283,7 +283,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
           originalUri: spreadBasename,
         })}`,
       ),
-      id: spreadId,
+      id: wrapperId,
       mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
     })
   })
@@ -317,12 +317,11 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     }
 
     const manifest = await generateManifestFromArchive(archive)
-    const spreadId = buildImageWrapperIdFromOriginalUri(spreadBasename)
 
     expect(manifest.readingDirection).toBe("rtl")
     expect(manifest.spineItems).toMatchObject([
       {
-        id: spreadId,
+        id: `1.${spreadBasename}`,
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         renditionFlow: "paginated",

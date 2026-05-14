@@ -186,10 +186,22 @@ describe("pageSpreadSplit", () => {
       spineItems: [
         {
           href: encodeURI(`file://${resourcePath}`),
-          id: wrapperId,
+          id: "1.p006-007.jpg",
           mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
           renditionFlow: "paginated",
           renditionLayout: "reflowable",
+        },
+      ],
+      items: [
+        {
+          href: `file://${nestedUri}`,
+          id: "1.p006-007.jpg",
+          mediaType: "image/jpeg",
+        },
+        {
+          href: encodeURI(`file://${resourcePath}`),
+          id: wrapperId,
+          mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         },
       ],
     })

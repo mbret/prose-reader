@@ -141,14 +141,13 @@ const createImageWrapperSpineItem = ({
   originalSpineItem: SpineItem
   originalUri: string
 }): SpineItem => {
-  const id = buildImageWrapperIdFromOriginalUri(originalUri)
+  const wrapperId = buildImageWrapperIdFromOriginalUri(originalUri)
   const resourcePath = buildImageWrapperResourcePath({
-    wrapperId: id,
+    wrapperId,
   })
 
   return {
     ...originalSpineItem,
-    id,
     href: createManifestResourceHref({ baseUrl, resourcePath }),
     mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
     pageSpreadLeft: undefined,
@@ -160,11 +159,13 @@ const createImageWrapperSpineItem = ({
 
 const createImageWrapperManifestItem = ({
   href,
-  id,
   mediaType,
-}: Pick<ManifestItem, "href" | "id" | "mediaType">): ManifestItem => ({
+  originalUri,
+}: Pick<ManifestItem, "href" | "mediaType"> & {
+  originalUri: string
+}): ManifestItem => ({
   href,
-  id,
+  id: buildImageWrapperIdFromOriginalUri(originalUri),
   mediaType,
 })
 
@@ -272,7 +273,11 @@ export const pageSpreadSplit =
       })
 
       imageWrapperManifestItems.push(
-        createImageWrapperManifestItem(wrapperSpineItem),
+        createImageWrapperManifestItem({
+          href: wrapperSpineItem.href,
+          mediaType: wrapperSpineItem.mediaType,
+          originalUri: archiveRecord.uri,
+        }),
       )
 
       return wrapperSpineItem
