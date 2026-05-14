@@ -6,14 +6,12 @@ import {
 import { useCallback } from "react"
 import { useSubscribe } from "reactjrx"
 import {
+  combineLatest,
   distinctUntilChanged,
-  filter,
-  first,
   map,
   NEVER,
   startWith,
   switchMap,
-  tap,
   throttleTime,
 } from "rxjs"
 import type { UseMeasureRect } from "../common/useMeasure"
@@ -35,37 +33,32 @@ export const useAttachSnapshot = (
     const itemLayoutChanged$ = item.didLayout$.pipe(
       startWith(item.layoutInfo),
       distinctUntilChanged(isShallowEqual),
+      throttleTime(100, undefined, { trailing: true }),
     )
 
     const isItemIntersecting$ = observeIntersection(
       element as HTMLElement,
-    ).pipe(map((entries) => entries.some((e) => e.isIntersecting)))
+    ).pipe(
+      map((entries) => entries.some((e) => e.isIntersecting)),
+      startWith(false),
+      distinctUntilChanged(),
+    )
 
-    return itemLayoutChanged$.pipe(
-      throttleTime(100, undefined, { trailing: true }),
-      switchMap(() => {
-        return isItemIntersecting$
-          .pipe(
-            tap((isVisible) => {
-              // if the layout change and the item is not visible anymore, cleanup the element
-              if (!isVisible) {
-                element.innerHTML = ""
-              }
-            }),
-            filter((isVisible) => isVisible),
-            first(),
-          )
-          .pipe(
-            switchMap(() => {
-              element.innerHTML = ""
+    return combineLatest([itemLayoutChanged$, isItemIntersecting$]).pipe(
+      switchMap(([, isVisible]) => {
+        if (!isVisible) {
+          element.innerHTML = ""
 
-              return readerWithGalleryEnhancer?.gallery.snapshot(
-                item,
-                element,
-                measures,
-              )
-            }),
-          )
+          return NEVER
+        }
+
+        element.innerHTML = ""
+
+        return readerWithGalleryEnhancer.gallery.snapshot(
+          item,
+          element,
+          measures,
+        )
       }),
     )
   }, [readerWithGalleryEnhancer, item, measures, element])

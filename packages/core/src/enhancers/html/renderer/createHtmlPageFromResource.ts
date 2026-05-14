@@ -30,11 +30,6 @@ export const createHtmlPageFromResource = async (
     const { width, height } = { width: bitmap.width, height: bitmap.height }
     bitmap.close()
 
-    const resourceUniqueId = Math.random()
-      .toString(36)
-      .substring(2, 15)
-      .toString()
-
     return new Blob(
       [
         `
@@ -44,22 +39,9 @@ export const createHtmlPageFromResource = async (
           </head>
           <body style="margin: 0px;" tab-index="-1;">
              <img
-               id="${resourceUniqueId}"
                src="${objectUrl}"
                style="max-width:100%;height:100%;object-fit:contain;display:block;"
              >
-             <script>
-               const imageElement = document.getElementById("${resourceUniqueId}")
-               if (imageElement instanceof HTMLImageElement) {
-                 imageElement.addEventListener(
-                   "load",
-                   () => {
-                     URL.revokeObjectURL("${objectUrl}")
-                   },
-                   { once: true },
-                 )
-               }
-             </script>
           </body>
         </html>
           `,

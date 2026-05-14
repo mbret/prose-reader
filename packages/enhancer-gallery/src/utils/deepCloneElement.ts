@@ -1,19 +1,24 @@
 import { waitForFrameLoad } from "@prose-reader/core"
-import { combineLatest, defaultIfEmpty, of, switchMap } from "rxjs"
+import { combineLatest, defaultIfEmpty, from, of, switchMap } from "rxjs"
 import { redrawCanvas } from "./redrawCanvas"
+import {
+  copyBlobAssetReferences,
+  createSnapshotObjectUrlStore,
+} from "./snapshotBlobAssets"
 
 const copyIframeContents = (
   originalIframes: NodeListOf<HTMLIFrameElement>,
   clonedIframes: NodeListOf<HTMLIFrameElement>,
+  objectUrlStore: ReturnType<typeof createSnapshotObjectUrlStore>,
 ) => {
-  return combineLatest(
-    Array.from(originalIframes).map((originalIframe, index) => {
+  const iframeCopies = Array.from(originalIframes).map(
+    (originalIframe, index) => {
       const clonedIframe = clonedIframes[index]
 
       if (!clonedIframe) return of(true)
 
       return waitForFrameLoad(of(clonedIframe)).pipe(
-        switchMap(() => {
+        switchMap(async () => {
           try {
             // Since we know they're same-origin EPUBs, we can directly copy content
             if (
@@ -37,16 +42,26 @@ const copyIframeContents = (
               ).forEach((node) => {
                 clonedHead.appendChild(node.cloneNode(true))
               })
+
+              await copyBlobAssetReferences(
+                clonedIframe.contentDocument,
+                clonedIframe.contentDocument,
+                objectUrlStore,
+              )
             }
-            return of(true)
+            return true
           } catch (e) {
             console.error("Error copying iframe content:", e)
-            return of(false)
+            return false
           }
         }),
       )
-    }),
+    },
   )
+
+  if (iframeCopies.length === 0) return of(true)
+
+  return combineLatest(iframeCopies)
 }
 
 const redrawCanvases = (sourceElement: HTMLElement, clone: HTMLElement) => {
@@ -63,6 +78,7 @@ const redrawCanvases = (sourceElement: HTMLElement, clone: HTMLElement) => {
 }
 
 export function deepCloneElement(sourceElement: HTMLElement) {
+  const objectUrlStore = createSnapshotObjectUrlStore()
   // Create a deep clone of the source element
   const clone = sourceElement.cloneNode(true) as HTMLElement
 
@@ -74,10 +90,20 @@ export function deepCloneElement(sourceElement: HTMLElement) {
   // Handle canvases in the main document
   redrawCanvases(sourceElement, clone)
 
-  const copyContents$ = copyIframeContents(originalIframes, clonedIframes)
+  const copyContents$ = combineLatest([
+    from(
+      copyBlobAssetReferences(
+        clone,
+        sourceElement.ownerDocument,
+        objectUrlStore,
+      ),
+    ),
+    copyIframeContents(originalIframes, clonedIframes, objectUrlStore),
+  ])
 
   return {
     clone,
     ready$: copyContents$.pipe(defaultIfEmpty(true)),
+    release: objectUrlStore.revokeAll,
   }
 }

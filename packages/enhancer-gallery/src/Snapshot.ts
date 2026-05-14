@@ -3,7 +3,7 @@ import {
   type Reader,
   type SpineItem,
 } from "@prose-reader/core"
-import { filter, finalize, first, Observable, switchMap, tap } from "rxjs"
+import { filter, first, Observable, switchMap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
 const createSnapshotItem = () => {
@@ -38,14 +38,24 @@ export class Snapshot extends Observable<HTMLElement> {
     },
   ) {
     super((subscriber) => {
-      const unlock = reader.spine.spineItemsLoader.forceOpen([item])
+      const unlockSpineItem = reader.spine.spineItemsLoader.forceOpen([item])
+      let hasUnlockedSpineItem = false
+      let releaseSnapshotAssets = () => {}
+      let snapshotItem: HTMLElement | undefined
 
-      return item.isReady$
+      const unlock = () => {
+        if (hasUnlockedSpineItem) return
+
+        hasUnlockedSpineItem = true
+        unlockSpineItem()
+      }
+
+      const subscription = item.isReady$
         .pipe(
           filter((isReady) => isReady),
           first(),
           switchMap(() => {
-            const snapshotItem = createSnapshotItem()
+            snapshotItem = createSnapshotItem()
 
             const pageSize = reader.viewport.value.pageSize
             const itemElement = snapshotItem
@@ -69,8 +79,12 @@ export class Snapshot extends Observable<HTMLElement> {
             // Use the minimum scale to ensure the element fits within both dimensions
             const scale = Math.min(widthScaleFullFrame, heightScale)
 
-            const { clone: clonedElement, ready$: cloneReady$ } =
-              deepCloneElement(item.element)
+            const {
+              clone: clonedElement,
+              ready$: cloneReady$,
+              release,
+            } = deepCloneElement(item.element)
+            releaseSnapshotAssets = release
 
             // cleanup unwanted elements from the spine
             Array.from(clonedElement.children).forEach((child) => {
@@ -112,21 +126,32 @@ export class Snapshot extends Observable<HTMLElement> {
               contentMask.style.top = `${gap}px`
             }
 
-            parent.appendChild(snapshotItem)
+            parent.appendChild(itemElement)
             contentMask.appendChild(clonedElement)
 
-            subscriber.next(snapshotItem)
+            subscriber.next(itemElement)
 
             return cloneReady$
           }),
-          tap(() => {
-            subscriber.complete()
-          }),
-          finalize(() => {
-            unlock()
-          }),
         )
-        .subscribe()
+        .subscribe({
+          error: (error) => {
+            unlock()
+            subscriber.error(error)
+          },
+          complete: () => {
+            unlock()
+            // Keep the observable open after cloning so the thumbnail owns its
+            // copied object URLs until React unsubscribes from this snapshot.
+          },
+        })
+
+      return () => {
+        subscription.unsubscribe()
+        unlock()
+        releaseSnapshotAssets()
+        snapshotItem?.remove()
+      }
     })
   }
 }
