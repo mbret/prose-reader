@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gallery</title>
+    <style>
+      body,
+      html,
+      #app {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #open-gallery {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+      }
+
+      #gallery {
+        position: fixed;
+        inset: 0;
+        z-index: 3;
+        box-sizing: border-box;
+        padding: 24px;
+        background: #111;
+        color: #fff;
+      }
+
+      #gallery[hidden] {
+        display: none;
+      }
+
+      #gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        max-width: 780px;
+      }
+
+      [data-gallery-cell] {
+        aspect-ratio: 2 / 3;
+        overflow: hidden;
+        border: 1px solid #444;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <button id="open-gallery" type="button">Open gallery</button>
+    <div id="gallery" hidden>
+      <div id="gallery-grid"></div>
+    </div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>
