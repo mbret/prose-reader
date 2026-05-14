@@ -147,6 +147,8 @@ export class HtmlRenderer extends DocumentRenderer {
       pageWidth,
       frameElement,
       manifest: this.context.manifest,
+      renditionFlow:
+        this.item.renditionFlow ?? this.context.manifest?.renditionFlow,
       blankPagePosition,
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),

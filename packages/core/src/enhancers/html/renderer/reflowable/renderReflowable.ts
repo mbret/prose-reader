@@ -55,6 +55,7 @@ export const renderReflowable = ({
   pageWidth,
   frameElement,
   manifest,
+  renditionFlow,
   minPageSpread,
   isRTL,
   blankPagePosition,
@@ -67,6 +68,7 @@ export const renderReflowable = ({
   pageHeight: number
   frameElement: HTMLIFrameElement
   manifest?: Manifest
+  renditionFlow?: Manifest["renditionFlow"]
   minPageSpread: number
   isRTL: boolean
   isImageType: boolean
@@ -76,7 +78,7 @@ export const renderReflowable = ({
   const minimumWidth = minPageSpread * pageWidth
   const continuousScrollableReflowableItem =
     manifest?.renditionLayout === "reflowable" &&
-    manifest?.renditionFlow === "scrolled-continuous"
+    renditionFlow === "scrolled-continuous"
 
   /**
    * In case of reflowable with continuous scrolling, we don't know if the content is
@@ -158,7 +160,7 @@ export const renderReflowable = ({
     } else {
       const frameStyle = isImageType
         ? buildStyleForReflowableImageOnly({
-            isScrollable: manifest?.renditionFlow === `scrolled-continuous`,
+            isScrollable: renditionFlow === `scrolled-continuous`,
             enableTouch,
           })
         : buildStyleWithMultiColumn(
@@ -183,7 +185,7 @@ export const renderReflowable = ({
           width: minimumWidth,
           height: contentHeight,
         })
-      } else if (manifest?.renditionFlow === `scrolled-continuous`) {
+      } else if (renditionFlow === `scrolled-continuous`) {
         /**
          * We take body content here because the frame body might be smaller after
          * layout due to possible image content and image ratio. We need to be able

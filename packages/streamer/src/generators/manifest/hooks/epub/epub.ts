@@ -162,6 +162,9 @@ export const epubHook =
               ? `${hrefBaseUri}${opfBasePath}/${row.href}`
               : `${hrefBaseUri}${row.href}`,
           renditionLayout: row.renditionLayout ?? packageRenditionLayout,
+          ...(row.renditionFlow !== undefined
+            ? { renditionFlow: row.renditionFlow }
+            : {}),
           progressionWeight: itemSize / totalSize,
           pageSpreadLeft: row.pageSpreadLeft,
           pageSpreadRight: row.pageSpreadRight,
