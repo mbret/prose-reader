@@ -2,9 +2,11 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import type { Archive } from "../archives/types"
 import {
-  buildVirtualPageSpreadResourcePath,
+  buildImageWrapperIdFromOriginalUri,
+  buildImageWrapperResourcePathFromOriginalUri,
+  decodeImageWrapperIdToOriginalUri,
+  IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
   isPageSpreadSplitSupportedArchiveRecord,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
   pageSpreadSplit,
 } from "./pageSpreadSplitManifest"
 
@@ -104,7 +106,7 @@ describe("pageSpreadSplit", () => {
     ).resolves.toBe(manifest)
   })
 
-  it("should not split matching non-image resource paths", async () => {
+  it("should not wrap matching non-image resource paths", async () => {
     const archive = createArchive([
       {
         ...fakeContent,
@@ -118,6 +120,28 @@ describe("pageSpreadSplit", () => {
     const manifest = createManifest({
       href: "file://p002-003.txt",
       id: "0.p002-003.txt",
+      mediaType: "image/jpeg",
+    })
+
+    await expect(
+      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+    ).resolves.toBe(manifest)
+  })
+
+  it("should not wrap image resource paths whose basename is not a page spread", async () => {
+    const archive = createArchive([
+      {
+        ...fakeContent,
+        basename: "p001.jpg",
+        dir: false,
+        encodingFormat: "image/jpeg",
+        size: 1,
+        uri: "p001.jpg",
+      },
+    ])
+    const manifest = createManifest({
+      href: "file://p001.jpg",
+      id: "0.p001.jpg",
       mediaType: "image/jpeg",
     })
 
@@ -151,12 +175,8 @@ describe("pageSpreadSplit", () => {
       id: "1.p006-007.jpg",
       mediaType: "image/jpeg",
     })
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri: nestedUri,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
+    const wrapperId = buildImageWrapperIdFromOriginalUri(nestedUri)
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri: nestedUri,
     })
 
@@ -165,14 +185,27 @@ describe("pageSpreadSplit", () => {
     ).resolves.toMatchObject({
       spineItems: [
         {
-          href: encodeURI(`file://${leftResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          href: encodeURI(`file://${resourcePath}`),
+          id: "1.p006-007.jpg",
+          mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
+          renditionFlow: "paginated",
+          renditionLayout: "reflowable",
+        },
+      ],
+      items: [
+        {
+          href: `file://${nestedUri}`,
+          id: "1.p006-007.jpg",
+          mediaType: "image/jpeg",
         },
         {
-          href: encodeURI(`file://${rightResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          href: encodeURI(`file://${resourcePath}`),
+          id: wrapperId,
+          mediaType: IMAGE_WRAPPER_DOCUMENT_MEDIA_TYPE,
         },
       ],
     })
+
+    expect(decodeImageWrapperIdToOriginalUri(wrapperId)).toBe(nestedUri)
   })
 })

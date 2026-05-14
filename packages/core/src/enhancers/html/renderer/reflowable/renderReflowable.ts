@@ -2,10 +2,13 @@ import type { Manifest } from "@prose-reader/shared"
 import { upsertCSSToFrame } from "../../../../utils/frames"
 import { getViewPortInformation } from "../viewport"
 import {
+  buildStyleForPaginatedSpreadImage,
   buildStyleForReflowableImageOnly,
   buildStyleForViewportFrame,
   buildStyleWithMultiColumn,
 } from "./styles"
+
+const SPREAD_IMAGE_ID = `spread-image`
 
 const getDimensionsForReflowableContent = ({
   isUsingVerticalWriting,
@@ -55,6 +58,7 @@ export const renderReflowable = ({
   pageWidth,
   frameElement,
   manifest,
+  renditionFlow,
   minPageSpread,
   isRTL,
   blankPagePosition,
@@ -67,6 +71,7 @@ export const renderReflowable = ({
   pageHeight: number
   frameElement: HTMLIFrameElement
   manifest?: Manifest
+  renditionFlow?: Manifest["renditionFlow"]
   minPageSpread: number
   isRTL: boolean
   isImageType: boolean
@@ -76,7 +81,7 @@ export const renderReflowable = ({
   const minimumWidth = minPageSpread * pageWidth
   const continuousScrollableReflowableItem =
     manifest?.renditionLayout === "reflowable" &&
-    manifest?.renditionFlow === "scrolled-continuous"
+    renditionFlow === "scrolled-continuous"
 
   /**
    * In case of reflowable with continuous scrolling, we don't know if the content is
@@ -113,6 +118,28 @@ export const renderReflowable = ({
       pageWidth,
     }) ?? {}
   const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
+  const spreadImageElement =
+    frameElement.contentDocument?.getElementById(SPREAD_IMAGE_ID)
+  const isPaginatedSpreadImage =
+    renditionFlow === `paginated` &&
+    spreadImageElement !== undefined &&
+    spreadImageElement !== null
+
+  if (isPaginatedSpreadImage) {
+    upsertCSSToFrame(
+      frameElement,
+      `prose-reader-paginated-spread-image-css`,
+      buildStyleForPaginatedSpreadImage({ pageHeight, pageWidth }),
+      true,
+    )
+
+    staticLayout(frameElement, {
+      width: pageWidth * 2,
+      height: pageHeight,
+    })
+
+    return { width: pageWidth * 2, height: pageHeight }
+  }
 
   // @todo simplify ? should be from common spine item
   if (
@@ -158,7 +185,7 @@ export const renderReflowable = ({
     } else {
       const frameStyle = isImageType
         ? buildStyleForReflowableImageOnly({
-            isScrollable: manifest?.renditionFlow === `scrolled-continuous`,
+            isScrollable: renditionFlow === `scrolled-continuous`,
             enableTouch,
           })
         : buildStyleWithMultiColumn(
@@ -183,7 +210,7 @@ export const renderReflowable = ({
           width: minimumWidth,
           height: contentHeight,
         })
-      } else if (manifest?.renditionFlow === `scrolled-continuous`) {
+      } else if (renditionFlow === `scrolled-continuous`) {
         /**
          * We take body content here because the frame body might be smaller after
          * layout due to possible image content and image ratio. We need to be able

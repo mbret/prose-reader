@@ -14,10 +14,12 @@ const generateCfi = ({
   nodeOrRange,
   offset,
   item,
+  spatial,
 }: {
   nodeOrRange: Node | Range
   offset?: number
   item: Manifest["spineItems"][number]
+  spatial?: [number, number]
 }) => {
   const nodeOrRangeOwnerDocument =
     "ownerDocument" in nodeOrRange
@@ -25,7 +27,6 @@ const generateCfi = ({
       : nodeOrRange.startContainer.ownerDocument
 
   if (
-    !nodeOrRangeOwnerDocument ||
     !nodeOrRangeOwnerDocument?.documentElement ||
     nodeOrRange === nodeOrRangeOwnerDocument
   )
@@ -51,9 +52,33 @@ const generateCfi = ({
   return generate({
     node: nodeOrRange,
     offset,
+    spatial,
     spineIndex: item.index,
     spineId: item.id,
   })
+}
+
+const SPREAD_IMAGE_ID = `spread-image`
+
+const getSpreadImageElement = (node: Node): Element | undefined => {
+  const element = node.ownerDocument?.getElementById(SPREAD_IMAGE_ID)
+
+  if (element !== null && element !== undefined) return element
+
+  return undefined
+}
+
+const getSpreadSpatialOffset = ({
+  isRTL,
+  pageIndex,
+}: {
+  isRTL: boolean
+  pageIndex: number
+}): [number, number] => {
+  const isFirstVisualHalf = pageIndex % 2 === 0
+  const x = isRTL ? (isFirstVisualHalf ? 75 : 25) : isFirstVisualHalf ? 25 : 75
+
+  return [x, 50]
 }
 
 /**
@@ -65,14 +90,33 @@ const generateCfi = ({
 export const generateCfiForSpineItemPage = ({
   spineItem,
   pageNode,
+  pageIndex,
+  readingDirection,
 }: {
   spineItem: Manifest["spineItems"][number]
   pageNode: NonNullable<PageEntry["firstVisibleNode"]>
+  pageIndex?: number
+  readingDirection?: Manifest["readingDirection"]
 }) => {
+  const spreadImageElement = getSpreadImageElement(pageNode.node)
+  const shouldGenerateSpreadSpatialCfi =
+    pageIndex !== undefined &&
+    spineItem.renditionLayout === `reflowable` &&
+    spineItem.renditionFlow === `paginated` &&
+    spreadImageElement !== undefined
+
   const cfiString = generateCfi({
-    nodeOrRange: pageNode.node,
-    offset: pageNode.offset,
+    nodeOrRange: shouldGenerateSpreadSpatialCfi
+      ? spreadImageElement
+      : pageNode.node,
+    offset: shouldGenerateSpreadSpatialCfi ? undefined : pageNode.offset,
     item: spineItem,
+    spatial: shouldGenerateSpreadSpatialCfi
+      ? getSpreadSpatialOffset({
+          isRTL: readingDirection === `rtl`,
+          pageIndex,
+        })
+      : undefined,
   })
 
   return cfiString.trim()

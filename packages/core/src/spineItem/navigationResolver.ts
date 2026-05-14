@@ -37,11 +37,13 @@ export const createNavigationResolver = ({
     spineItem: SpineItem,
     node: Node,
     offset: number,
+    spatial?: number[],
   ): SpineItemPosition => {
     const position = spineItemLocator.getSpineItemPositionFromNode(
       node,
       offset,
       spineItem,
+      spatial,
     )
 
     return position || new SpineItemPosition({ x: 0, y: 0 })

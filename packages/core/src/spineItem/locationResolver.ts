@@ -22,20 +22,45 @@ export const createSpineItemLocator = ({
   settings: ReaderSettingsManager
   viewport: Viewport
 }) => {
+  const getElementBoundingClientRect = (node: Node) => {
+    if (!("getBoundingClientRect" in node)) return undefined
+
+    const getBoundingClientRect = node.getBoundingClientRect
+
+    if (typeof getBoundingClientRect !== "function") return undefined
+
+    return getBoundingClientRect.call(node)
+  }
+
   const getSpineItemPositionFromNode = (
     node: Node,
     offset: number,
     spineItem: SpineItem,
+    spatial?: number[],
   ) => {
     let offsetOfNodeInSpineItem: number | undefined
 
+    if (
+      spatial !== undefined &&
+      node.nodeType === Node.ELEMENT_NODE &&
+      "getBoundingClientRect" in node
+    ) {
+      const rect = getElementBoundingClientRect(node)
+      const spatialX = spatial[0]
+
+      if (rect !== undefined && spatialX !== undefined) {
+        offsetOfNodeInSpineItem = rect.x + (rect.width * spatialX) / 100
+      }
+    }
+
     // for some reason `img` does not work with range (x always = 0)
     if (
-      node?.nodeName === `img` ||
-      (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE)
+      offsetOfNodeInSpineItem === undefined &&
+      (node?.nodeName === `img` ||
+        (node?.textContent === `` && node.nodeType === Node.ELEMENT_NODE))
     ) {
-      offsetOfNodeInSpineItem = (node as HTMLElement).getBoundingClientRect().x
-    } else if (node) {
+      offsetOfNodeInSpineItem = getElementBoundingClientRect(node)?.x
+    } else if (offsetOfNodeInSpineItem === undefined && node) {
       const range = node ? getRangeFromNode(node, offset) : undefined
       offsetOfNodeInSpineItem =
         range?.getBoundingClientRect().x || offsetOfNodeInSpineItem
@@ -84,8 +109,14 @@ export const createSpineItemLocator = ({
     node: Node,
     offset: number,
     spineItem: SpineItem,
+    spatial?: number[],
   ) => {
-    const position = getSpineItemPositionFromNode(node, offset, spineItem)
+    const position = getSpineItemPositionFromNode(
+      node,
+      offset,
+      spineItem,
+      spatial,
+    )
     const { height, width } = spineItem.layoutInfo
 
     return position

@@ -21,6 +21,7 @@ export const resolveCfi = ({
   spineItemsManager: SpineItemsManager
 }): Omit<ReturnType<typeof parseCfi>, "offset"> & {
   offset?: number | undefined
+  spatial?: number[] | undefined
   node: Node | null
   range?: Range | null
   spineItem?: SpineItem
@@ -58,6 +59,7 @@ export const resolveCfi = ({
           offset: Array.isArray(resolved.offset)
             ? resolved.offset.at(-1)
             : resolved.offset,
+          spatial: resolved.spatial,
           spineItem,
         }
       } catch (e) {

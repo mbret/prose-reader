@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { Archive } from "../../archives/types"
-import { buildVirtualPageSpreadResourcePath } from "../../cbz/pageSpreadSplitManifest"
+import { buildImageWrapperResourcePathFromOriginalUri } from "../../cbz/pageSpreadSplitManifest"
 import { generateResourceFromArchive } from "./index"
 
 describe("generateResourceFromArchive", () => {
@@ -8,14 +8,15 @@ describe("generateResourceFromArchive", () => {
     vi.unstubAllGlobals()
   })
 
-  it("should generate virtual XHTML page spread resources", async () => {
+  it("should generate reflowable XHTML page spread wrapper resources", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
+    const blob = vi.fn(() => Promise.resolve(source))
     const archive: Archive = {
       filename: "",
       records: [
         {
           basename: "p006-007.jpg",
-          blob: () => Promise.resolve(source),
+          blob,
           dir: false,
           encodingFormat: "image/jpeg",
           size: source.size,
@@ -25,18 +26,8 @@ describe("generateResourceFromArchive", () => {
       ],
       close: () => Promise.resolve(),
     }
-    const close = vi.fn()
-    const bitmap = {
-      close,
-      height: 20,
-      width: 100,
-    }
-    const createImageBitmap = vi.fn(() => Promise.resolve(bitmap))
 
-    vi.stubGlobal("createImageBitmap", createImageBitmap)
-
-    const resourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri: "p006-007.jpg",
     })
     const resource = await generateResourceFromArchive(archive, resourcePath)
@@ -47,26 +38,23 @@ describe("generateResourceFromArchive", () => {
       throw new Error("Expected virtual page spread body to be XHTML")
     }
 
+    expect(resource.body).not.toContain(`<meta name="viewport"`)
     expect(resource.body).toContain(
-      `<meta name="viewport" content="width=50, height=20" />`,
+      `<img id="spread-image" src="../../p006-007.jpg" alt="" />`,
     )
-    expect(resource.body).toContain(`transform: translateX(-50px);`)
-    expect(resource.body).toContain(
-      `<img src="../../../p006-007.jpg" alt="" />`,
-    )
-    expect(createImageBitmap).toHaveBeenCalledWith(source)
-    expect(close).toHaveBeenCalled()
+    expect(blob).not.toHaveBeenCalled()
   })
 
-  it("should preserve nested original image paths in virtual page spread resources", async () => {
+  it("should preserve nested original image paths in XHTML image wrappers", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
+    const blob = vi.fn(() => Promise.resolve(source))
     const originalUri = "folder/p006 & 007 [x].jpg"
     const archive: Archive = {
       filename: "",
       records: [
         {
           basename: "p006 & 007 [x].jpg",
-          blob: () => Promise.resolve(source),
+          blob,
           dir: false,
           encodingFormat: "image/jpeg",
           size: source.size,
@@ -76,36 +64,25 @@ describe("generateResourceFromArchive", () => {
       ],
       close: () => Promise.resolve(),
     }
-    const close = vi.fn()
-    const bitmap = {
-      close,
-      height: 20,
-      width: 100,
-    }
-    const createImageBitmap = vi.fn(() => Promise.resolve(bitmap))
 
-    vi.stubGlobal("createImageBitmap", createImageBitmap)
-
-    const resourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri,
     })
     const resource = await generateResourceFromArchive(archive, resourcePath)
 
-    expect(resourcePath).toContain("folder%2Fp006%20%26%20007%20%5Bx%5D.jpg")
+    expect(resourcePath).toContain("__prose-reader__/image-wrapper/pr-img-")
 
     if (typeof resource.body !== "string") {
       throw new Error("Expected virtual page spread body to be XHTML")
     }
 
     expect(resource.body).toContain(
-      `<img src="../../../folder/p006%20&amp;%20007%20%5Bx%5D.jpg" alt="" />`,
+      `<img id="spread-image" src="../../folder/p006%20&amp;%20007%20%5Bx%5D.jpg" alt="" />`,
     )
-    expect(createImageBitmap).toHaveBeenCalledWith(source)
-    expect(close).toHaveBeenCalled()
+    expect(blob).not.toHaveBeenCalled()
   })
 
-  it("should cache virtual page spread image dimensions by archive and original URI", async () => {
+  it("should generate image wrappers without decoding image dimensions", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const blob = vi.fn(() => Promise.resolve(source))
     const originalUri = "p006-007.jpg"
@@ -124,30 +101,13 @@ describe("generateResourceFromArchive", () => {
       ],
       close: () => Promise.resolve(),
     }
-    const close = vi.fn()
-    const bitmap = {
-      close,
-      height: 20,
-      width: 100,
-    }
-    const createImageBitmap = vi.fn(() => Promise.resolve(bitmap))
-
-    vi.stubGlobal("createImageBitmap", createImageBitmap)
-
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "left",
-      originalUri,
-    })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
-      cropSide: "right",
+    const resourcePath = buildImageWrapperResourcePathFromOriginalUri({
       originalUri,
     })
 
-    await generateResourceFromArchive(archive, leftResourcePath)
-    await generateResourceFromArchive(archive, rightResourcePath)
+    await generateResourceFromArchive(archive, resourcePath)
+    await generateResourceFromArchive(archive, resourcePath)
 
-    expect(blob).toHaveBeenCalledTimes(1)
-    expect(createImageBitmap).toHaveBeenCalledTimes(1)
-    expect(close).toHaveBeenCalledTimes(1)
+    expect(blob).not.toHaveBeenCalled()
   })
 })

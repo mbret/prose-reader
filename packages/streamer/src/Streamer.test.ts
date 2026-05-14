@@ -34,13 +34,13 @@ describe("Given a manifest href with encoded local characters", () => {
       filename: "",
       records: [
         {
-          basename: "page [1].jpg",
+          basename: "p006-007 [1].jpg",
           blob: () => Promise.resolve(new Blob([body], { type: "image/jpeg" })),
           dir: false,
           encodingFormat: "image/jpeg",
           size: body.length,
           string: () => Promise.resolve(""),
-          uri: "Chapter 1/page [1].jpg",
+          uri: "Chapter 1/p006-007 [1].jpg",
         },
       ],
     }
@@ -57,8 +57,14 @@ describe("Given a manifest href with encoded local characters", () => {
       resourcePath: spineItem.href,
     })
 
-    expect(spineItem.href).toBe("file://Chapter%201/page%20%5B1%5D.jpg")
-    expect(await resourceResponse.text()).toBe(body)
-    expect(resourceResponse.headers.get("Content-Type")).toBe("image/jpg")
+    expect(spineItem.href).toContain(
+      "file://__prose-reader__/image-wrapper/pr-img-",
+    )
+    expect(await resourceResponse.text()).toContain(
+      `<img id="spread-image" src="../../Chapter%201/p006-007%20%5B1%5D.jpg" alt="" />`,
+    )
+    expect(resourceResponse.headers.get("Content-Type")).toBe(
+      "application/xhtml+xml",
+    )
   })
 })
