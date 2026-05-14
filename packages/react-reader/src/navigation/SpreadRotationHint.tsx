@@ -27,7 +27,12 @@ import styles from "./SpreadRotationHint.module.css"
 const HINT_TARGET_DEBOUNCE_MS = 100
 const HINT_VISIBLE_MS = 900
 
-const ANIMATION_NAME_IN_OUT = { _open: "fade-in", _closed: "fade-out" }
+const ANIMATION_NAME_IN_OUT = {
+  _open: "fade-in",
+  _closed: "fade-out",
+  _motionReduce: "none",
+}
+const ANIMATION_DURATION_IN_OUT = { base: "moderate", _motionReduce: "0ms" }
 
 type ViewportDimensions = {
   height: number
@@ -183,7 +188,7 @@ export const SpreadRotationHint = memo(() => {
       present={visibleHintKey !== undefined}
       lazyMount
       animationName={ANIMATION_NAME_IN_OUT}
-      animationDuration="moderate"
+      animationDuration={ANIMATION_DURATION_IN_OUT}
     >
       <Box
         key={visibleHintKey}
@@ -194,14 +199,14 @@ export const SpreadRotationHint = memo(() => {
         transform="translate(-50%, -50%)"
         pointerEvents="none"
         zIndex={2}
+        data-spread-rotation-hint="true"
       >
         <Box
           alignItems="center"
-          bg="rgba(12, 12, 12, 0.56)"
+          bg="bg.inverted/72"
           borderRadius="full"
-          shadow="2xl"
           className={styles.pulse}
-          color="white"
+          color="fg.inverted"
           display="flex"
           height="68px"
           justifyContent="center"
