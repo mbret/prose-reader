@@ -8,18 +8,15 @@
   "exports": {
     ".": {
       "import": "./dist/native/index.es.js",
-      "require": "./dist/native/index.cjs.js",
-      "types": "./dist/native/index.d.ts"
+      "require": "./dist/native/index.cjs.js"
     },
     "./web": {
       "import": "./dist/web/index.es.js",
-      "require": "./dist/web/index.cjs.js",
-      "types": "./dist/web/index.d.ts"
+      "require": "./dist/web/index.cjs.js"
     },
     "./shared": {
       "import": "./dist/shared/index.es.js",
-      "require": "./dist/shared/index.cjs.js",
-      "types": "./dist/shared/index.d.ts"
+      "require": "./dist/shared/index.cjs.js"
     }
   },
   "license": "MIT",
