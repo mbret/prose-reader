@@ -1,4 +1,5 @@
 import { map, type Observable, switchMap } from "rxjs"
+import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { Spine } from "../../spine/Spine"
@@ -16,11 +17,13 @@ export const withRestoredPosition =
     navigationResolver,
     context,
     spine,
+    cfiManager,
   }: {
     navigationResolver: NavigationResolver
     settings: ReaderSettingsManager
     context: Context
     spine: Spine
+    cfiManager: CfiManager
   }) =>
   <N extends Navigation>(stream: Observable<N>): Observable<N> =>
     stream.pipe(
@@ -34,6 +37,7 @@ export const withRestoredPosition =
           spineItemLocator: spine.locator.spineItemLocator,
           context,
           spine,
+          cfiManager,
         }).pipe(
           map((restoredPosition) => ({
             ...params,

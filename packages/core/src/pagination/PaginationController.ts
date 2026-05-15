@@ -9,7 +9,6 @@ import {
   withLatestFrom,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
-import { isRootCfi } from "../cfi"
 import type { Context } from "../context/Context"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
@@ -116,13 +115,13 @@ export class PaginationController extends DestroyableClass {
 
             const shouldUpdateBeginCfi =
               beginLastCfi === undefined ||
-              isRootCfi(beginLastCfi) ||
+              this.cfi.isRootCfi(beginLastCfi) ||
               previousPagination.beginSpineItemIndex !== beginSpineItemIndex
 
             const shouldUpdateEndCfi =
               previousPagination.endSpineItemIndex !== endSpineItemIndex ||
               endLastCfi === undefined ||
-              isRootCfi(endLastCfi)
+              this.cfi.isRootCfi(endLastCfi)
 
             const beginCfi = shouldUpdateBeginCfi
               ? this.cfi.generateRootCfi(beginSpineItem.item)

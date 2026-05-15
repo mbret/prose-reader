@@ -7,7 +7,11 @@ import {
   generateCfiFromRange as generateBaseCfiFromRange,
   generateRootCfi as generateBaseRootCfi,
 } from "./generate"
-import { type ProseParsedCfi, parseCfi as parseBaseCfi } from "./parse"
+import {
+  isRootCfi,
+  type ProseParsedCfi,
+  parseCfi as parseBaseCfi,
+} from "./parse"
 import { resolveCfi as resolveBaseCfi } from "./resolve"
 
 export type CfiGenerateHookParams = {
@@ -53,6 +57,10 @@ export class CfiManager {
     }
 
     return undefined
+  }
+
+  public isRootCfi = (cfi: string) => {
+    return isRootCfi(cfi)
   }
 
   public generateRootCfi = (item: Manifest["spineItems"][number]) => {

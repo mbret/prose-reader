@@ -25,7 +25,6 @@ const generateCfi = ({
       : nodeOrRange.startContainer.ownerDocument
 
   if (
-    !nodeOrRangeOwnerDocument ||
     !nodeOrRangeOwnerDocument?.documentElement ||
     nodeOrRange === nodeOrRangeOwnerDocument
   )

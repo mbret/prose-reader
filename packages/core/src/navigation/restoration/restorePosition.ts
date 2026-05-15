@@ -1,4 +1,5 @@
 import { type Observable, of } from "rxjs"
+import type { CfiManager } from "../../cfi"
 import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
@@ -201,6 +202,7 @@ export const restorePosition = ({
   spineLocator,
   navigationResolver,
   spine,
+  cfiManager,
 }: {
   spineLocator: SpineLocator
   settings: ReaderSettingsManager
@@ -210,6 +212,7 @@ export const restorePosition = ({
   spineItemLocator: SpineItemLocator
   context: Context
   spine: Spine
+  cfiManager: CfiManager
 }): Observable<SpinePosition | UnboundSpinePosition> => {
   if (settings.values.computedPageTurnMode === "scrollable") {
     return of(
@@ -230,5 +233,6 @@ export const restorePosition = ({
     navigationResolver,
     spineItemsManager,
     spine,
+    cfiManager,
   })
 }

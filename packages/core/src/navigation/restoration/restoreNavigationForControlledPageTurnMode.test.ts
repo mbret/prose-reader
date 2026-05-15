@@ -23,7 +23,7 @@ describe(`Given a backward navigation to a new item`, () => {
         const settings = new ReaderSettingsManager({}, context)
         const hooksManager = new HookManager()
         const spineItemsManager = new SpineItemsManager(context, settings)
-        const cfi = new CfiManager(hooksManager, spineItemsManager)
+        const cfiManager = new CfiManager(hooksManager, spineItemsManager)
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         const pagination = new Pagination(context, spineItemsManager as any)
         const viewport = new Viewport(context, settings)
@@ -43,7 +43,7 @@ describe(`Given a backward navigation to a new item`, () => {
           viewport,
         )
         const navigationResolver = createNavigationResolver({
-          cfi,
+          cfi: cfiManager,
           context,
           locator: spine.locator,
           settings,
@@ -105,6 +105,7 @@ describe(`Given a backward navigation to a new item`, () => {
             spineItemsManager: spineItemsManager as any,
             spineLocator: spine.locator,
             spine,
+            cfiManager,
           }),
         )
 

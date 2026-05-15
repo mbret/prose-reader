@@ -182,6 +182,7 @@ export class InternalNavigator extends DestroyableClass {
                   settings,
                   spine,
                   context,
+                  cfiManager,
                 }),
           )
         }),
@@ -273,6 +274,7 @@ export class InternalNavigator extends DestroyableClass {
         settings,
         context,
         spine,
+        cfiManager,
       }),
       map(({ navigation }) => {
         const updated: InternalNavigationEntry = {

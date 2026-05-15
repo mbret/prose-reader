@@ -1,8 +1,8 @@
-import { type Observable, first, map, of } from "rxjs"
-import { isRootCfi } from "../../cfi"
+import { first, map, type Observable, of } from "rxjs"
+import type { CfiManager } from "../../cfi"
+import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import type { Spine } from "../../spine/Spine"
 import type { SpineItemsManager } from "../../spine/SpineItemsManager"
-import type { SpineLocator } from "../../spine/locator/SpineLocator"
 import { SpinePosition } from "../../spine/types"
 import { SpineItemPosition } from "../../spineItem/types"
 import type { NavigationResolver } from "../resolvers/NavigationResolver"
@@ -14,12 +14,14 @@ export const restoreNavigationForControlledPageTurnMode = ({
   navigationResolver,
   spineItemsManager,
   spine,
+  cfiManager,
 }: {
   navigation: InternalNavigationEntry
   spineLocator: SpineLocator
   navigationResolver: NavigationResolver
   spineItemsManager: SpineItemsManager
   spine: Spine
+  cfiManager: CfiManager
 }): Observable<SpinePosition> => {
   const spineItem = spineItemsManager.get(navigation.spineItem)
 
@@ -86,7 +88,7 @@ export const restoreNavigationForControlledPageTurnMode = ({
        * consolidation. In case the item changed, we should be careful and try to
        * anchor back to cfi.
        */
-      if (cfi !== undefined && !isRootCfi(cfi)) {
+      if (cfi !== undefined && !cfiManager.isRootCfi(cfi)) {
         if (
           spineItemWidthDifference ||
           spineItemHeighDifference ||
