@@ -1,40 +1,67 @@
 import { useCallback, useEffect, useState } from "react"
+import screenfull from "screenfull"
+
+const readFullscreenSupport = () => screenfull.isEnabled
+
+const readFullscreenState = () =>
+  screenfull.isEnabled ? screenfull.isFullscreen : false
 
 export const useFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isFullscreenSupported, setIsFullscreenSupported] = useState(false)
 
-  const onToggleFullscreenClick = useCallback(() => {
-    if (document.fullscreenElement) {
-      return document
-        .exitFullscreen()
-        .catch(console.error)
-        .then(() => {
-          setIsFullscreen(false)
-        })
+  const syncFullscreenState = useCallback(() => {
+    setIsFullscreen((current) => {
+      const next = readFullscreenState()
+
+      return current === next ? current : next
+    })
+    setIsFullscreenSupported((current) => {
+      const next = readFullscreenSupport()
+
+      return current === next ? current : next
+    })
+  }, [])
+
+  const onToggleFullscreenClick = useCallback(async () => {
+    if (!screenfull.isEnabled) {
+      syncFullscreenState()
+
+      return
     }
 
-    return document.documentElement
-      .requestFullscreen({ navigationUI: "hide" })
-      .catch(console.error)
-      .then(() => {
-        setIsFullscreen(true)
-      })
-  }, [])
+    try {
+      if (screenfull.isFullscreen) {
+        await screenfull.exit()
+      } else {
+        await screenfull.request(document.documentElement, {
+          navigationUI: `hide`,
+        })
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      syncFullscreenState()
+    }
+  }, [syncFullscreenState])
 
   useEffect(() => {
-    function fullscreenchangeHandler() {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
+    syncFullscreenState()
 
-    document.addEventListener("fullscreenchange", fullscreenchangeHandler)
+    if (!screenfull.isEnabled) return
+
+    screenfull.on(`change`, syncFullscreenState)
+    screenfull.on(`error`, syncFullscreenState)
 
     return () => {
-      document.removeEventListener("fullscreenchange", fullscreenchangeHandler)
+      screenfull.off(`change`, syncFullscreenState)
+      screenfull.off(`error`, syncFullscreenState)
     }
-  }, [])
+  }, [syncFullscreenState])
 
   return {
     isFullscreen,
+    isFullscreenSupported,
     onToggleFullscreenClick,
   }
 }

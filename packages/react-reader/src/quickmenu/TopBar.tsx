@@ -20,7 +20,8 @@ export const TopBar = memo(
       () => reader?.context.manifest$,
       [reader],
     )
-    const { isFullscreen, onToggleFullscreenClick } = useFullscreen()
+    const { isFullscreen, isFullscreenSupported, onToggleFullscreenClick } =
+      useFullscreen()
 
     return (
       <QuickBar
@@ -60,15 +61,17 @@ export const TopBar = memo(
           >
             <IoMdMore />
           </IconButton>
-          <IconButton
-            aria-label="right"
-            size="lg"
-            flexShrink={0}
-            variant="ghost"
-            onClick={onToggleFullscreenClick}
-          >
-            {isFullscreen ? <MdFullscreenExit /> : <MdFullscreen />}
-          </IconButton>
+          {isFullscreenSupported && (
+            <IconButton
+              aria-label={isFullscreen ? `Exit fullscreen` : `Enter fullscreen`}
+              size="lg"
+              flexShrink={0}
+              variant="ghost"
+              onClick={onToggleFullscreenClick}
+            >
+              {isFullscreen ? <MdFullscreenExit /> : <MdFullscreen />}
+            </IconButton>
+          )}
         </HStack>
       </QuickBar>
     )
