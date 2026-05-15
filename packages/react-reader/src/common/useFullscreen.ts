@@ -1,8 +1,4 @@
-import { useEffect } from "react"
-
-import { useCallback } from "react"
-
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 export const useFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false)
