@@ -1,0 +1,31 @@
+.prose-reader-enhancer-gallery-snapshot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.prose-reader-enhancer-gallery-snapshot-mask {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.prose-reader-enhancer-gallery-snapshot-preview {
+  position: relative;
+  top: 0;
+  left: 0;
+}
+
+.prose-reader-enhancer-gallery-snapshot,
+.prose-reader-enhancer-gallery-snapshot-mask,
+.prose-reader-enhancer-gallery-snapshot-preview,
+.prose-reader-enhancer-gallery-snapshot-frame,
+.prose-reader-enhancer-gallery-snapshot iframe {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}

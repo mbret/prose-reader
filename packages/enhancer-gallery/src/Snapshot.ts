@@ -6,25 +6,39 @@ import {
 import { filter, first, Observable, switchMap } from "rxjs"
 import { deepCloneElement } from "./utils/deepCloneElement"
 
-const createSnapshotItem = () => {
-  const spineItemContainerElement = document.createElement("div")
-  spineItemContainerElement.style.width = `100%`
-  spineItemContainerElement.style.height = `100%`
-  spineItemContainerElement.style.position = "relative"
-  spineItemContainerElement.style.overflow = "hidden"
+const SNAPSHOT_CLASS = "prose-reader-enhancer-gallery-snapshot"
+const SNAPSHOT_MASK_CLASS = "prose-reader-enhancer-gallery-snapshot-mask"
+const SNAPSHOT_PREVIEW_CLASS = "prose-reader-enhancer-gallery-snapshot-preview"
+const SNAPSHOT_FRAME_CLASS = "prose-reader-enhancer-gallery-snapshot-frame"
 
-  const contentMask = document.createElement("div")
+const createSnapshotItem = (doc: Document) => {
+  const spineItemContainerElement = doc.createElement("div")
+  spineItemContainerElement.classList.add(SNAPSHOT_CLASS)
+  spineItemContainerElement.tabIndex = -1
+  spineItemContainerElement.setAttribute("aria-hidden", "true")
+  spineItemContainerElement.setAttribute("inert", "")
 
-  contentMask.style.width = "100%"
-  contentMask.style.height = "100%"
-  contentMask.style.position = "absolute"
-  contentMask.style.top = "0"
-  contentMask.style.left = "0"
-  contentMask.style.overflow = "hidden"
+  const contentMask = doc.createElement("div")
+
+  contentMask.classList.add(SNAPSHOT_MASK_CLASS)
 
   spineItemContainerElement.appendChild(contentMask)
 
   return spineItemContainerElement
+}
+
+const makeSnapshotPreviewInert = (element: HTMLElement) => {
+  element.classList.add(SNAPSHOT_PREVIEW_CLASS)
+  element.tabIndex = -1
+  element.setAttribute("aria-hidden", "true")
+  element.setAttribute("inert", "")
+
+  element.querySelectorAll("iframe").forEach((iframe) => {
+    iframe.classList.add(SNAPSHOT_FRAME_CLASS)
+    iframe.tabIndex = -1
+    iframe.setAttribute("aria-hidden", "true")
+    iframe.setAttribute("inert", "")
+  })
 }
 
 export class Snapshot extends Observable<HTMLElement> {
@@ -38,6 +52,7 @@ export class Snapshot extends Observable<HTMLElement> {
     },
   ) {
     super((subscriber) => {
+      const parentDocument = parent.ownerDocument
       const unlockSpineItem = reader.spine.spineItemsLoader.forceOpen([item])
       let hasUnlockedSpineItem = false
       let releaseSnapshotAssets = () => {}
@@ -55,7 +70,7 @@ export class Snapshot extends Observable<HTMLElement> {
           filter((isReady) => isReady),
           first(),
           switchMap(() => {
-            snapshotItem = createSnapshotItem()
+            snapshotItem = createSnapshotItem(parentDocument)
 
             const pageSize = reader.viewport.value.pageSize
             const itemElement = snapshotItem
@@ -66,7 +81,6 @@ export class Snapshot extends Observable<HTMLElement> {
             if (!itemElement || !contentMask)
               throw new Error("No item element or content mask")
 
-            // mask reset
             contentMask.style.top = "0"
             contentMask.style.left = "0"
 
@@ -100,6 +114,7 @@ export class Snapshot extends Observable<HTMLElement> {
             clonedElement.style.left = "0"
             clonedElement.style.top = "0"
             clonedElement.style.position = "relative"
+            makeSnapshotPreviewInert(clonedElement)
 
             /**
              * Now we adjust the mask to make it fit in the center and cover

@@ -51,11 +51,14 @@ const GalleryItem = memo(
           pointerEvents="none"
           ref={setElement}
         />
+        {/* iframe nullifying overlay. Ensure there are no pointer interceptions, especially on iPadOS */}
+        <Box position="absolute" inset={0} zIndex={1} aria-hidden="true" />
         <Text
           position="absolute"
           bottom={0}
           left="0"
           right="0"
+          zIndex={2}
           textAlign="center"
           bgColor="bg.panel"
           color="fg"
