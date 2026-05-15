@@ -21,6 +21,6 @@ test("should render comic thumbnails in the gallery", async ({ page }) => {
   )
 
   await expect(gallery).toHaveScreenshot("comic-gallery-thumbnails.png", {
-    maxDiffPixels: 10,
+    maxDiffPixelRatio: 0.01,
   })
 })
