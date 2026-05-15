@@ -14,7 +14,7 @@ export const galleryEnhancer =
   (options: InheritOptions): InheritOutput & GalleryEnhancerAPI => {
     const reader = next(options)
 
-    if (!document.getElementById(STYLE_ID)) {
+    if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
       injectCSS(document, STYLE_ID, styles)
     }
 
