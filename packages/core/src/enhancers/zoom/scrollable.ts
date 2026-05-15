@@ -1,7 +1,11 @@
 import { HTML_PREFIX } from "../../constants"
 import { UnboundScrollPosition } from "../../navigation/controllers/ScrollNavigationController"
 import type { Reader } from "../../reader"
-import { noopElement } from "../../utils/dom"
+import {
+  noopElement,
+  setAttributeIfChanged,
+  setStylePropertyIfChanged,
+} from "../../utils/dom"
 
 export const adjustScrollToKeepContentCentered = (
   scrollContainer: HTMLElement,
@@ -64,10 +68,13 @@ export const applyScaleToViewportForScroll = (
     )
 
   const direction = scale < 1 ? "down" : "up"
-  scrollNavigationElement?.setAttribute(
-    `data-${HTML_PREFIX}-zooming-direction`,
-    direction,
-  )
+  if (scrollNavigationElement) {
+    setAttributeIfChanged(
+      scrollNavigationElement,
+      `data-${HTML_PREFIX}-zooming-direction`,
+      direction,
+    )
+  }
 
   /**
    * When zooming out, we want to keep the content centered. Since we don't have a scrollbar we will cheat
@@ -76,7 +83,7 @@ export const applyScaleToViewportForScroll = (
    * Keeping the origin centered would make it impossible to scroll the left content
    */
   if (scale < 1) {
-    viewportElement.style.transformOrigin = `top`
+    setStylePropertyIfChanged(viewportElement.style, `transform-origin`, `top`)
   } else if (scale > 1) {
     /**
      * @important
@@ -86,10 +93,18 @@ export const applyScaleToViewportForScroll = (
      * (eg: 50% viewport fit)
      * Therefore we need to use an origin that start at the actual content eliminating margin.
      */
-    viewportElement.style.transformOrigin = `${marginX}px ${marginY}px`
+    setStylePropertyIfChanged(
+      viewportElement.style,
+      `transform-origin`,
+      `${marginX}px ${marginY}px`,
+    )
   }
 
-  viewportElement.style.transform = `scale(${scale})`
+  setStylePropertyIfChanged(
+    viewportElement.style,
+    `transform`,
+    `scale(${scale})`,
+  )
 
   const spinePosition = scrollNavigationController.fromScrollPosition(
     newCenterPositionAfterNewScaleProjection,

@@ -10,6 +10,12 @@ import {
 } from "rxjs"
 import { HTML_PREFIX } from "../../constants"
 import type { Reader } from "../../reader"
+import {
+  removeAttributeIfPresent,
+  removeStylePropertyIfPresent,
+  setAttributeIfChanged,
+  setStylePropertyIfChanged,
+} from "../../utils/dom"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { constrainPositionWithinViewport } from "./constraints"
 import {
@@ -62,18 +68,28 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
         const { scale = 1, animate = false } = options ?? {}
         const viewportElement = this.reader.viewport.value.element
 
-        this.viewport.element.setAttribute(
+        setAttributeIfChanged(
+          this.viewport.element,
           `data-${HTML_PREFIX}-zooming`,
           "true",
         )
 
-        this.scrollNavigationController.value.element?.setAttribute(
-          `data-${HTML_PREFIX}-zooming`,
-          this.isControlled ? "false" : "true",
-        )
+        const scrollNavigationElement =
+          this.scrollNavigationController.value.element
+        if (scrollNavigationElement) {
+          setAttributeIfChanged(
+            scrollNavigationElement,
+            `data-${HTML_PREFIX}-zooming`,
+            this.isControlled ? "false" : "true",
+          )
+        }
 
         if (animate && this.isControlled) {
-          viewportElement.style.transition = `transform ${ANIMATION_DURATION}ms`
+          setStylePropertyIfChanged(
+            viewportElement.style,
+            `transition`,
+            `transform ${ANIMATION_DURATION}ms`,
+          )
         }
 
         this.mergeCompare({
@@ -100,26 +116,37 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
       switchMap((options) => {
         const viewportElement = this.reader.viewport.value.element
 
-        this.viewport.element.setAttribute(
+        setAttributeIfChanged(
+          this.viewport.element,
           `data-${HTML_PREFIX}-zooming`,
           "false",
         )
 
-        this.scrollNavigationController.value.element?.removeAttribute(
-          `data-${HTML_PREFIX}-zooming-direction`,
-        )
-        this.scrollNavigationController.value.element?.setAttribute(
-          `data-${HTML_PREFIX}-zooming`,
-          "false",
-        )
+        const scrollNavigationElement =
+          this.scrollNavigationController.value.element
+        if (scrollNavigationElement) {
+          removeAttributeIfPresent(
+            scrollNavigationElement,
+            `data-${HTML_PREFIX}-zooming-direction`,
+          )
+          setAttributeIfChanged(
+            scrollNavigationElement,
+            `data-${HTML_PREFIX}-zooming`,
+            "false",
+          )
+        }
 
         if (options?.animate && this.isControlled) {
-          viewportElement.style.transition = `transform ${ANIMATION_DURATION}ms`
+          setStylePropertyIfChanged(
+            viewportElement.style,
+            `transition`,
+            `transform ${ANIMATION_DURATION}ms`,
+          )
         }
 
         this.updateZoom(1, { x: 0, y: 0 })
 
-        viewportElement.style.transform = ``
+        removeStylePropertyIfPresent(viewportElement.style, `transform`)
 
         this.mergeCompare({
           isZooming: false,
@@ -128,8 +155,11 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
         return timer(options?.animate ? ANIMATION_DURATION : 0).pipe(
           tap(() => {
             const viewportElement = this.reader.viewport.value.element
-            viewportElement.style.transformOrigin = ``
-            viewportElement.style.transition = ``
+            removeStylePropertyIfPresent(
+              viewportElement.style,
+              `transform-origin`,
+            )
+            removeStylePropertyIfPresent(viewportElement.style, `transition`)
 
             if (this.isControlled) {
               this.reader.layout()
@@ -159,7 +189,7 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     if (!this.isControlled) return
 
     // make sure to prevent animation before applying the new position
-    this.viewport.element.style.transition = ``
+    removeStylePropertyIfPresent(this.viewport.element.style, `transition`)
 
     this.updateZoom(this.value.currentScale, position, {
       constraints:
@@ -177,7 +207,7 @@ export class ZoomController extends ReactiveEntity<ZoomControllerState> {
     if (!this.value.isZooming) return
 
     // make sure to prevent animation before applying the new position
-    this.viewport.element.style.transition = ``
+    removeStylePropertyIfPresent(this.viewport.element.style, `transition`)
 
     const roundedScale = Math.ceil(userScale * 100) / 100
     const newScale = roundedScale

@@ -1,5 +1,6 @@
 import { BehaviorSubject, type Observable } from "rxjs"
 import { takeUntil, tap } from "rxjs/operators"
+import { setStylePropertyIfChanged } from "../utils/dom"
 import { upsertCSSToFrame } from "../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
@@ -83,7 +84,8 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
       (entry) => entry.name === currentThemeSubject$.value,
     )
     if (foundTheme) {
-      container.style.setProperty(
+      setStylePropertyIfChanged(
+        container.style,
         `background-color`,
         foundTheme.backgroundColor,
       )

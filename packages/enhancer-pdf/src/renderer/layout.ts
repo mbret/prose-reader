@@ -1,4 +1,8 @@
-import type { Viewport } from "@prose-reader/core"
+import {
+  setPropertyIfChanged,
+  setStylePropertyIfChanged,
+  type Viewport,
+} from "@prose-reader/core"
 import type { PDFPageProxy } from "pdfjs-dist"
 
 export const layoutContainer = (
@@ -11,15 +15,15 @@ export const layoutContainer = (
   // first we try to get the desired viewport for a comfortable reading based on theh current page size
   const { height: pageHeight, width: pageWidth } = viewport.pageSize
 
-  container.style.width = `${pageWidth}px`
-  container.style.height = `${pageHeight}px`
+  setStylePropertyIfChanged(container.style, `width`, `${pageWidth}px`)
+  setStylePropertyIfChanged(container.style, `height`, `${pageHeight}px`)
 
   if (spreadPosition === `right`) {
-    container.style.justifyContent = `flex-start`
+    setStylePropertyIfChanged(container.style, `justify-content`, `flex-start`)
   } else if (spreadPosition === `left`) {
-    container.style.justifyContent = `flex-end`
+    setStylePropertyIfChanged(container.style, `justify-content`, `flex-end`)
   } else {
-    container.style.justifyContent = `center`
+    setStylePropertyIfChanged(container.style, `justify-content`, `center`)
   }
 }
 
@@ -49,8 +53,24 @@ export const layoutCanvas = (
   const canvasHeight =
     viewportRatio > pageRatio ? pageWidth / viewportRatio : pageHeight
 
-  canvas.width = Math.floor(viewport.width * pixelRatioScale)
-  canvas.height = Math.floor(viewport.height * pixelRatioScale)
-  canvas.style.width = `${Math.floor(canvasWidth)}px`
-  canvas.style.height = `${Math.floor(canvasHeight)}px`
+  setPropertyIfChanged(
+    canvas,
+    `width`,
+    Math.floor(viewport.width * pixelRatioScale),
+  )
+  setPropertyIfChanged(
+    canvas,
+    `height`,
+    Math.floor(viewport.height * pixelRatioScale),
+  )
+  setStylePropertyIfChanged(
+    canvas.style,
+    `width`,
+    `${Math.floor(canvasWidth)}px`,
+  )
+  setStylePropertyIfChanged(
+    canvas.style,
+    `height`,
+    `${Math.floor(canvasHeight)}px`,
+  )
 }

@@ -1,4 +1,8 @@
 import type { Manifest } from "@prose-reader/shared"
+import {
+  removeStylePropertyIfPresent,
+  setStylePropertyIfChanged,
+} from "../../../../utils/dom"
 import { upsertCSSToFrame } from "../../../../utils/frames"
 import { getViewPortInformation } from "../viewport"
 import {
@@ -46,8 +50,8 @@ const staticLayout = (
   frameElement: HTMLIFrameElement,
   size: { width: number; height: number },
 ) => {
-  frameElement.style.width = `${size.width}px`
-  frameElement.style.height = `${size.height}px`
+  setStylePropertyIfChanged(frameElement.style, `width`, `${size.width}px`)
+  setStylePropertyIfChanged(frameElement.style, `height`, `${size.height}px`)
 }
 
 export const renderReflowable = ({
@@ -96,16 +100,16 @@ export const renderReflowable = ({
     : pageSizeHeight
 
   // reset width of iframe to be able to retrieve real size later
-  frameElement?.style.setProperty(`width`, `${pageWidth}px`)
+  setStylePropertyIfChanged(frameElement.style, `width`, `${pageWidth}px`)
 
   /**
    * In case of reflowable with continuous scrolling, we let the frame takes whatever height
    * it needs since it could be less or more than page size and we want a continuous reading
    */
   if (!continuousScrollableReflowableItem) {
-    frameElement?.style.setProperty(`height`, `${pageHeight}px`)
+    setStylePropertyIfChanged(frameElement.style, `height`, `${pageHeight}px`)
   } else {
-    frameElement?.style.removeProperty(`height`)
+    removeStylePropertyIfPresent(frameElement.style, `height`)
   }
 
   const { viewportDimensions, computedScale = 1 } =
@@ -137,9 +141,10 @@ export const renderReflowable = ({
         height: viewportDimensions.height ?? 1,
       })
 
-      frameElement?.style.setProperty(`position`, `absolute`)
-      frameElement?.style.setProperty(`top`, `50%`)
-      frameElement?.style.setProperty(
+      setStylePropertyIfChanged(frameElement.style, `position`, `absolute`)
+      setStylePropertyIfChanged(frameElement.style, `top`, `50%`)
+      setStylePropertyIfChanged(
+        frameElement.style,
         `left`,
         blankPagePosition === `before`
           ? isRTL
@@ -152,11 +157,16 @@ export const renderReflowable = ({
             : `50%`,
       )
 
-      frameElement?.style.setProperty(
+      setStylePropertyIfChanged(
+        frameElement.style,
         `transform`,
         `translate(-50%, -50%) scale(${computedScale})`,
       )
-      frameElement?.style.setProperty(`transform-origin`, `center center`)
+      setStylePropertyIfChanged(
+        frameElement.style,
+        `transform-origin`,
+        `center center`,
+      )
     } else {
       const frameStyle = isImageType
         ? buildStyleForReflowableImageOnly({
@@ -230,10 +240,14 @@ export const renderReflowable = ({
     if (!isFillingAllScreen) {
       contentWidth = contentWidth + pageWidth
       if (isRTL && !isUsingVerticalWriting) {
-        frameElement?.style.setProperty(`margin-left`, `${pageWidth}px`)
+        setStylePropertyIfChanged(
+          frameElement.style,
+          `margin-left`,
+          `${pageWidth}px`,
+        )
       }
     } else {
-      frameElement?.style.setProperty(`margin-left`, `0px`)
+      setStylePropertyIfChanged(frameElement.style, `margin-left`, `0px`)
     }
 
     return { width: contentWidth, height: contentHeight }

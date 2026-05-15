@@ -21,7 +21,7 @@ import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import type { SpineItemReference } from "./spineItem/SpineItem"
-import { injectCSS, removeCSS } from "./utils/dom"
+import { injectCSS, removeCSS, setStylePropertyIfChanged } from "./utils/dom"
 import { Viewport } from "./viewport/Viewport"
 
 export type CreateReaderOptions = Partial<CoreInputSettings>
@@ -124,7 +124,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
 
       if (!containerElement) return
 
-      containerElement.style.setProperty(`overflow`, `hidden`)
+      setStylePropertyIfChanged(containerElement.style, `overflow`, `hidden`)
 
       viewport.layout()
       spine.layout()

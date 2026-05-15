@@ -13,6 +13,53 @@ const pointerEvents: string[] = [
   // `touchend` as const,
 ]
 
+export function setAttributeIfChanged(
+  element: Element,
+  name: string,
+  value: string | number | boolean,
+): void {
+  const nextValue = String(value)
+
+  if (element.getAttribute(name) !== nextValue) {
+    element.setAttribute(name, nextValue)
+  }
+}
+
+export function removeAttributeIfPresent(element: Element, name: string): void {
+  if (element.hasAttribute(name)) {
+    element.removeAttribute(name)
+  }
+}
+
+export function setPropertyIfChanged<T, K extends keyof T>(
+  object: T,
+  key: K,
+  value: T[K],
+): void {
+  if (object[key] !== value) {
+    object[key] = value
+  }
+}
+
+export function setStylePropertyIfChanged(
+  style: CSSStyleDeclaration,
+  property: string,
+  value: string,
+): void {
+  if (style.getPropertyValue(property) !== value) {
+    style.setProperty(property, value)
+  }
+}
+
+export function removeStylePropertyIfPresent(
+  style: CSSStyleDeclaration,
+  property: string,
+): void {
+  if (style.getPropertyValue(property) !== ``) {
+    style.removeProperty(property)
+  }
+}
+
 function createRangeOrCaretFromPoint(
   doc: Document,
   startX: number,
@@ -456,7 +503,7 @@ export const injectCSS = (
 ) => {
   const userStyle = doc.createElement(`style`)
   userStyle.id = id
-  userStyle.innerHTML = style
+  userStyle.textContent = style
 
   if (prepend) {
     doc.head.prepend(userStyle)

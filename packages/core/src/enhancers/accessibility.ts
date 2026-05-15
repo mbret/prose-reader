@@ -1,3 +1,4 @@
+import { removeAttributeIfPresent, setAttributeIfChanged } from "../utils/dom"
 import { upsertCSSToFrame } from "../utils/frames"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
@@ -14,9 +15,9 @@ export const accessibilityEnhancer =
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.removeAttribute(`tab-index`)
+          removeAttributeIfPresent(entry.target, `tab-index`)
         } else {
-          entry.target.setAttribute(`tab-index`, `-1`)
+          setAttributeIfChanged(entry.target, `tab-index`, `-1`)
         }
       })
     }, {})

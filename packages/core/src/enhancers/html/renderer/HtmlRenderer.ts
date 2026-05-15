@@ -1,6 +1,7 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { EMPTY, from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
+import { setAttributeIfChanged } from "../../../utils/dom"
 import {
   upsertCSSToFrame,
   waitForFrameLoad,
@@ -110,7 +111,8 @@ export class HtmlRenderer extends DocumentRenderer {
       this.settings.values.computedPageTurnMode === `scrollable`
 
     if (frameElement.contentDocument?.documentElement) {
-      frameElement.contentDocument?.documentElement.setAttribute(
+      setAttributeIfChanged(
+        frameElement.contentDocument.documentElement,
         `data-prose-reader-html-renderer-spread-position`,
         spreadPosition,
       )

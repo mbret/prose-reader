@@ -58,7 +58,9 @@ export const upsertCSSToFrame = (
   ) as HTMLStyleElement
 
   if (existingElement) {
-    existingElement.innerHTML = style
+    if (existingElement.textContent !== style) {
+      existingElement.textContent = style
+    }
     return
   }
 

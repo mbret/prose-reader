@@ -2,6 +2,7 @@ import {
   DestroyableClass,
   type Reader,
   type SpineItem,
+  setStylePropertyIfChanged,
 } from "@prose-reader/core"
 import {
   first,
@@ -66,9 +67,11 @@ export class SpineItemHighlight extends DestroyableClass {
   public updateStateOnSelection(isSelected: boolean) {
     Array.from(this.container.children).forEach((child) => {
       if (child instanceof HTMLElement) {
-        child.style.border = isSelected
-          ? "3px dashed red"
-          : "3px dashed transparent"
+        setStylePropertyIfChanged(
+          child.style,
+          `border`,
+          isSelected ? "3px dashed red" : "3px dashed transparent",
+        )
       }
     })
   }
@@ -78,7 +81,7 @@ export class SpineItemHighlight extends DestroyableClass {
       first(),
       withLatestFrom(this.isSelected),
       map(([resolvedCfi, isSelected]) => {
-        if (!resolvedCfi || !resolvedCfi.isCfiRange) return undefined
+        if (!resolvedCfi?.isCfiRange) return undefined
 
         const range = resolvedCfi.range
 

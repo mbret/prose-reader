@@ -28,6 +28,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { SpinePosition } from "../../spine/types"
 import { DestroyableClass } from "../../utils/DestroyableClass"
+import { setStylePropertyIfChanged } from "../../utils/dom"
 import { isDefined } from "../../utils/isDefined"
 import { isShallowEqual } from "../../utils/objects"
 import type { Viewport } from "../../viewport/Viewport"
@@ -104,9 +105,9 @@ export class ControlledNavigationController
     ]).pipe(
       tap(([, element]) => {
         if (settings.values.computedPageTurnMode === `scrollable`) {
-          element.style.display = `contents`
+          setStylePropertyIfChanged(element.style, `display`, `contents`)
         } else {
-          element.style.display = `block`
+          setStylePropertyIfChanged(element.style, `display`, `block`)
         }
       }),
     )
@@ -140,8 +141,8 @@ export class ControlledNavigationController
         const element = this.element$.getValue()
 
         // cleanup potential previous manual adjust
-        element.style.setProperty(`transition`, `none`)
-        element.style.setProperty(`opacity`, `1`)
+        setStylePropertyIfChanged(element.style, `transition`, `none`)
+        setStylePropertyIfChanged(element.style, `opacity`, `1`)
 
         return merge(
           of(true),
@@ -176,24 +177,30 @@ export class ControlledNavigationController
 
                   if (data.shouldAnimate && !noAdjustmentNeeded) {
                     if (pageTurnAnimation === `fade`) {
-                      element.style.setProperty(
+                      setStylePropertyIfChanged(
+                        element.style,
                         `transition`,
                         `opacity ${animationDuration / 2}ms`,
                       )
-                      element.style.setProperty(`opacity`, `0`)
+                      setStylePropertyIfChanged(element.style, `opacity`, `0`)
                     } else if (
                       currentEvent.animation === `snap` ||
                       pageTurnAnimation === `slide`
                     ) {
-                      element.style.setProperty(
+                      setStylePropertyIfChanged(
+                        element.style,
                         `transition`,
                         `transform ${animationDuration}ms`,
                       )
-                      element.style.setProperty(`opacity`, `1`)
+                      setStylePropertyIfChanged(element.style, `opacity`, `1`)
                     }
                   } else {
-                    element.style.setProperty(`transition`, `none`)
-                    element.style.setProperty(`opacity`, `1`)
+                    setStylePropertyIfChanged(
+                      element.style,
+                      `transition`,
+                      `none`,
+                    )
+                    setStylePropertyIfChanged(element.style, `opacity`, `1`)
                   }
                 }),
                 /**
@@ -217,7 +224,7 @@ export class ControlledNavigationController
 
                   if (pageTurnAnimation === `fade`) {
                     this.applyNavigationPosition(data.position)
-                    element.style.setProperty(`opacity`, `1`)
+                    setStylePropertyIfChanged(element.style, `opacity`, `1`)
                   }
                 }),
                 currentEvent.shouldAnimate
@@ -257,7 +264,11 @@ export class ControlledNavigationController
     const element = this.element$.getValue()
 
     const translation = spinePositionToTranslation(position)
-    element.style.transform = `translate(${translation.x}px, ${translation.y}px)`
+    setStylePropertyIfChanged(
+      element.style,
+      `transform`,
+      `translate(${translation.x}px, ${translation.y}px)`,
+    )
 
     this.hookManager.execute("onViewportOffsetAdjust", undefined)
   }

@@ -11,6 +11,10 @@ import {
 } from "rxjs/operators"
 import type { SettingsInterface } from "../../settings/SettingsInterface"
 import type { Pages } from "../../spine/Pages"
+import {
+  setAttributeIfChanged,
+  setStylePropertyIfChanged,
+} from "../../utils/dom"
 import { upsertCSSToFrame } from "../../utils/frames"
 import { isDefined } from "../../utils/isDefined"
 import { observeResize } from "../../utils/rxjs"
@@ -178,9 +182,13 @@ export const layoutEnhancer =
         /**
          * Hide document until it's ready
          */
-        documentContainer.style.opacity = `0`
+        setStylePropertyIfChanged(documentContainer.style, `opacity`, `0`)
         if (settingsManager.values.layoutLayerTransition) {
-          documentContainer.style.transition = `opacity 800ms`
+          setStylePropertyIfChanged(
+            documentContainer.style,
+            `transition`,
+            `opacity 800ms`,
+          )
         }
       },
     )
@@ -193,7 +201,9 @@ export const layoutEnhancer =
       // @todo dont remember why i did this but there should be a reason. If i get time to explain
       if (reader.settings.values.computedPageTurnMode !== `scrollable`) {
         // @todo see what's the impact
-        element?.setAttribute(`tab-index`, `0`)
+        if (element) {
+          setAttributeIfChanged(element, `tab-index`, `0`)
+        }
       }
     })
 
@@ -203,7 +213,7 @@ export const layoutEnhancer =
         const element = item.renderer.documentContainer
 
         if (element) {
-          element.style.opacity = `1`
+          setStylePropertyIfChanged(element.style, `opacity`, `1`)
         }
       }),
     )

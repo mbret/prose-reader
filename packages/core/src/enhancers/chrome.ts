@@ -1,4 +1,5 @@
 import { takeUntil } from "rxjs"
+import { setAttributeIfChanged } from "../utils/dom"
 import type { EnhancerOutput, RootEnhancer } from "./types/enhancer"
 
 /**
@@ -66,7 +67,9 @@ export const chromeEnhancer =
        * it when selecting text. It needs to be turned off by the user.
        * @see https://developers.google.com/web/updates/2015/10/tap-to-search
        */
-      frame.contentDocument?.body.setAttribute(`tabindex`, `-1`)
+      if (frame.contentDocument?.body) {
+        setAttributeIfChanged(frame.contentDocument.body, `tabindex`, `-1`)
+      }
     })
 
     // const forceScreenRefresh$ = reader.$.$

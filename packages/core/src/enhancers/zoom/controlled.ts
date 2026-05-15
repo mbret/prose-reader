@@ -1,14 +1,20 @@
+import { setStylePropertyIfChanged } from "../../utils/dom"
+
 export const applyViewportTransformForControlledMode = (
   scale: number,
   position: { x: number; y: number },
   viewportElement: HTMLElement,
 ) => {
-  viewportElement.style.transformOrigin = `0 0`
+  setStylePropertyIfChanged(viewportElement.style, `transform-origin`, `0 0`)
 
   const translateTransform = `translate3d(${position.x}px, ${position.y}px, 0px)`
   const scaleTransform = `scale(${scale})`
 
-  viewportElement.style.transform = `${translateTransform} ${scaleTransform}`
+  setStylePropertyIfChanged(
+    viewportElement.style,
+    `transform`,
+    `${translateTransform} ${scaleTransform}`,
+  )
 }
 
 export const derivePositionFromScaleForControlledMode = (

@@ -1,4 +1,4 @@
-import { DocumentRenderer } from "@prose-reader/core"
+import { DocumentRenderer, setStylePropertyIfChanged } from "@prose-reader/core"
 import { EMPTY, of } from "rxjs"
 
 export class AudioRenderer extends DocumentRenderer {
@@ -36,8 +36,8 @@ export class AudioRenderer extends DocumentRenderer {
     const rootElement = this.documentContainer
 
     if (rootElement) {
-      rootElement.style.width = `${width}px`
-      rootElement.style.height = `${height}px`
+      setStylePropertyIfChanged(rootElement.style, `width`, `${width}px`)
+      setStylePropertyIfChanged(rootElement.style, `height`, `${height}px`)
     }
 
     return of({ width, height })

@@ -1,4 +1,5 @@
 import type { Reader } from "../../reader"
+import { setAttributeIfChanged } from "../../utils/dom"
 
 export const fixIframeScrollbar = (reader: Reader) => {
   /**
@@ -14,6 +15,8 @@ export const fixIframeScrollbar = (reader: Reader) => {
     const spineItem = reader.spineItemsManager.get(itemId)
     const element = spineItem?.renderer.getDocumentFrame()
 
-    element?.setAttribute("scrolling", "no")
+    if (element) {
+      setAttributeIfChanged(element, "scrolling", "no")
+    }
   })
 }

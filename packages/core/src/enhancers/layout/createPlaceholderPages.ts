@@ -3,6 +3,10 @@ import { combineLatest, merge, type Observable } from "rxjs"
 import { switchMap, tap } from "rxjs/operators"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
 import type { Reader } from "../../reader"
+import {
+  setPropertyIfChanged,
+  setStylePropertyIfChanged,
+} from "../../utils/dom"
 import type { Viewport } from "../../viewport/Viewport"
 import type { Theme } from "../theme"
 
@@ -73,7 +77,7 @@ export const createPlaceholderPages = (
         ...items.map((item) => {
           // since we will use z-index for the loading element, we need to set the parent
           // to 0 to have it work as relative reference.
-          item.containerElement.style.zIndex = `0`
+          setStylePropertyIfChanged(item.containerElement.style, `z-index`, `0`)
 
           const alreadyExistingElement = item.containerElement.querySelector(
             `.${CONTAINER_HTML_PREFIX}`,
@@ -93,11 +97,13 @@ export const createPlaceholderPages = (
           return merge(
             item.pipe(
               tap((state) => {
-                loadingElementContainer.style.setProperty(
+                setStylePropertyIfChanged(
+                  loadingElementContainer.style,
                   `visibility`,
                   state.isReady ? `hidden` : `visible`,
                 )
-                loadingElementContainer.style.setProperty(
+                setStylePropertyIfChanged(
+                  loadingElementContainer.style,
                   `z-index`,
                   state.isReady ? `0` : `1`,
                 )
@@ -107,8 +113,11 @@ export const createPlaceholderPages = (
                     `[data-details-element]`,
                   )
                   if (detailsElement instanceof HTMLElement) {
-                    detailsElement.innerText =
-                      state.error?.toString() ?? `Unknown error`
+                    setPropertyIfChanged(
+                      detailsElement,
+                      `innerText`,
+                      state.error?.toString() ?? `Unknown error`,
+                    )
                   }
                 }
               }),
@@ -117,11 +126,13 @@ export const createPlaceholderPages = (
               tap(([, theme]) => {
                 const viewportWidth = reader.viewport.absoluteViewport.width
 
-                loadingElementContainer.style.setProperty(
+                setStylePropertyIfChanged(
+                  loadingElementContainer.style,
                   `max-width`,
                   `${viewportWidth}px`,
                 )
-                loadingElementContainer.style.setProperty(
+                setStylePropertyIfChanged(
+                  loadingElementContainer.style,
                   `color`,
                   theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`,
                 )

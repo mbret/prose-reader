@@ -1,7 +1,9 @@
 import {
   DocumentRenderer,
   injectCSSToFrame,
-  removeCSS,
+  setAttributeIfChanged,
+  setStylePropertyIfChanged,
+  upsertCSSToFrame,
   waitForFrameLoad,
   waitForFrameReady,
   waitForSwitch,
@@ -24,6 +26,14 @@ import {
 } from "rxjs"
 import pdfFrameStyle from "./frame.css?inline"
 import { layoutCanvas, layoutContainer } from "./layout"
+
+const pdfScaleStyle = `:root {
+  --scale-factor: 1;
+  --user-unit: 1;
+  --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+}`
 
 export class PdfRenderer extends DocumentRenderer {
   private pageProxy: PDFPageProxy | undefined
@@ -148,6 +158,7 @@ export class PdfRenderer extends DocumentRenderer {
               this.pdfViewerStyle,
             )
             injectCSSToFrame(frameElement, "enhancer-pdf-style", pdfFrameStyle)
+            upsertCSSToFrame(frameElement, "pdf-scale-scale", pdfScaleStyle)
 
             /**
              * We make sure to render the text layer to simulate the document being loaded.
@@ -158,7 +169,7 @@ export class PdfRenderer extends DocumentRenderer {
 
             if (!frameBody || !this.pageProxy) return EMPTY
 
-            frameBody.setAttribute("class", "textLayer")
+            setAttributeIfChanged(frameBody, "class", "textLayer")
 
             this.textLayer = new TextLayer({
               container: frameBody,
@@ -241,27 +252,36 @@ export class PdfRenderer extends DocumentRenderer {
         const textLayerElement = frameDoc.body
         const canvasScale = canvas.clientWidth / viewportWidth
 
-        textLayerElement.style.top = `${canvas.offsetTop}px`
-        textLayerElement.style.left = `${canvas.offsetLeft}px`
-        textLayerElement.style.height = canvas.style.height
-        textLayerElement.style.width = canvas.style.width
+        setStylePropertyIfChanged(
+          textLayerElement.style,
+          `top`,
+          `${canvas.offsetTop}px`,
+        )
+        setStylePropertyIfChanged(
+          textLayerElement.style,
+          `left`,
+          `${canvas.offsetLeft}px`,
+        )
+        setStylePropertyIfChanged(
+          textLayerElement.style,
+          `height`,
+          canvas.style.height,
+        )
+        setStylePropertyIfChanged(
+          textLayerElement.style,
+          `width`,
+          canvas.style.width,
+        )
 
-        removeCSS(frameElement, "pdf-scale-scale")
         /**
          * Taking inspiration from https://github.com/mozilla/pdf.js/blob/master/web/pdf_viewer.css.
          * Not sure why pdfjs DOES rely on css from the viewer to works. Or in another words, why is it
          * not more obvious that TextLayer requires a set of variables to work correctly.
          */
-        injectCSSToFrame(
-          frameElement,
-          "pdf-scale-scale",
-          `:root {
-            --scale-factor: ${canvasScale};
-            --user-unit: 1; 
-            --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
-            --scale-round-x: 1px;
-            --scale-round-y: 1px;
-           }`,
+        setStylePropertyIfChanged(
+          frameDoc.documentElement.style,
+          `--scale-factor`,
+          `${canvasScale}`,
         )
 
         this.textLayer.update({

@@ -1,3 +1,8 @@
+import {
+  setPropertyIfChanged,
+  setStylePropertyIfChanged,
+} from "@prose-reader/core"
+
 export const createElementForRange = (
   range: Range,
   container: HTMLElement,
@@ -48,7 +53,7 @@ export const createElementForRange = (
 }
 
 export const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {
-  target.style.cssText = source.style.cssText
+  setPropertyIfChanged(target.style, `cssText`, source.style.cssText)
 }
 
 export const createAnnotationLayer = (
@@ -71,11 +76,11 @@ export const layoutAnnotationLayer = (
   copyPositionStyle(layer, annotationLayer)
 
   if (layer.style.position === "") {
-    annotationLayer.style.position = "absolute"
-    annotationLayer.style.top = "0"
+    setStylePropertyIfChanged(annotationLayer.style, `position`, `absolute`)
+    setStylePropertyIfChanged(annotationLayer.style, `top`, `0`)
   }
 
   //   annotationLayer.style.backgroundColor = "red"
-  annotationLayer.style.opacity = "1"
-  annotationLayer.style.pointerEvents = "none"
+  setStylePropertyIfChanged(annotationLayer.style, `opacity`, `1`)
+  setStylePropertyIfChanged(annotationLayer.style, `pointer-events`, `none`)
 }

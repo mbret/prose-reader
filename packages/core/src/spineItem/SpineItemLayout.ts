@@ -16,6 +16,10 @@ import type { HookManager } from "../hooks/HookManager"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import {
+  removeStylePropertyIfPresent,
+  setStylePropertyIfChanged,
+} from "../utils/dom"
 import { deferNextResult } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
@@ -217,19 +221,27 @@ export class SpineItemLayout extends DestroyableClass {
     top?: number
   }) => {
     if (right !== undefined) {
-      this.containerElement.style.right = `${right}px`
+      setStylePropertyIfChanged(
+        this.containerElement.style,
+        `right`,
+        `${right}px`,
+      )
     } else {
-      this.containerElement.style.removeProperty(`right`)
+      removeStylePropertyIfPresent(this.containerElement.style, `right`)
     }
     if (left !== undefined) {
-      this.containerElement.style.left = `${left}px`
+      setStylePropertyIfChanged(
+        this.containerElement.style,
+        `left`,
+        `${left}px`,
+      )
     } else {
-      this.containerElement.style.removeProperty(`left`)
+      removeStylePropertyIfPresent(this.containerElement.style, `left`)
     }
     if (top !== undefined) {
-      this.containerElement.style.top = `${top}px`
+      setStylePropertyIfChanged(this.containerElement.style, `top`, `${top}px`)
     } else {
-      this.containerElement.style.removeProperty(`top`)
+      removeStylePropertyIfPresent(this.containerElement.style, `top`)
     }
   }
 
@@ -279,8 +291,16 @@ export class SpineItemLayout extends DestroyableClass {
             pageSize: this.viewport.pageSize,
           }
 
-          this.containerElement.style.width = `${safeWidth}px`
-          this.containerElement.style.height = `${safeHeight}px`
+          setStylePropertyIfChanged(
+            this.containerElement.style,
+            `width`,
+            `${safeWidth}px`,
+          )
+          setStylePropertyIfChanged(
+            this.containerElement.style,
+            `height`,
+            `${safeHeight}px`,
+          )
 
           if (this.settings.values.computedPageTurnDirection === `vertical`) {
             this.adjustPositionOfElement({

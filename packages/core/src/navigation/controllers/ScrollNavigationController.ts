@@ -26,6 +26,7 @@ import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager
 import type { Spine } from "../../spine/Spine"
 import { type SpinePosition, UnboundSpinePosition } from "../../spine/types"
 import { AbstractPosition } from "../../types"
+import { setStylePropertyIfChanged } from "../../utils/dom"
 import { isDefined } from "../../utils/isDefined"
 import { ReactiveEntity } from "../../utils/ReactiveEntity"
 import { observeResize, watchKeys } from "../../utils/rxjs"
@@ -87,9 +88,9 @@ export class ScrollNavigationController
         if (!element) return
 
         if (computedPageTurnMode === `scrollable`) {
-          element.style.display = "block"
+          setStylePropertyIfChanged(element.style, `display`, `block`)
         } else {
-          element.style.display = "contents"
+          setStylePropertyIfChanged(element.style, `display`, `contents`)
         }
       }),
     )

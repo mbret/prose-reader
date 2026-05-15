@@ -1,4 +1,5 @@
 import type { Reader } from "../../reader"
+import { setStylePropertyIfChanged } from "../../utils/dom"
 import { getFrameViewportInfo } from "../../utils/frames"
 
 export const fixReflowable = (reader: Reader) => {
@@ -49,7 +50,8 @@ export const fixReflowable = (reader: Reader) => {
           spineManagerWantAFullWidthItem &&
           frameElement instanceof HTMLIFrameElement
         ) {
-          frameElement?.style.setProperty(
+          setStylePropertyIfChanged(
+            frameElement.style,
             `left`,
             reader.context.isRTL() ? `75%` : `25%`,
           )

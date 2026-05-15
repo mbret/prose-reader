@@ -15,6 +15,7 @@ import {
   tap,
 } from "rxjs/operators"
 import type { Reader } from "../../reader"
+import { setStylePropertyIfChanged } from "../../utils/dom"
 
 /**
  * For some reason (bug / expected / engine layout optimization) when the viewport is being animated clicking inside iframe
@@ -57,19 +58,25 @@ export const createMovingSafePan$ = (reader: Reader) => {
   const createResetLock$ = <T>(source: Observable<T>) =>
     scheduled(source, animationFrameScheduler).pipe(
       tap(() => {
-        iframeOverlayForAnimationsElement?.style.setProperty(
-          `visibility`,
-          `hidden`,
-        )
+        if (iframeOverlayForAnimationsElement) {
+          setStylePropertyIfChanged(
+            iframeOverlayForAnimationsElement.style,
+            `visibility`,
+            `hidden`,
+          )
+        }
       }),
     )
 
   const lockAfterViewportBusy$ = reader.context.bridgeEvent.viewportBusy$.pipe(
     tap(() => {
-      iframeOverlayForAnimationsElement?.style.setProperty(
-        `visibility`,
-        `visible`,
-      )
+      if (iframeOverlayForAnimationsElement) {
+        setStylePropertyIfChanged(
+          iframeOverlayForAnimationsElement.style,
+          `visibility`,
+          `visible`,
+        )
+      }
     }),
   )
 

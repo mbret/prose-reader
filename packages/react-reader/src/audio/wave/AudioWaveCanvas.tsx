@@ -1,4 +1,8 @@
 import { Box, useBreakpointValue } from "@chakra-ui/react"
+import {
+  setPropertyIfChanged,
+  setStylePropertyIfChanged,
+} from "@prose-reader/core"
 import type { AudioVisualizerState } from "@prose-reader/enhancer-audio"
 import { useCallback, useEffect, useRef } from "react"
 import { FALLBACK_BOTTOM_COLOR, FALLBACK_TOP_COLOR } from "./constants"
@@ -126,16 +130,18 @@ export const AudioWaveCanvas = ({
     const nextWidth = Math.max(1, container.clientWidth)
     const nextHeight = Math.max(1, container.clientHeight)
     const pixelRatio = window.devicePixelRatio || 1
+    const nextCanvasWidth = Math.round(nextWidth * pixelRatio)
+    const nextCanvasHeight = Math.round(nextHeight * pixelRatio)
 
     sizeRef.current = {
       width: nextWidth,
       height: nextHeight,
     }
 
-    canvas.width = Math.round(nextWidth * pixelRatio)
-    canvas.height = Math.round(nextHeight * pixelRatio)
-    canvas.style.width = `${nextWidth}px`
-    canvas.style.height = `${nextHeight}px`
+    setPropertyIfChanged(canvas, `width`, nextCanvasWidth)
+    setPropertyIfChanged(canvas, `height`, nextCanvasHeight)
+    setStylePropertyIfChanged(canvas.style, `width`, `${nextWidth}px`)
+    setStylePropertyIfChanged(canvas.style, `height`, `${nextHeight}px`)
 
     const context = canvas.getContext(`2d`)
 
