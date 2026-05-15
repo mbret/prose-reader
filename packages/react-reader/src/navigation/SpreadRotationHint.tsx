@@ -187,6 +187,7 @@ export const SpreadRotationHint = memo(() => {
     <Presence
       present={visibleHintKey !== undefined}
       lazyMount
+      unmountOnExit
       animationName={ANIMATION_NAME_IN_OUT}
       animationDuration={ANIMATION_DURATION_IN_OUT}
     >
