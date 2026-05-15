@@ -34,9 +34,13 @@ export type ReaderInternal = ReturnType<typeof createReader>
 
 const STYLES_ID = `${HTML_STYLE_PREFIX}-core`
 
+type ReaderLayoutOptions = {
+  immediate?: boolean
+}
+
 export const createReader = (inputSettings: CreateReaderOptions) => {
   const id = crypto.randomUUID()
-  const layoutSubject = new Subject<void>()
+  const layoutSubject = new Subject<ReaderLayoutOptions>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
   const context = new Context()
@@ -85,8 +89,8 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
   navigator.position$.subscribe(context.bridgeEvent.positionSubject)
   pagination.subscribe(context.bridgeEvent.paginationSubject)
 
-  const layout = () => {
-    layoutSubject.next()
+  const layout = (options: ReaderLayoutOptions = {}) => {
+    layoutSubject.next(options)
   }
 
   const load = (
@@ -111,15 +115,18 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       rootElement: element,
     })
 
-    layout()
+    layout({ immediate: true })
   }
 
   const layoutOnSpreadModeChange$ = settingsManager
     .watch([`computedSpreadMode`])
-    .pipe(skip(1), tap(layout))
+    .pipe(
+      skip(1),
+      tap(() => layout()),
+    )
 
   const layout$ = layoutSubject.pipe(
-    tap(() => {
+    tap((options) => {
       const containerElement = context.value.rootElement
 
       if (!containerElement) return
@@ -127,7 +134,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
       setStylePropertyIfChanged(containerElement.style, `overflow`, `hidden`)
 
       viewport.layout()
-      spine.layout()
+      spine.layout(options)
     }),
     takeUntil(destroy$),
   )

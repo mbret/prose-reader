@@ -1,6 +1,6 @@
 import {
   concatMap,
-  debounceTime,
+  debounce,
   map,
   merge,
   type Observable,
@@ -10,6 +10,7 @@ import {
   switchMap,
   takeUntil,
   tap,
+  timer,
 } from "rxjs"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
@@ -30,8 +31,12 @@ export type LayoutInfo = {
   pages: PageLayoutInformation[]
 }
 
+export type SpineLayoutOptions = {
+  immediate?: boolean
+}
+
 export class SpineLayout extends DestroyableClass {
-  protected externalLayoutTrigger = new Subject()
+  protected externalLayoutTrigger = new Subject<SpineLayoutOptions>()
 
   /**
    * @todo use absolute position for all direction.
@@ -59,6 +64,12 @@ export class SpineLayout extends DestroyableClass {
     const spineItemNeedsLayout$ = merge(
       spineItemsObserver.itemLoad$,
       spineItemsObserver.itemUnload$,
+    ).pipe(
+      map(
+        (): SpineLayoutOptions => ({
+          immediate: false,
+        }),
+      ),
     )
 
     const layoutTrigger$ = merge(
@@ -72,7 +83,9 @@ export class SpineLayout extends DestroyableClass {
           item.markDirty()
         })
       }),
-      debounceTime(50),
+      // Immediate only skips this artificial delay. Item layout itself can still
+      // complete asynchronously depending on the renderer.
+      debounce((options) => (options.immediate ? of(undefined) : timer(50))),
       switchMap(() =>
         this.spineItemsManager.items.reduce(
           (acc$, item, itemIndex) =>
@@ -156,8 +169,8 @@ export class SpineLayout extends DestroyableClass {
       .subscribe()
   }
 
-  layout() {
-    this.externalLayoutTrigger.next(undefined)
+  layout(options: SpineLayoutOptions = {}) {
+    this.externalLayoutTrigger.next(options)
   }
 
   public getSpineItemSpineLayoutInfo(

@@ -15,7 +15,7 @@ import { createSpineLocator, type SpineLocator } from "./locator/SpineLocator"
 import { Pages } from "./Pages"
 import type { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
-import { SpineLayout } from "./SpineLayout"
+import { SpineLayout, type SpineLayoutOptions } from "./SpineLayout"
 
 export class Spine extends DestroyableClass {
   protected elementSubject = new BehaviorSubject<HTMLElement | undefined>(
@@ -127,8 +127,8 @@ export class Spine extends DestroyableClass {
     return this.elementSubject.getValue()
   }
 
-  public layout() {
-    this.spineLayout.layout()
+  public layout(options?: SpineLayoutOptions) {
+    this.spineLayout.layout(options)
   }
 
   public getSpineItemSpineLayoutInfo(
