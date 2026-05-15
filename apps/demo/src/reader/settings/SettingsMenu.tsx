@@ -8,10 +8,8 @@ import {
   IoMdArrowRoundForward,
   IoMdArrowUp,
 } from "react-icons/io"
-import screenfull from "screenfull"
 import { NavigationSettings } from "../../common/NavigationSettings"
 import { OtherSettings } from "../../common/OtherSettings"
-import { Checkbox } from "../../components/ui/checkbox"
 import { Field } from "../../components/ui/field"
 import { Radio, RadioGroup } from "../../components/ui/radio"
 import { Slider } from "../../components/ui/slider"
@@ -36,7 +34,6 @@ export const SettingsMenu = ({
   setLocalSettings: React.Dispatch<React.SetStateAction<LocalSettings>>
   localSettings: LocalSettings
 }) => {
-  const [isFullscreen, setIsFullScreen] = useState(screenfull.isFullscreen)
   const { reader } = useReader()
   const [theme, setTheme] = useState<Theme>(reader?.theme.get() || `publisher`)
   const readerSettings = useReaderSettings()
@@ -64,20 +61,6 @@ export const SettingsMenu = ({
     }
   }, [readerSettings?.pageHorizontalMargin])
 
-  useEffect(() => {
-    if (screenfull.isEnabled) {
-      const cb = () => {
-        setIsFullScreen(screenfull.isFullscreen)
-      }
-
-      screenfull.on("change", cb)
-
-      return () => {
-        screenfull.off(`change`, cb)
-      }
-    }
-  }, [])
-
   if (!open || !reader) return null
 
   return (
@@ -88,23 +71,6 @@ export const SettingsMenu = ({
       }}
       gap={4}
     >
-      <Field>
-        <Checkbox
-          checked={isFullscreen}
-          defaultChecked={false}
-          onCheckedChange={async (e) => {
-            if (screenfull.isEnabled) {
-              if (e.checked) {
-                await screenfull.request()
-              } else {
-                await screenfull.exit()
-              }
-            }
-          }}
-        >
-          Use full screen
-        </Checkbox>
-      </Field>
       <Field label="Line height" helperText="Change the space between lines">
         <RadioGroup
           defaultValue="publisher"
