@@ -151,7 +151,6 @@ const InnerReactReader = memo(
             present={enableFloatingTime || quickMenuOpen}
             animationName={ANIMATION_NAME_IN_OUT}
             animationDuration="slow"
-            overflow="hidden"
           >
             <FloatingTime />
           </Presence>
