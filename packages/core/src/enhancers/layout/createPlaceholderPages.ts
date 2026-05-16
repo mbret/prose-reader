@@ -26,12 +26,15 @@ const defaultLoadingElementCreate = ({
   item: Manifest[`spineItems`][number]
   viewport: Viewport
 }) => {
+  const viewportWidth = viewport.absoluteViewport.width
+  const initialMaxWidth =
+    viewportWidth > 0 ? `max-width: ${viewportWidth}px;` : ``
   const loadingElementContainer = container.ownerDocument.createElement(`div`)
   loadingElementContainer.classList.add(CONTAINER_HTML_PREFIX)
   loadingElementContainer.style.cssText = `
       height: 100%;
       width: 100%;
-      max-width: ${viewport.absoluteViewport.width}px;
+      ${initialMaxWidth}
       text-align: center;
       display: flex;
       justify-content: center;
@@ -126,11 +129,13 @@ export const createPlaceholderPages = (
               tap(([, theme]) => {
                 const viewportWidth = reader.viewport.absoluteViewport.width
 
-                setStylePropertyIfChanged(
-                  loadingElementContainer.style,
-                  `max-width`,
-                  `${viewportWidth}px`,
-                )
+                if (viewportWidth > 0) {
+                  setStylePropertyIfChanged(
+                    loadingElementContainer.style,
+                    `max-width`,
+                    `${viewportWidth}px`,
+                  )
+                }
                 setStylePropertyIfChanged(
                   loadingElementContainer.style,
                   `color`,
