@@ -237,7 +237,7 @@ const createContainerElement = (
   // biome-ignore lint/complexity/useLiteralKeys: TODO
   element.dataset["isReady"] = `false`
 
-  hookManager.execute("item.onBeforeContainerCreated", { element })
+  hookManager.execute("item.onBeforeContainerAttach", { element, item })
 
   return element
 }

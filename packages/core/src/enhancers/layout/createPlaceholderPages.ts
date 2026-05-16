@@ -71,31 +71,48 @@ const defaultLoadingElementCreate = ({
   return loadingElementContainer
 }
 
+const findLoadingElement = (container: HTMLElement) => {
+  const loadingElement = container.querySelector(`.${CONTAINER_HTML_PREFIX}`)
+
+  return loadingElement instanceof HTMLElement ? loadingElement : undefined
+}
+
 export const createPlaceholderPages = (
   reader: Reader & { theme: { $: { theme$: Observable<Theme> } } },
 ) => {
+  reader.hookManager.register(
+    `item.onBeforeContainerAttach`,
+    ({ element, item }) => {
+      // since we will use z-index for the loading element, we need to set the parent
+      // to 0 to have it work as relative reference.
+      setStylePropertyIfChanged(element.style, `z-index`, `0`)
+      element.appendChild(
+        defaultLoadingElementCreate({
+          container: element,
+          item,
+          viewport: reader.viewport,
+        }),
+      )
+    },
+  )
+
   return reader.spineItemsManager.items$.pipe(
     switchMap((items) =>
       merge(
         ...items.map((item) => {
-          // since we will use z-index for the loading element, we need to set the parent
-          // to 0 to have it work as relative reference.
           setStylePropertyIfChanged(item.containerElement.style, `z-index`, `0`)
 
-          const alreadyExistingElement = item.containerElement.querySelector(
-            `.${CONTAINER_HTML_PREFIX}`,
-          )
-
           const loadingElementContainer =
-            alreadyExistingElement instanceof HTMLElement
-              ? alreadyExistingElement
-              : defaultLoadingElementCreate({
-                  container: item.containerElement,
-                  item: item.item,
-                  viewport: reader.viewport,
-                })
+            findLoadingElement(item.containerElement) ??
+            defaultLoadingElementCreate({
+              container: item.containerElement,
+              item: item.item,
+              viewport: reader.viewport,
+            })
 
-          item.containerElement.appendChild(loadingElementContainer)
+          if (loadingElementContainer.parentElement !== item.containerElement) {
+            item.containerElement.appendChild(loadingElementContainer)
+          }
 
           return merge(
             item.pipe(

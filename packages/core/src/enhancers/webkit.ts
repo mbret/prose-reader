@@ -41,7 +41,7 @@ export const webkitEnhancer =
       //   },
       // )
       // reader.hookManager.register(
-      //   "item.onBeforeContainerCreated",
+      //   "item.onBeforeContainerAttach",
       //   ({ element }) => {
       //     element.style.cssText = `
       //   ${element.style.cssText}

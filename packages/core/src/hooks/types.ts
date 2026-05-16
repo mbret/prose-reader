@@ -92,8 +92,11 @@ export type CoreHook =
    * before the container of the item is attached to the dom
    */
   | {
-      name: "item.onBeforeContainerCreated"
-      runFn: (params: { element: HTMLElement }) => void
+      name: "item.onBeforeContainerAttach"
+      runFn: (params: {
+        element: HTMLElement
+        item: Manifest["spineItems"][number]
+      }) => void
     }
   | {
       name: "onViewportOffsetAdjust"
