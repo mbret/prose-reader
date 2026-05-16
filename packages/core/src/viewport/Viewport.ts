@@ -1,7 +1,15 @@
 import { merge, Subject, takeUntil, tap } from "rxjs"
-import { HTML_PREFIX_VIEWPORT } from "../constants"
+import {
+  CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
+  CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
+  HTML_PREFIX_VIEWPORT,
+} from "../constants"
 import type { Context } from "../context/Context"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
+import {
+  removeStylePropertyIfPresent,
+  setStylePropertyIfChanged,
+} from "../utils/dom"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { AbsoluteViewport, RelativeViewport } from "./types"
 
@@ -80,6 +88,33 @@ export class Viewport extends ReactiveEntity<State> {
     return pageSize
   }
 
+  private syncAbsoluteViewportCssVariables(layout: {
+    width: number
+    height: number
+  }) {
+    const { style } = this.value.element
+
+    if (layout.width > 0) {
+      setStylePropertyIfChanged(
+        style,
+        CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH,
+        `${layout.width}px`,
+      )
+    } else {
+      removeStylePropertyIfPresent(style, CSS_VAR_ABSOLUTE_VIEWPORT_WIDTH)
+    }
+
+    if (layout.height > 0) {
+      setStylePropertyIfChanged(
+        style,
+        CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT,
+        `${layout.height}px`,
+      )
+    } else {
+      removeStylePropertyIfPresent(style, CSS_VAR_ABSOLUTE_VIEWPORT_HEIGHT)
+    }
+  }
+
   /**
    * Re-measure the viewport and notify viewport-geometry dependents.
    *
@@ -94,6 +129,8 @@ export class Viewport extends ReactiveEntity<State> {
       width: this.value.element.clientWidth,
       height: this.value.element.clientHeight,
     }
+
+    this.syncAbsoluteViewportCssVariables(layout)
 
     this.mergeCompare({
       pageSize: this.calculatePageSize(layout),

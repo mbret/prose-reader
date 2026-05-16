@@ -1,17 +1,18 @@
 import type { Manifest } from "@prose-reader/shared"
-import { combineLatest, merge, type Observable } from "rxjs"
-import { switchMap, tap } from "rxjs/operators"
+import { merge } from "rxjs"
+import { tap } from "rxjs/operators"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
 import type { Reader } from "../../reader"
 import {
   setPropertyIfChanged,
   setStylePropertyIfChanged,
 } from "../../utils/dom"
-import type { Viewport } from "../../viewport/Viewport"
-import type { Theme } from "../theme"
+import type { Theme, ThemeEnhancerOutput } from "../theme"
 
 export const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
 export const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
+export const LOGO_HTML_PREFIX = `${HTML_PREFIX}-logo`
+export const DETAILS_HTML_PREFIX = `${HTML_PREFIX}-details`
 
 /**
  * We use iframe for loading element mainly to be able to use share hooks / manipulation
@@ -20,149 +21,109 @@ export const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
 const defaultLoadingElementCreate = ({
   container,
   item,
-  viewport,
 }: {
   container: HTMLElement
   item: Manifest[`spineItems`][number]
-  viewport: Viewport
 }) => {
-  const viewportWidth = viewport.absoluteViewport.width
-  const initialMaxWidth =
-    viewportWidth > 0 ? `max-width: ${viewportWidth}px;` : ``
   const loadingElementContainer = container.ownerDocument.createElement(`div`)
   loadingElementContainer.classList.add(CONTAINER_HTML_PREFIX)
-  loadingElementContainer.style.cssText = `
-      height: 100%;
-      width: 100%;
-      ${initialMaxWidth}
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      position: absolute;
-      left: 0;
-      top: 0;
-      color: rgb(202, 202, 202);
-      background-color: white;
-      z-index: 1;
-    `
 
   const logoElement = loadingElementContainer.ownerDocument.createElement(`div`)
+  logoElement.classList.add(LOGO_HTML_PREFIX)
   logoElement.innerText = `prose`
-  logoElement.style.cssText = `
-      font-size: 4em;
-    `
   const detailsElement =
     loadingElementContainer.ownerDocument.createElement(`div`)
+  detailsElement.classList.add(DETAILS_HTML_PREFIX)
   detailsElement.setAttribute(`data-details-element`, `true`)
   detailsElement.innerText = `loading ${item.id}`
-  detailsElement.style.cssText = `
-      font-size: 1.2em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      max-width: 300px;
-      width: 80%;
-    `
   loadingElementContainer.appendChild(logoElement)
   loadingElementContainer.appendChild(detailsElement)
 
   return loadingElementContainer
 }
 
-const findLoadingElement = (container: HTMLElement) => {
-  const loadingElement = container.querySelector(`.${CONTAINER_HTML_PREFIX}`)
+const getLoadingElementColor = (theme: Theme) => {
+  return theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`
+}
 
-  return loadingElement instanceof HTMLElement ? loadingElement : undefined
+const applyLoadingElementTheme = ({
+  loadingElement,
+  theme,
+}: {
+  loadingElement: HTMLElement
+  theme: Theme
+}) => {
+  setStylePropertyIfChanged(
+    loadingElement.style,
+    `color`,
+    getLoadingElementColor(theme),
+  )
 }
 
 export const createPlaceholderPages = (
-  reader: Reader & { theme: { $: { theme$: Observable<Theme> } } },
+  reader: Reader & {
+    theme: ThemeEnhancerOutput
+  },
 ) => {
+  const loadingElements = new WeakMap<HTMLElement, HTMLElement>()
+
   reader.hookManager.register(
     `item.onBeforeContainerAttach`,
     ({ element, item }) => {
       // since we will use z-index for the loading element, we need to set the parent
       // to 0 to have it work as relative reference.
       setStylePropertyIfChanged(element.style, `z-index`, `0`)
-      element.appendChild(
-        defaultLoadingElementCreate({
-          container: element,
-          item,
-          viewport: reader.viewport,
-        }),
-      )
+
+      const loadingElement = defaultLoadingElementCreate({
+        container: element,
+        item,
+      })
+
+      applyLoadingElementTheme({
+        loadingElement,
+        theme: reader.theme.get(),
+      })
+
+      loadingElements.set(element, loadingElement)
+      element.appendChild(loadingElement)
     },
   )
 
-  return reader.spineItemsManager.items$.pipe(
-    switchMap((items) =>
-      merge(
-        ...items.map((item) => {
-          setStylePropertyIfChanged(item.containerElement.style, `z-index`, `0`)
+  const itemError$ = reader.spineItemsObserver.states$.pipe(
+    tap(({ item, isError, error }) => {
+      if (!isError) return
 
-          const loadingElementContainer =
-            findLoadingElement(item.containerElement) ??
-            defaultLoadingElementCreate({
-              container: item.containerElement,
-              item: item.item,
-              viewport: reader.viewport,
-            })
+      const loadingElementContainer = loadingElements.get(item.containerElement)
 
-          if (loadingElementContainer.parentElement !== item.containerElement) {
-            item.containerElement.appendChild(loadingElementContainer)
-          }
+      if (!loadingElementContainer) return
 
-          return merge(
-            item.pipe(
-              tap((state) => {
-                setStylePropertyIfChanged(
-                  loadingElementContainer.style,
-                  `visibility`,
-                  state.isReady ? `hidden` : `visible`,
-                )
-                setStylePropertyIfChanged(
-                  loadingElementContainer.style,
-                  `z-index`,
-                  state.isReady ? `0` : `1`,
-                )
-
-                if (state.isError) {
-                  const detailsElement = loadingElementContainer.querySelector(
-                    `[data-details-element]`,
-                  )
-                  if (detailsElement instanceof HTMLElement) {
-                    setPropertyIfChanged(
-                      detailsElement,
-                      `innerText`,
-                      state.error?.toString() ?? `Unknown error`,
-                    )
-                  }
-                }
-              }),
-            ),
-            combineLatest([reader.spine.layout$, reader.theme.$.theme$]).pipe(
-              tap(([, theme]) => {
-                const viewportWidth = reader.viewport.absoluteViewport.width
-
-                if (viewportWidth > 0) {
-                  setStylePropertyIfChanged(
-                    loadingElementContainer.style,
-                    `max-width`,
-                    `${viewportWidth}px`,
-                  )
-                }
-                setStylePropertyIfChanged(
-                  loadingElementContainer.style,
-                  `color`,
-                  theme === `sepia` ? `#939393` : `rgb(202, 202, 202)`,
-                )
-              }),
-            ),
-          )
-        }),
-      ),
-    ),
+      const detailsElement = loadingElementContainer.querySelector(
+        `[data-details-element]`,
+      )
+      if (detailsElement instanceof HTMLElement) {
+        setPropertyIfChanged(
+          detailsElement,
+          `innerText`,
+          error?.toString() ?? `Unknown error`,
+        )
+      }
+    }),
   )
+
+  const theme$ = reader.theme.$.theme$.pipe(
+    tap((theme) => {
+      for (const item of reader.spineItemsManager.items) {
+        const loadingElement = loadingElements.get(item.containerElement)
+
+        if (loadingElement) {
+          applyLoadingElementTheme({
+            loadingElement,
+            theme,
+          })
+        }
+      }
+    }),
+  )
+
+  return merge(itemError$, theme$)
 }

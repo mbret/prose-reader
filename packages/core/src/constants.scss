@@ -2,3 +2,5 @@ $html-prefix: "prose-reader" !default;
 $html-prefix-viewport: "#{$html-prefix}-viewport" !default;
 $html-prefix-scroll-navigator: "#{$html-prefix}-scroll-navigator" !default;
 $html-prefix-spine-item: "#{$html-prefix}-spine-item" !default;
+$css-var-absolute-viewport-width: "--#{$html-prefix}-absolute-viewport-width" !default;
+$css-var-absolute-viewport-height: "--#{$html-prefix}-absolute-viewport-height" !default;

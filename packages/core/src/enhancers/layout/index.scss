@@ -10,3 +10,39 @@
   user-select: none;
   -webkit-user-select: none;
 }
+
+.#{$html-prefix}-enhancer-loading-container {
+  height: 100%;
+  width: 100%;
+  max-width: var(#{$css-var-absolute-viewport-width}, 100%);
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: rgb(202, 202, 202);
+  background-color: white;
+  z-index: 1;
+}
+
+[data-#{$html-prefix-spine-item}][data-is-ready="true"]
+  .#{$html-prefix}-enhancer-loading-container {
+  visibility: hidden;
+  z-index: 0;
+}
+
+.#{$html-prefix}-enhancer-loading-logo {
+  font-size: 4em;
+}
+
+.#{$html-prefix}-enhancer-loading-details {
+  font-size: 1.2em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 300px;
+  width: 80%;
+}

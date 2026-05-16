@@ -23,6 +23,14 @@ const defaultThemes = [
 
 export type Theme = (typeof defaultThemes)[number][`name`] | `publisher`
 
+export type ThemeEnhancerOutput = {
+  set: (theme: Theme) => void
+  get: () => Theme
+  $: {
+    theme$: Observable<Theme>
+  }
+}
+
 export type ThemeEnhancer = <
   InheritOptions,
   InheritOutput extends EnhancerOutput<RootEnhancer>,
@@ -33,13 +41,7 @@ export type ThemeEnhancer = <
     theme?: Theme
   },
 ) => InheritOutput & {
-  theme: {
-    set: (theme: Theme) => void
-    get: () => Theme
-    $: {
-      theme$: Observable<Theme>
-    }
-  }
+  theme: ThemeEnhancerOutput
 }
 
 export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
