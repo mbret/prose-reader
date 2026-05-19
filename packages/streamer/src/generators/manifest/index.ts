@@ -24,6 +24,8 @@ export const generateManifestFromArchive = async (
     hooks = {},
   }: { baseUrl?: string; hooks?: StreamerManifestHooks } = {},
 ) => {
+  Report.log("Generating manifest from archive", archive)
+
   const archiveOpf = await readArchiveOpf(archive)
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
   const createExternalHooks = (
