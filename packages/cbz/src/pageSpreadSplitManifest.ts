@@ -3,7 +3,7 @@ import {
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import type { Archive } from "@prose-reader/streamer"
+import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
 import { detectPageSpreadFromBasename } from "./detectPageSpreadFromBasename"
 
 export {
@@ -114,7 +114,7 @@ const createVirtualSpineItem = ({
 
   return {
     ...originalSpineItem,
-    id: `${originalSpineItem.id}.${label}`,
+    id: createXmlSafeId(`${originalSpineItem.id}.${label}`),
     href: createManifestResourceHref({ baseUrl, resourcePath }),
     mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
     progressionWeight,

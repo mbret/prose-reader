@@ -1,6 +1,7 @@
 import { getEpubCfiSpineItemref } from "@prose-reader/cfi"
 import type { Reader } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
+import { createXmlSafeId } from "@prose-reader/streamer"
 import { describe, expect, it, vi } from "vitest"
 import { cbzEnhancer } from "./enhancer"
 import { buildVirtualPageSpreadResourcePath } from "./pageSpreadSplitManifest"
@@ -45,6 +46,9 @@ const createVirtualSpineItem = ({
     id,
     index,
   })
+
+const createVirtualSpineId = (originalUri: string, pageLabel: string) =>
+  createXmlSafeId(`${originalUri}.${pageLabel}`)
 
 const createReader = (items: SpineItem[]) => {
   const generateHooks: CfiGenerateHook[] = []
@@ -123,25 +127,25 @@ describe("cbzEnhancer", () => {
     const secondSpreadUri = "bonus/p006-007.jpg"
     const firstSpreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "p002-003.jpg.002",
+      id: createVirtualSpineId(firstSpreadUri, "002"),
       index: 0,
       originalUri: firstSpreadUri,
     })
     const firstSpreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "p002-003.jpg.003",
+      id: createVirtualSpineId(firstSpreadUri, "003"),
       index: 1,
       originalUri: firstSpreadUri,
     })
     const secondSpreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "bonus/p006-007.jpg.006",
+      id: createVirtualSpineId(secondSpreadUri, "006"),
       index: 2,
       originalUri: secondSpreadUri,
     })
     const secondSpreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "bonus/p006-007.jpg.007",
+      id: createVirtualSpineId(secondSpreadUri, "007"),
       index: 3,
       originalUri: secondSpreadUri,
     })
@@ -156,7 +160,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook) return
 
     const cfi = generateHook({
-      cfi: "epubcfi(/6/6[bonus/p006-007.jpg.006]!/2[body])",
+      cfi: `epubcfi(/6/6[${secondSpreadLeft.id}]!/2[body])`,
       spineItem: secondSpreadLeft,
     })
 
@@ -166,7 +170,7 @@ describe("cbzEnhancer", () => {
     const spineItemref = getEpubCfiSpineItemref(cfi)
 
     expect(spineItemref?.spineIndex).toBe(1)
-    expect(spineItemref?.spineId).toBe(secondSpreadUri)
+    expect(spineItemref?.spineId).toBe(createXmlSafeId(secondSpreadUri))
     expect(
       decodeURIComponent(
         spineItemref?.extensions?.[VIRTUAL_SPINE_ID_EXTENSION] ?? "",
@@ -178,13 +182,13 @@ describe("cbzEnhancer", () => {
     const originalUri = "images/page 002-003.jpg"
     const spreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "images/page 002-003.jpg.002",
+      id: createVirtualSpineId(originalUri, "002"),
       index: 0,
       originalUri,
     })
     const spreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "images/page 002-003.jpg.003",
+      id: createVirtualSpineId(originalUri, "003"),
       index: 1,
       originalUri,
     })
@@ -198,7 +202,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook || !resolveHook) return
 
     const externalCfi = generateHook({
-      cfi: "epubcfi(/6/2[images/page 002-003.jpg.002]!/2[body])",
+      cfi: `epubcfi(/6/2[${spreadLeft.id}]!/2[body])`,
       spineItem: spreadLeft,
     })
 
@@ -208,7 +212,7 @@ describe("cbzEnhancer", () => {
     const externalItemref = getEpubCfiSpineItemref(externalCfi)
 
     expect(externalItemref?.spineIndex).toBe(0)
-    expect(externalItemref?.spineId).toBe(originalUri)
+    expect(externalItemref?.spineId).toBe(createXmlSafeId(originalUri))
 
     const internalCfi = resolveHook({ cfi: externalCfi })
 
@@ -225,13 +229,13 @@ describe("cbzEnhancer", () => {
     const originalUri = "bonus/p006-007.jpg"
     const spreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "bonus/p006-007.jpg.006",
+      id: createVirtualSpineId(originalUri, "006"),
       index: 2,
       originalUri,
     })
     const spreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "bonus/p006-007.jpg.007",
+      id: createVirtualSpineId(originalUri, "007"),
       index: 3,
       originalUri,
     })
@@ -250,7 +254,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook || !resolveHook) return
 
     const externalCfi = generateHook({
-      cfi: "epubcfi(/6/4[bonus/p006-007.jpg.006]!/2[body])",
+      cfi: `epubcfi(/6/4[${spreadLeft.id}]!/2[body])`,
       spineItem: spreadLeft,
     })
 

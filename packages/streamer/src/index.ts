@@ -22,6 +22,6 @@ export type {
 } from "./hooks"
 export { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 export { Streamer } from "./Streamer"
-
+export * from "./utils/createXmlSafeId"
 export * from "./utils/sortByTitleComparator"
 export * from "./utils/uri"

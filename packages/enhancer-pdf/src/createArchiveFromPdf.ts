@@ -25,6 +25,10 @@ export const createArchiveFromPdf = async (
   const pdf = await loadingTask.promise
 
   const pages = Array.from({ length: pdf.numPages })
+  const pageEntries = pages.map((_, index) => ({
+    id: `page-${index}`,
+    resourcePath: `${index}.pdf`,
+  }))
 
   const opfFileData = `
     <?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
@@ -32,10 +36,10 @@ export const createArchiveFromPdf = async (
         <meta property="rendition:layout">pre-paginated</meta>
       </metadata>
       <manifest>
-        ${pages.map((_, index) => `<item id="${index}" href="${index}.pdf" />`).join(`\n`)}
+        ${pageEntries.map(({ id, resourcePath }) => `<item id="${id}" href="${resourcePath}" />`).join(`\n`)}
       </manifest>
       <spine>
-        ${pages.map((_, index) => `<itemref idref="${index}" />`).join(`\n`)}
+        ${pageEntries.map(({ id }) => `<itemref idref="${id}" />`).join(`\n`)}
       </spine>
     </package>
   `

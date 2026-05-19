@@ -1,5 +1,5 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { Archive } from "@prose-reader/streamer"
+import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
 import { describe, expect, it } from "vitest"
 import {
   buildVirtualPageSpreadResourcePath,
@@ -100,6 +100,8 @@ describe("pageSpreadSplit", () => {
       cropSide: "right",
       originalUri: spreadBasename,
     })
+    const leftId = createXmlSafeId(`${spreadBasename}.006`)
+    const rightId = createXmlSafeId(`${spreadBasename}.007`)
 
     await expect(
       pageSpreadSplit({ archive, baseUrl: "" })(manifest),
@@ -107,7 +109,7 @@ describe("pageSpreadSplit", () => {
       spineItems: [
         {
           href: encodeURI(`file://${leftResourcePath}`),
-          id: `${spreadBasename}.006`,
+          id: leftId,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: true,
           pageSpreadRight: undefined,
@@ -116,7 +118,7 @@ describe("pageSpreadSplit", () => {
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
-          id: `${spreadBasename}.007`,
+          id: rightId,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: undefined,
           pageSpreadRight: true,
@@ -132,12 +134,12 @@ describe("pageSpreadSplit", () => {
         },
         {
           href: encodeURI(`file://${leftResourcePath}`),
-          id: `${spreadBasename}.006`,
+          id: leftId,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
-          id: `${spreadBasename}.007`,
+          id: rightId,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
       ],

@@ -2,6 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
 import type { Archive } from "../../archives/types"
+import { createXmlSafeId } from "../../utils/createXmlSafeId"
 import { generateManifestFromArchive } from "./index"
 
 const fakeContent = {
@@ -11,9 +12,9 @@ const fakeContent = {
 
 describe(`Given a list of urls archive`, () => {
   it(`should return a valid pre-paginated manifest`, async () => {
-    const archive = await createArchiveFromUrls([
-      `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`,
-    ])
+    const imageUrl = `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`
+    const imageId = createXmlSafeId(imageUrl)
+    const archive = await createArchiveFromUrls([imageUrl])
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -21,8 +22,8 @@ describe(`Given a list of urls archive`, () => {
       filename: ``,
       items: [
         {
-          href: "https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg",
-          id: "3mkdhqqhqhzia568079abhh01642468406498.jpg",
+          href: imageUrl,
+          id: imageId,
           mediaType: `image/jpg`,
         },
       ],
@@ -34,8 +35,8 @@ describe(`Given a list of urls archive`, () => {
       renditionFlow: `auto`,
       spineItems: [
         {
-          href: "https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg",
-          id: "3mkdhqqhqhzia568079abhh01642468406498.jpg",
+          href: imageUrl,
+          id: imageId,
           progressionWeight: 1,
           renditionLayout: "pre-paginated",
           mediaType: `image/jpg`,
@@ -52,14 +53,11 @@ describe(`Given a list of urls archive`, () => {
 
 describe(`Given a list of urls with rendition flow archive`, () => {
   it(`should return a valid reflowable manifest`, async () => {
-    const archive = await createArchiveFromUrls(
-      [
-        `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`,
-      ],
-      {
-        useRenditionFlow: true,
-      },
-    )
+    const imageUrl = `https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg`
+    const imageId = createXmlSafeId(imageUrl)
+    const archive = await createArchiveFromUrls([imageUrl], {
+      useRenditionFlow: true,
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -67,8 +65,8 @@ describe(`Given a list of urls with rendition flow archive`, () => {
       filename: ``,
       items: [
         {
-          href: "https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg",
-          id: "3mkdhqqhqhzia568079abhh01642468406498.jpg",
+          href: imageUrl,
+          id: imageId,
           mediaType: `image/jpg`,
         },
       ],
@@ -80,8 +78,8 @@ describe(`Given a list of urls with rendition flow archive`, () => {
       renditionFlow: `scrolled-continuous`,
       spineItems: [
         {
-          href: "https://cdn.epico.ink/public/YZ9LX5/en/PD2BXS/3mkdhqqhqhzia568079abhh01642468406498.jpg",
-          id: "3mkdhqqhqhzia568079abhh01642468406498.jpg",
+          href: imageUrl,
+          id: imageId,
           progressionWeight: 1,
           renditionLayout: "reflowable",
           mediaType: `image/jpg`,
@@ -129,7 +127,7 @@ describe("Given archive with a folder containing a space", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://Chapter%201/page_1.jpg",
-        id: "0.page_1.jpg",
+        id: createXmlSafeId("Chapter 1/page_1.jpg"),
         index: 0,
         mediaType: undefined,
         pageSpreadLeft: undefined,
@@ -137,6 +135,70 @@ describe("Given archive with a folder containing a space", () => {
         progressionWeight: 1,
         renditionLayout: "pre-paginated",
       },
+    ])
+  })
+
+  it("should derive unique XML-safe IDs from the archive resource path", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "Chapter 1/page_1.jpg",
+          dir: false,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page_1.jpg",
+          uri: "Chapter 2/page_1.jpg",
+          dir: false,
+          size: 1,
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems.map((item) => item.id)).toEqual([
+      createXmlSafeId("Chapter 1/page_1.jpg"),
+      createXmlSafeId("Chapter 2/page_1.jpg"),
+    ])
+    expect(manifest.items.map((item) => item.id)).toEqual([
+      createXmlSafeId("Chapter 1/page_1.jpg"),
+      createXmlSafeId("Chapter 2/page_1.jpg"),
+    ])
+  })
+
+  it("should disambiguate generated ID collisions after sanitizing paths", async () => {
+    const archive: Archive = {
+      filename: "",
+      records: [
+        {
+          ...fakeContent,
+          basename: "page.jpg",
+          uri: "Chapter 1/page.jpg",
+          dir: false,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "page.jpg",
+          uri: "Chapter_1/page.jpg",
+          dir: false,
+          size: 1,
+        },
+      ],
+      close: () => Promise.resolve(),
+    }
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(manifest.spineItems.map((item) => item.id)).toEqual([
+      "Chapter_1_page.jpg",
+      "Chapter_1_page.jpg-2",
     ])
   })
 })
@@ -185,7 +247,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://page_1.jpeg",
-        id: "0.page_1.jpeg",
+        id: "page_1.jpeg",
         index: 0,
         mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
@@ -220,7 +282,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
     expect(manifest.spineItems).toEqual([
       {
         href: "file://p006-007.jpg",
-        id: "0.p006-007.jpg",
+        id: "p006-007.jpg",
         index: 0,
         mediaType: "image/jpeg",
         pageSpreadLeft: undefined,
@@ -254,7 +316,7 @@ describe("Given non-epub audio archive items with encodingFormat", () => {
     expect(manifest.spineItems).toEqual([
       {
         href: "file://track_1.mp3",
-        id: "0.track_1.mp3",
+        id: "track_1.mp3",
         index: 0,
         mediaType: "audio/mpeg",
         pageSpreadLeft: undefined,

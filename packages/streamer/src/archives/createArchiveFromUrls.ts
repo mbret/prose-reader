@@ -1,4 +1,8 @@
-import { detectMimeTypeFromName } from "@prose-reader/shared"
+import {
+  detectMimeTypeFromName,
+  escapeXmlAttributeValue,
+} from "@prose-reader/shared"
+import { createXmlSafeIdFactory } from "../utils/createXmlSafeId"
 import { getUriBasename } from "../utils/uri"
 import type { Archive } from "./types"
 
@@ -11,6 +15,11 @@ export const createArchiveFromUrls = async (
   urls: string[],
   options?: { useRenditionFlow: boolean },
 ): Promise<Archive> => {
+  const createSafeId = createXmlSafeIdFactory()
+  const resources = urls.map((url) => ({
+    id: createSafeId(url),
+    url,
+  }))
   const opfFileData = `
     <?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
       <metadata>
@@ -18,15 +27,16 @@ export const createArchiveFromUrls = async (
         ${options?.useRenditionFlow ? `<meta property="rendition:flow">scrolled-continuous</meta>` : ``}
       </metadata>
       <manifest>
-        ${urls
-          .map(
-            (url) =>
-              `<item id="${getUriBasename(url)}" href="${url}" media-type="${detectMimeTypeFromName(url)}"/>`,
-          )
+        ${resources
+          .map(({ id, url }) => {
+            const mediaType = detectMimeTypeFromName(url)
+
+            return `<item id="${id}" href="${escapeXmlAttributeValue(url)}" media-type="${escapeXmlAttributeValue(mediaType ?? ``)}"/>`
+          })
           .join(`\n`)}
       </manifest>
       <spine>
-        ${urls.map((url) => `<itemref idref="${getUriBasename(url)}" />`).join(`\n`)}
+        ${resources.map(({ id }) => `<itemref idref="${id}" />`).join(`\n`)}
       </spine>
     </package>
   `

@@ -1,11 +1,17 @@
 import type { Manifest } from "@prose-reader/shared"
 import type { Archive } from "../../../archives/types"
+import { createXmlSafeIdFactory } from "../../../utils/createXmlSafeId"
 import { createManifestResourceHref } from "../createManifestResourceHref"
 
 export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (): Promise<Manifest> => {
     const files = Object.values(archive.records).filter((file) => !file.dir)
+    const createSafeId = createXmlSafeIdFactory()
+    const filesWithIds = files.map((file) => ({
+      file,
+      id: createSafeId(file.uri),
+    }))
 
     return {
       filename: archive.filename,
@@ -15,14 +21,11 @@ export const defaultHook =
       renditionLayout: undefined,
       renditionSpread: `auto`,
       readingDirection: `ltr`,
-      spineItems: files
-        .filter((file) => !file.basename.endsWith(`.db`))
-        .map((file, index) => {
+      spineItems: filesWithIds
+        .filter(({ file }) => !file.basename.endsWith(`.db`))
+        .map(({ file, id }, index) => {
           return {
-            // some books such as cbz can have same basename inside different sub folder
-            // we need to make sure to have unique index
-            // /chap01/01.png, /chap02/01.png, etc
-            id: `${index}.${file.basename}`,
+            id,
             index,
             href: createManifestResourceHref({
               baseUrl,
@@ -35,8 +38,8 @@ export const defaultHook =
             mediaType: file.encodingFormat,
           }
         }),
-      items: files.map((file, index) => ({
-        id: `${index}.${file.basename}`,
+      items: filesWithIds.map(({ file, id }) => ({
+        id,
         href: encodeURI(`${baseUrl}${file.uri}`),
       })),
     }

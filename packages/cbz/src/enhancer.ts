@@ -4,6 +4,7 @@ import {
 } from "@prose-reader/cfi"
 import type { Reader } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
+import { createXmlSafeId } from "@prose-reader/streamer"
 import { parseVirtualPageSpreadResourcePath } from "./pageSpreadSplitResource"
 
 const VIRTUAL_SPINE_ID_EXTENSION = "vnd.prose-reader.cbz.virtual-spine-id"
@@ -88,7 +89,7 @@ const restoreOriginalSpineReference = (
     extensions: {
       [VIRTUAL_SPINE_ID_EXTENSION]: encodeURIComponent(spineItem.id),
     },
-    spineId: virtualResource.originalUri,
+    spineId: createXmlSafeId(virtualResource.originalUri),
     spineIndex: originalSpineIndex,
   })
 }
