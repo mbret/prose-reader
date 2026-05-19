@@ -79,6 +79,6 @@ test.describe("Given headless rendering", () => {
       return cfi
     })
 
-    expect(cfi).toBe("epubcfi(/6/2[0]!/4/14/1,:0,:12)")
+    expect(cfi).toBe("epubcfi(/6/2[page-0]!/4/14/1,:0,:12)")
   })
 })
