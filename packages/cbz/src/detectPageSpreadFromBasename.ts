@@ -24,13 +24,13 @@ const numberFromPageLabel = (label: string): number | undefined => {
 
 const detectPageLabelsFromBasename = (basenameWithoutExtension: string) => {
   const explicitPageRangeMatch =
-    /(?:^|[\s._(-]|\[)p\s*(\d{1,5})\s*[-_]\s*(?:p\s*)?(\d{1,5})(?=$|[^\d])/i.exec(
+    /(?:^|[\s._(-]|\[)p\s*(\d{1,5})\s*[-_~]\s*(?:p\s*)?(\d{1,5})(?=$|[^\d])/i.exec(
       basenameWithoutExtension,
     )
 
   if (explicitPageRangeMatch) return explicitPageRangeMatch
 
-  return /(?:^|[\s._(]|\[)(0\d{1,4})\s*[-_]\s*(0\d{1,4})(?=$|[^\d])/i.exec(
+  return /(?:^|[\s._(]|\[)(0\d{1,4})\s*[-_~]\s*(0\d{1,4})(?=$|[^\d])/i.exec(
     basenameWithoutExtension,
   )
 }

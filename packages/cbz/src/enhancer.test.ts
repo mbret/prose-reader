@@ -123,25 +123,25 @@ describe("cbzEnhancer", () => {
     const secondSpreadUri = "bonus/p006-007.jpg"
     const firstSpreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "0.p002-003.jpg.002",
+      id: "p002-003.jpg.002",
       index: 0,
       originalUri: firstSpreadUri,
     })
     const firstSpreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "0.p002-003.jpg.003",
+      id: "p002-003.jpg.003",
       index: 1,
       originalUri: firstSpreadUri,
     })
     const secondSpreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "1.p006-007.jpg.006",
+      id: "bonus/p006-007.jpg.006",
       index: 2,
       originalUri: secondSpreadUri,
     })
     const secondSpreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "1.p006-007.jpg.007",
+      id: "bonus/p006-007.jpg.007",
       index: 3,
       originalUri: secondSpreadUri,
     })
@@ -156,7 +156,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook) return
 
     const cfi = generateHook({
-      cfi: "epubcfi(/6/6[1.p006-007.jpg.006]!/2[body])",
+      cfi: "epubcfi(/6/6[bonus/p006-007.jpg.006]!/2[body])",
       spineItem: secondSpreadLeft,
     })
 
@@ -178,13 +178,13 @@ describe("cbzEnhancer", () => {
     const originalUri = "images/page 002-003.jpg"
     const spreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "0.images/page 002-003.jpg.002",
+      id: "images/page 002-003.jpg.002",
       index: 0,
       originalUri,
     })
     const spreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "0.images/page 002-003.jpg.003",
+      id: "images/page 002-003.jpg.003",
       index: 1,
       originalUri,
     })
@@ -198,7 +198,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook || !resolveHook) return
 
     const externalCfi = generateHook({
-      cfi: "epubcfi(/6/2[0.images/page 002-003.jpg.002]!/2[body])",
+      cfi: "epubcfi(/6/2[images/page 002-003.jpg.002]!/2[body])",
       spineItem: spreadLeft,
     })
 
@@ -225,20 +225,20 @@ describe("cbzEnhancer", () => {
     const originalUri = "bonus/p006-007.jpg"
     const spreadLeft = createVirtualSpineItem({
       cropSide: "left",
-      id: "1.p006-007.jpg.006",
+      id: "bonus/p006-007.jpg.006",
       index: 2,
       originalUri,
     })
     const spreadRight = createVirtualSpineItem({
       cropSide: "right",
-      id: "1.p006-007.jpg.007",
+      id: "bonus/p006-007.jpg.007",
       index: 3,
       originalUri,
     })
     const { generateHook, resolveHook } = createReader([
       createSpineItem({
         href: "file://cover.jpg",
-        id: "0.cover.jpg",
+        id: "cover.jpg",
         index: 0,
       }),
       spreadLeft,
@@ -250,7 +250,7 @@ describe("cbzEnhancer", () => {
     if (!generateHook || !resolveHook) return
 
     const externalCfi = generateHook({
-      cfi: "epubcfi(/6/4[1.p006-007.jpg.006]!/2[body])",
+      cfi: "epubcfi(/6/4[bonus/p006-007.jpg.006]!/2[body])",
       spineItem: spreadLeft,
     })
 

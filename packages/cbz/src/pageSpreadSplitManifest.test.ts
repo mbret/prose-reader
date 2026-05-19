@@ -89,7 +89,7 @@ describe("pageSpreadSplit", () => {
     ])
     const manifest = createManifest({
       href: `file://${spreadBasename}`,
-      id: `0.${spreadBasename}`,
+      id: spreadBasename,
       mediaType: "image/jpeg",
     })
     const leftResourcePath = buildVirtualPageSpreadResourcePath({
@@ -107,7 +107,7 @@ describe("pageSpreadSplit", () => {
       spineItems: [
         {
           href: encodeURI(`file://${leftResourcePath}`),
-          id: `0.${spreadBasename}.006`,
+          id: `${spreadBasename}.006`,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: true,
           pageSpreadRight: undefined,
@@ -116,7 +116,7 @@ describe("pageSpreadSplit", () => {
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
-          id: `0.${spreadBasename}.007`,
+          id: `${spreadBasename}.007`,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: undefined,
           pageSpreadRight: true,
@@ -127,17 +127,17 @@ describe("pageSpreadSplit", () => {
       items: [
         {
           href: `file://${spreadBasename}`,
-          id: `0.${spreadBasename}`,
+          id: spreadBasename,
           mediaType: "image/jpeg",
         },
         {
           href: encodeURI(`file://${leftResourcePath}`),
-          id: `0.${spreadBasename}.006`,
+          id: `${spreadBasename}.006`,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
-          id: `0.${spreadBasename}.007`,
+          id: `${spreadBasename}.007`,
           mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
       ],
@@ -159,7 +159,7 @@ describe("pageSpreadSplit", () => {
     const manifest: Manifest = {
       ...createManifest({
         href: `file://${spreadBasename}`,
-        id: `0.${spreadBasename}`,
+        id: spreadBasename,
         mediaType: "image/jpeg",
       }),
       readingDirection: "rtl",
@@ -170,12 +170,12 @@ describe("pageSpreadSplit", () => {
     ).resolves.toMatchObject({
       spineItems: [
         {
-          id: `0.${spreadBasename}.006`,
+          id: `${spreadBasename}.006`,
           pageSpreadLeft: undefined,
           pageSpreadRight: true,
         },
         {
-          id: `0.${spreadBasename}.007`,
+          id: `${spreadBasename}.007`,
           pageSpreadLeft: true,
           pageSpreadRight: undefined,
         },
@@ -203,7 +203,7 @@ describe("pageSpreadSplit", () => {
     ])
     const manifest = createManifest({
       href: "file://p002-003.jpg",
-      id: "0.p002-003.jpg",
+      id: "p002-003.jpg",
       mediaType: "image/jpeg",
     })
 
@@ -225,7 +225,7 @@ describe("pageSpreadSplit", () => {
     ])
     const manifest = createManifest({
       href: "file://p002-003.txt",
-      id: "0.p002-003.txt",
+      id: "p002-003.txt",
       mediaType: "image/jpeg",
     })
 
@@ -256,7 +256,7 @@ describe("pageSpreadSplit", () => {
     ])
     const manifest = createManifest({
       href: `file://${nestedUri}`,
-      id: "1.p006-007.jpg",
+      id: nestedUri,
       mediaType: "image/jpeg",
     })
     const leftResourcePath = buildVirtualPageSpreadResourcePath({

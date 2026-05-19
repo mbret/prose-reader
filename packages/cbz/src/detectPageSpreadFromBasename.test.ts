@@ -31,6 +31,13 @@ describe("detectPageSpreadFromBasename", () => {
     })
   })
 
+  it("should detect consecutive pages separated by a tilde", () => {
+    expect(detectPageSpreadFromBasename("0004~0005.png")).toEqual({
+      firstPageLabel: "0004",
+      secondPageLabel: "0005",
+    })
+  })
+
   it("should not detect bare-bone numbers that could be many other things", () => {
     expect(detectPageSpreadFromBasename("1-2.webp")).toBeUndefined()
   })
