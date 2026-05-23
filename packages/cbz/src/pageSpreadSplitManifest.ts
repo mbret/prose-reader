@@ -4,6 +4,7 @@ import {
   parseContentType,
 } from "@prose-reader/shared"
 import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
+import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
 import { detectPageSpreadFromBasename } from "./detectPageSpreadFromBasename"
 
 export {
@@ -262,11 +263,18 @@ export const pageSpreadSplit =
       return [firstSpineItem, secondSpineItem]
     })
 
-    if (virtualManifestItems.length === 0) return manifest
+    const alignedSpineItems = alignSpineItemsForSpreadParity({
+      readingDirection: manifest.readingDirection,
+      spineItems,
+    })
+
+    if (virtualManifestItems.length === 0 && alignedSpineItems === spineItems) {
+      return manifest
+    }
 
     return {
       ...manifest,
-      spineItems: spineItems.map((spineItem, index) => ({
+      spineItems: alignedSpineItems.map((spineItem, index) => ({
         ...spineItem,
         index,
       })),

@@ -1,6 +1,6 @@
 export * from "./array"
 export * from "./contentType"
-export * from "./Manifest"
+export * from "./manifest"
 export * from "./objects"
 export * from "./report"
 export * from "./resources"

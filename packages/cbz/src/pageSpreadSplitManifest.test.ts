@@ -40,10 +40,48 @@ const createManifest = ({
   title: "",
 })
 
+const createManifestFromResourceNames = ({
+  readingDirection = "ltr",
+  resourceNames,
+}: {
+  readingDirection?: Manifest["readingDirection"]
+  resourceNames: string[]
+}): Manifest => ({
+  filename: "",
+  items: resourceNames.map((resourceName) => ({
+    href: `file://${resourceName}`,
+    id: resourceName,
+    mediaType: "image/jpeg",
+  })),
+  readingDirection,
+  renditionLayout: "pre-paginated",
+  renditionSpread: undefined,
+  spineItems: resourceNames.map((resourceName, index) => ({
+    href: `file://${resourceName}`,
+    id: resourceName,
+    index,
+    mediaType: "image/jpeg",
+    progressionWeight: 1 / resourceNames.length,
+    renditionLayout: "pre-paginated",
+  })),
+  title: "",
+})
+
 const createArchive = (records: Archive["records"]): Archive => ({
   close: () => Promise.resolve(),
   filename: "",
   records,
+})
+
+const createImageRecord = (
+  resourceName: string,
+): Archive["records"][number] => ({
+  ...fakeContent,
+  basename: resourceName,
+  dir: false,
+  encodingFormat: "image/jpeg",
+  size: 1,
+  uri: resourceName,
 })
 
 describe("isPageSpreadSplitSupportedArchiveRecord", () => {
@@ -183,6 +221,153 @@ describe("pageSpreadSplit", () => {
         },
       ],
     })
+  })
+
+  it("should shift RTL opening parity when the first split spread pair would otherwise be misaligned", async () => {
+    const resourceNames = ["p001.jpg", "p002.jpg", "p003.jpg", "p004-005.jpg"]
+    const archive = createArchive(resourceNames.map(createImageRecord))
+    const manifest = createManifestFromResourceNames({
+      readingDirection: "rtl",
+      resourceNames,
+    })
+
+    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+
+    expect(result.spineItems).toMatchObject([
+      {
+        id: "p001.jpg",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+      { id: "p002.jpg" },
+      { id: "p003.jpg" },
+      {
+        id: "p004-005.jpg.004",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: true,
+      },
+      {
+        id: "p004-005.jpg.005",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+    ])
+    expect(result.spineItems[1]?.pageSpreadLeft).toBeUndefined()
+    expect(result.spineItems[1]?.pageSpreadRight).toBeUndefined()
+    expect(result.spineItems[2]?.pageSpreadLeft).toBeUndefined()
+    expect(result.spineItems[2]?.pageSpreadRight).toBeUndefined()
+  })
+
+  it("should shift LTR opening parity when the first split spread pair would otherwise be misaligned", async () => {
+    const resourceNames = ["p001.jpg", "p002-003.jpg"]
+    const archive = createArchive(resourceNames.map(createImageRecord))
+    const manifest = createManifestFromResourceNames({
+      readingDirection: "ltr",
+      resourceNames,
+    })
+
+    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+
+    expect(result.spineItems).toMatchObject([
+      {
+        id: "p001.jpg",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: true,
+      },
+      {
+        id: "p002-003.jpg.002",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+      {
+        id: "p002-003.jpg.003",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: true,
+      },
+    ])
+  })
+
+  it("should shift opening parity when an existing spread pair would otherwise be misaligned", async () => {
+    const resourceNames = ["p001.jpg", "p002.jpg", "p003.jpg"]
+    const archive = createArchive(resourceNames.map(createImageRecord))
+    const manifest = createManifestFromResourceNames({
+      readingDirection: "rtl",
+      resourceNames,
+    })
+    const spreadManifest: Manifest = {
+      ...manifest,
+      spineItems: manifest.spineItems.map((spineItem) => {
+        if (spineItem.id === "p002.jpg") {
+          return {
+            ...spineItem,
+            pageSpreadLeft: undefined,
+            pageSpreadRight: true,
+          }
+        }
+
+        if (spineItem.id === "p003.jpg") {
+          return {
+            ...spineItem,
+            pageSpreadLeft: true,
+            pageSpreadRight: undefined,
+          }
+        }
+
+        return spineItem
+      }),
+    }
+
+    const result = await pageSpreadSplit({ archive, baseUrl: "" })(
+      spreadManifest,
+    )
+
+    expect(result.spineItems).toMatchObject([
+      {
+        id: "p001.jpg",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+      {
+        id: "p002.jpg",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: true,
+      },
+      {
+        id: "p003.jpg",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+    ])
+  })
+
+  it("should keep the opening page untouched when the first spread pair is naturally aligned", async () => {
+    const resourceNames = ["p001.jpg", "p002.jpg", "p003-004.jpg"]
+    const archive = createArchive(resourceNames.map(createImageRecord))
+    const manifest = createManifestFromResourceNames({
+      readingDirection: "rtl",
+      resourceNames,
+    })
+
+    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+
+    expect(result.spineItems).toMatchObject([
+      { id: "p001.jpg" },
+      { id: "p002.jpg" },
+      {
+        id: "p003-004.jpg.003",
+        pageSpreadLeft: undefined,
+        pageSpreadRight: true,
+      },
+      {
+        id: "p003-004.jpg.004",
+        pageSpreadLeft: true,
+        pageSpreadRight: undefined,
+      },
+    ])
+    expect(result.spineItems[0]?.pageSpreadLeft).toBeUndefined()
+    expect(result.spineItems[0]?.pageSpreadRight).toBeUndefined()
+    expect(result.spineItems[1]?.pageSpreadLeft).toBeUndefined()
+    expect(result.spineItems[1]?.pageSpreadRight).toBeUndefined()
   })
 
   it("should not check archives containing an OPF file", async () => {

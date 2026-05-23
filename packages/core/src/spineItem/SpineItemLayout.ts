@@ -1,4 +1,9 @@
-import { isShallowEqual, type Manifest } from "@prose-reader/shared"
+import {
+  getItemSpreadPosition,
+  isShallowEqual,
+  type Manifest,
+  type SpreadPosition,
+} from "@prose-reader/shared"
 import {
   filter,
   first,
@@ -23,19 +28,6 @@ import {
 import { deferNextResult } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
-
-type SpreadPosition = "left" | "right" | "none"
-
-const getSinglePageSpreadPosition = (
-  item: Manifest[`spineItems`][number],
-): Exclude<SpreadPosition, "none"> | undefined => {
-  const hasPageSpreadLeft = item.pageSpreadLeft === true
-  const hasPageSpreadRight = item.pageSpreadRight === true
-
-  if (hasPageSpreadLeft === hasPageSpreadRight) return undefined
-
-  return hasPageSpreadLeft ? `left` : `right`
-}
 
 export class SpineItemLayout extends DestroyableClass {
   private layoutTriggerSubject = new Subject<{
@@ -198,7 +190,7 @@ export class SpineItemLayout extends DestroyableClass {
 
       const lastItemStartOnNewScreenInAPrepaginatedBook =
         isScreenStartItem && isLastItem && isGloballyPrePaginated
-      const requestedSpreadPosition = getSinglePageSpreadPosition(this.item)
+      const requestedSpreadPosition = getItemSpreadPosition(this.item)
 
       if (
         requestedSpreadPosition !== undefined &&
