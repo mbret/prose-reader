@@ -113,7 +113,8 @@ export const epubHook =
       archive.records.find(({ dir }) => dir)?.basename ||
       ``
 
-    const readingDirection = resolved.readingDirection ?? `ltr`
+    const readingDirection =
+      resolved.readingDirection ?? manifest.readingDirection
 
     const archiveSpineItems = await getSpineItemFilesFromArchive({
       archive,

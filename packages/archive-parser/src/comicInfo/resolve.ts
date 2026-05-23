@@ -3,8 +3,17 @@ import { normalizeGtin } from "../utils/normalizeGtin"
 import { normalizeIsbn } from "../utils/normalizeIsbn"
 import type { ComicInfo } from "./parse"
 
-const readingDirection = (info: ComicInfo): "ltr" | "rtl" =>
-  info.Manga === "YesAndRightToLeft" ? "rtl" : "ltr"
+const readingDirection = (info: ComicInfo): "ltr" | "rtl" | undefined => {
+  switch (info.Manga) {
+    case "YesAndRightToLeft":
+      return "rtl"
+    case "Yes":
+    case "No":
+      return "ltr"
+    default:
+      return undefined
+  }
+}
 
 const trimToUndefined = (raw: string | undefined): string | undefined => {
   if (raw === undefined) return undefined

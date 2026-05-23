@@ -7,6 +7,7 @@ import { comicInfo } from "./hooks/comicInfo"
 import { defaultHook } from "./hooks/default"
 import { epubHook } from "./hooks/epub/epub"
 import { epubOptimizerHook } from "./hooks/epubOptimizer"
+import { finalDefaultsHook } from "./hooks/finalDefaults"
 import { kobo } from "./hooks/kobo"
 import { nonEpub } from "./hooks/nonEpub"
 import { tocHook } from "./hooks/toc"
@@ -57,6 +58,7 @@ export const generateManifestFromArchive = async (
     ...spineHooks,
     ...presentationHooks,
     ...navigationHooks,
+    finalDefaultsHook(),
   ]
 
   try {

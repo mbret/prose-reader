@@ -23,7 +23,7 @@ export type Manifest = {
     | `both`
     | `auto`
     | undefined
-  readingDirection: "ltr" | "rtl"
+  readingDirection: "ltr" | "rtl" | undefined
   /**
    * legacy
    * @see https://www.w3.org/publishing/epub3/epub-packages.html#sec-opf2-guide

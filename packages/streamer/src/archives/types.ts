@@ -5,7 +5,7 @@ export interface StreamResult {
   resume(): void
 }
 
-type FileRecord = {
+export type FileRecord = {
   dir: false
   basename: string
   uri: string
@@ -17,7 +17,7 @@ type FileRecord = {
   encodingFormat?: string
 }
 
-type DirectoryRecord = {
+export type DirectoryRecord = {
   dir: true
   basename: string
   uri: string
@@ -27,6 +27,12 @@ type DirectoryRecord = {
 
 export type Archive = {
   filename: string
+  /**
+   * Archive-level media type when known (e.g. `application/vnd.comicbook+zip`
+   * for a CBZ). This is the mime type of the container itself, not of any
+   * individual record; record-level mime types live on {@link FileRecord}.
+   */
+  encodingFormat?: string
   records: (FileRecord | DirectoryRecord)[]
   close: () => Promise<void>
 }

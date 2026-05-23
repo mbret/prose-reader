@@ -20,7 +20,7 @@ export const defaultHook =
         archive.filename,
       renditionLayout: undefined,
       renditionSpread: `auto`,
-      readingDirection: `ltr`,
+      readingDirection: undefined,
       spineItems: filesWithIds
         .filter(({ file }) => !file.basename.endsWith(`.db`))
         .map(({ file, id }, index) => {

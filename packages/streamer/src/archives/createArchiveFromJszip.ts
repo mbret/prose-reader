@@ -37,7 +37,11 @@ interface JSZip {
 
 export const createArchiveFromJszip = async (
   jszip: JSZip,
-  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {},
+  {
+    orderByAlpha,
+    name,
+    encodingFormat,
+  }: { orderByAlpha?: boolean; name?: string; encodingFormat?: string } = {},
 ): Promise<Archive> => {
   let files = Object.values(jszip.files)
 
@@ -47,6 +51,7 @@ export const createArchiveFromJszip = async (
 
   const archive: Archive = {
     filename: name || ``,
+    encodingFormat,
     records: files.map((file) => {
       // this is private API
       // @ts-expect-error

@@ -12,6 +12,7 @@ export const swStreamer = new ServiceWorkerStreamer({
   cleanArchiveAfter: 5 * 60 * 1000,
   hooks: {
     manifest: {
+      content: streamerHooks.manifest.content,
       spine: streamerHooks.manifest.spine,
     },
     resource: streamerHooks.resource,
@@ -27,14 +28,21 @@ export const swStreamer = new ServiceWorkerStreamer({
   },
   getArchive: async (key) => {
     const { blob, url, filename } = await getBlobFromKey(key)
+    const encodingFormat = blob.type.length > 0 ? blob.type : undefined
 
     if (url.endsWith(`.txt`)) {
-      return await createArchiveFromText(blob)
+      return await createArchiveFromText(blob, {
+        mimeType: encodingFormat ?? "text/plain",
+      })
     }
     const name = blob instanceof File ? blob.name : filename
 
     const jszip = await loadAsync(blob)
 
-    return await createArchiveFromJszip(jszip, { orderByAlpha: true, name })
+    return await createArchiveFromJszip(jszip, {
+      orderByAlpha: true,
+      name,
+      encodingFormat,
+    })
   },
 })

@@ -33,6 +33,7 @@ export const createArchiveFromText = async (
 
   const archive: Archive = {
     filename: `content.txt`,
+    encodingFormat: mimeType,
     records: [
       {
         dir: false,

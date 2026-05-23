@@ -4,6 +4,7 @@ import {
   resolveArchiveMetadata,
 } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
+import { getArchiveHasComicInfo } from "../../../archives/archiveHasComicInfo"
 import type { Archive } from "../../../archives/types"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()
@@ -11,10 +12,7 @@ const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()
 export const comicInfo =
   ({ archive }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
-    const comicInfoFile = archive.records.find(
-      (file) =>
-        file.basename.toLowerCase() === comicInfoFilenameLower && !file.dir,
-    )
+    const comicInfoFile = getArchiveHasComicInfo(archive)
 
     if (!comicInfoFile || comicInfoFile.dir) {
       return manifest
@@ -40,7 +38,9 @@ export const comicInfo =
 
       return {
         ...manifestWithoutComicInfo,
-        readingDirection: resolved.readingDirection ?? `ltr`,
+        readingDirection:
+          resolved.readingDirection ??
+          manifestWithoutComicInfo.readingDirection,
       }
     } catch (e) {
       console.error(

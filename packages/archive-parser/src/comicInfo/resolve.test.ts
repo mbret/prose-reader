@@ -22,7 +22,7 @@ describe("resolveComicInfo", () => {
     })
   })
 
-  it("ltr when Manga absent", () => {
+  it("ltr when Manga is explicitly No", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Manga>No</Manga>"))
 
     expect(resolveComicInfo(parsed)).toEqual({
@@ -30,12 +30,31 @@ describe("resolveComicInfo", () => {
     })
   })
 
+  it("ltr when Manga is explicitly Yes (left-to-right manga)", () => {
+    const parsed = parseComicInfo(comicInfoWrap("<Manga>Yes</Manga>"))
+
+    expect(resolveComicInfo(parsed)).toEqual({
+      readingDirection: "ltr",
+    })
+  })
+
+  it("undefined readingDirection when Manga tag is absent", () => {
+    const parsed = parseComicInfo(comicInfoWrap("<Title>x</Title>"))
+
+    expect(resolveComicInfo(parsed).readingDirection).toBeUndefined()
+  })
+
+  it("undefined readingDirection when Manga is Unknown", () => {
+    const parsed = parseComicInfo(comicInfoWrap("<Manga>Unknown</Manga>"))
+
+    expect(resolveComicInfo(parsed).readingDirection).toBeUndefined()
+  })
+
   it("gtin without isbn when value is GTIN-8 only", () => {
     const parsed = parseComicInfo(comicInfoWrap("<GTIN>9638-5074</GTIN>"))
 
     expect(resolveComicInfo(parsed)).toEqual({
       gtin: "96385074",
-      readingDirection: "ltr",
     })
   })
 

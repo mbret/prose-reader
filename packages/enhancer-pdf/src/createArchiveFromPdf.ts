@@ -55,6 +55,7 @@ export const createArchiveFromPdf = async (
 
   const archive = {
     filename,
+    encodingFormat: "application/pdf",
     proxyDocument: pdf,
     _symbol: PDF_SYMBOL,
     records: [

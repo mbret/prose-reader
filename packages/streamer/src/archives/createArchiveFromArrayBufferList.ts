@@ -10,7 +10,11 @@ export const createArchiveFromArrayBufferList = async (
     size: number
     data: () => Promise<ArrayBuffer>
   }[],
-  { orderByAlpha, name }: { orderByAlpha?: boolean; name?: string } = {},
+  {
+    orderByAlpha,
+    name,
+    encodingFormat,
+  }: { orderByAlpha?: boolean; name?: string; encodingFormat?: string } = {},
 ): Promise<Archive> => {
   let files = list
 
@@ -20,6 +24,7 @@ export const createArchiveFromArrayBufferList = async (
 
   return {
     filename: name || ``,
+    encodingFormat,
     records: files.map((file) => {
       const size = file.size
       const basename = getUriBasename(file.name)

@@ -1,4 +1,5 @@
 export type { Manifest } from "@prose-reader/shared"
+export { getArchiveHasComicInfo } from "./archives/archiveHasComicInfo"
 export { createArchiveFromArrayBufferList } from "./archives/createArchiveFromArrayBufferList"
 export { createArchiveFromJszip } from "./archives/createArchiveFromJszip"
 export { createArchiveFromLibArchive } from "./archives/createArchiveFromLibArchive"

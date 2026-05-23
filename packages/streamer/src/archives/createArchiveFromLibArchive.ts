@@ -40,13 +40,17 @@ interface CompressedFile {
 
 export const createArchiveFromLibArchive = async (
   libArchive: ArchiveReader,
-  { name }: { orderByAlpha?: boolean; name?: string } = {},
+  {
+    name,
+    encodingFormat,
+  }: { orderByAlpha?: boolean; name?: string; encodingFormat?: string } = {},
 ): Promise<Archive> => {
   const objArray = await libArchive.getFilesArray()
 
   const archive: Archive = {
     close: () => libArchive.close(),
     filename: name ?? ``,
+    encodingFormat,
     records: objArray.map((item: { file: CompressedFile; path: string }) => ({
       dir: false,
       basename: item.file.name,

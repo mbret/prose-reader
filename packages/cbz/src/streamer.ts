@@ -2,20 +2,26 @@ import type {
   StreamerManifestHookFactory,
   StreamerResourceHookFactory,
 } from "@prose-reader/streamer"
+import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
 import { pageSpreadSplit } from "./pageSpreadSplitManifest"
 import { pageSpreadSplitResourceHook } from "./pageSpreadSplitResource"
 
 export const streamerHooks: {
   manifest: {
+    content: StreamerManifestHookFactory[]
     spine: StreamerManifestHookFactory[]
   }
   resource: StreamerResourceHookFactory[]
 } = {
   manifest: {
+    content: [detectReadingDirectionManifest],
     spine: [pageSpreadSplit],
   },
   resource: [pageSpreadSplitResourceHook],
 }
+
+export { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
+export { CBZ_MIME_TYPES, isCbzArchive } from "./isCbzArchive"
 
 export {
   buildVirtualPageSpreadResourcePath,
