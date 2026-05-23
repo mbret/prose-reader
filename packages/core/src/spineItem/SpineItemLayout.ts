@@ -24,9 +24,22 @@ import { deferNextResult } from "../utils/rxjs"
 import type { Viewport } from "../viewport/Viewport"
 import type { DocumentRenderer } from "./renderer/DocumentRenderer"
 
+type SpreadPosition = "left" | "right" | "none"
+
+const getSinglePageSpreadPosition = (
+  item: Manifest[`spineItems`][number],
+): Exclude<SpreadPosition, "none"> | undefined => {
+  const hasPageSpreadLeft = item.pageSpreadLeft === true
+  const hasPageSpreadRight = item.pageSpreadRight === true
+
+  if (hasPageSpreadLeft === hasPageSpreadRight) return undefined
+
+  return hasPageSpreadLeft ? `left` : `right`
+}
+
 export class SpineItemLayout extends DestroyableClass {
   private layoutTriggerSubject = new Subject<{
-    spreadPosition: "left" | "right" | "none"
+    spreadPosition: SpreadPosition
     horizontalOffset: number
     isLastItem: boolean
     edgeX: number
@@ -56,7 +69,11 @@ export class SpineItemLayout extends DestroyableClass {
       switchMap(
         ({ spreadPosition, horizontalOffset, isLastItem, edgeX, edgeY }) => {
           const { blankPagePosition, minimumWidth } =
-            this.computeLayoutInformation({ horizontalOffset, isLastItem })
+            this.computeLayoutInformation({
+              horizontalOffset,
+              isLastItem,
+              spreadPosition,
+            })
 
           this.hookManager.execute(`item.onBeforeLayout`, {
             blankPagePosition,
@@ -129,9 +146,11 @@ export class SpineItemLayout extends DestroyableClass {
   private computeLayoutInformation = ({
     isLastItem,
     horizontalOffset,
+    spreadPosition,
   }: {
     isLastItem: boolean
     horizontalOffset: number
+    spreadPosition: SpreadPosition
   }) => {
     let minimumWidth = this.viewport.value.pageSize.width
     let blankPagePosition: `none` | `before` | `after` = `none`
@@ -179,18 +198,11 @@ export class SpineItemLayout extends DestroyableClass {
 
       const lastItemStartOnNewScreenInAPrepaginatedBook =
         isScreenStartItem && isLastItem && isGloballyPrePaginated
+      const requestedSpreadPosition = getSinglePageSpreadPosition(this.item)
 
       if (
-        this.item.pageSpreadRight &&
-        isScreenStartItem &&
-        !this.context.isRTL()
-      ) {
-        blankPagePosition = `before`
-        minimumWidth = this.viewport.value.pageSize.width * 2
-      } else if (
-        this.item.pageSpreadLeft &&
-        isScreenStartItem &&
-        this.context.isRTL()
+        requestedSpreadPosition !== undefined &&
+        requestedSpreadPosition !== spreadPosition
       ) {
         blankPagePosition = `before`
         minimumWidth = this.viewport.value.pageSize.width * 2

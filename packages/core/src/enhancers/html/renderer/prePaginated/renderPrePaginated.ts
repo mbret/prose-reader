@@ -126,11 +126,19 @@ const applyPrePaginatedFrameStyles = ({
     setFrameStyle(frameElement, `position`, `absolute`)
     setFrameStyle(frameElement, `top`, `50%`)
 
-    if (spreadPosition === `left`) {
+    if (blankPagePosition === `before`) {
+      if (spreadPosition === `left`) {
+        setFrameStyle(frameElement, `left`, isRTL ? `0` : `50%`)
+        removeFrameStyle(frameElement, `right`)
+      } else if (spreadPosition === `right`) {
+        setFrameStyle(frameElement, `right`, isRTL ? `50%` : `0`)
+        removeFrameStyle(frameElement, `left`)
+      } else {
+        setFrameStyle(frameElement, `left`, isRTL ? `25%` : `75%`)
+        removeFrameStyle(frameElement, `right`)
+      }
+    } else if (spreadPosition === `left`) {
       setFrameStyle(frameElement, `right`, `0`)
-      removeFrameStyle(frameElement, `left`)
-    } else if (blankPagePosition === `before` && isRTL) {
-      setFrameStyle(frameElement, `right`, `50%`)
       removeFrameStyle(frameElement, `left`)
     } else if (spreadPosition === `right`) {
       setFrameStyle(frameElement, `left`, `0`)
@@ -139,26 +147,24 @@ const applyPrePaginatedFrameStyles = ({
       setFrameStyle(
         frameElement,
         `left`,
-        blankPagePosition === `before`
-          ? isRTL
-            ? `25%`
-            : `75%`
-          : blankPagePosition === `after`
-            ? isRTL
-              ? `75%`
-              : `25%`
-            : `50%`,
+        blankPagePosition === `after` ? (isRTL ? `75%` : `25%`) : `50%`,
       )
       removeFrameStyle(frameElement, `right`)
     }
 
     const transformTranslateX = spreadPosition !== `none` ? `0` : `-50%`
     const transformOriginX =
-      spreadPosition === `right` && blankPagePosition !== `before`
-        ? `left`
-        : spreadPosition === `left` || (blankPagePosition === `before` && isRTL)
-          ? `right`
-          : `center`
+      blankPagePosition === `before`
+        ? spreadPosition === `left`
+          ? `left`
+          : spreadPosition === `right`
+            ? `right`
+            : `center`
+        : spreadPosition === `right`
+          ? `left`
+          : spreadPosition === `left`
+            ? `right`
+            : `center`
 
     setFrameStyle(
       frameElement,

@@ -14,6 +14,7 @@ const createSpineItem = ({
   context,
   hookManager,
   index,
+  itemOverrides = {},
   parentElement,
   settings,
   viewport,
@@ -21,6 +22,7 @@ const createSpineItem = ({
   context: Context
   hookManager: HookManager
   index: number
+  itemOverrides?: Partial<Manifest["spineItems"][number]>
   parentElement: HTMLElement
   settings: ReaderSettingsManager
   viewport: Viewport
@@ -28,8 +30,9 @@ const createSpineItem = ({
   const item: Manifest["spineItems"][number] = {
     href: `item-${index}.xhtml`,
     id: `item-${index}`,
-    index,
     mediaType: `application/xhtml+xml`,
+    ...itemOverrides,
+    index,
   }
 
   return new SpineItem(
@@ -42,6 +45,18 @@ const createSpineItem = ({
     viewport,
   )
 }
+
+const createPrePaginatedManifest = (
+  readingDirection: Manifest["readingDirection"],
+): Manifest => ({
+  filename: "",
+  items: [],
+  readingDirection,
+  renditionLayout: "pre-paginated",
+  renditionSpread: "auto",
+  spineItems: [],
+  title: "",
+})
 
 const createTestSpineLayout = () => {
   const context = new Context()
@@ -128,6 +143,124 @@ describe("SpineLayout", () => {
       expect(spineLayout.getSpineItemSpineLayoutInfo(0).width).toBe(100)
     } finally {
       destroy()
+    }
+  })
+
+  it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
+    const context = new Context()
+    const settings = new ReaderSettingsManager({ spreadMode: true }, context)
+    const hookManager = new HookManager()
+    const viewport = new Viewport(context, settings)
+    const spineItemsManager = new SpineItemsManager(context, settings)
+    const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
+    const spineLayout = new SpineLayout(
+      spineItemsManager,
+      spineItemsObserver,
+      context,
+      settings,
+      viewport,
+    )
+    const parentElement = document.createElement(`div`)
+    const layoutRequests: Array<{
+      blankPagePosition: "before" | "after" | "none"
+      id: string
+      minimumWidth: number
+    }> = []
+
+    context.update({
+      manifest: createPrePaginatedManifest("rtl"),
+    })
+    hookManager.register(
+      "item.onBeforeLayout",
+      ({ blankPagePosition, item, minimumWidth }) => {
+        layoutRequests.push({
+          blankPagePosition,
+          id: item.id,
+          minimumWidth,
+        })
+      },
+    )
+    vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(200)
+    vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
+    viewport.layout()
+
+    spineItemsManager.addMany([
+      createSpineItem({
+        context,
+        hookManager,
+        index: 0,
+        parentElement,
+        settings,
+        viewport,
+      }),
+      createSpineItem({
+        context,
+        hookManager,
+        index: 1,
+        parentElement,
+        settings,
+        viewport,
+      }),
+      createSpineItem({
+        context,
+        hookManager,
+        index: 2,
+        parentElement,
+        settings,
+        viewport,
+      }),
+      createSpineItem({
+        context,
+        hookManager,
+        index: 3,
+        itemOverrides: {
+          pageSpreadRight: true,
+          renditionLayout: "pre-paginated",
+        },
+        parentElement,
+        settings,
+        viewport,
+      }),
+      createSpineItem({
+        context,
+        hookManager,
+        index: 4,
+        itemOverrides: {
+          pageSpreadLeft: true,
+          renditionLayout: "pre-paginated",
+        },
+        parentElement,
+        settings,
+        viewport,
+      }),
+    ])
+
+    try {
+      const layoutDone = firstValueFrom(spineLayout.layout$)
+
+      spineLayout.layout({ immediate: true })
+      await layoutDone
+
+      expect(layoutRequests.find(({ id }) => id === "item-3")).toEqual({
+        blankPagePosition: "before",
+        id: "item-3",
+        minimumWidth: 200,
+      })
+      expect(layoutRequests.find(({ id }) => id === "item-4")).toEqual({
+        blankPagePosition: "none",
+        id: "item-4",
+        minimumWidth: 100,
+      })
+      expect(spineLayout.getSpineItemSpineLayoutInfo(3).width).toBe(200)
+      expect(spineLayout.getSpineItemSpineLayoutInfo(4).width).toBe(100)
+    } finally {
+      spineLayout.destroy()
+      spineItemsObserver.destroy()
+      spineItemsManager.destroyItems()
+      spineItemsManager.destroy()
+      viewport.destroy()
+      settings.destroy()
+      context.destroy()
     }
   })
 })
