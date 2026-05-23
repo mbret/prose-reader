@@ -30,7 +30,7 @@ export const comicInfo =
           ...item,
           progressionWeight: 1 / items.length,
         })),
-    }
+    } satisfies Manifest
 
     const content = await comicInfoFile.string()
 
