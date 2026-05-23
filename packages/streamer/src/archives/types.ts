@@ -36,3 +36,7 @@ export type Archive = {
   records: (FileRecord | DirectoryRecord)[]
   close: () => Promise<void>
 }
+
+export const isFileRecord = (
+  record: Archive["records"][number],
+): record is FileRecord => !record.dir

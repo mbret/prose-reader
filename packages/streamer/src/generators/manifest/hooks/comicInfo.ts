@@ -4,7 +4,7 @@ import {
   resolveArchiveMetadata,
 } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
-import { getArchiveHasComicInfo } from "../../../archives/archiveHasComicInfo"
+import { getArchiveHasComicInfo } from "../../../archives/getArchiveHasComicInfo"
 import type { Archive } from "../../../archives/types"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()
@@ -14,7 +14,7 @@ export const comicInfo =
   async (manifest: Manifest): Promise<Manifest> => {
     const comicInfoFile = getArchiveHasComicInfo(archive)
 
-    if (!comicInfoFile || comicInfoFile.dir) {
+    if (!comicInfoFile) {
       return manifest
     }
 
