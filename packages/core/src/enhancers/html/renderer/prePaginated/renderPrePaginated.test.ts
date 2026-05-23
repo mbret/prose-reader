@@ -69,4 +69,53 @@ describe("renderPrePaginated", () => {
       frameElement.remove()
     }
   })
+
+  it("honors a blank-before RTL item that initially lands in the right slot", () => {
+    const frameElement = createFrame({ viewportWidth: 50 })
+
+    try {
+      expect(
+        renderPrePaginated({
+          blankPagePosition: "before",
+          frameElement,
+          isRTL: true,
+          minPageSpread: 2,
+          pageHeight: 100,
+          pageWidth: 100,
+          spreadPosition: "right",
+        }),
+      ).toEqual({ width: 200, height: 100 })
+      expect(frameElement.style.getPropertyValue("right")).toBe("50%")
+      expect(frameElement.style.getPropertyValue("left")).toBe("")
+      expect(frameElement.style.getPropertyValue("transform-origin")).toBe(
+        "right center",
+      )
+    } finally {
+      frameElement.remove()
+    }
+  })
+
+  it("honors a blank-before LTR item that initially lands in the right slot", () => {
+    const frameElement = createFrame({ viewportWidth: 50 })
+
+    try {
+      renderPrePaginated({
+        blankPagePosition: "before",
+        frameElement,
+        isRTL: false,
+        minPageSpread: 2,
+        pageHeight: 100,
+        pageWidth: 100,
+        spreadPosition: "right",
+      })
+
+      expect(frameElement.style.getPropertyValue("right")).toBe("0px")
+      expect(frameElement.style.getPropertyValue("left")).toBe("")
+      expect(frameElement.style.getPropertyValue("transform-origin")).toBe(
+        "right center",
+      )
+    } finally {
+      frameElement.remove()
+    }
+  })
 })
