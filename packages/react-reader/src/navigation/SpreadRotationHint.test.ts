@@ -48,7 +48,7 @@ const createPagination = (
   endAbsolutePageIndex: 0,
   endCfi: undefined,
   endChapterInfo: undefined,
-  endHasAdjacentSpreadPage: false,
+  endHasAdjacentSpreadPage: true,
   endNumberOfPagesInSpineItem: 1,
   endPageIndexInSpineItem: 0,
   endSpineItemReadingDirection: `ltr`,
@@ -130,6 +130,22 @@ describe(`SpreadRotationHint`, () => {
         pagination: {
           ...createPagination(0),
           beginHasAdjacentSpreadPage: false,
+        },
+        computedSpreadMode: false,
+        viewportState: `free`,
+        viewport: { height: 800, width: 400 },
+      }),
+    ).toBeUndefined()
+
+    expect(
+      getSpreadRotationHintTargetKey({
+        manifest,
+        pagination: {
+          ...createPagination(0),
+          beginHasAdjacentSpreadPage: false,
+          endHasAdjacentSpreadPage: true,
+          endPageIndexInSpineItem: 0,
+          endSpineItemIndex: 1,
         },
         computedSpreadMode: false,
         viewportState: `free`,

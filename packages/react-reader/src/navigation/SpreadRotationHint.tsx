@@ -91,7 +91,7 @@ export const getSpreadRotationHintTargetKey = ({
   }
 
   const hasSpreadPair =
-    pagination.beginHasAdjacentSpreadPage || pagination.endHasAdjacentSpreadPage
+    pagination.beginHasAdjacentSpreadPage && pagination.endHasAdjacentSpreadPage
 
   if (!hasSpreadPair) return undefined
 
