@@ -15,7 +15,6 @@ export default defineConfig((env) =>
       dts({
         entryRoot: "src",
         include: ["src/**/*"],
-        tsconfigPath: "./tsconfig.app.json",
       }),
     ],
     test: {

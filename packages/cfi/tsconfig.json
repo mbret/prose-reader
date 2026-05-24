@@ -1,7 +1,7 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "extends": "../../tsconfig.web.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src", "vite.config.ts"]
 }
