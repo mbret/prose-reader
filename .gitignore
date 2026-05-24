@@ -26,3 +26,4 @@ lerna-debug.log
 .nx/cache
 .nx/workspace-data
 .nx
+.claude/worktrees
