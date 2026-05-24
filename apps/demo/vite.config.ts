@@ -1,6 +1,7 @@
 import path from "node:path"
+import babel from "@rolldown/plugin-babel"
 import replace from "@rollup/plugin-replace"
-import react from "@vitejs/plugin-react"
+import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 import svgr from "vite-plugin-svgr"
@@ -51,10 +52,9 @@ export default defineConfig(({ mode }) => ({
         },
       }),
     }),
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
     }),
     svgr({}),
     replace({

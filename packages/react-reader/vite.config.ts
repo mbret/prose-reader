@@ -1,5 +1,6 @@
 import { resolve } from "node:path"
-import react from "@vitejs/plugin-react"
+import babel from "@rolldown/plugin-babel"
+import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
@@ -21,10 +22,9 @@ export default defineConfig(({ mode }) => ({
       deps: true,
       devDeps: true,
     }),
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
     }),
     dts({
       tsconfigPath: "./tsconfig.app.json",

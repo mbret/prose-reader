@@ -1,28 +1,21 @@
-// vite.config.js
-import { resolve } from "node:path"
-import externals from "rollup-plugin-node-externals"
-import { defineConfig } from "vite"
+import { defineConfig, mergeConfig } from "vite"
 import dts from "vite-plugin-dts"
+import { createLibConfig } from "../../config/vite-lib"
+import { name } from "./package.json"
 
-export default defineConfig(({ mode }) => ({
-  build: {
-    lib: {
-      entry: resolve(__dirname, `src/index.ts`),
-      name: `prose`,
-      fileName: `index`,
-    },
-    minify: mode !== `development`,
-    sourcemap: true,
-    emptyOutDir: mode !== `development`,
-  },
-  plugins: [
-    externals({
-      peerDeps: true,
-      deps: true,
-      devDeps: true,
-    }),
-    dts({
-      staticImport: true,
-    }),
-  ],
-}))
+const libConfig = createLibConfig({
+  packageDir: __dirname,
+  packageName: name,
+})
+
+export default defineConfig((env) =>
+  mergeConfig(libConfig(env), {
+    plugins: [
+      dts({
+        entryRoot: "src",
+        include: ["src/**/*"],
+        staticImport: true,
+      }),
+    ],
+  }),
+)

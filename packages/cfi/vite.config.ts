@@ -1,7 +1,28 @@
-import { defineLibConfig } from "../../config/vite-lib"
+/// <reference types="vitest/config" />
+import { defineConfig, mergeConfig } from "vite"
+import dts from "vite-plugin-dts"
+import { createLibConfig } from "../../config/vite-lib"
 import { name } from "./package.json"
 
-export default defineLibConfig({
+const libConfig = createLibConfig({
   packageDir: __dirname,
   packageName: name,
 })
+
+export default defineConfig((env) =>
+  mergeConfig(libConfig(env), {
+    plugins: [
+      dts({
+        entryRoot: "src",
+        include: ["src/**/*"],
+        tsconfigPath: "./tsconfig.app.json",
+      }),
+    ],
+    test: {
+      environment: "jsdom",
+      coverage: {
+        reportsDirectory: `./.test/coverage`,
+      },
+    },
+  }),
+)

@@ -1,8 +1,21 @@
-import { defineLibConfig } from "../../config/vite-lib"
+import { defineConfig, mergeConfig } from "vite"
+import dts from "vite-plugin-dts"
+import { createLibConfig } from "../../config/vite-lib"
 import { name } from "./package.json"
 
-export default defineLibConfig({
+const libConfig = createLibConfig({
   packageDir: __dirname,
   packageName: name,
   umdGlobals: { xmldoc: "xmldoc" },
 })
+
+export default defineConfig((env) =>
+  mergeConfig(libConfig(env), {
+    plugins: [dts({ entryRoot: "src", include: ["src/**/*"] })],
+    test: {
+      coverage: {
+        reportsDirectory: `./.test/coverage`,
+      },
+    },
+  }),
+)

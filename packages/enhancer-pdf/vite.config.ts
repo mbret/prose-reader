@@ -1,29 +1,16 @@
-import { resolve } from "node:path"
-import externals from "rollup-plugin-node-externals"
-import { defineConfig } from "vite"
+/// <reference types="vitest/config" />
+import { defineConfig, mergeConfig } from "vite"
 import dts from "vite-plugin-dts"
+import { createLibConfig } from "../../config/vite-lib"
 import { name } from "./package.json"
 
-const libName = name.replace(`@`, ``).replace(`/`, `-`)
+const libConfig = createLibConfig({
+  packageDir: __dirname,
+  packageName: name,
+})
 
-export default defineConfig(({ mode }) => ({
-  build: {
-    minify: false,
-    target: "esnext",
-    lib: {
-      entry: resolve(__dirname, `src/index.ts`),
-      name: libName,
-      fileName: `index`,
-    },
-    emptyOutDir: mode !== `development`,
-    sourcemap: true,
-  },
-  plugins: [
-    externals({
-      peerDeps: true,
-      deps: true,
-      devDeps: true,
-    }),
-    dts(),
-  ],
-}))
+export default defineConfig((env) =>
+  mergeConfig(libConfig(env), {
+    plugins: [dts({ entryRoot: "src", include: ["src/**/*"] })],
+  }),
+)

@@ -1,8 +1,6 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
 import { type ConfigEnv, mergeConfig, type UserConfig } from "vite"
-import dts from "vite-plugin-dts"
-import { defineConfig } from "vitest/config"
 
 type Entry = string | Record<string, string>
 
@@ -20,8 +18,6 @@ interface LibConfigOptions {
   minify?: boolean | "esbuild"
   /** Forwarded to `build.target`. */
   target?: string
-  /** Options forwarded to `vite-plugin-dts`. Defaults merge `{ entryRoot: "src" }`. */
-  dts?: Parameters<typeof dts>[0]
   /**
    * `output.globals` for UMD when dependencies are external (Rollup).
    * Avoids "No name was provided for external module … in output.globals".
@@ -41,8 +37,9 @@ const buildFileNameFor = (entry: Entry) =>
     ? "index"
     : (format: string, entryName: string) => `${entryName}/index.${format}.js`
 
-export const defineLibConfig = (input: LibConfigInput) =>
-  defineConfig((env) => {
+export const createLibConfig =
+  (input: LibConfigInput) =>
+  (env: ConfigEnv): UserConfig => {
     const opts = typeof input === "function" ? input(env) : input
     const {
       packageDir,
@@ -50,7 +47,6 @@ export const defineLibConfig = (input: LibConfigInput) =>
       entry = resolve(packageDir, "src/index.ts"),
       minify: minifyOverride,
       target,
-      dts: dtsOptions,
       umdGlobals,
       override,
     } = opts
@@ -60,7 +56,7 @@ export const defineLibConfig = (input: LibConfigInput) =>
         ? minifyOverride
         : env.mode === "development"
           ? false
-          : "esbuild"
+          : "oxc"
 
     const base: UserConfig = {
       build: {
@@ -79,20 +75,8 @@ export const defineLibConfig = (input: LibConfigInput) =>
           },
         },
       },
-      plugins: [
-        // never build any deps inside. prose should always use peer or self deps.
-        externals({ peerDeps: true, deps: true, devDeps: true }),
-        dts({
-          entryRoot: "src",
-          ...dtsOptions,
-        }),
-      ],
-      test: {
-        coverage: {
-          reportsDirectory: "./.test/coverage",
-        },
-      },
+      plugins: [externals({ peerDeps: true, deps: true, devDeps: true })],
     }
 
     return override ? mergeConfig(base, override) : base
-  })
+  }

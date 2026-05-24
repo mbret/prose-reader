@@ -56,7 +56,7 @@ export class PdfRenderer extends DocumentRenderer {
   }
 
   private getFrameElement() {
-    const frame = this.documentContainer?.children[1].children[0]
+    const frame = this.documentContainer?.children[1]?.children[0]
 
     if (!(frame instanceof HTMLIFrameElement)) return
 

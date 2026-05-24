@@ -28,7 +28,7 @@
   "devDependencies": {
     "jsdom": "^27.0.0",
     "typescript": "*",
-    "vite": "^7"
+    "vite": "^8"
   },
   "peerDependencies": {
     "@prose-reader/cfi": "^1.296.0",
