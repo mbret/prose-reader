@@ -19,6 +19,11 @@
       "types": "./dist/archives/createArchiveFromLibArchive.d.ts",
       "import": "./dist/archives/createArchiveFromLibArchive/index.es.js",
       "require": "./dist/archives/createArchiveFromLibArchive/index.cjs.js"
+    },
+    "./archives/createArchiveFromUnzipper": {
+      "types": "./dist/archives/createArchiveFromUnzipper.d.ts",
+      "import": "./dist/archives/createArchiveFromUnzipper/index.es.js",
+      "require": "./dist/archives/createArchiveFromUnzipper/index.cjs.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -42,10 +47,14 @@
     "buffer": "^6.0.3",
     "jszip": "^3.10.0",
     "libarchive.js": "^2.0.2",
-    "rxjs": "*"
+    "rxjs": "*",
+    "unzipper": "^0.12.3"
   },
   "peerDependenciesMeta": {
     "jszip": {
+      "optional": true
+    },
+    "unzipper": {
       "optional": true
     },
     "libarchive.js": {
@@ -54,9 +63,11 @@
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "devDependencies": {
+    "@types/unzipper": "^0.10.11",
     "buffer": "^6.0.3",
     "isomorphic-fetch": "^3.0.0",
     "jszip": "^3.10.0",
-    "libarchive.js": "^2.0.2"
+    "libarchive.js": "^2.0.2",
+    "unzipper": "^0.12.3"
   }
 }

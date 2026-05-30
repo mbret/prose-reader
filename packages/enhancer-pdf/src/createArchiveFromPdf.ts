@@ -1,4 +1,8 @@
-import type { Archive } from "@prose-reader/streamer"
+import {
+  type Archive,
+  blobFileAccessors,
+  createArchive,
+} from "@prose-reader/streamer"
 import * as pdfjsLib from "pdfjs-dist"
 
 type PdfJsArchive = Archive & {
@@ -49,34 +53,32 @@ export const createArchiveFromPdf = async (
     basename: `content.opf`,
     uri: `content.opf`,
     size: 0,
-    blob: async () => new Blob(),
-    string: async () => opfFileData,
+    ...blobFileAccessors(async () => new Blob([opfFileData])),
   }
 
-  const archive = {
+  const archive = createArchive({
     filename,
     encodingFormat: "application/pdf",
-    proxyDocument: pdf,
-    _symbol: PDF_SYMBOL,
     records: [
       opfFile,
       ...pages.map((_, index) => ({
         dir: false,
-        blob: async () => {
-          throw new Error("Unable to get blob from pdf")
-        },
         basename: `${index}.pdf`,
-        size: 0,
-        string: () => {
-          throw new Error("Unable to get blob from pdf")
-        },
         uri: `${index}.pdf`,
+        size: 0,
+        ...blobFileAccessors(async () => {
+          throw new Error("Unable to get blob from pdf")
+        }),
       })),
     ],
-    close: () => {
-      return pdf.cleanup()
-    },
-  } satisfies PdfJsArchive
+    close: () => pdf.cleanup(),
+  })
 
-  return archive as Archive
+  const pdfArchive: PdfJsArchive = {
+    ...archive,
+    proxyDocument: pdf,
+    _symbol: PDF_SYMBOL,
+  }
+
+  return pdfArchive
 }

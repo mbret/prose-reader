@@ -17,6 +17,10 @@ const libConfig = createLibConfig({
       __dirname,
       "src/archives/createArchiveFromLibArchive.ts",
     ),
+    "archives/createArchiveFromUnzipper": resolve(
+      __dirname,
+      "src/archives/createArchiveFromUnzipper.ts",
+    ),
   },
 })
 
