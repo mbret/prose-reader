@@ -1,6 +1,6 @@
 # Alternatives
 
-These alternative will be compared to prose to help you navigate more choices and help you make your decision. We only mention library that can run in a browser. We are only listing the relevant pros and cons compared to prose, not an exhaustive of all the capabilities of each libraries.
+These alternatives will be compared to prose to help you navigate more choices and help you make your decision. We only mention libraries that can run in a browser. We are only listing the relevant pros and cons compared to prose, not an exhaustive list of all the capabilities of each library.
 
 {% hint style="info" %}
 If you are a library author who wants to be showcased here, please [contact us](contact-community-links.md)

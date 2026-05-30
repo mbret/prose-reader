@@ -6,7 +6,7 @@
 npm install @prose-reader/core @prose-reader/streamer rxjs
 ```
 
-You don't absolutely need to have `@prose-reader/core-streamer` installed to run the reader but the utilities provided are very useful to standardize and feed books to the engine.  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside.
+You don't absolutely need to have `@prose-reader/streamer` installed to run the reader but the utilities provided are very useful to standardize and feed books to the engine.  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside.
 
 ## Create your reader & load your book
 
@@ -40,10 +40,10 @@ On your html file you need to define a container for the reader. We will be usin
 </html>
 ```
 
-The next step is to create a streamer and load our book into the reader. There is a lot of comment on purpose to help you understand the basic flow but in the end the code is rather simple.
+The next step is to create a streamer and load our book into the reader. There are a lot of comments on purpose to help you understand the basic flow but in the end the code is rather simple.
 
 {% hint style="info" %}
-There is a lot of comments in the code to explain the basic but the bootstrap and use of the SDK is fairly simple.
+There are a lot of comments in the code to explain the basics but the bootstrap and use of the SDK is fairly simple.
 {% endhint %}
 
 We are gonna use an epub as example so you should also install `jszip`
@@ -90,13 +90,13 @@ async function createStreamer() {
 
       /**
        * We are gonna use prose streamer to manage the epub.
-       * The streamer work with archives, so we need to create one from the epub.
+       * The streamer works with archives, so we need to create one from the epub.
        *
        * An archive is a higher level interface that is agnostic to the underlying
        * format so the streamer can manage different formats transparently.
        *
        * We do provide several helpers to create archives from different formats.
-       * Epubs being zip archives, we have a helper that create an archive from a
+       * Epubs being zip archives, we have a helper that creates an archive from a
        * jszip object.
        */
       const archive = await createArchiveFromJszip(epubJszip)
@@ -131,14 +131,14 @@ async function run() {
 
   const reader = createReader({
     /**
-     * A manifest provide a list of resources and their URIs.
+     * A manifest provides a list of resources and their URIs.
      *
      * However we are loading the epub locally in memory here so the items cannot be
      * fetched directly. This would be possible and encouraged if using a service worker
-     * but in our situation we have to hook into the reader to tell him to get its resources
+     * but in our situation we have to hook into the reader to tell it to get its resources
      * from our local streamer directly.
      *
-     * This may seems boilerplaty but the separation between the reader and the streamer is what
+     * This may seem boilerplaty but the separation between the reader and the streamer is what
      * makes prose very flexible and powerful.
      *
      * You can pretty much load anything in any way you want.

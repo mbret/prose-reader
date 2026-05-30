@@ -7,7 +7,7 @@ If you plan on developing your own enhancer, please follow these rules strictly.
 ## Cheatsheets <a href="#cheatsheets_index_title" id="cheatsheets_index_title"></a>
 
 * Whatever you do, should not change the behavior of **CFI**s
-* User expect to see its book as the **publisher** intended
+* Users expect to see their book as the **publisher** intended
 
 ## Publisher is the highest priority
 
@@ -15,7 +15,7 @@ Always respect the publisher intent. Do not try to overwrite publisher style, or
 
 Many books are unfortunately broken from the publisher and therefore should be fixed. Sometimes the fix needs to be opinionated as well but generally we should respect the intent as closely as possible.
 
-Let's take a few example:
+Let's take a few examples:
 
 ### Adding a "download" button next to all `<tables>`
 
@@ -23,7 +23,7 @@ Let's say you want the user to be able to download as an excel spreadsheet all t
 
 ## No altering of the publisher content
 
-XML content from the publisher should not altered. If you need to inject content, try to do so outside of the natural flow (document) of the content. At the very least try to work with absolute positioning and move your content on header or footer of the page. For example highlights can be done as superposition outside of the iframe or inside but with an absolute positioning.
+XML content from the publisher should not be altered. If you need to inject content, try to do so outside of the natural flow (document) of the content. At the very least try to work with absolute positioning and move your content on header or footer of the page. For example highlights can be done as superposition outside of the iframe or inside but with an absolute positioning.
 
 Usually, anything you inject in a document should not:
 

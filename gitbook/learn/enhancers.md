@@ -1,12 +1,12 @@
 # Enhancers
 
-Enhancers are the official and conventional way of adding functionalities to the reader. prose reader core try to stay agnostic and focus on the minimum support of books. Things like bookmarks, highlighting, gesture navigation etc are not part of the core. That's when enhancers comes into play.
+Enhancers are the official and conventional way of adding functionalities to the reader. prose reader core tries to stay agnostic and focus on the minimum support of books. Things like bookmarks, highlighting, gesture navigation etc are not part of the core. That's when enhancers come into play.
 
 ## Existing enhancers
 
 ### Official enhancers
 
-There are already several official enhancers which covers common use cases (bookmark, gesture, search, etc). Before trying to make your own take a look to see if it does not already exist. The list is available in the packages section of the documentation.
+There are already several official enhancers which cover common use cases (bookmark, gesture, search, etc). Before trying to make your own take a look to see if it does not already exist. The list is available in the packages section of the documentation.
 
 Example:
 
@@ -30,7 +30,7 @@ reader.bookmarks.load(...)
 
 ### Paid enhancers
 
-As of right now there are no paid enhancers but we might consider look into it to help covering the cost of development of prose. If we ever want to do so, we will try to not create essential paid enhancers. We want the community to be able to produce high quality product having to necessarily pay.
+As of right now there are no paid enhancers but we might consider looking into it to help cover the cost of development of prose. If we ever want to do so, we will try to not create essential paid enhancers. We want the community to be able to produce high quality products without necessarily having to pay.
 
 ### Community enhancers
 
@@ -40,7 +40,7 @@ If you want your enhancers to be referenced here, contact us and we will update 
 
 ## Writing your own enhancer
 
-An enhancer is simply a higher order function which takes a reader creator and return its result.
+An enhancer is simply a higher order function which takes a reader creator and returns its result.
 
 The entire point of doing this is to be able to compose them, alter the reader creation and have dependency injection if needed. It is also a good way to keep consistency with the community.
 
@@ -61,7 +61,7 @@ const createAppReader = myEnhancer(createReader)
 const reader = createAppReader({})
 ```
 
-This enhancer follow the minimal configuration to be functional. It is however pretty useless in this state.
+This enhancer follows the minimal configuration to be functional. It is however pretty useless in this state.
 
 By the way here is how the user can use more than one enhancer:
 
@@ -88,7 +88,7 @@ Anyway, let's now add some features to our enhancer
 
 ### Add functionalities to the reader
 
-We want our enhancer to deal with the links being clicked in the book. This is not something natively implemented by prose since it's specific to how the end user want to react.
+We want our enhancer to deal with the links being clicked in the book. This is not something natively implemented by prose since it's specific to how the end user wants to react.
 
 Let's say we want to show a confirm dialog to the user and if they confirm we navigate them to the link:
 
@@ -186,7 +186,7 @@ We extended the type of `options` to allow some customization. We then simply ha
 Note how we are using `myEnhancer` as namespace. This is recommended to wrap your enhancer functionalities within a namespace to prevent conflict between enhancers and make update easier for users.
 {% endhint %}
 
-It's nice but what if the user want to change the message later and after the reader is created ? Maybe because the language changed or else. Right now our options are static and can only be passed on creation.
+It's nice but what if the user wants to change the message later and after the reader is created ? Maybe because the language changed or else. Right now our options are static and can only be passed on creation.
 
 Let's add a function to let user change the confirm message dynamically:
 
@@ -266,7 +266,7 @@ This may not seem like much but we already know how to:
 * add feature by reacting to reader events
 * alter reader API
 
-The final piece is how to make an enhancer that requires another enhancer. For the sake of simplicity let's stay with our current example of link interaction. Let's split our enhancer into two. The first enhancer will provide a confirm dialog, the second will redirect the link and use the first one to display the dialog. It does not make much sense but the exercice is about enhancer dependencies.
+The final piece is how to make an enhancer that requires another enhancer. For the sake of simplicity let's stay with our current example of link interaction. Let's split our enhancer into two. The first enhancer will provide a confirm dialog, the second will redirect the link and use the first one to display the dialog. It does not make much sense but the exercise is about enhancer dependencies.
 
 {% hint style="info" %}
 Composing enhancer types and having dependencies is the hardest part. We are looking for help to simplify the process. If you have an idea to make it a smoother experience please contact us.
@@ -362,11 +362,11 @@ To learn how to efficiently handle CSS with your enhancers, you can visit the [s
 
 ## What if I don't want to follow enhancers best practice?
 
-You can very much do whatever you want and distribute a packages that add features to prose. You don't need to follow the enhancers convention. However it might make its use confusing for the end user and will create extra friction.
+You can very much do whatever you want and distribute a package that adds features to prose. You don't need to follow the enhancers convention. However it might make its use confusing for the end user and will create extra friction.
 
 Here is an example of how to do things differently:
 
-We are creating a "plugin" which handle click on links and redirect the user after confirmation. Thiw will work and is rather simple to use.
+We are creating a "plugin" which handles click on links and redirect the user after confirmation. This will work and is rather simple to use.
 
 ```typescript
 export const linkHandlerPlugin = (reader: Reader) => {
@@ -412,6 +412,6 @@ export const linkHandlerEnhancer =
   }
 ```
 
-The enhancer version has more initial boilerplate, especially due to the generic types but this is essential for more complexe enhancers which alter options, output, the reader itself or else.
+The enhancer version has more initial boilerplate, especially due to the generic types but this is essential for more complex enhancers which alter options, output, the reader itself or else.
 
 For such simple examples the reason to use enhancer is not obvious and ultimately not needed at all because we don't change the input, output, reader in between and don't require other enhancers dependencies. That being said, keeping conventions is a good thing for community consistency.

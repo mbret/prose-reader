@@ -1,12 +1,12 @@
 # Performances
 
-A reading system can be heavy both in term of its internal code but also the content itself. Prose is written completely with rxjs, although it significantly helps for development and reliability it adds a certain overhead. In the majority of situation, you should have no performance issues but here are some considerations important to know for good performances.
+A reading system can be heavy both in terms of its internal code but also the content itself. Prose is written completely with rxjs, although it significantly helps for development and reliability it adds a certain overhead. In the majority of situations, you should have no performance issues but here are some considerations important to know for good performances.
 
 ## Book rendering
 
 ### `<iframe>`
 
-Not much to do about it but each spine item of a book is rendered within an iframe. Although browser improved significantly, this still adds some overhead when you have a lot of iframe. Using iframe is very important in order to sandbox and keep the book original publisher design.&#x20;
+Not much to do about it but each spine item of a book is rendered within an iframe. Although browsers improved significantly, this still adds some overhead when you have a lot of iframes. Using iframe is very important in order to sandbox and keep the book original publisher design.&#x20;
 
 ### Media
 
@@ -14,18 +14,18 @@ Beware that some books may have media of crazy size. There are some comics out t
 
 ## Number of pages loaded
 
-The number of pages loaded in parallel increase the overhead drastically. This is because each new spine item has:
+The number of pages loaded in parallel increases the overhead drastically. This is because each new spine item has:
 
 * An iframe attached
 * A layout cycle every-time
-* Assets loaded into memories
+* Assets loaded into memory
 * Is taken into account in all other calculations (navigation, pagination, etc)
 
-Prose is already heavily optimized to lazy load, wait for idle and other technics to keep the overhead as linear as possible but there is a limit to what can be done.
+Prose is already heavily optimized to lazy load, wait for idle and other techniques to keep the overhead as linear as possible but there is a limit to what can be done.
 
-Try to keep the number of pages loaded simultaneously reasonable. Ideally you can apply some strategies depending of the book. Here are some examples:
+Try to keep the number of pages loaded simultaneously reasonable. Ideally you can apply some strategies depending on the book. Here are some examples:
 
-* If you know the book is a big comic pre-paginated (only lot of unique media page): You can safely load only a few before and after page at the same time. This will not impact the reading experience too much.
-* If you know your book is novel (reflowable, mostly text, light book): You can safely load more or even the entire book. This will make the pagination more stable from the start and increase the reading experience while not impacting performances too much.
+* If you know the book is a big comic pre-paginated (only lot of unique media page): You can safely load only a few pages before and after at the same time. This will not impact the reading experience too much.
+* If you know your book is a novel (reflowable, mostly text, light book): You can safely load more or even the entire book. This will make the pagination more stable from the start and increase the reading experience while not impacting performances too much.
 
-Note that if you can afford to do so, you can always load the entire book at first but then only load a few before and after. Prose will keep the previous pagination in mind, even if the items are unloaded. This can make the pagination stable from the start while keeping the performances in check. This will however demands a few ms or seconds at the start depending of the book.
+Note that if you can afford to do so, you can always load the entire book at first but then only load a few before and after. Prose will keep the previous pagination in mind, even if the items are unloaded. This can make the pagination stable from the start while keeping the performances in check. This will however demand a few ms or seconds at the start depending on the book.

@@ -16,7 +16,7 @@ import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
 
 const MyAppReader = () => {
-  // You own the create of your reader instance
+  // You own the creation of your reader instance
   const readerInstance = useReaderInstance()
   
   // Then we handle the rendering
@@ -30,7 +30,7 @@ const MyAppReader = () => {
 
 ## Prose settings vs Reader settings
 
-Some settings are managed by the reader (eg: font size), as a result you should not specify them during the creation of your prose instance or they will be overwritten. Check the properties from the reader component to see what is available. Usually when the reader can change a setting of prose or its enhancers it setting should be managed through it. This is to avoid having multiple source of truth.
+Some settings are managed by the reader (eg: font size), as a result you should not specify them during the creation of your prose instance or they will be overwritten. Check the properties from the reader component to see what is available. Usually when the reader can change a setting of prose or its enhancers its setting should be managed through it. This is to avoid having multiple source of truth.
 
 ## Toggling features
 
@@ -48,7 +48,7 @@ export const createAppReader = searchEnhancer(createReader)
 ```
 
 {% hint style="warning" %}
-We are detecting certain markers in the enhancers to verify whether they exist and are valid. This is assuming you dont fiddle with them. The general rule of enhancers is to allow augmentation but not alteration.
+We are detecting certain markers in the enhancers to verify whether they exist and are valid. This is assuming you don't fiddle with them. The general rule of enhancers is to allow augmentation but not alteration.
 {% endhint %}
 
 ### Search
@@ -59,7 +59,7 @@ See [search.md](../enhancers/search.md "mention") to install enhancer
 
 See [annotations.md](../enhancers/annotations.md "mention") to install enhancer
 
-* Bookmarking a page is done by taping the top right corner the page.
+* Bookmarking a page is done by tapping the top right corner of the page.
 
 ### Annotations
 

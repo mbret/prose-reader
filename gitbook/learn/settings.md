@@ -29,7 +29,7 @@ export type OutputSettings = InputSettings & {
 ```
 
 {% hint style="warning" %}
-Some settings have their `computed` counterpart. When you read the settings you should always read the `computed` one. This indicate whether the reader is actually using the settings you provided. In some cases you may want to use a setting that is not compatible with the current book. The reader will not crash but fallback on a valid value (`computed`...)
+Some settings have their `computed` counterpart. When you read the settings you should always read the `computed` one. This indicates whether the reader is actually using the settings you provided. In some cases you may want to use a setting that is not compatible with the current book. The reader will not crash but fall back on a valid value (`computed`...)
 {% endhint %}
 
 ## `settings.settings$`
@@ -38,4 +38,4 @@ Some settings have their `computed` counterpart. When you read the settings you 
 Observable<OutputSettings>
 ```
 
-This observable emit as soon as you subscribe.
+This observable emits as soon as you subscribe.

@@ -1,6 +1,6 @@
 # About
 
-Prose provide a TypeScript library for working with EPUB Canonical Fragment Identifiers (CFI). This library provides utilities for parsing, resolving, generating, comparing, and serializing CFIs according to the EPUB CFI 1.1 specification.
+Prose provides a TypeScript library for working with EPUB Canonical Fragment Identifiers (CFI). This library provides utilities for parsing, resolving, generating, comparing, and serializing CFIs according to the EPUB CFI 1.1 specification.
 
 ## Installation
 

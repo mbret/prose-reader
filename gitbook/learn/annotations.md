@@ -32,7 +32,7 @@ Here is a couple of suggestion as to how mentally define your different componen
 
 ### Bookmark
 
-A bookmark can be defined as an annotation which does not have a note nor a range. It is simply a marker on a specific node in a document. Usually you want only one bookmark per page but if you reading system allow user to define more bookmark per page you may want to add more metadata to differentiate what is an entire page bookmark (usually the tap top right action) vs a specific page location bookmark (user wanting to bookmark a specific text).
+A bookmark can be defined as an annotation which does not have a note nor a range. It is simply a marker on a specific node in a document. Usually you want only one bookmark per page but if your reading system allows users to define more bookmarks per page you may want to add more metadata to differentiate what is an entire page bookmark (usually the tap top right action) vs a specific page location bookmark (user wanting to bookmark a specific text).
 
 ### Highlight
 
@@ -44,11 +44,11 @@ Notes can be defined by a bookmark with a user content, meaning no text selectio
 
 ## Avoid user confusion or frustration
 
-Ultimately it can be confusing for the user to have different things that can intertween. What happens when the user bookmark a word, is it an highlight without color ? what if he wanted to later put a color on this word bookmark ? Does it becomes an annotation ?
+Ultimately it can be confusing for the user to have different things that can intertwine. What happens when the user bookmarks a word, is it a highlight without color ? what if they wanted to later put a color on this word bookmark ? Does it become an annotation ?
 
-What we recommend is to reduce confusion and have as few components as possible. This is why the [Broken link](/broken/pages/lmGbhW3cVuUFnhwTDpD6 "mention") make an opinionated decision and only assume two interface:
+What we recommend is to reduce confusion and have as few components as possible. This is why the [Broken link](/broken/pages/lmGbhW3cVuUFnhwTDpD6 "mention") make an opinionated decision and only assume two interfaces:
 
-* Page bookmark: a single unique annotationo pointing to the first node of a page, no notes, no highlight color or anything.
+* Page bookmark: a single unique annotation pointing to the first node of a page, no notes, no highlight color or anything.
 * Annotation: Everything else
 
 ## Danger of persisting `weak` references
@@ -59,11 +59,11 @@ This is because the same CFI can return different runtime information for a diff
 
 Persisting the text selection is okay since the document should not have its structure altered but page information is usually discouraged.
 
-There is nothing wrong in persisting pagination or runtime information but just remember that they might be different from a session to another. Most of the time, a user will open a same book on a same device but that's an assumption only you can can decide.
+There is nothing wrong in persisting pagination or runtime information but just remember that they might be different from a session to another. Most of the time, a user will open a same book on a same device but that's an assumption only you can decide.
 
 ## Weak vs Strong references
 
-As discussed above, some references are stronger than other, in other words some things can be more stable than other across devices, resolutions and settings. Here is a couple of examples:
+As discussed above, some references are stronger than others, in other words some things can be more stable than others across devices, resolutions and settings. Here is a couple of examples:
 
 ### Strong
 
@@ -74,6 +74,6 @@ As discussed above, some references are stronger than other, in other words some
 
 ### Weak
 
-* Pages number, whether it's for chapter or absolute will changes depending of the device, resolution or reading settings.
+* Pages number, whether it's for chapter or absolute will change depending on the device, resolution or reading settings.
 * Number of pages, same as above.
 * Progress percentage, depending on how calculated will vary as well.

@@ -22,6 +22,6 @@ This is not recommended to use this mode as a mean to "refit" the reading experi
 
 ## Controlled vs Scrollable
 
-Controlled contents (regular books) behave differently than scrollable content (eg: webtoon). Visit the section [page-turn-mode.md](page-turn-mode.md "mention")for more information. When in scrollable mode, the user can keep reading normally and not be constrained within bounds. This is because scrollable books usually takes the entire space and offer continuous reading without page turn animations.
+Controlled contents (regular books) behave differently than scrollable content (eg: webtoon). Visit the section [page-turn-mode.md](page-turn-mode.md "mention")for more information. When in scrollable mode, the user can keep reading normally and not be constrained within bounds. This is because scrollable books usually take the entire space and offer continuous reading without page turn animations.
 
 The internal implementation is also very much different due to both modes using different navigators. Basically controlled will manipulate viewport 3d axis while scrollable content will manipulate scroll offset on the navigator.

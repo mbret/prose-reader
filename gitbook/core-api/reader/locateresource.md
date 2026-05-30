@@ -18,8 +18,8 @@ type CfiLocatableResource = {
 }
 
 type ProseParsedCfi {
-  // This will always be set and is statically infered from the CFI format.
-  // This does not means the range is valid.
+  // This will always be set and is statically inferred from the CFI format.
+  // This does not mean the range is valid.
   isCfiRange: boolean
   itemIndex?: number
 }

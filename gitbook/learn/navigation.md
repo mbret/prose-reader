@@ -1,14 +1,14 @@
 # Navigation
 
-Navigation is not simple task and can be done in many ways depending on the use case. This is why we have two categories of navigation; **spatial** and **direct.**
+Navigation is not a simple task and can be done in many ways depending on the use case. This is why we have two categories of navigation; **spatial** and **direct.**
 
 ## Spatial navigation
 
-Often useful when you want to navigate based on buttons or gesture. For example a swipe to the left trigger a `turnLeft`, to the right a `turnRight`. It's easier to call these spatial methods because it correlate directly with what the user is expecting and is especially useful for UX elements.&#x20;
+Often useful when you want to navigate based on buttons or gesture. For example a swipe to the left triggers a `turnLeft`, to the right a `turnRight`. It's easier to call these spatial methods because it correlates directly with what the user is expecting and is especially useful for UX elements.&#x20;
 
 ## Direct navigation
 
-The represent methods such as `goToItem`, `gotoPage`, `goToUrl`, etc. They are not directional nor spatial and are used when you know exactly where you want to go. They are usually used for navigating by bookmarks, table of contents, links and other.
+These represent methods such as `goToItem`, `goToPage`, `goToUrl`, etc. They are not directional nor spatial and are used when you know exactly where you want to go. They are usually used for navigating by bookmarks, table of contents, links and other.
 
 
 
@@ -40,10 +40,10 @@ type NavigationState {
 ## `navigation.state$`
 
 ```typescript
-Observabe<NavigationState>
+Observable<NavigationState>
 ```
 
-Emit as soon as you subscribe to it.
+Emits as soon as you subscribe to it.
 
 ## `navigation.goToNextSpineItem()`
 

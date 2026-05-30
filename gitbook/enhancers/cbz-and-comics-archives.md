@@ -1,6 +1,6 @@
 # CBZ & comics archives
 
-`@prose-reader/cbz` extends some support related to comics archives (not just .cbz). If your reader is serving epub files you may skip this package as its purposes is to bridge the gap between a comics archive and epub compliances.
+`@prose-reader/cbz` extends some support related to comics archives (not just .cbz). If your reader is serving epub files you may skip this package as its purpose is to bridge the gap between a comics archive and epub compliances.
 
 ## Feature overview
 

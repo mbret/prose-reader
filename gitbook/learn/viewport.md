@@ -4,7 +4,7 @@ The viewport is the visible reading area. It is not to be confused with paginati
 
 ## Purpose of a viewport
 
-The purpose of the viewport is to allow more flexibility in how and what are visible to the user while maintaining stable calculations internally. The pagination and navigation are two of the hardest things to get right in a reader and they need t have stable measures to do so. An extra layer as such allow decoupling the "view" from the "rendering".
+The purpose of the viewport is to allow more flexibility in how and what are visible to the user while maintaining stable calculations internally. The pagination and navigation are two of the hardest things to get right in a reader and they need to have stable measures to do so. An extra layer as such allows decoupling the "view" from the "rendering".
 
 For example, zooming out (thumbnails) or in is much easier when manipulating the viewport since you don't mess up with documents or the layout itself. You can imagine the viewport as a virtual layer that can be transformed without affecting the behavior of the engine.
 
@@ -31,12 +31,12 @@ A relatively simple manipulation of the viewport can be to change its size and m
 
 ## Absolute vs Relative viewport
 
-The absolute viewport represent the dimensions given when creating the reader and is the dimension used internally for pagination, navigation and all the calculations. The relative viewport represent the viewing area after transformation are applied.
+The absolute viewport represents the dimensions given when creating the reader and is the dimension used internally for pagination, navigation and all the calculations. The relative viewport represents the viewing area after transformations are applied.
 
 <div><figure><img src="../.gitbook/assets/localhost_9000_reader_aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL3JlbmRpdGlvbi1mbG93LXdlYnRvb24uZXB1Yg==_free&#x26;vertical(iPhone SE) (1) (1).png" alt="" width="188"><figcaption><p>Relative viewport (scale: 0.5)</p></figcaption></figure> <figure><img src="../.gitbook/assets/localhost_9000_reader_aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL3JlbmRpdGlvbi1mbG93LXdlYnRvb24uZXB1Yg==_free&#x26;vertical(iPhone SE) (2).png" alt="" width="188"><figcaption><p>Absolute viewport</p></figcaption></figure></div>
 
 {% hint style="info" %}
-Some calculations will always use the absolute viewport (eg: navigation) to keep consistency and correct results while other behaviors might take advantage of the absolute viewport. For example, prose will always load documents that are visible on the relative viewport.
+Some calculations will always use the absolute viewport (eg: navigation) to keep consistency and correct results while other behaviors might take advantage of the relative viewport. For example, prose will always load documents that are visible on the relative viewport.
 {% endhint %}
 
 

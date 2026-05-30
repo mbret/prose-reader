@@ -1,14 +1,12 @@
 # PDF
 
-This enhancer lets you render PDF documents. The reason it's not part of the core is because PDFs requires an extra dependencies and have a rather specific & much different way to be rendered. Having it as a core would increase the core size significantly and increase complexity while not everyone needs to render pdf.
+This enhancer lets you render PDF documents. The reason it's not part of the core is because PDFs require an extra dependency and have a rather specific & much different way to be rendered. Having it as a core would increase the core size significantly and increase complexity while not everyone needs to render pdf.
 
 {% hint style="warning" %}
-PDFs are incompatible with service workers due to the limitation from the library used [https://mozilla.github.io/pdf.js/](https://mozilla.github.io/pdf.js/). The archive, resources and rendering will all happens on the client side. There is nothing wrong with it except that it cannot be in your service worker streamer flow (if you use this flow).
+PDFs are incompatible with service workers due to the limitation from the library used [https://mozilla.github.io/pdf.js/](https://mozilla.github.io/pdf.js/). The archive, resources and rendering will all happen on the client side. There is nothing wrong with it except that it cannot be in your service worker streamer flow (if you use this flow).
 {% endhint %}
 
 ## Important
-
-PDFs are incompatible with service workers due to the limitation from the library used [https://mozilla.github.io/pdf.js/](https://mozilla.github.io/pdf.js/). The archive, resources and rendering will all happens on the client side. There is nothing wrong with it except that it cannot be in your service worker streamer flow (if you use this flow).
 
 The enhancer will hook into the resource loading and rendering process to handle the pdf for you. No resources will need to be fetched through HTTP requests.
 
@@ -22,7 +20,7 @@ We encourage you to visit the [prose reader demo repository ](https://github.com
 npm install @prose-reader/enhancer-pdf pdfjs-dist
 ```
 
-The following integration example is simplified and does not use streamers. The prose reader demo use a client streamer to streamline the process and have a more unified way to stream documents but it's not required. Since the package provides an archive creator helper it can be used as any other archives.
+The following integration example is simplified and does not use streamers. The prose reader demo uses a client streamer to streamline the process and have a more unified way to stream documents but it's not required. Since the package provides an archive creator helper it can be used as any other archives.
 
 <pre class="language-typescript"><code class="lang-typescript">import { of, from } from "rxjs"
 <strong>import { pdfEnhancer, createArchiveFromPdf } from "@prose-reader/enhancer-pdf"

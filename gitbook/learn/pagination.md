@@ -1,6 +1,6 @@
 # Pagination
 
-`reader.pagination` gives you access to the current book pagination information. It can be used to know which page is being read, how many pages are in a chapters or other such information.
+`reader.pagination` gives you access to the current book pagination information. It can be used to know which page is being read, how many pages are in a chapter or other such information.
 
 
 
@@ -45,7 +45,7 @@
 Observable<PaginationInfo>
 ```
 
-Observable that emit whenever a new valid pagination info is updated. It will not emit invalid pagination.&#x20;
+Observable that emits whenever a new valid pagination info is updated. It will not emit invalid pagination.&#x20;
 
 ### Examples
 

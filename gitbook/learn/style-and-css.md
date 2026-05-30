@@ -2,7 +2,7 @@
 
 ## Stable constants
 
-For convenience with CSS, prose reader define some constants that will **NEVER** changes. This allow you to create stable spreadsheets when needed.
+For convenience with CSS, prose reader defines some constants that will **NEVER** change. This allows you to create stable stylesheets when needed.
 
 * `data-prose-reader-container` data attributes placed on each reader container. Note that without the ID, it targets all reader containers.
 * `data-prose-reader-viewport` data attributes placed on the viewport element.
@@ -43,7 +43,7 @@ const reader = next(options)
 const sub = reader.context.watch(`rootElement`).pipe(
   tap((container) => {
     // Always set your attribute to the container of the given reader instance
-    container.setAttribute("[data-my-enhancer]", true)
+    container.setAttribute("data-my-enhancer", "true")
   }),
 )
 

@@ -4,11 +4,11 @@
 
 Selecting texts across pages is **only possible** within the same document frame. Typically for several pages of a same spine item (eg: epub long chapter). This is unfortunately **not possible** when pages are separated document frames. This is because selections are scoped per frames.
 
-This is a limitation that is close to impossible to solve because having a document frame per item is how the reading system can display each document in their own sandbox, with their own styles, scripts etc. That would require a radical change of implementation at its core and as far as we now this is not currently possible.
+This is a limitation that is close to impossible to solve because having a document frame per item is how the reading system can display each document in their own sandbox, with their own styles, scripts etc. That would require a radical change of implementation at its core and as far as we know this is not currently possible.
 
 ## Multiple selections
 
-It is possible for the user to do multiple selection if he decides to select texts in different document frame. Currently, the `selection` API will only return the last selection. This is technically possible to return all current selection but is currently not implemented.
+It is possible for the user to do multiple selections if they decide to select texts in different document frames. Currently, the `selection` API will only return the last selection. This is technically possible to return all current selections but is currently not implemented.
 
 ## API
 
@@ -43,7 +43,7 @@ Emits the current selection
 Observable<void>
 ```
 
-Emits when the user start a selection
+Emits when the user starts a selection
 
 ### `selection.selectionEnd$`
 

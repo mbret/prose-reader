@@ -23,7 +23,7 @@ type ContextState = {
 Observable<boolean | undefined>
 ```
 
-Replay observable, emit a value as soon as you subscribe.
+Replay observable, emits a value as soon as you subscribe.
 
 Tells you whether the reader is using spread mode or not. Spread mode means two pages displayed rather than one. Usually used on landscape mode or large screens. The value will be undefined if no books are loaded.
 

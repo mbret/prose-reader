@@ -1,17 +1,17 @@
 # Web (dom)
 
 {% hint style="danger" %}
-his section is old and obsolete. A rewriting will be done in the future. You can still take a look as some of the concepts are still valid.
+This section is old and obsolete. A rewriting will be done in the future. You can still take a look as some of the concepts are still valid.
 {% endhint %}
 
 Although not the most recommended usage, you can stream your content directly through your JS app. This can be helpful for kickstart or proof of concept projects. Ideally you may want to move the streamer to a service worker or a server to optimize your streaming process further and have more control.
 
-Here is a basic example that demonstrate how to stream an epub:
+Here is a basic example that demonstrates how to stream an epub:
 
 ```typescript
 import { createReader } from "@prose-reader/core";
 import {
-  createArchiveFromText,
+  createArchiveFromJszip,
   generateManifestFromArchive,
   generateResourceFromArchive,
 } from "@prose-reader/streamer";
@@ -28,7 +28,7 @@ const reader = createReader({
   await zip.loadAsync(await content.blob());
   
   // we create the archive from our epub zip container
-  const archive = await createArchiveFromZip(await content.blob());  
+  const archive = await createArchiveFromJszip(zip);  
 
   // the streamer can generate a manifest from various source 
   // including jszip archive

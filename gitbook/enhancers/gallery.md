@@ -4,7 +4,7 @@ This enhancer gives you methods to facilitate creation of gallery of pages. This
 
 <figure><img src="../.gitbook/assets/localhost_9000_reader_aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL2hhcnVrby1jb21pYy56aXA=(iPhone SE).png" alt="" width="375"><figcaption><p>Gallery on the demo reader</p></figcaption></figure>
 
-The gallery enhancer does not create a gallery for you, it will help you gather snapshot of pages that you can then display in your own gallery. This way it's agnostic and you are responsible for your entire design.
+The gallery enhancer does not create a gallery for you, it will help you gather snapshots of pages that you can then display in your own gallery. This way it's agnostic and you are responsible for your entire design.
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
 const createAppReader = galleryEnhancer(createReader)
 
 /**
- * There are no required configuration for this
+ * There is no required configuration for this
  * enhancer.
  */
 const reader = createAppReader({})
@@ -47,7 +47,7 @@ function snapshot(
 ): Observable<HTMLElement>
 ```
 
-This method takes a spine item and a given dimension for snapshot and will provide you with an copy of the relevant document (first page) scaled to your dimensions and centered. This will be an exact copy of how the page would look like in your current reader. It will however try to cleanup it and only keep the rendered document. This means that things like annotations, customization to spine item will not be taken into account.
+This method takes a spine item and a given dimension for snapshot and will provide you with a copy of the relevant document (first page) scaled to your dimensions and centered. This will be an exact copy of how the page would look like in your current reader. It will however try to clean it up and only keep the rendered document. This means that things like annotations, customization to spine item will not be taken into account.
 
 The parent element needs to be passed down as well as we will attach the snapshot to it automatically. This is needed for internal iframe loading events check.
 
