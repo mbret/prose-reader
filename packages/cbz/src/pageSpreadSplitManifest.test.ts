@@ -1,5 +1,10 @@
 import type { Manifest } from "@prose-reader/shared"
-import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
+import {
+  type Archive,
+  blobFileAccessors,
+  createArchive as createStreamerArchive,
+  createXmlSafeId,
+} from "@prose-reader/streamer"
 import { describe, expect, it } from "vitest"
 import {
   buildVirtualPageSpreadResourcePath,
@@ -8,10 +13,7 @@ import {
   pageSpreadSplit,
 } from "./pageSpreadSplitManifest"
 
-const fakeContent = {
-  blob: () => Promise.resolve(new Blob([])),
-  string: () => Promise.resolve(""),
-}
+const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
 const createManifest = ({
   href,
@@ -67,11 +69,12 @@ const createManifestFromResourceNames = ({
   title: "",
 })
 
-const createArchive = (records: Archive["records"]): Archive => ({
-  close: () => Promise.resolve(),
-  filename: "",
-  records,
-})
+const createArchive = (records: Archive["records"]): Archive =>
+  createStreamerArchive({
+    close: () => Promise.resolve(),
+    filename: "",
+    records,
+  })
 
 const createImageRecord = (
   resourceName: string,

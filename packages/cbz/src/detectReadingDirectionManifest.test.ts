@@ -1,12 +1,13 @@
 import type { Manifest } from "@prose-reader/shared"
-import type { Archive } from "@prose-reader/streamer"
+import {
+  type Archive,
+  blobFileAccessors,
+  createArchive as createStreamerArchive,
+} from "@prose-reader/streamer"
 import { describe, expect, it } from "vitest"
 import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
 
-const fakeContent = {
-  blob: () => Promise.resolve(new Blob([])),
-  string: () => Promise.resolve(""),
-}
+const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
 const createArchive = ({
   encodingFormat,
@@ -16,12 +17,13 @@ const createArchive = ({
   encodingFormat?: string
   filename: string
   records?: Archive["records"]
-}): Archive => ({
-  close: () => Promise.resolve(),
-  encodingFormat,
-  filename,
-  records,
-})
+}): Archive =>
+  createStreamerArchive({
+    close: () => Promise.resolve(),
+    encodingFormat,
+    filename,
+    records,
+  })
 
 const createImageRecord = (basename: string): Archive["records"][number] => ({
   ...fakeContent,
