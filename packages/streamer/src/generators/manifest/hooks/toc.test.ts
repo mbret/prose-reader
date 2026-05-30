@@ -1,9 +1,10 @@
 import { expect, it } from "vitest"
+import { createArchive } from "../../../archives/createArchive"
 import { tocHook } from "./toc"
 
 it("should create valid toc", async () => {
   const manifest = await tocHook({
-    archive: {
+    archive: createArchive({
       filename: "archive",
       close: async () => {},
       records: [
@@ -53,7 +54,7 @@ it("should create valid toc", async () => {
           uri: "folder d/folder e/4.jpg",
         },
       ],
-    },
+    }),
     baseUrl: "",
     archiveOpf: undefined,
   })({

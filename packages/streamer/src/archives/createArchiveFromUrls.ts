@@ -4,6 +4,7 @@ import {
 } from "@prose-reader/shared"
 import { createXmlSafeIdFactory } from "../utils/createXmlSafeId"
 import { getUriBasename } from "../utils/uri"
+import { createArchive } from "./createArchive"
 import type { Archive } from "./types"
 
 /**
@@ -64,9 +65,9 @@ export const createArchiveFromUrls = async (
     string: async () => opfFileData,
   }
 
-  return {
+  return createArchive({
     filename: ``,
     records: [opfFile, ...filesFromUrl],
     close: () => Promise.resolve(),
-  }
+  })
 }

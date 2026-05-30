@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { Archive } from "../../../archives/types"
+import { createArchive } from "../../../archives/createArchive"
 import { buildAudiobookToc, normalizeFilenameAsTitle } from "./audiobookToc"
 import { tocHook } from "./toc"
 
@@ -33,7 +33,7 @@ describe("buildAudiobookToc", () => {
   it("should return undefined for empty spine", () => {
     const result = buildAudiobookToc(
       { ...baseManifest, spineItems: [] },
-      { filename: "", close: async () => {}, records: [] },
+      createArchive({ filename: "", close: async () => {}, records: [] }),
     )
 
     expect(result).toBeUndefined()
@@ -58,7 +58,7 @@ describe("buildAudiobookToc", () => {
           },
         ],
       },
-      { filename: "", close: async () => {}, records: [] },
+      createArchive({ filename: "", close: async () => {}, records: [] }),
     )
 
     expect(result).toBeUndefined()
@@ -83,7 +83,7 @@ describe("buildAudiobookToc", () => {
           },
         ],
       },
-      {
+      createArchive({
         filename: "audiobook.zip",
         close: async () => {},
         records: [
@@ -104,7 +104,7 @@ describe("buildAudiobookToc", () => {
             encodingFormat: "audio/mpeg",
           },
         ],
-      },
+      }),
     )
 
     expect(result).toEqual([
@@ -140,7 +140,7 @@ describe("tocHook with audiobook", () => {
   }
 
   it("should prefer per-track toc over folder toc for audiobooks", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "audiobook.zip",
       close: async () => {},
       records: [
@@ -160,7 +160,7 @@ describe("tocHook with audiobook", () => {
           encodingFormat: "audio/mpeg",
         },
       ],
-    }
+    })
 
     const manifest = await tocHook({
       archive,
@@ -191,7 +191,7 @@ describe("tocHook with audiobook", () => {
   })
 
   it("should fall back to folder toc when not all spine items are audio", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "mixed.zip",
       close: async () => {},
       records: [
@@ -218,7 +218,7 @@ describe("tocHook with audiobook", () => {
           encodingFormat: "audio/mpeg",
         },
       ],
-    }
+    })
 
     const manifest = await tocHook({
       archive,

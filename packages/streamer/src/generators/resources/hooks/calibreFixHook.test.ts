@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
-import type { Archive } from "../../../archives/types"
+import { createArchive } from "../../../archives/createArchive"
 import { calibreFixHook } from "./calibreFixHook"
 
 describe("Given a book from calibre", () => {
   it("should fix the responsive broken cover", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -29,7 +29,7 @@ describe("Given a book from calibre", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const response = await calibreFixHook({
       archive,

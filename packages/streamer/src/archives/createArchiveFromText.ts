@@ -1,5 +1,5 @@
 import { getUriBasename } from "../utils/uri"
-import type { Archive } from "./types"
+import { createArchive } from "./createArchive"
 
 /**
  * Useful to create archive from txt content
@@ -31,7 +31,7 @@ export const createArchiveFromText = async (
       </package>
     `
 
-  const archive: Archive = {
+  const archive = createArchive({
     filename: `content.txt`,
     encodingFormat: mimeType,
     records: [
@@ -60,7 +60,7 @@ export const createArchiveFromText = async (
       },
     ],
     close: () => Promise.resolve(),
-  }
+  })
 
   return archive
 }

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
-import type { Archive } from "./archives/types"
+import { createArchive } from "./archives/createArchive"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 
 const archiveResourceBody = `bar/foo.jpg`
 
-const archive: Archive = {
+const archive = createArchive({
   filename: `comicinfo.xml`,
   records: [
     {
@@ -26,7 +26,7 @@ const archive: Archive = {
     },
   ],
   close: () => Promise.resolve(),
-}
+})
 
 describe("Given no resource specified", () => {
   it("should return 500", async () => {

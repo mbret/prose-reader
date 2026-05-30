@@ -5,6 +5,7 @@
  */
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Report } from "../report"
+import { createArchive } from "./createArchive"
 import type { Archive } from "./types"
 
 interface ArchiveReader {
@@ -47,7 +48,7 @@ export const createArchiveFromLibArchive = async (
 ): Promise<Archive> => {
   const objArray = await libArchive.getFilesArray()
 
-  const archive: Archive = {
+  const archive = createArchive({
     close: () => libArchive.close(),
     filename: name ?? ``,
     encodingFormat,
@@ -68,7 +69,7 @@ export const createArchiveFromLibArchive = async (
         return file.text()
       },
     })),
-  }
+  })
 
   Report.log("Generated archive", archive)
 

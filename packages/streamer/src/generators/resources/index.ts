@@ -1,4 +1,5 @@
 import type { Archive } from "../.."
+import { getArchiveFileRecordByUri } from "../../archives/types"
 import type { StreamerResourceHookFactory } from "../../hooks"
 import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"
@@ -52,11 +53,9 @@ export const generateResourceFromArchive = async (
       return resource
     }
 
-    const file = Object.values(archive.records).find(
-      (file) => file.uri === resourcePath && !file.dir,
-    )
+    const file = getArchiveFileRecordByUri(archive, resourcePath)
 
-    if (!file || file.dir) {
+    if (!file) {
       throw new Error(`no file found for resourcePath:${resourcePath}`)
     }
 

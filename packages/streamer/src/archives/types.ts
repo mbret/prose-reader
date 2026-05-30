@@ -25,6 +25,8 @@ export type DirectoryRecord = {
   encodingFormat?: undefined
 }
 
+export type ArchiveRecord = FileRecord | DirectoryRecord
+
 export type Archive = {
   filename: string
   /**
@@ -33,10 +35,24 @@ export type Archive = {
    * individual record; record-level mime types live on {@link FileRecord}.
    */
   encodingFormat?: string
-  records: (FileRecord | DirectoryRecord)[]
+  records: ArchiveRecord[]
+  /**
+   * `uri` → record index built once at construction (see `createArchive`).
+   * Resource resolution is a per-fetched-file hot path, so prefer this (or
+   * {@link getArchiveFileRecordByUri}) over scanning {@link Archive.records}.
+   */
+  recordsByUri: ReadonlyMap<string, ArchiveRecord>
   close: () => Promise<void>
 }
 
-export const isFileRecord = (
-  record: Archive["records"][number],
-): record is FileRecord => !record.dir
+export const isFileRecord = (record: ArchiveRecord): record is FileRecord =>
+  !record.dir
+
+export const getArchiveFileRecordByUri = (
+  archive: Pick<Archive, "recordsByUri">,
+  uri: string,
+): FileRecord | undefined => {
+  const record = archive.recordsByUri.get(uri)
+
+  return record && isFileRecord(record) ? record : undefined
+}

@@ -1,4 +1,7 @@
-import type { Archive } from "../../../archives/types"
+import {
+  type Archive,
+  getArchiveFileRecordByUri,
+} from "../../../archives/types"
 import { readArchiveOpf } from "../../../epubs/readArchiveOpf"
 import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import type { HookResource } from "./types"
@@ -56,11 +59,9 @@ const getContentTypeFromExtension = (uri: string) => {
 export const defaultHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.records).find(
-      (file) => file.uri === resourcePath && !file.dir,
-    )
+    const file = getArchiveFileRecordByUri(archive, resourcePath)
 
-    if (!file || file.dir) return resource
+    if (!file) return resource
 
     const metadata = await getMetadata(archive, resourcePath)
 

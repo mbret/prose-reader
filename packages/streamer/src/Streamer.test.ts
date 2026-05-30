@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { Streamer } from "."
-import type { Archive } from "./archives/types"
+import { createArchive } from "./archives/createArchive"
 
 describe("Given custom error on get Archive", () => {
   it("should return correct error", async () => {
@@ -29,7 +29,7 @@ describe("Given custom error on get Archive", () => {
 describe("Given a manifest href with encoded local characters", () => {
   it("should fetch the archive resource from the manifest href in direct streamer mode", async () => {
     const body = "image-body"
-    const archive: Archive = {
+    const archive = createArchive({
       close: () => Promise.resolve(),
       filename: "",
       records: [
@@ -43,7 +43,7 @@ describe("Given a manifest href with encoded local characters", () => {
           uri: "Chapter 1/page [1].jpg",
         },
       ],
-    }
+    })
     const streamer = new Streamer({
       cleanArchiveAfter: Infinity,
       getArchive: async () => archive,
@@ -65,11 +65,11 @@ describe("Given a manifest href with encoded local characters", () => {
 
 describe("Given streamer hooks", () => {
   it("should thread hooks into manifest and resource generation", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       close: () => Promise.resolve(),
       filename: "",
       records: [],
-    }
+    })
     const streamer = new Streamer({
       cleanArchiveAfter: Infinity,
       getArchive: async () => archive,

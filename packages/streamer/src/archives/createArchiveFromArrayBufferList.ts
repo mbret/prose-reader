@@ -1,6 +1,7 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
+import { createArchive } from "./createArchive"
 import type { Archive } from "./types"
 
 export const createArchiveFromArrayBufferList = async (
@@ -22,7 +23,7 @@ export const createArchiveFromArrayBufferList = async (
     files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
-  return {
+  return createArchive({
     filename: name || ``,
     encodingFormat,
     records: files.map((file) => {
@@ -58,5 +59,5 @@ export const createArchiveFromArrayBufferList = async (
       }
     }),
     close: () => Promise.resolve(),
-  }
+  })
 }

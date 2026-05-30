@@ -2,6 +2,7 @@ import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
+import { createArchive } from "./createArchive"
 import { printTree } from "./printTree"
 import type { Archive, StreamResult } from "./types"
 
@@ -49,7 +50,7 @@ export const createArchiveFromJszip = async (
     files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
-  const archive: Archive = {
+  const archive = createArchive({
     filename: name || ``,
     encodingFormat,
     records: files.map((file) => {
@@ -83,7 +84,7 @@ export const createArchiveFromJszip = async (
       }
     }),
     close: () => Promise.resolve(),
-  }
+  })
 
   Report.log("Generated archive", archive)
 

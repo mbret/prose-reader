@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
-import type { Archive } from "../../../archives/types"
+import { createArchive } from "../../../archives/createArchive"
 import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook"
 
 describe("Given a book with invalid self closing tag", () => {
   it("should fix the self closing tag", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -35,7 +35,7 @@ describe("Given a book with invalid self closing tag", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const response = await selfClosingTagsFixHook({
       archive,

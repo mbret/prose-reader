@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest"
-import type { Archive } from "../../archives/types"
+import { createArchive } from "../../archives/createArchive"
 import { generateResourceFromArchive } from "./index"
 
 describe("generateResourceFromArchive", () => {
   it("should apply external hooks before archive fallback", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [],
       close: () => Promise.resolve(),
-    }
+    })
 
     const resource = await generateResourceFromArchive(archive, "virtual.txt", {
       hooks: [
@@ -33,7 +33,7 @@ describe("generateResourceFromArchive", () => {
 
   it("should return the archive resource without external hooks", async () => {
     const source = new Blob(["source"], { type: "text/plain" })
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -46,7 +46,7 @@ describe("generateResourceFromArchive", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const resource = await generateResourceFromArchive(archive, "page.txt")
 

@@ -1,7 +1,7 @@
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
+import { createArchive } from "../../archives/createArchive"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
-import type { Archive } from "../../archives/types"
 import { createXmlSafeId } from "../../utils/createXmlSafeId"
 import { generateManifestFromArchive } from "./index"
 
@@ -101,7 +101,7 @@ describe("Given archive with a folder containing a space", () => {
   }
 
   it("should encode space but not the slash", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -120,7 +120,7 @@ describe("Given archive with a folder containing a space", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -139,7 +139,7 @@ describe("Given archive with a folder containing a space", () => {
   })
 
   it("should derive unique XML-safe IDs from the archive resource path", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -158,7 +158,7 @@ describe("Given archive with a folder containing a space", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -173,7 +173,7 @@ describe("Given archive with a folder containing a space", () => {
   })
 
   it("should disambiguate generated ID collisions after sanitizing paths", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -192,7 +192,7 @@ describe("Given archive with a folder containing a space", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -205,7 +205,7 @@ describe("Given archive with a folder containing a space", () => {
 
 describe("Given archive with no folders", () => {
   it("should not create any toc", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -217,7 +217,7 @@ describe("Given archive with no folders", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -227,7 +227,7 @@ describe("Given archive with no folders", () => {
 
 describe("Given non-epub image archive items with encodingFormat", () => {
   it("should keep image spine items pre-paginated", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -240,7 +240,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -262,7 +262,7 @@ describe("Given non-epub image archive items with encodingFormat", () => {
 describe("Given a non-epub image archive with a two-page spread filename", () => {
   it("should keep the original spine item without external streamer hooks", async () => {
     const spreadBasename = "p006-007.jpg"
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -275,7 +275,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -296,7 +296,7 @@ describe("Given a non-epub image archive with a two-page spread filename", () =>
 
 describe("Given non-epub audio archive items with encodingFormat", () => {
   it("should mark audio spine items as pre-paginated", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -309,7 +309,7 @@ describe("Given non-epub audio archive items with encodingFormat", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -330,7 +330,7 @@ describe("Given non-epub audio archive items with encodingFormat", () => {
 
 describe("Given non-epub audio archive items without encodingFormat", () => {
   it("should detect audio from filename and mark as pre-paginated", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -342,7 +342,7 @@ describe("Given non-epub audio archive items without encodingFormat", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const manifest = await generateManifestFromArchive(archive)
 
@@ -352,7 +352,7 @@ describe("Given non-epub audio archive items without encodingFormat", () => {
 
 describe("Given archive with folders", () => {
   it("should run spine hooks after content normalization and before derived metadata", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -383,7 +383,7 @@ describe("Given archive with folders", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
     const stateSeenByHook: Array<{
       nav: Manifest["nav"]
       renditionLayout: Manifest["renditionLayout"]
@@ -418,7 +418,7 @@ describe("Given archive with folders", () => {
   })
 
   it("should create correct toc", async () => {
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
@@ -458,7 +458,7 @@ describe("Given archive with folders", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const baseUrl = "http://localhost:9000"
 

@@ -2,7 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { parseOpf } from "@prose-reader/archive-parser"
 import { describe, expect, it } from "vitest"
-import type { Archive } from ".."
+import { createArchive } from ".."
 import { parseToc } from "./nav"
 
 describe(`Given ncx toc with prefix`, () => {
@@ -23,7 +23,7 @@ describe(`Given ncx toc with prefix`, () => {
       )
     ).toString()
 
-    const archive: Archive = {
+    const archive = createArchive({
       filename: `archive`,
       records: [
         {
@@ -44,7 +44,7 @@ describe(`Given ncx toc with prefix`, () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const result = await parseToc(parseOpf(opf), archive, {
       baseUrl: `http://localhost:9000/streamer/aHR0cDovL2xvY2FsaG9zdDo5MDAwL2VwdWJzL0FVVE9UT09MUy5lcHVi`,
@@ -67,7 +67,7 @@ describe("Given a base url with a slash at the end", () => {
       )
     ).toString()
 
-    const archive: Archive = {
+    const archive = createArchive({
       filename: `archive`,
       records: [
         {
@@ -88,7 +88,7 @@ describe("Given a base url with a slash at the end", () => {
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
 
     const result = await parseToc(parseOpf(opf), archive, {
       baseUrl: `http://localhost:9000/streamer/`,

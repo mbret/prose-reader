@@ -1,14 +1,15 @@
-import type { Archive } from "../../../archives/types"
+import {
+  type Archive,
+  getArchiveFileRecordByUri,
+} from "../../../archives/types"
 import type { HookResource } from "./types"
 
 export const cssFixHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const file = Object.values(archive.records).find(
-      (file) => file.uri === resourcePath && !file.dir,
-    )
+    const file = getArchiveFileRecordByUri(archive, resourcePath)
 
-    if (file && !file.dir && file.basename.endsWith(`.css`)) {
+    if (file?.basename.endsWith(`.css`)) {
       const bodyToParse =
         typeof resource.body === `string` ? resource.body : await file.string()
 
