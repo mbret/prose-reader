@@ -6,7 +6,7 @@ import { createManifestResourceHref } from "../createManifestResourceHref"
 export const defaultHook =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (): Promise<Manifest> => {
-    const files = Object.values(archive.records).filter((file) => !file.dir)
+    const files = archive.records.filter((file) => !file.dir)
     const createSafeId = createXmlSafeIdFactory()
     const filesWithIds = files.map((file) => ({
       file,

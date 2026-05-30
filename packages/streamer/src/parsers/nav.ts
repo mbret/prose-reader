@@ -97,7 +97,7 @@ const parseTocFromNavPath = async (
   const navItem = opf.manifestItems.find(manifestItemIsNavDocument)
 
   if (navItem?.href) {
-    const tocFile = Object.values(archive.records).find((item) =>
+    const tocFile = archive.records.find((item) =>
       item.uri.endsWith(navItem.href),
     )
 
@@ -183,9 +183,7 @@ const parseTocFromNcx = async ({
     if (ncxItem) {
       const ncxPath = `${opfBasePath}${opfBasePath === `` ? `` : `/`}${ncxItem.href}`
 
-      const file = Object.values(archive.records).find((item) =>
-        item.uri.endsWith(ncxPath),
-      )
+      const file = archive.records.find((item) => item.uri.endsWith(ncxPath))
 
       if (file && !file.dir) {
         const ncxData = new XmlDocument(await file.string())

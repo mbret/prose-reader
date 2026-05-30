@@ -1,9 +1,7 @@
 import type { Archive } from "../archives/types"
 
 export const getArchiveOpfInfo = (archive: Archive) => {
-  const filesAsArray = Object.values(archive.records).filter(
-    (file) => !file.dir,
-  )
+  const filesAsArray = archive.records.filter((file) => !file.dir)
   const file = filesAsArray.find((file) => file.uri.endsWith(`.opf`))
 
   return {
