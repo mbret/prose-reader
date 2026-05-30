@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-search",
-  "version": "1.306.0",
+  "version": "1.307.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.306.0"
+    "@prose-reader/core": "^1.307.0"
   },
   "peerDependencies": {
     "rxjs": "*"
