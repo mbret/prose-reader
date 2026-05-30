@@ -1,4 +1,9 @@
-import type { Archive, HookResource } from "@prose-reader/streamer"
+import {
+  type Archive,
+  blobFileAccessors,
+  createArchive,
+  type HookResource,
+} from "@prose-reader/streamer"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { buildVirtualPageSpreadResourcePath } from "./pageSpreadSplitManifest"
 import { pageSpreadSplitResourceHook } from "./pageSpreadSplitResource"
@@ -15,21 +20,20 @@ describe("pageSpreadSplitResourceHook", () => {
 
   it("should generate virtual XHTML page spread resources", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
           basename: "p006-007.jpg",
-          blob: () => Promise.resolve(source),
           dir: false,
           encodingFormat: "image/jpeg",
           size: source.size,
-          string: () => Promise.resolve(""),
           uri: "p006-007.jpg",
+          ...blobFileAccessors(() => Promise.resolve(source)),
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
     const close = vi.fn()
     const bitmap = {
       close,
@@ -66,21 +70,20 @@ describe("pageSpreadSplitResourceHook", () => {
   it("should preserve nested original image paths in virtual page spread resources", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const originalUri = "folder/p006 & 007 [x].jpg"
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
           basename: "p006 & 007 [x].jpg",
-          blob: () => Promise.resolve(source),
           dir: false,
           encodingFormat: "image/jpeg",
           size: source.size,
-          string: () => Promise.resolve(""),
           uri: originalUri,
+          ...blobFileAccessors(() => Promise.resolve(source)),
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
     const close = vi.fn()
     const bitmap = {
       close,
@@ -114,21 +117,20 @@ describe("pageSpreadSplitResourceHook", () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const blob = vi.fn(() => Promise.resolve(source))
     const originalUri = "p006-007.jpg"
-    const archive: Archive = {
+    const archive = createArchive({
       filename: "",
       records: [
         {
           basename: originalUri,
-          blob,
           dir: false,
           encodingFormat: "image/jpeg",
           size: source.size,
-          string: () => Promise.resolve(""),
           uri: originalUri,
+          ...blobFileAccessors(blob),
         },
       ],
       close: () => Promise.resolve(),
-    }
+    })
     const close = vi.fn()
     const bitmap = {
       close,
