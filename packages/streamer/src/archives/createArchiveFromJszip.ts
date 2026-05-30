@@ -4,7 +4,7 @@ import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
 import { printTree } from "./printTree"
-import type { Archive, StreamResult } from "./types"
+import type { Archive } from "./types"
 
 interface OutputByType {
   base64: string
@@ -28,8 +28,6 @@ interface JSZipObject {
   unixPermissions: number | string | null
   dosPermissions: number | null
   async<T extends OutputType>(type: T): Promise<OutputByType[T]>
-  // nodeStream(type?: `nodebuffer`): NodeJS.ReadableStream;
-  internalStream?: (type?: `uint8array`) => StreamResult
 }
 
 interface JSZip {
@@ -75,9 +73,6 @@ export const createArchiveFromJszip = async (
         encodingFormat: detectMimeTypeFromName(file.name),
         blob: () => file.async(`blob`),
         string: () => file.async("string"),
-        ...(file.internalStream && {
-          stream: file.internalStream,
-        }),
         // this is private API
         // @ts-expect-error
         size: file._data.uncompressedSize,
