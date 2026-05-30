@@ -1,13 +1,20 @@
 export type { Manifest } from "@prose-reader/shared"
 export { createArchive } from "./archives/createArchive"
 export { createArchiveFromArrayBufferList } from "./archives/createArchiveFromArrayBufferList"
-export { createArchiveFromJszip } from "./archives/createArchiveFromJszip"
-export { createArchiveFromLibArchive } from "./archives/createArchiveFromLibArchive"
 export { createArchiveFromText } from "./archives/createArchiveFromText"
 export { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
+export {
+  arrayBufferFileAccessors,
+  blobFileAccessors,
+} from "./archives/fileAccessors"
 export { getArchiveHasComicInfo } from "./archives/getArchiveHasComicInfo"
+export { readRecordAsText } from "./archives/readRecordAsText"
 export type { Archive, ArchiveRecord } from "./archives/types"
-export { getArchiveFileRecordByUri, isFileRecord } from "./archives/types"
+export {
+  getArchiveFileRecordByUri,
+  isDirectoryRecord,
+  isFileRecord,
+} from "./archives/types"
 export { configure } from "./configure"
 export { getArchiveOpfInfo } from "./epubs/getArchiveOpfInfo"
 export { generateManifestFromArchive } from "./generators/manifest"

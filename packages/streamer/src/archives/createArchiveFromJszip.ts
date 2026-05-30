@@ -1,38 +1,11 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
+import type JSZip from "jszip"
 import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
 import { printTree } from "./printTree"
 import type { Archive } from "./types"
-
-interface OutputByType {
-  base64: string
-  string: string
-  text: string
-  binarystring: string
-  array: number[]
-  uint8array: Uint8Array
-  arraybuffer: ArrayBuffer
-  blob: Blob
-  nodebuffer: Buffer
-}
-
-type OutputType = keyof OutputByType
-
-interface JSZipObject {
-  name: string
-  dir: boolean
-  date: Date
-  comment: string
-  unixPermissions: number | string | null
-  dosPermissions: number | null
-  async<T extends OutputType>(type: T): Promise<OutputByType[T]>
-}
-
-interface JSZip {
-  files: { [key: string]: JSZipObject }
-}
 
 export const createArchiveFromJszip = async (
   jszip: JSZip,
@@ -49,12 +22,9 @@ export const createArchiveFromJszip = async (
   }
 
   const archive = createArchive({
-    filename: name || ``,
+    filename: name,
     encodingFormat,
     records: files.map((file) => {
-      // this is private API
-      // @ts-expect-error
-      const size = file._data.uncompressedSize
       const basename = getUriBasename(file.name)
 
       if (file.dir) {
@@ -62,7 +32,6 @@ export const createArchiveFromJszip = async (
           dir: true,
           basename,
           uri: file.name,
-          size,
         }
       }
 
@@ -72,7 +41,7 @@ export const createArchiveFromJszip = async (
         uri: file.name,
         encodingFormat: detectMimeTypeFromName(file.name),
         blob: () => file.async(`blob`),
-        string: () => file.async("string"),
+        arrayBuffer: () => file.async(`arraybuffer`),
         // this is private API
         // @ts-expect-error
         size: file._data.uncompressedSize,

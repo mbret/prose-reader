@@ -1,4 +1,5 @@
 import { type OpfMetadata, parseOpf } from "@prose-reader/archive-parser"
+import { readRecordAsText } from "../archives/readRecordAsText"
 import type { Archive } from "../archives/types"
 import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
 
@@ -26,7 +27,7 @@ export async function readArchiveOpf(
     return undefined
   }
 
-  const raw = await opsFile.string()
+  const raw = await readRecordAsText(opsFile)
 
   return {
     opf: parseOpf(raw),

@@ -5,6 +5,7 @@ import {
 import { createXmlSafeIdFactory } from "../utils/createXmlSafeId"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
+import { blobFileAccessors } from "./fileAccessors"
 import type { Archive } from "./types"
 
 /**
@@ -47,13 +48,12 @@ export const createArchiveFromUrls = async (
     basename: getUriBasename(url),
     encodingFormat: detectMimeTypeFromName(url),
     uri: url,
-    size: 100 / urls.length,
-    blob: async () => {
+    size: 0,
+    ...blobFileAccessors(async () => {
       const response = await fetch(url)
 
       return response.blob()
-    },
-    string: async () => ``,
+    }),
   }))
 
   const opfFile: Archive[`records`][number] = {
@@ -61,12 +61,10 @@ export const createArchiveFromUrls = async (
     basename: `content.opf`,
     uri: `content.opf`,
     size: 0,
-    blob: async () => new Blob(),
-    string: async () => opfFileData,
+    ...blobFileAccessors(async () => new Blob([opfFileData])),
   }
 
   return createArchive({
-    filename: ``,
     records: [opfFile, ...filesFromUrl],
     close: () => Promise.resolve(),
   })

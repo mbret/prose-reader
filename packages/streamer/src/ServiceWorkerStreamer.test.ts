@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "./archives/createArchive"
+import { blobFileAccessors } from "./archives/fileAccessors"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 
@@ -12,17 +13,17 @@ const archive = createArchive({
       dir: false,
       basename: `foo.jpg`,
       uri: `bar/foo.jpg`,
-      blob: async () => new Blob([archiveResourceBody]),
-      string: async () => archiveResourceBody,
       size: 0,
+      ...blobFileAccessors(() =>
+        Promise.resolve(new Blob([archiveResourceBody])),
+      ),
     },
     {
       dir: false,
       basename: "unknown",
       uri: `Creature Girls - A Hands-On Field Journal in Another World v04 (2020) (Digital) (SnS)/Creature Girls - A Hands-On Field Journal in Another World v04 000 (2020) (Digital) (SnS).jpg`,
-      blob: async () => new Blob([`bar/foo.jpg`]),
-      string: async () => `bar/foo.jpg`,
       size: 0,
+      ...blobFileAccessors(() => Promise.resolve(new Blob([`bar/foo.jpg`]))),
     },
   ],
   close: () => Promise.resolve(),

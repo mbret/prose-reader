@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { Streamer } from "."
 import { createArchive } from "./archives/createArchive"
+import { blobFileAccessors } from "./archives/fileAccessors"
 
 describe("Given custom error on get Archive", () => {
   it("should return correct error", async () => {
@@ -34,12 +35,13 @@ describe("Given a manifest href with encoded local characters", () => {
       filename: "",
       records: [
         {
+          ...blobFileAccessors(() =>
+            Promise.resolve(new Blob([body], { type: "image/jpeg" })),
+          ),
           basename: "page [1].jpg",
-          blob: () => Promise.resolve(new Blob([body], { type: "image/jpeg" })),
           dir: false,
           encodingFormat: "image/jpeg",
           size: body.length,
-          string: () => Promise.resolve(""),
           uri: "Chapter 1/page [1].jpg",
         },
       ],

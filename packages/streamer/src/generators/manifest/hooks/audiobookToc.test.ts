@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../../../archives/createArchive"
+import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { buildAudiobookToc, normalizeFilenameAsTitle } from "./audiobookToc"
 import { tocHook } from "./toc"
 
@@ -16,10 +17,7 @@ describe("normalizeFilenameAsTitle", () => {
 })
 
 describe("buildAudiobookToc", () => {
-  const fakeContent = {
-    blob: () => Promise.resolve(new Blob()),
-    string: () => Promise.resolve(""),
-  }
+  const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob()))
 
   const baseManifest = {
     filename: "",
@@ -125,10 +123,7 @@ describe("buildAudiobookToc", () => {
 })
 
 describe("tocHook with audiobook", () => {
-  const fakeContent = {
-    blob: () => Promise.resolve(new Blob()),
-    string: () => Promise.resolve(""),
-  }
+  const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob()))
 
   const baseManifest = {
     filename: "",
@@ -149,7 +144,6 @@ describe("tocHook with audiobook", () => {
           basename: "disc1/",
           uri: "disc1/",
           dir: true,
-          size: 0,
         },
         {
           ...fakeContent,
@@ -200,7 +194,6 @@ describe("tocHook with audiobook", () => {
           basename: "chapter/",
           uri: "chapter/",
           dir: true,
-          size: 0,
         },
         {
           ...fakeContent,

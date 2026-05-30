@@ -1,5 +1,6 @@
 import { expect, it } from "vitest"
 import { createArchive } from "../../../archives/createArchive"
+import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { tocHook } from "./toc"
 
 it("should create valid toc", async () => {
@@ -10,47 +11,37 @@ it("should create valid toc", async () => {
       records: [
         {
           basename: "2.jpg",
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          blob: () => Promise.resolve({} as any),
+          ...blobFileAccessors(() => Promise.resolve(new Blob([]))),
           dir: false,
           size: 0,
-          string: () => Promise.resolve(``),
           uri: "folder c/2.jpg",
         },
         {
           basename: "1.jpg",
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          blob: () => Promise.resolve({} as any),
+          ...blobFileAccessors(() => Promise.resolve(new Blob([]))),
           dir: false,
           size: 0,
-          string: () => Promise.resolve(``),
           uri: "folder c/1.jpg",
         },
         {
           basename: "1.jpg",
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          blob: () => Promise.resolve({} as any),
+          ...blobFileAccessors(() => Promise.resolve(new Blob([]))),
           dir: false,
           size: 0,
-          string: () => Promise.resolve(``),
           uri: "folder a/folder b/1.jpg",
         },
         {
           basename: "Screenshot from 2024-08-28 13-21-11.png",
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          blob: () => Promise.resolve({} as any),
+          ...blobFileAccessors(() => Promise.resolve(new Blob([]))),
           dir: false,
           size: 0,
-          string: () => Promise.resolve(``),
           uri: "folder a/Screenshot from 2024-08-28 13-21-11.png",
         },
         {
           basename: "4.jpg",
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          blob: () => Promise.resolve({} as any),
+          ...blobFileAccessors(() => Promise.resolve(new Blob([]))),
           dir: false,
           size: 0,
-          string: () => Promise.resolve(``),
           uri: "folder d/folder e/4.jpg",
         },
       ],

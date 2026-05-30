@@ -1,3 +1,4 @@
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import {
   type Archive,
   getArchiveFileRecordByUri,
@@ -71,7 +72,9 @@ export const selfClosingTagsFixHook =
 
     if (file?.basename.endsWith(`.xhtml`)) {
       const bodyToParse =
-        typeof resource.body === `string` ? resource.body : await file.string()
+        typeof resource.body === `string`
+          ? resource.body
+          : await readRecordAsText(file)
 
       const tagCheckPattern = new RegExp(
         `<(${invalidSelfClosingTags.join("|")})[\\s/>]`,

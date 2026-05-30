@@ -4,53 +4,27 @@
  * Does not work in service worker due to usage of web worker.
  */
 import { detectMimeTypeFromName } from "@prose-reader/shared"
+// libarchive.js only re-exports `Archive` from its package root; the reader and
+// compressed-file types live in the compiled output, so we reach for them there.
+import type { ArchiveReader } from "libarchive.js/dist/build/compiled/archive-reader"
+import type { CompressedFile } from "libarchive.js/dist/build/compiled/compressed-file"
 import { Report } from "../report"
 import { createArchive } from "./createArchive"
+import { blobFileAccessors } from "./fileAccessors"
 import type { Archive } from "./types"
-
-interface ArchiveReader {
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
-  getFilesArray(): Promise<any[]>
-  /**
-   * Terminate worker to free up memory
-   */
-  close(): Promise<void>
-}
-
-/**
- * Represents compressed file before extraction
- */
-interface CompressedFile {
-  /**
-   * File name
-   */
-  get name(): string
-  /**
-   * File size
-   */
-  get size(): number
-  get lastModified(): number
-  /**
-   * Extract file from archive
-   * @returns {Promise<File>} extracted file
-   */
-
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
-  extract(): any
-}
 
 export const createArchiveFromLibArchive = async (
   libArchive: ArchiveReader,
   {
     name,
     encodingFormat,
-  }: { orderByAlpha?: boolean; name?: string; encodingFormat?: string } = {},
+  }: { orderByAlpha?: boolean; name: string; encodingFormat?: string },
 ): Promise<Archive> => {
   const objArray = await libArchive.getFilesArray()
 
   const archive = createArchive({
     close: () => libArchive.close(),
-    filename: name ?? ``,
+    filename: name,
     encodingFormat,
     records: objArray.map((item: { file: CompressedFile; path: string }) => ({
       dir: false,
@@ -58,16 +32,8 @@ export const createArchiveFromLibArchive = async (
       encodingFormat: detectMimeTypeFromName(item.file.name),
       size: item.file.size,
       uri: `${item.path}${item.file.name}`,
-      blob: async () => {
-        const file = await (item.file.extract() as Promise<File>)
-
-        return file
-      },
-      string: async () => {
-        const file = await (item.file.extract() as Promise<File>)
-
-        return file.text()
-      },
+      // libarchivejs `extract()` is typed `any`; it resolves to a `File`.
+      ...blobFileAccessors(() => item.file.extract() as Promise<File>),
     })),
   })
 

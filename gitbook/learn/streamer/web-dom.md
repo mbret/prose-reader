@@ -11,10 +11,10 @@ Here is a basic example that demonstrates how to stream an epub:
 ```typescript
 import { createReader } from "@prose-reader/core";
 import {
-  createArchiveFromJszip,
   generateManifestFromArchive,
   generateResourceFromArchive,
 } from "@prose-reader/streamer";
+import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip";
 import JSZip from "jszip";
 
 const reader = createReader({

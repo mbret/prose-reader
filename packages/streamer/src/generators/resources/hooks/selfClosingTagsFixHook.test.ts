@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../../../archives/createArchive"
+import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook"
 
 describe("Given a book with invalid self closing tag", () => {
@@ -8,9 +9,10 @@ describe("Given a book with invalid self closing tag", () => {
       filename: "",
       records: [
         {
-          blob: () => Promise.resolve(new Blob([])),
-          string: () =>
-            Promise.resolve(`
+          ...blobFileAccessors(() =>
+            Promise.resolve(
+              new Blob([
+                `
               <?xml version="1.0" encoding="UTF-8"?>
               <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
                 <head>
@@ -27,7 +29,10 @@ describe("Given a book with invalid self closing tag", () => {
                   </div>
                 </body>
               </html>
-          `),
+          `,
+              ]),
+            ),
+          ),
           basename: "foo.xhtml",
           uri: "foo.xhtml",
           dir: false,

@@ -12,7 +12,7 @@ export const isCbzArchive = (archive: Archive) => {
   const mimeType = parseContentType(archive.encodingFormat ?? "")
 
   if (mimeType && CBZ_MIME_TYPES.has(mimeType)) return true
-  if (hasCbzExtension(archive.filename)) return true
+  if (hasCbzExtension(archive.filename ?? "")) return true
 
   return false
 }

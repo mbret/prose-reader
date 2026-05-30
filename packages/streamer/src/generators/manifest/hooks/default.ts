@@ -14,10 +14,11 @@ export const defaultHook =
     }))
 
     return {
-      filename: archive.filename,
+      filename: archive.filename ?? ``,
       title:
         archive.records.find(({ dir }) => dir)?.basename.replace(/\/$/, ``) ||
-        archive.filename,
+        archive.filename ||
+        ``,
       renditionLayout: undefined,
       renditionSpread: `auto`,
       readingDirection: undefined,

@@ -1,5 +1,6 @@
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
+import { blobFileAccessors } from "./fileAccessors"
 
 /**
  * Useful to create archive from txt content
@@ -39,24 +40,19 @@ export const createArchiveFromText = async (
         dir: false,
         basename: getUriBasename(`generated.opf`),
         uri: `generated.opf`,
-        blob: async () => new Blob([txtOpfContent]),
-        string: async () => txtOpfContent,
         size: 0,
+        ...blobFileAccessors(async () => new Blob([txtOpfContent])),
       },
       {
         dir: false,
         basename: getUriBasename(`p01.txt`),
         uri: `p01.txt`,
-        blob: async () => {
-          if (typeof content === "string") return new Blob([content])
-          return content
-        },
-        string: async () => {
-          if (typeof content === "string") return content
-          return content.text()
-        },
-        size: typeof content === "string" ? content.length : content.size,
+        size:
+          typeof content === "string" ? new Blob([content]).size : content.size,
         encodingFormat: mimeType,
+        ...blobFileAccessors(async () =>
+          typeof content === "string" ? new Blob([content]) : content,
+        ),
       },
     ],
     close: () => Promise.resolve(),

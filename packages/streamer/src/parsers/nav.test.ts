@@ -2,7 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { parseOpf } from "@prose-reader/archive-parser"
 import { describe, expect, it } from "vitest"
-import { createArchive } from ".."
+import { blobFileAccessors, createArchive } from ".."
 import { parseToc } from "./nav"
 
 describe(`Given ncx toc with prefix`, () => {
@@ -30,17 +30,15 @@ describe(`Given ncx toc with prefix`, () => {
           dir: false,
           basename: `content.opf`,
           uri: `OEBPS/content.opf`,
-          blob: async () => new Blob([``]),
-          string: async () => ``,
           size: 0,
+          ...blobFileAccessors(() => Promise.resolve(new Blob([``]))),
         },
         {
           dir: false,
           basename: `toc.ncx`,
           uri: `OEBPS/toc.ncx`,
-          blob: async () => new Blob([toc]),
-          string: async () => toc,
           size: 0,
+          ...blobFileAccessors(() => Promise.resolve(new Blob([toc]))),
         },
       ],
       close: () => Promise.resolve(),
@@ -74,17 +72,15 @@ describe("Given a base url with a slash at the end", () => {
           dir: false,
           basename: `content.opf`,
           uri: `OEBPS/content.opf`,
-          blob: async () => new Blob([``]),
-          string: async () => ``,
           size: 0,
+          ...blobFileAccessors(() => Promise.resolve(new Blob([``]))),
         },
         {
           dir: false,
           basename: `toc.ncx`,
           uri: `OEBPS/toc.ncx`,
-          blob: async () => new Blob([toc]),
-          string: async () => toc,
           size: 0,
+          ...blobFileAccessors(() => Promise.resolve(new Blob([toc]))),
         },
       ],
       close: () => Promise.resolve(),

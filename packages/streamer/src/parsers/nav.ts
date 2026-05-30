@@ -6,6 +6,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"
 import { type Archive, getArchiveOpfInfo } from ".."
+import { readRecordAsText } from "../archives/readRecordAsText"
 import { getUriBasePath } from "../utils/uri"
 import { getXmlElementInnerText } from "./xml"
 
@@ -102,7 +103,7 @@ const parseTocFromNavPath = async (
     )
 
     if (tocFile && !tocFile.dir) {
-      const doc = new XmlDocument(await tocFile.string())
+      const doc = new XmlDocument(await readRecordAsText(tocFile))
 
       const tocFileBasePath = getUriBasePath(tocFile.uri)
 
@@ -186,7 +187,7 @@ const parseTocFromNcx = async ({
       const file = archive.records.find((item) => item.uri.endsWith(ncxPath))
 
       if (file && !file.dir) {
-        const ncxData = new XmlDocument(await file.string())
+        const ncxData = new XmlDocument(await readRecordAsText(file))
 
         return buildTOCFromNCX(ncxData, { opfBasePath, baseUrl })
       }

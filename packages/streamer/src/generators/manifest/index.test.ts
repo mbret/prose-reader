@@ -2,13 +2,11 @@ import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../../archives/createArchive"
 import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
+import { blobFileAccessors } from "../../archives/fileAccessors"
 import { createXmlSafeId } from "../../utils/createXmlSafeId"
 import { generateManifestFromArchive } from "./index"
 
-const fakeContent = {
-  blob: () => Promise.resolve(new Blob([])),
-  string: () => Promise.resolve(""),
-}
+const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
 describe(`Given a list of urls archive`, () => {
   it(`should return a valid pre-paginated manifest`, async () => {
@@ -95,10 +93,7 @@ describe(`Given a list of urls with rendition flow archive`, () => {
 })
 
 describe("Given archive with a folder containing a space", () => {
-  const fakeContent = {
-    blob: () => Promise.resolve(new Blob([])),
-    string: () => Promise.resolve(""),
-  }
+  const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
   it("should encode space but not the slash", async () => {
     const archive = createArchive({
@@ -109,7 +104,6 @@ describe("Given archive with a folder containing a space", () => {
           basename: "Chapter 1/",
           uri: "Chapter 1/",
           dir: true,
-          size: 1,
         },
         {
           ...fakeContent,
@@ -350,6 +344,66 @@ describe("Given non-epub audio archive items without encodingFormat", () => {
   })
 })
 
+describe("Given an epub with the opf in a subfolder", () => {
+  const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="bookid">
+  <metadata>
+    <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Test</dc:title>
+    <dc:identifier xmlns:dc="http://purl.org/dc/elements/1.1/" id="bookid">urn:uuid:test</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch2" href="chapter2.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+    <itemref idref="ch2"/>
+  </spine>
+</package>`
+
+  it("should resolve spine record sizes through the opf base path", async () => {
+    const archive = createArchive({
+      filename: "",
+      records: [
+        {
+          ...blobFileAccessors(() => Promise.resolve(new Blob([opf]))),
+          basename: "content.opf",
+          uri: "OEBPS/content.opf",
+          dir: false,
+          size: opf.length,
+        },
+        {
+          ...fakeContent,
+          basename: "chapter1.xhtml",
+          uri: "OEBPS/chapter1.xhtml",
+          dir: false,
+          size: 1,
+        },
+        {
+          ...fakeContent,
+          basename: "chapter2.xhtml",
+          uri: "OEBPS/chapter2.xhtml",
+          dir: false,
+          size: 3,
+        },
+      ],
+      close: () => Promise.resolve(),
+    })
+
+    const manifest = await generateManifestFromArchive(archive)
+
+    expect(
+      manifest.spineItems.map((item) => ({
+        href: item.href,
+        progressionWeight: item.progressionWeight,
+      })),
+    ).toEqual([
+      { href: "file://OEBPS/chapter1.xhtml", progressionWeight: 0.25 },
+      { href: "file://OEBPS/chapter2.xhtml", progressionWeight: 0.75 },
+    ])
+  })
+})
+
 describe("Given archive with folders", () => {
   it("should run spine hooks after content normalization and before derived metadata", async () => {
     const archive = createArchive({
@@ -360,7 +414,6 @@ describe("Given archive with folders", () => {
           basename: "Chapter 1/",
           uri: "Chapter 1/",
           dir: true,
-          size: 1,
         },
         {
           ...fakeContent,
@@ -371,15 +424,17 @@ describe("Given archive with folders", () => {
           size: 1,
         },
         {
-          ...fakeContent,
+          ...blobFileAccessors(() =>
+            Promise.resolve(
+              new Blob([
+                `<display_options><platform name="*"><option name="fixed-layout">true</option></platform></display_options>`,
+              ]),
+            ),
+          ),
           basename: "com.kobobooks.display-options.xml",
           uri: "com.kobobooks.display-options.xml",
           dir: false,
           size: 1,
-          string: () =>
-            Promise.resolve(
-              `<display_options><platform name="*"><option name="fixed-layout">true</option></platform></display_options>`,
-            ),
         },
       ],
       close: () => Promise.resolve(),
@@ -426,14 +481,12 @@ describe("Given archive with folders", () => {
           basename: "Chapter 1/",
           uri: "Chapter 1/",
           dir: true,
-          size: 1,
         },
         {
           ...fakeContent,
           basename: "Chapter 2",
           uri: "Chapter 2",
           dir: true,
-          size: 1,
         },
         {
           ...fakeContent,

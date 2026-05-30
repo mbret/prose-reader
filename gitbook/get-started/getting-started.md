@@ -56,7 +56,8 @@ npm install jszip
 
 ```typescript
 import { createReader } from "@prose-reader/core"
-import { createArchiveFromJszip, Streamer } from "@prose-reader/streamer"
+import { Streamer } from "@prose-reader/streamer"
+import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
 import { from } from "rxjs"
 import { loadAsync } from "jszip"
 

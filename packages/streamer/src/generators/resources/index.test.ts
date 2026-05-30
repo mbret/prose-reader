@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../../archives/createArchive"
+import { blobFileAccessors } from "../../archives/fileAccessors"
 import { generateResourceFromArchive } from "./index"
 
 describe("generateResourceFromArchive", () => {
@@ -37,11 +38,10 @@ describe("generateResourceFromArchive", () => {
       filename: "",
       records: [
         {
+          ...blobFileAccessors(() => Promise.resolve(source)),
           basename: "page.txt",
-          blob: () => Promise.resolve(source),
           dir: false,
           size: source.size,
-          string: () => Promise.resolve(""),
           uri: "page.txt",
         },
       ],

@@ -1,4 +1,5 @@
 import { XmlDocument } from "xmldoc"
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import {
   type Archive,
   getArchiveFileRecordByUri,
@@ -32,7 +33,9 @@ const fixBuggyCover =
 
     if (file?.basename.endsWith(`.xhtml`)) {
       const bodyToParse =
-        typeof resource.body === `string` ? resource.body : await file.string()
+        typeof resource.body === `string`
+          ? resource.body
+          : await readRecordAsText(file)
 
       const opfXmlDoc = new XmlDocument(bodyToParse)
 

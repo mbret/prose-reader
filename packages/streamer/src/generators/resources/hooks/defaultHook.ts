@@ -27,8 +27,7 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
 
     if (foundMediaType) {
       return {
-        mediaType: items.find((item) => resourcePath.endsWith(item.href))
-          ?.mediaType,
+        mediaType: foundMediaType,
       }
     }
   }

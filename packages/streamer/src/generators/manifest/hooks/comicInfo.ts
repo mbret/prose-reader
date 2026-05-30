@@ -5,6 +5,7 @@ import {
 } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
 import { getArchiveHasComicInfo } from "../../../archives/getArchiveHasComicInfo"
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import type { Archive } from "../../../archives/types"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()
@@ -30,7 +31,7 @@ export const comicInfo =
         })),
     } satisfies Manifest
 
-    const content = await comicInfoFile.string()
+    const content = await readRecordAsText(comicInfoFile)
 
     try {
       const parsed = parseComicInfo(content)

@@ -1,3 +1,4 @@
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import {
   type Archive,
   getArchiveFileRecordByUri,
@@ -11,7 +12,9 @@ export const cssFixHook =
 
     if (file?.basename.endsWith(`.css`)) {
       const bodyToParse =
-        typeof resource.body === `string` ? resource.body : await file.string()
+        typeof resource.body === `string`
+          ? resource.body
+          : await readRecordAsText(file)
 
       /**
        * Fix the potentially invalid writing mode present on some vertical book.

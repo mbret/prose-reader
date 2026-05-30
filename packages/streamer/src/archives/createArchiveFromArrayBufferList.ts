@@ -2,6 +2,7 @@ import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
+import { arrayBufferFileAccessors } from "./fileAccessors"
 import type { Archive } from "./types"
 
 export const createArchiveFromArrayBufferList = async (
@@ -24,10 +25,9 @@ export const createArchiveFromArrayBufferList = async (
   }
 
   return createArchive({
-    filename: name || ``,
+    filename: name,
     encodingFormat,
     records: files.map((file) => {
-      const size = file.size
       const basename = getUriBasename(file.name)
 
       if (file.isDir) {
@@ -35,7 +35,6 @@ export const createArchiveFromArrayBufferList = async (
           dir: true,
           basename,
           uri: file.name,
-          size,
         }
       }
 
@@ -44,18 +43,11 @@ export const createArchiveFromArrayBufferList = async (
         basename,
         encodingFormat: detectMimeTypeFromName(file.name),
         uri: file.name,
-        blob: async () =>
-          new Blob([await file.data()], {
-            type: detectMimeTypeFromName(file.name) ?? ``,
-          }),
-        string: async () => {
-          const data = await file.data()
-          return String.fromCharCode.apply(
-            null,
-            Array.from(new Uint16Array(data)),
-          )
-        },
-        size,
+        size: file.size,
+        ...arrayBufferFileAccessors(
+          file.data,
+          detectMimeTypeFromName(file.name) ?? ``,
+        ),
       }
     }),
     close: () => Promise.resolve(),

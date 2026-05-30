@@ -5,6 +5,7 @@ import {
   resolveArchiveMetadata,
 } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import type { Archive } from "../../../archives/types"
 
 const extractKoboInformationFromArchive = async (
@@ -16,7 +17,7 @@ const extractKoboInformationFromArchive = async (
     archive.records.map(async (file) => {
       if (file.dir || !file.uri.endsWith(KOBO_DISPLAY_OPTIONS_FILENAME)) return
 
-      const content = await file.string()
+      const content = await readRecordAsText(file)
 
       try {
         const { renditionLayout: layout } = parseKoboXml(content)

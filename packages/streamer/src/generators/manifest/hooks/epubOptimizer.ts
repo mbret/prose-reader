@@ -1,6 +1,7 @@
 import { isXmlBasedMimeType, type Manifest } from "@prose-reader/shared"
 import { XmlDocument } from "xmldoc"
-import type { Archive } from "../../../archives/types"
+import { readRecordAsText } from "../../../archives/readRecordAsText"
+import { type Archive, isFileRecord } from "../../../archives/types"
 import { getSpineItemFilesFromArchive } from "../../../epubs/getSpineItemFilesFromArchive"
 import type { ArchiveOpfParsed } from "../../../epubs/readArchiveOpf"
 
@@ -21,14 +22,14 @@ const allFilesHaveViewportMeta = (files: Archive["records"]) =>
 
     if (
       !isXmlBasedMimeType({
-        mimeType: current.encodingFormat,
+        mimeType: isFileRecord(current) ? current.encodingFormat : undefined,
         uri: current.uri,
       })
     ) {
       return false
     }
 
-    const file = current.dir ? null : await current.string()
+    const file = current.dir ? null : await readRecordAsText(current)
 
     if (!file) return false
 

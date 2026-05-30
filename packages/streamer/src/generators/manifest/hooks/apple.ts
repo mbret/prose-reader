@@ -4,6 +4,7 @@ import {
   resolveArchiveMetadata,
 } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
+import { readRecordAsText } from "../../../archives/readRecordAsText"
 import type { Archive } from "../../../archives/types"
 
 const appleDisplayOptionsBasename =
@@ -22,7 +23,7 @@ export const apple =
       return manifest
     }
 
-    const content = await infoFile.string()
+    const content = await readRecordAsText(infoFile)
 
     try {
       const parsed = parseAppleDisplayOptionsXml(content)

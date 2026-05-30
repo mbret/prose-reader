@@ -1,6 +1,7 @@
 import { createReader } from "@prose-reader/core"
 import { galleryEnhancer } from "@prose-reader/enhancer-gallery"
-import { createArchiveFromJszip, Streamer } from "@prose-reader/streamer"
+import { Streamer } from "@prose-reader/streamer"
+import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
 import { loadAsync } from "jszip"
 import type { Subscription } from "rxjs"
 import { from } from "rxjs"

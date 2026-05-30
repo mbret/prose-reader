@@ -2,25 +2,30 @@ export type FileRecord = {
   dir: false
   basename: string
   uri: string
-  blob: () => Promise<Blob>
-  string: () => Promise<string>
+  /** Uncompressed byte length of the record, or `0` when unknown. */
   size: number
   // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
   encodingFormat?: string
+  blob: () => Promise<Blob>
+  arrayBuffer: () => Promise<ArrayBuffer>
 }
 
 export type DirectoryRecord = {
   dir: true
   basename: string
   uri: string
-  size: number
-  encodingFormat?: undefined
 }
 
 export type ArchiveRecord = FileRecord | DirectoryRecord
 
 export type Archive = {
-  filename: string
+  /**
+   * Container-level filename when known (e.g. the originating `.cbz`/`.epub`
+   * file name). Absent for synthetic archives that have no real source file
+   * (URL lists, raw array buffers). Consumers use it as a detection signal, so
+   * it must never be fabricated.
+   */
+  filename?: string
   /**
    * Archive-level media type when known (e.g. `application/vnd.comicbook+zip`
    * for a CBZ). This is the mime type of the container itself, not of any
@@ -39,6 +44,10 @@ export type Archive = {
 
 export const isFileRecord = (record: ArchiveRecord): record is FileRecord =>
   !record.dir
+
+export const isDirectoryRecord = (
+  record: ArchiveRecord,
+): record is DirectoryRecord => record.dir
 
 export const getArchiveFileRecordByUri = (
   archive: Pick<Archive, "recordsByUri">,

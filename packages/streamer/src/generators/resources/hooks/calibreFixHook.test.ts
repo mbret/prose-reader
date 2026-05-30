@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../../../archives/createArchive"
+import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { calibreFixHook } from "./calibreFixHook"
 
 describe("Given a book from calibre", () => {
@@ -8,9 +9,10 @@ describe("Given a book from calibre", () => {
       filename: "",
       records: [
         {
-          blob: () => Promise.resolve(new Blob([])),
-          string: () =>
-            Promise.resolve(`<html>
+          ...blobFileAccessors(() =>
+            Promise.resolve(
+              new Blob([
+                `<html>
   <head>
     <meta name="calibre:cover" content="true" />
   </head>
@@ -21,7 +23,10 @@ describe("Given a book from calibre", () => {
       </svg>
     </div>
   </body>
-</html>`),
+</html>`,
+              ]),
+            ),
+          ),
           basename: "foo.xhtml",
           uri: "foo.xhtml",
           dir: false,

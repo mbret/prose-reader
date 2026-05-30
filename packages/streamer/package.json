@@ -2,12 +2,23 @@
   "name": "@prose-reader/streamer",
   "version": "1.306.0",
   "type": "module",
-  "main": "./dist/index.umd.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index/index.cjs.js",
+  "module": "./dist/index/index.es.js",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.umd.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index/index.es.js",
+      "require": "./dist/index/index.cjs.js"
+    },
+    "./archives/createArchiveFromJszip": {
+      "types": "./dist/archives/createArchiveFromJszip.d.ts",
+      "import": "./dist/archives/createArchiveFromJszip/index.es.js",
+      "require": "./dist/archives/createArchiveFromJszip/index.cjs.js"
+    },
+    "./archives/createArchiveFromLibArchive": {
+      "types": "./dist/archives/createArchiveFromLibArchive.d.ts",
+      "import": "./dist/archives/createArchiveFromLibArchive/index.es.js",
+      "require": "./dist/archives/createArchiveFromLibArchive/index.cjs.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -29,11 +40,23 @@
   },
   "peerDependencies": {
     "buffer": "^6.0.3",
+    "jszip": "^3.10.0",
+    "libarchive.js": "^2.0.2",
     "rxjs": "*"
+  },
+  "peerDependenciesMeta": {
+    "jszip": {
+      "optional": true
+    },
+    "libarchive.js": {
+      "optional": true
+    }
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "devDependencies": {
     "buffer": "^6.0.3",
-    "isomorphic-fetch": "^3.0.0"
+    "isomorphic-fetch": "^3.0.0",
+    "jszip": "^3.10.0",
+    "libarchive.js": "^2.0.2"
   }
 }

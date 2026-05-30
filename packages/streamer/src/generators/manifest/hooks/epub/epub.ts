@@ -1,6 +1,10 @@
 import { resolveArchiveMetadata } from "@prose-reader/archive-parser"
 import type { Manifest } from "@prose-reader/shared"
-import type { Archive } from "../../../../archives/types"
+import {
+  type Archive,
+  getArchiveFileRecordByUri,
+  isFileRecord,
+} from "../../../../archives/types"
 import { getArchiveOpfInfo } from "../../../../epubs/getArchiveOpfInfo"
 import { getSpineItemFilesFromArchive } from "../../../../epubs/getSpineItemFilesFromArchive"
 import type { ArchiveOpfParsed } from "../../../../epubs/readArchiveOpf"
@@ -121,10 +125,9 @@ export const epubHook =
       archiveOpf,
     })
 
-    const totalSize = archiveSpineItems.reduce(
-      (size, file) => file.size + size,
-      0,
-    )
+    const totalSize = archiveSpineItems
+      .filter(isFileRecord)
+      .reduce((size, file) => file.size + size, 0)
 
     const guideRefs = opf.guide
     const guide: ManifestGuideEntry[] = []
@@ -135,7 +138,7 @@ export const epubHook =
     }
 
     return {
-      filename: archive.filename,
+      filename: archive.filename ?? ``,
       renditionLayout: packageRenditionLayout,
       renditionFlow: manifestRenditionFlow(opf.renditionFlowMeta),
       renditionSpread: manifestRenditionSpread(opf.renditionSpreadMeta),
@@ -145,8 +148,9 @@ export const epubHook =
        * @see https://www.w3.org/TR/epub/#sec-itemref-elem
        */
       spineItems: opf.spineRows.map((row, index) => {
-        const itemSize =
-          archive.records.find((file) => file.uri.endsWith(row.href))?.size || 0
+        const recordUri = opfBasePath ? `${opfBasePath}/${row.href}` : row.href
+        const matchedRecord = getArchiveFileRecordByUri(archive, recordUri)
+        const itemSize = matchedRecord ? matchedRecord.size : 0
 
         const hrefBaseUri = baseUrl
           ? baseUrl
@@ -166,7 +170,8 @@ export const epubHook =
           ...(row.renditionFlow !== undefined
             ? { renditionFlow: row.renditionFlow }
             : {}),
-          progressionWeight: itemSize / totalSize,
+          progressionWeight:
+            totalSize > 0 ? itemSize / totalSize : 1 / opf.spineRows.length,
           pageSpreadLeft: row.pageSpreadLeft,
           pageSpreadRight: row.pageSpreadRight,
           mediaType: row.mediaType,

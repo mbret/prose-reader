@@ -4,7 +4,7 @@ import {
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import type { Archive } from "../../../archives/types"
+import { type Archive, isFileRecord } from "../../../archives/types"
 import { isArchiveEpub } from "../../../epubs/isArchiveEpub"
 
 /**
@@ -25,8 +25,13 @@ export const nonEpub =
           decodeURI(spineItem.href).endsWith(item.uri),
         )
 
+        const archiveItemEncodingFormat =
+          archiveItem && isFileRecord(archiveItem)
+            ? archiveItem.encodingFormat
+            : undefined
+
         const mimeType =
-          parseContentType(archiveItem?.encodingFormat ?? "") ||
+          parseContentType(archiveItemEncodingFormat ?? "") ||
           detectMimeTypeFromName(archiveItem?.basename ?? "")
 
         return {
