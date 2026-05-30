@@ -1,5 +1,7 @@
 import {
   type Archive,
+  blobFileAccessors,
+  createArchive,
   getUriBasename,
   sortByTitleComparator,
 } from "@prose-reader/streamer"
@@ -33,17 +35,14 @@ export const createArchiveFromExpoFileSystemNext = async (
     return [...acc, file]
   }, [])
 
-  const archive: Archive = {
-    filename: name || ``,
+  const archive = createArchive({
+    filename: name,
     records: flatList.map((record) => {
       if (record instanceof Directory) {
         return {
           dir: true,
           basename: getUriBasename(record.name),
           uri: record.uri.replace("file://", ""), // @todo fix prose-reader
-          blob: () => Promise.resolve(new Blob()),
-          string: () => Promise.resolve(``),
-          size: 0,
         }
       }
 
@@ -51,14 +50,15 @@ export const createArchiveFromExpoFileSystemNext = async (
         dir: false,
         basename: getUriBasename(record.name),
         uri: record.uri.replace("file://", ""), // @todo fix prose-reader
-        blob: async () => new Blob([await record.arrayBuffer()]),
-        string: async () => record.text(),
         size: record.info().size ?? 0,
         encodingFormat: record.type ?? undefined,
+        ...blobFileAccessors(
+          async () => new Blob([await record.arrayBuffer()]),
+        ),
       }
     }),
     close: () => Promise.resolve(),
-  }
+  })
 
   return archive
 }
