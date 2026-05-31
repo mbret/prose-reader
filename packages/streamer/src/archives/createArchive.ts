@@ -1,3 +1,5 @@
+import { Report } from "../report"
+import { printTree } from "./printTree"
 import type { Archive, ArchiveRecord } from "./types"
 
 type ArchiveInit = Omit<Archive, "recordsByUri">
@@ -17,9 +19,22 @@ export const createArchive = ({ records, ...rest }: ArchiveInit): Archive => {
     }
   }
 
-  return {
+  const archive: Archive = {
     ...rest,
     records,
     recordsByUri,
   }
+
+  Report.log("Generated archive", archive)
+
+  if (process.env.NODE_ENV === "development") {
+    if (Report.isEnabled()) {
+      const folderStructureStr = printTree(records.map((record) => record.uri))
+      Report.groupCollapsed(...Report.getGroupArgs("Archive folder structure"))
+      Report.log(`\n${folderStructureStr}`)
+      Report.groupEnd()
+    }
+  }
+
+  return archive
 }

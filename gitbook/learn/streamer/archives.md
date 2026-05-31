@@ -61,13 +61,14 @@ A few rules of thumb:
 | `createArchiveFromJszip` | `@prose-reader/streamer/archives/createArchiveFromJszip` | a loaded `JSZip` instance | optional peer dep `jszip` |
 | `createArchiveFromLibArchive` | `@prose-reader/streamer/archives/createArchiveFromLibArchive` | a `libarchive.js` reader (rar, 7z, …) | optional peer dep `libarchive.js`; uses a web worker (not service-worker friendly) |
 | `createArchiveFromUnzipper` | `@prose-reader/streamer/archives/createArchiveFromUnzipper` | an `unzipper` `CentralDirectory` | optional peer dep `unzipper`; node, random-access |
+| `createArchiveFromNodeUnrarJs` | `@prose-reader/streamer/archives/createArchiveFromNodeUnrarJs` | a `node-unrar-js` `Extractor` (rar, cbr) | optional peer dep `node-unrar-js`; WASM-based |
 | `createArchiveFromArrayBufferList` | `@prose-reader/streamer` | a list of `{ name, size, isDir, data() }` | environment-agnostic |
 | `createArchiveFromText` | `@prose-reader/streamer` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
 | `createArchiveFromUrls` | `@prose-reader/streamer` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
 | `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../../enhancers/pdf.md) |
 | `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](react-native.md) |
 
-The `jszip`, `libarchive.js` and `unzipper` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
+The `jszip`, `libarchive.js`, `unzipper` and `node-unrar-js` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
 
 ### From a JSZip archive (browser)
 
@@ -87,6 +88,16 @@ import unzipper from "unzipper"
 
 const directory = await unzipper.Open.file("book.cbz")
 const archive = await createArchiveFromUnzipper(directory, { name: "book.cbz" })
+```
+
+### From a RAR/CBR archive (node-unrar-js)
+
+```typescript
+import { createArchiveFromNodeUnrarJs } from "@prose-reader/streamer/archives/createArchiveFromNodeUnrarJs"
+import { createExtractorFromData } from "node-unrar-js"
+
+const extractor = await createExtractorFromData({ data: rarArrayBuffer })
+const archive = await createArchiveFromNodeUnrarJs(extractor, { name: "book.cbr" })
 ```
 
 ### From plain text

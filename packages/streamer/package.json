@@ -24,6 +24,11 @@
       "types": "./dist/archives/createArchiveFromUnzipper.d.ts",
       "import": "./dist/archives/createArchiveFromUnzipper/index.es.js",
       "require": "./dist/archives/createArchiveFromUnzipper/index.cjs.js"
+    },
+    "./archives/createArchiveFromNodeUnrarJs": {
+      "types": "./dist/archives/createArchiveFromNodeUnrarJs.d.ts",
+      "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.es.js",
+      "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -47,6 +52,7 @@
     "buffer": "^6.0.3",
     "jszip": "^3.10.0",
     "libarchive.js": "^2.0.2",
+    "node-unrar-js": "^2.0.2",
     "rxjs": "*",
     "unzipper": "^0.12.3"
   },
@@ -59,6 +65,9 @@
     },
     "libarchive.js": {
       "optional": true
+    },
+    "node-unrar-js": {
+      "optional": true
     }
   },
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
@@ -68,6 +77,7 @@
     "isomorphic-fetch": "^3.0.0",
     "jszip": "^3.10.0",
     "libarchive.js": "^2.0.2",
+    "node-unrar-js": "^2.0.2",
     "unzipper": "^0.12.3"
   }
 }

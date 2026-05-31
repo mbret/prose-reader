@@ -1,11 +1,9 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import type { CentralDirectory } from "unzipper"
-import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
 import { arrayBufferFileAccessors } from "./fileAccessors"
-import { printTree } from "./printTree"
 import type { Archive } from "./types"
 
 export const createArchiveFromUnzipper = async (
@@ -22,7 +20,7 @@ export const createArchiveFromUnzipper = async (
     files = files.slice().sort((a, b) => sortByTitleComparator(a.path, b.path))
   }
 
-  const archive = createArchive({
+  return createArchive({
     filename: name,
     encodingFormat,
     records: files.map((file) => {
@@ -65,17 +63,4 @@ export const createArchiveFromUnzipper = async (
     }),
     close: () => Promise.resolve(),
   })
-
-  Report.log("Generated archive", archive)
-
-  if (process.env.NODE_ENV === "development") {
-    if (Report.isEnabled()) {
-      const folderStructureStr = printTree(files.map((file) => file.path))
-      Report.groupCollapsed(...Report.getGroupArgs("Archive folder structure"))
-      Report.log(`\n${folderStructureStr}`)
-      Report.groupEnd()
-    }
-  }
-
-  return archive
 }

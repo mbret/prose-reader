@@ -8,7 +8,6 @@ import { detectMimeTypeFromName } from "@prose-reader/shared"
 // compressed-file types live in the compiled output, so we reach for them there.
 import type { ArchiveReader } from "libarchive.js/dist/build/compiled/archive-reader"
 import type { CompressedFile } from "libarchive.js/dist/build/compiled/compressed-file"
-import { Report } from "../report"
 import { createArchive } from "./createArchive"
 import { blobFileAccessors } from "./fileAccessors"
 import type { Archive } from "./types"
@@ -22,7 +21,7 @@ export const createArchiveFromLibArchive = async (
 ): Promise<Archive> => {
   const objArray = await libArchive.getFilesArray()
 
-  const archive = createArchive({
+  return createArchive({
     close: () => libArchive.close(),
     filename: name,
     encodingFormat,
@@ -36,8 +35,4 @@ export const createArchiveFromLibArchive = async (
       ...blobFileAccessors(() => item.file.extract() as Promise<File>),
     })),
   })
-
-  Report.log("Generated archive", archive)
-
-  return archive
 }

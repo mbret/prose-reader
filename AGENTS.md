@@ -22,6 +22,16 @@ We also support books that are not epubs (eg: comics, text, pdf). At some point 
 
 Actions such as navigation can happens anytime (eg: user tap the screen) and in some case may happens during layout or other internal state change happening. This is expected and prose should be resilient to it. The entire internal process is asynchronous on purpose but some actions are synchronous. Make sure to always consider race or stale or invalid in between state conditions.
 
+# Documentation
+
+The `gitbook/` folder is user-facing documentation that must stay in sync with the code. After any change that alters the public surface or its documented behavior, check whether the docs need updating in the same change — do not defer it.
+
+- Treat doc updates as part of the task, not a follow-up. A feature or fix is not done until the relevant docs reflect it.
+- Things that almost always require a doc update: adding/removing/renaming a public export (e.g. a new `createArchiveFrom*` creator), changing a function signature or options, changing a documented type/contract, adding or changing a peer dependency or subpath export, and changing documented defaults or behavior.
+- When adding something that belongs to an existing documented list/table (creators, enhancers, hooks, settings…), add it to that list and add a short usage example next to the sibling examples.
+- If you add a new doc page, also register it in `gitbook/SUMMARY.md`.
+- If a change is purely internal (no public surface or documented behavior affected), no doc update is needed — but state that you checked.
+
 ### TypeScript `as` usage
 
 - Avoid using TypeScript's `as` type assertions unless absolutely necessary.

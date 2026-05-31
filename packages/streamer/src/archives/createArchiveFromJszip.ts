@@ -1,10 +1,8 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import type JSZip from "jszip"
-import { Report } from "../report"
 import { sortByTitleComparator } from "../utils/sortByTitleComparator"
 import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
-import { printTree } from "./printTree"
 import type { Archive } from "./types"
 
 export const createArchiveFromJszip = async (
@@ -21,7 +19,7 @@ export const createArchiveFromJszip = async (
     files = files.slice().sort((a, b) => sortByTitleComparator(a.name, b.name))
   }
 
-  const archive = createArchive({
+  return createArchive({
     filename: name,
     encodingFormat,
     records: files.map((file) => {
@@ -49,17 +47,4 @@ export const createArchiveFromJszip = async (
     }),
     close: () => Promise.resolve(),
   })
-
-  Report.log("Generated archive", archive)
-
-  if (process.env.NODE_ENV === "development") {
-    if (Report.isEnabled()) {
-      const folderStructureStr = printTree(files.map((file) => file.name))
-      Report.groupCollapsed(...Report.getGroupArgs("Archive folder structure"))
-      Report.log(`\n${folderStructureStr}`)
-      Report.groupEnd()
-    }
-  }
-
-  return archive
 }

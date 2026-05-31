@@ -20,5 +20,5 @@ const resource = await generateResourceFromArchive(archive, "OEBPS/chapter1.xhtm
 ```
 
 {% hint style="info" %}
-Each library-backed creator (`unzipper`, `libarchive.js`, `jszip`) is an optional peer dependency exposed as a subpath import, so you only install and bundle the one you actually use.
+Each library-backed creator (`unzipper`, `libarchive.js`, `jszip`, `node-unrar-js`) is an optional peer dependency exposed as a subpath import, so you only install and bundle the one you actually use.
 {% endhint %}
