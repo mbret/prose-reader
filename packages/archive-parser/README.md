@@ -1,4 +1,4 @@
-# @oboku/archive-metadata
+# @prose-reader/archive-parser
 
 This package purpose is to help with two things:
 
