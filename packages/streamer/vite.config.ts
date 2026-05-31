@@ -25,6 +25,10 @@ const libConfig = createLibConfig({
       __dirname,
       "src/archives/createArchiveFromNodeUnrarJs.ts",
     ),
+    "archives/createArchiveFromZipJs": resolve(
+      __dirname,
+      "src/archives/createArchiveFromZipJs.ts",
+    ),
   },
 })
 

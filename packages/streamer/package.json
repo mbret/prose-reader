@@ -29,6 +29,11 @@
       "types": "./dist/archives/createArchiveFromNodeUnrarJs.d.ts",
       "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.js",
       "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs"
+    },
+    "./archives/createArchiveFromZipJs": {
+      "types": "./dist/archives/createArchiveFromZipJs.d.ts",
+      "import": "./dist/archives/createArchiveFromZipJs/index.js",
+      "require": "./dist/archives/createArchiveFromZipJs/index.cjs"
     }
   },
   "types": "./dist/index.d.ts",
@@ -49,6 +54,7 @@
     "xmldoc": "^2.0.0"
   },
   "peerDependencies": {
+    "@zip.js/zip.js": "^2.8.26",
     "buffer": "^6.0.3",
     "jszip": "^3.10.0",
     "libarchive.js": "^2.0.2",
@@ -57,6 +63,9 @@
     "unzipper": "^0.12.3"
   },
   "peerDependenciesMeta": {
+    "@zip.js/zip.js": {
+      "optional": true
+    },
     "jszip": {
       "optional": true
     },
@@ -73,6 +82,7 @@
   "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
   "devDependencies": {
     "@types/unzipper": "^0.10.11",
+    "@zip.js/zip.js": "^2.8.26",
     "buffer": "^6.0.3",
     "isomorphic-fetch": "^3.0.0",
     "jszip": "^3.10.0",

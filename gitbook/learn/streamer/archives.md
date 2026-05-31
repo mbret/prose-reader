@@ -59,6 +59,7 @@ A few rules of thumb:
 | Creator | Import | Source | Notes |
 | --- | --- | --- | --- |
 | `createArchiveFromJszip` | `@prose-reader/streamer/archives/createArchiveFromJszip` | a loaded `JSZip` instance | optional peer dep `jszip` |
+| `createArchiveFromZipJs` | `@prose-reader/streamer/archives/createArchiveFromZipJs` | a `zip.js` `ZipReader` instance | optional peer dep `@zip.js/zip.js`; browser/worker, multi-core, zip64 |
 | `createArchiveFromLibArchive` | `@prose-reader/streamer/archives/createArchiveFromLibArchive` | a `libarchive.js` reader (rar, 7z, …) | optional peer dep `libarchive.js`; uses a web worker (not service-worker friendly) |
 | `createArchiveFromUnzipper` | `@prose-reader/streamer/archives/createArchiveFromUnzipper` | an `unzipper` `CentralDirectory` | optional peer dep `unzipper`; node, random-access |
 | `createArchiveFromNodeUnrarJs` | `@prose-reader/streamer/archives/createArchiveFromNodeUnrarJs` | a `node-unrar-js` `Extractor` (rar, cbr) | optional peer dep `node-unrar-js`; WASM-based |
@@ -68,7 +69,7 @@ A few rules of thumb:
 | `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../../enhancers/pdf.md) |
 | `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](react-native.md) |
 
-The `jszip`, `libarchive.js`, `unzipper` and `node-unrar-js` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
+The `jszip`, `zip.js`, `libarchive.js`, `unzipper` and `node-unrar-js` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
 
 ### From a JSZip archive (browser)
 
@@ -78,6 +79,19 @@ import { loadAsync } from "jszip"
 
 const zip = await loadAsync(await (await fetch("book.epub")).blob())
 const archive = await createArchiveFromJszip(zip, { name: "book.epub" })
+```
+
+### From a zip.js archive (browser/worker)
+
+[zip.js](https://github.com/gildas-lormeau/zip.js) supports multi-core compression, web streams and zip64, which makes it a good fit for large containers in the browser or a service worker.
+
+```typescript
+import { createArchiveFromZipJs } from "@prose-reader/streamer/archives/createArchiveFromZipJs"
+import { BlobReader, ZipReader } from "@zip.js/zip.js"
+
+const blob = await (await fetch("book.epub")).blob()
+const zipReader = new ZipReader(new BlobReader(blob))
+const archive = await createArchiveFromZipJs(zipReader, { name: "book.epub" })
 ```
 
 ### From unzipper (node)
