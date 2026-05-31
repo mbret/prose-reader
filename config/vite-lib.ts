@@ -35,7 +35,8 @@ const toUmdName = (packageName: string) =>
 const buildFileNameFor = (entry: Entry) =>
   typeof entry === "string"
     ? "index"
-    : (format: string, entryName: string) => `${entryName}/index.${format}.js`
+    : (format: string, entryName: string) =>
+        `${entryName}/index.${format === "cjs" ? "cjs" : "js"}`
 
 export const createLibConfig =
   (input: LibConfigInput) =>

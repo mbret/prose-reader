@@ -2,33 +2,33 @@
   "name": "@prose-reader/streamer",
   "version": "1.307.0",
   "type": "module",
-  "main": "./dist/index/index.cjs.js",
-  "module": "./dist/index/index.es.js",
+  "main": "./dist/index/index.cjs",
+  "module": "./dist/index/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index/index.es.js",
-      "require": "./dist/index/index.cjs.js"
+      "import": "./dist/index/index.js",
+      "require": "./dist/index/index.cjs"
     },
     "./archives/createArchiveFromJszip": {
       "types": "./dist/archives/createArchiveFromJszip.d.ts",
-      "import": "./dist/archives/createArchiveFromJszip/index.es.js",
-      "require": "./dist/archives/createArchiveFromJszip/index.cjs.js"
+      "import": "./dist/archives/createArchiveFromJszip/index.js",
+      "require": "./dist/archives/createArchiveFromJszip/index.cjs"
     },
     "./archives/createArchiveFromLibArchive": {
       "types": "./dist/archives/createArchiveFromLibArchive.d.ts",
-      "import": "./dist/archives/createArchiveFromLibArchive/index.es.js",
-      "require": "./dist/archives/createArchiveFromLibArchive/index.cjs.js"
+      "import": "./dist/archives/createArchiveFromLibArchive/index.js",
+      "require": "./dist/archives/createArchiveFromLibArchive/index.cjs"
     },
     "./archives/createArchiveFromUnzipper": {
       "types": "./dist/archives/createArchiveFromUnzipper.d.ts",
-      "import": "./dist/archives/createArchiveFromUnzipper/index.es.js",
-      "require": "./dist/archives/createArchiveFromUnzipper/index.cjs.js"
+      "import": "./dist/archives/createArchiveFromUnzipper/index.js",
+      "require": "./dist/archives/createArchiveFromUnzipper/index.cjs"
     },
     "./archives/createArchiveFromNodeUnrarJs": {
       "types": "./dist/archives/createArchiveFromNodeUnrarJs.d.ts",
-      "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.es.js",
-      "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs.js"
+      "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.js",
+      "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs"
     }
   },
   "types": "./dist/index.d.ts",

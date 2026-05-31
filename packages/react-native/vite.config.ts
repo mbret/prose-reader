@@ -16,7 +16,8 @@ export default defineConfig(() => {
           native: resolve(__dirname, "src/native/index.ts"),
           shared: resolve(__dirname, "src/shared/index.ts"),
         },
-        fileName: (format, entryName) => `${entryName}/index.${format}.js`,
+        fileName: (format, entryName) =>
+          `${entryName}/index.${format === "cjs" ? "cjs" : "js"}`,
       },
     },
     plugins: [
