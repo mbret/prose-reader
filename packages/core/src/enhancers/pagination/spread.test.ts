@@ -13,32 +13,94 @@ const createSpreadItem = (spreadSide?: `left` | `right`): SpreadItem => ({
 })
 
 describe(`hasAdjacentSpreadPage`, () => {
-  it(`detects a visible left page with an adjacent right page`, () => {
+  describe(`ltr`, () => {
+    it(`pairs a left page with its following right page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`left`),
+          nextItem: createSpreadItem(`right`),
+          previousItem: undefined,
+          readingDirection: `ltr`,
+        }),
+      ).toBe(true)
+    })
+
+    it(`pairs a right page with its preceding left page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`right`),
+          nextItem: undefined,
+          previousItem: createSpreadItem(`left`),
+          readingDirection: `ltr`,
+        }),
+      ).toBe(true)
+    })
+
+    it(`does not pair a left page with a preceding right page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`left`),
+          nextItem: undefined,
+          previousItem: createSpreadItem(`right`),
+          readingDirection: `ltr`,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  describe(`rtl`, () => {
+    it(`pairs a right page with its following left page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`right`),
+          nextItem: createSpreadItem(`left`),
+          previousItem: undefined,
+          readingDirection: `rtl`,
+        }),
+      ).toBe(true)
+    })
+
+    it(`pairs a left page with its preceding right page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`left`),
+          nextItem: undefined,
+          previousItem: createSpreadItem(`right`),
+          readingDirection: `rtl`,
+        }),
+      ).toBe(true)
+    })
+
+    it(`does not pair a lone leading left page with the next right page`, () => {
+      expect(
+        hasAdjacentSpreadPage({
+          item: createSpreadItem(`left`),
+          nextItem: createSpreadItem(`right`),
+          previousItem: undefined,
+          readingDirection: `rtl`,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  it(`ignores pages without a spread side`, () => {
     expect(
       hasAdjacentSpreadPage({
-        item: createSpreadItem(`left`),
+        item: createSpreadItem(),
         nextItem: createSpreadItem(`right`),
-        previousItem: undefined,
+        previousItem: createSpreadItem(`left`),
+        readingDirection: `ltr`,
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 
-  it(`detects the reverse page-spread order`, () => {
-    expect(
-      hasAdjacentSpreadPage({
-        item: createSpreadItem(`left`),
-        nextItem: undefined,
-        previousItem: createSpreadItem(`right`),
-      }),
-    ).toBe(true)
-  })
-
-  it(`ignores pages without an adjacent opposite spread side`, () => {
+  it(`ignores a facing neighbor without an opposite spread side`, () => {
     expect(
       hasAdjacentSpreadPage({
         item: createSpreadItem(`left`),
         nextItem: createSpreadItem(),
         previousItem: undefined,
+        readingDirection: `ltr`,
       }),
     ).toBe(false)
   })

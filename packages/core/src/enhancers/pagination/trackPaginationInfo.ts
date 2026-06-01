@@ -112,6 +112,7 @@ const mapChapterInfo = ({
         beginItem !== undefined ? spineItems[beginItem.index + 1] : undefined,
       previousItem:
         beginItem !== undefined ? spineItems[beginItem.index - 1] : undefined,
+      readingDirection: beginItem?.readingDirection,
     }),
     beginSpineItemReadingDirection: beginItem?.readingDirection,
     beginAbsolutePageIndex: beginPageEntry?.absolutePageIndex,
@@ -124,6 +125,7 @@ const mapChapterInfo = ({
         endItem !== undefined ? spineItems[endItem.index + 1] : undefined,
       previousItem:
         endItem !== undefined ? spineItems[endItem.index - 1] : undefined,
+      readingDirection: endItem?.readingDirection,
     }),
     endSpineItemReadingDirection: endItem?.readingDirection,
     endAbsolutePageIndex: endPageEntry?.absolutePageIndex,
