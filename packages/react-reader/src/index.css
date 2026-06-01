@@ -1,0 +1,3 @@
+/* Package stylesheet entry. Always emitted as dist/index.css so consumers
+   can import "@prose-reader/react-reader/index.css" regardless of which
+   component-level styles are bundled. */
