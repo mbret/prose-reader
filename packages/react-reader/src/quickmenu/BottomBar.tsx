@@ -121,6 +121,7 @@ export const BottomBar = memo(
         )}
         <HStack
           flex={1}
+          alignSelf="stretch"
           alignItems="center"
           justifyContent="center"
           maxWidth="100%"
@@ -140,6 +141,7 @@ export const BottomBar = memo(
           </IconButton>
           <Stack
             flex={1}
+            minW={0}
             maxW={400}
             gap={2}
             alignItems="center"
