@@ -17,7 +17,6 @@ import { GalleryDialog } from "./gallery/GalleryDialog"
 import { HelpDialog } from "./help/HelpDialog"
 import { FloatingProgress } from "./navigation/FloatingProgress"
 import { FloatingTime } from "./navigation/FloatingTime"
-import { SpreadRotationHint } from "./navigation/SpreadRotationHint"
 import { useInterceptExternalLinks } from "./navigation/useInterceptExternalLinks"
 import { useNotifications } from "./notifications/useNotifications"
 import { QuickMenu } from "./quickmenu/QuickMenu"
@@ -121,7 +120,8 @@ const InnerReactReader = memo(
             <BookmarkPageMarkers />
           </Spine>
           <FloatingProgress />
-          <SpreadRotationHint />
+          {/* TODO commented, need rework to avoid false positive */}
+          {/* <SpreadRotationHint /> */}
           <GalleryDialog open={isGalleryOpen} setOpen={setIsGalleryOpen} />
           <RefitDialog />
           <QuickMenu onItemClick={_onItemClick} />
