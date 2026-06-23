@@ -1,6 +1,11 @@
 export type { Manifest } from "@prose-reader/shared"
 export { createArchive } from "./archives/createArchive"
 export { createArchiveFromArrayBufferList } from "./archives/createArchiveFromArrayBufferList"
+export {
+  type ArchiveEntry,
+  type CreateArchiveFromEntriesOptions,
+  createArchiveFromEntries,
+} from "./archives/createArchiveFromEntries"
 export { createArchiveFromText } from "./archives/createArchiveFromText"
 export { createArchiveFromUrls } from "./archives/createArchiveFromUrls"
 export {
