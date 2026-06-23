@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "1.314.0",
+  "version": "1.315.0",
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",
@@ -49,8 +49,8 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/archive-parser": "^1.314.0",
-    "@prose-reader/shared": "^1.314.0",
+    "@prose-reader/archive-parser": "^1.315.0",
+    "@prose-reader/shared": "^1.315.0",
     "xmldoc": "^2.0.0"
   },
   "peerDependencies": {

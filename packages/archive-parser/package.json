@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/archive-parser",
-  "version": "1.314.0",
+  "version": "1.315.0",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",
