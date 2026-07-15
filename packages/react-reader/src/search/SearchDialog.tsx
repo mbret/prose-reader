@@ -1,15 +1,5 @@
-import { Button } from "@chakra-ui/react"
 import { memo } from "react"
-import {
-  DialogActionTrigger,
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-} from "../components/ui/dialog"
+import { AppDialog } from "../components/AppDialog"
 import { SearchDialogContent } from "./SearchDialogContent"
 
 export const SearchDialog = memo(
@@ -23,29 +13,15 @@ export const SearchDialog = memo(
     onNavigate: () => void
   }) => {
     return (
-      <DialogRoot
-        lazyMount
-        placement="center"
+      <AppDialog
         open={open}
-        onOpenChange={(e) => setOpen(e.open)}
-        size={{ mdDown: "full", md: "lg" }}
-        scrollBehavior="inside"
+        onOpenChange={setOpen}
+        title="Search"
+        contentProps={{ height: "100%" }}
+        bodyProps={{ flex: 1, p: 0 }}
       >
-        <DialogContent height="100%">
-          <DialogHeader>
-            <DialogTitle>Search</DialogTitle>
-          </DialogHeader>
-          <DialogBody flex={1} p={0}>
-            <SearchDialogContent onNavigate={onNavigate} />
-          </DialogBody>
-          <DialogFooter>
-            <DialogActionTrigger asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogActionTrigger>
-          </DialogFooter>
-          <DialogCloseTrigger />
-        </DialogContent>
-      </DialogRoot>
+        <SearchDialogContent onNavigate={onNavigate} />
+      </AppDialog>
     )
   },
 )
