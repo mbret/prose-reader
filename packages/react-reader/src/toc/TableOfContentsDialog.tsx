@@ -1,15 +1,5 @@
-import { Button } from "@chakra-ui/react"
 import { memo } from "react"
-import {
-  DialogActionTrigger,
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-} from "../components/ui/dialog"
+import { AppDialog } from "../components/AppDialog"
 import { TableOfContentsDialogContent } from "./TableOfContentsDialogContent"
 
 export const TableOfContentsDialog = memo(
@@ -23,29 +13,14 @@ export const TableOfContentsDialog = memo(
     onNavigate: () => void
   }) => {
     return (
-      <DialogRoot
-        lazyMount
-        placement="center"
+      <AppDialog
         open={open}
-        onOpenChange={(e) => setOpen(e.open)}
-        size={{ mdDown: "full", md: "lg" }}
-        scrollBehavior="inside"
+        onOpenChange={setOpen}
+        title="Table of Contents"
+        bodyProps={{ overflowY: "auto", flex: 1 }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Table of Contents</DialogTitle>
-          </DialogHeader>
-          <DialogBody overflowY="auto" flex={1}>
-            <TableOfContentsDialogContent onNavigate={onNavigate} />
-          </DialogBody>
-          <DialogFooter>
-            <DialogActionTrigger asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogActionTrigger>
-          </DialogFooter>
-          <DialogCloseTrigger />
-        </DialogContent>
-      </DialogRoot>
+        <TableOfContentsDialogContent onNavigate={onNavigate} />
+      </AppDialog>
     )
   },
 )
