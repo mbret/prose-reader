@@ -19,8 +19,13 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Use half the available cores on CI; unlimited (Playwright default) locally. */
-  workers: process.env.CI ? "50%" : undefined,
+  /*
+   * The CI runner (macos-latest) has 3 cores, so Playwright's "50%" default
+   * floors to a single worker. Pin an explicit count instead: 2 workers give
+   * real parallelism while leaving a core for the Vite dev server + the
+   * orchestrator, keeping the screenshot tests stable under load.
+   */
+  workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
