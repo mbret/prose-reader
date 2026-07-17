@@ -1,4 +1,5 @@
 import { Box, Presence } from "@chakra-ui/react"
+import { isPanoramaSpineItem } from "@prose-reader/cbz"
 import {
   type ExtraPaginationInfo,
   type PaginationInfo,
@@ -43,15 +44,18 @@ type ViewportState = `busy` | `free`
 
 type HintPagination = Pick<
   PaginationInfo & ExtraPaginationInfo,
-  | `beginHasAdjacentSpreadPage`
   | `beginPageIndexInSpineItem`
   | `beginSpineItemIndex`
-  | `endHasAdjacentSpreadPage`
   | `endPageIndexInSpineItem`
   | `endSpineItemIndex`
 >
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
+
+type BeginSpineItem = {
+  item: { href: string }
+  isReady$: Observable<boolean>
+}
 
 export const wouldRotationUseComputedSpreadMode = ({
   manifest,
@@ -77,12 +81,14 @@ export const getSpreadRotationHintTargetKey = ({
   computedSpreadMode,
   viewportState,
   viewport,
+  isPanorama,
 }: {
   manifest: Manifest
   pagination: HintPagination
   computedSpreadMode: boolean
   viewportState: ViewportState
   viewport: ViewportDimensions
+  isPanorama: boolean
 }) => {
   if (viewportState !== `free`) return undefined
   if (computedSpreadMode) return undefined
@@ -90,10 +96,7 @@ export const getSpreadRotationHintTargetKey = ({
     return undefined
   }
 
-  const hasSpreadPair =
-    pagination.beginHasAdjacentSpreadPage && pagination.endHasAdjacentSpreadPage
-
-  if (!hasSpreadPair) return undefined
+  if (!isPanorama) return undefined
 
   return [
     pagination.beginSpineItemIndex,
@@ -108,17 +111,19 @@ export const getSpreadRotationHintTargetKey = ({
 const observeHintPagination = (reader: ReaderWithSpreadHintStreams) =>
   reader.pagination.state$.pipe(
     watchKeys([
-      `beginHasAdjacentSpreadPage`,
       `beginPageIndexInSpineItem`,
       `beginSpineItemIndex`,
-      `endHasAdjacentSpreadPage`,
       `endPageIndexInSpineItem`,
       `endSpineItemIndex`,
     ]),
     shareReplay({ bufferSize: 1, refCount: true }),
   )
 
-const observeBeginSpineItemReady = ({
+/**
+ * Resolves the begin spine item alongside its readiness so the hint can both
+ * gate on a loaded page and inspect whether that page is a cbz panorama half.
+ */
+const observeBeginSpineItem = ({
   pagination$,
   reader,
 }: {
@@ -129,20 +134,25 @@ const observeBeginSpineItemReady = ({
     map(([{ beginSpineItemIndex }, spineItems]) =>
       beginSpineItemIndex === undefined
         ? undefined
-        : spineItems[beginSpineItemIndex],
+        : (spineItems[beginSpineItemIndex] as BeginSpineItem | undefined),
     ),
     distinctUntilChanged(),
-    switchMap((spineItem) => spineItem?.isReady$ ?? of(false)),
+    switchMap((spineItem) =>
+      spineItem
+        ? spineItem.isReady$.pipe(map((isReady) => ({ spineItem, isReady })))
+        : of({ spineItem: undefined, isReady: false }),
+    ),
   )
 
 const observeSpreadRotationHintTargetKey = (
   reader: ReaderWithSpreadHintStreams,
 ) => {
   const pagination$ = observeHintPagination(reader)
-  const beginSpineItemReady$ = observeBeginSpineItemReady({
+  const beginSpineItem$ = observeBeginSpineItem({
     pagination$,
     reader,
   })
+  const cbzActive = `__PROSE_READER_ENHANCER_CBZ` in reader
 
   return combineLatest([
     pagination$,
@@ -150,12 +160,23 @@ const observeSpreadRotationHintTargetKey = (
     reader.settings.watch([`computedSpreadMode`]),
     reader.viewportState$,
     reader.viewport.watch([`width`, `height`]),
-    beginSpineItemReady$,
+    beginSpineItem$,
   ]).pipe(
     debounceTime(HINT_TARGET_DEBOUNCE_MS),
     map(
-      ([pagination, manifest, settings, viewportState, viewport, isReady]) => {
-        if (!isReady) return undefined
+      ([
+        pagination,
+        manifest,
+        settings,
+        viewportState,
+        viewport,
+        { spineItem, isReady },
+      ]) => {
+        const isPanorama =
+          isReady &&
+          cbzActive &&
+          spineItem !== undefined &&
+          isPanoramaSpineItem(spineItem)
 
         return getSpreadRotationHintTargetKey({
           manifest,
@@ -163,6 +184,7 @@ const observeSpreadRotationHintTargetKey = (
           computedSpreadMode: settings.computedSpreadMode ?? false,
           viewportState,
           viewport,
+          isPanorama,
         })
       },
     ),

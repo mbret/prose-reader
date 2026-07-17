@@ -44,6 +44,14 @@ const parseVirtualPageSpreadFromHref = (href: string) => {
   }
 }
 
+/**
+ * A cbz panorama is a continuous double-page drawing that the streamer split
+ * into two virtual portrait spine items. A spine item is therefore a panorama
+ * half iff its href is one of those virtual split resources.
+ */
+export const isPanoramaSpineItem = (spineItem: { item: { href: string } }) =>
+  parseVirtualPageSpreadFromHref(spineItem.item.href) !== undefined
+
 const getOriginalSpineIndex = (reader: Reader, originalUri: string) => {
   const seenVirtualOriginalUris = new Set<string>()
   let originalSpineIndex = 0
