@@ -6,7 +6,7 @@
  * when neighboring resources make the sequence plausible, like `p001.jpg` and
  * `p004.jpg`.
  */
-export type DetectedPageSpread = {
+export type DetectedPanorama = {
   firstPageLabel: string
   secondPageLabel: string
 }
@@ -35,9 +35,9 @@ const detectPageLabelsFromBasename = (basenameWithoutExtension: string) => {
   )
 }
 
-export const detectPageSpreadFromBasename = (
+export const detectPanoramaFromBasename = (
   basename: string,
-): DetectedPageSpread | undefined => {
+): DetectedPanorama | undefined => {
   const basenameWithoutExtension = basename.replace(/\.[^.]+$/, ``)
   const match = detectPageLabelsFromBasename(basenameWithoutExtension)
 

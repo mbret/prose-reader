@@ -5,7 +5,7 @@ import {
 import type { Reader } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeId } from "@prose-reader/streamer"
-import { parseVirtualPageSpreadResourcePath } from "./pageSpreadSplitResource"
+import { parseVirtualPanoramaResourcePath } from "./panoramaSplitResource"
 
 const VIRTUAL_SPINE_ID_EXTENSION = "vnd.prose-reader.cbz.virtual-spine-id"
 
@@ -31,10 +31,10 @@ const decodeURISafe = (value: string) => {
   }
 }
 
-const parseVirtualPageSpreadFromHref = (href: string) => {
+const parseVirtualPanoramaFromHref = (href: string) => {
   const virtualResource =
-    parseVirtualPageSpreadResourcePath(href) ??
-    parseVirtualPageSpreadResourcePath(decodeURISafe(href))
+    parseVirtualPanoramaResourcePath(href) ??
+    parseVirtualPanoramaResourcePath(decodeURISafe(href))
 
   if (!virtualResource) return undefined
 
@@ -50,14 +50,14 @@ const parseVirtualPageSpreadFromHref = (href: string) => {
  * half iff its href is one of those virtual split resources.
  */
 export const isPanoramaSpineItem = (spineItem: { item: { href: string } }) =>
-  parseVirtualPageSpreadFromHref(spineItem.item.href) !== undefined
+  parseVirtualPanoramaFromHref(spineItem.item.href) !== undefined
 
 const getOriginalSpineIndex = (reader: Reader, originalUri: string) => {
   const seenVirtualOriginalUris = new Set<string>()
   let originalSpineIndex = 0
 
   for (const spineItem of reader.spineItemsManager.items) {
-    const virtualResource = parseVirtualPageSpreadFromHref(spineItem.item.href)
+    const virtualResource = parseVirtualPanoramaFromHref(spineItem.item.href)
 
     if (!virtualResource) {
       originalSpineIndex++
@@ -82,7 +82,7 @@ const restoreOriginalSpineReference = (
   cfi: string,
   spineItem: SpineItem,
 ) => {
-  const virtualResource = parseVirtualPageSpreadFromHref(spineItem.href)
+  const virtualResource = parseVirtualPanoramaFromHref(spineItem.href)
 
   if (!virtualResource) return undefined
 
@@ -114,7 +114,7 @@ const restoreVirtualSpineReference = (reader: Reader, cfi: string) => {
 
   if (
     !virtualSpineItem ||
-    !parseVirtualPageSpreadFromHref(virtualSpineItem.item.href)
+    !parseVirtualPanoramaFromHref(virtualSpineItem.item.href)
   ) {
     return undefined
   }

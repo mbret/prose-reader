@@ -4,7 +4,7 @@ import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeId } from "@prose-reader/streamer"
 import { describe, expect, it, vi } from "vitest"
 import { cbzEnhancer } from "./enhancer"
-import { buildVirtualPageSpreadResourcePath } from "./pageSpreadSplitManifest"
+import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest"
 
 const VIRTUAL_SPINE_ID_EXTENSION = "vnd.prose-reader.cbz.virtual-spine-id"
 
@@ -38,7 +38,7 @@ const createVirtualSpineItem = ({
 }) =>
   createSpineItem({
     href: encodeURI(
-      `file://${buildVirtualPageSpreadResourcePath({
+      `file://${buildVirtualPanoramaResourcePath({
         cropSide,
         originalUri,
       })}`,

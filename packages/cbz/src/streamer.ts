@@ -3,8 +3,8 @@ import type {
   StreamerResourceHookFactory,
 } from "@prose-reader/streamer"
 import { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
-import { pageSpreadSplit } from "./pageSpreadSplitManifest"
-import { pageSpreadSplitResourceHook } from "./pageSpreadSplitResource"
+import { panoramaSplit } from "./panoramaSplitManifest"
+import { panoramaSplitResourceHook } from "./panoramaSplitResource"
 
 export const streamerHooks: {
   manifest: {
@@ -15,28 +15,28 @@ export const streamerHooks: {
 } = {
   manifest: {
     content: [detectReadingDirectionManifest],
-    spine: [pageSpreadSplit],
+    spine: [panoramaSplit],
   },
-  resource: [pageSpreadSplitResourceHook],
+  resource: [panoramaSplitResourceHook],
 }
 
 export { detectReadingDirectionManifest } from "./detectReadingDirectionManifest"
 export { CBZ_MIME_TYPES, isCbzArchive } from "./isCbzArchive"
 
 export {
-  buildVirtualPageSpreadResourcePath,
-  detectPageSpreadFromBasename,
-  isPageSpreadSplitSupportedArchiveRecord,
-  isPageSpreadSplitSupportedImage,
-  PAGE_SPREAD_RESOURCE_PREFIX,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-  type PageSpreadCropSide,
-  pageSpreadSplit,
-  type VirtualPageSpreadResource,
-} from "./pageSpreadSplitManifest"
+  buildVirtualPanoramaResourcePath,
+  detectPanoramaFromBasename,
+  isPanoramaSplitSupportedArchiveRecord,
+  isPanoramaSplitSupportedImage,
+  PANORAMA_RESOURCE_PREFIX,
+  PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
+  type PanoramaCropSide,
+  panoramaSplit,
+  type VirtualPanoramaResource,
+} from "./panoramaSplitManifest"
 
 export {
-  createPageSpreadSplitXhtml,
-  pageSpreadSplitResourceHook,
-  parseVirtualPageSpreadResourcePath,
-} from "./pageSpreadSplitResource"
+  createPanoramaSplitXhtml,
+  panoramaSplitResourceHook,
+  parseVirtualPanoramaResourcePath,
+} from "./panoramaSplitResource"

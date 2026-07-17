@@ -7,11 +7,11 @@ import {
 } from "@prose-reader/streamer"
 import { describe, expect, it } from "vitest"
 import {
-  buildVirtualPageSpreadResourcePath,
-  isPageSpreadSplitSupportedArchiveRecord,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-  pageSpreadSplit,
-} from "./pageSpreadSplitManifest"
+  buildVirtualPanoramaResourcePath,
+  isPanoramaSplitSupportedArchiveRecord,
+  PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
+  panoramaSplit,
+} from "./panoramaSplitManifest"
 
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))
 
@@ -87,10 +87,10 @@ const createImageRecord = (
   uri: resourceName,
 })
 
-describe("isPageSpreadSplitSupportedArchiveRecord", () => {
+describe("isPanoramaSplitSupportedArchiveRecord", () => {
   it("should require an image resource path", () => {
     expect(
-      isPageSpreadSplitSupportedArchiveRecord({
+      isPanoramaSplitSupportedArchiveRecord({
         ...fakeContent,
         basename: "p002-003.txt",
         dir: false,
@@ -103,7 +103,7 @@ describe("isPageSpreadSplitSupportedArchiveRecord", () => {
 
   it("should accept supported image resource paths", () => {
     expect(
-      isPageSpreadSplitSupportedArchiveRecord({
+      isPanoramaSplitSupportedArchiveRecord({
         ...fakeContent,
         basename: "p002-003.jpg",
         dir: false,
@@ -115,7 +115,7 @@ describe("isPageSpreadSplitSupportedArchiveRecord", () => {
   })
 })
 
-describe("pageSpreadSplit", () => {
+describe("panoramaSplit", () => {
   it("should expose two virtual pre-paginated spine items", async () => {
     const spreadBasename = "p006-007 [dig] [Seven Seas] [danke-Empire] {HQ}.jpg"
     const archive = createArchive([
@@ -133,11 +133,11 @@ describe("pageSpreadSplit", () => {
       id: spreadBasename,
       mediaType: "image/jpeg",
     })
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+    const leftResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "left",
       originalUri: spreadBasename,
     })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+    const rightResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "right",
       originalUri: spreadBasename,
     })
@@ -145,13 +145,13 @@ describe("pageSpreadSplit", () => {
     const rightId = createXmlSafeId(`${spreadBasename}.007`)
 
     await expect(
-      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+      panoramaSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toMatchObject({
       spineItems: [
         {
           href: encodeURI(`file://${leftResourcePath}`),
           id: leftId,
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: true,
           pageSpreadRight: undefined,
           progressionWeight: 1 / 2,
@@ -160,7 +160,7 @@ describe("pageSpreadSplit", () => {
         {
           href: encodeURI(`file://${rightResourcePath}`),
           id: rightId,
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
           pageSpreadLeft: undefined,
           pageSpreadRight: true,
           progressionWeight: 1 / 2,
@@ -176,12 +176,12 @@ describe("pageSpreadSplit", () => {
         {
           href: encodeURI(`file://${leftResourcePath}`),
           id: leftId,
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
           id: rightId,
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
       ],
     })
@@ -209,7 +209,7 @@ describe("pageSpreadSplit", () => {
     }
 
     await expect(
-      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+      panoramaSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toMatchObject({
       spineItems: [
         {
@@ -234,7 +234,7 @@ describe("pageSpreadSplit", () => {
       resourceNames,
     })
 
-    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+    const result = await panoramaSplit({ archive, baseUrl: "" })(manifest)
 
     expect(result.spineItems).toMatchObject([
       {
@@ -269,7 +269,7 @@ describe("pageSpreadSplit", () => {
       resourceNames,
     })
 
-    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+    const result = await panoramaSplit({ archive, baseUrl: "" })(manifest)
 
     expect(result.spineItems).toMatchObject([
       {
@@ -320,9 +320,7 @@ describe("pageSpreadSplit", () => {
       }),
     }
 
-    const result = await pageSpreadSplit({ archive, baseUrl: "" })(
-      spreadManifest,
-    )
+    const result = await panoramaSplit({ archive, baseUrl: "" })(spreadManifest)
 
     expect(result.spineItems).toMatchObject([
       {
@@ -351,7 +349,7 @@ describe("pageSpreadSplit", () => {
       resourceNames,
     })
 
-    const result = await pageSpreadSplit({ archive, baseUrl: "" })(manifest)
+    const result = await panoramaSplit({ archive, baseUrl: "" })(manifest)
 
     expect(result.spineItems).toMatchObject([
       { id: "p001.jpg" },
@@ -398,7 +396,7 @@ describe("pageSpreadSplit", () => {
     })
 
     await expect(
-      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+      panoramaSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toBe(manifest)
   })
 
@@ -420,7 +418,7 @@ describe("pageSpreadSplit", () => {
     })
 
     await expect(
-      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+      panoramaSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toBe(manifest)
   })
 
@@ -449,26 +447,26 @@ describe("pageSpreadSplit", () => {
       id: nestedUri,
       mediaType: "image/jpeg",
     })
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+    const leftResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "left",
       originalUri: nestedUri,
     })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+    const rightResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "right",
       originalUri: nestedUri,
     })
 
     await expect(
-      pageSpreadSplit({ archive, baseUrl: "" })(manifest),
+      panoramaSplit({ archive, baseUrl: "" })(manifest),
     ).resolves.toMatchObject({
       spineItems: [
         {
           href: encodeURI(`file://${leftResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
         {
           href: encodeURI(`file://${rightResourcePath}`),
-          mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+          mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
         },
       ],
     })
