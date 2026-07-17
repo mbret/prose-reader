@@ -2,8 +2,8 @@ import {
   type Archive,
   blobFileAccessors,
   createArchive,
-  type HookResource,
-} from "@prose-reader/streamer"
+} from "@prose-reader/archive-reader"
+import type { HookResource } from "@prose-reader/streamer"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest"
 import { panoramaSplitResourceHook } from "./panoramaSplitResource"

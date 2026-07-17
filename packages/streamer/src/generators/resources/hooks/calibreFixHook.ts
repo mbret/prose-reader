@@ -1,9 +1,9 @@
-import { XmlDocument } from "xmldoc"
-import { readRecordAsText } from "../../../archives/readRecordAsText"
 import {
   type Archive,
   getArchiveFileRecordByUri,
-} from "../../../archives/types"
+  readRecordAsText,
+} from "@prose-reader/archive-reader"
+import { XmlDocument } from "xmldoc"
 import type { HookResource } from "./types"
 
 const hasCalibreCoverMeta = (doc: XmlDocument) => {

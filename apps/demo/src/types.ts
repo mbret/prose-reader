@@ -1,7 +1,5 @@
 declare global {
-  interface Window {
-    __PROSE_READER_DEBUG?: boolean | string
-  }
+  var __PROSE_READER_DEBUG: boolean | string | undefined
 }
 
 export {}

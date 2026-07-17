@@ -1,8 +1,9 @@
 # Archives
 
-An **archive** is the streamer's environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…). Both `generateManifestFromArchive` and `generateResourceFromArchive` operate on an `Archive`, so whatever the source, your first step is always to turn it into one with a `createArchiveFrom*` creator.
+An **archive** is the environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…). The `Archive` type, the `createArchiveFrom*` creators and the archive reading helpers are owned by the **`@prose-reader/archive-reader`** package; the streamer consumes archives. Both `generateManifestFromArchive` and `generateResourceFromArchive` operate on an `Archive`, so whatever the source, your first step is always to turn it into one with a `createArchiveFrom*` creator.
 
 ```typescript
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
 
 const archive = await createArchiveFromJszip(zip)
@@ -58,14 +59,14 @@ A few rules of thumb:
 
 | Creator | Import | Source | Notes |
 | --- | --- | --- | --- |
-| `createArchiveFromJszip` | `@prose-reader/streamer/archives/createArchiveFromJszip` | a loaded `JSZip` instance | optional peer dep `jszip` |
-| `createArchiveFromZipJs` | `@prose-reader/streamer/archives/createArchiveFromZipJs` | a `zip.js` `ZipReader` instance | optional peer dep `@zip.js/zip.js`; browser/worker, multi-core, zip64 |
-| `createArchiveFromLibArchive` | `@prose-reader/streamer/archives/createArchiveFromLibArchive` | a `libarchive.js` reader (rar, 7z, …) | optional peer dep `libarchive.js`; uses a web worker (not service-worker friendly) |
-| `createArchiveFromUnzipper` | `@prose-reader/streamer/archives/createArchiveFromUnzipper` | an `unzipper` `CentralDirectory` | optional peer dep `unzipper`; node, random-access |
-| `createArchiveFromNodeUnrarJs` | `@prose-reader/streamer/archives/createArchiveFromNodeUnrarJs` | a `node-unrar-js` `Extractor` (rar, cbr) | optional peer dep `node-unrar-js`; WASM-based |
-| `createArchiveFromArrayBufferList` | `@prose-reader/streamer` | a list of `{ name, size, isDir, data() }` | environment-agnostic |
-| `createArchiveFromText` | `@prose-reader/streamer` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
-| `createArchiveFromUrls` | `@prose-reader/streamer` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
+| `createArchiveFromJszip` | `@prose-reader/archive-reader/archives/createArchiveFromJszip` | a loaded `JSZip` instance | optional peer dep `jszip` |
+| `createArchiveFromZipJs` | `@prose-reader/archive-reader/archives/createArchiveFromZipJs` | a `zip.js` `ZipReader` instance | optional peer dep `@zip.js/zip.js`; browser/worker, multi-core, zip64 |
+| `createArchiveFromLibArchive` | `@prose-reader/archive-reader/archives/createArchiveFromLibArchive` | a `libarchive.js` reader (rar, 7z, …) | optional peer dep `libarchive.js`; uses a web worker (not service-worker friendly) |
+| `createArchiveFromUnzipper` | `@prose-reader/archive-reader/archives/createArchiveFromUnzipper` | an `unzipper` `CentralDirectory` | optional peer dep `unzipper`; node, random-access |
+| `createArchiveFromNodeUnrarJs` | `@prose-reader/archive-reader/archives/createArchiveFromNodeUnrarJs` | a `node-unrar-js` `Extractor` (rar, cbr) | optional peer dep `node-unrar-js`; WASM-based |
+| `createArchiveFromArrayBufferList` | `@prose-reader/archive-reader` | a list of `{ name, size, isDir, data() }` | environment-agnostic |
+| `createArchiveFromText` | `@prose-reader/archive-reader` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
+| `createArchiveFromUrls` | `@prose-reader/archive-reader` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
 | `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../../enhancers/pdf.md) |
 | `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](react-native.md) |
 
@@ -74,7 +75,7 @@ The `jszip`, `zip.js`, `libarchive.js`, `unzipper` and `node-unrar-js` creators 
 ### From a JSZip archive (browser)
 
 ```typescript
-import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { loadAsync } from "jszip"
 
 const zip = await loadAsync(await (await fetch("book.epub")).blob())
@@ -86,7 +87,7 @@ const archive = await createArchiveFromJszip(zip, { name: "book.epub" })
 [zip.js](https://github.com/gildas-lormeau/zip.js) supports multi-core compression, web streams and zip64, which makes it a good fit for large containers in the browser or a service worker.
 
 ```typescript
-import { createArchiveFromZipJs } from "@prose-reader/streamer/archives/createArchiveFromZipJs"
+import { createArchiveFromZipJs } from "@prose-reader/archive-reader/archives/createArchiveFromZipJs"
 import { BlobReader, ZipReader } from "@zip.js/zip.js"
 
 const blob = await (await fetch("book.epub")).blob()
@@ -97,7 +98,7 @@ const archive = await createArchiveFromZipJs(zipReader, { name: "book.epub" })
 ### From unzipper (node)
 
 ```typescript
-import { createArchiveFromUnzipper } from "@prose-reader/streamer/archives/createArchiveFromUnzipper"
+import { createArchiveFromUnzipper } from "@prose-reader/archive-reader/archives/createArchiveFromUnzipper"
 import unzipper from "unzipper"
 
 const directory = await unzipper.Open.file("book.cbz")
@@ -107,7 +108,7 @@ const archive = await createArchiveFromUnzipper(directory, { name: "book.cbz" })
 ### From a RAR/CBR archive (node-unrar-js)
 
 ```typescript
-import { createArchiveFromNodeUnrarJs } from "@prose-reader/streamer/archives/createArchiveFromNodeUnrarJs"
+import { createArchiveFromNodeUnrarJs } from "@prose-reader/archive-reader/archives/createArchiveFromNodeUnrarJs"
 import { createExtractorFromData } from "node-unrar-js"
 
 const extractor = await createExtractorFromData({ data: rarArrayBuffer })
@@ -117,7 +118,7 @@ const archive = await createArchiveFromNodeUnrarJs(extractor, { name: "book.cbr"
 ### From plain text
 
 ```typescript
-import { createArchiveFromText } from "@prose-reader/streamer"
+import { createArchiveFromText } from "@prose-reader/archive-reader"
 
 const archive = await createArchiveFromText("Hello world", { direction: "ltr" })
 ```
@@ -125,7 +126,7 @@ const archive = await createArchiveFromText("Hello world", { direction: "ltr" })
 ### From a list of image URLs
 
 ```typescript
-import { createArchiveFromUrls } from "@prose-reader/streamer"
+import { createArchiveFromUrls } from "@prose-reader/archive-reader"
 
 const archive = await createArchiveFromUrls([
   "https://cdn.example.com/page-1.jpg",
@@ -141,7 +142,7 @@ When you build records yourself (for a custom source), use the accessor factorie
 import {
   arrayBufferFileAccessors,
   blobFileAccessors,
-} from "@prose-reader/streamer"
+} from "@prose-reader/archive-reader"
 
 // Blob-native source (the factory derives arrayBuffer from blob)
 blobFileAccessors(async () => new Blob([bytes]))
@@ -155,7 +156,7 @@ arrayBufferFileAccessors(async () => bytes, "image/jpeg")
 If none of the creators fit, build records and hand them to `createArchive` so the `recordsByUri` index is derived for you:
 
 ```typescript
-import { blobFileAccessors, createArchive } from "@prose-reader/streamer"
+import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 
 const archive = createArchive({
   filename: "custom",

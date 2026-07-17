@@ -1,5 +1,5 @@
+import { describe, expect, it } from "vitest"
 import { urlJoin } from "./url"
-import { expect, it, describe } from "vitest"
 
 describe("url join", () => {
   it("should work for simple case", () => {

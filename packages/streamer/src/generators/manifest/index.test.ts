@@ -1,9 +1,11 @@
+import {
+  blobFileAccessors,
+  createArchive,
+  createArchiveFromUrls,
+} from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
+import { createXmlSafeId } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../../archives/createArchive"
-import { createArchiveFromUrls } from "../../archives/createArchiveFromUrls"
-import { blobFileAccessors } from "../../archives/fileAccessors"
-import { createXmlSafeId } from "../../utils/createXmlSafeId"
 import { generateManifestFromArchive } from "./index"
 
 const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob([])))

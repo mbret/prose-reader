@@ -1,10 +1,9 @@
-import type { Manifest } from "@prose-reader/shared"
 import {
   type Archive,
   blobFileAccessors,
   createArchive as createStreamerArchive,
-  createXmlSafeId,
-} from "@prose-reader/streamer"
+} from "@prose-reader/archive-reader"
+import { createXmlSafeId, type Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import {
   buildVirtualPanoramaResourcePath,

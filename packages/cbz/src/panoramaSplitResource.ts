@@ -1,5 +1,6 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import { escapeXmlAttributeValue } from "@prose-reader/shared"
-import type { Archive, HookResource } from "@prose-reader/streamer"
+import type { HookResource } from "@prose-reader/streamer"
 import {
   PANORAMA_RESOURCE_PREFIX,
   PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,

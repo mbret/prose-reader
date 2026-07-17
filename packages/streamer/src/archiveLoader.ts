@@ -1,3 +1,4 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   BehaviorSubject,
   catchError,
@@ -21,8 +22,7 @@ import {
   tap,
   timer,
 } from "rxjs"
-import { Report } from "../report"
-import type { Archive } from "./types"
+import { Report } from "./report"
 
 class ArchiveEntry {
   state$ = new BehaviorSubject<{

@@ -1,5 +1,5 @@
-import type { Archive } from "../../archives/types"
-import { readArchiveOpf } from "../../epubs/readArchiveOpf"
+import type { Archive } from "@prose-reader/archive-reader"
+import { readArchiveOpf } from "@prose-reader/archive-reader"
 import type { StreamerManifestHooks } from "../../hooks"
 import { Report } from "../../report"
 import { apple } from "./hooks/apple"

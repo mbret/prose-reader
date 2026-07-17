@@ -1,12 +1,10 @@
 /// <reference lib="webworker" />
-import { configure } from "@prose-reader/streamer"
+// Sets globalThis.__PROSE_READER_DEBUG before the prose-reader modules load,
+// which auto-enables their Report logging (streamer and archive-reader alike).
+import "./debug"
 import { swStreamer } from "../streamer/streamer.sw"
 
 declare const self: ServiceWorkerGlobalScope
-
-configure({
-  enableReport: !import.meta.env.PROD,
-})
 
 // @ts-expect-error self.__WB_MANIFEST not typed
 console.log(self.__WB_MANIFEST)

@@ -1,9 +1,6 @@
+import { createArchiveFromText } from "@prose-reader/archive-reader"
 import { createReader } from "@prose-reader/core"
-import {
-  Streamer,
-  createArchiveFromText,
-  generateManifestFromArchive,
-} from "@prose-reader/streamer"
+import { generateManifestFromArchive, Streamer } from "@prose-reader/streamer"
 import { from } from "rxjs"
 
 async function run() {

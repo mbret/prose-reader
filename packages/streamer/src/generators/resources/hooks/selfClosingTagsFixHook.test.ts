@@ -1,6 +1,5 @@
+import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../../../archives/createArchive"
-import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { selfClosingTagsFixHook } from "./selfClosingTagsFixHook"
 
 describe("Given a book with invalid self closing tag", () => {

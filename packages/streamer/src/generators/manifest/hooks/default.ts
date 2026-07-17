@@ -1,6 +1,6 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import type { Archive } from "../../../archives/types"
-import { createXmlSafeIdFactory } from "../../../utils/createXmlSafeId"
+import { createXmlSafeIdFactory } from "@prose-reader/shared"
 import { createManifestResourceHref } from "../createManifestResourceHref"
 
 export const defaultHook =

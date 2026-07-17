@@ -1,6 +1,8 @@
+import {
+  createArchiveFromText,
+  readArchiveOpf,
+} from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { createArchiveFromText } from "../../../archives/createArchiveFromText"
-import { readArchiveOpf } from "../../../epubs/readArchiveOpf"
 import { generateManifestFromArchive } from "../index"
 import { epubOptimizerHook } from "./epubOptimizer"
 

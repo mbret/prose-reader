@@ -2,7 +2,7 @@ import {
   type Archive,
   blobFileAccessors,
   createArchive,
-} from "@prose-reader/streamer"
+} from "@prose-reader/archive-reader"
 import * as pdfjsLib from "pdfjs-dist"
 
 type PdfJsArchive = Archive & {

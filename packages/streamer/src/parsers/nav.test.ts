@@ -1,8 +1,11 @@
 import fs from "node:fs"
 import path from "node:path"
-import { parseOpf } from "@prose-reader/archive-reader"
+import {
+  blobFileAccessors,
+  createArchive,
+  parseOpf,
+} from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { blobFileAccessors, createArchive } from ".."
 import { parseToc } from "./nav"
 
 describe(`Given ncx toc with prefix`, () => {

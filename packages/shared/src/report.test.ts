@@ -40,6 +40,28 @@ it("should allow child namespaces to override the parent enabled state", () => {
   expect(spy).toHaveBeenCalledTimes(1)
 })
 
+it("should auto-enable from globalThis.__PROSE_READER_DEBUG, including where window does not exist", async () => {
+  const spy = vi.spyOn(console, "log").mockImplementation(() => {})
+
+  try {
+    // The flag is snapshotted when the module evaluates, so re-import a fresh
+    // instance the way a worker bundle would evaluate it after an early
+    // `globalThis.__PROSE_READER_DEBUG = true` side-effect import.
+    vi.resetModules()
+    globalThis.__PROSE_READER_DEBUG = true
+
+    const { Report: FreshReport } = await import("./report")
+    const report = FreshReport.namespace("auto-config-test")
+
+    report.log("first")
+
+    expect(spy).toHaveBeenCalledTimes(1)
+  } finally {
+    globalThis.__PROSE_READER_DEBUG = undefined
+    vi.resetModules()
+  }
+})
+
 it("should color only the namespace segment created with an override", () => {
   const report = Report.namespace("shared-report-test", true, {
     color: "red",

@@ -1,15 +1,14 @@
 # @prose-reader/archive-reader
 
-This package purpose is to help with two things:
+The package owning the **generic, accessible view of a book's container**: it reads and parses archives (EPUB zip, CBZ, folder of images, list of URLs, plain text…) and exposes them behind a single environment-agnostic `Archive` contract. The streamer (and any other prose-reader package) consumes archives; this package is the sole producer.
 
-- Make common archive configuration files typed and easy to read (typescript + JSON like object)
-- Help resolve different archive configuration into a common interpretation
+It provides three layers:
 
-Additionally it offers a fast and platform agnostic parser (web, node). This is an opinionated decision. The library used @xmldom/xmldom is fast and small.
+- **Archive reading** — the `Archive` / `ArchiveRecord` types and the `createArchiveFrom*` creators (`jszip`, `zip.js`, `libarchive.js`, `unzipper`, `node-unrar-js`, array buffers, URLs, text) plus record helpers (`readRecordAsText`, `getArchiveFileRecordByUri`, accessor factories). Library-backed creators ship as subpath exports so each underlying library stays an optional peer dependency.
+- **Metadata parsing** — typed parsers for common archive configuration files (OPF, `ComicInfo.xml`, Kobo display options, Apple iBooks display options) as TypeScript + JSON-like objects.
+- **Metadata resolution** — `resolveArchiveMetadata` translates the different parsed formats into one common interpretation, plus archive-level queries (`getArchiveOpfInfo`, `readArchiveOpf`, `isArchiveEpub`, `getArchiveHasComicInfo`).
 
-This package is not trying to become a standard, it is mostly used internally to help translate and normalize different book providers (or even different version).
-
-Essentially, instead of implementing your own parser for "foo.xml" and trying to understand what is what, we offer a common parsing and resolution.
+The parser is fast and platform agnostic (web, node). This package is not trying to become a standard, it is mostly used internally to help translate and normalize different book providers (or even different versions). Essentially, instead of implementing your own parser for "foo.xml" and trying to understand what is what, we offer a common reading, parsing and resolution layer.
 
 Example of products that may take advantage of this package:
 - App that lets user manipulate book archives
@@ -18,8 +17,8 @@ Example of products that may take advantage of this package:
 
 ## ComicInfo.xml
 
-We are following https://anansi-project.github.io/ 
+We are following https://anansi-project.github.io/
 
-## Epub 
+## Epub
 
 Spec for 3.3 is available at https://www.w3.org/TR/epub-33/

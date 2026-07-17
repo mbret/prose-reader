@@ -1,8 +1,8 @@
 import {
   type Archive,
   getArchiveFileRecordByUri,
-} from "../../../archives/types"
-import { readArchiveOpf } from "../../../epubs/readArchiveOpf"
+  readArchiveOpf,
+} from "@prose-reader/archive-reader"
 import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import type { HookResource } from "./types"
 

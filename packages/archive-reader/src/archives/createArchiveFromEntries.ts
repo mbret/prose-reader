@@ -1,6 +1,8 @@
-import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { sortByTitleComparator } from "../utils/sortByTitleComparator"
-import { getUriBasename } from "../utils/uri"
+import {
+  detectMimeTypeFromName,
+  getUriBasename,
+  sortByTitleComparator,
+} from "@prose-reader/shared"
 import { createArchive } from "./createArchive"
 import type { Archive, ArchiveRecord, FileRecord } from "./types"
 

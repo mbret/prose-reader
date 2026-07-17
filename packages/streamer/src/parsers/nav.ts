@@ -1,13 +1,13 @@
 import {
+  type Archive,
+  getArchiveOpfInfo,
   type OpfMetadata,
+  readRecordAsText,
   tokenizeXmlSpaceSeparatedList,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import { urlJoin } from "@prose-reader/shared"
+import { getUriBasePath, urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"
-import { type Archive, getArchiveOpfInfo } from ".."
-import { readRecordAsText } from "../archives/readRecordAsText"
-import { getUriBasePath } from "../utils/uri"
 import { getXmlElementInnerText } from "./xml"
 
 type Toc = NonNullable<Manifest[`nav`]>[`toc`]

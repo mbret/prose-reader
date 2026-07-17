@@ -1,5 +1,5 @@
-import type { Archive } from "../.."
-import { getArchiveFileRecordByUri } from "../../archives/types"
+import type { Archive } from "@prose-reader/archive-reader"
+import { getArchiveFileRecordByUri } from "@prose-reader/archive-reader"
 import type { StreamerResourceHookFactory } from "../../hooks"
 import { Report } from "../../report"
 import { calibreFixHook } from "./hooks/calibreFixHook"

@@ -1,11 +1,11 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME,
   parseAppleDisplayOptionsXml,
+  readRecordAsText,
   resolveArchiveMetadata,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import { readRecordAsText } from "../../../archives/readRecordAsText"
-import type { Archive } from "../../../archives/types"
 
 const appleDisplayOptionsBasename =
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME.toLowerCase()

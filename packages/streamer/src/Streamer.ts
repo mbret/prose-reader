@@ -1,3 +1,4 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import {
   catchError,
@@ -10,8 +11,7 @@ import {
   of,
   switchMap,
 } from "rxjs"
-import { createArchiveLoader } from "./archives/archiveLoader"
-import type { Archive } from "./archives/types"
+import { createArchiveLoader } from "./archiveLoader"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { generateResourceFromArchive } from "./generators/resources"
 import type { StreamerHooks } from "./hooks"

@@ -4,7 +4,7 @@ import {
 } from "@prose-reader/cfi"
 import type { Reader } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
-import { createXmlSafeId } from "@prose-reader/streamer"
+import { createXmlSafeId } from "@prose-reader/shared"
 import { parseVirtualPanoramaResourcePath } from "./panoramaSplitResource"
 
 const VIRTUAL_SPINE_ID_EXTENSION = "vnd.prose-reader.cbz.virtual-spine-id"

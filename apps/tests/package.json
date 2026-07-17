@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
+    "@prose-reader/archive-reader": "^1.320.0",
     "@prose-reader/core": "^1.120.0",
     "@prose-reader/enhancer-gallery": "^1.120.0",
     "@prose-reader/enhancer-gestures": "^1.120.0",

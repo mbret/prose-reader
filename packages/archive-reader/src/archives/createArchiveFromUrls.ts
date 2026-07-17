@@ -1,9 +1,9 @@
 import {
+  createXmlSafeIdFactory,
   detectMimeTypeFromName,
   escapeXmlAttributeValue,
+  getUriBasename,
 } from "@prose-reader/shared"
-import { createXmlSafeIdFactory } from "../utils/createXmlSafeId"
-import { getUriBasename } from "../utils/uri"
 import { createArchive } from "./createArchive"
 import { blobFileAccessors } from "./fileAccessors"
 import type { Archive } from "./types"

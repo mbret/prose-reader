@@ -1,7 +1,7 @@
-import { type OpfMetadata, parseOpf } from "@prose-reader/archive-reader"
 import { readRecordAsText } from "../archives/readRecordAsText"
 import type { Archive } from "../archives/types"
 import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
+import { type OpfMetadata, parseOpf } from "./parse"
 
 export type ArchiveOpfParsed = {
   opf: OpfMetadata

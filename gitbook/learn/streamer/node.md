@@ -9,7 +9,7 @@ import {
   generateManifestFromArchive,
   generateResourceFromArchive,
 } from "@prose-reader/streamer"
-import { createArchiveFromUnzipper } from "@prose-reader/streamer/archives/createArchiveFromUnzipper"
+import { createArchiveFromUnzipper } from "@prose-reader/archive-reader/archives/createArchiveFromUnzipper"
 import unzipper from "unzipper"
 
 const directory = await unzipper.Open.file("book.epub")

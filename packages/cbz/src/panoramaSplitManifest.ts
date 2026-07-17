@@ -1,13 +1,11 @@
+import { type Archive, isArchiveEpub } from "@prose-reader/archive-reader"
 import {
+  createXmlSafeId,
   detectMimeTypeFromName,
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import {
-  type Archive,
-  createManifestResourceHref,
-  createXmlSafeId,
-} from "@prose-reader/streamer"
+import { createManifestResourceHref } from "@prose-reader/streamer"
 import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
 import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
 
@@ -45,15 +43,6 @@ type ArchiveRecord = Archive["records"][number]
 type ArchiveFileRecord = Extract<ArchiveRecord, { dir: false }>
 
 const encodeOriginalUriSegment = (uri: string) => encodeURIComponent(uri)
-
-const hasOpfExtension = (path: string) => path.toLowerCase().endsWith(`.opf`)
-
-const isArchiveEpub = (archive: Archive) =>
-  archive.records.some(
-    (file) =>
-      !file.dir &&
-      (hasOpfExtension(file.basename) || hasOpfExtension(file.uri)),
-  )
 
 export const buildVirtualPanoramaResourcePath = ({
   cropSide,

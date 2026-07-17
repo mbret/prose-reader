@@ -1,9 +1,9 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   detectMimeTypeFromName,
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import type { Archive } from "../../../archives/types"
 
 type Toc = NonNullable<Manifest["nav"]>["toc"]
 

@@ -1,11 +1,14 @@
 import {
+  type Archive,
+  isArchiveEpub,
+  isFileRecord,
+} from "@prose-reader/archive-reader"
+import {
   detectMimeTypeFromName,
   isMediaContentMimeType,
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import { type Archive, isFileRecord } from "../../../archives/types"
-import { isArchiveEpub } from "../../../epubs/isArchiveEpub"
 
 /**
  * If we don't have a regular epub, we have an archive that could be many things.

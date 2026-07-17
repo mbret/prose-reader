@@ -5,21 +5,15 @@
  */
 
 declare global {
-  interface Window {
-    __PROSE_READER_DEBUG?: boolean | string
-  }
+  var __PROSE_READER_DEBUG: boolean | string | undefined
 }
 
-const getWindow = () => {
-  if (typeof window === "undefined") {
-    return undefined
-  }
-
-  return window
-}
-
+/**
+ * Read from `globalThis` (not `window`) so the flag can also be set in
+ * environments without `window` — service workers, web workers, node.
+ */
 function isGlobalDebugEnabled() {
-  const debug = getWindow()?.__PROSE_READER_DEBUG
+  const debug = globalThis.__PROSE_READER_DEBUG
 
   return debug === true || debug === "true"
 }

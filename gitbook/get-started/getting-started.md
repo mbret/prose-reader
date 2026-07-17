@@ -3,10 +3,10 @@
 ## Installation
 
 ```shell
-npm install @prose-reader/core @prose-reader/streamer rxjs
+npm install @prose-reader/core @prose-reader/streamer @prose-reader/archive-reader rxjs
 ```
 
-You don't absolutely need to have `@prose-reader/streamer` installed to run the reader but the utilities provided are very useful to standardize and feed books to the engine.  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside.
+You don’t absolutely need `@prose-reader/streamer` and `@prose-reader/archive-reader` installed to run the reader, but they are very useful to standardize and feed books to the engine (`archive-reader` turns your source into an archive, `streamer` serves it).  `rxjs` is a peer-dependency of prose-reader and needs to be installed alongside.
 
 ## Create your reader & load your book
 
@@ -57,7 +57,7 @@ npm install jszip
 ```typescript
 import { createReader } from "@prose-reader/core"
 import { Streamer } from "@prose-reader/streamer"
-import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { from } from "rxjs"
 import { loadAsync } from "jszip"
 

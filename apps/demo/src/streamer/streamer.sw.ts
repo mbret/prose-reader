@@ -1,9 +1,7 @@
+import { createArchiveFromText } from "@prose-reader/archive-reader"
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { streamerHooks } from "@prose-reader/cbz"
-import {
-  createArchiveFromText,
-  ServiceWorkerStreamer,
-} from "@prose-reader/streamer"
-import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
+import { ServiceWorkerStreamer } from "@prose-reader/streamer"
 import { loadAsync } from "jszip"
 import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { getBlobFromKey, getStreamerBaseUrl } from "./utils.shared"

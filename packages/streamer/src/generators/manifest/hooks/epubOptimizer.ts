@@ -1,9 +1,12 @@
+import type { ArchiveOpfParsed } from "@prose-reader/archive-reader"
+import {
+  type Archive,
+  getSpineItemFilesFromArchive,
+  isFileRecord,
+  readRecordAsText,
+} from "@prose-reader/archive-reader"
 import { isXmlBasedMimeType, type Manifest } from "@prose-reader/shared"
 import { XmlDocument } from "xmldoc"
-import { readRecordAsText } from "../../../archives/readRecordAsText"
-import { type Archive, isFileRecord } from "../../../archives/types"
-import { getSpineItemFilesFromArchive } from "../../../epubs/getSpineItemFilesFromArchive"
-import type { ArchiveOpfParsed } from "../../../epubs/readArchiveOpf"
 
 const hasDocMetaViewport = (doc: XmlDocument) => {
   const metaElm = doc

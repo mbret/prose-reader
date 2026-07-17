@@ -1,7 +1,7 @@
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
 import { createReader } from "@prose-reader/core"
 import { gesturesEnhancer } from "@prose-reader/enhancer-gestures"
 import { Streamer } from "@prose-reader/streamer"
-import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip"
 import { loadAsync } from "jszip"
 import { from } from "rxjs"
 

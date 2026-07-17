@@ -7,28 +7,10 @@ import { name } from "./package.json"
 const libConfig = createLibConfig({
   packageDir: __dirname,
   packageName: name,
+  // Object form on purpose: it keeps the multi-entry `dist/index/index.*`
+  // output layout the package.json `exports` map points to.
   entry: {
     index: resolve(__dirname, "src/index.ts"),
-    "archives/createArchiveFromJszip": resolve(
-      __dirname,
-      "src/archives/createArchiveFromJszip.ts",
-    ),
-    "archives/createArchiveFromLibArchive": resolve(
-      __dirname,
-      "src/archives/createArchiveFromLibArchive.ts",
-    ),
-    "archives/createArchiveFromUnzipper": resolve(
-      __dirname,
-      "src/archives/createArchiveFromUnzipper.ts",
-    ),
-    "archives/createArchiveFromNodeUnrarJs": resolve(
-      __dirname,
-      "src/archives/createArchiveFromNodeUnrarJs.ts",
-    ),
-    "archives/createArchiveFromZipJs": resolve(
-      __dirname,
-      "src/archives/createArchiveFromZipJs.ts",
-    ),
   },
 })
 

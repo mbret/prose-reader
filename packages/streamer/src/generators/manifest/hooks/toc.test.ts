@@ -1,6 +1,5 @@
+import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { expect, it } from "vitest"
-import { createArchive } from "../../../archives/createArchive"
-import { blobFileAccessors } from "../../../archives/fileAccessors"
 import { tocHook } from "./toc"
 
 it("should create valid toc", async () => {

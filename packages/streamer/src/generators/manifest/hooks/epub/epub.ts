@@ -1,13 +1,13 @@
-import { resolveArchiveMetadata } from "@prose-reader/archive-reader"
-import type { Manifest } from "@prose-reader/shared"
+import type { ArchiveOpfParsed } from "@prose-reader/archive-reader"
 import {
   type Archive,
   getArchiveFileRecordByUri,
+  getArchiveOpfInfo,
+  getSpineItemFilesFromArchive,
   isFileRecord,
-} from "../../../../archives/types"
-import { getArchiveOpfInfo } from "../../../../epubs/getArchiveOpfInfo"
-import { getSpineItemFilesFromArchive } from "../../../../epubs/getSpineItemFilesFromArchive"
-import type { ArchiveOpfParsed } from "../../../../epubs/readArchiveOpf"
+  resolveArchiveMetadata,
+} from "@prose-reader/archive-reader"
+import type { Manifest } from "@prose-reader/shared"
 import { Report } from "../../../../report"
 
 export const getItemsFromDoc = (

@@ -8,10 +8,10 @@
 
 ### Getting started
 
-Install the CBZ package alongside the reader and streamer packages used by your application.
+Install the CBZ package alongside the reader, streamer and archive-reader packages used by your application.
 
 ```sh
-npm install @prose-reader/cbz @prose-reader/core @prose-reader/streamer
+npm install @prose-reader/cbz @prose-reader/core @prose-reader/streamer @prose-reader/archive-reader
 ```
 
 Wrap the reader with `cbzEnhancer`:

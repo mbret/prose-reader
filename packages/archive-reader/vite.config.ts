@@ -1,3 +1,4 @@
+import { resolve } from "node:path"
 import { defineConfig, mergeConfig } from "vite"
 import dts from "vite-plugin-dts"
 import { createLibConfig } from "../../config/vite-lib"
@@ -6,7 +7,29 @@ import { name } from "./package.json"
 const libConfig = createLibConfig({
   packageDir: __dirname,
   packageName: name,
-  umdGlobals: { xmldoc: "xmldoc" },
+  entry: {
+    index: resolve(__dirname, "src/index.ts"),
+    "archives/createArchiveFromJszip": resolve(
+      __dirname,
+      "src/archives/createArchiveFromJszip.ts",
+    ),
+    "archives/createArchiveFromLibArchive": resolve(
+      __dirname,
+      "src/archives/createArchiveFromLibArchive.ts",
+    ),
+    "archives/createArchiveFromUnzipper": resolve(
+      __dirname,
+      "src/archives/createArchiveFromUnzipper.ts",
+    ),
+    "archives/createArchiveFromNodeUnrarJs": resolve(
+      __dirname,
+      "src/archives/createArchiveFromNodeUnrarJs.ts",
+    ),
+    "archives/createArchiveFromZipJs": resolve(
+      __dirname,
+      "src/archives/createArchiveFromZipJs.ts",
+    ),
+  },
 })
 
 export default defineConfig((env) =>

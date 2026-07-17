@@ -1,7 +1,6 @@
+import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
 import { Streamer } from "."
-import { createArchive } from "./archives/createArchive"
-import { blobFileAccessors } from "./archives/fileAccessors"
 
 describe("Given custom error on get Archive", () => {
   it("should return correct error", async () => {

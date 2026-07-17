@@ -1,12 +1,12 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   KOBO_DISPLAY_OPTIONS_FILENAME,
   type KoboMetadata,
   parseKoboXml,
+  readRecordAsText,
   resolveArchiveMetadata,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import { readRecordAsText } from "../../../archives/readRecordAsText"
-import type { Archive } from "../../../archives/types"
 
 const extractKoboInformationFromArchive = async (
   archive: Archive,

@@ -2,9 +2,8 @@ import {
   type Archive,
   blobFileAccessors,
   createArchive,
-  getUriBasename,
-  sortByTitleComparator,
-} from "@prose-reader/streamer"
+} from "@prose-reader/archive-reader"
+import { getUriBasename, sortByTitleComparator } from "@prose-reader/shared"
 import { Directory, type File } from "expo-file-system/next"
 
 export const createArchiveFromExpoFileSystemNext = async (

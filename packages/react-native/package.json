@@ -32,8 +32,9 @@
     "@webview-bridge/react-native": "^1.7.7"
   },
   "peerDependencies": {
+    "@prose-reader/archive-reader": "^1.320.0",
     "@prose-reader/core": "^1.215.0",
-    "@prose-reader/shared": "^1.215.0",
+    "@prose-reader/shared": "^1.320.0",
     "@prose-reader/streamer": "^1.215.0",
     "@webview-bridge/react-native": "^1.7.7",
     "@webview-bridge/web": "^1.7.7",

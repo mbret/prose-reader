@@ -1,12 +1,12 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import {
   COMIC_INFO_FILENAME,
+  getArchiveHasComicInfo,
   parseComicInfo,
+  readRecordAsText,
   resolveArchiveMetadata,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import { getArchiveHasComicInfo } from "../../../archives/getArchiveHasComicInfo"
-import { readRecordAsText } from "../../../archives/readRecordAsText"
-import type { Archive } from "../../../archives/types"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()
 

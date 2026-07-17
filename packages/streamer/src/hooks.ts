@@ -1,5 +1,5 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
-import type { Archive } from "./archives/types"
 import type { HookResource } from "./generators/resources/hooks/types"
 
 export type { HookResource }

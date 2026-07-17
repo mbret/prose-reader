@@ -1,8 +1,8 @@
-import { readRecordAsText } from "../../../archives/readRecordAsText"
 import {
   type Archive,
   getArchiveFileRecordByUri,
-} from "../../../archives/types"
+  readRecordAsText,
+} from "@prose-reader/archive-reader"
 import type { HookResource } from "./types"
 
 const invalidSelfClosingTags = [

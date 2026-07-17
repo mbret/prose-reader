@@ -1,4 +1,4 @@
-import { getUriBasename } from "../utils/uri"
+import { getUriBasename } from "@prose-reader/shared"
 import { createArchive } from "./createArchive"
 import { blobFileAccessors } from "./fileAccessors"
 

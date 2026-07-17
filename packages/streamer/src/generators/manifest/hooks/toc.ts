@@ -1,8 +1,10 @@
-import { type Manifest, urlJoin } from "@prose-reader/shared"
-import type { Archive } from "../../../archives/types"
-import type { ArchiveOpfParsed } from "../../../epubs/readArchiveOpf"
+import type { Archive, ArchiveOpfParsed } from "@prose-reader/archive-reader"
+import {
+  type Manifest,
+  sortByTitleComparator,
+  urlJoin,
+} from "@prose-reader/shared"
 import { parseToc } from "../../../parsers/nav"
-import { sortByTitleComparator } from "../../../utils/sortByTitleComparator"
 import { buildAudiobookToc } from "./audiobookToc"
 
 type Toc = NonNullable<Manifest["nav"]>["toc"]

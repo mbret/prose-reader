@@ -3,8 +3,6 @@ import { name } from "../package.json"
 
 // No explicit `enabled`: inherit the shared root, which auto-configures from
 // the `globalThis.__PROSE_READER_DEBUG` flag (works in window, workers, node).
-// `configure()` remains as an explicit override for setups where the flag
-// cannot be set before the module evaluates.
 export const Report = SharedReport.namespace(name, undefined, {
-  color: "#ffae42",
+  color: "#42b0a5",
 })

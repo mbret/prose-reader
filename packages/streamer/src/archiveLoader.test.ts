@@ -1,8 +1,8 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import { catchError, lastValueFrom, of } from "rxjs"
 import { describe, expect, it, vitest } from "vitest"
-import { waitFor } from "../tests/waitFor"
 import { createArchiveLoader } from "./archiveLoader"
-import type { Archive } from "./types"
+import { waitFor } from "./tests/waitFor"
 
 describe(`Given a TTL`, () => {
   describe(`and the archive is released right away`, () => {

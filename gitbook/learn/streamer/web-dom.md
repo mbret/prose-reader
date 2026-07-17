@@ -14,7 +14,7 @@ import {
   generateManifestFromArchive,
   generateResourceFromArchive,
 } from "@prose-reader/streamer";
-import { createArchiveFromJszip } from "@prose-reader/streamer/archives/createArchiveFromJszip";
+import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip";
 import JSZip from "jszip";
 
 const reader = createReader({

@@ -1,6 +1,5 @@
+import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { createArchive } from "./archives/createArchive"
-import { blobFileAccessors } from "./archives/fileAccessors"
 import { generateManifestFromArchive } from "./generators/manifest"
 import { ServiceWorkerStreamer } from "./ServiceWorkerStreamer"
 

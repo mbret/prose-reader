@@ -1,5 +1,5 @@
+import type { Archive } from "@prose-reader/archive-reader"
 import { parseContentType } from "@prose-reader/shared"
-import type { Archive } from "@prose-reader/streamer"
 
 export const CBZ_MIME_TYPES: ReadonlySet<string> = new Set([
   "application/vnd.comicbook+zip",
