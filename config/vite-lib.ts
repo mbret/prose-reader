@@ -1,6 +1,11 @@
 import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
-import { type ConfigEnv, mergeConfig, type UserConfig } from "vite"
+import {
+  type ConfigEnv,
+  type LibraryFormats,
+  mergeConfig,
+  type UserConfig,
+} from "vite"
 
 type Entry = string | Record<string, string>
 
@@ -59,12 +64,24 @@ export const createLibConfig =
           ? false
           : "oxc"
 
+    // Object-entry packages use the `${entryName}/index.{js,cjs}` layout from
+    // `buildFileNameFor`, which only distinguishes `cjs` — every other format
+    // (including `umd`) lands on the same `index.js`. Left to Vite's default
+    // (`['es', 'umd']` whenever `lib.name` is set), a single-entry object emits
+    // both `es` and `umd` to `index/index.js`; the UMD write wins and the ESM
+    // named exports disappear (a multi-entry object dodges this only because
+    // Vite silently drops UMD). Pin object entries to `['es', 'cjs']` so the
+    // ESM output survives and the `index.cjs` the exports map points to exists.
+    const objectEntryFormats: LibraryFormats[] | undefined =
+      typeof entry === "string" ? undefined : ["es", "cjs"]
+
     const base: UserConfig = {
       build: {
         lib: {
           entry,
           name: toUmdName(packageName),
           fileName: buildFileNameFor(entry),
+          ...(objectEntryFormats ? { formats: objectEntryFormats } : {}),
         },
         sourcemap: true,
         emptyOutDir: env.mode !== "development",
