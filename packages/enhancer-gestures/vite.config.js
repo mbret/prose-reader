@@ -2,17 +2,15 @@ import { resolve } from "node:path"
 import externals from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import dts from "vite-plugin-dts"
-import { name } from "./package.json"
-
-const libName = name.replace(`@`, ``).replace(`/`, `-`)
 
 export default defineConfig(({ mode }) => ({
   build: {
     minify: false,
     lib: {
       entry: resolve(__dirname, `src/index.ts`),
-      name: libName,
       fileName: "index",
+      // ESM + CJS only, no UMD (see config/vite-lib.ts for the rationale).
+      formats: [`es`, `cjs`],
     },
     emptyOutDir: mode !== `development`,
     sourcemap: true,

@@ -10,8 +10,9 @@ export default defineConfig(({ mode }) => ({
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
-      name: "prose-react-reader",
       fileName: `index`,
+      // ESM + CJS only, no UMD (see config/vite-lib.ts for the rationale).
+      formats: ["es", "cjs"],
     },
     emptyOutDir: mode !== "development",
     sourcemap: true,
