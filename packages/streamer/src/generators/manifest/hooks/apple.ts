@@ -2,7 +2,7 @@ import {
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME,
   parseAppleDisplayOptionsXml,
   resolveArchiveMetadata,
-} from "@prose-reader/archive-parser"
+} from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { readRecordAsText } from "../../../archives/readRecordAsText"
 import type { Archive } from "../../../archives/types"

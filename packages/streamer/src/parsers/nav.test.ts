@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
-import { parseOpf } from "@prose-reader/archive-parser"
+import { parseOpf } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
 import { blobFileAccessors, createArchive } from ".."
 import { parseToc } from "./nav"

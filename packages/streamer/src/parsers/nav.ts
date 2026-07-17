@@ -1,7 +1,7 @@
 import {
   type OpfMetadata,
   tokenizeXmlSpaceSeparatedList,
-} from "@prose-reader/archive-parser"
+} from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement, type XmlNodeBase } from "xmldoc"

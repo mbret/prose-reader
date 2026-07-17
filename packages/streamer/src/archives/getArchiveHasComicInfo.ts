@@ -1,4 +1,4 @@
-import { COMIC_INFO_FILENAME } from "@prose-reader/archive-parser"
+import { COMIC_INFO_FILENAME } from "@prose-reader/archive-reader"
 import { type Archive, type FileRecord, isFileRecord } from "./types"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()

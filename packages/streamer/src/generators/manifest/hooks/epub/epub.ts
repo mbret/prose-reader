@@ -1,4 +1,4 @@
-import { resolveArchiveMetadata } from "@prose-reader/archive-parser"
+import { resolveArchiveMetadata } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import {
   type Archive,

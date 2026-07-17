@@ -1,4 +1,4 @@
-# @prose-reader/archive-parser
+# @prose-reader/archive-reader
 
 This package purpose is to help with two things:
 

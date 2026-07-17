@@ -2,7 +2,7 @@ import {
   COMIC_INFO_FILENAME,
   parseComicInfo,
   resolveArchiveMetadata,
-} from "@prose-reader/archive-parser"
+} from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { getArchiveHasComicInfo } from "../../../archives/getArchiveHasComicInfo"
 import { readRecordAsText } from "../../../archives/readRecordAsText"
