@@ -16,7 +16,7 @@ const mapNcxChapter = (
     title:
       point?.descendantWithPath(`${prefix}navLabel.${prefix}text`)?.val || ``,
     path,
-    href: path,
+    containerHref: path,
     contents: [],
   }
   const children = point.childrenNamed(`${prefix}navPoint`)

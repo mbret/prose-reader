@@ -19,8 +19,9 @@ const toManifestTocItem =
   (item: ArchiveTocItem): TocItem => ({
     title: item.title,
     path: item.path,
-    // entries without a target (eg nav heading without link) keep an empty href
-    href: item.href ? urlJoin(baseUrl, item.href) : ``,
+    // rebase the container-relative ref into serving space; entries without a
+    // target (eg nav heading without link) keep an empty href
+    href: item.containerHref ? urlJoin(baseUrl, item.containerHref) : ``,
     contents: item.contents.map(toManifestTocItem(baseUrl)),
   })
 

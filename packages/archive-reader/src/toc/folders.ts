@@ -16,7 +16,7 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
     toc: ArchiveTocItem[],
     folder: string,
     subFolders: string[],
-    href: string,
+    containerHref: string,
     path: string,
   ): ArchiveTocItem[] => {
     const foundEntry = toc.find((entry) => entry.title === folder)
@@ -33,7 +33,7 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
               foundEntry.contents,
               nextFolderCursor,
               nextSubFolders,
-              href,
+              containerHref,
               path,
             ),
           } satisfies ArchiveTocItem,
@@ -49,7 +49,7 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
           {
             ...foundEntry,
             path,
-            href,
+            containerHref,
           } satisfies ArchiveTocItem,
         ]
       }
@@ -65,10 +65,10 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
             [],
             nextFolderCursor,
             nextSubFolders,
-            href,
+            containerHref,
             path,
           ),
-          href,
+          containerHref,
           path,
           title: folder,
         },
@@ -79,7 +79,7 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
       ...toc,
       {
         contents: [],
-        href,
+        containerHref,
         path,
         title: folder,
       },
@@ -97,12 +97,12 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
     // encodeURI leaves `#` and `?` untouched (reserved URI delimiters), but in
     // a raw archive filename they are data and would otherwise be parsed as
     // fragment/query once joined onto a base URL.
-    const href = encodeURI(file.uri)
+    const containerHref = encodeURI(file.uri)
       .replace(/#/g, `%23`)
       .replace(/\?/g, `%3F`)
       .replace(/\/$/, "")
     const path = file.uri.replace(/\/$/, "")
 
-    return combineWith(acc, firstFolder, restFolders, href, path)
+    return combineWith(acc, firstFolder, restFolders, containerHref, path)
   }, [])
 }

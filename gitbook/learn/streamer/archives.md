@@ -159,7 +159,7 @@ arrayBufferFileAccessors(async () => bytes, "image/jpeg")
 import { resolveArchiveToc } from "@prose-reader/archive-reader"
 
 const toc = await resolveArchiveToc(archive)
-// [{ title: "Chapter 1", path: "OEBPS/ch01.xhtml", href: "OEBPS/ch01.xhtml", contents: [...] }, ...]
+// [{ title: "Chapter 1", path: "OEBPS/ch01.xhtml", containerHref: "OEBPS/ch01.xhtml", contents: [...] }, ...]
 ```
 
 ```typescript
@@ -167,8 +167,8 @@ type ArchiveTocItem = {
   title: string
   /** Reference as authored in the source (may carry a `#fragment`), or the raw record `uri` for folder-derived TOCs. */
   path: string
-  /** Container-relative URI reference, safe to join onto a base URL. Empty when the entry has no target. */
-  href: string
+  /** URI reference in the container's coordinate space (no serving base baked in), safe to join onto a base URL. Empty when the entry has no target. */
+  containerHref: string
   contents: ArchiveTocItem[]
 }
 ```
@@ -180,7 +180,7 @@ Strategies are tried in order:
 3. EPUB-like containers with neither resolve to an **explicit empty TOC** — the folder layout of an EPUB zip is not a meaningful TOC.
 4. Anything else falls back to the **folder hierarchy** (e.g. a CBZ with one folder per chapter), or `undefined` when the archive is flat.
 
-Entries carry no serving concern: `href` is container-relative, and consumers join it onto their own base URL (`generateManifestFromArchive` does exactly that to produce `manifest.nav.toc`). Pass `{ opf }` (an already parsed `readArchiveOpf` result) to skip the internal OPF lookup.
+Entries carry no serving concern: `containerHref` lives in the container's coordinate space, and consumers rebase it into their own serving space by joining it onto a base URL (`generateManifestFromArchive` does exactly that to produce `manifest.nav.toc`). Pass `{ opf }` (an already parsed `readArchiveOpf` result) to skip the internal OPF lookup.
 
 ## Writing a custom source
 

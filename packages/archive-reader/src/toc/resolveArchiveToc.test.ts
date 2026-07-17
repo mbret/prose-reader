@@ -62,7 +62,7 @@ describe(`Given an epub without nav document nor ncx`, () => {
 })
 
 describe(`Given a non epub archive with folders`, () => {
-  it(`should resolve a toc from the folder hierarchy with raw path and encoded href`, async () => {
+  it(`should resolve a toc from the folder hierarchy with raw path and encoded containerHref`, async () => {
     const archive = createArchive({
       filename: `archive`,
       records: [
@@ -80,18 +80,18 @@ describe(`Given a non epub archive with folders`, () => {
         contents: [
           {
             contents: [],
-            href: `folder%20a/folder%20b/1.jpg`,
+            containerHref: `folder%20a/folder%20b/1.jpg`,
             path: `folder a/folder b/1.jpg`,
             title: `folder b`,
           },
         ],
-        href: `folder%20a/Screenshot%20from%202024-08-28%2013-21-11.png`,
+        containerHref: `folder%20a/Screenshot%20from%202024-08-28%2013-21-11.png`,
         path: `folder a/Screenshot from 2024-08-28 13-21-11.png`,
         title: `folder a`,
       },
       {
         contents: [],
-        href: `folder%20c/1.jpg`,
+        containerHref: `folder%20c/1.jpg`,
         path: `folder c/1.jpg`,
         title: `folder c`,
       },
@@ -99,12 +99,12 @@ describe(`Given a non epub archive with folders`, () => {
         contents: [
           {
             contents: [],
-            href: `folder%20d/folder%20e/4.jpg`,
+            containerHref: `folder%20d/folder%20e/4.jpg`,
             path: `folder d/folder e/4.jpg`,
             title: `folder e`,
           },
         ],
-        href: `folder%20d/folder%20e/4.jpg`,
+        containerHref: `folder%20d/folder%20e/4.jpg`,
         path: `folder d/folder e/4.jpg`,
         title: `folder d`,
       },
@@ -129,18 +129,18 @@ describe(`Given a non epub archive with several nested folders under the same pa
         contents: [
           {
             contents: [],
-            href: `Part%201/Chapter%201/1.jpg`,
+            containerHref: `Part%201/Chapter%201/1.jpg`,
             path: `Part 1/Chapter 1/1.jpg`,
             title: `Chapter 1`,
           },
           {
             contents: [],
-            href: `Part%201/Chapter%202/1.jpg`,
+            containerHref: `Part%201/Chapter%202/1.jpg`,
             path: `Part 1/Chapter 2/1.jpg`,
             title: `Chapter 2`,
           },
         ],
-        href: `Part%201/Chapter%201/1.jpg`,
+        containerHref: `Part%201/Chapter%201/1.jpg`,
         path: `Part 1/Chapter 1/1.jpg`,
         title: `Part 1`,
       },
@@ -149,7 +149,7 @@ describe(`Given a non epub archive with several nested folders under the same pa
 })
 
 describe(`Given filenames carrying reserved URI delimiters`, () => {
-  it(`should percent-encode # and ? in href while keeping path raw`, async () => {
+  it(`should percent-encode # and ? in containerHref while keeping path raw`, async () => {
     const archive = createArchive({
       filename: `archive`,
       records: [textRecord(`folder x/page #1?.jpg`)],
@@ -159,7 +159,7 @@ describe(`Given filenames carrying reserved URI delimiters`, () => {
     expect(await resolveArchiveToc(archive)).toEqual([
       {
         contents: [],
-        href: `folder%20x/page%20%231%3F.jpg`,
+        containerHref: `folder%20x/page%20%231%3F.jpg`,
         path: `folder x/page #1?.jpg`,
         title: `folder x`,
       },

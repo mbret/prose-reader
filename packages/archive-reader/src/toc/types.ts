@@ -15,11 +15,13 @@ export type ArchiveTocItem = {
    */
   path: string
   /**
-   * Container-relative URI reference for the target, safe to resolve against
-   * a base URL. Same as `path` for nav/NCX sources (their references are
-   * already URIs), percent-encoded form of `path` for folder-derived TOCs.
-   * Empty when the entry has no target.
+   * URI reference for the target, expressed in the archive container's
+   * coordinate space (no serving base baked in). A consumer rebases it into
+   * its own serving space — e.g. the streamer joins it onto a base URL to
+   * produce the {@link Manifest} `nav.toc` hrefs. Same as `path` for nav/NCX
+   * sources (their references are already URIs), percent-encoded form of
+   * `path` for folder-derived TOCs. Empty when the entry has no target.
    */
-  href: string
+  containerHref: string
   contents: ArchiveTocItem[]
 }

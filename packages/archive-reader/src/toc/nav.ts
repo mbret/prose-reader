@@ -21,7 +21,7 @@ const extractNavChapter = (
   const chp: ArchiveTocItem = {
     contents: [],
     path: ``,
-    href: ``,
+    containerHref: ``,
     title: ``,
   }
 
@@ -44,7 +44,7 @@ const extractNavChapter = (
 
   if (node === `a` && contentNode?.attr.href) {
     chp.path = urlJoin(basePath, contentNode.attr.href)
-    chp.href = chp.path
+    chp.containerHref = chp.path
   }
   const sublistNode = li.childNamed(`ol`)
   if (sublistNode) {
