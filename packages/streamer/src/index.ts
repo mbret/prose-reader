@@ -23,6 +23,7 @@ export {
 export { configure } from "./configure"
 export { getArchiveOpfInfo } from "./epubs/getArchiveOpfInfo"
 export { generateManifestFromArchive } from "./generators/manifest"
+export { createManifestResourceHref } from "./generators/manifest/createManifestResourceHref"
 export { generateResourceFromArchive } from "./generators/resources"
 export type {
   HookResource,
