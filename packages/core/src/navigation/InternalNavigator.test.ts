@@ -241,60 +241,63 @@ describe(`Given loaded book`, () => {
     it.each([
       ["paginated", "controlled" as const],
       ["scrollable", "scrollable" as const],
-    ])(`should clamp to viewport-flush position in %s mode and preserve the raw request`, async (_label, computedPageTurnMode) => {
-      const {
-        spine,
-        context,
-        settings,
-        hookManager,
-        navigator,
-        spineItemsManager,
-        viewport,
-      } = createNavigatorContext()
+    ])(
+      `should clamp to viewport-flush position in %s mode and preserve the raw request`,
+      async (_label, computedPageTurnMode) => {
+        const {
+          spine,
+          context,
+          settings,
+          hookManager,
+          navigator,
+          spineItemsManager,
+          viewport,
+        } = createNavigatorContext()
 
-      settings.update({ pageTurnMode: computedPageTurnMode })
+        settings.update({ pageTurnMode: computedPageTurnMode })
 
-      const navigations: InternalNavigationEntry[] = []
+        const navigations: InternalNavigationEntry[] = []
 
-      const items = generateItems(
-        100,
-        2,
-        context,
-        settings,
-        hookManager,
-        spine,
-        spineItemsManager,
-        viewport,
-      )
+        const items = generateItems(
+          100,
+          2,
+          context,
+          settings,
+          hookManager,
+          spine,
+          spineItemsManager,
+          viewport,
+        )
 
-      spineItemsManager.addMany(items)
+        spineItemsManager.addMany(items)
 
-      spine.layout()
+        spine.layout()
 
-      await firstValueFrom(spine.layout$)
+        await firstValueFrom(spine.layout$)
 
-      const sub = navigator.internalNavigator.navigationSubject
-        .pipe(skip(1))
-        .subscribe((navigation) => {
-          navigations.push(navigation)
+        const sub = navigator.internalNavigator.navigationSubject
+          .pipe(skip(1))
+          .subscribe((navigation) => {
+            navigations.push(navigation)
+          })
+
+        navigator.navigate({
+          position: new SpinePosition({ x: 9999, y: 0 }),
         })
 
-      navigator.navigate({
-        position: new SpinePosition({ x: 9999, y: 0 }),
-      })
+        await waitFor(100)
 
-      await waitFor(100)
+        sub.unsubscribe()
 
-      sub.unsubscribe()
-
-      expect(navigations.length).toBe(1)
-      expect(navigations[0]).toMatchObject({
-        position: { x: 100, y: 0 },
-        requestedPosition: { x: 9999, y: 0 },
-        meta: { triggeredBy: "user" },
-        type: "api",
-      })
-    })
+        expect(navigations.length).toBe(1)
+        expect(navigations[0]).toMatchObject({
+          position: { x: 100, y: 0 },
+          requestedPosition: { x: 9999, y: 0 },
+          meta: { triggeredBy: "user" },
+          type: "api",
+        })
+      },
+    )
   })
 
   describe("Given two consecutive user navigations resolving to the same position in scrollable mode", () => {

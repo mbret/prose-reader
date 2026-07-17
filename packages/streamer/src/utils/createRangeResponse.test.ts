@@ -48,22 +48,22 @@ describe("createRangeResponse", () => {
       expect(await response.text()).toBe(body.slice(0, 3))
     })
 
-    it.each([
-      "Bytes=0-2",
-      "BYTES=0-2",
-    ])("returns partial content when the range unit casing varies: %s", async (rangeHeader) => {
-      const response = createRangeResponse({
-        body,
-        contentType: "text/plain; charset=UTF-8",
-        rangeHeader,
-      })
+    it.each(["Bytes=0-2", "BYTES=0-2"])(
+      "returns partial content when the range unit casing varies: %s",
+      async (rangeHeader) => {
+        const response = createRangeResponse({
+          body,
+          contentType: "text/plain; charset=UTF-8",
+          rangeHeader,
+        })
 
-      expect(response.status).toBe(206)
-      expect(response.headers.get("Content-Range")).toBe(
-        `bytes 0-2/${new Blob([body]).size}`,
-      )
-      expect(await response.text()).toBe(body.slice(0, 3))
-    })
+        expect(response.status).toBe(206)
+        expect(response.headers.get("Content-Range")).toBe(
+          `bytes 0-2/${new Blob([body]).size}`,
+        )
+        expect(await response.text()).toBe(body.slice(0, 3))
+      },
+    )
 
     it("returns 416 for malformed range headers", async () => {
       const response = createRangeResponse({

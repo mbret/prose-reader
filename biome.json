@@ -12,6 +12,7 @@
       "!**/.nx",
       "!**/.test",
       "!**/test-results",
+      "!**/coverage",
       "!**/dist",
       "!**/CfiHandler.ts",
       "!**/playwright-report",
