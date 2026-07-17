@@ -20,7 +20,7 @@ The package splits into a few areas. Archives and hooks have dedicated guides �
 
 ## Archives
 
-The streamer *consumes* archives, it does not create them: the `Archive` type, the `createArchiveFrom*` creators, the file-accessor factories, the lookup helpers (`getArchiveFileRecordByUri`, `isFileRecord`, `isDirectoryRecord`, `readRecordAsText`, `getArchiveHasComicInfo`, `getArchiveOpfInfo`, …) all live in **`@prose-reader/archive-reader`** and are covered in full on the [Archives](archives.md) page. Building an [`Archive`](archives.md#the-archive-contract) is always the first step, whatever the source.
+The streamer *consumes* archives, it does not create them: the `Archive` type, the `createArchiveFrom*` creators, the file-accessor factories, the lookup helpers (`getArchiveFileRecordByUri`, `isFileRecord`, `isDirectoryRecord`, `readRecordAsText`, `getArchiveHasComicInfo`, `getArchiveOpfInfo`, …) and the TOC resolver ([`resolveArchiveToc`](archives.md#resolving-a-table-of-contents)) all live in **`@prose-reader/archive-reader`** and are covered in full on the [Archives](archives.md) page. Building an [`Archive`](archives.md#the-archive-contract) is always the first step, whatever the source.
 
 Generic string helpers previously exported here (`createXmlSafeId`, `createUniqueXmlSafeId`, `createXmlSafeIdFactory`, `sortByTitleComparator`, `removeTrailingSlash`, `getUriBasename`, `getUriBasePath`) moved to **`@prose-reader/shared`**.
 
