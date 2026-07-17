@@ -175,7 +175,7 @@ describe("range CFIs", () => {
 
     // Skip further tests if the parsed result doesn't have the expected structure
     if (!("parent" in parsed)) return
-    if (!parsed.start || !parsed.start[0]) return
+    if (!parsed.start?.[0]) return
 
     // Check text assertions in the start part
     const startParts = parsed.start[0]

@@ -35,7 +35,7 @@ const loadFontFaces = async (
   context: Context,
   settings: ReaderSettingsManager,
 ): Promise<void> => {
-  if (!document || !document.defaultView) return
+  if (!document?.defaultView) return
 
   const sheet = element.sheet
 

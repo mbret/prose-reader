@@ -86,7 +86,7 @@ export const createArchiveLoader = ({
     mergeMap((key) => {
       const archiveEntry = archives[key]
 
-      if (!archiveEntry || archiveEntry.state.status !== "idle") return EMPTY
+      if (archiveEntry?.state.status !== "idle") return EMPTY
 
       let isClosed = false
 
