@@ -52,7 +52,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     public context: Context,
     public settings: ReaderSettingsManager,
     public hookManager: HookManager,
-    public index: number,
+    public readonly index: number,
     public viewport: Viewport,
   ) {
     super({

@@ -46,11 +46,7 @@ export class SpineItemsManager extends DestroyableClass {
         ? spineItemOrId
         : this.get(spineItemOrId)
 
-    if (!spineItem) return undefined
-
-    const index = this.orderedSpineItemsSubject.value.indexOf(spineItem)
-
-    return index < 0 ? undefined : index
+    return spineItem?.index
   }
 
   addMany(spineItems: SpineItem[]) {
@@ -65,11 +61,17 @@ export class SpineItemsManager extends DestroyableClass {
   }
 
   /**
-   * @todo handle reload, remove subscription to each items etc. See add()
+   * @todo remove subscription to each items etc. See add()
    */
   destroyItems() {
-    this.orderedSpineItemsSubject.value.forEach((item) => {
+    const items = this.orderedSpineItemsSubject.value
+
+    items.forEach((item) => {
       item.destroy()
     })
+
+    if (items.length) {
+      this.orderedSpineItemsSubject.next([])
+    }
   }
 }
