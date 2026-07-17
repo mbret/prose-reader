@@ -41,37 +41,34 @@ export const getVisibleSpineItemsFromPosition = ({
       spineLayout,
     }) || spineItemsManager.get(0)
 
-  const spineItemsVisible = spineItemsManager.items.reduce<SpineItem[]>(
-    (acc, spineItem) => {
-      const itemPosition = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
-      const viewportInfo = useAbsoluteViewport
-        ? viewport.absoluteViewport
-        : viewport.relativeViewport
-      const relativeSpinePosition = translateSpinePositionToRelativeViewport(
-        position,
-        viewport.absoluteViewport,
-        viewportInfo,
-      )
-
-      const viewportPosition = ViewportSlicePosition.from(
-        relativeSpinePosition,
-        viewportInfo,
-      )
-      const { visible } = getItemVisibilityForPosition({
-        itemPosition,
-        threshold,
-        viewportPosition,
-        restrictToScreen,
-      })
-
-      if (visible) {
-        return [...acc, spineItem]
-      }
-
-      return acc
-    },
-    [],
+  const viewportInfo = useAbsoluteViewport
+    ? viewport.absoluteViewport
+    : viewport.relativeViewport
+  const relativeSpinePosition = translateSpinePositionToRelativeViewport(
+    position,
+    viewport.absoluteViewport,
+    viewportInfo,
   )
+  const viewportPosition = ViewportSlicePosition.from(
+    relativeSpinePosition,
+    viewportInfo,
+  )
+
+  const spineItemsVisible: SpineItem[] = []
+
+  for (const spineItem of spineItemsManager.items) {
+    const itemPosition = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
+    const { visible } = getItemVisibilityForPosition({
+      itemPosition,
+      threshold,
+      viewportPosition,
+      restrictToScreen,
+    })
+
+    if (visible) {
+      spineItemsVisible.push(spineItem)
+    }
+  }
 
   const beginItem = spineItemsVisible[0] ?? fallbackSpineItem
   const endItem = spineItemsVisible[spineItemsVisible.length - 1] ?? beginItem
