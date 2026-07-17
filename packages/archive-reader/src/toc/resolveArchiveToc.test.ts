@@ -112,6 +112,61 @@ describe(`Given a non epub archive with folders`, () => {
   })
 })
 
+describe(`Given a non epub archive with several nested folders under the same parent`, () => {
+  it(`should not duplicate entries when merging into an existing parent`, async () => {
+    const archive = createArchive({
+      filename: `archive`,
+      records: [
+        textRecord(`Part 1/Chapter 1/1.jpg`),
+        textRecord(`Part 1/Chapter 1/2.jpg`),
+        textRecord(`Part 1/Chapter 2/1.jpg`),
+      ],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveArchiveToc(archive)).toEqual([
+      {
+        contents: [
+          {
+            contents: [],
+            href: `Part%201/Chapter%201/1.jpg`,
+            path: `Part 1/Chapter 1/1.jpg`,
+            title: `Chapter 1`,
+          },
+          {
+            contents: [],
+            href: `Part%201/Chapter%202/1.jpg`,
+            path: `Part 1/Chapter 2/1.jpg`,
+            title: `Chapter 2`,
+          },
+        ],
+        href: `Part%201/Chapter%201/1.jpg`,
+        path: `Part 1/Chapter 1/1.jpg`,
+        title: `Part 1`,
+      },
+    ])
+  })
+})
+
+describe(`Given filenames carrying reserved URI delimiters`, () => {
+  it(`should percent-encode # and ? in href while keeping path raw`, async () => {
+    const archive = createArchive({
+      filename: `archive`,
+      records: [textRecord(`folder x/page #1?.jpg`)],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveArchiveToc(archive)).toEqual([
+      {
+        contents: [],
+        href: `folder%20x/page%20%231%3F.jpg`,
+        path: `folder x/page #1?.jpg`,
+        title: `folder x`,
+      },
+    ])
+  })
+})
+
 describe(`Given a non epub archive without folders`, () => {
   it(`should not resolve any toc`, async () => {
     const archive = createArchive({

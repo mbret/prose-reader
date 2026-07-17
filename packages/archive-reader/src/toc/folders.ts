@@ -28,16 +28,14 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
           ...toc.filter((entry) => entry !== foundEntry),
           {
             ...foundEntry,
-            contents: [
-              ...foundEntry.contents,
-              ...combineWith(
-                foundEntry.contents,
-                nextFolderCursor,
-                nextSubFolders,
-                href,
-                path,
-              ),
-            ],
+            // combineWith returns the full merged children list already
+            contents: combineWith(
+              foundEntry.contents,
+              nextFolderCursor,
+              nextSubFolders,
+              href,
+              path,
+            ),
           } satisfies ArchiveTocItem,
         ]
       }
@@ -96,7 +94,13 @@ export const buildTocFromFolders = (archive: Archive): ArchiveTocItem[] => {
 
     if (!firstFolder) return acc
 
-    const href = encodeURI(file.uri).replace(/\/$/, "")
+    // encodeURI leaves `#` and `?` untouched (reserved URI delimiters), but in
+    // a raw archive filename they are data and would otherwise be parsed as
+    // fragment/query once joined onto a base URL.
+    const href = encodeURI(file.uri)
+      .replace(/#/g, `%23`)
+      .replace(/\?/g, `%3F`)
+      .replace(/\/$/, "")
     const path = file.uri.replace(/\/$/, "")
 
     return combineWith(acc, firstFolder, restFolders, href, path)
