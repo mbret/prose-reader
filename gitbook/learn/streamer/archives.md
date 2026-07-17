@@ -151,6 +151,37 @@ blobFileAccessors(async () => new Blob([bytes]))
 arrayBufferFileAccessors(async () => bytes, "image/jpeg")
 ```
 
+## Resolving a table of contents
+
+`resolveArchiveToc(archive, options?)` resolves the archive's table of contents into a generic, container-relative JSON structure — no XML, no format-specific handling on your side, and no streamer required (a bookshelf app can show a book's TOC straight from the archive):
+
+```typescript
+import { resolveArchiveToc } from "@prose-reader/archive-reader"
+
+const toc = await resolveArchiveToc(archive)
+// [{ title: "Chapter 1", path: "OEBPS/ch01.xhtml", href: "OEBPS/ch01.xhtml", contents: [...] }, ...]
+```
+
+```typescript
+type ArchiveTocItem = {
+  title: string
+  /** Reference as authored in the source (may carry a `#fragment`), or the raw record `uri` for folder-derived TOCs. */
+  path: string
+  /** Container-relative URI reference, safe to join onto a base URL. Empty when the entry has no target. */
+  href: string
+  contents: ArchiveTocItem[]
+}
+```
+
+Strategies are tried in order:
+
+1. **EPUB nav document** (manifest item with `properties="nav"`)
+2. **NCX** (`spine@toc` idref)
+3. EPUB-like containers with neither resolve to an **explicit empty TOC** — the folder layout of an EPUB zip is not a meaningful TOC.
+4. Anything else falls back to the **folder hierarchy** (e.g. a CBZ with one folder per chapter), or `undefined` when the archive is flat.
+
+Entries carry no serving concern: `href` is container-relative, and consumers join it onto their own base URL (`generateManifestFromArchive` does exactly that to produce `manifest.nav.toc`). Pass `{ opf }` (an already parsed `readArchiveOpf` result) to skip the internal OPF lookup.
+
 ## Writing a custom source
 
 If none of the creators fit, build records and hand them to `createArchive` so the `recordsByUri` index is derived for you:

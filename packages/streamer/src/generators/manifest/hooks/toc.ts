@@ -1,113 +1,28 @@
-import type { Archive, ArchiveOpfParsed } from "@prose-reader/archive-reader"
 import {
-  type Manifest,
-  sortByTitleComparator,
-  urlJoin,
-} from "@prose-reader/shared"
-import { parseToc } from "../../../parsers/nav"
+  type Archive,
+  type ArchiveOpfParsed,
+  type ArchiveTocItem,
+  resolveArchiveToc,
+} from "@prose-reader/archive-reader"
+import { type Manifest, urlJoin } from "@prose-reader/shared"
 import { buildAudiobookToc } from "./audiobookToc"
 
 type Toc = NonNullable<Manifest["nav"]>["toc"]
 type TocItem = NonNullable<Manifest["nav"]>["toc"][number]
 
-const buildFolderFallbackToc = (
-  archive: Archive,
-  { baseUrl }: { baseUrl: string },
-): Toc => {
-  const filesSortedByAlpha = [...archive.records].sort((a, b) =>
-    sortByTitleComparator(a.uri, b.uri),
-  )
-
-  const combineWith = (
-    toc: TocItem[],
-    folder: string,
-    subFolders: string[],
-    href: string,
-    path: string,
-  ): TocItem[] => {
-    const foundEntry = toc.find((entry) => entry.title === folder)
-    const [nextFolderCursor, ...nextSubFolders] = subFolders
-
-    if (foundEntry) {
-      if (nextFolderCursor) {
-        return [
-          ...toc.filter((entry) => entry !== foundEntry),
-          {
-            ...foundEntry,
-            contents: [
-              ...foundEntry.contents,
-              ...combineWith(
-                foundEntry.contents,
-                nextFolderCursor,
-                nextSubFolders,
-                href,
-                path,
-              ),
-            ],
-          } satisfies TocItem,
-        ]
-      }
-
-      const previousRegisteredPathWasLonger =
-        foundEntry.path.split("/").length > path.split("/").length
-
-      if (previousRegisteredPathWasLonger) {
-        return [
-          ...toc.filter((entry) => entry !== foundEntry),
-          {
-            ...foundEntry,
-            path,
-            href,
-          } satisfies TocItem,
-        ]
-      }
-
-      return toc
-    }
-
-    if (nextFolderCursor) {
-      return [
-        ...toc,
-        {
-          contents: combineWith(
-            [],
-            nextFolderCursor,
-            nextSubFolders,
-            href,
-            path,
-          ),
-          href,
-          path,
-          title: folder,
-        },
-      ]
-    }
-
-    return [
-      ...toc,
-      {
-        contents: [],
-        href,
-        path,
-        title: folder,
-      },
-    ]
-  }
-
-  return filesSortedByAlpha.reduce((acc, file) => {
-    if (file.dir) return acc
-
-    const folders = file.uri.split("/").slice(0, -1)
-    const [firstFolder, ...restFolders] = folders
-
-    if (!firstFolder) return acc
-
-    const href = urlJoin(baseUrl, encodeURI(file.uri)).replace(/\/$/, "")
-    const path = file.uri.replace(/\/$/, "")
-
-    return combineWith(acc, firstFolder, restFolders, href, path)
-  }, [] as Toc)
-}
+/**
+ * The archive reader resolves references within the container, the streamer
+ * owns where they are served from.
+ */
+const toManifestTocItem =
+  (baseUrl: string) =>
+  (item: ArchiveTocItem): TocItem => ({
+    title: item.title,
+    path: item.path,
+    // entries without a target (eg nav heading without link) keep an empty href
+    href: item.href ? urlJoin(baseUrl, item.href) : ``,
+    contents: item.contents.map(toManifestTocItem(baseUrl)),
+  })
 
 const resolveTocFromArchive = async (
   archive: Archive,
@@ -118,22 +33,20 @@ const resolveTocFromArchive = async (
   }: { baseUrl: string; archiveOpf: ArchiveOpfParsed | undefined },
 ): Promise<Toc | undefined> => {
   if (archiveOpf) {
-    const toc = await parseToc(archiveOpf.opf, archive, { baseUrl })
+    const toc = await resolveArchiveToc(archive, { opf: archiveOpf })
 
     // Keep explicit empty TOC for EPUB-like inputs even when there is no nav file.
-    return toc || []
+    return (toc ?? []).map(toManifestTocItem(baseUrl))
   }
 
   const audiobookToc = buildAudiobookToc(manifest, archive)
   if (audiobookToc) return audiobookToc
 
-  const toc = buildFolderFallbackToc(archive, { baseUrl })
+  const toc = await resolveArchiveToc(archive)
 
-  if (toc.length === 0) {
-    return undefined
-  }
+  if (!toc) return undefined
 
-  return toc
+  return toc.map(toManifestTocItem(baseUrl))
 }
 
 /**

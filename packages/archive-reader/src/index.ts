@@ -4,7 +4,9 @@
  * `createArchiveFrom*` creators producing it, and the parsers/resolvers for
  * archive-embedded metadata (OPF, ComicInfo, Kobo XML, …). Parsed metadata
  * carries a `kind` discriminator (`comicInfo` / `kobo` / `apple` / `opf`);
- * {@link resolveArchiveMetadata} accepts that union directly.
+ * {@link resolveArchiveMetadata} accepts that union directly, and
+ * {@link resolveArchiveToc} resolves the table of contents (EPUB nav document,
+ * NCX, folder hierarchy) into container-relative JSON.
  *
  * Creators requiring an optional peer dependency (jszip, zip.js, libarchive.js,
  * node-unrar-js, unzipper) ship as subpath exports, e.g.
@@ -62,6 +64,8 @@ export type { ArchiveOpfParsed } from "./opf/readArchiveOpf"
 export { readArchiveOpf } from "./opf/readArchiveOpf"
 export type { ResolvedArchiveInput } from "./resolve"
 export { resolveArchiveMetadata } from "./resolve"
+export { resolveArchiveToc } from "./toc/resolveArchiveToc"
+export type { ArchiveTocItem } from "./toc/types"
 export type { ArchiveResolveResult } from "./types/archiveResolve"
 export { normalizeGtin } from "./utils/normalizeGtin"
 export { normalizeIsbn } from "./utils/normalizeIsbn"
