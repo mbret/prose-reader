@@ -109,12 +109,13 @@ const createReader = (items: SpineItem[]) => {
     },
   }
 
-  cbzEnhancer(() => {
+  const enhancedReader = cbzEnhancer(() => {
     // This unit only exercises the reader members consumed by cbzEnhancer.
     return reader as unknown as Reader
   })({})
 
   return {
+    enhancedReader,
     generateHook: generateHooks[0],
     reader,
     resolveHook: resolveHooks[0],
@@ -122,6 +123,27 @@ const createReader = (items: SpineItem[]) => {
 }
 
 describe("cbzEnhancer", () => {
+  it("detects virtual panorama halves through the cbz reader api", () => {
+    const originalUri = "p002-003.jpg"
+    const cover = createSpineItem({
+      href: "file://cover.jpg",
+      id: "cover.jpg",
+      index: 0,
+    })
+    const spreadLeft = createVirtualSpineItem({
+      cropSide: "left",
+      id: createVirtualSpineId(originalUri, "002"),
+      index: 1,
+      originalUri,
+    })
+    const { enhancedReader } = createReader([cover, spreadLeft])
+
+    expect(enhancedReader.cbz.isPanoramaSpineItem({ item: spreadLeft })).toBe(
+      true,
+    )
+    expect(enhancedReader.cbz.isPanoramaSpineItem({ item: cover })).toBe(false)
+  })
+
   it("rewrites generated virtual spread CFIs to the original CBZ resource", () => {
     const firstSpreadUri = "p002-003.jpg"
     const secondSpreadUri = "bonus/p006-007.jpg"

@@ -79,3 +79,9 @@ See [gallery.md](../enhancers/gallery.md "mention")to install enhancer
 
 See [refit.md](../enhancers/refit.md "mention")to install enhancer
 
+### CBZ & comics archives
+
+See [cbz-and-comics-archives.md](../enhancers/cbz-and-comics-archives.md "mention") to install enhancer
+
+* When the current page is half of a split panorama and rotating the device would display the full spread, the reader shows a rotation hint.
+

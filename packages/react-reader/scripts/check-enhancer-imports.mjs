@@ -6,7 +6,9 @@ import ts from "typescript"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const packageDir = path.resolve(__dirname, "..")
 const targetDir = path.join(packageDir, "src")
-const enhancerPackagePattern = /^@prose-reader\/enhancer-/
+// @prose-reader/cbz ships an enhancer without the `enhancer-` prefix but must
+// stay optional at runtime just like the other enhancer packages.
+const enhancerPackagePattern = /^@prose-reader\/(enhancer-|cbz(\/|$))/
 
 const collectSourceFiles = async (directory) => {
   const entries = await readdir(directory, {

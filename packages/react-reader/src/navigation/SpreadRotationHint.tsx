@@ -1,5 +1,4 @@
 import { Box, Presence } from "@chakra-ui/react"
-import { isPanoramaSpineItem } from "@prose-reader/cbz"
 import {
   type ExtraPaginationInfo,
   type PaginationInfo,
@@ -22,7 +21,7 @@ import {
   switchMap,
 } from "rxjs"
 import { useTransientValue } from "../common/useTransientValue"
-import { useReader } from "../context/useReader"
+import { hasCbzEnhancer, useReader } from "../context/useReader"
 import styles from "./SpreadRotationHint.module.css"
 
 const HINT_TARGET_DEBOUNCE_MS = 100
@@ -147,7 +146,7 @@ const observeSpreadRotationHintTargetKey = (
     pagination$,
     reader,
   })
-  const cbzActive = `__PROSE_READER_ENHANCER_CBZ` in reader
+  const cbzReader = hasCbzEnhancer(reader) ? reader : undefined
 
   return combineLatest([
     pagination$,
@@ -169,9 +168,9 @@ const observeSpreadRotationHintTargetKey = (
       ]) => {
         const isPanorama =
           isReady &&
-          cbzActive &&
+          cbzReader !== undefined &&
           spineItem !== undefined &&
-          isPanoramaSpineItem(spineItem)
+          cbzReader.cbz.isPanoramaSpineItem(spineItem)
 
         return getSpreadRotationHintTargetKey({
           manifest,

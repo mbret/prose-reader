@@ -1,3 +1,4 @@
+import type { CbzEnhancerAPI } from "@prose-reader/cbz"
 import type { Reader } from "@prose-reader/core"
 import type { AnnotationsEnhancerAPI } from "@prose-reader/enhancer-annotations"
 import type { AudioEnhancerAPI } from "@prose-reader/enhancer-audio"
@@ -40,4 +41,10 @@ export const hasRefitEnhancer = (
   reader?: Reader,
 ): reader is Reader & RefitEnhancerAPI => {
   return !!reader && "__PROSE_READER_ENHANCER_REFIT" in reader
+}
+
+export const hasCbzEnhancer = (
+  reader?: Reader,
+): reader is Reader & CbzEnhancerAPI => {
+  return !!reader && "__PROSE_READER_ENHANCER_CBZ" in reader
 }

@@ -13,6 +13,9 @@ type SpineItem = Manifest["spineItems"][number]
 
 export type CbzEnhancerAPI = {
   __PROSE_READER_ENHANCER_CBZ: true
+  cbz: {
+    isPanoramaSpineItem: (spineItem: { item: { href: string } }) => boolean
+  }
 }
 
 const decodeURIComponentSafe = (value: string) => {
@@ -49,7 +52,7 @@ const parseVirtualPanoramaFromHref = (href: string) => {
  * into two virtual portrait spine items. A spine item is therefore a panorama
  * half iff its href is one of those virtual split resources.
  */
-export const isPanoramaSpineItem = (spineItem: { item: { href: string } }) =>
+const isPanoramaSpineItem = (spineItem: { item: { href: string } }) =>
   parseVirtualPanoramaFromHref(spineItem.item.href) !== undefined
 
 const getOriginalSpineIndex = (reader: Reader, originalUri: string) => {
@@ -155,6 +158,9 @@ export const cbzEnhancer =
     return {
       ...reader,
       __PROSE_READER_ENHANCER_CBZ: true,
+      cbz: {
+        isPanoramaSpineItem,
+      },
       destroy,
     }
   }

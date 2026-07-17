@@ -59,3 +59,15 @@ For example, `p006-007.jpg` can produce:
 * CFI mappings that still point back to `p006-007.jpg` externally.
 
 The generated XHTML references the original image and crops it with CSS. This keeps the archive unchanged while giving the reader separate page resources to layout and navigate. Additionally the generated CFI is valid for the archive and can be used in other readers.
+
+### Detecting split pages at runtime
+
+The enhancer exposes `reader.cbz.isPanoramaSpineItem` which tells whether a spine item is one of the two virtual pages produced by page spread splitting. This is useful to adapt your UI when the current page is half of a panorama (for example, suggesting a device rotation so the full spread becomes visible):
+
+```ts
+const spineItem = reader.spineItemsManager.get(0)
+
+if (spineItem && reader.cbz.isPanoramaSpineItem(spineItem)) {
+  // the page is one of the two halves of a split panorama
+}
+```
