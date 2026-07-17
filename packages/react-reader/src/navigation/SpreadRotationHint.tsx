@@ -52,11 +52,6 @@ type HintPagination = Pick<
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
 
-type BeginSpineItem = {
-  item: { href: string }
-  isReady$: Observable<boolean>
-}
-
 export const wouldRotationUseComputedSpreadMode = ({
   manifest,
   viewport,
@@ -134,7 +129,7 @@ const observeBeginSpineItem = ({
     map(([{ beginSpineItemIndex }, spineItems]) =>
       beginSpineItemIndex === undefined
         ? undefined
-        : (spineItems[beginSpineItemIndex] as BeginSpineItem | undefined),
+        : spineItems[beginSpineItemIndex],
     ),
     distinctUntilChanged(),
     switchMap((spineItem) =>
