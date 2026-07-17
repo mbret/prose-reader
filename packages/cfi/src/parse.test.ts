@@ -184,7 +184,7 @@ describe("EPUB CFI Parser", () => {
         "epubcfi(/4[body01]/10[para05;vnd.test.param=value^,with^[special^]chars])"
       const parsed = parse(cfi)
 
-      if (Array.isArray(parsed) && parsed[0] && parsed[0][1]) {
+      if (Array.isArray(parsed) && parsed[0]?.[1]) {
         expect(parsed[0][1].extensions).toBeDefined()
         expect(parsed[0][1].extensions?.["vnd.test.param"]).toBe(
           "value,with[special]chars",

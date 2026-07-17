@@ -22,7 +22,6 @@ import {
   type TocCandidatesBySpineHref,
 } from "./chapters"
 import { getPercentageEstimate } from "./progression"
-import { hasAdjacentSpreadPage } from "./spread"
 
 type ChaptersData = {
   tocCandidatesBySpineHref: TocCandidatesBySpineHref
@@ -48,14 +47,12 @@ const mapChapterInfo = ({
   paginationInfo,
   chaptersData,
   pagesState,
-  spineItems,
 }: {
   beginItem: SpineItem | undefined
   endItem: SpineItem | undefined
   paginationInfo: ChapterPaginationInfo
   chaptersData: ChaptersData
   pagesState: PagesState
-  spineItems: SpineItem[]
 }) => {
   const beginPageEntry =
     beginItem && paginationInfo.beginPageIndexInSpineItem !== undefined
@@ -106,27 +103,11 @@ const mapChapterInfo = ({
     beginChapterInfo:
       beginChapterInfoFromVisibleNode ??
       (beginItem ? chaptersData.chaptersInfo[beginItem.item.id] : undefined),
-    beginHasAdjacentSpreadPage: hasAdjacentSpreadPage({
-      item: beginItem,
-      nextItem:
-        beginItem !== undefined ? spineItems[beginItem.index + 1] : undefined,
-      previousItem:
-        beginItem !== undefined ? spineItems[beginItem.index - 1] : undefined,
-      readingDirection: beginItem?.readingDirection,
-    }),
     beginSpineItemReadingDirection: beginItem?.readingDirection,
     beginAbsolutePageIndex: beginPageEntry?.absolutePageIndex,
     endChapterInfo:
       endChapterInfoFromVisibleNode ??
       (endItem ? chaptersData.chaptersInfo[endItem.item.id] : undefined),
-    endHasAdjacentSpreadPage: hasAdjacentSpreadPage({
-      item: endItem,
-      nextItem:
-        endItem !== undefined ? spineItems[endItem.index + 1] : undefined,
-      previousItem:
-        endItem !== undefined ? spineItems[endItem.index - 1] : undefined,
-      readingDirection: endItem?.readingDirection,
-    }),
     endSpineItemReadingDirection: endItem?.readingDirection,
     endAbsolutePageIndex: endPageEntry?.absolutePageIndex,
   }
@@ -243,17 +224,14 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     chapterPaginationInfo$,
     chaptersData$,
     pagesState$,
-    reader.spineItemsManager.items$,
   ]).pipe(
-    map(([paginationInfo, chaptersData, pagesState, spineItems]) => {
-      const beginItem =
-        paginationInfo.beginSpineItemIndex !== undefined
-          ? spineItems[paginationInfo.beginSpineItemIndex]
-          : undefined
-      const endItem =
-        paginationInfo.endSpineItemIndex !== undefined
-          ? spineItems[paginationInfo.endSpineItemIndex]
-          : undefined
+    map(([paginationInfo, chaptersData, pagesState]) => {
+      const beginItem = reader.spineItemsManager.get(
+        paginationInfo.beginSpineItemIndex,
+      )
+      const endItem = reader.spineItemsManager.get(
+        paginationInfo.endSpineItemIndex,
+      )
 
       return mapChapterInfo({
         beginItem,
@@ -261,7 +239,6 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
         paginationInfo,
         chaptersData,
         pagesState,
-        spineItems,
       })
     }),
     shareReplay({ bufferSize: 1, refCount: true }),

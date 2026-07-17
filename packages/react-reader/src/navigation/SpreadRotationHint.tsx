@@ -21,7 +21,7 @@ import {
   switchMap,
 } from "rxjs"
 import { useTransientValue } from "../common/useTransientValue"
-import { useReader } from "../context/useReader"
+import { hasCbzEnhancer, useReader } from "../context/useReader"
 import styles from "./SpreadRotationHint.module.css"
 
 const HINT_TARGET_DEBOUNCE_MS = 100
@@ -43,10 +43,8 @@ type ViewportState = `busy` | `free`
 
 type HintPagination = Pick<
   PaginationInfo & ExtraPaginationInfo,
-  | `beginHasAdjacentSpreadPage`
   | `beginPageIndexInSpineItem`
   | `beginSpineItemIndex`
-  | `endHasAdjacentSpreadPage`
   | `endPageIndexInSpineItem`
   | `endSpineItemIndex`
 >
@@ -77,12 +75,14 @@ export const getSpreadRotationHintTargetKey = ({
   computedSpreadMode,
   viewportState,
   viewport,
+  isPanorama,
 }: {
   manifest: Manifest
   pagination: HintPagination
   computedSpreadMode: boolean
   viewportState: ViewportState
   viewport: ViewportDimensions
+  isPanorama: boolean
 }) => {
   if (viewportState !== `free`) return undefined
   if (computedSpreadMode) return undefined
@@ -90,10 +90,7 @@ export const getSpreadRotationHintTargetKey = ({
     return undefined
   }
 
-  const hasSpreadPair =
-    pagination.beginHasAdjacentSpreadPage && pagination.endHasAdjacentSpreadPage
-
-  if (!hasSpreadPair) return undefined
+  if (!isPanorama) return undefined
 
   return [
     pagination.beginSpineItemIndex,
@@ -108,17 +105,19 @@ export const getSpreadRotationHintTargetKey = ({
 const observeHintPagination = (reader: ReaderWithSpreadHintStreams) =>
   reader.pagination.state$.pipe(
     watchKeys([
-      `beginHasAdjacentSpreadPage`,
       `beginPageIndexInSpineItem`,
       `beginSpineItemIndex`,
-      `endHasAdjacentSpreadPage`,
       `endPageIndexInSpineItem`,
       `endSpineItemIndex`,
     ]),
     shareReplay({ bufferSize: 1, refCount: true }),
   )
 
-const observeBeginSpineItemReady = ({
+/**
+ * Resolves the begin spine item alongside its readiness so the hint can both
+ * gate on a loaded page and inspect whether that page is a cbz panorama half.
+ */
+const observeBeginSpineItem = ({
   pagination$,
   reader,
 }: {
@@ -132,17 +131,22 @@ const observeBeginSpineItemReady = ({
         : spineItems[beginSpineItemIndex],
     ),
     distinctUntilChanged(),
-    switchMap((spineItem) => spineItem?.isReady$ ?? of(false)),
+    switchMap((spineItem) =>
+      spineItem
+        ? spineItem.isReady$.pipe(map((isReady) => ({ spineItem, isReady })))
+        : of({ spineItem: undefined, isReady: false }),
+    ),
   )
 
 const observeSpreadRotationHintTargetKey = (
   reader: ReaderWithSpreadHintStreams,
 ) => {
   const pagination$ = observeHintPagination(reader)
-  const beginSpineItemReady$ = observeBeginSpineItemReady({
+  const beginSpineItem$ = observeBeginSpineItem({
     pagination$,
     reader,
   })
+  const cbzReader = hasCbzEnhancer(reader) ? reader : undefined
 
   return combineLatest([
     pagination$,
@@ -150,12 +154,23 @@ const observeSpreadRotationHintTargetKey = (
     reader.settings.watch([`computedSpreadMode`]),
     reader.viewportState$,
     reader.viewport.watch([`width`, `height`]),
-    beginSpineItemReady$,
+    beginSpineItem$,
   ]).pipe(
     debounceTime(HINT_TARGET_DEBOUNCE_MS),
     map(
-      ([pagination, manifest, settings, viewportState, viewport, isReady]) => {
-        if (!isReady) return undefined
+      ([
+        pagination,
+        manifest,
+        settings,
+        viewportState,
+        viewport,
+        { spineItem, isReady },
+      ]) => {
+        const isPanorama =
+          isReady &&
+          cbzReader !== undefined &&
+          spineItem !== undefined &&
+          cbzReader.cbz.isPanoramaSpineItem(spineItem)
 
         return getSpreadRotationHintTargetKey({
           manifest,
@@ -163,6 +178,7 @@ const observeSpreadRotationHintTargetKey = (
           computedSpreadMode: settings.computedSpreadMode ?? false,
           viewportState,
           viewport,
+          isPanorama,
         })
       },
     ),

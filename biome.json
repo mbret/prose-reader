@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -12,6 +12,7 @@
       "!**/.nx",
       "!**/.test",
       "!**/test-results",
+      "!**/coverage",
       "!**/dist",
       "!**/CfiHandler.ts",
       "!**/playwright-report",
@@ -28,7 +29,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "complexity": {
         "noForEach": "off"
       },
@@ -62,5 +63,17 @@
       "quoteStyle": "double",
       "semicolons": "asNeeded"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.svg"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    }
+  ]
 }

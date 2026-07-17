@@ -5,20 +5,20 @@ import {
   type HookResource,
 } from "@prose-reader/streamer"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { buildVirtualPageSpreadResourcePath } from "./pageSpreadSplitManifest"
-import { pageSpreadSplitResourceHook } from "./pageSpreadSplitResource"
+import { buildVirtualPanoramaResourcePath } from "./panoramaSplitManifest"
+import { panoramaSplitResourceHook } from "./panoramaSplitResource"
 
-const generatePageSpreadResource = (archive: Archive, resourcePath: string) =>
-  pageSpreadSplitResourceHook({ archive, resourcePath })({
+const generatePanoramaResource = (archive: Archive, resourcePath: string) =>
+  panoramaSplitResourceHook({ archive, resourcePath })({
     params: {},
   } satisfies HookResource)
 
-describe("pageSpreadSplitResourceHook", () => {
+describe("panoramaSplitResourceHook", () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })
 
-  it("should generate virtual XHTML page spread resources", async () => {
+  it("should generate virtual XHTML panorama resources", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const archive = createArchive({
       filename: "",
@@ -44,16 +44,16 @@ describe("pageSpreadSplitResourceHook", () => {
 
     vi.stubGlobal("createImageBitmap", createImageBitmap)
 
-    const resourcePath = buildVirtualPageSpreadResourcePath({
+    const resourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "right",
       originalUri: "p006-007.jpg",
     })
-    const resource = await generatePageSpreadResource(archive, resourcePath)
+    const resource = await generatePanoramaResource(archive, resourcePath)
 
     expect(resource.params.contentType).toBe("application/xhtml+xml")
 
     if (typeof resource.body !== "string") {
-      throw new Error("Expected virtual page spread body to be XHTML")
+      throw new Error("Expected virtual panorama body to be XHTML")
     }
 
     expect(resource.body).toContain(
@@ -67,7 +67,7 @@ describe("pageSpreadSplitResourceHook", () => {
     expect(close).toHaveBeenCalled()
   })
 
-  it("should preserve nested original image paths in virtual page spread resources", async () => {
+  it("should preserve nested original image paths in virtual panorama resources", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const originalUri = "folder/p006 & 007 [x].jpg"
     const archive = createArchive({
@@ -94,16 +94,16 @@ describe("pageSpreadSplitResourceHook", () => {
 
     vi.stubGlobal("createImageBitmap", createImageBitmap)
 
-    const resourcePath = buildVirtualPageSpreadResourcePath({
+    const resourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "left",
       originalUri,
     })
-    const resource = await generatePageSpreadResource(archive, resourcePath)
+    const resource = await generatePanoramaResource(archive, resourcePath)
 
     expect(resourcePath).toContain("folder%2Fp006%20%26%20007%20%5Bx%5D.jpg")
 
     if (typeof resource.body !== "string") {
-      throw new Error("Expected virtual page spread body to be XHTML")
+      throw new Error("Expected virtual panorama body to be XHTML")
     }
 
     expect(resource.body).toContain(
@@ -113,7 +113,7 @@ describe("pageSpreadSplitResourceHook", () => {
     expect(close).toHaveBeenCalled()
   })
 
-  it("should cache virtual page spread image dimensions by archive and original URI", async () => {
+  it("should cache virtual panorama image dimensions by archive and original URI", async () => {
     const source = new Blob(["source"], { type: "image/jpeg" })
     const blob = vi.fn(() => Promise.resolve(source))
     const originalUri = "p006-007.jpg"
@@ -141,17 +141,17 @@ describe("pageSpreadSplitResourceHook", () => {
 
     vi.stubGlobal("createImageBitmap", createImageBitmap)
 
-    const leftResourcePath = buildVirtualPageSpreadResourcePath({
+    const leftResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "left",
       originalUri,
     })
-    const rightResourcePath = buildVirtualPageSpreadResourcePath({
+    const rightResourcePath = buildVirtualPanoramaResourcePath({
       cropSide: "right",
       originalUri,
     })
 
-    await generatePageSpreadResource(archive, leftResourcePath)
-    await generatePageSpreadResource(archive, rightResourcePath)
+    await generatePanoramaResource(archive, leftResourcePath)
+    await generatePanoramaResource(archive, rightResourcePath)
 
     expect(blob).toHaveBeenCalledTimes(1)
     expect(createImageBitmap).toHaveBeenCalledTimes(1)

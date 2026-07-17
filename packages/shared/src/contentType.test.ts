@@ -12,35 +12,31 @@ describe("parseContentType", () => {
 })
 
 describe("isMediaContentMimeType", () => {
-  it.each([
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ])("should return true for %s", (mimeType) => {
-    expect(isMediaContentMimeType(mimeType)).toBe(true)
-  })
+  it.each(["image/jpeg", "image/png", "image/webp"])(
+    "should return true for %s",
+    (mimeType) => {
+      expect(isMediaContentMimeType(mimeType)).toBe(true)
+    },
+  )
 
-  it.each([
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/flac",
-  ])("should return true for %s", (mimeType) => {
-    expect(isMediaContentMimeType(mimeType)).toBe(true)
-  })
+  it.each(["audio/mpeg", "audio/mp4", "audio/ogg", "audio/flac"])(
+    "should return true for %s",
+    (mimeType) => {
+      expect(isMediaContentMimeType(mimeType)).toBe(true)
+    },
+  )
 
-  it.each([
-    "video/mp4",
-    "video/webm",
-  ])("should return true for %s", (mimeType) => {
-    expect(isMediaContentMimeType(mimeType)).toBe(true)
-  })
+  it.each(["video/mp4", "video/webm"])(
+    "should return true for %s",
+    (mimeType) => {
+      expect(isMediaContentMimeType(mimeType)).toBe(true)
+    },
+  )
 
-  it.each([
-    "application/xhtml+xml",
-    "text/plain",
-    "text/html",
-  ])("should return false for %s", (mimeType) => {
-    expect(isMediaContentMimeType(mimeType)).toBe(false)
-  })
+  it.each(["application/xhtml+xml", "text/plain", "text/html"])(
+    "should return false for %s",
+    (mimeType) => {
+      expect(isMediaContentMimeType(mimeType)).toBe(false)
+    },
+  )
 })

@@ -5,22 +5,22 @@ import {
 } from "@prose-reader/shared"
 import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
 import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
-import { detectPageSpreadFromBasename } from "./detectPageSpreadFromBasename"
+import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
 
 export {
-  type DetectedPageSpread,
-  detectPageSpreadFromBasename,
-} from "./detectPageSpreadFromBasename"
+  type DetectedPanorama,
+  detectPanoramaFromBasename,
+} from "./detectPanoramaFromBasename"
 
-export type PageSpreadCropSide = "left" | "right"
+export type PanoramaCropSide = "left" | "right"
 
-export type VirtualPageSpreadResource = {
+export type VirtualPanoramaResource = {
   originalUri: string
-  cropSide: PageSpreadCropSide
+  cropSide: PanoramaCropSide
 }
 
-export const PAGE_SPREAD_RESOURCE_PREFIX = `__prose-reader__/page-spread`
-export const PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE = `application/xhtml+xml`
+export const PANORAMA_RESOURCE_PREFIX = `__prose-reader__/panorama`
+export const PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE = `application/xhtml+xml`
 
 const supportedImageMediaTypes = new Set([
   `image/jpg`,
@@ -29,9 +29,7 @@ const supportedImageMediaTypes = new Set([
   `image/webp`,
 ])
 
-export const isPageSpreadSplitSupportedImage = (
-  mimeType: string | undefined,
-) => {
+export const isPanoramaSplitSupportedImage = (mimeType: string | undefined) => {
   if (mimeType === undefined) return false
 
   return supportedImageMediaTypes.has(mimeType)
@@ -71,18 +69,18 @@ const isArchiveEpub = (archive: Archive) =>
       (hasOpfExtension(file.basename) || hasOpfExtension(file.uri)),
   )
 
-export const buildVirtualPageSpreadResourcePath = ({
+export const buildVirtualPanoramaResourcePath = ({
   cropSide,
   originalUri,
 }: {
   originalUri: string
-  cropSide: PageSpreadCropSide
+  cropSide: PanoramaCropSide
 }) => {
-  return `${PAGE_SPREAD_RESOURCE_PREFIX}/${encodeOriginalUriSegment(originalUri)}/${cropSide}.xhtml`
+  return `${PANORAMA_RESOURCE_PREFIX}/${encodeOriginalUriSegment(originalUri)}/${cropSide}.xhtml`
 }
 
 const spreadPropertiesForSide = (
-  side: PageSpreadCropSide,
+  side: PanoramaCropSide,
 ): Pick<SpineItem, "pageSpreadLeft" | "pageSpreadRight"> =>
   side === `left`
     ? { pageSpreadLeft: true, pageSpreadRight: undefined }
@@ -90,7 +88,7 @@ const spreadPropertiesForSide = (
 
 const cropSidesInReadingOrder = (
   readingDirection: Manifest["readingDirection"],
-): [PageSpreadCropSide, PageSpreadCropSide] =>
+): [PanoramaCropSide, PanoramaCropSide] =>
   readingDirection === `rtl` ? [`right`, `left`] : [`left`, `right`]
 
 const createVirtualSpineItem = ({
@@ -105,10 +103,10 @@ const createVirtualSpineItem = ({
   originalSpineItem: SpineItem
   originalUri: string
   label: string
-  cropSide: PageSpreadCropSide
+  cropSide: PanoramaCropSide
   progressionWeight: number | undefined
 }): SpineItem => {
-  const resourcePath = buildVirtualPageSpreadResourcePath({
+  const resourcePath = buildVirtualPanoramaResourcePath({
     cropSide,
     originalUri,
   })
@@ -117,7 +115,7 @@ const createVirtualSpineItem = ({
     ...originalSpineItem,
     id: createXmlSafeId(`${originalSpineItem.id}.${label}`),
     href: createManifestResourceHref({ baseUrl, resourcePath }),
-    mediaType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+    mediaType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
     progressionWeight,
     renditionLayout: `pre-paginated`,
     ...spreadPropertiesForSide(cropSide),
@@ -198,19 +196,19 @@ const mediaTypeFromArchiveRecordResourcePath = (
 ) =>
   detectMimeTypeFromName(record.uri) || detectMimeTypeFromName(record.basename)
 
-export const isPageSpreadSplitSupportedArchiveRecord = (
+export const isPanoramaSplitSupportedArchiveRecord = (
   record: ArchiveRecord | undefined,
 ): record is ArchiveFileRecord => {
   if (record === undefined || record.dir) return false
 
   const resourcePathMediaType = mediaTypeFromArchiveRecordResourcePath(record)
 
-  if (!isPageSpreadSplitSupportedImage(resourcePathMediaType)) return false
+  if (!isPanoramaSplitSupportedImage(resourcePathMediaType)) return false
 
-  return isPageSpreadSplitSupportedImage(mediaTypeFromArchiveRecord(record))
+  return isPanoramaSplitSupportedImage(mediaTypeFromArchiveRecord(record))
 }
 
-export const pageSpreadSplit =
+export const panoramaSplit =
   ({ archive, baseUrl }: { archive: Archive; baseUrl: string }) =>
   async (manifest: Manifest): Promise<Manifest> => {
     if (isArchiveEpub(archive)) return manifest
@@ -223,11 +221,11 @@ export const pageSpreadSplit =
         spineItem,
       })
 
-      if (!isPageSpreadSplitSupportedArchiveRecord(archiveRecord)) {
+      if (!isPanoramaSplitSupportedArchiveRecord(archiveRecord)) {
         return [spineItem]
       }
 
-      const detected = detectPageSpreadFromBasename(archiveRecord.basename)
+      const detected = detectPanoramaFromBasename(archiveRecord.basename)
 
       if (detected === undefined) return [spineItem]
 

@@ -1,11 +1,11 @@
 import { escapeXmlAttributeValue } from "@prose-reader/shared"
 import type { Archive, HookResource } from "@prose-reader/streamer"
 import {
-  PAGE_SPREAD_RESOURCE_PREFIX,
-  PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
-  type PageSpreadCropSide,
-  type VirtualPageSpreadResource,
-} from "./pageSpreadSplitManifest"
+  PANORAMA_RESOURCE_PREFIX,
+  PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
+  type PanoramaCropSide,
+  type VirtualPanoramaResource,
+} from "./panoramaSplitManifest"
 
 type CropRect = {
   x: number
@@ -31,10 +31,10 @@ const decodeOriginalUriSegment = (encoded: string): string | undefined => {
   }
 }
 
-export const parseVirtualPageSpreadResourcePath = (
+export const parseVirtualPanoramaResourcePath = (
   resourcePath: string,
-): VirtualPageSpreadResource | undefined => {
-  const prefixIndex = resourcePath.indexOf(`${PAGE_SPREAD_RESOURCE_PREFIX}/`)
+): VirtualPanoramaResource | undefined => {
+  const prefixIndex = resourcePath.indexOf(`${PANORAMA_RESOURCE_PREFIX}/`)
 
   if (prefixIndex < 0) return undefined
 
@@ -47,7 +47,7 @@ export const parseVirtualPageSpreadResourcePath = (
   if (
     parts.length !== 4 ||
     parts[0] !== `__prose-reader__` ||
-    parts[1] !== `page-spread` ||
+    parts[1] !== `panorama` ||
     encodedOriginalUri === undefined ||
     cropFileName === undefined
   ) {
@@ -73,7 +73,7 @@ const cropRectForSide = ({
   imageHeight,
   imageWidth,
 }: {
-  cropSide: PageSpreadCropSide
+  cropSide: PanoramaCropSide
   imageWidth: number
   imageHeight: number
 }): CropRect => {
@@ -97,7 +97,7 @@ const getRelativeOriginalImageSrc = (originalUri: string) => {
 
 const readImageDimensions = async (source: Blob): Promise<ImageDimensions> => {
   if (typeof createImageBitmap !== `function`) {
-    throw new Error(`Page spread XHTML generation requires createImageBitmap`)
+    throw new Error(`Panorama XHTML generation requires createImageBitmap`)
   }
 
   const bitmap = await createImageBitmap(source)
@@ -112,17 +112,17 @@ const readImageDimensions = async (source: Blob): Promise<ImageDimensions> => {
   }
 }
 
-export const createPageSpreadSplitXhtml = ({
+export const createPanoramaSplitXhtml = ({
   cropSide,
   imageDimensions,
   originalUri,
 }: {
-  cropSide: PageSpreadCropSide
+  cropSide: PanoramaCropSide
   imageDimensions: ImageDimensions
   originalUri: string
 }): string => {
   if (imageDimensions.width < 2) {
-    throw new Error(`Page spread image is too narrow to split`)
+    throw new Error(`Panorama image is too narrow to split`)
   }
 
   const crop = cropRectForSide({
@@ -161,14 +161,14 @@ export const createPageSpreadSplitXhtml = ({
 </html>`
 }
 
-const generatePageSpreadSplitResource = async ({
+const generatePanoramaSplitResource = async ({
   archive,
   resourcePath,
 }: {
   archive: Archive
   resourcePath: string
 }): Promise<HookResource | undefined> => {
-  const virtualResource = parseVirtualPageSpreadResourcePath(resourcePath)
+  const virtualResource = parseVirtualPanoramaResourcePath(resourcePath)
 
   if (virtualResource === undefined) return undefined
 
@@ -178,7 +178,7 @@ const generatePageSpreadSplitResource = async ({
 
   if (file === undefined || file.dir) {
     throw new Error(
-      `no source file found for virtual page spread resourcePath:${resourcePath}`,
+      `no source file found for virtual panorama resourcePath:${resourcePath}`,
     )
   }
 
@@ -194,7 +194,7 @@ const generatePageSpreadSplitResource = async ({
 
   archiveCache.set(virtualResource.originalUri, imageDimensions)
 
-  const body = createPageSpreadSplitXhtml({
+  const body = createPanoramaSplitXhtml({
     cropSide: virtualResource.cropSide,
     imageDimensions,
     originalUri: virtualResource.originalUri,
@@ -203,27 +203,27 @@ const generatePageSpreadSplitResource = async ({
   return {
     body,
     params: {
-      contentType: PAGE_SPREAD_SPLIT_DOCUMENT_MEDIA_TYPE,
+      contentType: PANORAMA_SPLIT_DOCUMENT_MEDIA_TYPE,
     },
   }
 }
 
-export const pageSpreadSplitResourceHook =
+export const panoramaSplitResourceHook =
   ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
   async (resource: HookResource): Promise<HookResource> => {
-    const pageSpreadResource = await generatePageSpreadSplitResource({
+    const panoramaResource = await generatePanoramaSplitResource({
       archive,
       resourcePath,
     })
 
-    if (pageSpreadResource === undefined) return resource
+    if (panoramaResource === undefined) return resource
 
     return {
       ...resource,
-      ...pageSpreadResource,
+      ...panoramaResource,
       params: {
         ...resource.params,
-        ...pageSpreadResource.params,
+        ...panoramaResource.params,
       },
     }
   }

@@ -10,7 +10,7 @@ export const handleLinks = (reader: Reader) => {
             switchMap(() => {
               const frame = item.renderer.getDocumentFrame()
 
-              if (!frame || !frame?.contentDocument) return NEVER
+              if (!frame?.contentDocument) return NEVER
 
               const anchorElements = Array.from(
                 frame.contentDocument.querySelectorAll(`a`),

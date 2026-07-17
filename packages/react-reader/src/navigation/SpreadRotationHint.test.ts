@@ -40,7 +40,6 @@ const createPagination = (
   beginAbsolutePageIndex: 0,
   beginCfi: undefined,
   beginChapterInfo: undefined,
-  beginHasAdjacentSpreadPage: true,
   beginNumberOfPagesInSpineItem: 1,
   beginPageIndexInSpineItem: 0,
   beginSpineItemReadingDirection: `ltr`,
@@ -48,7 +47,6 @@ const createPagination = (
   endAbsolutePageIndex: 0,
   endCfi: undefined,
   endChapterInfo: undefined,
-  endHasAdjacentSpreadPage: true,
   endNumberOfPagesInSpineItem: 1,
   endPageIndexInSpineItem: 0,
   endSpineItemReadingDirection: `ltr`,
@@ -86,7 +84,7 @@ describe(`SpreadRotationHint`, () => {
     ).toBe(false)
   })
 
-  it(`returns a target key only when the current page can become a spread after rotation`, () => {
+  it(`returns a target key only when the current page is a panorama half that can become a spread after rotation`, () => {
     const manifest = createManifest([
       createSpineItem(`left`, 0),
       createSpineItem(`right`, 1),
@@ -99,6 +97,7 @@ describe(`SpreadRotationHint`, () => {
         computedSpreadMode: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
+        isPanorama: true,
       }),
     ).toBe(`0:0:0:0`)
 
@@ -109,6 +108,7 @@ describe(`SpreadRotationHint`, () => {
         computedSpreadMode: true,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
+        isPanorama: true,
       }),
     ).toBeUndefined()
 
@@ -121,35 +121,18 @@ describe(`SpreadRotationHint`, () => {
         computedSpreadMode: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
+        isPanorama: true,
       }),
     ).toBeUndefined()
 
     expect(
       getSpreadRotationHintTargetKey({
         manifest,
-        pagination: {
-          ...createPagination(0),
-          beginHasAdjacentSpreadPage: false,
-        },
+        pagination: createPagination(0),
         computedSpreadMode: false,
         viewportState: `free`,
         viewport: { height: 800, width: 400 },
-      }),
-    ).toBeUndefined()
-
-    expect(
-      getSpreadRotationHintTargetKey({
-        manifest,
-        pagination: {
-          ...createPagination(0),
-          beginHasAdjacentSpreadPage: false,
-          endHasAdjacentSpreadPage: true,
-          endPageIndexInSpineItem: 0,
-          endSpineItemIndex: 1,
-        },
-        computedSpreadMode: false,
-        viewportState: `free`,
-        viewport: { height: 800, width: 400 },
+        isPanorama: false,
       }),
     ).toBeUndefined()
 
@@ -160,6 +143,7 @@ describe(`SpreadRotationHint`, () => {
         computedSpreadMode: false,
         viewportState: `busy`,
         viewport: { height: 800, width: 400 },
+        isPanorama: true,
       }),
     ).toBeUndefined()
   })
