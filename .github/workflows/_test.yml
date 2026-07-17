@@ -27,7 +27,15 @@ jobs:
         run: |
           npx lerna run build --stream --scope @prose-reader/*
 
+      - uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/Library/Caches/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install Playwright Browsers
+        # On a cache hit the browsers are already present; install still runs to
+        # verify/refresh them but skips the multi-hundred-MB download.
         run: npx playwright install --with-deps
 
       - name: Test
