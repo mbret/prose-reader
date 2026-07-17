@@ -17,6 +17,7 @@
 
 * [Contract](learn/contract.md)
 * [Streamer](learn/streamer/README.md)
+  * [API Reference](learn/streamer/api-reference.md)
   * [Archives](learn/streamer/archives.md)
   * [Node](learn/streamer/node.md)
   * [React Native](learn/streamer/react-native.md)

@@ -3,7 +3,11 @@ import {
   type Manifest,
   parseContentType,
 } from "@prose-reader/shared"
-import { type Archive, createXmlSafeId } from "@prose-reader/streamer"
+import {
+  type Archive,
+  createManifestResourceHref,
+  createXmlSafeId,
+} from "@prose-reader/streamer"
 import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
 import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
 
@@ -41,24 +45,6 @@ type ArchiveRecord = Archive["records"][number]
 type ArchiveFileRecord = Extract<ArchiveRecord, { dir: false }>
 
 const encodeOriginalUriSegment = (uri: string) => encodeURIComponent(uri)
-
-const createManifestResourceHref = ({
-  baseUrl = ``,
-  resourcePath,
-}: {
-  baseUrl?: string
-  resourcePath: string
-}) => {
-  if (!baseUrl && /^https?:\/\//.test(resourcePath)) {
-    return encodeURI(resourcePath)
-  }
-
-  const hrefBaseUrl = baseUrl
-    ? `${baseUrl}${baseUrl.endsWith(`/`) ? `` : `/`}`
-    : `file://`
-
-  return encodeURI(`${hrefBaseUrl}${resourcePath}`)
-}
 
 const hasOpfExtension = (path: string) => path.toLowerCase().endsWith(`.opf`)
 
