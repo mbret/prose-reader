@@ -1,16 +1,8 @@
 import type { Archive } from "@prose-reader/archive-reader"
-import { readArchiveOpf } from "@prose-reader/archive-reader"
-import type { StreamerManifestHooks } from "../../hooks"
+import { resolveArchive } from "@prose-reader/archive-reader"
+import type { StreamerManifestHookFactory } from "../../hooks"
 import { Report } from "../../report"
-import { apple } from "./hooks/apple"
-import { comicInfo } from "./hooks/comicInfo"
-import { defaultHook } from "./hooks/default"
-import { epubHook } from "./hooks/epub/epub"
-import { epubOptimizerHook } from "./hooks/epubOptimizer"
-import { finalDefaultsHook } from "./hooks/finalDefaults"
-import { kobo } from "./hooks/kobo"
-import { nonEpub } from "./hooks/nonEpub"
-import { tocHook } from "./hooks/toc"
+import { manifestFromResolvedArchive } from "./manifestFromResolvedArchive"
 
 const normalizeBaseUrl = (baseUrl: string | undefined) => {
   if (!baseUrl) return ``
@@ -18,58 +10,48 @@ const normalizeBaseUrl = (baseUrl: string | undefined) => {
   return baseUrl.endsWith(`/`) ? baseUrl : `${baseUrl}/`
 }
 
+/**
+ * Generates the prose `Manifest` for an archive: `resolveArchive` does the
+ * book understanding (metadata precedence, reading order, toc, the viewport
+ * layout scan), then the result is mapped into serving space and handed to
+ * the consumer `hooks` (ordered `Manifest` transforms). The final defaults
+ * (`readingDirection` falling back to `ltr`) apply after the hooks, so a
+ * hook can still observe "no source decided it".
+ */
 export const generateManifestFromArchive = async (
   archive: Archive,
   {
     baseUrl = ``,
-    hooks = {},
-  }: { baseUrl?: string; hooks?: StreamerManifestHooks } = {},
+    hooks = [],
+  }: { baseUrl?: string; hooks?: StreamerManifestHookFactory[] } = {},
 ) => {
   Report.log("Generating manifest from archive", archive)
 
-  const archiveOpf = await readArchiveOpf(archive)
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
-  const createExternalHooks = (
-    hookFactories: StreamerManifestHooks[keyof StreamerManifestHooks],
-  ) =>
-    (hookFactories ?? []).map((hook) =>
-      hook({ archive, baseUrl: normalizedBaseUrl }),
-    )
-
-  const contentHooks = [
-    epubHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
-    comicInfo({ archive, baseUrl: normalizedBaseUrl }),
-    apple({ archive, baseUrl: normalizedBaseUrl }),
-    nonEpub({ archive, baseUrl: normalizedBaseUrl }),
-    ...createExternalHooks(hooks.content),
-  ]
-  const spineHooks = createExternalHooks(hooks.spine)
-  const presentationHooks = [
-    epubOptimizerHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
-    kobo({ archive, baseUrl: normalizedBaseUrl }),
-    ...createExternalHooks(hooks.presentation),
-  ]
-  const navigationHooks = [
-    tocHook({ archive, baseUrl: normalizedBaseUrl, archiveOpf }),
-    ...createExternalHooks(hooks.navigation),
-  ]
-  const manifestHooks = [
-    ...contentHooks,
-    ...spineHooks,
-    ...presentationHooks,
-    ...navigationHooks,
-    finalDefaultsHook(),
-  ]
 
   try {
-    const baseManifestPromise = defaultHook({
+    const resolved = await resolveArchive(archive, {
+      include: [`metadata`, `readingOrder`, `toc`, `sources`],
+      layoutScan: true,
+    })
+
+    let manifest = manifestFromResolvedArchive({
       archive,
       baseUrl: normalizedBaseUrl,
-    })()
+      resolved,
+    })
 
-    const manifest = await manifestHooks.reduce(async (manifest, gen) => {
-      return await gen(await manifest)
-    }, baseManifestPromise)
+    for (const hookFactory of hooks) {
+      manifest = await hookFactory({
+        archive,
+        baseUrl: normalizedBaseUrl,
+      })(manifest)
+    }
+
+    manifest = {
+      ...manifest,
+      readingDirection: manifest.readingDirection ?? "ltr",
+    }
 
     Report.log("Generated manifest", manifest)
 

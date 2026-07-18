@@ -33,23 +33,24 @@ import {
 
 export const streamer = new ServiceWorkerStreamer({
   hooks: {
-    manifest: {
-      spine: streamerHooks.manifest.spine,
-    },
+    // streamerHooks.manifest is an ordered array (reading-direction
+    // detection, then the panorama split). If you merge in your own
+    // manifest hooks, keep that relative order.
+    manifest: streamerHooks.manifest,
     resource: streamerHooks.resource,
   },
-  // ... 
+  // ...
 })
 ```
+
+`streamerHooks` already matches the streamer's `hooks` shape, so if the CBZ hooks are the only ones you need you can pass it straight through as `hooks: streamerHooks`.
 
 ### Page spread splitting
 
 When a CBZ image filename looks like a two-page spread, the manifest hook can replace that single image spine item with two virtual XHTML spine items. For left-to-right books, the left crop is exposed before the right crop. For right-to-left books, the order is reversed so manga-style navigation remains correct.
 
 {% hint style="warning" %}
-The CBZ package does not detect reading direction. It uses the manifest `readingDirection` available when the streamer spine hook runs. If no earlier metadata or hook sets a direction, the default manifest direction is left-to-right.
-
-Applications that need RTL comic handling should set `readingDirection: "rtl"` before the CBZ spine hook runs, for example from `ComicInfo.xml`, filename conventions, user settings, or a custom streamer manifest hook.
+`streamerHooks.manifest` includes `detectReadingDirectionManifest`, which runs before the split and defaults comic archives to **right-to-left** (manga order) when nothing earlier decided a direction. It only fills an *undecided* `readingDirection`, so anything resolved upstream wins: `ComicInfo.xml`'s reading direction (now resolved automatically by `@prose-reader/archive-reader`), a user setting, or a custom manifest hook placed before it. To force left-to-right on a comic that would otherwise default to RTL, set `readingDirection: "ltr"` before these hooks run.
 {% endhint %}
 
 For example, `p006-007.jpg` can produce:

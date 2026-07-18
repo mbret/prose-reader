@@ -1,8 +1,51 @@
-import type { ArchiveResolveResult } from "../types/archiveResolve"
+import type {
+  ResolvedCollection,
+  ResolvedContributor,
+  ResolvedContributorRole,
+  ResolvedMetadata,
+  ResolvedMetadataHome,
+} from "../types/resolvedMetadata"
 import { normalizeGtin } from "../utils/normalizeGtin"
 import { normalizeIsbn } from "../utils/normalizeIsbn"
+import { omitUndefined } from "../utils/omitUndefined"
 import { parseW3cDtfDate } from "../utils/parseW3cDtfDate"
-import type { OpfIdentifier, OpfMetadata } from "./parse"
+import type { OpfIdentifier, OpfMetadata, OpfMetaEntry } from "./parse"
+
+/**
+ * Losslessness contract: where every parsed OPF field lands. Structural
+ * fields belong to sibling parts of the resolved archive entity
+ * (`readingOrder`, `toc`); `cover` and `guide` are reserved homes not yet
+ * promoted out of `sources`. `metas` is the open-world case: the whole list
+ * is copied verbatim into `properties`, so unknown vocabularies (calibre
+ * columns, vendor namespaces…) are lossless by construction while known
+ * properties (`rendition:*`, `belongs-to-collection`, roles…) additionally
+ * get promoted into real vocabulary fields.
+ */
+export const opfMetadataHomes = {
+  manifestItems: "readingOrder",
+  spineRows: "readingOrder",
+  spineTocIdref: "toc",
+  identifiers: "identifiers",
+  title: "title",
+  creators: "contributors",
+  contributors: "contributors",
+  publisher: "publisher",
+  description: "description",
+  rights: "rights",
+  languages: "languages",
+  subjects: "subjects",
+  date: "published",
+  coverHref: "cover",
+  renditionLayoutMeta: "renditionLayout",
+  renditionFlowMeta: "renditionFlow",
+  renditionSpreadMeta: "renditionSpread",
+  pageProgressionDirection: "readingDirection",
+  guide: "guide",
+  metas: "properties",
+} as const satisfies Record<
+  Exclude<keyof OpfMetadata, "kind">,
+  ResolvedMetadataHome
+>
 
 const rawIdentifierValueForIsbn = (
   identifiers: ReadonlyArray<OpfIdentifier>,
@@ -20,7 +63,153 @@ const rawIdentifierValueForIsbn = (
   return undefined
 }
 
-export const resolveOpf = (input: OpfMetadata): ArchiveResolveResult => {
+/**
+ * Common MARC relator codes normalized into the Readium role vocabulary;
+ * anything else passes through verbatim (losslessness beats guessing).
+ * @see https://www.loc.gov/marc/relators/relaterm.html
+ */
+const MARC_RELATOR_TO_ROLE: Readonly<
+  Partial<Record<string, ResolvedContributorRole>>
+> = {
+  art: "artist",
+  aut: "author",
+  clr: "colorist",
+  ctb: "contributor",
+  edt: "editor",
+  ill: "illustrator",
+  nrt: "narrator",
+  trl: "translator",
+}
+
+const contributorsFromOpf = (input: OpfMetadata): ResolvedContributor[] =>
+  // `contributors` already covers every dc:creator (the `creators` list is
+  // the plain-text view of the same elements), so it is the single source.
+  input.contributors.map((contributor) => {
+    const roles = contributor.roles.map(
+      (token) => MARC_RELATOR_TO_ROLE[token.trim().toLowerCase()] ?? token,
+    )
+
+    return omitUndefined({
+      name: contributor.name,
+      roles:
+        roles.length > 0
+          ? roles
+          : // a role-less dc:creator means author per EPUB 2 semantics; a
+            // role-less dc:contributor is the generic Readium `contributor`
+            [
+              contributor.source === "creator"
+                ? ("author" as const)
+                : ("contributor" as const),
+            ],
+      sortAs: contributor.fileAs,
+    })
+  })
+
+/** Same missing-`#` tolerance as the refines matching in parse.ts. */
+const metaRefinesId = (meta: OpfMetaEntry, id: string): boolean =>
+  meta.refines !== undefined && meta.refines.replace(/^#/, "") === id
+
+const parseDecimal = (raw: string | undefined): number | undefined => {
+  const trimmed = raw?.trim()
+  if (trimmed === undefined || !/^\d+(\.\d+)?$/.test(trimmed)) return undefined
+  const n = Number.parseFloat(trimmed)
+  return Number.isFinite(n) ? n : undefined
+}
+
+/**
+ * Series/collection membership from the metas: EPUB 3
+ * `belongs-to-collection` (a `collection-type` refine of `series` selects
+ * the series bucket, anything else — including untyped — is a plain
+ * collection), with the calibre `calibre:series`/`calibre:series_index`
+ * name/content pair as fallback when no EPUB 3 series entry exists.
+ */
+const collectionsFromOpfMetas = (
+  metas: ReadonlyArray<OpfMetaEntry>,
+): { series: ResolvedCollection[]; collection: ResolvedCollection[] } => {
+  const series: ResolvedCollection[] = []
+  const collection: ResolvedCollection[] = []
+
+  for (const meta of metas) {
+    if (meta.property !== "belongs-to-collection" || meta.value === undefined)
+      continue
+
+    const id = meta.id
+    const refining = (property: string): string | undefined =>
+      id === undefined
+        ? undefined
+        : metas.find(
+            (candidate) =>
+              metaRefinesId(candidate, id) &&
+              candidate.property === property &&
+              candidate.value !== undefined,
+          )?.value
+
+    const type = refining("collection-type")?.trim().toLowerCase()
+    const entry = omitUndefined({
+      name: meta.value,
+      position: parseDecimal(refining("group-position")),
+    })
+
+    if (type === "series") series.push(entry)
+    else collection.push(entry)
+  }
+
+  if (series.length === 0) {
+    const calibreSeries = metas.find(
+      (meta) =>
+        meta.name?.toLowerCase() === "calibre:series" &&
+        meta.content !== undefined,
+    )?.content
+
+    if (calibreSeries !== undefined) {
+      series.push(
+        omitUndefined({
+          name: calibreSeries,
+          position: parseDecimal(
+            metas.find(
+              (meta) => meta.name?.toLowerCase() === "calibre:series_index",
+            )?.content,
+          ),
+        }),
+      )
+    }
+  }
+
+  return { series, collection }
+}
+
+const validatedRenditionFlow = (
+  raw: string | undefined,
+): ResolvedMetadata["renditionFlow"] => {
+  const v = raw?.trim()
+  if (
+    v === "scrolled-continuous" ||
+    v === "scrolled-doc" ||
+    v === "paginated" ||
+    v === "auto"
+  ) {
+    return v
+  }
+  return undefined
+}
+
+const validatedRenditionSpread = (
+  raw: string | undefined,
+): ResolvedMetadata["renditionSpread"] => {
+  const v = raw?.trim()
+  if (
+    v === "none" ||
+    v === "landscape" ||
+    v === "portrait" ||
+    v === "both" ||
+    v === "auto"
+  ) {
+    return v
+  }
+  return undefined
+}
+
+export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
   const ppd = input.pageProgressionDirection?.trim().toLowerCase()
   const readingDirection = ppd === "ltr" || ppd === "rtl" ? ppd : undefined
 
@@ -28,19 +217,40 @@ export const resolveOpf = (input: OpfMetadata): ArchiveResolveResult => {
   const renditionLayout =
     rl === "reflowable" || rl === "pre-paginated" ? rl : undefined
 
-  const raw = rawIdentifierValueForIsbn(input.identifiers)
+  const rawIsbn = rawIdentifierValueForIsbn(input.identifiers)
+  const contributors = contributorsFromOpf(input)
+  const { series, collection } = collectionsFromOpfMetas(input.metas)
 
-  return {
-    gtin: normalizeGtin(raw),
-    isbn: normalizeIsbn(raw),
-    readingDirection,
-    renditionLayout,
+  const belongsTo =
+    series.length > 0 || collection.length > 0
+      ? omitUndefined({
+          series: series.length > 0 ? series : undefined,
+          collection: collection.length > 0 ? collection : undefined,
+        })
+      : undefined
+
+  return omitUndefined({
     title: input.title,
-    authors: input.creators.length > 0 ? [...input.creators] : undefined,
+    description: input.description,
     publisher: input.publisher,
     rights: input.rights,
     languages: input.languages.length > 0 ? [...input.languages] : undefined,
-    date: parseW3cDtfDate(input.date),
     subjects: input.subjects.length > 0 ? [...input.subjects] : undefined,
-  }
+    contributors: contributors.length > 0 ? contributors : undefined,
+    published: parseW3cDtfDate(input.date),
+    readingDirection,
+    renditionLayout,
+    renditionFlow: validatedRenditionFlow(input.renditionFlowMeta),
+    renditionSpread: validatedRenditionSpread(input.renditionSpreadMeta),
+    gtin: normalizeGtin(rawIsbn),
+    isbn: normalizeIsbn(rawIsbn),
+    identifiers:
+      input.identifiers.length > 0
+        ? input.identifiers.map(({ value, scheme }) =>
+            omitUndefined({ value, scheme }),
+          )
+        : undefined,
+    belongsTo,
+    properties: input.metas.length > 0 ? [...input.metas] : undefined,
+  })
 }

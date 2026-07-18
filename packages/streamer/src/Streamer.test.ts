@@ -75,14 +75,12 @@ describe("Given streamer hooks", () => {
       cleanArchiveAfter: Infinity,
       getArchive: async () => archive,
       hooks: {
-        manifest: {
-          spine: [
-            () => async (manifest) => ({
-              ...manifest,
-              title: "hooked manifest",
-            }),
-          ],
-        },
+        manifest: [
+          () => async (manifest) => ({
+            ...manifest,
+            title: "hooked manifest",
+          }),
+        ],
         resource: [
           () => async (resource) => ({
             ...resource,

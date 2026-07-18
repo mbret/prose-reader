@@ -9,10 +9,7 @@ import { getBlobFromKey, getStreamerBaseUrl } from "./utils.shared"
 export const swStreamer = new ServiceWorkerStreamer({
   cleanArchiveAfter: 5 * 60 * 1000,
   hooks: {
-    manifest: {
-      content: streamerHooks.manifest.content,
-      spine: streamerHooks.manifest.spine,
-    },
+    manifest: streamerHooks.manifest,
     resource: streamerHooks.resource,
   },
   getUriInfo: (event) => {

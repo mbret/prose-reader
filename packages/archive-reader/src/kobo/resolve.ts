@@ -1,16 +1,23 @@
-import type { ArchiveResolveResult } from "../types/archiveResolve"
+import type {
+  ResolvedMetadata,
+  ResolvedMetadataHome,
+} from "../types/resolvedMetadata"
+import { omitUndefined } from "../utils/omitUndefined"
 import type { KoboMetadata } from "./parse"
 
-export const resolveKobo = (input: KoboMetadata): ArchiveResolveResult => ({
-  gtin: undefined,
-  isbn: undefined,
-  readingDirection: undefined,
-  renditionLayout: input.renditionLayout,
-  title: undefined,
-  authors: undefined,
-  publisher: undefined,
-  rights: undefined,
-  languages: undefined,
-  date: undefined,
-  subjects: undefined,
-})
+/** Losslessness contract for the Kobo sidecar fields. */
+export const koboMetadataHomes = {
+  renditionLayout: "renditionLayout",
+} as const satisfies Record<
+  Exclude<keyof KoboMetadata, "kind">,
+  ResolvedMetadataHome
+>
+
+export const resolveKobo = (input: KoboMetadata): ResolvedMetadata =>
+  omitUndefined({
+    renditionLayout: input.renditionLayout,
+    kobo:
+      input.renditionLayout !== undefined
+        ? { fixedLayout: input.renditionLayout === "pre-paginated" }
+        : undefined,
+  })

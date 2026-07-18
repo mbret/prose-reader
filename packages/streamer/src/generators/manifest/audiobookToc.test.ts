@@ -1,7 +1,7 @@
 import { blobFileAccessors, createArchive } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
 import { buildAudiobookToc, normalizeFilenameAsTitle } from "./audiobookToc"
-import { tocHook } from "./toc"
+import { generateManifestFromArchive } from "./index"
 
 describe("normalizeFilenameAsTitle", () => {
   it.each([
@@ -121,17 +121,8 @@ describe("buildAudiobookToc", () => {
   })
 })
 
-describe("tocHook with audiobook", () => {
+describe("audiobook toc through manifest generation", () => {
   const fakeContent = blobFileAccessors(() => Promise.resolve(new Blob()))
-
-  const baseManifest = {
-    filename: "",
-    items: [],
-    readingDirection: "ltr" as const,
-    renditionLayout: "pre-paginated" as const,
-    renditionSpread: "auto" as const,
-    title: "",
-  }
 
   it("should prefer per-track toc over folder toc for audiobooks", async () => {
     const archive = createArchive({
@@ -155,21 +146,7 @@ describe("tocHook with audiobook", () => {
       ],
     })
 
-    const manifest = await tocHook({
-      archive,
-      baseUrl: "",
-      archiveOpf: undefined,
-    })({
-      ...baseManifest,
-      spineItems: [
-        {
-          id: "0",
-          index: 0,
-          href: "file://disc1/track_01.mp3",
-          mediaType: "audio/mpeg",
-        },
-      ],
-    })
+    const manifest = await generateManifestFromArchive(archive)
 
     expect(manifest.nav).toEqual({
       toc: [
@@ -212,27 +189,7 @@ describe("tocHook with audiobook", () => {
       ],
     })
 
-    const manifest = await tocHook({
-      archive,
-      baseUrl: "",
-      archiveOpf: undefined,
-    })({
-      ...baseManifest,
-      spineItems: [
-        {
-          id: "0",
-          index: 0,
-          href: "file://chapter/page.xhtml",
-          mediaType: "application/xhtml+xml",
-        },
-        {
-          id: "1",
-          index: 1,
-          href: "file://chapter/track.mp3",
-          mediaType: "audio/mpeg",
-        },
-      ],
-    })
+    const manifest = await generateManifestFromArchive(archive)
 
     expect(manifest.nav?.toc[0]?.title).toBe("chapter")
   })

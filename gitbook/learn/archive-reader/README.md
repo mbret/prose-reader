@@ -1,13 +1,15 @@
-# Archives
+# Archive Reader
 
-An **archive** is the environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…). The `Archive` type, the `createArchiveFrom*` creators and the archive reading helpers are owned by the **`@prose-reader/archive-reader`** package; the streamer consumes archives. Both `generateManifestFromArchive` and `generateResourceFromArchive` operate on an `Archive`, so whatever the source, your first step is always to turn it into one with a `createArchiveFrom*` creator.
+**`@prose-reader/archive-reader`** is the "book container in → resolved publication out" package: a standalone library usable by any reading or library app, prose or not. An **archive** is its environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…) — the `Archive` type, the `createArchiveFrom*` creators and the whole resolve layer live here. The [streamer](../streamer/README.md) is one consumer among others: its `generateManifestFromArchive` is `resolveArchive` plus a mapping into serving space.
+
+Whatever the source, the first step is always to turn it into an `Archive` with a `createArchiveFrom*` creator; the flagship second step is `resolveArchive`:
 
 ```typescript
+import { resolveArchive } from "@prose-reader/archive-reader"
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"
-import { generateManifestFromArchive } from "@prose-reader/streamer"
 
 const archive = await createArchiveFromJszip(zip)
-const manifest = await generateManifestFromArchive(archive)
+const { metadata, readingOrder, toc } = await resolveArchive(archive)
 ```
 
 ## The archive contract
@@ -68,7 +70,7 @@ A few rules of thumb:
 | `createArchiveFromText` | `@prose-reader/archive-reader` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
 | `createArchiveFromUrls` | `@prose-reader/archive-reader` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
 | `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../../enhancers/pdf.md) |
-| `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](react-native.md) |
+| `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](../streamer/react-native.md) |
 
 The `jszip`, `zip.js`, `libarchive.js`, `unzipper` and `node-unrar-js` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
 
@@ -150,6 +152,92 @@ blobFileAccessors(async () => new Blob([bytes]))
 // Binary-native source (the factory derives blob from the array buffer)
 arrayBufferFileAccessors(async () => bytes, "image/jpeg")
 ```
+
+## Resolving a publication
+
+`resolveArchive(archive, options?)` turns a container into a single resolved, enriched, **plain-JSON** entity — everything a reading or library app needs, with no archive handle attached (structured-clone-able, persistable, cacheable):
+
+```typescript
+import { resolveArchive } from "@prose-reader/archive-reader"
+
+const resolved = await resolveArchive(archive)
+// {
+//   version: 1,
+//   metadata: { title, contributors, readingDirection, renditionLayout, belongsTo, … },
+//   readingOrder: [{ uri, id?, mediaType?, size?, renditionLayout?, progressionWeight, … }],
+//   toc: [{ title, path, containerHref, contents }],
+// }
+```
+
+Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s): the entity carries no serving concern, consumers rebase into their own space.
+
+### Projection tokens & cost classes
+
+`include` picks which parts to resolve and return — the tokens are simply the result keys, and they follow I/O cost classes:
+
+| Token | Cost |
+| --- | --- |
+| `metadata` | sidecar XML reads (OPF, ComicInfo.xml, Apple/Kobo display options) — cheap |
+| `readingOrder` | the OPF read at most — cheap |
+| `toc` | one nav or NCX document read+parse on top — medium |
+| `sources` | same reads as `metadata` — the verbatim parser outputs, for provenance and single-format needs |
+| `version` | free, always present |
+
+The default is `["metadata", "readingOrder", "toc"]`: **the default costs O(sidecar files); anything that reads the whole book is opt-in.** `sources` is deliberately not in the default set — it roughly doubles the persisted entity.
+
+```typescript
+// library-shelf scan: metadata only, skip the toc read
+const { metadata } = await resolveArchive(archive, { include: ["metadata"] })
+
+// provenance included
+const resolved = await resolveArchive(archive, {
+  include: ["metadata", "readingOrder", "toc", "sources"],
+})
+```
+
+### Effort modifiers
+
+`layoutScan` (default `false`) does not change the return type — it changes how hard the resolver works: it reads and XML-parses **every** reading-order document to apply the industry viewport heuristic (an explicitly-reflowable publication whose spine documents all declare `head > meta[name=viewport]` is promoted to `pre-paginated`, metadata and per-item). The refinement is merged into the result inside the resolver; you never re-implement the merge. The streamer's `generateManifestFromArchive` enables it.
+
+### Metadata, sources & error policy
+
+`metadata` is the cross-format union vocabulary — see [Resolved metadata](resolved-metadata.md) for the vocabulary, the per-format mapping tables and the precedence rules. `sources` carries the verbatim parser outputs (`opf` with its `basePath`, `comicInfo`, `apple`, `kobo`); everything in `sources` is also represented, normalized, in `metadata`. Per-source parse failures are swallowed (logged via the debug `Report`): a malformed source — a sidecar or the package document (OPF) itself — never fails the resolve. A book whose OPF won't parse still resolves: it simply doesn't contribute to `metadata`/`toc`, and the reading order degrades to the archive's file listing (see [Resolving the reading order](#resolving-the-reading-order)).
+
+## Reading embedded metadata
+
+{% hint style="info" %}
+This is the advanced layer underneath `resolveArchive` — reach for it when you need one specific source rather than the whole resolved entity.
+{% endhint %}
+
+Books embed metadata in format-specific documents: the EPUB package document (OPF), a `ComicInfo.xml` sidecar in comic archives, Apple/Kobo display-options XML in EPUBs from those stores. Each source has a `readArchive*` helper that discovers, reads and parses the document in one call, returning `undefined` when the archive doesn't carry that source:
+
+```typescript
+import {
+  readArchiveOpf, // → { opf: OpfMetadata, basePath } | undefined
+  readArchiveComicInfo, // → ComicInfo | undefined
+  readArchiveApple, // → AppleMetadata | undefined
+  readArchiveKobo, // → KoboMetadata | undefined
+} from "@prose-reader/archive-reader"
+
+const comicInfo = await readArchiveComicInfo(archive)
+```
+
+The parsed objects mirror their source document (`ComicInfo.Writer`, `OpfMetadata.spineRows`, …) and carry a `kind` discriminator. `resolveArchiveMetadata` normalizes a single one of them into the [`ResolvedMetadata`](resolved-metadata.md) vocabulary, and `resolveMetadata` merges several with the documented precedence:
+
+```typescript
+import { resolveArchiveMetadata } from "@prose-reader/archive-reader"
+
+if (comicInfo) {
+  const { title, contributors, readingDirection } =
+    resolveArchiveMetadata(comicInfo)
+}
+```
+
+Malformed documents throw from the single-file readers (`readArchiveComicInfo`, `readArchiveApple`, `readArchiveOpf`) so you decide how lenient to be; `readArchiveKobo` merges every matching sidecar and skips unparseable ones. The lower-level pieces (`parseOpf`, `parseComicInfo`, `getArchiveOpfInfo`, `getArchiveHasComicInfo`, …) stay exported for advanced use.
+
+## Resolving the reading order
+
+`resolveArchiveReadingOrder(archive, options?)` is the standalone building block behind `resolveArchive`'s `readingOrder` token: the OPF spine when a usable package document exists (container-relative `uri`s, per-itemref layout hints, size-proportional `progressionWeight`), the archive's file listing otherwise — including when the package document is missing or unparseable — (sidecars like `ComicInfo.xml`/display-options and OS litter like `Thumbs.db` excluded, equal weights, discrete media marked `pre-paginated`). It always returns an array; a malformed OPF is treated as no OPF rather than throwing. Pass `{ opf }` to skip the internal OPF lookup.
 
 ## Resolving a table of contents
 

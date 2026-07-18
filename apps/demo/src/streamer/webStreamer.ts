@@ -12,10 +12,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 export const webStreamer = new Streamer({
   hooks: {
-    manifest: {
-      content: streamerHooks.manifest.content,
-      spine: streamerHooks.manifest.spine,
-    },
+    manifest: streamerHooks.manifest,
     resource: streamerHooks.resource,
   },
   /**

@@ -18,7 +18,9 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toEqual({
       gtin: "9783161484100",
       isbn: "9783161484100",
+      identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
+      comic: { manga: true },
     })
   })
 
@@ -27,6 +29,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toEqual({
       readingDirection: "ltr",
+      comic: { manga: false },
     })
   })
 
@@ -35,6 +38,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toEqual({
       readingDirection: "ltr",
+      comic: { manga: true },
     })
   })
 
@@ -47,7 +51,9 @@ describe("resolveComicInfo", () => {
   it("undefined readingDirection when Manga is Unknown", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Manga>Unknown</Manga>"))
 
-    expect(resolveComicInfo(parsed).readingDirection).toBeUndefined()
+    const resolved = resolveComicInfo(parsed)
+    expect(resolved.readingDirection).toBeUndefined()
+    expect(resolved.comic).toBeUndefined()
   })
 
   it("gtin without isbn when value is GTIN-8 only", () => {
@@ -55,6 +61,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toEqual({
       gtin: "96385074",
+      identifiers: [{ value: "9638-5074", scheme: "GTIN" }],
     })
   })
 
@@ -79,15 +86,15 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed).title).toBeUndefined()
   })
 
-  it("splits Writer on commas into authors", () => {
+  it("splits Writer on commas into author contributors", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<Writer>Alice, Bob, Charlie</Writer>"),
     )
 
-    expect(resolveComicInfo(parsed).authors).toEqual([
-      "Alice",
-      "Bob",
-      "Charlie",
+    expect(resolveComicInfo(parsed).contributors).toEqual([
+      { name: "Alice", roles: ["author"] },
+      { name: "Bob", roles: ["author"] },
+      { name: "Charlie", roles: ["author"] },
     ])
   })
 
@@ -96,20 +103,49 @@ describe("resolveComicInfo", () => {
       comicInfoWrap("<Writer>  Alice  ,  ,  Bob  </Writer>"),
     )
 
-    expect(resolveComicInfo(parsed).authors).toEqual(["Alice", "Bob"])
+    expect(resolveComicInfo(parsed).contributors).toEqual([
+      { name: "Alice", roles: ["author"] },
+      { name: "Bob", roles: ["author"] },
+    ])
   })
 
-  it("does not include Penciller / Inker / Colorist in authors", () => {
+  it("attributes comic roles per field, keeping author distinct", () => {
     const parsed = parseComicInfo(
       comicInfoWrap(
         "<Writer>Alice</Writer>" +
           "<Penciller>Charlie</Penciller>" +
           "<Inker>Dana</Inker>" +
-          "<Colorist>Eve</Colorist>",
+          "<Colorist>Eve</Colorist>" +
+          "<Letterer>Frank</Letterer>" +
+          "<CoverArtist>Grace</CoverArtist>" +
+          "<Editor>Heidi</Editor>" +
+          "<Translator>Ivan</Translator>",
       ),
     )
 
-    expect(resolveComicInfo(parsed).authors).toEqual(["Alice"])
+    expect(resolveComicInfo(parsed).contributors).toEqual([
+      { name: "Alice", roles: ["author"] },
+      { name: "Charlie", roles: ["penciler"] },
+      { name: "Dana", roles: ["inker"] },
+      { name: "Eve", roles: ["colorist"] },
+      { name: "Frank", roles: ["letterer"] },
+      { name: "Grace", roles: ["coverArtist"] },
+      { name: "Heidi", roles: ["editor"] },
+      { name: "Ivan", roles: ["translator"] },
+    ])
+  })
+
+  it("merges roles when the same person appears in several fields", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<Writer>Alice</Writer><Penciller>Alice, Bob</Penciller><Inker>Alice</Inker>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed).contributors).toEqual([
+      { name: "Alice", roles: ["author", "penciler", "inker"] },
+      { name: "Bob", roles: ["penciler"] },
+    ])
   })
 
   it("lifts LanguageISO into a single-entry languages array", () => {
@@ -155,12 +191,12 @@ describe("resolveComicInfo", () => {
     ])
   })
 
-  it("assembles a date from Year / Month / Day", () => {
+  it("assembles the published date from Year / Month / Day", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<Year>2024</Year><Month>12</Month><Day>25</Day>"),
     )
 
-    expect(resolveComicInfo(parsed).date).toEqual({
+    expect(resolveComicInfo(parsed).published).toEqual({
       year: 2024,
       month: 12,
       day: 25,
@@ -170,13 +206,13 @@ describe("resolveComicInfo", () => {
   it("preserves a year-only date when Month / Day are absent", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Year>2024</Year>"))
 
-    expect(resolveComicInfo(parsed).date).toEqual({ year: 2024 })
+    expect(resolveComicInfo(parsed).published).toEqual({ year: 2024 })
   })
 
-  it("omits date when Year / Month / Day are all absent", () => {
+  it("omits the published date when Year / Month / Day are all absent", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Title>x</Title>"))
 
-    expect(resolveComicInfo(parsed).date).toBeUndefined()
+    expect(resolveComicInfo(parsed).published).toBeUndefined()
   })
 
   it("ignores non-numeric date components", () => {
@@ -184,7 +220,7 @@ describe("resolveComicInfo", () => {
       comicInfoWrap("<Year>two thousand</Year><Month>12</Month>"),
     )
 
-    expect(resolveComicInfo(parsed).date).toEqual({ month: 12 })
+    expect(resolveComicInfo(parsed).published).toEqual({ month: 12 })
   })
 
   it("does not surface a rights field (ComicInfo has none)", () => {
@@ -193,6 +229,119 @@ describe("resolveComicInfo", () => {
     )
 
     expect(resolveComicInfo(parsed).rights).toBeUndefined()
+  })
+
+  it("maps Series / Number / Count into belongsTo.series", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<Series>Sample Series</Series><Number>1.5</Number><Count>12</Count>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed).belongsTo).toEqual({
+      series: [{ name: "Sample Series", position: 1.5, total: 12 }],
+    })
+  })
+
+  it("keeps a non-numeric Number out of the series position", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap("<Series>Sample Series</Series><Number>1AU</Number>"),
+    )
+
+    expect(resolveComicInfo(parsed).belongsTo).toEqual({
+      series: [{ name: "Sample Series" }],
+    })
+  })
+
+  it("maps SeriesGroup entries into belongsTo.collection", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap("<SeriesGroup>Family A, Family B</SeriesGroup>"),
+    )
+
+    expect(resolveComicInfo(parsed).belongsTo).toEqual({
+      collection: [{ name: "Family A" }, { name: "Family B" }],
+    })
+  })
+
+  it("zips StoryArc and StoryArcNumber positionally into the comic corner", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<StoryArc>Arc One, Arc Two</StoryArc><StoryArcNumber>1, 3</StoryArcNumber>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed).comic?.storyArcs).toEqual([
+      { name: "Arc One", position: 1 },
+      { name: "Arc Two", position: 3 },
+    ])
+  })
+
+  it("maps AlternateSeries / AlternateNumber / AlternateCount into the comic corner", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<AlternateSeries>Crossover</AlternateSeries>" +
+          "<AlternateNumber>2</AlternateNumber>" +
+          "<AlternateCount>6</AlternateCount>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed).comic?.alternateSeries).toEqual({
+      name: "Crossover",
+      position: 2,
+      total: 6,
+    })
+  })
+
+  it("normalizes the comic-scoped fields", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<BlackAndWhite>Yes</BlackAndWhite>" +
+          "<Volume>3</Volume>" +
+          "<Format>TPB</Format>" +
+          "<AgeRating>Teen</AgeRating>" +
+          "<CommunityRating>4.5</CommunityRating>" +
+          "<Notes>scanned</Notes>" +
+          "<Review>great</Review>" +
+          "<Web>https://a.example https://b.example</Web>" +
+          "<ScanInformation>group x</ScanInformation>" +
+          "<MainCharacterOrTeam>Hero</MainCharacterOrTeam>" +
+          "<Characters>Hero, Sidekick</Characters>" +
+          "<Teams>Team A</Teams>" +
+          "<Locations>City</Locations>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed).comic).toEqual({
+      blackAndWhite: true,
+      volume: 3,
+      format: "TPB",
+      ageRating: "Teen",
+      communityRating: 4.5,
+      notes: "scanned",
+      review: "great",
+      web: ["https://a.example", "https://b.example"],
+      scanInformation: "group x",
+      mainCharacterOrTeam: "Hero",
+      characters: ["Hero", "Sidekick"],
+      teams: ["Team A"],
+      locations: ["City"],
+    })
+  })
+
+  it("maps PageCount, Summary and Imprint into the shared vocabulary", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        "<PageCount>32</PageCount>" +
+          "<Summary>A short synopsis.</Summary>" +
+          "<Imprint>Vertigo</Imprint>",
+      ),
+    )
+
+    expect(resolveComicInfo(parsed)).toMatchObject({
+      numberOfPages: 32,
+      description: "A short synopsis.",
+      imprint: "Vertigo",
+    })
   })
 
   it("rolls up a representative ComicInfo into a single resolve result", () => {
@@ -217,13 +366,19 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toEqual({
       gtin: "9783161484100",
       isbn: "9783161484100",
+      identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
       title: "Sample Story",
-      authors: ["Alice", "Bob"],
+      contributors: [
+        { name: "Alice", roles: ["author"] },
+        { name: "Bob", roles: ["author"] },
+      ],
       publisher: "Acme",
       languages: ["en"],
-      date: { year: 2024, month: 5, day: 3 },
+      published: { year: 2024, month: 5, day: 3 },
       subjects: ["Action", "ninja"],
+      belongsTo: { series: [{ name: "Sample Series", position: 1 }] },
+      comic: { manga: true },
     })
   })
 })
