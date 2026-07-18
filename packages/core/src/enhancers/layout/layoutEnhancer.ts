@@ -207,7 +207,7 @@ export const layoutEnhancer =
       }
     })
 
-    const revealItemOnReady$ = reader.spineItemsObserver.states$.pipe(
+    const revealItemOnReady$ = reader.spineItemsObserver.itemStateChange$.pipe(
       filter(({ isReady }) => isReady),
       tap(({ item }) => {
         const element = item.renderer.documentContainer

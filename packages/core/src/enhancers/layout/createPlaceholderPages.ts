@@ -89,7 +89,7 @@ export const createPlaceholderPages = (
     },
   )
 
-  const itemError$ = reader.spineItemsObserver.states$.pipe(
+  const itemError$ = reader.spineItemsObserver.itemStateChange$.pipe(
     tap(({ item, isError, error }) => {
       if (!isError) return
 

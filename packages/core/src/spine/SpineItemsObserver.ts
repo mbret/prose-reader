@@ -7,11 +7,12 @@ import type { SpineItemsManager } from "./SpineItemsManager"
 
 export class SpineItemsObserver extends DestroyableClass {
   /**
-   * Shared observable which emits every time a spine item state change.
+   * Shared observable which emits every time a spine item state changes.
    * As there can be lot of spine items and subscriptions can become costly it is
-   * encouraged to use this shared observable.
+   * encouraged to use this shared observable. Read `item.value` for a current
+   * snapshot rather than relying on this stream to replay on subscribe.
    */
-  public states$: Observable<{ item: SpineItem } & SpineItemState>
+  public itemStateChange$: Observable<{ item: SpineItem } & SpineItemState>
 
   /**
    * Observable directly plugged to ResizeObserver for each item.
@@ -32,7 +33,7 @@ export class SpineItemsObserver extends DestroyableClass {
 
     const items = spineItemsManager.items
 
-    this.states$ = merge(
+    this.itemStateChange$ = merge(
       ...items.map((item) =>
         item.pipe(
           map((state) => ({ item, ...state })),
