@@ -69,13 +69,10 @@ export class ReaderHighlights extends DestroyableClass {
       },
     )
 
-    this.reader.hookManager.register(
-      "item.onDocumentUnload",
-      async ({ itemId }) => {
-        cleanupByItemId.get(itemId)?.()
-        cleanupByItemId.delete(itemId)
-      },
-    )
+    this.reader.hookManager.register("item.onDocumentUnload", ({ itemId }) => {
+      cleanupByItemId.get(itemId)?.()
+      cleanupByItemId.delete(itemId)
+    })
 
     this.tap$ = this.spineItemHighlights.pipe(
       switchMap((layers) => merge(...layers.map((layer) => layer.tap$))),

@@ -7,7 +7,6 @@ import {
   filter,
   finalize,
   first,
-  from,
   map,
   merge,
   mergeMap,
@@ -160,18 +159,18 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
           switchMap(() => {
             const documentContainer = this.value.documentContainer
 
-            const onDocumentUnloadPromise = documentContainer
-              ? // we voluntarily don't use fromExecuteAsync here because we want to ensure that the hook is executed even if the unload is cancelled
-                this.hookManager
-                  .executeAsync(`item.onDocumentUnload`, this.item.id, {
-                    itemId: this.item.id,
-                    documentContainer,
-                  })
-                  .then(() => null)
-              : Promise.resolve(null)
+            if (documentContainer) {
+              try {
+                this.hookManager.execute(`item.onDocumentUnload`, {
+                  itemId: this.item.id,
+                  documentContainer,
+                })
+              } catch (error) {
+                Report.error(`Error unloading document`, error)
+              }
+            }
 
-            return from(onDocumentUnloadPromise).pipe(
-              switchMap(() => this.onUnload()),
+            return this.onUnload().pipe(
               endWith(null),
               first(),
               catchError((error) => {
@@ -275,20 +274,23 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
     if (documentContainer) {
       /**
-       * The trigger based unload flow is asynchronous (viewport gate, async
-       * hooks) and its subscription dies with destroy$. Destroy needs to
-       * release resources (eg: blob urls) deterministically so we run the
-       * unload steps directly. If an unload was already in flight, hooks may
-       * be notified twice, which they already have to tolerate (see unloaded$).
+       * The trigger based unload flow is asynchronous (viewport gate) and its
+       * subscription dies with destroy$. Destroy needs to release resources
+       * (eg: blob urls) deterministically, so we run the unload steps directly.
+       * The unload hook is synchronous and runs before onUnload tears the
+       * document down, so it still observes the live document even though the
+       * caller detaches the container right after destroy returns. If an unload
+       * was already in flight, hooks may be notified twice, which they already
+       * have to tolerate (see unloaded$).
        */
-      this.hookManager
-        .executeAsync(`item.onDocumentUnload`, this.item.id, {
+      try {
+        this.hookManager.execute(`item.onDocumentUnload`, {
           itemId: this.item.id,
           documentContainer,
         })
-        .catch((error) => {
-          Report.error(`Error while executing unload hooks on destroy`, error)
-        })
+      } catch (error) {
+        Report.error(`Error while executing unload hooks on destroy`, error)
+      }
 
       this.onUnload()
         .pipe(

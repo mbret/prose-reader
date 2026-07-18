@@ -63,14 +63,16 @@ export type CoreHook =
   | {
       /**
        * Hook called before the loaded document is unloaded.
+       *
+       * Synchronous: unload also runs during a synchronous `destroy`, before the
+       * document is torn down and its container detached, so the hook is
+       * guaranteed to observe the live document.
        */
       name: `item.onDocumentUnload`
-      runFn: (
-        params: AsyncHookParams & {
-          itemId: string
-          documentContainer: HTMLElement
-        },
-      ) => Promise<void>
+      runFn: (params: {
+        itemId: string
+        documentContainer: HTMLElement
+      }) => void
     }
   | {
       name: "item.onBeforeLayout"

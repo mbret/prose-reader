@@ -122,12 +122,14 @@ describe(`DocumentRenderer`, () => {
   })
 
   describe(`when the renderer is destroyed while loaded`, () => {
-    it(`runs the unload steps exactly once`, async () => {
+    it(`synchronously runs the unload hook before onUnload, exactly once`, async () => {
       const { renderer, hookManager, cleanup } = createHarness()
 
       const unloadedItemIds: string[] = []
+      let onUnloadCallsWhenHookRan: number | undefined
 
-      hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        onUnloadCallsWhenHookRan = renderer.onUnloadCalls
         unloadedItemIds.push(itemId)
       })
 
@@ -141,11 +143,11 @@ describe(`DocumentRenderer`, () => {
 
       renderer.destroy()
 
-      expect(renderer.onUnloadCalls).toBe(1)
-
-      await waitFor(0)
-
+      // the hook runs synchronously within destroy, before onUnload tears the
+      // document down (so it still sees a live document)
       expect(unloadedItemIds).toEqual([`item-1`])
+      expect(onUnloadCallsWhenHookRan).toBe(0)
+      expect(renderer.onUnloadCalls).toBe(1)
 
       // destroy is idempotent
       renderer.destroy()
@@ -165,7 +167,7 @@ describe(`DocumentRenderer`, () => {
 
       const unloadedItemIds: string[] = []
 
-      hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
         unloadedItemIds.push(itemId)
       })
 

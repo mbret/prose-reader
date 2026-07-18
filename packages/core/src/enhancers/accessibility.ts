@@ -67,7 +67,7 @@ export const accessibilityEnhancer =
       cleanupByItemId.set(itemId, cleanup)
     })
 
-    reader.hookManager.register(`item.onDocumentUnload`, async ({ itemId }) => {
+    reader.hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
       cleanupByItemId.get(itemId)?.()
       cleanupByItemId.delete(itemId)
     })
