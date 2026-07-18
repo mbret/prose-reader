@@ -112,7 +112,7 @@ const mapTotalsFromPagesState = ({
   items,
   pagesState,
 }: {
-  items: SpineItem[]
+  items: readonly SpineItem[]
   pagesState: PagesState
 }) => {
   const numberOfPagesPerItems = items.map(() => 0)
@@ -240,12 +240,12 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     distinctUntilChanged(),
   )
 
-  const totals$ = combineLatest([
-    pagesState$,
-    reader.spineItemsManager.items$,
-  ]).pipe(
-    map(([pagesState, items]) =>
-      mapTotalsFromPagesState({ items, pagesState }),
+  const totals$ = pagesState$.pipe(
+    map((pagesState) =>
+      mapTotalsFromPagesState({
+        items: reader.spineItemsManager.items,
+        pagesState,
+      }),
     ),
     distinctUntilChanged(areTotalsEqual),
   )

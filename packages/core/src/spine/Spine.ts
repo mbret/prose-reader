@@ -2,11 +2,10 @@ import { BehaviorSubject, merge } from "rxjs"
 import { filter, takeUntil, tap } from "rxjs/operators"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
-import type { HookManager } from "../hooks/HookManager"
 import type { Pagination } from "../pagination/Pagination"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import type { createSpineItemLocator as createSpineItemLocationResolver } from "../spineItem/locationResolver"
-import { SpineItem } from "../spineItem/SpineItem"
+import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { isDefined } from "../utils/isDefined"
 import type { Viewport } from "../viewport/Viewport"
@@ -35,7 +34,6 @@ export class Spine extends DestroyableClass {
     public spineItemsManager: SpineItemsManager,
     public spineItemLocator: ReturnType<typeof createSpineItemLocationResolver>,
     protected settings: ReaderSettingsManager,
-    protected hookManager: HookManager,
     protected viewport: Viewport,
   ) {
     super()
@@ -92,27 +90,16 @@ export class Spine extends DestroyableClass {
       }),
     )
 
-    const loadSpineItems$ = this.element$.pipe(
+    const attachSpineItems$ = this.element$.pipe(
       filter(isDefined),
       tap((element) => {
-        const spineItems = this.context.manifest.spineItems.map(
-          (resource, index) =>
-            new SpineItem(
-              resource,
-              element,
-              this.context,
-              this.settings,
-              this.hookManager,
-              index,
-              this.viewport,
-            ),
-        )
-
-        this.spineItemsManager.addMany(spineItems)
+        this.spineItemsManager.items.forEach((item) => {
+          item.attach(element)
+        })
       }),
     )
 
-    merge(loadSpineItems$, spineElementUpdate$)
+    merge(attachSpineItems$, spineElementUpdate$)
       .pipe(takeUntil(this.destroy$))
       .subscribe()
   }

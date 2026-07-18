@@ -54,26 +54,21 @@ export const hotkeysEnhancer =
 
     navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
 
-    reader.spineItemsManager.items$
-      .pipe(
-        switchMap((spineItems) =>
-          merge(
-            ...spineItems.map((item) =>
-              item.watch("isLoaded").pipe(
-                switchMap(() => {
-                  const element = item.renderer.getDocumentFrame()
+    merge(
+      ...reader.spineItemsManager.items.map((item) =>
+        item.watch("isLoaded").pipe(
+          switchMap(() => {
+            const element = item.renderer.getDocumentFrame()
 
-                  return element instanceof HTMLIFrameElement &&
-                    element?.contentDocument
-                    ? navigateOnKey(element.contentDocument)
-                    : EMPTY
-                }),
-              ),
-            ),
-          ),
+            return element instanceof HTMLIFrameElement &&
+              element?.contentDocument
+              ? navigateOnKey(element.contentDocument)
+              : EMPTY
+          }),
         ),
-        takeUntil(reader.$.destroy$),
-      )
+      ),
+    )
+      .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
     return reader

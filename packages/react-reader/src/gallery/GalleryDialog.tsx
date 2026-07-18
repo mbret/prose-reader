@@ -66,10 +66,7 @@ const GalleryItem = memo(
 export const GalleryDialog = memo(
   ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
     const reader = useReader()
-    const { data: items } = useObserve(
-      () => reader?.spineItemsManager.items$,
-      [reader],
-    )
+    const items = reader?.spineItemsManager.items
 
     return (
       <AppDialog

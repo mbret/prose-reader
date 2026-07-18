@@ -17,6 +17,7 @@ import {
   HTML_PREFIX_SCROLL_NAVIGATOR,
 } from "./constants"
 import { createReader } from "./reader"
+import { waitFor } from "./tests/utils"
 
 window.__PROSE_READER_DEBUG = false
 
@@ -76,7 +77,48 @@ afterEach(() => {
   container.remove()
 })
 
+describe("Given a reader which is not mounted", () => {
+  /**
+   * Spine items exist from reader creation but rendering only starts at
+   * mount: containers are still detached and users may register hooks
+   * between `createReader()` and `mount()`.
+   */
+  it("does not load any spine item", async () => {
+    const reader = createTestReader()
+
+    const loadSpies = reader.spineItemsManager.items.map((item) =>
+      vi.spyOn(item.renderer, "load"),
+    )
+
+    // longer than the spine items loader debounce
+    await waitFor(200)
+
+    expect(loadSpies.map((spy) => spy.mock.calls.length)).toEqual([0])
+
+    reader.destroy()
+  })
+})
+
 describe("Given a mounted reader", () => {
+  it("loads visible spine items", async () => {
+    const reader = createTestReader()
+
+    const loadSpy = vi.spyOn(
+      // biome-ignore lint/style/noNonNullAssertion: manifest has one item
+      reader.spineItemsManager.items[0]!.renderer,
+      "load",
+    )
+
+    reader.mount(container)
+
+    // longer than the spine items loader debounce
+    await waitFor(200)
+
+    expect(loadSpy).toHaveBeenCalled()
+
+    reader.destroy()
+  })
+
   it("appends a single reader-owned subtree under the container", () => {
     const reader = createTestReader()
 

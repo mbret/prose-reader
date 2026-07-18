@@ -2,39 +2,64 @@ import { describe, expect, it } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { SpineItem } from "../spineItem/SpineItem"
-import { createTestManifest } from "../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 
-const createManager = () => {
-  const context = new Context(createTestManifest())
+const createManager = (numberOfItems: number) => {
+  const context = new Context(
+    createTestManifest({
+      spineItems: createTestManifestSpineItems(numberOfItems),
+    }),
+  )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
-  const spineItemsManager = new SpineItemsManager(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
 
-  const createSpineItem = (index: number) =>
-    new SpineItem(
-      // biome-ignore lint/suspicious/noExplicitAny: test does not need a real manifest item
-      {} as any,
-      document.createElement("div"),
-      context,
-      settings,
-      hookManager,
-      index,
-      viewport,
-    )
-
-  return { spineItemsManager, createSpineItem }
+  return { spineItemsManager, hookManager }
 }
+
+describe("items", () => {
+  it("should build one detached item per manifest spine item at construction", () => {
+    const { spineItemsManager } = createManager(3)
+
+    expect(spineItemsManager.items).toHaveLength(3)
+    expect(spineItemsManager.items.map(({ item }) => item.id)).toEqual([
+      "item-0",
+      "item-1",
+      "item-2",
+    ])
+    expect(
+      spineItemsManager.items.every(
+        (item) => item.element.parentElement === null,
+      ),
+    ).toBe(true)
+  })
+})
+
+describe("get", () => {
+  it("should resolve by numeric index and by id", () => {
+    const { spineItemsManager } = createManager(3)
+
+    expect(spineItemsManager.get(1)).toBe(spineItemsManager.items[1])
+    expect(spineItemsManager.get("item-2")).toBe(spineItemsManager.items[2])
+    expect(spineItemsManager.get(undefined)).toBeUndefined()
+  })
+})
 
 describe("getSpineItemIndex", () => {
   it("should return the stored index for each item in order", () => {
-    const { spineItemsManager, createSpineItem } = createManager()
-    const items = [0, 1, 2].map(createSpineItem)
-
-    spineItemsManager.addMany(items)
+    const { spineItemsManager } = createManager(3)
+    const items = spineItemsManager.items
 
     expect(spineItemsManager.getSpineItemIndex(items[0])).toBe(0)
     expect(spineItemsManager.getSpineItemIndex(items[1])).toBe(1)
@@ -42,47 +67,52 @@ describe("getSpineItemIndex", () => {
   })
 
   it("should resolve by numeric index and by id", () => {
-    const { spineItemsManager, createSpineItem } = createManager()
-    const items = [0, 1, 2].map(createSpineItem)
-
-    spineItemsManager.addMany(items)
+    const { spineItemsManager } = createManager(3)
 
     expect(spineItemsManager.getSpineItemIndex(1)).toBe(1)
+    expect(spineItemsManager.getSpineItemIndex("item-2")).toBe(2)
     expect(spineItemsManager.getSpineItemIndex(undefined)).toBeUndefined()
   })
+})
 
-  it("should keep index aligned with position after a reload", () => {
-    const { spineItemsManager, createSpineItem } = createManager()
+describe("attach", () => {
+  it("should run hooks registered after construction, before appending", () => {
+    const { spineItemsManager, hookManager } = createManager(1)
+    const parent = document.createElement("div")
+    const hookCalls: Array<{ id: string; parentAtHookTime: unknown }> = []
 
-    spineItemsManager.addMany([0, 1, 2].map(createSpineItem))
+    hookManager.register(
+      "item.onBeforeContainerAttach",
+      ({ element, item }) => {
+        hookCalls.push({ id: item.id, parentAtHookTime: element.parentElement })
+      },
+    )
 
-    spineItemsManager.destroyItems()
+    spineItemsManager.items.forEach((item) => {
+      item.attach(parent)
+    })
 
-    const reloaded = [0, 1].map(createSpineItem)
-    spineItemsManager.addMany(reloaded)
-
-    expect(spineItemsManager.items).toHaveLength(2)
-    expect(spineItemsManager.getSpineItemIndex(reloaded[0])).toBe(0)
-    expect(spineItemsManager.getSpineItemIndex(reloaded[1])).toBe(1)
-    expect(spineItemsManager.items[0]).toBe(reloaded[0])
-    expect(spineItemsManager.items[1]).toBe(reloaded[1])
+    expect(hookCalls).toEqual([{ id: "item-0", parentAtHookTime: null }])
+    expect(spineItemsManager.items[0]?.element.parentElement).toBe(parent)
   })
 })
 
 describe("destroy", () => {
   it("should destroy its items", () => {
-    const { spineItemsManager, createSpineItem } = createManager()
-    const items = [0, 1, 2].map(createSpineItem)
+    const { spineItemsManager } = createManager(3)
+    const parent = document.createElement("div")
+    const items = spineItemsManager.items
 
-    spineItemsManager.addMany(items)
+    items.forEach((item) => {
+      item.attach(parent)
+    })
 
-    expect(items.every((item) => item.element.parentElement !== null)).toBe(
+    expect(items.every((item) => item.element.parentElement === parent)).toBe(
       true,
     )
 
     spineItemsManager.destroy()
 
-    expect(spineItemsManager.items).toHaveLength(0)
     expect(items.every((item) => item.element.parentElement === null)).toBe(
       true,
     )

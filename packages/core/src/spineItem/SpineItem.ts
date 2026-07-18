@@ -48,7 +48,6 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
   constructor(
     public item: Manifest[`spineItems`][number],
-    public parentElement: HTMLElement,
     public context: Context,
     public settings: ReaderSettingsManager,
     public hookManager: HookManager,
@@ -63,13 +62,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       error: undefined,
     })
 
-    this.containerElement = createContainerElement(
-      parentElement,
-      item,
-      hookManager,
-    )
-
-    parentElement.appendChild(this.containerElement)
+    this.containerElement = createContainerElement(item)
 
     const rendererFactory = this.settings.values.getRenderer?.(item)
 
@@ -131,6 +124,21 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe()
+  }
+
+  /**
+   * Attach the item container to the spine element. Deferred from construction
+   * so that `item.onBeforeContainerAttach` hooks registered between
+   * `createReader()` and `mount()` are honored. `appendChild` adopts the
+   * container into the parent's document when mounting into another document.
+   */
+  attach = (parentElement: HTMLElement) => {
+    this.hookManager.execute(`item.onBeforeContainerAttach`, {
+      element: this.containerElement,
+      item: this.item,
+    })
+
+    parentElement.appendChild(this.containerElement)
   }
 
   load = () => {
@@ -225,13 +233,8 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 }
 
-const createContainerElement = (
-  containerElement: HTMLElement,
-  item: Manifest[`spineItems`][number],
-  hookManager: HookManager,
-) => {
-  const element: HTMLElement =
-    containerElement.ownerDocument.createElement(`div`)
+const createContainerElement = (item: Manifest[`spineItems`][number]) => {
+  const element: HTMLElement = document.createElement(`div`)
   element.setAttribute(`data-${HTML_PREFIX_SPINE_ITEM}`, "")
   element.classList.add(`spineItem`)
   element.classList.add(`spineItem-${item.renditionLayout ?? "reflowable"}`)
@@ -241,8 +244,6 @@ const createContainerElement = (
   `
   // biome-ignore lint/complexity/useLiteralKeys: TODO
   element.dataset["isReady"] = `false`
-
-  hookManager.execute("item.onBeforeContainerAttach", { element, item })
 
   return element
 }

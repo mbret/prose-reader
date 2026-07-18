@@ -14,6 +14,10 @@ describe("SpineItemsLoader", () => {
   describe("Given the viewport geometry changes without a position change", () => {
     it("reloads visible spine items from the current relative viewport", async () => {
       const context = new Context(createTestManifest())
+
+      // the loader only runs once mounted
+      context.update({ rootElement: document.createElement("div") })
+
       const settings = new ReaderSettingsManager(
         { numberOfAdjacentSpineItemToPreLoad: 0 },
         context,

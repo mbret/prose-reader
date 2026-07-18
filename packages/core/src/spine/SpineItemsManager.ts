@@ -1,29 +1,39 @@
-import { BehaviorSubject } from "rxjs"
 import type { Context } from "../context/Context"
+import type { HookManager } from "../hooks/HookManager"
 import type { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem, type SpineItemReference } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import type { Viewport } from "../viewport/Viewport"
 
 export class SpineItemsManager extends DestroyableClass {
+  /**
+   * A reader is tied to a single book so the spine item list is immutable,
+   * derived from the manifest at construction. Items are attached to the DOM
+   * later, once the spine element exists (see SpineItem.attach).
+   */
+  public readonly items: readonly SpineItem[]
+
   constructor(
     protected context: Context,
     protected settings: ReaderSettingsManager,
+    protected hookManager: HookManager,
+    protected viewport: Viewport,
   ) {
     super()
-  }
 
-  protected orderedSpineItemsSubject = new BehaviorSubject<SpineItem[]>([])
-  public items$ = this.orderedSpineItemsSubject.asObservable()
+    this.items = context.manifest.spineItems.map(
+      (item, index) =>
+        new SpineItem(item, context, settings, hookManager, index, viewport),
+    )
+  }
 
   get(indexOrId: SpineItemReference | undefined) {
     if (typeof indexOrId === "number") {
-      return this.orderedSpineItemsSubject.value[indexOrId]
+      return this.items[indexOrId]
     }
 
     if (typeof indexOrId === "string") {
-      return this.orderedSpineItemsSubject.value.find(
-        ({ item }) => item.id === indexOrId,
-      )
+      return this.items.find(({ item }) => item.id === indexOrId)
     }
 
     return indexOrId
@@ -49,34 +59,10 @@ export class SpineItemsManager extends DestroyableClass {
     return spineItem?.index
   }
 
-  addMany(spineItems: SpineItem[]) {
-    this.orderedSpineItemsSubject.next([
-      ...this.orderedSpineItemsSubject.getValue(),
-      ...spineItems,
-    ])
-  }
-
-  get items() {
-    return this.orderedSpineItemsSubject.value
-  }
-
-  /**
-   * @todo remove subscription to each items etc. See add()
-   */
-  destroyItems() {
-    const items = this.orderedSpineItemsSubject.value
-
-    items.forEach((item) => {
+  public destroy() {
+    this.items.forEach((item) => {
       item.destroy()
     })
-
-    if (items.length) {
-      this.orderedSpineItemsSubject.next([])
-    }
-  }
-
-  public destroy() {
-    this.destroyItems()
 
     super.destroy()
   }

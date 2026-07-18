@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   debounceTime,
   distinctUntilChanged,
+  filter,
   map,
   merge,
   shareReplay,
@@ -13,6 +14,7 @@ import type { Context } from "../../context/Context"
 import type { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { DestroyableClass } from "../../utils/DestroyableClass"
+import { isDefined } from "../../utils/isDefined"
 import { waitForSwitch } from "../../utils/rxjs"
 import type { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
@@ -68,6 +70,11 @@ export class SpineItemsLoader extends DestroyableClass {
       // Ideally loading faster is better but loading too close to user navigating can
       // be dangerous.
       debounceTime(100),
+      // Spine items exist from construction but must not render before mount
+      // (their containers are detached and users may still register hooks).
+      // Dropping pre-mount events is safe: mounting triggers a layout which
+      // re-fires this stream.
+      filter(() => isDefined(this.context.value.rootElement)),
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
       withLatestFrom(this.context.bridgeEvent.position$, forcedOpen$),
       map(([, position, forcedOpenIndexes]) => {

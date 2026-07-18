@@ -1,12 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import {
-  distinctUntilChanged,
-  map,
-  merge,
-  type Observable,
-  share,
-  switchMap,
-} from "rxjs"
+import { distinctUntilChanged, map, merge, type Observable, share } from "rxjs"
 import type { SpineItem, SpineItemState } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { observeResize } from "../utils/rxjs"
@@ -22,6 +15,9 @@ export class SpineItemsObserver extends DestroyableClass {
 
   /**
    * Observable directly plugged to ResizeObserver for each item.
+   *
+   * Items are only attached to the DOM at mount, and ResizeObserver does not
+   * report detached elements, so this starts emitting once items are attached.
    */
   public itemResize$: Observable<{
     item: SpineItem
@@ -34,47 +30,29 @@ export class SpineItemsObserver extends DestroyableClass {
   constructor(protected spineItemsManager: SpineItemsManager) {
     super()
 
-    this.states$ = this.spineItemsManager.items$.pipe(
-      switchMap((items) => {
-        return merge(
-          ...items.map((item) =>
-            item.pipe(
-              map((state) => ({ item, ...state })),
-              distinctUntilChanged(isShallowEqual),
-            ),
-          ),
-        )
-      }),
-      share(),
-    )
+    const items = spineItemsManager.items
 
-    this.itemResize$ = this.spineItemsManager.items$.pipe(
-      switchMap((items) => {
-        const resize$ = items.map((item) =>
-          observeResize(item.element).pipe(
-            map((entries) => ({ entries, item })),
-          ),
-        )
+    this.states$ = merge(
+      ...items.map((item) =>
+        item.pipe(
+          map((state) => ({ item, ...state })),
+          distinctUntilChanged(isShallowEqual),
+        ),
+      ),
+    ).pipe(share())
 
-        return merge(...resize$)
-      }),
-      share(),
-    )
+    this.itemResize$ = merge(
+      ...items.map((item) =>
+        observeResize(item.element).pipe(map((entries) => ({ entries, item }))),
+      ),
+    ).pipe(share())
 
-    this.itemLoad$ = this.spineItemsManager.items$.pipe(
-      switchMap((items) => {
-        return merge(...items.map((item) => item.loaded$.pipe(map(() => item))))
-      }),
-      share(),
-    )
+    this.itemLoad$ = merge(
+      ...items.map((item) => item.loaded$.pipe(map(() => item))),
+    ).pipe(share())
 
-    this.itemUnload$ = this.spineItemsManager.items$.pipe(
-      switchMap((items) => {
-        return merge(
-          ...items.map((item) => item.unloaded$.pipe(map(() => item))),
-        )
-      }),
-      share(),
-    )
+    this.itemUnload$ = merge(
+      ...items.map((item) => item.unloaded$.pipe(map(() => item))),
+    ).pipe(share())
   }
 }

@@ -12,14 +12,22 @@ import {
   UnboundSpinePosition,
 } from "../../../spine/types"
 import { createSpineItemLocator } from "../../../spineItem/locationResolver"
-import { SpineItem } from "../../../spineItem/SpineItem"
-import { createTestManifest } from "../../../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../../../tests/utils"
 import { Viewport } from "../../../viewport/Viewport"
 import { getNavigationForLeftOrTopPage } from "./getNavigationForLeftOrTopPage"
 import { getNavigationForRightOrBottomPage } from "./getNavigationForRightOrBottomPage"
 
 const createContext = () => {
-  const context = new Context(createTestManifest())
+  const context = new Context(
+    createTestManifest({
+      spineItems: createTestManifestSpineItems([
+        { href: "item.xhtml", id: "item" },
+      ]),
+    }),
+  )
   const settings = new ReaderSettingsManager(
     {
       pageTurnMode: "scrollable",
@@ -27,9 +35,14 @@ const createContext = () => {
     context,
   )
   const hookManager = new HookManager()
-  const spineItemsManager = new SpineItemsManager(context, settings)
-  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -42,22 +55,12 @@ const createContext = () => {
     spineItemsManager,
     spineItemLocator,
     settings,
-    hookManager,
     viewport,
   )
-  const spineItem = new SpineItem(
-    {
-      href: "item.xhtml",
-      id: "item",
-      index: 0,
-    },
-    document.createElement("div"),
-    context,
-    settings,
-    hookManager,
-    0,
-    viewport,
-  )
+  const spineItem = spineItemsManager.items[0]
+
+  if (!spineItem) throw new Error("Expected one spine item from the manifest")
+
   const spineItemLayout = new SpineItemSpineLayout({
     bottom: 250,
     height: 250,
@@ -80,7 +83,6 @@ const createContext = () => {
   )
 
   viewport.layout()
-  spineItemsManager.addMany([spineItem])
 
   const navigationResolver = createNavigationResolver({
     cfi,

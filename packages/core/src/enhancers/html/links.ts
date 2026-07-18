@@ -2,30 +2,27 @@ import { fromEvent, merge, NEVER, share, switchMap, tap } from "rxjs"
 import type { Reader } from "../../reader"
 
 export const handleLinks = (reader: Reader) => {
-  return reader.spine.spineItemsManager.items$.pipe(
-    switchMap((items) =>
-      merge(
-        ...items.map((item) => {
-          return item.watch("isLoaded").pipe(
-            switchMap(() => {
-              const frame = item.renderer.getDocumentFrame()
+  return merge(
+    ...reader.spine.spineItemsManager.items.map((item) => {
+      return item.watch("isLoaded").pipe(
+        switchMap(() => {
+          const frame = item.renderer.getDocumentFrame()
 
-              if (!frame?.contentDocument) return NEVER
+          if (!frame?.contentDocument) return NEVER
 
-              const anchorElements = Array.from(
-                frame.contentDocument.querySelectorAll(`a`),
-              )
-
-              const events$ = anchorElements.map((element) =>
-                fromEvent<MouseEvent>(element, `click`),
-              )
-
-              return merge(...events$)
-            }),
+          const anchorElements = Array.from(
+            frame.contentDocument.querySelectorAll(`a`),
           )
+
+          const events$ = anchorElements.map((element) =>
+            fromEvent<MouseEvent>(element, `click`),
+          )
+
+          return merge(...events$)
         }),
-      ),
-    ),
+      )
+    }),
+  ).pipe(
     tap((event) => {
       event.preventDefault()
     }),
