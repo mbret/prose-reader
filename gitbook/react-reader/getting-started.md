@@ -16,15 +16,50 @@ import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
 
 const MyAppReader = () => {
+  const containerRef = useRef<HTMLDivElement | null>(null)
   // You own the creation of your reader instance
-  const readerInstance = useReaderInstance()
+  const readerInstance = useReaderInstance(manifest, containerRef)
   
   // Then we handle the rendering
   return (
     <ReactReader
       reader={readerInstance}
-    />
+    >
+      <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
+    </ReactReader>
   )
+}
+```
+
+A reader lives for a single book, so the idiomatic React pattern is one effect that creates and mounts the reader together, with `destroy()` as its cleanup. Because `destroy()` is the true inverse of create + mount, the effect is naturally safe with strict mode re-running effects:
+
+```typescript
+import { useEffect, useState, type RefObject } from "react"
+import type { Manifest } from "@prose-reader/core"
+
+const useReaderInstance = (
+  manifest: Manifest | undefined,
+  containerRef: RefObject<HTMLElement | null>,
+) => {
+  const [reader, setReader] = useState<ReturnType<typeof createAppReader>>()
+
+  useEffect(() => {
+    const containerElement = containerRef.current
+
+    if (!manifest || !containerElement) return
+
+    const instance = createAppReader({ manifest })
+
+    instance.mount(containerElement)
+    setReader(instance)
+
+    return () => {
+      instance.destroy()
+      setReader(undefined)
+    }
+  }, [manifest, containerRef])
+
+  return reader
 }
 ```
 

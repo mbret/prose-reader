@@ -1,13 +1,7 @@
 import { Box, useBreakpointValue } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
-import {
-  type ComponentProps,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react"
+import { type ComponentProps, memo, useCallback, useRef } from "react"
 import { useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
@@ -21,16 +15,10 @@ import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
-import { type ReaderInstance, useCreateReader } from "./useCreateReader"
+import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { useReader } from "./useReader"
-
-/**
- * mount() is one-shot per reader, this keeps track of already mounted
- * readers so we never mount twice (eg: react strict mode re-running effects).
- */
-const mountedReaders = new WeakSet<ReaderInstance>()
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -55,7 +43,7 @@ export const ReaderScreen = memo(() => {
     lg: "desktop",
   })
 
-  useCreateReader(manifest)
+  useCreateReader(manifest, readerContainerRef)
   useUpdateReaderSettings({ localSettings })
   usePersistCurrentPagination()
   useResetStateOnUnMount()
@@ -69,16 +57,6 @@ export const ReaderScreen = memo(() => {
     onFontSizeScopeChange,
     fontSizeValues,
   } = useFontSizeSettings(bookSettingsSignal, breakpointValue)
-
-  useEffect(() => {
-    const containerElement = readerContainerRef.current
-
-    if (reader && containerElement && !mountedReaders.has(reader)) {
-      mountedReaders.add(reader)
-
-      reader.mount(containerElement)
-    }
-  }, [reader])
 
   const onItemClick = useCallback(
     (
