@@ -1,5 +1,5 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
-import { EMPTY, from, map, of, switchMap, tap } from "rxjs"
+import { from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
 import { setAttributeIfChanged } from "../../../utils/dom"
 import {
@@ -84,8 +84,6 @@ export class HtmlRenderer extends DocumentRenderer {
     revokeFrameObjectUrl(frameElement)
 
     this.detach()
-
-    return EMPTY
   }
 
   onLayout({

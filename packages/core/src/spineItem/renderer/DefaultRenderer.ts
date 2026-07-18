@@ -2,9 +2,7 @@ import { EMPTY, of } from "rxjs"
 import { DocumentRenderer } from "./DocumentRenderer"
 
 export class DefaultRenderer extends DocumentRenderer {
-  onUnload() {
-    return EMPTY
-  }
+  onUnload() {}
 
   onCreateDocument() {
     return of(document.createElement("div"))

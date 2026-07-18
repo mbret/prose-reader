@@ -77,7 +77,7 @@ export class PdfRenderer extends DocumentRenderer {
     )
   }
 
-  onUnload(): Observable<unknown> {
+  onUnload(): void {
     this.detach()
 
     if (this.renderTask) {
@@ -86,8 +86,6 @@ export class PdfRenderer extends DocumentRenderer {
 
     this.textLayer?.cancel()
     this.pageProxy?.cleanup()
-
-    return EMPTY
   }
 
   onCreateDocument(): Observable<HTMLElement> {

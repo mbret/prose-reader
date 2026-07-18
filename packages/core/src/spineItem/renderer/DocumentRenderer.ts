@@ -156,7 +156,7 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         return this.context.bridgeEvent.viewportFree$.pipe(
           first(),
-          switchMap(() => {
+          map(() => {
             const documentContainer = this.value.documentContainer
 
             if (documentContainer) {
@@ -170,17 +170,12 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
               }
             }
 
-            return this.onUnload().pipe(
-              endWith(null),
-              first(),
-              catchError((error) => {
-                Report.error(`Error unloading document`, error)
+            try {
+              this.onUnload()
+            } catch (error) {
+              Report.error(`Error unloading document`, error)
+            }
 
-                return of(null)
-              }),
-            )
-          }),
-          map(() => {
             this.mergeCompare({ state: `idle`, error: undefined })
 
             return undefined
@@ -292,17 +287,11 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
         Report.error(`Error while executing unload hooks on destroy`, error)
       }
 
-      this.onUnload()
-        .pipe(
-          endWith(null),
-          first(),
-          catchError((error) => {
-            Report.error(`Error while unloading document on destroy`, error)
-
-            return of(null)
-          }),
-        )
-        .subscribe()
+      try {
+        this.onUnload()
+      } catch (error) {
+        Report.error(`Error while unloading document on destroy`, error)
+      }
     }
 
     super.destroy()
@@ -312,7 +301,12 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     release: Observable<void>
   }): Observable<Document | undefined>
 
-  abstract onUnload(): Observable<unknown>
+  /**
+   * Release the document and its resources. Must be synchronous: unload also
+   * runs during a synchronous `destroy`, before the caller detaches the
+   * container, so any deferred work would run against a torn-down document.
+   */
+  abstract onUnload(): void
 
   /**
    * This lifecycle lets you fetch your resource and create the document.
