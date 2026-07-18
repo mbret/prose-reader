@@ -67,9 +67,14 @@ export const createReader = ({
   const context = new Context(manifest)
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
-  const spineItemsManager = new SpineItemsManager(context, settingsManager)
-  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settingsManager)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settingsManager,
+    hookManager,
+    viewport,
+  )
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
     settings: settingsManager,
@@ -82,7 +87,6 @@ export const createReader = ({
     spineItemsManager,
     spineItemLocator,
     settingsManager,
-    hookManager,
     viewport,
   )
   const navigator = createNavigator({

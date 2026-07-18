@@ -33,11 +33,14 @@ jobs:
   ts:
     uses: ./.github/workflows/_ts.yml
 
+  ts_react_native_demo:
+    uses: ./.github/workflows/_ts_react_native_demo.yml
+
   tests:
     uses: ./.github/workflows/_test.yml
 
   publish:
-    needs: [lint, ts, tests, build]
+    needs: [lint, ts, ts_react_native_demo, tests, build]
     runs-on: macos-latest
 
     steps:

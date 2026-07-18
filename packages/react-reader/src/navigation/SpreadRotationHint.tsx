@@ -124,11 +124,11 @@ const observeBeginSpineItem = ({
   pagination$: Observable<HintPagination>
   reader: ReaderWithSpreadHintStreams
 }) =>
-  combineLatest([pagination$, reader.spineItemsManager.items$]).pipe(
-    map(([{ beginSpineItemIndex }, spineItems]) =>
+  pagination$.pipe(
+    map(({ beginSpineItemIndex }) =>
       beginSpineItemIndex === undefined
         ? undefined
-        : spineItems[beginSpineItemIndex],
+        : reader.spineItemsManager.items[beginSpineItemIndex],
     ),
     distinctUntilChanged(),
     switchMap((spineItem) =>

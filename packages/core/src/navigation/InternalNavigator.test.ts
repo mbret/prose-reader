@@ -9,19 +9,32 @@ import { Spine } from "../spine/Spine"
 import { SpineItemsManager } from "../spine/SpineItemsManager"
 import { SpinePosition } from "../spine/types"
 import { createSpineItemLocator } from "../spineItem/locationResolver"
-import { createTestManifest, waitFor } from "../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+  waitFor,
+} from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { createNavigator } from "./Navigator"
-import { generateItems } from "./tests/utils"
+import { mockSpineItemsLayout } from "./tests/utils"
 import type { InternalNavigationEntry } from "./types"
 
-const createNavigatorContext = () => {
-  const context = new Context(createTestManifest())
+const createNavigatorContext = (numberOfItems = 0) => {
+  const context = new Context(
+    createTestManifest({
+      spineItems: createTestManifestSpineItems(numberOfItems),
+    }),
+  )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
-  const spineItemsManager = new SpineItemsManager(context, settings)
-  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -34,7 +47,6 @@ const createNavigatorContext = () => {
     spineItemsManager,
     spineItemLocator,
     settings,
-    hookManager,
     viewport,
   )
   const navigator = createNavigator({
@@ -131,29 +143,10 @@ describe(`Given unloaded book`, () => {
 describe(`Given loaded book`, () => {
   describe("Given invalid negative navigation spine item", () => {
     it(`should fallback to 0`, async () => {
-      const {
-        navigator,
-        spineItemsManager,
-        context,
-        settings,
-        hookManager,
-        spine,
-        viewport,
-      } = createNavigatorContext()
+      const { navigator, spineItemsManager, spine } = createNavigatorContext(2)
       const navigations: InternalNavigationEntry[] = []
 
-      const items = generateItems(
-        100,
-        2,
-        context,
-        settings,
-        hookManager,
-        spine,
-        spineItemsManager,
-        viewport,
-      )
-
-      spineItemsManager.addMany(items)
+      mockSpineItemsLayout(100, spine, spineItemsManager)
 
       const sub = navigator.internalNavigator.navigationSubject
         .pipe(skip(1))
@@ -183,29 +176,10 @@ describe(`Given loaded book`, () => {
 
   describe("Given invalid positive navigation spine item", () => {
     it(`should fallback to length - 1`, async () => {
-      const {
-        spine,
-        context,
-        settings,
-        hookManager,
-        navigator,
-        spineItemsManager,
-        viewport,
-      } = createNavigatorContext()
+      const { spine, navigator, spineItemsManager } = createNavigatorContext(2)
       const navigations: InternalNavigationEntry[] = []
 
-      const items = generateItems(
-        100,
-        2,
-        context,
-        settings,
-        hookManager,
-        spine,
-        spineItemsManager,
-        viewport,
-      )
-
-      spineItemsManager.addMany(items)
+      mockSpineItemsLayout(100, spine, spineItemsManager)
 
       spine.layout()
 
@@ -244,32 +218,14 @@ describe(`Given loaded book`, () => {
     ])(
       `should clamp to viewport-flush position in %s mode and preserve the raw request`,
       async (_label, computedPageTurnMode) => {
-        const {
-          spine,
-          context,
-          settings,
-          hookManager,
-          navigator,
-          spineItemsManager,
-          viewport,
-        } = createNavigatorContext()
+        const { spine, settings, navigator, spineItemsManager } =
+          createNavigatorContext(2)
 
         settings.update({ pageTurnMode: computedPageTurnMode })
 
         const navigations: InternalNavigationEntry[] = []
 
-        const items = generateItems(
-          100,
-          2,
-          context,
-          settings,
-          hookManager,
-          spine,
-          spineItemsManager,
-          viewport,
-        )
-
-        spineItemsManager.addMany(items)
+        mockSpineItemsLayout(100, spine, spineItemsManager)
 
         spine.layout()
 
@@ -307,30 +263,12 @@ describe(`Given loaded book`, () => {
     // between. A `position`-equality short-circuit before the active mode
     // controller dropped the second call and the user landed on the wrong page.
     it("should forward both to scrollNavigationController.navigate", async () => {
-      const {
-        spine,
-        context,
-        settings,
-        hookManager,
-        navigator,
-        spineItemsManager,
-        viewport,
-      } = createNavigatorContext()
+      const { spine, settings, navigator, spineItemsManager } =
+        createNavigatorContext(2)
 
       settings.update({ pageTurnMode: "scrollable" })
 
-      const items = generateItems(
-        100,
-        2,
-        context,
-        settings,
-        hookManager,
-        spine,
-        spineItemsManager,
-        viewport,
-      )
-
-      spineItemsManager.addMany(items)
+      mockSpineItemsLayout(100, spine, spineItemsManager)
 
       spine.layout()
 

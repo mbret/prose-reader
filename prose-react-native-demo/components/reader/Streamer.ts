@@ -1,8 +1,8 @@
 import {
-  ReactNativeStreamer,
   createArchiveFromExpoFileSystemNext,
+  ReactNativeStreamer,
 } from "@prose-reader/react-native"
-import { Directory } from "expo-file-system/next"
+import { Directory } from "expo-file-system"
 import { unzippedDestination } from "../constants"
 
 export const streamer = new ReactNativeStreamer({

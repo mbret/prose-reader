@@ -1,16 +1,18 @@
 import { firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { HookManager, SpineItem, SpineItemsObserver } from "../.."
+import { HookManager } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { createTestManifest } from "../../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { SpineItemsManager } from "../SpineItemsManager"
+import { SpineItemsObserver } from "../SpineItemsObserver"
 import { SpineLayout } from "../SpineLayout"
 import { SpinePosition } from "../types"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
-
-const context = new Context(createTestManifest())
 
 const singlePageItems = [
   {
@@ -31,73 +33,54 @@ const singlePageItems = [
   },
 ]
 
-const createSpineItem = (
-  item: (typeof singlePageItems)[number],
-  index: number,
-  settings: ReaderSettingsManager,
-  hookManager: HookManager,
-  viewport: Viewport,
-) => {
-  const containerElement = document.createElement("div")
-
-  const spineItem = new SpineItem(
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
-    {} as any,
-    containerElement,
+const createTestEnvironment = () => {
+  const context = new Context(
+    createTestManifest({
+      spineItems: createTestManifestSpineItems(singlePageItems.length),
+    }),
+  )
+  const settings = new ReaderSettingsManager({}, context)
+  const hookManager = new HookManager()
+  const viewport = new Viewport(context, settings)
+  const spineItemsManager = new SpineItemsManager(
     context,
     settings,
     hookManager,
-    index,
+    viewport,
+  )
+  const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
+  const spineLayout = new SpineLayout(
+    // biome-ignore lint/suspicious/noExplicitAny: TODO
+    spineItemsManager as any,
+    spineItemsObserver,
+    context,
+    settings,
     viewport,
   )
 
-  vi.spyOn(spineItem, "layoutInfo", "get").mockReturnValue({
-    // left: item.left,
-    // top: item.top,
-    width: item.width,
-    height: item.height,
-    // right: item.right,
-    // bottom: item.bottom,
-    // x: item.left,
-    // y: item.top,
+  vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
+  vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
+
+  viewport.layout()
+
+  spineItemsManager.items.forEach((spineItem, index) => {
+    vi.spyOn(spineItem, "layoutInfo", "get").mockReturnValue({
+      // biome-ignore lint/style/noNonNullAssertion: index in range
+      width: singlePageItems[index]!.width,
+      // biome-ignore lint/style/noNonNullAssertion: index in range
+      height: singlePageItems[index]!.height,
+    })
   })
 
-  return spineItem
+  return { settings, spineItemsManager, spineLayout, viewport }
 }
 
 describe("Given single page items and no spread", () => {
   describe("when position is in half of the first item", () => {
     describe("and threshold of 0.51", () => {
       it("should not recognize second item", () => {
-        const context = new Context(createTestManifest())
-        const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManager(context, settings)
-        const hookManager = new HookManager()
-        const viewport = new Viewport(context, settings)
-        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-        const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          spineItemsManager as any,
-          spineItemsObserver,
-          context,
-          settings,
-          viewport,
-        )
-
-        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
-          100,
-        )
-        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
-          100,
-        )
-
-        viewport.layout()
-
-        const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager, viewport),
-        )
-
-        spineItemsManager.addMany(spineItems)
+        const { settings, spineItemsManager, spineLayout, viewport } =
+          createTestEnvironment()
 
         spineLayout.layout()
 
@@ -120,35 +103,8 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.50", () => {
       it("should not recognize second item", () => {
-        const context = new Context(createTestManifest())
-        const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManager(context, settings)
-        const hookManager = new HookManager()
-        const viewport = new Viewport(context, settings)
-        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-        const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          spineItemsManager as any,
-          spineItemsObserver,
-          context,
-          settings,
-          viewport,
-        )
-
-        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
-          100,
-        )
-        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
-          100,
-        )
-
-        viewport.layout()
-
-        const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager, viewport),
-        )
-
-        spineItemsManager.addMany(spineItems)
+        const { settings, spineItemsManager, spineLayout, viewport } =
+          createTestEnvironment()
 
         spineLayout.layout()
 
@@ -171,35 +127,8 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.49", () => {
       it("should recognize second item", async () => {
-        const context = new Context(createTestManifest())
-        const settings = new ReaderSettingsManager({}, context)
-        const spineItemsManager = new SpineItemsManager(context, settings)
-        const hookManager = new HookManager()
-        const viewport = new Viewport(context, settings)
-        const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
-        const spineLayout = new SpineLayout(
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          spineItemsManager as any,
-          spineItemsObserver,
-          context,
-          settings,
-          viewport,
-        )
-
-        vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(
-          100,
-        )
-        vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(
-          100,
-        )
-
-        viewport.layout()
-
-        const spineItems = singlePageItems.map((item, index) =>
-          createSpineItem(item, index, settings, hookManager, viewport),
-        )
-
-        spineItemsManager.addMany(spineItems)
+        const { settings, spineItemsManager, spineLayout, viewport } =
+          createTestEnvironment()
 
         spineLayout.layout()
 

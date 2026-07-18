@@ -62,26 +62,23 @@ export const selectionEnhancer =
     const reader = next(options)
     let lasSelection: SelectionValue
 
-    const trackedSelection$ = reader.spineItemsManager.items$.pipe(
-      switchMap((spineItems) => {
-        const instances = spineItems.map((spineItem) => {
-          const itemIndex =
-            reader.spineItemsManager.getSpineItemIndex(spineItem) ?? 0
+    const trackedSelection$ = merge(
+      ...reader.spineItemsManager.items.map((spineItem) => {
+        const itemIndex =
+          reader.spineItemsManager.getSpineItemIndex(spineItem) ?? 0
 
-          return trackSpineItemSelection(spineItem).pipe(
-            map((entry) => {
-              if (!entry) return undefined
+        return trackSpineItemSelection(spineItem).pipe(
+          map((entry) => {
+            if (!entry) return undefined
 
-              return {
-                ...entry,
-                itemIndex,
-              }
-            }),
-          )
-        })
-
-        return merge(...instances)
+            return {
+              ...entry,
+              itemIndex,
+            }
+          }),
+        )
       }),
+    ).pipe(
       startWith(undefined),
       distinctUntilChanged(),
       tap((value) => {

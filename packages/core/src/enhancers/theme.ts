@@ -132,21 +132,6 @@ export const themeEnhancer: ThemeEnhancer = (next) => (options) => {
     }
   })
 
-  /**
-   * Make sure to apply theme on item container (fixed layout)
-   * & loading element
-   */
-  reader.spineItemsManager.items$
-    .pipe(
-      tap((items) =>
-        items.map(({ element }) =>
-          applyChangeToSpineItemElement({ container: element }),
-        ),
-      ),
-      takeUntil(reader.$.destroy$),
-    )
-    .subscribe()
-
   currentThemeSubject$
     .pipe(
       tap(() => {

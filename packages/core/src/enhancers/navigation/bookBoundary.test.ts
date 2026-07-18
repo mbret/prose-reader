@@ -4,7 +4,7 @@ import { CfiManager } from "../../cfi"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
-import { generateItems } from "../../navigation/tests/utils"
+import { mockSpineItemsLayout } from "../../navigation/tests/utils"
 import { Pagination } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -12,7 +12,11 @@ import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { createTestManifest, waitFor } from "../../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+  waitFor,
+} from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import {
   type BookBoundaryReachedEvent,
@@ -53,12 +57,21 @@ const createTestReader = ({
   itemSize?: number
   itemCount?: number
 } = {}) => {
-  const context = new Context(createTestManifest())
+  const context = new Context(
+    createTestManifest({
+      spineItems: createTestManifestSpineItems(itemCount),
+    }),
+  )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
-  const spineItemsManager = new SpineItemsManager(context, settings)
-  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -71,7 +84,6 @@ const createTestReader = ({
     spineItemsManager,
     spineItemLocator,
     settings,
-    hookManager,
     viewport,
   )
   const navigator = createNavigator({
@@ -92,17 +104,7 @@ const createTestReader = ({
   )
   viewport.layout()
 
-  const items = generateItems(
-    itemSize,
-    itemCount,
-    context,
-    settings,
-    hookManager,
-    spine,
-    spineItemsManager,
-    viewport,
-  )
-  spineItemsManager.addMany(items)
+  mockSpineItemsLayout(itemSize, spine, spineItemsManager)
 
   const reader = {
     navigation: navigator,

@@ -5,7 +5,7 @@ import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
 import { observeSettledNavigation } from "../../navigation/operators"
-import { generateItems } from "../../navigation/tests/utils"
+import { mockSpineItemsLayout } from "../../navigation/tests/utils"
 import { Pagination } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
@@ -17,7 +17,11 @@ import {
   UnboundSpinePosition,
 } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { createTestManifest, waitFor } from "../../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+  waitFor,
+} from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
@@ -30,12 +34,22 @@ const createTestReader = ({
   itemCount?: number
   readingDirection?: "ltr" | "rtl"
 } = {}) => {
-  const context = new Context(createTestManifest({ readingDirection }))
+  const context = new Context(
+    createTestManifest({
+      readingDirection,
+      spineItems: createTestManifestSpineItems(itemCount),
+    }),
+  )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
-  const spineItemsManager = new SpineItemsManager(context, settings)
-  const cfi = new CfiManager(hookManager, spineItemsManager)
   const viewport = new Viewport(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
+  const cfi = new CfiManager(hookManager, spineItemsManager)
   const pagination = new Pagination(context, spineItemsManager)
   const spineItemLocator = createSpineItemLocator({
     context,
@@ -48,7 +62,6 @@ const createTestReader = ({
     spineItemsManager,
     spineItemLocator,
     settings,
-    hookManager,
     viewport,
   )
   const navigator = createNavigator({
@@ -69,17 +82,7 @@ const createTestReader = ({
   )
   viewport.layout()
 
-  const items = generateItems(
-    itemSize,
-    itemCount,
-    context,
-    settings,
-    hookManager,
-    spine,
-    spineItemsManager,
-    viewport,
-  )
-  spineItemsManager.addMany(items)
+  const items = mockSpineItemsLayout(itemSize, spine, spineItemsManager)
 
   // Cast: only the fields read by `outOfSpineBoundary` are wired up.
   const reader = {
@@ -463,7 +466,7 @@ describe("outOfSpineBoundary", () => {
           }),
       )
 
-      // `generateItems` already installed an LTR-layout spy on the same
+      // `mockSpineItemsLayout` already installed an LTR-layout spy on the same
       // method; reset before re-installing the RTL implementation so the
       // new mock fully replaces the old one (vi.spyOn returns the existing
       // spy when the prop is already spied — without the reset we'd end up

@@ -26,6 +26,7 @@
   "scripts": {
     "start": "vite build --watch --mode development",
     "build": "vite build",
+    "tsc": "tsc --noEmit -p tsconfig.rn.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run --coverage"
   },
   "devDependencies": {

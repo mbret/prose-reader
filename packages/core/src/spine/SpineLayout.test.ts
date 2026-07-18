@@ -4,58 +4,25 @@ import { describe, expect, it, vi } from "vitest"
 import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
-import { SpineItem } from "../spineItem/SpineItem"
-import { createTestManifest } from "../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineLayout } from "./SpineLayout"
 
-const createSpineItem = ({
-  context,
-  hookManager,
-  index,
-  itemOverrides = {},
-  parentElement,
-  settings,
-  viewport,
-}: {
-  context: Context
-  hookManager: HookManager
-  index: number
-  itemOverrides?: Partial<Manifest["spineItems"][number]>
-  parentElement: HTMLElement
-  settings: ReaderSettingsManager
-  viewport: Viewport
-}) => {
-  const item: Manifest["spineItems"][number] = {
-    href: `item-${index}.xhtml`,
-    id: `item-${index}`,
-    mediaType: `application/xhtml+xml`,
-    ...itemOverrides,
-    index,
-  }
-
-  return new SpineItem(
-    item,
-    parentElement,
-    context,
-    settings,
-    hookManager,
-    index,
-    viewport,
-  )
-}
-
 const createPrePaginatedManifest = (
   readingDirection: Manifest["readingDirection"],
+  items: Array<Partial<Manifest["spineItems"][number]> | undefined>,
 ): Manifest => ({
   filename: "",
   items: [],
   readingDirection,
   renditionLayout: "pre-paginated",
   renditionSpread: "auto",
-  spineItems: [],
+  spineItems: createTestManifestSpineItems(items),
   title: "",
 })
 
@@ -63,16 +30,25 @@ const createSpreadModeTestEnvironment = ({
   pageHeight,
   pageWidth,
   readingDirection,
+  items,
 }: {
   pageHeight: number
   pageWidth: number
   readingDirection: Manifest["readingDirection"]
+  items: Array<Partial<Manifest["spineItems"][number]> | undefined>
 }) => {
-  const context = new Context(createPrePaginatedManifest(readingDirection))
+  const context = new Context(
+    createPrePaginatedManifest(readingDirection, items),
+  )
   const settings = new ReaderSettingsManager({ spreadMode: true }, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
-  const spineItemsManager = new SpineItemsManager(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
   const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
   const spineLayout = new SpineLayout(
     spineItemsManager,
@@ -81,7 +57,6 @@ const createSpreadModeTestEnvironment = ({
     settings,
     viewport,
   )
-  const parentElement = document.createElement(`div`)
   const layoutRequests: Array<{
     blankPagePosition: "before" | "after" | "none"
     id: string
@@ -106,28 +81,9 @@ const createSpreadModeTestEnvironment = ({
   )
   viewport.layout()
 
-  const addItems = (
-    items: Array<Partial<Manifest["spineItems"][number]> | undefined>,
-  ) => {
-    spineItemsManager.addMany(
-      items.map((itemOverrides, index) =>
-        createSpineItem({
-          context,
-          hookManager,
-          index,
-          itemOverrides: itemOverrides ?? {},
-          parentElement,
-          settings,
-          viewport,
-        }),
-      ),
-    )
-  }
-
   const destroy = () => {
     spineLayout.destroy()
     spineItemsObserver.destroy()
-    spineItemsManager.destroyItems()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()
@@ -135,7 +91,6 @@ const createSpreadModeTestEnvironment = ({
   }
 
   return {
-    addItems,
     destroy,
     layoutRequests,
     spineLayout,
@@ -143,11 +98,18 @@ const createSpreadModeTestEnvironment = ({
 }
 
 const createTestSpineLayout = () => {
-  const context = new Context(createTestManifest())
+  const context = new Context(
+    createTestManifest({ spineItems: createTestManifestSpineItems(1) }),
+  )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
-  const spineItemsManager = new SpineItemsManager(context, settings)
+  const spineItemsManager = new SpineItemsManager(
+    context,
+    settings,
+    hookManager,
+    viewport,
+  )
   const spineItemsObserver = new SpineItemsObserver(spineItemsManager)
   const spineLayout = new SpineLayout(
     spineItemsManager,
@@ -156,27 +118,14 @@ const createTestSpineLayout = () => {
     settings,
     viewport,
   )
-  const parentElement = document.createElement(`div`)
 
   vi.spyOn(viewport.value.element, "clientWidth", "get").mockReturnValue(100)
   vi.spyOn(viewport.value.element, "clientHeight", "get").mockReturnValue(100)
   viewport.layout()
 
-  spineItemsManager.addMany([
-    createSpineItem({
-      context,
-      hookManager,
-      index: 0,
-      parentElement,
-      settings,
-      viewport,
-    }),
-  ])
-
   const destroy = () => {
     spineLayout.destroy()
     spineItemsObserver.destroy()
-    spineItemsManager.destroyItems()
     spineItemsManager.destroy()
     viewport.destroy()
     settings.destroy()
@@ -231,20 +180,19 @@ describe("SpineLayout", () => {
   })
 
   it("keeps RTL right-left spread pairs together after an odd number of pages", async () => {
-    const { addItems, destroy, layoutRequests, spineLayout } =
+    const { destroy, layoutRequests, spineLayout } =
       createSpreadModeTestEnvironment({
         pageHeight: 100,
         pageWidth: 100,
         readingDirection: "rtl",
+        items: [
+          undefined,
+          undefined,
+          undefined,
+          { pageSpreadRight: true, renditionLayout: "pre-paginated" },
+          { pageSpreadLeft: true, renditionLayout: "pre-paginated" },
+        ],
       })
-
-    addItems([
-      undefined,
-      undefined,
-      undefined,
-      { pageSpreadRight: true, renditionLayout: "pre-paginated" },
-      { pageSpreadLeft: true, renditionLayout: "pre-paginated" },
-    ])
 
     try {
       const layoutDone = firstValueFrom(spineLayout.layout$)
@@ -270,20 +218,19 @@ describe("SpineLayout", () => {
   })
 
   it("keeps LTR left-right spread pairs together after an odd number of pages", async () => {
-    const { addItems, destroy, layoutRequests, spineLayout } =
+    const { destroy, layoutRequests, spineLayout } =
       createSpreadModeTestEnvironment({
         pageHeight: 100,
         pageWidth: 100,
         readingDirection: "ltr",
+        items: [
+          undefined,
+          undefined,
+          undefined,
+          { pageSpreadLeft: true, renditionLayout: "pre-paginated" },
+          { pageSpreadRight: true, renditionLayout: "pre-paginated" },
+        ],
       })
-
-    addItems([
-      undefined,
-      undefined,
-      undefined,
-      { pageSpreadLeft: true, renditionLayout: "pre-paginated" },
-      { pageSpreadRight: true, renditionLayout: "pre-paginated" },
-    ])
 
     try {
       const layoutDone = firstValueFrom(spineLayout.layout$)

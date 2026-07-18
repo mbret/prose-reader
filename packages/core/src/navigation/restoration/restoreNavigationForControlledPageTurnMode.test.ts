@@ -9,10 +9,13 @@ import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { createTestManifest } from "../../tests/utils"
+import {
+  createTestManifest,
+  createTestManifestSpineItems,
+} from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
-import { generateItems } from "../tests/utils"
+import { mockSpineItemsLayout } from "../tests/utils"
 import type { InternalNavigationEntry, NavigationConsolidation } from "../types"
 import { restoreNavigationForControlledPageTurnMode } from "./restoreNavigationForControlledPageTurnMode"
 
@@ -20,14 +23,23 @@ describe(`Given a backward navigation to a new item`, () => {
   describe(`when item was unloaded`, () => {
     describe(`and item is bigger once loaded`, () => {
       it(`should restore position at the last page`, async () => {
-        const context = new Context(createTestManifest())
+        const context = new Context(
+          createTestManifest({
+            spineItems: createTestManifestSpineItems(2),
+          }),
+        )
         const settings = new ReaderSettingsManager({}, context)
         const hooksManager = new HookManager()
-        const spineItemsManager = new SpineItemsManager(context, settings)
+        const viewport = new Viewport(context, settings)
+        const spineItemsManager = new SpineItemsManager(
+          context,
+          settings,
+          hooksManager,
+          viewport,
+        )
         const cfiManager = new CfiManager(hooksManager, spineItemsManager)
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         const pagination = new Pagination(context, spineItemsManager as any)
-        const viewport = new Viewport(context, settings)
         const spineItemLocator = createSpineItemLocator({
           context,
           settings,
@@ -40,7 +52,6 @@ describe(`Given a backward navigation to a new item`, () => {
           spineItemsManager as any,
           spineItemLocator,
           settings,
-          hooksManager,
           viewport,
         )
         const navigationResolver = createNavigationResolver({
@@ -63,18 +74,7 @@ describe(`Given a backward navigation to a new item`, () => {
         viewport.layout()
 
         // items of 2 pages
-        spineItemsManager.addMany(
-          generateItems(
-            100,
-            2,
-            context,
-            settings,
-            hooksManager,
-            spine,
-            spineItemsManager,
-            viewport,
-          ),
-        )
+        mockSpineItemsLayout(100, spine, spineItemsManager)
 
         spine.layout()
 

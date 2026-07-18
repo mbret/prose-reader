@@ -10,10 +10,7 @@ export const Spine = memo(({ children }: { children: React.ReactNode }) => {
     () => reader?.spine.element$,
     [reader],
   )
-  const { data: spineItems } = useObserve(
-    () => reader?.spine.spineItemsManager.items$,
-    [reader],
-  )
+  const spineItems = reader?.spineItemsManager.items
 
   if (!spineElement) return null
 
