@@ -130,6 +130,37 @@ describe(`Given an EPUB`, () => {
   })
 })
 
+describe(`Given an EPUB with a malformed OPF`, () => {
+  const malformedOpfArchive = () =>
+    archiveWith(
+      [
+        // mismatched close tag: parseOpf's XmlDocument rejects it, so the
+        // orchestrating opf read throws and safeRead returns undefined
+        textRecord(
+          `OEBPS/content.opf`,
+          `<?xml version="1.0"?><package><spine></package>`,
+        ),
+        textRecord(`OEBPS/page1.xhtml`, xhtml(false), { size: 100 }),
+        textRecord(`OEBPS/page2.xhtml`, xhtml(false), { size: 300 }),
+      ],
+      `book.epub`,
+    )
+
+  it(`should swallow the parse error and keep resolving`, async () => {
+    const resolved = await resolveArchive(malformedOpfArchive())
+
+    // the malformed OPF does not contribute
+    expect(resolved.metadata).toEqual({})
+    // reading order degrades to the file listing rather than failing the
+    // resolve — the whole point of the lenient per-source policy
+    expect(resolved.readingOrder.map((item) => item.uri)).toEqual([
+      `OEBPS/content.opf`,
+      `OEBPS/page1.xhtml`,
+      `OEBPS/page2.xhtml`,
+    ])
+  })
+})
+
 describe(`Given the layoutScan effort modifier`, () => {
   it(`should promote an explicitly-reflowable book whose documents all declare a viewport`, async () => {
     const archive = epubArchive({

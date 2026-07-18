@@ -159,7 +159,14 @@ export const resolveArchiveReadingOrder = async (
   archive: Archive,
   { opf }: { opf?: ArchiveOpfParsed } = {},
 ): Promise<ArchiveReadingOrderItem[]> => {
-  const archiveOpf = opf ?? (await readArchiveOpf(archive))
+  // A malformed package document is treated as no package document: the
+  // reading order always degrades to the archive's file listing rather than
+  // throwing (books in the wild are dirty). `resolveArchive` reads and
+  // reports the OPF once, then threads it here — passing `undefined` when
+  // that read failed — so this fallback read must swallow the same parse
+  // error too, otherwise it would re-surface and escape the lenient resolve.
+  const archiveOpf =
+    opf ?? (await readArchiveOpf(archive).catch(() => undefined))
 
   if (archiveOpf) return readingOrderFromOpf(archive, archiveOpf)
 

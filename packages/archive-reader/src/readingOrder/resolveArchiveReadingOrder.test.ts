@@ -145,6 +145,35 @@ describe(`Given an EPUB authored over absolute urls`, () => {
   })
 })
 
+describe(`Given an archive whose package document is malformed`, () => {
+  it(`should degrade to the file listing instead of throwing`, async () => {
+    const archive = archiveWith([
+      // mismatched close tag: parseOpf's XmlDocument rejects it
+      textRecord(
+        `OEBPS/content.opf`,
+        `<?xml version="1.0"?><package><spine></package>`,
+      ),
+      textRecord(`OEBPS/page1.xhtml`, ``, { size: 100 }),
+      textRecord(`OEBPS/page2.xhtml`, ``, { size: 300 }),
+    ])
+
+    const readingOrder = await resolveArchiveReadingOrder(archive)
+
+    // the unparseable OPF is treated as no OPF: fall back to the file listing
+    expect(readingOrder.map((item) => item.uri)).toEqual([
+      `OEBPS/content.opf`,
+      `OEBPS/page1.xhtml`,
+      `OEBPS/page2.xhtml`,
+    ])
+    // records fallback splits progression equally
+    expect(readingOrder.map((item) => item.progressionWeight)).toEqual([
+      1 / 3,
+      1 / 3,
+      1 / 3,
+    ])
+  })
+})
+
 describe(`Given a comic archive with sidecars and OS litter`, () => {
   it(`should exclude them from the reading order and the weight denominator`, async () => {
     const archive = archiveWith([

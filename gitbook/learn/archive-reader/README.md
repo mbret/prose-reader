@@ -201,7 +201,7 @@ const resolved = await resolveArchive(archive, {
 
 ### Metadata, sources & error policy
 
-`metadata` is the cross-format union vocabulary — see [Resolved metadata](resolved-metadata.md) for the vocabulary, the per-format mapping tables and the precedence rules. `sources` carries the verbatim parser outputs (`opf` with its `basePath`, `comicInfo`, `apple`, `kobo`); everything in `sources` is also represented, normalized, in `metadata`. Per-source parse failures are swallowed (logged via the debug `Report`): a malformed sidecar never fails the resolve.
+`metadata` is the cross-format union vocabulary — see [Resolved metadata](resolved-metadata.md) for the vocabulary, the per-format mapping tables and the precedence rules. `sources` carries the verbatim parser outputs (`opf` with its `basePath`, `comicInfo`, `apple`, `kobo`); everything in `sources` is also represented, normalized, in `metadata`. Per-source parse failures are swallowed (logged via the debug `Report`): a malformed source — a sidecar or the package document (OPF) itself — never fails the resolve. A book whose OPF won't parse still resolves: it simply doesn't contribute to `metadata`/`toc`, and the reading order degrades to the archive's file listing (see [Resolving the reading order](#resolving-the-reading-order)).
 
 ## Reading embedded metadata
 
@@ -237,7 +237,7 @@ Malformed documents throw from the single-file readers (`readArchiveComicInfo`, 
 
 ## Resolving the reading order
 
-`resolveArchiveReadingOrder(archive, options?)` is the standalone building block behind `resolveArchive`'s `readingOrder` token: the OPF spine when a package document exists (container-relative `uri`s, per-itemref layout hints, size-proportional `progressionWeight`), the archive's file listing otherwise (sidecars like `ComicInfo.xml`/display-options and OS litter like `Thumbs.db` excluded, equal weights, discrete media marked `pre-paginated`). Pass `{ opf }` to skip the internal OPF lookup.
+`resolveArchiveReadingOrder(archive, options?)` is the standalone building block behind `resolveArchive`'s `readingOrder` token: the OPF spine when a usable package document exists (container-relative `uri`s, per-itemref layout hints, size-proportional `progressionWeight`), the archive's file listing otherwise — including when the package document is missing or unparseable — (sidecars like `ComicInfo.xml`/display-options and OS litter like `Thumbs.db` excluded, equal weights, discrete media marked `pre-paginated`). It always returns an array; a malformed OPF is treated as no OPF rather than throwing. Pass `{ opf }` to skip the internal OPF lookup.
 
 ## Resolving a table of contents
 
