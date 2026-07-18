@@ -71,7 +71,7 @@ const loadFontFaces = async (
               const originalSrc = urlMatch[1] ?? ``
 
               // Find the font resource in the manifest
-              const foundItem = context.manifest?.items.find(({ href }) => {
+              const foundItem = context.manifest.items.find(({ href }) => {
                 return `${joinPath(spineItemUriParentPath, originalSrc).toLowerCase()}`.endsWith(
                   `${href.toLowerCase()}`,
                 )
@@ -136,7 +136,7 @@ const loadElementSrc = (
   if (!originalSrc) return of(null)
 
   // EPUB/image.png needs to match frame relative src /image.png
-  const foundItem = context.manifest?.items.find(({ href }) => {
+  const foundItem = context.manifest.items.find(({ href }) => {
     // this will remove things like "../.." and have a normal relative path
     return `${joinPath(spineItemUriParentPath, originalSrc).toLowerCase()}`.endsWith(
       `${href.toLowerCase()}`,

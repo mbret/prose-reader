@@ -8,7 +8,7 @@ import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
 
 type ReaderOptions = Parameters<typeof createReader>[0]
 type RnPaginationState = Omit<EnhancerPaginationInto, "navigationId">
-type RnContextState = Omit<ContextState, "containerElement" | "rootElement">
+type RnContextState = Omit<ContextState, "rootElement">
 
 export interface BridgeState extends Bridge {
   pagination: RnPaginationState | undefined

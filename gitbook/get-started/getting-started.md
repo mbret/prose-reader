@@ -134,7 +134,13 @@ async function run() {
     /**
      * A manifest provides a list of resources and their URIs.
      *
-     * However we are loading the epub locally in memory here so the items cannot be
+     * A reader is tied to a single book: create it once you have the
+     * manifest and create a new reader if you need to open another book
+     * (after destroying the previous one with `reader.destroy()`).
+     */
+    manifest,
+    /**
+     * We are loading the epub locally in memory here so the items cannot be
      * fetched directly. This would be possible and encouraged if using a service worker
      * but in our situation we have to hook into the reader to tell it to get its resources
      * from our local streamer directly.
@@ -152,12 +158,10 @@ async function run() {
   })
 
   /**
-   * Finally we can load the reader with our manifest.
+   * Finally we can mount the reader into the DOM. This is a one-shot
+   * operation: the reader starts rendering the book into the container.
    */
-  reader.load({
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  reader.mount(document.getElementById(`app`)!)
 }
 
 run()

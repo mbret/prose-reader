@@ -19,3 +19,12 @@
     height: 100%;
     width: 100%;
 }
+
+// Applied to the container the reader is mounted into. Kept as a class (rather
+// than inline styles) so mount only adds the class and destroy fully reverts by
+// removing it, leaving no residue on a reused container.
+.#{$html-prefix}-reader {
+    background-color: white;
+    position: relative;
+    overflow: hidden;
+}

@@ -7,7 +7,6 @@ import {
   filter,
   finalize,
   first,
-  from,
   map,
   merge,
   mergeMap,
@@ -157,31 +156,26 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
 
         return this.context.bridgeEvent.viewportFree$.pipe(
           first(),
-          switchMap(() => {
+          map(() => {
             const documentContainer = this.value.documentContainer
 
-            const onDocumentUnloadPromise = documentContainer
-              ? // we voluntarily don't use fromExecuteAsync here because we want to ensure that the hook is executed even if the unload is cancelled
-                this.hookManager
-                  .executeAsync(`item.onDocumentUnload`, this.item.id, {
-                    itemId: this.item.id,
-                    documentContainer,
-                  })
-                  .then(() => null)
-              : Promise.resolve(null)
-
-            return from(onDocumentUnloadPromise).pipe(
-              switchMap(() => this.onUnload()),
-              endWith(null),
-              first(),
-              catchError((error) => {
+            if (documentContainer) {
+              try {
+                this.hookManager.execute(`item.onDocumentUnload`, {
+                  itemId: this.item.id,
+                  documentContainer,
+                })
+              } catch (error) {
                 Report.error(`Error unloading document`, error)
+              }
+            }
 
-                return of(null)
-              }),
-            )
-          }),
-          map(() => {
+            try {
+              this.onUnload()
+            } catch (error) {
+              Report.error(`Error unloading document`, error)
+            }
+
             this.mergeCompare({ state: `idle`, error: undefined })
 
             return undefined
@@ -269,8 +263,36 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }
 
   public destroy() {
-    this.unload()
-    this.stateSubject.complete()
+    if (this.isDestroyed) return
+
+    const documentContainer = this.value.documentContainer
+
+    if (documentContainer) {
+      /**
+       * The trigger based unload flow is asynchronous (viewport gate) and its
+       * subscription dies with destroy$. Destroy needs to release resources
+       * (eg: blob urls) deterministically, so we run the unload steps directly.
+       * The unload hook is synchronous and runs before onUnload tears the
+       * document down, so it still observes the live document even though the
+       * caller detaches the container right after destroy returns. If an unload
+       * was already in flight, hooks may be notified twice, which they already
+       * have to tolerate (see unloaded$).
+       */
+      try {
+        this.hookManager.execute(`item.onDocumentUnload`, {
+          itemId: this.item.id,
+          documentContainer,
+        })
+      } catch (error) {
+        Report.error(`Error while executing unload hooks on destroy`, error)
+      }
+
+      try {
+        this.onUnload()
+      } catch (error) {
+        Report.error(`Error while unloading document on destroy`, error)
+      }
+    }
 
     super.destroy()
   }
@@ -279,7 +301,12 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
     release: Observable<void>
   }): Observable<Document | undefined>
 
-  abstract onUnload(): Observable<unknown>
+  /**
+   * Release the document and its resources. Must be synchronous: unload also
+   * runs during a synchronous `destroy`, before the caller detaches the
+   * container, so any deferred work would run against a torn-down document.
+   */
+  abstract onUnload(): void
 
   /**
    * This lifecycle lets you fetch your resource and create the document.
@@ -332,6 +359,6 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
       if (hasViewport) return "pre-paginated"
     }
 
-    return this.context.manifest?.renditionLayout ?? "reflowable"
+    return this.context.manifest.renditionLayout ?? "reflowable"
   }
 }

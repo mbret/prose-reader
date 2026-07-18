@@ -142,7 +142,7 @@ export const getNavigationForUrl = ({
   try {
     const validUrl = url instanceof URL ? url : new URL(url)
     const urlWithoutAnchor = `${validUrl.origin}${validUrl.pathname}`
-    const existingSpineItem = context.manifest?.spineItems.find(
+    const existingSpineItem = context.manifest.spineItems.find(
       (item) => item.href === urlWithoutAnchor,
     )
 

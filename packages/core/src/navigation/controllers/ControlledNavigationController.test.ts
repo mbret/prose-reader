@@ -7,12 +7,12 @@ import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { waitFor } from "../../tests/utils"
+import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { ControlledNavigationController } from "./ControlledNavigationController"
 
 const createTestController = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const spineItemsManager = new SpineItemsManager(context, settings)

@@ -101,7 +101,6 @@ const createReader = ({
   spineItems?: Array<ReturnType<typeof createManifestSpineItem>>
   spineItemResources?: Map<number, ResourceHandler["getResource"] | undefined>
 } = {}) => {
-  const manifest$ = new BehaviorSubject(createManifest(spineItems))
   const paginationState$ = new BehaviorSubject(
     createPaginationState({
       beginSpineItemIndex: undefined,
@@ -119,7 +118,7 @@ const createReader = ({
 
   const reader = {
     context: {
-      manifest$,
+      manifest: createManifest(spineItems),
     },
     pagination: {
       state$: paginationState$,
@@ -144,7 +143,6 @@ const createReader = ({
   }
 
   return {
-    manifest$,
     paginationState$,
     reader,
   }
@@ -208,48 +206,6 @@ describe(`AudioController`, () => {
 
     expect(loadSpy).toHaveBeenCalledTimes(loadCallsAfterDestroy)
     expect(audio.element.getAttribute(`src`)).toBe(sourceAfterDestroy)
-  })
-
-  it(`resets loading state when manifest updates remove the pending track`, async () => {
-    const deferredSource = createDeferred<URL>()
-    const { reader, manifest$ } = createReader({
-      spineItems: [createManifestSpineItem()],
-      spineItemResources: new Map<
-        number,
-        ResourceHandler["getResource"] | undefined
-      >([[0, () => deferredSource.promise]]),
-    })
-    const { audio, loadSpy } = createAudio()
-    const controller = new AudioController(reader, audio)
-
-    controller.select(`track-1`, {
-      navigate: false,
-      play: true,
-    })
-
-    await flush()
-
-    expect(controller.state.isLoading).toBe(true)
-    expect(controller.state.currentTrack?.id).toBe(`track-1`)
-
-    manifest$.next(createManifest([]))
-
-    await flush()
-
-    expect(controller.state.tracks).toEqual([])
-    expect(controller.state.currentTrack).toBeUndefined()
-    expect(controller.state.isLoading).toBe(false)
-    expect(controller.state.isPlaying).toBe(false)
-    expect(audio.element.getAttribute(`src`)).toBe(null)
-
-    const loadCallsAfterManifestReset = loadSpy.mock.calls.length
-
-    deferredSource.resolve(createUrlResource(`track-1.mp3`))
-
-    await flush()
-
-    expect(loadSpy).toHaveBeenCalledTimes(loadCallsAfterManifestReset)
-    expect(audio.element.getAttribute(`src`)).toBe(null)
   })
 
   it(`clears loading state when track source resolution completes without a source`, async () => {

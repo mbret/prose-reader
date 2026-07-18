@@ -192,5 +192,6 @@ export class Viewport extends ReactiveEntity<State> {
   public destroy() {
     super.destroy()
     this.layoutSubject.complete()
+    this.value.element.remove()
   }
 }

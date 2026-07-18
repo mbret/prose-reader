@@ -30,6 +30,7 @@ async function run() {
   )
 
   const reader = createReaderWithEnhancers({
+    manifest,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     pdf: {
@@ -103,11 +104,8 @@ async function run() {
   // biome-ignore lint/style/noNonNullAssertion: TODO
   createRoot(document.getElementById("bookmarks")!).render(<Bookmarks />)
 
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader

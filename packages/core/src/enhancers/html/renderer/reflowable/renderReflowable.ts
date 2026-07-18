@@ -71,7 +71,7 @@ export const renderReflowable = ({
   pageWidth: number
   pageHeight: number
   frameElement: HTMLIFrameElement
-  manifest?: Manifest
+  manifest: Manifest
   renditionFlow?: Manifest["renditionFlow"]
   minPageSpread: number
   isRTL: boolean
@@ -81,7 +81,7 @@ export const renderReflowable = ({
 }) => {
   const minimumWidth = minPageSpread * pageWidth
   const continuousScrollableReflowableItem =
-    manifest?.renditionLayout === "reflowable" &&
+    manifest.renditionLayout === "reflowable" &&
     renditionFlow === "scrolled-continuous"
 
   /**
@@ -118,7 +118,7 @@ export const renderReflowable = ({
       pageHeight,
       pageWidth,
     }) ?? {}
-  const isGloballyPrePaginated = manifest?.renditionLayout === `pre-paginated`
+  const isGloballyPrePaginated = manifest.renditionLayout === `pre-paginated`
 
   // @todo simplify ? should be from common spine item
   if (

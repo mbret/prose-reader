@@ -74,4 +74,10 @@ export class SpineItemsManager extends DestroyableClass {
       this.orderedSpineItemsSubject.next([])
     }
   }
+
+  public destroy() {
+    this.destroyItems()
+
+    super.destroy()
+  }
 }

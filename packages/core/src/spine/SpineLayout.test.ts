@@ -5,6 +5,7 @@ import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem } from "../spineItem/SpineItem"
+import { createTestManifest } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 import { SpineItemsObserver } from "./SpineItemsObserver"
@@ -67,7 +68,7 @@ const createSpreadModeTestEnvironment = ({
   pageWidth: number
   readingDirection: Manifest["readingDirection"]
 }) => {
-  const context = new Context()
+  const context = new Context(createPrePaginatedManifest(readingDirection))
   const settings = new ReaderSettingsManager({ spreadMode: true }, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
@@ -87,9 +88,6 @@ const createSpreadModeTestEnvironment = ({
     minimumWidth: number
   }> = []
 
-  context.update({
-    manifest: createPrePaginatedManifest(readingDirection),
-  })
   hookManager.register(
     "item.onBeforeLayout",
     ({ blankPagePosition, item, minimumWidth }) => {
@@ -145,7 +143,7 @@ const createSpreadModeTestEnvironment = ({
 }
 
 const createTestSpineLayout = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)

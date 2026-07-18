@@ -16,6 +16,7 @@ import { refitEnhancer } from "@prose-reader/enhancer-refit"
 const createAppReader = refitEnhancer(createReader)
 
 const reader = createAppReader({
+  manifest,
   refit: {
     viewportFit: "tablet"
   }

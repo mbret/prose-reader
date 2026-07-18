@@ -27,8 +27,6 @@ export class AudioRenderer extends DocumentRenderer {
 
   onUnload() {
     this.detach()
-
-    return EMPTY
   }
 
   onLayout() {

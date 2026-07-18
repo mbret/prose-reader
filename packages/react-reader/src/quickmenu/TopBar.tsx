@@ -2,7 +2,6 @@ import { HStack, IconButton, Stack, Text } from "@chakra-ui/react"
 import { memo } from "react"
 import { IoIosArrowBack, IoMdMore } from "react-icons/io"
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md"
-import { useObserve } from "reactjrx"
 import { useFullscreen } from "../common/useFullscreen"
 import { useReader } from "../context/useReader"
 import { QuickBar } from "./QuickBar"
@@ -16,10 +15,7 @@ export const TopBar = memo(
     onItemClick: (item: "more" | "back") => void
   }) => {
     const reader = useReader()
-    const { data: manifest } = useObserve(
-      () => reader?.context.manifest$,
-      [reader],
-    )
+    const manifest = reader?.context.manifest
     const { isFullscreen, isFullscreenSupported, onToggleFullscreenClick } =
       useFullscreen()
 

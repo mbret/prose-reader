@@ -4,20 +4,27 @@ import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { waitFor } from "../../tests/utils"
+import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { ResourceHandler } from "../resources/ResourceHandler"
 import { DocumentRenderer } from "./DocumentRenderer"
 
 class TestRenderer extends DocumentRenderer {
   public readonly onLoadDocumentSubject = new Subject<void>()
+  public onUnloadCalls = 0
 
   onUnload() {
+    this.onUnloadCalls++
+
     return EMPTY
   }
 
   onCreateDocument() {
-    return of(document.createElement("div"))
+    const element = document.createElement("div")
+
+    this.setDocumentContainer(element)
+
+    return of(element)
   }
 
   onLoadDocument() {
@@ -38,7 +45,7 @@ class TestRenderer extends DocumentRenderer {
 }
 
 const createHarness = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const viewport = new Viewport(context, settings)
   const hookManager = new HookManager()
@@ -110,6 +117,67 @@ describe(`DocumentRenderer`, () => {
       expect(hookManager._hookExecutions).toHaveLength(0)
 
       resolveHook?.()
+      cleanup()
+    })
+  })
+
+  describe(`when the renderer is destroyed while loaded`, () => {
+    it(`synchronously runs the unload hook before onUnload, exactly once`, async () => {
+      const { renderer, hookManager, cleanup } = createHarness()
+
+      const unloadedItemIds: string[] = []
+      let onUnloadCallsWhenHookRan: number | undefined
+
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        onUnloadCallsWhenHookRan = renderer.onUnloadCalls
+        unloadedItemIds.push(itemId)
+      })
+
+      renderer.load()
+      renderer.onLoadDocumentSubject.next()
+      renderer.onLoadDocumentSubject.complete()
+
+      await waitFor(0)
+
+      expect(renderer.value.state).toBe(`loaded`)
+
+      renderer.destroy()
+
+      // the hook runs synchronously within destroy, before onUnload tears the
+      // document down (so it still sees a live document)
+      expect(unloadedItemIds).toEqual([`item-1`])
+      expect(onUnloadCallsWhenHookRan).toBe(0)
+      expect(renderer.onUnloadCalls).toBe(1)
+
+      // destroy is idempotent
+      renderer.destroy()
+
+      await waitFor(0)
+
+      expect(renderer.onUnloadCalls).toBe(1)
+      expect(unloadedItemIds).toEqual([`item-1`])
+
+      cleanup()
+    })
+  })
+
+  describe(`when the renderer is destroyed without having loaded`, () => {
+    it(`does not run any unload step`, async () => {
+      const { renderer, hookManager, cleanup } = createHarness()
+
+      const unloadedItemIds: string[] = []
+
+      hookManager.register(`item.onDocumentUnload`, ({ itemId }) => {
+        unloadedItemIds.push(itemId)
+      })
+
+      renderer.destroy()
+
+      await waitFor(0)
+
+      expect(renderer.onUnloadCalls).toBe(0)
+      expect(unloadedItemIds).toEqual([])
+
       cleanup()
     })
   })

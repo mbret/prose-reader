@@ -13,12 +13,13 @@ import {
 } from "../../../spine/types"
 import { createSpineItemLocator } from "../../../spineItem/locationResolver"
 import { SpineItem } from "../../../spineItem/SpineItem"
+import { createTestManifest } from "../../../tests/utils"
 import { Viewport } from "../../../viewport/Viewport"
 import { getNavigationForLeftOrTopPage } from "./getNavigationForLeftOrTopPage"
 import { getNavigationForRightOrBottomPage } from "./getNavigationForRightOrBottomPage"
 
 const createContext = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager(
     {
       pageTurnMode: "scrollable",

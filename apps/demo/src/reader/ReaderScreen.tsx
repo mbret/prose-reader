@@ -1,13 +1,7 @@
 import { Box, useBreakpointValue } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
-import {
-  type ComponentProps,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react"
+import { type ComponentProps, memo, useCallback, useRef } from "react"
 import { useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
@@ -40,7 +34,7 @@ export const ReaderScreen = memo(() => {
     }),
   )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const { data: bookState } = useObserve(() => reader?.state$, [reader])
+  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
@@ -49,7 +43,7 @@ export const ReaderScreen = memo(() => {
     lg: "desktop",
   })
 
-  useCreateReader()
+  useCreateReader(manifest, readerContainerRef)
   useUpdateReaderSettings({ localSettings })
   usePersistCurrentPagination()
   useResetStateOnUnMount()
@@ -63,20 +57,6 @@ export const ReaderScreen = memo(() => {
     onFontSizeScopeChange,
     fontSizeValues,
   } = useFontSizeSettings(bookSettingsSignal, breakpointValue)
-
-  useEffect(() => {
-    console.debug(`manifest`, manifest)
-
-    const containerElement = readerContainerRef.current
-
-    if (reader && manifest && containerElement) {
-      reader?.load({
-        containerElement,
-        manifest,
-        cfi: localStorage.getItem(`cfi`) || undefined,
-      })
-    }
-  }, [manifest, reader])
 
   const onItemClick = useCallback(
     (
@@ -137,7 +117,7 @@ export const ReaderScreen = memo(() => {
       >
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
-        {bookState !== "ready" && !manifestError && (
+        {!isReaderMounted && !manifestError && (
           <BookLoading serviceWorkerReady={serviceWorkerReady} />
         )}
         <MenuDialog

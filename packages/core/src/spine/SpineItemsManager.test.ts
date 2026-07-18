@@ -3,11 +3,12 @@ import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem } from "../spineItem/SpineItem"
+import { createTestManifest } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 
 const createManager = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)
@@ -65,5 +66,25 @@ describe("getSpineItemIndex", () => {
     expect(spineItemsManager.getSpineItemIndex(reloaded[1])).toBe(1)
     expect(spineItemsManager.items[0]).toBe(reloaded[0])
     expect(spineItemsManager.items[1]).toBe(reloaded[1])
+  })
+})
+
+describe("destroy", () => {
+  it("should destroy its items", () => {
+    const { spineItemsManager, createSpineItem } = createManager()
+    const items = [0, 1, 2].map(createSpineItem)
+
+    spineItemsManager.addMany(items)
+
+    expect(items.every((item) => item.element.parentElement !== null)).toBe(
+      true,
+    )
+
+    spineItemsManager.destroy()
+
+    expect(spineItemsManager.items).toHaveLength(0)
+    expect(items.every((item) => item.element.parentElement === null)).toBe(
+      true,
+    )
   })
 })

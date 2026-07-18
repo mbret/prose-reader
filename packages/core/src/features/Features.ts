@@ -30,14 +30,14 @@ export class Features extends ReactiveEntity<State> {
     })
 
     combineLatest([
-      context.watch(["manifest", "hasVerticalWriting"]),
+      context.watch(["hasVerticalWriting"]),
       settingsManager.watch([`computedPageTurnMode`]),
     ])
       .pipe(
-        map(([{ manifest, hasVerticalWriting }, { computedPageTurnMode }]) => ({
+        map(([{ hasVerticalWriting }, { computedPageTurnMode }]) => ({
           hasVerticalWriting,
-          renditionFlow: manifest?.renditionFlow,
-          renditionLayout: manifest?.renditionLayout,
+          renditionFlow: context.manifest.renditionFlow,
+          renditionLayout: context.manifest.renditionLayout,
           computedPageTurnMode,
         })),
         distinctUntilChanged(isShallowEqual),

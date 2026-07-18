@@ -10,13 +10,13 @@ export const computeSpreadMode = ({
   spreadMode,
 }: {
   spreadMode: boolean
-  manifest?: Manifest
+  manifest: Manifest
 }) => {
   /**
    * For now we don't support spread for reflowable & scrollable content since
    * two items could have different height, resulting in weird stuff.
    */
-  if (manifest?.renditionFlow === `scrolled-continuous`) return false
+  if (manifest.renditionFlow === `scrolled-continuous`) return false
 
   return spreadMode
 }

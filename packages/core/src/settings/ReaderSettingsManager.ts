@@ -25,7 +25,7 @@ export class ReaderSettingsManager
     super(initialSettings)
 
     context
-      .watch(["manifest", "hasVerticalWriting"])
+      .watch(["hasVerticalWriting"])
       .pipe(
         tap(() => this.update(this.values)),
         takeUntil(this.destroy$),
@@ -50,7 +50,7 @@ export class ReaderSettingsManager
     }
 
     // We force scroll mode for some books
-    if (manifest?.renditionFlow === `scrolled-continuous`) {
+    if (manifest.renditionFlow === `scrolled-continuous`) {
       computedSettings.computedPageTurnMode = `scrollable`
     }
 

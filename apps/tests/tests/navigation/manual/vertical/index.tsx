@@ -26,7 +26,12 @@ async function run() {
   })
   const manifest = await manifestResponse.json()
 
+  const query = new URLSearchParams(window.location.search)
+  const cfi = query.get("cfi") || undefined
+
   const reader = createReader({
+    manifest,
+    cfi,
     pageTurnAnimation: "none",
     pageTurnDirection: "vertical",
     layoutLayerTransition: false,
@@ -35,15 +40,8 @@ async function run() {
     },
   })
 
-  const query = new URLSearchParams(window.location.search)
-  const cfi = query.get("cfi") || undefined
-
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-    cfi,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader

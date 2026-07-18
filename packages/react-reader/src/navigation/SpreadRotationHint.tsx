@@ -150,7 +150,6 @@ const observeSpreadRotationHintTargetKey = (
 
   return combineLatest([
     pagination$,
-    reader.context.manifest$,
     reader.settings.watch([`computedSpreadMode`]),
     reader.viewportState$,
     reader.viewport.watch([`width`, `height`]),
@@ -160,12 +159,12 @@ const observeSpreadRotationHintTargetKey = (
     map(
       ([
         pagination,
-        manifest,
         settings,
         viewportState,
         viewport,
         { spineItem, isReady },
       ]) => {
+        const manifest = reader.context.manifest
         const isPanorama =
           isReady &&
           cbzReader !== undefined &&

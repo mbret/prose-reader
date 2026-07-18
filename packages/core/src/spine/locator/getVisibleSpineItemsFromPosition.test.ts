@@ -3,13 +3,14 @@ import { describe, expect, it, vi } from "vitest"
 import { HookManager, SpineItem, SpineItemsObserver } from "../.."
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
+import { createTestManifest } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { SpineItemsManager } from "../SpineItemsManager"
 import { SpineLayout } from "../SpineLayout"
 import { SpinePosition } from "../types"
 import { getVisibleSpineItemsFromPosition } from "./getVisibleSpineItemsFromPosition"
 
-const context = new Context()
+const context = new Context(createTestManifest())
 
 const singlePageItems = [
   {
@@ -68,7 +69,7 @@ describe("Given single page items and no spread", () => {
   describe("when position is in half of the first item", () => {
     describe("and threshold of 0.51", () => {
       it("should not recognize second item", () => {
-        const context = new Context()
+        const context = new Context(createTestManifest())
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
@@ -119,7 +120,7 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.50", () => {
       it("should not recognize second item", () => {
-        const context = new Context()
+        const context = new Context(createTestManifest())
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()
@@ -170,7 +171,7 @@ describe("Given single page items and no spread", () => {
 
     describe("and threshold of 0.49", () => {
       it("should recognize second item", async () => {
-        const context = new Context()
+        const context = new Context(createTestManifest())
         const settings = new ReaderSettingsManager({}, context)
         const spineItemsManager = new SpineItemsManager(context, settings)
         const hookManager = new HookManager()

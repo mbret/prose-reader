@@ -21,6 +21,7 @@ async function run() {
   const createReaderWithEnhancers = gesturesEnhancer(pdfEnhancer(createReader))
 
   const reader = createReaderWithEnhancers({
+    manifest,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
     pdf: {
@@ -31,11 +32,8 @@ async function run() {
     },
   })
 
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader

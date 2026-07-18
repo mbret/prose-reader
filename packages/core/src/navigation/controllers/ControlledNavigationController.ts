@@ -277,6 +277,12 @@ export class ControlledNavigationController
     this.navigateSubject.next(navigation)
   }
 
+  public destroy() {
+    super.destroy()
+    this.element$.getValue().remove()
+    this.element$.complete()
+  }
+
   public isActive = () => {
     return this.settings.values.computedPageTurnMode === "controlled"
   }

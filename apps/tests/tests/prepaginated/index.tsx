@@ -36,6 +36,7 @@ async function run() {
   console.log(manifest)
 
   const reader = createReader({
+    manifest,
     numberOfAdjacentSpineItemToPreLoad: 0,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
@@ -45,13 +46,10 @@ async function run() {
   })
 
   /**
-   * Finally we can load the reader with our manifest.
+   * Finally we can mount the reader.
    */
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error
   window.reader = reader

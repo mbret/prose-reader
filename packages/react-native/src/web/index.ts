@@ -1,4 +1,7 @@
-import type { createReader as createReaderCore } from "@prose-reader/core"
+import type {
+  createReader as createReaderCore,
+  Manifest,
+} from "@prose-reader/core"
 import { linkBridge } from "@webview-bridge/web"
 import type { ProseBridgeStore, ProsePostMessageSchema } from "../shared"
 
@@ -16,35 +19,48 @@ export const createReaderBridge = () => {
 
 export const bridgeReader = ({
   bridge,
-  reader,
+  createReader,
   containerElement,
 }: {
-  reader: Reader
+  /**
+   * Factory invoked for every `load` event coming from the native side.
+   * A reader renders a single book: a subsequent `load` destroys the
+   * previous reader and creates a fresh one from the new manifest.
+   */
+  createReader: (manifest: Manifest) => Reader
   bridge: ReturnType<typeof createReaderBridge>
   containerElement: HTMLElement
-}): Reader => {
+}) => {
+  let reader: Reader | undefined
+
   bridge.addEventListener("load", (data) => {
-    reader.load({
-      containerElement,
-      manifest: data.manifest,
+    reader?.destroy()
+
+    const newReader = createReader(data.manifest)
+
+    reader = newReader
+
+    // these subscriptions complete when the reader is destroyed
+    newReader.pagination.state$.subscribe((state) => {
+      bridge.setPagination(state)
     })
+
+    newReader.context.subscribe(({ rootElement, ...rest }) => {
+      bridge.setContext(rest)
+    })
+
+    newReader.mount(containerElement)
   })
 
   bridge.addEventListener("turnRight", () => {
-    reader.navigation.turnRight()
+    reader?.navigation.turnRight()
   })
 
   bridge.addEventListener("turnLeft", () => {
-    reader.navigation.turnLeft()
+    reader?.navigation.turnLeft()
   })
 
-  reader.pagination.state$.subscribe((state) => {
-    bridge.setPagination(state)
-  })
-
-  reader.context.subscribe(({ rootElement, ...rest }) => {
-    bridge.setContext(rest)
-  })
-
-  return reader
+  return {
+    getReader: () => reader,
+  }
 }

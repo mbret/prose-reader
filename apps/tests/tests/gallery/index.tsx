@@ -40,6 +40,7 @@ async function run() {
   const manifest = await manifestResponse.json()
   const createReaderWithEnhancers = galleryEnhancer(createReader)
   const reader = createReaderWithEnhancers({
+    manifest,
     numberOfAdjacentSpineItemToPreLoad: 0,
     pageTurnAnimation: "none",
     layoutLayerTransition: false,
@@ -79,10 +80,7 @@ async function run() {
     })
   })
 
-  reader.load({
-    containerElement: getElementById(`app`),
-    manifest,
-  })
+  reader.mount(getElementById(`app`))
 
   // @ts-expect-error export for debug
   window.reader = reader

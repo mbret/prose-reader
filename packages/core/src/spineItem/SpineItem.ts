@@ -156,10 +156,15 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 
   public destroy = () => {
+    if (this.isDestroyed) return
+
     super.destroy()
 
-    this.containerElement.remove()
+    this._layout.destroy()
+    // the renderer needs the container attached to release its resources
+    // (eg: revoking blobs requires a live frame document)
     this.renderer.destroy()
+    this.containerElement.remove()
   }
 
   get element() {

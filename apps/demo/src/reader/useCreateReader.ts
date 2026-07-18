@@ -8,8 +8,9 @@ import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { refitEnhancer } from "@prose-reader/enhancer-refit"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
+import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
-import { useEffect } from "react"
+import { type RefObject, useEffect } from "react"
 import { SIGNAL_RESET } from "reactjrx"
 import { of } from "rxjs"
 import { getFileKeyFromUrl } from "../streamer/utils.shared"
@@ -35,11 +36,26 @@ export const createAppReader = refitEnhancer(
   ),
 )
 
-export const useCreateReader = () => {
+/**
+ * A reader lives for a single book: we create it once we have both the
+ * manifest and the container, mount it right away and destroy it on
+ * cleanup. Because destroy() is the true inverse of create+mount, this
+ * effect is naturally safe with react strict mode re-running effects.
+ */
+export const useCreateReader = (
+  manifest: Manifest | undefined,
+  containerRef: RefObject<HTMLElement | null>,
+) => {
   useEffect(() => {
+    const containerElement = containerRef.current
+
+    if (!manifest || !containerElement) return
+
     const query = new URLSearchParams(window.location.search)
 
     const readerOptions: Parameters<typeof createAppReader>[0] = {
+      manifest,
+      cfi: localStorage.getItem(`cfi`) || undefined,
       pageTurnAnimation: `slide`,
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
@@ -66,6 +82,8 @@ export const useCreateReader = () => {
 
     const instance = createAppReader(readerOptions)
 
+    instance.mount(containerElement)
+
     readerSignal.update(instance)
 
     return () => {
@@ -75,5 +93,5 @@ export const useCreateReader = () => {
 
       webStreamer.prune()
     }
-  }, [])
+  }, [manifest, containerRef])
 }
