@@ -269,8 +269,39 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
   }
 
   public destroy() {
-    this.unload()
-    this.stateSubject.complete()
+    if (this.isDestroyed) return
+
+    const documentContainer = this.value.documentContainer
+
+    if (documentContainer) {
+      /**
+       * The trigger based unload flow is asynchronous (viewport gate, async
+       * hooks) and its subscription dies with destroy$. Destroy needs to
+       * release resources (eg: blob urls) deterministically so we run the
+       * unload steps directly. If an unload was already in flight, hooks may
+       * be notified twice, which they already have to tolerate (see unloaded$).
+       */
+      this.hookManager
+        .executeAsync(`item.onDocumentUnload`, this.item.id, {
+          itemId: this.item.id,
+          documentContainer,
+        })
+        .catch((error) => {
+          Report.error(`Error while executing unload hooks on destroy`, error)
+        })
+
+      this.onUnload()
+        .pipe(
+          endWith(null),
+          first(),
+          catchError((error) => {
+            Report.error(`Error while unloading document on destroy`, error)
+
+            return of(null)
+          }),
+        )
+        .subscribe()
+    }
 
     super.destroy()
   }

@@ -95,8 +95,6 @@ export class Spine extends DestroyableClass {
     const loadSpineItems$ = this.element$.pipe(
       filter(isDefined),
       tap((element) => {
-        this.spineItemsManager.destroyItems()
-
         const spineItems = this.context.manifest.spineItems.map(
           (resource, index) =>
             new SpineItem(

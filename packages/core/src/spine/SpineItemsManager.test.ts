@@ -68,3 +68,23 @@ describe("getSpineItemIndex", () => {
     expect(spineItemsManager.items[1]).toBe(reloaded[1])
   })
 })
+
+describe("destroy", () => {
+  it("should destroy its items", () => {
+    const { spineItemsManager, createSpineItem } = createManager()
+    const items = [0, 1, 2].map(createSpineItem)
+
+    spineItemsManager.addMany(items)
+
+    expect(items.every((item) => item.element.parentElement !== null)).toBe(
+      true,
+    )
+
+    spineItemsManager.destroy()
+
+    expect(spineItemsManager.items).toHaveLength(0)
+    expect(items.every((item) => item.element.parentElement === null)).toBe(
+      true,
+    )
+  })
+})
