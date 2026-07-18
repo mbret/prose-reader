@@ -1,1 +1,1 @@
-See the documentation at https://doc.prose-reader.com/learn/archive-reader.
+See the documentation at https://doc.prose-reader.com/archive-reader.

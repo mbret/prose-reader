@@ -69,8 +69,8 @@
 
 ## Archive Reader
 
-* [About](learn/archive-reader/README.md)
-  * [Resolved metadata](learn/archive-reader/resolved-metadata.md)
+* [About](archive-reader/README.md)
+  * [Resolved metadata](archive-reader/resolved-metadata.md)
 
 ## CFI
 

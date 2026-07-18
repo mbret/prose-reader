@@ -20,7 +20,7 @@ The package splits into a few areas. Archives and hooks have dedicated guides â€
 
 ## Archives
 
-The streamer *consumes* archives, it does not create or understand them: the `Archive` type, the `createArchiveFrom*` creators, the file-accessor factories, the lookup helpers, and the whole resolve layer ([`resolveArchive`](../archive-reader/README.md#resolving-a-publication), [`resolveArchiveReadingOrder`](../archive-reader/README.md#resolving-the-reading-order), [`resolveArchiveToc`](../archive-reader/README.md#resolving-a-table-of-contents), the [`ResolvedMetadata`](../archive-reader/resolved-metadata.md) vocabulary) all live in **`@prose-reader/archive-reader`** and are covered in full on the [Archive Reader](../archive-reader/README.md) page. Building an [`Archive`](../archive-reader/README.md#the-archive-contract) is always the first step, whatever the source.
+The streamer *consumes* archives, it does not create or understand them: the `Archive` type, the `createArchiveFrom*` creators, the file-accessor factories, the lookup helpers, and the whole resolve layer ([`resolveArchive`](../../archive-reader/README.md#resolving-a-publication), [`resolveArchiveReadingOrder`](../../archive-reader/README.md#resolving-the-reading-order), [`resolveArchiveToc`](../../archive-reader/README.md#resolving-a-table-of-contents), the [`ResolvedMetadata`](../../archive-reader/resolved-metadata.md) vocabulary) all live in **`@prose-reader/archive-reader`** and are covered in full on the [Archive Reader](../../archive-reader/README.md) page. Building an [`Archive`](../../archive-reader/README.md#the-archive-contract) is always the first step, whatever the source.
 
 Generic string helpers previously exported here (`createXmlSafeId`, `createUniqueXmlSafeId`, `createXmlSafeIdFactory`, `sortByTitleComparator`, `removeTrailingSlash`, `getUriBasename`, `getUriBasePath`) moved to **`@prose-reader/shared`**.
 
@@ -35,7 +35,7 @@ generateManifestFromArchive(
 ): Promise<Manifest>
 ```
 
-Produces a reader [`Manifest`](../contract.md): the archive is resolved by `@prose-reader/archive-reader`'s [`resolveArchive`](../archive-reader/README.md#resolving-a-publication) (with the viewport `layoutScan` enabled), mapped into serving space (`baseUrl` rebasing, XML-safe ids, guide passthrough, audiobook/folder toc), then handed to any user [hooks](hooks.md) before the final defaults.
+Produces a reader [`Manifest`](../contract.md): the archive is resolved by `@prose-reader/archive-reader`'s [`resolveArchive`](../../archive-reader/README.md#resolving-a-publication) (with the viewport `layoutScan` enabled), mapped into serving space (`baseUrl` rebasing, XML-safe ids, guide passthrough, audiobook/folder toc), then handed to any user [hooks](hooks.md) before the final defaults.
 
 ```typescript
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip"

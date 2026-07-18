@@ -1,6 +1,6 @@
 # React Native
 
-The streamer is source-agnostic — in React Native you're free to source content however you like (the file system, an in-memory buffer, the network, a custom unpacker…). The only requirement is to turn your source into an `Archive` (see [Archive Reader](../archive-reader/README.md) for the full list of creators and how to build your own).
+The streamer is source-agnostic — in React Native you're free to source content however you like (the file system, an in-memory buffer, the network, a custom unpacker…). The only requirement is to turn your source into an `Archive` (see [Archive Reader](../../archive-reader/README.md) for the full list of creators and how to build your own).
 
 As one example, streaming from a directory on disk via `expo-file-system`:
 
