@@ -16,8 +16,6 @@
 ## Learn
 
 * [Contract](learn/contract.md)
-* [Archive Reader](learn/archive-reader/README.md)
-  * [Resolved metadata](learn/archive-reader/resolved-metadata.md)
 * [Streamer](learn/streamer/README.md)
   * [API Reference](learn/streamer/api-reference.md)
   * [Node](learn/streamer/node.md)
@@ -68,6 +66,11 @@
 * [Refit](enhancers/refit.md)
 * [Audio](enhancers/audio.md)
 * [CBZ & comics archives](enhancers/cbz-and-comics-archives.md)
+
+## Archive Reader
+
+* [About](archive-reader/README.md)
+  * [Resolved metadata](archive-reader/resolved-metadata.md)
 
 ## CFI
 

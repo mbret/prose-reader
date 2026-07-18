@@ -1,6 +1,6 @@
 # Node
 
-The streamer is source-agnostic — in node you can feed it from a zip library, an extraction tool, raw buffers, URLs, or your own custom source. Pick whatever fits your stack; the only requirement is to turn your source into an `Archive` (see [Archive Reader](../archive-reader/README.md) for the full list of creators and how to build your own).
+The streamer is source-agnostic — in node you can feed it from a zip library, an extraction tool, raw buffers, URLs, or your own custom source. Pick whatever fits your stack; the only requirement is to turn your source into an `Archive` (see [Archive Reader](../../archive-reader/README.md) for the full list of creators and how to build your own).
 
 As one example, opening a zip-based container (EPUB, CBZ) with `unzipper`:
 

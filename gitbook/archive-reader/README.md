@@ -1,6 +1,6 @@
 # Archive Reader
 
-**`@prose-reader/archive-reader`** is the "book container in → resolved publication out" package: a standalone library usable by any reading or library app, prose or not. An **archive** is its environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…) — the `Archive` type, the `createArchiveFrom*` creators and the whole resolve layer live here. The [streamer](../streamer/README.md) is one consumer among others: its `generateManifestFromArchive` is `resolveArchive` plus a mapping into serving space.
+**`@prose-reader/archive-reader`** is the "book container in → resolved publication out" package: a standalone library usable by any reading or library app, prose or not. An **archive** is its environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…) — the `Archive` type, the `createArchiveFrom*` creators and the whole resolve layer live here. The [streamer](../learn/streamer/README.md) is one consumer among others: its `generateManifestFromArchive` is `resolveArchive` plus a mapping into serving space.
 
 Whatever the source, the first step is always to turn it into an `Archive` with a `createArchiveFrom*` creator; the flagship second step is `resolveArchive`:
 
@@ -69,8 +69,8 @@ A few rules of thumb:
 | `createArchiveFromArrayBufferList` | `@prose-reader/archive-reader` | a list of `{ name, size, isDir, data() }` | environment-agnostic |
 | `createArchiveFromText` | `@prose-reader/archive-reader` | a `string` or `Blob` of text | wraps plain text as a single-page reflowable book |
 | `createArchiveFromUrls` | `@prose-reader/archive-reader` | a list of image URLs | pre-paginated; URLs must be same-origin or CORS-enabled |
-| `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../../enhancers/pdf.md) |
-| `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](../streamer/react-native.md) |
+| `createArchiveFromPdf` | `@prose-reader/enhancer-pdf` | a PDF `Blob` | see [PDF enhancer](../enhancers/pdf.md) |
+| `createArchiveFromExpoFileSystemNext` | `@prose-reader/react-native` | an `expo-file-system/next` `Directory` | see [React Native](../learn/streamer/react-native.md) |
 
 The `jszip`, `zip.js`, `libarchive.js`, `unzipper` and `node-unrar-js` creators ship as **subpath exports** so the underlying library stays an *optional* peer dependency — you only install (and bundle) the one you use.
 
