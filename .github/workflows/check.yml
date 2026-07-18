@@ -15,5 +15,8 @@ jobs:
   ts:
     uses: ./.github/workflows/_ts.yml
 
+  ts_react_native_demo:
+    uses: ./.github/workflows/_ts_react_native_demo.yml
+
   tests:
     uses: ./.github/workflows/_test.yml

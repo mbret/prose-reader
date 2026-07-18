@@ -1,4 +1,4 @@
-import { Directory, type File } from "expo-file-system/next"
+import { Directory, type File } from "expo-file-system"
 import { useEffect, useState } from "react"
 import { unzip } from "react-native-zip-archive"
 import { unzippedDestination } from "./constants"

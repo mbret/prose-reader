@@ -4,7 +4,7 @@ import {
   createArchive,
 } from "@prose-reader/archive-reader"
 import { getUriBasename, sortByTitleComparator } from "@prose-reader/shared"
-import { Directory, type File } from "expo-file-system/next"
+import { Directory, type File } from "expo-file-system"
 
 export const createArchiveFromExpoFileSystemNext = async (
   directory: Directory,

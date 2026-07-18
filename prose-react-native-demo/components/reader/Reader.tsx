@@ -1,5 +1,5 @@
 import { ReaderProvider, useCreateReader } from "@prose-reader/react-native"
-import type { Directory } from "expo-file-system/next"
+import type { Directory } from "expo-file-system"
 import { useEffect, useState } from "react"
 import { StyleSheet, View } from "react-native"
 import { BottomMenu } from "./BottomMenu"

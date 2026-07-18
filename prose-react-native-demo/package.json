@@ -9,6 +9,7 @@
     "android": "npm run web:build && expo run:android",
     "ios": "npm run web:build && expo run:ios",
     "lint": "expo lint",
+    "tsc": "tsc --noEmit",
     "web:dev": "vite web",
     "web:build": "tsc && vite build web",
     "web:preview": "vite preview web"
@@ -56,13 +57,13 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
+    "@types/react": "~19.2.0",
     "concurrently": "^9.0.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "typescript": "*",
     "vite": "^8",
-    "vite-plugin-singlefile": "^2.1.0"
+    "vite-plugin-singlefile": "^2.3.3"
   },
   "private": true
 }

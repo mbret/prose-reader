@@ -1,4 +1,4 @@
-import { File } from "expo-file-system/next"
+import { File } from "expo-file-system"
 import { useEffect, useState } from "react"
 import { epubsDownloadsDestination } from "./constants"
 

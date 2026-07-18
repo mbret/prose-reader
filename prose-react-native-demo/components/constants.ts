@@ -1,4 +1,4 @@
-import { Directory, Paths } from "expo-file-system/next"
+import { Directory, Paths } from "expo-file-system"
 
 export const epubsDestination = new Directory(Paths.cache, "epubs")
 export const epubsDownloadsDestination = new Directory(

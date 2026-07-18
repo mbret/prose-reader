@@ -7,7 +7,7 @@ As one example, streaming from a directory on disk via `expo-file-system`:
 ```typescript
 import { createArchiveFromExpoFileSystemNext } from "@prose-reader/react-native"
 import { generateManifestFromArchive } from "@prose-reader/streamer"
-import { Directory, Paths } from "expo-file-system/next"
+import { Directory, Paths } from "expo-file-system"
 
 const directory = new Directory(Paths.document, "book")
 const archive = await createArchiveFromExpoFileSystemNext(directory, {
