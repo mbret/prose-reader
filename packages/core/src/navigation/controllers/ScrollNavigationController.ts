@@ -215,6 +215,11 @@ export class ScrollNavigationController
     this.mergeCompare(value)
   }
 
+  public destroy() {
+    super.destroy()
+    this.value.element?.remove()
+  }
+
   navigate(navigation: NavigationModeControllerNavigationEntry) {
     this.navigateSubject.next(navigation)
   }
