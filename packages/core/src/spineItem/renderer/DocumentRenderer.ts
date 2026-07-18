@@ -332,6 +332,6 @@ export abstract class DocumentRenderer extends ReactiveEntity<DocumentRendererSt
       if (hasViewport) return "pre-paginated"
     }
 
-    return this.context.manifest?.renditionLayout ?? "reflowable"
+    return this.context.manifest.renditionLayout ?? "reflowable"
   }
 }

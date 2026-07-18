@@ -35,6 +35,7 @@ async function run() {
   }
 
   const reader = createReader({
+    manifest,
     layoutLayerTransition: false,
     pageTurnAnimation: "none",
     getResource: (item) => {
@@ -42,11 +43,8 @@ async function run() {
     },
   })
 
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader

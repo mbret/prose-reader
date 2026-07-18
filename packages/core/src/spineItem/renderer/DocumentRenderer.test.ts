@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { waitFor } from "../../tests/utils"
+import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { ResourceHandler } from "../resources/ResourceHandler"
 import { DocumentRenderer } from "./DocumentRenderer"
@@ -38,7 +38,7 @@ class TestRenderer extends DocumentRenderer {
 }
 
 const createHarness = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const viewport = new Viewport(context, settings)
   const hookManager = new HookManager()

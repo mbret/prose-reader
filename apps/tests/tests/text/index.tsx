@@ -15,17 +15,15 @@ async function run() {
   const createReaderWithEnhancers = createReader
 
   const reader = createReaderWithEnhancers({
+    manifest,
     pageTurnAnimation: "none",
     getResource: (item) =>
       from(streamer.fetchResource({ key: `_`, resourcePath: item.href })),
     layoutLayerTransition: false,
   })
 
-  reader.load({
-    // biome-ignore lint/style/noNonNullAssertion: TODO
-    containerElement: document.getElementById(`app`)!,
-    manifest,
-  })
+  // biome-ignore lint/style/noNonNullAssertion: TODO
+  reader.mount(document.getElementById(`app`)!)
 
   // @ts-expect-error export for debug
   window.reader = reader

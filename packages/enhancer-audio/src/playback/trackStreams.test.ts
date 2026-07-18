@@ -70,7 +70,6 @@ const createReader = ({
 }: {
   spineItems?: Manifest["spineItems"]
 } = {}) => {
-  const manifest$ = new BehaviorSubject(createManifest(spineItems))
   const paginationState$ = new BehaviorSubject(
     createPaginationState({
       beginSpineItemIndex: undefined,
@@ -79,11 +78,11 @@ const createReader = ({
   )
 
   const reader: Pick<AudioControllerReader, "context" | "pagination"> = {
-    context: { manifest$ },
+    context: { manifest: createManifest(spineItems) },
     pagination: { state$: paginationState$ },
   }
 
-  return { manifest$, paginationState$, reader }
+  return { paginationState$, reader }
 }
 
 describe(`createTrackStreams`, () => {
@@ -120,29 +119,6 @@ describe(`createTrackStreams`, () => {
           mediaType: `audio/mpeg`,
         },
       ])
-    })
-
-    it(`emits new tracks when the manifest changes`, async () => {
-      const { reader, manifest$ } = createReader({
-        spineItems: [createSpineItem({ id: `track-1`, index: 0 })],
-      })
-      const state$ = new BehaviorSubject(createState())
-      const { tracks$ } = createTrackStreams(reader, state$)
-
-      const emissions: AudioTrack[][] = []
-      const sub = tracks$.subscribe((tracks) => emissions.push(tracks))
-
-      manifest$.next(
-        createManifest([
-          createSpineItem({ id: `track-a`, index: 0 }),
-          createSpineItem({ id: `track-b`, index: 1 }),
-        ]),
-      )
-
-      expect(emissions).toHaveLength(2)
-      expect(emissions[1]?.map(({ id }) => id)).toEqual([`track-a`, `track-b`])
-
-      sub.unsubscribe()
     })
   })
 

@@ -5,6 +5,7 @@ import {
   distinctUntilChanged,
   map,
   type Observable,
+  of,
   shareReplay,
 } from "rxjs"
 import type { AudioEnhancerState, AudioTrack } from "../types"
@@ -48,17 +49,15 @@ export function createTrackStreams(
   reader: Pick<AudioControllerReader, "context" | "pagination">,
   state$: Observable<AudioEnhancerState>,
 ) {
-  const tracks$ = reader.context.manifest$.pipe(
-    map((manifest) =>
-      manifest.spineItems.filter(isAudioSpineItem).map((item) => ({
-        id: item.id,
-        href: item.href,
-        index: item.index,
-        mediaType: item.mediaType,
-      })),
-    ),
-    shareReplay({ bufferSize: 1, refCount: true }),
-  )
+  const tracks = reader.context.manifest.spineItems
+    .filter(isAudioSpineItem)
+    .map((item) => ({
+      id: item.id,
+      href: item.href,
+      index: item.index,
+      mediaType: item.mediaType,
+    }))
+  const tracks$ = of(tracks)
 
   const pagination$ = reader.pagination.state$.pipe(
     mapKeysTo([`beginSpineItemIndex`, `endSpineItemIndex`]),

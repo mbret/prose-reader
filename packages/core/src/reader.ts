@@ -1,12 +1,13 @@
+import type { Manifest } from "@prose-reader/shared"
 import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
-import { map, skip, takeUntil, tap } from "rxjs/operators"
+import { distinctUntilChanged, map, skip, takeUntil, tap } from "rxjs/operators"
 import { CfiManager } from "./cfi"
 import {
   HTML_ATTRIBUTE_DATA_READER_ID,
   HTML_PREFIX,
   HTML_STYLE_PREFIX,
 } from "./constants"
-import { Context, type ContextState } from "./context/Context"
+import { Context } from "./context/Context"
 import { Features } from "./features/Features"
 import { HookManager } from "./hooks/HookManager"
 import styles from "./index.scss?inline"
@@ -22,9 +23,21 @@ import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import type { SpineItemReference } from "./spineItem/SpineItem"
 import { injectCSS, removeCSS, setStylePropertyIfChanged } from "./utils/dom"
+import { isDefined } from "./utils/isDefined"
 import { Viewport } from "./viewport/Viewport"
 
-export type CreateReaderOptions = Partial<CoreInputSettings>
+export type CreateReaderOptions = Partial<CoreInputSettings> & {
+  /**
+   * The manifest of the book to read. A reader is tied to a single book,
+   * create a new reader if you need to open another book.
+   */
+  manifest: Manifest
+  /**
+   * Optional initial reading position. The reader will restore the position
+   * once mounted. This is handled by the navigation enhancer.
+   */
+  cfi?: string
+}
 
 export type CreateReaderParameters = CreateReaderOptions
 
@@ -38,12 +51,17 @@ type ReaderLayoutOptions = {
   immediate?: boolean
 }
 
-export const createReader = (inputSettings: CreateReaderOptions) => {
+export const createReader = ({
+  manifest,
+  // handled by the navigation enhancer, extracted so it does not leak into settings
+  cfi: _cfi,
+  ...inputSettings
+}: CreateReaderOptions) => {
   const id = crypto.randomUUID()
   const layoutSubject = new Subject<ReaderLayoutOptions>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
-  const context = new Context()
+  const context = new Context(manifest)
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
   const spineItemsManager = new SpineItemsManager(context, settingsManager)
@@ -93,25 +111,28 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     layoutSubject.next(options)
   }
 
-  const load = (
-    options: Required<
-      Pick<ContextState, "manifest"> & { containerElement: HTMLElement }
-    >,
-  ) => {
-    const { containerElement, manifest } = options
-
-    if (context.manifest) {
-      Report.warn(`loading a new book is not supported yet`)
-
-      return
+  /**
+   * Attach the reader to the DOM and start rendering the book.
+   *
+   * This is a one-shot operation, a reader renders a single book into a
+   * single container. Calling it a second time throws. If you need to open
+   * another book or move to another container, destroy the reader and
+   * create a new one.
+   */
+  const mount = (containerElement: HTMLElement) => {
+    if (context.value.rootElement) {
+      throw new Error(
+        `This reader is already mounted. A reader renders a single book, destroy it and create a new reader instead.`,
+      )
     }
 
-    Report.log(`load`, { options })
+    Report.log(`mount`, { containerElement })
+
+    injectCSS(document, STYLES_ID, styles)
 
     const element = wrapContainer(containerElement, id)
 
     context.update({
-      manifest,
       rootElement: element,
     })
 
@@ -141,16 +162,13 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
 
   const subs = merge(layout$, layoutOnSpreadModeChange$).subscribe()
 
-  injectCSS(document, STYLES_ID, styles)
-
   /**
    * Free up resources, and dispose the whole reader.
    * You should call this method if you leave the reader.
    *
-   * This is not possible to use any of the reader features once it
-   * has been destroyed. If you need to open a new book you need to
-   * either create a new reader or call `load` with a different manifest
-   * instead of destroying it.
+   * It is not possible to use any of the reader features once it
+   * has been destroyed. If you need to open a new book, create a new
+   * reader.
    */
   const destroy = () => {
     removeCSS(document, STYLES_ID)
@@ -179,7 +197,7 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
     layout,
-    load,
+    mount,
     destroy,
     pagination: {
       get state() {
@@ -203,14 +221,15 @@ export const createReader = (inputSettings: CreateReaderOptions) => {
     viewportState$: context.bridgeEvent.viewportState$,
     viewportFree$: context.bridgeEvent.viewportFree$,
     /**
-     * Dispatched when the reader has loaded a book and is rendering a book.
-     * Using navigation API and getting information about current content will
-     * have an effect.
+     * Emits false until the reader is mounted, then true.
+     *
+     * Once mounted the reader is rendering the book. Using navigation API
+     * and getting information about current content will have an effect.
      * It can typically be used to hide a loading indicator.
      */
-    state$: context.manifest$.pipe(
-      map((manifest) => (manifest ? "ready" : "idle")),
-    ),
+    mounted$: context
+      .watch(`rootElement`)
+      .pipe(map(isDefined), distinctUntilChanged()),
     features,
     $: {
       destroy$,

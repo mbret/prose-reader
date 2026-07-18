@@ -149,7 +149,7 @@ export class SpineItemLayout extends DestroyableClass {
     const isScreenStartItem =
       horizontalOffset % this.viewport.absoluteViewport.width === 0
     const manifest = this.context.manifest
-    const isGloballyPrePaginated = isFullyPrePaginated(manifest) ?? false
+    const isGloballyPrePaginated = isFullyPrePaginated(manifest)
 
     if (this.settings.values.computedSpreadMode) {
       /**

@@ -20,7 +20,7 @@ import { audioEnhancer } from "@prose-reader/enhancer-audio"
 
 const createAppReader = audioEnhancer(createReader)
 
-const reader = createAppReader({})
+const reader = createAppReader({ manifest })
 ```
 
 The enhancer has no required configuration. When composing with other enhancers, wrap `createReader` as usual:

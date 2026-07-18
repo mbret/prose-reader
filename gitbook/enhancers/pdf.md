@@ -49,6 +49,10 @@ const run = async () => {
     const archive = await createArchiveFromPdf(pdfBlob)
     
     const reader = createAppReader({
+        // The generated manifest will have uri that matches the
+        // archive files. If you let it by default, the 
+        // enhancer will be able to automatically retrieve the pages
+        manifest: await generateManifestFromArchive(archive),
         pdf: {
             pdfjsViewerInlineCss,
             // Assuming we load different books, we want
@@ -65,13 +69,7 @@ const run = async () => {
         }
     })
     
-    reader.load({
-        containerElement: document.getElementById(`reader`),
-        // The generated manifest will have uri that matches the
-        // archive files. If you let it by default, the 
-        // enhancer will be able to automatically retrieve the pages
-        manifest: await generateManifestFromArchive(archive)
-    })
+    reader.mount(document.getElementById(`reader`))
     
     reader.destroy$.subscribe(() => {
         // don't forget to close your archive once you

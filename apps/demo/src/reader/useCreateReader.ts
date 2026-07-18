@@ -8,6 +8,7 @@ import { pdfEnhancer } from "@prose-reader/enhancer-pdf"
 import { refitEnhancer } from "@prose-reader/enhancer-refit"
 import { searchEnhancer } from "@prose-reader/enhancer-search"
 import { BOOKMARK_AREA_DATA_ATTRIBUTE } from "@prose-reader/react-reader"
+import type { Manifest } from "@prose-reader/shared"
 import pdfjsViewerInlineCss from "pdfjs-dist/web/pdf_viewer.css?inline"
 import { useEffect } from "react"
 import { SIGNAL_RESET } from "reactjrx"
@@ -35,11 +36,15 @@ export const createAppReader = refitEnhancer(
   ),
 )
 
-export const useCreateReader = () => {
+export const useCreateReader = (manifest: Manifest | undefined) => {
   useEffect(() => {
+    if (!manifest) return
+
     const query = new URLSearchParams(window.location.search)
 
     const readerOptions: Parameters<typeof createAppReader>[0] = {
+      manifest,
+      cfi: localStorage.getItem(`cfi`) || undefined,
       pageTurnAnimation: `slide`,
       pageTurnDirection: query.has("vertical") ? `vertical` : `horizontal`,
       pageTurnMode: query.has("free") ? `scrollable` : `controlled`,
@@ -75,5 +80,5 @@ export const useCreateReader = () => {
 
       webStreamer.prune()
     }
-  }, [])
+  }, [manifest])
 }

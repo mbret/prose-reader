@@ -36,11 +36,6 @@ type ChapterPaginationInfo = Pick<
   | "endPageIndexInSpineItem"
 >
 
-const EMPTY_CHAPTERS_DATA: ChaptersData = {
-  tocCandidatesBySpineHref: new Map(),
-  chaptersInfo: {},
-}
-
 const mapChapterInfo = ({
   beginItem,
   endItem,
@@ -181,12 +176,8 @@ const getProgressionForPagination = ({
 }
 
 const observeChaptersData = (reader: Reader & LayoutEnhancerOutput) =>
-  reader.context.manifest$.pipe(
+  of(reader.context.manifest).pipe(
     map((manifest): ChaptersData => {
-      if (!manifest) {
-        return EMPTY_CHAPTERS_DATA
-      }
-
       const tocIndex = buildTocIndex(manifest.nav?.toc ?? [], manifest)
       const tocCandidatesBySpineHref = buildTocCandidatesBySpineHref({
         manifest,
@@ -282,14 +273,13 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     pagination$,
     reader.layout$,
     settledPosition$,
-    reader.context.manifest$,
   ]).pipe(
-    switchMap(([paginationInfo, _layout, navigationPosition, manifest]) =>
+    switchMap(([paginationInfo, _layout, navigationPosition]) =>
       getProgressionForPagination({
         reader,
         paginationInfo,
         navigationPosition,
-        manifest,
+        manifest: reader.context.manifest,
       }),
     ),
     map((progression) => ({

@@ -21,10 +21,16 @@ import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
-import { useCreateReader } from "./useCreateReader"
+import { type ReaderInstance, useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
 import { useReader } from "./useReader"
+
+/**
+ * mount() is one-shot per reader, this keeps track of already mounted
+ * readers so we never mount twice (eg: react strict mode re-running effects).
+ */
+const mountedReaders = new WeakSet<ReaderInstance>()
 
 export const ReaderScreen = memo(() => {
   const { url = `` } = useParams<`url`>()
@@ -40,7 +46,7 @@ export const ReaderScreen = memo(() => {
     }),
   )
   const [_, __, bookSettingsSignal] = useBookSettings(epubKey)
-  const { data: bookState } = useObserve(() => reader?.state$, [reader])
+  const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
   const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
@@ -49,7 +55,7 @@ export const ReaderScreen = memo(() => {
     lg: "desktop",
   })
 
-  useCreateReader()
+  useCreateReader(manifest)
   useUpdateReaderSettings({ localSettings })
   usePersistCurrentPagination()
   useResetStateOnUnMount()
@@ -65,18 +71,14 @@ export const ReaderScreen = memo(() => {
   } = useFontSizeSettings(bookSettingsSignal, breakpointValue)
 
   useEffect(() => {
-    console.debug(`manifest`, manifest)
-
     const containerElement = readerContainerRef.current
 
-    if (reader && manifest && containerElement) {
-      reader?.load({
-        containerElement,
-        manifest,
-        cfi: localStorage.getItem(`cfi`) || undefined,
-      })
+    if (reader && containerElement && !mountedReaders.has(reader)) {
+      mountedReaders.add(reader)
+
+      reader.mount(containerElement)
     }
-  }, [manifest, reader])
+  }, [reader])
 
   const onItemClick = useCallback(
     (
@@ -137,7 +139,7 @@ export const ReaderScreen = memo(() => {
       >
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
-        {bookState !== "ready" && !manifestError && (
+        {!isReaderMounted && !manifestError && (
           <BookLoading serviceWorkerReady={serviceWorkerReady} />
         )}
         <MenuDialog

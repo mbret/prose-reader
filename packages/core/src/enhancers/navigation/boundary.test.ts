@@ -17,7 +17,7 @@ import {
   UnboundSpinePosition,
 } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
-import { waitFor } from "../../tests/utils"
+import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
@@ -30,7 +30,7 @@ const createTestReader = ({
   itemCount?: number
   readingDirection?: "ltr" | "rtl"
 } = {}) => {
-  const context = new Context()
+  const context = new Context(createTestManifest({ readingDirection }))
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const spineItemsManager = new SpineItemsManager(context, settings)
@@ -68,10 +68,6 @@ const createTestReader = ({
     itemSize,
   )
   viewport.layout()
-
-  // biome-ignore lint/suspicious/noExplicitAny: minimal Reader mock for unit tests
-  const fakeManifest = { readingDirection, spineItems: [] } as any
-  context.update({ manifest: fakeManifest })
 
   const items = generateItems(
     itemSize,

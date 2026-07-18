@@ -16,7 +16,7 @@ export const handleLinksNavigation = (
       const hrefWithoutAnchor = `${hrefUrl.origin}${hrefUrl.pathname}`
 
       // internal link, we can handle
-      const hasExistingSpineItem = reader.context.manifest?.spineItems.some(
+      const hasExistingSpineItem = reader.context.manifest.spineItems.some(
         (item) => item.href === hrefWithoutAnchor,
       )
 

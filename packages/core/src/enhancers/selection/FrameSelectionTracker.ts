@@ -3,6 +3,8 @@ import {
   endWith,
   filter,
   first,
+  fromEvent,
+  map,
   merge,
   NEVER,
   type Observable,
@@ -10,7 +12,6 @@ import {
   switchMap,
   takeUntil,
 } from "rxjs"
-import { fromEvent, map } from "rxjs"
 import { DestroyableClass } from "../../utils/DestroyableClass"
 import { isDefined } from "../../utils/isDefined"
 import { observeMutation } from "../../utils/rxjs"

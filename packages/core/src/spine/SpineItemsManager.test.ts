@@ -3,11 +3,12 @@ import { Context } from "../context/Context"
 import { HookManager } from "../hooks/HookManager"
 import { ReaderSettingsManager } from "../settings/ReaderSettingsManager"
 import { SpineItem } from "../spineItem/SpineItem"
+import { createTestManifest } from "../tests/utils"
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 
 const createManager = () => {
-  const context = new Context()
+  const context = new Context(createTestManifest())
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
   const viewport = new Viewport(context, settings)

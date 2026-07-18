@@ -21,16 +21,16 @@ export const shouldEnableSpreadModeForViewport = ({
   manifest,
   viewport,
 }: {
-  manifest: Manifest | undefined
+  manifest: Manifest
   viewport: ViewportDimensions
 }) => {
   const isLandscape = viewport.width > viewport.height
 
-  if (!isLandscape && manifest?.renditionSpread === `portrait`) {
+  if (!isLandscape && manifest.renditionSpread === `portrait`) {
     return true
   }
 
-  if (isLandscape && isSpreadEnabledInLandscape(manifest?.renditionSpread)) {
+  if (isLandscape && isSpreadEnabledInLandscape(manifest.renditionSpread)) {
     return true
   }
 
@@ -41,7 +41,7 @@ export const shouldUseComputedSpreadModeForViewport = ({
   manifest,
   viewport,
 }: {
-  manifest: Manifest | undefined
+  manifest: Manifest
   viewport: ViewportDimensions
 }) => {
   return computeSpreadMode({

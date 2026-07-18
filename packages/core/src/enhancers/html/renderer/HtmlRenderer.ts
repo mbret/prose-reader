@@ -150,7 +150,7 @@ export class HtmlRenderer extends DocumentRenderer {
       frameElement,
       manifest: this.context.manifest,
       renditionFlow:
-        this.item.renditionFlow ?? this.context.manifest?.renditionFlow,
+        this.item.renditionFlow ?? this.context.manifest.renditionFlow,
       blankPagePosition,
       isUsingVerticalWriting,
       isRTL: this.context.isRTL(),
@@ -205,7 +205,7 @@ export class HtmlRenderer extends DocumentRenderer {
     return (
       this.item.renditionLayout === `pre-paginated` ||
       (!this.item.renditionLayout &&
-        this.context.manifest?.renditionLayout === `pre-paginated`)
+        this.context.manifest.renditionLayout === `pre-paginated`)
     )
   }
 

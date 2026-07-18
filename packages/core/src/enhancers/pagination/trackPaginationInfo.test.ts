@@ -63,6 +63,30 @@ describe("Given a book with one chapter", () => {
         layoutEnhancer(themeEnhancer(createReader)),
       )({
         getResource: () => of(new Response("", { status: 200 })),
+        manifest: {
+          ...BASE_MANIFEST,
+          nav: {
+            toc: [
+              {
+                contents: [],
+                href: "/chapter_1/page_1.jpg",
+                path: "/chapter_1/page_1.jpg",
+                title: "Chapter 1",
+              },
+            ],
+          },
+          spineItems: [
+            {
+              href: "/chapter_1/page_1.jpg",
+              id: "1",
+              pageSpreadLeft: true,
+              pageSpreadRight: true,
+              progressionWeight: 0,
+              renditionLayout: "pre-paginated",
+              index: 0,
+            },
+          ],
+        },
       })
 
       const value = await new Promise<
@@ -73,34 +97,8 @@ describe("Given a book with one chapter", () => {
           error: reject,
         })
 
-        reader.load({
-          manifest: {
-            ...BASE_MANIFEST,
-            nav: {
-              toc: [
-                {
-                  contents: [],
-                  href: "/chapter_1/page_1.jpg",
-                  path: "/chapter_1/page_1.jpg",
-                  title: "Chapter 1",
-                },
-              ],
-            },
-            spineItems: [
-              {
-                href: "/chapter_1/page_1.jpg",
-                id: "1",
-                pageSpreadLeft: true,
-                pageSpreadRight: true,
-                progressionWeight: 0,
-                renditionLayout: "pre-paginated",
-                index: 0,
-              },
-            ],
-          },
-          // biome-ignore lint/style/noNonNullAssertion: TODO
-          containerElement: document.getElementById("test-container")!,
-        })
+        // biome-ignore lint/style/noNonNullAssertion: TODO
+        reader.mount(document.getElementById("test-container")!)
       })
 
       expect(value.beginChapterInfo).toEqual({
@@ -119,6 +117,39 @@ describe("Given a book with one chapter", () => {
       )({
         getRenderer: () => (props) => new DefaultRenderer(props),
         getResource: () => of(new Response("", { status: 200 })),
+        manifest: {
+          ...BASE_MANIFEST,
+          nav: {
+            toc: [
+              {
+                contents: [],
+                href: "/chapter_1/page_1.jpg",
+                path: "/chapter_1/page_1.jpg",
+                title: "Chapter 1",
+              },
+            ],
+          },
+          spineItems: [
+            {
+              href: "/chapter_1/page_1.jpg",
+              id: "1",
+              pageSpreadLeft: true,
+              pageSpreadRight: true,
+              progressionWeight: 0,
+              renditionLayout: "pre-paginated",
+              index: 0,
+            },
+            {
+              href: "/chapter_1/page_2.jpg",
+              id: "2",
+              pageSpreadLeft: true,
+              pageSpreadRight: true,
+              progressionWeight: 0,
+              renditionLayout: "pre-paginated",
+              index: 1,
+            },
+          ],
+        },
       })
 
       const value = await new Promise<
@@ -129,43 +160,8 @@ describe("Given a book with one chapter", () => {
           error: reject,
         })
 
-        reader.load({
-          manifest: {
-            ...BASE_MANIFEST,
-            nav: {
-              toc: [
-                {
-                  contents: [],
-                  href: "/chapter_1/page_1.jpg",
-                  path: "/chapter_1/page_1.jpg",
-                  title: "Chapter 1",
-                },
-              ],
-            },
-            spineItems: [
-              {
-                href: "/chapter_1/page_1.jpg",
-                id: "1",
-                pageSpreadLeft: true,
-                pageSpreadRight: true,
-                progressionWeight: 0,
-                renditionLayout: "pre-paginated",
-                index: 0,
-              },
-              {
-                href: "/chapter_1/page_2.jpg",
-                id: "2",
-                pageSpreadLeft: true,
-                pageSpreadRight: true,
-                progressionWeight: 0,
-                renditionLayout: "pre-paginated",
-                index: 1,
-              },
-            ],
-          },
-          // biome-ignore lint/style/noNonNullAssertion: TODO
-          containerElement: document.getElementById("test-container")!,
-        })
+        // biome-ignore lint/style/noNonNullAssertion: TODO
+        reader.mount(document.getElementById("test-container")!)
 
         reader.navigation.goToSpineItem({ indexOrId: 1 })
       })
@@ -188,6 +184,46 @@ describe("Given a book with one chapter", () => {
           )({
             getRenderer: () => (props) => new DefaultRenderer(props),
             getResource: () => of(new Response("", { status: 200 })),
+            manifest: {
+              ...BASE_MANIFEST,
+              nav: {
+                toc: [
+                  {
+                    contents: [
+                      {
+                        contents: [],
+                        href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                        path: "OEBPS/part0006.xhtml",
+                        title: "Chapter 1",
+                      },
+                    ],
+                    href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                    path: "OEBPS/part0006.xhtml",
+                    title: "Part 1",
+                  },
+                ],
+              },
+              spineItems: [
+                {
+                  href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
+                  id: "part0006.xhtml",
+                  pageSpreadLeft: true,
+                  pageSpreadRight: true,
+                  progressionWeight: 0,
+                  renditionLayout: "pre-paginated",
+                  index: 0,
+                },
+                {
+                  href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
+                  id: "part0007.xhtml",
+                  pageSpreadLeft: true,
+                  pageSpreadRight: true,
+                  progressionWeight: 0,
+                  renditionLayout: "pre-paginated",
+                  index: 1,
+                },
+              ],
+            },
           })
 
           const value = await new Promise<
@@ -198,50 +234,8 @@ describe("Given a book with one chapter", () => {
               error: reject,
             })
 
-            reader.load({
-              manifest: {
-                ...BASE_MANIFEST,
-                nav: {
-                  toc: [
-                    {
-                      contents: [
-                        {
-                          contents: [],
-                          href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
-                          path: "OEBPS/part0006.xhtml",
-                          title: "Chapter 1",
-                        },
-                      ],
-                      href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
-                      path: "OEBPS/part0006.xhtml",
-                      title: "Part 1",
-                    },
-                  ],
-                },
-                spineItems: [
-                  {
-                    href: "http://localhost:9000/streamer/book/OEBPS/part0006.xhtml",
-                    id: "part0006.xhtml",
-                    pageSpreadLeft: true,
-                    pageSpreadRight: true,
-                    progressionWeight: 0,
-                    renditionLayout: "pre-paginated",
-                    index: 0,
-                  },
-                  {
-                    href: "http://localhost:9000/streamer/book/OEBPS/part0007.xhtml",
-                    id: "part0007.xhtml",
-                    pageSpreadLeft: true,
-                    pageSpreadRight: true,
-                    progressionWeight: 0,
-                    renditionLayout: "pre-paginated",
-                    index: 1,
-                  },
-                ],
-              },
-              // biome-ignore lint/style/noNonNullAssertion: TODO
-              containerElement: document.getElementById("test-container")!,
-            })
+            // biome-ignore lint/style/noNonNullAssertion: TODO
+            reader.mount(document.getElementById("test-container")!)
 
             reader.navigation.goToSpineItem({ indexOrId: 1 })
           })
@@ -264,6 +258,45 @@ describe("Given a book with two chapters", () => {
         layoutEnhancer(themeEnhancer(createReader)),
       )({
         getResource: () => of(new Response("", { status: 200 })),
+        manifest: {
+          ...BASE_MANIFEST,
+          nav: {
+            toc: [
+              {
+                contents: [],
+                href: "/OPS/page_1.jpg",
+                path: "/OPS/page_1.jpg",
+                title: "Chapter 1",
+              },
+              {
+                contents: [],
+                href: "/OPS/page_2.jpg",
+                path: "/OPS/page_2.jpg",
+                title: "Chapter 2",
+              },
+            ],
+          },
+          spineItems: [
+            {
+              href: "/OPS/page_1.jpg",
+              id: "1",
+              pageSpreadLeft: true,
+              pageSpreadRight: true,
+              progressionWeight: 0,
+              renditionLayout: "pre-paginated",
+              index: 0,
+            },
+            {
+              href: "/OPS/page_2.jpg",
+              id: "2",
+              pageSpreadLeft: true,
+              pageSpreadRight: true,
+              progressionWeight: 0,
+              renditionLayout: "pre-paginated",
+              index: 1,
+            },
+          ],
+        },
       })
 
       const value = await new Promise<
@@ -274,49 +307,8 @@ describe("Given a book with two chapters", () => {
           error: reject,
         })
 
-        reader.load({
-          manifest: {
-            ...BASE_MANIFEST,
-            nav: {
-              toc: [
-                {
-                  contents: [],
-                  href: "/OPS/page_1.jpg",
-                  path: "/OPS/page_1.jpg",
-                  title: "Chapter 1",
-                },
-                {
-                  contents: [],
-                  href: "/OPS/page_2.jpg",
-                  path: "/OPS/page_2.jpg",
-                  title: "Chapter 2",
-                },
-              ],
-            },
-            spineItems: [
-              {
-                href: "/OPS/page_1.jpg",
-                id: "1",
-                pageSpreadLeft: true,
-                pageSpreadRight: true,
-                progressionWeight: 0,
-                renditionLayout: "pre-paginated",
-                index: 0,
-              },
-              {
-                href: "/OPS/page_2.jpg",
-                id: "2",
-                pageSpreadLeft: true,
-                pageSpreadRight: true,
-                progressionWeight: 0,
-                renditionLayout: "pre-paginated",
-                index: 1,
-              },
-            ],
-          },
-          // biome-ignore lint/style/noNonNullAssertion: TODO
-          containerElement: document.getElementById("test-container")!,
-        })
+        // biome-ignore lint/style/noNonNullAssertion: TODO
+        reader.mount(document.getElementById("test-container")!)
       })
 
       expect(value.beginChapterInfo).toEqual({

@@ -1,22 +1,15 @@
 /**
  * @todo web worker
  */
-import { EMPTY, forkJoin, from, merge, Subject } from "rxjs"
-import {
-  catchError,
-  map,
-  mergeMap,
-  switchMap,
-  takeUntil,
-  tap,
-} from "rxjs/operators"
+import { EMPTY, forkJoin, from, of, Subject } from "rxjs"
+import { catchError, map, mergeMap, switchMap, takeUntil } from "rxjs/operators"
 import type { Manifest } from "../.."
 import type { Context } from "../../context/Context"
 import { Report } from "../../report"
 import { openDatabase } from "./indexedDB"
 
 export const createResourcesManager = (context: Context) => {
-  let uniqueID = Date.now().toString()
+  const uniqueID = Date.now().toString()
   const cache$ = new Subject<{
     id: number | Pick<Manifest[`spineItems`][number], `id`>
     data: Response
@@ -31,10 +24,10 @@ export const createResourcesManager = (context: Context) => {
     ) {
       const id =
         typeof itemIndexOrId === "object" ? itemIndexOrId.id : itemIndexOrId
-      return context.manifest?.spineItems.find((entry) => entry.id === id)
+      return context.manifest.spineItems.find((entry) => entry.id === id)
     }
 
-    return context.manifest?.spineItems[itemIndexOrId]
+    return context.manifest.spineItems[itemIndexOrId]
   }
 
   const get = async (
@@ -93,18 +86,10 @@ export const createResourcesManager = (context: Context) => {
     )
     .subscribe()
 
-  const onLoad$ = context.manifest$.pipe(
-    tap(() => {
-      uniqueID = Date.now().toString()
-    }),
-  )
-
   /**
    * Cleanup old cache on startup if needed
-   * @todo
-   * do on first time and only then on subsequent load
    */
-  merge(onLoad$)
+  of(null)
     .pipe(
       switchMap(() => {
         Report.debug(`Cleanup up old cache...`)

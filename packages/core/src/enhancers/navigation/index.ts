@@ -21,9 +21,7 @@ export const navigationEnhancer =
   >(
     next: (options: InheritOptions) => InheritOutput,
   ) =>
-  (
-    options: InheritOptions,
-  ): Omit<InheritOutput, "load"> & NavigationEnhancerOutput => {
+  (options: InheritOptions): InheritOutput & NavigationEnhancerOutput => {
     const reader = next(options)
     const state$ = observeState(reader)
     const outOfSpineBoundary$ = outOfSpineBoundary(reader)
@@ -45,13 +43,12 @@ export const navigationEnhancer =
       .pipe(takeUntil(reader.$.destroy$))
       .subscribe()
 
-    const load: NavigationEnhancerOutput["load"] = (options) => {
-      const { cfi, ...rest } = options
+    const mount = (containerElement: HTMLElement) => {
+      reader.mount(containerElement)
 
-      reader.load(rest)
-
-      if (cfi) {
-        manualNavigator.goToCfi(cfi, { animate: false })
+      // restore the initial position once the reader is mounted
+      if (options.cfi) {
+        manualNavigator.goToCfi(options.cfi, { animate: false })
       }
     }
 
@@ -62,7 +59,7 @@ export const navigationEnhancer =
 
     return {
       ...reader,
-      load,
+      mount,
       destroy,
       navigation: {
         ...reader.navigation,

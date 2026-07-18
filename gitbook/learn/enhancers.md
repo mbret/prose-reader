@@ -58,7 +58,7 @@ export const myEnhancer =
 // end user wrap its createReader with your enhancer
 const createAppReader = myEnhancer(createReader)
 
-const reader = createAppReader({})
+const reader = createAppReader({ manifest })
 ```
 
 This enhancer follows the minimal configuration to be functional. It is however pretty useless in this state.
@@ -174,6 +174,7 @@ export const myEnhancer =
 const createAppReader = myEnhancer(createReader)
 
 const reader = createAppReader({
+  manifest,
   myEnhancer: {
     confirmMessage: `You are going to be redirected to external link`,
   },
@@ -250,6 +251,7 @@ export const myEnhancer =
 const createAppReader = myEnhancer(createReader)
 
 const reader = createAppReader({
+  manifest,
   myEnhancer: {
     confirmMessage: `You are going to be redirected to external link`,
   },
@@ -348,6 +350,7 @@ export const linkEnhancer =
 const createAppReader = linkEnhancer(dialogEnhancer(createReader))
 
 const reader = createAppReader({
+  manifest,
   dialog: {
     confirmMessage: `Do you want to continue with this link?`,
   },

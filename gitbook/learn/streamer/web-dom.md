@@ -16,10 +16,7 @@ import {
 } from "@prose-reader/streamer";
 import { createArchiveFromJszip } from "@prose-reader/archive-reader/archives/createArchiveFromJszip";
 import JSZip from "jszip";
-
-const reader = createReader({
-  containerElement: document.getElementById("app")!,
-});
+import { from } from "rxjs";
 
 (async () => {
   const content = await fetch("content.epub");
@@ -34,18 +31,24 @@ const reader = createReader({
   // including jszip archive
   const manifest = await generateManifestFromArchive(archive);
 
-  reader.load(manifest, {
+  const reader = createReader({
+    manifest,
     // By default prose will fetch the resources via http. In our case we don't have
     // a server or a service worker so we want to serve the resource directly from
     // this script.
-    fetchResource: async (item) => {
-      // The streamer will automatically serve the correct resource for each item
-      // provided the correct href and archive.
-      const resource = await generateResourceFromArchive(archive, item.href);
+    getResource: (item) =>
+      from(
+        (async () => {
+          // The streamer will automatically serve the correct resource for each item
+          // provided the correct href and archive.
+          const resource = await generateResourceFromArchive(archive, item.href);
 
-      return new Response(resource.body, { ...resource.params, status: 200 });
-    },
+          return new Response(resource.body, { ...resource.params, status: 200 });
+        })(),
+      ),
   });
+
+  reader.mount(document.getElementById("app")!);
 })();
 ```
 

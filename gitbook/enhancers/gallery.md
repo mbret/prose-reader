@@ -23,7 +23,7 @@ const createAppReader = galleryEnhancer(createReader)
  * There is no required configuration for this
  * enhancer.
  */
-const reader = createAppReader({})
+const reader = createAppReader({ manifest })
 ```
 
 ## API

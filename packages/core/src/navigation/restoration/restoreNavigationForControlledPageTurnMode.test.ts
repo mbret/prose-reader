@@ -9,6 +9,7 @@ import { Spine } from "../../spine/Spine"
 import { SpineItemsManager } from "../../spine/SpineItemsManager"
 import { SpinePosition } from "../../spine/types"
 import { createSpineItemLocator } from "../../spineItem/locationResolver"
+import { createTestManifest } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import { createNavigationResolver } from "../resolvers/NavigationResolver"
 import { generateItems } from "../tests/utils"
@@ -19,7 +20,7 @@ describe(`Given a backward navigation to a new item`, () => {
   describe(`when item was unloaded`, () => {
     describe(`and item is bigger once loaded`, () => {
       it(`should restore position at the last page`, async () => {
-        const context = new Context()
+        const context = new Context(createTestManifest())
         const settings = new ReaderSettingsManager({}, context)
         const hooksManager = new HookManager()
         const spineItemsManager = new SpineItemsManager(context, settings)

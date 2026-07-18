@@ -49,18 +49,20 @@ Observable that emits whenever a new valid pagination info is updated. It will n
 
 ### Examples
 
-Save current cfi into localStorage for loading a book at the previous location:
+Save current cfi into localStorage for opening a book at the previous location:
 
 <pre class="language-typescript"><code class="lang-typescript">// save cfi into localstorage
 reader.pagination.paginationInfo$.subscribe((paginationInfo) => {
 <strong>    localStorage.setItem(`cfi`, paginationInfo.beginCfi)
 </strong>})
 
-// when we load the book
-reader.load(manifest, {
-<strong>    containerElement: document.getElementById(`reader`),
-</strong>    cfi: localStorage.getItem(`cfi`)
+// when we create the reader for the book
+const reader = createReader({
+<strong>    manifest,
+</strong>    cfi: localStorage.getItem(`cfi`) ?? undefined
 })
+
+reader.mount(document.getElementById(`reader`))
 </code></pre>
 
 ## `pagination.getPaginationInfo()`

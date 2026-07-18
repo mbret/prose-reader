@@ -1,4 +1,4 @@
-import { BehaviorSubject, combineLatest, merge } from "rxjs"
+import { BehaviorSubject, merge } from "rxjs"
 import { filter, takeUntil, tap } from "rxjs/operators"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
@@ -92,16 +92,12 @@ export class Spine extends DestroyableClass {
       }),
     )
 
-    const loadSpineItems$ = combineLatest([
-      this.context.manifest$,
-      this.element$,
-    ]).pipe(
-      tap(([manifest, element]) => {
-        if (!element) return
-
+    const loadSpineItems$ = this.element$.pipe(
+      filter(isDefined),
+      tap((element) => {
         this.spineItemsManager.destroyItems()
 
-        const spineItems = manifest.spineItems.map(
+        const spineItems = this.context.manifest.spineItems.map(
           (resource, index) =>
             new SpineItem(
               resource,

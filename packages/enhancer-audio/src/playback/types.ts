@@ -8,7 +8,7 @@ import type { Observable } from "rxjs"
 
 export type AudioControllerReader = {
   context: {
-    manifest$: Observable<Manifest>
+    manifest: Manifest
   }
   pagination: {
     state$: Observable<PaginationInfo>

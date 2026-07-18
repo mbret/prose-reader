@@ -2,7 +2,7 @@ import { Subject } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { Context } from "../../context/Context"
 import { ReaderSettingsManager } from "../../settings/ReaderSettingsManager"
-import { waitFor } from "../../tests/utils"
+import { createTestManifest, waitFor } from "../../tests/utils"
 import { Viewport } from "../../viewport/Viewport"
 import type { SpineLocator } from "../locator/SpineLocator"
 import type { SpineItemsManager } from "../SpineItemsManager"
@@ -13,7 +13,7 @@ import { SpineItemsLoader } from "./SpineItemsLoader"
 describe("SpineItemsLoader", () => {
   describe("Given the viewport geometry changes without a position change", () => {
     it("reloads visible spine items from the current relative viewport", async () => {
-      const context = new Context()
+      const context = new Context(createTestManifest())
       const settings = new ReaderSettingsManager(
         { numberOfAdjacentSpineItemToPreLoad: 0 },
         context,

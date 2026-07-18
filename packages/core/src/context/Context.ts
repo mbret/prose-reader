@@ -1,53 +1,40 @@
 import type { Manifest } from "@prose-reader/shared"
-import { distinctUntilChanged, filter, map } from "rxjs/operators"
 import { isFullyPrePaginated } from "../manifest/isFullyPrePaginated"
-import { isDefined } from "../utils/isDefined"
 import { ReactiveEntity } from "../utils/ReactiveEntity"
 import { BridgeEvent } from "./BridgeEvent"
 
 export type ContextState = {
+  manifest: Manifest
   rootElement?: HTMLElement
-  manifest?: Manifest
   hasVerticalWriting?: boolean
   assumedRenditionLayout: "reflowable" | "pre-paginated"
-  isFullyPrePaginated?: boolean
+  isFullyPrePaginated: boolean
 }
 
 export class Context extends ReactiveEntity<ContextState> {
   public bridgeEvent = new BridgeEvent()
-  public manifest$ = this.pipe(
-    map((state) => state.manifest),
-    filter(isDefined),
-    distinctUntilChanged(),
-  )
 
-  constructor() {
+  constructor(manifest: Manifest) {
     super({
-      assumedRenditionLayout: "reflowable",
+      manifest,
+      assumedRenditionLayout: manifest.renditionLayout ?? "reflowable",
+      isFullyPrePaginated: isFullyPrePaginated(manifest),
     })
   }
 
-  public update(newState: Partial<ContextState>) {
-    const previousState = this.value
-    const manifest = newState.manifest ?? previousState.manifest
-
-    const newCompleteState = {
-      ...previousState,
-      ...newState,
-      ...(newState.manifest && {
-        isFullyPrePaginated: isFullyPrePaginated(manifest),
-        assumedRenditionLayout: manifest?.renditionLayout ?? "reflowable",
-      }),
-    }
-
-    this.mergeCompare(newCompleteState)
+  /**
+   * The manifest is fixed for the lifetime of the reader, only the
+   * runtime state (eg: rootElement, hasVerticalWriting) can change.
+   */
+  public update(newState: Partial<Omit<ContextState, "manifest">>) {
+    this.mergeCompare(newState)
   }
 
   /**
    * RTL only makes sense for horizontal scrolling
    */
   public isRTL = () => {
-    return this.value.manifest?.readingDirection === `rtl`
+    return this.value.manifest.readingDirection === `rtl`
   }
 
   get manifest() {
@@ -55,6 +42,6 @@ export class Context extends ReactiveEntity<ContextState> {
   }
 
   get readingDirection() {
-    return this.manifest?.readingDirection
+    return this.manifest.readingDirection
   }
 }
