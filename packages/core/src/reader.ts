@@ -45,8 +45,6 @@ export type ContextSettings = Partial<CoreInputSettings>
 
 export type ReaderInternal = ReturnType<typeof createReader>
 
-const STYLES_ID = `${HTML_STYLE_PREFIX}-core`
-
 type ReaderLayoutOptions = {
   immediate?: boolean
 }
@@ -58,6 +56,11 @@ export const createReader = ({
   ...inputSettings
 }: CreateReaderOptions) => {
   const id = crypto.randomUUID()
+  // Keyed per-reader so mount/destroy are symmetric: each reader injects and
+  // removes its own <style>. The stylesheet content is global (keyed on shared
+  // classes/attributes) so coexisting readers get identical duplicates rather
+  // than fighting over a single shared element.
+  const stylesId = `${HTML_STYLE_PREFIX}-core-${id}`
   const layoutSubject = new Subject<ReaderLayoutOptions>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
@@ -128,7 +131,7 @@ export const createReader = ({
 
     Report.log(`mount`, { containerElement })
 
-    injectCSS(document, STYLES_ID, styles)
+    injectCSS(document, stylesId, styles)
 
     const element = wrapContainer(containerElement, id)
 
@@ -172,7 +175,7 @@ export const createReader = ({
   const destroy = () => {
     const containerElement = context.value.rootElement
 
-    removeCSS(document, STYLES_ID)
+    removeCSS(document, stylesId)
 
     if (containerElement) {
       unwrapContainer(containerElement)
