@@ -22,7 +22,7 @@ import { Spine } from "./spine/Spine"
 import { SpineItemsManager } from "./spine/SpineItemsManager"
 import { createSpineItemLocator } from "./spineItem/locationResolver"
 import type { SpineItemReference } from "./spineItem/SpineItem"
-import { injectCSS, removeCSS, setStylePropertyIfChanged } from "./utils/dom"
+import { injectCSS, removeCSS, setAttributeIfChanged } from "./utils/dom"
 import { isDefined } from "./utils/isDefined"
 import { Viewport } from "./viewport/Viewport"
 
@@ -150,9 +150,8 @@ export const createReader = ({
     tap((options) => {
       const containerElement = context.value.rootElement
 
+      // rootElement is only set at mount; skip layout until then.
       if (!containerElement) return
-
-      setStylePropertyIfChanged(containerElement.style, `overflow`, `hidden`)
 
       viewport.layout()
       spine.layout(options)
@@ -171,7 +170,13 @@ export const createReader = ({
    * reader.
    */
   const destroy = () => {
+    const containerElement = context.value.rootElement
+
     removeCSS(document, STYLES_ID)
+
+    if (containerElement) {
+      unwrapContainer(containerElement)
+    }
 
     subs.unsubscribe()
     spineItemsManager.destroy()
@@ -237,17 +242,26 @@ export const createReader = ({
   }
 }
 
+const CONTAINER_CLASS = `${HTML_PREFIX}-reader`
+const CONTAINER_ATTRIBUTE = `data-prose-reader-container`
+
+// The container's base styles (background, position, overflow) live in the
+// injected stylesheet keyed on CONTAINER_CLASS rather than as inline styles.
+// This keeps mount side-effect free on the element beyond adding the class and
+// two attributes, so unwrapContainer can fully revert them on destroy and a
+// reused container accumulates nothing across mounts.
 const wrapContainer = (containerElement: HTMLElement, id: string) => {
-  containerElement.style.cssText = `
-    ${containerElement.style.cssText}
-    background-color: white;
-    position: relative;
-  `
-  containerElement.classList.add(`${HTML_PREFIX}-reader`)
-  containerElement.setAttribute(HTML_ATTRIBUTE_DATA_READER_ID, id)
-  containerElement.setAttribute("data-prose-reader-container", id)
+  containerElement.classList.add(CONTAINER_CLASS)
+  setAttributeIfChanged(containerElement, HTML_ATTRIBUTE_DATA_READER_ID, id)
+  setAttributeIfChanged(containerElement, CONTAINER_ATTRIBUTE, id)
 
   return containerElement
+}
+
+const unwrapContainer = (containerElement: HTMLElement) => {
+  containerElement.classList.remove(CONTAINER_CLASS)
+  containerElement.removeAttribute(HTML_ATTRIBUTE_DATA_READER_ID)
+  containerElement.removeAttribute(CONTAINER_ATTRIBUTE)
 }
 
 type Reader = ReturnType<typeof createReader>
