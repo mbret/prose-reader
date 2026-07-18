@@ -160,8 +160,15 @@ export const resolveArchive = async <
   const runLayoutScan =
     options.layoutScan === true && (wantsMetadata || wantsReadingOrder)
 
-  // every token interprets the container through the package document
-  const opf = await safeRead(() => readArchiveOpf(archive), "opf")
+  // the package document backs every archive-derived token, but a
+  // version-only (or empty) projection returns nothing read from the book —
+  // skip the read entirely rather than open and parse the OPF for nothing
+  // (runLayoutScan implies metadata or readingOrder, so it is covered)
+  const wantsOpf =
+    wantsMetadata || wantsSources || wantsReadingOrder || wantsToc
+  const opf = wantsOpf
+    ? await safeRead(() => readArchiveOpf(archive), "opf")
+    : undefined
 
   const wantsSidecars = wantsMetadata || wantsSources || runLayoutScan
   const comicInfo = wantsSidecars

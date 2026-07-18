@@ -130,6 +130,56 @@ describe(`Given an EPUB`, () => {
   })
 })
 
+describe(`Given a projection that needs nothing read from the book`, () => {
+  // an OPF record whose bytes are only touched when actually read, so the
+  // test can assert the package document is not opened for nothing
+  const countingOpf = (content: string) => {
+    let reads = 0
+    const record = {
+      dir: false as const,
+      basename: `content.opf`,
+      uri: `OEBPS/content.opf`,
+      size: content.length,
+      ...blobFileAccessors(() => {
+        reads += 1
+        return Promise.resolve(new Blob([content]))
+      }),
+    }
+    return { record, reads: () => reads }
+  }
+
+  it(`should not open the package document for a version-only projection`, async () => {
+    const { record, reads } = countingOpf(`<package/>`)
+
+    const resolved = await resolveArchive(archiveWith([record], `book.epub`), {
+      include: [`version`],
+    })
+
+    expect(resolved).toEqual({ version: 1 })
+    expect(reads()).toBe(0)
+  })
+
+  it(`should not open the package document for an empty projection`, async () => {
+    const { record, reads } = countingOpf(`<package/>`)
+
+    await resolveArchive(archiveWith([record], `book.epub`), { include: [] })
+
+    expect(reads()).toBe(0)
+  })
+
+  it(`should still read the OPF once a book-derived token is requested`, async () => {
+    const { record, reads } = countingOpf(
+      `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest/><spine/></package>`,
+    )
+
+    await resolveArchive(archiveWith([record], `book.epub`), {
+      include: [`readingOrder`],
+    })
+
+    expect(reads()).toBeGreaterThan(0)
+  })
+})
+
 describe(`Given an EPUB with a malformed OPF`, () => {
   const malformedOpfArchive = () =>
     archiveWith(
