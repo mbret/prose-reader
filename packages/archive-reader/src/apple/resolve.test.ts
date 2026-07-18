@@ -15,43 +15,57 @@ describe("resolveApple", () => {
       resolveApple(
         metadataWithOptions([{ name: "fixed-layout", value: "true" }]),
       ),
-    ).toEqual({ renditionLayout: "pre-paginated" })
+    ).toEqual({
+      renditionLayout: "pre-paginated",
+      apple: {
+        fixedLayout: true,
+        options: [{ name: "fixed-layout", value: "true" }],
+      },
+    })
   })
 
   it("treats true case-insensitively with surrounding whitespace", () => {
     expect(
       resolveApple(
         metadataWithOptions([{ name: "fixed-layout", value: " TRUE " }]),
-      ),
-    ).toEqual({ renditionLayout: "pre-paginated" })
+      ).renditionLayout,
+    ).toBe("pre-paginated")
   })
 
   it("empty when displayOptions absent", () => {
     expect(resolveApple({ kind: "apple" })).toEqual({})
   })
 
-  it("empty when fixed-layout option is absent", () => {
+  it("keeps unknown options in the apple corner without a renditionLayout", () => {
     expect(
       resolveApple(metadataWithOptions([{ name: "other", value: "x" }])),
-    ).toEqual({})
+    ).toEqual({
+      apple: { options: [{ name: "other", value: "x" }] },
+    })
   })
 
-  it("empty when fixed-layout is not true", () => {
+  it("normalizes fixed-layout false without promoting a layout", () => {
     expect(
       resolveApple(
         metadataWithOptions([{ name: "fixed-layout", value: "false" }]),
       ),
-    ).toEqual({})
+    ).toEqual({
+      apple: {
+        fixedLayout: false,
+        options: [{ name: "fixed-layout", value: "false" }],
+      },
+    })
   })
 
   it("uses first matching fixed-layout name when duplicated", () => {
-    expect(
-      resolveApple(
-        metadataWithOptions([
-          { name: "fixed-layout", value: "false" },
-          { name: "fixed-layout", value: "true" },
-        ]),
-      ),
-    ).toEqual({})
+    const resolved = resolveApple(
+      metadataWithOptions([
+        { name: "fixed-layout", value: "false" },
+        { name: "fixed-layout", value: "true" },
+      ]),
+    )
+
+    expect(resolved.renditionLayout).toBeUndefined()
+    expect(resolved.apple?.fixedLayout).toBe(false)
   })
 })

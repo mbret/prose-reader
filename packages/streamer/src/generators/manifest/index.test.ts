@@ -125,7 +125,8 @@ describe("Given archive with a folder containing a space", () => {
         href: "file://Chapter%201/page_1.jpg",
         id: createXmlSafeId("Chapter 1/page_1.jpg"),
         index: 0,
-        mediaType: undefined,
+        // detected from the filename when the record has no encodingFormat
+        mediaType: "image/jpg",
         pageSpreadLeft: undefined,
         pageSpreadRight: undefined,
         progressionWeight: 1,
@@ -407,7 +408,7 @@ describe("Given an epub with the opf in a subfolder", () => {
 })
 
 describe("Given archive with folders", () => {
-  it("should run spine hooks after content normalization and before derived metadata", async () => {
+  it("should run consumer hooks on the mapped manifest, before the final defaults", async () => {
     const archive = createArchive({
       filename: "",
       records: [
@@ -442,35 +443,39 @@ describe("Given archive with folders", () => {
       close: () => Promise.resolve(),
     })
     const stateSeenByHook: Array<{
-      nav: Manifest["nav"]
+      navTocLength: number | undefined
       renditionLayout: Manifest["renditionLayout"]
+      readingDirection: Manifest["readingDirection"]
       spineItemRenditionLayout: Manifest["spineItems"][number]["renditionLayout"]
     }> = []
 
     const manifest = await generateManifestFromArchive(archive, {
-      hooks: {
-        spine: [
-          () => async (manifest) => {
-            stateSeenByHook.push({
-              nav: manifest.nav,
-              renditionLayout: manifest.renditionLayout,
-              spineItemRenditionLayout: manifest.spineItems[0]?.renditionLayout,
-            })
+      hooks: [
+        () => async (manifest) => {
+          stateSeenByHook.push({
+            navTocLength: manifest.nav?.toc.length,
+            renditionLayout: manifest.renditionLayout,
+            // the final ltr default only applies after consumer hooks, so a
+            // hook can still observe that no source decided the direction
+            readingDirection: manifest.readingDirection,
+            spineItemRenditionLayout: manifest.spineItems[0]?.renditionLayout,
+          })
 
-            return manifest
-          },
-        ],
-      },
+          return manifest
+        },
+      ],
     })
 
     expect(stateSeenByHook).toEqual([
       {
-        nav: undefined,
-        renditionLayout: undefined,
+        navTocLength: 1,
+        renditionLayout: "pre-paginated",
+        readingDirection: undefined,
         spineItemRenditionLayout: "pre-paginated",
       },
     ])
     expect(manifest.renditionLayout).toBe("pre-paginated")
+    expect(manifest.readingDirection).toBe("ltr")
     expect(manifest.nav?.toc).toHaveLength(1)
   })
 

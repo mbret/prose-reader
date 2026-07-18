@@ -3,7 +3,6 @@ import {
   getArchiveFileRecordByUri,
   readArchiveOpf,
 } from "@prose-reader/archive-reader"
-import { getItemsFromDoc } from "../../manifest/hooks/epub/epub"
 import type { HookResource } from "./types"
 
 /**
@@ -15,15 +14,16 @@ const getMetadata = async (archive: Archive, resourcePath: string) => {
   const parsed = await readArchiveOpf(archive)
 
   if (parsed) {
-    const { opf } = parsed
-    const items = getItemsFromDoc(opf.manifestItems, archive, () => "")
+    const { opf, basePath } = parsed
 
-    // we are comparing opf items relative absolute path in epub archive
-    // against resourcePatch (which are absolute path in archive).
+    // we are comparing opf items container-relative path in epub archive
+    // against resourcePath (which is an absolute path in archive).
     // They should in theory match.
-    const foundMediaType = items.find((item) =>
-      resourcePath.endsWith(item.href),
-    )?.mediaType
+    const foundMediaType = opf.manifestItems.find((item) => {
+      const containerHref = basePath ? `${basePath}/${item.href}` : item.href
+
+      return resourcePath.endsWith(containerHref)
+    })?.mediaType
 
     if (foundMediaType) {
       return {

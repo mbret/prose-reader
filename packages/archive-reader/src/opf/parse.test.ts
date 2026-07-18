@@ -13,7 +13,9 @@ const noPackageMetadata: Pick<
   | "identifiers"
   | "title"
   | "creators"
+  | "contributors"
   | "publisher"
+  | "description"
   | "rights"
   | "languages"
   | "subjects"
@@ -25,11 +27,14 @@ const noPackageMetadata: Pick<
   | "pageProgressionDirection"
   | "spineTocIdref"
   | "guide"
+  | "metas"
 > = {
   identifiers: [],
   title: undefined,
   creators: [],
+  contributors: [],
   publisher: undefined,
+  description: undefined,
   rights: undefined,
   languages: [],
   subjects: [],
@@ -41,6 +46,7 @@ const noPackageMetadata: Pick<
   pageProgressionDirection: undefined,
   spineTocIdref: undefined,
   guide: [],
+  metas: [],
 }
 
 describe("parseOpf", () => {
@@ -165,6 +171,11 @@ describe("parseOpf", () => {
       renditionSpreadMeta: "both",
       pageProgressionDirection: "rtl",
       guide: [{ href: "cover.xhtml", title: "Cover", type: "cover" }],
+      metas: [
+        { property: "rendition:layout", value: "pre-paginated" },
+        { property: "rendition:flow", value: "paginated" },
+        { property: "rendition:spread", value: "both" },
+      ],
     })
   })
 
@@ -283,6 +294,7 @@ describe("parseOpf", () => {
       renditionLayoutMeta: "reflowable",
       spineTocIdref: "ncx",
       guide: [{ href: "c.xhtml", title: "Cover", type: "cover" }],
+      metas: [{ property: "rendition:layout", value: "reflowable" }],
     })
   })
 })
@@ -486,5 +498,158 @@ describe("parseOpf — cover image resolution", () => {
     )
 
     expect(parseOpf(xml).coverHref).toBeUndefined()
+  })
+})
+
+describe("parseOpf — contributors", () => {
+  it("captures EPUB 2 style roles and file-as from attributes", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">` +
+        `<dc:creator opf:role="aut" opf:file-as="Murakami, Haruki">Haruki Murakami</dc:creator>` +
+        `<dc:contributor opf:role="ill">Anzai Mizumaru</dc:contributor>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      {
+        name: "Haruki Murakami",
+        source: "creator",
+        roles: ["aut"],
+        fileAs: "Murakami, Haruki",
+      },
+      { name: "Anzai Mizumaru", source: "contributor", roles: ["ill"] },
+    ])
+  })
+
+  it("captures EPUB 3 refines roles and file-as, in document order", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:creator id="creator01">Jane Author</dc:creator>` +
+        `<meta refines="#creator01" property="role" scheme="marc:relators">aut</meta>` +
+        `<meta refines="#creator01" property="role" scheme="marc:relators">ill</meta>` +
+        `<meta refines="#creator01" property="file-as">Author, Jane</meta>` +
+        `<meta refines="#creator01" property="display-seq">1</meta>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      {
+        name: "Jane Author",
+        source: "creator",
+        id: "creator01",
+        roles: ["aut", "ill"],
+        fileAs: "Author, Jane",
+      },
+    ])
+  })
+
+  it("prefers the attribute role/file-as and appends refines roles", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">` +
+        `<dc:creator id="c1" opf:role="aut" opf:file-as="A">Name</dc:creator>` +
+        `<meta refines="#c1" property="role">ill</meta>` +
+        `<meta refines="#c1" property="file-as">B</meta>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      {
+        name: "Name",
+        source: "creator",
+        id: "c1",
+        roles: ["aut", "ill"],
+        fileAs: "A",
+      },
+    ])
+  })
+
+  it("keeps entries without any role and drops empty names", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:creator>Plain Author</dc:creator>` +
+        `<dc:contributor>   </dc:contributor>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      { name: "Plain Author", source: "creator", roles: [] },
+    ])
+  })
+
+  it("does not attach refines from other ids", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:creator id="c1">One</dc:creator>` +
+        `<dc:creator id="c2">Two</dc:creator>` +
+        `<meta refines="#c2" property="role">ill</meta>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      { name: "One", source: "creator", id: "c1", roles: [] },
+      { name: "Two", source: "creator", id: "c2", roles: ["ill"] },
+    ])
+  })
+})
+
+describe("parseOpf — generic meta capture", () => {
+  it("captures every meta element verbatim, whatever its shape", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<meta property="dcterms:modified">2024-01-01T00:00:00Z</meta>` +
+        `<meta property="belongs-to-collection" id="series01">My Series</meta>` +
+        `<meta refines="#series01" property="collection-type">series</meta>` +
+        `<meta refines="#series01" property="group-position">3</meta>` +
+        `<meta name="calibre:series" content="My Series"/>` +
+        `<meta name="calibre:series_index" content="3"/>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).metas).toEqual([
+      { property: "dcterms:modified", value: "2024-01-01T00:00:00Z" },
+      {
+        property: "belongs-to-collection",
+        id: "series01",
+        value: "My Series",
+      },
+      {
+        property: "collection-type",
+        refines: "#series01",
+        value: "series",
+      },
+      {
+        property: "group-position",
+        refines: "#series01",
+        value: "3",
+      },
+      { name: "calibre:series", content: "My Series" },
+      { name: "calibre:series_index", content: "3" },
+    ])
+  })
+
+  it("drops fully empty meta elements and trims fields", () => {
+    const xml = opfWrap(
+      `<metadata>` +
+        `<meta/>` +
+        `<meta property="  spaced  ">  spaced value  </meta>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).metas).toEqual([
+      { property: "spaced", value: "spaced value" },
+    ])
+  })
+})
+
+describe("parseOpf — description", () => {
+  it("returns the first non-empty dc:description", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:description>  </dc:description>` +
+        `<dc:description>A story about tests.</dc:description>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).description).toBe("A story about tests.")
   })
 })

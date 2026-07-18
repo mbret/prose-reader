@@ -7,16 +7,12 @@ import { panoramaSplit } from "./panoramaSplitManifest"
 import { panoramaSplitResourceHook } from "./panoramaSplitResource"
 
 export const streamerHooks: {
-  manifest: {
-    content: StreamerManifestHookFactory[]
-    spine: StreamerManifestHookFactory[]
-  }
+  manifest: StreamerManifestHookFactory[]
   resource: StreamerResourceHookFactory[]
 } = {
-  manifest: {
-    content: [detectReadingDirectionManifest],
-    spine: [panoramaSplit],
-  },
+  // ordered: reading direction detection must run before the panorama split
+  // (the split lays crops out according to the reading direction)
+  manifest: [detectReadingDirectionManifest, panoramaSplit],
   resource: [panoramaSplitResourceHook],
 }
 

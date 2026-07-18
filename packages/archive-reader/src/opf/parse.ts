@@ -37,6 +37,47 @@ export type OpfGuideReference = {
   readonly type: string
 }
 
+/**
+ * One `<meta>` child of `metadata`, captured verbatim whatever its shape:
+ * the EPUB 3 `property`/`refines` form, the EPUB 2 `name`/`content` pair
+ * form (including vendor vocabularies such as `calibre:series`), or any
+ * mix. Attributes and text are trimmed; blank ones are omitted. This is the
+ * open-world channel — OPF `meta` is an open vocabulary, so everything is
+ * kept rather than a hand-picked subset.
+ */
+export type OpfMetaEntry = {
+  /** EPUB 3 `property` attribute (e.g. `dcterms:modified`, `belongs-to-collection`). */
+  readonly property?: string
+  /** EPUB 3 `refines` attribute, verbatim (usually `#some-id`). */
+  readonly refines?: string
+  readonly scheme?: string
+  readonly id?: string
+  /** EPUB 2 `name` attribute (name/content pair form). */
+  readonly name?: string
+  /** EPUB 2 `content` attribute. */
+  readonly content?: string
+  /** Trimmed element text (EPUB 3 form), when non-empty. */
+  readonly value?: string
+}
+
+export type OpfContributor = {
+  /** Trimmed element text. */
+  readonly name: string
+  /** Which element the entry was authored as. */
+  readonly source: "creator" | "contributor"
+  /** Element `id`, the anchor for EPUB 3 `refines` metadata. */
+  readonly id?: string
+  /**
+   * Role tokens (MARC relator codes in well-formed books, e.g. `aut`,
+   * `ill`): the EPUB 2 `opf:role` attribute first, then every EPUB 3
+   * `meta refines property="role"` value in document order. Verbatim,
+   * not validated against the MARC list.
+   */
+  readonly roles: ReadonlyArray<string>
+  /** EPUB 2 `opf:file-as` attribute, or the `file-as` refines when absent. */
+  readonly fileAs?: string
+}
+
 const elementLocalName = (name: string): string =>
   name.includes(":") ? name.slice(name.lastIndexOf(":") + 1) : name
 
@@ -187,6 +228,98 @@ const coverHrefFromManifestAndMetadata = ({
   )?.href
 }
 
+const trimmedAttr = (el: XmlElement, name: string): string | undefined => {
+  const trimmed = el.attr[name]?.trim()
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
+}
+
+const metasFromMetadata = (metadataEl: XmlElement): OpfMetaEntry[] => {
+  const metas: OpfMetaEntry[] = []
+
+  metadataEl.eachChild((child) => {
+    if (elementLocalName(child.name).toLowerCase() !== "meta") return
+
+    const property = trimmedAttr(child, "property")
+    const refines = trimmedAttr(child, "refines")
+    const scheme = trimmedAttr(child, "scheme")
+    const id = trimmedAttr(child, "id")
+    const name = trimmedAttr(child, "name")
+    const content = trimmedAttr(child, "content")
+    const valueTrimmed = child.val.trim()
+    const value = valueTrimmed.length > 0 ? valueTrimmed : undefined
+
+    const entry: OpfMetaEntry = {
+      ...(property !== undefined ? { property } : {}),
+      ...(refines !== undefined ? { refines } : {}),
+      ...(scheme !== undefined ? { scheme } : {}),
+      ...(id !== undefined ? { id } : {}),
+      ...(name !== undefined ? { name } : {}),
+      ...(content !== undefined ? { content } : {}),
+      ...(value !== undefined ? { value } : {}),
+    }
+
+    if (Object.keys(entry).length === 0) return
+
+    metas.push(entry)
+  })
+
+  return metas
+}
+
+/** `refines` is a relative IRI, in practice `#id`; a missing `#` is tolerated. */
+const refinesTargetsId = (refines: string, id: string): boolean =>
+  refines.replace(/^#/, "") === id
+
+const contributorsFromMetadata = (
+  metadataEl: XmlElement,
+  metas: ReadonlyArray<OpfMetaEntry>,
+): OpfContributor[] => {
+  const contributors: OpfContributor[] = []
+
+  metadataEl.eachChild((child) => {
+    const local = elementLocalName(child.name).toLowerCase()
+    if (local !== "creator" && local !== "contributor") return
+
+    const name = child.val.trim()
+    if (name.length === 0) return
+
+    const id = trimmedAttr(child, "id")
+    const refinesFor = (property: string): string[] =>
+      id === undefined
+        ? []
+        : metas.flatMap((meta) =>
+            meta.refines !== undefined &&
+            refinesTargetsId(meta.refines, id) &&
+            meta.property === property &&
+            meta.value !== undefined
+              ? [meta.value]
+              : [],
+          )
+
+    const attributeRole =
+      trimmedAttr(child, "opf:role") ?? trimmedAttr(child, "role")
+    const roles = [
+      ...(attributeRole !== undefined ? [attributeRole] : []),
+      ...refinesFor("role"),
+    ]
+
+    const fileAs =
+      trimmedAttr(child, "opf:file-as") ??
+      trimmedAttr(child, "file-as") ??
+      refinesFor("file-as")[0]
+
+    contributors.push({
+      name,
+      source: local,
+      ...(id !== undefined ? { id } : {}),
+      roles,
+      ...(fileAs !== undefined ? { fileAs } : {}),
+    })
+  })
+
+  return contributors
+}
+
 const metaValByProperty = (
   metadataEl: XmlElement,
   property: string,
@@ -309,8 +442,17 @@ export type OpfMetadata = {
   readonly title: string | undefined
   /** `dc:creator` values, in document order, trimmed; empty when none. */
   readonly creators: ReadonlyArray<string>
+  /**
+   * Every `dc:creator` and `dc:contributor`, in document order, with role
+   * attribution from both conventions (EPUB 2 `opf:role` attribute, EPUB 3
+   * `meta refines property="role"`). `creators` stays the plain-text view
+   * of the `dc:creator` subset.
+   */
+  readonly contributors: ReadonlyArray<OpfContributor>
   /** First non-empty `dc:publisher`, trimmed. */
   readonly publisher: string | undefined
+  /** First non-empty `dc:description`, trimmed. */
+  readonly description: string | undefined
   /** First non-empty `dc:rights`, trimmed. */
   readonly rights: string | undefined
   /** `dc:language` values, in document order, trimmed; empty when none. */
@@ -337,6 +479,12 @@ export type OpfMetadata = {
   readonly renditionSpreadMeta: string | undefined
   readonly pageProgressionDirection: string | undefined
   readonly guide: ReadonlyArray<OpfGuideReference>
+  /**
+   * Every `<meta>` element of `metadata`, captured verbatim (see
+   * {@link OpfMetaEntry}). Known properties (`rendition:*`, roles…) are
+   * also exposed as dedicated fields; this list is the lossless record.
+   */
+  readonly metas: ReadonlyArray<OpfMetaEntry>
 }
 
 /**
@@ -383,19 +531,23 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
 
   let title: string | undefined
   let publisher: string | undefined
+  let description: string | undefined
   let rights: string | undefined
   let date: string | undefined
   let creators: string[] = []
+  let contributors: OpfContributor[] = []
   let languages: string[] = []
   let subjects: string[] = []
   let renditionLayoutMeta: string | undefined
   let renditionFlowMeta: string | undefined
   let renditionSpreadMeta: string | undefined
+  let metas: OpfMetaEntry[] = []
   const identifiers: OpfIdentifier[] = []
 
   if (metadataEl !== undefined) {
     title = firstTextByLocalName(metadataEl, "title")
     publisher = firstTextByLocalName(metadataEl, "publisher")
+    description = firstTextByLocalName(metadataEl, "description")
     rights = firstTextByLocalName(metadataEl, "rights")
     date = firstTextByLocalName(metadataEl, "date")
     creators = textsByLocalName(metadataEl, "creator")
@@ -404,6 +556,8 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     renditionLayoutMeta = metaValByProperty(metadataEl, "rendition:layout")
     renditionFlowMeta = metaValByProperty(metadataEl, "rendition:flow")
     renditionSpreadMeta = metaValByProperty(metadataEl, "rendition:spread")
+    metas = metasFromMetadata(metadataEl)
+    contributors = contributorsFromMetadata(metadataEl, metas)
     identifiers.push(...identifiersFromMetadata(metadataEl))
   }
 
@@ -422,7 +576,9 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     identifiers,
     title,
     creators,
+    contributors,
     publisher,
+    description,
     rights,
     languages,
     subjects,
@@ -433,5 +589,6 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     renditionSpreadMeta,
     pageProgressionDirection,
     guide,
+    metas,
   }
 }

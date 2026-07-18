@@ -6,6 +6,64 @@ import type { ComicInfoManga } from "./manga"
 export const COMIC_INFO_FILENAME = "ComicInfo.xml"
 
 /**
+ * Every simple child element of the ComicInfo schema (v2.1 draft), audited
+ * against the XSD. `Pages` is deliberately absent (nested block, skipped by
+ * the parser). This list is the single source of truth for the known keys
+ * of {@link ComicInfo} and the domain of the losslessness mapping table in
+ * `resolve.ts` — adding a field here without declaring its metadata home
+ * there is a type error.
+ *
+ * @see https://github.com/anansi-project/comicinfo/blob/main/drafts/v2.1/ComicInfo.xsd
+ */
+export const COMIC_INFO_KNOWN_FIELDS = [
+  "AgeRating",
+  "AlternateCount",
+  "AlternateNumber",
+  "AlternateSeries",
+  "BlackAndWhite",
+  "Characters",
+  "Colorist",
+  "CommunityRating",
+  "Count",
+  "CoverArtist",
+  "Day",
+  "Editor",
+  "Format",
+  "Genre",
+  "GTIN",
+  "Imprint",
+  "Inker",
+  "LanguageISO",
+  "Letterer",
+  "Locations",
+  "MainCharacterOrTeam",
+  "Manga",
+  "Month",
+  "Notes",
+  "Number",
+  "PageCount",
+  "Penciller",
+  "Publisher",
+  "Review",
+  "ScanInformation",
+  "Series",
+  "SeriesGroup",
+  "StoryArc",
+  "StoryArcNumber",
+  "Summary",
+  "Tags",
+  "Teams",
+  "Title",
+  "Translator",
+  "Volume",
+  "Web",
+  "Writer",
+  "Year",
+] as const
+
+export type ComicInfoKnownField = (typeof COMIC_INFO_KNOWN_FIELDS)[number]
+
+/**
  * Parsed `ComicInfo.xml` root: one optional string property per child element,
  * using the same names as in the file (e.g. `Title`, `GTIN`, `LanguageISO`).
  * Nested blocks such as `Pages` are skipped. Other simple child elements are
@@ -14,52 +72,11 @@ export const COMIC_INFO_FILENAME = "ComicInfo.xml"
  * @see https://anansi-project.github.io/docs/comicinfo/intro
  * @see https://github.com/anansi-project/comicinfo/blob/main/drafts/v2.1/ComicInfo.xsd for schema
  */
-export interface ComicInfo {
+export interface ComicInfo
+  extends Partial<Record<ComicInfoKnownField, string>> {
   readonly kind: "comicInfo"
-  AgeRating?: string
-  AlternateCount?: string
-  AlternateNumber?: string
-  AlternateSeries?: string
-  BlackAndWhite?: string
-  Characters?: string
-  Colorist?: string
-  CommunityRating?: string
-  Count?: string
-  CoverArtist?: string
-  Day?: string
-  Editor?: string
-  Format?: string
-  Genre?: string
-  GTIN?: string
-  Imprint?: string
-  Inker?: string
-  LanguageISO?: string
-  Letterer?: string
-  Locations?: string
-  MainCharacterOrTeam?: string
   /** Schema literals per {@link ComicInfoManga}; files may still use other strings. */
   Manga?: ComicInfoManga | (string & {})
-  Month?: string
-  Notes?: string
-  Number?: string
-  PageCount?: string
-  Penciller?: string
-  Publisher?: string
-  Review?: string
-  ScanInformation?: string
-  Series?: string
-  SeriesGroup?: string
-  StoryArc?: string
-  StoryArcNumber?: string
-  Summary?: string
-  Tags?: string
-  Teams?: string
-  Title?: string
-  Translator?: string
-  Volume?: string
-  Web?: string
-  Writer?: string
-  Year?: string
   [tag: string]: string | undefined
 }
 

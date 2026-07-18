@@ -9,7 +9,6 @@ export type {
   StreamerManifestHook,
   StreamerManifestHookContext,
   StreamerManifestHookFactory,
-  StreamerManifestHooks,
   StreamerResourceHook,
   StreamerResourceHookContext,
   StreamerResourceHookFactory,
