@@ -2,6 +2,16 @@
 
 This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
 
+# Toolchain
+
+This repo targets the Node version pinned in `.nvmrc` (Node 25), and CI runs on it. Web/CI shells may default to an older Node (e.g. Node 22 with npm 10), so activate the pinned version before running any `npm`, build, test, or lockfile command:
+
+```sh
+export NVM_DIR=/opt/nvm && . "$NVM_DIR/nvm.sh" && nvm install && nvm use
+```
+
+`nvm install`/`nvm use` read `.nvmrc` from the repo root. Regenerate `package-lock.json` **only** under the pinned toolchain (npm 11 / Node 25): npm 10 rewrites native-binary metadata (strips `libc`, mismarks optional Rollup binaries as `dev`), producing spurious lockfile churn.
+
 # Performances
 
 This library needs to be very careful with everything that impact performances (eg: reflow, heavy dom computation). Whenever possible we should use
