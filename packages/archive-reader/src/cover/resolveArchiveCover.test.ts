@@ -137,6 +137,39 @@ describe(`Given an EPUB whose OPF declares no cover`, () => {
   })
 })
 
+describe(`Given a synthetic image-spine OPF (URL list, no cover marker)`, () => {
+  it(`assumes the first spine image as the cover`, async () => {
+    // shape produced by createArchiveFromUrls: a generated OPF whose spine is
+    // the image list, with no cover-image property — the first image is still
+    // the natural cover
+    const archive = archiveWith(
+      [
+        textRecord(
+          `content.opf`,
+          `<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>x</dc:title></metadata>
+  <manifest>
+    <item id="i1" href="001.jpg" media-type="image/jpeg"/>
+    <item id="i2" href="002.jpg" media-type="image/jpeg"/>
+  </manifest>
+  <spine><itemref idref="i1"/><itemref idref="i2"/></spine>
+</package>`,
+        ),
+        textRecord(`001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        textRecord(`002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+      ],
+      `urls`,
+    )
+
+    expect(await resolveArchiveCover(archive)).toEqual({
+      uri: `001.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `assumed`,
+    })
+  })
+})
+
 describe(`Given a package-less container`, () => {
   it(`falls back to the first reading-order resource, sidecars excluded`, async () => {
     const archive = archiveWith(

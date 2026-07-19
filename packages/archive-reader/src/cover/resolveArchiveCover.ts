@@ -56,12 +56,9 @@ export const resolveArchiveCover = async (
   const archiveOpf =
     opf ?? (await readArchiveOpf(archive).catch(() => undefined))
 
-  if (archiveOpf !== undefined) {
-    const coverHref = archiveOpf.opf.coverHref
-
-    if (coverHref === undefined) return undefined
-
-    const uri = toContainerUri(coverHref, archiveOpf.basePath)
+  // 1. an OPF-declared cover is authoritative.
+  if (archiveOpf !== undefined && archiveOpf.opf.coverHref !== undefined) {
+    const uri = toContainerUri(archiveOpf.opf.coverHref, archiveOpf.basePath)
 
     return omitUndefined({
       uri,
@@ -70,11 +67,17 @@ export const resolveArchiveCover = async (
     })
   }
 
-  const order = readingOrder ?? (await resolveArchiveReadingOrder(archive))
-
-  // a cover is an image: the first-page convention only holds for image
-  // content, so skip audio/video reading orders (a package-less audiobook or
-  // video archive starts with a track that must not be published as a cover)
+  // 2. no declared cover — assume the first image of the reading order. This
+  // holds whether or not a package document exists: an authored reflowable
+  // EPUB has a text spine with no image items, so it stays undefined rather
+  // than promoting an interior illustration (a manifest resource, not a spine
+  // item); only image-content publications resolve a cover here — comics,
+  // image archives, and synthetic image-spine OPFs (e.g. createArchiveFromUrls
+  // lists, whose generated OPF carries no cover marker). Audio/video are
+  // pre-paginated discrete media but not images, so they are skipped too.
+  const order =
+    readingOrder ??
+    (await resolveArchiveReadingOrder(archive, { opf: archiveOpf }))
   const firstImage = order.find(
     (item) => item.mediaType?.startsWith("image/") === true,
   )
