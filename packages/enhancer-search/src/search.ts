@@ -4,12 +4,27 @@ import type { ResultItem } from "./types"
 
 export type SearchResult = ResultItem[]
 
-const searchNodeContainingText = (node: Node, text: string) => {
+/**
+ * Walk the subtree accumulating ranges for every match of `regexp`.
+ *
+ * A full-book search runs this over the rendered document of *every* spine
+ * item, so the text-node loop below is the hot path (thousands of text nodes
+ * per large chapter). Two things are hoisted out of it to keep the work
+ * proportional to the number of matches rather than the number of nodes:
+ * - the search regexp is compiled once by the caller and reused across every
+ *   node (only its `lastIndex` is reset), instead of recompiling per text node,
+ * - matches are pushed into a single shared array instead of allocating a new
+ *   array at each node and spreading child results upward.
+ */
+const collectMatchingRanges = (
+  node: Node,
+  regexp: RegExp,
+  matchLength: number,
+  rangeList: Range[],
+) => {
+  if (node.nodeName === `head`) return
+
   const nodeList = node.childNodes
-
-  if (node.nodeName === `head`) return []
-
-  const rangeList: Range[] = []
 
   for (let i = 0; i < nodeList.length; i++) {
     const subNode = nodeList[i]
@@ -18,22 +33,22 @@ const searchNodeContainingText = (node: Node, text: string) => {
       continue
     }
 
-    if (subNode?.hasChildNodes()) {
-      rangeList.push(...searchNodeContainingText(subNode, text))
+    if (subNode.hasChildNodes()) {
+      collectMatchingRanges(subNode, regexp, matchLength, rangeList)
     }
 
     if (subNode.nodeType === 3) {
       const content = (subNode as Text).data.toLowerCase()
       if (content) {
         let match: RegExpExecArray | null = null
-        const regexp = RegExp(`(${text})`, `gi`)
+        regexp.lastIndex = 0
 
         // biome-ignore lint/suspicious/noAssignInExpressions: TODO
         while ((match = regexp.exec(content)) !== null) {
           if (match.index >= 0 && subNode.ownerDocument) {
             const range = subNode.ownerDocument.createRange()
             range.setStart(subNode, match.index)
-            range.setEnd(subNode, match.index + text.length)
+            range.setEnd(subNode, match.index + matchLength)
 
             rangeList.push(range)
           }
@@ -41,6 +56,12 @@ const searchNodeContainingText = (node: Node, text: string) => {
       }
     }
   }
+}
+
+const searchNodeContainingText = (node: Node, text: string) => {
+  const rangeList: Range[] = []
+
+  collectMatchingRanges(node, RegExp(`(${text})`, `gi`), text.length, rangeList)
 
   return rangeList
 }
