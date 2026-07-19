@@ -13,7 +13,7 @@ const mediaTypeForRecord = (record: FileRecord): string | undefined =>
 
 /**
  * Whether a record is an image resource — an `image/*` media type by encoding
- * format or filename (the raster formats real CBZ/CBR/EPUB producers use).
+ * format or filename (the image formats real CBZ/CBR/EPUB producers use).
  * Directories are never images.
  */
 export const isImageRecord = (record: ArchiveRecord): boolean =>
