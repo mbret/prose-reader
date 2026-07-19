@@ -91,6 +91,39 @@ describe(`Given an EPUB with an OPF cover`, () => {
       confidence: `derived`,
     })
   })
+
+  it(`resolves dot segments in the cover href against the OPF directory`, async () => {
+    // OPF nested under OEBPS/Text, cover a sibling folder up via `../Images`.
+    // EPUB resolves this to OEBPS/Images/cover.jpg — the real record uri —
+    // not the verbatim OEBPS/Text/../Images/cover.jpg concatenation.
+    const archive = archiveWith(
+      [
+        textRecord(
+          `OEBPS/Text/content.opf`,
+          `<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>x</dc:title></metadata>
+  <manifest>
+    <item id="c" href="../Images/cover.jpg" media-type="image/jpeg" properties="cover-image"/>
+    <item id="p1" href="page1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="p1"/></spine>
+</package>`,
+        ),
+        textRecord(`OEBPS/Text/page1.xhtml`, `<html/>`),
+        textRecord(`OEBPS/Images/cover.jpg`, ``, {
+          encodingFormat: `image/jpeg`,
+        }),
+      ],
+      `book.epub`,
+    )
+
+    expect(await resolveArchiveCover(archive)).toEqual({
+      uri: `OEBPS/Images/cover.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `derived`,
+    })
+  })
 })
 
 describe(`Given an EPUB whose OPF declares no cover`, () => {
