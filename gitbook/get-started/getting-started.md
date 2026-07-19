@@ -160,6 +160,10 @@ async function run() {
   /**
    * Finally we can mount the reader into the DOM. This is a one-shot
    * operation: the reader starts rendering the book into the container.
+   *
+   * The container must belong to the reader's document. By default that is
+   * the ambient `document`; to render inside a foreign document (eg: an
+   * iframe's `contentDocument`) pass it as `ownerDocument` to `createReader`.
    */
   reader.mount(document.getElementById(`app`)!)
 }

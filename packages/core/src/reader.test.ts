@@ -15,6 +15,7 @@ import {
   HTML_ATTRIBUTE_DATA_READER_ID,
   HTML_PREFIX,
   HTML_PREFIX_SCROLL_NAVIGATOR,
+  HTML_STYLE_PREFIX,
 } from "./constants"
 import { createReader } from "./reader"
 import { waitFor } from "./tests/utils"
@@ -160,5 +161,53 @@ describe("Given a mounted reader", () => {
 
       second.destroy()
     })
+  })
+})
+
+describe("Given a reader mounted into a foreign document", () => {
+  it("builds its subtree and stylesheet in the mount document, not the global one", () => {
+    const foreignDocument = document.implementation.createHTMLDocument()
+    const foreignContainer = foreignDocument.createElement("div")
+    foreignDocument.body.appendChild(foreignContainer)
+
+    const reader = createReader({
+      getResource: () => of(new Response("", { status: 200 })),
+      manifest: MANIFEST,
+      ownerDocument: foreignDocument,
+    })
+    const stylesId = `${HTML_STYLE_PREFIX}-core-${reader.id}`
+
+    reader.mount(foreignContainer)
+
+    // the stylesheet is injected into the mount document only
+    expect(foreignDocument.getElementById(stylesId)).not.toBeNull()
+    expect(document.getElementById(stylesId)).toBeNull()
+
+    // the whole reader-owned subtree lives in the mount document
+    const scrollNavigator = foreignContainer.querySelector(
+      `[data-${HTML_PREFIX_SCROLL_NAVIGATOR}]`,
+    )
+    expect(scrollNavigator?.ownerDocument).toBe(foreignDocument)
+    expect(reader.viewport.value.element.ownerDocument).toBe(foreignDocument)
+    expect(reader.spine.element?.ownerDocument).toBe(foreignDocument)
+    expect(reader.spineItemsManager.items[0]?.element.ownerDocument).toBe(
+      foreignDocument,
+    )
+
+    reader.destroy()
+
+    // and it is removed from the mount document on destroy
+    expect(foreignDocument.getElementById(stylesId)).toBeNull()
+  })
+
+  it("throws when the container does not belong to the reader's document", () => {
+    const foreignDocument = document.implementation.createHTMLDocument()
+    const reader = createTestReader()
+
+    expect(() =>
+      reader.mount(foreignDocument.createElement("div")),
+    ).toThrowError(/must belong to the reader's document/)
+
+    reader.destroy()
   })
 })

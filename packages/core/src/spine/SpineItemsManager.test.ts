@@ -9,11 +9,12 @@ import {
 import { Viewport } from "../viewport/Viewport"
 import { SpineItemsManager } from "./SpineItemsManager"
 
-const createManager = (numberOfItems: number) => {
+const createManager = (numberOfItems: number, ownerDocument?: Document) => {
   const context = new Context(
     createTestManifest({
       spineItems: createTestManifestSpineItems(numberOfItems),
     }),
+    ownerDocument,
   )
   const settings = new ReaderSettingsManager({}, context)
   const hookManager = new HookManager()
@@ -94,6 +95,27 @@ describe("attach", () => {
 
     expect(hookCalls).toEqual([{ id: "item-0", parentAtHookTime: null }])
     expect(spineItemsManager.items[0]?.element.parentElement).toBe(parent)
+  })
+
+  it("builds the container in the reader's document so hooks see it immediately", () => {
+    const foreignDocument = document.implementation.createHTMLDocument()
+    const { spineItemsManager, hookManager } = createManager(1, foreignDocument)
+    const parent = foreignDocument.createElement("div")
+    const ownerDocumentsAtHookTime: Document[] = []
+
+    hookManager.register("item.onBeforeContainerAttach", ({ element }) => {
+      ownerDocumentsAtHookTime.push(element.ownerDocument)
+    })
+
+    const item = spineItemsManager.items[0]
+
+    // the container is born in the reader's document, before any attach
+    expect(item?.element.ownerDocument).toBe(foreignDocument)
+
+    item?.attach(parent)
+
+    expect(ownerDocumentsAtHookTime).toEqual([foreignDocument])
+    expect(item?.element.parentElement).toBe(parent)
   })
 })
 

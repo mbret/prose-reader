@@ -53,9 +53,7 @@ export class ControlledNavigationController
 {
   protected navigateSubject = new Subject<ControlledNavigationEntry>()
 
-  public readonly element$ = new BehaviorSubject<HTMLElement>(
-    document.createElement(`div`),
-  )
+  public readonly element$: BehaviorSubject<HTMLElement>
   public isNavigating$: Observable<boolean>
   public layout$: Observable<unknown>
 
@@ -67,6 +65,10 @@ export class ControlledNavigationController
     protected viewport: Viewport,
   ) {
     super()
+
+    this.element$ = new BehaviorSubject<HTMLElement>(
+      context.document.createElement(`div`),
+    )
 
     const elementInit$ = this.spine.element$.pipe(
       filter(isDefined),

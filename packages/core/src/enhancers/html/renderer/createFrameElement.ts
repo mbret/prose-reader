@@ -1,7 +1,8 @@
-export const createFrameElement = () => {
-  // we force undefined because otherwise the load method will believe it's defined after this call but the code is async and
-  // the iframe could be undefined later
-  const frame = document.createElement(`iframe`)
+export const createFrameElement = (ownerDocument: Document) => {
+  // The iframe must be created directly in the mount document. Creating it in
+  // another document and then adopting it (via appendChild) reloads the frame,
+  // so the caller passes the document the frame will live in.
+  const frame = ownerDocument.createElement(`iframe`)
   frame.frameBorder = `no`
   frame.tabIndex = 0
   frame.setAttribute(

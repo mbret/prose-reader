@@ -18,7 +18,7 @@ import { renderReflowable } from "./reflowable/renderReflowable"
 
 export class HtmlRenderer extends DocumentRenderer {
   onCreateDocument() {
-    const frameElement = createFrameElement()
+    const frameElement = createFrameElement(this.context.document)
 
     this.setDocumentContainer(frameElement)
 
