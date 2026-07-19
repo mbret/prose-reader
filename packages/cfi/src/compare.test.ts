@@ -111,6 +111,34 @@ describe("EPUB CFI Sorting", () => {
     })
   })
 
+  describe("Step indices win over step types (rule 3 & 4 before rule 9)", () => {
+    it("should order by step index when only one side has a character offset", () => {
+      // Text node step /7 (with offset) comes after element step /6 in
+      // document order, no matter what follows /6.
+      const a = "epubcfi(/4[body01]/7:5)"
+      const b = "epubcfi(/4[body01]/6/2)"
+
+      expect(compare(a, b)).toBe(1)
+      expect(compare(b, a)).toBe(-1)
+    })
+
+    it("should order sibling steps by index when one carries an offset", () => {
+      const a = "epubcfi(/4[body01]/10:3)"
+      const b = "epubcfi(/4[body01]/2)"
+
+      expect(compare(a, b)).toBe(1)
+      expect(compare(b, a)).toBe(-1)
+    })
+
+    it("should order by step index when only one side has a temporal position", () => {
+      const a = "epubcfi(/4[body01]/16[svgimg]~5.2)"
+      const b = "epubcfi(/4[body01]/18[svgimg2])"
+
+      expect(compare(a, b)).toBe(-1)
+      expect(compare(b, a)).toBe(1)
+    })
+  })
+
   describe("Complex comparisons", () => {
     it("should handle complex CFIs with multiple attributes", () => {
       // CFI with mixed attributes
