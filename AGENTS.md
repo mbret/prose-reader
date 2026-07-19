@@ -4,13 +4,13 @@ This repository is a mono-repository and is using lerna. Take it into considerat
 
 # Toolchain
 
-This repo targets the Node version pinned in `.nvmrc` (Node 25), and CI runs on it. Web/CI shells may default to an older Node (e.g. Node 22 with npm 10), so activate the pinned version before running any `npm`, build, test, or lockfile command:
+Use the Node/npm toolchain the repo pins in `.nvmrc` — do not assume the shell's default Node is correct (web/CI shells may start on a different, older Node). Before running any `npm`, build, test, or lockfile command, activate the pinned version via nvm:
 
 ```sh
-export NVM_DIR=/opt/nvm && . "$NVM_DIR/nvm.sh" && nvm install && nvm use
+export NVM_DIR="${NVM_DIR:-/opt/nvm}" && . "$NVM_DIR/nvm.sh" && nvm install && nvm use
 ```
 
-`nvm install`/`nvm use` read `.nvmrc` from the repo root. Regenerate `package-lock.json` **only** under the pinned toolchain (npm 11 / Node 25): npm 10 rewrites native-binary metadata (strips `libc`, mismarks optional Rollup binaries as `dev`), producing spurious lockfile churn.
+`nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
 
 # Performances
 
