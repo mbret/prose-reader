@@ -51,6 +51,7 @@ A few rules of thumb:
 - **Bytes** come from `record.blob()` or `record.arrayBuffer()`.
 - **Text** is read with `readRecordAsText(record)` (it decodes `arrayBuffer()` as UTF‑8). There is intentionally no `string()` accessor, so decoding a binary record is always a deliberate act at the call site.
 - **Lookups** should go through `getArchiveFileRecordByUri(archive, uri)` (backed by `recordsByUri`) rather than scanning `archive.records`, since resource resolution is a per-fetch hot path.
+- **Images** are identified with `isImageRecord(record)` (an `image/*` media type, by encoding format or filename) and listed with `getArchiveImageRecords(archive)` — the page listing of a comic or image container.
 - Always build archives with `createArchive` (directly or via a creator) so `recordsByUri` is populated.
 
 {% hint style="info" %}

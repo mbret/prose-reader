@@ -32,6 +32,10 @@ export {
   arrayBufferFileAccessors,
   blobFileAccessors,
 } from "./archives/fileAccessors"
+export {
+  getArchiveImageRecords,
+  isImageRecord,
+} from "./archives/images"
 export { readRecordAsText } from "./archives/readRecordAsText"
 export type {
   Archive,

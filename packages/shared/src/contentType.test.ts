@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { isMediaContentMimeType, parseContentType } from "./contentType"
+import {
+  detectMimeTypeFromName,
+  isMediaContentMimeType,
+  parseContentType,
+} from "./contentType"
 
 describe("parseContentType", () => {
   it("should keep mime type without parameters", () => {
@@ -39,4 +43,29 @@ describe("isMediaContentMimeType", () => {
       expect(isMediaContentMimeType(mimeType)).toBe(false)
     },
   )
+})
+
+describe("detectMimeTypeFromName", () => {
+  it.each([
+    ["page.png", "image/png"],
+    ["page.jpeg", "image/jpeg"],
+    ["page.gif", "image/gif"],
+    ["page.webp", "image/webp"],
+    ["page.avif", "image/avif"],
+    ["page.bmp", "image/bmp"],
+    ["page.tif", "image/tiff"],
+    ["page.tiff", "image/tiff"],
+    ["cover.svg", "image/svg+xml"],
+  ])("detects the image type of %s", (name, mimeType) => {
+    expect(detectMimeTypeFromName(name)).toBe(mimeType)
+  })
+
+  it("is case-insensitive on the extension", () => {
+    expect(detectMimeTypeFromName("COVER.JPG")).toBe("image/jpg")
+    expect(detectMimeTypeFromName("Scan.TIFF")).toBe("image/tiff")
+  })
+
+  it("returns undefined for an unknown extension", () => {
+    expect(detectMimeTypeFromName("book.opf")).toBeUndefined()
+  })
 })
