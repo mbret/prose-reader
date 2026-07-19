@@ -5,13 +5,14 @@ import type { SpineItemsManager } from "../../spine/SpineItemsManager"
 import type { SpinePosition } from "../../spine/types"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import { SpineItemPosition } from "../../spineItem/types"
+import { isHtmlTagElement } from "../../utils/dom"
 import { getAdjustedPositionForSpread } from "./getAdjustedPositionForSpread"
 
 const getNodeFromSelector = (
   selector: string,
   frameElement?: HTMLIFrameElement,
 ) => {
-  if (frameElement && frameElement instanceof HTMLIFrameElement) {
+  if (isHtmlTagElement(frameElement, "iframe")) {
     const contentDocument = frameElement.contentDocument
     const normalizedSelector = selector.trim()
 

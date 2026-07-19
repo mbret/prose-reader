@@ -298,8 +298,9 @@ export class ControlledNavigationController
   public get viewportPosition(): SpinePosition {
     const element = this.element$.getValue()
 
-    const computedStyle = window.getComputedStyle(element)
-    const transform = computedStyle.transform || computedStyle.webkitTransform
+    const computedStyle =
+      element.ownerDocument.defaultView?.getComputedStyle(element)
+    const transform = computedStyle?.transform || computedStyle?.webkitTransform
 
     if (!transform || transform === "none") {
       return new SpinePosition({ x: 0, y: 0 })

@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react"
 import { EMPTY, fromEvent, map, merge, switchMap, takeUntil } from "rxjs"
+import { isHtmlTagElement } from "../utils/dom"
 import type { NavigationEnhancerOutput } from "./navigation/types"
 import type {
   EnhancerOptions,
@@ -52,7 +53,9 @@ export const hotkeysEnhancer =
         }),
       )
 
-    navigateOnKey(document).pipe(takeUntil(reader.$.destroy$)).subscribe()
+    navigateOnKey(reader.context.document)
+      .pipe(takeUntil(reader.$.destroy$))
+      .subscribe()
 
     merge(
       ...reader.spineItemsManager.items.map((item) =>
@@ -60,8 +63,8 @@ export const hotkeysEnhancer =
           switchMap(() => {
             const element = item.renderer.getDocumentFrame()
 
-            return element instanceof HTMLIFrameElement &&
-              element?.contentDocument
+            return isHtmlTagElement(element, "iframe") &&
+              element.contentDocument
               ? navigateOnKey(element.contentDocument)
               : EMPTY
           }),

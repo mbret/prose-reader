@@ -2,6 +2,7 @@ import { resolve } from "@prose-reader/cfi"
 import { Report } from "../report"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpineItem } from "../spineItem/SpineItem"
+import { isHtmlTagElement } from "../utils/dom"
 import { parseCfi } from "./parse"
 
 /**
@@ -38,7 +39,7 @@ export const resolveCfi = ({
 
   const rendererElement = spineItem.renderer.getDocumentFrame()
 
-  if (rendererElement instanceof HTMLIFrameElement) {
+  if (isHtmlTagElement(rendererElement, "iframe")) {
     const doc = rendererElement.contentWindow?.document
 
     if (doc) {

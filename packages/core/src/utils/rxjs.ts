@@ -19,7 +19,11 @@ export function observeResize(
   element: HTMLElement,
 ): Observable<ResizeObserverEntry[]> {
   return new Observable<ResizeObserverEntry[]>((observer) => {
-    const resizeObserver = new ResizeObserver((entries) => {
+    // Use the observed element's own realm so observation is correct even
+    // when the reader is mounted into a foreign document.
+    const Ctor =
+      element.ownerDocument.defaultView?.ResizeObserver ?? ResizeObserver
+    const resizeObserver = new Ctor((entries) => {
       observer.next(entries)
     })
 
@@ -91,7 +95,9 @@ export const observeMutation = (
   options?: MutationObserverInit,
 ) => {
   return new Observable<MutationRecord[]>((subscriber) => {
-    const observer = new MutationObserver((mutations) => {
+    const Ctor =
+      target.ownerDocument?.defaultView?.MutationObserver ?? MutationObserver
+    const observer = new Ctor((mutations) => {
       subscriber.next(mutations)
     })
 
@@ -106,7 +112,10 @@ export function observeIntersection(
   options?: IntersectionObserverInit,
 ): Observable<IntersectionObserverEntry[]> {
   return new Observable<IntersectionObserverEntry[]>((observer) => {
-    const intersectionObserver = new IntersectionObserver((entries) => {
+    const Ctor =
+      element.ownerDocument.defaultView?.IntersectionObserver ??
+      IntersectionObserver
+    const intersectionObserver = new Ctor((entries) => {
       observer.next(entries)
     }, options)
 

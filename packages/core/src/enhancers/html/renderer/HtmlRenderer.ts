@@ -1,7 +1,7 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import { from, map, of, switchMap, tap } from "rxjs"
 import { DocumentRenderer } from "../../../spineItem/renderer/DocumentRenderer"
-import { setAttributeIfChanged } from "../../../utils/dom"
+import { isHtmlTagElement, setAttributeIfChanged } from "../../../utils/dom"
 import {
   upsertCSSToFrame,
   waitForFrameLoad,
@@ -217,7 +217,7 @@ export class HtmlRenderer extends DocumentRenderer {
   private getFrameElement() {
     const frame = this.documentContainer
 
-    if (!(frame instanceof HTMLIFrameElement)) return
+    if (!isHtmlTagElement(frame, "iframe")) return
 
     return frame
   }
