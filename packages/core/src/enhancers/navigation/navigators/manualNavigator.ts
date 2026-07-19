@@ -29,13 +29,17 @@ export class ManualNavigator {
     return this.turnRightOrBottom()
   }
 
-  turnRightOrBottom() {
+  protected turnWith(
+    getNavigationForPage:
+      | typeof getNavigationForLeftOrTopPage
+      | typeof getNavigationForRightOrBottomPage,
+  ) {
     const navigation = this.reader.navigation.getNavigation()
     const spineItem = this.reader.spineItemsManager.get(navigation.spineItem)
 
     if (!spineItem) return
 
-    const position = getNavigationForRightOrBottomPage({
+    const position = getNavigationForPage({
       context: this.reader.context,
       navigationResolver: this.reader.navigation.navigationResolver,
       position: navigation.position,
@@ -53,28 +57,12 @@ export class ManualNavigator {
     })
   }
 
+  turnRightOrBottom() {
+    return this.turnWith(getNavigationForRightOrBottomPage)
+  }
+
   turnLeftOrTop() {
-    const navigation = this.reader.navigation.getNavigation()
-    const spineItem = this.reader.spineItemsManager.get(navigation.spineItem)
-
-    if (!spineItem) return
-
-    const position = getNavigationForLeftOrTopPage({
-      context: this.reader.context,
-      navigationResolver: this.reader.navigation.navigationResolver,
-      position: navigation.position,
-      computedPageTurnDirection:
-        this.reader.settings.values.computedPageTurnDirection,
-      spineItem,
-      spineItemsManager: this.reader.spineItemsManager,
-      spineLocator: this.reader.spine.locator,
-      viewport: this.reader.viewport,
-      settings: this.reader.settings,
-    })
-
-    return this.reader.navigation.navigate({
-      position,
-    })
+    return this.turnWith(getNavigationForLeftOrTopPage)
   }
 
   goToCfi(cfi: string, options: { animate: boolean } = { animate: true }) {
