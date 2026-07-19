@@ -1,5 +1,5 @@
 import type { Reader } from "../../reader"
-import { setStylePropertyIfChanged } from "../../utils/dom"
+import { isHtmlTagElement, setStylePropertyIfChanged } from "../../utils/dom"
 import { getFrameViewportInfo } from "../../utils/frames"
 
 export const fixReflowable = (reader: Reader) => {
@@ -33,7 +33,7 @@ export const fixReflowable = (reader: Reader) => {
 
       if (
         !(spineItem?.renditionLayout === `reflowable`) ||
-        !(element instanceof HTMLIFrameElement)
+        !isHtmlTagElement(element, "iframe")
       )
         return
 
@@ -48,7 +48,7 @@ export const fixReflowable = (reader: Reader) => {
         if (
           noBlankPageAsked &&
           spineManagerWantAFullWidthItem &&
-          frameElement instanceof HTMLIFrameElement
+          isHtmlTagElement(frameElement, "iframe")
         ) {
           setStylePropertyIfChanged(
             frameElement.style,

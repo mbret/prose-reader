@@ -42,7 +42,7 @@ export class Viewport extends ReactiveEntity<State> {
     protected context: Context,
     protected settingsManager: ReaderSettingsManager,
   ) {
-    const element = document.createElement("div")
+    const element = context.document.createElement("div")
 
     element.setAttribute(`data-${HTML_PREFIX_VIEWPORT}`, "")
 

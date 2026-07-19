@@ -37,6 +37,13 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
    * once mounted. This is handled by the navigation enhancer.
    */
   cfi?: string
+  /**
+   * The document the reader creates all of its DOM in. Defaults to the ambient
+   * `globalThis.document`. Provide a foreign document (eg: an iframe's
+   * `contentDocument`) to render the reader inside it; the container passed to
+   * `mount` must belong to this document.
+   */
+  ownerDocument?: Document
 }
 
 export type CreateReaderParameters = CreateReaderOptions
@@ -53,6 +60,7 @@ export const createReader = ({
   manifest,
   // handled by the navigation enhancer, extracted so it does not leak into settings
   cfi: _cfi,
+  ownerDocument = globalThis.document,
   ...inputSettings
 }: CreateReaderOptions) => {
   const id = crypto.randomUUID()
@@ -64,7 +72,7 @@ export const createReader = ({
   const layoutSubject = new Subject<ReaderLayoutOptions>()
   const destroy$ = new Subject<void>()
   const hookManager = new HookManager()
-  const context = new Context(manifest)
+  const context = new Context(manifest, ownerDocument)
   const settingsManager = new ReaderSettingsManager(inputSettings, context)
   const features = new Features(context, settingsManager)
   const viewport = new Viewport(context, settingsManager)
@@ -133,9 +141,15 @@ export const createReader = ({
       )
     }
 
+    if (containerElement.ownerDocument !== context.document) {
+      throw new Error(
+        `The container element must belong to the reader's document. Pass \`ownerDocument\` to \`createReader\` when mounting into a foreign document (eg: an iframe's contentDocument).`,
+      )
+    }
+
     Report.log(`mount`, { containerElement })
 
-    injectCSS(document, stylesId, styles)
+    injectCSS(context.document, stylesId, styles)
 
     const element = wrapContainer(containerElement, id)
 
@@ -179,9 +193,9 @@ export const createReader = ({
   const destroy = () => {
     const containerElement = context.value.rootElement
 
-    removeCSS(document, stylesId)
-
+    // The stylesheet is only injected at mount, so only remove it if mounted.
     if (containerElement) {
+      removeCSS(context.document, stylesId)
       unwrapContainer(containerElement)
     }
 

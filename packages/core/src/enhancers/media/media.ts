@@ -14,7 +14,11 @@ export const mediaEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    const frameObserver = new IntersectionObserver(
+    const IntersectionObserverCtor =
+      reader.context.document.defaultView?.IntersectionObserver ??
+      IntersectionObserver
+
+    const frameObserver = new IntersectionObserverCtor(
       (entries) => {
         entries.forEach((entry) => {
           const frame = entry.target as HTMLIFrameElement
@@ -45,7 +49,7 @@ export const mediaEnhancer =
       },
     )
 
-    const elementObserver = new IntersectionObserver(
+    const elementObserver = new IntersectionObserverCtor(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.target.tagName === `video`) {

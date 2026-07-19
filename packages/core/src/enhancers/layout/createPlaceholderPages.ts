@@ -4,6 +4,7 @@ import { tap } from "rxjs/operators"
 import { HTML_PREFIX as HTML_PREFIX_CORE } from "../../constants"
 import type { Reader } from "../../reader"
 import {
+  isHtmlElement,
   setPropertyIfChanged,
   setStylePropertyIfChanged,
 } from "../../utils/dom"
@@ -100,7 +101,7 @@ export const createPlaceholderPages = (
       const detailsElement = loadingElementContainer.querySelector(
         `[data-details-element]`,
       )
-      if (detailsElement instanceof HTMLElement) {
+      if (isHtmlElement(detailsElement)) {
         setPropertyIfChanged(
           detailsElement,
           `innerText`,

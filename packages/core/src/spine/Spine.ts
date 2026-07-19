@@ -77,9 +77,8 @@ export class Spine extends DestroyableClass {
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(
       filter(isDefined),
-      tap((rootElement) => {
-        const element: HTMLElement =
-          rootElement.ownerDocument.createElement(`div`)
+      tap(() => {
+        const element: HTMLElement = this.context.document.createElement(`div`)
         element.style.cssText = `
           height: 100%;
           position: relative;

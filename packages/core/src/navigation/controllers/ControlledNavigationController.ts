@@ -53,9 +53,7 @@ export class ControlledNavigationController
 {
   protected navigateSubject = new Subject<ControlledNavigationEntry>()
 
-  public readonly element$ = new BehaviorSubject<HTMLElement>(
-    document.createElement(`div`),
-  )
+  public readonly element$: BehaviorSubject<HTMLElement>
   public isNavigating$: Observable<boolean>
   public layout$: Observable<unknown>
 
@@ -67,6 +65,10 @@ export class ControlledNavigationController
     protected viewport: Viewport,
   ) {
     super()
+
+    this.element$ = new BehaviorSubject<HTMLElement>(
+      context.document.createElement(`div`),
+    )
 
     const elementInit$ = this.spine.element$.pipe(
       filter(isDefined),
@@ -296,8 +298,9 @@ export class ControlledNavigationController
   public get viewportPosition(): SpinePosition {
     const element = this.element$.getValue()
 
-    const computedStyle = window.getComputedStyle(element)
-    const transform = computedStyle.transform || computedStyle.webkitTransform
+    const computedStyle =
+      element.ownerDocument.defaultView?.getComputedStyle(element)
+    const transform = computedStyle?.transform || computedStyle?.webkitTransform
 
     if (!transform || transform === "none") {
       return new SpinePosition({ x: 0, y: 0 })

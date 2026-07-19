@@ -12,7 +12,11 @@ export const accessibilityEnhancer =
   (options: InheritOptions): InheritOutput => {
     const reader = next(options)
 
-    const observer = new IntersectionObserver((entries) => {
+    const IntersectionObserverCtor =
+      reader.context.document.defaultView?.IntersectionObserver ??
+      IntersectionObserver
+
+    const observer = new IntersectionObserverCtor((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           removeAttributeIfPresent(entry.target, `tab-index`)

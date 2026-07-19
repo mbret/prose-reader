@@ -71,7 +71,7 @@ export class ScrollNavigationController
       tap(({ rootElement }) => {
         if (!rootElement) return
 
-        const element = document.createElement(`div`)
+        const element = this.context.document.createElement(`div`)
         element.setAttribute(`data-${HTML_PREFIX_SCROLL_NAVIGATOR}`, "")
         element.appendChild(this.viewport.value.element)
         rootElement.appendChild(element)

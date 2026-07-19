@@ -62,7 +62,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
       error: undefined,
     })
 
-    this.containerElement = createContainerElement(item)
+    this.containerElement = createContainerElement(item, context.document)
 
     const rendererFactory = this.settings.values.getRenderer?.(item)
 
@@ -129,8 +129,9 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   /**
    * Attach the item container to the spine element. Deferred from construction
    * so that `item.onBeforeContainerAttach` hooks registered between
-   * `createReader()` and `mount()` are honored. `appendChild` adopts the
-   * container into the parent's document when mounting into another document.
+   * `createReader()` and `mount()` are honored. The container is built in the
+   * reader's document (see `context.document`), so it already belongs to the
+   * mount document when the hook runs.
    */
   attach = (parentElement: HTMLElement) => {
     this.hookManager.execute(`item.onBeforeContainerAttach`, {
@@ -233,8 +234,11 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 }
 
-const createContainerElement = (item: Manifest[`spineItems`][number]) => {
-  const element: HTMLElement = document.createElement(`div`)
+const createContainerElement = (
+  item: Manifest[`spineItems`][number],
+  ownerDocument: Document,
+) => {
+  const element: HTMLElement = ownerDocument.createElement(`div`)
   element.setAttribute(`data-${HTML_PREFIX_SPINE_ITEM}`, "")
   element.classList.add(`spineItem`)
   element.classList.add(`spineItem-${item.renditionLayout ?? "reflowable"}`)

@@ -14,12 +14,25 @@ export type ContextState = {
 export class Context extends ReactiveEntity<ContextState> {
   public bridgeEvent = new BridgeEvent()
 
-  constructor(manifest: Manifest) {
+  /**
+   * The document the reader creates all of its DOM in. This is the single
+   * source of truth for DOM creation so the reader can be rendered inside a
+   * foreign document (eg: an iframe's `contentDocument`). Defaults to the
+   * ambient document; the container passed to `mount` must belong to it.
+   */
+  public readonly document: Document
+
+  constructor(
+    manifest: Manifest,
+    ownerDocument: Document = globalThis.document,
+  ) {
     super({
       manifest,
       assumedRenditionLayout: manifest.renditionLayout ?? "reflowable",
       isFullyPrePaginated: isFullyPrePaginated(manifest),
     })
+
+    this.document = ownerDocument
   }
 
   /**

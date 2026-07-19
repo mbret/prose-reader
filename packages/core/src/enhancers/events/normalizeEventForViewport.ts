@@ -1,5 +1,10 @@
 import type { SpineLocator } from "../../spine/locator/SpineLocator"
-import { isMouseEvent, isPointerEvent, isTouchEvent } from "../../utils/dom"
+import {
+  isHtmlTagElement,
+  isMouseEvent,
+  isPointerEvent,
+  isTouchEvent,
+} from "../../utils/dom"
 import type { Viewport } from "../../viewport/Viewport"
 import { translateFramePositionIntoPage } from "./translateFramePositionIntoPage"
 
@@ -19,7 +24,7 @@ export const normalizeEventForViewport = <
   const frameElement = originalFrame
   const { height: pageHeight, width: pageWidth } = viewport.pageSize
 
-  if (!spineItem || !(frameElement instanceof HTMLIFrameElement)) return event
+  if (!spineItem || !isHtmlTagElement(frameElement, "iframe")) return event
 
   if (isPointerEvent(event)) {
     const { clientX, clientY } = translateFramePositionIntoPage({

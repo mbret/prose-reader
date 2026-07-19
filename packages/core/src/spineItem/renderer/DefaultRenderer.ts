@@ -5,7 +5,7 @@ export class DefaultRenderer extends DocumentRenderer {
   onUnload() {}
 
   onCreateDocument() {
-    return of(document.createElement("div"))
+    return of(this.context.document.createElement("div"))
   }
 
   onLoadDocument() {
