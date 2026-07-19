@@ -1,7 +1,8 @@
 import { getUrlExtension } from "./url"
 
 export const detectMimeTypeFromName = (name: string) => {
-  const extension = getUrlExtension(name)
+  // extensions are case-insensitive (`COVER.JPG` is a jpeg)
+  const extension = getUrlExtension(name).toLowerCase()
 
   switch (extension) {
     case `png`:
@@ -10,10 +11,19 @@ export const detectMimeTypeFromName = (name: string) => {
       return `image/jpg`
     case `jpeg`:
       return `image/jpeg`
-    case `txt`:
-      return `text/plain`
+    case `gif`:
+      return `image/gif`
     case `webp`:
       return `image/webp`
+    case `avif`:
+      return `image/avif`
+    case `bmp`:
+      return `image/bmp`
+    case `tif`:
+    case `tiff`:
+      return `image/tiff`
+    case `txt`:
+      return `text/plain`
     case `xhtml`:
       return `application/xhtml+xml`
     case `mp3`:
