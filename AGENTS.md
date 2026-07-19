@@ -2,6 +2,16 @@
 
 This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
 
+# Toolchain
+
+Use the Node/npm toolchain the repo pins in `.nvmrc` — do not assume the shell's default Node is correct (web/CI shells may start on a different, older Node). Before running any `npm`, build, test, or lockfile command, activate the pinned version via nvm:
+
+```sh
+export NVM_DIR="${NVM_DIR:-/opt/nvm}" && . "$NVM_DIR/nvm.sh" && nvm install && nvm use
+```
+
+`nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
+
 # Performances
 
 This library needs to be very careful with everything that impact performances (eg: reflow, heavy dom computation). Whenever possible we should use
