@@ -11,6 +11,7 @@ import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../kobo/parse"
 import type { ArchiveOpfParsed } from "../opf/readArchiveOpf"
 import { readArchiveOpf } from "../opf/readArchiveOpf"
 import { omitUndefined } from "../utils/omitUndefined"
+import { toContainerUri } from "../utils/toContainerUri"
 
 /**
  * One resource of the publication's default reading sequence, in the
@@ -57,15 +58,6 @@ const validatedPackageLayout = (
   return v === "reflowable" || v === "pre-paginated" ? v : undefined
 }
 
-const containerUriForSpineHref = (
-  href: string,
-  opfBasePath: string,
-): string => {
-  // absolute URLs (the URL-list pseudo-archives) are their own record uri
-  if (/^https?:\/\//.test(href)) return href
-  return opfBasePath ? `${opfBasePath}/${href}` : href
-}
-
 const readingOrderFromOpf = (
   archive: Archive,
   { opf, basePath }: ArchiveOpfParsed,
@@ -73,7 +65,7 @@ const readingOrderFromOpf = (
   const packageLayout = validatedPackageLayout(opf.renditionLayoutMeta)
 
   const rows = opf.spineRows.map((row) => {
-    const uri = containerUriForSpineHref(row.href, basePath)
+    const uri = toContainerUri(row.href, basePath)
     const record = getArchiveFileRecordByUri(archive, uri)
 
     return { row, uri, record }

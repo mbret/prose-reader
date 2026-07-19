@@ -13,8 +13,20 @@
 ## The vocabulary
 
 ```typescript
+/** "derived" = declared or properly computed; "assumed" = a best-effort convention */
+type ResolvedConfidence = "derived" | "assumed"
+
+type ResolvedCover = {
+  /** container-relative uri of the cover image (rebase like reading-order uris) */
+  uri: string
+  mediaType?: string
+  confidence: ResolvedConfidence
+}
+
 type ResolvedMetadata = {
   title?: string
+  /** the cover image; resolved against the container, so `resolveArchive` only */
+  cover?: ResolvedCover
   description?: string
   publisher?: string
   imprint?: string
@@ -27,6 +39,7 @@ type ResolvedMetadata = {
   renditionLayout?: "reflowable" | "pre-paginated"
   renditionFlow?: "scrolled-continuous" | "scrolled-doc" | "paginated" | "auto"
   renditionSpread?: "none" | "landscape" | "portrait" | "both" | "auto"
+  /** declared count, else counted page-like pages; `resolveArchive` only when counted */
   numberOfPages?: number
   gtin?: string
   isbn?: string
@@ -44,6 +57,13 @@ type ResolvedMetadata = {
 }
 ```
 
+### Cover and page count
+
+Two fields are resolved for the whole **container**, not just its descriptive sidecars, so they are populated by `resolveArchive` and left absent by the source-level `resolveMetadata` / `resolveArchiveMetadata`, which never see the file listing:
+
+- **`cover`** — the OPF-declared cover image (EPUB 3 `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a `cover`-ish image id), rebased onto a container-relative `uri` (`confidence: "derived"`); else the first image of the reading order for image-content containers — comics, image archives, synthetic image-spine OPFs such as `createArchiveFromUrls` lists (`confidence: "assumed"`). It stays absent when nothing image-like is a reading resource: an authored reflowable EPUB (text spine, so an interior illustration is never promoted) or an audiobook/video archive has no cover.
+- **`numberOfPages`** — the declared ComicInfo `PageCount`, else the count of page-like reading-order items (images and fixed-layout documents). Reflowable documents are not pages, and audio/video tracks are not pages, so both are excluded: a reflowable book or an audiobook has no page count.
+
 ### Contributor roles
 
 Roles use the Readium terms our sources can express — `author`, `translator`, `editor`, `artist`, `illustrator`, `letterer`, `penciler`, `colorist`, `inker`, `narrator`, `contributor` — plus the prose-reader extension `coverArtist` (ComicInfo `CoverArtist`; Readium has no cover-art term). Well-known MARC relator codes from OPF (`aut`, `trl`, `edt`, `art`, `ill`, `clr`, `nrt`, `ctb`) are normalized to those terms; unknown tokens pass through verbatim. A role-less `dc:creator` defaults to `author`, a role-less `dc:contributor` to `contributor`.
@@ -58,11 +78,13 @@ When several sources are present, `resolveMetadata` merges field-wise:
 | `readingDirection` | **ComicInfo wins over OPF** (`Manga` beats `page-progression-direction`) — deliberate, preserving the historical pipeline behavior |
 | `renditionLayout` | **OPF explicit → Apple → Kobo**, first defined wins; the [`layoutScan`](README.md#resolving-a-publication) promotion applies on top, inside the resolver |
 | `identifiers` | concatenated, OPF first (identifier systems coexist) |
-| corners (`comic`, `apple`, `kobo`) and single-source fields (`rights`, `properties`, `imprint`, `numberOfPages`) | from their only producer |
+| `cover` | OPF-declared cover, else the first-image fallback for image-content containers (`resolveArchive` only) |
+| `numberOfPages` | declared ComicInfo `PageCount`, else the counted page-like reading-order items (`resolveArchive` only) |
+| corners (`comic`, `apple`, `kobo`) and single-source fields (`rights`, `properties`, `imprint`) | from their only producer |
 
 ## Mapping tables
 
-These mirror the compile-enforced tables shipped next to each resolver — the losslessness audit trail. Dotted paths address the scoped corners; `readingOrder`/`toc` mean the field feeds a sibling part of the resolved entity; `cover` and `guide` are reserved homes still only reachable through `sources`.
+These mirror the compile-enforced tables shipped next to each resolver — the losslessness audit trail. Dotted paths address the scoped corners; `readingOrder`/`toc` mean the field feeds a sibling part of the resolved entity; `cover` is the `metadata.cover` field (resolved against the container by `resolveArchive`); `guide` is a reserved home still only reachable through `sources`.
 
 ### ComicInfo → metadata
 
@@ -84,7 +106,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Translator` | `contributors` | role `translator` |
 | `Year`, `Month`, `Day` | `published` | independent optional components |
 | `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comic.manga` |
-| `PageCount` | `numberOfPages` | |
+| `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
 | `GTIN` | `identifiers` | scheme `GTIN`; also `gtin`/`isbn` normalization |
 | `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total |
 | `SeriesGroup` | `belongsTo.collection` | comma-split |
@@ -126,7 +148,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | every `<meta>` | `properties` | verbatim, the open-world channel |
 | manifest items, spine itemrefs | `readingOrder` | structural |
 | spine `toc` idref | `toc` | structural |
-| cover heuristics (`coverHref`) | `cover` | reserved — `sources.opf` only today |
+| cover heuristics (`coverHref`) | `cover` | the `metadata.cover` field; `basePath`-resolved by `resolveArchive`, `confidence: "derived"` |
 | `<guide>` | `guide` | reserved — `sources.opf` only today |
 
 ### Apple / Kobo → metadata

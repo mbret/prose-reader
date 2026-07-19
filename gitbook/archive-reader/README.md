@@ -163,7 +163,7 @@ import { resolveArchive } from "@prose-reader/archive-reader"
 const resolved = await resolveArchive(archive)
 // {
 //   version: 1,
-//   metadata: { title, contributors, readingDirection, renditionLayout, belongsTo, … },
+//   metadata: { title, cover?, numberOfPages?, contributors, renditionLayout, belongsTo, … },
 //   readingOrder: [{ uri, id?, mediaType?, size?, renditionLayout?, progressionWeight, … }],
 //   toc: [{ title, path, containerHref, contents }],
 // }
@@ -177,7 +177,7 @@ Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s
 
 | Token | Cost |
 | --- | --- |
-| `metadata` | sidecar XML reads (OPF, ComicInfo.xml, Apple/Kobo display options) — cheap |
+| `metadata` | sidecar XML reads (OPF, ComicInfo.xml, Apple/Kobo display options) — cheap. Also derives `cover` and the counted `numberOfPages`, which for a package-less container costs an in-memory reading-order scan |
 | `readingOrder` | the OPF read at most — cheap |
 | `toc` | one nav or NCX document read+parse on top — medium |
 | `sources` | same reads as `metadata` — the verbatim parser outputs, for provenance and single-format needs |
@@ -233,11 +233,28 @@ if (comicInfo) {
 }
 ```
 
+{% hint style="info" %}
+`resolveArchiveMetadata` and `resolveMetadata` see only parsed source documents, so they never populate the container-derived fields — `metadata.cover` and the counted `numberOfPages` fallback. Those need the file listing and come from `resolveArchive` (or `resolveArchiveCover`).
+{% endhint %}
+
 Malformed documents throw from the single-file readers (`readArchiveComicInfo`, `readArchiveApple`, `readArchiveOpf`) so you decide how lenient to be; `readArchiveKobo` merges every matching sidecar and skips unparseable ones. The lower-level pieces (`parseOpf`, `parseComicInfo`, `getArchiveOpfInfo`, `getArchiveHasComicInfo`, …) stay exported for advanced use.
 
 ## Resolving the reading order
 
 `resolveArchiveReadingOrder(archive, options?)` is the standalone building block behind `resolveArchive`'s `readingOrder` token: the OPF spine when a usable package document exists (container-relative `uri`s, per-itemref layout hints, size-proportional `progressionWeight`), the archive's file listing otherwise — including when the package document is missing or unparseable — (sidecars like `ComicInfo.xml`/display-options and OS litter like `Thumbs.db` excluded, equal weights, discrete media marked `pre-paginated`). It always returns an array; a malformed OPF is treated as no OPF rather than throwing. Pass `{ opf }` to skip the internal OPF lookup.
+
+## Resolving the cover
+
+`resolveArchiveCover(archive, options?)` is the standalone building block behind `metadata.cover`: the OPF-declared cover image rebased to a container-relative `uri` (`confidence: "derived"`), else the first image of the reading order for image-content containers — comics, image archives, synthetic image-spine OPFs such as `createArchiveFromUrls` lists (`confidence: "assumed"`). It returns `undefined` when no cover is derivable: an authored reflowable EPUB (text spine, so an interior illustration is never promoted) or an audiobook/video archive has none.
+
+```typescript
+import { resolveArchiveCover } from "@prose-reader/archive-reader"
+
+const cover = await resolveArchiveCover(archive)
+// { uri: "OEBPS/cover.jpg", mediaType: "image/jpeg", confidence: "derived" } | undefined
+```
+
+Pass `{ opf }` and/or `{ readingOrder }` (already-resolved parts) to skip the internal lookups — `resolveArchive` threads both in.
 
 ## Resolving a table of contents
 

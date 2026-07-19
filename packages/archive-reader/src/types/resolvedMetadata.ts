@@ -156,11 +156,57 @@ export type ResolvedKoboMetadata = {
 }
 
 /**
+ * How sure the resolver is about a value it produced:
+ *
+ * - `derived` — the container states it outright *or* it is computed from the
+ *   container's actual content (e.g. an OPF-declared cover, a page count read
+ *   from ComicInfo or counted from the pages). A value we know.
+ * - `assumed` — the container does not state it and it cannot be computed, so
+ *   the resolver applies a sensible convention. A best-effort opinion the
+ *   consumer may want to flag, or let the user confirm.
+ *
+ * Only carried on fields that actually have an `assumed` path; fields that are
+ * always `derived` (or always absent when unknown) do not carry it.
+ */
+export type ResolvedConfidence = "derived" | "assumed"
+
+/**
+ * The publication's cover image, addressed in the container's coordinate
+ * space (a record `uri` — rebase into your own serving space, like reading
+ * order uris). Determining it needs the container, not just the descriptive
+ * sidecars, so it is only populated by `resolveArchive`.
+ */
+export type ResolvedCover = {
+  readonly uri: string
+  /**
+   * Best-effort media type of the cover resource, from the archive record's
+   * encoding format when known, else detected from the filename. Absent when
+   * neither yields one.
+   */
+  readonly mediaType?: string
+  /**
+   * `derived` when the OPF references this image as the cover; `assumed` when
+   * the archive declares none and this is the package-less first-page
+   * convention. See {@link ResolvedConfidence}.
+   */
+  readonly confidence: ResolvedConfidence
+}
+
+/**
  * @see module doc above for design rules.
  */
 export type ResolvedMetadata = {
   /** Human-readable title of the work. OPF `dc:title`, ComicInfo `Title`. */
   readonly title?: string
+  /**
+   * The publication's cover image: the OPF-declared cover (EPUB 3
+   * `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a
+   * `cover`-ish image id), else the first page of a package-less container
+   * (CBZ, folder of images). Resolved against the container, so it is
+   * populated by `resolveArchive` and left absent by the source-level
+   * resolvers, which never see the file listing. See {@link ResolvedCover}.
+   */
+  readonly cover?: ResolvedCover
   /** OPF `dc:description`, ComicInfo `Summary`. */
   readonly description?: string
   /** OPF first non-empty `dc:publisher`, ComicInfo `Publisher`. */
@@ -207,7 +253,15 @@ export type ResolvedMetadata = {
     | "auto"
   /** OPF `rendition:spread` meta, validated values only (no defaulting here). */
   readonly renditionSpread?: "none" | "landscape" | "portrait" | "both" | "auto"
-  /** ComicInfo `PageCount`, when numeric (schema.org `numberOfPages`). */
+  /**
+   * Number of pages (schema.org `numberOfPages`). ComicInfo `PageCount` when
+   * declared, else the count of page-like reading-order items — images and
+   * fixed-layout documents (comics, image archives, fixed layout). Reflowable
+   * documents are not pages, and audio/video tracks are not pages either, so
+   * both are excluded; a reflowable book or an audiobook has no page count.
+   * Counting needs the container, so the counted value is only populated by
+   * `resolveArchive`.
+   */
   readonly numberOfPages?: number
   /** Digits-only GTIN when a source identifier matches a GS1 length (8/12/13/14). */
   readonly gtin?: string
@@ -244,8 +298,9 @@ export type ResolvedMetadata = {
  * Where a parsed source field lands: a {@link ResolvedMetadata} field
  * (dotted paths address the scoped corners), or a sibling part of the
  * resolved archive entity for structural fields (`readingOrder`, `toc`).
- * `cover` and `guide` are reserved homes for entity parts that only exist
- * as raw `sources` today — tracked, not yet promoted.
+ * `guide` is a reserved home for an entity part that only exists as raw
+ * `sources` today — tracked, not yet promoted. (`cover` used to be reserved
+ * here too; it is now the {@link ResolvedMetadata.cover} field.)
  *
  * Used by the per-format mapping tables (`opfMetadataHomes`,
  * `comicInfoMetadataHomes`, …) that compile-enforce the losslessness rule:
@@ -259,5 +314,4 @@ export type ResolvedMetadataHome =
   | `belongsTo.${"series" | "collection"}`
   | "readingOrder"
   | "toc"
-  | "cover"
   | "guide"

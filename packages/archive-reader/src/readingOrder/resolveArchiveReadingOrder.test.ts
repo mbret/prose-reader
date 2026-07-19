@@ -85,6 +85,25 @@ describe(`Given an EPUB with the OPF in a subfolder`, () => {
       await resolveArchiveReadingOrder(archive),
     )
   })
+
+  it(`should resolve dot segments in spine hrefs against the OPF directory`, async () => {
+    const nestedOpf = `<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <manifest>
+    <item id="p1" href="../Text/page1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="p1"/></spine>
+</package>`
+
+    const archive = archiveWith([
+      textRecord(`OEBPS/OPF/content.opf`, nestedOpf),
+      textRecord(`OEBPS/Text/page1.xhtml`, ``, { size: 100 }),
+    ])
+
+    expect(
+      (await resolveArchiveReadingOrder(archive)).map((item) => item.uri),
+    ).toEqual([`OEBPS/Text/page1.xhtml`])
+  })
 })
 
 describe(`Given an EPUB whose spine records are missing sizes`, () => {

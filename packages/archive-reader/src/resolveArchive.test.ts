@@ -199,7 +199,9 @@ describe(`Given an EPUB with a malformed OPF`, () => {
   it(`should swallow the parse error and keep resolving`, async () => {
     const resolved = await resolveArchive(malformedOpfArchive())
 
-    // the malformed OPF does not contribute
+    // the malformed OPF contributes no descriptive metadata, and the file
+    // listing holds no image (only the .opf and .xhtml docs), so no cover is
+    // assumed and there are no pre-paginated pages to count
     expect(resolved.metadata).toEqual({})
     // reading order degrades to the file listing rather than failing the
     // resolve — the whole point of the lenient per-source policy
@@ -298,6 +300,14 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
 
     expect(resolved.metadata).toEqual({
       title: `Vol 1`,
+      // resolved for the whole archive: the cover is the first page (assumed,
+      // the sidecar declared none) and the page count is the image count
+      cover: {
+        uri: `page_001.jpg`,
+        mediaType: `image/jpeg`,
+        confidence: `assumed`,
+      },
+      numberOfPages: 2,
       readingDirection: `rtl`,
       contributors: [{ name: `Jane Author`, roles: [`author`] }],
       belongsTo: { series: [{ name: `My Comics`, position: 3 }] },
@@ -326,7 +336,16 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
   it(`should swallow a malformed sidecar and keep resolving`, async () => {
     const resolved = await resolveArchive(comicArchive(`not xml`))
 
-    expect(resolved.metadata).toEqual({})
+    // the malformed sidecar contributes no descriptive metadata; the cover
+    // and page count still resolve from the container itself
+    expect(resolved.metadata).toEqual({
+      cover: {
+        uri: `page_001.jpg`,
+        mediaType: `image/jpeg`,
+        confidence: `assumed`,
+      },
+      numberOfPages: 2,
+    })
     expect(resolved.readingOrder).toHaveLength(2)
   })
 })
@@ -380,5 +399,141 @@ describe(`Given a folder comic`, () => {
         contents: [],
       },
     ])
+  })
+})
+
+describe(`Given the cover in metadata`, () => {
+  const epubWithCover = () =>
+    archiveWith(
+      [
+        textRecord(
+          `OEBPS/content.opf`,
+          `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0">` +
+            `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>x</dc:title></metadata>` +
+            `<manifest>` +
+            `<item id="c" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>` +
+            `<item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/>` +
+            `</manifest><spine><itemref idref="p1"/></spine></package>`,
+        ),
+        textRecord(`OEBPS/p1.xhtml`, xhtml(false)),
+        textRecord(`OEBPS/cover.jpg`, ``, { encodingFormat: `image/jpeg` }),
+      ],
+      `book.epub`,
+    )
+
+  it(`rides along with metadata in the default projection`, async () => {
+    const resolved = await resolveArchive(epubWithCover())
+
+    expect(resolved.metadata.cover).toEqual({
+      uri: `OEBPS/cover.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `derived`,
+    })
+  })
+
+  it(`marks an OPF-declared cover as derived, for a metadata-only projection`, async () => {
+    const resolved = await resolveArchive(epubWithCover(), {
+      include: [`metadata`],
+    })
+
+    expect(resolved.metadata.cover).toEqual({
+      uri: `OEBPS/cover.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `derived`,
+    })
+  })
+
+  it(`falls back to the first page (assumed) for a package-less container`, async () => {
+    const archive = archiveWith(
+      [
+        textRecord(`ComicInfo.xml`, `<?xml version="1.0"?><ComicInfo/>`),
+        textRecord(`page_001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        textRecord(`page_002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+      ],
+      `comic.cbz`,
+    )
+
+    // metadata-only, no readingOrder token: the fallback still resolves
+    // because metadata derives the cover from the container itself
+    const resolved = await resolveArchive(archive, { include: [`metadata`] })
+
+    expect(resolved.metadata.cover).toEqual({
+      uri: `page_001.jpg`,
+      mediaType: `image/jpeg`,
+      confidence: `assumed`,
+    })
+  })
+})
+
+describe(`Given the numberOfPages in metadata`, () => {
+  const comic = (records: ReturnType<typeof textRecord>[]) =>
+    archiveWith(records, `comic.cbz`)
+
+  it(`counts the pre-paginated pages of a package-less container`, async () => {
+    const resolved = await resolveArchive(
+      comic([
+        textRecord(`page_001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        textRecord(`page_002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        textRecord(`page_003.jpg`, ``, { encodingFormat: `image/jpeg` }),
+      ]),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBe(3)
+  })
+
+  it(`prefers a declared ComicInfo PageCount over the counted pages`, async () => {
+    const resolved = await resolveArchive(
+      comic([
+        textRecord(
+          `ComicInfo.xml`,
+          `<?xml version="1.0"?><ComicInfo><PageCount>48</PageCount></ComicInfo>`,
+        ),
+        textRecord(`page_001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        textRecord(`page_002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+      ]),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBe(48)
+  })
+
+  it(`leaves it absent for a reflowable EPUB`, async () => {
+    const resolved = await resolveArchive(epubArchive(), {
+      include: [`metadata`],
+    })
+
+    expect(resolved.metadata.numberOfPages).toBeUndefined()
+  })
+
+  it(`does not count audio/video tracks as pages`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`track01.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+          textRecord(`track02.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+        ],
+        `audiobook.zip`,
+      ),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBeUndefined()
+  })
+
+  it(`counts only the page-like items in a mixed archive`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`narration.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+          textRecord(`page_001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+          textRecord(`page_002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        ],
+        `mixed.zip`,
+      ),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBe(2)
   })
 })
