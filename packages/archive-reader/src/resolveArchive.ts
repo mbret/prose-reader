@@ -128,16 +128,24 @@ const safeRead = async <T>(
 }
 
 /**
- * The counted page count: one page per pre-paginated reading-order item
- * (comics, image archives, fixed layout). Reflowable documents are not
- * pre-paginated, so a reflowable publication counts zero here and its page
- * count stays absent — a document count is not a page count.
+ * The counted page count: one page per pre-paginated *page-like* reading-order
+ * item — an image or a fixed-layout document (comics, image archives, fixed
+ * layout). Reflowable documents are not pre-paginated, so they never count.
+ * Audio and video are pre-paginated discrete media too, but a track or clip is
+ * not a page, so they are excluded — an audiobook or video archive has no page
+ * count. Absent when nothing page-like is present.
  */
-const countPrePaginatedPages = (
+const countPages = (
   readingOrder: ArchiveReadingOrderItem[],
 ): number | undefined => {
+  const isAudioOrVideo = (mediaType: string | undefined): boolean =>
+    mediaType?.startsWith("audio/") === true ||
+    mediaType?.startsWith("video/") === true
+
   const count = readingOrder.filter(
-    (item) => item.renditionLayout === "pre-paginated",
+    (item) =>
+      item.renditionLayout === "pre-paginated" &&
+      !isAudioOrVideo(item.mediaType),
   ).length
 
   return count > 0 ? count : undefined
@@ -251,8 +259,7 @@ export const resolveArchive = async <
       opf,
       readingOrder: order,
     })
-    const numberOfPages =
-      metadata.numberOfPages ?? countPrePaginatedPages(order)
+    const numberOfPages = metadata.numberOfPages ?? countPages(order)
 
     metadata = omitUndefined({ ...metadata, cover, numberOfPages })
   }

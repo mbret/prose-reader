@@ -505,4 +505,35 @@ describe(`Given the numberOfPages in metadata`, () => {
 
     expect(resolved.metadata.numberOfPages).toBeUndefined()
   })
+
+  it(`does not count audio/video tracks as pages`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`track01.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+          textRecord(`track02.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+        ],
+        `audiobook.zip`,
+      ),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBeUndefined()
+  })
+
+  it(`counts only the page-like items in a mixed archive`, async () => {
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`narration.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+          textRecord(`page_001.jpg`, ``, { encodingFormat: `image/jpeg` }),
+          textRecord(`page_002.jpg`, ``, { encodingFormat: `image/jpeg` }),
+        ],
+        `mixed.zip`,
+      ),
+      { include: [`metadata`] },
+    )
+
+    expect(resolved.metadata.numberOfPages).toBe(2)
+  })
 })

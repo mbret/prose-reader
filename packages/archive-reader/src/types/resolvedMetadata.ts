@@ -255,11 +255,12 @@ export type ResolvedMetadata = {
   readonly renditionSpread?: "none" | "landscape" | "portrait" | "both" | "auto"
   /**
    * Number of pages (schema.org `numberOfPages`). ComicInfo `PageCount` when
-   * declared, else — for a pre-paginated publication (comics, image
-   * archives, fixed layout) — the count of pre-paginated pages in the
-   * reading order. Absent for reflowable publications, where a document
-   * count is not a page count. Counting needs the container, so the counted
-   * value is only populated by `resolveArchive`.
+   * declared, else the count of page-like reading-order items — images and
+   * fixed-layout documents (comics, image archives, fixed layout). Reflowable
+   * documents are not pages, and audio/video tracks are not pages either, so
+   * both are excluded; a reflowable book or an audiobook has no page count.
+   * Counting needs the container, so the counted value is only populated by
+   * `resolveArchive`.
    */
   readonly numberOfPages?: number
   /** Digits-only GTIN when a source identifier matches a GS1 length (8/12/13/14). */
