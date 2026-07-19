@@ -55,6 +55,7 @@ export {
 } from "./comicInfo/parse"
 export { readArchiveComicInfo } from "./comicInfo/readArchiveComicInfo"
 export { comicInfoMetadataHomes } from "./comicInfo/resolve"
+export { resolveArchiveCover } from "./cover/resolveArchiveCover"
 export type { KoboMetadata } from "./kobo/parse"
 export { KOBO_DISPLAY_OPTIONS_FILENAME, parseKoboXml } from "./kobo/parse"
 export { readArchiveKobo } from "./kobo/readArchiveKobo"
@@ -95,8 +96,10 @@ export type {
   ResolvedAppleMetadata,
   ResolvedCollection,
   ResolvedComicMetadata,
+  ResolvedConfidence,
   ResolvedContributor,
   ResolvedContributorRole,
+  ResolvedCover,
   ResolvedDate,
   ResolvedKoboMetadata,
   ResolvedMetadata,

@@ -3,6 +3,7 @@ import { readArchiveApple } from "./apple/readArchiveApple"
 import type { Archive } from "./archives/types"
 import type { ComicInfo } from "./comicInfo/parse"
 import { readArchiveComicInfo } from "./comicInfo/readArchiveComicInfo"
+import { resolveArchiveCover } from "./cover/resolveArchiveCover"
 import type { KoboMetadata } from "./kobo/parse"
 import { readArchiveKobo } from "./kobo/readArchiveKobo"
 import { readingOrderDocumentsAllHaveViewport } from "./layout/scanReadingOrderDocumentsViewport"
@@ -51,7 +52,11 @@ export type ResolvedArchive = {
    * bump it.
    */
   readonly version: number
-  /** Cross-format normalized metadata (see {@link ResolvedMetadata}). */
+  /**
+   * Cross-format normalized metadata (see {@link ResolvedMetadata}),
+   * including the resolved `cover` — metadata is resolved for the whole
+   * container, not just its descriptive sidecars.
+   */
   readonly metadata: ResolvedMetadata
   readonly readingOrder: ArchiveReadingOrderItem[]
   /**
@@ -67,14 +72,18 @@ export type ResolvedArchive = {
  * Projection tokens are simply the keys of the result. Cost classes:
  *
  * - `metadata`, `sources`: sidecar XML reads (OPF, ComicInfo.xml,
- *   Apple/Kobo display options) — cheap.
+ *   Apple/Kobo display options) — cheap. `metadata` also derives the cover:
+ *   free for an OPF cover, and for a package-less container it computes the
+ *   reading-order listing (an in-memory records scan) for the first-page
+ *   fallback.
  * - `readingOrder`: the OPF read at most — cheap.
  * - `toc`: one nav or NCX document read+parse on top — medium.
  * - `version`: free, and always present regardless of projection.
  *
  * The default (`metadata`, `readingOrder`, `toc`) costs O(sidecar files) +
  * one navigation document: anything that reads the whole book is opt-in
- * (see `layoutScan`).
+ * (see `layoutScan`). `sources` is opt-in too — it rides for free on the
+ * reads its neighbors already do.
  */
 export type ResolveArchiveToken = keyof ResolvedArchive
 
@@ -118,6 +127,22 @@ const safeRead = async <T>(
   }
 }
 
+/**
+ * The counted page count: one page per pre-paginated reading-order item
+ * (comics, image archives, fixed layout). Reflowable documents are not
+ * pre-paginated, so a reflowable publication counts zero here and its page
+ * count stays absent — a document count is not a page count.
+ */
+const countPrePaginatedPages = (
+  readingOrder: ArchiveReadingOrderItem[],
+): number | undefined => {
+  const count = readingOrder.filter(
+    (item) => item.renditionLayout === "pre-paginated",
+  ).length
+
+  return count > 0 ? count : undefined
+}
+
 const RESOLVED_ARCHIVE_VERSION = 1
 
 /**
@@ -131,8 +156,16 @@ const RESOLVED_ARCHIVE_VERSION = 1
  * ```ts
  * const { metadata, readingOrder, toc } = await resolveArchive(archive)
  *
- * // library-shelf scan: metadata only, skip the toc read
+ * // library-shelf scan: metadata (incl. cover) only, skip the toc read
  * const { metadata } = await resolveArchive(archive, { include: ["metadata"] })
+ * renderShelfItem({ title: metadata.title, cover: metadata.cover?.uri })
+ *
+ * // your own per-source precedence via the raw sources escape hatch
+ * // (resolveArchiveMetadata normalizes a single source at a time)
+ * const { sources } = await resolveArchive(archive, { include: ["sources"] })
+ * const opf = sources.opf && resolveArchiveMetadata(sources.opf.opf)
+ * const comicInfo = sources.comicInfo && resolveArchiveMetadata(sources.comicInfo)
+ * const isbn = comicInfo?.isbn ?? opf?.isbn // ComicInfo wins, your call
  *
  * // full fidelity, including the O(book) layout refinement
  * const resolved = await resolveArchive(archive, {
@@ -204,6 +237,24 @@ export const resolveArchive = async <
       ...item,
       renditionLayout: "pre-paginated" as const,
     }))
+  }
+
+  // cover and the counted page count are part of the resolved metadata but
+  // are container-level derivations (basePath join, first-page fallback, page
+  // counting), so they are resolved here where the archive is available and
+  // folded into `metadata`. After the scan so both ride the finalized reading
+  // order (its layout drives the page count, and the scan can promote it).
+  if (wantsMetadata && metadata !== undefined) {
+    const order =
+      readingOrder ?? (await resolveArchiveReadingOrder(archive, { opf }))
+    const cover = await resolveArchiveCover(archive, {
+      opf,
+      readingOrder: order,
+    })
+    const numberOfPages =
+      metadata.numberOfPages ?? countPrePaginatedPages(order)
+
+    metadata = omitUndefined({ ...metadata, cover, numberOfPages })
   }
 
   const toc = wantsToc
