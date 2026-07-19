@@ -65,7 +65,14 @@ export function compare(a: ParsedCfi | string, b: ParsedCfi | string): number {
       if (!x) return -1
       if (!y) return 1
 
-      // Compare step types (rule 9)
+      // Compare element indices (rule 3 & 4)
+      // The step index locates the node in the document, so it always wins.
+      if (x.index > y.index) return 1
+      if (x.index < y.index) return -1
+
+      // Compare step types (rule 9), only as a tie-breaker between steps at
+      // the same index (eg: an offset terminating at a node vs a child step
+      // descending into it)
       // character offset (:) < child (/) < temporal-spatial (~ or @) < reference (!)
       const xStepType = getStepTypeWeight(x)
       const yStepType = getStepTypeWeight(y)
@@ -73,10 +80,6 @@ export function compare(a: ParsedCfi | string, b: ParsedCfi | string): number {
       if (xStepType !== yStepType) {
         return xStepType - yStepType
       }
-
-      // Compare element indices (rule 3 & 4)
-      if (x.index > y.index) return 1
-      if (x.index < y.index) return -1
 
       // Compare temporal positions (rule 7 & 8)
       // Temporal is more important than spatial
