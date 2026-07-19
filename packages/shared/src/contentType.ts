@@ -22,6 +22,8 @@ export const detectMimeTypeFromName = (name: string) => {
     case `tif`:
     case `tiff`:
       return `image/tiff`
+    case `svg`:
+      return `image/svg+xml`
     case `txt`:
       return `text/plain`
     case `xhtml`:

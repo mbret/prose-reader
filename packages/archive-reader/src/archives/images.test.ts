@@ -30,10 +30,11 @@ describe(`isImageRecord`, () => {
   })
 
   it(`detects an image by filename when the encoding format is absent`, () => {
-    // covers the raster formats detectMimeTypeFromName recognizes, including
-    // the ones it gained (gif/avif/bmp/tiff)
+    // covers the formats detectMimeTypeFromName recognizes, including the ones
+    // it gained (gif/avif/bmp/tiff) and svg (image/svg+xml)
     expect(isImageRecord(fileRecord(`page.gif`))).toBe(true)
     expect(isImageRecord(fileRecord(`page.tiff`))).toBe(true)
+    expect(isImageRecord(fileRecord(`cover.svg`))).toBe(true)
     expect(isImageRecord(fileRecord(`COVER.JPG`))).toBe(true)
   })
 

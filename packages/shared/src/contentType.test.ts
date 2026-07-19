@@ -55,6 +55,7 @@ describe("detectMimeTypeFromName", () => {
     ["page.bmp", "image/bmp"],
     ["page.tif", "image/tiff"],
     ["page.tiff", "image/tiff"],
+    ["cover.svg", "image/svg+xml"],
   ])("detects the image type of %s", (name, mimeType) => {
     expect(detectMimeTypeFromName(name)).toBe(mimeType)
   })
