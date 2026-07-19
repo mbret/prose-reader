@@ -155,17 +155,46 @@ describe(`Given a package-less container`, () => {
     })
   })
 
+  it(`skips non-image reading-order items to reach the cover image`, async () => {
+    const archive = archiveWith(
+      [
+        textRecord(`intro.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+        textRecord(`cover.png`, ``, { encodingFormat: `image/png` }),
+      ],
+      `mixed.zip`,
+    )
+
+    expect(await resolveArchiveCover(archive)).toEqual({
+      uri: `cover.png`,
+      mediaType: `image/png`,
+      confidence: `assumed`,
+    })
+  })
+
+  it(`returns undefined when no reading-order item is an image`, async () => {
+    const archive = archiveWith(
+      [
+        textRecord(`track01.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+        textRecord(`track02.mp3`, ``, { encodingFormat: `audio/mpeg` }),
+      ],
+      `audiobook.zip`,
+    )
+
+    expect(await resolveArchiveCover(archive)).toBeUndefined()
+  })
+
   it(`returns undefined for an empty container`, async () => {
     expect(await resolveArchiveCover(archiveWith([]))).toBeUndefined()
   })
 })
 
 describe(`Given a malformed OPF`, () => {
-  it(`degrades to the first-page fallback rather than throwing`, async () => {
+  it(`degrades to the first image of the file listing rather than throwing`, async () => {
     const archive = archiveWith(
       [
         // mismatched close tag: parseOpf's XmlDocument rejects it, so the opf
-        // read throws and the cover degrades to the file-listing fallback
+        // read throws and the cover degrades to the file-listing fallback —
+        // which skips the .opf (not an image) and lands on the first image
         textRecord(
           `content.opf`,
           `<?xml version="1.0"?><package><spine></package>`,
@@ -176,7 +205,8 @@ describe(`Given a malformed OPF`, () => {
     )
 
     expect(await resolveArchiveCover(archive)).toEqual({
-      uri: `content.opf`,
+      uri: `page_001.jpg`,
+      mediaType: `image/jpeg`,
       confidence: `assumed`,
     })
   })

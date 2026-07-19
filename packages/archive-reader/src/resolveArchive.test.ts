@@ -199,12 +199,10 @@ describe(`Given an EPUB with a malformed OPF`, () => {
   it(`should swallow the parse error and keep resolving`, async () => {
     const resolved = await resolveArchive(malformedOpfArchive())
 
-    // the malformed OPF contributes no descriptive metadata; with no package
-    // document the cover degrades (assumed) to the first file-listing entry,
-    // same as the reading order below. No pre-paginated pages → no page count.
-    expect(resolved.metadata).toEqual({
-      cover: { uri: `OEBPS/content.opf`, confidence: `assumed` },
-    })
+    // the malformed OPF contributes no descriptive metadata, and the file
+    // listing holds no image (only the .opf and .xhtml docs), so no cover is
+    // assumed and there are no pre-paginated pages to count
+    expect(resolved.metadata).toEqual({})
     // reading order degrades to the file listing rather than failing the
     // resolve — the whole point of the lenient per-source policy
     expect(resolved.readingOrder.map((item) => item.uri)).toEqual([

@@ -71,14 +71,20 @@ export const resolveArchiveCover = async (
   }
 
   const order = readingOrder ?? (await resolveArchiveReadingOrder(archive))
-  const first = order[0]
 
-  if (first === undefined) return undefined
+  // a cover is an image: the first-page convention only holds for image
+  // content, so skip audio/video reading orders (a package-less audiobook or
+  // video archive starts with a track that must not be published as a cover)
+  const firstImage = order.find(
+    (item) => item.mediaType?.startsWith("image/") === true,
+  )
+
+  if (firstImage === undefined) return undefined
 
   // the reading order already computed the media type the same way
   return omitUndefined({
-    uri: first.uri,
-    mediaType: first.mediaType,
+    uri: firstImage.uri,
+    mediaType: firstImage.mediaType,
     confidence: "assumed" as const,
   })
 }
