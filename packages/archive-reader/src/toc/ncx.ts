@@ -1,4 +1,4 @@
-import { urlJoin } from "@prose-reader/shared"
+import { getUriBasePath, urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement } from "xmldoc"
 import { readRecordAsText } from "../archives/readRecordAsText"
 import type { Archive } from "../archives/types"
@@ -7,10 +7,10 @@ import type { ArchiveTocItem } from "./types"
 
 const mapNcxChapter = (
   point: XmlElement,
-  { opfBasePath, prefix }: { opfBasePath: string; prefix: string },
+  { basePath, prefix }: { basePath: string; prefix: string },
 ) => {
   const src = point?.childNamed(`${prefix}content`)?.attr.src || ``
-  const path = urlJoin(opfBasePath, src)
+  const path = urlJoin(basePath, src)
 
   const out: ArchiveTocItem = {
     title:
@@ -21,9 +21,7 @@ const mapNcxChapter = (
   }
   const children = point.childrenNamed(`${prefix}navPoint`)
   if (children && children.length > 0) {
-    out.contents = children.map((pt) =>
-      mapNcxChapter(pt, { opfBasePath, prefix }),
-    )
+    out.contents = children.map((pt) => mapNcxChapter(pt, { basePath, prefix }))
   }
 
   return out
@@ -31,7 +29,7 @@ const mapNcxChapter = (
 
 const buildTocFromNcxDocument = (
   ncxData: XmlDocument,
-  { opfBasePath }: { opfBasePath: string },
+  { basePath }: { basePath: string },
 ) => {
   const toc: ArchiveTocItem[] = []
 
@@ -45,7 +43,7 @@ const buildTocFromNcxDocument = (
     .childNamed(`${prefix}navMap`)
     ?.childrenNamed(`${prefix}navPoint`)
     .forEach((point) => {
-      toc.push(mapNcxChapter(point, { opfBasePath, prefix }))
+      toc.push(mapNcxChapter(point, { basePath, prefix }))
     })
 
   return toc
@@ -73,7 +71,13 @@ export const resolveTocFromNcx = async ({
       if (file && !file.dir) {
         const ncxData = new XmlDocument(await readRecordAsText(file))
 
-        return buildTocFromNcxDocument(ncxData, { opfBasePath })
+        /**
+         * content src inside the ncx are relative to the ncx file,
+         * not the opf file
+         */
+        return buildTocFromNcxDocument(ncxData, {
+          basePath: getUriBasePath(file.uri),
+        })
       }
     }
   }
