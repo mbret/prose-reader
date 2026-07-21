@@ -1,9 +1,4 @@
-import {
-  type Archive,
-  getArchiveFileRecordByUri,
-  readRecordAsText,
-} from "@prose-reader/archive-reader"
-import type { HookResource } from "./types"
+import { createTextResourceHook } from "./createTextResourceHook"
 
 const invalidSelfClosingTags = [
   "div",
@@ -65,43 +60,25 @@ const invalidSelfClosingTags = [
  * is a first lighter regex which check if any such tag exist in the first place before running
  * the full replace regex empty.
  */
-export const selfClosingTagsFixHook =
-  ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
-  async (resource: HookResource): Promise<HookResource> => {
-    const file = getArchiveFileRecordByUri(archive, resourcePath)
-
-    if (file?.basename.endsWith(`.xhtml`)) {
-      const bodyToParse =
-        typeof resource.body === `string`
-          ? resource.body
-          : await readRecordAsText(file)
-
-      const tagCheckPattern = new RegExp(
-        `<(${invalidSelfClosingTags.join("|")})[\\s/>]`,
-        "i",
-      )
-      if (!tagCheckPattern.test(bodyToParse)) {
-        return resource
-      }
-
-      const tagPattern = new RegExp(
-        `<(${invalidSelfClosingTags.join("|")})(\\s[^>]*)?\\s*/>`,
-        "gi",
-      )
-
-      const fixedBody = bodyToParse.replace(
-        tagPattern,
-        (_, tagName, attributes = "") => {
-          // Convert to an opening and closing tag
-          return `<${tagName} ${attributes.trim()}></${tagName}>`
-        },
-      )
-
-      return {
-        ...resource,
-        body: fixedBody,
-      }
+export const selfClosingTagsFixHook = createTextResourceHook(
+  ".xhtml",
+  (bodyToParse) => {
+    const tagCheckPattern = new RegExp(
+      `<(${invalidSelfClosingTags.join("|")})[\\s/>]`,
+      "i",
+    )
+    if (!tagCheckPattern.test(bodyToParse)) {
+      return undefined
     }
 
-    return resource
-  }
+    const tagPattern = new RegExp(
+      `<(${invalidSelfClosingTags.join("|")})(\\s[^>]*)?\\s*/>`,
+      "gi",
+    )
+
+    return bodyToParse.replace(tagPattern, (_, tagName, attributes = "") => {
+      // Convert to an opening and closing tag
+      return `<${tagName} ${attributes.trim()}></${tagName}>`
+    })
+  },
+)

@@ -1,10 +1,5 @@
-import {
-  type Archive,
-  getArchiveFileRecordByUri,
-  readRecordAsText,
-} from "@prose-reader/archive-reader"
 import { XmlDocument } from "xmldoc"
-import type { HookResource } from "./types"
+import { createTextResourceHook } from "./createTextResourceHook"
 
 const hasCalibreCoverMeta = (doc: XmlDocument) => {
   const metaElm = doc
@@ -26,38 +21,21 @@ const getBuggyCoverSvg = (doc: XmlDocument) => {
     )
 }
 
-const fixBuggyCover =
-  ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
-  async (resource: HookResource): Promise<HookResource> => {
-    const file = getArchiveFileRecordByUri(archive, resourcePath)
+export const calibreFixHook = createTextResourceHook(
+  ".xhtml",
+  (bodyToParse) => {
+    const opfXmlDoc = new XmlDocument(bodyToParse)
 
-    if (file?.basename.endsWith(`.xhtml`)) {
-      const bodyToParse =
-        typeof resource.body === `string`
-          ? resource.body
-          : await readRecordAsText(file)
-
-      const opfXmlDoc = new XmlDocument(bodyToParse)
-
-      if (hasCalibreCoverMeta(opfXmlDoc)) {
-        const buggySvg = getBuggyCoverSvg(opfXmlDoc)
-
-        if (buggySvg) {
-          delete buggySvg.attr.preserveAspectRatio
-        }
-
-        return {
-          ...resource,
-          body: opfXmlDoc?.toString(),
-        }
-      }
+    if (!hasCalibreCoverMeta(opfXmlDoc)) {
+      return undefined
     }
 
-    return resource
-  }
+    const buggySvg = getBuggyCoverSvg(opfXmlDoc)
 
-export const calibreFixHook =
-  ({ archive, resourcePath }: { archive: Archive; resourcePath: string }) =>
-  async (resource: HookResource): Promise<HookResource> => {
-    return fixBuggyCover({ archive, resourcePath })(resource)
-  }
+    if (buggySvg) {
+      delete buggySvg.attr.preserveAspectRatio
+    }
+
+    return opfXmlDoc.toString()
+  },
+)
