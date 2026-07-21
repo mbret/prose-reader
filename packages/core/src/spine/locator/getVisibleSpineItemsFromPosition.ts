@@ -34,13 +34,6 @@ export const getVisibleSpineItemsFromPosition = ({
       endIndex: number
     }
   | undefined => {
-  const fallbackSpineItem =
-    getSpineItemFromPosition({
-      position,
-      spineItemsManager,
-      spineLayout,
-    }) || spineItemsManager.get(0)
-
   const viewportInfo = useAbsoluteViewport
     ? viewport.absoluteViewport
     : viewport.relativeViewport
@@ -70,7 +63,20 @@ export const getVisibleSpineItemsFromPosition = ({
     }
   }
 
-  const beginItem = spineItemsVisible[0] ?? fallbackSpineItem
+  /**
+   * The fallback is only needed when nothing is visible. Computing it eagerly
+   * would run a full-spine `getSpineItemFromPosition` scan on every call, even
+   * though it is discarded whenever at least one item is visible (the common
+   * case). Resolve it lazily to avoid that extra O(n) pass per call.
+   */
+  const getFallbackSpineItem = () =>
+    getSpineItemFromPosition({
+      position,
+      spineItemsManager,
+      spineLayout,
+    }) || spineItemsManager.get(0)
+
+  const beginItem = spineItemsVisible[0] ?? getFallbackSpineItem()
   const endItem = spineItemsVisible[spineItemsVisible.length - 1] ?? beginItem
 
   if (!beginItem || !endItem) return undefined

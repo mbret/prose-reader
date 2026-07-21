@@ -126,7 +126,34 @@ export const createSpineLocator = ({
     | undefined => {
     const numberOfPages = spineItem.numberOfPages
 
-    const pages = Array.from(Array(numberOfPages)).map((_, index) => {
+    /**
+     * The viewport slice and the item layout are constant across every page of
+     * the item, so they are computed once here instead of per page. Visibility
+     * is evaluated inline so we neither materialize a full per-page position
+     * array nor rebuild the accumulator with a spread on each visible page
+     * (which was O(pages^2)). This runs several times per pan frame.
+     */
+    const viewportInfo = useAbsoluteViewport
+      ? viewport.absoluteViewport
+      : viewport.relativeViewport
+
+    const relativeSpinePosition = translateSpinePositionToRelativeViewport(
+      position,
+      viewport.absoluteViewport,
+      viewportInfo,
+    )
+
+    const viewportPosition = ViewportSlicePosition.from(
+      relativeSpinePosition,
+      viewportInfo,
+    )
+
+    const itemLayout = spineLayout.getSpineItemSpineLayoutInfo(spineItem)
+
+    let beginPageIndex: number | undefined
+    let endPageIndex: number | undefined
+
+    for (let index = 0; index < numberOfPages; index += 1) {
       const spineItemPosition =
         spineItemLocator.getSpineItemPositionFromPageIndex({
           pageIndex: index,
@@ -135,12 +162,14 @@ export const createSpineLocator = ({
 
       const spinePosition = getSpinePositionFromSpineItemPosition({
         spineItemPosition,
-        itemLayout: spineLayout.getSpineItemSpineLayoutInfo(spineItem),
+        itemLayout,
       })
 
-      return {
-        index,
-        absolutePosition: {
+      const { visible } = getItemVisibilityForPosition({
+        viewportPosition,
+        restrictToScreen,
+        threshold,
+        itemPosition: {
           width: viewport.pageSize.width,
           height: viewport.pageSize.height,
           left: spinePosition.x,
@@ -148,44 +177,15 @@ export const createSpineLocator = ({
           bottom: spinePosition.y + viewport.pageSize.height,
           right: spinePosition.x + viewport.pageSize.width,
         },
-      }
-    })
+      })
 
-    const pagesVisible = pages.reduce<number[]>(
-      (acc, { absolutePosition, index }) => {
-        const viewportInfo = useAbsoluteViewport
-          ? viewport.absoluteViewport
-          : viewport.relativeViewport
-
-        const relativeSpinePosition = translateSpinePositionToRelativeViewport(
-          position,
-          viewport.absoluteViewport,
-          viewportInfo,
-        )
-
-        const viewportPosition = ViewportSlicePosition.from(
-          relativeSpinePosition,
-          viewportInfo,
-        )
-
-        const { visible } = getItemVisibilityForPosition({
-          viewportPosition,
-          restrictToScreen,
-          threshold,
-          itemPosition: absolutePosition,
-        })
-
-        if (visible) {
-          return [...acc, index]
+      if (visible) {
+        if (beginPageIndex === undefined) {
+          beginPageIndex = index
         }
-
-        return acc
-      },
-      [],
-    )
-
-    const beginPageIndex = pagesVisible[0]
-    const endPageIndex = pagesVisible[pagesVisible.length - 1] ?? beginPageIndex
+        endPageIndex = index
+      }
+    }
 
     if (beginPageIndex === undefined || endPageIndex === undefined)
       return undefined
