@@ -1,5 +1,3 @@
-import type { AudioVisualizerState } from "@prose-reader/enhancer-audio"
-
 export const FALLBACK_TOP_COLOR = `#93c5fd`
 export const FALLBACK_BOTTOM_COLOR = `#3b82f6`
 export const MIN_BAR_HEIGHT = 1
@@ -14,9 +12,3 @@ export const DEFAULT_STATE_HILL_SPREAD = 0.52
 export const DEFAULT_STATE_MAX_BAR_HEIGHT_RATIO = 0.16
 export const DEFAULT_STATE_OPACITY = 0.5
 export const DEFAULT_STATE_TEXTURE_AMOUNT = 0.34
-
-export const DEFAULT_VISUALIZER_STATE: AudioVisualizerState = {
-  levels: [],
-  isActive: false,
-  trackId: undefined,
-}

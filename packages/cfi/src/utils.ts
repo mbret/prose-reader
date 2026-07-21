@@ -57,15 +57,6 @@ export function cfiEscape(str: string): string {
 export const isCFI = /^epubcfi\((.*)\)$/
 
 /**
- * Wrap a CFI string in the epubcfi() function
- * @param cfi The CFI string to wrap
- * @returns The wrapped CFI string
- */
-export function wrapCfi(cfi: string): string {
-  return isCFI.test(cfi) ? cfi : `epubcfi(${cfi})`
-}
-
-/**
  * @important Make it non browser runtime specific
  */
 export const isElement = (node: Node): node is Element =>
