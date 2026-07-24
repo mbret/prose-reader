@@ -164,10 +164,6 @@ const hrefMatchesWithoutAnchor = (
   )
 }
 
-export const hrefMatches = (a: string, b: string) => {
-  return hrefMatchesWithoutAnchor(stripAnchor(a), stripAnchor(b))
-}
-
 export const isPossibleTocItemCandidateForHref = (
   hrefWithoutAnchor: string,
   tocItemHrefWithoutAnchor: string,

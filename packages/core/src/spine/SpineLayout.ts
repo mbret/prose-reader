@@ -21,16 +21,6 @@ import type { SpineItemsManager } from "./SpineItemsManager"
 import type { SpineItemsObserver } from "./SpineItemsObserver"
 import { SpineItemSpineLayout } from "./types"
 
-export type PageLayoutInformation = {
-  absolutePageIndex: number
-  itemIndex: number
-  absolutePosition: SpineItemSpineLayout
-}
-
-export type LayoutInfo = {
-  pages: PageLayoutInformation[]
-}
-
 export type SpineLayoutOptions = {
   immediate?: boolean
 }
