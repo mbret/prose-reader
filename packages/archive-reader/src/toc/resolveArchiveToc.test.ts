@@ -43,6 +43,39 @@ describe(`Given ncx toc with prefix`, () => {
   })
 })
 
+describe(`Given an ncx located in a different directory than the opf`, () => {
+  it(`should resolve content src relative to the ncx file, not the opf`, async () => {
+    const opf = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><manifest><item id="ncx" href="OEBPS/toc.ncx" media-type="application/x-dtbncx+xml"/><item id="ch1" href="OEBPS/chapter1.xhtml" media-type="application/xhtml+xml"/></manifest><spine toc="ncx"><itemref idref="ch1"/></spine></package>`
+    const ncx = `<?xml version="1.0" encoding="UTF-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap><navPoint id="np1" playOrder="1"><navLabel><text>Chapter 1</text></navLabel><content src="chapter1.xhtml"/><navPoint id="np2" playOrder="2"><navLabel><text>Section 1.1</text></navLabel><content src="chapter1.xhtml#s1"/></navPoint></navPoint></navMap></ncx>`
+
+    const archive = createArchive({
+      filename: `archive`,
+      records: [
+        textRecord(`content.opf`, opf),
+        textRecord(`OEBPS/toc.ncx`, ncx),
+        textRecord(`OEBPS/chapter1.xhtml`),
+      ],
+      close: () => Promise.resolve(),
+    })
+
+    expect(await resolveArchiveToc(archive)).toEqual([
+      {
+        title: `Chapter 1`,
+        path: `OEBPS/chapter1.xhtml`,
+        containerHref: `OEBPS/chapter1.xhtml`,
+        contents: [
+          {
+            title: `Section 1.1`,
+            path: `OEBPS/chapter1.xhtml#s1`,
+            containerHref: `OEBPS/chapter1.xhtml#s1`,
+            contents: [],
+          },
+        ],
+      },
+    ])
+  })
+})
+
 describe(`Given an epub without nav document nor ncx`, () => {
   it(`should resolve an explicit empty toc instead of guessing from folders`, async () => {
     const archive = createArchive({
