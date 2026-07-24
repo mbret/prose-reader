@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react-native",
-  "version": "1.332.0",
+  "version": "1.333.0",
   "type": "module",
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
