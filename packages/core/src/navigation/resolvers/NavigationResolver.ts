@@ -18,7 +18,7 @@ import { getNavigationForSpineItemPage } from "./getNavigationForSpineItemPage"
 import { getNavigationForUrl } from "./getNavigationForUrl"
 import { getNavigationFromSpineItemPosition } from "./getNavigationFromSpineItemPosition"
 
-export const NAMESPACE = `spineNavigator`
+const NAMESPACE = `spineNavigator`
 
 export type NavigationResolver = ReturnType<typeof createNavigationResolver>
 

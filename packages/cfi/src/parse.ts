@@ -51,7 +51,7 @@ export type ParsedCfi = CfiPart[][] | CfiRange
  * @param cfi The CFI string to unwrap
  * @returns The unwrapped CFI string
  */
-export function unwrapCfi(cfi: string): string {
+function unwrapCfi(cfi: string): string {
   const match = cfi.match(isCFI)
   return match ? match[1] || cfi : cfi
 }

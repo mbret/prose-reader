@@ -48,8 +48,6 @@ export type CreateReaderOptions = Partial<CoreInputSettings> & {
 
 export type CreateReaderParameters = CreateReaderOptions
 
-export type ContextSettings = Partial<CoreInputSettings>
-
 export type ReaderInternal = ReturnType<typeof createReader>
 
 type ReaderLayoutOptions = {

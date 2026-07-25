@@ -14,7 +14,7 @@ type Navigation = {
  *
  * For same spine item, we can only speculate
  */
-export const getOrGuessDirection = ({
+const getOrGuessDirection = ({
   navigation,
   previousNavigation,
   settings,

@@ -1,6 +1,6 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react"
 
-export const config = defineConfig({
+const config = defineConfig({
   theme: {
     tokens: {
       fonts: {

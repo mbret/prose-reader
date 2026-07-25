@@ -420,7 +420,7 @@ export const revokeDocumentBlobs = (_document: Document | null | undefined) => {
  * @param requiredProps Array of property names that must exist
  * @param optionalMethods Array of method names that should be functions (optional)
  */
-export function hasShape<T>(
+function hasShape<T>(
   obj: unknown,
   requiredProps: (keyof T)[],
   optionalMethods: (keyof T)[] = [],

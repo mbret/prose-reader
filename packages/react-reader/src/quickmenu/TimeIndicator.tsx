@@ -1,7 +1,7 @@
 import { Text, type TextProps } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 
-export const useTime = () => {
+const useTime = () => {
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {

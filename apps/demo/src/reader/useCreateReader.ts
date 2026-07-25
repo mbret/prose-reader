@@ -19,7 +19,7 @@ import { readerSignal } from "./useReader"
 
 export type ReaderInstance = ReturnType<typeof createAppReader>
 
-export const createAppReader = refitEnhancer(
+const createAppReader = refitEnhancer(
   galleryEnhancer(
     pdfEnhancer(
       annotationsEnhancer(

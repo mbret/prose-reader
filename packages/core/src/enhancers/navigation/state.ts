@@ -2,8 +2,6 @@ import { distinctUntilChanged, map, withLatestFrom } from "rxjs"
 import type { Reader } from "../../reader"
 import { isShallowEqual } from "../../utils/objects"
 
-export type State = ReturnType<typeof observeState>
-
 export const observeState = (reader: Reader) => {
   return reader.pagination.state$.pipe(
     withLatestFrom(reader.settings.values$),

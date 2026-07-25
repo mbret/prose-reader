@@ -10,10 +10,7 @@ export const restoreAnnotations = (bookKey: string): Annotation[] => {
   return restored
 }
 
-export const persistAnnotations = (
-  bookKey: string,
-  annotations: Annotation[],
-) => {
+const persistAnnotations = (bookKey: string, annotations: Annotation[]) => {
   const existing = JSON.parse(localStorage.getItem(`annotations`) || `{}`)
 
   localStorage.setItem(

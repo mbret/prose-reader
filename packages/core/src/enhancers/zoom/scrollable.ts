@@ -7,7 +7,7 @@ import {
   setStylePropertyIfChanged,
 } from "../../utils/dom"
 
-export const adjustScrollToKeepContentCentered = (
+const adjustScrollToKeepContentCentered = (
   scrollContainer: HTMLElement,
   fromScale: number,
   toScale: number,

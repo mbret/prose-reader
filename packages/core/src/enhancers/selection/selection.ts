@@ -1,7 +1,7 @@
 import { Report } from "../../report"
 import type { SpineItem } from "../../spineItem/SpineItem"
 
-export const getRangeFromSelection = (
+const getRangeFromSelection = (
   anchor: { node: Node; offset?: number },
   focus: { node: Node; offset?: number },
 ) => {

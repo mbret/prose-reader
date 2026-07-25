@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { BridgeMethods, ProsePostMessageSchema } from "../shared"
 import { useProseBridge } from "./useProseBridge"
 
-export const appPostMessageSchema = postMessageSchema<ProsePostMessageSchema>({
+const appPostMessageSchema = postMessageSchema<ProsePostMessageSchema>({
   load: {
     validate: (data) =>
       data as {

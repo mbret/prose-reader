@@ -10,10 +10,10 @@ import {
 } from "../../utils/dom"
 import type { Theme, ThemeEnhancerOutput } from "../theme"
 
-export const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
-export const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
-export const LOGO_HTML_PREFIX = `${HTML_PREFIX}-logo`
-export const DETAILS_HTML_PREFIX = `${HTML_PREFIX}-details`
+const HTML_PREFIX = `${HTML_PREFIX_CORE}-enhancer-loading`
+const CONTAINER_HTML_PREFIX = `${HTML_PREFIX}-container`
+const LOGO_HTML_PREFIX = `${HTML_PREFIX}-logo`
+const DETAILS_HTML_PREFIX = `${HTML_PREFIX}-details`
 
 /**
  * We use iframe for loading element mainly to be able to use share hooks / manipulation

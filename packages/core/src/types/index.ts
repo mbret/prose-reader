@@ -1,7 +1,4 @@
 /// <reference types="vite/client" />
-import type { Manifest } from "@prose-reader/shared"
-
-export type { Manifest }
 
 export abstract class AbstractPosition {
   public readonly x: number

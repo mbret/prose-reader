@@ -2,7 +2,7 @@ import type { Reader } from "../../reader"
 import { UnboundSpinePosition } from "../../spine/types"
 import { getPositionRelativeToNonTransformedElement } from "../../utils/coordinates"
 
-export const getSpinePositionFromClientPosition = (
+const getSpinePositionFromClientPosition = (
   position: { x: number; y: number },
   spineElement: HTMLElement,
 ) => {

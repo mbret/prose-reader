@@ -52,7 +52,7 @@ export const createElementForRange = (
   })
 }
 
-export const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {
+const copyPositionStyle = (source: HTMLElement, target: HTMLElement) => {
   setPropertyIfChanged(target.style, `cssText`, source.style.cssText)
 }
 

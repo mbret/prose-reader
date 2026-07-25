@@ -3,7 +3,7 @@ import type { CfiRange, ParsedCfi } from "./parse"
 /**
  * Get all ancestors of a node, including the node itself
  */
-export function getAncestors(node: Node): Node[] {
+function getAncestors(node: Node): Node[] {
   const ancestors: Node[] = [node]
   let current: Node | null = node
 
@@ -40,7 +40,7 @@ export function findCommonAncestor(nodeA: Node, nodeB: Node): Node | null {
  * Special characters in CFI that need to be escaped according to the spec
  * These are: [ ] ^ , ( ) ;
  */
-export const CFI_SPECIAL_CHARS = /[[\]^,();]/g
+const CFI_SPECIAL_CHARS = /[[\]^,();]/g
 
 /**
  * Escape special characters in a CFI string

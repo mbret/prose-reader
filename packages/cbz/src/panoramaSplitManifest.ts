@@ -9,10 +9,7 @@ import { createManifestResourceHref } from "@prose-reader/streamer"
 import { alignSpineItemsForSpreadParity } from "./alignSpineItemsForSpreadParity"
 import { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
 
-export {
-  type DetectedPanorama,
-  detectPanoramaFromBasename,
-} from "./detectPanoramaFromBasename"
+export { detectPanoramaFromBasename } from "./detectPanoramaFromBasename"
 
 export type PanoramaCropSide = "left" | "right"
 
@@ -107,7 +104,7 @@ const createVirtualManifestItem = ({
   mediaType,
 })
 
-export const getArchiveRecordForManifestItem = ({
+const getArchiveRecordForManifestItem = ({
   archive,
   baseUrl,
   spineItem,
@@ -155,7 +152,7 @@ const getResourcePathCandidates = (href: string, baseUrl: string) => {
   return candidates
 }
 
-export const mediaTypeFromArchiveRecord = (
+const mediaTypeFromArchiveRecord = (
   record:
     | {
         basename: string

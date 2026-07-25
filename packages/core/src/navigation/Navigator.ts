@@ -155,5 +155,3 @@ export const createNavigator = ({
     position$,
   }
 }
-
-export type Navigator = ReturnType<typeof createNavigator>
