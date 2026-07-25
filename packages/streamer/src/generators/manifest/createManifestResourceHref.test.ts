@@ -22,6 +22,21 @@ describe("createManifestResourceHref", () => {
     )
   })
 
+  it("should escape fragment/query delimiters found in resource paths", () => {
+    expect(
+      createManifestResourceHref({
+        baseUrl: "http://localhost:9000/streamer/book",
+        resourcePath: "page #1.jpg",
+      }),
+    ).toBe("http://localhost:9000/streamer/book/page%20%231.jpg")
+
+    expect(
+      createManifestResourceHref({
+        resourcePath: "who?.jpg",
+      }),
+    ).toBe("file://who%3F.jpg")
+  })
+
   it("should keep absolute resource paths absolute without a base URL", () => {
     expect(
       createManifestResourceHref({
