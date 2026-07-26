@@ -19,7 +19,7 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
-    "pdfjs-dist": "^5.1.91"
+    "pdfjs-dist": "^6.1.200"
   },
   "peerDependencies": {
     "@prose-reader/archive-reader": "^1.320.0",
