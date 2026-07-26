@@ -11,10 +11,10 @@ import {
 
 /**
  * @important
- * Although we check for the right/bottom page, it has the side effect to work
- * for vertical controlled books because when checking the right page, we will
- * get nothing and therefore move the cursor to the next valid position, in turn
- * getting the next bottom page.
+ * Although we only check for the horizontal page in the requested direction, it
+ * has the side effect to work for vertical controlled books: when checking the
+ * left/right page we will get nothing and therefore move the cursor to the next
+ * valid position, in turn getting the next top/bottom page.
  */
 export const getNavigationForSinglePage = ({
   position,
