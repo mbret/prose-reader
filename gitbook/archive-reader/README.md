@@ -167,6 +167,7 @@ const resolved = await resolveArchive(archive)
 //   metadata: { title, cover?, numberOfPages?, contributors, renditionLayout, belongsTo, … },
 //   readingOrder: [{ uri, id?, mediaType?, size?, renditionLayout?, progressionWeight, … }],
 //   toc: [{ title, path, containerHref, contents }],
+//   unreadableSources: [],
 // }
 ```
 
@@ -182,7 +183,7 @@ Everything is **container-relative** (reading-order `uri`s, toc `containerHref`s
 | `readingOrder` | the OPF read at most — cheap |
 | `toc` | one nav or NCX document read+parse on top — medium |
 | `sources` | same reads as `metadata` — the verbatim parser outputs, for provenance and single-format needs |
-| `version` | free, always present |
+| `version`, `unreadableSources` | free, always present |
 
 The default is `["metadata", "readingOrder", "toc"]`: **the default costs O(sidecar files); anything that reads the whole book is opt-in.** `sources` is deliberately not in the default set — it roughly doubles the persisted entity.
 
@@ -203,6 +204,21 @@ const resolved = await resolveArchive(archive, {
 ### Metadata, sources & error policy
 
 `metadata` is the cross-format union vocabulary — see [Resolved metadata](resolved-metadata.md) for the vocabulary, the per-format mapping tables and the precedence rules. `sources` carries the verbatim parser outputs (`opf` with its `basePath`, `comicInfo`, `apple`, `kobo`); everything in `sources` is also represented, normalized, in `metadata`. Per-source parse failures are swallowed (logged via the debug `Report`): a malformed source — a sidecar or the package document (OPF) itself — never fails the resolve. A book whose OPF won't parse still resolves: it simply doesn't contribute to `metadata`/`toc`, and the reading order degrades to the archive's file listing (see [Resolving the reading order](#resolving-the-reading-order)).
+
+`unreadableSources` is the trace those swallowed failures leave — the sources the container **carries** but that yielded no parsed value:
+
+```typescript
+const { metadata, unreadableSources } = await resolveArchive(archive)
+
+// declared yet broken: refuse the publication rather than present an empty book
+if (unreadableSources.includes("opf")) {
+  throw new Error("Archive carries an OPF package document it cannot parse")
+}
+```
+
+It is always present (empty when every carried source parsed) whatever the projection, so rejecting a corrupt publication costs neither the `sources` payload nor a container-format probe of your own: `sources.opf === undefined` cannot tell a broken package document from a container that has none (a CBZ), and testing the archive records yourself (`isArchiveEpub`) re-derives what the resolver already knows. Its entries are the `sources` keys (`ResolvedArchiveSourceKind`), but the two fields stay separate on purpose: `sources` holds what parsed, `unreadableSources` holds what didn't.
+
+A source counts as unreadable when its document is there and reading or parsing it produced nothing — for the package document, that includes any `.opf` record the OPF discovery never reaches. A projection that reads nothing from the book (`include: ["version"]`) reports nothing.
 
 ## Reading embedded metadata
 

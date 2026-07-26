@@ -12,6 +12,23 @@ export NVM_DIR="${NVM_DIR:-/opt/nvm}" && . "$NVM_DIR/nvm.sh" && nvm install && n
 
 `nvm install`/`nvm use` read `.nvmrc` from the repo root, so this always follows whatever version is pinned there — no version numbers to keep in sync. Regenerate `package-lock.json` only with the npm that ships with that pinned Node: a mismatched npm rewrites native-binary metadata (e.g. dropping `libc`, mismarking optional platform binaries as `dev`) and produces spurious lockfile churn.
 
+# API design: breaking changes are not a constraint
+
+Cleanliness of the design wins. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.
+
+Concretely, never do these unless explicitly asked:
+
+- keep a deprecated export, alias or overload alive "for compatibility"
+- add an opt-in flag or option whose only purpose is preserving the old behavior
+- pick a weaker shape (a sibling field, an optional add-on, a widened union) because the better one would break consumers
+- write a migration shim, adapter or compatibility layer
+
+What is still expected of you:
+
+- update every in-repo consumer (all packages, examples, tests) in the same change — a break you introduce is a break you fix repo-wide, and the repo must typecheck and pass tests
+- update `gitbook/` for the new surface, per the Documentation section — not the old one, and no "previously this was…" notes
+- state the break plainly in your summary, including when it needs a semver major, so the release can be handled
+
 # Performances
 
 This library needs to be very careful with everything that impact performances (eg: reflow, heavy dom computation). Whenever possible we should use
