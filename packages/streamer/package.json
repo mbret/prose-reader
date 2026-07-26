@@ -26,7 +26,7 @@
   "dependencies": {
     "@prose-reader/archive-reader": "^1.334.0",
     "@prose-reader/shared": "^1.334.0",
-    "xmldoc": "^2.0.0"
+    "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
     "rxjs": "*"

@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@prose-reader/shared": "^1.334.0",
-    "xmldoc": "^2.0.0"
+    "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
     "@zip.js/zip.js": "^2.8.33",
