@@ -7,6 +7,7 @@ import { resolveArchiveCover } from "./cover/resolveArchiveCover"
 import type { KoboMetadata } from "./kobo/parse"
 import { readArchiveKobo } from "./kobo/readArchiveKobo"
 import { readingOrderDocumentsAllHaveViewport } from "./layout/scanReadingOrderDocumentsViewport"
+import { isArchiveEpub } from "./opf/isArchiveEpub"
 import type { ArchiveOpfParsed } from "./opf/readArchiveOpf"
 import { readArchiveOpf } from "./opf/readArchiveOpf"
 import type { ArchiveReadingOrderItem } from "./readingOrder/resolveArchiveReadingOrder"
@@ -33,6 +34,8 @@ export type ResolvedArchiveSources = {
   readonly apple?: AppleMetadata
   readonly kobo?: KoboMetadata
 }
+
+export type ResolvedArchiveSourceKind = keyof ResolvedArchiveSources
 
 /**
  * The fully resolved, plain-JSON view of a book container: everything a
@@ -66,6 +69,31 @@ export type ResolvedArchive = {
    */
   readonly toc?: ArchiveTocItem[]
   readonly sources: ResolvedArchiveSources
+  /**
+   * Sources the container carries but that yielded no parsed value: declared
+   * yet broken, which `sources` alone cannot express — an absent source and an
+   * unreadable one both read as `undefined` there.
+   *
+   * Always present (empty when every carried source parsed), whatever the
+   * projection: a consumer refusing to accept a corrupt publication should not
+   * have to ask for `sources`, nor re-derive the container format from the
+   * archive records to tell the two cases apart.
+   *
+   * ```ts
+   * const { metadata, unreadableSources } = await resolveArchive(archive)
+   *
+   * if (unreadableSources.includes("opf")) {
+   *   throw new Error("Archive carries an OPF package document it cannot parse")
+   * }
+   * ```
+   *
+   * A source counts as unreadable when its document (or, for the package
+   * document, any `.opf` record in the container) is there and reading or
+   * parsing it did not produce a value — the resolve itself never fails, so
+   * this is the only trace left. A projection that reads nothing from the book
+   * reports nothing.
+   */
+  readonly unreadableSources: ResolvedArchiveSourceKind[]
 }
 
 /**
@@ -78,7 +106,8 @@ export type ResolvedArchive = {
  *   fallback.
  * - `readingOrder`: the OPF read at most — cheap.
  * - `toc`: one nav or NCX document read+parse on top — medium.
- * - `version`: free, and always present regardless of projection.
+ * - `version`, `unreadableSources`: free, and always present regardless of
+ *   projection.
  *
  * The default (`metadata`, `readingOrder`, `toc`) costs O(sidecar files) +
  * one navigation document: anything that reads the whole book is opt-in
@@ -112,18 +141,25 @@ export type ResolveArchiveOptions<
   layoutScan?: boolean
 }
 
+/**
+ * `failed` separates "the read threw" from "the read found nothing", which
+ * `value === undefined` conflates — the distinction `unreadableSources`
+ * reports.
+ */
+type SafeRead<T> = { value: T | undefined; failed: boolean }
+
 const safeRead = async <T>(
   read: () => Promise<T>,
   source: string,
-): Promise<T | undefined> => {
+): Promise<SafeRead<T>> => {
   try {
-    return await read()
+    return { value: await read(), failed: false }
   } catch (e) {
     // books in the wild are dirty: a malformed source never fails the
     // resolve, it just doesn't contribute
     Report.error(`resolveArchive: unable to read ${source}`, e)
 
-    return undefined
+    return { value: undefined, failed: true }
   }
 }
 
@@ -151,6 +187,40 @@ const countPages = (
   return count > 0 ? count : undefined
 }
 
+/**
+ * A sidecar reader returns `undefined` only when the container does not carry
+ * the document at all, so a throw is the whole broken signal. The package
+ * document has one more broken shape: a container carrying an `.opf` record
+ * whose package document never reaches the parser (a name the OPF discovery
+ * does not match, a directory record). `isArchiveEpub` is the carrier test
+ * there, which is exactly what consumers had to reach for themselves.
+ */
+const collectUnreadableSources = ({
+  archive,
+  opf,
+  comicInfo,
+  apple,
+  kobo,
+}: {
+  archive: Archive
+  opf: SafeRead<ArchiveOpfParsed | undefined> | undefined
+  comicInfo: SafeRead<ComicInfo | undefined> | undefined
+  apple: SafeRead<AppleMetadata | undefined> | undefined
+  kobo: SafeRead<KoboMetadata | undefined> | undefined
+}): ResolvedArchiveSourceKind[] => {
+  const unreadable: ResolvedArchiveSourceKind[] = []
+
+  if (opf !== undefined && opf.value === undefined) {
+    if (opf.failed || isArchiveEpub(archive)) unreadable.push("opf")
+  }
+
+  if (comicInfo?.failed) unreadable.push("comicInfo")
+  if (apple?.failed) unreadable.push("apple")
+  if (kobo?.failed) unreadable.push("kobo")
+
+  return unreadable
+}
+
 const RESOLVED_ARCHIVE_VERSION = 1
 
 /**
@@ -175,6 +245,10 @@ const RESOLVED_ARCHIVE_VERSION = 1
  * const comicInfo = sources.comicInfo && resolveArchiveMetadata(sources.comicInfo)
  * const isbn = comicInfo?.isbn ?? opf?.isbn // ComicInfo wins, your call
  *
+ * // reject a publication whose package document is there but broken
+ * const { unreadableSources } = await resolveArchive(archive)
+ * if (unreadableSources.includes("opf")) throw new Error("broken OPF")
+ *
  * // full fidelity, including the O(book) layout refinement
  * const resolved = await resolveArchive(archive, {
  *   include: ["metadata", "readingOrder", "toc", "sources"],
@@ -187,7 +261,9 @@ export const resolveArchive = async <
 >(
   archive: Archive,
   options: ResolveArchiveOptions<T> = {},
-): Promise<Pick<ResolvedArchive, T[number] | "version">> => {
+): Promise<
+  Pick<ResolvedArchive, T[number] | "version" | "unreadableSources">
+> => {
   const tokens = new Set<ResolveArchiveToken>(
     options.include ?? DEFAULT_INCLUDE,
   )
@@ -207,20 +283,24 @@ export const resolveArchive = async <
   // (runLayoutScan implies metadata or readingOrder, so it is covered)
   const wantsOpf =
     wantsMetadata || wantsSources || wantsReadingOrder || wantsToc
-  const opf = wantsOpf
+  const opfRead = wantsOpf
     ? await safeRead(() => readArchiveOpf(archive), "opf")
     : undefined
+  const opf = opfRead?.value
 
   const wantsSidecars = wantsMetadata || wantsSources || runLayoutScan
-  const comicInfo = wantsSidecars
+  const comicInfoRead = wantsSidecars
     ? await safeRead(() => readArchiveComicInfo(archive), "comicInfo")
     : undefined
-  const apple = wantsSidecars
+  const comicInfo = comicInfoRead?.value
+  const appleRead = wantsSidecars
     ? await safeRead(() => readArchiveApple(archive), "apple")
     : undefined
-  const kobo = wantsSidecars
+  const apple = appleRead?.value
+  const koboRead = wantsSidecars
     ? await safeRead(() => readArchiveKobo(archive), "kobo")
     : undefined
+  const kobo = koboRead?.value
 
   let metadata =
     wantsMetadata || runLayoutScan
@@ -265,13 +345,20 @@ export const resolveArchive = async <
   }
 
   const toc = wantsToc
-    ? await safeRead(() => resolveArchiveToc(archive, { opf }), "toc")
+    ? (await safeRead(() => resolveArchiveToc(archive, { opf }), "toc")).value
     : undefined
 
   const result: {
     -readonly [K in keyof ResolvedArchive]?: ResolvedArchive[K]
-  } & { version: number } = {
+  } & Pick<ResolvedArchive, "version" | "unreadableSources"> = {
     version: RESOLVED_ARCHIVE_VERSION,
+    unreadableSources: collectUnreadableSources({
+      archive,
+      opf: opfRead,
+      comicInfo: comicInfoRead,
+      apple: appleRead,
+      kobo: koboRead,
+    }),
   }
 
   if (wantsMetadata && metadata !== undefined) result.metadata = metadata
@@ -284,5 +371,8 @@ export const resolveArchive = async <
   // `as`: the runtime projection above mirrors the type-level Pick over the
   // same token set; TypeScript cannot connect Set membership checks to the
   // computed Pick keys.
-  return result as Pick<ResolvedArchive, T[number] | "version">
+  return result as Pick<
+    ResolvedArchive,
+    T[number] | "version" | "unreadableSources"
+  >
 }

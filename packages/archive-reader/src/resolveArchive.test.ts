@@ -77,6 +77,7 @@ describe(`Given an EPUB`, () => {
 
     expect(resolved).toEqual({
       version: 1,
+      unreadableSources: [],
       metadata: {
         title: `My Book`,
         contributors: [{ name: `Jane Author`, roles: [`author`] }],
@@ -110,7 +111,7 @@ describe(`Given an EPUB`, () => {
     })
 
     expectTypeOf(resolved).toEqualTypeOf<
-      Pick<ResolvedArchive, `sources` | `version`>
+      Pick<ResolvedArchive, `sources` | `version` | `unreadableSources`>
     >()
 
     expect(resolved.version).toBe(1)
@@ -155,7 +156,8 @@ describe(`Given a projection that needs nothing read from the book`, () => {
       include: [`version`],
     })
 
-    expect(resolved).toEqual({ version: 1 })
+    // nothing was read, so nothing can be reported broken
+    expect(resolved).toEqual({ version: 1, unreadableSources: [] })
     expect(reads()).toBe(0)
   })
 
@@ -210,6 +212,39 @@ describe(`Given an EPUB with a malformed OPF`, () => {
       `OEBPS/page1.xhtml`,
       `OEBPS/page2.xhtml`,
     ])
+  })
+
+  it(`should report the package document as unreadable`, async () => {
+    const resolved = await resolveArchive(malformedOpfArchive())
+
+    // `sources.opf === undefined` cannot say this: a comic archive with no
+    // package document at all looks exactly the same there
+    expect(resolved.unreadableSources).toEqual([`opf`])
+  })
+
+  it(`should report it for a projection that never asks for sources`, async () => {
+    const resolved = await resolveArchive(malformedOpfArchive(), {
+      include: [`metadata`],
+    })
+
+    expect(resolved.unreadableSources).toEqual([`opf`])
+  })
+
+  it(`should report an OPF record the package discovery cannot reach`, async () => {
+    // carried, well-formed, yet never parsed: OPF discovery matches the
+    // lowercase extension only, so nothing reaches the parser and no read
+    // throws — the container still declares a package document we cannot use
+    const resolved = await resolveArchive(
+      archiveWith(
+        [
+          textRecord(`OEBPS/CONTENT.OPF`, `<package/>`),
+          textRecord(`OEBPS/page1.xhtml`, xhtml(false), { size: 100 }),
+        ],
+        `book.epub`,
+      ),
+    )
+
+    expect(resolved.unreadableSources).toEqual([`opf`])
   })
 })
 
@@ -331,10 +366,14 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
     ])
     // flat container: no toc derivable, key absent
     expect(`toc` in resolved).toBe(false)
+    // a container carrying no package document at all is not a broken EPUB
+    expect(resolved.unreadableSources).toEqual([])
   })
 
   it(`should swallow a malformed sidecar and keep resolving`, async () => {
     const resolved = await resolveArchive(comicArchive(`not xml`))
+
+    expect(resolved.unreadableSources).toEqual([`comicInfo`])
 
     // the malformed sidecar contributes no descriptive metadata; the cover
     // and page count still resolve from the container itself

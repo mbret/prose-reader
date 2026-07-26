@@ -89,6 +89,7 @@ export type {
   ResolveArchiveOptions,
   ResolveArchiveToken,
   ResolvedArchive,
+  ResolvedArchiveSourceKind,
   ResolvedArchiveSources,
 } from "./resolveArchive"
 export { resolveArchive } from "./resolveArchive"
