@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/cbz",
-  "version": "1.333.0",
+  "version": "1.334.0",
   "type": "module",
   "files": [
     "/dist"
