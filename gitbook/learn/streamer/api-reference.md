@@ -66,7 +66,7 @@ createManifestResourceHref(params: {
 }): string
 ```
 
-Builds the `href` used for a manifest resource. An absolute `http(s)://` `resourcePath` is returned untouched (when no `baseUrl` is given); otherwise the path is prefixed with `baseUrl` (a trailing `/` is added when missing) or with `file://` when no `baseUrl` is provided. The result is always passed through `encodeURI`.
+Builds the `href` used for a manifest resource. An absolute `http(s)://` `resourcePath` is returned untouched (when no `baseUrl` is given); otherwise the path is prefixed with `baseUrl` (a trailing `/` is added when missing) or with `file://` when no `baseUrl` is provided. The result is always passed through `encodeURI`, and `#`/`?` characters appearing in the resource path itself are additionally escaped (`%23`/`%3F`) — in an archive filename they are data, not fragment/query delimiters.
 
 ```typescript
 import { createManifestResourceHref } from "@prose-reader/streamer"
