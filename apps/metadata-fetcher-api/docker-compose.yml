@@ -38,4 +38,5 @@ services:
       REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-10000}
     volumes:
       - ../../apps/metadata-fetcher-api/src:/repo/apps/metadata-fetcher-api/src:ro
+      - ../../packages/archive-reader/src:/repo/packages/archive-reader/src:ro
       - ../../packages/metadata-fetcher/src:/repo/packages/metadata-fetcher/src:ro

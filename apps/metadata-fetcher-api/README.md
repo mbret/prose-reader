@@ -13,7 +13,9 @@ npm run start:metadata-fetcher
 curl "http://localhost:3000/metadata?title=Dune&author=Frank+Herbert"
 ```
 
-Then open <http://localhost:3000> for the **playground**: a form (title, author, ISBN, plus the options) that runs a lookup and shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
+Then open <http://localhost:3000> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and only that plain JSON metadata is posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the metadata is written to disk, browser storage, a database or a cache.
+
+The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
 The playground is **development only**. It is served when `NODE_ENV` is anything but `production`, which the production image sets — so a hosted deployment has no HTML surface at all: `/` is a plain JSON 404 there, because the route is never registered rather than hidden behind a check. There is no flag to turn it back on.
 
@@ -29,11 +31,11 @@ npm run dev --workspace prose-reader-metadata-fetcher-api
 
 ### No build, anywhere in development
 
-Node runs TypeScript directly (type stripping), and that goes for the library too: `@prose-reader/metadata-fetcher` declares a `prose-source` export condition pointing at its own `src/index.ts`, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads the package's TypeScript instead of its `dist`.
+Node runs TypeScript directly (type stripping), and that goes for both libraries too: `@prose-reader/archive-reader` and `@prose-reader/metadata-fetcher` declare `prose-source` export conditions pointing at their source entry points, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads their TypeScript instead of `dist`. This includes archive-reader's zip.js creator used by playground uploads.
 
 The same condition is set for the typechecker (`customConditions` in `tsconfig.json`) and for the tests (`resolve.conditions` in `vitest.config.ts`), so running, typechecking and testing all agree and none of them needs the package built.
 
-The condition is inert for anyone else: nothing applies it unless asked, and consumers of the published package resolve `dist` as usual. The production image resolves `dist` too — it should exercise the artifact that actually ships.
+The condition is inert for anyone else: nothing applies it unless asked, and normal package consumers resolve `dist` as usual. The production image resolves `dist` too — it should exercise the artifact that actually ships.
 
 ## Endpoints
 

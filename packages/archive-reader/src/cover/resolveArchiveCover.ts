@@ -1,13 +1,13 @@
 import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
-import type { Archive } from "../archives/types"
-import { getArchiveFileRecordByUri } from "../archives/types"
-import type { ArchiveOpfParsed } from "../opf/readArchiveOpf"
-import { readArchiveOpf } from "../opf/readArchiveOpf"
-import type { ArchiveReadingOrderItem } from "../readingOrder/resolveArchiveReadingOrder"
-import { resolveArchiveReadingOrder } from "../readingOrder/resolveArchiveReadingOrder"
-import type { ResolvedCover } from "../types/resolvedMetadata"
-import { omitUndefined } from "../utils/omitUndefined"
-import { toContainerUri } from "../utils/toContainerUri"
+import type { Archive } from "../archives/types.ts"
+import { getArchiveFileRecordByUri } from "../archives/types.ts"
+import type { ArchiveOpfParsed } from "../opf/readArchiveOpf.ts"
+import { readArchiveOpf } from "../opf/readArchiveOpf.ts"
+import type { ArchiveReadingOrderItem } from "../readingOrder/resolveArchiveReadingOrder.ts"
+import { resolveArchiveReadingOrder } from "../readingOrder/resolveArchiveReadingOrder.ts"
+import type { ResolvedCover } from "../types/resolvedMetadata.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
+import { toContainerUri } from "../utils/toContainerUri.ts"
 
 const mediaTypeForUri = (archive: Archive, uri: string): string | undefined => {
   const record = getArchiveFileRecordByUri(archive, uri)

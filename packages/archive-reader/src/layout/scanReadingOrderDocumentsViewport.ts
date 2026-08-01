@@ -1,10 +1,10 @@
 import { isXmlBasedMimeType } from "@prose-reader/shared"
 import { XmlDocument } from "xmldoc"
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive } from "../archives/types"
-import { getArchiveFileRecordByUri, isFileRecord } from "../archives/types"
-import type { ArchiveReadingOrderItem } from "../readingOrder/resolveArchiveReadingOrder"
-import { Report } from "../report"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive } from "../archives/types.ts"
+import { getArchiveFileRecordByUri, isFileRecord } from "../archives/types.ts"
+import type { ArchiveReadingOrderItem } from "../readingOrder/resolveArchiveReadingOrder.ts"
+import { Report } from "../report.ts"
 
 const hasDocMetaViewport = (doc: XmlDocument) => {
   const metaElm = doc

@@ -77,17 +77,26 @@ const readContributors = (
 const readIdentifiers = (
   record: Record<string, unknown>,
 ): ResolvedMetadata["identifiers"] => {
-  const identifiers = readRecordArray(record, "identifiers").flatMap(
-    (entry) => {
-      const value = readString(entry, "value")
+  type ResolvedIdentifier = NonNullable<ResolvedMetadata["identifiers"]>[number]
 
-      if (value === undefined) return []
+  const identifiers = readRecordArray(
+    record,
+    "identifiers",
+  ).flatMap<ResolvedIdentifier>((entry) => {
+    const value = readString(entry, "value")
 
-      const scheme = readString(entry, "scheme")
+    if (value === undefined) return []
 
-      return [scheme !== undefined ? { value, scheme } : { value }]
-    },
-  )
+    const scheme = readString(entry, "scheme")
+
+    return [
+      {
+        value,
+        ...(scheme !== undefined ? { scheme } : {}),
+        ...(entry.unique === true ? { unique: true } : {}),
+      },
+    ]
+  })
 
   return identifiers.length > 0 ? identifiers : undefined
 }

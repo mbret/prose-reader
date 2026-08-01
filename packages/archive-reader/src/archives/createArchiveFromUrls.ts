@@ -4,9 +4,9 @@ import {
   escapeXmlAttributeValue,
   getUriBasename,
 } from "@prose-reader/shared"
-import { createArchive } from "./createArchive"
-import { blobFileAccessors } from "./fileAccessors"
-import type { Archive } from "./types"
+import { createArchive } from "./createArchive.ts"
+import { blobFileAccessors } from "./fileAccessors.ts"
+import type { Archive } from "./types.ts"
 
 /**
  * @important

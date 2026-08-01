@@ -1,12 +1,12 @@
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive, FileRecord } from "../archives/types"
-import { isFileRecord } from "../archives/types"
-import { Report } from "../report"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive, FileRecord } from "../archives/types.ts"
+import { isFileRecord } from "../archives/types.ts"
+import { Report } from "../report.ts"
 import {
   KOBO_DISPLAY_OPTIONS_FILENAME,
   type KoboMetadata,
   parseKoboXml,
-} from "./parse"
+} from "./parse.ts"
 
 /**
  * Loads and parses Kobo XML sidecars (`com.kobobooks.display-options.xml`)

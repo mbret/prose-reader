@@ -4,10 +4,14 @@ import {
   type MetadataProvider,
   MetadataProviderResponseError,
 } from "@prose-reader/metadata-fetcher"
+import { TextReader, Uint8ArrayWriter, ZipWriter } from "@zip.js/zip.js"
 import type { Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { createApp } from "./createApp.ts"
-import { PLAYGROUND_FILE } from "./playground/playground.ts"
+import {
+  PLAYGROUND_FILE,
+  PLAYGROUND_SCRIPT_FILE,
+} from "./playground/playground.ts"
 
 /**
  * `response.json()` is `unknown` — rightly so. These two assert the shape the
@@ -92,7 +96,57 @@ const serve = (app: Express) => {
         headers: { "content-type": "application/json" },
         body: typeof body === "string" ? body : JSON.stringify(body),
       }),
+    postFile: (path: string, body: Uint8Array<ArrayBuffer>, filename: string) =>
+      fetch(`${origin()}${path}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/octet-stream",
+          "x-prose-file-name": encodeURIComponent(filename),
+          "x-prose-file-type": "application%2Fepub%2Bzip",
+        },
+        body,
+      }),
   }
+}
+
+const createEpub = async (): Promise<Uint8Array<ArrayBuffer>> => {
+  const writer = new ZipWriter(new Uint8ArrayWriter(), {
+    useWebWorkers: false,
+  })
+
+  await writer.add(
+    "META-INF/container.xml",
+    new TextReader(`<?xml version="1.0"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="OPS/package.opf" media-type="application/oebps-package+xml"/>
+        </rootfiles>
+      </container>`),
+  )
+  await writer.add(
+    "OPS/package.opf",
+    new TextReader(`<?xml version="1.0" encoding="UTF-8"?>
+      <package version="3.0" unique-identifier="isbn" xmlns="http://www.idpf.org/2007/opf">
+        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+          <dc:identifier id="isbn">9780441013593</dc:identifier>
+          <dc:title>Dune</dc:title>
+          <dc:creator>Frank Herbert</dc:creator>
+          <dc:language>en</dc:language>
+        </metadata>
+        <manifest>
+          <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
+        </manifest>
+        <spine><itemref idref="chapter"/></spine>
+      </package>`),
+  )
+  await writer.add(
+    "OPS/chapter.xhtml",
+    new TextReader(
+      '<html xmlns="http://www.w3.org/1999/xhtml"><body>Dune</body></html>',
+    ),
+  )
+
+  return writer.close()
 }
 
 const defaults = {
@@ -254,8 +308,68 @@ describe("metadata-fetcher-api playground", () => {
       expect(response.headers.get("content-type")).toContain("text/html")
       expect(html).toContain('<form id="form">')
       expect(html).toContain('name="title"')
+      expect(html).toContain('type="file"')
+      expect(html).toContain(
+        '<script src="/playground/playground.js"></script>',
+      )
+      expect(html).not.toContain("const form =")
+      expect(html).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       // served straight from playground.html, so editing it needs no restart
       expect(html).toBe(await readFile(PLAYGROUND_FILE, "utf8"))
+
+      const scriptResponse = await api.get("/playground/playground.js")
+      const script = await scriptResponse.text()
+
+      expect(scriptResponse.status).toBe(200)
+      expect(scriptResponse.headers.get("content-type")).toContain(
+        "text/javascript",
+      )
+      expect(script).toContain("/playground/resolve")
+      expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
+      expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))
+    } finally {
+      await api.close()
+    }
+  })
+
+  it("resolves an uploaded publication in memory", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [duneProvider], playground: true }),
+    )
+
+    try {
+      const response = await api.postFile(
+        "/playground/resolve",
+        await createEpub(),
+        "dune.epub",
+      )
+
+      expect(response.status).toBe(200)
+      expect(await response.json()).toMatchObject({
+        title: "Dune",
+        isbn: "9780441013593",
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        languages: ["en"],
+      })
+    } finally {
+      await api.close()
+    }
+  })
+
+  it("rejects a file that is not a readable publication", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [duneProvider], playground: true }),
+    )
+
+    try {
+      const response = await api.postFile(
+        "/playground/resolve",
+        new TextEncoder().encode("not a zip"),
+        "broken.epub",
+      )
+
+      expect(response.status).toBe(400)
+      expect((await readError(response)).error).toContain("broken.epub")
     } finally {
       await api.close()
     }
@@ -273,6 +387,15 @@ describe("metadata-fetcher-api playground", () => {
       expect(response.status).toBe(404)
       expect(response.headers.get("content-type")).toContain("application/json")
       expect((await readError(response)).error).toContain("GET /")
+
+      const upload = await api.postFile(
+        "/playground/resolve",
+        new Uint8Array([1]),
+        "book.epub",
+      )
+
+      expect(upload.status).toBe(404)
+      expect((await api.get("/playground/playground.js")).status).toBe(404)
     } finally {
       await api.close()
     }

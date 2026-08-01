@@ -43,7 +43,7 @@ type ResolvedMetadata = {
   numberOfPages?: number
   gtin?: string
   isbn?: string
-  identifiers?: { value: string; scheme?: string }[]
+  identifiers?: { value: string; scheme?: string; unique?: true }[]
   belongsTo?: {
     series?: { name: string; position?: number; total?: number }[]
     collection?: { name: string; position?: number; total?: number }[]
@@ -67,6 +67,10 @@ Two fields are resolved for the whole **container**, not just its descriptive si
 ### Contributor roles
 
 Roles use the Readium terms our sources can express — `author`, `translator`, `editor`, `artist`, `illustrator`, `letterer`, `penciler`, `colorist`, `inker`, `narrator`, `contributor` — plus the prose-reader extension `coverArtist` (ComicInfo `CoverArtist`; Readium has no cover-art term). Well-known MARC relator codes from OPF (`aut`, `trl`, `edt`, `art`, `ill`, `clr`, `nrt`, `ctb`) are normalized to those terms; unknown tokens pass through verbatim. A role-less `dc:creator` defaults to `author`, a role-less `dc:contributor` to `contributor`.
+
+### Identifiers
+
+Every non-empty OPF `dc:identifier` is preserved in document order. The identifier selected by `package@unique-identifier` has `unique: true`. Parsed source data at `sources.opf.identifiers` also retains each element's XML `id`; normalized `metadata.identifiers` omits that internal anchor while keeping the semantic marker.
 
 ## Precedence
 
@@ -138,7 +142,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `dc:subject` | `subjects` | all, document order |
 | `dc:creator`, `dc:contributor` | `contributors` | roles from `opf:role` and EPUB 3 `meta refines property="role"`, `file-as` → `sortAs` |
 | `dc:date` | `published` | parsed as W3CDTF |
-| `dc:identifier` | `identifiers` | all, with scheme; ISBN-scheme entries drive `isbn`/`gtin` |
+| `dc:identifier` | `identifiers` | all, with scheme; the `package@unique-identifier` target has `unique: true`; ISBN-scheme entries drive `isbn`/`gtin` |
 | spine `page-progression-direction` | `readingDirection` | validated |
 | `rendition:layout` meta | `renditionLayout` | validated |
 | `rendition:flow` meta | `renditionFlow` | validated |

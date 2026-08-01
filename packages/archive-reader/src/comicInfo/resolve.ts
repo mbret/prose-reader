@@ -4,11 +4,11 @@ import type {
   ResolvedContributorRole,
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata"
-import { normalizeGtin } from "../utils/normalizeGtin"
-import { normalizeIsbn } from "../utils/normalizeIsbn"
-import { omitUndefined } from "../utils/omitUndefined"
-import type { ComicInfo, ComicInfoKnownField } from "./parse"
+} from "../types/resolvedMetadata.ts"
+import { normalizeGtin } from "../utils/normalizeGtin.ts"
+import { normalizeIsbn } from "../utils/normalizeIsbn.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
+import type { ComicInfo, ComicInfoKnownField } from "./parse.ts"
 
 /**
  * Losslessness contract: where every ComicInfo field lands in

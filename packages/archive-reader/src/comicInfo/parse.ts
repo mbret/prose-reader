@@ -1,6 +1,6 @@
 import type { XmlElement } from "xmldoc"
 import { XmlDocument } from "xmldoc"
-import type { ComicInfoManga } from "./manga"
+import type { ComicInfoManga } from "./manga.ts"
 
 /** Canonical top-level filename; real archives may use any casing. */
 export const COMIC_INFO_FILENAME = "ComicInfo.xml"

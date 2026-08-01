@@ -1,6 +1,6 @@
-import { Report } from "../report"
-import { printTree } from "./printTree"
-import type { Archive, ArchiveRecord } from "./types"
+import { Report } from "../report.ts"
+import { printTree } from "./printTree.ts"
+import type { Archive, ArchiveRecord } from "./types.ts"
 
 type ArchiveInit = Omit<Archive, "recordsByUri">
 

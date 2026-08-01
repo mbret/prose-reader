@@ -10,31 +10,37 @@
   },
   "exports": {
     ".": {
+      "prose-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index/index.js",
       "require": "./dist/index/index.cjs"
     },
     "./archives/createArchiveFromJszip": {
+      "prose-source": "./src/archives/createArchiveFromJszip.ts",
       "types": "./dist/archives/createArchiveFromJszip.d.ts",
       "import": "./dist/archives/createArchiveFromJszip/index.js",
       "require": "./dist/archives/createArchiveFromJszip/index.cjs"
     },
     "./archives/createArchiveFromLibArchive": {
+      "prose-source": "./src/archives/createArchiveFromLibArchive.ts",
       "types": "./dist/archives/createArchiveFromLibArchive.d.ts",
       "import": "./dist/archives/createArchiveFromLibArchive/index.js",
       "require": "./dist/archives/createArchiveFromLibArchive/index.cjs"
     },
     "./archives/createArchiveFromUnzipper": {
+      "prose-source": "./src/archives/createArchiveFromUnzipper.ts",
       "types": "./dist/archives/createArchiveFromUnzipper.d.ts",
       "import": "./dist/archives/createArchiveFromUnzipper/index.js",
       "require": "./dist/archives/createArchiveFromUnzipper/index.cjs"
     },
     "./archives/createArchiveFromNodeUnrarJs": {
+      "prose-source": "./src/archives/createArchiveFromNodeUnrarJs.ts",
       "types": "./dist/archives/createArchiveFromNodeUnrarJs.d.ts",
       "import": "./dist/archives/createArchiveFromNodeUnrarJs/index.js",
       "require": "./dist/archives/createArchiveFromNodeUnrarJs/index.cjs"
     },
     "./archives/createArchiveFromZipJs": {
+      "prose-source": "./src/archives/createArchiveFromZipJs.ts",
       "types": "./dist/archives/createArchiveFromZipJs.d.ts",
       "import": "./dist/archives/createArchiveFromZipJs/index.js",
       "require": "./dist/archives/createArchiveFromZipJs/index.cjs"
@@ -85,6 +91,7 @@
     }
   },
   "devDependencies": {
+    "@types/sax": "^1.2.7",
     "@types/unzipper": "^0.10.11",
     "@zip.js/zip.js": "^2.8.34",
     "buffer": "^6.0.3",

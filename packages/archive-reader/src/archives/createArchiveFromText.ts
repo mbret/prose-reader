@@ -1,6 +1,6 @@
 import { getUriBasename } from "@prose-reader/shared"
-import { createArchive } from "./createArchive"
-import { blobFileAccessors } from "./fileAccessors"
+import { createArchive } from "./createArchive.ts"
+import { blobFileAccessors } from "./fileAccessors.ts"
 
 /**
  * Useful to create archive from txt content

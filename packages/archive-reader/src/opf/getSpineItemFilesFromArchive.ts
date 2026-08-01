@@ -1,5 +1,5 @@
-import type { Archive } from "../archives/types"
-import type { ArchiveOpfParsed } from "./readArchiveOpf"
+import type { Archive } from "../archives/types.ts"
+import type { ArchiveOpfParsed } from "./readArchiveOpf.ts"
 
 export const getSpineItemFilesFromArchive = async ({
   archive,

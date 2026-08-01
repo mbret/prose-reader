@@ -1,6 +1,6 @@
 import { sortByTitleComparator } from "@prose-reader/shared"
-import type { Archive } from "../archives/types"
-import type { ArchiveTocItem } from "./types"
+import type { Archive } from "../archives/types.ts"
+import type { ArchiveTocItem } from "./types.ts"
 
 /**
  * Derive a TOC from the folder hierarchy of the archive (e.g. a CBZ with one

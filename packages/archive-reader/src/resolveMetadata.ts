@@ -1,13 +1,13 @@
-import type { AppleMetadata } from "./apple/parse"
-import { resolveApple } from "./apple/resolve"
-import type { ComicInfo } from "./comicInfo/parse"
-import { resolveComicInfo } from "./comicInfo/resolve"
-import type { KoboMetadata } from "./kobo/parse"
-import { resolveKobo } from "./kobo/resolve"
-import type { OpfMetadata } from "./opf/parse"
-import { resolveOpf } from "./opf/resolve"
-import type { ResolvedMetadata } from "./types/resolvedMetadata"
-import { omitUndefined } from "./utils/omitUndefined"
+import type { AppleMetadata } from "./apple/parse.ts"
+import { resolveApple } from "./apple/resolve.ts"
+import type { ComicInfo } from "./comicInfo/parse.ts"
+import { resolveComicInfo } from "./comicInfo/resolve.ts"
+import type { KoboMetadata } from "./kobo/parse.ts"
+import { resolveKobo } from "./kobo/resolve.ts"
+import type { OpfMetadata } from "./opf/parse.ts"
+import { resolveOpf } from "./opf/resolve.ts"
+import type { ResolvedMetadata } from "./types/resolvedMetadata.ts"
+import { omitUndefined } from "./utils/omitUndefined.ts"
 
 export type ResolveMetadataSources = {
   opf?: OpfMetadata

@@ -1,8 +1,8 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import type { CentralDirectory } from "unzipper"
-import { createArchiveFromEntries } from "./createArchiveFromEntries"
-import { arrayBufferFileAccessors } from "./fileAccessors"
-import type { Archive } from "./types"
+import { createArchiveFromEntries } from "./createArchiveFromEntries.ts"
+import { arrayBufferFileAccessors } from "./fileAccessors.ts"
+import type { Archive } from "./types.ts"
 
 export const createArchiveFromUnzipper = async (
   directory: CentralDirectory,

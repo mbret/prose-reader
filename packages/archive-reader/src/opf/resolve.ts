@@ -4,12 +4,12 @@ import type {
   ResolvedContributorRole,
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata"
-import { normalizeGtin } from "../utils/normalizeGtin"
-import { normalizeIsbn } from "../utils/normalizeIsbn"
-import { omitUndefined } from "../utils/omitUndefined"
-import { parseW3cDtfDate } from "../utils/parseW3cDtfDate"
-import type { OpfIdentifier, OpfMetadata, OpfMetaEntry } from "./parse"
+} from "../types/resolvedMetadata.ts"
+import { normalizeGtin } from "../utils/normalizeGtin.ts"
+import { normalizeIsbn } from "../utils/normalizeIsbn.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
+import { parseW3cDtfDate } from "../utils/parseW3cDtfDate.ts"
+import type { OpfIdentifier, OpfMetadata, OpfMetaEntry } from "./parse.ts"
 
 /**
  * Losslessness contract: where every parsed OPF field lands. Structural
@@ -246,8 +246,8 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     isbn: normalizeIsbn(rawIsbn),
     identifiers:
       input.identifiers.length > 0
-        ? input.identifiers.map(({ value, scheme }) =>
-            omitUndefined({ value, scheme }),
+        ? input.identifiers.map(({ value, scheme, unique }) =>
+            omitUndefined({ value, scheme, unique }),
           )
         : undefined,
     belongsTo,

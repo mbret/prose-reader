@@ -1,4 +1,4 @@
-import type { FileRecord } from "./types"
+import type { FileRecord } from "./types.ts"
 
 type FileContentAccessors = Pick<FileRecord, "blob" | "arrayBuffer">
 

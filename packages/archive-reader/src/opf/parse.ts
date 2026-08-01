@@ -1,7 +1,7 @@
 import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
-import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList"
-import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties"
+import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
+import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {
   readonly id: string
@@ -13,6 +13,10 @@ export type OpfSpineManifestItem = {
 export type OpfIdentifier = {
   readonly value: string
   readonly scheme?: string
+  /** Element `id`, which can be targeted by `package@unique-identifier`. */
+  readonly id?: string
+  /** Present when `package@unique-identifier` targets this identifier. */
+  readonly unique?: true
 }
 
 export type OpfSpineRow = {
@@ -110,7 +114,10 @@ const childrenNamedLocal = (
   return out
 }
 
-const identifiersFromMetadata = (metadataEl: XmlElement): OpfIdentifier[] => {
+const identifiersFromMetadata = (
+  metadataEl: XmlElement,
+  uniqueIdentifierId: string | undefined,
+): OpfIdentifier[] => {
   const identifiers: OpfIdentifier[] = []
 
   metadataEl.eachChild((child) => {
@@ -122,11 +129,18 @@ const identifiersFromMetadata = (metadataEl: XmlElement): OpfIdentifier[] => {
     const scheme =
       child.attr["opf:scheme"] ?? child.attr["opf:Scheme"] ?? child.attr.scheme
     const schemeTrimmed = scheme?.trim()
+    const idTrimmed = child.attr.id?.trim()
+    const id =
+      idTrimmed !== undefined && idTrimmed.length > 0 ? idTrimmed : undefined
 
     identifiers.push({
       value,
       ...(schemeTrimmed !== undefined && schemeTrimmed.length > 0
         ? { scheme: schemeTrimmed }
+        : {}),
+      ...(id !== undefined ? { id } : {}),
+      ...(id !== undefined && id === uniqueIdentifierId
+        ? { unique: true }
         : {}),
     })
   })
@@ -503,6 +517,11 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
   const manifestEl = childNamedLocal(doc, "manifest")
   const spineEl = childNamedLocal(doc, "spine")
   const metadataEl = childNamedLocal(doc, "metadata")
+  const uniqueIdentifierIdRaw = doc.attr["unique-identifier"]?.trim()
+  const uniqueIdentifierId =
+    uniqueIdentifierIdRaw !== undefined && uniqueIdentifierIdRaw.length > 0
+      ? uniqueIdentifierIdRaw
+      : undefined
 
   let manifestItems: OpfSpineManifestItem[] = []
   let spineRows: OpfSpineRow[] = []
@@ -558,7 +577,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     renditionSpreadMeta = metaValByProperty(metadataEl, "rendition:spread")
     metas = metasFromMetadata(metadataEl)
     contributors = contributorsFromMetadata(metadataEl, metas)
-    identifiers.push(...identifiersFromMetadata(metadataEl))
+    identifiers.push(...identifiersFromMetadata(metadataEl, uniqueIdentifierId))
   }
 
   const coverHref = coverHrefFromManifestAndMetadata({

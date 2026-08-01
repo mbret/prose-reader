@@ -34,13 +34,13 @@ describe("mergeResolvedMetadata", () => {
         { identifiers: [{ value: "urn:uuid:1", scheme: "UUID" }] },
         {
           identifiers: [
-            { value: "URN:UUID:1", scheme: "uuid" },
+            { value: "URN:UUID:1", scheme: "uuid", unique: true },
             { value: "OL1W", scheme: "OpenLibrary" },
           ],
         },
       ).identifiers,
     ).toEqual([
-      { value: "urn:uuid:1", scheme: "UUID" },
+      { value: "urn:uuid:1", scheme: "UUID", unique: true },
       { value: "OL1W", scheme: "OpenLibrary" },
     ])
   })
