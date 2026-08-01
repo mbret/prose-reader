@@ -72,7 +72,7 @@ Roles use the Readium terms our sources can express — `author`, `translator`, 
 
 Every non-empty OPF `dc:identifier` is preserved in document order. The identifier selected by `package@unique-identifier` has `unique: true`. Parsed source data at `sources.opf.identifiers` also retains each element's XML `id`; normalized `metadata.identifiers` omits that internal anchor while keeping the semantic marker.
 
-Normalized identifiers retain an explicitly authored scheme. When none was authored, a syntactically valid absolute `http://` or `https://` value is classified as `scheme: "URL"`. The inference is deliberately narrow: malformed URLs and other prefixes such as `urn:`, `uuid:`, `calibre:`, or `url:` stay unclassified.
+Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). The direct EPUB 2 attribute wins when a hybrid file states both. Only when neither type was authored is a syntactically valid absolute `http://` or `https://` value classified as `scheme: "URL"`. The inference is deliberately narrow: malformed URLs and other prefixes such as `urn:`, `uuid:`, `calibre:`, or `url:` stay unclassified.
 
 ## Precedence
 
@@ -144,7 +144,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `dc:subject` | `subjects` | all, document order |
 | `dc:creator`, `dc:contributor` | `contributors` | roles from `opf:role` and EPUB 3 `meta refines property="role"`, `file-as` → `sortAs` |
 | `dc:date` | `published` | parsed as W3CDTF |
-| `dc:identifier` | `identifiers` | all; authored scheme retained, otherwise valid absolute HTTP(S) → scheme `URL`; the `package@unique-identifier` target has `unique: true`; ISBN-scheme entries drive `isbn`/`gtin` |
+| `dc:identifier` | `identifiers` | all; EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` refinement retained, otherwise valid absolute HTTP(S) → scheme `URL`; the `package@unique-identifier` target has `unique: true`; ISBN-scheme entries drive `isbn`/`gtin` |
 | spine `page-progression-direction` | `readingDirection` | validated |
 | `rendition:layout` meta | `renditionLayout` | validated |
 | `rendition:flow` meta | `renditionFlow` | validated |

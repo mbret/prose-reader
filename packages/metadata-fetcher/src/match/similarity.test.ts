@@ -53,7 +53,29 @@ describe("titleSimilarity", () => {
     expect(titleSimilarity("Dune: Book One", "Dune: Messiah")).toBeLessThan(0.8)
   })
 
-  it("never scores below the plain comparison", () => {
+  it("rejects contradictory volume, part, and book numbers", () => {
+    expect(
+      titleSimilarity(
+        "Wilhelm Meister's apprenticeship and travels, vol. 2 of 2",
+        "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",
+      ),
+    ).toBe(0)
+    expect(titleSimilarity("The Story, Part Two", "The Story, Part III")).toBe(
+      0,
+    )
+    expect(
+      titleSimilarity("Chronicles: Book 4", "Chronicles: Book Fourth"),
+    ).toBeGreaterThan(0)
+  })
+
+  it("does not invent a contradiction when only one title states a division", () => {
+    expect(titleSimilarity("Dune", "Dune: Book One")).toBeGreaterThan(0)
+    expect(
+      titleSimilarity("Collected Works, Volume II", "Collected Works, vol. 2"),
+    ).toBeGreaterThan(0.8)
+  })
+
+  it("keeps exact full titles exact", () => {
     expect(titleSimilarity("Dune", "Dune")).toBe(1)
     expect(titleSimilarity("Dune: Messiah", "Dune: Messiah")).toBe(1)
   })

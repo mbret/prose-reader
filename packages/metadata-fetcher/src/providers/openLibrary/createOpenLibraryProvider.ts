@@ -7,6 +7,10 @@ import type {
 import { metadataAuthors } from "../../utils/metadataAuthors.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
+import {
+  type OpenLibraryProjectGutenbergLookup,
+  projectGutenbergLookupFromMetadata,
+} from "./projectGutenbergIdentifier.ts"
 import { resolveOpenLibraryDoc } from "./resolve.ts"
 
 export const OPEN_LIBRARY_PROVIDER_ID = "openLibrary"
@@ -30,6 +34,7 @@ const SEARCH_FIELDS = [
   "subject",
   "number_of_pages_median",
   "cover_i",
+  "id_project_gutenberg",
 ].join(",")
 
 export type OpenLibraryProviderOptions = {
@@ -71,11 +76,11 @@ const searchTerms = (
  * })
  * ```
  *
- * Lookup strategy, at most two requests: an **ISBN search** when the book
- * states one — the catalog then verifies the identity for us — falling back
- * to a **title (+ first author) search** when the ISBN is unknown to it or
- * absent. A query with neither an ISBN nor a title yields no candidates
- * rather than a fishing expedition.
+ * Lookup strategy, at most three requests: an **ISBN search** when the book
+ * states one; an exact **Project Gutenberg id search** when an identifier is
+ * an official Gutenberg URL; then a **title (+ first author) search**. A query
+ * with none of those terms yields no candidates rather than a fishing
+ * expedition.
  */
 export const createOpenLibraryProvider = (
   options: OpenLibraryProviderOptions = {},
@@ -120,10 +125,18 @@ export const createOpenLibraryProvider = (
 
   const toCandidates = (
     docs: ReadonlyArray<OpenLibraryDoc>,
-    isbn: string | undefined,
+    options: {
+      readonly isbn?: string
+      readonly confirmedProjectGutenberg?: OpenLibraryProjectGutenbergLookup
+    } = {},
   ): ReadonlyArray<MetadataCandidate> =>
     docs.map((doc) => ({
-      metadata: resolveOpenLibraryDoc(doc, { coversBaseUrl, isbn }),
+      metadata: resolveOpenLibraryDoc(doc, {
+        coversBaseUrl,
+        isbn: options.isbn,
+        matchedProjectGutenbergIdentifier:
+          options.confirmedProjectGutenberg?.identifier,
+      }),
       id: doc.key,
       url: doc.key !== undefined ? `${baseUrl}${doc.key}` : undefined,
       raw: doc,
@@ -134,18 +147,32 @@ export const createOpenLibraryProvider = (
     name: "Open Library",
     search: async (metadata, context) => {
       const isbn = metadata.isbn?.trim() || undefined
+      const projectGutenberg = projectGutenbergLookupFromMetadata(metadata)
 
       if (isbn !== undefined) {
         const docs = await searchDocs({ isbn }, context)
 
-        if (docs.length > 0) return toCandidates(docs, isbn)
+        if (docs.length > 0) return toCandidates(docs, { isbn })
+      }
+
+      if (projectGutenberg !== undefined) {
+        const docs = await searchDocs(
+          { q: `id_project_gutenberg:${projectGutenberg.id}` },
+          context,
+        )
+
+        if (docs.length > 0) {
+          return toCandidates(docs, {
+            confirmedProjectGutenberg: projectGutenberg,
+          })
+        }
       }
 
       const terms = searchTerms(metadata)
 
       if (terms === undefined) return []
 
-      return toCandidates(await searchDocs(terms, context), undefined)
+      return toCandidates(await searchDocs(terms, context))
     },
   }
 }

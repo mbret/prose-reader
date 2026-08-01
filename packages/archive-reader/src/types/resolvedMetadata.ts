@@ -275,9 +275,10 @@ export type ResolvedMetadata = {
   readonly isbn?: string
   /**
    * Raw identifier values, trimmed. OPF contributes every `dc:identifier`,
-   * retaining its announced scheme or classifying a valid absolute HTTP(S)
-   * value as scheme `URL`; `unique` marks the package's selected identifier.
-   * ComicInfo contributes `GTIN` (scheme `GTIN`).
+   * retaining its announced EPUB 2 scheme or EPUB 3 `identifier-type`
+   * refinement, otherwise classifying a valid absolute HTTP(S) value as
+   * scheme `URL`; `unique` marks the package's selected identifier. ComicInfo
+   * contributes `GTIN` (scheme `GTIN`).
    */
   readonly identifiers?: ReadonlyArray<{
     readonly value: string

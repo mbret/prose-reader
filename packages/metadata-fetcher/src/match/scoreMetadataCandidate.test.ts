@@ -149,4 +149,40 @@ describe("scoreMetadataCandidate", () => {
     expect(result.score).toBeGreaterThan(0.8)
     expect(result.score).toBeLessThan(1)
   })
+
+  it("rejects a fuzzy catalog hit that names a different volume", () => {
+    const result = score(
+      {
+        title: "Wilhelm Meister's apprenticeship and travels, vol. 2 of 2",
+        contributors: [
+          { name: "Goethe, Johann Wolfgang von", roles: ["author"] },
+        ],
+        identifiers: [
+          {
+            value: "http://www.gutenberg.org/78139",
+            scheme: "URL",
+            unique: true,
+          },
+        ],
+        languages: ["en"],
+        published: { year: 2026 },
+        publisher: "Public domain in the USA.",
+      },
+      {
+        title: "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",
+        contributors: [
+          { name: "Johann Wolfgang von Goethe", roles: ["author"] },
+        ],
+        identifiers: [{ value: "/works/OL40566043W", scheme: "OpenLibrary" }],
+        languages: ["en"],
+        published: { year: 2015 },
+        publisher: "CreateSpace Independent Publishing Platform",
+      },
+    )
+
+    expect(result.score).toBeLessThan(0.5)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "title", score: 0 }),
+    )
+  })
 })

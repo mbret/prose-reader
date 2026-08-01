@@ -82,6 +82,59 @@ describe("createOpenLibraryProvider", () => {
     expect(candidates[0]?.metadata.isbn).toBeUndefined()
   })
 
+  it("looks an official Project Gutenberg URL up by Open Library's external id", async () => {
+    const identifierValue = "http://www.gutenberg.org/1342"
+    const fetchMock = fetchReturning({
+      docs: [
+        {
+          ...DUNE_DOC,
+          id_project_gutenberg: ["1342", "42671"],
+        },
+      ],
+    })
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
+
+    const candidates = await provider.search(
+      {
+        identifiers: [{ value: identifierValue, scheme: "URL", unique: true }],
+      },
+      context,
+    )
+    const url = requestedUrl(fetchMock, 0)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(url.searchParams.get("q")).toBe("id_project_gutenberg:1342")
+    expect(url.searchParams.get("title")).toBeNull()
+    expect(url.searchParams.get("fields")).toContain("id_project_gutenberg")
+    expect(candidates[0]?.metadata.identifiers).toEqual([
+      { value: identifierValue, scheme: "URL" },
+      { value: "1342", scheme: "ProjectGutenberg" },
+      { value: "42671", scheme: "ProjectGutenberg" },
+      { value: DUNE_DOC.key, scheme: "OpenLibrary" },
+    ])
+  })
+
+  it("falls back to title when Open Library has no Gutenberg cross-reference", async () => {
+    const fetchMock = fetchReturning({ docs: [] }, { docs: [DUNE_DOC] })
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
+
+    await provider.search(
+      {
+        title: "Dune",
+        identifiers: [
+          { value: "https://www.gutenberg.org/ebooks/999999", scheme: "URL" },
+        ],
+      },
+      context,
+    )
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "id_project_gutenberg:999999",
+    )
+    expect(requestedUrl(fetchMock, 1).searchParams.get("title")).toBe("Dune")
+  })
+
   it("returns nothing, without asking, when the query has neither ISBN nor title", async () => {
     const fetchMock = fetchReturning()
     const provider = createOpenLibraryProvider({ fetch: fetchMock })

@@ -10,9 +10,21 @@ describe("parseOpenLibrarySearchResponse", () => {
     expect(
       parseOpenLibrarySearchResponse({
         numFound: 1,
-        docs: [{ key: "/works/OL1W", title: "Dune" }],
+        docs: [
+          {
+            key: "/works/OL1W",
+            title: "Dune",
+            id_project_gutenberg: ["1342"],
+          },
+        ],
       }),
-    ).toEqual([expect.objectContaining({ key: "/works/OL1W", title: "Dune" })])
+    ).toEqual([
+      expect.objectContaining({
+        key: "/works/OL1W",
+        title: "Dune",
+        id_project_gutenberg: ["1342"],
+      }),
+    ])
   })
 
   it("reads an unexpected payload as nothing found", () => {
@@ -29,6 +41,7 @@ describe("parseOpenLibrarySearchResponse", () => {
           author_name: ["Frank Herbert", null, "  "],
           first_publish_year: "1965",
           cover_i: 8188413,
+          id_project_gutenberg: ["1342", null, "  "],
         },
       ],
     })
@@ -36,6 +49,7 @@ describe("parseOpenLibrarySearchResponse", () => {
     expect(doc).toEqual({
       author_name: ["Frank Herbert"],
       cover_i: 8188413,
+      id_project_gutenberg: ["1342"],
     })
   })
 })
@@ -72,6 +86,7 @@ describe("resolveOpenLibraryDoc", () => {
           subject: ["Science fiction"],
           number_of_pages_median: 412,
           cover_i: 8188413,
+          id_project_gutenberg: ["1965"],
         },
         { coversBaseUrl },
       ),
@@ -88,7 +103,10 @@ describe("resolveOpenLibraryDoc", () => {
         mediaType: "image/jpeg",
         confidence: "derived",
       },
-      identifiers: [{ value: "/works/OL893415W", scheme: "OpenLibrary" }],
+      identifiers: [
+        { value: "1965", scheme: "ProjectGutenberg" },
+        { value: "/works/OL893415W", scheme: "OpenLibrary" },
+      ],
     })
   })
 
@@ -114,6 +132,24 @@ describe("resolveOpenLibraryDoc", () => {
       isbn: "9780441013593",
       identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
     })
+  })
+
+  it("echoes a Gutenberg URL only after an exact external-id lookup", () => {
+    expect(
+      resolveOpenLibraryDoc(
+        { title: "Pride and Prejudice", id_project_gutenberg: ["1342"] },
+        {
+          coversBaseUrl,
+          matchedProjectGutenbergIdentifier: {
+            value: "http://www.gutenberg.org/1342",
+            scheme: "URL",
+          },
+        },
+      ).identifiers,
+    ).toEqual([
+      { value: "http://www.gutenberg.org/1342", scheme: "URL" },
+      { value: "1342", scheme: "ProjectGutenberg" },
+    ])
   })
 
   it("dedupes the languages the MARC variants collapse into", () => {

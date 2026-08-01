@@ -27,12 +27,14 @@ export const openLibraryMetadataHomes = {
   subject: "subjects",
   number_of_pages_median: "numberOfPages",
   cover_i: "cover",
+  id_project_gutenberg: "identifiers",
 } as const satisfies Record<
   keyof OpenLibraryDoc,
   keyof ResolvedMetadata | "identifiers"
 >
 
 export const OPEN_LIBRARY_IDENTIFIER_SCHEME = "OpenLibrary"
+const PROJECT_GUTENBERG_IDENTIFIER_SCHEME = "ProjectGutenberg"
 
 const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,
@@ -56,6 +58,11 @@ export const resolveOpenLibraryDoc = (
     readonly coversBaseUrl: string
     /** The ISBN this record was looked up by, when it was. */
     readonly isbn?: string
+    /** The source identifier that an exact Gutenberg-id lookup confirmed. */
+    readonly matchedProjectGutenbergIdentifier?: {
+      readonly value: string
+      readonly scheme?: string
+    }
   },
 ): ResolvedMetadata => {
   const title =
@@ -75,6 +82,13 @@ export const resolveOpenLibraryDoc = (
     ...(options.isbn !== undefined
       ? [{ value: options.isbn, scheme: "ISBN" }]
       : []),
+    ...(options.matchedProjectGutenbergIdentifier !== undefined
+      ? [options.matchedProjectGutenbergIdentifier]
+      : []),
+    ...(doc.id_project_gutenberg ?? []).map((value) => ({
+      value,
+      scheme: PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
+    })),
     ...(doc.key !== undefined
       ? [{ value: doc.key, scheme: OPEN_LIBRARY_IDENTIFIER_SCHEME }]
       : []),

@@ -155,6 +155,52 @@ describe("resolveOpf", () => {
     ])
   })
 
+  it("uses an EPUB 3 identifier-type refinement before inferring URL", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [
+          {
+            id: "doi",
+            value: "https://doi.org/10.1016/j.iheduc.2008.03.001",
+          },
+          {
+            id: "legacy",
+            scheme: "URI",
+            value: "https://example.com/explicit",
+          },
+          { id: "unrefined", value: "https://example.com/inferred" },
+          {
+            id: "onix-doi",
+            value: "https://doi.org/10.1000/182",
+          },
+        ],
+        metas: [
+          { property: "identifier-type", refines: "#doi", value: " DOI " },
+          {
+            property: "identifier-type",
+            refines: "legacy",
+            value: "DOI",
+          },
+          {
+            property: "identifier-type",
+            refines: "#onix-doi",
+            scheme: "onix:codelist5",
+            value: "06",
+          },
+        ],
+      }).identifiers,
+    ).toEqual([
+      {
+        value: "https://doi.org/10.1016/j.iheduc.2008.03.001",
+        scheme: "DOI",
+      },
+      { value: "https://example.com/explicit", scheme: "URI" },
+      { value: "https://example.com/inferred", scheme: "URL" },
+      { value: "https://doi.org/10.1000/182", scheme: "DOI" },
+    ])
+  })
+
   it("falls back to first identifier value that normalizes as ISBN", () => {
     expect(
       resolveOpf({
