@@ -179,6 +179,28 @@ describe("parseOpf", () => {
     })
   })
 
+  it("keeps every identifier and marks the package unique identifier", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:identifier>url:http://www.gutenberg.org/78139</dc:identifier>` +
+        `<dc:identifier>calibre:21</dc:identifier>` +
+        `<dc:identifier>uuid:5438f78b-6008-42d6-9e9a-eef8b06fd79b</dc:identifier>` +
+        `<dc:identifier id="bookid">http://www.gutenberg.org/78139</dc:identifier>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "url:http://www.gutenberg.org/78139" },
+      { value: "calibre:21" },
+      { value: "uuid:5438f78b-6008-42d6-9e9a-eef8b06fd79b" },
+      {
+        id: "bookid",
+        unique: true,
+        value: "http://www.gutenberg.org/78139",
+      },
+    ])
+  })
+
   it("records manifest item properties and spine toc idref", () => {
     const xml = opfWrap(
       `<manifest>` +

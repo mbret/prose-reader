@@ -135,14 +135,14 @@ describe("resolveMetadata", () => {
   it("concatenates identifiers, OPF first", () => {
     const resolved = resolveMetadata({
       opf: opfWith(
-        `<dc:identifier>urn:uuid:abc</dc:identifier>` +
+        `<dc:identifier id="bookid">urn:uuid:abc</dc:identifier>` +
           `<dc:identifier opf:scheme="ISBN" xmlns:opf="http://www.idpf.org/2007/opf">978-3-16-148410-0</dc:identifier>`,
       ),
       comicInfo: comicInfoWith(`<GTIN>9638-5074</GTIN>`),
     })
 
     expect(resolved.identifiers).toEqual([
-      { value: "urn:uuid:abc" },
+      { value: "urn:uuid:abc", unique: true },
       { value: "978-3-16-148410-0", scheme: "ISBN" },
       { value: "9638-5074", scheme: "GTIN" },
     ])

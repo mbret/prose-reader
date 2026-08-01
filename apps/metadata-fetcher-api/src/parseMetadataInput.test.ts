@@ -60,18 +60,20 @@ describe("parseMetadataInput", () => {
     ).toEqual([{ name: "Frank Herbert", roles: [] }])
   })
 
-  it("reads identifiers, with and without a scheme", () => {
+  it("reads identifiers, their scheme, and the unique marker", () => {
     expect(
       parseMetadataInput({
         identifiers: [
-          { value: "urn:uuid:1" },
+          { value: "urn:uuid:1", unique: true },
           { value: "9780441013593", scheme: "ISBN" },
+          { value: "not-unique", unique: "true" },
           { scheme: "ISBN" },
         ],
       })?.identifiers,
     ).toEqual([
-      { value: "urn:uuid:1" },
+      { value: "urn:uuid:1", unique: true },
       { value: "9780441013593", scheme: "ISBN" },
+      { value: "not-unique" },
     ])
   })
 

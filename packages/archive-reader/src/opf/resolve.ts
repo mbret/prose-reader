@@ -246,8 +246,8 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     isbn: normalizeIsbn(rawIsbn),
     identifiers:
       input.identifiers.length > 0
-        ? input.identifiers.map(({ value, scheme }) =>
-            omitUndefined({ value, scheme }),
+        ? input.identifiers.map(({ value, scheme, unique }) =>
+            omitUndefined({ value, scheme, unique }),
           )
         : undefined,
     belongsTo,

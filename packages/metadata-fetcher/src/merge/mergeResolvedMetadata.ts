@@ -5,17 +5,23 @@ import { omitUndefined } from "../utils/omitUndefined.ts"
 const dedupeIdentifiers = (
   identifiers: ReadonlyArray<MetadataIdentifier>,
 ): ReadonlyArray<MetadataIdentifier> => {
-  const seen = new Set<string>()
+  const deduped = new Map<string, MetadataIdentifier>()
 
-  return identifiers.filter((identifier) => {
+  for (const identifier of identifiers) {
     const key = `${identifier.scheme?.trim().toLowerCase() ?? ""}:${identifier.value.trim().toLowerCase()}`
+    const existing = deduped.get(key)
 
-    if (seen.has(key)) return false
+    if (existing === undefined) {
+      deduped.set(key, identifier)
+      continue
+    }
 
-    seen.add(key)
+    if (identifier.unique === true && existing.unique !== true) {
+      deduped.set(key, { ...existing, unique: true })
+    }
+  }
 
-    return true
-  })
+  return [...deduped.values()]
 }
 
 /**

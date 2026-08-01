@@ -105,6 +105,25 @@ describe("resolveOpf", () => {
     })
   })
 
+  it("keeps the unique marker while dropping the source XML id", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [
+          { value: "urn:uuid:secondary" },
+          {
+            id: "bookid",
+            unique: true,
+            value: "urn:uuid:package",
+          },
+        ],
+      }).identifiers,
+    ).toEqual([
+      { value: "urn:uuid:secondary" },
+      { unique: true, value: "urn:uuid:package" },
+    ])
+  })
+
   it("falls back to first identifier value that normalizes as ISBN", () => {
     expect(
       resolveOpf({
