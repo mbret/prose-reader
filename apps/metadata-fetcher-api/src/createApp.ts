@@ -11,7 +11,7 @@ import express, {
   type Response,
 } from "express"
 import { parseMetadataInput } from "./parseMetadataInput.ts"
-import { PLAYGROUND_FILE } from "./playground.ts"
+import { registerPlayground } from "./playground/playground.ts"
 
 export type CreateAppOptions = {
   readonly providers: ReadonlyArray<MetadataProvider>
@@ -20,7 +20,7 @@ export type CreateAppOptions = {
   readonly requestTimeoutMs: number
   /**
    * Serve the development playground at `/`. Off in production, where the
-   * service has no HTML surface at all — see `playground.ts`.
+   * service has no HTML surface at all — see `playground/`.
    */
   readonly playground: boolean
 }
@@ -202,13 +202,7 @@ export const createApp = (options: CreateAppOptions): Express => {
 
   // registered only in development, so `/` is a plain 404 for anyone hosting
   // this — there is no page to find, not a hidden one
-  if (options.playground) {
-    app.get("/", (_request, response, next) => {
-      response.sendFile(PLAYGROUND_FILE, (error) => {
-        if (error) next(error)
-      })
-    })
-  }
+  if (options.playground) registerPlayground(app)
 
   app.get("/health", (_request, response) => {
     response.json({

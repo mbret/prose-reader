@@ -6,7 +6,7 @@ import type {
 import type { Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { createApp } from "./createApp.ts"
-import { PLAYGROUND_FILE } from "./playground.ts"
+import { PLAYGROUND_FILE } from "./playground/playground.ts"
 
 /**
  * `response.json()` is `unknown` — rightly so. These two assert the shape the
