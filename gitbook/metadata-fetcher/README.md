@@ -233,7 +233,9 @@ curl "http://localhost:3000/metadata?isbn=9780441013593"
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/metadata-fetcher-api) for the full reference.
+For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. It also serves a playground at `/` — a form that runs a lookup and shows each candidate with its score and the signals behind it, which is the quickest way to see what a provider answers. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
+
+See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/metadata-fetcher-api) for the full reference.
 
 ## Writing a provider
 

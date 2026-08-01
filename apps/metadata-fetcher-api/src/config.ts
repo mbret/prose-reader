@@ -22,6 +22,13 @@ export type ApiConfig = {
    * the request answered with `504`.
    */
   readonly requestTimeoutMs: number
+  /**
+   * Whether to serve the development playground at `/`. Tied to `NODE_ENV`
+   * rather than a switch of its own: the production image already sets it, so
+   * a hosted deployment cannot forget to turn the page off — and there is no
+   * flag to turn it back on by accident.
+   */
+  readonly playground: boolean
 }
 
 /**
@@ -88,4 +95,5 @@ export const configFromEnv = (env: NodeJS.ProcessEnv): ApiConfig => ({
     min: 1,
     integer: true,
   }),
+  playground: env.NODE_ENV !== "production",
 })

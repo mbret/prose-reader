@@ -36,6 +36,13 @@ describe("configFromEnv", () => {
     expect(configFromEnv({ PORT: "  " }).port).toBe(3000)
   })
 
+  it("serves the playground everywhere but production", () => {
+    expect(configFromEnv({}).playground).toBe(true)
+    expect(configFromEnv({ NODE_ENV: "development" }).playground).toBe(true)
+    expect(configFromEnv({ NODE_ENV: "test" }).playground).toBe(true)
+    expect(configFromEnv({ NODE_ENV: "production" }).playground).toBe(false)
+  })
+
   it("refuses to boot on a malformed variable", () => {
     // a typo that silently defaults is far harder to notice than a container
     // that won't start

@@ -13,6 +13,10 @@ npm run start:metadata-fetcher
 curl "http://localhost:3000/metadata?title=Dune&author=Frank+Herbert"
 ```
 
+Then open <http://localhost:3000> for the **playground**: a form (title, author, ISBN, plus the options) that runs a lookup and shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
+
+The playground is **development only**. It is served when `NODE_ENV` is anything but `production`, which the production image sets — so a hosted deployment has no HTML surface at all: `/` is a plain JSON 404 there, because the route is never registered rather than hidden behind a check. There is no flag to turn it back on.
+
 Stop it with `npm run stop:metadata-fetcher`.
 
 Source is bind-mounted into the container, so **editing the express app restarts it** (`node --watch`) and **editing the library rebuilds it** (a sibling `library` service runs the package's watch build into a shared volume, and the API restarts on the new build). No rebuild, no reinstall, nothing to run on the host.
@@ -99,6 +103,7 @@ Both answer with the `FetchedMetadata` entity verbatim — merged `metadata`, ra
 | `OPEN_LIBRARY_USER_AGENT` | — | **set this**: Open Library asks API clients to identify themselves (app name + contact) and throttles anonymous traffic harder |
 | `OPEN_LIBRARY_BASE_URL` | `https://openlibrary.org` | override to point at a mirror or a stub |
 | `OPEN_LIBRARY_COVERS_BASE_URL` | `https://covers.openlibrary.org` | |
+| `NODE_ENV` | — | `production` drops the playground page; both Docker targets set it for you |
 
 A malformed value fails the boot rather than silently falling back — a typo'd `PORT` that quietly serves on 3000 is much harder to notice than a container that refuses to start.
 

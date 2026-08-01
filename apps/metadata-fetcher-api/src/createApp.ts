@@ -11,12 +11,18 @@ import express, {
   type Response,
 } from "express"
 import { parseMetadataInput } from "./parseMetadataInput.ts"
+import { PLAYGROUND_HTML } from "./playground.ts"
 
 export type CreateAppOptions = {
   readonly providers: ReadonlyArray<MetadataProvider>
   readonly limit: number
   readonly minScore: number
   readonly requestTimeoutMs: number
+  /**
+   * Serve the development playground at `/`. Off in production, where the
+   * service has no HTML surface at all — see `playground.ts`.
+   */
+  readonly playground: boolean
 }
 
 /** Request bodies are entities, not uploads — a resolved archive is small. */
@@ -201,6 +207,14 @@ export const createApp = (options: CreateAppOptions): Express => {
 
   app.disable("x-powered-by")
   app.use(express.json({ limit: BODY_LIMIT }))
+
+  // registered only in development, so `/` is a plain 404 for anyone hosting
+  // this — there is no page to find, not a hidden one
+  if (options.playground) {
+    app.get("/", (_request, response) => {
+      response.type("html").send(PLAYGROUND_HTML)
+    })
+  }
 
   app.get("/health", (_request, response) => {
     response.json({

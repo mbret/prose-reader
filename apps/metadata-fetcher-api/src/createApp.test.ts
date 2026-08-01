@@ -94,6 +94,7 @@ const defaults = {
   limit: 5,
   minScore: 0.5,
   requestTimeoutMs: 5_000,
+  playground: false,
 }
 
 describe("metadata-fetcher-api", () => {
@@ -231,6 +232,44 @@ describe("metadata-fetcher-api", () => {
 
     expect(response.status).toBe(404)
     expect((await readError(response)).error).toContain("/nope")
+  })
+})
+
+describe("metadata-fetcher-api playground", () => {
+  it("serves the page in development", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [duneProvider], playground: true }),
+    )
+
+    try {
+      const response = await api.get("/")
+      const html = await response.text()
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get("content-type")).toContain("text/html")
+      expect(html).toContain('<form id="form">')
+      expect(html).toContain('name="title"')
+    } finally {
+      await api.close()
+    }
+  })
+
+  it("has no page at all when hosted", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [duneProvider], playground: false }),
+    )
+
+    try {
+      const response = await api.get("/")
+
+      // a 404 from the API's own handler: the route was never registered,
+      // rather than a page hidden behind a check
+      expect(response.status).toBe(404)
+      expect(response.headers.get("content-type")).toContain("application/json")
+      expect((await readError(response)).error).toContain("GET /")
+    } finally {
+      await api.close()
+    }
   })
 })
 
