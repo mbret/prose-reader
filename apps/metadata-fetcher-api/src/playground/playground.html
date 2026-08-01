@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>metadata fetcher — playground</title>
-<!-- an empty icon: without it the browser asks for /favicon.ico, which the
-     API answers with a JSON 404 and the console reports as an error -->
+<!-- empty icon: /favicon.ico would hit the API's JSON 404 -->
 <link rel="icon" href="data:,">
 <style>
   :root {
@@ -126,8 +125,8 @@
       .filter(Boolean)
       .join(" · ")
 
-  // every value below comes from a catalog: nodes are built and filled through
-  // textContent, never innerHTML, so a title carrying markup stays a title
+  // catalog values go in through textContent, never innerHTML, so a title
+  // carrying markup stays a title
   const renderMatch = (match) => {
     const metadata = match.metadata ?? {}
     const card = el("article", `match${match.accepted ? " accepted" : ""}`)

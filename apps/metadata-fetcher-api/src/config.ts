@@ -4,10 +4,9 @@ import {
 } from "@prose-reader/metadata-fetcher"
 
 /**
- * Everything the API needs to serve, already validated. Built from the
- * environment by {@link configFromEnv} in `server.ts` and handed to
- * `createApp`, which never reads `process.env` itself — that is what makes
- * the app testable with stub providers and a one-millisecond timeout.
+ * Everything the API needs to serve, already validated. `createApp` takes it
+ * as an argument and never reads `process.env` itself, which is what makes it
+ * testable with stub providers and a one-millisecond timeout.
  */
 export type ApiConfig = {
   readonly port: number
@@ -17,24 +16,22 @@ export type ApiConfig = {
   /** Default `minScore` when the request doesn't override it. */
   readonly minScore: number
   /**
-   * Budget for one lookup, across every provider. A catalog that hangs must
-   * not hold a connection (and a worker) forever, so the fetch is aborted and
-   * the request answered with `504`.
+   * Budget for one lookup, across every provider: a catalog that hangs must
+   * not hold a connection forever. Exceeded, the fetch aborts and the request
+   * answers `504`.
    */
   readonly requestTimeoutMs: number
   /**
-   * Whether to serve the development playground at `/`. Tied to `NODE_ENV`
-   * rather than a switch of its own: the production image already sets it, so
-   * a hosted deployment cannot forget to turn the page off — and there is no
-   * flag to turn it back on by accident.
+   * Serve the development playground at `/`. Tied to `NODE_ENV` rather than a
+   * switch of its own: the production image already sets it, so a hosted
+   * deployment cannot forget to turn the page off, nor turn it back on.
    */
   readonly playground: boolean
 }
 
 /**
- * A malformed variable fails the boot rather than silently falling back: a
- * typo in `PORT` that starts the server on the wrong port is much harder to
- * notice than a container refusing to start.
+ * A malformed variable fails the boot: a typo in `PORT` that quietly serves on
+ * 3000 is much harder to notice than a container refusing to start.
  */
 const invalid = (key: string, value: string, expected: string): Error =>
   new Error(`Invalid ${key}: "${value}" is not ${expected}`)
@@ -72,9 +69,8 @@ const readString = (
 }
 
 /**
- * The providers this deployment exposes. One entry today; adding a catalog is
- * adding a line here plus its env vars — the API surface does not change,
- * since `sources` is keyed by provider id.
+ * Adding a catalog is a line here plus its env vars — the API surface does not
+ * change, since `sources` is keyed by provider id.
  */
 const providersFromEnv = (
   env: NodeJS.ProcessEnv,

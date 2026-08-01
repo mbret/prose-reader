@@ -1,10 +1,8 @@
 /**
- * Minimal readers for `JSON.parse` output. A remote catalog's payload is
- * third-party data we cannot control, so it enters the package as `unknown`
- * and every field is read through a guard rather than asserted into shape —
- * a renamed or nulled field then reads as "absent" instead of crashing the
- * fetch or, worse, producing a candidate with `undefined` where a string was
- * promised.
+ * Readers for `JSON.parse` output. A catalog's payload is third-party data, so
+ * it enters as `unknown` and every field goes through a guard: a renamed or
+ * nulled field reads as absent instead of crashing the fetch, or producing a
+ * candidate with `undefined` where a string was promised.
  */
 export const isJsonRecord = (
   value: unknown,
@@ -33,7 +31,7 @@ export const readNumber = (
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
 }
 
-/** Non-string and blank entries are dropped; an empty result reads as absent. */
+/** Non-string and blank entries are dropped; empty reads as absent. */
 export const readStringArray = (
   record: Record<string, unknown>,
   key: string,

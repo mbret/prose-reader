@@ -20,27 +20,21 @@ export type MetadataProviderContext = {
 }
 
 /**
- * One record a provider believes could be the book. The provider's whole job:
- * search its catalog and normalize each hit into the shared
- * {@link ResolvedMetadata} vocabulary. It does **not** score its own
- * candidates — how well a record matches the query is computed by the fetch,
- * identically for every provider, so scores stay comparable and explainable
- * (see `MetadataMatch.signals`).
+ * One record a provider believes could be the book. A provider's whole job is
+ * to search its catalog and normalize each hit into {@link ResolvedMetadata};
+ * it does **not** score its own candidates — the fetch does that, identically
+ * for everyone, so scores stay comparable.
  */
 export type MetadataCandidate = {
   /** The record, normalized into the cross-format vocabulary. */
   readonly metadata: ResolvedMetadata
-  /**
-   * Provider-native record id, stable across fetches (an Open Library work
-   * key, a MangaDex uuid…). Used by consumers to pin a user-confirmed match.
-   */
+  /** Stable provider-native id, for pinning a user-confirmed match. */
   readonly id?: string
   /** Canonical url of the record, for attribution and deep links. */
   readonly url?: string
   /**
-   * The provider's own record as it parsed it — provenance and the escape
-   * hatch for provider-specific fields with no home in the vocabulary. Kept
-   * in the result only when `includeRaw` is on.
+   * The provider's own record — provenance, and the escape hatch for fields
+   * with no home in the vocabulary. Kept only when `includeRaw` is on.
    */
   readonly raw?: unknown
 }
@@ -84,17 +78,13 @@ export type MetadataCandidate = {
  * ```
  */
 export type MetadataProvider = {
-  /**
-   * Stable machine id, unique across the providers of one fetch — it keys the
-   * result's `sources`.
-   */
+  /** Unique across the providers of one fetch: it keys the result's `sources`. */
   readonly id: string
   /** Human-readable name, for attribution in a UI. */
   readonly name: string
   /**
-   * Returns the candidates the catalog has for this book, best-effort: an
-   * empty list when the metadata carries nothing the provider can search on,
-   * or when the catalog knows nothing. Throwing is allowed — a failing
+   * The candidates the catalog has, best-effort: an empty list when there is
+   * nothing to search on, or nothing found. Throwing is allowed — a failing
    * provider never fails the fetch, it lands in `failedProviders`.
    */
   readonly search: (

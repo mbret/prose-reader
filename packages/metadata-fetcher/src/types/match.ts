@@ -1,9 +1,8 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 
 /**
- * The {@link ResolvedMetadata} fields the matcher compares. A field is only
- * ever compared when **both** sides speak about it: what the query doesn't
- * know cannot count against a candidate.
+ * The fields the matcher compares — only ever when **both** sides state one,
+ * so what the query doesn't know cannot count against a candidate.
  */
 export type MetadataMatchField =
   | "isbn"
@@ -18,9 +17,9 @@ export type MetadataMatchField =
   | "numberOfPages"
 
 /**
- * One field comparison — the unit of "how it matched". Keeping the compared
- * values next to the score makes a match explainable to a user ("same title,
- * different publisher") without re-deriving anything.
+ * One field comparison. The compared values sit next to the score so a match
+ * is explainable to a user — "same title, different publisher" — without
+ * re-deriving anything.
  */
 export type MetadataMatchSignal = {
   readonly field: MetadataMatchField
@@ -52,9 +51,9 @@ export type MetadataMatch = {
   /** Every field comparison behind {@link MetadataMatch.score}. */
   readonly signals: ReadonlyArray<MetadataMatchSignal>
   /**
-   * Whether this match reached `minScore` and therefore contributed to the
-   * merged `FetchedMetadata.metadata`. Rejected matches are kept, ranked, so a
-   * consumer can still offer them for manual confirmation.
+   * Reached `minScore`, and so contributed to the merged
+   * `FetchedMetadata.metadata`. Rejected matches are kept and ranked, for a
+   * consumer to offer for manual confirmation.
    */
   readonly accepted: boolean
   /** The record, normalized into the cross-format vocabulary. */

@@ -15,10 +15,9 @@ const DEFAULT_BASE_URL = "https://openlibrary.org"
 const DEFAULT_COVERS_BASE_URL = "https://covers.openlibrary.org"
 
 /**
- * Only what {@link resolveOpenLibraryDoc} maps. `search.json` returns a very
- * wide document by default (every edition key, every IA identifier…), and the
- * `fields` parameter is the difference between a few hundred bytes per hit
- * and a few hundred kilobytes.
+ * Only what {@link resolveOpenLibraryDoc} maps: `search.json` returns every
+ * edition key and IA identifier by default, so `fields` is the difference
+ * between a few hundred bytes per hit and a few hundred kilobytes.
  */
 const SEARCH_FIELDS = [
   "key",
@@ -38,23 +37,16 @@ export type OpenLibraryProviderOptions = {
   readonly baseUrl?: string
   /** Cover service origin. Defaults to `https://covers.openlibrary.org`. */
   readonly coversBaseUrl?: string
-  /**
-   * `fetch` implementation, for tests, a custom agent, or a caching layer.
-   * Defaults to the global one.
-   */
+  /** For tests, a custom agent, or a caching layer. Defaults to the global one. */
   readonly fetch?: typeof globalThis.fetch
   /**
-   * Sent as `User-Agent`. Open Library's API etiquette asks for an
-   * identifying one (app name + contact) and throttles anonymous traffic
-   * harder.
+   * Open Library's API etiquette asks for an identifying `User-Agent` (app
+   * name + contact) and throttles anonymous traffic harder.
    */
   readonly userAgent?: string
 }
 
-/**
- * Terms to send to `search.json`, or `undefined` when the metadata carries
- * nothing the endpoint can search on.
- */
+/** `undefined` when the metadata carries nothing this endpoint can search on. */
 const searchTerms = (
   metadata: ResolvedMetadata,
 ): Record<string, string> | undefined => {
@@ -105,8 +97,7 @@ export const createOpenLibraryProvider = (
     url.searchParams.set("fields", SEARCH_FIELDS)
     url.searchParams.set("limit", String(context.limit))
 
-    // read lazily so a consumer stubbing the global after building the
-    // provider still wins
+    // read lazily so a consumer stubbing the global afterwards still wins
     const doFetch = options.fetch ?? globalThis.fetch
     const response = await doFetch(url.toString(), {
       signal: context.signal,

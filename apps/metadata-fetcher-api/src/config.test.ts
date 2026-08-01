@@ -44,8 +44,6 @@ describe("configFromEnv", () => {
   })
 
   it("refuses to boot on a malformed variable", () => {
-    // a typo that silently defaults is far harder to notice than a container
-    // that won't start
     expect(() => configFromEnv({ PORT: "80 80" })).toThrow(/Invalid PORT/)
     expect(() => configFromEnv({ PORT: "99999" })).toThrow(/Invalid PORT/)
     expect(() => configFromEnv({ METADATA_LIMIT: "2.5" })).toThrow(/an integer/)

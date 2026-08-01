@@ -1,27 +1,23 @@
 # syntax=docker/dockerfile:1
 #
-# Build context is the repository root (this is a workspace app), so build it
-# from there — or through the compose file next to this Dockerfile, which sets
-# the context for you:
+# The context is the repository root — this is a workspace app:
 #
 #   docker build -f apps/metadata-fetcher-api/Dockerfile --target production .
 #
-# Ignore rules live in `Dockerfile.dockerignore` beside this file so they stay
-# scoped to this image instead of every build in the monorepo.
+# Ignore rules are in `Dockerfile.dockerignore`, scoped to this image rather
+# than every build in the monorepo.
 
 ARG NODE_VERSION=25-alpine
 
 # ---------------------------------------------------------------------------
-# deps — the workspace, installed. Only the package manifests are copied here,
-# so editing source code doesn't invalidate the (slow) install layer.
+# deps — manifests only, so editing source doesn't invalidate the slow install
+# layer. npm resolves the root `workspaces` globs against what is present, so
+# four workspaces out of sixteen is enough.
 # ---------------------------------------------------------------------------
 FROM node:${NODE_VERSION} AS deps
 
 WORKDIR /repo
 
-# npm resolves the root `workspaces` globs against what is actually present,
-# so shipping four workspaces out of sixteen is enough — the rest of the
-# monorepo never enters the context.
 COPY package.json package-lock.json lerna.json nx.json ./
 COPY tsconfig.node.json tsconfig.web.json ./
 COPY config config
@@ -30,13 +26,9 @@ COPY packages/archive-reader/package.json packages/archive-reader/
 COPY packages/metadata-fetcher/package.json packages/metadata-fetcher/
 COPY apps/metadata-fetcher-api/package.json apps/metadata-fetcher-api/
 
-# --ignore-scripts: the root `prepare` runs husky, which needs the .git this
-# image deliberately does not carry
+# --ignore-scripts: the root `prepare` runs husky, which needs a .git
 RUN npm ci --ignore-scripts --no-audit --no-fund
 
-# ---------------------------------------------------------------------------
-# sources — the workspaces themselves, on top of the installed tree.
-# ---------------------------------------------------------------------------
 FROM deps AS sources
 
 COPY packages/shared packages/shared
@@ -45,15 +37,13 @@ COPY packages/metadata-fetcher packages/metadata-fetcher
 COPY apps/metadata-fetcher-api apps/metadata-fetcher-api
 
 # ---------------------------------------------------------------------------
-# development — what compose runs. Source is bind-mounted over these copies
-# and node reloads on change, the API's and the library's alike: the
-# `prose-source` export condition resolves @prose-reader/metadata-fetcher to
-# its TypeScript, which node runs as-is. Nothing to build, nothing to watch.
+# development — what compose runs. Source is bind-mounted over these copies and
+# node reloads on change, the API's and the library's alike: `prose-source`
+# resolves @prose-reader/metadata-fetcher to its TypeScript.
 #
-# The library's own runtime dependencies are built, though — it imports
-# @prose-reader/archive-reader (ISBN normalization) and @prose-reader/shared
-# (its debug Report), which resolve through their published entries. `lerna
-# run build` follows the graph, so naming archive-reader covers both.
+# Only the library's runtime dependencies need building — archive-reader for
+# ISBN normalization, shared for the debug Report. `lerna run build` follows
+# the graph, so naming archive-reader covers both.
 # ---------------------------------------------------------------------------
 FROM sources AS development
 
@@ -67,19 +57,16 @@ EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
 # ---------------------------------------------------------------------------
-# build — the library as consumers get it. Production deliberately runs the
-# built entry, not the source condition, so the image exercises the artifact
-# that ships. `lerna run build` follows the graph, so shared and
-# archive-reader are built first.
+# build — the library as consumers get it. Production runs the built entry, not
+# the source condition, so the image exercises the artifact that ships.
 # ---------------------------------------------------------------------------
 FROM sources AS build
 
 RUN npx lerna run build --scope @prose-reader/metadata-fetcher
 
 # ---------------------------------------------------------------------------
-# production — the image users run. Dev dependencies (vite, typescript,
-# vitest…) are pruned away; node runs the app's TypeScript directly, so no
-# bundling step stands between the source and what ships.
+# production — dev dependencies pruned, unprivileged, healthchecked. Node runs
+# the app's TypeScript directly, so nothing is bundled on the way.
 # ---------------------------------------------------------------------------
 FROM build AS prune
 

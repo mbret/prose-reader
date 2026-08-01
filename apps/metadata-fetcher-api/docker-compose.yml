@@ -1,11 +1,9 @@
-# Development stack for the metadata fetcher. Started from the repository root
-# with
+# Development stack, started from the repository root with
 #
 #   npm run start:metadata-fetcher
 #
-# One service: the API source *and* the library source are bind-mounted into
-# it, and node runs both as TypeScript — so an edit on the host is an edit in
-# the container. No build, no watcher, no reinstall.
+# The API source and the library source are both bind-mounted, and node runs
+# both as TypeScript: an edit on the host is an edit in the container.
 
 name: prose-metadata-fetcher
 
@@ -17,11 +15,10 @@ services:
       target: development
     image: prose-reader/metadata-fetcher-api:development
     working_dir: /repo/apps/metadata-fetcher-api
-    # node as PID 1 rather than `npm run dev`: it receives SIGTERM directly, so
-    # `docker compose down` stops in milliseconds instead of waiting out the
-    # kill timer. `--conditions=prose-source` resolves
-    # @prose-reader/metadata-fetcher to its TypeScript source, and `--watch`
-    # then restarts on any file it imported — the library's included.
+    # node as PID 1 rather than `npm run dev`, so SIGTERM reaches it directly
+    # and `docker compose down` doesn't wait out the kill timer.
+    # `--watch` restarts on any imported file — the library's source included,
+    # since `--conditions=prose-source` resolves it to TypeScript.
     command:
       [
         "node",
@@ -34,8 +31,7 @@ services:
       - "${METADATA_FETCHER_PORT:-3000}:3000"
     environment:
       PORT: 3000
-      # Open Library asks API clients to identify themselves — put your app
-      # and a contact here (see the app README)
+      # Open Library asks clients to identify themselves (see the README)
       OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
       METADATA_LIMIT: ${METADATA_LIMIT:-5}
       METADATA_MIN_SCORE: ${METADATA_MIN_SCORE:-0.5}

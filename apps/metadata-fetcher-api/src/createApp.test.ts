@@ -274,8 +274,7 @@ describe("metadata-fetcher-api playground", () => {
     try {
       const response = await api.get("/")
 
-      // a 404 from the API's own handler: the route was never registered,
-      // rather than a page hidden behind a check
+      // the API's own 404: the route was never registered
       expect(response.status).toBe(404)
       expect(response.headers.get("content-type")).toContain("application/json")
       expect((await readError(response)).error).toContain("GET /")
@@ -293,7 +292,6 @@ describe("metadata-fetcher-api failures", () => {
       const response = await api.get("/metadata?title=Dune")
 
       expect(response.status).toBe(502)
-      // the entity still says who failed
       expect((await readFetched(response)).failedProviders).toEqual([
         { id: "down" },
       ])
@@ -310,8 +308,7 @@ describe("metadata-fetcher-api failures", () => {
     try {
       const response = await api.get("/metadata?title=Dune")
 
-      // rate limited, not broken — the body says which, so a caller can decide
-      // to come back rather than give up
+      // rate limited rather than broken: a caller can decide to come back
       expect(response.status).toBe(502)
       expect((await readFetched(response)).failedProviders).toEqual([
         { id: "throttled", status: 429 },

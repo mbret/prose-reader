@@ -1,12 +1,11 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 
 /**
- * A request body is third-party data, and the fetcher's query builder trusts
- * its input (`metadata.title.trim()`): handing it a raw body would turn
- * `{"title": 42}` into a 500. So the boundary reads the body through guards
- * and keeps only the fields a lookup actually searches on — everything else
- * (`readingOrder`, `properties`, the format-scoped corners…) is dropped, not
- * rejected, so posting a whole `ResolvedArchive` just works.
+ * A request body is third-party data, and the fetcher trusts its input
+ * (`metadata.title.trim()`), so `{"title": 42}` would be a 500. Everything
+ * here is read through a guard, and only the fields a lookup searches on are
+ * kept — the rest of a `ResolvedArchive` is dropped rather than rejected, so
+ * one can be posted verbatim.
  */
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -159,14 +158,9 @@ const omitUndefined = <T extends object>(obj: T): T => {
 }
 
 /**
- * Reads a request body into the metadata to look up.
- *
- * Accepts either a bare `ResolvedMetadata` or anything carrying one under
- * `metadata` — which is the `ResolvedArchive` shape, so the output of
- * `resolveArchive` can be posted verbatim.
- *
- * Returns `undefined` when the body is not a JSON object at all; anything
- * else degrades field by field.
+ * Accepts a bare `ResolvedMetadata` or anything carrying one under `metadata`
+ * — the `ResolvedArchive` shape. `undefined` when the body is not a JSON
+ * object at all; anything else degrades field by field.
  */
 export const parseMetadataInput = (
   body: unknown,

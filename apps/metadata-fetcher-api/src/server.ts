@@ -1,11 +1,7 @@
 import { configFromEnv } from "./config.ts"
 import { createApp } from "./createApp.ts"
 
-/**
- * Entry point: environment in, listening server out. Everything else lives in
- * `createApp`, which takes its configuration as an argument — so the app can
- * be exercised with stub providers without a port or an env var in sight.
- */
+/** Environment in, listening server out. Everything else is in `createApp`. */
 const config = configFromEnv(process.env)
 const app = createApp(config)
 
@@ -18,9 +14,9 @@ const server = app.listen(config.port, () => {
 })
 
 /**
- * Containers are stopped with SIGTERM: closing the server lets in-flight
- * lookups finish instead of dying mid-response, and exiting promptly keeps
- * `docker compose down` from waiting out its 10s kill timer.
+ * Containers stop with SIGTERM: closing lets in-flight lookups finish instead
+ * of dying mid-response, and exiting promptly keeps `docker compose down` from
+ * waiting out its kill timer.
  */
 const shutdown = (signal: string): void => {
   console.log(`metadata-fetcher-api: ${signal} received, shutting down`)

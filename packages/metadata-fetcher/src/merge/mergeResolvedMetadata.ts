@@ -19,30 +19,23 @@ const dedupeIdentifiers = (
 }
 
 /**
- * Merges several {@link ResolvedMetadata} into one, **first defined wins**:
- * the leftmost entry stating a field owns it. Precedence is entirely the
- * caller's — pass the sources in the order you trust them.
+ * Merges several {@link ResolvedMetadata} into one, **first defined wins**.
+ * Precedence is the caller's — pass the sources in the order you trust them.
  *
  * ```ts
  * // the book over the catalogs, catalogs filling the gaps
  * const metadata = mergeResolvedMetadata(resolved.metadata, fetched.metadata)
- *
- * // the catalog over the book (a scene-released CBZ with a junk ComicInfo)
- * const metadata = mergeResolvedMetadata(fetched.metadata, resolved.metadata)
  * ```
  *
  * Field-wise rather than object-wise, so a source knowing only a cover
- * contributes its cover without hiding another's title. Two exceptions, both
- * because the values are additive rather than competing:
+ * contributes it without hiding another's title. Two fields are additive
+ * instead: `identifiers` concatenate (deduped on scheme + value, mirroring
+ * `resolveMetadata`), and `belongsTo` merges `series` and `collection`
+ * independently.
  *
- * - `identifiers` concatenate in argument order, deduped on scheme + value —
- *   different identifier systems coexist (this mirrors `resolveMetadata`).
- * - `belongsTo` merges its `series` and `collection` independently.
- *
- * Everything else — including `subjects`, `contributors` and the
- * format-scoped corners — takes the first stated value whole. Unioning
- * keyword lists across catalogs is a judgement call that belongs to the
- * consumer, not to a merge that must stay predictable.
+ * Everything else takes the first stated value whole. Unioning keyword lists
+ * across catalogs is a judgement call for the consumer, not for a merge that
+ * has to stay predictable.
  */
 export const mergeResolvedMetadata = (
   ...entries: ReadonlyArray<ResolvedMetadata | undefined>
@@ -75,10 +68,9 @@ export const mergeResolvedMetadata = (
     )?.belongsTo?.collection,
   })
 
-  // `Required` in the mapped type makes every key mandatory in this literal
-  // (their values still accept `undefined`), so a field added to the
-  // vocabulary is a compile error here until its merge rule is chosen —
-  // silently dropping it would be the easy bug.
+  // `Required` makes every key mandatory in this literal (values still accept
+  // `undefined`), so a field added to the vocabulary is a compile error here
+  // until its merge rule is chosen, rather than silently dropped.
   const merged: {
     [K in keyof Required<ResolvedMetadata>]: ResolvedMetadata[K]
   } = {

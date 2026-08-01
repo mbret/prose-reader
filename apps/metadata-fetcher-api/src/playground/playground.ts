@@ -1,25 +1,18 @@
 import { join } from "node:path"
 import type { Express } from "express"
 
-/**
- * Absolute path to the playground page, which sits next to this module — the
- * whole feature is this folder: one route, one self-contained HTML file, no
- * bundler and no assets.
- */
+/** The page sits next to this module: one route, one file, no bundler. */
 export const PLAYGROUND_FILE = join(import.meta.dirname, "playground.html")
 
 /**
  * Mounts the development playground at `/`: a form that runs a lookup and
- * shows what came back — each candidate with its score and the per-field
- * signals behind it.
+ * shows each candidate with the signals behind its score.
  *
- * `createApp` calls this **only** when the playground is enabled (never in
- * production, see `config.ts`), so a hosted deployment has no HTML surface at
- * all: the route does not exist there, rather than existing behind a check.
+ * `createApp` calls this only when the playground is enabled — never in
+ * production (see `config.ts`), where the route simply does not exist.
  *
- * The page is served straight from disk on every request, deliberately:
- * editing it then shows up on a refresh, with no restart — `node --watch` only
- * watches modules it imported, and an HTML file read at runtime is not one.
+ * Served from disk per request, deliberately: editing the page then shows up
+ * on a refresh, since `node --watch` only watches modules it imported.
  */
 export const registerPlayground = (app: Express): void => {
   app.get("/", (_request, response, next) => {

@@ -25,15 +25,12 @@ export type CreateAppOptions = {
   readonly playground: boolean
 }
 
-/** Request bodies are entities, not uploads — a resolved archive is small. */
+/** Bodies are entities, not uploads — a resolved archive is small. */
 const BODY_LIMIT = "1mb"
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; error: string }
 
-/**
- * Per-request overrides of the deployment defaults, always from the query
- * string — so `POST /metadata` keeps a pure entity as its body.
- */
+/** Always from the query string, so `POST /metadata` keeps a pure entity body. */
 type RequestOptions = {
   limit: number
   minScore: number
@@ -114,8 +111,7 @@ const parseRequestOptions = (
 
   if (!includeRaw.ok) return includeRaw
 
-  // `?providers=openLibrary,…` narrows the lookup to a subset; unknown ids are
-  // an error rather than a silent no-op, since "I asked mangadex and got
+  // unknown ids are an error rather than a silent no-op: "mangadex found
   // nothing" and "mangadex isn't deployed here" are very different answers
   const requested = queryValues(query.providers).flatMap((value) =>
     value
@@ -147,7 +143,7 @@ const parseRequestOptions = (
   }
 }
 
-/** `GET /metadata` search terms → the metadata to look up. */
+/** `GET /metadata` search terms as metadata to look up. */
 const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
   const authors = queryValues(query.author)
   const languages = queryValues(query.language)
@@ -183,14 +179,13 @@ const isAbortError = (error: unknown): boolean =>
   (error.name === "AbortError" || error.name === "TimeoutError")
 
 /**
- * A thin HTTP surface over `fetchMetadata` — the package does the work, this
- * only parses requests and maps failures onto status codes:
+ * An HTTP surface over `fetchMetadata`: the package does the work, this parses
+ * requests and maps failures onto status codes.
  *
- * - `GET /health` — liveness plus the providers this deployment exposes
- * - `GET /metadata?title=…&author=…` — human-friendly lookup, for curl and
- *   quick tries
- * - `POST /metadata` — the integration path: post a `ResolvedArchive` (or a
- *   bare `ResolvedMetadata`) as the body, options on the query string
+ * - `GET /health` — liveness, plus the providers this deployment exposes
+ * - `GET /metadata?title=…&author=…` — human-friendly, for curl
+ * - `POST /metadata` — a `ResolvedArchive` (or bare `ResolvedMetadata`) body,
+ *   options on the query string
  *
  * Both metadata routes answer with the `FetchedMetadata` entity verbatim.
  */
@@ -200,8 +195,8 @@ export const createApp = (options: CreateAppOptions): Express => {
   app.disable("x-powered-by")
   app.use(express.json({ limit: BODY_LIMIT }))
 
-  // registered only in development, so `/` is a plain 404 for anyone hosting
-  // this — there is no page to find, not a hidden one
+  // registered only in development, so a hosted deployment has no page to
+  // find rather than a hidden one
   if (options.playground) registerPlayground(app)
 
   app.get("/health", (_request, response) => {
@@ -245,9 +240,8 @@ export const createApp = (options: CreateAppOptions): Express => {
         signal: AbortSignal.timeout(options.requestTimeoutMs),
       })
 
-      // every catalog we could ask failed: the body still says who and what,
-      // but the request did not get an answer — that is a gateway failure,
-      // not a "found nothing"
+      // nothing could be asked, which is a gateway failure rather than a
+      // "found nothing" — the body still says who failed, and with what
       const allFailed =
         providers.length > 0 &&
         fetched.failedProviders.length === providers.length
@@ -295,14 +289,14 @@ export const createApp = (options: CreateAppOptions): Express => {
         return
       }
 
-      // the lookup budget ran out — the catalogs, not us, were slow
+      // the lookup budget ran out: the catalogs were slow, not us
       if (isAbortError(error)) {
         response.status(504).json({ error: "Metadata lookup timed out" })
 
         return
       }
 
-      // a malformed JSON body is express.json's own error
+      // express.json's own errors
       if (
         error instanceof SyntaxError ||
         (error instanceof Error && error.name === "PayloadTooLargeError")

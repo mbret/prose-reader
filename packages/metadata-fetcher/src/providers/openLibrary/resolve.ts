@@ -4,19 +4,17 @@ import { marcLanguageToBcp47 } from "./marcLanguage.ts"
 import type { OpenLibraryDoc } from "./parse.ts"
 
 /**
- * A popular work carries hundreds of subject headings on Open Library, most
- * of them long-tail noise ("Fiction, science fiction, general", "Accessible
- * book", "Protected DAISY"). Keeping them all would dwarf the entity a
- * consumer persists, so the head of the list — where the API puts the
- * meaningful ones — is kept and the tail is dropped.
+ * A popular work carries hundreds of subject headings, most of them long-tail
+ * noise ("Accessible book", "Protected DAISY"), which would dwarf the entity a
+ * consumer persists. The API puts the meaningful ones first.
  */
 export const OPEN_LIBRARY_MAX_SUBJECTS = 25
 
 /**
- * Where every {@link OpenLibraryDoc} field lands in {@link ResolvedMetadata}.
- * Compile-enforced against the parsed doc — adding a field to the parser
- * without declaring its home here is a type error. Same losslessness contract
- * as the archive parsers, and it doubles as the mapping documentation.
+ * Where every {@link OpenLibraryDoc} field lands in {@link ResolvedMetadata},
+ * compile-enforced: adding a field to the parser without declaring its home is
+ * a type error. The archive parsers' losslessness contract, and the mapping
+ * documentation.
  */
 export const openLibraryMetadataHomes = {
   key: "identifiers",
@@ -42,19 +40,16 @@ const emptyToUndefined = <T>(
 ): ReadonlyArray<T> | undefined => (values.length > 0 ? values : undefined)
 
 /**
- * Normalizes one search hit into the cross-format vocabulary.
+ * Normalizes one search hit into the cross-format vocabulary. Two choices
+ * worth stating:
  *
- * Two choices worth stating:
- *
- * - **`title` folds in `subtitle`** (`"Dune: Messiah"`), because
- *   {@link ResolvedMetadata} has one title field and an OPF `dc:title`
- *   normally carries the subtitle too — comparing a bare title against a
- *   full one would cost match score.
- * - **`isbn` is only set when the search was an ISBN lookup**, and then it is
- *   the queried one: the API answered "this work has that ISBN", which is a
- *   fact about the record. A `search.json` hit describes a *work*, whose
- *   editions each have their own ISBN, so picking one out of a title search
- *   would be fabrication.
+ * - **`title` folds in `subtitle`** (`Dune: Messiah`): the vocabulary has one
+ *   title field, and an OPF `dc:title` normally carries the subtitle too, so
+ *   comparing a bare title against a full one would cost match score.
+ * - **`isbn` is set only for an ISBN lookup**, to the queried one — the API
+ *   answered "this work has that ISBN", a fact about the record. A hit
+ *   describes a *work*, whose editions each have their own ISBN, so picking
+ *   one out of a title search would be fabrication.
  */
 export const resolveOpenLibraryDoc = (
   doc: OpenLibraryDoc,
@@ -92,9 +87,8 @@ export const resolveOpenLibraryDoc = (
     cover:
       doc.cover_i !== undefined
         ? {
-            // an absolute url, not a container-relative uri: a remote record
-            // addresses its cover in the catalog's space, and there is
-            // nothing to rebase it onto
+            // absolute, not container-relative: a catalog addresses its
+            // covers in its own space, with nothing to rebase onto
             uri: `${options.coversBaseUrl}/b/id/${doc.cover_i}-L.jpg`,
             mediaType: "image/jpeg",
             confidence: "derived" as const,

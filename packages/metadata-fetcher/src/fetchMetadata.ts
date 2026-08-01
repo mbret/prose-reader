@@ -13,17 +13,9 @@ import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 import { omitUndefined } from "./utils/omitUndefined.ts"
 
 /**
- * What to look the book up by. A {@link ResolvedMetadata} — or anything
- * carrying one, which is exactly the `ResolvedArchive` shape, so the output of
- * `resolveArchive` goes straight in:
- *
- * ```ts
- * const resolved = await resolveArchive(archive)
- * const fetched = await fetchMetadata(resolved, { providers })
- *
- * // …or hand-built terms, when there is no container to resolve
- * const fetched = await fetchMetadata({ title: "Dune" }, { providers })
- * ```
+ * A {@link ResolvedMetadata}, or anything carrying one — the `ResolvedArchive`
+ * shape, so the output of `resolveArchive` goes straight in. Hand-built terms
+ * (`{ title: "Dune" }`) work too, when there is no container to resolve.
  */
 export type FetchMetadataInput =
   | ResolvedMetadata
@@ -37,20 +29,19 @@ export type FetchMetadataOptions = {
    */
   readonly providers: ReadonlyArray<MetadataProvider>
   /**
-   * Hard cap on the matches kept **per provider**, best-scoring first, and
-   * the page-size hint passed to each provider. Defaults to `5`.
+   * Hard cap on the matches kept **per provider**, best first; also the
+   * page-size hint each provider receives. Defaults to `5`.
    */
   readonly limit?: number
   /**
-   * Score a match must reach to be `accepted` — to contribute to the merged
-   * `metadata`. Defaults to `0.5`. Below it, matches are still returned,
+   * Score a match must reach to be `accepted`, and so contribute to the merged
+   * `metadata`. Defaults to `0.5`. Below it, matches are still returned and
    * ranked, for a consumer to offer as "did you mean?".
    */
   readonly minScore?: number
   /**
-   * Keep each provider's own record on the matches (`match.raw`). Defaults to
-   * `false`: it is provenance most consumers don't need, and it can dwarf the
-   * normalized entity they persist.
+   * Keep each provider's own record on `match.raw`. Defaults to `false`: it is
+   * provenance most consumers don't need, and can dwarf what they persist.
    */
   readonly includeRaw?: boolean
   /** Cancellation signal, forwarded to every provider. */
@@ -88,9 +79,9 @@ const toMatch = ({
   })
 
 /**
- * Asks every provider what it knows about a book, scores what comes back
- * against what we already knew, and merges the convincing answers into one
- * {@link ResolvedMetadata} — the same vocabulary `resolveArchive` produces, so
+ * Asks every provider what it knows about a book, scores the answers against
+ * what you gave it, and merges the convincing ones into a single
+ * {@link ResolvedMetadata} — the vocabulary `resolveArchive` produces, so
  * remote and embedded metadata stay interchangeable.
  *
  * ```ts

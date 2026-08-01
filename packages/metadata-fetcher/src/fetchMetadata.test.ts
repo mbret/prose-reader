@@ -34,7 +34,6 @@ describe("fetchMetadata", () => {
         { metadata: { title: "Dune", publisher: "Ace" } },
       ]),
     ]
-    // the shape `resolveArchive` returns, projections included
     const resolved: Pick<
       ResolvedArchive,
       "version" | "metadata" | "unreadableSources"
@@ -55,8 +54,7 @@ describe("fetchMetadata", () => {
       limit: 3,
     })
 
-    // no query projection in between: what the book said is what a provider
-    // reads, down to the format-scoped corners
+    // no projection in between, down to the format-scoped corners
     expect(search).toHaveBeenCalledWith(
       book,
       expect.objectContaining({ limit: 3 }),
@@ -169,8 +167,7 @@ describe("fetchMetadata", () => {
       search: () =>
         Promise.reject(new MetadataProviderResponseError(429, "slow down")),
     }
-    // a provider on another HTTP client throws that client's error, which
-    // carries the status structurally
+    // another HTTP client's error, carrying the status structurally
     const foreign: MetadataProvider = {
       id: "foreign",
       name: "Foreign Client",

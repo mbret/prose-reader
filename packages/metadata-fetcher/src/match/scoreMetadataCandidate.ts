@@ -10,11 +10,9 @@ import {
 } from "./similarity.ts"
 
 /**
- * Relative importance of each field in the aggregate score. The scale is
- * intent, not statistics: identifiers *are* the book, a title is what a human
- * recognizes it by, and everything else is corroboration — an edition detail
- * that differs (a reprint's year, a regional publisher, a page count off by a
- * front matter) must never sink an otherwise convincing match on its own.
+ * Intent, not statistics: identifiers *are* the book, a title is what a human
+ * recognizes it by, everything else corroborates. An edition detail that
+ * differs must never sink an otherwise convincing match on its own.
  */
 export const METADATA_MATCH_WEIGHTS = {
   isbn: 1,
@@ -30,19 +28,16 @@ export const METADATA_MATCH_WEIGHTS = {
 } as const satisfies Record<MetadataMatchField, number>
 
 /**
- * Fields that identify a publication rather than describe it, so they settle
- * the score outright, in both directions: state the same one and the candidate
- * *is* the book (`1`); state a different one and it is not (`0`), however well
- * the descriptive fields agree. Catalogs and books disagree on titles,
- * editions and page counts constantly — they do not agree or disagree on an
- * ISBN by accident.
+ * Identity rather than description, so these settle the score outright in both
+ * directions. Catalogs and books disagree on titles and page counts
+ * constantly; they do not agree or disagree on an ISBN by accident.
  */
 const DECISIVE_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
   "isbn",
   "gtin",
 ])
 
-/** Blank is absent: the vocabulary says so, and a hand-built query may not. */
+/** Blank is absent — the vocabulary says so, a hand-built query may not. */
 const stated = (value: string | undefined): string | undefined => {
   const trimmed = value?.trim()
 
@@ -58,9 +53,8 @@ const identifierLabel = (identifier: MetadataIdentifier): string =>
     : identifier.value
 
 /**
- * Two identifiers agree when their values do and their schemes don't
- * contradict — an unannounced scheme (the OPF `dc:identifier` case) is not a
- * contradiction, a `DOI` and an `ISBN` carrying the same digits would be.
+ * An unannounced scheme (the OPF `dc:identifier` case) is not a contradiction;
+ * a `DOI` and an `ISBN` carrying the same digits are.
  */
 const identifiersAgree = (
   a: MetadataIdentifier,
@@ -72,14 +66,11 @@ const identifiersAgree = (
   return a.scheme.trim().toLowerCase() === b.scheme.trim().toLowerCase()
 }
 
-/** Compare on the primary subtag: `en-US` and `en` are the same language. */
+/** `en-US` and `en` are the same language. */
 const primaryLanguageSubtag = (language: string): string =>
   language.trim().toLowerCase().split("-")[0] ?? ""
 
-/**
- * Reprints and regional editions shift the publication year around, so a
- * near year still corroborates; a decade apart doesn't.
- */
+/** Reprints shift the year around, so a near one still corroborates. */
 const publishedYearScore = (
   queryYear: number,
   candidateYear: number,
@@ -94,9 +85,8 @@ const publishedYearScore = (
 }
 
 /**
- * Page counts legitimately differ by front matter, ads or a different
- * edition, so this is a proximity score, not equality: identical is `1`, 25%
- * apart is `0.5`, half as long is `0`.
+ * Proximity, not equality — front matter and ads move the count: identical is
+ * `1`, 25% apart `0.5`, half as long `0`.
  */
 const numberOfPagesScore = (query: number, candidate: number): number => {
   const largest = Math.max(query, candidate)
@@ -127,21 +117,17 @@ export type ScoredMetadataCandidate = {
 }
 
 /**
- * Scores one candidate against the query: how well the two agree, field by
- * field, and why.
+ * How well a candidate agrees with the query, field by field, and why. Every
+ * provider is scored by these rules, so their scores stay comparable:
  *
- * The rules, in one place because every provider is scored by them:
- *
- * - **Only comparable fields count.** A field is compared when both sides
- *   state it; what the book doesn't know can neither raise nor lower a
- *   candidate. A candidate with nothing in common to compare scores `0`.
- * - **The aggregate is a weighted average** of the comparable fields (see
- *   {@link METADATA_MATCH_WEIGHTS}), so a rich query and a sparse one both
- *   land on the same `0`–`1` scale.
- * - **A stated identifier settles it, both ways.** An agreeing ISBN or GTIN
- *   pins the score to `1`; a contradicting one pins it to `0`, which is what
- *   sinks the plausible-looking wrong edition that agrees on everything a
- *   weighted average can see.
+ * - **Only comparable fields count** — a field is compared when both sides
+ *   state it, so what the book doesn't know can neither raise nor lower a
+ *   candidate, and nothing in common scores `0`.
+ * - **The aggregate is a weighted average** ({@link METADATA_MATCH_WEIGHTS}),
+ *   putting a rich query and a sparse one on the same scale.
+ * - **A stated identifier settles it, both ways** — agreeing pins the score to
+ *   `1`, contradicting to `0`. The latter is what sinks the wrong edition that
+ *   agrees on everything a weighted average can see.
  */
 export const scoreMetadataCandidate = (
   query: ResolvedMetadata,
@@ -299,11 +285,10 @@ export const scoreMetadataCandidate = (
 
   const decisive = signals.filter((signal) => DECISIVE_FIELDS.has(signal.field))
 
-  // Identity settles it, both ways — and contradiction wins over agreement,
-  // because refusing a publication whose stated identity disagrees is the
-  // recoverable mistake. Without this the average is merciful to exactly the
-  // wrong candidate: a different edition agreeing on title and author scores
-  // (0.8 + 0.5) / 2.3 ≈ 0.57, i.e. accepted, despite a contradicting ISBN.
+  // Contradiction wins over agreement: refusing a publication whose stated
+  // identity disagrees is the recoverable mistake. Without this the average is
+  // merciful to exactly the wrong candidate — a different edition agreeing on
+  // title and author scores (0.8 + 0.5) / 2.3 ≈ 0.57, accepted.
   if (decisive.some((signal) => signal.score === 0))
     return { score: 0, signals }
   if (decisive.some((signal) => signal.score === 1))
