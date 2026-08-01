@@ -44,7 +44,6 @@ export type FetchMetadataOptions = {
    * provenance most consumers don't need, and can dwarf what they persist.
    */
   readonly includeRaw?: boolean
-  /** Cancellation signal, forwarded to every provider. */
   readonly signal?: AbortSignal
 }
 

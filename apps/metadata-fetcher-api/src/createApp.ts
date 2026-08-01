@@ -18,19 +18,13 @@ export type CreateAppOptions = {
   readonly limit: number
   readonly minScore: number
   readonly requestTimeoutMs: number
-  /**
-   * Serve the development playground at `/`. Off in production, where the
-   * service has no HTML surface at all — see `playground/`.
-   */
   readonly playground: boolean
 }
 
-/** Bodies are entities, not uploads — a resolved archive is small. */
 const BODY_LIMIT = "1mb"
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; error: string }
 
-/** Always from the query string, so `POST /metadata` keeps a pure entity body. */
 type RequestOptions = {
   limit: number
   minScore: number
@@ -143,7 +137,6 @@ const parseRequestOptions = (
   }
 }
 
-/** `GET /metadata` search terms as metadata to look up. */
 const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
   const authors = queryValues(query.author)
   const languages = queryValues(query.language)
@@ -195,8 +188,6 @@ export const createApp = (options: CreateAppOptions): Express => {
   app.disable("x-powered-by")
   app.use(express.json({ limit: BODY_LIMIT }))
 
-  // registered only in development, so a hosted deployment has no page to
-  // find rather than a hidden one
   if (options.playground) registerPlayground(app)
 
   app.get("/health", (_request, response) => {
@@ -289,7 +280,6 @@ export const createApp = (options: CreateAppOptions): Express => {
         return
       }
 
-      // the lookup budget ran out: the catalogs were slow, not us
       if (isAbortError(error)) {
         response.status(504).json({ error: "Metadata lookup timed out" })
 

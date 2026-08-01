@@ -66,7 +66,6 @@ const identifiersAgree = (
   return a.scheme.trim().toLowerCase() === b.scheme.trim().toLowerCase()
 }
 
-/** `en-US` and `en` are the same language. */
 const primaryLanguageSubtag = (language: string): string =>
   language.trim().toLowerCase().split("-")[0] ?? ""
 

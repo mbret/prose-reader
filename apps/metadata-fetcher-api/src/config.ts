@@ -11,9 +11,7 @@ import {
 export type ApiConfig = {
   readonly port: number
   readonly providers: ReadonlyArray<MetadataProvider>
-  /** Default `limit` when the request doesn't override it. */
   readonly limit: number
-  /** Default `minScore` when the request doesn't override it. */
   readonly minScore: number
   /**
    * Budget for one lookup, across every provider: a catalog that hangs must
@@ -68,10 +66,6 @@ const readString = (
   return raw !== undefined && raw.length > 0 ? raw : undefined
 }
 
-/**
- * Adding a catalog is a line here plus its env vars — the API surface does not
- * change, since `sources` is keyed by provider id.
- */
 const providersFromEnv = (
   env: NodeJS.ProcessEnv,
 ): ReadonlyArray<MetadataProvider> => [

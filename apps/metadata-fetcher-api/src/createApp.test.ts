@@ -67,11 +67,6 @@ const hangingProvider: MetadataProvider = {
     }),
 }
 
-/**
- * Listens on an ephemeral port and drives the app over real HTTP: the routing,
- * the body parser and the status codes are the thing under test, so stubbing
- * express out would test nothing.
- */
 const serve = (app: Express) => {
   const server = app.listen(0)
 
@@ -308,7 +303,6 @@ describe("metadata-fetcher-api failures", () => {
     try {
       const response = await api.get("/metadata?title=Dune")
 
-      // rate limited rather than broken: a caller can decide to come back
       expect(response.status).toBe(502)
       expect((await readFetched(response)).failedProviders).toEqual([
         { id: "throttled", status: 429 },

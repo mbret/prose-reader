@@ -31,7 +31,6 @@ export const readNumber = (
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
 }
 
-/** Non-string and blank entries are dropped; empty reads as absent. */
 export const readStringArray = (
   record: Record<string, unknown>,
   key: string,

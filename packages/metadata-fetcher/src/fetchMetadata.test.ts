@@ -54,7 +54,6 @@ describe("fetchMetadata", () => {
       limit: 3,
     })
 
-    // no projection in between, down to the format-scoped corners
     expect(search).toHaveBeenCalledWith(
       book,
       expect.objectContaining({ limit: 3 }),
@@ -184,7 +183,6 @@ describe("fetchMetadata", () => {
     expect(fetched.failedProviders).toEqual([
       { id: "throttled", status: 429 },
       { id: "foreign", status: 503 },
-      // a network error carries no status, which is itself the answer
       { id: "network" },
     ])
   })

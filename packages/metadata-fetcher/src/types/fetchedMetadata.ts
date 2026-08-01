@@ -8,7 +8,6 @@ import type { MetadataMatch } from "./match.ts"
  * stays revisable because the per-provider values never left the entity.
  */
 export type FetchedMetadataSource = {
-  /** Identity of the provider, for attribution in a UI. */
   readonly provider: {
     readonly id: string
     readonly name: string
@@ -30,9 +29,6 @@ export type FetchedMetadataSources = Readonly<
   Record<string, FetchedMetadataSource>
 >
 
-/**
- * A provider that dropped out of a lookup, and what is known about why.
- */
 export type FailedMetadataProvider = {
   readonly id: string
   /**

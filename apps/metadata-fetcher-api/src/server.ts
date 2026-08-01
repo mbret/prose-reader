@@ -1,7 +1,6 @@
 import { configFromEnv } from "./config.ts"
 import { createApp } from "./createApp.ts"
 
-/** Environment in, listening server out. Everything else is in `createApp`. */
 const config = configFromEnv(process.env)
 const app = createApp(config)
 

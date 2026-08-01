@@ -25,7 +25,6 @@ export type OpenLibraryDoc = {
   /** MARC 21 language codes (`eng`, `fre`), not BCP 47. */
   readonly language?: ReadonlyArray<string>
   readonly subject?: ReadonlyArray<string>
-  /** Median page count across the work's editions. */
   readonly number_of_pages_median?: number
   /** Cover id, addressing `covers.openlibrary.org`. */
   readonly cover_i?: number

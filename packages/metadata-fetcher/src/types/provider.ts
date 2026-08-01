@@ -1,13 +1,9 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 
-/** One entry of {@link ResolvedMetadata.identifiers}. */
 export type MetadataIdentifier = NonNullable<
   ResolvedMetadata["identifiers"]
 >[number]
 
-/**
- * Per-search context handed to a provider alongside the metadata to look up.
- */
 export type MetadataProviderContext = {
   /**
    * How many candidates the caller will keep. A hint for the provider's own
@@ -15,7 +11,6 @@ export type MetadataProviderContext = {
    * returning more is allowed but wasteful.
    */
   readonly limit: number
-  /** Cancellation signal to forward to every request the provider makes. */
   readonly signal?: AbortSignal
 }
 
@@ -26,11 +21,8 @@ export type MetadataProviderContext = {
  * for everyone, so scores stay comparable.
  */
 export type MetadataCandidate = {
-  /** The record, normalized into the cross-format vocabulary. */
   readonly metadata: ResolvedMetadata
-  /** Stable provider-native id, for pinning a user-confirmed match. */
   readonly id?: string
-  /** Canonical url of the record, for attribution and deep links. */
   readonly url?: string
   /**
    * The provider's own record — provenance, and the escape hatch for fields
@@ -80,7 +72,6 @@ export type MetadataCandidate = {
 export type MetadataProvider = {
   /** Unique across the providers of one fetch: it keys the result's `sources`. */
   readonly id: string
-  /** Human-readable name, for attribution in a UI. */
   readonly name: string
   /**
    * The candidates the catalog has, best-effort: an empty list when there is

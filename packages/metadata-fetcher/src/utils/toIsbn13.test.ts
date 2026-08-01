@@ -7,7 +7,6 @@ describe("toIsbn13", () => {
   })
 
   it("converts the ISBN-10 and ISBN-13 of the same book to one value", () => {
-    // Dune, Ace mass market paperback
     expect(toIsbn13("0441013597")).toBe("9780441013593")
     // The Hitchhiker's Guide to the Galaxy, with an X check digit
     expect(toIsbn13("034539180X")).toBe("9780345391803")

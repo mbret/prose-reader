@@ -38,7 +38,6 @@ export type MetadataMatchSignal = {
  * don't) that it is the same book.
  */
 export type MetadataMatch = {
-  /** Id of the {@link MetadataProvider} this record came from. */
   readonly providerId: string
   /**
    * Aggregate confidence, `0` to `1`: the weight-averaged score of every
@@ -48,7 +47,6 @@ export type MetadataMatch = {
    * to compare.
    */
   readonly score: number
-  /** Every field comparison behind {@link MetadataMatch.score}. */
   readonly signals: ReadonlyArray<MetadataMatchSignal>
   /**
    * Reached `minScore`, and so contributed to the merged
@@ -56,12 +54,8 @@ export type MetadataMatch = {
    * consumer to offer for manual confirmation.
    */
   readonly accepted: boolean
-  /** The record, normalized into the cross-format vocabulary. */
   readonly metadata: ResolvedMetadata
-  /** Provider-native record id, when the provider exposes one. */
   readonly id?: string
-  /** Canonical url of the record, for attribution and deep links. */
   readonly url?: string
-  /** The provider's own record, present only when `includeRaw` is on. */
   readonly raw?: unknown
 }

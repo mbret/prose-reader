@@ -32,7 +32,6 @@ export const openLibraryMetadataHomes = {
   keyof ResolvedMetadata | "identifiers"
 >
 
-/** The scheme announced for the Open Library work key in `identifiers`. */
 export const OPEN_LIBRARY_IDENTIFIER_SCHEME = "OpenLibrary"
 
 const emptyToUndefined = <T>(
@@ -54,7 +53,6 @@ const emptyToUndefined = <T>(
 export const resolveOpenLibraryDoc = (
   doc: OpenLibraryDoc,
   options: {
-    /** Base url of the cover service, e.g. `https://covers.openlibrary.org`. */
     readonly coversBaseUrl: string
     /** The ISBN this record was looked up by, when it was. */
     readonly isbn?: string

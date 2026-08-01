@@ -1,7 +1,6 @@
 import { join } from "node:path"
 import type { Express } from "express"
 
-/** The page sits next to this module: one route, one file, no bundler. */
 export const PLAYGROUND_FILE = join(import.meta.dirname, "playground.html")
 
 /**

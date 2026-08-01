@@ -46,7 +46,6 @@ export type OpenLibraryProviderOptions = {
   readonly userAgent?: string
 }
 
-/** `undefined` when the metadata carries nothing this endpoint can search on. */
 const searchTerms = (
   metadata: ResolvedMetadata,
 ): Record<string, string> | undefined => {
