@@ -1,5 +1,5 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import type { MetadataMatch } from "./match"
+import type { MetadataMatch } from "./match.ts"
 
 /**
  * What one provider had to say — the metadata-fetching twin of

@@ -1,10 +1,9 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
-import { buildMetadataQuery } from "../query/buildMetadataQuery"
-import { scoreMetadataCandidate } from "./scoreMetadataCandidate"
+import { scoreMetadataCandidate } from "./scoreMetadataCandidate.ts"
 
 const score = (query: ResolvedMetadata, candidate: ResolvedMetadata) =>
-  scoreMetadataCandidate(buildMetadataQuery(query), candidate)
+  scoreMetadataCandidate(query, candidate)
 
 describe("scoreMetadataCandidate", () => {
   it("scores 0 when the two sides have nothing comparable", () => {

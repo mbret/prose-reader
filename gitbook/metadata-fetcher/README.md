@@ -242,16 +242,20 @@ See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/me
 A provider is three things: a stable `id`, a display `name`, and a `search` returning normalized candidates. It never scores its own results — that stays in the package, identically for everyone.
 
 ```typescript
-import type { MetadataProvider } from "@prose-reader/metadata-fetcher"
+import {
+  type MetadataProvider,
+  metadataAuthors,
+} from "@prose-reader/metadata-fetcher"
 
 const myProvider: MetadataProvider = {
   id: "myCatalog",
   name: "My Catalog",
-  search: async (query, { limit, signal }) => {
-    if (query.title === undefined) return []
+  search: async (metadata, { limit, signal }) => {
+    if (metadata.title === undefined) return []
 
     const response = await fetch(
-      `https://example.com/search?q=${encodeURIComponent(query.title)}`,
+      `https://example.com/search?q=${encodeURIComponent(metadata.title)}` +
+        `&author=${encodeURIComponent(metadataAuthors(metadata)[0] ?? "")}`,
       { signal },
     )
     const { results } = await response.json()
@@ -273,32 +277,28 @@ const myProvider: MetadataProvider = {
 }
 ```
 
-The `query` is what we know locally, reduced to the terms a catalog can search on — so a provider never walks the union vocabulary looking for a title:
+**Both sides of a lookup are `ResolvedMetadata`** — what the book said going in, what the catalog says coming back. There is deliberately no separate "query" shape: the vocabulary is already sparse by contract (`field !== undefined` is a reliable presence check), already normalized, and already carries everything a catalog could key on, down to `metadata.comic` for a comics catalog. A flattened projection would be a second shape to learn that says less.
+
+Two helpers cover the derivations that need more than a field read:
 
 ```typescript
-type MetadataQuery = {
-  title?: string
-  /** contributors credited as author, else every contributor */
-  authors?: string[]
-  isbn?: string
-  gtin?: string
-  identifiers?: { value: string; scheme?: string }[]
-  series?: string
-  publisher?: string
-  languages?: string[]
-  published?: { year?: number; month?: number; day?: number }
-  numberOfPages?: number
-  /** everything known locally, verbatim — the escape hatch */
-  metadata: ResolvedMetadata
-}
+import { hasSearchTerms, metadataAuthors } from "@prose-reader/metadata-fetcher"
+
+// contributors credited as `author`, else every contributor — a comic archive
+// often credits only a penciler
+metadataAuthors(metadata) // ["Frank Herbert"]
+
+// is there anything to go on at all? a publisher or a page count narrows a
+// search but cannot start one, so they don't count
+if (!hasSearchTerms(resolved.metadata)) return
 ```
 
 Rules of thumb:
 
-- **Return an empty list, don't throw**, when the query carries nothing you can search on. Throwing is for actual failures — they land in `failedProviders`.
+- **Return an empty list, don't throw**, when the metadata carries nothing you can search on. Throwing is for actual failures — they land in `failedProviders`.
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `isbn` is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
 
-`buildMetadataQuery` is exported if you need to build a query yourself (a provider test, a UI form), and so are the matching primitives (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules.
+The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(query, candidate)` takes a `ResolvedMetadata` on both sides, like everything else here.

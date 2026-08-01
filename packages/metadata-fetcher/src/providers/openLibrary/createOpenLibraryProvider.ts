@@ -1,11 +1,12 @@
+import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import type {
   MetadataCandidate,
   MetadataProvider,
   MetadataProviderContext,
-  MetadataQuery,
-} from "../../types/provider"
-import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse"
-import { resolveOpenLibraryDoc } from "./resolve"
+} from "../../types/provider.ts"
+import { metadataAuthors } from "../../utils/metadataAuthors.ts"
+import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
+import { resolveOpenLibraryDoc } from "./resolve.ts"
 
 export const OPEN_LIBRARY_PROVIDER_ID = "openLibrary"
 
@@ -50,18 +51,20 @@ export type OpenLibraryProviderOptions = {
 }
 
 /**
- * Terms to send to `search.json`, or `undefined` when the query carries
+ * Terms to send to `search.json`, or `undefined` when the metadata carries
  * nothing the endpoint can search on.
  */
 const searchTerms = (
-  query: MetadataQuery,
+  metadata: ResolvedMetadata,
 ): Record<string, string> | undefined => {
-  if (query.title === undefined) return undefined
+  const title = metadata.title?.trim()
 
-  const author = query.authors?.[0]
+  if (title === undefined || title.length === 0) return undefined
+
+  const author = metadataAuthors(metadata)[0]
 
   return {
-    title: query.title,
+    title,
     ...(author !== undefined ? { author } : {}),
   }
 }
@@ -137,8 +140,8 @@ export const createOpenLibraryProvider = (
   return {
     id: OPEN_LIBRARY_PROVIDER_ID,
     name: "Open Library",
-    search: async (query, context) => {
-      const { isbn } = query
+    search: async (metadata, context) => {
+      const isbn = metadata.isbn?.trim() || undefined
 
       if (isbn !== undefined) {
         const docs = await searchDocs({ isbn }, context)
@@ -146,7 +149,7 @@ export const createOpenLibraryProvider = (
         if (docs.length > 0) return toCandidates(docs, isbn)
       }
 
-      const terms = searchTerms(query)
+      const terms = searchTerms(metadata)
 
       if (terms === undefined) return []
 

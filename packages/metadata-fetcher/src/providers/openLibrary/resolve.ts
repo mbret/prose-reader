@@ -1,7 +1,7 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import { omitUndefined } from "../../utils/omitUndefined"
-import { marcLanguageToBcp47 } from "./marcLanguage"
-import type { OpenLibraryDoc } from "./parse"
+import { omitUndefined } from "../../utils/omitUndefined.ts"
+import { marcLanguageToBcp47 } from "./marcLanguage.ts"
+import type { OpenLibraryDoc } from "./parse.ts"
 
 /**
  * A popular work carries hundreds of subject headings on Open Library, most

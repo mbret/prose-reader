@@ -1,6 +1,6 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import type { MetadataIdentifier } from "../types/provider"
-import { omitUndefined } from "../utils/omitUndefined"
+import type { MetadataIdentifier } from "../types/provider.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
 
 const dedupeIdentifiers = (
   identifiers: ReadonlyArray<MetadataIdentifier>,

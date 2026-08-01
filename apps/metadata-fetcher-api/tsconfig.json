@@ -4,7 +4,11 @@
     // node runs this app's TypeScript directly (type stripping), so every
     // construct must be erasable — no enums, namespaces or parameter
     // properties, which stripping cannot rewrite
-    "erasableSyntaxOnly": true
+    "erasableSyntaxOnly": true,
+    // resolve @prose-reader/metadata-fetcher to its TypeScript source, the
+    // same way `node --conditions=prose-source` does at runtime: the app
+    // typechecks against what it actually runs, and neither needs a build
+    "customConditions": ["prose-source"]
   },
-  "include": ["src"]
+  "include": ["src", "vitest.config.ts"]
 }

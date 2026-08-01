@@ -1,7 +1,4 @@
-import type {
-  ResolvedDate,
-  ResolvedMetadata,
-} from "@prose-reader/archive-reader"
+import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 
 /** One entry of {@link ResolvedMetadata.identifiers}. */
 export type MetadataIdentifier = NonNullable<
@@ -9,43 +6,7 @@ export type MetadataIdentifier = NonNullable<
 >[number]
 
 /**
- * What we know about the book locally, reduced to the terms a remote catalog
- * can actually search on. Built from a {@link ResolvedMetadata} by
- * `buildMetadataQuery`, so a provider never has to walk the union vocabulary
- * (roles, collections, format-scoped corners…) to find a title and an author.
- *
- * Every field is optional — a query is best-effort by nature: a CBZ with no
- * sidecar may only offer a title, an EPUB may only offer an identifier. Values
- * are trimmed and empty ones collapse to absent, so `field !== undefined` is a
- * reliable presence check (same rule as {@link ResolvedMetadata}).
- */
-export type MetadataQuery = {
-  readonly title?: string
-  /**
-   * Contributors credited as `author`, in source order; when the publication
-   * credits nobody as an author, every contributor's name (a comic archive
-   * often only lists a penciler).
-   */
-  readonly authors?: ReadonlyArray<string>
-  readonly isbn?: string
-  readonly gtin?: string
-  readonly identifiers?: ReadonlyArray<MetadataIdentifier>
-  /** Name of the first series the publication belongs to. */
-  readonly series?: string
-  readonly publisher?: string
-  readonly languages?: ReadonlyArray<string>
-  readonly published?: ResolvedDate
-  readonly numberOfPages?: number
-  /**
-   * Everything known locally, verbatim — the escape hatch for a provider
-   * needing more than the search terms above (a comic catalog keying off
-   * `metadata.comic`, a store keying off `metadata.properties`…).
-   */
-  readonly metadata: ResolvedMetadata
-}
-
-/**
- * Per-search context handed to a provider alongside the query.
+ * Per-search context handed to a provider alongside the metadata to look up.
  */
 export type MetadataProviderContext = {
   /**
@@ -85,18 +46,29 @@ export type MetadataCandidate = {
 }
 
 /**
- * A pluggable metadata source. Implementing one is: pick a stable `id`, take
- * the query terms you can search on, return normalized candidates.
+ * A pluggable metadata source. Implementing one is: pick a stable `id`, read
+ * the terms you can search on out of the metadata, return normalized
+ * candidates.
+ *
+ * Both sides of a lookup speak {@link ResolvedMetadata} — what the book said
+ * going in, what the catalog says coming back. There is no separate query
+ * shape to learn: the vocabulary is already sparse by contract (`field !==
+ * undefined` is a reliable presence check) and already carries everything a
+ * catalog could key on, down to the format-scoped corners. `metadataAuthors`
+ * is exported for the one derivation that needs the role vocabulary.
  *
  * ```ts
+ * import { type MetadataProvider, metadataAuthors } from "@prose-reader/metadata-fetcher"
+ *
  * const myProvider: MetadataProvider = {
  *   id: "myCatalog",
  *   name: "My Catalog",
- *   search: async (query, { limit, signal }) => {
- *     if (query.title === undefined) return []
+ *   search: async (metadata, { limit, signal }) => {
+ *     if (metadata.title === undefined) return []
  *
  *     const response = await fetch(
- *       `https://example.com/search?q=${encodeURIComponent(query.title)}`,
+ *       `https://example.com/search?q=${encodeURIComponent(metadata.title)}` +
+ *         `&author=${encodeURIComponent(metadataAuthors(metadata)[0] ?? "")}`,
  *       { signal },
  *     )
  *     const { results } = await response.json()
@@ -120,13 +92,13 @@ export type MetadataProvider = {
   /** Human-readable name, for attribution in a UI. */
   readonly name: string
   /**
-   * Returns the candidates the catalog has for this query, best-effort: an
-   * empty list when the query carries nothing the provider can search on, or
-   * when the catalog knows nothing. Throwing is allowed — a failing provider
-   * never fails the fetch, it lands in `failedProviders`.
+   * Returns the candidates the catalog has for this book, best-effort: an
+   * empty list when the metadata carries nothing the provider can search on,
+   * or when the catalog knows nothing. Throwing is allowed — a failing
+   * provider never fails the fetch, it lands in `failedProviders`.
    */
   readonly search: (
-    query: MetadataQuery,
+    metadata: ResolvedMetadata,
     context: MetadataProviderContext,
   ) => Promise<ReadonlyArray<MetadataCandidate>>
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { mergeResolvedMetadata } from "./mergeResolvedMetadata"
+import { mergeResolvedMetadata } from "./mergeResolvedMetadata.ts"
 
 describe("mergeResolvedMetadata", () => {
   it("returns an empty result when nothing is passed", () => {

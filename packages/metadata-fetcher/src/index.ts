@@ -23,50 +23,53 @@
  * (`id`, `name`, `search`) and pass it in. Scoring, ranking, merging and
  * error handling stay in the package, identically for every provider.
  */
-export type { FetchMetadataInput, FetchMetadataOptions } from "./fetchMetadata"
-export { fetchMetadata } from "./fetchMetadata"
-export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate"
+export type {
+  FetchMetadataInput,
+  FetchMetadataOptions,
+} from "./fetchMetadata.ts"
+export { fetchMetadata } from "./fetchMetadata.ts"
+export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 export {
   METADATA_MATCH_WEIGHTS,
   scoreMetadataCandidate,
-} from "./match/scoreMetadataCandidate"
+} from "./match/scoreMetadataCandidate.ts"
 export {
   normalizeForComparison,
   personNameSimilarity,
   textSimilarity,
   titleSimilarity,
-} from "./match/similarity"
-export { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata"
-export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider"
+} from "./match/similarity.ts"
+export { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata.ts"
+export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export {
   createOpenLibraryProvider,
   OPEN_LIBRARY_PROVIDER_ID,
-} from "./providers/openLibrary/createOpenLibraryProvider"
-export { marcLanguageToBcp47 } from "./providers/openLibrary/marcLanguage"
-export type { OpenLibraryDoc } from "./providers/openLibrary/parse"
-export { parseOpenLibrarySearchResponse } from "./providers/openLibrary/parse"
+} from "./providers/openLibrary/createOpenLibraryProvider.ts"
+export { marcLanguageToBcp47 } from "./providers/openLibrary/marcLanguage.ts"
+export type { OpenLibraryDoc } from "./providers/openLibrary/parse.ts"
+export { parseOpenLibrarySearchResponse } from "./providers/openLibrary/parse.ts"
 export {
   OPEN_LIBRARY_IDENTIFIER_SCHEME,
   OPEN_LIBRARY_MAX_SUBJECTS,
   openLibraryMetadataHomes,
   resolveOpenLibraryDoc,
-} from "./providers/openLibrary/resolve"
-export { buildMetadataQuery } from "./query/buildMetadataQuery"
+} from "./providers/openLibrary/resolve.ts"
 export type {
   FetchedMetadata,
   FetchedMetadataSource,
   FetchedMetadataSources,
-} from "./types/fetchedMetadata"
+} from "./types/fetchedMetadata.ts"
 export type {
   MetadataMatch,
   MetadataMatchField,
   MetadataMatchSignal,
-} from "./types/match"
+} from "./types/match.ts"
 export type {
   MetadataCandidate,
   MetadataIdentifier,
   MetadataProvider,
   MetadataProviderContext,
-  MetadataQuery,
-} from "./types/provider"
-export { toIsbn13 } from "./utils/toIsbn13"
+} from "./types/provider.ts"
+export { hasSearchTerms } from "./utils/hasSearchTerms.ts"
+export { metadataAuthors } from "./utils/metadataAuthors.ts"
+export { toIsbn13 } from "./utils/toIsbn13.ts"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { toIsbn13 } from "./toIsbn13"
+import { toIsbn13 } from "./toIsbn13.ts"
 
 describe("toIsbn13", () => {
   it("keeps an ISBN-13 as-is", () => {

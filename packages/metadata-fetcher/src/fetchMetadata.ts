@@ -1,15 +1,14 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate"
-import { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata"
-import { buildMetadataQuery } from "./query/buildMetadataQuery"
-import { Report } from "./report"
+import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
+import { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata.ts"
+import { Report } from "./report.ts"
 import type {
   FetchedMetadata,
   FetchedMetadataSource,
-} from "./types/fetchedMetadata"
-import type { MetadataMatch } from "./types/match"
-import type { MetadataCandidate, MetadataProvider } from "./types/provider"
-import { omitUndefined } from "./utils/omitUndefined"
+} from "./types/fetchedMetadata.ts"
+import type { MetadataMatch } from "./types/match.ts"
+import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
+import { omitUndefined } from "./utils/omitUndefined.ts"
 
 /**
  * What to look the book up by. A {@link ResolvedMetadata} — or anything
@@ -126,12 +125,11 @@ export const fetchMetadata = async (
   const limit = options.limit ?? DEFAULT_LIMIT
   const minScore = options.minScore ?? DEFAULT_MIN_SCORE
   const includeRaw = options.includeRaw === true
-  const query = buildMetadataQuery(metadata)
 
   const results = await Promise.all(
     options.providers.map(async (provider) => {
       try {
-        const candidates = await provider.search(query, {
+        const candidates = await provider.search(metadata, {
           limit,
           signal: options.signal,
         })
@@ -163,7 +161,7 @@ export const fetchMetadata = async (
     const providerMatches = candidates
       .map((candidate) => {
         const { score, signals } = scoreMetadataCandidate(
-          query,
+          metadata,
           candidate.metadata,
         )
 

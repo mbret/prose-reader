@@ -3,8 +3,8 @@ import type {
   ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
-import { fetchMetadata } from "./fetchMetadata"
-import type { MetadataCandidate, MetadataProvider } from "./types/provider"
+import { fetchMetadata } from "./fetchMetadata.ts"
+import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 
 const providerReturning = (
   id: string,
@@ -46,7 +46,7 @@ describe("fetchMetadata", () => {
     expect(fromMetadata.metadata).toEqual(fromArchive.metadata)
   })
 
-  it("hands every provider the same normalized query", async () => {
+  it("hands every provider the metadata itself, verbatim", async () => {
     const search = vi.fn().mockResolvedValue([])
 
     await fetchMetadata(book, {
@@ -54,12 +54,10 @@ describe("fetchMetadata", () => {
       limit: 3,
     })
 
+    // no query projection in between: what the book said is what a provider
+    // reads, down to the format-scoped corners
     expect(search).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Dune",
-        authors: ["Frank Herbert"],
-        metadata: book,
-      }),
+      book,
       expect.objectContaining({ limit: 3 }),
     )
   })

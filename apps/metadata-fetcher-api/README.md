@@ -19,18 +19,21 @@ The playground is **development only**. It is served when `NODE_ENV` is anything
 
 Stop it with `npm run stop:metadata-fetcher`.
 
-Source is bind-mounted into the container, so **editing the express app restarts it** (`node --watch`) and **editing the library rebuilds it** (a sibling `library` service runs the package's watch build into a shared volume, and the API restarts on the new build). No rebuild, no reinstall, nothing to run on the host.
-
-Only working on the express app? `docker compose -f apps/metadata-fetcher-api/docker-compose.yml up api` skips the library watcher.
+Both the app's source and the library's are bind-mounted into the container, and node runs both as TypeScript — so **editing either restarts the server** (`node --watch`), with no build, no watcher and nothing to run on the host. Editing `playground.html` needs not even a restart: it is read from disk per request, so a refresh is enough.
 
 ### Without Docker
 
 ```bash
-npm run build --workspace @prose-reader/metadata-fetcher   # once
-npm run dev --workspace prose-reader-metadata-fetcher-api  # node --watch
+npm run dev --workspace prose-reader-metadata-fetcher-api
 ```
 
-Node runs the app's TypeScript directly (type stripping), so there is no build step and no bundler between the source and what runs — in the container or out of it.
+### No build, anywhere in development
+
+Node runs TypeScript directly (type stripping), and that goes for the library too: `@prose-reader/metadata-fetcher` declares a `prose-source` export condition pointing at its own `src/index.ts`, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads the package's TypeScript instead of its `dist`.
+
+The same condition is set for the typechecker (`customConditions` in `tsconfig.json`) and for the tests (`resolve.conditions` in `vitest.config.ts`), so running, typechecking and testing all agree and none of them needs the package built.
+
+The condition is inert for anyone else: nothing applies it unless asked, and consumers of the published package resolve `dist` as usual. The production image resolves `dist` too — it should exercise the artifact that actually ships.
 
 ## Endpoints
 

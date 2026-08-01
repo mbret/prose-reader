@@ -35,25 +35,27 @@ COPY apps/metadata-fetcher-api/package.json apps/metadata-fetcher-api/
 RUN npm ci --ignore-scripts --no-audit --no-fund
 
 # ---------------------------------------------------------------------------
-# build — the library the API serves. `lerna run build` follows the dependency
-# graph, so shared and archive-reader are built first.
+# sources — the workspaces themselves, on top of the installed tree.
 # ---------------------------------------------------------------------------
-FROM deps AS build
+FROM deps AS sources
 
 COPY packages/shared packages/shared
 COPY packages/archive-reader packages/archive-reader
 COPY packages/metadata-fetcher packages/metadata-fetcher
-
-RUN npx lerna run build --scope @prose-reader/metadata-fetcher
-
 COPY apps/metadata-fetcher-api apps/metadata-fetcher-api
 
 # ---------------------------------------------------------------------------
 # development — what compose runs. Source is bind-mounted over these copies
-# and node reloads on change; the library's own watcher runs as a sibling
-# service (see docker-compose.yml).
+# and node reloads on change, the API's and the library's alike: the
+# `prose-source` export condition resolves @prose-reader/metadata-fetcher to
+# its TypeScript, which node runs as-is. Nothing to build, nothing to watch.
+#
+# Only @prose-reader/shared is built: the library imports it at runtime (its
+# debug Report) and it resolves through its published entry.
 # ---------------------------------------------------------------------------
-FROM build AS development
+FROM sources AS development
+
+RUN npx lerna run build --scope @prose-reader/shared
 
 ENV NODE_ENV=development
 WORKDIR /repo/apps/metadata-fetcher-api
@@ -61,6 +63,16 @@ WORKDIR /repo/apps/metadata-fetcher-api
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]
+
+# ---------------------------------------------------------------------------
+# build — the library as consumers get it. Production deliberately runs the
+# built entry, not the source condition, so the image exercises the artifact
+# that ships. `lerna run build` follows the graph, so shared and
+# archive-reader are built first.
+# ---------------------------------------------------------------------------
+FROM sources AS build
+
+RUN npx lerna run build --scope @prose-reader/metadata-fetcher
 
 # ---------------------------------------------------------------------------
 # production — the image users run. Dev dependencies (vite, typescript,

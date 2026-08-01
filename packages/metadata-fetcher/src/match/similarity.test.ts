@@ -4,7 +4,7 @@ import {
   personNameSimilarity,
   textSimilarity,
   titleSimilarity,
-} from "./similarity"
+} from "./similarity.ts"
 
 describe("normalizeForComparison", () => {
   it("folds case, diacritics and punctuation", () => {

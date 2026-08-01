@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { marcLanguageToBcp47 } from "./marcLanguage"
-import { parseOpenLibrarySearchResponse } from "./parse"
-import { OPEN_LIBRARY_MAX_SUBJECTS, resolveOpenLibraryDoc } from "./resolve"
+import { marcLanguageToBcp47 } from "./marcLanguage.ts"
+import { parseOpenLibrarySearchResponse } from "./parse.ts"
+import { OPEN_LIBRARY_MAX_SUBJECTS, resolveOpenLibraryDoc } from "./resolve.ts"
 
 const coversBaseUrl = "https://covers.openlibrary.org"
 

@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "node --watch --watch-preserve-output src/server.ts",
+    "dev": "node --conditions=prose-source --watch --watch-preserve-output src/server.ts",
     "serve": "node src/server.ts",
     "tsc": "tsc",
     "test": "vitest run",

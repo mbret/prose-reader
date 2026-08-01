@@ -1,31 +1,35 @@
-# Development stack for the metadata fetcher: the API, plus a watcher that
-# rebuilds the library it serves. Started from the repository root with
+# Development stack for the metadata fetcher. Started from the repository root
+# with
 #
 #   npm run start:metadata-fetcher
 #
-# Both services run the same `development` image; source is bind-mounted over
-# it, so an edit on the host is an edit in the container — no rebuild, no
-# reinstall.
+# One service: the API source *and* the library source are bind-mounted into
+# it, and node runs both as TypeScript — so an edit on the host is an edit in
+# the container. No build, no watcher, no reinstall.
 
 name: prose-metadata-fetcher
 
-x-development-image: &development-image
-  context: ../..
-  dockerfile: apps/metadata-fetcher-api/Dockerfile
-  target: development
-
 services:
-  # The express app. `node --watch` restarts it on any change to its source —
-  # and on a library rebuild too, since it watches the files it imports
-  # through the workspace link.
   api:
-    build: *development-image
+    build:
+      context: ../..
+      dockerfile: apps/metadata-fetcher-api/Dockerfile
+      target: development
     image: prose-reader/metadata-fetcher-api:development
     working_dir: /repo/apps/metadata-fetcher-api
-    # node as PID 1 rather than `npm run dev`: it receives SIGTERM directly,
-    # so `docker compose down` stops in milliseconds instead of waiting out
-    # the kill timer
-    command: ["node", "--watch", "--watch-preserve-output", "src/server.ts"]
+    # node as PID 1 rather than `npm run dev`: it receives SIGTERM directly, so
+    # `docker compose down` stops in milliseconds instead of waiting out the
+    # kill timer. `--conditions=prose-source` resolves
+    # @prose-reader/metadata-fetcher to its TypeScript source, and `--watch`
+    # then restarts on any file it imported — the library's included.
+    command:
+      [
+        "node",
+        "--conditions=prose-source",
+        "--watch",
+        "--watch-preserve-output",
+        "src/server.ts",
+      ]
     ports:
       - "${METADATA_FETCHER_PORT:-3000}:3000"
     environment:
@@ -38,27 +42,4 @@ services:
       REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-10000}
     volumes:
       - ../../apps/metadata-fetcher-api/src:/repo/apps/metadata-fetcher-api/src:ro
-      - library-dist:/repo/packages/metadata-fetcher/dist
-    depends_on:
-      - library
-
-  # Rebuilds @prose-reader/metadata-fetcher into the shared `library-dist`
-  # volume whenever its source changes, which is what makes the API reflect a
-  # library edit. Drop it (`docker compose up api`) if you are only working on
-  # the express app.
-  library:
-    build: *development-image
-    image: prose-reader/metadata-fetcher-api:development
-    working_dir: /repo/packages/metadata-fetcher
-    # mirrors the package's own `start` script, spelled out so vite is PID 1
-    # and stops on SIGTERM without npm in between
-    command: ["npx", "vite", "build", "--watch", "--mode", "development"]
-    volumes:
       - ../../packages/metadata-fetcher/src:/repo/packages/metadata-fetcher/src:ro
-      - library-dist:/repo/packages/metadata-fetcher/dist
-
-volumes:
-  # Shared so the library watcher writes what the API imports. Seeded from the
-  # image on creation, so it is never empty; `docker compose down -v` resets
-  # it if a stale build ever needs clearing.
-  library-dist:

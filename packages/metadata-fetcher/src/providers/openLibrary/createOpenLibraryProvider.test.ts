@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { buildMetadataQuery } from "../../query/buildMetadataQuery"
-import { createOpenLibraryProvider } from "./createOpenLibraryProvider"
+import { createOpenLibraryProvider } from "./createOpenLibraryProvider.ts"
 
 const DUNE_DOC = {
   key: "/works/OL893415W",
@@ -44,7 +43,7 @@ describe("createOpenLibraryProvider", () => {
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
     const candidates = await provider.search(
-      buildMetadataQuery({ isbn: "9780441013593", title: "Dune" }),
+      { isbn: "9780441013593", title: "Dune" },
       context,
     )
 
@@ -64,11 +63,11 @@ describe("createOpenLibraryProvider", () => {
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
     const candidates = await provider.search(
-      buildMetadataQuery({
+      {
         isbn: "9780441013593",
         title: "Dune",
         contributors: [{ name: "Frank Herbert", roles: ["author"] }],
-      }),
+      },
       context,
     )
 
@@ -87,9 +86,7 @@ describe("createOpenLibraryProvider", () => {
     const fetchMock = fetchReturning()
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
-    expect(
-      await provider.search(buildMetadataQuery({ publisher: "Ace" }), context),
-    ).toEqual([])
+    expect(await provider.search({ publisher: "Ace" }, context)).toEqual([])
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -98,10 +95,7 @@ describe("createOpenLibraryProvider", () => {
       fetch: fetchReturning({ docs: [DUNE_DOC] }),
     })
 
-    const [candidate] = await provider.search(
-      buildMetadataQuery({ title: "Dune" }),
-      context,
-    )
+    const [candidate] = await provider.search({ title: "Dune" }, context)
 
     expect(candidate?.id).toBe("/works/OL893415W")
     expect(candidate?.url).toBe("https://openlibrary.org/works/OL893415W")
@@ -114,9 +108,9 @@ describe("createOpenLibraryProvider", () => {
       .mockResolvedValue(new Response("nope", { status: 503 }))
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
-    await expect(
-      provider.search(buildMetadataQuery({ title: "Dune" }), context),
-    ).rejects.toThrow("503")
+    await expect(provider.search({ title: "Dune" }, context)).rejects.toThrow(
+      "503",
+    )
   })
 
   it("survives a response whose shape it does not recognize", async () => {
@@ -124,9 +118,7 @@ describe("createOpenLibraryProvider", () => {
       fetch: fetchReturning({ error: "upstream" }, { error: "upstream" }),
     })
 
-    expect(
-      await provider.search(buildMetadataQuery({ title: "Dune" }), context),
-    ).toEqual([])
+    expect(await provider.search({ title: "Dune" }, context)).toEqual([])
   })
 
   it("sends the user agent only when one is configured", async () => {
@@ -136,9 +128,9 @@ describe("createOpenLibraryProvider", () => {
     await createOpenLibraryProvider({
       fetch: withAgent,
       userAgent: "MyReader/1.0 (me@example.com)",
-    }).search(buildMetadataQuery({ title: "Dune" }), context)
+    }).search({ title: "Dune" }, context)
     await createOpenLibraryProvider({ fetch: withoutAgent }).search(
-      buildMetadataQuery({ title: "Dune" }),
+      { title: "Dune" },
       context,
     )
 
@@ -158,10 +150,7 @@ describe("createOpenLibraryProvider", () => {
       coversBaseUrl: "https://covers.example.com",
     })
 
-    const [candidate] = await provider.search(
-      buildMetadataQuery({ title: "Dune" }),
-      context,
-    )
+    const [candidate] = await provider.search({ title: "Dune" }, context)
 
     expect(requestedUrl(fetchMock, 0).origin).toBe("https://mirror.example.com")
     expect(candidate?.metadata.cover?.uri).toBe(
@@ -174,7 +163,7 @@ describe("createOpenLibraryProvider", () => {
     const controller = new AbortController()
 
     await createOpenLibraryProvider({ fetch: fetchMock }).search(
-      buildMetadataQuery({ isbn: "9780441013593", title: "Dune" }),
+      { isbn: "9780441013593", title: "Dune" },
       { limit: 5, signal: controller.signal },
     )
 

@@ -4,7 +4,7 @@ import {
   readRecordArray,
   readString,
   readStringArray,
-} from "../../utils/json"
+} from "../../utils/json.ts"
 
 /**
  * One entry of an Open Library `search.json` response, field names mirroring

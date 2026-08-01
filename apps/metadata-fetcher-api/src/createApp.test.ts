@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import type {
   FetchedMetadata,
   MetadataProvider,
@@ -5,6 +6,7 @@ import type {
 import type { Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { createApp } from "./createApp.ts"
+import { PLAYGROUND_FILE } from "./playground.ts"
 
 /**
  * `response.json()` is `unknown` — rightly so. These two assert the shape the
@@ -236,7 +238,7 @@ describe("metadata-fetcher-api", () => {
 })
 
 describe("metadata-fetcher-api playground", () => {
-  it("serves the page in development", async () => {
+  it("serves the page in development, from the file on disk", async () => {
     const api = serve(
       createApp({ ...defaults, providers: [duneProvider], playground: true }),
     )
@@ -249,6 +251,8 @@ describe("metadata-fetcher-api playground", () => {
       expect(response.headers.get("content-type")).toContain("text/html")
       expect(html).toContain('<form id="form">')
       expect(html).toContain('name="title"')
+      // served straight from playground.html, so editing it needs no restart
+      expect(html).toBe(await readFile(PLAYGROUND_FILE, "utf8"))
     } finally {
       await api.close()
     }

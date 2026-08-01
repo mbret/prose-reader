@@ -1,13 +1,13 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import type { MetadataMatchField, MetadataMatchSignal } from "../types/match"
-import type { MetadataIdentifier, MetadataQuery } from "../types/provider"
-import { metadataAuthors } from "../utils/metadataAuthors"
-import { toIsbn13 } from "../utils/toIsbn13"
+import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
+import type { MetadataIdentifier } from "../types/provider.ts"
+import { metadataAuthors } from "../utils/metadataAuthors.ts"
+import { toIsbn13 } from "../utils/toIsbn13.ts"
 import {
   personNameSimilarity,
   textSimilarity,
   titleSimilarity,
-} from "./similarity"
+} from "./similarity.ts"
 
 /**
  * Relative importance of each field in the aggregate score. The scale is
@@ -40,6 +40,13 @@ const DECISIVE_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
   "isbn",
   "gtin",
 ])
+
+/** Blank is absent: the vocabulary says so, and a hand-built query may not. */
+const stated = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim()
+
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
+}
 
 const identifierKey = (identifier: MetadataIdentifier): string =>
   identifier.value.trim().toLowerCase()
@@ -135,7 +142,7 @@ export type ScoredMetadataCandidate = {
  *   which is what sinks a plausible-looking wrong edition.
  */
 export const scoreMetadataCandidate = (
-  query: MetadataQuery,
+  query: ResolvedMetadata,
   candidate: ResolvedMetadata,
 ): ScoredMetadataCandidate => {
   const signals: MetadataMatchSignal[] = []
@@ -163,10 +170,13 @@ export const scoreMetadataCandidate = (
 
   const compareStrings = (
     field: MetadataMatchField,
-    queryValue: string | undefined,
-    candidateValue: string | undefined,
+    rawQueryValue: string | undefined,
+    rawCandidateValue: string | undefined,
     compare: (a: string, b: string) => number = textSimilarity,
   ) => {
+    const queryValue = stated(rawQueryValue)
+    const candidateValue = stated(rawCandidateValue)
+
     if (queryValue === undefined || candidateValue === undefined) return
 
     addSignal(field, {
@@ -176,28 +186,33 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryIsbn = query.isbn !== undefined ? toIsbn13(query.isbn) : undefined
-  const candidateIsbn =
-    candidate.isbn !== undefined ? toIsbn13(candidate.isbn) : undefined
+  const queryIsbn = stated(query.isbn)
+  const candidateIsbn = stated(candidate.isbn)
+  const queryIsbn13 = queryIsbn !== undefined ? toIsbn13(queryIsbn) : undefined
+  const candidateIsbn13 =
+    candidateIsbn !== undefined ? toIsbn13(candidateIsbn) : undefined
 
   if (
-    query.isbn !== undefined &&
-    candidate.isbn !== undefined &&
     queryIsbn !== undefined &&
-    candidateIsbn !== undefined
+    candidateIsbn !== undefined &&
+    queryIsbn13 !== undefined &&
+    candidateIsbn13 !== undefined
   ) {
     addSignal("isbn", {
-      score: queryIsbn === candidateIsbn ? 1 : 0,
-      query: query.isbn,
-      candidate: candidate.isbn,
+      score: queryIsbn13 === candidateIsbn13 ? 1 : 0,
+      query: queryIsbn,
+      candidate: candidateIsbn,
     })
   }
 
-  if (query.gtin !== undefined && candidate.gtin !== undefined) {
+  const queryGtin = stated(query.gtin)
+  const candidateGtin = stated(candidate.gtin)
+
+  if (queryGtin !== undefined && candidateGtin !== undefined) {
     addSignal("gtin", {
-      score: query.gtin === candidate.gtin ? 1 : 0,
-      query: query.gtin,
-      candidate: candidate.gtin,
+      score: queryGtin === candidateGtin ? 1 : 0,
+      query: queryGtin,
+      candidate: candidateGtin,
     })
   }
 
@@ -218,10 +233,14 @@ export const scoreMetadataCandidate = (
 
   compareStrings("title", query.title, candidate.title, titleSimilarity)
   compareStrings("publisher", query.publisher, candidate.publisher)
-  compareStrings("series", query.series, candidate.belongsTo?.series?.[0]?.name)
+  compareStrings(
+    "series",
+    query.belongsTo?.series?.[0]?.name,
+    candidate.belongsTo?.series?.[0]?.name,
+  )
 
   const candidateAuthors = metadataAuthors(candidate)
-  const queryAuthors = query.authors ?? []
+  const queryAuthors = metadataAuthors(query)
 
   if (queryAuthors.length > 0 && candidateAuthors.length > 0) {
     addSignal("contributors", {

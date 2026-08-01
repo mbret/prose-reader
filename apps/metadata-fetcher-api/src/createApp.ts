@@ -1,7 +1,7 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import {
-  buildMetadataQuery,
   fetchMetadata,
+  hasSearchTerms,
   type MetadataProvider,
 } from "@prose-reader/metadata-fetcher"
 import express, {
@@ -11,7 +11,7 @@ import express, {
   type Response,
 } from "express"
 import { parseMetadataInput } from "./parseMetadataInput.ts"
-import { PLAYGROUND_HTML } from "./playground.ts"
+import { PLAYGROUND_FILE } from "./playground.ts"
 
 export type CreateAppOptions = {
   readonly providers: ReadonlyArray<MetadataProvider>
@@ -178,14 +178,6 @@ const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
   }
 }
 
-/**
- * Whether the catalogs have anything to go on. `buildMetadataQuery` is the
- * package's own normalization, so this asks exactly the question the
- * providers will: did anything survive as a search term?
- */
-const isSearchable = (metadata: ResolvedMetadata): boolean =>
-  Object.keys(buildMetadataQuery(metadata)).some((key) => key !== "metadata")
-
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error &&
   (error.name === "AbortError" || error.name === "TimeoutError")
@@ -211,8 +203,10 @@ export const createApp = (options: CreateAppOptions): Express => {
   // registered only in development, so `/` is a plain 404 for anyone hosting
   // this — there is no page to find, not a hidden one
   if (options.playground) {
-    app.get("/", (_request, response) => {
-      response.type("html").send(PLAYGROUND_HTML)
+    app.get("/", (_request, response, next) => {
+      response.sendFile(PLAYGROUND_FILE, (error) => {
+        if (error) next(error)
+      })
     })
   }
 
@@ -237,7 +231,7 @@ export const createApp = (options: CreateAppOptions): Express => {
       return
     }
 
-    if (!isSearchable(metadata)) {
+    if (!hasSearchTerms(metadata)) {
       response.status(400).json({
         error:
           "No search term: provide at least a title, an author, an isbn, a gtin or an identifier",
