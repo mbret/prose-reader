@@ -44,7 +44,7 @@ export type OpenLibraryProviderOptions = {
   /**
    * Sent as `User-Agent`. Open Library's API etiquette asks for an
    * identifying one (app name + contact) and throttles anonymous traffic
-   * harder. Ignored by browsers, which forbid setting the header.
+   * harder.
    */
   readonly userAgent?: string
 }
@@ -101,10 +101,9 @@ export const createOpenLibraryProvider = (
     url.searchParams.set("fields", SEARCH_FIELDS)
     url.searchParams.set("limit", String(context.limit))
 
-    // `bind`: a detached global `fetch` has lost its receiver, which browsers
-    // reject ("Illegal invocation"). Read lazily so a consumer polyfilling or
-    // stubbing the global after building the provider still wins.
-    const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis)
+    // read lazily so a consumer stubbing the global after building the
+    // provider still wins
+    const doFetch = options.fetch ?? globalThis.fetch
     const response = await doFetch(url.toString(), {
       signal: context.signal,
       headers: {

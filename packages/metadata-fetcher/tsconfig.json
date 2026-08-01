@@ -1,7 +1,8 @@
 {
-  "extends": "../../tsconfig.web.json",
+  "extends": "../../tsconfig.node.json",
   "compilerOptions": {
-    "skipLibCheck": true
+    // `report.ts` reads the package name from package.json for its namespace
+    "resolveJsonModule": true
   },
   "include": ["src", "vite.config.ts"]
 }

@@ -20,6 +20,10 @@ fetched.metadata.cover?.uri // what the catalogs found
 fetched.matches[0]?.score // …and how sure we are it is this book
 ```
 
+{% hint style="info" %}
+This package targets **Node** — metadata lookups belong to a library backend or an import pipeline, not to the reading surface. Its output is plain JSON, so what you persist there is what a reader consumes later.
+{% endhint %}
+
 Nothing here needs an archive: hand-built terms work just as well, which is what a "search by title" form or a filename-derived guess produces.
 
 ```typescript
@@ -188,7 +192,7 @@ const provider = createOpenLibraryProvider({
 | `baseUrl` | `https://openlibrary.org` | API origin |
 | `coversBaseUrl` | `https://covers.openlibrary.org` | cover service origin |
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
-| `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder. Ignored by browsers, which forbid setting the header |
+| `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
 **Lookup strategy**, at most two requests: an ISBN search when the book states one — the catalog then verifies the identity for us — falling back to a title (+ first author) search when the ISBN is unknown to it or absent. A query with neither an ISBN nor a title yields no candidates rather than a fishing expedition.
 
