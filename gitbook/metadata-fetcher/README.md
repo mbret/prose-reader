@@ -219,11 +219,14 @@ Only the mapped fields are requested (`fields=`), which is the difference betwee
 A Docker image wraps this package in a small HTTP API, so metadata lookups don't have to happen inside your JavaScript app — and so you can try a provider against a real catalog with curl:
 
 ```bash
-docker build -f apps/metadata-fetcher-api/Dockerfile --target production -t prose-metadata-fetcher .
-docker run -p 3000:3000 -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" prose-metadata-fetcher
+docker run -p 3000:3000 \
+  -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
+  ghcr.io/mbret/prose-reader/metadata-fetcher-api:latest
 
 curl "http://localhost:3000/metadata?isbn=9780441013593"
 ```
+
+The image is published with every release, tagged with the version and `latest`, for `linux/amd64` and `linux/arm64`.
 
 | Route | |
 | --- | --- |

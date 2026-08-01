@@ -1,0 +1,60 @@
+name: docker
+
+on:
+  workflow_call:
+
+jobs:
+  docker:
+    # ubuntu, unlike the rest of the checks: GitHub's macOS runners ship no
+    # docker daemon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Single platform and loaded into the local daemon so the smoke test can
+      # actually run it — the multi-arch build only happens when publishing.
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/metadata-fetcher-api/Dockerfile
+          target: production
+          push: false
+          load: true
+          tags: metadata-fetcher-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # A green build only proves it compiled. This proves the image boots, and
+      # that a hosted deployment has no playground page — the property the
+      # production target exists to guarantee.
+      - name: Smoke test
+        run: |
+          docker run -d --name metadata-fetcher-api -p 3000:3000 \
+            -e OPEN_LIBRARY_USER_AGENT="prose-reader ci" \
+            metadata-fetcher-api:ci
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health > /dev/null; then break; fi
+            sleep 1
+          done
+
+          echo "health:"
+          curl -fsS http://localhost:3000/health
+          echo
+
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/)
+          if [ "$status" != "404" ]; then
+            echo "the playground answered $status — it must not exist in the production image"
+            exit 1
+          fi
+
+      - name: Container logs
+        if: ${{ failure() }}
+        run: docker logs metadata-fetcher-api
+
+      - name: Stop
+        if: ${{ always() }}
+        run: docker rm -f metadata-fetcher-api || true

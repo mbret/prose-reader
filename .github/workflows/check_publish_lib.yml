@@ -39,8 +39,11 @@ jobs:
   tests:
     uses: ./.github/workflows/_test.yml
 
+  docker:
+    uses: ./.github/workflows/_docker.yml
+
   publish:
-    needs: [lint, ts, ts_react_native_demo, tests, build]
+    needs: [lint, ts, ts_react_native_demo, tests, docker, build]
     runs-on: macos-latest
 
     steps:
@@ -70,3 +73,52 @@ jobs:
           npx lerna publish minor --no-private --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+
+  # The metadata fetcher ships as a container too, so a library app can run
+  # lookups without depending on the npm package. Same release as the libs: one
+  # image per published version.
+  publish_docker:
+    needs: [publish]
+    # ubuntu, unlike the rest: GitHub's macOS runners ship no docker daemon
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # master, not the commit that triggered this run: `lerna publish` has
+      # just pushed the version bump, and the image should carry it
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+
+      - name: Read the published version
+        id: release
+        run: echo "version=$(node -p "require('./lerna.json').version")" >> "$GITHUB_OUTPUT"
+
+      # arm64 as well as amd64: the point of the image is that someone can run
+      # a metadata service without a toolchain, and that includes Apple silicon
+      # and ARM hosts. It is emulated, so it leans on the layer cache — drop
+      # the platform if release time ever matters more.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/metadata-fetcher-api/Dockerfile
+          target: production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/metadata-fetcher-api:${{ steps.release.outputs.version }}
+            ghcr.io/${{ github.repository }}/metadata-fetcher-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

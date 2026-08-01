@@ -116,13 +116,24 @@ Behind an HTTP proxy, set `NODE_USE_ENV_PROXY=1`: Node's global `fetch` ignores 
 
 ## Deploying it
 
-The `production` target is the image to ship: dev dependencies pruned, running as the unprivileged `node` user, with a `HEALTHCHECK` that polls `/health`.
+Every release publishes the image to GitHub Container Registry, tagged with the version and `latest`:
+
+```bash
+docker run -p 3000:3000 \
+  -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
+  ghcr.io/mbret/prose-reader/metadata-fetcher-api:latest
+```
+
+It is built for `linux/amd64` and `linux/arm64`. The `production` target it comes from has dev dependencies pruned, runs as the unprivileged `node` user, and carries a `HEALTHCHECK` polling `/health`.
+
+To build it yourself:
 
 ```bash
 docker build -f apps/metadata-fetcher-api/Dockerfile --target production -t prose-metadata-fetcher .
-docker run -p 3000:3000 -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" prose-metadata-fetcher
 ```
 
 The build context is the repository root (this is a workspace app). Only the four workspaces the image needs enter the context — see `Dockerfile.dockerignore`.
+
+CI builds the same target on every pull request and smoke-tests it — it boots the container, checks `/health`, and asserts `/` answers `404`, so the "no playground when hosted" property is enforced rather than trusted.
 
 The service is stateless: no database, no cache, nothing on disk. Scale it by running more of it, and put your own cache in front if you expect repeat lookups — catalogs appreciate it.
