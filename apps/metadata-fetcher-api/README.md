@@ -116,12 +116,12 @@ Behind an HTTP proxy, set `NODE_USE_ENV_PROXY=1`: Node's global `fetch` ignores 
 
 ## Deploying it
 
-Every release publishes the image to GitHub Container Registry, tagged with the version and `latest`:
+Every release publishes the image to Docker Hub, tagged with the version and `latest`:
 
 ```bash
 docker run -p 3000:3000 \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
-  ghcr.io/mbret/prose-reader/metadata-fetcher-api:latest
+  mbret/prose-metadata-fetcher-api:latest
 ```
 
 It is built for `linux/amd64` and `linux/arm64`. The `production` target it comes from has dev dependencies pruned, runs as the unprivileged `node` user, and carries a `HEALTHCHECK` polling `/health`.

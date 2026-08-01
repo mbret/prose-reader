@@ -221,7 +221,7 @@ A Docker image wraps this package in a small HTTP API, so metadata lookups don't
 ```bash
 docker run -p 3000:3000 \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
-  ghcr.io/mbret/prose-reader/metadata-fetcher-api:latest
+  mbret/prose-metadata-fetcher-api:latest
 
 curl "http://localhost:3000/metadata?isbn=9780441013593"
 ```

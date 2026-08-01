@@ -81,9 +81,6 @@ jobs:
     needs: [publish]
     # ubuntu, unlike the rest: GitHub's macOS runners ship no docker daemon
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       # master, not the commit that triggered this run: `lerna publish` has
@@ -100,25 +97,29 @@ jobs:
       # a metadata service without a toolchain, and that includes Apple silicon
       # and ARM hosts. It is emulated, so it leans on the layer cache — drop
       # the platform if release time ever matters more.
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      # Tagged with the version too, not just `latest`: every push here
+      # publishes a release, so a deployment can pin one and roll back to it.
+      - name: Build and push metadata fetcher API
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./
           file: apps/metadata-fetcher-api/Dockerfile
           target: production
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/metadata-fetcher-api:${{ steps.release.outputs.version }}
-            ghcr.io/${{ github.repository }}/metadata-fetcher-api:latest
+            mbret/prose-metadata-fetcher-api:${{ steps.release.outputs.version }}
+            mbret/prose-metadata-fetcher-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
