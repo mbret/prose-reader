@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.web.json",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

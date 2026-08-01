@@ -17,7 +17,7 @@
 type ResolvedConfidence = "derived" | "assumed"
 
 type ResolvedCover = {
-  /** container-relative uri of the cover image (rebase like reading-order uris) */
+  /** container-relative uri (rebase like reading-order uris), or an absolute url from a remote catalog */
   uri: string
   mediaType?: string
   confidence: ResolvedConfidence
@@ -61,7 +61,7 @@ type ResolvedMetadata = {
 
 Two fields are resolved for the whole **container**, not just its descriptive sidecars, so they are populated by `resolveArchive` and left absent by the source-level `resolveMetadata` / `resolveArchiveMetadata`, which never see the file listing:
 
-- **`cover`** — the OPF-declared cover image (EPUB 3 `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a `cover`-ish image id), rebased onto a container-relative `uri` (`confidence: "derived"`); else the first image of the reading order for image-content containers — comics, image archives, synthetic image-spine OPFs such as `createArchiveFromUrls` lists (`confidence: "assumed"`). It stays absent when nothing image-like is a reading resource: an authored reflowable EPUB (text spine, so an interior illustration is never promoted) or an audiobook/video archive has no cover.
+- **`cover`** — the OPF-declared cover image (EPUB 3 `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a `cover`-ish image id), rebased onto a container-relative `uri` (`confidence: "derived"`); else the first image of the reading order for image-content containers — comics, image archives, synthetic image-spine OPFs such as `createArchiveFromUrls` lists (`confidence: "assumed"`). It stays absent when nothing image-like is a reading resource: an authored reflowable EPUB (text spine, so an interior illustration is never promoted) or an audiobook/video archive has no cover — a container with no cover of its own is exactly the case [metadata-fetcher](../metadata-fetcher/README.md) answers, with an absolute url into the catalog's cover service.
 - **`numberOfPages`** — the declared ComicInfo `PageCount`, else the count of page-like reading-order items (images and fixed-layout documents). Reflowable documents are not pages, and audio/video tracks are not pages, so both are excluded: a reflowable book or an audiobook has no page count.
 
 ### Contributor roles

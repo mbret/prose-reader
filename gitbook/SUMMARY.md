@@ -72,6 +72,10 @@
 * [About](archive-reader/README.md)
   * [Resolved metadata](archive-reader/resolved-metadata.md)
 
+## Metadata Fetcher
+
+* [About](metadata-fetcher/README.md)
+
 ## CFI
 
 * [About](cfi/about.md)
