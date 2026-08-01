@@ -13,7 +13,9 @@ npm run start:metadata-fetcher
 curl "http://localhost:3000/metadata?title=Dune&author=Frank+Herbert"
 ```
 
-Then open <http://localhost:3000> for the **playground**: a form (title, author, ISBN, plus the options) that runs a lookup and shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
+Then open <http://localhost:3000> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication up to 100 MB: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and only that plain JSON metadata is posted to `/metadata`. Neither the file nor the metadata is written to disk, browser storage, a database or a cache.
+
+The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
 The playground is **development only**. It is served when `NODE_ENV` is anything but `production`, which the production image sets — so a hosted deployment has no HTML surface at all: `/` is a plain JSON 404 there, because the route is never registered rather than hidden behind a check. There is no flag to turn it back on.
 

@@ -1,6 +1,10 @@
 {
   "extends": "../../tsconfig.node.json",
   "compilerOptions": {
+    // zip.js includes browser-capable declarations alongside its Node API.
+    // Their File System Access types need DOM declarations even though this
+    // app only instantiates the in-memory Uint8Array reader and writer.
+    "lib": ["ES2023", "DOM"],
     // node runs this app's TypeScript directly (type stripping), so every
     // construct must be erasable — no enums, namespaces or parameter
     // properties, which stripping cannot rewrite

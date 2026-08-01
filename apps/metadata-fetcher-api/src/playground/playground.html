@@ -30,6 +30,21 @@
   form { margin: 1.75rem 0 0; display: grid; gap: 0.75rem; }
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
   label { display: grid; gap: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+  fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+  legend { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.35rem; }
+  .source-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .source-option {
+    display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.65rem;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--card);
+    color: var(--fg); cursor: pointer;
+  }
+  .file-panel {
+    border: 1px dashed var(--line); border-radius: 8px; background: var(--card);
+    padding: 0.8rem;
+  }
+  [hidden].row, [hidden].file-panel { display: none; }
+  input[type=file] { font: inherit; color: var(--fg); }
+  .privacy { color: var(--muted); font-size: 0.78rem; margin: 0.35rem 0 0; }
   input[type=text], input[type=number] {
     font: inherit; padding: 0.5rem 0.6rem; border: 1px solid var(--line);
     border-radius: 7px; background: var(--card); color: var(--fg); min-width: 0;
@@ -73,10 +88,21 @@
   <p class="sub">Development playground — not served when <code>NODE_ENV=production</code>. <span id="providers"></span></p>
 
   <form id="form">
-    <div class="row">
+    <fieldset>
+      <legend>Lookup source</legend>
+      <div class="source-options">
+        <label class="source-option"><input type="radio" name="source" value="fields" checked> Enter metadata</label>
+        <label class="source-option"><input type="radio" name="source" value="file"> Upload publication</label>
+      </div>
+    </fieldset>
+    <div class="row" id="fieldsSource">
       <label>Title <input type="text" name="title" placeholder="Dune"></label>
       <label>Author <input type="text" name="author" placeholder="Frank Herbert"></label>
       <label>ISBN <input type="text" name="isbn" placeholder="9780441013593"></label>
+    </div>
+    <div class="file-panel" id="fileSource" hidden>
+      <label>EPUB, CBZ or ZIP file <input type="file" name="file" accept=".epub,.cbz,.zip,application/epub+zip,application/zip,application/vnd.comicbook+zip" disabled></label>
+      <p class="privacy">Files up to 100 MB are read in memory with prose archive-reader and discarded after their metadata is resolved.</p>
     </div>
     <details>
       <summary>Options</summary>
@@ -104,6 +130,9 @@
   const rawBox = document.getElementById("rawBox")
   const rawEl = document.getElementById("raw")
   const button = form.querySelector("button")
+  const fieldsSource = document.getElementById("fieldsSource")
+  const fileSource = document.getElementById("fileSource")
+  const fileInput = form.elements.file
 
   const el = (tag, className, text) => {
     const node = document.createElement(tag)
@@ -205,12 +234,18 @@
     resultsEl.append(...matches.map(renderMatch))
   }
 
-  const queryFrom = (formData) => {
+  const queryFrom = (formData, source) => {
     const params = new URLSearchParams()
+    const keys = source === "file"
+      ? ["limit", "minScore"]
+      : ["title", "author", "isbn", "limit", "minScore"]
 
-    for (const [key, value] of formData.entries()) {
-      if (key === "includeRaw") continue
-      if (typeof value === "string" && value.trim() !== "") params.set(key, value.trim())
+    for (const key of keys) {
+      const value = formData.get(key)
+
+      if (typeof value === "string" && value.trim() !== "") {
+        params.set(key, value.trim())
+      }
     }
 
     // a checked box submits "on", which the API rightly refuses
@@ -219,19 +254,72 @@
     return params
   }
 
+  const urlWith = (path, params) => {
+    const query = params.toString()
+
+    return query === "" ? path : `${path}?${query}`
+  }
+
+  const showResponse = (response, body, label, started) => {
+    const elapsed = Math.round(performance.now() - started)
+
+    statusEl.className = `status${response.ok ? "" : " error"}`
+    statusEl.replaceChildren(
+      el("code", null, label),
+      `  →  ${response.status} in ${elapsed} ms`,
+    )
+    render(body)
+    rawEl.textContent = JSON.stringify(body, null, 2)
+    rawBox.hidden = false
+  }
+
+  const setSource = (source) => {
+    const fromFile = source === "file"
+    const fieldsHidden = fromFile
+    const fileHidden = !fromFile
+
+    if (fieldsSource.hidden !== fieldsHidden) fieldsSource.hidden = fieldsHidden
+    if (fileSource.hidden !== fileHidden) fileSource.hidden = fileHidden
+
+    for (const input of fieldsSource.querySelectorAll("input")) {
+      if (input.disabled !== fromFile) input.disabled = fromFile
+    }
+    if (fileInput.disabled !== fileHidden) fileInput.disabled = fileHidden
+  }
+
+  for (const sourceInput of form.elements.source) {
+    sourceInput.addEventListener("change", () => {
+      if (sourceInput.checked) setSource(sourceInput.value)
+    })
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault()
 
-    const params = queryFrom(new FormData(form))
+    const formData = new FormData(form)
+    const source = formData.get("source")
+    const params = queryFrom(formData, source)
 
-    if (params.toString() === "") {
+    if (
+      source === "fields" &&
+      !["title", "author", "isbn"].some((key) => params.has(key))
+    ) {
       statusEl.className = "status error"
       statusEl.textContent = "Type a title, an author or an ISBN first."
 
       return
     }
 
-    const url = `/metadata?${params}`
+    const file = formData.get("file")
+
+    if (source === "file" && (!(file instanceof File) || file.size === 0)) {
+      statusEl.className = "status error"
+      statusEl.textContent = "Choose an EPUB, CBZ or ZIP file first."
+
+      return
+    }
+
+    const metadataUrl = urlWith("/metadata", params)
     const started = performance.now()
 
     button.disabled = true
@@ -241,20 +329,49 @@
     rawBox.hidden = true
 
     try {
-      const response = await fetch(url)
+      let response
+      let label
+
+      if (source === "file") {
+        statusEl.textContent = `reading ${file.name} in memory…`
+
+        const resolvedResponse = await fetch("/playground/resolve", {
+          method: "POST",
+          headers: {
+            "content-type": "application/octet-stream",
+            "x-prose-file-name": encodeURIComponent(file.name),
+            "x-prose-file-type": encodeURIComponent(file.type),
+          },
+          body: file,
+        })
+        const resolved = await resolvedResponse.json()
+
+        if (!resolvedResponse.ok) {
+          showResponse(
+            resolvedResponse,
+            resolved,
+            `POST /playground/resolve (${file.name})`,
+            started,
+          )
+
+          return
+        }
+
+        statusEl.textContent = `fetching with metadata resolved from ${file.name}…`
+        response = await fetch(metadataUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(resolved),
+        })
+        label = `POST ${metadataUrl} (${file.name})`
+      } else {
+        response = await fetch(metadataUrl)
+        label = `GET ${metadataUrl}`
+      }
+
       const body = await response.json()
-      const elapsed = Math.round(performance.now() - started)
 
-      statusEl.className = `status${response.ok ? "" : " error"}`
-      statusEl.replaceChildren(
-        el("code", null, `GET ${url}`),
-        `  →  ${response.status} in ${elapsed} ms`,
-      )
-
-      render(body)
-
-      rawEl.textContent = JSON.stringify(body, null, 2)
-      rawBox.hidden = false
+      showResponse(response, body, label, started)
     } catch (error) {
       statusEl.className = "status error"
       statusEl.textContent = `request failed: ${error.message}`
