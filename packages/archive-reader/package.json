@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@types/unzipper": "^0.10.11",
-    "@zip.js/zip.js": "^2.8.33",
+    "@zip.js/zip.js": "^2.8.34",
     "buffer": "^6.0.3",
     "jszip": "^3.10.0",
     "libarchive.js": "^2.0.2",
