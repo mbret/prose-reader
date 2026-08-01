@@ -89,10 +89,10 @@ Both answer with the `FetchedMetadata` entity verbatim — merged `metadata`, ra
 
 | | |
 | --- | --- |
-| `200` | a lookup happened — including "found nothing", and including a partial one where some catalogs failed (they are named in `failedProviders`) |
+| `200` | a lookup happened — including "found nothing", and including a partial one where some catalogs failed (they are named in `failedProviders`, with the HTTP status they answered with) |
 | `400` | no search term, an invalid option, an unknown provider id, or a body that is not a JSON object |
 | `404` | unknown route |
-| `502` | every provider that could be asked failed — the body still names them |
+| `502` | every provider that could be asked failed — the body still names them and the status each answered with, so a `429` reads as "come back later" rather than "broken" |
 | `504` | the lookup outlived `REQUEST_TIMEOUT_MS` |
 
 ## Configuration

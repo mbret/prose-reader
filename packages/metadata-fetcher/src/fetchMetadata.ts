@@ -1,8 +1,10 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 import { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata.ts"
+import { responseErrorStatus } from "./providers/responseError.ts"
 import { Report } from "./report.ts"
 import type {
+  FailedMetadataProvider,
   FetchedMetadata,
   FetchedMetadataSource,
 } from "./types/fetchedMetadata.ts"
@@ -134,23 +136,31 @@ export const fetchMetadata = async (
           signal: options.signal,
         })
 
-        return { provider, candidates }
+        return { provider, candidates, failure: undefined }
       } catch (error) {
         // the caller pulled the plug: their cancellation, their rejection
         if (options.signal?.aborted === true) throw error
 
         // catalogs in the wild are flaky: a failing provider never fails the
-        // fetch, it just doesn't contribute
+        // fetch, it just doesn't contribute. The status, when the catalog
+        // answered with one, is what tells a rate limit from an outage.
         Report.error(`fetchMetadata: provider "${provider.id}" failed`, error)
 
-        return { provider, candidates: undefined }
+        return {
+          provider,
+          candidates: undefined,
+          failure: omitUndefined({
+            id: provider.id,
+            status: responseErrorStatus(error),
+          }),
+        }
       }
     }),
   )
 
-  const failedProviders = results
-    .filter((result) => result.candidates === undefined)
-    .map((result) => result.provider.id)
+  const failedProviders: FailedMetadataProvider[] = results.flatMap((result) =>
+    result.failure !== undefined ? [result.failure] : [],
+  )
 
   const sources: Record<string, FetchedMetadataSource> = {}
   const matches: MetadataMatch[] = []

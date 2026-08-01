@@ -4,6 +4,7 @@ import type {
 } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { fetchMetadata } from "./fetchMetadata.ts"
+import { MetadataProviderResponseError } from "./providers/responseError.ts"
 import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 
 const providerReturning = (
@@ -161,6 +162,36 @@ describe("fetchMetadata", () => {
     })
   })
 
+  it("reports the status when a catalog answered with one", async () => {
+    const rateLimited: MetadataProvider = {
+      id: "throttled",
+      name: "Throttled Catalog",
+      search: () =>
+        Promise.reject(new MetadataProviderResponseError(429, "slow down")),
+    }
+    // a provider on another HTTP client throws that client's error, which
+    // carries the status structurally
+    const foreign: MetadataProvider = {
+      id: "foreign",
+      name: "Foreign Client",
+      search: () =>
+        Promise.reject(
+          Object.assign(new Error("Service Unavailable"), { status: 503 }),
+        ),
+    }
+
+    const fetched = await fetchMetadata(book, {
+      providers: [rateLimited, foreign, failingProvider("network")],
+    })
+
+    expect(fetched.failedProviders).toEqual([
+      { id: "throttled", status: 429 },
+      { id: "foreign", status: 503 },
+      // a network error carries no status, which is itself the answer
+      { id: "network" },
+    ])
+  })
+
   it("survives a failing provider and lists it", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
@@ -169,7 +200,7 @@ describe("fetchMetadata", () => {
       ],
     })
 
-    expect(fetched.failedProviders).toEqual(["down"])
+    expect(fetched.failedProviders).toEqual([{ id: "down" }])
     expect(fetched.sources).not.toHaveProperty("down")
     expect(fetched.metadata).toEqual({ title: "Dune" })
   })

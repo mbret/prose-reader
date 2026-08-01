@@ -33,6 +33,24 @@ export type FetchedMetadataSources = Readonly<
 >
 
 /**
+ * A provider that dropped out of a lookup, and what is known about why.
+ */
+export type FailedMetadataProvider = {
+  readonly id: string
+  /**
+   * The HTTP status the catalog answered with, when the failure was a
+   * response rather than a network error, a malformed payload or a bug. This
+   * is the difference between "rate limited, ask again later" (`429`), "the
+   * catalog is down" (`5xx`) and "we asked wrong" (`4xx`) — a consumer acts
+   * differently on each, and a bare "it failed" cannot tell them apart.
+   *
+   * Providers report it by throwing `MetadataProviderResponseError` (or any
+   * error carrying a numeric `status`).
+   */
+  readonly status?: number
+}
+
+/**
  * The fully fetched, plain-JSON view of what remote catalogs know about a
  * book — the metadata-fetching equivalent of `ResolvedArchive`:
  * structured-clone-able, persistable, cacheable, no handle attached.
@@ -66,8 +84,9 @@ export type FetchedMetadata = {
   readonly matches: ReadonlyArray<MetadataMatch>
   readonly sources: FetchedMetadataSources
   /**
-   * Providers whose search threw — a network error, a rate limit, a malformed
-   * response. Always present (empty when every provider answered): a failing
+   * Providers whose search threw — a rate limit, an outage, a network error, a
+   * malformed response — each with its HTTP `status` when the catalog answered
+   * with one. Always present (empty when every provider answered): a failing
    * provider never fails the fetch, so this is the only trace left, and a
    * consumer refusing to cache a partial answer needs it.
    *
@@ -76,7 +95,10 @@ export type FetchedMetadata = {
    *
    * // don't persist "we found nothing" when we simply couldn't ask
    * if (fetched.failedProviders.length === 0) cache.set(bookId, fetched)
+   *
+   * // rate limited rather than broken: worth asking again, later
+   * const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
    * ```
    */
-  readonly failedProviders: ReadonlyArray<string>
+  readonly failedProviders: ReadonlyArray<FailedMetadataProvider>
 }

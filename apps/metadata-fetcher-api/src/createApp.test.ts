@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises"
-import type {
-  FetchedMetadata,
-  MetadataProvider,
+import {
+  type FetchedMetadata,
+  type MetadataProvider,
+  MetadataProviderResponseError,
 } from "@prose-reader/metadata-fetcher"
 import type { Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -48,6 +49,13 @@ const failingProvider: MetadataProvider = {
   id: "down",
   name: "Down Catalog",
   search: () => Promise.reject(new Error("upstream is down")),
+}
+
+const rateLimitedProvider: MetadataProvider = {
+  id: "throttled",
+  name: "Throttled Catalog",
+  search: () =>
+    Promise.reject(new MetadataProviderResponseError(429, "slow down")),
 }
 
 const hangingProvider: MetadataProvider = {
@@ -286,7 +294,28 @@ describe("metadata-fetcher-api failures", () => {
 
       expect(response.status).toBe(502)
       // the entity still says who failed
-      expect((await readFetched(response)).failedProviders).toEqual(["down"])
+      expect((await readFetched(response)).failedProviders).toEqual([
+        { id: "down" },
+      ])
+    } finally {
+      await api.close()
+    }
+  })
+
+  it("names the status a catalog failed with", async () => {
+    const api = serve(
+      createApp({ ...defaults, providers: [rateLimitedProvider] }),
+    )
+
+    try {
+      const response = await api.get("/metadata?title=Dune")
+
+      // rate limited, not broken — the body says which, so a caller can decide
+      // to come back rather than give up
+      expect(response.status).toBe(502)
+      expect((await readFetched(response)).failedProviders).toEqual([
+        { id: "throttled", status: 429 },
+      ])
     } finally {
       await api.close()
     }

@@ -56,7 +56,12 @@ export {
   openLibraryMetadataHomes,
   resolveOpenLibraryDoc,
 } from "./providers/openLibrary/resolve.ts"
+export {
+  MetadataProviderResponseError,
+  responseErrorStatus,
+} from "./providers/responseError.ts"
 export type {
+  FailedMetadataProvider,
   FetchedMetadata,
   FetchedMetadataSource,
   FetchedMetadataSources,

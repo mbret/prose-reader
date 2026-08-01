@@ -5,6 +5,7 @@ import type {
   MetadataProviderContext,
 } from "../../types/provider.ts"
 import { metadataAuthors } from "../../utils/metadataAuthors.ts"
+import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
 import { resolveOpenLibraryDoc } from "./resolve.ts"
 
@@ -118,7 +119,8 @@ export const createOpenLibraryProvider = (
     })
 
     if (!response.ok) {
-      throw new Error(
+      throw new MetadataProviderResponseError(
+        response.status,
         `Open Library search failed with status ${response.status}`,
       )
     }

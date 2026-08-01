@@ -188,9 +188,11 @@
     resultsEl.replaceChildren()
 
     if (body.failedProviders?.length) {
-      resultsEl.append(
-        el("p", "status error", `failed providers: ${body.failedProviders.join(", ")}`),
-      )
+      const failed = body.failedProviders
+        .map(({ id, status }) => (status ? `${id} (HTTP ${status})` : id))
+        .join(", ")
+
+      resultsEl.append(el("p", "status error", `failed providers: ${failed}`))
     }
 
     const matches = body.matches ?? []

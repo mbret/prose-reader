@@ -47,7 +47,8 @@ type FetchedMetadata = {
   /** per-provider detail, keyed by provider id */
   sources: Record<string, { provider: { id, name }; matches: MetadataMatch[] }>
   /** providers whose search threw */
-  failedProviders: string[]
+  /** providers that dropped out, with the HTTP status when there was one */
+  failedProviders: { id: string; status?: number }[]
 }
 ```
 
@@ -142,12 +143,19 @@ const fetched = await fetchMetadata(resolved, {
 
 ### Error policy
 
-Mirrors `resolveArchive`: a provider that throws — a network error, a rate limit, a malformed response — never fails the fetch. It is logged through the debug `Report` and listed in `failedProviders`, the only trace left:
+Mirrors `resolveArchive`: a provider that throws — a rate limit, an outage, a network error, a malformed response — never fails the fetch. Providers are asked concurrently and each is isolated, so one failing costs you that catalog and nothing else. It is logged through the debug `Report` and listed in `failedProviders`, the only trace left:
 
 ```typescript
 // don't persist "we found nothing" when we simply couldn't ask
 if (fetched.failedProviders.length === 0) cache.set(bookId, fetched)
+
+// rate limited rather than broken: worth asking again, later
+const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 ```
+
+Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
+
+There is deliberately **no retry, no backoff and no `Retry-After` handling** — a failure is reported, not papered over. A caller that wants to come back has what it needs to decide.
 
 Cancelling through `signal` is the one exception: it rejects, since the caller asked for it.
 
@@ -299,6 +307,15 @@ if (!hasSearchTerms(resolved.metadata)) return
 Rules of thumb:
 
 - **Return an empty list, don't throw**, when the metadata carries nothing you can search on. Throwing is for actual failures — they land in `failedProviders`.
+- **Throw `MetadataProviderResponseError`** when the catalog answers with a failing status, so the status reaches the caller instead of dying in a log line. Any error carrying a numeric `status` works too, which covers HTTP clients that throw their own:
+
+  ```typescript
+  import { MetadataProviderResponseError } from "@prose-reader/metadata-fetcher"
+
+  if (!response.ok) {
+    throw new MetadataProviderResponseError(response.status, "My Catalog search failed")
+  }
+  ```
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `isbn` is the single most damaging thing you can emit.
