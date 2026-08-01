@@ -1,9 +1,9 @@
-import type { Archive } from "../archives/types"
-import { type ArchiveOpfParsed, readArchiveOpf } from "../opf/readArchiveOpf"
-import { buildTocFromFolders } from "./folders"
-import { resolveTocFromNav } from "./nav"
-import { resolveTocFromNcx } from "./ncx"
-import type { ArchiveTocItem } from "./types"
+import type { Archive } from "../archives/types.ts"
+import { type ArchiveOpfParsed, readArchiveOpf } from "../opf/readArchiveOpf.ts"
+import { buildTocFromFolders } from "./folders.ts"
+import { resolveTocFromNav } from "./nav.ts"
+import { resolveTocFromNcx } from "./ncx.ts"
+import type { ArchiveTocItem } from "./types.ts"
 
 /**
  * Resolve the table of contents of an archive into a generic, container

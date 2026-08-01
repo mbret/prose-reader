@@ -1,11 +1,11 @@
 import { getUriBasePath, urlJoin } from "@prose-reader/shared"
 import { XmlDocument, XmlElement, type XmlNodeBase } from "xmldoc"
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive } from "../archives/types"
-import type { OpfMetadata } from "../opf/parse"
-import { getXmlElementInnerText } from "../utils/getXmlElementInnerText"
-import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList"
-import type { ArchiveTocItem } from "./types"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive } from "../archives/types.ts"
+import type { OpfMetadata } from "../opf/parse.ts"
+import { getXmlElementInnerText } from "../utils/getXmlElementInnerText.ts"
+import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
+import type { ArchiveTocItem } from "./types.ts"
 
 const manifestItemIsNavDocument = (item: {
   readonly properties?: string

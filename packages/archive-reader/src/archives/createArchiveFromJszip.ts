@@ -1,6 +1,6 @@
 import type JSZip from "jszip"
-import { createArchiveFromEntries } from "./createArchiveFromEntries"
-import type { Archive } from "./types"
+import { createArchiveFromEntries } from "./createArchiveFromEntries.ts"
+import type { Archive } from "./types.ts"
 
 export const createArchiveFromJszip = async (
   jszip: JSZip,

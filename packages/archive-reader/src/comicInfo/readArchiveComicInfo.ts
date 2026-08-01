@@ -1,7 +1,7 @@
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive } from "../archives/types"
-import { getArchiveHasComicInfo } from "./getArchiveHasComicInfo"
-import { type ComicInfo, parseComicInfo } from "./parse"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive } from "../archives/types.ts"
+import { getArchiveHasComicInfo } from "./getArchiveHasComicInfo.ts"
+import { type ComicInfo, parseComicInfo } from "./parse.ts"
 
 /**
  * Loads and parses the `ComicInfo.xml` sidecar from `archive`.

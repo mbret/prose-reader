@@ -3,15 +3,15 @@ import {
   isMediaContentMimeType,
   parseContentType,
 } from "@prose-reader/shared"
-import { APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME } from "../apple/parse"
-import type { Archive, FileRecord } from "../archives/types"
-import { getArchiveFileRecordByUri, isFileRecord } from "../archives/types"
-import { COMIC_INFO_FILENAME } from "../comicInfo/parse"
-import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../kobo/parse"
-import type { ArchiveOpfParsed } from "../opf/readArchiveOpf"
-import { readArchiveOpf } from "../opf/readArchiveOpf"
-import { omitUndefined } from "../utils/omitUndefined"
-import { toContainerUri } from "../utils/toContainerUri"
+import { APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME } from "../apple/parse.ts"
+import type { Archive, FileRecord } from "../archives/types.ts"
+import { getArchiveFileRecordByUri, isFileRecord } from "../archives/types.ts"
+import { COMIC_INFO_FILENAME } from "../comicInfo/parse.ts"
+import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../kobo/parse.ts"
+import type { ArchiveOpfParsed } from "../opf/readArchiveOpf.ts"
+import { readArchiveOpf } from "../opf/readArchiveOpf.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
+import { toContainerUri } from "../utils/toContainerUri.ts"
 
 /**
  * One resource of the publication's default reading sequence, in the

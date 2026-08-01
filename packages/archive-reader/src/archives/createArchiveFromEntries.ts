@@ -3,8 +3,8 @@ import {
   getUriBasename,
   sortByTitleComparator,
 } from "@prose-reader/shared"
-import { createArchive } from "./createArchive"
-import type { Archive, ArchiveRecord, FileRecord } from "./types"
+import { createArchive } from "./createArchive.ts"
+import type { Archive, ArchiveRecord, FileRecord } from "./types.ts"
 
 /**
  * Normalized view of a source entry, shared by every `createArchiveFrom*`

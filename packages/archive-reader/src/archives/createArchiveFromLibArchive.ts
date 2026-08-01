@@ -7,9 +7,9 @@
 // compressed-file types live in the compiled output, so we reach for them there.
 import type { ArchiveReader } from "libarchive.js/dist/build/compiled/archive-reader"
 import type { CompressedFile } from "libarchive.js/dist/build/compiled/compressed-file"
-import { createArchiveFromEntries } from "./createArchiveFromEntries"
-import { blobFileAccessors } from "./fileAccessors"
-import type { Archive } from "./types"
+import { createArchiveFromEntries } from "./createArchiveFromEntries.ts"
+import { blobFileAccessors } from "./fileAccessors.ts"
+import type { Archive } from "./types.ts"
 
 export const createArchiveFromLibArchive = async (
   libArchive: ArchiveReader,

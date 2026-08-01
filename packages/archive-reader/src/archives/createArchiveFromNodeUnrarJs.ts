@@ -1,8 +1,8 @@
 import { detectMimeTypeFromName } from "@prose-reader/shared"
 import type { Extractor } from "node-unrar-js"
-import { createArchiveFromEntries } from "./createArchiveFromEntries"
-import { arrayBufferFileAccessors } from "./fileAccessors"
-import type { Archive } from "./types"
+import { createArchiveFromEntries } from "./createArchiveFromEntries.ts"
+import { arrayBufferFileAccessors } from "./fileAccessors.ts"
+import type { Archive } from "./types.ts"
 
 /**
  * `node-unrar-js`'s `extract({ files })` returns a generator that keeps WASM

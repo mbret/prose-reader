@@ -1,4 +1,4 @@
-import type { Archive } from "../archives/types"
+import type { Archive } from "../archives/types.ts"
 
 export const getArchiveOpfInfo = (archive: Archive) => {
   const filesAsArray = archive.records.filter((file) => !file.dir)

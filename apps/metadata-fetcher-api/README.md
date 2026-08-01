@@ -31,11 +31,11 @@ npm run dev --workspace prose-reader-metadata-fetcher-api
 
 ### No build, anywhere in development
 
-Node runs TypeScript directly (type stripping), and that goes for the library too: `@prose-reader/metadata-fetcher` declares a `prose-source` export condition pointing at its own `src/index.ts`, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads the package's TypeScript instead of its `dist`.
+Node runs TypeScript directly (type stripping), and that goes for both libraries too: `@prose-reader/archive-reader` and `@prose-reader/metadata-fetcher` declare `prose-source` export conditions pointing at their source entry points, so `node --conditions=prose-source` — what `npm run dev` and the compose service both run — loads their TypeScript instead of `dist`. This includes archive-reader's zip.js creator used by playground uploads.
 
 The same condition is set for the typechecker (`customConditions` in `tsconfig.json`) and for the tests (`resolve.conditions` in `vitest.config.ts`), so running, typechecking and testing all agree and none of them needs the package built.
 
-The condition is inert for anyone else: nothing applies it unless asked, and consumers of the published package resolve `dist` as usual. The production image resolves `dist` too — it should exercise the artifact that actually ships.
+The condition is inert for anyone else: nothing applies it unless asked, and normal package consumers resolve `dist` as usual. The production image resolves `dist` too — it should exercise the artifact that actually ships.
 
 ## Endpoints
 

@@ -1,4 +1,4 @@
-import type { FileRecord } from "./types"
+import type { FileRecord } from "./types.ts"
 
 /**
  * Decodes a record's bytes as UTF-8. The caller asserts the record is text;

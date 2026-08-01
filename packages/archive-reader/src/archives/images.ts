@@ -1,6 +1,6 @@
 import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
-import type { Archive, ArchiveRecord, FileRecord } from "./types"
-import { isFileRecord } from "./types"
+import type { Archive, ArchiveRecord, FileRecord } from "./types.ts"
+import { isFileRecord } from "./types.ts"
 
 /**
  * Best-effort media type of a file record: the archive's own encoding format

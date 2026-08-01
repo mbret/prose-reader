@@ -1,11 +1,11 @@
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive, FileRecord } from "../archives/types"
-import { isFileRecord } from "../archives/types"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive, FileRecord } from "../archives/types.ts"
+import { isFileRecord } from "../archives/types.ts"
 import {
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME,
   type AppleMetadata,
   parseAppleDisplayOptionsXml,
-} from "./parse"
+} from "./parse.ts"
 
 const appleDisplayOptionsBasenameLower =
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME.toLowerCase()

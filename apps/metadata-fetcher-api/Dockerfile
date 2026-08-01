@@ -38,16 +38,14 @@ COPY apps/metadata-fetcher-api apps/metadata-fetcher-api
 
 # ---------------------------------------------------------------------------
 # development — what compose runs. Source is bind-mounted over these copies and
-# node reloads on change, the API's and the library's alike: `prose-source`
-# resolves @prose-reader/metadata-fetcher to its TypeScript.
+# node reloads on change, the API's and both libraries' alike: `prose-source`
+# resolves archive-reader and metadata-fetcher to their TypeScript.
 #
-# Only the library's runtime dependencies need building — archive-reader for
-# ISBN normalization, shared for the debug Report. `lerna run build` follows
-# the graph, so naming archive-reader covers both.
+# Only shared needs building: archive-reader's source uses its debug Report.
 # ---------------------------------------------------------------------------
 FROM sources AS development
 
-RUN npx lerna run build --scope @prose-reader/archive-reader
+RUN npx lerna run build --scope @prose-reader/shared
 
 ENV NODE_ENV=development
 WORKDIR /repo/apps/metadata-fetcher-api

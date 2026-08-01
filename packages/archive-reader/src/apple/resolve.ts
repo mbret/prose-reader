@@ -1,9 +1,9 @@
 import type {
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata"
-import { omitUndefined } from "../utils/omitUndefined"
-import type { AppleMetadata } from "./parse"
+} from "../types/resolvedMetadata.ts"
+import { omitUndefined } from "../utils/omitUndefined.ts"
+import type { AppleMetadata } from "./parse.ts"
 
 /**
  * Losslessness contract: the display options list is copied verbatim into

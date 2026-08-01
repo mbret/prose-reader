@@ -9,9 +9,9 @@
     // construct must be erasable — no enums, namespaces or parameter
     // properties, which stripping cannot rewrite
     "erasableSyntaxOnly": true,
-    // resolve @prose-reader/metadata-fetcher to its TypeScript source, the
-    // same way `node --conditions=prose-source` does at runtime: the app
-    // typechecks against what it actually runs, and neither needs a build
+    // resolve both prose-reader libraries to their TypeScript source, the same
+    // way `node --conditions=prose-source` does at runtime: the app typechecks
+    // against what it actually runs, and neither library needs a build
     "customConditions": ["prose-source"]
   },
   "include": ["src", "vitest.config.ts"]

@@ -1,7 +1,7 @@
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive } from "../archives/types"
-import { getArchiveOpfInfo } from "./getArchiveOpfInfo"
-import { type OpfMetadata, parseOpf } from "./parse"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive } from "../archives/types.ts"
+import { getArchiveOpfInfo } from "./getArchiveOpfInfo.ts"
+import { type OpfMetadata, parseOpf } from "./parse.ts"
 
 export type ArchiveOpfParsed = {
   opf: OpfMetadata

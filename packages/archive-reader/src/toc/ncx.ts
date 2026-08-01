@@ -1,9 +1,9 @@
 import { getUriBasePath, urlJoin } from "@prose-reader/shared"
 import { XmlDocument, type XmlElement } from "xmldoc"
-import { readRecordAsText } from "../archives/readRecordAsText"
-import type { Archive } from "../archives/types"
-import type { OpfMetadata } from "../opf/parse"
-import type { ArchiveTocItem } from "./types"
+import { readRecordAsText } from "../archives/readRecordAsText.ts"
+import type { Archive } from "../archives/types.ts"
+import type { OpfMetadata } from "../opf/parse.ts"
+import type { ArchiveTocItem } from "./types.ts"
 
 const mapNcxChapter = (
   point: XmlElement,
