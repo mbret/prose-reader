@@ -40,7 +40,7 @@
     "@webview-bridge/react-native": "^1.7.7",
     "@webview-bridge/web": "^1.7.7",
     "expo-file-system": "^56.0.7",
-    "react": "19.x",
+    "react": "^19.2.8",
     "rxjs": "*"
   }
 }
