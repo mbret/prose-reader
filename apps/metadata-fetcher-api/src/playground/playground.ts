@@ -3,7 +3,6 @@ import express, { type Express } from "express"
 
 export const PLAYGROUND_FILE = join(import.meta.dirname, "playground.html")
 export const PLAYGROUND_SCRIPT_FILE = join(import.meta.dirname, "playground.js")
-const PLAYGROUND_FILE_LIMIT = "100mb"
 
 const decodedHeader = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
@@ -44,7 +43,10 @@ export const registerPlayground = (app: Express): void => {
     "/playground/resolve",
     express.raw({
       type: "application/octet-stream",
-      limit: PLAYGROUND_FILE_LIMIT,
+      // The development playground intentionally keeps the publication only
+      // in process memory, with no application-level size restriction or
+      // fallback to temporary storage.
+      limit: Number.POSITIVE_INFINITY,
     }),
     async (request, response) => {
       const filename = decodedHeader(request.get("x-prose-file-name"))
