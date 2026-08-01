@@ -8,7 +8,10 @@ import { TextReader, Uint8ArrayWriter, ZipWriter } from "@zip.js/zip.js"
 import type { Express } from "express"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { createApp } from "./createApp.ts"
-import { PLAYGROUND_FILE } from "./playground/playground.ts"
+import {
+  PLAYGROUND_FILE,
+  PLAYGROUND_SCRIPT_FILE,
+} from "./playground/playground.ts"
 
 /**
  * `response.json()` is `unknown` — rightly so. These two assert the shape the
@@ -306,10 +309,24 @@ describe("metadata-fetcher-api playground", () => {
       expect(html).toContain('<form id="form">')
       expect(html).toContain('name="title"')
       expect(html).toContain('type="file"')
-      expect(html).toContain("/playground/resolve")
+      expect(html).toContain(
+        '<script src="/playground/playground.js"></script>',
+      )
+      expect(html).not.toContain("const form =")
       expect(html).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       // served straight from playground.html, so editing it needs no restart
       expect(html).toBe(await readFile(PLAYGROUND_FILE, "utf8"))
+
+      const scriptResponse = await api.get("/playground/playground.js")
+      const script = await scriptResponse.text()
+
+      expect(scriptResponse.status).toBe(200)
+      expect(scriptResponse.headers.get("content-type")).toContain(
+        "text/javascript",
+      )
+      expect(script).toContain("/playground/resolve")
+      expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
+      expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))
     } finally {
       await api.close()
     }
@@ -378,6 +395,7 @@ describe("metadata-fetcher-api playground", () => {
       )
 
       expect(upload.status).toBe(404)
+      expect((await api.get("/playground/playground.js")).status).toBe(404)
     } finally {
       await api.close()
     }

@@ -2,6 +2,7 @@ import { join } from "node:path"
 import express, { type Express } from "express"
 
 export const PLAYGROUND_FILE = join(import.meta.dirname, "playground.html")
+export const PLAYGROUND_SCRIPT_FILE = join(import.meta.dirname, "playground.js")
 const PLAYGROUND_FILE_LIMIT = "100mb"
 
 const decodedHeader = (value: string | undefined): string | undefined => {
@@ -23,12 +24,18 @@ const decodedHeader = (value: string | undefined): string | undefined => {
  * `createApp` calls this only when the playground is enabled — never in
  * production (see `config.ts`), where the route simply does not exist.
  *
- * Served from disk per request, deliberately: editing the page then shows up
- * on a refresh, since `node --watch` only watches modules it imported.
+ * Both assets are served from disk per request, deliberately: editing either
+ * then shows up on refresh, since `node --watch` only watches imported modules.
  */
 export const registerPlayground = (app: Express): void => {
   app.get("/", (_request, response, next) => {
     response.sendFile(PLAYGROUND_FILE, (error) => {
+      if (error) next(error)
+    })
+  })
+
+  app.get("/playground/playground.js", (_request, response, next) => {
+    response.sendFile(PLAYGROUND_SCRIPT_FILE, (error) => {
       if (error) next(error)
     })
   })
