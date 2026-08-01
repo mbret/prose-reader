@@ -43,9 +43,10 @@ export type MetadataMatch = {
   readonly providerId: string
   /**
    * Aggregate confidence, `0` to `1`: the weight-averaged score of every
-   * comparable field, or exactly `1` when an identifier the catalog and the
-   * book both state agrees (an ISBN/GTIN match *is* the book). `0` when the
-   * two sides had no field in common to compare.
+   * comparable field — except when both sides state an identifier, which
+   * settles it outright: `1` if it agrees (an ISBN/GTIN match *is* the book),
+   * `0` if it contradicts. `0` too when the two sides had no field in common
+   * to compare.
    */
   readonly score: number
   /** Every field comparison behind {@link MetadataMatch.score}. */

@@ -50,12 +50,14 @@ COPY apps/metadata-fetcher-api apps/metadata-fetcher-api
 # `prose-source` export condition resolves @prose-reader/metadata-fetcher to
 # its TypeScript, which node runs as-is. Nothing to build, nothing to watch.
 #
-# Only @prose-reader/shared is built: the library imports it at runtime (its
-# debug Report) and it resolves through its published entry.
+# The library's own runtime dependencies are built, though — it imports
+# @prose-reader/archive-reader (ISBN normalization) and @prose-reader/shared
+# (its debug Report), which resolve through their published entries. `lerna
+# run build` follows the graph, so naming archive-reader covers both.
 # ---------------------------------------------------------------------------
 FROM sources AS development
 
-RUN npx lerna run build --scope @prose-reader/shared
+RUN npx lerna run build --scope @prose-reader/archive-reader
 
 ENV NODE_ENV=development
 WORKDIR /repo/apps/metadata-fetcher-api

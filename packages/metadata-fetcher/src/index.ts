@@ -1,10 +1,12 @@
 /**
- * The "what we know about a book in → what the catalogs know out" package:
+ * Fetches a book's metadata from online catalogs — what the world knows about
+ * it, as opposed to what its file carries.
+ *
  * {@link fetchMetadata} takes a `ResolvedMetadata` — or anything carrying one,
  * which is the `ResolvedArchive` shape `@prose-reader/archive-reader`
  * produces — asks a list of pluggable {@link MetadataProvider}s, scores every
- * candidate against what the book itself said, and returns the same
- * `ResolvedMetadata` vocabulary back, plus the per-provider detail behind it.
+ * candidate against what you gave it, and returns the same `ResolvedMetadata`
+ * vocabulary back, plus the per-provider detail behind it.
  *
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"

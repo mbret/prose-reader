@@ -13,6 +13,13 @@ describe("toIsbn13", () => {
     expect(toIsbn13("034539180X")).toBe("9780345391803")
   })
 
+  it("recognizes the forms a human types", () => {
+    expect(toIsbn13("978-0-441-01359-3")).toBe("9780441013593")
+    expect(toIsbn13("ISBN 0-441-01359-7")).toBe("9780441013593")
+    expect(toIsbn13("urn:isbn:9780441013593")).toBe("9780441013593")
+    expect(toIsbn13("  0441013597  ")).toBe("9780441013593")
+  })
+
   it("returns undefined for anything that is not an ISBN", () => {
     expect(toIsbn13("")).toBeUndefined()
     expect(toIsbn13("urn:uuid:1234")).toBeUndefined()

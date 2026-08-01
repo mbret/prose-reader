@@ -40,13 +40,36 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("sinks a candidate whose ISBN contradicts, despite a perfect title", () => {
+  it("rejects a candidate whose ISBN contradicts, however well the rest agrees", () => {
+    // the wrong edition of the right book: same title, same author, different
+    // ISBN. A weighted average would land at ~0.57 and be accepted.
     const result = score(
-      { isbn: "9780441013593", title: "Dune" },
-      { isbn: "9780345391803", title: "Dune" },
+      {
+        isbn: "9780441013593",
+        title: "Dune",
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+      },
+      {
+        isbn: "9780345391803",
+        title: "Dune",
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+      },
     )
 
-    expect(result.score).toBeLessThan(0.5)
+    expect(result.score).toBe(0)
+    // the evidence is still there for a consumer offering a manual pick
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "title", score: 1 }),
+    )
+  })
+
+  it("matches ISBNs however they were typed", () => {
+    expect(
+      score({ isbn: "978-0-441-01359-3" }, { isbn: "9780441013593" }).score,
+    ).toBe(1)
+    expect(
+      score({ isbn: "ISBN 0-441-01359-7" }, { isbn: "9780441013593" }).score,
+    ).toBe(1)
   })
 
   it("recognizes an inverted author name", () => {

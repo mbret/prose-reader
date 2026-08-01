@@ -221,7 +221,7 @@ It is always present (empty when every carried source parsed) whatever the proje
 A source counts as unreadable when its document is there and reading or parsing it produced nothing — for the package document, that includes any `.opf` record the OPF discovery never reaches. A projection that reads nothing from the book (`include: ["version"]`) reports nothing.
 
 {% hint style="info" %}
-A container can only tell you what it carries. When it carries little — a bare CBZ with no `ComicInfo.xml`, an EPUB whose OPF states a title and nothing else — [metadata-fetcher](../metadata-fetcher/README.md) takes the resolved entity straight in and asks remote catalogs for the rest, returning the same `ResolvedMetadata` vocabulary back.
+This is the metadata the file carries. For the metadata online catalogs hold about it, [metadata-fetcher](../metadata-fetcher/README.md) takes the resolved entity straight in and returns the same `ResolvedMetadata` vocabulary back.
 {% endhint %}
 
 ## Reading embedded metadata

@@ -30,11 +30,12 @@ export const METADATA_MATCH_WEIGHTS = {
 } as const satisfies Record<MetadataMatchField, number>
 
 /**
- * Fields that identify a publication rather than describe it: when the two
- * sides state the same one, the candidate is the book and the aggregate is
- * `1`, whatever the descriptive fields say (catalogs and books disagree on
- * titles, editions and page counts constantly — they do not disagree on an
- * ISBN by accident).
+ * Fields that identify a publication rather than describe it, so they settle
+ * the score outright, in both directions: state the same one and the candidate
+ * *is* the book (`1`); state a different one and it is not (`0`), however well
+ * the descriptive fields agree. Catalogs and books disagree on titles,
+ * editions and page counts constantly — they do not agree or disagree on an
+ * ISBN by accident.
  */
 const DECISIVE_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
   "isbn",
@@ -137,9 +138,10 @@ export type ScoredMetadataCandidate = {
  * - **The aggregate is a weighted average** of the comparable fields (see
  *   {@link METADATA_MATCH_WEIGHTS}), so a rich query and a sparse one both
  *   land on the same `0`–`1` scale.
- * - **A stated identifier settles it.** An agreeing ISBN or GTIN pins the
- *   score to `1`; a contradicting one scores `0` at the heaviest weight,
- *   which is what sinks a plausible-looking wrong edition.
+ * - **A stated identifier settles it, both ways.** An agreeing ISBN or GTIN
+ *   pins the score to `1`; a contradicting one pins it to `0`, which is what
+ *   sinks the plausible-looking wrong edition that agrees on everything a
+ *   weighted average can see.
  */
 export const scoreMetadataCandidate = (
   query: ResolvedMetadata,
@@ -295,11 +297,17 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const decisive = signals.some(
-    (signal) => DECISIVE_FIELDS.has(signal.field) && signal.score === 1,
-  )
+  const decisive = signals.filter((signal) => DECISIVE_FIELDS.has(signal.field))
 
-  if (decisive) return { score: 1, signals }
+  // Identity settles it, both ways — and contradiction wins over agreement,
+  // because refusing a publication whose stated identity disagrees is the
+  // recoverable mistake. Without this the average is merciful to exactly the
+  // wrong candidate: a different edition agreeing on title and author scores
+  // (0.8 + 0.5) / 2.3 ≈ 0.57, i.e. accepted, despite a contradicting ISBN.
+  if (decisive.some((signal) => signal.score === 0))
+    return { score: 0, signals }
+  if (decisive.some((signal) => signal.score === 1))
+    return { score: 1, signals }
 
   const totalWeight = signals.reduce(
     (total, signal) => total + signal.weight,

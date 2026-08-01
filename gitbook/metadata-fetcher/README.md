@@ -1,8 +1,8 @@
 # Metadata Fetcher
 
-**`@prose-reader/metadata-fetcher`** is the "what the book says in → what the catalogs know out" package. Where [archive-reader](../archive-reader/README.md) resolves the metadata a container *carries*, this one goes looking for the metadata it *lacks*: a cover for a bare CBZ, a synopsis and subjects for an EPUB whose OPF only states a title, the series a scene-released comic belongs to.
+**`@prose-reader/metadata-fetcher`** fetches a book's metadata from online catalogs. [archive-reader](../archive-reader/README.md) reads what the file itself carries; this reads what the world knows about it.
 
-It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the `ResolvedArchive` shape — asks a list of **pluggable providers**, scores every candidate against what the book itself said, and gives back the same `ResolvedMetadata` vocabulary, plus the per-provider detail behind it:
+It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the `ResolvedArchive` shape — asks a list of **pluggable providers**, scores every candidate against what you gave it, and gives back the same `ResolvedMetadata` vocabulary, plus the per-provider detail behind it:
 
 ```typescript
 import { resolveArchive } from "@prose-reader/archive-reader"
