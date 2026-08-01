@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>metadata fetcher — playground</title>
+<!-- empty icon: /favicon.ico would hit the API's JSON 404 -->
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b68; --line: #e3e3e0;
+    --card: #ffffff; --accent: #b06642; --ok: #2f7d5b; --no: #96684a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17171a; --fg: #ececea; --muted: #9a9a96; --line: #2e2e33;
+      --card: #1f1f23; --accent: #d98d63; --ok: #6fc79b; --no: #c99b7c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.25rem 4rem; background: var(--bg); color: var(--fg);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 54rem; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 0.85rem; margin: 0.35rem 0 0; }
+  .sub code { background: var(--line); padding: 0.1em 0.35em; border-radius: 4px; }
+  form { margin: 1.75rem 0 0; display: grid; gap: 0.75rem; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
+  label { display: grid; gap: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+  input[type=text], input[type=number] {
+    font: inherit; padding: 0.5rem 0.6rem; border: 1px solid var(--line);
+    border-radius: 7px; background: var(--card); color: var(--fg); min-width: 0;
+  }
+  input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  details { border: 1px solid var(--line); border-radius: 7px; padding: 0.5rem 0.75rem; background: var(--card); }
+  details[open] { padding-bottom: 0.85rem; }
+  summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
+  .inline { display: flex; align-items: center; gap: 0.4rem; color: var(--fg); font-size: 0.85rem; }
+  button {
+    font: inherit; font-weight: 550; padding: 0.55rem 1.1rem; border: 0; border-radius: 7px;
+    background: var(--accent); color: #fff; cursor: pointer; justify-self: start;
+  }
+  button[disabled] { opacity: 0.55; cursor: progress; }
+  .status { margin: 1.5rem 0 0; font-size: 0.85rem; color: var(--muted); }
+  .status code { color: var(--fg); word-break: break-all; }
+  .status.error { color: var(--no); }
+  .match {
+    border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 8px;
+    background: var(--card); padding: 0.9rem 1rem; margin-top: 0.75rem;
+    display: grid; grid-template-columns: auto 1fr; gap: 0 1rem;
+  }
+  .match.accepted { border-left-color: var(--ok); }
+  .match img { grid-row: 1 / span 3; width: 62px; border-radius: 4px; background: var(--line); }
+  .match h2 { grid-column: 2; font-size: 1rem; margin: 0; }
+  .meta { grid-column: 2; color: var(--muted); font-size: 0.82rem; margin: 0.2rem 0 0; }
+  .meta a { color: inherit; }
+  .badge { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge.yes { color: var(--ok); } .badge.no { color: var(--no); }
+  .signals { grid-column: 2; margin: 0.6rem 0 0; display: grid; gap: 0.15rem; font-size: 0.78rem; }
+  .signal { display: grid; grid-template-columns: 7rem 3rem 1fr; gap: 0.5rem; align-items: baseline; }
+  .signal .field { color: var(--muted); }
+  .signal .vs { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  pre { overflow-x: auto; font-size: 0.75rem; margin: 0; }
+  .empty { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<main>
+  <h1>metadata fetcher</h1>
+  <p class="sub">Development playground — not served when <code>NODE_ENV=production</code>. <span id="providers"></span></p>
+
+  <form id="form">
+    <div class="row">
+      <label>Title <input type="text" name="title" placeholder="Dune"></label>
+      <label>Author <input type="text" name="author" placeholder="Frank Herbert"></label>
+      <label>ISBN <input type="text" name="isbn" placeholder="9780441013593"></label>
+    </div>
+    <details>
+      <summary>Options</summary>
+      <div class="row">
+        <label>limit <input type="number" name="limit" min="1" max="50" placeholder="5"></label>
+        <label>minScore <input type="number" name="minScore" min="0" max="1" step="0.05" placeholder="0.5"></label>
+        <label class="inline"><input type="checkbox" name="includeRaw"> includeRaw</label>
+      </div>
+    </details>
+    <button type="submit">Fetch</button>
+  </form>
+
+  <p class="status" id="status"></p>
+  <div id="results"></div>
+  <details id="rawBox" hidden>
+    <summary>Raw response</summary>
+    <pre id="raw"></pre>
+  </details>
+</main>
+
+<script>
+  const form = document.getElementById("form")
+  const statusEl = document.getElementById("status")
+  const resultsEl = document.getElementById("results")
+  const rawBox = document.getElementById("rawBox")
+  const rawEl = document.getElementById("raw")
+  const button = form.querySelector("button")
+
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag)
+
+    if (className) node.className = className
+    if (text !== undefined && text !== null) node.textContent = String(text)
+
+    return node
+  }
+
+  const describe = (metadata) =>
+    [
+      (metadata.contributors ?? []).map((contributor) => contributor.name).join(", "),
+      metadata.published?.year,
+      metadata.publisher,
+      metadata.numberOfPages && `${metadata.numberOfPages} pages`,
+      metadata.languages?.join("/"),
+    ]
+      .filter(Boolean)
+      .join(" · ")
+
+  // catalog values go in through textContent, never innerHTML, so a title
+  // carrying markup stays a title
+  const renderMatch = (match) => {
+    const metadata = match.metadata ?? {}
+    const card = el("article", `match${match.accepted ? " accepted" : ""}`)
+
+    if (metadata.cover?.uri) {
+      const cover = el("img")
+
+      cover.src = metadata.cover.uri
+      cover.alt = ""
+      cover.loading = "lazy"
+      card.append(cover)
+    }
+
+    card.append(el("h2", null, metadata.title ?? "(untitled)"))
+
+    const meta = el("p", "meta")
+    const verdict = match.accepted ? "accepted" : "rejected"
+
+    meta.append(
+      el("span", `badge ${match.accepted ? "yes" : "no"}`, `${match.score.toFixed(2)} ${verdict}`),
+      ` · ${match.providerId}`,
+    )
+
+    const described = describe(metadata)
+
+    if (described) meta.append(` · ${described}`)
+
+    if (match.url) {
+      const link = el("a", null, "record")
+
+      link.href = match.url
+      link.target = "_blank"
+      link.rel = "noreferrer"
+      meta.append(" · ", link)
+    }
+
+    card.append(meta)
+
+    const signals = el("div", "signals")
+
+    for (const signal of match.signals ?? []) {
+      const row = el("div", "signal")
+
+      row.append(
+        el("span", "field", signal.field),
+        el("span", null, signal.score.toFixed(2)),
+        el("span", "vs", `${signal.query}  ↔  ${signal.candidate}`),
+      )
+      signals.append(row)
+    }
+
+    card.append(signals)
+
+    return card
+  }
+
+  const render = (body) => {
+    resultsEl.replaceChildren()
+
+    if (body.failedProviders?.length) {
+      const failed = body.failedProviders
+        .map(({ id, status }) => (status ? `${id} (HTTP ${status})` : id))
+        .join(", ")
+
+      resultsEl.append(el("p", "status error", `failed providers: ${failed}`))
+    }
+
+    const matches = body.matches ?? []
+
+    if (matches.length === 0) {
+      resultsEl.append(el("p", "empty", body.error ?? "No candidate came back."))
+
+      return
+    }
+
+    resultsEl.append(...matches.map(renderMatch))
+  }
+
+  const queryFrom = (formData) => {
+    const params = new URLSearchParams()
+
+    for (const [key, value] of formData.entries()) {
+      if (key === "includeRaw") continue
+      if (typeof value === "string" && value.trim() !== "") params.set(key, value.trim())
+    }
+
+    // a checked box submits "on", which the API rightly refuses
+    if (formData.get("includeRaw")) params.set("includeRaw", "true")
+
+    return params
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault()
+
+    const params = queryFrom(new FormData(form))
+
+    if (params.toString() === "") {
+      statusEl.className = "status error"
+      statusEl.textContent = "Type a title, an author or an ISBN first."
+
+      return
+    }
+
+    const url = `/metadata?${params}`
+    const started = performance.now()
+
+    button.disabled = true
+    statusEl.className = "status"
+    statusEl.textContent = "fetching…"
+    resultsEl.replaceChildren()
+    rawBox.hidden = true
+
+    try {
+      const response = await fetch(url)
+      const body = await response.json()
+      const elapsed = Math.round(performance.now() - started)
+
+      statusEl.className = `status${response.ok ? "" : " error"}`
+      statusEl.replaceChildren(
+        el("code", null, `GET ${url}`),
+        `  →  ${response.status} in ${elapsed} ms`,
+      )
+
+      render(body)
+
+      rawEl.textContent = JSON.stringify(body, null, 2)
+      rawBox.hidden = false
+    } catch (error) {
+      statusEl.className = "status error"
+      statusEl.textContent = `request failed: ${error.message}`
+    } finally {
+      button.disabled = false
+    }
+  })
+
+  fetch("/health")
+    .then((response) => response.json())
+    .then(({ providers }) => {
+      document.getElementById("providers").textContent =
+        `Providers: ${providers.map((provider) => provider.name).join(", ")}`
+    })
+    .catch(() => {
+      // the providers line is decoration — a real failure surfaces on fetch
+    })
+</script>
+</body>
+</html>

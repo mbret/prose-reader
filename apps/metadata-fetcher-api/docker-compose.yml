@@ -1,0 +1,41 @@
+# Development stack, started from the repository root with
+#
+#   npm run start:metadata-fetcher
+#
+# The API source and the library source are both bind-mounted, and node runs
+# both as TypeScript: an edit on the host is an edit in the container.
+
+name: prose-metadata-fetcher
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/metadata-fetcher-api/Dockerfile
+      target: development
+    image: prose-reader/metadata-fetcher-api:development
+    working_dir: /repo/apps/metadata-fetcher-api
+    # node as PID 1 rather than `npm run dev`, so SIGTERM reaches it directly
+    # and `docker compose down` doesn't wait out the kill timer.
+    # `--watch` restarts on any imported file — the library's source included,
+    # since `--conditions=prose-source` resolves it to TypeScript.
+    command:
+      [
+        "node",
+        "--conditions=prose-source",
+        "--watch",
+        "--watch-preserve-output",
+        "src/server.ts",
+      ]
+    ports:
+      - "${METADATA_FETCHER_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      # Open Library asks clients to identify themselves (see the README)
+      OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
+      METADATA_LIMIT: ${METADATA_LIMIT:-5}
+      METADATA_MIN_SCORE: ${METADATA_MIN_SCORE:-0.5}
+      REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-10000}
+    volumes:
+      - ../../apps/metadata-fetcher-api/src:/repo/apps/metadata-fetcher-api/src:ro
+      - ../../packages/metadata-fetcher/src:/repo/packages/metadata-fetcher/src:ro

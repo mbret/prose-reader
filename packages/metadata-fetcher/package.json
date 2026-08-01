@@ -1,0 +1,35 @@
+{
+  "name": "@prose-reader/metadata-fetcher",
+  "version": "1.335.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "prose-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "test": "vitest run --coverage",
+    "tsc": "tsc",
+    "test:watch": "vitest watch"
+  },
+  "dependencies": {
+    "@prose-reader/archive-reader": "^1.335.0",
+    "@prose-reader/shared": "^1.335.0"
+  }
+}

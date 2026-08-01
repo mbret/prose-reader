@@ -220,6 +220,10 @@ It is always present (empty when every carried source parsed) whatever the proje
 
 A source counts as unreadable when its document is there and reading or parsing it produced nothing — for the package document, that includes any `.opf` record the OPF discovery never reaches. A projection that reads nothing from the book (`include: ["version"]`) reports nothing.
 
+{% hint style="info" %}
+This is the metadata the file carries. For the metadata online catalogs hold about it, [metadata-fetcher](../metadata-fetcher/README.md) takes the resolved entity straight in and returns the same `ResolvedMetadata` vocabulary back.
+{% endhint %}
+
 ## Reading embedded metadata
 
 {% hint style="info" %}

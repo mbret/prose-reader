@@ -1,0 +1,31 @@
+# Scoped to apps/metadata-fetcher-api/Dockerfile — BuildKit reads
+# `<dockerfile>.dockerignore` in preference to a root one, so the rest of the
+# monorepo keeps its own build rules.
+#
+# The context is the repository root, which is ~1.2 GB installed. This trims
+# it to a few megabytes. Plain exclusions rather than the "exclude everything,
+# then re-include" idiom: re-including a path under an excluded parent behaves
+# differently between builders, and the Dockerfile already copies only the
+# four workspaces it needs.
+
+# generated — the image builds its own
+**/node_modules
+**/dist
+**/.test
+**/.nx
+**/coverage
+**/test-results
+**/playwright-report
+
+.git
+.github
+.husky
+.vscode
+
+# workspaces this image has no use for (the demo and e2e fixtures alone are
+# ~80 MB of epubs, comics and pdfs)
+apps/demo
+apps/front
+apps/tests
+prose-react-native-demo
+gitbook

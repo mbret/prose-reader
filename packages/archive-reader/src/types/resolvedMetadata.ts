@@ -171,12 +171,18 @@ export type ResolvedKoboMetadata = {
 export type ResolvedConfidence = "derived" | "assumed"
 
 /**
- * The publication's cover image, addressed in the container's coordinate
- * space (a record `uri` — rebase into your own serving space, like reading
- * order uris). Determining it needs the container, not just the descriptive
- * sidecars, so it is only populated by `resolveArchive`.
+ * The publication's cover image. Determining it from a container needs the
+ * container itself, not just its descriptive sidecars, so within this package
+ * only `resolveArchive` populates it.
  */
 export type ResolvedCover = {
+  /**
+   * Addressed in the coordinate space of whoever resolved it: a container
+   * record `uri` when it comes from an archive — rebase into your own serving
+   * space, like reading order uris — or an absolute url when it comes from a
+   * remote catalog (`@prose-reader/metadata-fetcher`), which addresses its
+   * covers in its own space and has nothing to be rebased onto.
+   */
   readonly uri: string
   /**
    * Best-effort media type of the cover resource, from the archive record's
@@ -204,7 +210,8 @@ export type ResolvedMetadata = {
    * `cover`-ish image id), else the first page of a package-less container
    * (CBZ, folder of images). Resolved against the container, so it is
    * populated by `resolveArchive` and left absent by the source-level
-   * resolvers, which never see the file listing. See {@link ResolvedCover}.
+   * resolvers, which never see the file listing — a remote catalog is the
+   * other way to obtain one. See {@link ResolvedCover}.
    */
   readonly cover?: ResolvedCover
   /** OPF `dc:description`, ComicInfo `Summary`. */

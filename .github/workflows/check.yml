@@ -20,3 +20,6 @@ jobs:
 
   tests:
     uses: ./.github/workflows/_test.yml
+
+  docker:
+    uses: ./.github/workflows/_docker.yml
