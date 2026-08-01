@@ -214,6 +214,27 @@ const provider = createOpenLibraryProvider({
 
 Only the mapped fields are requested (`fields=`), which is the difference between a few hundred bytes per hit and a few hundred kilobytes.
 
+## Running it as a service
+
+A Docker image wraps this package in a small HTTP API, so metadata lookups don't have to happen inside your JavaScript app — and so you can try a provider against a real catalog with curl:
+
+```bash
+docker build -f apps/metadata-fetcher-api/Dockerfile --target production -t prose-metadata-fetcher .
+docker run -p 3000:3000 -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" prose-metadata-fetcher
+
+curl "http://localhost:3000/metadata?isbn=9780441013593"
+```
+
+| Route | |
+| --- | --- |
+| `GET /health` | liveness, plus the providers the deployment exposes |
+| `GET /metadata?title=&author=&isbn=…` | human-friendly lookup |
+| `POST /metadata` | body is a `ResolvedArchive` (or a bare `ResolvedMetadata`), options on the query string |
+
+Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
+
+For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/metadata-fetcher-api) for the full reference.
+
 ## Writing a provider
 
 A provider is three things: a stable `id`, a display `name`, and a `search` returning normalized candidates. It never scores its own results — that stays in the package, identically for everyone.

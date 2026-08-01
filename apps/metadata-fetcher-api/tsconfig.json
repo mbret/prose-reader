@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.node.json",
+  "compilerOptions": {
+    // node runs this app's TypeScript directly (type stripping), so every
+    // construct must be erasable — no enums, namespaces or parameter
+    // properties, which stripping cannot rewrite
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src"]
+}

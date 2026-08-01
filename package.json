@@ -10,6 +10,8 @@
     "start:lib": "lerna run start --stream --scope @prose-reader/* --concurrency 15",
     "start:front": "lerna run dev --stream --scope prose-reader-front",
     "start:demo": "lerna run start --stream --scope demo",
+    "start:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml up --build",
+    "stop:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml down",
     "build": "lerna run build --stream",
     "build:lib": "lerna run build --stream --scope @prose-reader/*",
     "check:react-reader-enhancers": "npm run check:enhancers --workspace @prose-reader/react-reader",

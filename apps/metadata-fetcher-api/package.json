@@ -1,0 +1,23 @@
+{
+  "name": "prose-reader-metadata-fetcher-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node --watch --watch-preserve-output src/server.ts",
+    "serve": "node src/server.ts",
+    "tsc": "tsc",
+    "test": "vitest run",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "@prose-reader/metadata-fetcher": "^1.335.0",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "typescript": "*"
+  }
+}
