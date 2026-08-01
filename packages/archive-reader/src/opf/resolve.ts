@@ -63,6 +63,23 @@ const rawIdentifierValueForIsbn = (
   return undefined
 }
 
+const inferredIdentifierScheme = (value: string): string | undefined => {
+  const trimmed = value.trim()
+
+  if (!/^https?:\/\//i.test(trimmed)) return undefined
+
+  try {
+    const url = new URL(trimmed)
+
+    return (url.protocol === "http:" || url.protocol === "https:") &&
+      url.hostname.length > 0
+      ? "URL"
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Common MARC relator codes normalized into the Readium role vocabulary;
  * anything else passes through verbatim (losslessness beats guessing).
@@ -247,7 +264,11 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     identifiers:
       input.identifiers.length > 0
         ? input.identifiers.map(({ value, scheme, unique }) =>
-            omitUndefined({ value, scheme, unique }),
+            omitUndefined({
+              value,
+              scheme: scheme ?? inferredIdentifierScheme(value),
+              unique,
+            }),
           )
         : undefined,
     belongsTo,

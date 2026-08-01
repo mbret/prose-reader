@@ -126,9 +126,10 @@ const createEpub = async (): Promise<Uint8Array<ArrayBuffer>> => {
   await writer.add(
     "OPS/package.opf",
     new TextReader(`<?xml version="1.0" encoding="UTF-8"?>
-      <package version="3.0" unique-identifier="isbn" xmlns="http://www.idpf.org/2007/opf">
+      <package version="3.0" unique-identifier="bookid" xmlns="http://www.idpf.org/2007/opf">
         <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-          <dc:identifier id="isbn">9780441013593</dc:identifier>
+          <dc:identifier>9780441013593</dc:identifier>
+          <dc:identifier id="bookid">https://example.com/books/dune</dc:identifier>
           <dc:title>Dune</dc:title>
           <dc:creator>Frank Herbert</dc:creator>
           <dc:language>en</dc:language>
@@ -348,6 +349,14 @@ describe("metadata-fetcher-api playground", () => {
       expect(await response.json()).toMatchObject({
         title: "Dune",
         isbn: "9780441013593",
+        identifiers: [
+          { value: "9780441013593" },
+          {
+            value: "https://example.com/books/dune",
+            scheme: "URL",
+            unique: true,
+          },
+        ],
         contributors: [{ name: "Frank Herbert", roles: ["author"] }],
         languages: ["en"],
       })

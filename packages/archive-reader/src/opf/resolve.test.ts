@@ -124,6 +124,37 @@ describe("resolveOpf", () => {
     ])
   })
 
+  it("infers URL only for valid absolute HTTP(S) identifiers without a scheme", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [
+          {
+            id: "bookid",
+            unique: true,
+            value: "http://www.gutenberg.org/78139",
+          },
+          { value: "HTTPS://example.com/books/1" },
+          { value: "https://" },
+          { value: "urn:uuid:abc" },
+          { value: "url:http://example.com/books/1" },
+          { value: "https://example.com/explicit", scheme: "URI" },
+        ],
+      }).identifiers,
+    ).toEqual([
+      {
+        unique: true,
+        value: "http://www.gutenberg.org/78139",
+        scheme: "URL",
+      },
+      { value: "HTTPS://example.com/books/1", scheme: "URL" },
+      { value: "https://" },
+      { value: "urn:uuid:abc" },
+      { value: "url:http://example.com/books/1" },
+      { value: "https://example.com/explicit", scheme: "URI" },
+    ])
+  })
+
   it("falls back to first identifier value that normalizes as ISBN", () => {
     expect(
       resolveOpf({
