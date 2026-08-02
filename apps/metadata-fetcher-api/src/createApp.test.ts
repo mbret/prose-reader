@@ -331,6 +331,10 @@ describe("metadata-fetcher-api playground", () => {
         "text/javascript",
       )
       expect(script).toContain("/playground/resolve")
+      expect(script).toContain(
+        'console.log("POST /playground/resolve", resolved)',
+      )
+      expect(script).toContain("console.log(label, body)")
       expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))
     } finally {
