@@ -56,6 +56,8 @@ type FetchedMetadata = {
 }
 ```
 
+`version` is currently `2`, matching the explicit `publication.original` / `publication.edition` vocabulary carried by every candidate.
+
 `metadata` is **only** the remote answer — the local metadata is deliberately not folded in, so you stay free to decide who wins (see [Merging with what the book said](#merging-with-what-the-book-said)).
 
 `sources` is the twin of `resolveArchive`'s `sources`: everything a provider contributed is also represented, merged, in `metadata`. The duplication is the contract — a wrong precedence opinion stays revisable because the per-provider values never left the entity. Unlike archive sources, the key space is open: providers are pluggable, so the keys are whatever providers you passed.
@@ -72,7 +74,9 @@ type MetadataMatch = {
   /** every field comparison behind the score */
   signals: {
     field: "isbn" | "gtin" | "identifiers" | "title" | "contributors" |
-           "series" | "publisher" | "published" | "languages" | "numberOfPages"
+           "series" | "publication.original.date" |
+           "publication.original.publisher" | "publication.edition.date" |
+           "publication.edition.publisher" | "languages" | "numberOfPages"
     score: number
     weight: number
     /** the two values compared, rendered for display */
@@ -88,14 +92,14 @@ type MetadataMatch = {
 }
 ```
 
-Scoring is done by the package, identically for every provider — a provider never grades its own homework, so scores stay comparable across catalogs and a match stays explainable to a user ("same title and author, different publisher"):
+Scoring is done by the package, identically for every provider — a provider never grades its own homework, so scores stay comparable across catalogs and a match stays explainable to a user ("same title and author, different edition publisher"):
 
 ```typescript
 fetched.matches[0]?.signals
 // [
 //   { field: "title", score: 1, weight: 0.8, query: "Dune", candidate: "Dune" },
 //   { field: "contributors", score: 1, weight: 0.5, query: "Frank Herbert", … },
-//   { field: "publisher", score: 0.2, weight: 0.15, query: "Ace", candidate: "Chilton Books" },
+//   { field: "publication.edition.publisher", score: 0.2, weight: 0.15, query: "Ace", candidate: "Chilton Books" },
 // ]
 ```
 
@@ -111,11 +115,12 @@ The rules:
   | `identifiers` | 0.6 | other identifier systems, scheme-aware |
   | `contributors` | 0.5 | authors, compared as people |
   | `series` | 0.3 | |
-  | `published` | 0.2 | year proximity: reprints shift it |
-  | `publisher`, `languages`, `numberOfPages` | 0.15 | edition details — they must never sink a convincing match alone |
+  | `publication.original.date`, `publication.edition.date` | 0.2 | year proximity within the same publication scope |
+  | `publication.original.publisher`, `publication.edition.publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
 - **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same scheme. A scheme-less raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
+- **Publication scopes never cross.** An original publication date is compared only with another original publication date; an EPUB or catalog-edition date is compared only with another edition date. Equal years from different events do not create a signal.
 
 `minScore` (default `0.5`) decides which matches are `accepted` — which ones contribute to the merged `metadata`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
@@ -220,8 +225,9 @@ The confirmed candidate echoes the book's exact input identifier and adds `{ val
 | `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`; the exact matched input identifier is preserved too |
 | `dcterms:title` | `title` | |
 | `dcterms:creator`, `marcrel:*` | `contributors` | common MARC relators normalize to roles such as `author`, `translator`, `editor`, and `illustrator`; unknown codes remain verbatim |
-| `dcterms:issued` | `published` | Gutenberg release date, parsed through day precision when available |
-| `dcterms:publisher` | `publisher` | |
+| `dcterms:issued` | `publication.edition.date` | Gutenberg ebook release date, parsed through day precision when available; it is not the work's original publication date |
+| `dcterms:publisher` | `publication.edition.publisher` | the publisher of the Gutenberg edition |
+| `pgterms:marc260` | `publication.original.date`, `publication.original.publisher` | original print statement; only one unambiguous `$c` year and `$b` publisher are promoted |
 | `dcterms:rights` | `rights` | |
 | `dcterms:language` | `languages` | RDF values are already BCP 47 |
 | LCSH `dcterms:subject`, `pgterms:bookshelf` | `subjects` | deduped and capped at 25; Library of Congress classification codes are excluded |
@@ -255,8 +261,7 @@ const provider = createOpenLibraryProvider({
 | --- | --- | --- |
 | `title` + `subtitle` | `title` | joined (`Dune: a novel`) — `ResolvedMetadata` has one title field, and an OPF `dc:title` normally carries the subtitle too |
 | `author_name` | `contributors` | role `author` |
-| `first_publish_year` | `published.year` | |
-| `publisher` | `publisher` | first entry |
+| `first_publish_year` | `publication.original.date.year` | |
 | `language` | `languages` | MARC 21 → BCP 47 (`eng` → `en`); unknown codes pass through, `und`/`mul`/`zxx` are dropped |
 | `subject` | `subjects` | capped at the first 25 — a popular work carries hundreds, most of them long-tail noise |
 | `number_of_pages_median` | `numberOfPages` | |
@@ -345,8 +350,8 @@ import { hasSearchTerms, metadataAuthors } from "@prose-reader/metadata-fetcher"
 // often credits only a penciler
 metadataAuthors(metadata) // ["Frank Herbert"]
 
-// is there anything to go on at all? a publisher or a page count narrows a
-// search but cannot start one, so they don't count
+// is there anything to go on at all? publication details or a page count
+// narrow a search but cannot start one, so they don't count
 if (!hasSearchTerms(resolved.metadata)) return
 ```
 

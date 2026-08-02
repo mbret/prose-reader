@@ -5,7 +5,7 @@
 ## Design rules
 
 - **Union schema, not intersection.** The shape is rich enough to express what any supported format can say; each source populates the subset it knows. Results are sparse: an absent key means "no source had anything to say", and empty arrays/strings collapse to absent so `field !== undefined` is a reliable presence check.
-- **Vocabulary anchored on prior art.** Field names and semantics follow the [Readium Web Publication Manifest](https://readium.org/webpub-manifest/) where a term exists: `contributors` with role terms, `belongsTo.series`/`belongsTo.collection` with `position`, `numberOfPages`, `imprint`, `description`…
+- **Vocabulary anchored on prior art.** Field names and semantics follow the [Readium Web Publication Manifest](https://readium.org/webpub-manifest/) where a term exists: `contributors` with role terms, `belongsTo.series`/`belongsTo.collection` with `position`, `numberOfPages`, publication details, `description`…
 - **Normalization ≠ convergence.** Every field is typed/parsed/validated (`BlackAndWhite: "Yes"` → `boolean`, `Year`/`Month`/`Day` → a date shape), but concepts with no cross-format twin live in clearly format-scoped corners (`metadata.comic`, `metadata.apple`, `metadata.kobo`) rather than behind faked generic names.
 - **Losslessness: sources are never load-bearing.** Everything a parser captures has a declared home in the resolved entity. For the closed schemas (ComicInfo, Apple, Kobo) this is compile-enforced by the mapping tables below (exported as `comicInfoMetadataHomes`, `appleMetadataHomes`, `koboMetadataHomes`, `opfMetadataHomes`); for the open-ended OPF `meta` vocabulary, every entry is structurally copied into `metadata.properties`, lossless by construction.
 - **`metadata` versus `sources`.** `metadata` says what the resolver believes; `sources` (the verbatim parser outputs) say what the book said. The duplication is the contract: a wrong mapping opinion is revisable in a release because the raw value never left the entity.
@@ -28,13 +28,23 @@ type ResolvedMetadata = {
   /** the cover image; resolved against the container, so `resolveArchive` only */
   cover?: ResolvedCover
   description?: string
-  publisher?: string
-  imprint?: string
+  /** the work's first publication and this concrete edition are distinct facts */
+  publication?: {
+    original?: {
+      date?: { year?: number; month?: number; day?: number }
+      publisher?: string
+      imprint?: string
+    }
+    edition?: {
+      date?: { year?: number; month?: number; day?: number }
+      publisher?: string
+      imprint?: string
+    }
+  }
   rights?: string
   languages?: string[]
   subjects?: string[]
   contributors?: { name: string; roles: string[]; sortAs?: string }[]
-  published?: { year?: number; month?: number; day?: number }
   readingDirection?: "ltr" | "rtl"
   renditionLayout?: "reflowable" | "pre-paginated"
   renditionFlow?: "scrolled-continuous" | "scrolled-doc" | "paginated" | "auto"
@@ -64,6 +74,12 @@ Two fields are resolved for the whole **container**, not just its descriptive si
 - **`cover`** — the OPF-declared cover image (EPUB 3 `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a `cover`-ish image id), rebased onto a container-relative `uri` (`confidence: "derived"`); else the first image of the reading order for image-content containers — comics, image archives, synthetic image-spine OPFs such as `createArchiveFromUrls` lists (`confidence: "assumed"`). It stays absent when nothing image-like is a reading resource: an authored reflowable EPUB (text spine, so an interior illustration is never promoted) or an audiobook/video archive has no cover — a container with no cover of its own is exactly the case [metadata-fetcher](../metadata-fetcher/README.md) answers, with an absolute url into the catalog's cover service.
 - **`numberOfPages`** — the declared ComicInfo `PageCount`, else the count of page-like reading-order items (images and fixed-layout documents). Reflowable documents are not pages, and audio/video tracks are not pages, so both are excluded: a reflowable book or an audiobook has no page count.
 
+### Publication details
+
+`publication.original` describes the work's first known publication. `publication.edition` describes the concrete publication represented by the current file or catalog item. Keeping each event's `date`, `publisher`, and `imprint` together prevents an EPUB edition date, an original print date, and a catalog site's release from being treated as interchangeable.
+
+An EPUB package's `dc:date` is the publication date of that specific EPUB publication, so OPF and ComicInfo values populate `publication.edition`. Catalog providers can additionally populate `publication.original` when their source explicitly identifies the first publication.
+
 ### Contributor roles
 
 Roles use the Readium terms our sources can express — `author`, `translator`, `editor`, `artist`, `illustrator`, `letterer`, `penciler`, `colorist`, `inker`, `narrator`, `contributor` — plus the prose-reader extension `coverArtist` (ComicInfo `CoverArtist`; Readium has no cover-art term). Well-known MARC relator codes from OPF (`aut`, `trl`, `edt`, `art`, `ill`, `clr`, `nrt`, `ctb`) are normalized to those terms; unknown tokens pass through verbatim. A role-less `dc:creator` defaults to `author`, a role-less `dc:contributor` to `contributor`.
@@ -80,13 +96,14 @@ When several sources are present, `resolveMetadata` merges field-wise:
 
 | Field | Rule |
 | --- | --- |
-| descriptive fields (`title`, `description`, `publisher`, `languages`, `subjects`, `contributors`, `published`, `belongsTo`, `gtin`/`isbn`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
+| descriptive fields (`title`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`, `gtin`/`isbn`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
+| `publication.edition` details (`date`, `publisher`, `imprint`) | merged field-wise, **OPF wins over ComicInfo** and the sidecar fills gaps |
 | `readingDirection` | **ComicInfo wins over OPF** (`Manga` beats `page-progression-direction`) — deliberate, preserving the historical pipeline behavior |
 | `renditionLayout` | **OPF explicit → Apple → Kobo**, first defined wins; the [`layoutScan`](README.md#resolving-a-publication) promotion applies on top, inside the resolver |
 | `identifiers` | concatenated, OPF first (identifier systems coexist) |
 | `cover` | OPF-declared cover, else the first-image fallback for image-content containers (`resolveArchive` only) |
 | `numberOfPages` | declared ComicInfo `PageCount`, else the counted page-like reading-order items (`resolveArchive` only) |
-| corners (`comic`, `apple`, `kobo`) and single-source fields (`rights`, `properties`, `imprint`) | from their only producer |
+| corners (`comic`, `apple`, `kobo`) and single-source fields (`rights`, `properties`) | from their only producer |
 
 ## Mapping tables
 
@@ -98,8 +115,8 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | --- | --- | --- |
 | `Title` | `title` | trimmed |
 | `Summary` | `description` | |
-| `Publisher` | `publisher` | |
-| `Imprint` | `imprint` | |
+| `Publisher` | `publication.edition.publisher` | |
+| `Imprint` | `publication.edition.imprint` | |
 | `LanguageISO` | `languages` | single-entry array |
 | `Genre`, `Tags` | `subjects` | comma-split, Genre first |
 | `Writer` | `contributors` | role `author`, comma-split |
@@ -110,7 +127,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `CoverArtist` | `contributors` | role `coverArtist` |
 | `Editor` | `contributors` | role `editor` |
 | `Translator` | `contributors` | role `translator` |
-| `Year`, `Month`, `Day` | `published` | independent optional components |
+| `Year`, `Month`, `Day` | `publication.edition.date` | independent optional components |
 | `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comic.manga` |
 | `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
 | `GTIN` | `identifiers` | scheme `GTIN`; also `gtin`/`isbn` normalization |
@@ -138,12 +155,12 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | --- | --- | --- |
 | `dc:title` | `title` | first non-empty |
 | `dc:description` | `description` | |
-| `dc:publisher` | `publisher` | |
+| `dc:publisher` | `publication.edition.publisher` | |
 | `dc:rights` | `rights` | |
 | `dc:language` | `languages` | all, document order |
 | `dc:subject` | `subjects` | all, document order |
 | `dc:creator`, `dc:contributor` | `contributors` | roles from `opf:role` and EPUB 3 `meta refines property="role"`, `file-as` → `sortAs` |
-| `dc:date` | `published` | parsed as W3CDTF |
+| `dc:date` | `publication.edition.date` | the specific EPUB publication's date, parsed as W3CDTF |
 | `dc:identifier` | `identifiers` | all; EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` refinement retained, otherwise valid absolute HTTP(S) → scheme `URL`; the `package@unique-identifier` target has `unique: true`; ISBN-scheme entries drive `isbn`/`gtin` |
 | spine `page-progression-direction` | `readingDirection` | validated |
 | `rendition:layout` meta | `renditionLayout` | validated |
@@ -167,4 +184,4 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 ## Error policy & versioning
 
-Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.
+Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `2`, reflecting the explicit publication-event model. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.

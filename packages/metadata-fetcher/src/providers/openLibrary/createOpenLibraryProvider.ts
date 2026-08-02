@@ -29,7 +29,6 @@ const SEARCH_FIELDS = [
   "subtitle",
   "author_name",
   "first_publish_year",
-  "publisher",
   "language",
   "subject",
   "number_of_pages_median",

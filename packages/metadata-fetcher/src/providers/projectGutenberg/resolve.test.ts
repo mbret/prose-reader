@@ -7,6 +7,7 @@ const record: ProjectGutenbergRecord = {
   title: "Wilhelm Meister, vol. 2",
   publisher: "Project Gutenberg",
   issued: "2026-03-08",
+  originalPublication: "$aNew York :$bA.L. Burt, $c1896.",
   rights: "Public domain in the USA.",
   description: "Catalog note",
   summary: "Summary",
@@ -33,7 +34,13 @@ describe("resolveProjectGutenbergRecord", () => {
       }),
     ).toEqual({
       title: "Wilhelm Meister, vol. 2",
-      publisher: "Project Gutenberg",
+      publication: {
+        original: { date: { year: 1896 }, publisher: "A.L. Burt" },
+        edition: {
+          date: { year: 2026, month: 3, day: 8 },
+          publisher: "Project Gutenberg",
+        },
+      },
       description: "Summary",
       rights: "Public domain in the USA.",
       languages: ["en"],
@@ -42,7 +49,6 @@ describe("resolveProjectGutenbergRecord", () => {
         { name: "Goethe, Johann Wolfgang von", roles: ["author"] },
         { name: "Carlyle, Thomas", roles: ["translator", "editor"] },
       ],
-      published: { year: 2026, month: 3, day: 8 },
       identifiers: [
         { value: "http://www.gutenberg.org/78139", scheme: "URL" },
         { value: "78139", scheme: "ProjectGutenberg" },
@@ -73,7 +79,28 @@ describe("resolveProjectGutenbergRecord", () => {
       },
     )
 
-    expect(metadata.published).toBeUndefined()
+    expect(metadata.publication?.edition).toEqual({
+      publisher: "Project Gutenberg",
+    })
+    expect(metadata.publication?.original).toEqual({
+      date: { year: 1896 },
+      publisher: "A.L. Burt",
+    })
     expect(metadata.cover).toBeUndefined()
+  })
+
+  it("omits ambiguous original-publication subfields", () => {
+    const metadata = resolveProjectGutenbergRecord(
+      {
+        ...record,
+        originalPublication: "$bFirst$bSecond$c1896, reprinted 1901",
+      },
+      {
+        baseUrl: "https://www.gutenberg.org",
+        matchedIdentifier: { value: "78139", scheme: "ProjectGutenberg" },
+      },
+    )
+
+    expect(metadata.publication?.original).toBeUndefined()
   })
 })

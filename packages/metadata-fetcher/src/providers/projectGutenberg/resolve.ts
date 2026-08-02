@@ -4,6 +4,8 @@ import type {
   ResolvedCover,
   ResolvedDate,
   ResolvedMetadata,
+  ResolvedMetadataHome,
+  ResolvedPublication,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "./identifier.ts"
@@ -15,8 +17,9 @@ export const PROJECT_GUTENBERG_MAX_SUBJECTS = 25
 export const projectGutenbergMetadataHomes = {
   id: "identifiers",
   title: "title",
-  publisher: "publisher",
-  issued: "published",
+  publisher: "publication.edition.publisher",
+  issued: "publication.edition.date",
+  originalPublication: "publication.original",
   rights: "rights",
   description: "description",
   summary: "description",
@@ -27,7 +30,7 @@ export const projectGutenbergMetadataHomes = {
   cover: "cover",
 } as const satisfies Record<
   keyof ProjectGutenbergRecord,
-  keyof ResolvedMetadata | "identifiers"
+  ResolvedMetadataHome | "identifiers"
 >
 
 const MARC_RELATOR_TO_ROLE: Readonly<
@@ -94,6 +97,55 @@ const resolvedIssuedDate = (
   }
 }
 
+const marc260Subfields = (
+  statement: string,
+  code: string,
+): ReadonlyArray<string> =>
+  statement
+    .split("$")
+    .slice(1)
+    .flatMap((subfield) =>
+      subfield[0]?.toLowerCase() === code.toLowerCase()
+        ? [subfield.slice(1).trim()]
+        : [],
+    )
+    .filter((value) => value.length > 0)
+
+const originalPublicationFromMarc260 = (
+  statement: string | undefined,
+): ResolvedPublication | undefined => {
+  if (statement === undefined) return undefined
+
+  const publisherValues = marc260Subfields(statement, "b")
+  const rawPublisher =
+    publisherValues.length === 1 ? publisherValues[0] : undefined
+  const publisher = rawPublisher?.replace(/[\s,;:/]+$/u, "").trim()
+  const dateValues = marc260Subfields(statement, "c")
+  const years = [
+    ...new Set(
+      dateValues.flatMap((value) =>
+        [...value.matchAll(/\d{4}/g)].flatMap((match) =>
+          match[0] !== undefined ? [Number(match[0])] : [],
+        ),
+      ),
+    ),
+  ]
+  const date = years.length === 1 ? { year: years[0] } : undefined
+  const details = omitUndefined({
+    date,
+    publisher:
+      publisher !== undefined &&
+      publisher.length > 0 &&
+      !/^\[?s\.n\.?\]?$/i.test(publisher)
+        ? publisher
+        : undefined,
+  })
+
+  return details.date !== undefined || details.publisher !== undefined
+    ? details
+    : undefined
+}
+
 const absoluteHttpUrl = (
   value: string,
   baseUrl: string,
@@ -151,16 +203,30 @@ export const resolveProjectGutenbergRecord = (
           confidence: "derived",
         }
       : undefined
+  const edition = omitUndefined({
+    date: resolvedIssuedDate(record.issued),
+    publisher: record.publisher,
+  })
+  const original = originalPublicationFromMarc260(record.originalPublication)
+  const publication = omitUndefined({
+    original,
+    edition:
+      edition.date !== undefined || edition.publisher !== undefined
+        ? edition
+        : undefined,
+  })
 
   return omitUndefined({
     title: record.title,
-    publisher: record.publisher,
+    publication:
+      publication.original !== undefined || publication.edition !== undefined
+        ? publication
+        : undefined,
     description: record.summary ?? record.description,
     rights: record.rights,
     languages: emptyToUndefined([...new Set(record.languages ?? [])]),
     subjects: emptyToUndefined(subjects),
     contributors: resolvedContributors(record),
-    published: resolvedIssuedDate(record.issued),
     identifiers,
     cover,
   })

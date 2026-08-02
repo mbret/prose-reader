@@ -7,7 +7,12 @@ const score = (query: ResolvedMetadata, candidate: ResolvedMetadata) =>
 
 describe("scoreMetadataCandidate", () => {
   it("scores 0 when the two sides have nothing comparable", () => {
-    expect(score({ title: "Dune" }, { publisher: "Ace" })).toEqual({
+    expect(
+      score(
+        { title: "Dune" },
+        { publication: { edition: { publisher: "Ace" } } },
+      ),
+    ).toEqual({
       score: 0,
       signals: [],
     })
@@ -15,7 +20,7 @@ describe("scoreMetadataCandidate", () => {
 
   it("only compares fields both sides state", () => {
     const { signals } = score(
-      { title: "Dune", publisher: "Ace" },
+      { title: "Dune", publication: { edition: { publisher: "Ace" } } },
       { title: "Dune", numberOfPages: 412 },
     )
 
@@ -24,8 +29,16 @@ describe("scoreMetadataCandidate", () => {
 
   it("pins the score to 1 on an agreeing ISBN, whatever else disagrees", () => {
     const result = score(
-      { isbn: "9780441013593", title: "Doon", publisher: "Somebody" },
-      { isbn: "9780441013593", title: "Dune", publisher: "Ace" },
+      {
+        isbn: "9780441013593",
+        title: "Doon",
+        publication: { edition: { publisher: "Somebody" } },
+      },
+      {
+        isbn: "9780441013593",
+        title: "Dune",
+        publication: { edition: { publisher: "Ace" } },
+      },
     )
 
     expect(result.score).toBe(1)
@@ -92,7 +105,10 @@ describe("scoreMetadataCandidate", () => {
   it("reports what it compared, for display", () => {
     const { signals } = score(
       { title: "Dune" },
-      { title: "Dune: Messiah", publisher: "Ace" },
+      {
+        title: "Dune: Messiah",
+        publication: { edition: { publisher: "Ace" } },
+      },
     )
 
     expect(signals[0]).toMatchObject({
@@ -104,12 +120,24 @@ describe("scoreMetadataCandidate", () => {
 
   it("tolerates a near publication year and a near page count", () => {
     const near = score(
-      { published: { year: 1965 }, numberOfPages: 412 },
-      { published: { year: 1966 }, numberOfPages: 400 },
+      {
+        publication: { original: { date: { year: 1965 } } },
+        numberOfPages: 412,
+      },
+      {
+        publication: { original: { date: { year: 1966 } } },
+        numberOfPages: 400,
+      },
     )
     const far = score(
-      { published: { year: 1965 }, numberOfPages: 412 },
-      { published: { year: 2011 }, numberOfPages: 90 },
+      {
+        publication: { original: { date: { year: 1965 } } },
+        numberOfPages: 412,
+      },
+      {
+        publication: { original: { date: { year: 2011 } } },
+        numberOfPages: 90,
+      },
     )
 
     expect(near.score).toBeGreaterThan(0.5)
@@ -196,14 +224,32 @@ describe("scoreMetadataCandidate", () => {
 
   it("weight-averages the comparable fields", () => {
     const result = score(
-      { title: "Dune", publisher: "Ace" },
-      { title: "Dune", publisher: "Chilton Books" },
+      { title: "Dune", publication: { edition: { publisher: "Ace" } } },
+      {
+        title: "Dune",
+        publication: { edition: { publisher: "Chilton Books" } },
+      },
     )
 
     // a perfect title (weight .8) barely dented by a different publisher
     // (weight .15) — an edition detail must not sink a convincing match
     expect(result.score).toBeGreaterThan(0.8)
     expect(result.score).toBeLessThan(1)
+  })
+
+  it("does not compare an original publication date with an edition date", () => {
+    const result = score(
+      {
+        title: "Dune",
+        publication: { original: { date: { year: 1965 } } },
+      },
+      {
+        title: "Dune",
+        publication: { edition: { date: { year: 1965 } } },
+      },
+    )
+
+    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
   })
 
   it("rejects a fuzzy catalog hit that names a different volume", () => {
@@ -221,8 +267,12 @@ describe("scoreMetadataCandidate", () => {
           },
         ],
         languages: ["en"],
-        published: { year: 2026 },
-        publisher: "Public domain in the USA.",
+        publication: {
+          edition: {
+            date: { year: 2026 },
+            publisher: "Project Gutenberg",
+          },
+        },
       },
       {
         title: "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",
@@ -231,8 +281,13 @@ describe("scoreMetadataCandidate", () => {
         ],
         identifiers: [{ value: "/works/OL40566043W", scheme: "OpenLibrary" }],
         languages: ["en"],
-        published: { year: 2015 },
-        publisher: "CreateSpace Independent Publishing Platform",
+        publication: {
+          original: { date: { year: 1821 } },
+          edition: {
+            date: { year: 2015 },
+            publisher: "CreateSpace Independent Publishing Platform",
+          },
+        },
       },
     )
 

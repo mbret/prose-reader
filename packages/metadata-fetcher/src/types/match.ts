@@ -11,15 +11,17 @@ export type MetadataMatchField =
   | "title"
   | "contributors"
   | "series"
-  | "publisher"
-  | "published"
+  | "publication.original.date"
+  | "publication.original.publisher"
+  | "publication.edition.date"
+  | "publication.edition.publisher"
   | "languages"
   | "numberOfPages"
 
 /**
  * One field comparison. The compared values sit next to the score so a match
- * is explainable to a user — "same title, different publisher" — without
- * re-deriving anything.
+ * is explainable to a user — "same title, different edition publisher" —
+ * without re-deriving anything.
  */
 export type MetadataMatchSignal = {
   readonly field: MetadataMatchField

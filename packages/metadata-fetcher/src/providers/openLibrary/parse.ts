@@ -21,7 +21,6 @@ export type OpenLibraryDoc = {
   readonly subtitle?: string
   readonly author_name?: ReadonlyArray<string>
   readonly first_publish_year?: number
-  readonly publisher?: ReadonlyArray<string>
   /** MARC 21 language codes (`eng`, `fre`), not BCP 47. */
   readonly language?: ReadonlyArray<string>
   readonly subject?: ReadonlyArray<string>
@@ -38,7 +37,6 @@ const parseDoc = (record: Record<string, unknown>): OpenLibraryDoc => ({
   subtitle: readString(record, "subtitle"),
   author_name: readStringArray(record, "author_name"),
   first_publish_year: readNumber(record, "first_publish_year"),
-  publisher: readStringArray(record, "publisher"),
   language: readStringArray(record, "language"),
   subject: readStringArray(record, "subject"),
   number_of_pages_median: readNumber(record, "number_of_pages_median"),

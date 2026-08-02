@@ -12,6 +12,7 @@ const PROJECT_GUTENBERG_RDF_FIXTURE = `<?xml version="1.0" encoding="utf-8"?>
   <pgterms:ebook rdf:about="ebooks/78139">
     <dcterms:publisher>Project Gutenberg</dcterms:publisher>
     <dcterms:issued>2026-03-08</dcterms:issued>
+    <pgterms:marc260>  $aNew York :$bA.L. Burt, $c1896.</pgterms:marc260>
     <dcterms:rights>Public domain in the USA.</dcterms:rights>
     <dcterms:creator>
       <pgterms:agent><pgterms:name>Goethe, Johann Wolfgang von</pgterms:name></pgterms:agent>
@@ -56,6 +57,7 @@ describe("parseProjectGutenbergRdf", () => {
       title: "Wilhelm Meister's apprenticeship and travels, vol. 2 (of 2)",
       publisher: "Project Gutenberg",
       issued: "2026-03-08",
+      originalPublication: "$aNew York :$bA.L. Burt, $c1896.",
       rights: "Public domain in the USA.",
       description: "A catalog note",
       summary: "A useful summary",

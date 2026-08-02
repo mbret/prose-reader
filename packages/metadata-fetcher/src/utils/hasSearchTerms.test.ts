@@ -23,10 +23,12 @@ describe("hasSearchTerms", () => {
     expect(hasSearchTerms({})).toBe(false)
     expect(
       hasSearchTerms({
-        publisher: "Ace",
+        publication: {
+          original: { date: { year: 1965 } },
+          edition: { publisher: "Ace" },
+        },
         languages: ["en"],
         numberOfPages: 412,
-        published: { year: 1965 },
       }),
     ).toBe(false)
   })

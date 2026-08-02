@@ -2,6 +2,7 @@ import type {
   ResolvedCollection,
   ResolvedContributor,
   ResolvedContributorRole,
+  ResolvedDate,
   ResolvedMetadata,
   ResolvedMetadataHome,
 } from "../types/resolvedMetadata.ts"
@@ -28,24 +29,24 @@ export const comicInfoMetadataHomes = {
   CommunityRating: "comic.communityRating",
   Count: "belongsTo.series",
   CoverArtist: "contributors",
-  Day: "published",
+  Day: "publication.edition.date",
   Editor: "contributors",
   Format: "comic.format",
   Genre: "subjects",
   GTIN: "identifiers",
-  Imprint: "imprint",
+  Imprint: "publication.edition.imprint",
   Inker: "contributors",
   LanguageISO: "languages",
   Letterer: "contributors",
   Locations: "comic.locations",
   MainCharacterOrTeam: "comic.mainCharacterOrTeam",
   Manga: "readingDirection",
-  Month: "published",
+  Month: "publication.edition.date",
   Notes: "comic.notes",
   Number: "belongsTo.series",
   PageCount: "numberOfPages",
   Penciller: "contributors",
-  Publisher: "publisher",
+  Publisher: "publication.edition.publisher",
   Review: "comic.review",
   ScanInformation: "comic.scanInformation",
   Series: "belongsTo.series",
@@ -60,7 +61,7 @@ export const comicInfoMetadataHomes = {
   Volume: "comic.volume",
   Web: "comic.web",
   Writer: "contributors",
-  Year: "published",
+  Year: "publication.edition.date",
 } as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHome>
 
 const readingDirection = (info: ComicInfo): "ltr" | "rtl" | undefined => {
@@ -133,9 +134,7 @@ const mangaFlag = (info: ComicInfo): boolean | undefined => {
   }
 }
 
-const dateFromYearMonthDay = (
-  info: ComicInfo,
-): ResolvedMetadata["published"] => {
+const dateFromYearMonthDay = (info: ComicInfo): ResolvedDate | undefined => {
   const year = parseNonNegativeInt(info.Year)
   const month = parseNonNegativeInt(info.Month)
   const day = parseNonNegativeInt(info.Day)
@@ -277,16 +276,24 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
   const gtinTrimmed = trimToUndefined(rawGtin)
   const languageIso = trimToUndefined(info.LanguageISO)
   const subjects = [...splitCommaList(info.Genre), ...splitCommaList(info.Tags)]
+  const edition = omitUndefined({
+    date: dateFromYearMonthDay(info),
+    publisher: trimToUndefined(info.Publisher),
+    imprint: trimToUndefined(info.Imprint),
+  })
 
   return omitUndefined({
     title: trimToUndefined(info.Title),
     description: trimToUndefined(info.Summary),
-    publisher: trimToUndefined(info.Publisher),
-    imprint: trimToUndefined(info.Imprint),
+    publication:
+      edition.date !== undefined ||
+      edition.publisher !== undefined ||
+      edition.imprint !== undefined
+        ? { edition }
+        : undefined,
     languages: languageIso !== undefined ? [languageIso] : undefined,
     subjects: emptyToUndefined(subjects),
     contributors: emptyToUndefined(contributorsFromComicInfo(info)),
-    published: dateFromYearMonthDay(info),
     readingDirection: readingDirection(info),
     numberOfPages: parseNonNegativeInt(info.PageCount),
     gtin: normalizeGtin(rawGtin),

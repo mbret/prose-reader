@@ -73,6 +73,29 @@ export const mergeResolvedMetadata = (
       (entry) => entry.belongsTo?.collection !== undefined,
     )?.belongsTo?.collection,
   })
+  const publicationPart = (part: "original" | "edition") => {
+    const details = omitUndefined({
+      date: defined.find(
+        (entry) => entry.publication?.[part]?.date !== undefined,
+      )?.publication?.[part]?.date,
+      publisher: defined.find(
+        (entry) => entry.publication?.[part]?.publisher !== undefined,
+      )?.publication?.[part]?.publisher,
+      imprint: defined.find(
+        (entry) => entry.publication?.[part]?.imprint !== undefined,
+      )?.publication?.[part]?.imprint,
+    })
+
+    return details.date !== undefined ||
+      details.publisher !== undefined ||
+      details.imprint !== undefined
+      ? details
+      : undefined
+  }
+  const publication = omitUndefined({
+    original: publicationPart("original"),
+    edition: publicationPart("edition"),
+  })
 
   // `Required` makes every key mandatory in this literal (values still accept
   // `undefined`), so a field added to the vocabulary is a compile error here
@@ -83,13 +106,14 @@ export const mergeResolvedMetadata = (
     title: first("title"),
     cover: first("cover"),
     description: first("description"),
-    publisher: first("publisher"),
-    imprint: first("imprint"),
+    publication:
+      publication.original !== undefined || publication.edition !== undefined
+        ? publication
+        : undefined,
     rights: first("rights"),
     languages: first("languages"),
     subjects: first("subjects"),
     contributors: first("contributors"),
-    published: first("published"),
     readingDirection: first("readingDirection"),
     renditionLayout: first("renditionLayout"),
     renditionFlow: first("renditionFlow"),

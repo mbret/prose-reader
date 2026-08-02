@@ -83,6 +83,23 @@ export type ResolvedDate = {
   readonly day?: number
 }
 
+/** Bibliographic details tied to one publication event. */
+export type ResolvedPublication = {
+  readonly date?: ResolvedDate
+  readonly publisher?: string
+  readonly imprint?: string
+}
+
+/**
+ * Separates the work's first publication from the concrete edition being
+ * described. An EPUB package and a ComicInfo sidecar describe `edition`;
+ * catalogs can additionally provide `original` when they explicitly know it.
+ */
+export type ResolvedPublicationInfo = {
+  readonly original?: ResolvedPublication
+  readonly edition?: ResolvedPublication
+}
+
 /**
  * One entry of the open-world property channel — structurally the OPF
  * `<meta>` shape (EPUB 3 `property`/`refines`/`value`, EPUB 2
@@ -216,10 +233,8 @@ export type ResolvedMetadata = {
   readonly cover?: ResolvedCover
   /** OPF `dc:description`, ComicInfo `Summary`. */
   readonly description?: string
-  /** OPF first non-empty `dc:publisher`, ComicInfo `Publisher`. */
-  readonly publisher?: string
-  /** ComicInfo `Imprint` (Readium term; OPF has no dedicated element). */
-  readonly imprint?: string
+  /** Original-versus-edition publication details. */
+  readonly publication?: ResolvedPublicationInfo
   /** Rights/copyright statement. OPF `dc:rights`; ComicInfo has none. */
   readonly rights?: string
   /**
@@ -240,8 +255,6 @@ export type ResolvedMetadata = {
    * roles merged when the same name appears in several fields).
    */
   readonly contributors?: ReadonlyArray<ResolvedContributor>
-  /** Publication date. OPF `dc:date` (W3CDTF); ComicInfo `Year`/`Month`/`Day`. */
-  readonly published?: ResolvedDate
   /**
    * OPF spine `page-progression-direction`, ComicInfo `Manga`
    * (`YesAndRightToLeft` → rtl). See `resolveMetadata` for precedence.
@@ -318,11 +331,16 @@ export type ResolvedMetadata = {
  * adding a parser field without declaring its home is a type error.
  */
 export type ResolvedMetadataHome =
-  | Exclude<keyof ResolvedMetadata, "comic" | "apple" | "kobo" | "belongsTo">
+  | Exclude<
+      keyof ResolvedMetadata,
+      "comic" | "apple" | "kobo" | "belongsTo" | "publication"
+    >
   | `comic.${keyof ResolvedComicMetadata}`
   | `apple.${keyof ResolvedAppleMetadata}`
   | `kobo.${keyof ResolvedKoboMetadata}`
   | `belongsTo.${"series" | "collection"}`
+  | `publication.${keyof ResolvedPublicationInfo}`
+  | `publication.${keyof ResolvedPublicationInfo}.${keyof ResolvedPublication}`
   | "readingOrder"
   | "toc"
   | "guide"

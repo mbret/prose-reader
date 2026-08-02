@@ -18,6 +18,8 @@ export type ProjectGutenbergRecord = {
   readonly title?: string
   readonly publisher?: string
   readonly issued?: string
+  /** Original print publication statement (`MARC 260`). */
+  readonly originalPublication?: string
   readonly rights?: string
   readonly description?: string
   readonly summary?: string
@@ -221,6 +223,7 @@ export const parseProjectGutenbergRdf = (
     title: text(childNamedLocal(ebook, "title")),
     publisher: text(childNamedLocal(ebook, "publisher")),
     issued: text(childNamedLocal(ebook, "issued")),
+    originalPublication: text(childNamedLocal(ebook, "marc260")),
     rights: text(childNamedLocal(ebook, "rights")),
     description: text(childNamedLocal(ebook, "description")),
     summary: text(childNamedLocal(ebook, "marc520")),

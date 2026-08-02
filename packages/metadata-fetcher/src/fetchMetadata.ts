@@ -49,7 +49,7 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 1
+const FETCHED_METADATA_VERSION = 2
 
 const toMatch = ({
   candidate,

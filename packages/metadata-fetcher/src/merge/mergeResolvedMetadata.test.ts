@@ -11,9 +11,15 @@ describe("mergeResolvedMetadata", () => {
     expect(
       mergeResolvedMetadata(
         { title: "Book Title" },
-        { title: "Catalog Title", publisher: "Ace" },
+        {
+          title: "Catalog Title",
+          publication: { edition: { publisher: "Ace" } },
+        },
       ),
-    ).toEqual({ title: "Book Title", publisher: "Ace" })
+    ).toEqual({
+      title: "Book Title",
+      publication: { edition: { publisher: "Ace" } },
+    })
   })
 
   it("merges field-wise, not object-wise", () => {
@@ -54,6 +60,32 @@ describe("mergeResolvedMetadata", () => {
     ).toEqual({
       series: [{ name: "Dune" }],
       collection: [{ name: "SF Masterworks" }],
+    })
+  })
+
+  it("merges publication parts and their details independently", () => {
+    expect(
+      mergeResolvedMetadata(
+        {
+          publication: {
+            original: { date: { year: 1965 } },
+            edition: { publisher: "Ace" },
+          },
+        },
+        {
+          publication: {
+            original: { publisher: "Chilton Books" },
+            edition: { date: { year: 1990 }, imprint: "Spectra" },
+          },
+        },
+      ).publication,
+    ).toEqual({
+      original: { date: { year: 1965 }, publisher: "Chilton Books" },
+      edition: {
+        date: { year: 1990 },
+        publisher: "Ace",
+        imprint: "Spectra",
+      },
     })
   })
 

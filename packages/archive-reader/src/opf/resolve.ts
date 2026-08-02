@@ -29,12 +29,12 @@ export const opfMetadataHomes = {
   title: "title",
   creators: "contributors",
   contributors: "contributors",
-  publisher: "publisher",
+  publisher: "publication.edition.publisher",
   description: "description",
   rights: "rights",
   languages: "languages",
   subjects: "subjects",
-  date: "published",
+  date: "publication.edition.date",
   coverHref: "cover",
   renditionLayoutMeta: "renditionLayout",
   renditionFlowMeta: "renditionFlow",
@@ -292,16 +292,22 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
           collection: collection.length > 0 ? collection : undefined,
         })
       : undefined
+  const edition = omitUndefined({
+    date: parseW3cDtfDate(input.date),
+    publisher: input.publisher,
+  })
 
   return omitUndefined({
     title: input.title,
     description: input.description,
-    publisher: input.publisher,
+    publication:
+      edition.date !== undefined || edition.publisher !== undefined
+        ? { edition }
+        : undefined,
     rights: input.rights,
     languages: input.languages.length > 0 ? [...input.languages] : undefined,
     subjects: input.subjects.length > 0 ? [...input.subjects] : undefined,
     contributors: contributors.length > 0 ? contributors : undefined,
-    published: parseW3cDtfDate(input.date),
     readingDirection,
     renditionLayout,
     renditionFlow: validatedRenditionFlow(input.renditionFlowMeta),

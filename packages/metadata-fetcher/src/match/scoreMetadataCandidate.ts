@@ -21,8 +21,10 @@ export const METADATA_MATCH_WEIGHTS = {
   title: 0.8,
   contributors: 0.5,
   series: 0.3,
-  published: 0.2,
-  publisher: 0.15,
+  "publication.original.date": 0.2,
+  "publication.original.publisher": 0.15,
+  "publication.edition.date": 0.2,
+  "publication.edition.publisher": 0.15,
   languages: 0.15,
   numberOfPages: 0.15,
 } as const satisfies Record<MetadataMatchField, number>
@@ -94,7 +96,7 @@ const primaryLanguageSubtag = (language: string): string =>
   language.trim().toLowerCase().split("-")[0] ?? ""
 
 /** Reprints shift the year around, so a near one still corroborates. */
-const publishedYearScore = (
+const publicationYearScore = (
   queryYear: number,
   candidateYear: number,
 ): number => {
@@ -249,7 +251,16 @@ export const scoreMetadataCandidate = (
   }
 
   compareStrings("title", query.title, candidate.title, titleSimilarity)
-  compareStrings("publisher", query.publisher, candidate.publisher)
+  compareStrings(
+    "publication.original.publisher",
+    query.publication?.original?.publisher,
+    candidate.publication?.original?.publisher,
+  )
+  compareStrings(
+    "publication.edition.publisher",
+    query.publication?.edition?.publisher,
+    candidate.publication?.edition?.publisher,
+  )
   compareStrings(
     "series",
     query.belongsTo?.series?.[0]?.name,
@@ -271,16 +282,30 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryYear = query.published?.year
-  const candidateYear = candidate.published?.year
+  const comparePublicationYears = (
+    field: "publication.original.date" | "publication.edition.date",
+    queryYear: number | undefined,
+    candidateYear: number | undefined,
+  ) => {
+    if (queryYear === undefined || candidateYear === undefined) return
 
-  if (queryYear !== undefined && candidateYear !== undefined) {
-    addSignal("published", {
-      score: publishedYearScore(queryYear, candidateYear),
+    addSignal(field, {
+      score: publicationYearScore(queryYear, candidateYear),
       query: String(queryYear),
       candidate: String(candidateYear),
     })
   }
+
+  comparePublicationYears(
+    "publication.original.date",
+    query.publication?.original?.date?.year,
+    candidate.publication?.original?.date?.year,
+  )
+  comparePublicationYears(
+    "publication.edition.date",
+    query.publication?.edition?.date?.year,
+    candidate.publication?.edition?.date?.year,
+  )
 
   const queryLanguages = query.languages ?? []
   const candidateLanguages = candidate.languages ?? []

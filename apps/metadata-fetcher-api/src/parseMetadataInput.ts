@@ -1,4 +1,8 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type {
+  ResolvedDate,
+  ResolvedMetadata,
+  ResolvedPublication,
+} from "@prose-reader/archive-reader"
 
 /**
  * A request body is third-party data, and the fetcher trusts its input
@@ -118,16 +122,12 @@ const readCollections = (
   return collections.length > 0 ? collections : undefined
 }
 
-const readPublished = (
-  record: Record<string, unknown>,
-): ResolvedMetadata["published"] => {
-  const published = record.published
+const readDate = (value: unknown): ResolvedDate | undefined => {
+  if (!isRecord(value)) return undefined
 
-  if (!isRecord(published)) return undefined
-
-  const year = readNumber(published, "year")
-  const month = readNumber(published, "month")
-  const day = readNumber(published, "day")
+  const year = readNumber(value, "year")
+  const month = readNumber(value, "month")
+  const day = readNumber(value, "day")
 
   if (year === undefined && month === undefined && day === undefined) {
     return undefined
@@ -137,6 +137,42 @@ const readPublished = (
     ...(year !== undefined ? { year } : {}),
     ...(month !== undefined ? { month } : {}),
     ...(day !== undefined ? { day } : {}),
+  }
+}
+
+const readPublicationPart = (
+  value: unknown,
+): ResolvedPublication | undefined => {
+  if (!isRecord(value)) return undefined
+
+  const date = readDate(value.date)
+  const publisher = readString(value, "publisher")
+  const imprint = readString(value, "imprint")
+
+  if (date === undefined && publisher === undefined && imprint === undefined) {
+    return undefined
+  }
+
+  return {
+    ...(date !== undefined ? { date } : {}),
+    ...(publisher !== undefined ? { publisher } : {}),
+    ...(imprint !== undefined ? { imprint } : {}),
+  }
+}
+
+const readPublication = (
+  record: Record<string, unknown>,
+): ResolvedMetadata["publication"] => {
+  if (!isRecord(record.publication)) return undefined
+
+  const original = readPublicationPart(record.publication.original)
+  const edition = readPublicationPart(record.publication.edition)
+
+  if (original === undefined && edition === undefined) return undefined
+
+  return {
+    ...(original !== undefined ? { original } : {}),
+    ...(edition !== undefined ? { edition } : {}),
   }
 }
 
@@ -180,7 +216,6 @@ export const parseMetadataInput = (
 
   return omitUndefined({
     title: readString(record, "title"),
-    publisher: readString(record, "publisher"),
     isbn: readString(record, "isbn"),
     gtin: readString(record, "gtin"),
     languages: readStringArray(record, "languages"),
@@ -188,7 +223,7 @@ export const parseMetadataInput = (
     numberOfPages: readNumber(record, "numberOfPages"),
     contributors: readContributors(record),
     identifiers: readIdentifiers(record),
-    published: readPublished(record),
+    publication: readPublication(record),
     belongsTo: readBelongsTo(record),
   })
 }

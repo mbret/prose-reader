@@ -62,9 +62,10 @@ Human-friendly lookup, for curl and quick tries.
 | `title` | |
 | `author` | repeatable |
 | `isbn`, `gtin` | |
-| `publisher`, `series` | |
+| `series` | |
 | `language` | repeatable |
-| `year` | publication year |
+| `originalPublisher`, `editionPublisher` | publisher for the explicitly named publication event |
+| `originalPublicationYear`, `editionPublicationYear` | year for the explicitly named publication event |
 
 ```bash
 curl "http://localhost:3000/metadata?isbn=9780441013593"
