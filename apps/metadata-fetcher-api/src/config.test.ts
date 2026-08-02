@@ -51,5 +51,11 @@ describe("configFromEnv", () => {
     expect(() => configFromEnv({ METADATA_MIN_SCORE: "2" })).toThrow(
       /METADATA_MIN_SCORE/,
     )
+    expect(() =>
+      configFromEnv({ PROJECT_GUTENBERG_BASE_URL: "not-a-url" }),
+    ).toThrow(/Invalid PROJECT_GUTENBERG_BASE_URL/)
+    expect(() =>
+      configFromEnv({ PROJECT_GUTENBERG_BASE_URL: "file:///tmp/catalog" }),
+    ).toThrow(/absolute HTTP\(S\) URL/)
   })
 })

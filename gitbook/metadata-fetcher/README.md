@@ -114,7 +114,7 @@ The rules:
   | `published` | 0.2 | year proximity: reprints shift it |
   | `publisher`, `languages`, `numberOfPages` | 0.15 | edition details — they must never sink a convincing match alone |
 
-- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same scheme. A scheme-less raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 
 `minScore` (default `0.5`) decides which matches are `accepted` — which ones contribute to the merged `metadata`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
@@ -211,7 +211,7 @@ const provider = createProjectGutenbergProvider({
 
 **Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
 
-The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. That shared identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
+The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
 **Mapping** (per-eBook RDF → `ResolvedMetadata`, exported as `projectGutenbergMetadataHomes`):
 

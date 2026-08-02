@@ -32,20 +32,9 @@ export const METADATA_MATCH_WEIGHTS = {
  * directions. Catalogs and books disagree on titles and page counts
  * constantly; they do not agree or disagree on an ISBN by accident.
  */
-const DECISIVE_CONTRADICTION_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
+const DECISIVE_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
   "isbn",
   "gtin",
-])
-
-/**
- * Providers echo an identifier only after their catalog confirmed it. A
- * shared provider-confirmed identifier is decisive; disjoint identifier lists
- * are not contradictions because catalogs naturally use different id spaces.
- */
-const DECISIVE_AGREEMENT_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
-  "isbn",
-  "gtin",
-  "identifiers",
 ])
 
 /** Blank is absent — the vocabulary says so, a hand-built query may not. */
@@ -55,8 +44,17 @@ const stated = (value: string | undefined): string | undefined => {
   return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
 }
 
-const identifierKey = (identifier: MetadataIdentifier): string =>
-  identifier.value.trim().toLowerCase()
+const identifiersHaveSameValue = (
+  a: MetadataIdentifier,
+  b: MetadataIdentifier,
+): boolean => {
+  const aValue = stated(a.value)?.toLowerCase()
+
+  return aValue !== undefined && aValue === stated(b.value)?.toLowerCase()
+}
+
+const identifierScheme = (identifier: MetadataIdentifier): string | undefined =>
+  stated(identifier.scheme)?.toLowerCase()
 
 const identifierLabel = (identifier: MetadataIdentifier): string =>
   identifier.scheme !== undefined
@@ -71,10 +69,25 @@ const identifiersAgree = (
   a: MetadataIdentifier,
   b: MetadataIdentifier,
 ): boolean => {
-  if (identifierKey(a) !== identifierKey(b)) return false
-  if (a.scheme === undefined || b.scheme === undefined) return true
+  if (!identifiersHaveSameValue(a, b)) return false
+  const aScheme = identifierScheme(a)
+  const bScheme = identifierScheme(b)
 
-  return a.scheme.trim().toLowerCase() === b.scheme.trim().toLowerCase()
+  if (aScheme === undefined || bScheme === undefined) return true
+
+  return aScheme === bScheme
+}
+
+/** Only an authored scope makes a shared raw value unambiguous identity. */
+const identifiersAgreeDecisively = (
+  a: MetadataIdentifier,
+  b: MetadataIdentifier,
+): boolean => {
+  if (!identifiersHaveSameValue(a, b)) return false
+  const aScheme = identifierScheme(a)
+  const bScheme = identifierScheme(b)
+
+  return aScheme !== undefined && aScheme === bScheme
 }
 
 const primaryLanguageSubtag = (language: string): string =>
@@ -135,9 +148,10 @@ export type ScoredMetadataCandidate = {
  *   candidate, and nothing in common scores `0`.
  * - **The aggregate is a weighted average** ({@link METADATA_MATCH_WEIGHTS}),
  *   putting a rich query and a sparse one on the same scale.
- * - **Confirmed identity settles it** — an agreeing ISBN, GTIN, or identifier
- *   pins the score to `1`. A contradictory ISBN or GTIN pins it to `0`; two
- *   disjoint provider-specific identifier lists are merely unrelated.
+ * - **Confirmed identity settles it** — an agreeing ISBN, GTIN, or
+ *   scheme-scoped identifier pins the score to `1`. A contradictory ISBN or
+ *   GTIN pins it to `0`; two disjoint provider-specific identifier lists are
+ *   merely unrelated.
  */
 export const scoreMetadataCandidate = (
   query: ResolvedMetadata,
@@ -216,6 +230,11 @@ export const scoreMetadataCandidate = (
 
   const queryIdentifiers = query.identifiers ?? []
   const candidateIdentifiers = candidate.identifiers ?? []
+  const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
+    candidateIdentifiers.some((other) =>
+      identifiersAgreeDecisively(identifier, other),
+    ),
+  )
 
   if (queryIdentifiers.length > 0 && candidateIdentifiers.length > 0) {
     const shared = queryIdentifiers.some((identifier) =>
@@ -293,20 +312,18 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const decisiveContradictions = signals.filter((signal) =>
-    DECISIVE_CONTRADICTION_FIELDS.has(signal.field),
-  )
-  const decisiveAgreements = signals.filter((signal) =>
-    DECISIVE_AGREEMENT_FIELDS.has(signal.field),
-  )
+  const decisive = signals.filter((signal) => DECISIVE_FIELDS.has(signal.field))
 
   // Contradiction wins over agreement: refusing a publication whose stated
   // identity disagrees is the recoverable mistake. Without this the average is
   // merciful to exactly the wrong candidate — a different edition agreeing on
   // title and author scores (0.8 + 0.5) / 2.3 ≈ 0.57, accepted.
-  if (decisiveContradictions.some((signal) => signal.score === 0))
+  if (decisive.some((signal) => signal.score === 0))
     return { score: 0, signals }
-  if (decisiveAgreements.some((signal) => signal.score === 1))
+  if (
+    decisiveIdentifierAgreement ||
+    decisive.some((signal) => signal.score === 1)
+  )
     return { score: 1, signals }
 
   const totalWeight = signals.reduce(

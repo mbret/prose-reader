@@ -153,6 +153,24 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
+  it("does not make a scheme-less identifier match decisive", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "78139" }],
+      },
+      {
+        title: "Neuromancer",
+        identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
+      },
+    )
+
+    expect(result.score).toBeLessThan(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 1 }),
+    )
+  })
+
   it("does not treat disjoint provider identifier spaces as decisive contradictions", () => {
     const result = score(
       {

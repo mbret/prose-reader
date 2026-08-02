@@ -112,7 +112,7 @@ Both answer with the `FetchedMetadata` entity verbatim — merged `metadata`, ra
 | `METADATA_MIN_SCORE` | `0.5` | default `minScore` |
 | `REQUEST_TIMEOUT_MS` | `10000` | budget for one lookup across every provider |
 | `PROJECT_GUTENBERG_USER_AGENT` | — | optional identifying user agent for exact RDF lookups |
-| `PROJECT_GUTENBERG_BASE_URL` | `https://www.gutenberg.org` | override to point at a mirror or a stub |
+| `PROJECT_GUTENBERG_BASE_URL` | `https://www.gutenberg.org` | absolute HTTP(S) origin; override to point at a mirror or a stub |
 | `OPEN_LIBRARY_USER_AGENT` | — | **set this**: Open Library asks API clients to identify themselves (app name + contact) and throttles anonymous traffic harder |
 | `OPEN_LIBRARY_BASE_URL` | `https://openlibrary.org` | override to point at a mirror or a stub |
 | `OPEN_LIBRARY_COVERS_BASE_URL` | `https://covers.openlibrary.org` | |

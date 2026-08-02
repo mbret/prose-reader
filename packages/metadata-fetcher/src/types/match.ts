@@ -41,10 +41,10 @@ export type MetadataMatch = {
   readonly providerId: string
   /**
    * Aggregate confidence, `0` to `1`: the weight-averaged score of every
-   * comparable field — except when both sides state an identifier, which
-   * settles it outright: `1` if it agrees (an ISBN/GTIN match *is* the book),
-   * `0` if it contradicts. `0` too when the two sides had no field in common
-   * to compare.
+   * comparable field — except when an ISBN, GTIN or shared scheme-scoped
+   * identifier confirms identity, which settles it at `1`. A contradictory
+   * ISBN or GTIN settles it at `0`. `0` too when the two sides had no field in
+   * common to compare.
    */
   readonly score: number
   readonly signals: ReadonlyArray<MetadataMatchSignal>
