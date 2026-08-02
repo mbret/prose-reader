@@ -1,13 +1,12 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataCandidate,
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
-import { metadataAuthors } from "../../utils/metadataAuthors.ts"
 import {
   type ProjectGutenbergLookup,
-  projectGutenbergLookupFromMetadata,
+  projectGutenbergLookupFromInput,
 } from "../projectGutenberg/identifier.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
@@ -51,13 +50,13 @@ export type OpenLibraryProviderOptions = {
 }
 
 const searchTerms = (
-  metadata: ResolvedMetadata,
+  input: FetchMetadataInput,
 ): Record<string, string> | undefined => {
-  const title = metadata.title?.trim()
+  const title = input.title?.trim()
 
   if (title === undefined || title.length === 0) return undefined
 
-  const author = metadataAuthors(metadata)[0]
+  const author = input.authors?.find((value) => value.trim().length > 0)?.trim()
 
   return {
     title,
@@ -144,9 +143,9 @@ export const createOpenLibraryProvider = (
   return {
     id: OPEN_LIBRARY_PROVIDER_ID,
     name: "Open Library",
-    search: async (metadata, context) => {
-      const isbn = metadata.isbn?.trim() || undefined
-      const projectGutenberg = projectGutenbergLookupFromMetadata(metadata)
+    search: async (input, context) => {
+      const isbn = input.isbn?.trim() || undefined
+      const projectGutenberg = projectGutenbergLookupFromInput(input)
 
       if (isbn !== undefined) {
         const docs = await searchDocs({ isbn }, context)
@@ -167,7 +166,7 @@ export const createOpenLibraryProvider = (
         }
       }
 
-      const terms = searchTerms(metadata)
+      const terms = searchTerms(input)
 
       if (terms === undefined) return []
 

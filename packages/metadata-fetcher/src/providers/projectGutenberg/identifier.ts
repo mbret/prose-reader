@@ -1,14 +1,14 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type {
+  FetchMetadataInput,
+  MetadataIdentifier,
+} from "../../types/fetchMetadataInput.ts"
 
 export const PROJECT_GUTENBERG_IDENTIFIER_SCHEME = "ProjectGutenberg"
 
 export type ProjectGutenbergLookup = {
   readonly id: string
   /** The book's exact identifier spelling, echoed only after PG confirms it. */
-  readonly identifier: {
-    readonly value: string
-    readonly scheme?: string
-  }
+  readonly identifier: MetadataIdentifier
 }
 
 const GUTENBERG_HOSTS: ReadonlySet<string> = new Set([
@@ -57,10 +57,10 @@ const projectGutenbergIdFromUrl = (value: string): string | undefined => {
  * forms. Calling providers decide explicitly how to use this crosswalk; the
  * shared scorer never reinterprets arbitrary URLs.
  */
-export const projectGutenbergLookupFromMetadata = (
-  metadata: ResolvedMetadata,
+export const projectGutenbergLookupFromInput = (
+  input: FetchMetadataInput,
 ): ProjectGutenbergLookup | undefined => {
-  for (const identifier of metadata.identifiers ?? []) {
+  for (const identifier of input.identifiers ?? []) {
     const scheme = identifier.scheme?.trim().toLowerCase()
     const id =
       scheme === PROJECT_GUTENBERG_IDENTIFIER_SCHEME.toLowerCase()

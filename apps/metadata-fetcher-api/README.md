@@ -1,6 +1,6 @@
 # metadata-fetcher-api
 
-A small HTTP service over [`@prose-reader/metadata-fetcher`](../../gitbook/metadata-fetcher/README.md): post what a book container told you, get back what the catalogs know.
+A small HTTP service over [`@prose-reader/metadata-fetcher`](../../gitbook/metadata-fetcher/README.md): post a compact book lookup input, get back what the catalogs know.
 
 It exists for two reasons — it is the development harness for the fetcher and its providers (hit a real catalog without wiring a script every time), and it is the easy way to run metadata lookups as a service without depending on the JavaScript package at all.
 
@@ -13,7 +13,7 @@ npm run start:metadata-fetcher
 curl "http://localhost:3000/metadata?title=Dune&author=Frank+Herbert"
 ```
 
-Then open <http://localhost:3000> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and only that plain JSON metadata is posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the metadata is written to disk, browser storage, a database or a cache.
+Then open <http://localhost:3000> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
 
 The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
@@ -64,8 +64,8 @@ Human-friendly lookup, for curl and quick tries.
 | `isbn`, `gtin` | |
 | `series` | |
 | `language` | repeatable |
-| `originalPublisher`, `editionPublisher` | publisher for the explicitly named publication event |
-| `originalPublicationYear`, `editionPublicationYear` | year for the explicitly named publication event |
+| `publisher` | publisher matching evidence |
+| `publishedYear` | publication year matching evidence |
 
 ```bash
 curl "http://localhost:3000/metadata?isbn=9780441013593"
@@ -73,15 +73,15 @@ curl "http://localhost:3000/metadata?isbn=9780441013593"
 
 ### `POST /metadata`
 
-The integration path: the body is a `ResolvedArchive` — the output of `resolveArchive` — or a bare `ResolvedMetadata`. Options stay on the query string so the body remains a pure entity.
+The integration path: the body is a `FetchMetadataInput`. Options stay on the query string so the body remains a pure lookup description.
 
 ```bash
 curl -X POST "http://localhost:3000/metadata?limit=3" \
   -H 'content-type: application/json' \
-  -d '{"metadata":{"title":"Dune","contributors":[{"name":"Frank Herbert","roles":["author"]}]}}'
+  -d '{"title":"Dune","authors":["Frank Herbert"],"publishedYear":1965}'
 ```
 
-Fields a lookup cannot search on (`readingOrder`, `cover`, `properties`, the format-scoped corners…) are ignored rather than rejected, so a whole resolved archive can be posted verbatim.
+Supported fields are `title`, `authors`, `isbn`, `gtin`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Unknown fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
 
 ### Options (both metadata routes)
 

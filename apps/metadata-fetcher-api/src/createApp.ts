@@ -1,5 +1,5 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import {
+  type FetchMetadataInput,
   fetchMetadata,
   hasSearchTerms,
   type MetadataProvider,
@@ -137,36 +137,12 @@ const parseRequestOptions = (
   }
 }
 
-const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
+const metadataInputFromQuery = (
+  query: Request["query"],
+): FetchMetadataInput => {
   const authors = queryValues(query.author)
   const languages = queryValues(query.language)
-  const series = queryValue(query.series)
-  const originalPublisher = queryValue(query.originalPublisher)
-  const editionPublisher = queryValue(query.editionPublisher)
-  const originalYear = Number(queryValue(query.originalPublicationYear))
-  const editionYear = Number(queryValue(query.editionPublicationYear))
-  const original =
-    originalPublisher !== undefined || Number.isFinite(originalYear)
-      ? {
-          ...(originalPublisher !== undefined
-            ? { publisher: originalPublisher }
-            : {}),
-          ...(Number.isFinite(originalYear)
-            ? { date: { year: originalYear } }
-            : {}),
-        }
-      : undefined
-  const edition =
-    editionPublisher !== undefined || Number.isFinite(editionYear)
-      ? {
-          ...(editionPublisher !== undefined
-            ? { publisher: editionPublisher }
-            : {}),
-          ...(Number.isFinite(editionYear)
-            ? { date: { year: editionYear } }
-            : {}),
-        }
-      : undefined
+  const publishedYear = Number(queryValue(query.publishedYear))
 
   return {
     ...(queryValue(query.title) !== undefined
@@ -178,21 +154,15 @@ const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
     ...(queryValue(query.gtin) !== undefined
       ? { gtin: queryValue(query.gtin) }
       : {}),
-    ...(original !== undefined || edition !== undefined
-      ? {
-          publication: {
-            ...(original !== undefined ? { original } : {}),
-            ...(edition !== undefined ? { edition } : {}),
-          },
-        }
-      : {}),
-    ...(authors.length > 0
-      ? { contributors: authors.map((name) => ({ name, roles: ["author"] })) }
-      : {}),
+    ...(authors.length > 0 ? { authors } : {}),
     ...(languages.length > 0 ? { languages } : {}),
-    ...(series !== undefined
-      ? { belongsTo: { series: [{ name: series }] } }
+    ...(queryValue(query.series) !== undefined
+      ? { series: queryValue(query.series) }
       : {}),
+    ...(queryValue(query.publisher) !== undefined
+      ? { publisher: queryValue(query.publisher) }
+      : {}),
+    ...(Number.isFinite(publishedYear) ? { publishedYear } : {}),
   }
 }
 
@@ -206,8 +176,7 @@ const isAbortError = (error: unknown): boolean =>
  *
  * - `GET /health` — liveness, plus the providers this deployment exposes
  * - `GET /metadata?title=…&author=…` — human-friendly, for curl
- * - `POST /metadata` — a `ResolvedArchive` (or bare `ResolvedMetadata`) body,
- *   options on the query string
+ * - `POST /metadata` — a `FetchMetadataInput` body, options on the query string
  *
  * Both metadata routes answer with the `FetchedMetadata` entity verbatim.
  */
@@ -227,7 +196,7 @@ export const createApp = (options: CreateAppOptions): Express => {
   })
 
   const lookup = async (
-    metadata: ResolvedMetadata,
+    input: FetchMetadataInput,
     request: Request,
     response: Response,
     next: NextFunction,
@@ -240,7 +209,7 @@ export const createApp = (options: CreateAppOptions): Express => {
       return
     }
 
-    if (!hasSearchTerms(metadata)) {
+    if (!hasSearchTerms(input)) {
       response.status(400).json({
         error:
           "No search term: provide at least a title, an author, an isbn, a gtin or an identifier",
@@ -252,7 +221,7 @@ export const createApp = (options: CreateAppOptions): Express => {
     const { providers, limit, minScore, includeRaw } = parsed.value
 
     try {
-      const fetched = await fetchMetadata(metadata, {
+      const fetched = await fetchMetadata(input, {
         providers,
         limit,
         minScore,
@@ -273,21 +242,21 @@ export const createApp = (options: CreateAppOptions): Express => {
   }
 
   app.get("/metadata", (request, response, next) =>
-    lookup(metadataFromQuery(request.query), request, response, next),
+    lookup(metadataInputFromQuery(request.query), request, response, next),
   )
 
   app.post("/metadata", (request, response, next) => {
-    const metadata = parseMetadataInput(request.body)
+    const input = parseMetadataInput(request.body)
 
-    if (metadata === undefined) {
+    if (input === undefined) {
       response
         .status(400)
-        .json({ error: "Body must be a JSON object of resolved metadata" })
+        .json({ error: "Body must be a JSON object of metadata lookup input" })
 
       return
     }
 
-    return lookup(metadata, request, response, next)
+    return lookup(input, request, response, next)
   })
 
   app.use((request, response) => {

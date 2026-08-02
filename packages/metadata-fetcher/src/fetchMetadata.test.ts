@@ -1,10 +1,7 @@
-import type {
-  ResolvedArchive,
-  ResolvedMetadata,
-} from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { fetchMetadata } from "./fetchMetadata.ts"
 import { MetadataProviderResponseError } from "./providers/responseError.ts"
+import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 
 const providerReturning = (
@@ -22,13 +19,13 @@ const failingProvider = (id: string, error = new Error("boom")) => ({
   search: () => Promise.reject(error),
 })
 
-const book: ResolvedMetadata = {
+const book: FetchMetadataInput = {
   title: "Dune",
-  contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+  authors: ["Frank Herbert"],
 }
 
 describe("fetchMetadata", () => {
-  it("accepts a resolved archive as well as bare metadata", async () => {
+  it("accepts the compact lookup input", async () => {
     const providers = [
       providerReturning("a", [
         {
@@ -39,19 +36,12 @@ describe("fetchMetadata", () => {
         },
       ]),
     ]
-    const resolved: Pick<
-      ResolvedArchive,
-      "version" | "metadata" | "unreadableSources"
-    > = { version: 2, metadata: book, unreadableSources: [] }
+    const fetched = await fetchMetadata(book, { providers })
 
-    const fromArchive = await fetchMetadata(resolved, { providers })
-    const fromMetadata = await fetchMetadata(book, { providers })
-
-    expect(fromArchive.matches[0]?.metadata).toEqual({
+    expect(fetched.matches[0]?.metadata).toEqual({
       title: "Dune",
       publication: { edition: { publisher: "Ace" } },
     })
-    expect(fromMetadata.matches).toEqual(fromArchive.matches)
   })
 
   it("hands every provider the metadata itself, verbatim", async () => {
@@ -251,7 +241,7 @@ describe("fetchMetadata", () => {
 
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
-      version: 3,
+      version: 4,
       matches: [],
       sources: {},
       failedProviders: [],

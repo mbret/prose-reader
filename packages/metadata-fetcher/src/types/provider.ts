@@ -1,8 +1,5 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-
-export type MetadataIdentifier = NonNullable<
-  ResolvedMetadata["identifiers"]
->[number]
+import type { FetchMetadataInput } from "./fetchMetadataInput.ts"
 
 export type MetadataProviderContext = {
   /**
@@ -33,28 +30,24 @@ export type MetadataCandidate = {
 
 /**
  * A pluggable metadata source. Implementing one is: pick a stable `id`, read
- * the terms you can search on out of the metadata, return normalized
+ * the terms you can search on out of the compact input, return normalized
  * candidates.
  *
- * Both sides of a lookup speak {@link ResolvedMetadata} — what the book said
- * going in, what the catalog says coming back. There is no separate query
- * shape to learn: the vocabulary is already sparse by contract (`field !==
- * undefined` is a reliable presence check) and already carries everything a
- * catalog could key on, down to the format-scoped corners. `metadataAuthors`
- * is exported for the one derivation that needs the role vocabulary.
+ * Inputs contain only fields understood for lookup and matching. Returned
+ * candidates remain rich {@link ResolvedMetadata} entities.
  *
  * ```ts
- * import { type MetadataProvider, metadataAuthors } from "@prose-reader/metadata-fetcher"
+ * import { type MetadataProvider } from "@prose-reader/metadata-fetcher"
  *
  * const myProvider: MetadataProvider = {
  *   id: "myCatalog",
  *   name: "My Catalog",
- *   search: async (metadata, { limit, signal }) => {
- *     if (metadata.title === undefined) return []
+ *   search: async (input, { limit, signal }) => {
+ *     if (input.title === undefined) return []
  *
  *     const response = await fetch(
- *       `https://example.com/search?q=${encodeURIComponent(metadata.title)}` +
- *         `&author=${encodeURIComponent(metadataAuthors(metadata)[0] ?? "")}`,
+ *       `https://example.com/search?q=${encodeURIComponent(input.title)}` +
+ *         `&author=${encodeURIComponent(input.authors?.[0] ?? "")}`,
  *       { signal },
  *     )
  *     const { results } = await response.json()
@@ -79,7 +72,7 @@ export type MetadataProvider = {
    * provider never fails the fetch, it lands in `failedProviders`.
    */
   readonly search: (
-    metadata: ResolvedMetadata,
+    input: FetchMetadataInput,
     context: MetadataProviderContext,
   ) => Promise<ReadonlyArray<MetadataCandidate>>
 }

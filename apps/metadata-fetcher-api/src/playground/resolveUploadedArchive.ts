@@ -1,9 +1,9 @@
-import {
-  type Archive,
-  type ResolvedMetadata,
-  resolveArchive,
-} from "@prose-reader/archive-reader"
+import { type Archive, resolveArchive } from "@prose-reader/archive-reader"
 import { createArchiveFromZipJs } from "@prose-reader/archive-reader/archives/createArchiveFromZipJs"
+import {
+  type FetchMetadataInput,
+  metadataInputFromResolvedArchive,
+} from "@prose-reader/metadata-fetcher"
 import { Uint8ArrayReader, ZipReader } from "@zip.js/zip.js"
 
 /**
@@ -14,7 +14,7 @@ import { Uint8ArrayReader, ZipReader } from "@zip.js/zip.js"
 export const resolveUploadedArchive = async (
   bytes: Uint8Array,
   options: { filename: string; encodingFormat?: string },
-): Promise<ResolvedMetadata> => {
+): Promise<FetchMetadataInput> => {
   const zipReader = new ZipReader(new Uint8ArrayReader(bytes))
   let archive: Archive | undefined
 
@@ -25,11 +25,11 @@ export const resolveUploadedArchive = async (
         ? { encodingFormat: options.encodingFormat }
         : {}),
     })
-    const { metadata } = await resolveArchive(archive, {
+    const resolved = await resolveArchive(archive, {
       include: ["metadata"],
     })
 
-    return metadata
+    return metadataInputFromResolvedArchive(resolved)
   } finally {
     if (archive !== undefined) {
       await archive.close()

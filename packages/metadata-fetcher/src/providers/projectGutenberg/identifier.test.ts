@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { projectGutenbergLookupFromMetadata } from "./identifier.ts"
+import { projectGutenbergLookupFromInput } from "./identifier.ts"
 
-describe("projectGutenbergLookupFromMetadata", () => {
+describe("projectGutenbergLookupFromInput", () => {
   it.each([
     "http://www.gutenberg.org/78139",
     "https://www.gutenberg.org/ebooks/78139",
@@ -10,7 +10,7 @@ describe("projectGutenbergLookupFromMetadata", () => {
     "https://gutenberg.org/cache/epub/78139/pg78139-images.html",
   ])("extracts the id from an official Gutenberg URL: %s", (value) => {
     expect(
-      projectGutenbergLookupFromMetadata({
+      projectGutenbergLookupFromInput({
         identifiers: [{ value, scheme: "URL" }],
       }),
     ).toEqual({ id: "78139", identifier: { value, scheme: "URL" } })
@@ -18,10 +18,8 @@ describe("projectGutenbergLookupFromMetadata", () => {
 
   it("recognizes an authored Project Gutenberg identifier", () => {
     expect(
-      projectGutenbergLookupFromMetadata({
-        identifiers: [
-          { value: "0078139", scheme: "ProjectGutenberg", unique: true },
-        ],
+      projectGutenbergLookupFromInput({
+        identifiers: [{ value: "0078139", scheme: "ProjectGutenberg" }],
       }),
     ).toEqual({
       id: "78139",
@@ -31,7 +29,7 @@ describe("projectGutenbergLookupFromMetadata", () => {
 
   it("does not reinterpret arbitrary URLs or authored identifier types", () => {
     expect(
-      projectGutenbergLookupFromMetadata({
+      projectGutenbergLookupFromInput({
         identifiers: [
           { value: "https://example.com/78139", scheme: "URL" },
           {

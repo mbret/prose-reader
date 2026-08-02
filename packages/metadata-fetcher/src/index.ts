@@ -8,10 +8,11 @@
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
+ *   metadataInputFromResolvedArchive,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
- * const fetched = await fetchMetadata(resolved, {
+ * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
  *     createOpenLibraryProvider(),
@@ -23,10 +24,7 @@
  * pass it in. Scoring, ranking and error handling stay here, identical for
  * every provider.
  */
-export type {
-  FetchMetadataInput,
-  FetchMetadataOptions,
-} from "./fetchMetadata.ts"
+export type { FetchMetadataOptions } from "./fetchMetadata.ts"
 export { fetchMetadata } from "./fetchMetadata.ts"
 export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 export {
@@ -39,6 +37,7 @@ export {
   textSimilarity,
   titleSimilarity,
 } from "./match/similarity.ts"
+export { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
 export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export {
   createOpenLibraryProvider,
@@ -60,7 +59,7 @@ export {
 } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
 export {
   PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
-  projectGutenbergLookupFromMetadata,
+  projectGutenbergLookupFromInput,
 } from "./providers/projectGutenberg/identifier.ts"
 export type {
   ProjectGutenbergContributor,
@@ -84,13 +83,16 @@ export type {
   FetchedMetadataSources,
 } from "./types/fetchedMetadata.ts"
 export type {
+  FetchMetadataInput,
+  MetadataIdentifier,
+} from "./types/fetchMetadataInput.ts"
+export type {
   MetadataMatch,
   MetadataMatchField,
   MetadataMatchSignal,
 } from "./types/match.ts"
 export type {
   MetadataCandidate,
-  MetadataIdentifier,
   MetadataProvider,
   MetadataProviderContext,
 } from "./types/provider.ts"

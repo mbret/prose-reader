@@ -1,8 +1,9 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
+import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
 import { scoreMetadataCandidate } from "./scoreMetadataCandidate.ts"
 
-const score = (query: ResolvedMetadata, candidate: ResolvedMetadata) =>
+const score = (query: FetchMetadataInput, candidate: ResolvedMetadata) =>
   scoreMetadataCandidate(query, candidate)
 
 describe("scoreMetadataCandidate", () => {
@@ -20,7 +21,7 @@ describe("scoreMetadataCandidate", () => {
 
   it("only compares fields both sides state", () => {
     const { signals } = score(
-      { title: "Dune", publication: { edition: { publisher: "Ace" } } },
+      { title: "Dune", publisher: "Ace" },
       { title: "Dune", numberOfPages: 412 },
     )
 
@@ -32,7 +33,7 @@ describe("scoreMetadataCandidate", () => {
       {
         isbn: "9780441013593",
         title: "Doon",
-        publication: { edition: { publisher: "Somebody" } },
+        publisher: "Somebody",
       },
       {
         isbn: "9780441013593",
@@ -60,7 +61,7 @@ describe("scoreMetadataCandidate", () => {
       {
         isbn: "9780441013593",
         title: "Dune",
-        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        authors: ["Frank Herbert"],
       },
       {
         isbn: "9780345391803",
@@ -89,7 +90,7 @@ describe("scoreMetadataCandidate", () => {
     const { signals } = score(
       {
         title: "Dune",
-        contributors: [{ name: "Herbert, Frank", roles: ["author"] }],
+        authors: ["Herbert, Frank"],
       },
       {
         title: "Dune",
@@ -98,7 +99,7 @@ describe("scoreMetadataCandidate", () => {
     )
 
     expect(signals).toContainEqual(
-      expect.objectContaining({ field: "contributors", score: 1 }),
+      expect.objectContaining({ field: "authors", score: 1 }),
     )
   })
 
@@ -121,7 +122,7 @@ describe("scoreMetadataCandidate", () => {
   it("tolerates a near publication year and a near page count", () => {
     const near = score(
       {
-        publication: { original: { date: { year: 1965 } } },
+        publishedYear: 1965,
         numberOfPages: 412,
       },
       {
@@ -131,7 +132,7 @@ describe("scoreMetadataCandidate", () => {
     )
     const far = score(
       {
-        publication: { original: { date: { year: 1965 } } },
+        publishedYear: 1965,
         numberOfPages: 412,
       },
       {
@@ -224,7 +225,7 @@ describe("scoreMetadataCandidate", () => {
 
   it("weight-averages the comparable fields", () => {
     const result = score(
-      { title: "Dune", publication: { edition: { publisher: "Ace" } } },
+      { title: "Dune", publisher: "Ace" },
       {
         title: "Dune",
         publication: { edition: { publisher: "Chilton Books" } },
@@ -237,11 +238,11 @@ describe("scoreMetadataCandidate", () => {
     expect(result.score).toBeLessThan(1)
   })
 
-  it("does not compare an original publication date with an edition date", () => {
+  it("compares a published year with either candidate publication scope", () => {
     const result = score(
       {
         title: "Dune",
-        publication: { original: { date: { year: 1965 } } },
+        publishedYear: 1965,
       },
       {
         title: "Dune",
@@ -249,30 +250,51 @@ describe("scoreMetadataCandidate", () => {
       },
     )
 
-    expect(result.signals.map((signal) => signal.field)).toEqual(["title"])
+    expect(result.signals.map((signal) => signal.field)).toEqual([
+      "title",
+      "publishedYear",
+    ])
+  })
+
+  it("uses the best publication evidence from a rich candidate", () => {
+    const result = score(
+      { publisher: "Ace", publishedYear: 2005 },
+      {
+        publication: {
+          original: { publisher: "Chilton Books", date: { year: 1965 } },
+          edition: { publisher: "Ace", date: { year: 2005 } },
+        },
+      },
+    )
+
+    expect(result.signals).toEqual([
+      expect.objectContaining({
+        field: "publisher",
+        score: 1,
+        candidate: "Ace",
+      }),
+      expect.objectContaining({
+        field: "publishedYear",
+        score: 1,
+        candidate: "2005",
+      }),
+    ])
   })
 
   it("rejects a fuzzy catalog hit that names a different volume", () => {
     const result = score(
       {
         title: "Wilhelm Meister's apprenticeship and travels, vol. 2 of 2",
-        contributors: [
-          { name: "Goethe, Johann Wolfgang von", roles: ["author"] },
-        ],
+        authors: ["Goethe, Johann Wolfgang von"],
         identifiers: [
           {
             value: "http://www.gutenberg.org/78139",
             scheme: "URL",
-            unique: true,
           },
         ],
         languages: ["en"],
-        publication: {
-          edition: {
-            date: { year: 2026 },
-            publisher: "Project Gutenberg",
-          },
-        },
+        publishedYear: 2026,
+        publisher: "Project Gutenberg",
       },
       {
         title: "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",

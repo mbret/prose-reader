@@ -1,4 +1,3 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
 import { responseErrorStatus } from "./providers/responseError.ts"
 import { Report } from "./report.ts"
@@ -7,18 +6,10 @@ import type {
   FetchedMetadata,
   FetchedMetadataSource,
 } from "./types/fetchedMetadata.ts"
+import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import type { MetadataMatch } from "./types/match.ts"
 import type { MetadataCandidate, MetadataProvider } from "./types/provider.ts"
 import { omitUndefined } from "./utils/omitUndefined.ts"
-
-/**
- * A {@link ResolvedMetadata}, or anything carrying one — the `ResolvedArchive`
- * shape, so the output of `resolveArchive` goes straight in. Hand-built terms
- * (`{ title: "Dune" }`) work too, when there is no container to resolve.
- */
-export type FetchMetadataInput =
-  | ResolvedMetadata
-  | { readonly metadata: ResolvedMetadata }
 
 export type FetchMetadataOptions = {
   /**
@@ -47,7 +38,7 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 3
+const FETCHED_METADATA_VERSION = 4
 
 const toMatch = ({
   candidate,
@@ -78,8 +69,9 @@ const toMatch = ({
 /**
  * Asks every provider what it knows about a book, scores the answers against
  * what you gave it, and returns the ranked candidates with the evidence behind
- * each score. Candidates use the same {@link ResolvedMetadata} vocabulary as
- * `resolveArchive`, so remote and embedded metadata stay interchangeable.
+ * each score. The input contains only fields understood for lookup and
+ * matching; candidates retain archive-reader's rich `ResolvedMetadata`
+ * vocabulary, including catalog-only covers, descriptions and subjects.
  *
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
@@ -87,10 +79,11 @@ const toMatch = ({
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
+ *   metadataInputFromResolvedArchive,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
- * const fetched = await fetchMetadata(resolved, {
+ * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
  *     createOpenLibraryProvider(),
@@ -112,7 +105,6 @@ export const fetchMetadata = async (
   input: FetchMetadataInput,
   options: FetchMetadataOptions,
 ): Promise<FetchedMetadata> => {
-  const metadata = "metadata" in input ? input.metadata : input
   const limit = options.limit ?? DEFAULT_LIMIT
   const minScore = options.minScore ?? DEFAULT_MIN_SCORE
   const includeRaw = options.includeRaw === true
@@ -120,7 +112,7 @@ export const fetchMetadata = async (
   const results = await Promise.all(
     options.providers.map(async (provider) => {
       try {
-        const candidates = await provider.search(metadata, {
+        const candidates = await provider.search(input, {
           limit,
           signal: options.signal,
         })
@@ -160,7 +152,7 @@ export const fetchMetadata = async (
     const providerMatches = candidates
       .map((candidate) => {
         const { score, signals } = scoreMetadataCandidate(
-          metadata,
+          input,
           candidate.metadata,
         )
 

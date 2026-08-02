@@ -1,6 +1,9 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type {
+  FetchMetadataInput,
+  MetadataIdentifier,
+} from "../types/fetchMetadataInput.ts"
 import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
-import type { MetadataIdentifier } from "../types/provider.ts"
 import { metadataAuthors } from "../utils/metadataAuthors.ts"
 import { toIsbn13 } from "../utils/toIsbn13.ts"
 import {
@@ -19,12 +22,10 @@ export const METADATA_MATCH_WEIGHTS = {
   gtin: 1,
   identifiers: 0.6,
   title: 0.8,
-  contributors: 0.5,
+  authors: 0.5,
   series: 0.3,
-  "publication.original.date": 0.2,
-  "publication.original.publisher": 0.15,
-  "publication.edition.date": 0.2,
-  "publication.edition.publisher": 0.15,
+  publishedYear: 0.2,
+  publisher: 0.15,
   languages: 0.15,
   numberOfPages: 0.15,
 } as const satisfies Record<MetadataMatchField, number>
@@ -136,6 +137,59 @@ const bestSimilarity = (
     0,
   )
 
+type ComparedValues = {
+  readonly score: number
+  readonly query: string
+  readonly candidate: string
+}
+
+const bestStringComparison = (
+  rawQueryValue: string | undefined,
+  rawCandidateValues: ReadonlyArray<string | undefined>,
+  compare: (a: string, b: string) => number = textSimilarity,
+): ComparedValues | undefined => {
+  const query = stated(rawQueryValue)
+
+  if (query === undefined) return undefined
+
+  let best: ComparedValues | undefined
+
+  for (const rawCandidate of rawCandidateValues) {
+    const candidate = stated(rawCandidate)
+
+    if (candidate === undefined) continue
+
+    const comparison = { score: compare(query, candidate), query, candidate }
+
+    if (best === undefined || comparison.score > best.score) best = comparison
+  }
+
+  return best
+}
+
+const bestPublicationYearComparison = (
+  query: number | undefined,
+  candidates: ReadonlyArray<number | undefined>,
+): ComparedValues | undefined => {
+  if (query === undefined) return undefined
+
+  let best: ComparedValues | undefined
+
+  for (const candidate of candidates) {
+    if (candidate === undefined) continue
+
+    const comparison = {
+      score: publicationYearScore(query, candidate),
+      query: String(query),
+      candidate: String(candidate),
+    }
+
+    if (best === undefined || comparison.score > best.score) best = comparison
+  }
+
+  return best
+}
+
 export type ScoredMetadataCandidate = {
   readonly score: number
   readonly signals: ReadonlyArray<MetadataMatchSignal>
@@ -156,20 +210,14 @@ export type ScoredMetadataCandidate = {
  *   merely unrelated.
  */
 export const scoreMetadataCandidate = (
-  query: ResolvedMetadata,
+  query: FetchMetadataInput,
   candidate: ResolvedMetadata,
 ): ScoredMetadataCandidate => {
   const signals: MetadataMatchSignal[] = []
 
   const addSignal = (
     field: MetadataMatchField,
-    values:
-      | {
-          score: number
-          query: string
-          candidate: string
-        }
-      | undefined,
+    values: ComparedValues | undefined,
   ) => {
     if (values === undefined) return
 
@@ -251,27 +299,24 @@ export const scoreMetadataCandidate = (
   }
 
   compareStrings("title", query.title, candidate.title, titleSimilarity)
-  compareStrings(
-    "publication.original.publisher",
-    query.publication?.original?.publisher,
-    candidate.publication?.original?.publisher,
+  addSignal(
+    "publisher",
+    bestStringComparison(query.publisher, [
+      candidate.publication?.original?.publisher,
+      candidate.publication?.edition?.publisher,
+    ]),
   )
-  compareStrings(
-    "publication.edition.publisher",
-    query.publication?.edition?.publisher,
-    candidate.publication?.edition?.publisher,
-  )
-  compareStrings(
-    "series",
-    query.belongsTo?.series?.[0]?.name,
-    candidate.belongsTo?.series?.[0]?.name,
-  )
+  compareStrings("series", query.series, candidate.belongsTo?.series?.[0]?.name)
 
   const candidateAuthors = metadataAuthors(candidate)
-  const queryAuthors = metadataAuthors(query)
+  const queryAuthors = (query.authors ?? []).flatMap((author) => {
+    const name = stated(author)
+
+    return name !== undefined ? [name] : []
+  })
 
   if (queryAuthors.length > 0 && candidateAuthors.length > 0) {
-    addSignal("contributors", {
+    addSignal("authors", {
       score: bestSimilarity(
         queryAuthors,
         candidateAuthors,
@@ -282,29 +327,12 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const comparePublicationYears = (
-    field: "publication.original.date" | "publication.edition.date",
-    queryYear: number | undefined,
-    candidateYear: number | undefined,
-  ) => {
-    if (queryYear === undefined || candidateYear === undefined) return
-
-    addSignal(field, {
-      score: publicationYearScore(queryYear, candidateYear),
-      query: String(queryYear),
-      candidate: String(candidateYear),
-    })
-  }
-
-  comparePublicationYears(
-    "publication.original.date",
-    query.publication?.original?.date?.year,
-    candidate.publication?.original?.date?.year,
-  )
-  comparePublicationYears(
-    "publication.edition.date",
-    query.publication?.edition?.date?.year,
-    candidate.publication?.edition?.date?.year,
+  addSignal(
+    "publishedYear",
+    bestPublicationYearComparison(query.publishedYear, [
+      candidate.publication?.original?.date?.year,
+      candidate.publication?.edition?.date?.year,
+    ]),
   )
 
   const queryLanguages = query.languages ?? []
