@@ -63,6 +63,23 @@ const rawIdentifierValueForIsbn = (
   return undefined
 }
 
+const inferredIdentifierScheme = (value: string): string | undefined => {
+  const trimmed = value.trim()
+
+  if (!/^https?:\/\//i.test(trimmed)) return undefined
+
+  try {
+    const url = new URL(trimmed)
+
+    return (url.protocol === "http:" || url.protocol === "https:") &&
+      url.hostname.length > 0
+      ? "URL"
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Common MARC relator codes normalized into the Readium role vocabulary;
  * anything else passes through verbatim (losslessness beats guessing).
@@ -108,6 +125,53 @@ const contributorsFromOpf = (input: OpfMetadata): ResolvedContributor[] =>
 /** Same missing-`#` tolerance as the refines matching in parse.ts. */
 const metaRefinesId = (meta: OpfMetaEntry, id: string): boolean =>
   meta.refines !== undefined && meta.refines.replace(/^#/, "") === id
+
+const ONIX_CODE_LIST_5_IDENTIFIER_TYPES: Readonly<Record<string, string>> = {
+  "02": "ISBN",
+  "03": "GTIN",
+  "04": "UPC",
+  "05": "ISMN",
+  "06": "DOI",
+  "13": "LCCN",
+  "14": "GTIN",
+  "15": "ISBN",
+  "22": "URN",
+  "23": "OCLC",
+  "24": "ISBN",
+  "25": "ISMN",
+  "26": "DOI",
+  "34": "GTIN",
+  "35": "ARK",
+}
+
+const normalizedIdentifierType = (
+  meta: OpfMetaEntry | undefined,
+): string | undefined => {
+  const value = meta?.value?.trim()
+
+  if (value === undefined || value.length === 0) return undefined
+  if (meta?.scheme?.trim().toLowerCase() !== "onix:codelist5") return value
+
+  return ONIX_CODE_LIST_5_IDENTIFIER_TYPES[value] ?? value
+}
+
+const refinedIdentifierType = (
+  identifier: OpfIdentifier,
+  metas: ReadonlyArray<OpfMetaEntry>,
+): string | undefined => {
+  const id = identifier.id
+
+  if (id === undefined) return undefined
+
+  return normalizedIdentifierType(
+    metas.find(
+      (meta) =>
+        meta.property === "identifier-type" &&
+        metaRefinesId(meta, id) &&
+        meta.value !== undefined,
+    ),
+  )
+}
 
 const parseDecimal = (raw: string | undefined): number | undefined => {
   const trimmed = raw?.trim()
@@ -246,8 +310,15 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     isbn: normalizeIsbn(rawIsbn),
     identifiers:
       input.identifiers.length > 0
-        ? input.identifiers.map(({ value, scheme, unique }) =>
-            omitUndefined({ value, scheme, unique }),
+        ? input.identifiers.map((identifier) =>
+            omitUndefined({
+              value: identifier.value,
+              scheme:
+                identifier.scheme ??
+                refinedIdentifierType(identifier, input.metas) ??
+                inferredIdentifierScheme(identifier.value),
+              unique: identifier.unique,
+            }),
           )
         : undefined,
     belongsTo,

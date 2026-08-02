@@ -111,7 +111,7 @@ The rules:
   | `publisher`, `languages`, `numberOfPages` | 0.15 | edition details — they must never sink a convincing match alone |
 
 - **A stated identifier settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees; a *contradicting* one scores `0` at the heaviest weight, which is what sinks a plausible-looking wrong edition. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
-- **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
+- **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 
 `minScore` (default `0.5`) decides which matches are `accepted` — which ones contribute to the merged `metadata`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
@@ -202,7 +202,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most two requests: an ISBN search when the book states one — the catalog then verifies the identity for us — falling back to a title (+ first author) search when the ISBN is unknown to it or absent. A query with neither an ISBN nor a title yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most three requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL; then a title (+ first author) search when those identifiers are unknown to Open Library or absent. The Gutenberg URL interpretation is deliberately local to this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention. A query with none of those terms yields no candidates rather than a fishing expedition.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`, exported as `openLibraryMetadataHomes`):
 
@@ -216,6 +216,7 @@ const provider = createOpenLibraryProvider({
 | `subject` | `subjects` | capped at the first 25 — a popular work carries hundreds, most of them long-tail noise |
 | `number_of_pages_median` | `numberOfPages` | |
 | `cover_i` | `cover` | absolute url on the cover service, `confidence: "derived"` |
+| `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |
 
 `isbn` is set **only** when the search was an ISBN lookup, and then it is the queried one: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.
