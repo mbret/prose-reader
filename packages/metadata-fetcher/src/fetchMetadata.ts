@@ -87,13 +87,17 @@ const toMatch = ({
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
  *   createOpenLibraryProvider,
+ *   createProjectGutenbergProvider,
  *   fetchMetadata,
  *   mergeResolvedMetadata,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
  * const fetched = await fetchMetadata(resolved, {
- *   providers: [createOpenLibraryProvider()],
+ *   providers: [
+ *     createProjectGutenbergProvider(),
+ *     createOpenLibraryProvider(),
+ *   ],
  * })
  *
  * // what the catalogs found, and why we believe it

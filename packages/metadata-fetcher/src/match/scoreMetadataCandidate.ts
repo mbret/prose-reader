@@ -32,9 +32,20 @@ export const METADATA_MATCH_WEIGHTS = {
  * directions. Catalogs and books disagree on titles and page counts
  * constantly; they do not agree or disagree on an ISBN by accident.
  */
-const DECISIVE_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
+const DECISIVE_CONTRADICTION_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
   "isbn",
   "gtin",
+])
+
+/**
+ * Providers echo an identifier only after their catalog confirmed it. A
+ * shared provider-confirmed identifier is decisive; disjoint identifier lists
+ * are not contradictions because catalogs naturally use different id spaces.
+ */
+const DECISIVE_AGREEMENT_FIELDS: ReadonlySet<MetadataMatchField> = new Set([
+  "isbn",
+  "gtin",
+  "identifiers",
 ])
 
 /** Blank is absent — the vocabulary says so, a hand-built query may not. */
@@ -124,9 +135,9 @@ export type ScoredMetadataCandidate = {
  *   candidate, and nothing in common scores `0`.
  * - **The aggregate is a weighted average** ({@link METADATA_MATCH_WEIGHTS}),
  *   putting a rich query and a sparse one on the same scale.
- * - **A stated identifier settles it, both ways** — agreeing pins the score to
- *   `1`, contradicting to `0`. The latter is what sinks the wrong edition that
- *   agrees on everything a weighted average can see.
+ * - **Confirmed identity settles it** — an agreeing ISBN, GTIN, or identifier
+ *   pins the score to `1`. A contradictory ISBN or GTIN pins it to `0`; two
+ *   disjoint provider-specific identifier lists are merely unrelated.
  */
 export const scoreMetadataCandidate = (
   query: ResolvedMetadata,
@@ -282,15 +293,20 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const decisive = signals.filter((signal) => DECISIVE_FIELDS.has(signal.field))
+  const decisiveContradictions = signals.filter((signal) =>
+    DECISIVE_CONTRADICTION_FIELDS.has(signal.field),
+  )
+  const decisiveAgreements = signals.filter((signal) =>
+    DECISIVE_AGREEMENT_FIELDS.has(signal.field),
+  )
 
   // Contradiction wins over agreement: refusing a publication whose stated
   // identity disagrees is the recoverable mistake. Without this the average is
   // merciful to exactly the wrong candidate — a different edition agreeing on
   // title and author scores (0.8 + 0.5) / 2.3 ≈ 0.57, accepted.
-  if (decisive.some((signal) => signal.score === 0))
+  if (decisiveContradictions.some((signal) => signal.score === 0))
     return { score: 0, signals }
-  if (decisive.some((signal) => signal.score === 1))
+  if (decisiveAgreements.some((signal) => signal.score === 1))
     return { score: 1, signals }
 
   const totalWeight = signals.reduce(

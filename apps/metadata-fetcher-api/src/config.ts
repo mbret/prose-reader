@@ -1,5 +1,6 @@
 import {
   createOpenLibraryProvider,
+  createProjectGutenbergProvider,
   type MetadataProvider,
 } from "@prose-reader/metadata-fetcher"
 
@@ -69,6 +70,10 @@ const readString = (
 const providersFromEnv = (
   env: NodeJS.ProcessEnv,
 ): ReadonlyArray<MetadataProvider> => [
+  createProjectGutenbergProvider({
+    userAgent: readString(env, "PROJECT_GUTENBERG_USER_AGENT"),
+    baseUrl: readString(env, "PROJECT_GUTENBERG_BASE_URL"),
+  }),
   createOpenLibraryProvider({
     userAgent: readString(env, "OPEN_LIBRARY_USER_AGENT"),
     baseUrl: readString(env, "OPEN_LIBRARY_BASE_URL"),

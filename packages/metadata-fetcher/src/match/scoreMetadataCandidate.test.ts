@@ -130,6 +130,44 @@ describe("scoreMetadataCandidate", () => {
     expect(clashing.score).toBe(0)
   })
 
+  it("makes a provider-confirmed shared identifier decisive", () => {
+    const result = score(
+      {
+        title: "A locally edited title",
+        identifiers: [
+          { value: "http://www.gutenberg.org/78139", scheme: "URL" },
+        ],
+      },
+      {
+        title: "The catalog title",
+        identifiers: [
+          { value: "http://www.gutenberg.org/78139", scheme: "URL" },
+          { value: "78139", scheme: "ProjectGutenberg" },
+        ],
+      },
+    )
+
+    expect(result.score).toBe(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 1 }),
+    )
+  })
+
+  it("does not treat disjoint provider identifier spaces as decisive contradictions", () => {
+    const result = score(
+      {
+        title: "Dune",
+        identifiers: [{ value: "one", scheme: "CatalogA" }],
+      },
+      {
+        title: "Dune",
+        identifiers: [{ value: "two", scheme: "CatalogB" }],
+      },
+    )
+
+    expect(result.score).toBeGreaterThan(0.5)
+  })
+
   it("compares languages on their primary subtag", () => {
     const { signals } = score({ languages: ["en-US"] }, { languages: ["en"] })
 

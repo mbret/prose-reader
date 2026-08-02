@@ -6,12 +6,16 @@
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
  *   createOpenLibraryProvider,
+ *   createProjectGutenbergProvider,
  *   fetchMetadata,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
  * const fetched = await fetchMetadata(resolved, {
- *   providers: [createOpenLibraryProvider()],
+ *   providers: [
+ *     createProjectGutenbergProvider(),
+ *     createOpenLibraryProvider(),
+ *   ],
  * })
  * ```
  *
@@ -50,6 +54,26 @@ export {
   openLibraryMetadataHomes,
   resolveOpenLibraryDoc,
 } from "./providers/openLibrary/resolve.ts"
+export type { ProjectGutenbergProviderOptions } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
+export {
+  createProjectGutenbergProvider,
+  PROJECT_GUTENBERG_PROVIDER_ID,
+} from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
+export {
+  PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
+  projectGutenbergLookupFromMetadata,
+} from "./providers/projectGutenberg/identifier.ts"
+export type {
+  ProjectGutenbergContributor,
+  ProjectGutenbergCover,
+  ProjectGutenbergRecord,
+} from "./providers/projectGutenberg/parse.ts"
+export { parseProjectGutenbergRdf } from "./providers/projectGutenberg/parse.ts"
+export {
+  PROJECT_GUTENBERG_MAX_SUBJECTS,
+  projectGutenbergMetadataHomes,
+  resolveProjectGutenbergRecord,
+} from "./providers/projectGutenberg/resolve.ts"
 export {
   MetadataProviderResponseError,
   responseErrorStatus,

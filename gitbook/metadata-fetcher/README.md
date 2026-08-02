@@ -8,12 +8,16 @@ It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the
 import { resolveArchive } from "@prose-reader/archive-reader"
 import {
   createOpenLibraryProvider,
+  createProjectGutenbergProvider,
   fetchMetadata,
 } from "@prose-reader/metadata-fetcher"
 
 const resolved = await resolveArchive(archive)
 const fetched = await fetchMetadata(resolved, {
-  providers: [createOpenLibraryProvider()],
+  providers: [
+    createProjectGutenbergProvider(),
+    createOpenLibraryProvider(),
+  ],
 })
 
 fetched.metadata.cover?.uri // what the catalogs found
@@ -110,7 +114,7 @@ The rules:
   | `published` | 0.2 | year proximity: reprints shift it |
   | `publisher`, `languages`, `numberOfPages` | 0.15 | edition details — they must never sink a convincing match alone |
 
-- **A stated identifier settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees; a *contradicting* one scores `0` at the heaviest weight, which is what sinks a plausible-looking wrong edition. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 
 `minScore` (default `0.5`) decides which matches are `accepted` — which ones contribute to the merged `metadata`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
@@ -125,7 +129,10 @@ if (fetched.metadata.title === undefined) {
 
 ```typescript
 const fetched = await fetchMetadata(resolved, {
-  providers: [createOpenLibraryProvider()],
+  providers: [
+    createProjectGutenbergProvider(),
+    createOpenLibraryProvider(),
+  ],
   limit: 5,
   minScore: 0.5,
   includeRaw: false,
@@ -183,7 +190,45 @@ A remote `cover.uri` is an **absolute url**, not a container-relative uri: a cat
 
 | Provider | Import | Catalog | Notes |
 | --- | --- | --- | --- |
+| `createProjectGutenbergProvider` | `@prose-reader/metadata-fetcher` | [Project Gutenberg](https://www.gutenberg.org) | official per-eBook RDF; exact Gutenberg identifiers only, no key |
 | `createOpenLibraryProvider` | `@prose-reader/metadata-fetcher` | [Open Library](https://openlibrary.org) | free, no key; books broadly, comics and manga much less so |
+
+### Project Gutenberg
+
+```typescript
+import { createProjectGutenbergProvider } from "@prose-reader/metadata-fetcher"
+
+const provider = createProjectGutenbergProvider({
+  userAgent: "MyReader/1.0 (contact@example.com)",
+})
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `baseUrl` | `https://www.gutenberg.org` | catalog origin; override for a mirror or stub |
+| `fetch` | the global one | for tests, a custom agent, or a caching layer |
+| `userAgent` | — | optional identifying user agent |
+
+**Lookup strategy**, exactly one request: the provider recognizes an official Gutenberg URL in `identifiers` (including `/ebooks/78139`, `/files/78139/…`, `/cache/epub/78139/…`, and the older `/78139` form), or a numeric identifier whose scheme is `ProjectGutenberg`. It then requests Gutenberg's official per-eBook RDF record at `/cache/epub/{id}/pg{id}.rdf`. A title or author alone never triggers the provider, so it neither crawls the website nor returns a fuzzy Gutenberg hit. Arbitrary URLs and identifiers with another authored scheme are ignored.
+
+The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. That shared identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
+
+**Mapping** (per-eBook RDF → `ResolvedMetadata`, exported as `projectGutenbergMetadataHomes`):
+
+| Project Gutenberg RDF | Resolved | |
+| --- | --- | --- |
+| `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`; the exact matched input identifier is preserved too |
+| `dcterms:title` | `title` | |
+| `dcterms:creator`, `marcrel:*` | `contributors` | common MARC relators normalize to roles such as `author`, `translator`, `editor`, and `illustrator`; unknown codes remain verbatim |
+| `dcterms:issued` | `published` | Gutenberg release date, parsed through day precision when available |
+| `dcterms:publisher` | `publisher` | |
+| `dcterms:rights` | `rights` | |
+| `dcterms:language` | `languages` | RDF values are already BCP 47 |
+| LCSH `dcterms:subject`, `pgterms:bookshelf` | `subjects` | deduped and capped at 25; Library of Congress classification codes are excluded |
+| `pgterms:marc520`, then `dcterms:description` | `description` | catalog summary preferred over a general note |
+| medium/small cover in `dcterms:hasFormat` | `cover` | medium preferred; absolute HTTP(S) url, `confidence: "derived"` |
+
+The response is parsed and normalized in memory. The provider has no database, cache, file writes, or other persistence.
 
 ### Open Library
 
@@ -202,7 +247,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most three requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL; then a title (+ first author) search when those identifiers are unknown to Open Library or absent. The Gutenberg URL interpretation is deliberately local to this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention. A query with none of those terms yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most three requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a title (+ first author) search when those identifiers are unknown to Open Library or absent. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`, exported as `openLibraryMetadataHomes`):
 

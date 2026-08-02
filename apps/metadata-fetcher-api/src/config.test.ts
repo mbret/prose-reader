@@ -12,6 +12,7 @@ describe("configFromEnv", () => {
       requestTimeoutMs: 10_000,
     })
     expect(config.providers.map((provider) => provider.id)).toEqual([
+      "projectGutenberg",
       "openLibrary",
     ])
   })

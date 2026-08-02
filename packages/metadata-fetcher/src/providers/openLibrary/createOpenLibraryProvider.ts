@@ -5,12 +5,12 @@ import type {
   MetadataProviderContext,
 } from "../../types/provider.ts"
 import { metadataAuthors } from "../../utils/metadataAuthors.ts"
+import {
+  type ProjectGutenbergLookup,
+  projectGutenbergLookupFromMetadata,
+} from "../projectGutenberg/identifier.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
 import { type OpenLibraryDoc, parseOpenLibrarySearchResponse } from "./parse.ts"
-import {
-  type OpenLibraryProjectGutenbergLookup,
-  projectGutenbergLookupFromMetadata,
-} from "./projectGutenbergIdentifier.ts"
 import { resolveOpenLibraryDoc } from "./resolve.ts"
 
 export const OPEN_LIBRARY_PROVIDER_ID = "openLibrary"
@@ -127,7 +127,7 @@ export const createOpenLibraryProvider = (
     docs: ReadonlyArray<OpenLibraryDoc>,
     options: {
       readonly isbn?: string
-      readonly confirmedProjectGutenberg?: OpenLibraryProjectGutenbergLookup
+      readonly confirmedProjectGutenberg?: ProjectGutenbergLookup
     } = {},
   ): ReadonlyArray<MetadataCandidate> =>
     docs.map((doc) => ({
