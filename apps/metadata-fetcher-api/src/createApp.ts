@@ -141,7 +141,32 @@ const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
   const authors = queryValues(query.author)
   const languages = queryValues(query.language)
   const series = queryValue(query.series)
-  const year = Number(queryValue(query.year))
+  const originalPublisher = queryValue(query.originalPublisher)
+  const editionPublisher = queryValue(query.editionPublisher)
+  const originalYear = Number(queryValue(query.originalPublicationYear))
+  const editionYear = Number(queryValue(query.editionPublicationYear))
+  const original =
+    originalPublisher !== undefined || Number.isFinite(originalYear)
+      ? {
+          ...(originalPublisher !== undefined
+            ? { publisher: originalPublisher }
+            : {}),
+          ...(Number.isFinite(originalYear)
+            ? { date: { year: originalYear } }
+            : {}),
+        }
+      : undefined
+  const edition =
+    editionPublisher !== undefined || Number.isFinite(editionYear)
+      ? {
+          ...(editionPublisher !== undefined
+            ? { publisher: editionPublisher }
+            : {}),
+          ...(Number.isFinite(editionYear)
+            ? { date: { year: editionYear } }
+            : {}),
+        }
+      : undefined
 
   return {
     ...(queryValue(query.title) !== undefined
@@ -153,8 +178,13 @@ const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
     ...(queryValue(query.gtin) !== undefined
       ? { gtin: queryValue(query.gtin) }
       : {}),
-    ...(queryValue(query.publisher) !== undefined
-      ? { publisher: queryValue(query.publisher) }
+    ...(original !== undefined || edition !== undefined
+      ? {
+          publication: {
+            ...(original !== undefined ? { original } : {}),
+            ...(edition !== undefined ? { edition } : {}),
+          },
+        }
       : {}),
     ...(authors.length > 0
       ? { contributors: authors.map((name) => ({ name, roles: ["author"] })) }
@@ -163,7 +193,6 @@ const metadataFromQuery = (query: Request["query"]): ResolvedMetadata => {
     ...(series !== undefined
       ? { belongsTo: { series: [{ name: series }] } }
       : {}),
-    ...(Number.isFinite(year) ? { published: { year } } : {}),
   }
 }
 

@@ -74,7 +74,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toMatchObject({
       title: "Sample Story",
-      publisher: "Acme",
+      publication: { edition: { publisher: "Acme" } },
     })
   })
 
@@ -191,12 +191,12 @@ describe("resolveComicInfo", () => {
     ])
   })
 
-  it("assembles the published date from Year / Month / Day", () => {
+  it("assembles the edition publication date from Year / Month / Day", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<Year>2024</Year><Month>12</Month><Day>25</Day>"),
     )
 
-    expect(resolveComicInfo(parsed).published).toEqual({
+    expect(resolveComicInfo(parsed).publication?.edition?.date).toEqual({
       year: 2024,
       month: 12,
       day: 25,
@@ -206,13 +206,15 @@ describe("resolveComicInfo", () => {
   it("preserves a year-only date when Month / Day are absent", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Year>2024</Year>"))
 
-    expect(resolveComicInfo(parsed).published).toEqual({ year: 2024 })
+    expect(resolveComicInfo(parsed).publication?.edition?.date).toEqual({
+      year: 2024,
+    })
   })
 
-  it("omits the published date when Year / Month / Day are all absent", () => {
+  it("omits the edition date when Year / Month / Day are all absent", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Title>x</Title>"))
 
-    expect(resolveComicInfo(parsed).published).toBeUndefined()
+    expect(resolveComicInfo(parsed).publication).toBeUndefined()
   })
 
   it("ignores non-numeric date components", () => {
@@ -220,7 +222,9 @@ describe("resolveComicInfo", () => {
       comicInfoWrap("<Year>two thousand</Year><Month>12</Month>"),
     )
 
-    expect(resolveComicInfo(parsed).published).toEqual({ month: 12 })
+    expect(resolveComicInfo(parsed).publication?.edition?.date).toEqual({
+      month: 12,
+    })
   })
 
   it("does not surface a rights field (ComicInfo has none)", () => {
@@ -340,7 +344,7 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toMatchObject({
       numberOfPages: 32,
       description: "A short synopsis.",
-      imprint: "Vertigo",
+      publication: { edition: { imprint: "Vertigo" } },
     })
   })
 
@@ -373,9 +377,13 @@ describe("resolveComicInfo", () => {
         { name: "Alice", roles: ["author"] },
         { name: "Bob", roles: ["author"] },
       ],
-      publisher: "Acme",
+      publication: {
+        edition: {
+          publisher: "Acme",
+          date: { year: 2024, month: 5, day: 3 },
+        },
+      },
       languages: ["en"],
-      published: { year: 2024, month: 5, day: 3 },
       subjects: ["Action", "ninja"],
       belongsTo: { series: [{ name: "Sample Series", position: 1 }] },
       comic: { manga: true },

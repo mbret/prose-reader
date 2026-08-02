@@ -11,15 +11,17 @@ export type MetadataMatchField =
   | "title"
   | "contributors"
   | "series"
-  | "publisher"
-  | "published"
+  | "publication.original.date"
+  | "publication.original.publisher"
+  | "publication.edition.date"
+  | "publication.edition.publisher"
   | "languages"
   | "numberOfPages"
 
 /**
  * One field comparison. The compared values sit next to the score so a match
- * is explainable to a user — "same title, different publisher" — without
- * re-deriving anything.
+ * is explainable to a user — "same title, different edition publisher" —
+ * without re-deriving anything.
  */
 export type MetadataMatchSignal = {
   readonly field: MetadataMatchField
@@ -41,10 +43,10 @@ export type MetadataMatch = {
   readonly providerId: string
   /**
    * Aggregate confidence, `0` to `1`: the weight-averaged score of every
-   * comparable field — except when both sides state an identifier, which
-   * settles it outright: `1` if it agrees (an ISBN/GTIN match *is* the book),
-   * `0` if it contradicts. `0` too when the two sides had no field in common
-   * to compare.
+   * comparable field — except when an ISBN, GTIN or shared scheme-scoped
+   * identifier confirms identity, which settles it at `1`. A contradictory
+   * ISBN or GTIN settles it at `0`. `0` too when the two sides had no field in
+   * common to compare.
    */
   readonly score: number
   readonly signals: ReadonlyArray<MetadataMatchSignal>

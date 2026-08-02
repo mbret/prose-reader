@@ -21,8 +21,10 @@ export const METADATA_MATCH_WEIGHTS = {
   title: 0.8,
   contributors: 0.5,
   series: 0.3,
-  published: 0.2,
-  publisher: 0.15,
+  "publication.original.date": 0.2,
+  "publication.original.publisher": 0.15,
+  "publication.edition.date": 0.2,
+  "publication.edition.publisher": 0.15,
   languages: 0.15,
   numberOfPages: 0.15,
 } as const satisfies Record<MetadataMatchField, number>
@@ -44,8 +46,17 @@ const stated = (value: string | undefined): string | undefined => {
   return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
 }
 
-const identifierKey = (identifier: MetadataIdentifier): string =>
-  identifier.value.trim().toLowerCase()
+const identifiersHaveSameValue = (
+  a: MetadataIdentifier,
+  b: MetadataIdentifier,
+): boolean => {
+  const aValue = stated(a.value)?.toLowerCase()
+
+  return aValue !== undefined && aValue === stated(b.value)?.toLowerCase()
+}
+
+const identifierScheme = (identifier: MetadataIdentifier): string | undefined =>
+  stated(identifier.scheme)?.toLowerCase()
 
 const identifierLabel = (identifier: MetadataIdentifier): string =>
   identifier.scheme !== undefined
@@ -60,17 +71,32 @@ const identifiersAgree = (
   a: MetadataIdentifier,
   b: MetadataIdentifier,
 ): boolean => {
-  if (identifierKey(a) !== identifierKey(b)) return false
-  if (a.scheme === undefined || b.scheme === undefined) return true
+  if (!identifiersHaveSameValue(a, b)) return false
+  const aScheme = identifierScheme(a)
+  const bScheme = identifierScheme(b)
 
-  return a.scheme.trim().toLowerCase() === b.scheme.trim().toLowerCase()
+  if (aScheme === undefined || bScheme === undefined) return true
+
+  return aScheme === bScheme
+}
+
+/** Only an authored scope makes a shared raw value unambiguous identity. */
+const identifiersAgreeDecisively = (
+  a: MetadataIdentifier,
+  b: MetadataIdentifier,
+): boolean => {
+  if (!identifiersHaveSameValue(a, b)) return false
+  const aScheme = identifierScheme(a)
+  const bScheme = identifierScheme(b)
+
+  return aScheme !== undefined && aScheme === bScheme
 }
 
 const primaryLanguageSubtag = (language: string): string =>
   language.trim().toLowerCase().split("-")[0] ?? ""
 
 /** Reprints shift the year around, so a near one still corroborates. */
-const publishedYearScore = (
+const publicationYearScore = (
   queryYear: number,
   candidateYear: number,
 ): number => {
@@ -124,9 +150,10 @@ export type ScoredMetadataCandidate = {
  *   candidate, and nothing in common scores `0`.
  * - **The aggregate is a weighted average** ({@link METADATA_MATCH_WEIGHTS}),
  *   putting a rich query and a sparse one on the same scale.
- * - **A stated identifier settles it, both ways** — agreeing pins the score to
- *   `1`, contradicting to `0`. The latter is what sinks the wrong edition that
- *   agrees on everything a weighted average can see.
+ * - **Confirmed identity settles it** — an agreeing ISBN, GTIN, or
+ *   scheme-scoped identifier pins the score to `1`. A contradictory ISBN or
+ *   GTIN pins it to `0`; two disjoint provider-specific identifier lists are
+ *   merely unrelated.
  */
 export const scoreMetadataCandidate = (
   query: ResolvedMetadata,
@@ -205,6 +232,11 @@ export const scoreMetadataCandidate = (
 
   const queryIdentifiers = query.identifiers ?? []
   const candidateIdentifiers = candidate.identifiers ?? []
+  const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
+    candidateIdentifiers.some((other) =>
+      identifiersAgreeDecisively(identifier, other),
+    ),
+  )
 
   if (queryIdentifiers.length > 0 && candidateIdentifiers.length > 0) {
     const shared = queryIdentifiers.some((identifier) =>
@@ -219,7 +251,16 @@ export const scoreMetadataCandidate = (
   }
 
   compareStrings("title", query.title, candidate.title, titleSimilarity)
-  compareStrings("publisher", query.publisher, candidate.publisher)
+  compareStrings(
+    "publication.original.publisher",
+    query.publication?.original?.publisher,
+    candidate.publication?.original?.publisher,
+  )
+  compareStrings(
+    "publication.edition.publisher",
+    query.publication?.edition?.publisher,
+    candidate.publication?.edition?.publisher,
+  )
   compareStrings(
     "series",
     query.belongsTo?.series?.[0]?.name,
@@ -241,16 +282,30 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryYear = query.published?.year
-  const candidateYear = candidate.published?.year
+  const comparePublicationYears = (
+    field: "publication.original.date" | "publication.edition.date",
+    queryYear: number | undefined,
+    candidateYear: number | undefined,
+  ) => {
+    if (queryYear === undefined || candidateYear === undefined) return
 
-  if (queryYear !== undefined && candidateYear !== undefined) {
-    addSignal("published", {
-      score: publishedYearScore(queryYear, candidateYear),
+    addSignal(field, {
+      score: publicationYearScore(queryYear, candidateYear),
       query: String(queryYear),
       candidate: String(candidateYear),
     })
   }
+
+  comparePublicationYears(
+    "publication.original.date",
+    query.publication?.original?.date?.year,
+    candidate.publication?.original?.date?.year,
+  )
+  comparePublicationYears(
+    "publication.edition.date",
+    query.publication?.edition?.date?.year,
+    candidate.publication?.edition?.date?.year,
+  )
 
   const queryLanguages = query.languages ?? []
   const candidateLanguages = candidate.languages ?? []
@@ -290,7 +345,10 @@ export const scoreMetadataCandidate = (
   // title and author scores (0.8 + 0.5) / 2.3 ≈ 0.57, accepted.
   if (decisive.some((signal) => signal.score === 0))
     return { score: 0, signals }
-  if (decisive.some((signal) => signal.score === 1))
+  if (
+    decisiveIdentifierAgreement ||
+    decisive.some((signal) => signal.score === 1)
+  )
     return { score: 1, signals }
 
   const totalWeight = signals.reduce(

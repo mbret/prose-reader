@@ -81,7 +81,6 @@ describe("resolveOpenLibraryDoc", () => {
           title: "Dune",
           author_name: ["Frank Herbert"],
           first_publish_year: 1965,
-          publisher: ["Chilton Books", "Ace"],
           language: ["eng"],
           subject: ["Science fiction"],
           number_of_pages_median: 412,
@@ -93,8 +92,7 @@ describe("resolveOpenLibraryDoc", () => {
     ).toEqual({
       title: "Dune",
       contributors: [{ name: "Frank Herbert", roles: ["author"] }],
-      published: { year: 1965 },
-      publisher: "Chilton Books",
+      publication: { original: { date: { year: 1965 } } },
       languages: ["en"],
       subjects: ["Science fiction"],
       numberOfPages: 412,

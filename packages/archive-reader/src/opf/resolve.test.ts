@@ -251,7 +251,7 @@ describe("resolveOpf", () => {
       }),
     ).toEqual({
       title: "Norwegian Wood",
-      publisher: "Vintage",
+      publication: { edition: { publisher: "Vintage" } },
       description: "A nostalgic story.",
       rights: "Copyright 2024",
       languages: ["en", "ja"],
@@ -343,19 +343,20 @@ describe("resolveOpf", () => {
 
   it("parses W3CDTF dc:date down to year / month / day", () => {
     expect(
-      resolveOpf({ ...emptyOpf(), date: "2024-12-25T12:00:00Z" }).published,
+      resolveOpf({ ...emptyOpf(), date: "2024-12-25T12:00:00Z" }).publication
+        ?.edition?.date,
     ).toEqual({ year: 2024, month: 12, day: 25 })
   })
 
   it("preserves a year-only dc:date", () => {
-    expect(resolveOpf({ ...emptyOpf(), date: "1997" }).published).toEqual({
-      year: 1997,
-    })
+    expect(
+      resolveOpf({ ...emptyOpf(), date: "1997" }).publication?.edition?.date,
+    ).toEqual({ year: 1997 })
   })
 
-  it("omits the published date when dc:date is unparseable", () => {
+  it("omits the edition date when dc:date is unparseable", () => {
     expect(
-      resolveOpf({ ...emptyOpf(), date: "sometime in 2024" }).published,
+      resolveOpf({ ...emptyOpf(), date: "sometime in 2024" }).publication,
     ).toBe(undefined)
   })
 

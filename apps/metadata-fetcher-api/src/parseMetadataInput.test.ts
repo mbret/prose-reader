@@ -18,7 +18,7 @@ describe("parseMetadataInput", () => {
   it("unwraps the resolved archive shape", () => {
     expect(
       parseMetadataInput({
-        version: 1,
+        version: 2,
         metadata: { title: "Dune" },
         unreadableSources: [],
       }),
@@ -29,7 +29,7 @@ describe("parseMetadataInput", () => {
     expect(
       parseMetadataInput({
         title: 42,
-        publisher: null,
+        publication: null,
         languages: "en",
         numberOfPages: "412",
         contributors: { name: "Frank Herbert" },
@@ -77,12 +77,24 @@ describe("parseMetadataInput", () => {
     ])
   })
 
-  it("reads a partial publication date", () => {
+  it("reads original and edition publication details", () => {
     expect(
-      parseMetadataInput({ published: { year: 1965 } })?.published,
-    ).toEqual({ year: 1965 })
-    expect(parseMetadataInput({ published: {} })?.published).toBeUndefined()
-    expect(parseMetadataInput({ published: "1965" })?.published).toBeUndefined()
+      parseMetadataInput({
+        publication: {
+          original: { date: { year: 1965 }, publisher: "Chilton Books" },
+          edition: { date: { year: 2005 }, imprint: "Ace" },
+        },
+      })?.publication,
+    ).toEqual({
+      original: { date: { year: 1965 }, publisher: "Chilton Books" },
+      edition: { date: { year: 2005 }, imprint: "Ace" },
+    })
+    expect(
+      parseMetadataInput({ publication: { original: {} } })?.publication,
+    ).toBeUndefined()
+    expect(
+      parseMetadataInput({ publication: "1965" })?.publication,
+    ).toBeUndefined()
   })
 
   it("reads series and collection membership", () => {

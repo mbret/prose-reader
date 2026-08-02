@@ -52,7 +52,7 @@ describe("resolveMetadata", () => {
     })
 
     expect(resolved.title).toBe("Package Title")
-    expect(resolved.publisher).toBe("Package Publisher")
+    expect(resolved.publication?.edition?.publisher).toBe("Package Publisher")
     expect(resolved.languages).toEqual(["en"])
     expect(resolved.contributors).toEqual([
       { name: "Package Author", roles: ["author"] },

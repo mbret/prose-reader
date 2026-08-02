@@ -1,4 +1,7 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type {
+  ResolvedMetadata,
+  ResolvedMetadataHome,
+} from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { marcLanguageToBcp47 } from "./marcLanguage.ts"
 import type { OpenLibraryDoc } from "./parse.ts"
@@ -21,8 +24,7 @@ export const openLibraryMetadataHomes = {
   title: "title",
   subtitle: "title",
   author_name: "contributors",
-  first_publish_year: "published",
-  publisher: "publisher",
+  first_publish_year: "publication.original.date",
   language: "languages",
   subject: "subjects",
   number_of_pages_median: "numberOfPages",
@@ -30,7 +32,7 @@ export const openLibraryMetadataHomes = {
   id_project_gutenberg: "identifiers",
 } as const satisfies Record<
   keyof OpenLibraryDoc,
-  keyof ResolvedMetadata | "identifiers"
+  ResolvedMetadataHome | "identifiers"
 >
 
 export const OPEN_LIBRARY_IDENTIFIER_SCHEME = "OpenLibrary"
@@ -106,7 +108,10 @@ export const resolveOpenLibraryDoc = (
             confidence: "derived" as const,
           }
         : undefined,
-    publisher: doc.publisher?.[0],
+    publication:
+      doc.first_publish_year !== undefined
+        ? { original: { date: { year: doc.first_publish_year } } }
+        : undefined,
     languages,
     subjects: emptyToUndefined(
       (doc.subject ?? []).slice(0, OPEN_LIBRARY_MAX_SUBJECTS),
@@ -117,10 +122,6 @@ export const resolveOpenLibraryDoc = (
         roles: ["author" as const],
       })),
     ),
-    published:
-      doc.first_publish_year !== undefined
-        ? { year: doc.first_publish_year }
-        : undefined,
     numberOfPages: doc.number_of_pages_median,
     isbn: options.isbn,
     identifiers: emptyToUndefined(identifiers),

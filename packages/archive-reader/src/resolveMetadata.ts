@@ -20,8 +20,8 @@ export type ResolveMetadataSources = {
  * Merges the per-source resolved metadata of every parsed source into one
  * {@link ResolvedMetadata}, with explicit precedence:
  *
- * - Descriptive fields (`title`, `description`, `publisher`, `languages`,
- *   `subjects`, `contributors`, `published`, `belongsTo`, `gtin`/`isbn`):
+ * - Descriptive fields (`title`, `description`, `publication`, `languages`,
+ *   `subjects`, `contributors`, `belongsTo`, `gtin`/`isbn`):
  *   **OPF wins over ComicInfo** — the package document is the publication's
  *   own metadata; a ComicInfo sidecar fills the gaps.
  * - `readingDirection`: **ComicInfo wins over OPF** (`Manga` beats
@@ -36,7 +36,7 @@ export type ResolveMetadataSources = {
  * - `identifiers` concatenates (OPF first) — different identifier systems
  *   coexist rather than compete.
  * - Format-scoped corners (`comic`, `apple`, `kobo`) and single-source
- *   fields (`rights`, `properties`, `imprint`, `numberOfPages`…) come from
+ *   fields (`rights`, `properties`, `numberOfPages`…) come from
  *   their only producer.
  */
 export const resolveMetadata = (
@@ -56,17 +56,30 @@ export const resolveMetadata = (
     ...(opf?.identifiers ?? []),
     ...(comicInfo?.identifiers ?? []),
   ]
+  const edition = omitUndefined({
+    date:
+      opf?.publication?.edition?.date ?? comicInfo?.publication?.edition?.date,
+    publisher:
+      opf?.publication?.edition?.publisher ??
+      comicInfo?.publication?.edition?.publisher,
+    imprint:
+      opf?.publication?.edition?.imprint ??
+      comicInfo?.publication?.edition?.imprint,
+  })
 
   return omitUndefined({
     title: opf?.title ?? comicInfo?.title,
     description: opf?.description ?? comicInfo?.description,
-    publisher: opf?.publisher ?? comicInfo?.publisher,
-    imprint: comicInfo?.imprint,
+    publication:
+      edition.date !== undefined ||
+      edition.publisher !== undefined ||
+      edition.imprint !== undefined
+        ? { edition }
+        : undefined,
     rights: opf?.rights,
     languages: opf?.languages ?? comicInfo?.languages,
     subjects: opf?.subjects ?? comicInfo?.subjects,
     contributors: opf?.contributors ?? comicInfo?.contributors,
-    published: opf?.published ?? comicInfo?.published,
     readingDirection: comicInfo?.readingDirection ?? opf?.readingDirection,
     renditionLayout:
       opf?.renditionLayout ?? apple?.renditionLayout ?? kobo?.renditionLayout,

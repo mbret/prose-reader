@@ -41,7 +41,7 @@ const duneProvider: MetadataProvider = {
         raw: { note: "verbatim" },
         metadata: {
           title: "Dune",
-          publisher: "Chilton Books",
+          publication: { edition: { publisher: "Chilton Books" } },
           contributors: [{ name: "Frank Herbert", roles: ["author"] }],
         },
       },
@@ -203,7 +203,7 @@ describe("metadata-fetcher-api", () => {
 
   it("accepts a resolved archive posted verbatim", async () => {
     const response = await api.post("/metadata", {
-      version: 1,
+      version: 2,
       metadata: { title: "Dune", numberOfPages: 412 },
       readingOrder: [{ uri: "page-1.jpg" }],
       unreadableSources: [],
@@ -218,7 +218,7 @@ describe("metadata-fetcher-api", () => {
       title: 42,
       contributors: "nope",
       identifiers: [{ value: null }],
-      published: { year: "1965" },
+      publication: { original: { date: { year: "1965" } } },
     })
 
     // nothing survived as a search term — a 400, not a 500
@@ -263,10 +263,13 @@ describe("metadata-fetcher-api", () => {
     // the catalog's publisher disagrees, so the match is short of perfect —
     // which is exactly what `minScore=1` refuses
     const strict = await readFetched(
-      await api.get("/metadata?title=Dune&publisher=Ace&minScore=1"),
+      await api.get("/metadata?title=Dune&editionPublisher=Ace&minScore=1"),
     )
 
     expect(strict.matches[0]?.accepted).toBe(false)
+    expect(strict.matches[0]?.signals).toContainEqual(
+      expect.objectContaining({ field: "publication.edition.publisher" }),
+    )
     expect(strict.metadata).toEqual({})
 
     const raw = await readFetched(

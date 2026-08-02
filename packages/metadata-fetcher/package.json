@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@prose-reader/archive-reader": "^1.339.0",
-    "@prose-reader/shared": "^1.339.0"
+    "@prose-reader/shared": "^1.339.0",
+    "xmldoc": "^2.0.0"
   }
 }

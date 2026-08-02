@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { projectGutenbergLookupFromMetadata } from "./projectGutenbergIdentifier.ts"
+import { projectGutenbergLookupFromMetadata } from "./identifier.ts"
 
 describe("projectGutenbergLookupFromMetadata", () => {
   it.each([
@@ -16,6 +16,19 @@ describe("projectGutenbergLookupFromMetadata", () => {
     ).toEqual({ id: "78139", identifier: { value, scheme: "URL" } })
   })
 
+  it("recognizes an authored Project Gutenberg identifier", () => {
+    expect(
+      projectGutenbergLookupFromMetadata({
+        identifiers: [
+          { value: "0078139", scheme: "ProjectGutenberg", unique: true },
+        ],
+      }),
+    ).toEqual({
+      id: "78139",
+      identifier: { value: "0078139", scheme: "ProjectGutenberg" },
+    })
+  })
+
   it("does not reinterpret arbitrary URLs or authored identifier types", () => {
     expect(
       projectGutenbergLookupFromMetadata({
@@ -25,6 +38,7 @@ describe("projectGutenbergLookupFromMetadata", () => {
             value: "https://www.gutenberg.org/78139",
             scheme: "DOI",
           },
+          { value: "0", scheme: "ProjectGutenberg" },
         ],
       }),
     ).toBeUndefined()

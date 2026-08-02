@@ -17,13 +17,34 @@ const el = (tag, className, text) => {
   return node
 }
 
+const describeDate = (date) => {
+  if (date?.year === undefined) return undefined
+
+  return [date.year, date.month, date.day]
+    .filter((part) => part !== undefined)
+    .map((part, index) =>
+      index === 0 ? String(part) : String(part).padStart(2, "0"),
+    )
+    .join("-")
+}
+
+const describePublication = (label, publication) => {
+  const details = [
+    describeDate(publication?.date),
+    publication?.publisher,
+    publication?.imprint,
+  ].filter(Boolean)
+
+  return details.length > 0 ? `${label}: ${details.join(", ")}` : undefined
+}
+
 const describe = (metadata) =>
   [
     (metadata.contributors ?? [])
       .map((contributor) => contributor.name)
       .join(", "),
-    metadata.published?.year,
-    metadata.publisher,
+    describePublication("original", metadata.publication?.original),
+    describePublication("edition", metadata.publication?.edition),
     metadata.numberOfPages && `${metadata.numberOfPages} pages`,
     metadata.languages?.join("/"),
   ]

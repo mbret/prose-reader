@@ -7,7 +7,6 @@ const DUNE_DOC = {
   subtitle: "a novel",
   author_name: ["Frank Herbert"],
   first_publish_year: 1965,
-  publisher: ["Chilton Books", "Ace"],
   language: ["eng", "fre"],
   subject: ["Science fiction", "Desert"],
   number_of_pages_median: 412,
@@ -139,7 +138,12 @@ describe("createOpenLibraryProvider", () => {
     const fetchMock = fetchReturning()
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
-    expect(await provider.search({ publisher: "Ace" }, context)).toEqual([])
+    expect(
+      await provider.search(
+        { publication: { edition: { publisher: "Ace" } } },
+        context,
+      ),
+    ).toEqual([])
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

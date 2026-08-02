@@ -31,6 +31,7 @@ services:
       - "${METADATA_FETCHER_PORT:-3000}:3000"
     environment:
       PORT: 3000
+      PROJECT_GUTENBERG_USER_AGENT: ${PROJECT_GUTENBERG_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
       # Open Library asks clients to identify themselves (see the README)
       OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
       METADATA_LIMIT: ${METADATA_LIMIT:-5}

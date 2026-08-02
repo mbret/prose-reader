@@ -1,8 +1,10 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 
-export type OpenLibraryProjectGutenbergLookup = {
+export const PROJECT_GUTENBERG_IDENTIFIER_SCHEME = "ProjectGutenberg"
+
+export type ProjectGutenbergLookup = {
   readonly id: string
-  /** The book's exact identifier spelling, echoed only after OL confirms it. */
+  /** The book's exact identifier spelling, echoed only after PG confirms it. */
   readonly identifier: {
     readonly value: string
     readonly scheme?: string
@@ -21,6 +23,16 @@ const GUTENBERG_PATHS: ReadonlyArray<RegExp> = [
   /^\/(\d+)(?:\/|$)/,
 ]
 
+const normalizedProjectGutenbergId = (value: string): string | undefined => {
+  const trimmed = value.trim()
+
+  if (!/^\d+$/.test(trimmed)) return undefined
+
+  const normalized = trimmed.replace(/^0+(?=\d)/, "")
+
+  return normalized !== "0" ? normalized : undefined
+}
+
 const projectGutenbergIdFromUrl = (value: string): string | undefined => {
   try {
     const url = new URL(value.trim())
@@ -31,7 +43,7 @@ const projectGutenbergIdFromUrl = (value: string): string | undefined => {
     for (const pattern of GUTENBERG_PATHS) {
       const id = pattern.exec(url.pathname)?.[1]
 
-      if (id !== undefined) return id
+      if (id !== undefined) return normalizedProjectGutenbergId(id)
     }
   } catch {
     return undefined
@@ -41,19 +53,21 @@ const projectGutenbergIdFromUrl = (value: string): string | undefined => {
 }
 
 /**
- * Open Library-specific crosswalk: its `id_project_gutenberg` search field
- * stores the numeric id encoded by official Gutenberg URLs. Other providers
- * own their own identifier conventions; this is intentionally not generic.
+ * Recognizes Project Gutenberg's own numeric identifier and official URL
+ * forms. Calling providers decide explicitly how to use this crosswalk; the
+ * shared scorer never reinterprets arbitrary URLs.
  */
 export const projectGutenbergLookupFromMetadata = (
   metadata: ResolvedMetadata,
-): OpenLibraryProjectGutenbergLookup | undefined => {
+): ProjectGutenbergLookup | undefined => {
   for (const identifier of metadata.identifiers ?? []) {
     const scheme = identifier.scheme?.trim().toLowerCase()
-
-    if (scheme !== undefined && scheme !== "url" && scheme !== "uri") continue
-
-    const id = projectGutenbergIdFromUrl(identifier.value)
+    const id =
+      scheme === PROJECT_GUTENBERG_IDENTIFIER_SCHEME.toLowerCase()
+        ? normalizedProjectGutenbergId(identifier.value)
+        : scheme === undefined || scheme === "url" || scheme === "uri"
+          ? projectGutenbergIdFromUrl(identifier.value)
+          : undefined
 
     if (id === undefined) continue
 

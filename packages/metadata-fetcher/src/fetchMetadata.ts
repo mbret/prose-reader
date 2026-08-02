@@ -49,7 +49,7 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 1
+const FETCHED_METADATA_VERSION = 2
 
 const toMatch = ({
   candidate,
@@ -87,13 +87,17 @@ const toMatch = ({
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
  *   createOpenLibraryProvider,
+ *   createProjectGutenbergProvider,
  *   fetchMetadata,
  *   mergeResolvedMetadata,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
  * const fetched = await fetchMetadata(resolved, {
- *   providers: [createOpenLibraryProvider()],
+ *   providers: [
+ *     createProjectGutenbergProvider(),
+ *     createOpenLibraryProvider(),
+ *   ],
  * })
  *
  * // what the catalogs found, and why we believe it

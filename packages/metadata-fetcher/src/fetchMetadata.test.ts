@@ -31,18 +31,26 @@ describe("fetchMetadata", () => {
   it("accepts a resolved archive as well as bare metadata", async () => {
     const providers = [
       providerReturning("a", [
-        { metadata: { title: "Dune", publisher: "Ace" } },
+        {
+          metadata: {
+            title: "Dune",
+            publication: { edition: { publisher: "Ace" } },
+          },
+        },
       ]),
     ]
     const resolved: Pick<
       ResolvedArchive,
       "version" | "metadata" | "unreadableSources"
-    > = { version: 1, metadata: book, unreadableSources: [] }
+    > = { version: 2, metadata: book, unreadableSources: [] }
 
     const fromArchive = await fetchMetadata(resolved, { providers })
     const fromMetadata = await fetchMetadata(book, { providers })
 
-    expect(fromArchive.metadata).toEqual({ title: "Dune", publisher: "Ace" })
+    expect(fromArchive.metadata).toEqual({
+      title: "Dune",
+      publication: { edition: { publisher: "Ace" } },
+    })
     expect(fromMetadata.metadata).toEqual(fromArchive.metadata)
   })
 
@@ -93,7 +101,12 @@ describe("fetchMetadata", () => {
     const fetched = await fetchMetadata(book, {
       providers: [
         providerReturning("weak", [
-          { metadata: { title: "Something Else", publisher: "Wrong" } },
+          {
+            metadata: {
+              title: "Something Else",
+              publication: { edition: { publisher: "Wrong" } },
+            },
+          },
         ]),
         providerReturning("strong", [
           { metadata: { title: "Dune", numberOfPages: 412 } },
@@ -229,7 +242,7 @@ describe("fetchMetadata", () => {
 
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
-      version: 1,
+      version: 2,
       metadata: {},
       matches: [],
       sources: {},

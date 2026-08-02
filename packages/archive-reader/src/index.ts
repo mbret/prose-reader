@@ -110,6 +110,8 @@ export type {
   ResolvedMetadata,
   ResolvedMetadataHome,
   ResolvedProperty,
+  ResolvedPublication,
+  ResolvedPublicationInfo,
 } from "./types/resolvedMetadata.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
