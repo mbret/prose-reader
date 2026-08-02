@@ -248,6 +248,8 @@ form.addEventListener("submit", async (event) => {
       })
       const resolved = await resolvedResponse.json()
 
+      console.log("POST /playground/resolve", resolved)
+
       if (!resolvedResponse.ok) {
         showResponse(
           resolvedResponse,
