@@ -51,9 +51,8 @@ export type MetadataMatch = {
   readonly score: number
   readonly signals: ReadonlyArray<MetadataMatchSignal>
   /**
-   * Reached `minScore`, and so contributed to the merged
-   * `FetchedMetadata.metadata`. Rejected matches are kept and ranked, for a
-   * consumer to offer for manual confirmation.
+   * Reached `minScore`. Rejected matches are kept and ranked, for a consumer
+   * to offer for manual confirmation.
    */
   readonly accepted: boolean
   readonly metadata: ResolvedMetadata

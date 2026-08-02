@@ -20,8 +20,8 @@
  * ```
  *
  * Providers are the extension point: implement {@link MetadataProvider} and
- * pass it in. Scoring, ranking, merging and error handling stay here,
- * identical for every provider.
+ * pass it in. Scoring, ranking and error handling stay here, identical for
+ * every provider.
  */
 export type {
   FetchMetadataInput,
@@ -39,7 +39,6 @@ export {
   textSimilarity,
   titleSimilarity,
 } from "./match/similarity.ts"
-export { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata.ts"
 export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export {
   createOpenLibraryProvider,

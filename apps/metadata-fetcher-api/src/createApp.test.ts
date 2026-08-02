@@ -183,11 +183,13 @@ describe("metadata-fetcher-api", () => {
     const fetched = await readFetched(response)
 
     expect(response.status).toBe(200)
-    expect(fetched.metadata.title).toBe("Dune")
+    expect(fetched.version).toBe(3)
+    expect(fetched).not.toHaveProperty("metadata")
     expect(fetched.matches[0]).toMatchObject({
       providerId: "stub",
       accepted: true,
       url: "https://example.com/works/OL893415W",
+      metadata: { title: "Dune" },
     })
     expect(fetched.sources.stub?.provider.name).toBe("Stub Catalog")
   })
@@ -210,7 +212,9 @@ describe("metadata-fetcher-api", () => {
     })
 
     expect(response.status).toBe(200)
-    expect((await readFetched(response)).metadata.title).toBe("Dune")
+    expect((await readFetched(response)).matches[0]?.metadata.title).toBe(
+      "Dune",
+    )
   })
 
   it("sanitizes a body whose fields are the wrong type", async () => {
@@ -270,7 +274,6 @@ describe("metadata-fetcher-api", () => {
     expect(strict.matches[0]?.signals).toContainEqual(
       expect.objectContaining({ field: "publication.edition.publisher" }),
     )
-    expect(strict.metadata).toEqual({})
 
     const raw = await readFetched(
       await api.get("/metadata?title=Dune&includeRaw=true"),
@@ -454,9 +457,10 @@ describe("metadata-fetcher-api failures", () => {
 
     try {
       const response = await api.get("/metadata?title=Dune")
+      const fetched = await readFetched(response)
 
       expect(response.status).toBe(200)
-      expect((await readFetched(response)).metadata.title).toBe("Dune")
+      expect(fetched.matches[0]?.metadata.title).toBe("Dune")
     } finally {
       await api.close()
     }

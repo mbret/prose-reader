@@ -47,11 +47,11 @@ describe("fetchMetadata", () => {
     const fromArchive = await fetchMetadata(resolved, { providers })
     const fromMetadata = await fetchMetadata(book, { providers })
 
-    expect(fromArchive.metadata).toEqual({
+    expect(fromArchive.matches[0]?.metadata).toEqual({
       title: "Dune",
       publication: { edition: { publisher: "Ace" } },
     })
-    expect(fromMetadata.metadata).toEqual(fromArchive.metadata)
+    expect(fromMetadata.matches).toEqual(fromArchive.matches)
   })
 
   it("hands every provider the metadata itself, verbatim", async () => {
@@ -97,7 +97,7 @@ describe("fetchMetadata", () => {
     ])
   })
 
-  it("merges only the accepted matches, best first", async () => {
+  it("marks matches on either side of the acceptance threshold", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
         providerReturning("weak", [
@@ -114,7 +114,15 @@ describe("fetchMetadata", () => {
       ],
     })
 
-    expect(fetched.metadata).toEqual({ title: "Dune", numberOfPages: 412 })
+    expect(
+      fetched.matches.map(({ providerId, accepted }) => ({
+        providerId,
+        accepted,
+      })),
+    ).toEqual([
+      { providerId: "strong", accepted: true },
+      { providerId: "weak", accepted: false },
+    ])
   })
 
   it("keeps the rejected matches, ranked, for manual confirmation", async () => {
@@ -124,7 +132,6 @@ describe("fetchMetadata", () => {
       ],
     })
 
-    expect(fetched.metadata).toEqual({})
     expect(fetched.matches).toHaveLength(1)
     expect(fetched.matches[0]?.accepted).toBe(false)
     expect(fetched.sources.a?.matches[0]?.signals).toContainEqual(
@@ -138,11 +145,13 @@ describe("fetchMetadata", () => {
     ]
 
     expect(
-      (await fetchMetadata(book, { providers, minScore: 1 })).metadata,
-    ).toEqual({})
+      (await fetchMetadata(book, { providers, minScore: 1 })).matches[0]
+        ?.accepted,
+    ).toBe(false)
     expect(
-      (await fetchMetadata(book, { providers, minScore: 0.1 })).metadata,
-    ).toEqual({ title: "Dune Messiah" })
+      (await fetchMetadata(book, { providers, minScore: 0.1 })).matches[0]
+        ?.accepted,
+    ).toBe(true)
   })
 
   it("caps the matches a provider contributes, best first", async () => {
@@ -210,7 +219,7 @@ describe("fetchMetadata", () => {
 
     expect(fetched.failedProviders).toEqual([{ id: "down" }])
     expect(fetched.sources).not.toHaveProperty("down")
-    expect(fetched.metadata).toEqual({ title: "Dune" })
+    expect(fetched.matches[0]?.metadata).toEqual({ title: "Dune" })
   })
 
   it("rejects when the caller aborts", async () => {
@@ -242,8 +251,7 @@ describe("fetchMetadata", () => {
 
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
-      version: 2,
-      metadata: {},
+      version: 3,
       matches: [],
       sources: {},
       failedProviders: [],

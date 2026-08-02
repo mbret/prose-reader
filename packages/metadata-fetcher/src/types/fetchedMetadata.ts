@@ -1,11 +1,8 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import type { MetadataMatch } from "./match.ts"
 
 /**
- * What one provider had to say — the twin of `ResolvedArchiveSources`, with
- * the same contract: everything a provider contributed is also represented,
- * merged, in {@link FetchedMetadata.metadata}, so a wrong precedence opinion
- * stays revisable because the per-provider values never left the entity.
+ * What one provider had to say: every candidate, with the provider identity
+ * needed to present or revisit those results independently.
  */
 export type FetchedMetadataSource = {
   readonly provider: {
@@ -44,8 +41,9 @@ export type FailedMetadataProvider = {
 }
 
 /**
- * What remote catalogs know about a book — the equivalent of `ResolvedArchive`
- * and just as plain: structured-clone-able, persistable, cacheable.
+ * What remote catalogs found for a book, kept as ranked alternatives rather
+ * than consolidated into a potentially synthetic record. The entity is plain
+ * JSON: structured-clone-able, persistable and cacheable.
  */
 export type FetchedMetadata = {
   /**
@@ -53,19 +51,6 @@ export type FetchedMetadata = {
    * shape or meaning of existing fields changes incompatibly.
    */
   readonly version: number
-  /**
-   * What the providers found, merged field-wise with the highest-scoring
-   * accepted match winning. Empty when nothing matched confidently enough.
-   *
-   * **Only** the remote answer: the local metadata is deliberately not folded
-   * in, so a consumer decides who wins.
-   *
-   * ```ts
-   * // trust the book over the catalog, fill the gaps from the catalog
-   * const metadata = mergeResolvedMetadata(resolved.metadata, fetched.metadata)
-   * ```
-   */
-  readonly metadata: ResolvedMetadata
   /**
    * Every match across every provider, ranked best-first — the list a "did you
    * mean?" picker renders. Ties keep the order the providers were declared in,
