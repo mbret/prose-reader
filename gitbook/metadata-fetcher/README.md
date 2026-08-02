@@ -2,7 +2,7 @@
 
 **`@prose-reader/metadata-fetcher`** fetches a book's metadata from online catalogs. [archive-reader](../archive-reader/README.md) reads what the file itself carries; this reads what the world knows about it.
 
-It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the `ResolvedArchive` shape — asks a list of **pluggable providers**, scores every candidate against what you gave it, and gives back the same `ResolvedMetadata` vocabulary, plus the per-provider detail behind it:
+It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the `ResolvedArchive` shape — asks a list of **pluggable providers**, scores every candidate against what you gave it, and returns the ranked alternatives plus the per-provider detail behind them:
 
 ```typescript
 import { resolveArchive } from "@prose-reader/archive-reader"
@@ -20,8 +20,9 @@ const fetched = await fetchMetadata(resolved, {
   ],
 })
 
-fetched.metadata.cover?.uri // what the catalogs found
-fetched.matches[0]?.score // …and how sure we are it is this book
+const match = fetched.matches.find(({ accepted }) => accepted)
+match?.metadata.cover?.uri // what the best accepted candidate says
+match?.score // …and how sure we are it is this book
 ```
 
 {% hint style="info" %}
@@ -44,8 +45,6 @@ const fetched = await fetchMetadata(
 ```typescript
 type FetchedMetadata = {
   version: number
-  /** the accepted matches, merged — the same vocabulary resolveArchive produces */
-  metadata: ResolvedMetadata
   /** every match across every provider, ranked best-first */
   matches: MetadataMatch[]
   /** per-provider detail, keyed by provider id */
@@ -56,11 +55,11 @@ type FetchedMetadata = {
 }
 ```
 
-`version` is currently `2`, matching the explicit `publication.original` / `publication.edition` vocabulary carried by every candidate.
+`version` is currently `3`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
 
-`metadata` is **only** the remote answer — the local metadata is deliberately not folded in, so you stay free to decide who wins (see [Merging with what the book said](#merging-with-what-the-book-said)).
+`matches` are deliberately not consolidated into a single metadata record. A score says how strongly a candidate resembles the input; it does not prove that several accepted candidates describe the same edition. Keeping the candidates separate avoids silently mixing fields from competing records and leaves selection policy with the consumer.
 
-`sources` is the twin of `resolveArchive`'s `sources`: everything a provider contributed is also represented, merged, in `metadata`. The duplication is the contract — a wrong precedence opinion stays revisable because the per-provider values never left the entity. Unlike archive sources, the key space is open: providers are pluggable, so the keys are whatever providers you passed.
+`sources` groups those same matches by provider. Unlike archive sources, the key space is open: providers are pluggable, so the keys are whatever providers you passed.
 
 ## Matches: how it matched
 
@@ -83,7 +82,7 @@ type MetadataMatch = {
     query: string
     candidate: string
   }[]
-  /** reached minScore, so it contributed to the merged metadata */
+  /** reached minScore */
   accepted: boolean
   metadata: ResolvedMetadata
   id?: string
@@ -122,10 +121,10 @@ The rules:
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Publication scopes never cross.** An original publication date is compared only with another original publication date; an EPUB or catalog-edition date is compared only with another edition date. Equal years from different events do not create a signal.
 
-`minScore` (default `0.5`) decides which matches are `accepted` — which ones contribute to the merged `metadata`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
+`minScore` (default `0.5`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
 ```typescript
-if (fetched.metadata.title === undefined) {
+if (!fetched.matches.some(({ accepted }) => accepted)) {
   showPicker(fetched.matches) // nothing convincing — let the user choose
 }
 ```
@@ -147,7 +146,7 @@ const fetched = await fetchMetadata(resolved, {
 
 | Option | Default | |
 | --- | --- | --- |
-| `providers` | — | the catalogs to ask, queried concurrently. Their order is the tie-break precedence: equally-scored matches rank in declaration order, and that ranking drives the merged `metadata` |
+| `providers` | — | the catalogs to ask, queried concurrently. Their order is the tie-break precedence: equally-scored matches rank in declaration order |
 | `limit` | `5` | hard cap on the matches kept **per provider**, best-scoring first, and the page-size hint passed to each provider |
 | `minScore` | `0.5` | score a match must reach to be `accepted` |
 | `includeRaw` | `false` | keep each provider's own record on `match.raw`. Off by default: provenance most consumers don't need, and it can dwarf the normalized entity they persist |
@@ -171,21 +170,19 @@ There is deliberately **no retry, no backoff and no `Retry-After` handling** —
 
 Cancelling through `signal` is the one exception: it rejects, since the caller asked for it.
 
-## Merging with what the book said
+## Choosing metadata
 
-`mergeResolvedMetadata` combines any number of `ResolvedMetadata`, **first defined wins**, field-wise. Precedence is entirely yours — pass the sources in the order you trust them:
+The globally ranked `matches` list makes the simplest policy explicit: select its first accepted entry. A UI can instead present several alternatives, prefer a provider, or require a confirmed identifier before applying anything.
 
 ```typescript
-import { mergeResolvedMetadata } from "@prose-reader/metadata-fetcher"
+const match = fetched.matches.find(({ accepted }) => accepted)
 
-// the book over the catalogs, catalogs filling its gaps
-const metadata = mergeResolvedMetadata(resolved.metadata, fetched.metadata)
-
-// the catalogs over the book (a scene-released CBZ with a junk ComicInfo)
-const metadata = mergeResolvedMetadata(fetched.metadata, resolved.metadata)
+if (match !== undefined) {
+  importMetadata(match.metadata)
+}
 ```
 
-Field-wise rather than object-wise, so a source knowing only a cover contributes its cover without hiding another's title. Two exceptions, both because the values are additive rather than competing: `identifiers` concatenate in argument order (deduped on scheme + value, like `resolveMetadata` does), and `belongsTo` merges its `series` and `collection` independently. Everything else — including `subjects` and `contributors` — takes the first stated value whole; unioning keyword lists across catalogs is a judgement call that belongs to you, not to a merge that must stay predictable.
+Each candidate remains a `ResolvedMetadata`, so it can be handled with the same application code as metadata read from the publication. The fetcher does not decide how local and remote values should be reconciled.
 
 {% hint style="info" %}
 A remote `cover.uri` is an **absolute url**, not a container-relative uri: a catalog addresses its cover in its own space and there is nothing to rebase it onto. `cover.confidence` is `derived` — the catalog declares it.

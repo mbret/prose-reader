@@ -1,6 +1,5 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { scoreMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
-import { mergeResolvedMetadata } from "./merge/mergeResolvedMetadata.ts"
 import { responseErrorStatus } from "./providers/responseError.ts"
 import { Report } from "./report.ts"
 import type {
@@ -24,8 +23,7 @@ export type FetchMetadataInput =
 export type FetchMetadataOptions = {
   /**
    * The catalogs to ask, queried concurrently. Their order is the tie-break
-   * precedence: equally-scored matches rank in the order declared here, and
-   * that ranking drives the merged `metadata`.
+   * precedence: equally-scored matches rank in the order declared here.
    */
   readonly providers: ReadonlyArray<MetadataProvider>
   /**
@@ -34,9 +32,9 @@ export type FetchMetadataOptions = {
    */
   readonly limit?: number
   /**
-   * Score a match must reach to be `accepted`, and so contribute to the merged
-   * `metadata`. Defaults to `0.5`. Below it, matches are still returned and
-   * ranked, for a consumer to offer as "did you mean?".
+   * Score a match must reach to be `accepted`. Defaults to `0.5`. Below it,
+   * matches are still returned and ranked, for a consumer to offer as "did
+   * you mean?".
    */
   readonly minScore?: number
   /**
@@ -49,7 +47,7 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 2
+const FETCHED_METADATA_VERSION = 3
 
 const toMatch = ({
   candidate,
@@ -79,9 +77,9 @@ const toMatch = ({
 
 /**
  * Asks every provider what it knows about a book, scores the answers against
- * what you gave it, and merges the convincing ones into a single
- * {@link ResolvedMetadata} — the vocabulary `resolveArchive` produces, so
- * remote and embedded metadata stay interchangeable.
+ * what you gave it, and returns the ranked candidates with the evidence behind
+ * each score. Candidates use the same {@link ResolvedMetadata} vocabulary as
+ * `resolveArchive`, so remote and embedded metadata stay interchangeable.
  *
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
@@ -89,7 +87,6 @@ const toMatch = ({
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
- *   mergeResolvedMetadata,
  * } from "@prose-reader/metadata-fetcher"
  *
  * const resolved = await resolveArchive(archive)
@@ -100,12 +97,10 @@ const toMatch = ({
  *   ],
  * })
  *
- * // what the catalogs found, and why we believe it
- * fetched.metadata.cover?.uri
- * fetched.matches[0]?.signals // [{ field: "isbn", score: 1, … }, …]
- *
- * // the book wins, the catalogs fill its gaps
- * const metadata = mergeResolvedMetadata(resolved.metadata, fetched.metadata)
+ * // what the best accepted candidate says, and why we believe it
+ * const match = fetched.matches.find(({ accepted }) => accepted)
+ * match?.metadata.cover?.uri
+ * match?.signals // [{ field: "isbn", score: 1, … }, …]
  * ```
  *
  * Error policy mirrors `resolveArchive`: a provider that throws never fails
@@ -205,11 +200,6 @@ export const fetchMetadata = async (
 
   return {
     version: FETCHED_METADATA_VERSION,
-    metadata: mergeResolvedMetadata(
-      ...rankedMatches
-        .filter((match) => match.accepted)
-        .map((match) => match.metadata),
-    ),
     matches: rankedMatches,
     sources,
     failedProviders,

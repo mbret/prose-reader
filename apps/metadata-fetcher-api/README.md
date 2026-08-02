@@ -92,7 +92,7 @@ Fields a lookup cannot search on (`readingOrder`, `cover`, `properties`, the for
 | `includeRaw` | `false` | keep each provider's own record on `match.raw` |
 | `providers` | all | comma-separated provider ids to narrow the lookup |
 
-Both answer with the `FetchedMetadata` entity verbatim — merged `metadata`, ranked `matches` with the per-field signals behind each score, per-provider `sources`, and `failedProviders`. See the [package documentation](../../gitbook/metadata-fetcher/README.md) for the entity and the matching rules.
+Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with the per-field signals behind each score, per-provider `sources`, and `failedProviders`. Matches are alternatives and are not consolidated into a synthetic metadata record. See the [package documentation](../../gitbook/metadata-fetcher/README.md) for the entity and the matching rules.
 
 ### Status codes
 
