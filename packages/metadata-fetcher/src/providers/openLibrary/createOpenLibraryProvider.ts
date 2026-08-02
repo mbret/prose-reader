@@ -51,7 +51,7 @@ export type OpenLibraryProviderOptions = {
 
 const searchTerms = (
   input: FetchMetadataInput,
-): Record<string, string> | undefined => {
+): { readonly title: string; readonly author?: string } | undefined => {
   const title = input.title?.trim()
 
   if (title === undefined || title.length === 0) return undefined
@@ -74,11 +74,12 @@ const searchTerms = (
  * })
  * ```
  *
- * Lookup strategy, at most three requests: an **ISBN search** when the book
+ * Lookup strategy, at most four requests: an **ISBN search** when the book
  * states one; an exact **Project Gutenberg id search** when an identifier is
- * an official Gutenberg URL; then a **title (+ first author) search**. A query
- * with none of those terms yields no candidates rather than a fishing
- * expedition.
+ * an official Gutenberg URL; then a precise **title (+ first author) search**,
+ * followed by a free-text fallback when Open Library indexed part of the title
+ * as a subtitle. A query with none of those terms yields no candidates rather
+ * than a fishing expedition.
  */
 export const createOpenLibraryProvider = (
   options: OpenLibraryProviderOptions = {},
@@ -170,7 +171,16 @@ export const createOpenLibraryProvider = (
 
       if (terms === undefined) return []
 
-      return toCandidates(await searchDocs(terms, context))
+      const docs = await searchDocs(terms, context)
+
+      if (docs.length > 0) return toCandidates(docs)
+
+      const q =
+        terms.author !== undefined
+          ? `${terms.title} ${terms.author}`
+          : terms.title
+
+      return toCandidates(await searchDocs({ q }, context))
     },
   }
 }

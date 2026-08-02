@@ -81,6 +81,41 @@ describe("createOpenLibraryProvider", () => {
     expect(candidates[0]?.metadata.isbn).toBeUndefined()
   })
 
+  it("falls back to free text when Open Library indexed a sparse work title", async () => {
+    const irinaDoc = {
+      key: "/works/OL39356532W",
+      title: "Irina",
+      subtitle: "The Vampire Cosmonaut (Light Novel) Vol. 1",
+      author_name: ["Keisuke Makino"],
+    }
+    const fetchMock = fetchReturning({ docs: [] }, { docs: [irinaDoc] })
+    const provider = createOpenLibraryProvider({ fetch: fetchMock })
+
+    const candidates = await provider.search(
+      {
+        title: "Irina: The Vampire Cosmonaut Vol. 1",
+        authors: ["Keisuke Makino"],
+      },
+      context,
+    )
+
+    const precise = requestedUrl(fetchMock, 0)
+    const fallback = requestedUrl(fetchMock, 1)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(precise.searchParams.get("title")).toBe(
+      "Irina: The Vampire Cosmonaut Vol. 1",
+    )
+    expect(precise.searchParams.get("author")).toBe("Keisuke Makino")
+    expect(fallback.searchParams.get("q")).toBe(
+      "Irina: The Vampire Cosmonaut Vol. 1 Keisuke Makino",
+    )
+    expect(fallback.searchParams.get("title")).toBeNull()
+    expect(candidates[0]?.metadata.title).toBe(
+      "Irina: The Vampire Cosmonaut (Light Novel) Vol. 1",
+    )
+  })
+
   it("looks an official Project Gutenberg URL up by Open Library's external id", async () => {
     const identifierValue = "http://www.gutenberg.org/1342"
     const fetchMock = fetchReturning({
@@ -174,8 +209,8 @@ describe("createOpenLibraryProvider", () => {
   })
 
   it("sends the user agent only when one is configured", async () => {
-    const withAgent = fetchReturning({ docs: [] })
-    const withoutAgent = fetchReturning({ docs: [] })
+    const withAgent = fetchReturning({ docs: [] }, { docs: [] })
+    const withoutAgent = fetchReturning({ docs: [] }, { docs: [] })
 
     await createOpenLibraryProvider({
       fetch: withAgent,
@@ -189,7 +224,13 @@ describe("createOpenLibraryProvider", () => {
     expect(withAgent.mock.calls[0]?.[1]?.headers).toMatchObject({
       "User-Agent": "MyReader/1.0 (me@example.com)",
     })
+    expect(withAgent.mock.calls[1]?.[1]?.headers).toMatchObject({
+      "User-Agent": "MyReader/1.0 (me@example.com)",
+    })
     expect(withoutAgent.mock.calls[0]?.[1]?.headers).not.toHaveProperty(
+      "User-Agent",
+    )
+    expect(withoutAgent.mock.calls[1]?.[1]?.headers).not.toHaveProperty(
       "User-Agent",
     )
   })
@@ -211,7 +252,7 @@ describe("createOpenLibraryProvider", () => {
   })
 
   it("forwards the abort signal to every request", async () => {
-    const fetchMock = fetchReturning({ docs: [] }, { docs: [] })
+    const fetchMock = fetchReturning({ docs: [] }, { docs: [] }, { docs: [] })
     const controller = new AbortController()
 
     await createOpenLibraryProvider({ fetch: fetchMock }).search(
@@ -221,5 +262,6 @@ describe("createOpenLibraryProvider", () => {
 
     expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal)
     expect(fetchMock.mock.calls[1]?.[1]?.signal).toBe(controller.signal)
+    expect(fetchMock.mock.calls[2]?.[1]?.signal).toBe(controller.signal)
   })
 })

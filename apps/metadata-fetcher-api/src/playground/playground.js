@@ -267,6 +267,7 @@ form.addEventListener("submit", async (event) => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(resolved),
       })
+
       label = `POST ${metadataUrl} (${file.name})`
     } else {
       response = await fetch(metadataUrl)

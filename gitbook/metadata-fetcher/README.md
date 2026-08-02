@@ -281,7 +281,7 @@ const provider = createOpenLibraryProvider({
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 | `userAgent` | — | Open Library's API etiquette asks for an identifying one (app name + contact) and throttles anonymous traffic harder |
 
-**Lookup strategy**, at most three requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a title (+ first author) search when those identifiers are unknown to Open Library or absent. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
+**Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
 
 **Mapping** (`search.json` doc → `ResolvedMetadata`, exported as `openLibraryMetadataHomes`):
 
