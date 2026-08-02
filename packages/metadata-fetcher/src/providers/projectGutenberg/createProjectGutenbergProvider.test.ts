@@ -1,6 +1,6 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
+import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import { createProjectGutenbergProvider } from "./createProjectGutenbergProvider.ts"
 
 const PROJECT_GUTENBERG_RDF_FIXTURE = `<rdf:RDF
@@ -25,13 +25,12 @@ describe("createProjectGutenbergProvider", () => {
       fetch: fetchMock,
       userAgent: "MyReader/1.0 (me@example.com)",
     })
-    const input: ResolvedMetadata = {
+    const input: FetchMetadataInput = {
       title: "A locally edited title",
       identifiers: [
         {
           value: "http://www.gutenberg.org/78139",
           scheme: "URL",
-          unique: true,
         },
       ],
     }

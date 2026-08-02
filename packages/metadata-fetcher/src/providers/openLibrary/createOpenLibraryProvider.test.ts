@@ -65,7 +65,7 @@ describe("createOpenLibraryProvider", () => {
       {
         isbn: "9780441013593",
         title: "Dune",
-        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        authors: ["Frank Herbert"],
       },
       context,
     )
@@ -95,7 +95,7 @@ describe("createOpenLibraryProvider", () => {
 
     const candidates = await provider.search(
       {
-        identifiers: [{ value: identifierValue, scheme: "URL", unique: true }],
+        identifiers: [{ value: identifierValue, scheme: "URL" }],
       },
       context,
     )
@@ -138,12 +138,7 @@ describe("createOpenLibraryProvider", () => {
     const fetchMock = fetchReturning()
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
-    expect(
-      await provider.search(
-        { publication: { edition: { publisher: "Ace" } } },
-        context,
-      ),
-    ).toEqual([])
+    expect(await provider.search({ publisher: "Ace" }, context)).toEqual([])
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

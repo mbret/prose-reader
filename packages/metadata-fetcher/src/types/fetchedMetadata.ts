@@ -64,7 +64,8 @@ export type FetchedMetadata = {
    * leaves — a consumer refusing to cache a partial answer needs it.
    *
    * ```ts
-   * const fetched = await fetchMetadata(resolved, { providers })
+   * const input = metadataInputFromResolvedArchive(resolved)
+   * const fetched = await fetchMetadata(input, { providers })
    *
    * // don't persist "we found nothing" when we simply couldn't ask
    * if (fetched.failedProviders.length === 0) cache.set(bookId, fetched)

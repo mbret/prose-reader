@@ -2,7 +2,7 @@
 
 **`@prose-reader/metadata-fetcher`** fetches a book's metadata from online catalogs. [archive-reader](../archive-reader/README.md) reads what the file itself carries; this reads what the world knows about it.
 
-It takes a `ResolvedMetadata` — or anything carrying one, which is exactly the `ResolvedArchive` shape — asks a list of **pluggable providers**, scores every candidate against what you gave it, and returns the ranked alternatives plus the per-provider detail behind them:
+It takes a compact `FetchMetadataInput`, asks a list of **pluggable providers**, scores every rich catalog candidate against that input, and returns the ranked alternatives plus the per-provider detail behind them:
 
 ```typescript
 import { resolveArchive } from "@prose-reader/archive-reader"
@@ -10,10 +10,12 @@ import {
   createOpenLibraryProvider,
   createProjectGutenbergProvider,
   fetchMetadata,
+  metadataInputFromResolvedArchive,
 } from "@prose-reader/metadata-fetcher"
 
 const resolved = await resolveArchive(archive)
-const fetched = await fetchMetadata(resolved, {
+const input = metadataInputFromResolvedArchive(resolved)
+const fetched = await fetchMetadata(input, {
   providers: [
     createProjectGutenbergProvider(),
     createOpenLibraryProvider(),
@@ -33,10 +35,40 @@ Nothing here needs an archive: hand-built terms work just as well, which is what
 
 ```typescript
 const fetched = await fetchMetadata(
-  { title: "Dune", contributors: [{ name: "Frank Herbert", roles: ["author"] }] },
+  { title: "Dune", authors: ["Frank Herbert"] },
   { providers: [createOpenLibraryProvider()] },
 )
 ```
+
+## Lookup input
+
+The input is owned by the fetcher and contains exactly the fields its providers and matcher understand:
+
+```typescript
+type FetchMetadataInput = {
+  title?: string
+  authors?: ReadonlyArray<string>
+  isbn?: string
+  gtin?: string
+  identifiers?: ReadonlyArray<{ value: string; scheme?: string }>
+  series?: string
+  publisher?: string
+  publishedYear?: number
+  languages?: ReadonlyArray<string>
+  numberOfPages?: number
+}
+```
+
+Some fields start a request (`title`, `authors`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
+
+`metadataInputFromResolvedArchive` is the explicit bridge from archive-reader. It only requires the `metadata` projection, so callers do not need to resolve reading order, TOC or sources for a lookup:
+
+```typescript
+const resolved = await resolveArchive(archive, { include: ["metadata"] })
+const input = metadataInputFromResolvedArchive(resolved)
+```
+
+The adapter selects authors from contributors, the first series, and the edition publisher/year with original-publication data as fallback. It also removes archive-only identifier details such as `unique`.
 
 ## The fetched entity
 
@@ -55,7 +87,7 @@ type FetchedMetadata = {
 }
 ```
 
-`version` is currently `3`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
+`version` is currently `4`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
 
 `matches` are deliberately not consolidated into a single metadata record. A score says how strongly a candidate resembles the input; it does not prove that several accepted candidates describe the same edition. Keeping the candidates separate avoids silently mixing fields from competing records and leaves selection policy with the consumer.
 
@@ -72,10 +104,9 @@ type MetadataMatch = {
   score: number
   /** every field comparison behind the score */
   signals: {
-    field: "isbn" | "gtin" | "identifiers" | "title" | "contributors" |
-           "series" | "publication.original.date" |
-           "publication.original.publisher" | "publication.edition.date" |
-           "publication.edition.publisher" | "languages" | "numberOfPages"
+    field: "isbn" | "gtin" | "identifiers" | "title" | "authors" |
+           "series" | "publisher" | "publishedYear" | "languages" |
+           "numberOfPages"
     score: number
     weight: number
     /** the two values compared, rendered for display */
@@ -97,8 +128,8 @@ Scoring is done by the package, identically for every provider — a provider ne
 fetched.matches[0]?.signals
 // [
 //   { field: "title", score: 1, weight: 0.8, query: "Dune", candidate: "Dune" },
-//   { field: "contributors", score: 1, weight: 0.5, query: "Frank Herbert", … },
-//   { field: "publication.edition.publisher", score: 0.2, weight: 0.15, query: "Ace", candidate: "Chilton Books" },
+//   { field: "authors", score: 1, weight: 0.5, query: "Frank Herbert", … },
+//   { field: "publisher", score: 0.2, weight: 0.15, query: "Ace", candidate: "Chilton Books" },
 // ]
 ```
 
@@ -112,14 +143,14 @@ The rules:
   | `isbn`, `gtin` | 1 | identifiers *are* the book |
   | `title` | 0.8 | what a human recognizes it by |
   | `identifiers` | 0.6 | other identifier systems, scheme-aware |
-  | `contributors` | 0.5 | authors, compared as people |
+  | `authors` | 0.5 | compared as people |
   | `series` | 0.3 | |
-  | `publication.original.date`, `publication.edition.date` | 0.2 | year proximity within the same publication scope |
-  | `publication.original.publisher`, `publication.edition.publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
+  | `publishedYear` | 0.2 | year proximity against the candidate's publication data |
+  | `publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
 - **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same scheme. A scheme-less raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
-- **Publication scopes never cross.** An original publication date is compared only with another original publication date; an EPUB or catalog-edition date is compared only with another edition date. Equal years from different events do not create a signal.
+- **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 
 `minScore` (default `0.5`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
@@ -132,7 +163,7 @@ if (!fetched.matches.some(({ accepted }) => accepted)) {
 ## Options
 
 ```typescript
-const fetched = await fetchMetadata(resolved, {
+const fetched = await fetchMetadata(input, {
   providers: [
     createProjectGutenbergProvider(),
     createOpenLibraryProvider(),
@@ -288,11 +319,11 @@ The image is published with every release, tagged with the version and `latest`,
 | --- | --- |
 | `GET /health` | liveness, plus the providers the deployment exposes |
 | `GET /metadata?title=&author=&isbn=…` | human-friendly lookup |
-| `POST /metadata` | body is a `ResolvedArchive` (or a bare `ResolvedMetadata`), options on the query string |
+| `POST /metadata` | body is a `FetchMetadataInput`, options on the query string |
 
 Both metadata routes answer with the `FetchedMetadata` entity verbatim. The options above (`limit`, `minScore`, `includeRaw`, plus a `providers` filter) are query parameters, and the deployment defaults are environment variables.
 
-For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them, and only their plain JSON metadata is sent to `/metadata`, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
+For development, `npm run start:metadata-fetcher` starts the same image with the source bind-mounted: editing the express app restarts it, editing this package rebuilds it and the API picks it up. It also serves a playground at `/` — enter metadata manually or choose an EPUB/CBZ/ZIP file, then inspect each candidate, its score and the signals behind it. Uploaded files have no application-level size limit: archive-reader resolves them in memory and discards them, and only the compact lookup input is sent to `/metadata`, with no disk or browser storage. The playground is development-only: the production image sets `NODE_ENV=production`, and the route is then never registered.
 
 See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/metadata-fetcher-api) for the full reference.
 
@@ -301,20 +332,17 @@ See [the app's README](https://github.com/mbret/prose-reader/tree/master/apps/me
 A provider is three things: a stable `id`, a display `name`, and a `search` returning normalized candidates. It never scores its own results — that stays in the package, identically for everyone.
 
 ```typescript
-import {
-  type MetadataProvider,
-  metadataAuthors,
-} from "@prose-reader/metadata-fetcher"
+import { type MetadataProvider } from "@prose-reader/metadata-fetcher"
 
 const myProvider: MetadataProvider = {
   id: "myCatalog",
   name: "My Catalog",
-  search: async (metadata, { limit, signal }) => {
-    if (metadata.title === undefined) return []
+  search: async (input, { limit, signal }) => {
+    if (input.title === undefined) return []
 
     const response = await fetch(
-      `https://example.com/search?q=${encodeURIComponent(metadata.title)}` +
-        `&author=${encodeURIComponent(metadataAuthors(metadata)[0] ?? "")}`,
+      `https://example.com/search?q=${encodeURIComponent(input.title)}` +
+        `&author=${encodeURIComponent(input.authors?.[0] ?? "")}`,
       { signal },
     )
     const { results } = await response.json()
@@ -336,25 +364,26 @@ const myProvider: MetadataProvider = {
 }
 ```
 
-**Both sides of a lookup are `ResolvedMetadata`** — what the book said going in, what the catalog says coming back. There is deliberately no separate "query" shape: the vocabulary is already sparse by contract (`field !== undefined` is a reliable presence check), already normalized, and already carries everything a catalog could key on, down to `metadata.comic` for a comics catalog. A flattened projection would be a second shape to learn that says less.
+The asymmetry is intentional: providers receive the small `FetchMetadataInput` and return rich `ResolvedMetadata` candidates. The input exposes only lookup and matching evidence; results retain covers, descriptions, subjects, contributors and every other useful catalog value.
 
-Two helpers cover the derivations that need more than a field read:
+Helpers cover archive conversion and common input checks:
 
 ```typescript
-import { hasSearchTerms, metadataAuthors } from "@prose-reader/metadata-fetcher"
+import {
+  hasSearchTerms,
+  metadataInputFromResolvedArchive,
+} from "@prose-reader/metadata-fetcher"
 
-// contributors credited as `author`, else every contributor — a comic archive
-// often credits only a penciler
-metadataAuthors(metadata) // ["Frank Herbert"]
+const input = metadataInputFromResolvedArchive(resolved)
 
 // is there anything to go on at all? publication details or a page count
 // narrow a search but cannot start one, so they don't count
-if (!hasSearchTerms(resolved.metadata)) return
+if (!hasSearchTerms(input)) return
 ```
 
 Rules of thumb:
 
-- **Return an empty list, don't throw**, when the metadata carries nothing you can search on. Throwing is for actual failures — they land in `failedProviders`.
+- **Return an empty list, don't throw**, when the input carries nothing you can search on. Throwing is for actual failures — they land in `failedProviders`.
 - **Throw `MetadataProviderResponseError`** when the catalog answers with a failing status, so the status reaches the caller instead of dying in a log line. Any error carrying a numeric `status` works too, which covers HTTP clients that throw their own:
 
   ```typescript
@@ -369,4 +398,4 @@ Rules of thumb:
 - **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `isbn` is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
 
-The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(query, candidate)` takes a `ResolvedMetadata` on both sides, like everything else here.
+The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate.

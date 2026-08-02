@@ -1,10 +1,10 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
+import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
 import { MetadataProviderResponseError } from "../responseError.ts"
-import { projectGutenbergLookupFromMetadata } from "./identifier.ts"
+import { projectGutenbergLookupFromInput } from "./identifier.ts"
 import { parseProjectGutenbergRdf } from "./parse.ts"
 import { resolveProjectGutenbergRecord } from "./resolve.ts"
 
@@ -33,10 +33,10 @@ export const createProjectGutenbergProvider = (
   const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL
 
   const search = async (
-    metadata: ResolvedMetadata,
+    input: FetchMetadataInput,
     context: MetadataProviderContext,
   ) => {
-    const lookup = projectGutenbergLookupFromMetadata(metadata)
+    const lookup = projectGutenbergLookupFromInput(input)
 
     if (lookup === undefined) return []
 

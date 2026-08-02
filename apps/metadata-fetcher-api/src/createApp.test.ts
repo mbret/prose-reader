@@ -183,7 +183,7 @@ describe("metadata-fetcher-api", () => {
     const fetched = await readFetched(response)
 
     expect(response.status).toBe(200)
-    expect(fetched.version).toBe(3)
+    expect(fetched.version).toBe(4)
     expect(fetched).not.toHaveProperty("metadata")
     expect(fetched.matches[0]).toMatchObject({
       providerId: "stub",
@@ -203,12 +203,11 @@ describe("metadata-fetcher-api", () => {
     ])
   })
 
-  it("accepts a resolved archive posted verbatim", async () => {
+  it("accepts compact lookup input", async () => {
     const response = await api.post("/metadata", {
-      version: 2,
-      metadata: { title: "Dune", numberOfPages: 412 },
-      readingOrder: [{ uri: "page-1.jpg" }],
-      unreadableSources: [],
+      title: "Dune",
+      authors: ["Frank Herbert"],
+      numberOfPages: 412,
     })
 
     expect(response.status).toBe(200)
@@ -220,9 +219,9 @@ describe("metadata-fetcher-api", () => {
   it("sanitizes a body whose fields are the wrong type", async () => {
     const response = await api.post("/metadata", {
       title: 42,
-      contributors: "nope",
+      authors: "nope",
       identifiers: [{ value: null }],
-      publication: { original: { date: { year: "1965" } } },
+      publishedYear: "1965",
     })
 
     // nothing survived as a search term — a 400, not a 500
@@ -267,12 +266,12 @@ describe("metadata-fetcher-api", () => {
     // the catalog's publisher disagrees, so the match is short of perfect —
     // which is exactly what `minScore=1` refuses
     const strict = await readFetched(
-      await api.get("/metadata?title=Dune&editionPublisher=Ace&minScore=1"),
+      await api.get("/metadata?title=Dune&publisher=Ace&minScore=1"),
     )
 
     expect(strict.matches[0]?.accepted).toBe(false)
     expect(strict.matches[0]?.signals).toContainEqual(
-      expect.objectContaining({ field: "publication.edition.publisher" }),
+      expect.objectContaining({ field: "publisher" }),
     )
 
     const raw = await readFetched(
@@ -360,10 +359,9 @@ describe("metadata-fetcher-api playground", () => {
           {
             value: "https://example.com/books/dune",
             scheme: "URL",
-            unique: true,
           },
         ],
-        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        authors: ["Frank Herbert"],
         languages: ["en"],
       })
     } finally {

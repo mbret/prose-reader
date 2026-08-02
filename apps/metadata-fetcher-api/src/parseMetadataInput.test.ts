@@ -8,113 +8,87 @@ describe("parseMetadataInput", () => {
     expect(parseMetadataInput([{ title: "Dune" }])).toBeUndefined()
   })
 
-  it("reads a bare resolved metadata", () => {
-    expect(parseMetadataInput({ title: "Dune", numberOfPages: 412 })).toEqual({
-      title: "Dune",
-      numberOfPages: 412,
-    })
-  })
-
-  it("unwraps the resolved archive shape", () => {
+  it("reads the compact lookup input", () => {
     expect(
       parseMetadataInput({
-        version: 2,
-        metadata: { title: "Dune" },
-        unreadableSources: [],
+        title: " Dune ",
+        authors: ["Frank Herbert"],
+        isbn: "9780441013593",
+        gtin: "9780441013593",
+        identifiers: [{ value: "OL893415W", scheme: "OpenLibrary" }],
+        series: "Dune",
+        publisher: "Ace",
+        publishedYear: 2005,
+        languages: ["en"],
+        numberOfPages: 412,
       }),
-    ).toEqual({ title: "Dune" })
+    ).toEqual({
+      title: "Dune",
+      authors: ["Frank Herbert"],
+      isbn: "9780441013593",
+      gtin: "9780441013593",
+      identifiers: [{ value: "OL893415W", scheme: "OpenLibrary" }],
+      series: "Dune",
+      publisher: "Ace",
+      publishedYear: 2005,
+      languages: ["en"],
+      numberOfPages: 412,
+    })
   })
 
   it("drops fields whose type is not the announced one", () => {
     expect(
       parseMetadataInput({
         title: 42,
-        publication: null,
+        authors: "Frank Herbert",
         languages: "en",
+        publishedYear: "1965",
         numberOfPages: "412",
-        contributors: { name: "Frank Herbert" },
       }),
     ).toEqual({})
   })
 
-  it("keeps the valid entries of a partly broken list", () => {
+  it("keeps the valid entries of partly broken lists", () => {
     expect(
       parseMetadataInput({
+        authors: ["Frank Herbert", 42, "  "],
         languages: ["en", 42, "  ", "fr"],
-        contributors: [
-          { name: "Frank Herbert", roles: ["author"] },
-          { name: 42 },
+        identifiers: [
+          { value: "urn:uuid:1", unique: true },
+          { value: "9780441013593", scheme: "ISBN" },
+          { scheme: "ISBN" },
           "nope",
         ],
       }),
     ).toEqual({
+      authors: ["Frank Herbert"],
       languages: ["en", "fr"],
-      contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+      identifiers: [
+        { value: "urn:uuid:1" },
+        { value: "9780441013593", scheme: "ISBN" },
+      ],
     })
   })
 
-  it("defaults a contributor with no usable roles to an empty role list", () => {
-    expect(
-      parseMetadataInput({ contributors: [{ name: "Frank Herbert" }] })
-        ?.contributors,
-    ).toEqual([{ name: "Frank Herbert", roles: [] }])
-  })
-
-  it("reads identifiers, their scheme, and the unique marker", () => {
+  it("does not unwrap archive-reader entities", () => {
     expect(
       parseMetadataInput({
-        identifiers: [
-          { value: "urn:uuid:1", unique: true },
-          { value: "9780441013593", scheme: "ISBN" },
-          { value: "not-unique", unique: "true" },
-          { scheme: "ISBN" },
-        ],
-      })?.identifiers,
-    ).toEqual([
-      { value: "urn:uuid:1", unique: true },
-      { value: "9780441013593", scheme: "ISBN" },
-      { value: "not-unique" },
-    ])
+        version: 2,
+        metadata: { title: "Dune" },
+        unreadableSources: [],
+      }),
+    ).toEqual({})
   })
 
-  it("reads original and edition publication details", () => {
-    expect(
-      parseMetadataInput({
-        publication: {
-          original: { date: { year: 1965 }, publisher: "Chilton Books" },
-          edition: { date: { year: 2005 }, imprint: "Ace" },
-        },
-      })?.publication,
-    ).toEqual({
-      original: { date: { year: 1965 }, publisher: "Chilton Books" },
-      edition: { date: { year: 2005 }, imprint: "Ace" },
-    })
-    expect(
-      parseMetadataInput({ publication: { original: {} } })?.publication,
-    ).toBeUndefined()
-    expect(
-      parseMetadataInput({ publication: "1965" })?.publication,
-    ).toBeUndefined()
-  })
-
-  it("reads series and collection membership", () => {
-    expect(
-      parseMetadataInput({
-        belongsTo: {
-          series: [{ name: "Dune", position: 1 }, { position: 2 }],
-          collection: "nope",
-        },
-      })?.belongsTo,
-    ).toEqual({ series: [{ name: "Dune", position: 1 }] })
-  })
-
-  it("ignores the parts of a resolved archive a lookup cannot search on", () => {
+  it("ignores rich metadata fields with no input role", () => {
     expect(
       parseMetadataInput({
         title: "Dune",
         cover: { uri: "cover.jpg", confidence: "derived" },
-        properties: [{ property: "calibre:series" }],
-        comic: { manga: true },
+        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        publication: { edition: { date: { year: 2005 } } },
+        belongsTo: { series: [{ name: "Dune" }] },
+        subjects: ["Science fiction"],
       }),
     ).toEqual({ title: "Dune" })
   })

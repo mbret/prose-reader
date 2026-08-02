@@ -11,22 +11,18 @@ describe("hasSearchTerms", () => {
     )
     expect(
       hasSearchTerms({
-        contributors: [{ name: "Frank Herbert", roles: ["author"] }],
+        authors: ["Frank Herbert"],
       }),
     ).toBe(true)
-    expect(hasSearchTerms({ belongsTo: { series: [{ name: "Dune" }] } })).toBe(
-      true,
-    )
+    expect(hasSearchTerms({ series: "Dune" })).toBe(true)
   })
 
   it("does not count fields that only narrow a search", () => {
     expect(hasSearchTerms({})).toBe(false)
     expect(
       hasSearchTerms({
-        publication: {
-          original: { date: { year: 1965 } },
-          edition: { publisher: "Ace" },
-        },
+        publisher: "Ace",
+        publishedYear: 1965,
         languages: ["en"],
         numberOfPages: 412,
       }),
@@ -36,6 +32,8 @@ describe("hasSearchTerms", () => {
   it("treats blank and empty as absent", () => {
     expect(hasSearchTerms({ title: "   " })).toBe(false)
     expect(hasSearchTerms({ identifiers: [] })).toBe(false)
-    expect(hasSearchTerms({ contributors: [] })).toBe(false)
+    expect(hasSearchTerms({ identifiers: [{ value: "  " }] })).toBe(false)
+    expect(hasSearchTerms({ authors: [] })).toBe(false)
+    expect(hasSearchTerms({ authors: ["  "] })).toBe(false)
   })
 })
