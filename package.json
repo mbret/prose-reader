@@ -33,7 +33,7 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.0.16",
     "husky": "^9.1.7",
-    "lerna": "^9.0.7",
+    "lerna": "^10.0.0",
     "lint-staged": "^17.0.5",
     "rollup-plugin-node-externals": "^9.0.0",
     "rxjs": "*",
