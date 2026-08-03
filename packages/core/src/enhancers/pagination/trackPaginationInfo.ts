@@ -15,17 +15,18 @@ import { Pages, type PagesState } from "../../spine/Pages"
 import type { SpineItem } from "../../spineItem/SpineItem"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import {
-  buildStaticChaptersInfo,
   buildTocCandidatesBySpineHref,
   buildTocIndex,
+  createStaticChaptersResolver,
   resolveChapterInfoFromVisibleNode,
+  type StaticChaptersResolver,
   type TocCandidatesBySpineHref,
 } from "./chapters"
 import { getPercentageEstimate } from "./progression"
 
 type ChaptersData = {
   tocCandidatesBySpineHref: TocCandidatesBySpineHref
-  chaptersInfo: ReturnType<typeof buildStaticChaptersInfo>
+  chaptersInfo: StaticChaptersResolver
 }
 
 type ChapterPaginationInfo = Pick<
@@ -97,12 +98,14 @@ const mapChapterInfo = ({
   return {
     beginChapterInfo:
       beginChapterInfoFromVisibleNode ??
-      (beginItem ? chaptersData.chaptersInfo[beginItem.item.id] : undefined),
+      (beginItem
+        ? chaptersData.chaptersInfo.get(beginItem.item.id)
+        : undefined),
     beginSpineItemReadingDirection: beginItem?.readingDirection,
     beginAbsolutePageIndex: beginPageEntry?.absolutePageIndex,
     endChapterInfo:
       endChapterInfoFromVisibleNode ??
-      (endItem ? chaptersData.chaptersInfo[endItem.item.id] : undefined),
+      (endItem ? chaptersData.chaptersInfo.get(endItem.item.id) : undefined),
     endSpineItemReadingDirection: endItem?.readingDirection,
     endAbsolutePageIndex: endPageEntry?.absolutePageIndex,
   }
@@ -186,7 +189,7 @@ const observeChaptersData = (reader: Reader & LayoutEnhancerOutput) =>
 
       return {
         tocCandidatesBySpineHref,
-        chaptersInfo: buildStaticChaptersInfo(manifest, tocIndex),
+        chaptersInfo: createStaticChaptersResolver(manifest, tocIndex),
       }
     }),
   )

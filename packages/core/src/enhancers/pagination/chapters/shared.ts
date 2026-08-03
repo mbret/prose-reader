@@ -52,7 +52,14 @@ const flattenToc = (
   })
 }
 
-const getSpineItemIndexByHref = (manifest: Manifest) => {
+/**
+ * Map every spine href to the index of its first occurrence.
+ *
+ * Building this once lets callers resolve a spine item index by href in O(1)
+ * instead of scanning `manifest.spineItems` per lookup. First-occurrence wins,
+ * which matches `Array.prototype.findIndex` semantics for duplicate hrefs.
+ */
+export const getSpineItemIndexByHref = (manifest: Manifest) => {
   const indexByHref = new Map<string, number>()
 
   manifest.spineItems.forEach((item, index) => {
