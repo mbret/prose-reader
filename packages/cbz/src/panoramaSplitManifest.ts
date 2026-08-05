@@ -29,6 +29,7 @@ const supportedImageMediaTypes = new Set([
   `image/jpeg`,
   `image/png`,
   `image/webp`,
+  `image/avif`,
 ])
 
 export const isPanoramaSplitSupportedImage = (mimeType: string | undefined) => {

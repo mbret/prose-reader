@@ -112,6 +112,19 @@ describe("isPanoramaSplitSupportedArchiveRecord", () => {
       }),
     ).toBe(true)
   })
+
+  it("should accept avif image resource paths", () => {
+    expect(
+      isPanoramaSplitSupportedArchiveRecord({
+        ...fakeContent,
+        basename: "p002-003.avif",
+        dir: false,
+        encodingFormat: "image/avif",
+        size: 1,
+        uri: "p002-003.avif",
+      }),
+    ).toBe(true)
+  })
 })
 
 describe("panoramaSplit", () => {

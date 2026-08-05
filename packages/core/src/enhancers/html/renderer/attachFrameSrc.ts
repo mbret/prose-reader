@@ -11,7 +11,10 @@ import {
 import { Report } from "../../../report"
 import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsManager"
 import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
-import { createHtmlPageFromResource } from "./createHtmlPageFromResource"
+import {
+  createHtmlPageFromResource,
+  IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
+} from "./createHtmlPageFromResource"
 
 /**
  * For these resources, we want to digest and wrap them into custom html pages.
@@ -26,13 +29,11 @@ const ITEM_EXTENSION_REQUIRES_TRANSFORM = [
   `.jpeg`,
   `.png`,
   `.webp`,
+  `.avif`,
 ]
 const ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM = [
   `text/plain`,
-  `image/jpg`,
-  `image/jpeg`,
-  `image/png`,
-  `image/webp`,
+  ...IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
 ]
 
 export const revokeFrameObjectUrl = (
