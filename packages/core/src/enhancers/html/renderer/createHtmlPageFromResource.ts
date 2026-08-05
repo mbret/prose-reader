@@ -2,6 +2,20 @@ import { detectMimeTypeFromName, parseContentType } from "@prose-reader/shared"
 import type { Manifest } from "../../.."
 
 /**
+ * Raster images we wrap into a generated html page (viewport metadata,
+ * sizing). Shared with the transform decision in `attachFrameSrc`: a type
+ * gated in only one of the two places would reach the frame as a raw image
+ * blob without viewport metadata and lay out incorrectly.
+ */
+export const IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM = [
+  `image/jpg`,
+  `image/jpeg`,
+  `image/png`,
+  `image/webp`,
+  `image/avif`,
+]
+
+/**
  * Document is application/xhtml+xml
  * @todo move this into a enhancer
  * @todo only keep a very basic default one which just put the resource as <media> inside html page
@@ -20,9 +34,7 @@ export const createHtmlPageFromResource = async (
     detectMimeTypeFromName(item.href)
 
   if (
-    [`image/jpg`, `image/jpeg`, `image/png`, `image/webp`].some(
-      (mime) => mime === contentType,
-    )
+    IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM.some((mime) => mime === contentType)
   ) {
     const blob = await resourceResponse.blob()
     const objectUrl = URL.createObjectURL(blob)
