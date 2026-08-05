@@ -13,28 +13,8 @@ import type { ReaderSettingsManager } from "../../../settings/ReaderSettingsMana
 import type { ResourceHandler } from "../../../spineItem/resources/ResourceHandler"
 import {
   createHtmlPageFromResource,
-  IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
+  getTransformMediaType,
 } from "./createHtmlPageFromResource"
-
-/**
- * For these resources, we want to digest and wrap them into custom html pages.
- *
- * Anything that does not fall under these criteria will be served as is.
- * If a format is not supported by prose it will simply renders whatever browser can render.
- * Support for these formats can then be interpreted by enhancers.
- */
-const ITEM_EXTENSION_REQUIRES_TRANSFORM = [
-  `.txt`,
-  `.jpg`,
-  `.jpeg`,
-  `.png`,
-  `.webp`,
-  `.avif`,
-]
-const ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM = [
-  `text/plain`,
-  ...IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
-]
 
 export const revokeFrameObjectUrl = (
   frameElement: HTMLIFrameElement | undefined,
@@ -67,12 +47,17 @@ export const attachFrameSrc = ({
       switchMap((frameElement) => {
         return from(resourcesHandler.getResource()).pipe(
           switchMap((resource) => {
+            /**
+             * Resources we digest and wrap into custom html pages are decided
+             * by `getTransformMediaType`. Anything else is served as is: if a
+             * format is not supported by prose it simply renders whatever the
+             * browser can render, and enhancers can interpret those formats.
+             */
             const requiresTransform =
-              ITEM_EXTENSION_REQUIRES_TRANSFORM.some((extension) =>
-                item.href.endsWith(extension),
-              ) ||
-              (item.mediaType &&
-                ITEM_MEDIA_TYPE_REQUIRES_TRANSFORM.includes(item.mediaType))
+              getTransformMediaType({
+                href: item.href,
+                mediaType: item.mediaType,
+              }) !== undefined
 
             /**
              * Because of the bug with iframe and sw, we should not use srcdoc and sw together for

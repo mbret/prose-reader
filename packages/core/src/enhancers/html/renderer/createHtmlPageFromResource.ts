@@ -3,17 +3,51 @@ import type { Manifest } from "../../.."
 
 /**
  * Raster images we wrap into a generated html page (viewport metadata,
- * sizing). Shared with the transform decision in `attachFrameSrc`: a type
- * gated in only one of the two places would reach the frame as a raw image
- * blob without viewport metadata and lay out incorrectly.
+ * sizing). Restricted to types every modern browser decodes with
+ * `createImageBitmap`: a type listed here that the browser cannot decode
+ * would leave the frame without any document at all.
  */
-export const IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM = [
+const IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM = [
   `image/jpg`,
   `image/jpeg`,
   `image/png`,
   `image/webp`,
   `image/avif`,
+  `image/gif`,
+  `image/bmp`,
 ]
+
+const MEDIA_TYPES_REQUIRING_TRANSFORM = [
+  `text/plain`,
+  ...IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM,
+]
+
+/**
+ * Resolves the media type driving the html page transform, or undefined when
+ * the resource must be served untouched.
+ *
+ * Both the transform decision (`attachFrameSrc`) and the transform itself
+ * resolve through this single function so the two cannot drift: a type gated
+ * in only one of the two places would reach the frame as a raw image document
+ * without viewport metadata and lay out incorrectly.
+ *
+ * Candidates that are not transformable are skipped rather than trusted, so a
+ * generic response header (eg `application/octet-stream`) on a `.avif`
+ * resource does not bypass the wrap. The manifest media type wins over the
+ * response header, which wins over the name-based detection.
+ */
+export const getTransformMediaType = ({
+  href,
+  mediaType,
+  responseContentType,
+}: {
+  href: string
+  mediaType?: string
+  responseContentType?: string
+}) =>
+  [mediaType, responseContentType, detectMimeTypeFromName(href)].find(
+    (type) => !!type && MEDIA_TYPES_REQUIRING_TRANSFORM.includes(type),
+  )
 
 /**
  * Document is application/xhtml+xml
@@ -29,12 +63,17 @@ export const createHtmlPageFromResource = async (
     return new Blob([resourceResponse], { type: "text/html" })
   }
 
-  const contentType =
-    parseContentType(resourceResponse.headers.get(`Content-Type`) || ``) ||
-    detectMimeTypeFromName(item.href)
+  const transformMediaType = getTransformMediaType({
+    href: item.href,
+    mediaType: item.mediaType,
+    responseContentType: parseContentType(
+      resourceResponse.headers.get(`Content-Type`) || ``,
+    ),
+  })
 
   if (
-    IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM.some((mime) => mime === contentType)
+    transformMediaType &&
+    IMAGE_MEDIA_TYPES_REQUIRING_TRANSFORM.includes(transformMediaType)
   ) {
     const blob = await resourceResponse.blob()
     const objectUrl = URL.createObjectURL(blob)
@@ -62,7 +101,7 @@ export const createHtmlPageFromResource = async (
     )
   }
 
-  if ([`text/plain`].some((mime) => mime === contentType)) {
+  if (transformMediaType === `text/plain`) {
     const data = await resourceResponse.text()
 
     return new Blob(
