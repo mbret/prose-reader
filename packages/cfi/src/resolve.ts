@@ -194,13 +194,12 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
         ? lastEndPart.offset[0]
         : lastEndPart?.offset) ?? 0
   } else {
-    // If startPath/endPath are empty or only have offset, use parentNode directly
-    const isStartOffsetOnly =
-      startPath.length === 0 ||
-      (startPath.length === 1 && typeof startPath[0]?.offset === "number")
-    const isEndOffsetOnly =
-      endPath.length === 0 ||
-      (endPath.length === 1 && typeof endPath[0]?.offset === "number")
+    // Offset-only local paths (`,:5`) are attached to the parent path during
+    // parsing, so a non-empty path here always carries real steps that must be
+    // traversed — a single step with an offset (`/1:2`) is a path to a child
+    // node, not an offset on the parent.
+    const isStartOffsetOnly = startPath.length === 0
+    const isEndOffsetOnly = endPath.length === 0
 
     if (isStartOffsetOnly) {
       if (!parentNode)

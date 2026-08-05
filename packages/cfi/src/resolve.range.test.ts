@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { generate } from "./generate"
 import { resolve } from "./resolve"
 
 describe("CFI Range handling", () => {
@@ -117,6 +118,85 @@ describe("CFI Range handling", () => {
     if (result.node instanceof Range) {
       expect(result.node.startContainer).toBe(doc.getElementById("para01"))
       expect(result.node.endContainer).toBe(doc.getElementById("para02"))
+    }
+  })
+
+  it("should resolve single-step start/end paths as children of the parent", () => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(
+      `<html xmlns="http://www.w3.org/1999/xhtml"><body id="body01"><p id="para01">Hello <b>big</b> world</p></body></html>`,
+      "application/xhtml+xml",
+    )
+
+    // Start/end paths are relative to the parent path: /1 and /3 are the two
+    // text nodes of para01, not offsets on para01 itself.
+    const cfi = "epubcfi(/2[body01]/2[para01],/1:2,/3:3)"
+    const result = resolve(cfi, doc)
+
+    expect(result.isRange).toBe(true)
+    expect(result.node).toBeInstanceOf(Range)
+
+    if (result.node instanceof Range) {
+      const para01 = doc.getElementById("para01")
+      expect(result.node.startContainer).toBe(para01?.childNodes[0])
+      expect(result.node.startOffset).toBe(2)
+      expect(result.node.endContainer).toBe(para01?.childNodes[2])
+      expect(result.node.endOffset).toBe(3)
+      expect(result.node.toString()).toBe("llo big wo")
+    }
+  })
+
+  it("should round-trip a generated range crossing an inline element", () => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(
+      `<html xmlns="http://www.w3.org/1999/xhtml"><body id="body01"><p id="para01">abcdefghij<i>X</i>klmnopqrst</p></body></html>`,
+      "application/xhtml+xml",
+    )
+
+    const para01 = doc.getElementById("para01")
+    const startNode = para01?.childNodes[0]
+    const endNode = para01?.childNodes[2]
+
+    if (!startNode || !endNode) throw new Error("missing text nodes")
+
+    const cfi = generate({
+      start: { node: startNode, offset: 8 },
+      end: { node: endNode, offset: 6 },
+    })
+    const result = resolve(cfi, doc)
+
+    expect(result.isRange).toBe(true)
+    expect(result.node).toBeInstanceOf(Range)
+
+    if (result.node instanceof Range) {
+      expect(result.node.startContainer).toBe(startNode)
+      expect(result.node.startOffset).toBe(8)
+      expect(result.node.endContainer).toBe(endNode)
+      expect(result.node.endOffset).toBe(6)
+      expect(result.node.toString()).toBe("ijXklmnop")
+    }
+  })
+
+  it("should resolve offset-only ranges attached to a text node parent", () => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(
+      `<html xmlns="http://www.w3.org/1999/xhtml"><body id="body01"><p id="para01">0123456789</p></body></html>`,
+      "application/xhtml+xml",
+    )
+
+    const cfi = "epubcfi(/2[body01]/2[para01]/1,:2,:5)"
+    const result = resolve(cfi, doc)
+
+    expect(result.isRange).toBe(true)
+    expect(result.node).toBeInstanceOf(Range)
+
+    if (result.node instanceof Range) {
+      const textNode = doc.getElementById("para01")?.firstChild
+      expect(result.node.startContainer).toBe(textNode)
+      expect(result.node.startOffset).toBe(2)
+      expect(result.node.endContainer).toBe(textNode)
+      expect(result.node.endOffset).toBe(5)
+      expect(result.node.toString()).toBe("234")
     }
   })
 
