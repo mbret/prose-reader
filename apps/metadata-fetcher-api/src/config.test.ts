@@ -6,7 +6,7 @@ describe("configFromEnv", () => {
     const config = configFromEnv({})
 
     expect(config).toMatchObject({
-      port: 3000,
+      port: 6382,
       limit: 5,
       minScore: 0.5,
       requestTimeoutMs: 10_000,
@@ -34,7 +34,7 @@ describe("configFromEnv", () => {
   })
 
   it("treats a blank variable as unset", () => {
-    expect(configFromEnv({ PORT: "  " }).port).toBe(3000)
+    expect(configFromEnv({ PORT: "  " }).port).toBe(6382)
   })
 
   it("serves the playground everywhere but production", () => {

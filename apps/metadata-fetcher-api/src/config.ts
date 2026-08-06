@@ -30,7 +30,7 @@ export type ApiConfig = {
 
 /**
  * A malformed variable fails the boot: a typo in `PORT` that quietly serves on
- * 3000 is much harder to notice than a container refusing to start.
+ * 6382 is much harder to notice than a container refusing to start.
  */
 const invalid = (key: string, value: string, expected: string): Error =>
   new Error(`Invalid ${key}: "${value}" is not ${expected}`)
@@ -102,7 +102,7 @@ const providersFromEnv = (
 ]
 
 export const configFromEnv = (env: NodeJS.ProcessEnv): ApiConfig => ({
-  port: readNumber(env, "PORT", 3000, { min: 0, max: 65535, integer: true }),
+  port: readNumber(env, "PORT", 6382, { min: 0, max: 65535, integer: true }),
   providers: providersFromEnv(env),
   limit: readNumber(env, "METADATA_LIMIT", 5, { min: 1, integer: true }),
   minScore: readNumber(env, "METADATA_MIN_SCORE", 0.5, { min: 0, max: 1 }),

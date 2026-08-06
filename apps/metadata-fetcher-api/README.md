@@ -10,10 +10,10 @@ It exists for two reasons — it is the development harness for the fetcher and 
 # from the repository root — builds the image and starts the stack
 npm run start:metadata-fetcher
 
-curl "http://localhost:3000/metadata?title=Dune&author=Frank+Herbert"
+curl "http://localhost:6382/metadata?title=Dune&author=Frank+Herbert"
 ```
 
-Then open <http://localhost:3000> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
+Then open <http://localhost:6382> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
 
 The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
@@ -68,7 +68,7 @@ Human-friendly lookup, for curl and quick tries.
 | `publishedYear` | publication year matching evidence |
 
 ```bash
-curl "http://localhost:3000/metadata?isbn=9780441013593"
+curl "http://localhost:6382/metadata?isbn=9780441013593"
 ```
 
 ### `POST /metadata`
@@ -76,7 +76,7 @@ curl "http://localhost:3000/metadata?isbn=9780441013593"
 The integration path: the body is a `FetchMetadataInput`. Options stay on the query string so the body remains a pure lookup description.
 
 ```bash
-curl -X POST "http://localhost:3000/metadata?limit=3" \
+curl -X POST "http://localhost:6382/metadata?limit=3" \
   -H 'content-type: application/json' \
   -d '{"title":"Dune","authors":["Frank Herbert"],"publishedYear":1965}'
 ```
@@ -108,7 +108,7 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 
 | Variable | Default | |
 | --- | --- | --- |
-| `PORT` | `3000` | |
+| `PORT` | `6382` | |
 | `METADATA_LIMIT` | `5` | default `limit` |
 | `METADATA_MIN_SCORE` | `0.5` | default `minScore` |
 | `REQUEST_TIMEOUT_MS` | `10000` | budget for one lookup across every provider |
@@ -119,7 +119,7 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 | `OPEN_LIBRARY_COVERS_BASE_URL` | `https://covers.openlibrary.org` | |
 | `NODE_ENV` | — | `production` drops the playground page; both Docker targets set it for you |
 
-A malformed value fails the boot rather than silently falling back — a typo'd `PORT` that quietly serves on 3000 is much harder to notice than a container that refuses to start.
+A malformed value fails the boot rather than silently falling back — a typo'd `PORT` that quietly serves on 6382 is much harder to notice than a container that refuses to start.
 
 {% hint style="info" %}
 Behind an HTTP proxy, set `NODE_USE_ENV_PROXY=1`: Node's global `fetch` ignores `HTTP_PROXY`/`HTTPS_PROXY` unless asked to honor them.
@@ -130,7 +130,7 @@ Behind an HTTP proxy, set `NODE_USE_ENV_PROXY=1`: Node's global `fetch` ignores 
 Every release publishes the image to Docker Hub, tagged with the version and `latest`:
 
 ```bash
-docker run -p 3000:3000 \
+docker run -p 6382:6382 \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
   mbret/prose-metadata-fetcher-api:latest
 ```
