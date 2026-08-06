@@ -14,15 +14,14 @@ export const metadataInputFromResolvedArchive = (
 ): FetchMetadataInput => {
   const { metadata } = resolved
   const authors = metadataAuthors(metadata)
-  const identifiers = metadata.identifiers?.map(({ value, scheme }) =>
-    omitUndefined({ value, scheme }),
-  )
+  const identifiers = metadata.identifiers?.map(({ value, scheme }) => ({
+    value,
+    scheme,
+  }))
 
   return omitUndefined({
     title: metadata.title,
     authors: authors.length > 0 ? authors : undefined,
-    isbn: metadata.isbn,
-    gtin: metadata.gtin,
     identifiers:
       identifiers !== undefined && identifiers.length > 0
         ? identifiers

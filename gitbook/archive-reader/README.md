@@ -163,7 +163,7 @@ import { resolveArchive } from "@prose-reader/archive-reader"
 
 const resolved = await resolveArchive(archive)
 // {
-//   version: 2,
+//   version: 3,
 //   metadata: { title, cover?, numberOfPages?, contributors, renditionLayout, belongsTo, … },
 //   readingOrder: [{ uri, id?, mediaType?, size?, renditionLayout?, progressionWeight, … }],
 //   toc: [{ title, path, containerHref, contents }],

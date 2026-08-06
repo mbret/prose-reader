@@ -1,4 +1,8 @@
-import type { ResolvedArchive } from "@prose-reader/archive-reader"
+import {
+  parseComicInfo,
+  type ResolvedArchive,
+  resolveMetadata,
+} from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
 import { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
 
@@ -13,10 +17,9 @@ describe("metadataInputFromResolvedArchive", () => {
           { name: "Frank Herbert", roles: ["author"] },
           { name: "John Schoenherr", roles: ["illustrator"] },
         ],
-        isbn: "9780441013593",
-        gtin: "9780441013593",
         identifiers: [
           { value: "urn:isbn:9780441013593", scheme: "URI", unique: true },
+          { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         ],
         belongsTo: {
           series: [
@@ -40,9 +43,10 @@ describe("metadataInputFromResolvedArchive", () => {
     expect(metadataInputFromResolvedArchive(resolved)).toEqual({
       title: "Dune",
       authors: ["Frank Herbert"],
-      isbn: "9780441013593",
-      gtin: "9780441013593",
-      identifiers: [{ value: "urn:isbn:9780441013593", scheme: "URI" }],
+      identifiers: [
+        { value: "urn:isbn:9780441013593", scheme: "URI" },
+        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+      ],
       series: "Dune",
       publisher: "Ace",
       publishedYear: 2005,
@@ -65,6 +69,23 @@ describe("metadataInputFromResolvedArchive", () => {
       authors: ["Jane Artist"],
       publisher: "Chilton Books",
       publishedYear: 1965,
+    })
+  })
+
+  it("forwards standard ComicInfo Web catalog URLs as identifiers", () => {
+    const googleBooksUrl = "https://books.google.com/books?id=k028AAAACAAJ"
+    const gutenbergUrl = "https://www.gutenberg.org/ebooks/78139"
+    const metadata = resolveMetadata({
+      comicInfo: parseComicInfo(
+        `<ComicInfo><Web>${googleBooksUrl} ${gutenbergUrl}</Web></ComicInfo>`,
+      ),
+    })
+
+    expect(metadataInputFromResolvedArchive({ metadata })).toEqual({
+      identifiers: [
+        { value: googleBooksUrl, scheme: "URL" },
+        { value: gutenbergUrl, scheme: "URL" },
+      ],
     })
   })
 })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { parseComicInfo } from "./comicInfo/parse"
-import { parseOpf } from "./opf/parse"
+import { parseComicInfo } from "./metadata/comicInfo/parse"
+import { parseOpf } from "./metadata/opf/parse"
 import { resolveMetadata } from "./resolveMetadata"
 
 const opfWrap = (metadata: string) =>
@@ -142,11 +142,46 @@ describe("resolveMetadata", () => {
     })
 
     expect(resolved.identifiers).toEqual([
-      { value: "urn:uuid:abc", unique: true },
+      { value: "urn:uuid:abc", scheme: "Unknown", unique: true },
       { value: "978-3-16-148410-0", scheme: "ISBN" },
       { value: "9638-5074", scheme: "GTIN" },
     ])
-    expect(resolved.isbn).toBe("9783161484100")
+  })
+
+  it("resolves typed and URL Google Books identifiers from EPUB 3 metadata", () => {
+    const resolved = resolveMetadata({
+      opf: opfWith(
+        `<dc:identifier id="google-books-id">k028AAAACAAJ</dc:identifier>` +
+          `<meta refines="#google-books-id" property="identifier-type">GoogleBooks</meta>` +
+          `<dc:identifier>https://books.google.com/books?id=k028AAAACAAJ</dc:identifier>`,
+      ),
+    })
+
+    expect(resolved.identifiers).toEqual([
+      { value: "k028AAAACAAJ", scheme: "GoogleBooks" },
+      {
+        value: "https://books.google.com/books?id=k028AAAACAAJ",
+        scheme: "URL",
+      },
+    ])
+  })
+
+  it("resolves typed and URL Project Gutenberg identifiers from EPUB 3 metadata", () => {
+    const resolved = resolveMetadata({
+      opf: opfWith(
+        `<dc:identifier id="gutenberg-id">78139</dc:identifier>` +
+          `<meta refines="#gutenberg-id" property="identifier-type">ProjectGutenberg</meta>` +
+          `<dc:identifier>https://www.gutenberg.org/ebooks/78139</dc:identifier>`,
+      ),
+    })
+
+    expect(resolved.identifiers).toEqual([
+      { value: "78139", scheme: "ProjectGutenberg" },
+      {
+        value: "https://www.gutenberg.org/ebooks/78139",
+        scheme: "URL",
+      },
+    ])
   })
 
   it("keeps the format-scoped corners from their producers", () => {

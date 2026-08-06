@@ -3,13 +3,13 @@ import {
   isMediaContentMimeType,
   parseContentType,
 } from "@prose-reader/shared"
-import { APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME } from "../apple/parse.ts"
 import type { Archive, FileRecord } from "../archives/types.ts"
 import { getArchiveFileRecordByUri, isFileRecord } from "../archives/types.ts"
-import { COMIC_INFO_FILENAME } from "../comicInfo/parse.ts"
-import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../kobo/parse.ts"
-import type { ArchiveOpfParsed } from "../opf/readArchiveOpf.ts"
-import { readArchiveOpf } from "../opf/readArchiveOpf.ts"
+import { APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME } from "../metadata/apple/parse.ts"
+import { COMIC_INFO_FILENAME } from "../metadata/comicInfo/parse.ts"
+import { KOBO_DISPLAY_OPTIONS_FILENAME } from "../metadata/kobo/parse.ts"
+import type { ArchiveOpfParsed } from "../metadata/opf/readArchiveOpf.ts"
+import { readArchiveOpf } from "../metadata/opf/readArchiveOpf.ts"
 import { omitUndefined } from "../utils/omitUndefined.ts"
 import { toContainerUri } from "../utils/toContainerUri.ts"
 

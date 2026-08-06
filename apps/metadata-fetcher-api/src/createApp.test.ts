@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises"
 import {
   type FetchedMetadata,
+  type FetchMetadataInput,
   type MetadataProvider,
   MetadataProviderResponseError,
 } from "@prose-reader/metadata-fetcher"
@@ -183,7 +184,7 @@ describe("metadata-fetcher-api", () => {
     const fetched = await readFetched(response)
 
     expect(response.status).toBe(200)
-    expect(fetched.version).toBe(4)
+    expect(fetched.version).toBe(5)
     expect(fetched).not.toHaveProperty("metadata")
     expect(fetched.matches[0]).toMatchObject({
       providerId: "stub",
@@ -201,6 +202,41 @@ describe("metadata-fetcher-api", () => {
       true,
       false,
     ])
+  })
+
+  it("accepts a Google Books volume id as a query term", async () => {
+    const response = await api.get("/metadata?googleBooksId=zyTCAlFPjgYC")
+
+    expect(response.status).toBe(200)
+  })
+
+  it("normalizes GET identifier conveniences into the SDK shape", async () => {
+    let received: FetchMetadataInput | undefined
+    const provider: MetadataProvider = {
+      id: "capture",
+      name: "Capture",
+      search: (input) => {
+        received = input
+
+        return Promise.resolve([])
+      },
+    }
+    const captureApi = serve(createApp({ ...defaults, providers: [provider] }))
+
+    try {
+      const response = await captureApi.get(
+        "/metadata?isbn=9780441013593&gtin=96385074&googleBooksId=zyTCAlFPjgYC",
+      )
+
+      expect(response.status).toBe(200)
+      expect(received?.identifiers).toEqual([
+        { value: "9780441013593", scheme: "ISBN" },
+        { value: "96385074", scheme: "GTIN" },
+        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+      ])
+    } finally {
+      await captureApi.close()
+    }
   })
 
   it("accepts compact lookup input", async () => {
@@ -334,6 +370,10 @@ describe("metadata-fetcher-api playground", () => {
       expect(script).toContain(
         'console.log("POST /playground/resolve", resolved)',
       )
+      expect(script).toContain('scheme: "ISBN"')
+      expect(script).toContain('scheme: "GoogleBooks"')
+      expect(script).toContain("body: JSON.stringify(metadataInput)")
+      expect(script).not.toContain("label = `GET ")
       expect(script).toContain("console.log(label, body)")
       expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))
@@ -357,9 +397,8 @@ describe("metadata-fetcher-api playground", () => {
       expect(response.status).toBe(200)
       expect(await response.json()).toMatchObject({
         title: "Dune",
-        isbn: "9780441013593",
         identifiers: [
-          { value: "9780441013593" },
+          { value: "9780441013593", scheme: "ISBN" },
           {
             value: "https://example.com/books/dune",
             scheme: "URL",

@@ -1,15 +1,15 @@
-import type { AppleMetadata } from "./apple/parse.ts"
-import { readArchiveApple } from "./apple/readArchiveApple.ts"
 import type { Archive } from "./archives/types.ts"
-import type { ComicInfo } from "./comicInfo/parse.ts"
-import { readArchiveComicInfo } from "./comicInfo/readArchiveComicInfo.ts"
 import { resolveArchiveCover } from "./cover/resolveArchiveCover.ts"
-import type { KoboMetadata } from "./kobo/parse.ts"
-import { readArchiveKobo } from "./kobo/readArchiveKobo.ts"
 import { readingOrderDocumentsAllHaveViewport } from "./layout/scanReadingOrderDocumentsViewport.ts"
-import { isArchiveEpub } from "./opf/isArchiveEpub.ts"
-import type { ArchiveOpfParsed } from "./opf/readArchiveOpf.ts"
-import { readArchiveOpf } from "./opf/readArchiveOpf.ts"
+import type { AppleMetadata } from "./metadata/apple/parse.ts"
+import { readArchiveApple } from "./metadata/apple/readArchiveApple.ts"
+import type { ComicInfo } from "./metadata/comicInfo/parse.ts"
+import { readArchiveComicInfo } from "./metadata/comicInfo/readArchiveComicInfo.ts"
+import type { KoboMetadata } from "./metadata/kobo/parse.ts"
+import { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
+import { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
+import type { ArchiveOpfParsed } from "./metadata/opf/readArchiveOpf.ts"
+import { readArchiveOpf } from "./metadata/opf/readArchiveOpf.ts"
 import type { ArchiveReadingOrderItem } from "./readingOrder/resolveArchiveReadingOrder.ts"
 import { resolveArchiveReadingOrder } from "./readingOrder/resolveArchiveReadingOrder.ts"
 import { Report } from "./report.ts"
@@ -221,7 +221,7 @@ const collectUnreadableSources = ({
   return unreadable
 }
 
-const RESOLVED_ARCHIVE_VERSION = 2
+const RESOLVED_ARCHIVE_VERSION = 3
 
 /**
  * Resolves a book container into a single enriched, plain-JSON entity:
@@ -243,7 +243,7 @@ const RESOLVED_ARCHIVE_VERSION = 2
  * const { sources } = await resolveArchive(archive, { include: ["sources"] })
  * const opf = sources.opf && resolveArchiveMetadata(sources.opf.opf)
  * const comicInfo = sources.comicInfo && resolveArchiveMetadata(sources.comicInfo)
- * const isbn = comicInfo?.isbn ?? opf?.isbn // ComicInfo wins, your call
+ * const identifiers = comicInfo?.identifiers ?? opf?.identifiers
  *
  * // reject a publication whose package document is there but broken
  * const { unreadableSources } = await resolveArchive(archive)

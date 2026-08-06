@@ -1,9 +1,11 @@
 import type {
-  FetchMetadataInput,
+  KnownMetadataIdentifierScheme,
   MetadataIdentifier,
-} from "../../types/fetchMetadataInput.ts"
+} from "@prose-reader/archive-reader"
+import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 
-export const PROJECT_GUTENBERG_IDENTIFIER_SCHEME = "ProjectGutenberg"
+export const PROJECT_GUTENBERG_IDENTIFIER_SCHEME =
+  "ProjectGutenberg" satisfies KnownMetadataIdentifierScheme
 
 export type ProjectGutenbergLookup = {
   readonly id: string
@@ -61,11 +63,11 @@ export const projectGutenbergLookupFromInput = (
   input: FetchMetadataInput,
 ): ProjectGutenbergLookup | undefined => {
   for (const identifier of input.identifiers ?? []) {
-    const scheme = identifier.scheme?.trim().toLowerCase()
+    const scheme = identifier.scheme.trim().toLowerCase()
     const id =
       scheme === PROJECT_GUTENBERG_IDENTIFIER_SCHEME.toLowerCase()
         ? normalizedProjectGutenbergId(identifier.value)
-        : scheme === undefined || scheme === "url" || scheme === "uri"
+        : scheme === "unknown" || scheme === "url" || scheme === "uri"
           ? projectGutenbergIdFromUrl(identifier.value)
           : undefined
 
@@ -75,9 +77,7 @@ export const projectGutenbergLookupFromInput = (
       id,
       identifier: {
         value: identifier.value,
-        ...(identifier.scheme !== undefined
-          ? { scheme: identifier.scheme }
-          : {}),
+        scheme: identifier.scheme,
       },
     }
   }

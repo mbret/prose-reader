@@ -31,12 +31,12 @@ describe("scoreMetadataCandidate", () => {
   it("pins the score to 1 on an agreeing ISBN, whatever else disagrees", () => {
     const result = score(
       {
-        isbn: "9780441013593",
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
         title: "Doon",
         publisher: "Somebody",
       },
       {
-        isbn: "9780441013593",
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
         title: "Dune",
         publication: { edition: { publisher: "Ace" } },
       },
@@ -49,9 +49,12 @@ describe("scoreMetadataCandidate", () => {
   })
 
   it("matches the ISBN-10 of a book against the ISBN-13 of a record", () => {
-    expect(score({ isbn: "0441013597" }, { isbn: "9780441013593" }).score).toBe(
-      1,
-    )
+    expect(
+      score(
+        { identifiers: [{ value: "0441013597", scheme: "ISBN" }] },
+        { identifiers: [{ value: "9780441013593", scheme: "ISBN" }] },
+      ).score,
+    ).toBe(1)
   })
 
   it("rejects a candidate whose ISBN contradicts, however well the rest agrees", () => {
@@ -59,12 +62,12 @@ describe("scoreMetadataCandidate", () => {
     // ISBN. A weighted average would land at ~0.57 and be accepted.
     const result = score(
       {
-        isbn: "9780441013593",
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
         title: "Dune",
         authors: ["Frank Herbert"],
       },
       {
-        isbn: "9780345391803",
+        identifiers: [{ value: "9780345391803", scheme: "ISBN" }],
         title: "Dune",
         contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       },
@@ -78,11 +81,18 @@ describe("scoreMetadataCandidate", () => {
   })
 
   it("matches ISBNs however they were typed", () => {
+    const hyphenated = score(
+      { identifiers: [{ value: "978-0-441-01359-3", scheme: "ISBN" }] },
+      { identifiers: [{ value: "9780441013593", scheme: "ISBN" }] },
+    )
+
+    expect(hyphenated.score).toBe(1)
+    expect(hyphenated.signals.map(({ field }) => field)).toEqual(["isbn"])
     expect(
-      score({ isbn: "978-0-441-01359-3" }, { isbn: "9780441013593" }).score,
-    ).toBe(1)
-    expect(
-      score({ isbn: "ISBN 0-441-01359-7" }, { isbn: "9780441013593" }).score,
+      score(
+        { identifiers: [{ value: "ISBN 0-441-01359-7", scheme: "ISBN" }] },
+        { identifiers: [{ value: "9780441013593", scheme: "ISBN" }] },
+      ).score,
     ).toBe(1)
   })
 
@@ -182,11 +192,29 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
-  it("does not make a scheme-less identifier match decisive", () => {
+  it("makes a matching Google Books volume id decisive", () => {
+    const result = score(
+      {
+        title: "A local title",
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      {
+        title: "The catalog title",
+        identifiers: [{ value: "zytcalfpjgyc", scheme: "googlebooks" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 1 }),
+    )
+  })
+
+  it("does not make an Unknown identifier match decisive", () => {
     const result = score(
       {
         title: "Dune",
-        identifiers: [{ value: "78139" }],
+        identifiers: [{ value: "78139", scheme: "Unknown" }],
       },
       {
         title: "Neuromancer",

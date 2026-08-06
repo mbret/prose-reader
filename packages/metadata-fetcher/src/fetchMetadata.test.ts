@@ -241,7 +241,7 @@ describe("fetchMetadata", () => {
 
   it("returns an empty, versioned entity when no provider is passed", async () => {
     expect(await fetchMetadata(book, { providers: [] })).toEqual({
-      version: 4,
+      version: 5,
       matches: [],
       sources: {},
       failedProviders: [],

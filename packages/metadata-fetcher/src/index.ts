@@ -5,6 +5,7 @@
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
+ *   createGoogleBooksProvider,
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
@@ -15,6 +16,7 @@
  * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
+ *     createGoogleBooksProvider({ apiKey: "your-api-key" }),
  *     createOpenLibraryProvider(),
  *   ],
  * })
@@ -24,6 +26,12 @@
  * pass it in. Scoring, ranking and error handling stay here, identical for
  * every provider.
  */
+
+export type {
+  KnownMetadataIdentifierScheme,
+  MetadataIdentifier,
+  MetadataIdentifierScheme,
+} from "@prose-reader/archive-reader"
 export type { FetchMetadataOptions } from "./fetchMetadata.ts"
 export { fetchMetadata } from "./fetchMetadata.ts"
 export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
@@ -38,6 +46,36 @@ export {
   titleSimilarity,
 } from "./match/similarity.ts"
 export { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
+export type { GoogleBooksProviderOptions } from "./providers/googleBooks/createGoogleBooksProvider.ts"
+export {
+  createGoogleBooksProvider,
+  GOOGLE_BOOKS_PROVIDER_ID,
+} from "./providers/googleBooks/createGoogleBooksProvider.ts"
+export type { GoogleBooksLookup } from "./providers/googleBooks/identifier.ts"
+export {
+  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+  googleBooksLookupFromInput,
+} from "./providers/googleBooks/identifier.ts"
+export type {
+  GoogleBooksImageLinks,
+  GoogleBooksIndustryIdentifier,
+  GoogleBooksSeriesInfo,
+  GoogleBooksVolume,
+  GoogleBooksVolumeInfo,
+} from "./providers/googleBooks/parse.ts"
+export {
+  parseGoogleBooksVolume,
+  parseGoogleBooksVolumesResponse,
+} from "./providers/googleBooks/parse.ts"
+export type { ResolveGoogleBooksVolumeOptions } from "./providers/googleBooks/resolve.ts"
+export {
+  GOOGLE_BOOKS_MAX_SUBJECTS,
+  googleBooksCoverUrl,
+  googleBooksVolumeInfoMetadataHomes,
+  googleBooksVolumeMetadataHomes,
+  googleBooksVolumeUrl,
+  resolveGoogleBooksVolume,
+} from "./providers/googleBooks/resolve.ts"
 export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export {
   createOpenLibraryProvider,
@@ -82,10 +120,7 @@ export type {
   FetchedMetadataSource,
   FetchedMetadataSources,
 } from "./types/fetchedMetadata.ts"
-export type {
-  FetchMetadataInput,
-  MetadataIdentifier,
-} from "./types/fetchMetadataInput.ts"
+export type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 export type {
   MetadataMatch,
   MetadataMatchField,
@@ -98,4 +133,6 @@ export type {
 } from "./types/provider.ts"
 export { hasSearchTerms } from "./utils/hasSearchTerms.ts"
 export { metadataAuthors } from "./utils/metadataAuthors.ts"
+export type { RetryWithBackoffOptions } from "./utils/retryWithBackoff.ts"
+export { retryWithBackoff } from "./utils/retryWithBackoff.ts"
 export { toIsbn13 } from "./utils/toIsbn13.ts"

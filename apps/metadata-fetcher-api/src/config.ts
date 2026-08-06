@@ -1,4 +1,5 @@
 import {
+  createGoogleBooksProvider,
   createOpenLibraryProvider,
   createProjectGutenbergProvider,
   type MetadataProvider,
@@ -89,17 +90,30 @@ const readUrl = (env: NodeJS.ProcessEnv, key: string): string | undefined => {
 
 const providersFromEnv = (
   env: NodeJS.ProcessEnv,
-): ReadonlyArray<MetadataProvider> => [
-  createProjectGutenbergProvider({
-    userAgent: readString(env, "PROJECT_GUTENBERG_USER_AGENT"),
-    baseUrl: readUrl(env, "PROJECT_GUTENBERG_BASE_URL"),
-  }),
-  createOpenLibraryProvider({
-    userAgent: readString(env, "OPEN_LIBRARY_USER_AGENT"),
-    baseUrl: readString(env, "OPEN_LIBRARY_BASE_URL"),
-    coversBaseUrl: readString(env, "OPEN_LIBRARY_COVERS_BASE_URL"),
-  }),
-]
+): ReadonlyArray<MetadataProvider> => {
+  const googleBooksApiKey = readString(env, "GOOGLE_BOOKS_API_KEY")
+  const googleBooksBaseUrl = readUrl(env, "GOOGLE_BOOKS_BASE_URL")
+
+  return [
+    createProjectGutenbergProvider({
+      userAgent: readString(env, "PROJECT_GUTENBERG_USER_AGENT"),
+      baseUrl: readUrl(env, "PROJECT_GUTENBERG_BASE_URL"),
+    }),
+    ...(googleBooksApiKey !== undefined
+      ? [
+          createGoogleBooksProvider({
+            apiKey: googleBooksApiKey,
+            baseUrl: googleBooksBaseUrl,
+          }),
+        ]
+      : []),
+    createOpenLibraryProvider({
+      userAgent: readString(env, "OPEN_LIBRARY_USER_AGENT"),
+      baseUrl: readString(env, "OPEN_LIBRARY_BASE_URL"),
+      coversBaseUrl: readString(env, "OPEN_LIBRARY_COVERS_BASE_URL"),
+    }),
+  ]
+}
 
 export const configFromEnv = (env: NodeJS.ProcessEnv): ApiConfig => ({
   port: readNumber(env, "PORT", 6382, { min: 0, max: 65535, integer: true }),

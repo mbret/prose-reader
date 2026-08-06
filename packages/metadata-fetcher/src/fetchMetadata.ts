@@ -38,7 +38,7 @@ export type FetchMetadataOptions = {
 
 const DEFAULT_LIMIT = 5
 const DEFAULT_MIN_SCORE = 0.5
-const FETCHED_METADATA_VERSION = 4
+const FETCHED_METADATA_VERSION = 5
 
 const toMatch = ({
   candidate,
@@ -76,6 +76,7 @@ const toMatch = ({
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
+ *   createGoogleBooksProvider,
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
@@ -86,6 +87,7 @@ const toMatch = ({
  * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
+ *     createGoogleBooksProvider({ apiKey: "your-api-key" }),
  *     createOpenLibraryProvider(),
  *   ],
  * })

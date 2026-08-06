@@ -78,7 +78,7 @@ describe(`Given an EPUB with the OPF in a subfolder`, () => {
       textRecord(`OEBPS/page2.xhtml`, ``, { size: 300 }),
     ])
 
-    const { readArchiveOpf } = await import(`../opf/readArchiveOpf`)
+    const { readArchiveOpf } = await import(`../metadata/opf/readArchiveOpf`)
     const parsed = await readArchiveOpf(archive)
 
     expect(await resolveArchiveReadingOrder(archive, { opf: parsed })).toEqual(

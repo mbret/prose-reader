@@ -7,13 +7,18 @@ It exists for two reasons — it is the development harness for the fetcher and 
 ## Run it
 
 ```bash
-# from the repository root — builds the image and starts the stack
+# from the repository root
+cp apps/metadata-fetcher-api/.env.example apps/metadata-fetcher-api/.env
+
+# edit .env and set GOOGLE_BOOKS_API_KEY, then build and start the stack
 npm run start:metadata-fetcher
 
 curl "http://localhost:6382/metadata?title=Dune&author=Frank+Herbert"
 ```
 
-Then open <http://localhost:6382> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
+The `.env` file is ignored by Git. Docker Compose loads it from `apps/metadata-fetcher-api/.env` even though the command runs at the repository root. Setting `GOOGLE_BOOKS_API_KEY` there enables the `googleBooks` provider; restart the stack after changing it.
+
+Then open <http://localhost:6382> for the **playground**. Entered metadata is converted into the canonical `FetchMetadataInput` shape and posted as JSON to `/metadata`, so the browser's network inspector shows the exact SDK/API input. For an EPUB/CBZ/ZIP publication, the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted into that same input before it is posted. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
 
 The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
@@ -53,6 +58,8 @@ Liveness, plus the providers this deployment exposes.
 }
 ```
 
+When `GOOGLE_BOOKS_API_KEY` is configured, the list also contains the `googleBooks` provider.
+
 ### `GET /metadata`
 
 Human-friendly lookup, for curl and quick tries.
@@ -62,6 +69,7 @@ Human-friendly lookup, for curl and quick tries.
 | `title` | |
 | `author` | repeatable |
 | `isbn`, `gtin` | |
+| `googleBooksId` | exact Google Books volume id |
 | `series` | |
 | `language` | repeatable |
 | `publisher` | publisher matching evidence |
@@ -71,6 +79,8 @@ Human-friendly lookup, for curl and quick tries.
 curl "http://localhost:6382/metadata?isbn=9780441013593"
 ```
 
+These three identifier query conveniences are normalized before calling the SDK: `isbn` → scheme `ISBN`, `gtin` → `GTIN`, and `googleBooksId` → `GoogleBooks`.
+
 ### `POST /metadata`
 
 The integration path: the body is a `FetchMetadataInput`. Options stay on the query string so the body remains a pure lookup description.
@@ -78,10 +88,10 @@ The integration path: the body is a `FetchMetadataInput`. Options stay on the qu
 ```bash
 curl -X POST "http://localhost:6382/metadata?limit=3" \
   -H 'content-type: application/json' \
-  -d '{"title":"Dune","authors":["Frank Herbert"],"publishedYear":1965}'
+  -d '{"title":"Dune","authors":["Frank Herbert"],"identifiers":[{"value":"9780441013593","scheme":"ISBN"}],"publishedYear":1965}'
 ```
 
-Supported fields are `title`, `authors`, `isbn`, `gtin`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Unknown fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
+Supported fields are `title`, `authors`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Every identifier has `{ "value": string, "scheme": string }`; known schemes include `ISBN`, `GTIN`, `GoogleBooks`, `ProjectGutenberg`, `OpenLibrary`, `URL`, `DOI`, and `Unknown`, while custom scheme strings are accepted. A missing or blank scheme in untyped JSON normalizes to `Unknown`. Unknown body fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
 
 ### Options (both metadata routes)
 
@@ -106,6 +116,8 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 
 ## Configuration
 
+For local Docker development, put these values in `apps/metadata-fetcher-api/.env` (start from `.env.example`). Shell environment variables can still override the file. `npm run dev --workspace prose-reader-metadata-fetcher-api`, which runs outside Compose, reads only the shell environment.
+
 | Variable | Default | |
 | --- | --- | --- |
 | `PORT` | `6382` | |
@@ -114,6 +126,8 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 | `REQUEST_TIMEOUT_MS` | `10000` | budget for one lookup across every provider |
 | `PROJECT_GUTENBERG_USER_AGENT` | — | optional identifying user agent for exact RDF lookups |
 | `PROJECT_GUTENBERG_BASE_URL` | `https://www.gutenberg.org` | absolute HTTP(S) origin; override to point at a mirror or a stub |
+| `GOOGLE_BOOKS_API_KEY` | — | enables the Google Books provider when set |
+| `GOOGLE_BOOKS_BASE_URL` | `https://www.googleapis.com/books/v1` | absolute HTTP(S) API root; override for a stub |
 | `OPEN_LIBRARY_USER_AGENT` | — | **set this**: Open Library asks API clients to identify themselves (app name + contact) and throttles anonymous traffic harder |
 | `OPEN_LIBRARY_BASE_URL` | `https://openlibrary.org` | override to point at a mirror or a stub |
 | `OPEN_LIBRARY_COVERS_BASE_URL` | `https://covers.openlibrary.org` | |
@@ -131,6 +145,7 @@ Every release publishes the image to Docker Hub, tagged with the version and `la
 
 ```bash
 docker run -p 6382:6382 \
+  -e GOOGLE_BOOKS_API_KEY="your-api-key" \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
   mbret/prose-metadata-fetcher-api:latest
 ```

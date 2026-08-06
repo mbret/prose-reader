@@ -13,9 +13,12 @@ describe("parseMetadataInput", () => {
       parseMetadataInput({
         title: " Dune ",
         authors: ["Frank Herbert"],
-        isbn: "9780441013593",
-        gtin: "9780441013593",
-        identifiers: [{ value: "OL893415W", scheme: "OpenLibrary" }],
+        identifiers: [
+          { value: "9780441013593", scheme: "ISBN" },
+          { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+          { value: "OL893415W", scheme: "OpenLibrary" },
+          { value: "catalog-42", scheme: "MyCatalog" },
+        ],
         series: "Dune",
         publisher: "Ace",
         publishedYear: 2005,
@@ -25,9 +28,12 @@ describe("parseMetadataInput", () => {
     ).toEqual({
       title: "Dune",
       authors: ["Frank Herbert"],
-      isbn: "9780441013593",
-      gtin: "9780441013593",
-      identifiers: [{ value: "OL893415W", scheme: "OpenLibrary" }],
+      identifiers: [
+        { value: "9780441013593", scheme: "ISBN" },
+        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+        { value: "OL893415W", scheme: "OpenLibrary" },
+        { value: "catalog-42", scheme: "MyCatalog" },
+      ],
       series: "Dune",
       publisher: "Ace",
       publishedYear: 2005,
@@ -64,7 +70,7 @@ describe("parseMetadataInput", () => {
       authors: ["Frank Herbert"],
       languages: ["en", "fr"],
       identifiers: [
-        { value: "urn:uuid:1" },
+        { value: "urn:uuid:1", scheme: "Unknown" },
         { value: "9780441013593", scheme: "ISBN" },
       ],
     })
@@ -73,7 +79,7 @@ describe("parseMetadataInput", () => {
   it("does not unwrap archive-reader entities", () => {
     expect(
       parseMetadataInput({
-        version: 2,
+        version: 3,
         metadata: { title: "Dune" },
         unreadableSources: [],
       }),

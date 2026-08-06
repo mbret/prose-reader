@@ -1,9 +1,13 @@
-import type { ResolvedMetadata } from "@prose-reader/archive-reader"
 import type {
-  FetchMetadataInput,
   MetadataIdentifier,
-} from "../types/fetchMetadataInput.ts"
+  ResolvedMetadata,
+} from "@prose-reader/archive-reader"
+import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
 import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
+import {
+  gtinIdentifierValue,
+  isbnIdentifierValue,
+} from "../utils/identifierValues.ts"
 import { metadataAuthors } from "../utils/metadataAuthors.ts"
 import { toIsbn13 } from "../utils/toIsbn13.ts"
 import {
@@ -56,17 +60,25 @@ const identifiersHaveSameValue = (
   return aValue !== undefined && aValue === stated(b.value)?.toLowerCase()
 }
 
-const identifierScheme = (identifier: MetadataIdentifier): string | undefined =>
-  stated(identifier.scheme)?.toLowerCase()
+const identifierScheme = (
+  identifier: MetadataIdentifier,
+): string | undefined =>
+  identifier.scheme.trim().toLowerCase() === "unknown"
+    ? undefined
+    : stated(identifier.scheme)?.toLowerCase()
 
 const identifierLabel = (identifier: MetadataIdentifier): string =>
-  identifier.scheme !== undefined
-    ? `${identifier.scheme}:${identifier.value}`
-    : identifier.value
+  `${identifier.scheme}:${identifier.value}`
+
+const isIsbnOrGtinIdentifier = (identifier: MetadataIdentifier): boolean => {
+  const scheme = identifier.scheme.trim().toLowerCase()
+
+  return scheme === "isbn" || scheme === "gtin"
+}
 
 /**
- * An unannounced scheme (the OPF `dc:identifier` case) is not a contradiction;
- * a `DOI` and an `ISBN` carrying the same digits are.
+ * An `Unknown` scheme is not a contradiction; a `DOI` and an `ISBN` carrying
+ * the same digits are.
  */
 const identifiersAgree = (
   a: MetadataIdentifier,
@@ -81,7 +93,7 @@ const identifiersAgree = (
   return aScheme === bScheme
 }
 
-/** Only an authored scope makes a shared raw value unambiguous identity. */
+/** Only a known or consumer-authored scope makes a value unambiguous identity. */
 const identifiersAgreeDecisively = (
   a: MetadataIdentifier,
   b: MetadataIdentifier,
@@ -248,18 +260,19 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryIsbn = stated(query.isbn)
-  const candidateIsbn = stated(candidate.isbn)
+  const queryIsbn = isbnIdentifierValue(query.identifiers)
+  const candidateIsbn = isbnIdentifierValue(candidate.identifiers)
   const queryIsbn13 = queryIsbn !== undefined ? toIsbn13(queryIsbn) : undefined
   const candidateIsbn13 =
     candidateIsbn !== undefined ? toIsbn13(candidateIsbn) : undefined
 
-  if (
+  const comparedIsbn =
     queryIsbn !== undefined &&
     candidateIsbn !== undefined &&
     queryIsbn13 !== undefined &&
     candidateIsbn13 !== undefined
-  ) {
+
+  if (comparedIsbn) {
     addSignal("isbn", {
       score: queryIsbn13 === candidateIsbn13 ? 1 : 0,
       query: queryIsbn,
@@ -267,10 +280,10 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryGtin = stated(query.gtin)
-  const candidateGtin = stated(candidate.gtin)
+  const queryGtin = gtinIdentifierValue(query.identifiers)
+  const candidateGtin = gtinIdentifierValue(candidate.identifiers)
 
-  if (queryGtin !== undefined && candidateGtin !== undefined) {
+  if (!comparedIsbn && queryGtin !== undefined && candidateGtin !== undefined) {
     addSignal("gtin", {
       score: queryGtin === candidateGtin ? 1 : 0,
       query: queryGtin,
@@ -278,8 +291,14 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryIdentifiers = query.identifiers ?? []
-  const candidateIdentifiers = candidate.identifiers ?? []
+  // ISBN and GTIN have normalized comparisons above. Comparing their raw
+  // spellings again would emit a false generic mismatch for hyphenated ISBNs.
+  const queryIdentifiers = (query.identifiers ?? []).filter(
+    (identifier) => !isIsbnOrGtinIdentifier(identifier),
+  )
+  const candidateIdentifiers = (candidate.identifiers ?? []).filter(
+    (identifier) => !isIsbnOrGtinIdentifier(identifier),
+  )
   const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
     candidateIdentifiers.some((other) =>
       identifiersAgreeDecisively(identifier, other),

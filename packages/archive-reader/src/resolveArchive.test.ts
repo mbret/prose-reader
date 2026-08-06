@@ -76,7 +76,7 @@ describe(`Given an EPUB`, () => {
     const resolved = await resolveArchive(epubArchive())
 
     expect(resolved).toEqual({
-      version: 2,
+      version: 3,
       unreadableSources: [],
       metadata: {
         title: `My Book`,
@@ -114,7 +114,7 @@ describe(`Given an EPUB`, () => {
       Pick<ResolvedArchive, `sources` | `version` | `unreadableSources`>
     >()
 
-    expect(resolved.version).toBe(2)
+    expect(resolved.version).toBe(3)
     expect(resolved.sources.opf?.opf.title).toBe(`My Book`)
     expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
     expect(`metadata` in resolved).toBe(false)
@@ -157,7 +157,7 @@ describe(`Given a projection that needs nothing read from the book`, () => {
     })
 
     // nothing was read, so nothing can be reported broken
-    expect(resolved).toEqual({ version: 2, unreadableSources: [] })
+    expect(resolved).toEqual({ version: 3, unreadableSources: [] })
     expect(reads()).toBe(0)
   })
 

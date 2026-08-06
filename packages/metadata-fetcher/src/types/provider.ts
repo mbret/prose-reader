@@ -56,7 +56,10 @@ export type MetadataCandidate = {
  *       id: result.id,
  *       url: `https://example.com/book/${result.id}`,
  *       raw: result,
- *       metadata: { title: result.name, isbn: result.isbn },
+ *       metadata: {
+ *         title: result.name,
+ *         identifiers: [{ value: result.isbn, scheme: "ISBN" }],
+ *       },
  *     }))
  *   },
  * }

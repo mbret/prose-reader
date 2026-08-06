@@ -1,11 +1,11 @@
-import type { AppleMetadata } from "./apple/parse.ts"
-import { resolveApple } from "./apple/resolve.ts"
-import type { ComicInfo } from "./comicInfo/parse.ts"
-import { resolveComicInfo } from "./comicInfo/resolve.ts"
-import type { KoboMetadata } from "./kobo/parse.ts"
-import { resolveKobo } from "./kobo/resolve.ts"
-import type { OpfMetadata } from "./opf/parse.ts"
-import { resolveOpf } from "./opf/resolve.ts"
+import type { AppleMetadata } from "./metadata/apple/parse.ts"
+import { resolveApple } from "./metadata/apple/resolve.ts"
+import type { ComicInfo } from "./metadata/comicInfo/parse.ts"
+import { resolveComicInfo } from "./metadata/comicInfo/resolve.ts"
+import type { KoboMetadata } from "./metadata/kobo/parse.ts"
+import { resolveKobo } from "./metadata/kobo/resolve.ts"
+import type { OpfMetadata } from "./metadata/opf/parse.ts"
+import { resolveOpf } from "./metadata/opf/resolve.ts"
 import type { ResolvedMetadata } from "./types/resolvedMetadata.ts"
 import { omitUndefined } from "./utils/omitUndefined.ts"
 
@@ -21,7 +21,7 @@ export type ResolveMetadataSources = {
  * {@link ResolvedMetadata}, with explicit precedence:
  *
  * - Descriptive fields (`title`, `description`, `publication`, `languages`,
- *   `subjects`, `contributors`, `belongsTo`, `gtin`/`isbn`):
+ *   `subjects`, `contributors`, `belongsTo`):
  *   **OPF wins over ComicInfo** — the package document is the publication's
  *   own metadata; a ComicInfo sidecar fills the gaps.
  * - `readingDirection`: **ComicInfo wins over OPF** (`Manga` beats
@@ -86,8 +86,6 @@ export const resolveMetadata = (
     renditionFlow: opf?.renditionFlow,
     renditionSpread: opf?.renditionSpread,
     numberOfPages: comicInfo?.numberOfPages,
-    gtin: opf?.gtin ?? comicInfo?.gtin,
-    isbn: opf?.isbn ?? comicInfo?.isbn,
     identifiers: identifiers.length > 0 ? identifiers : undefined,
     belongsTo: opf?.belongsTo ?? comicInfo?.belongsTo,
     properties: opf?.properties,

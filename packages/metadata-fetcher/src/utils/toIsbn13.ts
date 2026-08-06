@@ -10,10 +10,10 @@ const ISBN_10 = /^\d{9}[\dX]$/
  * books", which — ISBN being a decisive match signal — is the most damaging
  * false negative the matcher can produce.
  *
- * Input is put through `normalizeIsbn`, the same function that produces
- * {@link ResolvedMetadata.isbn} in the first place, so the hyphenated and
- * prefixed forms a human types (`978-0-441-01359-3`, `ISBN 0-441-01359-7`)
- * are recognized rather than silently dropped.
+ * Input is put through `normalizeIsbn`, the same normalization used for ISBN
+ * identifiers, so the hyphenated and prefixed forms a human types
+ * (`978-0-441-01359-3`, `ISBN 0-441-01359-7`) are recognized rather than
+ * silently dropped.
  *
  * Returns `undefined` when nothing ISBN-shaped can be recovered (check digits
  * are not verified: a wrong one still identifies the intended book).

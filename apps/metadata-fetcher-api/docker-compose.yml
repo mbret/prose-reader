@@ -2,6 +2,9 @@
 #
 #   npm run start:metadata-fetcher
 #
+# Compose automatically reads this project's `.env` file next to this file.
+# Start from `.env.example`; `.env` itself is ignored by Git.
+#
 # The API source and the library source are both bind-mounted, and node runs
 # both as TypeScript: an edit on the host is an edit in the container.
 
@@ -32,6 +35,8 @@ services:
     environment:
       PORT: 6382
       PROJECT_GUTENBERG_USER_AGENT: ${PROJECT_GUTENBERG_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
+      GOOGLE_BOOKS_BASE_URL: ${GOOGLE_BOOKS_BASE_URL:-}
       # Open Library asks clients to identify themselves (see the README)
       OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
       METADATA_LIMIT: ${METADATA_LIMIT:-5}

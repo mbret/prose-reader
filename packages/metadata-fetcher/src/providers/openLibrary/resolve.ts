@@ -1,4 +1,6 @@
 import type {
+  KnownMetadataIdentifierScheme,
+  MetadataIdentifier,
   ResolvedMetadata,
   ResolvedMetadataHome,
 } from "@prose-reader/archive-reader"
@@ -35,8 +37,10 @@ export const openLibraryMetadataHomes = {
   ResolvedMetadataHome | "identifiers"
 >
 
-export const OPEN_LIBRARY_IDENTIFIER_SCHEME = "OpenLibrary"
-const PROJECT_GUTENBERG_IDENTIFIER_SCHEME = "ProjectGutenberg"
+export const OPEN_LIBRARY_IDENTIFIER_SCHEME =
+  "OpenLibrary" satisfies KnownMetadataIdentifierScheme
+const PROJECT_GUTENBERG_IDENTIFIER_SCHEME =
+  "ProjectGutenberg" satisfies KnownMetadataIdentifierScheme
 
 const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,
@@ -49,10 +53,10 @@ const emptyToUndefined = <T>(
  * - **`title` folds in `subtitle`** (`Dune: Messiah`): the vocabulary has one
  *   title field, and an OPF `dc:title` normally carries the subtitle too, so
  *   comparing a bare title against a full one would cost match score.
- * - **`isbn` is set only for an ISBN lookup**, to the queried one — the API
- *   answered "this work has that ISBN", a fact about the record. A hit
- *   describes a *work*, whose editions each have their own ISBN, so picking
- *   one out of a title search would be fabrication.
+ * - **An ISBN identifier is added only for an ISBN lookup**, using the queried
+ *   value — the API answered "this work has that ISBN", a fact about the
+ *   record. A title-search hit describes a *work*, whose editions each have
+ *   their own ISBN, so picking one would be fabrication.
  */
 export const resolveOpenLibraryDoc = (
   doc: OpenLibraryDoc,
@@ -61,10 +65,7 @@ export const resolveOpenLibraryDoc = (
     /** The ISBN this record was looked up by, when it was. */
     readonly isbn?: string
     /** The source identifier that an exact Gutenberg-id lookup confirmed. */
-    readonly matchedProjectGutenbergIdentifier?: {
-      readonly value: string
-      readonly scheme?: string
-    }
+    readonly matchedProjectGutenbergIdentifier?: MetadataIdentifier
   },
 ): ResolvedMetadata => {
   const title =
@@ -123,7 +124,6 @@ export const resolveOpenLibraryDoc = (
       })),
     ),
     numberOfPages: doc.number_of_pages_median,
-    isbn: options.isbn,
     identifiers: emptyToUndefined(identifiers),
   })
 }

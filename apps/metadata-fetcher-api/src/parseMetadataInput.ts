@@ -63,12 +63,11 @@ const readIdentifiers = (
 
     if (identifierValue === undefined) return []
 
-    const scheme = readString(entry, "scheme")
-
     return [
-      scheme !== undefined
-        ? { value: identifierValue, scheme }
-        : { value: identifierValue },
+      {
+        value: identifierValue,
+        scheme: readString(entry, "scheme") ?? "Unknown",
+      },
     ]
   })
 
@@ -95,8 +94,6 @@ export const parseMetadataInput = (
   return omitUndefined({
     title: readString(body, "title"),
     authors: readStringArray(body, "authors"),
-    isbn: readString(body, "isbn"),
-    gtin: readString(body, "gtin"),
     identifiers: readIdentifiers(body),
     series: readString(body, "series"),
     publisher: readString(body, "publisher"),

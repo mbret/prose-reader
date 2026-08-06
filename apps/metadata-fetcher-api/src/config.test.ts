@@ -33,6 +33,17 @@ describe("configFromEnv", () => {
     })
   })
 
+  it("enables Google Books only when its API key is configured", () => {
+    expect(
+      configFromEnv({ GOOGLE_BOOKS_API_KEY: "secret" }).providers.map(
+        (provider) => provider.id,
+      ),
+    ).toEqual(["projectGutenberg", "googleBooks", "openLibrary"])
+    expect(
+      configFromEnv({ GOOGLE_BOOKS_API_KEY: "  " }).providers,
+    ).toHaveLength(2)
+  })
+
   it("treats a blank variable as unset", () => {
     expect(configFromEnv({ PORT: "  " }).port).toBe(6382)
   })
@@ -57,5 +68,8 @@ describe("configFromEnv", () => {
     expect(() =>
       configFromEnv({ PROJECT_GUTENBERG_BASE_URL: "file:///tmp/catalog" }),
     ).toThrow(/absolute HTTP\(S\) URL/)
+    expect(() => configFromEnv({ GOOGLE_BOOKS_BASE_URL: "not-a-url" })).toThrow(
+      /Invalid GOOGLE_BOOKS_BASE_URL/,
+    )
   })
 })
