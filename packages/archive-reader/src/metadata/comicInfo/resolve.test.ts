@@ -274,6 +274,14 @@ describe("resolveComicInfo", () => {
     })
   })
 
+  it("lists the single Title it states in titles too", () => {
+    const parsed = parseComicInfo(comicInfoWrap("<Title>Sample Issue</Title>"))
+    const resolved = resolveComicInfo(parsed)
+
+    expect(resolved.title).toBe("Sample Issue")
+    expect(resolved.titles).toEqual([{ value: "Sample Issue" }])
+  })
+
   it("keeps Number and Count stated without a Series", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<Number>1</Number><Count>12</Count>"),
@@ -398,6 +406,7 @@ describe("resolveComicInfo", () => {
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
       title: "Sample Story",
+      titles: [{ value: "Sample Story" }],
       contributors: [
         { name: "Alice", roles: ["author"] },
         { name: "Bob", roles: ["author"] },

@@ -119,7 +119,7 @@ When several sources are present, `resolveMetadata` merges field-wise:
 
 | Field | Rule |
 | --- | --- |
-| descriptive fields (`title`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
+| descriptive fields (`title`, `titles`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
 | `publication.edition` details (`date`, `publisher`, `imprint`) | merged field-wise, **OPF wins over ComicInfo** and the sidecar fills gaps |
 | `readingDirection` | **ComicInfo wins over OPF** (`Manga` beats `page-progression-direction`) — deliberate, preserving the historical pipeline behavior |
 | `renditionLayout` | **OPF explicit → Apple → Kobo**, first defined wins; the [`layoutScan`](README.md#resolving-a-publication) promotion applies on top, inside the resolver |
@@ -136,7 +136,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 | ComicInfo field | Home | Notes |
 | --- | --- | --- |
-| `Title` | `title` | trimmed |
+| `Title` | `title`, `titles` | trimmed; the sidecar states one title, so `titles` has the single entry |
 | `Summary` | `description` | |
 | `Publisher` | `publication.edition.publisher` | |
 | `Imprint` | `publication.edition.imprint` | |

@@ -4,7 +4,7 @@ import type {
   ResolvedContributorRole,
   ResolvedDate,
   ResolvedMetadata,
-  ResolvedMetadataHome,
+  ResolvedMetadataHomes,
   ResolvedMetadataIdentifier,
 } from "../../types/resolvedMetadata.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
@@ -55,13 +55,13 @@ export const comicInfoMetadataHomes = {
   Summary: "description",
   Tags: "subjects",
   Teams: "comic.teams",
-  Title: "title",
+  Title: ["title", "titles"],
   Translator: "contributors",
   Volume: "comic.volume",
   Web: "comic.web",
   Writer: "contributors",
   Year: "publication.edition.date",
-} as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHome>
+} as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHomes>
 
 const readingDirection = (info: ComicInfo): "ltr" | "rtl" | undefined => {
   switch (info.Manga) {
@@ -315,8 +315,11 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     imprint: trimToUndefined(info.Imprint),
   })
 
+  const title = trimToUndefined(info.Title)
+
   return omitUndefined({
-    title: trimToUndefined(info.Title),
+    title,
+    titles: title !== undefined ? [{ value: title }] : undefined,
     description: trimToUndefined(info.Summary),
     publication:
       edition.date !== undefined ||

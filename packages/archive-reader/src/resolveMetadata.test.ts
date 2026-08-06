@@ -32,7 +32,7 @@ describe("resolveMetadata", () => {
       resolveMetadata({
         comicInfo: comicInfoWith("<Title>Vol 1</Title>"),
       }),
-    ).toEqual({ title: "Vol 1" })
+    ).toEqual({ title: "Vol 1", titles: [{ value: "Vol 1" }] })
   })
 
   it("prefers OPF over ComicInfo for descriptive fields", () => {
