@@ -1,6 +1,7 @@
-import type {
-  MetadataIdentifier,
-  ResolvedMetadata,
+import {
+  type MetadataIdentifier,
+  mainTitle,
+  type ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
 import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
@@ -317,7 +318,7 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  compareStrings("title", query.title, candidate.title, titleSimilarity)
+  compareStrings("title", query.title, mainTitle(candidate), titleSimilarity)
   addSignal(
     "publisher",
     bestStringComparison(query.publisher, [

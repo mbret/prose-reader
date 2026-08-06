@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { mainTitle } from "../../utils/mainTitle"
 import type { OpfMetadata } from "./parse"
 import { resolveOpf } from "./resolve"
 
@@ -261,7 +262,6 @@ describe("resolveOpf", () => {
         subjects: ["Fiction", "Modern Japanese Literature"],
       }),
     ).toEqual({
-      title: "Norwegian Wood",
       titles: [{ value: "Norwegian Wood" }],
       publication: { edition: { publisher: "Vintage" } },
       description: "A nostalgic story.",
@@ -389,7 +389,7 @@ describe("resolveOpf", () => {
       ],
     })
 
-    expect(resolved.title).toBe("Dune")
+    expect(mainTitle(resolved)).toBe("Dune")
     expect(resolved.titles).toEqual([
       { value: "Dune", type: "main" },
       { value: "A Novel", type: "subtitle", displaySeq: 2 },
@@ -409,7 +409,7 @@ describe("resolveOpf", () => {
       metas: [{ property: "title-type", refines: "#t2", value: "main" }],
     })
 
-    expect(resolved.title).toBe("First")
+    expect(mainTitle(resolved)).toBe("First")
     expect(resolved.titles).toEqual([
       { value: "First" },
       { value: "Second", type: "main" },

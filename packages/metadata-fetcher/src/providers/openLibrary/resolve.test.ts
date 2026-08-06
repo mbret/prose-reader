@@ -90,7 +90,7 @@ describe("resolveOpenLibraryDoc", () => {
         { coversBaseUrl },
       ),
     ).toEqual({
-      title: "Dune",
+      titles: [{ value: "Dune" }],
       contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       publication: { original: { date: { year: 1965 } } },
       languages: ["en"],
@@ -113,7 +113,7 @@ describe("resolveOpenLibraryDoc", () => {
       resolveOpenLibraryDoc(
         { title: "Dune", subtitle: "a novel" },
         { coversBaseUrl },
-      ).title,
+      ).titles?.[0]?.value,
     ).toBe("Dune: a novel")
   })
 

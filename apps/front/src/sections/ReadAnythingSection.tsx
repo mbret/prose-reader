@@ -2,9 +2,9 @@ import { Box, Button, Icon, Image, Link, Text } from "@chakra-ui/react"
 import { FaCloud, FaExternalLinkAlt } from "react-icons/fa"
 import { FaFilePdf } from "react-icons/fa6"
 import { TbFileTypeZip } from "react-icons/tb"
+import formatA from "../assets/demo.prose-reader.com_books.png"
 import formatB from "../assets/demo.prose-reader.com_books (4).png"
 import formatC from "../assets/demo.prose-reader.com_books (5).png"
-import formatA from "../assets/demo.prose-reader.com_books.png"
 import { Section, SectionTitle } from "./Section"
 
 const images = [

@@ -55,7 +55,7 @@ export const comicInfoMetadataHomes = {
   Summary: "description",
   Tags: "subjects",
   Teams: "comic.teams",
-  Title: ["title", "titles"],
+  Title: "titles",
   Translator: "contributors",
   Volume: "comic.volume",
   Web: "comic.web",
@@ -318,7 +318,6 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
   const title = trimToUndefined(info.Title)
 
   return omitUndefined({
-    title,
     titles: title !== undefined ? [{ value: title }] : undefined,
     description: trimToUndefined(info.Summary),
     publication:

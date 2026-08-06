@@ -53,7 +53,12 @@ describe("createProjectGutenbergProvider", () => {
       id: "78139",
       url: "https://www.gutenberg.org/ebooks/78139",
       metadata: {
-        title: "Wilhelm Meister's apprenticeship and travels, vol. 2 (of 2)",
+        titles: [
+          {
+            value:
+              "Wilhelm Meister's apprenticeship and travels, vol. 2 (of 2)",
+          },
+        ],
         identifiers: [
           { value: "http://www.gutenberg.org/78139", scheme: "URL" },
           { value: "78139", scheme: "ProjectGutenberg" },

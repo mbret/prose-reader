@@ -33,7 +33,7 @@ describe("resolveProjectGutenbergRecord", () => {
         },
       }),
     ).toEqual({
-      title: "Wilhelm Meister, vol. 2",
+      titles: [{ value: "Wilhelm Meister, vol. 2" }],
       publication: {
         original: { date: { year: 1896 }, publisher: "A.L. Burt" },
         edition: {

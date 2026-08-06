@@ -321,7 +321,7 @@ Each request makes at most three total attempts. Network failures and HTTP `500`
 | Google Books | Resolved | |
 | --- | --- | --- |
 | `id` | `identifiers` | scheme `GoogleBooks`; also `id` on the match |
-| `volumeInfo.title` + `subtitle` | `title` | joined with `:`, then `seriesInfo.bookDisplayNumber` is appended as `Vol …` only when no volume marker is already present |
+| `volumeInfo.title` + `subtitle` | `titles` | joined with `:`, then `seriesInfo.bookDisplayNumber` is appended as `Vol …` only when no volume marker is already present |
 | `authors` | `contributors` | role `author` |
 | `publisher`, `publishedDate` | `publication.edition` | partial dates retain the available year/month/day |
 | `description` | `description` | Google may provide simple HTML formatting |
@@ -357,7 +357,7 @@ const provider = createOpenLibraryProvider({
 
 | Open Library | Resolved | |
 | --- | --- | --- |
-| `title` + `subtitle` | `title` | joined (`Dune: a novel`) — `ResolvedMetadata` has one title field, and an OPF `dc:title` normally carries the subtitle too |
+| `title` + `subtitle` | `titles` | joined (`Dune: a novel`) — `ResolvedMetadata` has one title field, and an OPF `dc:title` normally carries the subtitle too |
 | `author_name` | `contributors` | role `author` |
 | `first_publish_year` | `publication.original.date.year` | |
 | `language` | `languages` | MARC 21 → BCP 47 (`eng` → `en`); unknown codes pass through, `und`/`mul`/`zxx` are dropped |

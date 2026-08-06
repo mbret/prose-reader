@@ -236,7 +236,7 @@ const RESOLVED_ARCHIVE_VERSION = 3
  *
  * // library-shelf scan: metadata (incl. cover) only, skip the toc read
  * const { metadata } = await resolveArchive(archive, { include: ["metadata"] })
- * renderShelfItem({ title: metadata.title, cover: metadata.cover?.uri })
+ * renderShelfItem({ title: mainTitle(metadata), cover: metadata.cover?.uri })
  *
  * // your own per-source precedence via the raw sources escape hatch
  * // (resolveArchiveMetadata normalizes a single source at a time)

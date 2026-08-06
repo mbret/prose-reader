@@ -90,7 +90,7 @@ describe("resolveComicInfo", () => {
     )
 
     expect(resolveComicInfo(parsed)).toMatchObject({
-      title: "Sample Story",
+      titles: [{ value: "Sample Story" }],
       publication: { edition: { publisher: "Acme" } },
     })
   })
@@ -100,7 +100,7 @@ describe("resolveComicInfo", () => {
       comicInfoWrap("<Series>Sample Series</Series><Number>1</Number>"),
     )
 
-    expect(resolveComicInfo(parsed).title).toBeUndefined()
+    expect(resolveComicInfo(parsed).titles).toBeUndefined()
   })
 
   it("splits Writer on commas into author contributors", () => {
@@ -278,7 +278,6 @@ describe("resolveComicInfo", () => {
     const parsed = parseComicInfo(comicInfoWrap("<Title>Sample Issue</Title>"))
     const resolved = resolveComicInfo(parsed)
 
-    expect(resolved.title).toBe("Sample Issue")
     expect(resolved.titles).toEqual([{ value: "Sample Issue" }])
   })
 
@@ -405,7 +404,6 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toEqual({
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
-      title: "Sample Story",
       titles: [{ value: "Sample Story" }],
       contributors: [
         { name: "Alice", roles: ["author"] },

@@ -25,8 +25,8 @@ export const googleBooksVolumeMetadataHomes = {
 
 /** Compile-enforced map from every parsed Google Books field to its home. */
 export const googleBooksVolumeInfoMetadataHomes = {
-  title: "title",
-  subtitle: "title",
+  title: "titles",
+  subtitle: "titles",
   authors: "contributors",
   publisher: "publication.edition.publisher",
   publishedDate: "publication.edition.date",
@@ -38,7 +38,7 @@ export const googleBooksVolumeInfoMetadataHomes = {
   imageLinks: "cover",
   infoLink: "candidate.url",
   canonicalVolumeLink: "candidate.url",
-  seriesInfo: "title",
+  seriesInfo: "titles",
 } satisfies Record<
   keyof GoogleBooksVolumeInfo,
   ResolvedMetadataHome | "identifiers" | "candidate.url"
@@ -197,8 +197,10 @@ export const resolveGoogleBooksVolume = (
     GOOGLE_BOOKS_MAX_SUBJECTS,
   )
 
+  const title = titleWithSeriesNumber(volumeInfo)
+
   return omitUndefined({
-    title: titleWithSeriesNumber(volumeInfo),
+    titles: title !== undefined ? [{ value: title }] : undefined,
     description: volumeInfo.description,
     publication:
       edition.date !== undefined || edition.publisher !== undefined

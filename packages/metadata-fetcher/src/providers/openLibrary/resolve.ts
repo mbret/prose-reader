@@ -23,8 +23,8 @@ export const OPEN_LIBRARY_MAX_SUBJECTS = 25
  */
 export const openLibraryMetadataHomes = {
   key: "identifiers",
-  title: "title",
-  subtitle: "title",
+  title: "titles",
+  subtitle: "titles",
   author_name: "contributors",
   first_publish_year: "publication.original.date",
   language: "languages",
@@ -98,7 +98,7 @@ export const resolveOpenLibraryDoc = (
   ]
 
   return omitUndefined({
-    title,
+    titles: title !== undefined ? [{ value: title }] : undefined,
     cover:
       doc.cover_i !== undefined
         ? {

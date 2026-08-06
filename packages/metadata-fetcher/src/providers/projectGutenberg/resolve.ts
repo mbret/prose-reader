@@ -17,7 +17,7 @@ export const PROJECT_GUTENBERG_MAX_SUBJECTS = 25
 /** Compile-enforced map from every parsed RDF field to its resolved home. */
 export const projectGutenbergMetadataHomes = {
   id: "identifiers",
-  title: "title",
+  title: "titles",
   publisher: "publication.edition.publisher",
   issued: "publication.edition.date",
   originalPublication: "publication.original",
@@ -215,7 +215,7 @@ export const resolveProjectGutenbergRecord = (
   })
 
   return omitUndefined({
-    title: record.title,
+    titles: record.title !== undefined ? [{ value: record.title }] : undefined,
     publication:
       publication.original !== undefined || publication.edition !== undefined
         ? publication

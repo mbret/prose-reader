@@ -68,7 +68,7 @@ export type ResolvedTitleType =
   | "short"
   | "collection"
   | "edition"
-  | "extended"
+  | "expanded"
 
 /**
  * One title as the source states it. EPUB expresses a multipart title as
@@ -291,18 +291,17 @@ export type ResolvedCover = {
  */
 export type ResolvedMetadata = {
   /**
-   * The main title, which EPUB 3 defines as the first `dc:title` in document
-   * order — a `title-type` of `main` on a later one does not displace it.
-   * ComicInfo `Title`.
-   */
-  readonly title?: string
-  /**
    * Every title the source states, in document order, with the typing it
-   * gives them (see {@link ResolvedTitle}). A subtitle lives here as an entry
-   * of type `subtitle`, never appended to {@link ResolvedMetadata.title}:
-   * composing the two for display is the consumer's decision, not ours.
-   * Populated by sources that distinguish titles at all — an EPUB package,
-   * or a catalog that returns a subtitle of its own.
+   * gives them (see {@link ResolvedTitle}). OPF `dc:title`, ComicInfo
+   * `Title`.
+   *
+   * **The first entry is the main title**: EPUB 3 requires reading systems to
+   * take the first `dc:title` in document order as the publication's title,
+   * and a later `title-type` of `main` does not displace it. Use
+   * {@link mainTitle} rather than re-deriving that rule.
+   *
+   * A subtitle is an entry of type `subtitle`, never appended to the main
+   * one: composing the two for display is the consumer's decision, not ours.
    */
   readonly titles?: ReadonlyArray<ResolvedTitle>
   /**

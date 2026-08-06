@@ -79,7 +79,6 @@ describe(`Given an EPUB`, () => {
       version: 3,
       unreadableSources: [],
       metadata: {
-        title: `My Book`,
         titles: [{ value: `My Book` }],
         contributors: [{ name: `Jane Author`, roles: [`author`] }],
       },
@@ -335,7 +334,6 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
     )
 
     expect(resolved.metadata).toEqual({
-      title: `Vol 1`,
       titles: [{ value: `Vol 1` }],
       // resolved for the whole archive: the cover is the first page (assumed,
       // the sidecar declared none) and the page count is the image count

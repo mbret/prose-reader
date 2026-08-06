@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { parseComicInfo } from "./metadata/comicInfo/parse"
 import { parseOpf } from "./metadata/opf/parse"
 import { resolveMetadata } from "./resolveMetadata"
+import { mainTitle } from "./utils/mainTitle"
 
 const opfWrap = (metadata: string) =>
   `<?xml version="1.0"?>` +
@@ -32,7 +33,7 @@ describe("resolveMetadata", () => {
       resolveMetadata({
         comicInfo: comicInfoWith("<Title>Vol 1</Title>"),
       }),
-    ).toEqual({ title: "Vol 1", titles: [{ value: "Vol 1" }] })
+    ).toEqual({ titles: [{ value: "Vol 1" }] })
   })
 
   it("prefers OPF over ComicInfo for descriptive fields", () => {
@@ -51,7 +52,7 @@ describe("resolveMetadata", () => {
       ),
     })
 
-    expect(resolved.title).toBe("Package Title")
+    expect(mainTitle(resolved)).toBe("Package Title")
     expect(resolved.publication?.edition?.publisher).toBe("Package Publisher")
     expect(resolved.languages).toEqual(["en"])
     expect(resolved.contributors).toEqual([
@@ -65,7 +66,7 @@ describe("resolveMetadata", () => {
       comicInfo: comicInfoWith(`<Summary>From the sidecar.</Summary>`),
     })
 
-    expect(resolved.title).toBe("Package Title")
+    expect(mainTitle(resolved)).toBe("Package Title")
     expect(resolved.description).toBe("From the sidecar.")
   })
 
@@ -232,7 +233,7 @@ describe("resolveMetadata", () => {
     })
 
     expect(resolved).toMatchObject({
-      title: "My Book",
+      titles: [{ value: "My Book" }],
       contributors: [{ name: "Jane Author", roles: ["author"] }],
       belongsTo: { series: [{ name: "My Series", position: 2 }] },
       renditionLayout: "pre-paginated",

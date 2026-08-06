@@ -22,7 +22,7 @@ describe("scoreMetadataCandidate", () => {
   it("only compares fields both sides state", () => {
     const { signals } = score(
       { title: "Dune", publisher: "Ace" },
-      { title: "Dune", numberOfPages: 412 },
+      { titles: [{ value: "Dune" }], numberOfPages: 412 },
     )
 
     expect(signals.map((signal) => signal.field)).toEqual(["title"])
@@ -37,7 +37,7 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         publication: { edition: { publisher: "Ace" } },
       },
     )
@@ -68,7 +68,7 @@ describe("scoreMetadataCandidate", () => {
       },
       {
         identifiers: [{ value: "9780345391803", scheme: "ISBN" }],
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       },
     )
@@ -103,7 +103,7 @@ describe("scoreMetadataCandidate", () => {
         authors: ["Herbert, Frank"],
       },
       {
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       },
     )
@@ -117,7 +117,7 @@ describe("scoreMetadataCandidate", () => {
     const { signals } = score(
       { title: "Dune" },
       {
-        title: "Dune: Messiah",
+        titles: [{ value: "Dune: Messiah" }],
         publication: { edition: { publisher: "Ace" } },
       },
     )
@@ -178,7 +178,7 @@ describe("scoreMetadataCandidate", () => {
         ],
       },
       {
-        title: "The catalog title",
+        titles: [{ value: "The catalog title" }],
         identifiers: [
           { value: "http://www.gutenberg.org/78139", scheme: "URL" },
           { value: "78139", scheme: "ProjectGutenberg" },
@@ -199,7 +199,7 @@ describe("scoreMetadataCandidate", () => {
         identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
       },
       {
-        title: "The catalog title",
+        titles: [{ value: "The catalog title" }],
         identifiers: [{ value: "zytcalfpjgyc", scheme: "googlebooks" }],
       },
     )
@@ -217,7 +217,7 @@ describe("scoreMetadataCandidate", () => {
         identifiers: [{ value: "78139", scheme: "Unknown" }],
       },
       {
-        title: "Neuromancer",
+        titles: [{ value: "Neuromancer" }],
         identifiers: [{ value: "78139", scheme: "ProjectGutenberg" }],
       },
     )
@@ -235,7 +235,7 @@ describe("scoreMetadataCandidate", () => {
         identifiers: [{ value: "one", scheme: "CatalogA" }],
       },
       {
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         identifiers: [{ value: "two", scheme: "CatalogB" }],
       },
     )
@@ -255,7 +255,7 @@ describe("scoreMetadataCandidate", () => {
     const result = score(
       { title: "Dune", publisher: "Ace" },
       {
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         publication: { edition: { publisher: "Chilton Books" } },
       },
     )
@@ -273,7 +273,7 @@ describe("scoreMetadataCandidate", () => {
         publishedYear: 1965,
       },
       {
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         publication: { edition: { date: { year: 1965 } } },
       },
     )
@@ -325,7 +325,12 @@ describe("scoreMetadataCandidate", () => {
         publisher: "Project Gutenberg",
       },
       {
-        title: "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",
+        titles: [
+          {
+            value:
+              "Wilhelm Meister's Apprenticeship and Travels, Vol. I (of 2)",
+          },
+        ],
         contributors: [
           { name: "Johann Wolfgang von Goethe", roles: ["author"] },
         ],

@@ -10,7 +10,7 @@ describe("metadataInputFromResolvedArchive", () => {
   it("projects only lookup and matching fields into the flat input", () => {
     const resolved: Pick<ResolvedArchive, "metadata"> = {
       metadata: {
-        title: "Dune",
+        titles: [{ value: "Dune" }],
         cover: { uri: "cover.jpg", confidence: "derived" },
         description: "A desert planet.",
         contributors: [

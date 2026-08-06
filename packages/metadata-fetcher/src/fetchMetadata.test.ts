@@ -1,3 +1,4 @@
+import { mainTitle } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { fetchMetadata } from "./fetchMetadata.ts"
 import { MetadataProviderResponseError } from "./providers/responseError.ts"
@@ -30,7 +31,7 @@ describe("fetchMetadata", () => {
       providerReturning("a", [
         {
           metadata: {
-            title: "Dune",
+            titles: [{ value: "Dune" }],
             publication: { edition: { publisher: "Ace" } },
           },
         },
@@ -39,7 +40,7 @@ describe("fetchMetadata", () => {
     const fetched = await fetchMetadata(book, { providers })
 
     expect(fetched.matches[0]?.metadata).toEqual({
-      title: "Dune",
+      titles: [{ value: "Dune" }],
       publication: { edition: { publisher: "Ace" } },
     })
   })
@@ -61,8 +62,12 @@ describe("fetchMetadata", () => {
   it("ranks matches across providers, best first", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
-        providerReturning("weak", [{ metadata: { title: "Duna" } }]),
-        providerReturning("strong", [{ metadata: { title: "Dune" } }]),
+        providerReturning("weak", [
+          { metadata: { titles: [{ value: "Duna" }] } },
+        ]),
+        providerReturning("strong", [
+          { metadata: { titles: [{ value: "Dune" }] } },
+        ]),
       ],
     })
 
@@ -76,8 +81,12 @@ describe("fetchMetadata", () => {
   it("breaks ties in the order the providers were declared", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
-        providerReturning("first", [{ metadata: { title: "Dune" } }]),
-        providerReturning("second", [{ metadata: { title: "Dune" } }]),
+        providerReturning("first", [
+          { metadata: { titles: [{ value: "Dune" }] } },
+        ]),
+        providerReturning("second", [
+          { metadata: { titles: [{ value: "Dune" }] } },
+        ]),
       ],
     })
 
@@ -93,13 +102,13 @@ describe("fetchMetadata", () => {
         providerReturning("weak", [
           {
             metadata: {
-              title: "Something Else",
+              titles: [{ value: "Something Else" }],
               publication: { edition: { publisher: "Wrong" } },
             },
           },
         ]),
         providerReturning("strong", [
-          { metadata: { title: "Dune", numberOfPages: 412 } },
+          { metadata: { titles: [{ value: "Dune" }], numberOfPages: 412 } },
         ]),
       ],
     })
@@ -118,7 +127,9 @@ describe("fetchMetadata", () => {
   it("keeps the rejected matches, ranked, for manual confirmation", async () => {
     const fetched = await fetchMetadata(book, {
       providers: [
-        providerReturning("a", [{ metadata: { title: "Neuromancer" } }]),
+        providerReturning("a", [
+          { metadata: { titles: [{ value: "Neuromancer" }] } },
+        ]),
       ],
     })
 
@@ -131,7 +142,9 @@ describe("fetchMetadata", () => {
 
   it("honors minScore", async () => {
     const providers = [
-      providerReturning("a", [{ metadata: { title: "Dune Messiah" } }]),
+      providerReturning("a", [
+        { metadata: { titles: [{ value: "Dune Messiah" }] } },
+      ]),
     ]
 
     expect(
@@ -148,16 +161,16 @@ describe("fetchMetadata", () => {
     const fetched = await fetchMetadata(book, {
       providers: [
         providerReturning("a", [
-          { metadata: { title: "Neuromancer" } },
-          { metadata: { title: "Dune" } },
-          { metadata: { title: "Duna" } },
+          { metadata: { titles: [{ value: "Neuromancer" }] } },
+          { metadata: { titles: [{ value: "Dune" }] } },
+          { metadata: { titles: [{ value: "Duna" }] } },
         ]),
       ],
       limit: 2,
     })
 
     expect(
-      fetched.sources.a?.matches.map((match) => match.metadata.title),
+      fetched.sources.a?.matches.map((match) => mainTitle(match.metadata)),
     ).toEqual(["Dune", "Duna"])
   })
 
@@ -203,13 +216,17 @@ describe("fetchMetadata", () => {
     const fetched = await fetchMetadata(book, {
       providers: [
         failingProvider("down"),
-        providerReturning("up", [{ metadata: { title: "Dune" } }]),
+        providerReturning("up", [
+          { metadata: { titles: [{ value: "Dune" }] } },
+        ]),
       ],
     })
 
     expect(fetched.failedProviders).toEqual([{ id: "down" }])
     expect(fetched.sources).not.toHaveProperty("down")
-    expect(fetched.matches[0]?.metadata).toEqual({ title: "Dune" })
+    expect(fetched.matches[0]?.metadata).toEqual({
+      titles: [{ value: "Dune" }],
+    })
   })
 
   it("rejects when the caller aborts", async () => {
@@ -227,7 +244,9 @@ describe("fetchMetadata", () => {
 
   it("keeps the provider payload only when asked", async () => {
     const providers = [
-      providerReturning("a", [{ metadata: { title: "Dune" }, raw: { id: 1 } }]),
+      providerReturning("a", [
+        { metadata: { titles: [{ value: "Dune" }] }, raw: { id: 1 } },
+      ]),
     ]
 
     expect(

@@ -28,7 +28,7 @@ export const opfMetadataHomes = {
   spineRows: "readingOrder",
   spineTocIdref: "toc",
   identifiers: "identifiers",
-  titles: ["title", "titles"],
+  titles: "titles",
   creators: "contributors",
   contributors: "contributors",
   publisher: "publication.edition.publisher",
@@ -231,8 +231,8 @@ const refiningValue = (
 /**
  * EPUB 3 states a multipart title as several `dc:title` elements refined
  * with `title-type`, `display-seq` and `file-as`. All of them are kept, in
- * document order; `title` separately stays the first one, which the spec
- * makes the main title whatever the refinements say.
+ * document order — the order matters, since the spec makes the first one the
+ * main title whatever the refinements say (see `mainTitle`).
  */
 const titlesFromOpf = (input: OpfMetadata): ResolvedTitle[] =>
   input.titles.map((title) =>
@@ -402,7 +402,6 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
   })
 
   return omitUndefined({
-    title: titles[0]?.value,
     titles: titles.length > 0 ? titles : undefined,
     description: input.description,
     publication:
