@@ -28,9 +28,9 @@ services:
         "src/server.ts",
       ]
     ports:
-      - "${METADATA_FETCHER_PORT:-3000}:3000"
+      - "${METADATA_FETCHER_PORT:-6382}:6382"
     environment:
-      PORT: 3000
+      PORT: 6382
       PROJECT_GUTENBERG_USER_AGENT: ${PROJECT_GUTENBERG_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
       # Open Library asks clients to identify themselves (see the README)
       OPEN_LIBRARY_USER_AGENT: ${OPEN_LIBRARY_USER_AGENT:-prose-reader-metadata-fetcher-api (development)}
