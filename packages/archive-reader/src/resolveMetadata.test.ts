@@ -148,6 +148,24 @@ describe("resolveMetadata", () => {
     ])
   })
 
+  it("resolves typed and URL Google Books identifiers from EPUB 3 metadata", () => {
+    const resolved = resolveMetadata({
+      opf: opfWith(
+        `<dc:identifier id="google-books-id">k028AAAACAAJ</dc:identifier>` +
+          `<meta refines="#google-books-id" property="identifier-type">GoogleBooks</meta>` +
+          `<dc:identifier>https://books.google.com/books?id=k028AAAACAAJ</dc:identifier>`,
+      ),
+    })
+
+    expect(resolved.identifiers).toEqual([
+      { value: "k028AAAACAAJ", scheme: "GoogleBooks" },
+      {
+        value: "https://books.google.com/books?id=k028AAAACAAJ",
+        scheme: "URL",
+      },
+    ])
+  })
+
   it("keeps the format-scoped corners from their producers", () => {
     const resolved = resolveMetadata({
       comicInfo: comicInfoWith(`<BlackAndWhite>Yes</BlackAndWhite>`),
