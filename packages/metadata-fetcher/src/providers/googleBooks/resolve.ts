@@ -85,12 +85,14 @@ const titleWithSeriesNumber = (
       ? `${volumeInfo.title}: ${volumeInfo.subtitle}`
       : volumeInfo.title
   const displayNumber = volumeInfo.seriesInfo?.bookDisplayNumber
+  const hasSeriesNumber =
+    title !== undefined &&
+    (/\bvol(?:ume)?\.?\s*\S+/i.test(title) ||
+      /\b(?:book|part)(?:\s*#\s*|\s+)(?:\d+(?:[.-]\d+)*|[ivxlcdm]+)\b/i.test(
+        title,
+      ))
 
-  if (
-    title === undefined ||
-    displayNumber === undefined ||
-    /\bvol(?:ume)?\.?\s*\S+/i.test(title)
-  ) {
+  if (title === undefined || displayNumber === undefined || hasSeriesNumber) {
     return title
   }
 

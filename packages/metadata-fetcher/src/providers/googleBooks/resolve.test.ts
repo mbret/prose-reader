@@ -176,6 +176,31 @@ describe("resolveGoogleBooksVolume", () => {
     ).toBe("Saga Vol. 2")
   })
 
+  it.each(["Saga: Book 2", "Saga Part II"])(
+    "does not append another series marker to %s",
+    (title) => {
+      expect(
+        resolveGoogleBooksVolume({
+          volumeInfo: {
+            title,
+            seriesInfo: { bookDisplayNumber: "2" },
+          },
+        }).title,
+      ).toBe(title)
+    },
+  )
+
+  it("does not mistake ordinary uses of 'book' for a series marker", () => {
+    expect(
+      resolveGoogleBooksVolume({
+        volumeInfo: {
+          title: "The Book Thief",
+          seriesInfo: { bookDisplayNumber: "2" },
+        },
+      }).title,
+    ).toBe("The Book Thief Vol 2")
+  })
+
   it("prefers the largest cover, preserves its query and rejects non-HTTP URLs", () => {
     expect(
       googleBooksCoverUrl({
