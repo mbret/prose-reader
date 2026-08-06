@@ -118,7 +118,7 @@ describe("resolveGoogleBooksVolume", () => {
         { value: "9780441013593", scheme: "ISBN" },
       ],
       cover: {
-        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=0",
+        uri: "https://books.google.com/books/content?id=zyTCAlFPjgYC&zoom=1&edge=curl",
         confidence: "derived",
       },
     })
@@ -176,13 +176,13 @@ describe("resolveGoogleBooksVolume", () => {
     ).toBe("Saga Vol. 2")
   })
 
-  it("prefers the largest cover and rejects non-HTTP URLs", () => {
+  it("prefers the largest cover, preserves its query and rejects non-HTTP URLs", () => {
     expect(
       googleBooksCoverUrl({
         thumbnail: "https://books.google.com/small?zoom=1",
         large: "http://books.google.com/large?zoom=2&edge=curl",
       }),
-    ).toBe("https://books.google.com/large?zoom=0")
+    ).toBe("https://books.google.com/large?zoom=2&edge=curl")
     expect(
       googleBooksCoverUrl({ large: "data:image/jpeg;base64,x" }),
     ).toBeUndefined()
@@ -191,7 +191,20 @@ describe("resolveGoogleBooksVolume", () => {
         large: "data:image/jpeg;base64,x",
         thumbnail: "http://books.google.com/small?zoom=1",
       }),
-    ).toBe("https://books.google.com/small?zoom=0")
+    ).toBe("https://books.google.com/small?zoom=1")
+  })
+
+  it("keeps the Google-provided zoom that serves the BLAME! cover", () => {
+    expect(
+      googleBooksCoverUrl({
+        smallThumbnail:
+          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+        thumbnail:
+          "http://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      }),
+    ).toBe(
+      "https://books.google.com/books/content?id=k028AAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    )
   })
 
   it("falls back through the candidate page links", () => {

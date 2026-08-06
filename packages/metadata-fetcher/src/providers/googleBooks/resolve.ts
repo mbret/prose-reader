@@ -114,10 +114,9 @@ const absoluteHttpUrl = (value: string | undefined): string | undefined => {
 }
 
 /**
- * Google commonly returns a small HTTP cover with `zoom=1&edge=curl` even
- * when the underlying image is larger. Keep Oboku's proven upgrade: prefer
- * the largest announced link, request `zoom=0`, drop the page curl and force
- * HTTPS.
+ * Prefer the largest cover Google announced and force HTTPS. Preserve the
+ * query exactly: changing Google's `zoom`, `edge` or signed `imgtk` parameters
+ * can turn a valid cover into its "image not available" placeholder.
  */
 export const googleBooksCoverUrl = (
   imageLinks: GoogleBooksImageLinks | undefined,
@@ -136,14 +135,7 @@ export const googleBooksCoverUrl = (
   for (const candidate of candidates) {
     const absolute = absoluteHttpUrl(candidate)
 
-    if (absolute === undefined) continue
-
-    const url = new URL(absolute)
-
-    if (url.searchParams.has("zoom")) url.searchParams.set("zoom", "0")
-    url.searchParams.delete("edge")
-
-    return url.toString()
+    if (absolute !== undefined) return absolute
   }
 
   return undefined
