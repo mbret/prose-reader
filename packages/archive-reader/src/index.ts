@@ -53,7 +53,6 @@ export {
   parseAppleDisplayOptionsXml,
 } from "./metadata/apple/parse.ts"
 export { readArchiveApple } from "./metadata/apple/readArchiveApple.ts"
-export { appleMetadataHomes } from "./metadata/apple/resolve.ts"
 export { getArchiveHasComicInfo } from "./metadata/comicInfo/getArchiveHasComicInfo.ts"
 export type { ComicInfoManga } from "./metadata/comicInfo/manga.ts"
 export {
@@ -70,14 +69,12 @@ export {
   parseComicInfo,
 } from "./metadata/comicInfo/parse.ts"
 export { readArchiveComicInfo } from "./metadata/comicInfo/readArchiveComicInfo.ts"
-export { comicInfoMetadataHomes } from "./metadata/comicInfo/resolve.ts"
 export type { KoboMetadata } from "./metadata/kobo/parse.ts"
 export {
   KOBO_DISPLAY_OPTIONS_FILENAME,
   parseKoboXml,
 } from "./metadata/kobo/parse.ts"
 export { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
-export { koboMetadataHomes } from "./metadata/kobo/resolve.ts"
 export { getArchiveOpfInfo } from "./metadata/opf/getArchiveOpfInfo.ts"
 export { getSpineItemFilesFromArchive } from "./metadata/opf/getSpineItemFilesFromArchive.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
@@ -93,7 +90,6 @@ export type {
 export { parseOpf } from "./metadata/opf/parse.ts"
 export type { ArchiveOpfParsed } from "./metadata/opf/readArchiveOpf.ts"
 export { readArchiveOpf } from "./metadata/opf/readArchiveOpf.ts"
-export { opfMetadataHomes } from "./metadata/opf/resolve.ts"
 export type { ArchiveReadingOrderItem } from "./readingOrder/resolveArchiveReadingOrder.ts"
 export { resolveArchiveReadingOrder } from "./readingOrder/resolveArchiveReadingOrder.ts"
 export type { ResolvedArchiveInput } from "./resolve.ts"
