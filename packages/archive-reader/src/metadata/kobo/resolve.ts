@@ -1,8 +1,8 @@
 import type {
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata.ts"
-import { omitUndefined } from "../utils/omitUndefined.ts"
+} from "../../types/resolvedMetadata.ts"
+import { omitUndefined } from "../../utils/omitUndefined.ts"
 import type { KoboMetadata } from "./parse.ts"
 
 /** Losslessness contract for the Kobo sidecar fields. */

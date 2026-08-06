@@ -1,6 +1,6 @@
 import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
-import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
+import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {

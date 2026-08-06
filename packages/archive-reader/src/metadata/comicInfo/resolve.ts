@@ -6,8 +6,8 @@ import type {
   ResolvedMetadata,
   ResolvedMetadataHome,
   ResolvedMetadataIdentifier,
-} from "../types/resolvedMetadata.ts"
-import { omitUndefined } from "../utils/omitUndefined.ts"
+} from "../../types/resolvedMetadata.ts"
+import { omitUndefined } from "../../utils/omitUndefined.ts"
 import type { ComicInfo, ComicInfoKnownField } from "./parse.ts"
 
 /**

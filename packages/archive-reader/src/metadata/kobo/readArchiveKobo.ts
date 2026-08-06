@@ -1,7 +1,7 @@
-import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive, FileRecord } from "../archives/types.ts"
-import { isFileRecord } from "../archives/types.ts"
-import { Report } from "../report.ts"
+import { readRecordAsText } from "../../archives/readRecordAsText.ts"
+import type { Archive, FileRecord } from "../../archives/types.ts"
+import { isFileRecord } from "../../archives/types.ts"
+import { Report } from "../../report.ts"
 import {
   KOBO_DISPLAY_OPTIONS_FILENAME,
   type KoboMetadata,

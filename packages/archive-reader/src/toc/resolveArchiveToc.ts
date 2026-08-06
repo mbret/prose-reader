@@ -1,5 +1,8 @@
 import type { Archive } from "../archives/types.ts"
-import { type ArchiveOpfParsed, readArchiveOpf } from "../opf/readArchiveOpf.ts"
+import {
+  type ArchiveOpfParsed,
+  readArchiveOpf,
+} from "../metadata/opf/readArchiveOpf.ts"
 import { buildTocFromFolders } from "./folders.ts"
 import { resolveTocFromNav } from "./nav.ts"
 import { resolveTocFromNcx } from "./ncx.ts"

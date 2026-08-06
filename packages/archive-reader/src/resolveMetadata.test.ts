@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { parseComicInfo } from "./comicInfo/parse"
-import { parseOpf } from "./opf/parse"
+import { parseComicInfo } from "./metadata/comicInfo/parse"
+import { parseOpf } from "./metadata/opf/parse"
 import { resolveMetadata } from "./resolveMetadata"
 
 const opfWrap = (metadata: string) =>

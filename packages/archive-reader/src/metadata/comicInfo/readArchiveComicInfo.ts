@@ -1,5 +1,5 @@
-import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive } from "../archives/types.ts"
+import { readRecordAsText } from "../../archives/readRecordAsText.ts"
+import type { Archive } from "../../archives/types.ts"
 import { getArchiveHasComicInfo } from "./getArchiveHasComicInfo.ts"
 import { type ComicInfo, parseComicInfo } from "./parse.ts"
 

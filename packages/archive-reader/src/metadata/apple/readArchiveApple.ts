@@ -1,6 +1,6 @@
-import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive, FileRecord } from "../archives/types.ts"
-import { isFileRecord } from "../archives/types.ts"
+import { readRecordAsText } from "../../archives/readRecordAsText.ts"
+import type { Archive, FileRecord } from "../../archives/types.ts"
+import { isFileRecord } from "../../archives/types.ts"
 import {
   APPLE_IBOOKS_DISPLAY_OPTIONS_FILENAME,
   type AppleMetadata,

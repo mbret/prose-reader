@@ -1,4 +1,4 @@
-import type { Archive } from "../archives/types.ts"
+import type { Archive } from "../../archives/types.ts"
 
 const hasOpfExtension = (path: string) => path.toLowerCase().endsWith(`.opf`)
 

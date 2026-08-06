@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { createArchive } from "../archives/createArchive"
 import { blobFileAccessors } from "../archives/fileAccessors"
-import { readArchiveOpf } from "../opf/readArchiveOpf"
+import { readArchiveOpf } from "../metadata/opf/readArchiveOpf"
 import { resolveArchiveCover } from "./resolveArchiveCover"
 
 const textRecord = (

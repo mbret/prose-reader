@@ -1,4 +1,4 @@
-import { tokenizeXmlSpaceSeparatedList } from "../utils/tokenizeXmlSpaceSeparatedList.ts"
+import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
 
 export type OpfItemrefLayoutHints = {
   readonly renditionLayout?: `reflowable` | `pre-paginated`

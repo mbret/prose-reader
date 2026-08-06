@@ -4,11 +4,11 @@ import type {
   ResolvedContributorRole,
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata.ts"
-import { normalizeGtin } from "../utils/normalizeGtin.ts"
-import { normalizeIsbn } from "../utils/normalizeIsbn.ts"
-import { omitUndefined } from "../utils/omitUndefined.ts"
-import { parseW3cDtfDate } from "../utils/parseW3cDtfDate.ts"
+} from "../../types/resolvedMetadata.ts"
+import { normalizeGtin } from "../../utils/normalizeGtin.ts"
+import { normalizeIsbn } from "../../utils/normalizeIsbn.ts"
+import { omitUndefined } from "../../utils/omitUndefined.ts"
+import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
 import type { OpfIdentifier, OpfMetadata, OpfMetaEntry } from "./parse.ts"
 
 /**

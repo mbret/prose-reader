@@ -2,7 +2,7 @@ import {
   type Archive,
   type FileRecord,
   isFileRecord,
-} from "../archives/types.ts"
+} from "../../archives/types.ts"
 import { COMIC_INFO_FILENAME } from "./parse.ts"
 
 const comicInfoFilenameLower = COMIC_INFO_FILENAME.toLowerCase()

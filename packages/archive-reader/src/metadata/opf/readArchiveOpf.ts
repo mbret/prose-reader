@@ -1,5 +1,5 @@
-import { readRecordAsText } from "../archives/readRecordAsText.ts"
-import type { Archive } from "../archives/types.ts"
+import { readRecordAsText } from "../../archives/readRecordAsText.ts"
+import type { Archive } from "../../archives/types.ts"
 import { getArchiveOpfInfo } from "./getArchiveOpfInfo.ts"
 import { type OpfMetadata, parseOpf } from "./parse.ts"
 

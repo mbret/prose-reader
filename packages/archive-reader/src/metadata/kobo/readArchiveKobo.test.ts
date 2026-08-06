@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { createArchive } from "../archives/createArchive"
-import { blobFileAccessors } from "../archives/fileAccessors"
+import { createArchive } from "../../archives/createArchive"
+import { blobFileAccessors } from "../../archives/fileAccessors"
 import { readArchiveKobo } from "./readArchiveKobo"
 
 const textRecord = (uri: string, content = ``) => ({

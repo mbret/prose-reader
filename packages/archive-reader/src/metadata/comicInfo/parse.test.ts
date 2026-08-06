@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { normalizeIsbn } from "../utils/normalizeIsbn"
+import { normalizeIsbn } from "../../utils/normalizeIsbn"
 import { parseComicInfo } from "./parse"
 
 const minimalComicInfo = (body = "") =>

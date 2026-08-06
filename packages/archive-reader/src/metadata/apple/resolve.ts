@@ -1,8 +1,8 @@
 import type {
   ResolvedMetadata,
   ResolvedMetadataHome,
-} from "../types/resolvedMetadata.ts"
-import { omitUndefined } from "../utils/omitUndefined.ts"
+} from "../../types/resolvedMetadata.ts"
+import { omitUndefined } from "../../utils/omitUndefined.ts"
 import type { AppleMetadata } from "./parse.ts"
 
 /**
