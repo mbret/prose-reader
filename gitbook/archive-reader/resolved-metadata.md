@@ -94,45 +94,7 @@ Every non-empty OPF `dc:identifier` is preserved in document order. The identifi
 
 Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). Known scheme spellings are canonicalized while custom strings remain valid. The direct EPUB 2 attribute wins when a hybrid file states both. Without an authored type, recognizable ISBN and GTIN values become `ISBN`/`GTIN`, a valid absolute HTTP(S) value becomes `URL`, and the lossless fallback is `Unknown`.
 
-The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. This is also the identifier vocabulary consumed by metadata-fetcher, so ISBNs and catalog ids do not change shape between archive inspection and catalog lookup.
-
-#### Google Books identifiers
-
-Archive-reader does not call Google Books itself. Its Google Books support is the normalization of identifiers embedded in a publication, so the resolved metadata can be passed directly to [metadata-fetcher](../metadata-fetcher/README.md#google-books) for an exact catalog lookup.
-
-The authoritative EPUB 3 form gives the `dc:identifier` an `id` and refines it with `identifier-type`:
-
-```xml
-<dc:identifier id="google-books-id">k028AAAACAAJ</dc:identifier>
-<meta refines="#google-books-id" property="identifier-type">
-  GoogleBooks
-</meta>
-```
-
-It resolves as:
-
-```typescript
-{ value: "k028AAAACAAJ", scheme: "GoogleBooks" }
-```
-
-An official Google Books URL is also valid publication metadata:
-
-```xml
-<dc:identifier>
-  https://books.google.com/books?id=k028AAAACAAJ
-</dc:identifier>
-```
-
-Archive-reader classifies the literal value as a URL:
-
-```typescript
-{
-  value: "https://books.google.com/books?id=k028AAAACAAJ",
-  scheme: "URL",
-}
-```
-
-The Google Books provider recognizes that official URL and extracts `k028AAAACAAJ` for an exact lookup. By contrast, an opaque value such as `k028AAAACAAJ` without the EPUB 3 refinement has no safely inferable namespace and is preserved with scheme `Unknown`.
+The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. This is also the identifier vocabulary consumed by metadata-fetcher, so ISBNs and catalog ids do not change shape between archive inspection and catalog lookup. See [Google Books identifiers](google-books.md) for the supported EPUB forms and their exact catalog handoff.
 
 ## Precedence
 

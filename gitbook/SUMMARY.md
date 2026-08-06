@@ -71,6 +71,7 @@
 
 * [About](archive-reader/README.md)
   * [Resolved metadata](archive-reader/resolved-metadata.md)
+  * [Google Books identifiers](archive-reader/google-books.md)
 
 ## Metadata Fetcher
 
