@@ -72,6 +72,7 @@
 * [About](archive-reader/README.md)
   * [Resolved metadata](archive-reader/resolved-metadata.md)
   * [Google Books identifiers](archive-reader/google-books.md)
+  * [Project Gutenberg identifiers](archive-reader/project-gutenberg.md)
 
 ## Metadata Fetcher
 

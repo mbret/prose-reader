@@ -166,6 +166,24 @@ describe("resolveMetadata", () => {
     ])
   })
 
+  it("resolves typed and URL Project Gutenberg identifiers from EPUB 3 metadata", () => {
+    const resolved = resolveMetadata({
+      opf: opfWith(
+        `<dc:identifier id="gutenberg-id">78139</dc:identifier>` +
+          `<meta refines="#gutenberg-id" property="identifier-type">ProjectGutenberg</meta>` +
+          `<dc:identifier>https://www.gutenberg.org/ebooks/78139</dc:identifier>`,
+      ),
+    })
+
+    expect(resolved.identifiers).toEqual([
+      { value: "78139", scheme: "ProjectGutenberg" },
+      {
+        value: "https://www.gutenberg.org/ebooks/78139",
+        scheme: "URL",
+      },
+    ])
+  })
+
   it("keeps the format-scoped corners from their producers", () => {
     const resolved = resolveMetadata({
       comicInfo: comicInfoWith(`<BlackAndWhite>Yes</BlackAndWhite>`),
