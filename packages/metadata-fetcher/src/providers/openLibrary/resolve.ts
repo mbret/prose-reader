@@ -27,9 +27,10 @@ const emptyToUndefined = <T>(
  * Normalizes one search hit into the cross-format vocabulary. Two choices
  * worth stating:
  *
- * - **`title` folds in `subtitle`** (`Dune: Messiah`): the vocabulary has one
- *   title field, and an OPF `dc:title` normally carries the subtitle too, so
- *   comparing a bare title against a full one would cost match score.
+ * - **`title` and `subtitle` stay separate**, as the catalog states them:
+ *   `title` is the work's title and the subtitle is a `titles` entry. The
+ *   matcher composes them when it compares, so nothing is lost by not
+ *   pre-joining them here.
  * - **An ISBN identifier is added only for an ISBN lookup**, using the queried
  *   value — the API answered "this work has that ISBN", a fact about the
  *   record. A title-search hit describes a *work*, whose editions each have
@@ -45,10 +46,12 @@ export const resolveOpenLibraryDoc = (
     readonly matchedProjectGutenbergIdentifier?: MetadataIdentifier
   },
 ): ResolvedMetadata => {
-  const title =
-    doc.title !== undefined && doc.subtitle !== undefined
-      ? `${doc.title}: ${doc.subtitle}`
-      : doc.title
+  const titles = emptyToUndefined([
+    ...(doc.title !== undefined ? [{ value: doc.title }] : []),
+    ...(doc.subtitle !== undefined
+      ? [{ value: doc.subtitle, type: "subtitle" as const }]
+      : []),
+  ])
 
   const languages = emptyToUndefined([
     ...new Set(
@@ -75,7 +78,7 @@ export const resolveOpenLibraryDoc = (
   ]
 
   return omitUndefined({
-    titles: title !== undefined ? [{ value: title }] : undefined,
+    titles,
     cover:
       doc.cover_i !== undefined
         ? {

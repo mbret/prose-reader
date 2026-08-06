@@ -70,6 +70,26 @@ const renderMatch = (match) => {
 
   card.append(el("h2", null, titles[0]?.value ?? "(untitled)"))
 
+  const otherTitles = (metadata.titles ?? [])
+    .slice(1)
+    .map((title) =>
+      title.type ? `${title.value} (${title.type})` : title.value,
+    )
+
+  if (otherTitles.length > 0) {
+    card.append(el("p", "titles", otherTitles.join(" · ")))
+  }
+
+  const series = (metadata.belongsTo?.series ?? [])
+    .map((entry) =>
+      [entry.name, entry.position !== undefined && `#${entry.position}`]
+        .filter(Boolean)
+        .join(" "),
+    )
+    .filter(Boolean)
+
+  if (series.length > 0) card.append(el("p", "titles", series.join(" · ")))
+
   const meta = el("p", "meta")
   const verdict = match.accepted ? "accepted" : "rejected"
 

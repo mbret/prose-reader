@@ -180,6 +180,24 @@ const bestStringComparison = (
   return best
 }
 
+/**
+ * A comparison string, not a value: a book states `Dune: A Novel` in one
+ * `dc:title` where a catalog states a title and a subtitle, and the query
+ * side has whichever spelling its source used. Composing the two for the
+ * comparison alone keeps that asymmetry from costing score, while the
+ * candidate's own metadata stays exactly as the catalog stated it.
+ */
+const subtitledTitle = (candidate: ResolvedMetadata): string | undefined => {
+  const main = mainTitle(candidate)
+  const subtitle = candidate.titles?.find(
+    (title) => title.type === "subtitle",
+  )?.value
+
+  return main !== undefined && subtitle !== undefined
+    ? `${main}: ${subtitle}`
+    : undefined
+}
+
 const bestPublicationYearComparison = (
   query: number | undefined,
   candidates: ReadonlyArray<number | undefined>,
@@ -318,7 +336,14 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  compareStrings("title", query.title, mainTitle(candidate), titleSimilarity)
+  addSignal(
+    "title",
+    bestStringComparison(
+      query.title,
+      [mainTitle(candidate), subtitledTitle(candidate)],
+      titleSimilarity,
+    ),
+  )
   addSignal(
     "publisher",
     bestStringComparison(query.publisher, [

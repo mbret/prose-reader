@@ -21,8 +21,19 @@ export type GoogleBooksImageLinks = {
   readonly extraLarge?: string
 }
 
+export type GoogleBooksVolumeSeries = {
+  readonly seriesId?: string
+  readonly orderNumber?: number
+}
+
+/**
+ * Only the volume's place in its series is retained. `bookDisplayNumber` and
+ * `shortSeriesBookTitle` are display strings by Google's own definition — the
+ * sequence is `orderNumber` — and the payload never states the series name,
+ * only an id, so a name would have to be invented.
+ */
 export type GoogleBooksSeriesInfo = {
-  readonly bookDisplayNumber?: string
+  readonly volumeSeries?: ReadonlyArray<GoogleBooksVolumeSeries>
 }
 
 /**
@@ -109,9 +120,18 @@ const parseSeriesInfo = (
 
   if (seriesInfo === undefined) return undefined
 
-  const bookDisplayNumber = readString(seriesInfo, "bookDisplayNumber")
+  const volumeSeries = readRecordArray(seriesInfo, "volumeSeries").flatMap(
+    (record) => {
+      const parsed = omitUndefined({
+        seriesId: readString(record, "seriesId"),
+        orderNumber: readNumber(record, "orderNumber"),
+      })
 
-  return bookDisplayNumber !== undefined ? { bookDisplayNumber } : undefined
+      return Object.keys(parsed).length > 0 ? [parsed] : []
+    },
+  )
+
+  return volumeSeries.length > 0 ? { volumeSeries } : undefined
 }
 
 const parseVolumeInfo = (

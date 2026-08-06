@@ -1,9 +1,11 @@
 import {
   type MetadataIdentifier,
   parseW3cDtfDate,
+  type ResolvedCollection,
   type ResolvedContributor,
   type ResolvedCover,
   type ResolvedMetadata,
+  type ResolvedTitle,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
@@ -49,27 +51,47 @@ const industryIdentifiers = (
     }),
   )
 
-const titleWithSeriesNumber = (
+/**
+ * Google states the title and the subtitle as separate fields, so they stay
+ * separate: composing them for display is the consumer's decision.
+ */
+const resolvedTitles = (
   volumeInfo: GoogleBooksVolumeInfo,
-): string | undefined => {
-  const title =
-    volumeInfo.title !== undefined && volumeInfo.subtitle !== undefined
-      ? `${volumeInfo.title}: ${volumeInfo.subtitle}`
-      : volumeInfo.title
-  const displayNumber = volumeInfo.seriesInfo?.bookDisplayNumber
-  const hasSeriesNumber =
-    title !== undefined &&
-    (/\bvol(?:ume)?\.?\s*\S+/i.test(title) ||
-      /\b(?:book|part)(?:\s*#\s*|\s+)(?:\d+(?:[.-]\d+)*|[ivxlcdm]+)\b/i.test(
-        title,
-      ))
+): ReadonlyArray<ResolvedTitle> | undefined =>
+  emptyToUndefined([
+    ...(volumeInfo.title !== undefined ? [{ value: volumeInfo.title }] : []),
+    ...(volumeInfo.subtitle !== undefined
+      ? [{ value: volumeInfo.subtitle, type: "subtitle" as const }]
+      : []),
+  ])
 
-  if (title === undefined || displayNumber === undefined || hasSeriesNumber) {
-    return title
-  }
+/**
+ * The volume's place in its series, which Google identifies by id alone — it
+ * never states the series name, and inventing one would be fabrication.
+ */
+const resolvedSeries = (
+  volumeInfo: GoogleBooksVolumeInfo,
+): ReadonlyArray<ResolvedCollection> | undefined =>
+  emptyToUndefined(
+    (volumeInfo.seriesInfo?.volumeSeries ?? []).flatMap<ResolvedCollection>(
+      (series) => {
+        const entry = omitUndefined({
+          identifiers:
+            series.seriesId !== undefined
+              ? [
+                  {
+                    value: series.seriesId,
+                    scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+                  },
+                ]
+              : undefined,
+          position: series.orderNumber,
+        })
 
-  return `${title} Vol ${displayNumber}`
-}
+        return Object.keys(entry).length > 0 ? [entry] : []
+      },
+    ),
+  )
 
 const absoluteHttpUrl = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
@@ -169,11 +191,12 @@ export const resolveGoogleBooksVolume = (
     GOOGLE_BOOKS_MAX_SUBJECTS,
   )
 
-  const title = titleWithSeriesNumber(volumeInfo)
+  const series = resolvedSeries(volumeInfo)
 
   return omitUndefined({
-    titles: title !== undefined ? [{ value: title }] : undefined,
+    titles: resolvedTitles(volumeInfo),
     description: volumeInfo.description,
+    belongsTo: series !== undefined ? { series } : undefined,
     publication:
       edition.date !== undefined || edition.publisher !== undefined
         ? { edition }

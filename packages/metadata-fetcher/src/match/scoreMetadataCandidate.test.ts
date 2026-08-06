@@ -129,6 +129,38 @@ describe("scoreMetadataCandidate", () => {
     })
   })
 
+  it("compares a book's joined title against a catalog's split one", () => {
+    const candidate: ResolvedMetadata = {
+      titles: [{ value: "Dune" }, { value: "A Novel", type: "subtitle" }],
+    }
+    const { signals } = score({ title: "Dune: A Novel" }, candidate)
+
+    expect(signals[0]).toMatchObject({
+      field: "title",
+      score: 1,
+      candidate: "Dune: A Novel",
+    })
+    // the comparison string is never written back onto the candidate
+    expect(candidate.titles).toEqual([
+      { value: "Dune" },
+      { value: "A Novel", type: "subtitle" },
+    ])
+  })
+
+  it("keeps the plain title when it compares better than the composed one", () => {
+    const { signals } = score(
+      { title: "Dune" },
+      {
+        titles: [
+          { value: "Dune" },
+          { value: "The Graphic Novel", type: "subtitle" },
+        ],
+      },
+    )
+
+    expect(signals[0]).toMatchObject({ score: 1, candidate: "Dune" })
+  })
+
   it("tolerates a near publication year and a near page count", () => {
     const near = score(
       {

@@ -168,7 +168,7 @@ The rules:
   | `publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
 - **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same non-`Unknown` scheme. An `Unknown` raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
-- **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
+- **Comparisons are fuzzy where the world is.** Titles compare on character bigrams, against both the candidate's `title` and its title composed with a `subtitle` entry — a book states `Dune: A Novel` in one `dc:title` where a catalog splits it in two, and only the comparison string is composed, never the returned metadata. The subtitle asymmetry is repaired on top (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 
 `minScore` (default `0.5`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
@@ -272,7 +272,7 @@ The confirmed candidate echoes the book's exact input identifier and adds `{ val
 | Project Gutenberg RDF | Resolved | |
 | --- | --- | --- |
 | `pgterms:ebook@rdf:about` | `identifiers` | numeric scheme `ProjectGutenberg`; the exact matched input identifier is preserved too |
-| `dcterms:title` | `title` | |
+| `dcterms:title` | `title`, `titles` | |
 | `dcterms:creator`, `marcrel:*` | `contributors` | common MARC relators normalize to roles such as `author`, `translator`, `editor`, and `illustrator`; unknown codes remain verbatim |
 | `dcterms:issued` | `publication.edition.date` | Gutenberg ebook release date, parsed through day precision when available; it is not the work's original publication date |
 | `dcterms:publisher` | `publication.edition.publisher` | the publisher of the Gutenberg edition |
@@ -321,7 +321,9 @@ Each request makes at most three total attempts. Network failures and HTTP `500`
 | Google Books | Resolved | |
 | --- | --- | --- |
 | `id` | `identifiers` | scheme `GoogleBooks`; also `id` on the match |
-| `volumeInfo.title` + `subtitle` | `titles` | joined with `:`, then `seriesInfo.bookDisplayNumber` is appended as `Vol …` only when no volume marker is already present |
+| `volumeInfo.title` | `titles` | verbatim; the main title (first entry) |
+| `subtitle` | `titles` | its own entry, typed `subtitle` — never appended to the main title |
+| `seriesInfo.volumeSeries` | `belongsTo.series` | `seriesId` as a `GoogleBooks` identifier, `orderNumber` as `position`. Google never states the series *name*, and `bookDisplayNumber` / `shortSeriesBookTitle` are display strings by its own definition, so neither is mapped |
 | `authors` | `contributors` | role `author` |
 | `publisher`, `publishedDate` | `publication.edition` | partial dates retain the available year/month/day |
 | `description` | `description` | Google may provide simple HTML formatting |
@@ -357,7 +359,8 @@ const provider = createOpenLibraryProvider({
 
 | Open Library | Resolved | |
 | --- | --- | --- |
-| `title` + `subtitle` | `titles` | joined (`Dune: a novel`) — `ResolvedMetadata` has one title field, and an OPF `dc:title` normally carries the subtitle too |
+| `title` | `titles` | verbatim; the main title (first entry) |
+| `subtitle` | `titles` | its own entry, typed `subtitle` — the matcher composes the two when it compares, so nothing is gained by joining them here |
 | `author_name` | `contributors` | role `author` |
 | `first_publish_year` | `publication.original.date.year` | |
 | `language` | `languages` | MARC 21 → BCP 47 (`eng` → `en`); unknown codes pass through, `und`/`mul`/`zxx` are dropped |
