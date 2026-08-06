@@ -116,7 +116,7 @@ export type {
   MetadataIdentifierScheme,
   ResolvedAppleMetadata,
   ResolvedCollection,
-  ResolvedComicMetadata,
+  ResolvedComicInfoMetadata,
   ResolvedConfidence,
   ResolvedContributor,
   ResolvedContributorRole,

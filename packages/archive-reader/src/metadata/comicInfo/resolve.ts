@@ -12,53 +12,53 @@ import type { ComicInfo, ComicInfoKnownField } from "./parse.ts"
 
 /**
  * Losslessness contract: where every ComicInfo field lands in
- * {@link ResolvedMetadata} (dotted paths address the `comic` corner and
+ * {@link ResolvedMetadata} (dotted paths address the `comicInfo` corner and
  * `belongsTo`). Compile-enforced against {@link ComicInfoKnownField} —
  * adding a field to the parser without declaring its home here is a type
  * error. This table doubles as the per-format mapping documentation.
  */
 export const comicInfoMetadataHomes = {
-  AgeRating: "comic.ageRating",
-  AlternateCount: "comic.alternateSeries",
-  AlternateNumber: "comic.alternateSeries",
-  AlternateSeries: "comic.alternateSeries",
-  BlackAndWhite: "comic.blackAndWhite",
-  Characters: "comic.characters",
+  AgeRating: "comicInfo.ageRating",
+  AlternateCount: "comicInfo.alternateSeries",
+  AlternateNumber: "comicInfo.alternateSeries",
+  AlternateSeries: "comicInfo.alternateSeries",
+  BlackAndWhite: "comicInfo.blackAndWhite",
+  Characters: "comicInfo.characters",
   Colorist: "contributors",
-  CommunityRating: "comic.communityRating",
+  CommunityRating: "comicInfo.communityRating",
   Count: "belongsTo.series",
   CoverArtist: "contributors",
   Day: "publication.edition.date",
   Editor: "contributors",
-  Format: "comic.format",
+  Format: "comicInfo.format",
   Genre: "subjects",
   GTIN: "identifiers",
   Imprint: "publication.edition.imprint",
   Inker: "contributors",
   LanguageISO: "languages",
   Letterer: "contributors",
-  Locations: "comic.locations",
-  MainCharacterOrTeam: "comic.mainCharacterOrTeam",
+  Locations: "comicInfo.locations",
+  MainCharacterOrTeam: "comicInfo.mainCharacterOrTeam",
   Manga: "readingDirection",
   Month: "publication.edition.date",
-  Notes: "comic.notes",
+  Notes: "comicInfo.notes",
   Number: "belongsTo.series",
   PageCount: "numberOfPages",
   Penciller: "contributors",
   Publisher: "publication.edition.publisher",
-  Review: "comic.review",
-  ScanInformation: "comic.scanInformation",
+  Review: "comicInfo.review",
+  ScanInformation: "comicInfo.scanInformation",
   Series: "belongsTo.series",
   SeriesGroup: "belongsTo.collection",
-  StoryArc: "comic.storyArcs",
-  StoryArcNumber: "comic.storyArcs",
+  StoryArc: "comicInfo.storyArcs",
+  StoryArcNumber: "comicInfo.storyArcs",
   Summary: "description",
   Tags: "subjects",
-  Teams: "comic.teams",
+  Teams: "comicInfo.teams",
   Title: "titles",
   Translator: "contributors",
-  Volume: "comic.volume",
-  Web: "comic.web",
+  Volume: "comicInfo.volume",
+  Web: "comicInfo.web",
   Writer: "contributors",
   Year: "publication.edition.date",
 } as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHomes>
@@ -258,7 +258,7 @@ const webIdentifiers = (
 const comicCornerFromComicInfo = (
   info: ComicInfo,
   webValues: ReadonlyArray<string>,
-): ResolvedMetadata["comic"] => {
+): ResolvedMetadata["comicInfo"] => {
   const corner = omitUndefined({
     manga: mangaFlag(info),
     blackAndWhite: parseYesNo(info.BlackAndWhite),
@@ -333,6 +333,6 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     numberOfPages: parseNonNegativeInt(info.PageCount),
     identifiers: emptyToUndefined(identifiers),
     belongsTo: belongsToFromComicInfo(info),
-    comic: comicCornerFromComicInfo(info, web),
+    comicInfo: comicCornerFromComicInfo(info, web),
   })
 }

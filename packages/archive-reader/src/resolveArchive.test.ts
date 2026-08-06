@@ -346,7 +346,7 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
       readingDirection: `rtl`,
       contributors: [{ name: `Jane Author`, roles: [`author`] }],
       belongsTo: { series: [{ name: `My Comics`, position: 3 }] },
-      comic: { manga: true },
+      comicInfo: { manga: true },
     })
     expect(resolved.readingOrder).toEqual([
       {

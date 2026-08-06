@@ -18,7 +18,7 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toEqual({
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
-      comic: { manga: true },
+      comicInfo: { manga: true },
     })
   })
 
@@ -27,7 +27,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toEqual({
       readingDirection: "ltr",
-      comic: { manga: false },
+      comicInfo: { manga: false },
     })
   })
 
@@ -36,7 +36,7 @@ describe("resolveComicInfo", () => {
 
     expect(resolveComicInfo(parsed)).toEqual({
       readingDirection: "ltr",
-      comic: { manga: true },
+      comicInfo: { manga: true },
     })
   })
 
@@ -51,7 +51,7 @@ describe("resolveComicInfo", () => {
 
     const resolved = resolveComicInfo(parsed)
     expect(resolved.readingDirection).toBeUndefined()
-    expect(resolved.comic).toBeUndefined()
+    expect(resolved.comicInfo).toBeUndefined()
   })
 
   it("keeps a GTIN-8 identifier", () => {
@@ -76,7 +76,7 @@ describe("resolveComicInfo", () => {
         { value: googleBooksUrl, scheme: "URL" },
         { value: gutenbergUrl, scheme: "URL" },
       ],
-      comic: {
+      comicInfo: {
         web: [googleBooksUrl, gutenbergUrl, "not-a-url", googleBooksUrl],
       },
     })
@@ -308,7 +308,7 @@ describe("resolveComicInfo", () => {
       ),
     )
 
-    expect(resolveComicInfo(parsed).comic?.storyArcs).toEqual([
+    expect(resolveComicInfo(parsed).comicInfo?.storyArcs).toEqual([
       { name: "Arc One", position: 1 },
       { name: "Arc Two", position: 3 },
     ])
@@ -323,7 +323,7 @@ describe("resolveComicInfo", () => {
       ),
     )
 
-    expect(resolveComicInfo(parsed).comic?.alternateSeries).toEqual({
+    expect(resolveComicInfo(parsed).comicInfo?.alternateSeries).toEqual({
       name: "Crossover",
       position: 2,
       total: 6,
@@ -349,7 +349,7 @@ describe("resolveComicInfo", () => {
       ),
     )
 
-    expect(resolveComicInfo(parsed).comic).toEqual({
+    expect(resolveComicInfo(parsed).comicInfo).toEqual({
       blackAndWhite: true,
       volume: 3,
       format: "TPB",
@@ -418,7 +418,7 @@ describe("resolveComicInfo", () => {
       languages: ["en"],
       subjects: ["Action", "ninja"],
       belongsTo: { series: [{ name: "Sample Series", position: 1 }] },
-      comic: { manga: true },
+      comicInfo: { manga: true },
     })
   })
 })

@@ -17,7 +17,7 @@
  * - **Normalization ≠ convergence** — every field is typed/parsed/validated
  *   (booleans are booleans, positions are numbers), but concepts with no
  *   cross-format twin stay in clearly format-scoped corners ({@link
- *   ResolvedComicMetadata}, {@link ResolvedAppleMetadata},
+ *   ResolvedComicInfoMetadata}, {@link ResolvedAppleMetadata},
  *   {@link ResolvedKoboMetadata}) instead of faking generic names.
  * - **Losslessness** — everything a parser captures must have a home either
  *   here or on a sibling part of the resolved archive entity (reading order,
@@ -191,7 +191,7 @@ export type ResolvedProperty = {
  * ComicInfo-scoped concepts with no cross-format twin. Normalized (typed,
  * parsed), but deliberately not renamed into pseudo-generic fields.
  */
-export type ResolvedComicMetadata = {
+export type ResolvedComicInfoMetadata = {
   /** `Manga` is `Yes`/`YesAndRightToLeft` → true, `No` → false. */
   readonly manga?: boolean
   /** `BlackAndWhite` `Yes` → true, `No` → false. */
@@ -389,7 +389,7 @@ export type ResolvedMetadata = {
    * (see {@link ResolvedProperty}). Lossless by construction.
    */
   readonly properties?: ReadonlyArray<ResolvedProperty>
-  readonly comic?: ResolvedComicMetadata
+  readonly comicInfo?: ResolvedComicInfoMetadata
   readonly apple?: ResolvedAppleMetadata
   readonly kobo?: ResolvedKoboMetadata
 }
@@ -409,9 +409,9 @@ export type ResolvedMetadata = {
 export type ResolvedMetadataHome =
   | Exclude<
       keyof ResolvedMetadata,
-      "comic" | "apple" | "kobo" | "belongsTo" | "publication"
+      "comicInfo" | "apple" | "kobo" | "belongsTo" | "publication"
     >
-  | `comic.${keyof ResolvedComicMetadata}`
+  | `comicInfo.${keyof ResolvedComicInfoMetadata}`
   | `apple.${keyof ResolvedAppleMetadata}`
   | `kobo.${keyof ResolvedKoboMetadata}`
   | `belongsTo.${"series" | "collection"}`
