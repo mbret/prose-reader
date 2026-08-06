@@ -52,6 +52,7 @@ type FetchMetadataInput = {
   authors?: ReadonlyArray<string>
   isbn?: string
   gtin?: string
+  googleBooksId?: string
   identifiers?: ReadonlyArray<{ value: string; scheme?: string }>
   series?: string
   publisher?: string
@@ -61,7 +62,7 @@ type FetchMetadataInput = {
 }
 ```
 
-Some fields start a request (`title`, `authors`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
+Some fields start a request (`title`, `authors`, ISBN/GTIN, `googleBooksId`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). `googleBooksId` is Google's opaque volume id, not an ISBN—for example `zyTCAlFPjgYC`. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
 
 `metadataInputFromResolvedArchive` is the explicit bridge from archive-reader. It only requires the `metadata` projection, so callers do not need to resolve reading order, TOC or sources for a lookup:
 
@@ -70,7 +71,7 @@ const resolved = await resolveArchive(archive, { include: ["metadata"] })
 const input = metadataInputFromResolvedArchive(resolved)
 ```
 
-The adapter selects authors from contributors, the first series, and the edition publisher/year with original-publication data as fallback. It also removes archive-only identifier details such as `unique`.
+The adapter selects authors from contributors, the first series, and the edition publisher/year with original-publication data as fallback. It promotes a `GoogleBooks` identifier into `googleBooksId` and removes archive-only identifier details such as `unique` from the remaining generic identifiers.
 
 ## The fetched entity
 
@@ -284,18 +285,18 @@ const provider = createGoogleBooksProvider({
 | `baseUrl` | `https://www.googleapis.com/books/v1` | API root; override for a stub |
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 
-**Lookup strategy**, from most exact to broadest: a volume whose identifier has scheme `GoogleBooks` (or an official Google Books/API URL), ISBN, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
+**Lookup strategy**, from most exact to broadest: `googleBooksId` (or an authored `GoogleBooks` identifier or official Google Books/API URL), ISBN, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
 
-To replace Oboku's `googleVolumeId`, pass the directive value as an authored identifier:
+To replace Oboku's `googleVolumeId`, pass it directly:
 
 ```typescript
 const input = {
   title: "Dune",
-  identifiers: [{ value: googleVolumeId, scheme: "GoogleBooks" }],
+  googleBooksId: googleVolumeId,
 }
 ```
 
-An exact lookup echoes that identifier after Google confirms it, so the shared matcher treats it as decisive. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`.
+An official Google Books website/API URL in `identifiers` is recognized too. An exact lookup echoes the volume id as `{ value: id, scheme: "GoogleBooks" }` after Google confirms it, so the shared matcher treats it as decisive. `metadataInputFromResolvedArchive` promotes that identifier back into `googleBooksId` for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`.
 
 Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 

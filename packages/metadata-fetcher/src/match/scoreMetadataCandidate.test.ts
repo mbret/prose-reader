@@ -182,6 +182,21 @@ describe("scoreMetadataCandidate", () => {
     )
   })
 
+  it("makes a matching Google Books volume id decisive", () => {
+    const result = score(
+      { title: "A local title", googleBooksId: "zyTCAlFPjgYC" },
+      {
+        title: "The catalog title",
+        identifiers: [{ value: "zytcalfpjgyc", scheme: "googlebooks" }],
+      },
+    )
+
+    expect(result.score).toBe(1)
+    expect(result.signals).toContainEqual(
+      expect.objectContaining({ field: "identifiers", score: 1 }),
+    )
+  })
+
   it("does not make a scheme-less identifier match decisive", () => {
     const result = score(
       {

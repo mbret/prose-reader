@@ -69,6 +69,7 @@ Human-friendly lookup, for curl and quick tries.
 | `title` | |
 | `author` | repeatable |
 | `isbn`, `gtin` | |
+| `googleBooksId` | exact Google Books volume id |
 | `series` | |
 | `language` | repeatable |
 | `publisher` | publisher matching evidence |
@@ -88,7 +89,7 @@ curl -X POST "http://localhost:6382/metadata?limit=3" \
   -d '{"title":"Dune","authors":["Frank Herbert"],"publishedYear":1965}'
 ```
 
-Supported fields are `title`, `authors`, `isbn`, `gtin`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Unknown fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
+Supported fields are `title`, `authors`, `isbn`, `gtin`, `googleBooksId`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Unknown fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
 
 ### Options (both metadata routes)
 

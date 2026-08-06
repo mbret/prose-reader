@@ -97,6 +97,7 @@ export const parseMetadataInput = (
     authors: readStringArray(body, "authors"),
     isbn: readString(body, "isbn"),
     gtin: readString(body, "gtin"),
+    googleBooksId: readString(body, "googleBooksId"),
     identifiers: readIdentifiers(body),
     series: readString(body, "series"),
     publisher: readString(body, "publisher"),

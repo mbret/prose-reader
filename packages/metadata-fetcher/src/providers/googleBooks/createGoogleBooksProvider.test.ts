@@ -57,12 +57,7 @@ describe("createGoogleBooksProvider", () => {
     })
     const input: FetchMetadataInput = {
       title: "A locally edited title",
-      identifiers: [
-        {
-          value: "https://books.google.com/books?id=zyTCAlFPjgYC",
-          scheme: "URL",
-        },
-      ],
+      googleBooksId: "zyTCAlFPjgYC",
     }
     const [candidate] = await provider.search(input, {
       ...context,
@@ -81,10 +76,6 @@ describe("createGoogleBooksProvider", () => {
       url: "https://books.google.com/books/about/Dune.html?id=zyTCAlFPjgYC",
       metadata: {
         identifiers: expect.arrayContaining([
-          {
-            value: "https://books.google.com/books?id=zyTCAlFPjgYC",
-            scheme: "URL",
-          },
           { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         ]),
       },

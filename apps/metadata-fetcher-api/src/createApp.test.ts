@@ -203,6 +203,12 @@ describe("metadata-fetcher-api", () => {
     ])
   })
 
+  it("accepts a Google Books volume id as a query term", async () => {
+    const response = await api.get("/metadata?googleBooksId=zyTCAlFPjgYC")
+
+    expect(response.status).toBe(200)
+  })
+
   it("accepts compact lookup input", async () => {
     const response = await api.post("/metadata", {
       title: "Dune",

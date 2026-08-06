@@ -140,7 +140,7 @@ const queryFrom = (formData, source) => {
   const keys =
     source === "file"
       ? ["limit", "minScore"]
-      : ["title", "author", "isbn", "limit", "minScore"]
+      : ["title", "author", "isbn", "googleBooksId", "limit", "minScore"]
 
   for (const key of keys) {
     const value = formData.get(key)
@@ -204,10 +204,11 @@ form.addEventListener("submit", async (event) => {
 
   if (
     source === "fields" &&
-    !["title", "author", "isbn"].some((key) => params.has(key))
+    !["title", "author", "isbn", "googleBooksId"].some((key) => params.has(key))
   ) {
     statusEl.className = "status error"
-    statusEl.textContent = "Type a title, an author or an ISBN first."
+    statusEl.textContent =
+      "Type a title, an author, an ISBN or a Google Books ID first."
 
     return
   }

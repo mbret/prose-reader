@@ -1,7 +1,8 @@
 import type { ResolvedMetadata } from "@prose-reader/archive-reader"
-import type {
-  FetchMetadataInput,
-  MetadataIdentifier,
+import {
+  type FetchMetadataInput,
+  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+  type MetadataIdentifier,
 } from "../types/fetchMetadataInput.ts"
 import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
 import { metadataAuthors } from "../utils/metadataAuthors.ts"
@@ -278,7 +279,18 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryIdentifiers = query.identifiers ?? []
+  const queryGoogleBooksId = stated(query.googleBooksId)
+  const queryIdentifiers = [
+    ...(queryGoogleBooksId !== undefined
+      ? [
+          {
+            value: queryGoogleBooksId,
+            scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+          },
+        ]
+      : []),
+    ...(query.identifiers ?? []),
+  ]
   const candidateIdentifiers = candidate.identifiers ?? []
   const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
     candidateIdentifiers.some((other) =>

@@ -1,5 +1,8 @@
 import type { ResolvedArchive } from "@prose-reader/archive-reader"
-import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
+import {
+  type FetchMetadataInput,
+  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+} from "./types/fetchMetadataInput.ts"
 import { metadataAuthors } from "./utils/metadataAuthors.ts"
 import { omitUndefined } from "./utils/omitUndefined.ts"
 
@@ -14,15 +17,21 @@ export const metadataInputFromResolvedArchive = (
 ): FetchMetadataInput => {
   const { metadata } = resolved
   const authors = metadataAuthors(metadata)
-  const identifiers = metadata.identifiers?.map(({ value, scheme }) =>
-    omitUndefined({ value, scheme }),
+  const googleBooksIdentifier = metadata.identifiers?.find(
+    ({ scheme }) =>
+      scheme?.trim().toLowerCase() ===
+      GOOGLE_BOOKS_IDENTIFIER_SCHEME.toLowerCase(),
   )
+  const identifiers = metadata.identifiers
+    ?.filter((identifier) => identifier !== googleBooksIdentifier)
+    .map(({ value, scheme }) => omitUndefined({ value, scheme }))
 
   return omitUndefined({
     title: metadata.title,
     authors: authors.length > 0 ? authors : undefined,
     isbn: metadata.isbn,
     gtin: metadata.gtin,
+    googleBooksId: googleBooksIdentifier?.value,
     identifiers:
       identifiers !== undefined && identifiers.length > 0
         ? identifiers

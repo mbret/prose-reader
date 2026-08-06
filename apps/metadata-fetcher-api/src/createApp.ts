@@ -154,6 +154,9 @@ const metadataInputFromQuery = (
     ...(queryValue(query.gtin) !== undefined
       ? { gtin: queryValue(query.gtin) }
       : {}),
+    ...(queryValue(query.googleBooksId) !== undefined
+      ? { googleBooksId: queryValue(query.googleBooksId) }
+      : {}),
     ...(authors.length > 0 ? { authors } : {}),
     ...(languages.length > 0 ? { languages } : {}),
     ...(queryValue(query.series) !== undefined
@@ -212,7 +215,7 @@ export const createApp = (options: CreateAppOptions): Express => {
     if (!hasSearchTerms(input)) {
       response.status(400).json({
         error:
-          "No search term: provide at least a title, an author, an isbn, a gtin or an identifier",
+          "No search term: provide at least a title, an author, an isbn, a gtin, a Google Books id or an identifier",
       })
 
       return

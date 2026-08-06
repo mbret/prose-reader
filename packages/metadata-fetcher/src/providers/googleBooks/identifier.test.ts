@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest"
 import { googleBooksLookupFromInput } from "./identifier.ts"
 
 describe("googleBooksLookupFromInput", () => {
-  it("recognizes an authored Google Books volume id", () => {
+  it("recognizes the dedicated Google Books volume id", () => {
+    expect(
+      googleBooksLookupFromInput({ googleBooksId: " zyTCAlFPjgYC " }),
+    ).toEqual({
+      id: "zyTCAlFPjgYC",
+      identifier: { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    })
+  })
+
+  it("recognizes an authored generic identifier", () => {
     expect(
       googleBooksLookupFromInput({
         identifiers: [{ value: " zyTCAlFPjgYC ", scheme: "GoogleBooks" }],

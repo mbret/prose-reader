@@ -17,6 +17,7 @@ describe("metadataInputFromResolvedArchive", () => {
         gtin: "9780441013593",
         identifiers: [
           { value: "urn:isbn:9780441013593", scheme: "URI", unique: true },
+          { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         ],
         belongsTo: {
           series: [
@@ -42,6 +43,7 @@ describe("metadataInputFromResolvedArchive", () => {
       authors: ["Frank Herbert"],
       isbn: "9780441013593",
       gtin: "9780441013593",
+      googleBooksId: "zyTCAlFPjgYC",
       identifiers: [{ value: "urn:isbn:9780441013593", scheme: "URI" }],
       series: "Dune",
       publisher: "Ace",

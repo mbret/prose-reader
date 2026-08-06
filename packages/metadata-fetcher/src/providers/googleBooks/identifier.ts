@@ -1,9 +1,10 @@
-import type {
-  FetchMetadataInput,
-  MetadataIdentifier,
+import {
+  type FetchMetadataInput,
+  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+  type MetadataIdentifier,
 } from "../../types/fetchMetadataInput.ts"
 
-export const GOOGLE_BOOKS_IDENTIFIER_SCHEME = "GoogleBooks"
+export { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "../../types/fetchMetadataInput.ts"
 
 export type GoogleBooksLookup = {
   readonly id: string
@@ -58,6 +59,20 @@ const googleBooksIdFromUrl = (value: string): string | undefined => {
 export const googleBooksLookupFromInput = (
   input: FetchMetadataInput,
 ): GoogleBooksLookup | undefined => {
+  if (input.googleBooksId !== undefined) {
+    const id = normalizedGoogleBooksId(input.googleBooksId)
+
+    if (id !== undefined) {
+      return {
+        id,
+        identifier: {
+          value: id,
+          scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+        },
+      }
+    }
+  }
+
   for (const identifier of input.identifiers ?? []) {
     const scheme = identifier.scheme?.trim().toLowerCase()
     const id =
