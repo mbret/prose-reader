@@ -62,15 +62,4 @@ Both resolve to the literal URL:
 
 Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comic.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
 
-## What this illustrates generally
-
-The same identifier model applies beyond Google Books:
-
-- EPUB `dc:identifier` can use an EPUB 3 `identifier-type` refinement to announce a known or application-specific namespace.
-- ComicInfo provides `GTIN` for product identifiers and `Web` for reference URLs; it has no generic typed identifier collection.
-- Valid absolute HTTP(S) identifiers become scheme `URL`, independently of their host.
-- Archive-reader only infers schemes from values when the syntax is dependable, currently ISBN, GTIN, and absolute HTTP(S) URLs.
-- An opaque untyped value is preserved as `Unknown` instead of being guessed or discarded.
-- Custom scheme strings remain valid even when they are not part of `KnownMetadataIdentifierScheme`.
-
-For EPUBs—including EPUBs carrying Apple or Kobo display-option files—the OPF package document is the identifier source. Apple and Kobo sidecars describe presentation and do not define bibliographic identifier fields.
+See [Publication identifiers](identifiers.md) for the shared scheme resolution rules, custom schemes, URLs, and the `Unknown` fallback.

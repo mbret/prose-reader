@@ -94,7 +94,7 @@ Every non-empty OPF `dc:identifier` is preserved in document order. The identifi
 
 Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). Known scheme spellings are canonicalized while custom strings remain valid. The direct EPUB 2 attribute wins when a hybrid file states both. Without an authored type, recognizable ISBN and GTIN values become `ISBN`/`GTIN`, a valid absolute HTTP(S) value becomes `URL`, and the lossless fallback is `Unknown`.
 
-The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. See [Google Books identifiers](google-books.md) and [Project Gutenberg identifiers](project-gutenberg.md) for their supported archive representations.
+The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. See [Publication identifiers](identifiers.md) for the complete resolution model, with [Google Books](google-books.md) and [Project Gutenberg](project-gutenberg.md) as concrete catalog examples.
 
 ## Precedence
 
