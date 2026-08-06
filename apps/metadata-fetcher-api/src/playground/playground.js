@@ -135,14 +135,10 @@ const render = (body) => {
   resultsEl.append(...matches.map(renderMatch))
 }
 
-const queryFrom = (formData, source) => {
+const optionsQueryFrom = (formData) => {
   const params = new URLSearchParams()
-  const keys =
-    source === "file"
-      ? ["limit", "minScore"]
-      : ["title", "author", "isbn", "googleBooksId", "limit", "minScore"]
 
-  for (const key of keys) {
+  for (const key of ["limit", "minScore"]) {
     const value = formData.get(key)
 
     if (typeof value === "string" && value.trim() !== "") {
@@ -154,6 +150,33 @@ const queryFrom = (formData, source) => {
   if (formData.get("includeRaw")) params.set("includeRaw", "true")
 
   return params
+}
+
+const trimmedFormValue = (formData, key) => {
+  const value = formData.get(key)
+
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : undefined
+}
+
+const metadataInputFrom = (formData) => {
+  const title = trimmedFormValue(formData, "title")
+  const author = trimmedFormValue(formData, "author")
+  const isbn = trimmedFormValue(formData, "isbn")
+  const googleBooksId = trimmedFormValue(formData, "googleBooksId")
+  const identifiers = [
+    ...(isbn !== undefined ? [{ value: isbn, scheme: "ISBN" }] : []),
+    ...(googleBooksId !== undefined
+      ? [{ value: googleBooksId, scheme: "GoogleBooks" }]
+      : []),
+  ]
+
+  return {
+    ...(title !== undefined ? { title } : {}),
+    ...(author !== undefined ? { authors: [author] } : {}),
+    ...(identifiers.length > 0 ? { identifiers } : {}),
+  }
 }
 
 const urlWith = (path, params) => {
@@ -200,12 +223,9 @@ form.addEventListener("submit", async (event) => {
 
   const formData = new FormData(form)
   const source = formData.get("source")
-  const params = queryFrom(formData, source)
+  const metadataInput = metadataInputFrom(formData)
 
-  if (
-    source === "fields" &&
-    !["title", "author", "isbn", "googleBooksId"].some((key) => params.has(key))
-  ) {
+  if (source === "fields" && Object.keys(metadataInput).length === 0) {
     statusEl.className = "status error"
     statusEl.textContent =
       "Type a title, an author, an ISBN or a Google Books ID first."
@@ -222,7 +242,7 @@ form.addEventListener("submit", async (event) => {
     return
   }
 
-  const metadataUrl = urlWith("/metadata", params)
+  const metadataUrl = urlWith("/metadata", optionsQueryFrom(formData))
   const started = performance.now()
 
   button.disabled = true
@@ -271,8 +291,13 @@ form.addEventListener("submit", async (event) => {
 
       label = `POST ${metadataUrl} (${file.name})`
     } else {
-      response = await fetch(metadataUrl)
-      label = `GET ${metadataUrl}`
+      console.log(`POST ${metadataUrl}`, metadataInput)
+      response = await fetch(metadataUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(metadataInput),
+      })
+      label = `POST ${metadataUrl}`
     }
 
     const body = await response.json()

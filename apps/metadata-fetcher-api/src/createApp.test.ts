@@ -370,6 +370,10 @@ describe("metadata-fetcher-api playground", () => {
       expect(script).toContain(
         'console.log("POST /playground/resolve", resolved)',
       )
+      expect(script).toContain('scheme: "ISBN"')
+      expect(script).toContain('scheme: "GoogleBooks"')
+      expect(script).toContain("body: JSON.stringify(metadataInput)")
+      expect(script).not.toContain("label = `GET ")
       expect(script).toContain("console.log(label, body)")
       expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB/)
       expect(script).toBe(await readFile(PLAYGROUND_SCRIPT_FILE, "utf8"))

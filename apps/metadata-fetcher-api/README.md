@@ -18,7 +18,7 @@ curl "http://localhost:6382/metadata?title=Dune&author=Frank+Herbert"
 
 The `.env` file is ignored by Git. Docker Compose loads it from `apps/metadata-fetcher-api/.env` even though the command runs at the repository root. Setting `GOOGLE_BOOKS_API_KEY` there enables the `googleBooks` provider; restart the stack after changing it.
 
-Then open <http://localhost:6382> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
+Then open <http://localhost:6382> for the **playground**. Entered metadata is converted into the canonical `FetchMetadataInput` shape and posted as JSON to `/metadata`, so the browser's network inspector shows the exact SDK/API input. For an EPUB/CBZ/ZIP publication, the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted into that same input before it is posted. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
 
 The playground shows what came back — each candidate with its score, whether it was accepted, and the per-field signals behind it, with the raw entity a click away. It is the fastest way to see what a provider actually answers.
 
