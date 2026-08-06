@@ -16,6 +16,14 @@
 /** "derived" = declared or properly computed; "assumed" = a best-effort convention */
 type ResolvedConfidence = "derived" | "assumed"
 
+type Collection = {
+  name?: string
+  /** EPUB `dcterms:identifier` refinement of the collection, catalog series ids */
+  identifiers?: { value: string; scheme: string }[]
+  position?: number
+  total?: number
+}
+
 type ResolvedCover = {
   /** container-relative uri (rebase like reading-order uris), or an absolute url from a remote catalog */
   uri: string
@@ -24,7 +32,13 @@ type ResolvedCover = {
 }
 
 type ResolvedMetadata = {
-  title?: string
+  /** every stated title, in document order — the first is the main title (`mainTitle(metadata)`) */
+  titles?: {
+    value: string
+    type?: "main" | "subtitle" | "short" | "collection" | "edition" | "expanded" | (string & {})
+    displaySeq?: number
+    sortAs?: string
+  }[]
   /** the cover image; resolved against the container, so `resolveArchive` only */
   cover?: ResolvedCover
   description?: string
@@ -58,9 +72,10 @@ type ResolvedMetadata = {
             (string & {})
     unique?: true
   }[]
+  /** a collection is identified by a name, by identifiers, or by both — sources differ */
   belongsTo?: {
-    series?: { name: string; position?: number; total?: number }[]
-    collection?: { name: string; position?: number; total?: number }[]
+    series?: Collection[]
+    collection?: Collection[]
   }
   /** open-world channel: every OPF <meta>, verbatim */
   properties?: { property?: string; refines?: string; name?: string; content?: string; value?: string }[]
@@ -102,7 +117,7 @@ When several sources are present, `resolveMetadata` merges field-wise:
 
 | Field | Rule |
 | --- | --- |
-| descriptive fields (`title`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
+| descriptive fields (`titles`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
 | `publication.edition` details (`date`, `publisher`, `imprint`) | merged field-wise, **OPF wins over ComicInfo** and the sidecar fills gaps |
 | `readingDirection` | **ComicInfo wins over OPF** (`Manga` beats `page-progression-direction`) — deliberate, preserving the historical pipeline behavior |
 | `renditionLayout` | **OPF explicit → Apple → Kobo**, first defined wins; the [`layoutScan`](README.md#resolving-a-publication) promotion applies on top, inside the resolver |
@@ -119,7 +134,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 | ComicInfo field | Home | Notes |
 | --- | --- | --- |
-| `Title` | `title` | trimmed |
+| `Title` | `titles` | trimmed; the sidecar states one title, so `titles` has the single entry |
 | `Summary` | `description` | |
 | `Publisher` | `publication.edition.publisher` | |
 | `Imprint` | `publication.edition.imprint` | |
@@ -137,7 +152,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comic.manga` |
 | `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
 | `GTIN` | `identifiers` | scheme `GTIN`; ISBN-shaped values remain searchable as ISBNs by metadata-fetcher |
-| `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total |
+| `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total; `Number` or `Count` without a `Series` still states this issue's place, so the entry is kept without a name |
 | `SeriesGroup` | `belongsTo.collection` | comma-split |
 | `AlternateSeries`, `AlternateNumber`, `AlternateCount` | `comic.alternateSeries` | |
 | `StoryArc`, `StoryArcNumber` | `comic.storyArcs` | comma-split, zipped positionally |
@@ -159,7 +174,8 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 | OPF field | Home | Notes |
 | --- | --- | --- |
-| `dc:title` | `title` | first non-empty |
+| `dc:title` | `titles` | every non-empty one, in document order; EPUB 3 makes the first the main title whatever a later `title-type` claims — `mainTitle(metadata)` reads it |
+| `title-type`, `display-seq`, `file-as` refinements | `titles[].type` / `displaySeq` / `sortAs` | `type` lowercased, unknown values verbatim |
 | `dc:description` | `description` | |
 | `dc:publisher` | `publication.edition.publisher` | |
 | `dc:rights` | `rights` | |
@@ -173,6 +189,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `rendition:flow` meta | `renditionFlow` | validated |
 | `rendition:spread` meta | `renditionSpread` | validated |
 | `belongs-to-collection` metas | `belongsTo` | `collection-type` `series` → series (with `group-position`), else collection |
+| `dcterms:identifier` refinement of a collection | `belongsTo.*[].identifiers` | scheme from an `identifier-type` refinement of that identifier, else inferred |
 | `calibre:series` / `calibre:series_index` | `belongsTo.series` | fallback when no EPUB 3 series meta |
 | every `<meta>` | `properties` | verbatim, the open-world channel |
 | manifest items, spine itemrefs | `readingOrder` | structural |

@@ -79,7 +79,7 @@ describe(`Given an EPUB`, () => {
       version: 3,
       unreadableSources: [],
       metadata: {
-        title: `My Book`,
+        titles: [{ value: `My Book` }],
         contributors: [{ name: `Jane Author`, roles: [`author`] }],
       },
       readingOrder: [
@@ -115,7 +115,7 @@ describe(`Given an EPUB`, () => {
     >()
 
     expect(resolved.version).toBe(3)
-    expect(resolved.sources.opf?.opf.title).toBe(`My Book`)
+    expect(resolved.sources.opf?.opf.titles[0]?.value).toBe(`My Book`)
     expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
     expect(`metadata` in resolved).toBe(false)
     expect(`readingOrder` in resolved).toBe(false)
@@ -334,7 +334,7 @@ describe(`Given a CBZ with a ComicInfo sidecar`, () => {
     )
 
     expect(resolved.metadata).toEqual({
-      title: `Vol 1`,
+      titles: [{ value: `Vol 1` }],
       // resolved for the whole archive: the cover is the first page (assumed,
       // the sidecar declared none) and the page count is the image count
       cover: {

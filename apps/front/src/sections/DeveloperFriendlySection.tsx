@@ -1,7 +1,6 @@
 import { Box, Button, Icon, Link, Text } from "@chakra-ui/react"
 import { FaExternalLinkAlt } from "react-icons/fa"
-import { SiTypescript } from "react-icons/si"
-import { SiReactiveresume } from "react-icons/si"
+import { SiReactiveresume, SiTypescript } from "react-icons/si"
 import { Section, SectionTitle } from "./Section"
 
 export const DeveloperFriendlySection = () => {

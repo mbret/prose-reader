@@ -20,8 +20,8 @@ export type ResolveMetadataSources = {
  * Merges the per-source resolved metadata of every parsed source into one
  * {@link ResolvedMetadata}, with explicit precedence:
  *
- * - Descriptive fields (`title`, `description`, `publication`, `languages`,
- *   `subjects`, `contributors`, `belongsTo`):
+ * - Descriptive fields (`titles`, `description`, `publication`,
+ *   `languages`, `subjects`, `contributors`, `belongsTo`):
  *   **OPF wins over ComicInfo** — the package document is the publication's
  *   own metadata; a ComicInfo sidecar fills the gaps.
  * - `readingDirection`: **ComicInfo wins over OPF** (`Manga` beats
@@ -68,7 +68,7 @@ export const resolveMetadata = (
   })
 
   return omitUndefined({
-    title: opf?.title ?? comicInfo?.title,
+    titles: opf?.titles ?? comicInfo?.titles,
     description: opf?.description ?? comicInfo?.description,
     publication:
       edition.date !== undefined ||

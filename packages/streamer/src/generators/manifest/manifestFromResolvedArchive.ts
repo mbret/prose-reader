@@ -1,7 +1,8 @@
-import type {
-  Archive,
-  ArchiveTocItem,
-  ResolvedArchive,
+import {
+  type Archive,
+  type ArchiveTocItem,
+  mainTitle,
+  type ResolvedArchive,
 } from "@prose-reader/archive-reader"
 import type { Manifest } from "@prose-reader/shared"
 import { createXmlSafeIdFactory, urlJoin } from "@prose-reader/shared"
@@ -78,7 +79,7 @@ const epubManifest = (
 
   return {
     filename: archive.filename ?? ``,
-    title: metadata.title || firstDirectoryTitle(archive) || ``,
+    title: mainTitle(metadata) || firstDirectoryTitle(archive) || ``,
     renditionLayout: metadata.renditionLayout,
     renditionFlow: metadata.renditionFlow ?? `auto`,
     renditionSpread: metadata.renditionSpread,
@@ -131,7 +132,10 @@ const recordsManifest = (
   const manifest: Manifest = {
     filename: archive.filename ?? ``,
     title:
-      metadata.title || firstDirectoryTitle(archive) || archive.filename || ``,
+      mainTitle(metadata) ||
+      firstDirectoryTitle(archive) ||
+      archive.filename ||
+      ``,
     renditionLayout: metadata.renditionLayout,
     renditionSpread: `auto`,
     readingDirection: metadata.readingDirection,

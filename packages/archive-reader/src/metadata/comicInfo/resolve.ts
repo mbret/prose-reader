@@ -4,7 +4,7 @@ import type {
   ResolvedContributorRole,
   ResolvedDate,
   ResolvedMetadata,
-  ResolvedMetadataHome,
+  ResolvedMetadataHomes,
   ResolvedMetadataIdentifier,
 } from "../../types/resolvedMetadata.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
@@ -55,13 +55,13 @@ export const comicInfoMetadataHomes = {
   Summary: "description",
   Tags: "subjects",
   Teams: "comic.teams",
-  Title: "title",
+  Title: "titles",
   Translator: "contributors",
   Volume: "comic.volume",
   Web: "comic.web",
   Writer: "contributors",
   Year: "publication.edition.date",
-} as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHome>
+} as const satisfies Record<ComicInfoKnownField, ResolvedMetadataHomes>
 
 const readingDirection = (info: ComicInfo): "ltr" | "rtl" | undefined => {
   switch (info.Manga) {
@@ -183,17 +183,21 @@ const contributorsFromComicInfo = (info: ComicInfo): ResolvedContributor[] => {
   return [...byName.values()]
 }
 
+/**
+ * `Number` and `Count` are facts about this issue's place in its series,
+ * which a sidecar can state without naming the series — so a nameless entry
+ * is still emitted rather than dropping what the file says.
+ */
 const seriesFromComicInfo = (
   info: ComicInfo,
 ): ResolvedCollection | undefined => {
-  const name = trimToUndefined(info.Series)
-  if (name === undefined) return undefined
-
-  return omitUndefined({
-    name,
+  const series = omitUndefined({
+    name: trimToUndefined(info.Series),
     position: parseDecimal(info.Number),
     total: parseNonNegativeInt(info.Count),
   })
+
+  return Object.keys(series).length > 0 ? series : undefined
 }
 
 const alternateSeriesFromComicInfo = (
@@ -311,8 +315,10 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     imprint: trimToUndefined(info.Imprint),
   })
 
+  const title = trimToUndefined(info.Title)
+
   return omitUndefined({
-    title: trimToUndefined(info.Title),
+    titles: title !== undefined ? [{ value: title }] : undefined,
     description: trimToUndefined(info.Summary),
     publication:
       edition.date !== undefined ||

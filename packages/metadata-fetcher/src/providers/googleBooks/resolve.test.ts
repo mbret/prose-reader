@@ -100,7 +100,7 @@ describe("resolveGoogleBooksVolume", () => {
         },
       }),
     ).toEqual({
-      title: "Dune: A Novel",
+      titles: [{ value: "Dune: A Novel" }],
       description: "<p>A desert epic.</p>",
       publication: {
         edition: {
@@ -164,7 +164,7 @@ describe("resolveGoogleBooksVolume", () => {
           title: "Saga",
           seriesInfo: { bookDisplayNumber: "2" },
         },
-      }).title,
+      }).titles?.[0]?.value,
     ).toBe("Saga Vol 2")
     expect(
       resolveGoogleBooksVolume({
@@ -172,7 +172,7 @@ describe("resolveGoogleBooksVolume", () => {
           title: "Saga Vol. 2",
           seriesInfo: { bookDisplayNumber: "2" },
         },
-      }).title,
+      }).titles?.[0]?.value,
     ).toBe("Saga Vol. 2")
   })
 
@@ -185,7 +185,7 @@ describe("resolveGoogleBooksVolume", () => {
             title,
             seriesInfo: { bookDisplayNumber: "2" },
           },
-        }).title,
+        }).titles?.[0]?.value,
       ).toBe(title)
     },
   )
@@ -197,7 +197,7 @@ describe("resolveGoogleBooksVolume", () => {
           title: "The Book Thief",
           seriesInfo: { bookDisplayNumber: "2" },
         },
-      }).title,
+      }).titles?.[0]?.value,
     ).toBe("The Book Thief Vol 2")
   })
 

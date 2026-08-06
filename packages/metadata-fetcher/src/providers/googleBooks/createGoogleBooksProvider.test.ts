@@ -1,3 +1,4 @@
+import { mainTitle } from "@prose-reader/archive-reader"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
@@ -171,7 +172,7 @@ describe("createGoogleBooksProvider", () => {
     expect(requestedUrl(fetchMock, 2).searchParams.get("q")).toBe(
       'intitle:"Dune" inauthor:"Frank Herbert"',
     )
-    expect(candidates[0]?.metadata.title).toBe("Dune")
+    expect(mainTitle(candidates[0]?.metadata)).toBe("Dune")
   })
 
   it("falls back to title-only when author makes the query too narrow", async () => {

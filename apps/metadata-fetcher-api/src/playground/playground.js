@@ -66,7 +66,9 @@ const renderMatch = (match) => {
     card.append(cover)
   }
 
-  card.append(el("h2", null, metadata.title ?? "(untitled)"))
+  const titles = metadata.titles ?? []
+
+  card.append(el("h2", null, titles[0]?.value ?? "(untitled)"))
 
   const meta = el("p", "meta")
   const verdict = match.accepted ? "accepted" : "rejected"

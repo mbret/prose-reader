@@ -90,7 +90,7 @@ describe("resolveComicInfo", () => {
     )
 
     expect(resolveComicInfo(parsed)).toMatchObject({
-      title: "Sample Story",
+      titles: [{ value: "Sample Story" }],
       publication: { edition: { publisher: "Acme" } },
     })
   })
@@ -100,7 +100,7 @@ describe("resolveComicInfo", () => {
       comicInfoWrap("<Series>Sample Series</Series><Number>1</Number>"),
     )
 
-    expect(resolveComicInfo(parsed).title).toBeUndefined()
+    expect(resolveComicInfo(parsed).titles).toBeUndefined()
   })
 
   it("splits Writer on commas into author contributors", () => {
@@ -274,6 +274,23 @@ describe("resolveComicInfo", () => {
     })
   })
 
+  it("lists the single Title it states in titles too", () => {
+    const parsed = parseComicInfo(comicInfoWrap("<Title>Sample Issue</Title>"))
+    const resolved = resolveComicInfo(parsed)
+
+    expect(resolved.titles).toEqual([{ value: "Sample Issue" }])
+  })
+
+  it("keeps Number and Count stated without a Series", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap("<Number>1</Number><Count>12</Count>"),
+    )
+
+    expect(resolveComicInfo(parsed).belongsTo).toEqual({
+      series: [{ position: 1, total: 12 }],
+    })
+  })
+
   it("maps SeriesGroup entries into belongsTo.collection", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<SeriesGroup>Family A, Family B</SeriesGroup>"),
@@ -387,7 +404,7 @@ describe("resolveComicInfo", () => {
     expect(resolveComicInfo(parsed)).toEqual({
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
-      title: "Sample Story",
+      titles: [{ value: "Sample Story" }],
       contributors: [
         { name: "Alice", roles: ["author"] },
         { name: "Bob", roles: ["author"] },

@@ -1,3 +1,4 @@
+import { mainTitle } from "@prose-reader/archive-reader"
 import { describe, expect, it, vi } from "vitest"
 import { createOpenLibraryProvider } from "./createOpenLibraryProvider.ts"
 
@@ -120,7 +121,7 @@ describe("createOpenLibraryProvider", () => {
       "Irina: The Vampire Cosmonaut Vol. 1 Keisuke Makino",
     )
     expect(fallback.searchParams.get("title")).toBeNull()
-    expect(candidates[0]?.metadata.title).toBe(
+    expect(mainTitle(candidates[0]?.metadata)).toBe(
       "Irina: The Vampire Cosmonaut (Light Novel) Vol. 1",
     )
   })

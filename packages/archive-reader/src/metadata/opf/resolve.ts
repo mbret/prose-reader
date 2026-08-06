@@ -1,9 +1,11 @@
 import type {
+  MetadataIdentifier,
   ResolvedCollection,
   ResolvedContributor,
   ResolvedContributorRole,
   ResolvedMetadata,
-  ResolvedMetadataHome,
+  ResolvedMetadataHomes,
+  ResolvedTitle,
 } from "../../types/resolvedMetadata.ts"
 import { normalizeGtin } from "../../utils/normalizeGtin.ts"
 import { normalizeIsbn } from "../../utils/normalizeIsbn.ts"
@@ -26,7 +28,7 @@ export const opfMetadataHomes = {
   spineRows: "readingOrder",
   spineTocIdref: "toc",
   identifiers: "identifiers",
-  title: "title",
+  titles: "titles",
   creators: "contributors",
   contributors: "contributors",
   publisher: "publication.edition.publisher",
@@ -44,7 +46,7 @@ export const opfMetadataHomes = {
   metas: "properties",
 } as const satisfies Record<
   Exclude<keyof OpfMetadata, "kind">,
-  ResolvedMetadataHome
+  ResolvedMetadataHomes
 >
 
 const inferredIdentifierScheme = (value: string): string => {
@@ -198,6 +200,96 @@ const parseDecimal = (raw: string | undefined): number | undefined => {
   return Number.isFinite(n) ? n : undefined
 }
 
+const parseNonNegativeInt = (raw: string | undefined): number | undefined => {
+  const trimmed = raw?.trim()
+  if (trimmed === undefined || !/^\d+$/.test(trimmed)) return undefined
+  const n = Number.parseInt(trimmed, 10)
+  return Number.isFinite(n) ? n : undefined
+}
+
+const trimToUndefined = (raw: string | undefined): string | undefined => {
+  const trimmed = raw?.trim()
+
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
+}
+
+/** The value of the `meta refines="#id"` entry stating `property`. */
+const refiningValue = (
+  metas: ReadonlyArray<OpfMetaEntry>,
+  id: string | undefined,
+  property: string,
+): string | undefined =>
+  id === undefined
+    ? undefined
+    : metas.find(
+        (meta) =>
+          metaRefinesId(meta, id) &&
+          meta.property === property &&
+          meta.value !== undefined,
+      )?.value
+
+/**
+ * EPUB 3 states a multipart title as several `dc:title` elements refined
+ * with `title-type`, `display-seq` and `file-as`. All of them are kept, in
+ * document order — the order matters, since the spec makes the first one the
+ * main title whatever the refinements say (see `mainTitle`).
+ */
+const titlesFromOpf = (input: OpfMetadata): ResolvedTitle[] =>
+  input.titles.map((title) =>
+    omitUndefined({
+      value: title.value,
+      type: trimToUndefined(
+        refiningValue(input.metas, title.id, "title-type"),
+      )?.toLowerCase(),
+      displaySeq: parseNonNegativeInt(
+        refiningValue(input.metas, title.id, "display-seq"),
+      ),
+      sortAs: trimToUndefined(refiningValue(input.metas, title.id, "file-as")),
+    }),
+  )
+
+/**
+ * A collection can be identified as well as named: `dcterms:identifier`
+ * refines the `belongs-to-collection` meta, and an `identifier-type`
+ * refinement of that identifier names its scheme.
+ */
+const collectionIdentifiers = (
+  metas: ReadonlyArray<OpfMetaEntry>,
+  id: string | undefined,
+): ReadonlyArray<MetadataIdentifier> | undefined => {
+  if (id === undefined) return undefined
+
+  const identifiers = metas.flatMap<MetadataIdentifier>((meta) => {
+    if (!metaRefinesId(meta, id) || meta.property !== "dcterms:identifier") {
+      return []
+    }
+
+    const value = trimToUndefined(meta.value)
+
+    if (value === undefined) return []
+
+    const declaredType = normalizedIdentifierType(
+      metas.find(
+        (candidate) =>
+          meta.id !== undefined &&
+          metaRefinesId(candidate, meta.id) &&
+          candidate.property === "identifier-type",
+      ),
+    )
+
+    return [
+      {
+        value,
+        scheme: normalizedIdentifierScheme(
+          declaredType ?? inferredIdentifierScheme(value),
+        ),
+      },
+    ]
+  })
+
+  return identifiers.length > 0 ? identifiers : undefined
+}
+
 /**
  * Series/collection membership from the metas: EPUB 3
  * `belongs-to-collection` (a `collection-type` refine of `series` selects
@@ -217,18 +309,12 @@ const collectionsFromOpfMetas = (
 
     const id = meta.id
     const refining = (property: string): string | undefined =>
-      id === undefined
-        ? undefined
-        : metas.find(
-            (candidate) =>
-              metaRefinesId(candidate, id) &&
-              candidate.property === property &&
-              candidate.value !== undefined,
-          )?.value
+      refiningValue(metas, id, property)
 
     const type = refining("collection-type")?.trim().toLowerCase()
     const entry = omitUndefined({
       name: meta.value,
+      identifiers: collectionIdentifiers(metas, id),
       position: parseDecimal(refining("group-position")),
     })
 
@@ -300,6 +386,7 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     rl === "reflowable" || rl === "pre-paginated" ? rl : undefined
 
   const contributors = contributorsFromOpf(input)
+  const titles = titlesFromOpf(input)
   const { series, collection } = collectionsFromOpfMetas(input.metas)
 
   const belongsTo =
@@ -315,7 +402,7 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
   })
 
   return omitUndefined({
-    title: input.title,
+    titles: titles.length > 0 ? titles : undefined,
     description: input.description,
     publication:
       edition.date !== undefined || edition.publisher !== undefined

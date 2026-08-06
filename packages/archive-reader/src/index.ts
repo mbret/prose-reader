@@ -125,11 +125,15 @@ export type {
   ResolvedKoboMetadata,
   ResolvedMetadata,
   ResolvedMetadataHome,
+  ResolvedMetadataHomes,
   ResolvedMetadataIdentifier,
   ResolvedProperty,
   ResolvedPublication,
   ResolvedPublicationInfo,
+  ResolvedTitle,
+  ResolvedTitleType,
 } from "./types/resolvedMetadata.ts"
+export { mainTitle } from "./utils/mainTitle.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
 export { parseW3cDtfDate } from "./utils/parseW3cDtfDate.ts"

@@ -59,6 +59,34 @@ export type ResolvedMetadataIdentifier = MetadataIdentifier & {
 }
 
 /**
+ * EPUB 3 `title-type` vocabulary. Unknown source tokens pass through
+ * verbatim, like contributor roles.
+ */
+export type ResolvedTitleType =
+  | "main"
+  | "subtitle"
+  | "short"
+  | "collection"
+  | "edition"
+  | "expanded"
+
+/**
+ * One title as the source states it. EPUB expresses a multipart title as
+ * several `dc:title` elements, each optionally refined with `title-type`,
+ * `display-seq` and `file-as`, so a publication can state a main title, a
+ * subtitle, a short form and more.
+ */
+export type ResolvedTitle = {
+  readonly value: string
+  /** EPUB `title-type` refinement, lowercased; absent when untyped. */
+  readonly type?: ResolvedTitleType | (string & {})
+  /** EPUB `display-seq` refinement: the order the source wants them shown. */
+  readonly displaySeq?: number
+  /** Sorting form of the title (OPF `file-as`). */
+  readonly sortAs?: string
+}
+
+/**
  * Contributor role vocabulary: the Readium WPM role terms our sources can
  * express, plus the prose-reader extension `coverArtist` (ComicInfo
  * `CoverArtist` — Readium has no cover-art term). Resolvers normalize
@@ -94,11 +122,22 @@ export type ResolvedContributor = {
 
 /**
  * Membership in a series or collection (Readium `belongsTo` shape).
+ *
+ * Identity is whatever the source states: EPUB names the collection in the
+ * `belongs-to-collection` value and may add a `dcterms:identifier`
+ * refinement, while a catalog can know it the other way around — Google
+ * Books identifies a series by `seriesId` alone and never states its name.
+ * Both halves are therefore optional, and an entry stating only a position
+ * ("issue 1 of something") is still the source's own fact.
+ *
  * `total` is a prose-reader extension: the announced number of entries in
  * the collection (ComicInfo `Count`), useful to library apps.
  */
 export type ResolvedCollection = {
-  readonly name: string
+  /** EPUB `belongs-to-collection` value, ComicInfo `Series`. */
+  readonly name?: string
+  /** EPUB `dcterms:identifier` refinement, catalog series ids. */
+  readonly identifiers?: ReadonlyArray<MetadataIdentifier>
   /** Position of this publication in the collection; floats allowed ("1.5"). */
   readonly position?: number
   /** Announced total number of entries in the collection. */
@@ -251,8 +290,20 @@ export type ResolvedCover = {
  * @see module doc above for design rules.
  */
 export type ResolvedMetadata = {
-  /** Human-readable title of the work. OPF `dc:title`, ComicInfo `Title`. */
-  readonly title?: string
+  /**
+   * Every title the source states, in document order, with the typing it
+   * gives them (see {@link ResolvedTitle}). OPF `dc:title`, ComicInfo
+   * `Title`.
+   *
+   * **The first entry is the main title**: EPUB 3 requires reading systems to
+   * take the first `dc:title` in document order as the publication's title,
+   * and a later `title-type` of `main` does not displace it. Use
+   * {@link mainTitle} rather than re-deriving that rule.
+   *
+   * A subtitle is an entry of type `subtitle`, never appended to the main
+   * one: composing the two for display is the consumer's decision, not ours.
+   */
+  readonly titles?: ReadonlyArray<ResolvedTitle>
   /**
    * The publication's cover image: the OPF-declared cover (EPUB 3
    * `cover-image` property, the EPUB 2 `<meta name="cover">` convention, or a
@@ -369,3 +420,12 @@ export type ResolvedMetadataHome =
   | "readingOrder"
   | "toc"
   | "guide"
+
+/**
+ * A source field's declared home(s). One field legitimately lands in more
+ * than one place — an EPUB's `dc:title` elements populate both `title` (the
+ * first of them) and `titles` (all of them) — so the tables accept a list.
+ */
+export type ResolvedMetadataHomes =
+  | ResolvedMetadataHome
+  | ReadonlyArray<ResolvedMetadataHome>

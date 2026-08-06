@@ -1,4 +1,4 @@
-import type { ResolvedArchive } from "@prose-reader/archive-reader"
+import { mainTitle, type ResolvedArchive } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 import { metadataAuthors } from "./utils/metadataAuthors.ts"
 import { omitUndefined } from "./utils/omitUndefined.ts"
@@ -20,7 +20,7 @@ export const metadataInputFromResolvedArchive = (
   }))
 
   return omitUndefined({
-    title: metadata.title,
+    title: mainTitle(metadata),
     authors: authors.length > 0 ? authors : undefined,
     identifiers:
       identifiers !== undefined && identifiers.length > 0

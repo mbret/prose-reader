@@ -6,7 +6,7 @@ import type { SearchResult } from "./search"
 import { searchInDocument } from "./search"
 import type { ResultItem, SearchEnhancerAPI } from "./types"
 
-export type { SearchEnhancerAPI, ResultItem, SearchResult }
+export type { ResultItem, SearchEnhancerAPI, SearchResult }
 
 /**
  * Contract of search enhancer.

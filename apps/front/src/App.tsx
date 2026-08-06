@@ -1,5 +1,4 @@
-import { Heading, Image, Link, Text } from "@chakra-ui/react"
-import { Box } from "@chakra-ui/react"
+import { Box, Heading, Image, Link, Text } from "@chakra-ui/react"
 import { FaDiscord, FaGithub } from "react-icons/fa"
 import { LuExternalLink } from "react-icons/lu"
 import headerLogo from "./assets/header_logo.svg"

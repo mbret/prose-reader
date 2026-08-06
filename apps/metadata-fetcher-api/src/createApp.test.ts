@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises"
+import { mainTitle } from "@prose-reader/archive-reader"
 import {
   type FetchedMetadata,
   type FetchMetadataInput,
@@ -41,12 +42,12 @@ const duneProvider: MetadataProvider = {
         url: "https://example.com/works/OL893415W",
         raw: { note: "verbatim" },
         metadata: {
-          title: "Dune",
+          titles: [{ value: "Dune" }],
           publication: { edition: { publisher: "Chilton Books" } },
           contributors: [{ name: "Frank Herbert", roles: ["author"] }],
         },
       },
-      { metadata: { title: "Neuromancer" } },
+      { metadata: { titles: [{ value: "Neuromancer" }] } },
     ]),
 }
 
@@ -190,7 +191,7 @@ describe("metadata-fetcher-api", () => {
       providerId: "stub",
       accepted: true,
       url: "https://example.com/works/OL893415W",
-      metadata: { title: "Dune" },
+      metadata: { titles: [{ value: "Dune" }] },
     })
     expect(fetched.sources.stub?.provider.name).toBe("Stub Catalog")
   })
@@ -247,7 +248,7 @@ describe("metadata-fetcher-api", () => {
     })
 
     expect(response.status).toBe(200)
-    expect((await readFetched(response)).matches[0]?.metadata.title).toBe(
+    expect(mainTitle((await readFetched(response)).matches[0]?.metadata)).toBe(
       "Dune",
     )
   })
@@ -501,7 +502,7 @@ describe("metadata-fetcher-api failures", () => {
       const fetched = await readFetched(response)
 
       expect(response.status).toBe(200)
-      expect(fetched.matches[0]?.metadata.title).toBe("Dune")
+      expect(mainTitle(fetched.matches[0]?.metadata)).toBe("Dune")
     } finally {
       await api.close()
     }
