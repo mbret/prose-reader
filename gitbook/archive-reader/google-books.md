@@ -1,6 +1,6 @@
 # Google Books identifiers
 
-Archive-reader does not call Google Books. It recognizes and normalizes Google Books identifiers embedded in EPUB metadata so the result can be passed directly to [metadata-fetcher's Google Books provider](../metadata-fetcher/README.md#google-books) for an exact catalog lookup.
+Archive-reader recognizes and normalizes Google Books identifiers embedded in archive metadata. It does not contact Google or verify that a volume exists.
 
 ## Typed EPUB 3 identifier
 
@@ -45,7 +45,7 @@ Archive-reader preserves the URL and classifies its literal form:
 }
 ```
 
-The Google Books provider recognizes official Google Books website and API URLs, extracts the volume id, and performs the same exact lookup as it does for the typed identifier. It rejects unrelated domains and URLs authored with a conflicting scheme.
+Archive-reader does not extract or relabel the volume id from the URL. It preserves the authored value as a general `URL` identifier.
 
 ### ComicInfo
 
@@ -66,7 +66,7 @@ Archive-reader retains the value under `metadata.comic.web` and also promotes ea
 }
 ```
 
-That identifier is forwarded unchanged to metadata-fetcher, whose Google Books provider extracts the volume id and performs the exact lookup. The same standard `Web` mechanism works for an official Project Gutenberg URL, and multiple catalog URLs can coexist in the field separated by spaces.
+Multiple reference URLs can coexist in `Web`, separated by spaces. Every valid absolute HTTP(S) value is preserved as its own `URL` identifier.
 
 ## Untyped raw identifiers
 

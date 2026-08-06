@@ -1,6 +1,6 @@
 # Project Gutenberg identifiers
 
-Archive-reader does not call Project Gutenberg. It recognizes and normalizes Gutenberg identifiers embedded in archive metadata so the result can be passed directly to [metadata-fetcher's Project Gutenberg provider](../metadata-fetcher/README.md#project-gutenberg) for an exact catalog lookup.
+Archive-reader recognizes and normalizes Project Gutenberg identifiers embedded in archive metadata. It does not contact Gutenberg or verify that an ebook exists.
 
 ## Typed EPUB 3 identifier
 
@@ -41,7 +41,7 @@ Archive-reader preserves the literal URL:
 }
 ```
 
-The Project Gutenberg provider recognizes official `/ebooks/{id}`, `/files/{id}/…`, `/cache/epub/{id}/…`, and legacy `/{id}` URLs. It extracts the numeric ebook id and fetches the corresponding RDF record for an exact lookup.
+Archive-reader does not extract or relabel the ebook number from the URL. It preserves the authored value as a general `URL` identifier.
 
 ### ComicInfo
 
@@ -53,7 +53,7 @@ ComicInfo archives use the standard `Web` reference field, so a CBZ or CBR needs
 </ComicInfo>
 ```
 
-Archive-reader retains the value under `metadata.comic.web` and also promotes it to `{ value: "https://www.gutenberg.org/ebooks/78139", scheme: "URL" }`. `metadataInputFromResolvedArchive` forwards that identifier unchanged to metadata-fetcher.
+Archive-reader retains the value under `metadata.comic.web` and also promotes it to `{ value: "https://www.gutenberg.org/ebooks/78139", scheme: "URL" }`. Multiple reference URLs can coexist in `Web`, separated by spaces.
 
 ## Untyped raw identifiers
 
