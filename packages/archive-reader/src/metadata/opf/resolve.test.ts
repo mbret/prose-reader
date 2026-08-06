@@ -8,7 +8,7 @@ const emptyOpf = (): OpfMetadata => ({
   spineRows: [],
   spineTocIdref: undefined,
   identifiers: [],
-  title: undefined,
+  titles: [],
   creators: [],
   contributors: [],
   publisher: undefined,
@@ -253,7 +253,7 @@ describe("resolveOpf", () => {
     expect(
       resolveOpf({
         ...emptyOpf(),
-        title: "Norwegian Wood",
+        titles: [{ value: "Norwegian Wood" }],
         publisher: "Vintage",
         description: "A nostalgic story.",
         rights: "Copyright 2024",
@@ -262,6 +262,7 @@ describe("resolveOpf", () => {
       }),
     ).toEqual({
       title: "Norwegian Wood",
+      titles: [{ value: "Norwegian Wood" }],
       publication: { edition: { publisher: "Vintage" } },
       description: "A nostalgic story.",
       rights: "Copyright 2024",
@@ -371,6 +372,50 @@ describe("resolveOpf", () => {
     ).toBe(undefined)
   })
 
+  it("keeps every title with the typing its refinements state", () => {
+    const resolved = resolveOpf({
+      ...emptyOpf(),
+      titles: [
+        { value: "Dune", id: "t1" },
+        { value: "A Novel", id: "t2" },
+        { value: "Herbert, Dune", id: "t3" },
+      ],
+      metas: [
+        { property: "title-type", refines: "#t1", value: "main" },
+        { property: "title-type", refines: "#t2", value: "Subtitle" },
+        { property: "display-seq", refines: "#t2", value: "2" },
+        { property: "title-type", refines: "#t3", value: "short" },
+        { property: "file-as", refines: "#t3", value: "Dune" },
+      ],
+    })
+
+    expect(resolved.title).toBe("Dune")
+    expect(resolved.titles).toEqual([
+      { value: "Dune", type: "main" },
+      { value: "A Novel", type: "subtitle", displaySeq: 2 },
+      { value: "Herbert, Dune", type: "short", sortAs: "Dune" },
+    ])
+  })
+
+  // EPUB 3: reading systems must take the first dc:title in document order as
+  // the main title, whatever a later title-type says.
+  it("keeps the first title as the main one when a later one claims main", () => {
+    const resolved = resolveOpf({
+      ...emptyOpf(),
+      titles: [
+        { value: "First", id: "t1" },
+        { value: "Second", id: "t2" },
+      ],
+      metas: [{ property: "title-type", refines: "#t2", value: "main" }],
+    })
+
+    expect(resolved.title).toBe("First")
+    expect(resolved.titles).toEqual([
+      { value: "First" },
+      { value: "Second", type: "main" },
+    ])
+  })
+
   it("maps belongs-to-collection metas into belongsTo, series versus collection", () => {
     expect(
       resolveOpf({
@@ -386,6 +431,58 @@ describe("resolveOpf", () => {
       series: [{ name: "My Series", position: 3 }],
       collection: [{ name: "My Set" }],
     })
+  })
+
+  it("identifies a collection from its dcterms:identifier refinement", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        metas: [
+          { property: "belongs-to-collection", id: "s1", value: "My Series" },
+          { property: "collection-type", refines: "#s1", value: "series" },
+          {
+            property: "dcterms:identifier",
+            refines: "#s1",
+            id: "sid",
+            value: "9780441013593",
+          },
+          {
+            property: "identifier-type",
+            refines: "#sid",
+            scheme: "onix:codelist5",
+            value: "15",
+          },
+        ],
+      }).belongsTo,
+    ).toEqual({
+      series: [
+        {
+          name: "My Series",
+          identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
+        },
+      ],
+    })
+  })
+
+  it("infers the scheme of a collection identifier stating no type", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        metas: [
+          { property: "belongs-to-collection", id: "c1", value: "My Set" },
+          {
+            property: "dcterms:identifier",
+            refines: "#c1",
+            value: "https://example.com/sets/1",
+          },
+        ],
+      }).belongsTo?.collection,
+    ).toEqual([
+      {
+        name: "My Set",
+        identifiers: [{ value: "https://example.com/sets/1", scheme: "URL" }],
+      },
+    ])
   })
 
   it("falls back to calibre series metas when no EPUB 3 series exists", () => {

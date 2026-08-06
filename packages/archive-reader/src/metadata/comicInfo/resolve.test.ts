@@ -274,6 +274,16 @@ describe("resolveComicInfo", () => {
     })
   })
 
+  it("keeps Number and Count stated without a Series", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap("<Number>1</Number><Count>12</Count>"),
+    )
+
+    expect(resolveComicInfo(parsed).belongsTo).toEqual({
+      series: [{ position: 1, total: 12 }],
+    })
+  })
+
   it("maps SeriesGroup entries into belongsTo.collection", () => {
     const parsed = parseComicInfo(
       comicInfoWrap("<SeriesGroup>Family A, Family B</SeriesGroup>"),

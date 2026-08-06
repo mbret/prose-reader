@@ -183,17 +183,21 @@ const contributorsFromComicInfo = (info: ComicInfo): ResolvedContributor[] => {
   return [...byName.values()]
 }
 
+/**
+ * `Number` and `Count` are facts about this issue's place in its series,
+ * which a sidecar can state without naming the series — so a nameless entry
+ * is still emitted rather than dropping what the file says.
+ */
 const seriesFromComicInfo = (
   info: ComicInfo,
 ): ResolvedCollection | undefined => {
-  const name = trimToUndefined(info.Series)
-  if (name === undefined) return undefined
-
-  return omitUndefined({
-    name,
+  const series = omitUndefined({
+    name: trimToUndefined(info.Series),
     position: parseDecimal(info.Number),
     total: parseNonNegativeInt(info.Count),
   })
+
+  return Object.keys(series).length > 0 ? series : undefined
 }
 
 const alternateSeriesFromComicInfo = (

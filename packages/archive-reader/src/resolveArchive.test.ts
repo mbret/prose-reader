@@ -80,6 +80,7 @@ describe(`Given an EPUB`, () => {
       unreadableSources: [],
       metadata: {
         title: `My Book`,
+        titles: [{ value: `My Book` }],
         contributors: [{ name: `Jane Author`, roles: [`author`] }],
       },
       readingOrder: [
@@ -115,7 +116,7 @@ describe(`Given an EPUB`, () => {
     >()
 
     expect(resolved.version).toBe(3)
-    expect(resolved.sources.opf?.opf.title).toBe(`My Book`)
+    expect(resolved.sources.opf?.opf.titles[0]?.value).toBe(`My Book`)
     expect(resolved.sources.opf?.basePath).toBe(`OEBPS`)
     expect(`metadata` in resolved).toBe(false)
     expect(`readingOrder` in resolved).toBe(false)

@@ -11,7 +11,7 @@ const opfWrap = (body: string) =>
 const noPackageMetadata: Pick<
   OpfMetadata,
   | "identifiers"
-  | "title"
+  | "titles"
   | "creators"
   | "contributors"
   | "publisher"
@@ -30,7 +30,7 @@ const noPackageMetadata: Pick<
   | "metas"
 > = {
   identifiers: [],
-  title: undefined,
+  titles: [],
   creators: [],
   contributors: [],
   publisher: undefined,
@@ -165,7 +165,7 @@ describe("parseOpf", () => {
       manifestItems: [{ id: "x", href: "x.xhtml" }],
       spineRows: [{ idref: "x", id: "x", href: "x.xhtml" }],
       identifiers: [{ scheme: "ISBN", value: "978-3-16-148410-0" }],
-      title: "My Book",
+      titles: [{ value: "My Book" }],
       renditionLayoutMeta: "pre-paginated",
       renditionFlowMeta: "paginated",
       renditionSpreadMeta: "both",
@@ -177,6 +177,23 @@ describe("parseOpf", () => {
         { property: "rendition:spread", value: "both" },
       ],
     })
+  })
+
+  it("keeps every dc:title in document order with the ids refinements target", () => {
+    const xml = opfWrap(
+      `<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+        `<dc:title id="t1">Dune</dc:title>` +
+        `<dc:title id="t2">  A Novel  </dc:title>` +
+        `<dc:title>   </dc:title>` +
+        `<dc:title>Untagged</dc:title>` +
+        `</metadata>`,
+    )
+
+    expect(parseOpf(xml).titles).toEqual([
+      { value: "Dune", id: "t1" },
+      { value: "A Novel", id: "t2" },
+      { value: "Untagged" },
+    ])
   })
 
   it("keeps every identifier and marks the package unique identifier", () => {
@@ -312,7 +329,7 @@ describe("parseOpf", () => {
           mediaType: "application/xhtml+xml",
         },
       ],
-      title: "Prefixed roots",
+      titles: [{ value: "Prefixed roots" }],
       renditionLayoutMeta: "reflowable",
       spineTocIdref: "ncx",
       guide: [{ href: "c.xhtml", title: "Cover", type: "cover" }],

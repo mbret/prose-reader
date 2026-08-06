@@ -19,6 +19,12 @@ export type OpfIdentifier = {
   readonly unique?: true
 }
 
+export type OpfTitle = {
+  readonly value: string
+  /** Element `id`, which `meta refines` entries target. */
+  readonly id?: string
+}
+
 export type OpfSpineRow = {
   readonly idref: string
   readonly id: string
@@ -146,6 +152,26 @@ const identifiersFromMetadata = (
   })
 
   return identifiers
+}
+
+const titlesFromMetadata = (metadataEl: XmlElement): OpfTitle[] => {
+  const titles: OpfTitle[] = []
+
+  metadataEl.eachChild((child) => {
+    if (elementLocalName(child.name).toLowerCase() !== "title") return
+
+    const value = child.val.trim()
+    if (value.length === 0) return
+
+    const id = child.attr.id?.trim()
+
+    titles.push({
+      value,
+      ...(id !== undefined && id.length > 0 ? { id } : {}),
+    })
+  })
+
+  return titles
 }
 
 const firstTextByLocalName = (
@@ -453,7 +479,12 @@ export type OpfMetadata = {
   readonly spineRows: ReadonlyArray<OpfSpineRow>
   readonly spineTocIdref: string | undefined
   readonly identifiers: ReadonlyArray<OpfIdentifier>
-  readonly title: string | undefined
+  /**
+   * Every non-empty `dc:title`, in document order — the first is the main
+   * title per EPUB 3. Ids are retained so `meta refines` entries
+   * (`title-type`, `display-seq`, `file-as`) can be attached to their title.
+   */
+  readonly titles: ReadonlyArray<OpfTitle>
   /** `dc:creator` values, in document order, trimmed; empty when none. */
   readonly creators: ReadonlyArray<string>
   /**
@@ -548,7 +579,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
       ? spineTocRaw.trim()
       : undefined
 
-  let title: string | undefined
+  let titles: OpfTitle[] = []
   let publisher: string | undefined
   let description: string | undefined
   let rights: string | undefined
@@ -564,7 +595,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
   const identifiers: OpfIdentifier[] = []
 
   if (metadataEl !== undefined) {
-    title = firstTextByLocalName(metadataEl, "title")
+    titles = titlesFromMetadata(metadataEl)
     publisher = firstTextByLocalName(metadataEl, "publisher")
     description = firstTextByLocalName(metadataEl, "description")
     rights = firstTextByLocalName(metadataEl, "rights")
@@ -593,7 +624,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     spineRows,
     spineTocIdref,
     identifiers,
-    title,
+    titles,
     creators,
     contributors,
     publisher,
