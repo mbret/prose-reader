@@ -200,7 +200,7 @@ const throttled = fetched.failedProviders.filter(({ status }) => status === 429)
 
 Each entry carries the catalog's HTTP `status` when the failure was a response — `429` (ask again later), `5xx` (the catalog is down), `4xx` (we asked wrong) — and no status when it wasn't one, which is itself the answer: a network error, an unparseable payload, a bug. Three states are distinguishable: a provider in `sources` answered, one in `failedProviders` threw, one in neither was never asked (narrowed out by the `providers` option).
 
-There is deliberately **no retry, no backoff and no `Retry-After` handling** — a failure is reported, not papered over. A caller that wants to come back has what it needs to decide.
+`fetchMetadata` itself does not retry or interpret `Retry-After`; providers own that policy because only they know which operations are idempotent and which failures their catalog treats as transient. The built-in Google Books provider retries its transient failures as described below. A provider that exhausts its own retries is reported here normally.
 
 Cancelling through `signal` is the one exception: it rejects, since the caller asked for it.
 
@@ -295,7 +295,9 @@ const input = {
 }
 ```
 
-An exact lookup echoes that identifier after Google confirms it, so the shared matcher treats it as decisive. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`. A malformed successful exact response or failing HTTP response is reported through `failedProviders`.
+An exact lookup echoes that identifier after Google confirms it, so the shared matcher treats it as decisive. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`.
+
+Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
 **Mapping** (Google Books Volume → `ResolvedMetadata`, compile-checked by the exported `googleBooksVolumeMetadataHomes` and `googleBooksVolumeInfoMetadataHomes`):
 
@@ -446,6 +448,21 @@ Rules of thumb:
   if (!response.ok) {
     throw new MetadataProviderResponseError(response.status, "My Catalog search failed")
   }
+  ```
+- **Use `retryWithBackoff`** when an idempotent provider request has known transient failures. `attempts` counts the initial call, and cancellation interrupts the next delay. Pass the same signal to the request when it should cancel an active call too. The helper deliberately leaves the retry predicate to the provider:
+
+  ```typescript
+  import {
+    responseErrorStatus,
+    retryWithBackoff,
+  } from "@prose-reader/metadata-fetcher"
+
+  const response = await retryWithBackoff(() => requestCatalog({ signal }), {
+    attempts: 3,
+    initialDelayMs: 1_000,
+    signal,
+    shouldRetry: (error) => responseErrorStatus(error) === 503,
+  })
   ```
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.

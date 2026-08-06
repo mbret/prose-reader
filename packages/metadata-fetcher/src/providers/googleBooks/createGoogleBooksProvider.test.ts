@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { scoreMetadataCandidate } from "../../match/scoreMetadataCandidate.ts"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import { createGoogleBooksProvider } from "./createGoogleBooksProvider.ts"
@@ -37,6 +37,11 @@ const requestedUrl = (
 ) => new URL(String(fetchMock.mock.calls[call]?.[0]))
 
 const context = { limit: 5 }
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+})
 
 describe("createGoogleBooksProvider", () => {
   it("requires an API key", () => {
@@ -177,10 +182,80 @@ describe("createGoogleBooksProvider", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it("throws on upstream failures and malformed exact responses", async () => {
+  it("retries transient upstream failures and succeeds", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, "random").mockReturnValue(0)
+    const fetchMock = fetchReturning(
+      jsonResponse({}, 503),
+      jsonResponse({}, 503),
+      jsonResponse(DUNE_VOLUME),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const pending = provider.search(
+      {
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      context,
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("retries a network failure", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, "random").mockReturnValue(0)
+    const fetchMock = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValueOnce(new TypeError("network unavailable"))
+      .mockResolvedValue(jsonResponse(DUNE_VOLUME))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const pending = provider.search(
+      {
+        identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+      },
+      context,
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(pending).resolves.toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("throws the final transient upstream failure after three attempts", async () => {
+    vi.useFakeTimers()
     const unavailable = createGoogleBooksProvider({
       apiKey: "secret",
-      fetch: fetchReturning(jsonResponse({}, 503)),
+      fetch: fetchReturning(
+        jsonResponse({}, 503),
+        jsonResponse({}, 503),
+        jsonResponse({}, 503),
+      ),
+    })
+    const input = {
+      identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
+    }
+    const pending = unavailable.search(input, context)
+    const rejected = expect(pending).rejects.toThrow("503")
+
+    await vi.runAllTimersAsync()
+    await rejected
+  })
+
+  it("does not retry client errors or malformed successful responses", async () => {
+    const forbiddenFetch = fetchReturning(jsonResponse({}, 403))
+    const forbidden = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: forbiddenFetch,
     })
     const invalid = createGoogleBooksProvider({
       apiKey: "secret",
@@ -190,7 +265,8 @@ describe("createGoogleBooksProvider", () => {
       identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
     }
 
-    await expect(unavailable.search(input, context)).rejects.toThrow("503")
+    await expect(forbidden.search(input, context)).rejects.toThrow("403")
+    expect(forbiddenFetch).toHaveBeenCalledTimes(1)
     await expect(invalid.search(input, context)).rejects.toThrow(
       "requested volume",
     )

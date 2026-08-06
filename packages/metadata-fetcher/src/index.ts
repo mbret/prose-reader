@@ -130,4 +130,6 @@ export type {
 } from "./types/provider.ts"
 export { hasSearchTerms } from "./utils/hasSearchTerms.ts"
 export { metadataAuthors } from "./utils/metadataAuthors.ts"
+export type { RetryWithBackoffOptions } from "./utils/retryWithBackoff.ts"
+export { retryWithBackoff } from "./utils/retryWithBackoff.ts"
 export { toIsbn13 } from "./utils/toIsbn13.ts"
