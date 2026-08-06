@@ -5,6 +5,7 @@ import type {
   ResolvedDate,
   ResolvedMetadata,
   ResolvedMetadataHome,
+  ResolvedMetadataIdentifier,
 } from "../types/resolvedMetadata.ts"
 import { omitUndefined } from "../utils/omitUndefined.ts"
 import type { ComicInfo, ComicInfoKnownField } from "./parse.ts"
@@ -224,13 +225,36 @@ const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,
 ): ReadonlyArray<T> | undefined => (values.length > 0 ? values : undefined)
 
+const webFromComicInfo = (info: ComicInfo): ReadonlyArray<string> =>
+  (info.Web ?? "").split(/\s+/).filter((token) => token.length > 0)
+
+const isAbsoluteHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value)
+
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.hostname.length > 0
+    )
+  } catch {
+    return false
+  }
+}
+
+const webIdentifiers = (
+  values: ReadonlyArray<string>,
+): ReadonlyArray<ResolvedMetadataIdentifier> =>
+  values
+    .filter(
+      (value, index, all) =>
+        isAbsoluteHttpUrl(value) && all.indexOf(value) === index,
+    )
+    .map((value) => ({ value, scheme: "URL" }))
+
 const comicCornerFromComicInfo = (
   info: ComicInfo,
+  webValues: ReadonlyArray<string>,
 ): ResolvedMetadata["comic"] => {
-  const web = emptyToUndefined(
-    (info.Web ?? "").split(/\s+/).filter((token) => token.length > 0),
-  )
-
   const corner = omitUndefined({
     manga: mangaFlag(info),
     blackAndWhite: parseYesNo(info.BlackAndWhite),
@@ -240,7 +264,7 @@ const comicCornerFromComicInfo = (
     communityRating: parseDecimal(info.CommunityRating),
     notes: trimToUndefined(info.Notes),
     review: trimToUndefined(info.Review),
-    web,
+    web: emptyToUndefined(webValues),
     scanInformation: trimToUndefined(info.ScanInformation),
     mainCharacterOrTeam: trimToUndefined(info.MainCharacterOrTeam),
     characters: emptyToUndefined(splitCommaList(info.Characters)),
@@ -272,6 +296,13 @@ const belongsToFromComicInfo = (
 export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
   const rawGtin = info.GTIN
   const gtinTrimmed = trimToUndefined(rawGtin)
+  const web = webFromComicInfo(info)
+  const identifiers: ReadonlyArray<ResolvedMetadataIdentifier> = [
+    ...(gtinTrimmed !== undefined
+      ? [{ value: gtinTrimmed, scheme: "GTIN" }]
+      : []),
+    ...webIdentifiers(web),
+  ]
   const languageIso = trimToUndefined(info.LanguageISO)
   const subjects = [...splitCommaList(info.Genre), ...splitCommaList(info.Tags)]
   const edition = omitUndefined({
@@ -294,11 +325,8 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     contributors: emptyToUndefined(contributorsFromComicInfo(info)),
     readingDirection: readingDirection(info),
     numberOfPages: parseNonNegativeInt(info.PageCount),
-    identifiers:
-      gtinTrimmed !== undefined
-        ? [{ value: gtinTrimmed, scheme: "GTIN" }]
-        : undefined,
+    identifiers: emptyToUndefined(identifiers),
     belongsTo: belongsToFromComicInfo(info),
-    comic: comicCornerFromComicInfo(info),
+    comic: comicCornerFromComicInfo(info, web),
   })
 }

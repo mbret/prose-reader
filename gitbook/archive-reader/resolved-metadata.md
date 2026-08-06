@@ -148,7 +148,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `CommunityRating` | `comic.communityRating` | numeric |
 | `Notes` | `comic.notes` | |
 | `Review` | `comic.review` | |
-| `Web` | `comic.web` | whitespace-split URL list |
+| `Web` | `comic.web`, `identifiers` | whitespace-split reference list; valid absolute HTTP(S) values also become scheme `URL` identifiers |
 | `ScanInformation` | `comic.scanInformation` | |
 | `MainCharacterOrTeam` | `comic.mainCharacterOrTeam` | |
 | `Characters` | `comic.characters` | comma-split |

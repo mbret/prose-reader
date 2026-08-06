@@ -167,7 +167,7 @@ export type ResolvedComicMetadata = {
   readonly communityRating?: number
   readonly notes?: string
   readonly review?: string
-  /** `Web`, split on whitespace (the schema allows several URLs). */
+  /** `Web`, split on whitespace; valid HTTP(S) values also become URL identifiers. */
   readonly web?: ReadonlyArray<string>
   readonly scanInformation?: string
   readonly mainCharacterOrTeam?: string

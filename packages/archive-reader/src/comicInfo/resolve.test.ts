@@ -62,6 +62,26 @@ describe("resolveComicInfo", () => {
     })
   })
 
+  it("promotes valid ComicInfo Web references to URL identifiers", () => {
+    const googleBooksUrl = "https://books.google.com/books?id=k028AAAACAAJ"
+    const gutenbergUrl = "https://www.gutenberg.org/ebooks/78139"
+    const parsed = parseComicInfo(
+      comicInfoWrap(
+        `<Web>${googleBooksUrl} ${gutenbergUrl} not-a-url ${googleBooksUrl}</Web>`,
+      ),
+    )
+
+    expect(resolveComicInfo(parsed)).toEqual({
+      identifiers: [
+        { value: googleBooksUrl, scheme: "URL" },
+        { value: gutenbergUrl, scheme: "URL" },
+      ],
+      comic: {
+        web: [googleBooksUrl, gutenbergUrl, "not-a-url", googleBooksUrl],
+      },
+    })
+  })
+
   it("forwards Title and Publisher trimmed", () => {
     const parsed = parseComicInfo(
       comicInfoWrap(

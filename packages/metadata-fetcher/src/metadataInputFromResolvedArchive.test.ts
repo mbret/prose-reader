@@ -1,4 +1,8 @@
-import type { ResolvedArchive } from "@prose-reader/archive-reader"
+import {
+  parseComicInfo,
+  type ResolvedArchive,
+  resolveMetadata,
+} from "@prose-reader/archive-reader"
 import { describe, expect, it } from "vitest"
 import { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
 
@@ -65,6 +69,23 @@ describe("metadataInputFromResolvedArchive", () => {
       authors: ["Jane Artist"],
       publisher: "Chilton Books",
       publishedYear: 1965,
+    })
+  })
+
+  it("forwards standard ComicInfo Web catalog URLs as identifiers", () => {
+    const googleBooksUrl = "https://books.google.com/books?id=k028AAAACAAJ"
+    const gutenbergUrl = "https://www.gutenberg.org/ebooks/78139"
+    const metadata = resolveMetadata({
+      comicInfo: parseComicInfo(
+        `<ComicInfo><Web>${googleBooksUrl} ${gutenbergUrl}</Web></ComicInfo>`,
+      ),
+    })
+
+    expect(metadataInputFromResolvedArchive({ metadata })).toEqual({
+      identifiers: [
+        { value: googleBooksUrl, scheme: "URL" },
+        { value: gutenbergUrl, scheme: "URL" },
+      ],
     })
   })
 })
