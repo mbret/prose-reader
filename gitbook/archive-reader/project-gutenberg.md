@@ -1,10 +1,17 @@
 # Project Gutenberg identifiers
 
-Archive-reader recognizes and normalizes Project Gutenberg identifiers embedded in archive metadata. It does not contact Gutenberg or verify that an ebook exists.
+Archive-reader recognizes `ProjectGutenberg` as a known identifier scheme when a publication states it explicitly. A publication can also carry a Project Gutenberg reference as a general `URL` identifier.
 
-## Typed EPUB 3 identifier
+| Publication metadata | Resolved identifier |
+| --- | --- |
+| EPUB 3 identifier explicitly typed `ProjectGutenberg` | `{ value: id, scheme: "ProjectGutenberg" }` |
+| Absolute Gutenberg URL in an EPUB identifier | `{ value: url, scheme: "URL" }` |
+| Absolute Gutenberg URL in ComicInfo `Web` | `{ value: url, scheme: "URL" }` |
+| Untyped opaque Gutenberg ebook number | `{ value: id, scheme: "Unknown" }` |
 
-An EPUB can identify a raw Gutenberg ebook number with an `identifier-type` refinement:
+## Explicitly typed EPUB identifier
+
+EPUB 3 can state the identifier namespace directly:
 
 ```xml
 <dc:identifier id="gutenberg-id">78139</dc:identifier>
@@ -13,7 +20,7 @@ An EPUB can identify a raw Gutenberg ebook number with an `identifier-type` refi
 </meta>
 ```
 
-Archive-reader resolves it as:
+Archive-reader preserves the value and canonicalizes the known scheme spelling:
 
 ```typescript
 {
@@ -22,17 +29,27 @@ Archive-reader resolves it as:
 }
 ```
 
-## Official Project Gutenberg URL
+This is the most precise representation because the publication explicitly says what assigned the otherwise ambiguous number.
 
-### EPUB
+## Reference URL
 
-An EPUB can instead carry the public ebook page:
+Publications can carry a catalog reference without assigning a specialized identifier scheme.
+
+In EPUB metadata:
 
 ```xml
 <dc:identifier>https://www.gutenberg.org/ebooks/78139</dc:identifier>
 ```
 
-Archive-reader preserves the literal URL:
+In a CBZ or CBR `ComicInfo.xml`, the standard [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) field provides the equivalent representation:
+
+```xml
+<ComicInfo>
+  <Web>https://www.gutenberg.org/ebooks/78139</Web>
+</ComicInfo>
+```
+
+Both resolve to the literal URL:
 
 ```typescript
 {
@@ -41,26 +58,17 @@ Archive-reader preserves the literal URL:
 }
 ```
 
-Archive-reader does not extract or relabel the ebook number from the URL. It preserves the authored value as a general `URL` identifier.
+Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comic.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
 
-### ComicInfo
+## What this illustrates generally
 
-ComicInfo archives use the standard `Web` reference field, so a CBZ or CBR needs no EPUB package or vendor extension:
+The same identifier model applies beyond Project Gutenberg:
 
-```xml
-<ComicInfo>
-  <Web>https://www.gutenberg.org/ebooks/78139</Web>
-</ComicInfo>
-```
+- EPUB `dc:identifier` can use an EPUB 3 `identifier-type` refinement to announce a known or application-specific namespace.
+- ComicInfo provides `GTIN` for product identifiers and `Web` for reference URLs; it has no generic typed identifier collection.
+- Valid absolute HTTP(S) identifiers become scheme `URL`, independently of their host.
+- Archive-reader only infers schemes from values when the syntax is dependable, currently ISBN, GTIN, and absolute HTTP(S) URLs.
+- An opaque untyped value is preserved as `Unknown` instead of being guessed or discarded.
+- Custom scheme strings remain valid even when they are not part of `KnownMetadataIdentifierScheme`.
 
-Archive-reader retains the value under `metadata.comic.web` and also promotes it to `{ value: "https://www.gutenberg.org/ebooks/78139", scheme: "URL" }`. Multiple reference URLs can coexist in `Web`, separated by spaces.
-
-## Untyped raw identifiers
-
-A bare numeric value does not announce that Project Gutenberg assigned it:
-
-```xml
-<dc:identifier>78139</dc:identifier>
-```
-
-Archive-reader therefore preserves it with scheme `Unknown` instead of guessing. Use the typed EPUB refinement, the official URL, or `{ value: "78139", scheme: "ProjectGutenberg" }` when constructing metadata directly.
+For EPUBs—including EPUBs carrying Apple or Kobo display-option files—the OPF package document is the identifier source. Apple and Kobo sidecars describe presentation and do not define bibliographic identifier fields.

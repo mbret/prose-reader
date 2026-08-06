@@ -1,10 +1,17 @@
 # Google Books identifiers
 
-Archive-reader recognizes and normalizes Google Books identifiers embedded in archive metadata. It does not contact Google or verify that a volume exists.
+Archive-reader recognizes `GoogleBooks` as a known identifier scheme when a publication states it explicitly. A publication can also carry a Google Books reference as a general `URL` identifier.
 
-## Typed EPUB 3 identifier
+| Publication metadata | Resolved identifier |
+| --- | --- |
+| EPUB 3 identifier explicitly typed `GoogleBooks` | `{ value: id, scheme: "GoogleBooks" }` |
+| Absolute Google Books URL in an EPUB identifier | `{ value: url, scheme: "URL" }` |
+| Absolute Google Books URL in ComicInfo `Web` | `{ value: url, scheme: "URL" }` |
+| Untyped opaque Google Books id | `{ value: id, scheme: "Unknown" }` |
 
-The authoritative form gives the `dc:identifier` an `id` and refines it with the EPUB 3 `identifier-type` property:
+## Explicitly typed EPUB identifier
+
+EPUB 3 can state the identifier namespace directly:
 
 ```xml
 <dc:identifier id="google-books-id">k028AAAACAAJ</dc:identifier>
@@ -13,7 +20,7 @@ The authoritative form gives the `dc:identifier` an `id` and refines it with the
 </meta>
 ```
 
-Archive-reader resolves it as:
+Archive-reader preserves the value and canonicalizes the known scheme spelling:
 
 ```typescript
 {
@@ -22,13 +29,13 @@ Archive-reader resolves it as:
 }
 ```
 
-The raw volume id is opaque, so the refinement is what identifies its namespace.
+This is the most precise representation because the publication explicitly says what assigned the otherwise opaque value.
 
-## Official Google Books URL
+## Reference URL
 
-### EPUB
+Publications can carry a catalog reference without assigning a specialized identifier scheme.
 
-An EPUB can carry an official Google Books URL instead of a typed raw id:
+In EPUB metadata:
 
 ```xml
 <dc:identifier>
@@ -36,20 +43,7 @@ An EPUB can carry an official Google Books URL instead of a typed raw id:
 </dc:identifier>
 ```
 
-Archive-reader preserves the URL and classifies its literal form:
-
-```typescript
-{
-  value: "https://books.google.com/books?id=k028AAAACAAJ",
-  scheme: "URL",
-}
-```
-
-Archive-reader does not extract or relabel the volume id from the URL. It preserves the authored value as a general `URL` identifier.
-
-### ComicInfo
-
-ComicInfo already defines [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) as one or more space-separated reference URLs for the book. A CBZ can therefore carry the same exact Google Books reference without being converted to EPUB or using a vendor extension:
+In a CBZ or CBR `ComicInfo.xml`, the standard [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) field provides the equivalent representation:
 
 ```xml
 <ComicInfo>
@@ -57,7 +51,7 @@ ComicInfo already defines [`Web`](https://anansi-project.github.io/docs/comicinf
 </ComicInfo>
 ```
 
-Archive-reader retains the value under `metadata.comic.web` and also promotes each valid absolute HTTP(S) value to a normalized identifier:
+Both resolve to the literal URL:
 
 ```typescript
 {
@@ -66,25 +60,17 @@ Archive-reader retains the value under `metadata.comic.web` and also promotes ea
 }
 ```
 
-Multiple reference URLs can coexist in `Web`, separated by spaces. Every valid absolute HTTP(S) value is preserved as its own `URL` identifier.
+Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comic.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
 
-## Untyped raw identifiers
+## What this illustrates generally
 
-Without either the EPUB 3 refinement or an official URL, archive-reader cannot safely infer that an opaque value belongs to Google Books:
+The same identifier model applies beyond Google Books:
 
-```xml
-<dc:identifier>k028AAAACAAJ</dc:identifier>
-```
+- EPUB `dc:identifier` can use an EPUB 3 `identifier-type` refinement to announce a known or application-specific namespace.
+- ComicInfo provides `GTIN` for product identifiers and `Web` for reference URLs; it has no generic typed identifier collection.
+- Valid absolute HTTP(S) identifiers become scheme `URL`, independently of their host.
+- Archive-reader only infers schemes from values when the syntax is dependable, currently ISBN, GTIN, and absolute HTTP(S) URLs.
+- An opaque untyped value is preserved as `Unknown` instead of being guessed or discarded.
+- Custom scheme strings remain valid even when they are not part of `KnownMetadataIdentifierScheme`.
 
-It is preserved losslessly rather than guessed:
-
-```typescript
-{
-  value: "k028AAAACAAJ",
-  scheme: "Unknown",
-}
-```
-
-Applications that already know the value came from Google Books should provide `{ value: "k028AAAACAAJ", scheme: "GoogleBooks" }` when constructing metadata directly.
-
-The [ComicInfo 2.1 schema](https://anansi-project.github.io/docs/comicinfo/schemas/v2.1) has `GTIN` and `Web`, but no generic typed identifier collection. `GTIN` must not be repurposed for a Google Books id. Supporting opaque raw catalog ids inside `ComicInfo.xml` would require an upstream schema addition or a vendor-specific extension; it is unnecessary for Google Books and Project Gutenberg because both have canonical URLs supported by `Web`.
+For EPUBs—including EPUBs carrying Apple or Kobo display-option files—the OPF package document is the identifier source. Apple and Kobo sidecars describe presentation and do not define bibliographic identifier fields.
