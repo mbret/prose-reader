@@ -221,7 +221,7 @@ const collectUnreadableSources = ({
   return unreadable
 }
 
-const RESOLVED_ARCHIVE_VERSION = 2
+const RESOLVED_ARCHIVE_VERSION = 3
 
 /**
  * Resolves a book container into a single enriched, plain-JSON entity:
@@ -243,7 +243,7 @@ const RESOLVED_ARCHIVE_VERSION = 2
  * const { sources } = await resolveArchive(archive, { include: ["sources"] })
  * const opf = sources.opf && resolveArchiveMetadata(sources.opf.opf)
  * const comicInfo = sources.comicInfo && resolveArchiveMetadata(sources.comicInfo)
- * const isbn = comicInfo?.isbn ?? opf?.isbn // ComicInfo wins, your call
+ * const identifiers = comicInfo?.identifiers ?? opf?.identifiers
  *
  * // reject a publication whose package document is there but broken
  * const { unreadableSources } = await resolveArchive(archive)

@@ -6,7 +6,7 @@ import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
  * narrow a search but cannot start one.
  */
 export const hasSearchTerms = (input: FetchMetadataInput): boolean =>
-  [input.title, input.isbn, input.gtin, input.googleBooksId, input.series].some(
+  [input.title, input.series].some(
     (value) => value !== undefined && value.trim().length > 0,
   ) ||
   (input.identifiers ?? []).some(

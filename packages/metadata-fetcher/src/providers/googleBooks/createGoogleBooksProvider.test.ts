@@ -57,7 +57,7 @@ describe("createGoogleBooksProvider", () => {
     })
     const input: FetchMetadataInput = {
       title: "A locally edited title",
-      googleBooksId: "zyTCAlFPjgYC",
+      identifiers: [{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }],
     }
     const [candidate] = await provider.search(input, {
       ...context,
@@ -99,17 +99,23 @@ describe("createGoogleBooksProvider", () => {
       fetch: fetchMock,
     })
     const candidates = await provider.search(
-      { isbn: "978-0-441-01359-3", title: "Dune" },
+      {
+        identifiers: [{ value: "978-0-441-01359-3", scheme: "ISBN" }],
+        title: "Dune",
+      },
       context,
     )
     const url = requestedUrl(fetchMock, 0)
 
-    expect(url.searchParams.get("q")).toBe("isbn:978-0-441-01359-3")
+    expect(url.searchParams.get("q")).toBe("isbn:9780441013593")
     expect(url.searchParams.get("maxResults")).toBe("5")
     expect(url.searchParams.get("orderBy")).toBe("relevance")
     expect(url.searchParams.get("printType")).toBe("books")
     expect(candidates).toHaveLength(2)
-    expect(candidates[0]?.metadata.isbn).toBe("9780441013593")
+    expect(candidates[0]?.metadata.identifiers).toContainEqual({
+      value: "9780441013593",
+      scheme: "ISBN",
+    })
   })
 
   it("falls back from a missing id and ISBN to title plus author", async () => {
@@ -126,8 +132,10 @@ describe("createGoogleBooksProvider", () => {
       {
         title: "Dune",
         authors: ["Frank Herbert"],
-        isbn: "0000000000",
-        identifiers: [{ value: "missing", scheme: "GoogleBooks" }],
+        identifiers: [
+          { value: "0000000000", scheme: "ISBN" },
+          { value: "missing", scheme: "GoogleBooks" },
+        ],
       },
       context,
     )

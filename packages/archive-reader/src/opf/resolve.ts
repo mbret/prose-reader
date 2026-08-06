@@ -47,36 +47,54 @@ export const opfMetadataHomes = {
   ResolvedMetadataHome
 >
 
-const rawIdentifierValueForIsbn = (
-  identifiers: ReadonlyArray<OpfIdentifier>,
-): string | undefined => {
-  for (const i of identifiers) {
-    if (i.scheme !== undefined && i.scheme.trim().toLowerCase() === "isbn") {
-      if (normalizeIsbn(i.value) !== undefined) return i.value
+const inferredIdentifierScheme = (value: string): string => {
+  const trimmed = value.trim()
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed)
+
+      if (
+        (url.protocol === "http:" || url.protocol === "https:") &&
+        url.hostname.length > 0
+      ) {
+        return "URL"
+      }
+    } catch {
+      // Continue with identifier-specific inference.
     }
   }
 
-  for (const i of identifiers) {
-    if (normalizeIsbn(i.value) !== undefined) return i.value
-  }
+  const isbn = normalizeIsbn(trimmed)
 
-  return undefined
+  if (isbn !== undefined && (isbn.length === 10 || /^97[89]/.test(isbn))) {
+    return "ISBN"
+  }
+  if (normalizeGtin(trimmed) !== undefined) return "GTIN"
+
+  return "Unknown"
 }
 
-const inferredIdentifierScheme = (value: string): string | undefined => {
-  const trimmed = value.trim()
-
-  if (!/^https?:\/\//i.test(trimmed)) return undefined
-
-  try {
-    const url = new URL(trimmed)
-
-    return (url.protocol === "http:" || url.protocol === "https:") &&
-      url.hostname.length > 0
-      ? "URL"
-      : undefined
-  } catch {
-    return undefined
+const normalizedIdentifierScheme = (scheme: string): string => {
+  switch (scheme.trim().toLowerCase()) {
+    case "isbn":
+      return "ISBN"
+    case "gtin":
+      return "GTIN"
+    case "doi":
+      return "DOI"
+    case "googlebooks":
+      return "GoogleBooks"
+    case "openlibrary":
+      return "OpenLibrary"
+    case "projectgutenberg":
+      return "ProjectGutenberg"
+    case "url":
+      return "URL"
+    case "unknown":
+      return "Unknown"
+    default:
+      return scheme.trim()
   }
 }
 
@@ -281,7 +299,6 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
   const renditionLayout =
     rl === "reflowable" || rl === "pre-paginated" ? rl : undefined
 
-  const rawIsbn = rawIdentifierValueForIsbn(input.identifiers)
   const contributors = contributorsFromOpf(input)
   const { series, collection } = collectionsFromOpfMetas(input.metas)
 
@@ -312,17 +329,16 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
     renditionLayout,
     renditionFlow: validatedRenditionFlow(input.renditionFlowMeta),
     renditionSpread: validatedRenditionSpread(input.renditionSpreadMeta),
-    gtin: normalizeGtin(rawIsbn),
-    isbn: normalizeIsbn(rawIsbn),
     identifiers:
       input.identifiers.length > 0
         ? input.identifiers.map((identifier) =>
             omitUndefined({
               value: identifier.value,
-              scheme:
+              scheme: normalizedIdentifierScheme(
                 identifier.scheme ??
-                refinedIdentifierType(identifier, input.metas) ??
-                inferredIdentifierScheme(identifier.value),
+                  refinedIdentifierType(identifier, input.metas) ??
+                  inferredIdentifierScheme(identifier.value),
+              ),
               unique: identifier.unique,
             }),
           )

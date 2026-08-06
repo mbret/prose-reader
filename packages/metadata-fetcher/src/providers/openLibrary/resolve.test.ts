@@ -117,9 +117,9 @@ describe("resolveOpenLibraryDoc", () => {
     ).toBe("Dune: a novel")
   })
 
-  it("states the ISBN only when the record was looked up by one", () => {
+  it("states an ISBN identifier only when the record was looked up by one", () => {
     expect(
-      resolveOpenLibraryDoc({ title: "Dune" }, { coversBaseUrl }).isbn,
+      resolveOpenLibraryDoc({ title: "Dune" }, { coversBaseUrl }).identifiers,
     ).toBeUndefined()
     expect(
       resolveOpenLibraryDoc(
@@ -127,7 +127,6 @@ describe("resolveOpenLibraryDoc", () => {
         { coversBaseUrl, isbn: "9780441013593" },
       ),
     ).toMatchObject({
-      isbn: "9780441013593",
       identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
     })
   })

@@ -42,7 +42,10 @@ describe("createOpenLibraryProvider", () => {
     const provider = createOpenLibraryProvider({ fetch: fetchMock })
 
     const candidates = await provider.search(
-      { isbn: "9780441013593", title: "Dune" },
+      {
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
+        title: "Dune",
+      },
       context,
     )
 
@@ -54,7 +57,10 @@ describe("createOpenLibraryProvider", () => {
     expect(url.searchParams.get("limit")).toBe("5")
     expect(url.searchParams.get("fields")).toContain("number_of_pages_median")
     // the catalog confirmed the identity, so the record carries it
-    expect(candidates[0]?.metadata.isbn).toBe("9780441013593")
+    expect(candidates[0]?.metadata.identifiers).toContainEqual({
+      value: "9780441013593",
+      scheme: "ISBN",
+    })
   })
 
   it("falls back to a title search when the catalog knows no such ISBN", async () => {
@@ -63,7 +69,7 @@ describe("createOpenLibraryProvider", () => {
 
     const candidates = await provider.search(
       {
-        isbn: "9780441013593",
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
         title: "Dune",
         authors: ["Frank Herbert"],
       },
@@ -78,7 +84,10 @@ describe("createOpenLibraryProvider", () => {
     expect(fallback.searchParams.get("isbn")).toBeNull()
     // a title search describes a work, whose editions each have their own
     // ISBN: picking one would be fabrication
-    expect(candidates[0]?.metadata.isbn).toBeUndefined()
+    expect(candidates[0]?.metadata.identifiers).not.toContainEqual({
+      value: "9780441013593",
+      scheme: "ISBN",
+    })
   })
 
   it("falls back to free text when Open Library indexed a sparse work title", async () => {
@@ -256,7 +265,10 @@ describe("createOpenLibraryProvider", () => {
     const controller = new AbortController()
 
     await createOpenLibraryProvider({ fetch: fetchMock }).search(
-      { isbn: "9780441013593", title: "Dune" },
+      {
+        identifiers: [{ value: "9780441013593", scheme: "ISBN" }],
+        title: "Dune",
+      },
       { limit: 5, signal: controller.signal },
     )
 

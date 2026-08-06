@@ -4,6 +4,7 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
+import { isbnIdentifierValue } from "../../utils/identifierValues.ts"
 import { isJsonRecord, readRecordArray } from "../../utils/json.ts"
 import { retryWithBackoff } from "../../utils/retryWithBackoff.ts"
 import {
@@ -196,7 +197,7 @@ export const createGoogleBooksSearch = (
       }
     }
 
-    const isbn = input.isbn?.trim() || undefined
+    const isbn = isbnIdentifierValue(input.identifiers)
 
     if (isbn !== undefined) {
       const volumes = await searchVolumes(`isbn:${isbn}`, context)

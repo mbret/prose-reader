@@ -13,8 +13,6 @@ describe("metadataInputFromResolvedArchive", () => {
           { name: "Frank Herbert", roles: ["author"] },
           { name: "John Schoenherr", roles: ["illustrator"] },
         ],
-        isbn: "9780441013593",
-        gtin: "9780441013593",
         identifiers: [
           { value: "urn:isbn:9780441013593", scheme: "URI", unique: true },
           { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
@@ -41,10 +39,10 @@ describe("metadataInputFromResolvedArchive", () => {
     expect(metadataInputFromResolvedArchive(resolved)).toEqual({
       title: "Dune",
       authors: ["Frank Herbert"],
-      isbn: "9780441013593",
-      gtin: "9780441013593",
-      googleBooksId: "zyTCAlFPjgYC",
-      identifiers: [{ value: "urn:isbn:9780441013593", scheme: "URI" }],
+      identifiers: [
+        { value: "urn:isbn:9780441013593", scheme: "URI" },
+        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+      ],
       series: "Dune",
       publisher: "Ace",
       publishedYear: 2005,

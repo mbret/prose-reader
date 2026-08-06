@@ -1,13 +1,11 @@
 import {
-  normalizeGtin,
-  normalizeIsbn,
+  type MetadataIdentifier,
   parseW3cDtfDate,
   type ResolvedContributor,
   type ResolvedCover,
   type ResolvedMetadata,
   type ResolvedMetadataHome,
 } from "@prose-reader/archive-reader"
-import type { MetadataIdentifier } from "../../types/fetchMetadataInput.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
 import type {
@@ -50,10 +48,8 @@ const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,
 ): ReadonlyArray<T> | undefined => (values.length > 0 ? values : undefined)
 
-const resolvedIdentifierScheme = (
-  type: string | undefined,
-): string | undefined =>
-  type === "ISBN_10" || type === "ISBN_13" ? "ISBN" : type
+const resolvedIdentifierScheme = (type: string | undefined): string =>
+  type === "ISBN_10" || type === "ISBN_13" ? "ISBN" : (type ?? "Unknown")
 
 const dedupeIdentifiers = (
   identifiers: ReadonlyArray<MetadataIdentifier>,
@@ -65,8 +61,8 @@ const dedupeIdentifiers = (
           (other) =>
             other.value.trim().toLowerCase() ===
               identifier.value.trim().toLowerCase() &&
-            other.scheme?.trim().toLowerCase() ===
-              identifier.scheme?.trim().toLowerCase(),
+            other.scheme.trim().toLowerCase() ===
+              identifier.scheme.trim().toLowerCase(),
         ) === index,
     ),
   )
@@ -80,23 +76,6 @@ const industryIdentifiers = (
       scheme: resolvedIdentifierScheme(identifier.type),
     }),
   )
-
-const isbnFromIndustryIdentifiers = (
-  values: ReadonlyArray<GoogleBooksIndustryIdentifier>,
-): string | undefined => {
-  const preferred = ["ISBN_13", "ISBN_10"]
-
-  for (const type of preferred) {
-    const isbn = values.find(
-      (identifier) => identifier.type === type,
-    )?.identifier
-    const normalized = normalizeIsbn(isbn)
-
-    if (normalized !== undefined) return normalized
-  }
-
-  return undefined
-}
 
 const titleWithSeriesNumber = (
   volumeInfo: GoogleBooksVolumeInfo,
@@ -194,10 +173,6 @@ export const resolveGoogleBooksVolume = (
 ): ResolvedMetadata => {
   const volumeInfo = volume.volumeInfo ?? {}
   const sourceIndustryIdentifiers = volumeInfo.industryIdentifiers ?? []
-  const normalizedMatchedIsbn = normalizeIsbn(options.matchedIsbn)
-  const isbn =
-    normalizedMatchedIsbn ??
-    isbnFromIndustryIdentifiers(sourceIndustryIdentifiers)
   const sourceIdentifiers = industryIdentifiers(sourceIndustryIdentifiers)
   const identifiers = dedupeIdentifiers([
     ...(options.matchedIdentifier !== undefined
@@ -240,8 +215,6 @@ export const resolveGoogleBooksVolume = (
     subjects: emptyToUndefined(subjects),
     contributors: resolvedContributors(volumeInfo.authors ?? []),
     numberOfPages: volumeInfo.pageCount,
-    gtin: normalizeGtin(isbn),
-    isbn,
     identifiers,
     cover,
   })

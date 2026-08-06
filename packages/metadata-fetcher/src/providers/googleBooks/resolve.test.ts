@@ -112,8 +112,6 @@ describe("resolveGoogleBooksVolume", () => {
       subjects: ["Fiction", "Science fiction"],
       contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       numberOfPages: 412,
-      gtin: "9780441013593",
-      isbn: "9780441013593",
       identifiers: [
         { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         { value: "0441013597", scheme: "ISBN" },
@@ -153,8 +151,6 @@ describe("resolveGoogleBooksVolume", () => {
         { matchedIsbn: "978-0-441-01359-3" },
       ),
     ).toMatchObject({
-      isbn: "9780441013593",
-      gtin: "9780441013593",
       identifiers: expect.arrayContaining([
         { value: "978-0-441-01359-3", scheme: "ISBN" },
       ]),

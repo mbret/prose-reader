@@ -51,9 +51,13 @@ type ResolvedMetadata = {
   renditionSpread?: "none" | "landscape" | "portrait" | "both" | "auto"
   /** declared count, else counted page-like pages; `resolveArchive` only when counted */
   numberOfPages?: number
-  gtin?: string
-  isbn?: string
-  identifiers?: { value: string; scheme?: string; unique?: true }[]
+  identifiers?: {
+    value: string
+    scheme: "ISBN" | "GTIN" | "DOI" | "GoogleBooks" |
+            "OpenLibrary" | "ProjectGutenberg" | "URL" | "Unknown" |
+            (string & {})
+    unique?: true
+  }[]
   belongsTo?: {
     series?: { name: string; position?: number; total?: number }[]
     collection?: { name: string; position?: number; total?: number }[]
@@ -88,7 +92,9 @@ Roles use the Readium terms our sources can express — `author`, `translator`, 
 
 Every non-empty OPF `dc:identifier` is preserved in document order. The identifier selected by `package@unique-identifier` has `unique: true`. Parsed source data at `sources.opf.identifiers` also retains each element's XML `id`; normalized `metadata.identifiers` omits that internal anchor while keeping the semantic marker.
 
-Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). The direct EPUB 2 attribute wins when a hybrid file states both. Only when neither type was authored is a syntactically valid absolute `http://` or `https://` value classified as `scheme: "URL"`. The inference is deliberately narrow: malformed URLs and other prefixes such as `urn:`, `uuid:`, `calibre:`, or `url:` stay unclassified.
+Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). Known scheme spellings are canonicalized while custom strings remain valid. The direct EPUB 2 attribute wins when a hybrid file states both. Without an authored type, recognizable ISBN and GTIN values become `ISBN`/`GTIN`, a valid absolute HTTP(S) value becomes `URL`, and the lossless fallback is `Unknown`.
+
+The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. This is also the identifier vocabulary consumed by metadata-fetcher, so ISBNs and catalog ids do not change shape between archive inspection and catalog lookup.
 
 ## Precedence
 
@@ -96,7 +102,7 @@ When several sources are present, `resolveMetadata` merges field-wise:
 
 | Field | Rule |
 | --- | --- |
-| descriptive fields (`title`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`, `gtin`/`isbn`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
+| descriptive fields (`title`, `description`, `languages`, `subjects`, `contributors`, `belongsTo`) | **OPF wins over ComicInfo** — the package document is the publication's own metadata; the sidecar fills gaps |
 | `publication.edition` details (`date`, `publisher`, `imprint`) | merged field-wise, **OPF wins over ComicInfo** and the sidecar fills gaps |
 | `readingDirection` | **ComicInfo wins over OPF** (`Manga` beats `page-progression-direction`) — deliberate, preserving the historical pipeline behavior |
 | `renditionLayout` | **OPF explicit → Apple → Kobo**, first defined wins; the [`layoutScan`](README.md#resolving-a-publication) promotion applies on top, inside the resolver |
@@ -130,7 +136,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Year`, `Month`, `Day` | `publication.edition.date` | independent optional components |
 | `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comic.manga` |
 | `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
-| `GTIN` | `identifiers` | scheme `GTIN`; also `gtin`/`isbn` normalization |
+| `GTIN` | `identifiers` | scheme `GTIN`; ISBN-shaped values remain searchable as ISBNs by metadata-fetcher |
 | `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total |
 | `SeriesGroup` | `belongsTo.collection` | comma-split |
 | `AlternateSeries`, `AlternateNumber`, `AlternateCount` | `comic.alternateSeries` | |
@@ -161,7 +167,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `dc:subject` | `subjects` | all, document order |
 | `dc:creator`, `dc:contributor` | `contributors` | roles from `opf:role` and EPUB 3 `meta refines property="role"`, `file-as` → `sortAs` |
 | `dc:date` | `publication.edition.date` | the specific EPUB publication's date, parsed as W3CDTF |
-| `dc:identifier` | `identifiers` | all; EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` refinement retained, otherwise valid absolute HTTP(S) → scheme `URL`; the `package@unique-identifier` target has `unique: true`; ISBN-scheme entries drive `isbn`/`gtin` |
+| `dc:identifier` | `identifiers` | all; EPUB 2 `opf:scheme` or EPUB 3 `identifier-type` refinement retained, otherwise recognizable ISBN/GTIN, valid absolute HTTP(S) → `URL`, or `Unknown`; the `package@unique-identifier` target has `unique: true` |
 | spine `page-progression-direction` | `readingDirection` | validated |
 | `rendition:layout` meta | `renditionLayout` | validated |
 | `rendition:flow` meta | `renditionFlow` | validated |
@@ -184,4 +190,4 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 
 ## Error policy & versioning
 
-Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `2`, reflecting the explicit publication-event model. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.
+Per-source parse failures are swallowed and logged via the debug `Report` (books in the wild are dirty): a malformed `ComicInfo.xml` never fails a resolve, it just doesn't contribute. The `ResolvedArchive` entity carries a `version` field for consumers persisting it — currently `3`, reflecting the normalized identifier model. It is bumped only when the shape or meaning of existing fields changes incompatibly; additive vocabulary growth does not bump it.

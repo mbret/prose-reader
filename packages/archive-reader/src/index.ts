@@ -98,6 +98,9 @@ export { resolveMetadata } from "./resolveMetadata.ts"
 export { resolveArchiveToc } from "./toc/resolveArchiveToc.ts"
 export type { ArchiveTocItem } from "./toc/types.ts"
 export type {
+  KnownMetadataIdentifierScheme,
+  MetadataIdentifier,
+  MetadataIdentifierScheme,
   ResolvedAppleMetadata,
   ResolvedCollection,
   ResolvedComicMetadata,
@@ -109,6 +112,7 @@ export type {
   ResolvedKoboMetadata,
   ResolvedMetadata,
   ResolvedMetadataHome,
+  ResolvedMetadataIdentifier,
   ResolvedProperty,
   ResolvedPublication,
   ResolvedPublicationInfo,

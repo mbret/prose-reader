@@ -4,6 +4,7 @@ import type {
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
+import { isbnIdentifierValue } from "../../utils/identifierValues.ts"
 import {
   type ProjectGutenbergLookup,
   projectGutenbergLookupFromInput,
@@ -145,7 +146,7 @@ export const createOpenLibraryProvider = (
     id: OPEN_LIBRARY_PROVIDER_ID,
     name: "Open Library",
     search: async (input, context) => {
-      const isbn = input.isbn?.trim() || undefined
+      const isbn = isbnIdentifierValue(input.identifiers)
       const projectGutenberg = projectGutenbergLookupFromInput(input)
 
       if (isbn !== undefined) {

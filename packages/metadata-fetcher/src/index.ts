@@ -26,6 +26,12 @@
  * pass it in. Scoring, ranking and error handling stay here, identical for
  * every provider.
  */
+
+export type {
+  KnownMetadataIdentifierScheme,
+  MetadataIdentifier,
+  MetadataIdentifierScheme,
+} from "@prose-reader/archive-reader"
 export type { FetchMetadataOptions } from "./fetchMetadata.ts"
 export { fetchMetadata } from "./fetchMetadata.ts"
 export type { ScoredMetadataCandidate } from "./match/scoreMetadataCandidate.ts"
@@ -114,10 +120,7 @@ export type {
   FetchedMetadataSource,
   FetchedMetadataSources,
 } from "./types/fetchedMetadata.ts"
-export type {
-  FetchMetadataInput,
-  MetadataIdentifier,
-} from "./types/fetchMetadataInput.ts"
+export type { FetchMetadataInput } from "./types/fetchMetadataInput.ts"
 export type {
   MetadataMatch,
   MetadataMatchField,

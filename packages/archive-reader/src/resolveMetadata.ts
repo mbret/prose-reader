@@ -21,7 +21,7 @@ export type ResolveMetadataSources = {
  * {@link ResolvedMetadata}, with explicit precedence:
  *
  * - Descriptive fields (`title`, `description`, `publication`, `languages`,
- *   `subjects`, `contributors`, `belongsTo`, `gtin`/`isbn`):
+ *   `subjects`, `contributors`, `belongsTo`):
  *   **OPF wins over ComicInfo** — the package document is the publication's
  *   own metadata; a ComicInfo sidecar fills the gaps.
  * - `readingDirection`: **ComicInfo wins over OPF** (`Manga` beats
@@ -86,8 +86,6 @@ export const resolveMetadata = (
     renditionFlow: opf?.renditionFlow,
     renditionSpread: opf?.renditionSpread,
     numberOfPages: comicInfo?.numberOfPages,
-    gtin: opf?.gtin ?? comicInfo?.gtin,
-    isbn: opf?.isbn ?? comicInfo?.isbn,
     identifiers: identifiers.length > 0 ? identifiers : undefined,
     belongsTo: opf?.belongsTo ?? comicInfo?.belongsTo,
     properties: opf?.properties,

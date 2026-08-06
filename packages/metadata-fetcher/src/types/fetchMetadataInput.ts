@@ -1,13 +1,4 @@
-/** Scheme used by `ResolvedMetadata.identifiers` for a Google Books volume. */
-export const GOOGLE_BOOKS_IDENTIFIER_SCHEME = "GoogleBooks"
-
-/** An identifier a metadata provider can use for lookup or matching. */
-export type MetadataIdentifier = {
-  /** Identifier exactly as announced by the source. */
-  readonly value: string
-  /** Namespace, such as `DOI`, `URL`, `ProjectGutenberg` or `GoogleBooks`. */
-  readonly scheme?: string
-}
+import type { MetadataIdentifier } from "@prose-reader/archive-reader"
 
 /**
  * The compact description of a publication that metadata providers understand
@@ -19,10 +10,7 @@ export type FetchMetadataInput = {
   readonly title?: string
   /** Author names, lead author first. */
   readonly authors?: ReadonlyArray<string>
-  readonly isbn?: string
-  readonly gtin?: string
-  /** Google Books volume id, such as `zyTCAlFPjgYC`. */
-  readonly googleBooksId?: string
+  /** Scheme-scoped publication and catalog identifiers. */
   readonly identifiers?: ReadonlyArray<MetadataIdentifier>
   /** Series name, when it helps identify or disambiguate the publication. */
   readonly series?: string

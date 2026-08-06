@@ -26,6 +26,38 @@
  *   normalization; known ones get promoted into real fields over time.
  */
 
+/** Identifier namespaces understood by prose-reader out of the box. */
+export type KnownMetadataIdentifierScheme =
+  | "ISBN"
+  | "GTIN"
+  | "DOI"
+  | "GoogleBooks"
+  | "OpenLibrary"
+  | "ProjectGutenberg"
+  | "URL"
+  | "Unknown"
+
+/**
+ * A known identifier namespace, or a catalog/application-specific namespace.
+ * The open string keeps custom providers extensible while the known literals
+ * remain visible to TypeScript tooling.
+ */
+export type MetadataIdentifierScheme =
+  | KnownMetadataIdentifierScheme
+  | (string & {})
+
+/** A scheme-scoped identifier for a publication, work, or catalog record. */
+export type MetadataIdentifier = {
+  /** Identifier exactly as announced by the source. */
+  readonly value: string
+  readonly scheme: MetadataIdentifierScheme
+}
+
+/** An archive identifier, including EPUB's selected-package marker. */
+export type ResolvedMetadataIdentifier = MetadataIdentifier & {
+  readonly unique?: true
+}
+
 /**
  * Contributor role vocabulary: the Readium WPM role terms our sources can
  * express, plus the prose-reader extension `coverArtist` (ComicInfo
@@ -283,21 +315,14 @@ export type ResolvedMetadata = {
    * `resolveArchive`.
    */
   readonly numberOfPages?: number
-  /** Digits-only GTIN when a source identifier matches a GS1 length (8/12/13/14). */
-  readonly gtin?: string
-  readonly isbn?: string
   /**
    * Raw identifier values, trimmed. OPF contributes every `dc:identifier`,
    * retaining its announced EPUB 2 scheme or EPUB 3 `identifier-type`
-   * refinement, otherwise classifying a valid absolute HTTP(S) value as
-   * scheme `URL`; `unique` marks the package's selected identifier. ComicInfo
-   * contributes `GTIN` (scheme `GTIN`).
+   * refinement. Otherwise it classifies recognizable ISBN/GTIN and absolute
+   * HTTP(S) values, with `Unknown` as the lossless fallback. `unique` marks
+   * the package's selected identifier. ComicInfo contributes `GTIN`.
    */
-  readonly identifiers?: ReadonlyArray<{
-    readonly value: string
-    readonly scheme?: string
-    readonly unique?: true
-  }>
+  readonly identifiers?: ReadonlyArray<ResolvedMetadataIdentifier>
   /**
    * Series/collection membership (Readium `belongsTo`). OPF EPUB 3
    * `belongs-to-collection` metas (`collection-type` `series` versus other)

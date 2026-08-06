@@ -8,7 +8,7 @@ const comicInfoWrap = (body: string) =>
   `xmlns:xsd="http://www.w3.org/2001/XMLSchema">${body}</ComicInfo>`
 
 describe("resolveComicInfo", () => {
-  it("isbn from GTIN, readingDirection from Manga", () => {
+  it("normalizes GTIN as an identifier and resolves Manga direction", () => {
     const parsed = parseComicInfo(
       comicInfoWrap(
         "<GTIN>978-3-16-148410-0</GTIN><Manga>YesAndRightToLeft</Manga>",
@@ -16,8 +16,6 @@ describe("resolveComicInfo", () => {
     )
 
     expect(resolveComicInfo(parsed)).toEqual({
-      gtin: "9783161484100",
-      isbn: "9783161484100",
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
       comic: { manga: true },
@@ -56,11 +54,10 @@ describe("resolveComicInfo", () => {
     expect(resolved.comic).toBeUndefined()
   })
 
-  it("gtin without isbn when value is GTIN-8 only", () => {
+  it("keeps a GTIN-8 identifier", () => {
     const parsed = parseComicInfo(comicInfoWrap("<GTIN>9638-5074</GTIN>"))
 
     expect(resolveComicInfo(parsed)).toEqual({
-      gtin: "96385074",
       identifiers: [{ value: "9638-5074", scheme: "GTIN" }],
     })
   })
@@ -368,8 +365,6 @@ describe("resolveComicInfo", () => {
     )
 
     expect(resolveComicInfo(parsed)).toEqual({
-      gtin: "9783161484100",
-      isbn: "9783161484100",
       identifiers: [{ value: "978-3-16-148410-0", scheme: "GTIN" }],
       readingDirection: "rtl",
       title: "Sample Story",

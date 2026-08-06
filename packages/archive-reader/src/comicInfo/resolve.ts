@@ -6,8 +6,6 @@ import type {
   ResolvedMetadata,
   ResolvedMetadataHome,
 } from "../types/resolvedMetadata.ts"
-import { normalizeGtin } from "../utils/normalizeGtin.ts"
-import { normalizeIsbn } from "../utils/normalizeIsbn.ts"
 import { omitUndefined } from "../utils/omitUndefined.ts"
 import type { ComicInfo, ComicInfoKnownField } from "./parse.ts"
 
@@ -296,8 +294,6 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     contributors: emptyToUndefined(contributorsFromComicInfo(info)),
     readingDirection: readingDirection(info),
     numberOfPages: parseNonNegativeInt(info.PageCount),
-    gtin: normalizeGtin(rawGtin),
-    isbn: normalizeIsbn(rawGtin),
     identifiers:
       gtinTrimmed !== undefined
         ? [{ value: gtinTrimmed, scheme: "GTIN" }]

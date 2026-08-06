@@ -79,6 +79,8 @@ Human-friendly lookup, for curl and quick tries.
 curl "http://localhost:6382/metadata?isbn=9780441013593"
 ```
 
+These three identifier query conveniences are normalized before calling the SDK: `isbn` → scheme `ISBN`, `gtin` → `GTIN`, and `googleBooksId` → `GoogleBooks`.
+
 ### `POST /metadata`
 
 The integration path: the body is a `FetchMetadataInput`. Options stay on the query string so the body remains a pure lookup description.
@@ -86,10 +88,10 @@ The integration path: the body is a `FetchMetadataInput`. Options stay on the qu
 ```bash
 curl -X POST "http://localhost:6382/metadata?limit=3" \
   -H 'content-type: application/json' \
-  -d '{"title":"Dune","authors":["Frank Herbert"],"publishedYear":1965}'
+  -d '{"title":"Dune","authors":["Frank Herbert"],"identifiers":[{"value":"9780441013593","scheme":"ISBN"}],"publishedYear":1965}'
 ```
 
-Supported fields are `title`, `authors`, `isbn`, `gtin`, `googleBooksId`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Unknown fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
+Supported fields are `title`, `authors`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Every identifier has `{ "value": string, "scheme": string }`; known schemes include `ISBN`, `GTIN`, `GoogleBooks`, `ProjectGutenberg`, `OpenLibrary`, `URL`, `DOI`, and `Unknown`, while custom scheme strings are accepted. A missing or blank scheme in untyped JSON normalizes to `Unknown`. Unknown body fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
 
 ### Options (both metadata routes)
 

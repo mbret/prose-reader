@@ -47,13 +47,29 @@ const fetched = await fetchMetadata(
 The input is owned by the fetcher and contains exactly the fields its providers and matcher understand:
 
 ```typescript
+type KnownMetadataIdentifierScheme =
+  | "ISBN"
+  | "GTIN"
+  | "DOI"
+  | "GoogleBooks"
+  | "OpenLibrary"
+  | "ProjectGutenberg"
+  | "URL"
+  | "Unknown"
+
+type MetadataIdentifierScheme =
+  | KnownMetadataIdentifierScheme
+  | (string & {}) // custom catalog/application scheme
+
+type MetadataIdentifier = {
+  value: string
+  scheme: MetadataIdentifierScheme
+}
+
 type FetchMetadataInput = {
   title?: string
   authors?: ReadonlyArray<string>
-  isbn?: string
-  gtin?: string
-  googleBooksId?: string
-  identifiers?: ReadonlyArray<{ value: string; scheme?: string }>
+  identifiers?: ReadonlyArray<MetadataIdentifier>
   series?: string
   publisher?: string
   publishedYear?: number
@@ -62,7 +78,7 @@ type FetchMetadataInput = {
 }
 ```
 
-Some fields start a request (`title`, `authors`, ISBN/GTIN, `googleBooksId`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). `googleBooksId` is Google's opaque volume id, not an ISBN—for example `zyTCAlFPjgYC`. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
+Some fields start a request (`title`, `authors`, `series`, identifiers); others disambiguate the candidates that come back (`publisher`, `publishedYear`, languages, page count). ISBN, GTIN and catalog ids all use the same identifier shape: `{ value: "9780441013593", scheme: "ISBN" }` and `{ value: "zyTCAlFPjgYC", scheme: "GoogleBooks" }`. The known schemes give TypeScript autocomplete, while any consumer-defined string remains valid. `Unknown` explicitly preserves a source identifier whose namespace cannot be classified; `URL` means a validated absolute HTTP(S) identifier. Fields with no input role — covers, descriptions, subjects, rights, layout and format-specific metadata — are deliberately absent.
 
 `metadataInputFromResolvedArchive` is the explicit bridge from archive-reader. It only requires the `metadata` projection, so callers do not need to resolve reading order, TOC or sources for a lookup:
 
@@ -71,7 +87,7 @@ const resolved = await resolveArchive(archive, { include: ["metadata"] })
 const input = metadataInputFromResolvedArchive(resolved)
 ```
 
-The adapter selects authors from contributors, the first series, and the edition publisher/year with original-publication data as fallback. It promotes a `GoogleBooks` identifier into `googleBooksId` and removes archive-only identifier details such as `unique` from the remaining generic identifiers.
+The adapter selects authors from contributors, the first series, and the edition publisher/year with original-publication data as fallback. It forwards every identifier with its scheme and removes only archive-specific details such as `unique`.
 
 ## The fetched entity
 
@@ -90,7 +106,7 @@ type FetchedMetadata = {
 }
 ```
 
-`version` is currently `4`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
+`version` is currently `5`. Every candidate uses the explicit `publication.original` / `publication.edition` vocabulary.
 
 `matches` are deliberately not consolidated into a single metadata record. A score says how strongly a candidate resembles the input; it does not prove that several accepted candidates describe the same edition. Keeping the candidates separate avoids silently mixing fields from competing records and leaves selection policy with the consumer.
 
@@ -151,7 +167,7 @@ The rules:
   | `publishedYear` | 0.2 | year proximity against the candidate's publication data |
   | `publisher`, `languages`, `numberOfPages` | 0.15 | publication details — they must never sink a convincing match alone |
 
-- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same scheme. A scheme-less raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
+- **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same non-`Unknown` scheme. An `Unknown` raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams with the subtitle asymmetry repaired (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`); an explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`). Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
 
@@ -285,18 +301,18 @@ const provider = createGoogleBooksProvider({
 | `baseUrl` | `https://www.googleapis.com/books/v1` | API root; override for a stub |
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 
-**Lookup strategy**, from most exact to broadest: `googleBooksId` (or an authored `GoogleBooks` identifier or official Google Books/API URL), ISBN, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
+**Lookup strategy**, from most exact to broadest: an authored `GoogleBooks` identifier (or official Google Books/API URL), an `ISBN` identifier, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
 
 To replace Oboku's `googleVolumeId`, pass it directly:
 
 ```typescript
 const input = {
   title: "Dune",
-  googleBooksId: googleVolumeId,
+  identifiers: [{ value: googleVolumeId, scheme: "GoogleBooks" }],
 }
 ```
 
-An official Google Books website/API URL in `identifiers` is recognized too. An exact lookup echoes the volume id as `{ value: id, scheme: "GoogleBooks" }` after Google confirms it, so the shared matcher treats it as decisive. `metadataInputFromResolvedArchive` promotes that identifier back into `googleBooksId` for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`.
+An official Google Books website/API URL with scheme `URL` is recognized too. An exact lookup echoes the confirmed volume id as `{ value: id, scheme: "GoogleBooks" }`, so the shared matcher treats it as decisive and `metadataInputFromResolvedArchive` can forward it unchanged for a later refresh. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN identifier even when a sparse Google record omits `industryIdentifiers`.
 
 Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
@@ -309,7 +325,7 @@ Each request makes at most three total attempts. Network failures and HTTP `500`
 | `authors` | `contributors` | role `author` |
 | `publisher`, `publishedDate` | `publication.edition` | partial dates retain the available year/month/day |
 | `description` | `description` | Google may provide simple HTML formatting |
-| `industryIdentifiers` | `isbn`, `gtin`, `identifiers` | ISBN-13 preferred over ISBN-10; ISBN schemes normalize to `ISBN`; every announced identifier is retained |
+| `industryIdentifiers` | `identifiers` | ISBN schemes normalize to `ISBN`; every announced identifier is retained |
 | `pageCount` | `numberOfPages` | |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
@@ -351,7 +367,7 @@ const provider = createOpenLibraryProvider({
 | `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |
 
-`isbn` is set **only** when the search was an ISBN lookup, and then it is the queried one: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.
+An `ISBN` identifier is added **only** when the search was an ISBN lookup, and then it uses the queried value: the API answered "this work has that ISBN", which is a fact about the record. A title-search hit describes a *work*, whose editions each have their own ISBN, so picking one would be fabrication.
 
 Only the mapped fields are requested (`fields=`), which is the difference between a few hundred bytes per hit and a few hundred kilobytes.
 
@@ -410,7 +426,7 @@ const myProvider: MetadataProvider = {
       raw: result,
       metadata: {
         title: result.name,
-        isbn: result.isbn,
+        identifiers: [{ value: result.isbn, scheme: "ISBN" }],
         contributors: result.authors.map((name) => ({
           name,
           roles: ["author"],
@@ -467,7 +483,7 @@ Rules of thumb:
   ```
 - **Forward `signal`** to every request you make.
 - **Treat `limit` as a page-size hint**; the fetch caps the ranked result anyway.
-- **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `isbn` is the single most damaging thing you can emit.
+- **Normalize honestly.** Populate a field only when the record actually states it — a fabricated value is a signal the matcher will score, and a wrong `ISBN` identifier is the single most damaging thing you can emit.
 - **`raw` is yours**: put your parsed record there for provenance and provider-specific fields with no home in the vocabulary. It is kept only when the consumer asks for it.
 
 The matching primitives are exported too (`scoreMetadataCandidate`, `titleSimilarity`, `personNameSimilarity`, `textSimilarity`, `normalizeForComparison`) if you want to rank something of your own by the same rules — `scoreMetadataCandidate(input, candidate)` takes a `FetchMetadataInput` and a rich `ResolvedMetadata` candidate.

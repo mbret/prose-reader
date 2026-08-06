@@ -86,7 +86,7 @@ describe("resolveOpf", () => {
     expect(resolveOpf(emptyOpf())).toEqual({})
   })
 
-  it("prefers identifier with scheme ISBN for isbn and gtin", () => {
+  it("preserves authored identifier schemes", () => {
     expect(
       resolveOpf({
         ...emptyOpf(),
@@ -96,8 +96,6 @@ describe("resolveOpf", () => {
         ],
       }),
     ).toEqual({
-      gtin: "9783161484100",
-      isbn: "9783161484100",
       identifiers: [
         { scheme: "UUID", value: "urn:uuid:abc" },
         { scheme: "ISBN", value: "978-3-16-148410-0" },
@@ -119,8 +117,8 @@ describe("resolveOpf", () => {
         ],
       }).identifiers,
     ).toEqual([
-      { value: "urn:uuid:secondary" },
-      { unique: true, value: "urn:uuid:package" },
+      { value: "urn:uuid:secondary", scheme: "Unknown" },
+      { unique: true, value: "urn:uuid:package", scheme: "Unknown" },
     ])
   })
 
@@ -148,9 +146,9 @@ describe("resolveOpf", () => {
         scheme: "URL",
       },
       { value: "HTTPS://example.com/books/1", scheme: "URL" },
-      { value: "https://" },
-      { value: "urn:uuid:abc" },
-      { value: "url:http://example.com/books/1" },
+      { value: "https://", scheme: "Unknown" },
+      { value: "urn:uuid:abc", scheme: "Unknown" },
+      { value: "url:http://example.com/books/1", scheme: "Unknown" },
       { value: "https://example.com/explicit", scheme: "URI" },
     ])
   })
@@ -201,20 +199,27 @@ describe("resolveOpf", () => {
     ])
   })
 
-  it("falls back to first identifier value that normalizes as ISBN", () => {
+  it("infers ISBN when an untyped identifier normalizes as one", () => {
     expect(
       resolveOpf({
         ...emptyOpf(),
         identifiers: [{ value: "urn:isbn:9783161484100" }],
       }),
     ).toEqual({
-      gtin: "9783161484100",
-      isbn: "9783161484100",
-      identifiers: [{ value: "urn:isbn:9783161484100" }],
+      identifiers: [{ value: "urn:isbn:9783161484100", scheme: "ISBN" }],
     })
   })
 
-  it("ignores ISBN-scheme identifiers that do not normalize, then scans the rest", () => {
+  it("infers non-Bookland 13-digit values as GTIN rather than ISBN", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [{ value: "4006381333931" }],
+      }).identifiers,
+    ).toEqual([{ value: "4006381333931", scheme: "GTIN" }])
+  })
+
+  it("keeps an authored ISBN scheme even when its value does not normalize", () => {
     expect(
       resolveOpf({
         ...emptyOpf(),
@@ -222,11 +227,14 @@ describe("resolveOpf", () => {
           { scheme: "ISBN", value: "not-a-real-isbn" },
           { value: "978-3-16-148410-0" },
         ],
-      }).isbn,
-    ).toBe("9783161484100")
+      }).identifiers,
+    ).toEqual([
+      { scheme: "ISBN", value: "not-a-real-isbn" },
+      { scheme: "ISBN", value: "978-3-16-148410-0" },
+    ])
   })
 
-  it("uses the first ISBN-scheme identifier whose value normalizes", () => {
+  it("preserves several identifiers in the same scheme", () => {
     expect(
       resolveOpf({
         ...emptyOpf(),
@@ -234,8 +242,11 @@ describe("resolveOpf", () => {
           { scheme: "ISBN", value: "garbage" },
           { scheme: "ISBN", value: "978-3-16-148410-0" },
         ],
-      }).isbn,
-    ).toBe("9783161484100")
+      }).identifiers,
+    ).toEqual([
+      { scheme: "ISBN", value: "garbage" },
+      { scheme: "ISBN", value: "978-3-16-148410-0" },
+    ])
   })
 
   it("forwards title, publisher, description, rights, languages and subjects", () => {

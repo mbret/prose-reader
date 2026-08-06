@@ -143,20 +143,22 @@ const metadataInputFromQuery = (
   const authors = queryValues(query.author)
   const languages = queryValues(query.language)
   const publishedYear = Number(queryValue(query.publishedYear))
+  const isbn = queryValue(query.isbn)
+  const gtin = queryValue(query.gtin)
+  const googleBooksId = queryValue(query.googleBooksId)
+  const identifiers = [
+    ...(isbn !== undefined ? [{ value: isbn, scheme: "ISBN" }] : []),
+    ...(gtin !== undefined ? [{ value: gtin, scheme: "GTIN" }] : []),
+    ...(googleBooksId !== undefined
+      ? [{ value: googleBooksId, scheme: "GoogleBooks" }]
+      : []),
+  ]
 
   return {
     ...(queryValue(query.title) !== undefined
       ? { title: queryValue(query.title) }
       : {}),
-    ...(queryValue(query.isbn) !== undefined
-      ? { isbn: queryValue(query.isbn) }
-      : {}),
-    ...(queryValue(query.gtin) !== undefined
-      ? { gtin: queryValue(query.gtin) }
-      : {}),
-    ...(queryValue(query.googleBooksId) !== undefined
-      ? { googleBooksId: queryValue(query.googleBooksId) }
-      : {}),
+    ...(identifiers.length > 0 ? { identifiers } : {}),
     ...(authors.length > 0 ? { authors } : {}),
     ...(languages.length > 0 ? { languages } : {}),
     ...(queryValue(query.series) !== undefined

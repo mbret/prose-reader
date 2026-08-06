@@ -142,11 +142,10 @@ describe("resolveMetadata", () => {
     })
 
     expect(resolved.identifiers).toEqual([
-      { value: "urn:uuid:abc", unique: true },
+      { value: "urn:uuid:abc", scheme: "Unknown", unique: true },
       { value: "978-3-16-148410-0", scheme: "ISBN" },
       { value: "9638-5074", scheme: "GTIN" },
     ])
-    expect(resolved.isbn).toBe("9783161484100")
   })
 
   it("keeps the format-scoped corners from their producers", () => {
