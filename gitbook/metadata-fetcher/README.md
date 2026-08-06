@@ -7,6 +7,7 @@ It takes a compact `FetchMetadataInput`, asks a list of **pluggable providers**,
 ```typescript
 import { resolveArchive } from "@prose-reader/archive-reader"
 import {
+  createGoogleBooksProvider,
   createOpenLibraryProvider,
   createProjectGutenbergProvider,
   fetchMetadata,
@@ -18,6 +19,7 @@ const input = metadataInputFromResolvedArchive(resolved)
 const fetched = await fetchMetadata(input, {
   providers: [
     createProjectGutenbergProvider(),
+    createGoogleBooksProvider({ apiKey: "your-api-key" }),
     createOpenLibraryProvider(),
   ],
 })
@@ -166,6 +168,7 @@ if (!fetched.matches.some(({ accepted }) => accepted)) {
 const fetched = await fetchMetadata(input, {
   providers: [
     createProjectGutenbergProvider(),
+    createGoogleBooksProvider({ apiKey: "your-api-key" }),
     createOpenLibraryProvider(),
   ],
   limit: 5,
@@ -224,6 +227,7 @@ A remote `cover.uri` is an **absolute url**, not a container-relative uri: a cat
 | Provider | Import | Catalog | Notes |
 | --- | --- | --- | --- |
 | `createProjectGutenbergProvider` | `@prose-reader/metadata-fetcher` | [Project Gutenberg](https://www.gutenberg.org) | official per-eBook RDF; exact Gutenberg identifiers only, no key |
+| `createGoogleBooksProvider` | `@prose-reader/metadata-fetcher` | [Google Books](https://books.google.com) | broad edition metadata and covers; API key required |
 | `createOpenLibraryProvider` | `@prose-reader/metadata-fetcher` | [Open Library](https://openlibrary.org) | free, no key; books broadly, comics and manga much less so |
 
 ### Project Gutenberg
@@ -263,6 +267,53 @@ The confirmed candidate echoes the book's exact input identifier and adds `{ val
 | medium/small cover in `dcterms:hasFormat` | `cover` | medium preferred; absolute HTTP(S) url, `confidence: "derived"` |
 
 The response is parsed and normalized in memory. The provider has no database, cache, file writes, or other persistence.
+
+### Google Books
+
+```typescript
+import { createGoogleBooksProvider } from "@prose-reader/metadata-fetcher"
+
+const provider = createGoogleBooksProvider({
+  apiKey: "your-api-key",
+})
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `apiKey` | — | required application API key |
+| `baseUrl` | `https://www.googleapis.com/books/v1` | API root; override for a stub |
+| `fetch` | the global one | for tests, a custom agent, or a caching layer |
+
+**Lookup strategy**, from most exact to broadest: a volume whose identifier has scheme `GoogleBooks` (or an official Google Books/API URL), ISBN, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
+
+To replace Oboku's `googleVolumeId`, pass the directive value as an authored identifier:
+
+```typescript
+const input = {
+  title: "Dune",
+  identifiers: [{ value: googleVolumeId, scheme: "GoogleBooks" }],
+}
+```
+
+An exact lookup echoes that identifier after Google confirms it, so the shared matcher treats it as decisive. A missing volume id falls through to ISBN/title when available. ISBN searches likewise retain the queried ISBN even when a sparse Google record omits `industryIdentifiers`. A malformed successful exact response or failing HTTP response is reported through `failedProviders`.
+
+**Mapping** (Google Books Volume → `ResolvedMetadata`, compile-checked by the exported `googleBooksVolumeMetadataHomes` and `googleBooksVolumeInfoMetadataHomes`):
+
+| Google Books | Resolved | |
+| --- | --- | --- |
+| `id` | `identifiers` | scheme `GoogleBooks`; also `id` on the match |
+| `volumeInfo.title` + `subtitle` | `title` | joined with `:`, then `seriesInfo.bookDisplayNumber` is appended as `Vol …` only when no volume marker is already present |
+| `authors` | `contributors` | role `author` |
+| `publisher`, `publishedDate` | `publication.edition` | partial dates retain the available year/month/day |
+| `description` | `description` | Google may provide simple HTML formatting |
+| `industryIdentifiers` | `isbn`, `gtin`, `identifiers` | ISBN-13 preferred over ISBN-10; ISBN schemes normalize to `ISBN`; every announced identifier is retained |
+| `pageCount` | `numberOfPages` | |
+| `categories` | `subjects` | deduped and capped at 25 |
+| `language` | `languages` | Google's best ISO 639-1 language |
+| `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS and `zoom=0`, with `edge=curl` removed |
+| `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
+
+Google-specific values without a cross-format home (ratings, access and sale data, and so on) remain available on `match.raw` when `includeRaw` is enabled.
 
 ### Open Library
 
@@ -305,8 +356,11 @@ Only the mapped fields are requested (`fields=`), which is the difference betwee
 
 A Docker image wraps this package in a small HTTP API, so metadata lookups don't have to happen inside your JavaScript app — and so you can try a provider against a real catalog with curl:
 
+For repository development, copy `apps/metadata-fetcher-api/.env.example` to `apps/metadata-fetcher-api/.env`, set `GOOGLE_BOOKS_API_KEY`, then run `npm run start:metadata-fetcher` from the repository root. Compose loads that file automatically and it remains ignored by Git.
+
 ```bash
 docker run -p 6382:6382 \
+  -e GOOGLE_BOOKS_API_KEY="your-api-key" \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
   mbret/prose-metadata-fetcher-api:latest
 

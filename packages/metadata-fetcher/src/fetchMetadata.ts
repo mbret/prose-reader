@@ -76,6 +76,7 @@ const toMatch = ({
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
+ *   createGoogleBooksProvider,
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
@@ -86,6 +87,7 @@ const toMatch = ({
  * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
+ *     createGoogleBooksProvider({ apiKey: "your-api-key" }),
  *     createOpenLibraryProvider(),
  *   ],
  * })

@@ -5,6 +5,7 @@
  * ```ts
  * import { resolveArchive } from "@prose-reader/archive-reader"
  * import {
+ *   createGoogleBooksProvider,
  *   createOpenLibraryProvider,
  *   createProjectGutenbergProvider,
  *   fetchMetadata,
@@ -15,6 +16,7 @@
  * const fetched = await fetchMetadata(metadataInputFromResolvedArchive(resolved), {
  *   providers: [
  *     createProjectGutenbergProvider(),
+ *     createGoogleBooksProvider({ apiKey: "your-api-key" }),
  *     createOpenLibraryProvider(),
  *   ],
  * })
@@ -38,6 +40,36 @@ export {
   titleSimilarity,
 } from "./match/similarity.ts"
 export { metadataInputFromResolvedArchive } from "./metadataInputFromResolvedArchive.ts"
+export type { GoogleBooksProviderOptions } from "./providers/googleBooks/createGoogleBooksProvider.ts"
+export {
+  createGoogleBooksProvider,
+  GOOGLE_BOOKS_PROVIDER_ID,
+} from "./providers/googleBooks/createGoogleBooksProvider.ts"
+export type { GoogleBooksLookup } from "./providers/googleBooks/identifier.ts"
+export {
+  GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+  googleBooksLookupFromInput,
+} from "./providers/googleBooks/identifier.ts"
+export type {
+  GoogleBooksImageLinks,
+  GoogleBooksIndustryIdentifier,
+  GoogleBooksSeriesInfo,
+  GoogleBooksVolume,
+  GoogleBooksVolumeInfo,
+} from "./providers/googleBooks/parse.ts"
+export {
+  parseGoogleBooksVolume,
+  parseGoogleBooksVolumesResponse,
+} from "./providers/googleBooks/parse.ts"
+export type { ResolveGoogleBooksVolumeOptions } from "./providers/googleBooks/resolve.ts"
+export {
+  GOOGLE_BOOKS_MAX_SUBJECTS,
+  googleBooksCoverUrl,
+  googleBooksVolumeInfoMetadataHomes,
+  googleBooksVolumeMetadataHomes,
+  googleBooksVolumeUrl,
+  resolveGoogleBooksVolume,
+} from "./providers/googleBooks/resolve.ts"
 export type { OpenLibraryProviderOptions } from "./providers/openLibrary/createOpenLibraryProvider.ts"
 export {
   createOpenLibraryProvider,

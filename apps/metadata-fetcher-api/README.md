@@ -7,11 +7,16 @@ It exists for two reasons — it is the development harness for the fetcher and 
 ## Run it
 
 ```bash
-# from the repository root — builds the image and starts the stack
+# from the repository root
+cp apps/metadata-fetcher-api/.env.example apps/metadata-fetcher-api/.env
+
+# edit .env and set GOOGLE_BOOKS_API_KEY, then build and start the stack
 npm run start:metadata-fetcher
 
 curl "http://localhost:6382/metadata?title=Dune&author=Frank+Herbert"
 ```
+
+The `.env` file is ignored by Git. Docker Compose loads it from `apps/metadata-fetcher-api/.env` even though the command runs at the repository root. Setting `GOOGLE_BOOKS_API_KEY` there enables the `googleBooks` provider; restart the stack after changing it.
 
 Then open <http://localhost:6382> for the **playground**. Enter a title, author and ISBN, or choose an EPUB/CBZ/ZIP publication: the file is read in memory with `@prose-reader/archive-reader`, closed as soon as its metadata is resolved, and converted to the compact lookup input posted to `/metadata`. The playground imposes no application-level file-size limit and neither the file nor the input is written to disk, browser storage, a database or a cache.
 
@@ -52,6 +57,8 @@ Liveness, plus the providers this deployment exposes.
   ]
 }
 ```
+
+When `GOOGLE_BOOKS_API_KEY` is configured, the list also contains the `googleBooks` provider.
 
 ### `GET /metadata`
 
@@ -106,6 +113,8 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 
 ## Configuration
 
+For local Docker development, put these values in `apps/metadata-fetcher-api/.env` (start from `.env.example`). Shell environment variables can still override the file. `npm run dev --workspace prose-reader-metadata-fetcher-api`, which runs outside Compose, reads only the shell environment.
+
 | Variable | Default | |
 | --- | --- | --- |
 | `PORT` | `6382` | |
@@ -114,6 +123,8 @@ Both answer with the `FetchedMetadata` entity verbatim — ranked `matches` with
 | `REQUEST_TIMEOUT_MS` | `10000` | budget for one lookup across every provider |
 | `PROJECT_GUTENBERG_USER_AGENT` | — | optional identifying user agent for exact RDF lookups |
 | `PROJECT_GUTENBERG_BASE_URL` | `https://www.gutenberg.org` | absolute HTTP(S) origin; override to point at a mirror or a stub |
+| `GOOGLE_BOOKS_API_KEY` | — | enables the Google Books provider when set |
+| `GOOGLE_BOOKS_BASE_URL` | `https://www.googleapis.com/books/v1` | absolute HTTP(S) API root; override for a stub |
 | `OPEN_LIBRARY_USER_AGENT` | — | **set this**: Open Library asks API clients to identify themselves (app name + contact) and throttles anonymous traffic harder |
 | `OPEN_LIBRARY_BASE_URL` | `https://openlibrary.org` | override to point at a mirror or a stub |
 | `OPEN_LIBRARY_COVERS_BASE_URL` | `https://covers.openlibrary.org` | |
@@ -131,6 +142,7 @@ Every release publishes the image to Docker Hub, tagged with the version and `la
 
 ```bash
 docker run -p 6382:6382 \
+  -e GOOGLE_BOOKS_API_KEY="your-api-key" \
   -e OPEN_LIBRARY_USER_AGENT="MyApp/1.0 (me@example.com)" \
   mbret/prose-metadata-fetcher-api:latest
 ```
