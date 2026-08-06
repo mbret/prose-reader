@@ -88,6 +88,33 @@ describe("createGoogleBooksProvider", () => {
     )
   })
 
+  it("fetches and confirms an official Google Books URL", async () => {
+    const fetchMock = fetchReturning(jsonResponse(DUNE_VOLUME))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+    const value =
+      "https://books.google.com/books?id=zyTCAlFPjgYC&printsec=frontcover"
+    const input: FetchMetadataInput = {
+      identifiers: [{ value, scheme: "URL" }],
+    }
+    const [candidate] = await provider.search(input, context)
+
+    expect(requestedUrl(fetchMock, 0).pathname).toBe(
+      "/books/v1/volumes/zyTCAlFPjgYC",
+    )
+    expect(candidate?.metadata.identifiers).toEqual(
+      expect.arrayContaining([
+        { value, scheme: "URL" },
+        { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+      ]),
+    )
+    expect(scoreMetadataCandidate(input, candidate?.metadata ?? {}).score).toBe(
+      1,
+    )
+  })
+
   it("looks a book up by ISBN and preserves Google's result list", async () => {
     const fetchMock = fetchReturning(
       jsonResponse({

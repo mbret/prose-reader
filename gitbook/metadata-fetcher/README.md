@@ -329,7 +329,7 @@ Each request makes at most three total attempts. Network failures and HTTP `500`
 | `pageCount` | `numberOfPages` | |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
-| `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS and `zoom=0`, with `edge=curl` removed |
+| `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS while Google's query parameters are preserved because changing them can yield a placeholder |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
 Google-specific values without a cross-format home (ratings, access and sale data, and so on) remain available on `match.raw` when `includeRaw` is enabled.
