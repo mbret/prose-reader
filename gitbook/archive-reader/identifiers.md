@@ -55,7 +55,7 @@ For EPUBs that include Apple or Kobo display-option files, the OPF package docum
 ComicInfo has dedicated fields rather than a generic typed identifier collection:
 
 - `GTIN` becomes a `GTIN` identifier.
-- [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) accepts space-separated reference URLs. Every valid absolute HTTP(S) value becomes a `URL` identifier and is also retained under `metadata.comic.web`.
+- [`Web`](https://anansi-project.github.io/docs/comicinfo/documentation#web) accepts space-separated reference URLs. Every valid absolute HTTP(S) value becomes a `URL` identifier and is also retained under `metadata.comicInfo.web`.
 
 Use a catalog's reference URL in `Web` when a comic archive needs to identify an external catalog entry without being converted to EPUB or using a vendor-specific extension.
 

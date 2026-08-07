@@ -58,6 +58,6 @@ Both resolve to the literal URL:
 }
 ```
 
-Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comic.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
+Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comicInfo.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
 
 See [Publication identifiers](identifiers.md) for the shared scheme resolution rules, custom schemes, URLs, and the `Unknown` fallback.
