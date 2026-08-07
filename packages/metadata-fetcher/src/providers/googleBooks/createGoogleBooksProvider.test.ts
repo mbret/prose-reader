@@ -151,6 +151,7 @@ describe("createGoogleBooksProvider", () => {
       jsonResponse({}, 404),
       jsonResponse({ totalItems: 0 }),
       jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ items: [DUNE_VOLUME] }),
     )
     const provider = createGoogleBooksProvider({
       apiKey: "secret",
@@ -168,17 +169,84 @@ describe("createGoogleBooksProvider", () => {
       context,
     )
 
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
     expect(requestedUrl(fetchMock, 2).searchParams.get("q")).toBe(
-      'intitle:"Dune" inauthor:"Frank Herbert"',
+      'intitle:Dune inauthor:"Frank Herbert"',
     )
     expect(mainTitle(candidates[0]?.metadata)).toBe("Dune")
+  })
+
+  // On the live catalog `intitle:"Blame! Master Edition, Vol. 1"` matches
+  // nothing (a phrase has to be reproduced exactly, punctuation included) and
+  // `intitle:blame 1` binds only `blame` to the title, so the rest becomes
+  // full-text and the results are dictionaries.
+  it("binds every word of the title, dropping punctuation", async () => {
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ totalItems: 0 }),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search({ title: "Blame! Master Edition, Vol. 1" }, context)
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "intitle:Blame intitle:Master intitle:Edition intitle:Vol intitle:1",
+    )
+  })
+
+  // that per-word query is exact but strict: the catalog record is called
+  // "BLAME! Master Edition 1", with no "Vol", so nothing satisfies it
+  it("widens the search when the per-word query cannot fill the window", async () => {
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ items: [DUNE_VOLUME, { ...DUNE_VOLUME, id: "other" }] }),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    const candidates = await provider.search(
+      { title: "Blame! Master Edition, Vol. 1" },
+      context,
+    )
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(requestedUrl(fetchMock, 1).searchParams.get("q")).toBe(
+      "intitle:Blame! Master Edition, Vol. 1",
+    )
+    // the sparse precise hit stays first, the broader query only adds
+    expect(candidates.map(({ id }) => id)).toEqual(["zyTCAlFPjgYC", "other"])
+  })
+
+  it("keeps the author quoted, so a multi-word name stays one term", async () => {
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ totalItems: 0 }),
+    )
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search(
+      { title: "Dune", authors: ["Frank Herbert"] },
+      context,
+    )
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      'intitle:Dune inauthor:"Frank Herbert"',
+    )
   })
 
   it("falls back to title-only when author makes the query too narrow", async () => {
     const fetchMock = fetchReturning(
       jsonResponse({ totalItems: 0 }),
       jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ totalItems: 0 }),
     )
     const provider = createGoogleBooksProvider({
       apiKey: "secret",
@@ -191,10 +259,10 @@ describe("createGoogleBooksProvider", () => {
     )
 
     expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
-      'intitle:"Dune" inauthor:"A misspelled author"',
+      'intitle:Dune inauthor:"A misspelled author"',
     )
     expect(requestedUrl(fetchMock, 1).searchParams.get("q")).toBe(
-      'intitle:"Dune"',
+      "intitle:Dune",
     )
   })
 
@@ -300,7 +368,10 @@ describe("createGoogleBooksProvider", () => {
   })
 
   it("caps Google's page size at its API maximum", async () => {
-    const fetchMock = fetchReturning(jsonResponse({ totalItems: 0 }))
+    const fetchMock = fetchReturning(
+      jsonResponse({ totalItems: 0 }),
+      jsonResponse({ totalItems: 0 }),
+    )
     const provider = createGoogleBooksProvider({
       apiKey: "secret",
       fetch: fetchMock,
@@ -312,7 +383,10 @@ describe("createGoogleBooksProvider", () => {
   })
 
   it("honors a custom API root", async () => {
-    const fetchMock = fetchReturning(jsonResponse({ items: [DUNE_VOLUME] }))
+    const fetchMock = fetchReturning(
+      jsonResponse({ items: [DUNE_VOLUME] }),
+      jsonResponse({ totalItems: 0 }),
+    )
     const provider = createGoogleBooksProvider({
       apiKey: "secret",
       baseUrl: "https://catalog.example.com/google/v1/",

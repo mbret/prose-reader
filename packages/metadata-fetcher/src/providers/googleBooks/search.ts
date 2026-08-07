@@ -36,11 +36,65 @@ type GoogleBooksVolumeRecord = {
   readonly raw: unknown
 }
 
-const quotedTerm = (value: string): string =>
-  `"${value
+const searchTerm = (value: string): string =>
+  value
     .replace(/["\\]+/g, " ")
     .replace(/\s+/g, " ")
-    .trim()}"`
+    .trim()
+
+const quotedTerm = (value: string): string => `"${searchTerm(value)}"`
+
+/**
+ * Every word bound to the title, none of them quoted as a phrase.
+ *
+ * `intitle:` binds to the token that follows it, so the three spellings of a
+ * title search behave very differently against the live catalog:
+ *
+ * - `intitle:"blame 1"` — the phrase, verbatim. A real title rarely
+ *   reproduces a query exactly, and punctuation makes it worse:
+ *   `intitle:"Blame! Master Edition, Vol. 1"`, a title taken straight from a
+ *   package document, matches *nothing*.
+ * - `intitle:blame 1` — only `blame` is bound to the title; `1` becomes a
+ *   full-text term, which is how a search for a comic returns dictionaries
+ *   and *Who is to Blame for the War?*.
+ * - `intitle:blame intitle:1` — every word in the title, in any order. This
+ *   is what "search by title" means, and it is what this builds.
+ */
+const titleQuery = (value: string): string =>
+  searchTerm(value)
+    .split(" ")
+    .map((word) => word.replace(/[^\p{L}\p{N}'’-]+/gu, ""))
+    .filter((word) => word.length > 0)
+    .map((word) => `intitle:${word}`)
+    .join(" ")
+
+/**
+ * The same words, with only the first bound to the title. Broader than
+ * {@link titleQuery} and used only to rescue it: a title with more words
+ * than the catalog's own record ("… Master Edition, Vol. 1" against a record
+ * called "BLAME! Master Edition 1") satisfies no per-word query.
+ */
+const looseTitleQuery = (value: string): string =>
+  `intitle:${searchTerm(value)}`
+
+/** Precise hits first, then whatever the broader query added. */
+const mergedByVolumeId = (
+  precise: ReadonlyArray<GoogleBooksVolumeRecord>,
+  loose: ReadonlyArray<GoogleBooksVolumeRecord>,
+): ReadonlyArray<GoogleBooksVolumeRecord> => {
+  const seen = new Set(
+    precise.flatMap((record) =>
+      record.volume.id !== undefined ? [record.volume.id] : [],
+    ),
+  )
+
+  return [
+    ...precise,
+    ...loose.filter(
+      (record) => record.volume.id === undefined || !seen.has(record.volume.id),
+    ),
+  ]
+}
 
 const titleSearchTerms = (
   input: FetchMetadataInput,
@@ -211,17 +265,27 @@ export const createGoogleBooksSearch = (
 
     if (terms === undefined) return []
 
-    const titleQuery = `intitle:${quotedTerm(terms.title)}`
+    const byWord = titleQuery(terms.title)
+
+    if (byWord.length === 0) return []
+
     const preciseQuery =
       terms.author !== undefined
-        ? `${titleQuery} inauthor:${quotedTerm(terms.author)}`
-        : titleQuery
-    const volumes = await searchVolumes(preciseQuery, context)
+        ? `${byWord} inauthor:${quotedTerm(terms.author)}`
+        : byWord
+    const precise = await searchVolumes(preciseQuery, context)
+    const titled =
+      precise.length === 0 && terms.author !== undefined
+        ? await searchVolumes(byWord, context)
+        : precise
 
-    if (volumes.length > 0 || terms.author === undefined) {
-      return toCandidates(volumes)
-    }
+    // A per-word search that could not even fill the window was too strict
+    // for this catalog's spelling of the title — widen it rather than answer
+    // with the one record that happened to survive.
+    if (titled.length >= context.limit) return toCandidates(titled)
 
-    return toCandidates(await searchVolumes(titleQuery, context))
+    const loose = await searchVolumes(looseTitleQuery(terms.title), context)
+
+    return toCandidates(mergedByVolumeId(titled, loose))
   }
 }
