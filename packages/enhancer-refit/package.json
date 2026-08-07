@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-refit",
-  "version": "1.347.0",
+  "version": "1.348.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
