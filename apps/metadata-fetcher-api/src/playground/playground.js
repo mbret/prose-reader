@@ -67,28 +67,67 @@ const renderMatch = (match) => {
   }
 
   const titles = metadata.titles ?? []
+  const [mainTitle, ...otherTitles] = titles
 
-  card.append(el("h2", null, titles[0]?.value ?? "(untitled)"))
+  // titles exactly as the catalog states them: nothing joined, nothing
+  // reordered, the subtitle on its own line rather than glued onto the title
+  card.append(el("h2", null, mainTitle?.value ?? "(untitled)"))
 
-  const otherTitles = (metadata.titles ?? [])
-    .slice(1)
-    .map((title) =>
-      title.type ? `${title.value} (${title.type})` : title.value,
+  const subtitles = otherTitles.filter(({ type }) => type === "subtitle")
+  const alternates = otherTitles.filter(({ type }) => type !== "subtitle")
+
+  if (subtitles.length > 0) {
+    card.append(
+      el("p", "subtitle", subtitles.map(({ value }) => value).join(" · ")),
     )
-
-  if (otherTitles.length > 0) {
-    card.append(el("p", "titles", otherTitles.join(" · ")))
   }
 
-  const series = (metadata.belongsTo?.series ?? [])
-    .map((entry) =>
-      [entry.name, entry.position !== undefined && `#${entry.position}`]
-        .filter(Boolean)
-        .join(" "),
+  if (alternates.length > 0) {
+    card.append(
+      el(
+        "p",
+        "titles",
+        alternates
+          .map(({ value, type }) => (type ? `${value} (${type})` : value))
+          .join(" · "),
+      ),
     )
-    .filter(Boolean)
+  }
 
-  if (series.length > 0) card.append(el("p", "titles", series.join(" · ")))
+  const collections = [
+    ...(metadata.belongsTo?.series ?? []).map((entry) => ({
+      entry,
+      label: "series",
+    })),
+    ...(metadata.belongsTo?.collection ?? []).map((entry) => ({
+      entry,
+      label: "collection",
+    })),
+  ].map(({ entry, label }) => {
+    // a catalog can identify a series without naming it — Google states only
+    // a series id — so the number stands on its own when that is all there is
+    const identifier = entry.identifiers?.[0]
+    const position =
+      entry.position === undefined
+        ? undefined
+        : entry.total === undefined
+          ? `#${entry.position}`
+          : `#${entry.position} of ${entry.total}`
+
+    return [
+      entry.name ?? label,
+      position,
+      entry.name === undefined && identifier
+        ? `${identifier.scheme}:${identifier.value}`
+        : undefined,
+    ]
+      .filter(Boolean)
+      .join(" · ")
+  })
+
+  if (collections.length > 0) {
+    card.append(el("p", "titles", collections.join(" · ")))
+  }
 
   const meta = el("p", "meta")
   const verdict = match.accepted ? "accepted" : "rejected"
