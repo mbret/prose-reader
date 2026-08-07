@@ -25,6 +25,9 @@ export type OpenLibraryDoc = {
   readonly language?: ReadonlyArray<string>
   readonly subject?: ReadonlyArray<string>
   readonly number_of_pages_median?: number
+  /** Mean of the work's star ratings, on the catalog's 1–5 scale. */
+  readonly ratings_average?: number
+  readonly ratings_count?: number
   /** Cover id, addressing `covers.openlibrary.org`. */
   readonly cover_i?: number
   /** Project Gutenberg ebook ids attached to the work's editions. */
@@ -40,6 +43,8 @@ const parseDoc = (record: Record<string, unknown>): OpenLibraryDoc => ({
   language: readStringArray(record, "language"),
   subject: readStringArray(record, "subject"),
   number_of_pages_median: readNumber(record, "number_of_pages_median"),
+  ratings_average: readNumber(record, "ratings_average"),
+  ratings_count: readNumber(record, "ratings_count"),
   cover_i: readNumber(record, "cover_i"),
   id_project_gutenberg: readStringArray(record, "id_project_gutenberg"),
 })

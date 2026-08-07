@@ -50,6 +50,9 @@ export type GoogleBooksVolumeInfo = {
   readonly industryIdentifiers?: ReadonlyArray<GoogleBooksIndustryIdentifier>
   readonly pageCount?: number
   readonly categories?: ReadonlyArray<string>
+  /** Mean review rating; Google states it on a 1–5 scale, rounded to a half. */
+  readonly averageRating?: number
+  readonly ratingsCount?: number
   readonly language?: string
   readonly imageLinks?: GoogleBooksImageLinks
   readonly infoLink?: string
@@ -151,6 +154,8 @@ const parseVolumeInfo = (
     industryIdentifiers: parseIndustryIdentifiers(volumeInfo),
     pageCount: readNumber(volumeInfo, "pageCount"),
     categories: readStringArray(volumeInfo, "categories"),
+    averageRating: readNumber(volumeInfo, "averageRating"),
+    ratingsCount: readNumber(volumeInfo, "ratingsCount"),
     language: readString(volumeInfo, "language"),
     imageLinks: parseImageLinks(volumeInfo),
     infoLink: readString(volumeInfo, "infoLink"),

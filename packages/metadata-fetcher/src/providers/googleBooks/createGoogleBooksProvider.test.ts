@@ -11,9 +11,11 @@ const DUNE_VOLUME = {
     authors: ["Frank Herbert"],
     industryIdentifiers: [{ type: "ISBN_13", identifier: "9780441013593" }],
     averageRating: 4.5,
+    ratingsCount: 128,
     canonicalVolumeLink:
       "http://books.google.com/books/about/Dune.html?id=zyTCAlFPjgYC",
   },
+  saleInfo: { saleability: "FOR_SALE" },
 }
 
 const jsonResponse = (payload: unknown, status = 200) =>
@@ -79,10 +81,11 @@ describe("createGoogleBooksProvider", () => {
         identifiers: expect.arrayContaining([
           { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         ]),
+        aggregateRating: { value: 4.5, count: 128 },
       },
     })
     expect(candidate?.raw).toMatchObject({
-      volumeInfo: { averageRating: 4.5 },
+      saleInfo: { saleability: "FOR_SALE" },
     })
     expect(scoreMetadataCandidate(input, candidate?.metadata ?? {}).score).toBe(
       1,

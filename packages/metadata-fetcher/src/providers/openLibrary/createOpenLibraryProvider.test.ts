@@ -57,6 +57,9 @@ describe("createOpenLibraryProvider", () => {
     expect(url.searchParams.get("isbn")).toBe("9780441013593")
     expect(url.searchParams.get("limit")).toBe("5")
     expect(url.searchParams.get("fields")).toContain("number_of_pages_median")
+    // ratings are only returned when explicitly requested
+    expect(url.searchParams.get("fields")).toContain("ratings_average")
+    expect(url.searchParams.get("fields")).toContain("ratings_count")
     // the catalog confirmed the identity, so the record carries it
     expect(candidates[0]?.metadata.identifiers).toContainEqual({
       value: "9780441013593",

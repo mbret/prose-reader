@@ -92,6 +92,8 @@ describe("resolveGoogleBooksVolume", () => {
           ],
           pageCount: 412,
           categories: ["Fiction", "Science fiction"],
+          averageRating: 4.5,
+          ratingsCount: 128,
           language: "en",
           imageLinks: {
             thumbnail:
@@ -112,6 +114,7 @@ describe("resolveGoogleBooksVolume", () => {
       subjects: ["Fiction", "Science fiction"],
       contributors: [{ name: "Frank Herbert", roles: ["author"] }],
       numberOfPages: 412,
+      aggregateRating: { value: 4.5, count: 128 },
       identifiers: [
         { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
         { value: "0441013597", scheme: "ISBN" },
@@ -250,6 +253,20 @@ describe("resolveGoogleBooksVolume", () => {
         volumeInfo: { categories: [categories[0] ?? "", ...categories] },
       }).subjects,
     ).toHaveLength(GOOGLE_BOOKS_MAX_SUBJECTS)
+  })
+
+  it("keeps a rating Google states without a count", () => {
+    expect(
+      resolveGoogleBooksVolume({ volumeInfo: { averageRating: 3 } })
+        .aggregateRating,
+    ).toEqual({ value: 3 })
+  })
+
+  it("states no rating from a count alone", () => {
+    expect(
+      resolveGoogleBooksVolume({ volumeInfo: { ratingsCount: 128 } })
+        .aggregateRating,
+    ).toBeUndefined()
   })
 
   it("stays sparse for an empty volume", () => {

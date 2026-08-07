@@ -32,6 +32,8 @@ const SEARCH_FIELDS = [
   "language",
   "subject",
   "number_of_pages_median",
+  "ratings_average",
+  "ratings_count",
   "cover_i",
   "id_project_gutenberg",
 ].join(",")

@@ -84,6 +84,8 @@ describe("resolveOpenLibraryDoc", () => {
           language: ["eng"],
           subject: ["Science fiction"],
           number_of_pages_median: 412,
+          ratings_average: 3.9574468,
+          ratings_count: 47,
           cover_i: 8188413,
           id_project_gutenberg: ["1965"],
         },
@@ -96,6 +98,7 @@ describe("resolveOpenLibraryDoc", () => {
       languages: ["en"],
       subjects: ["Science fiction"],
       numberOfPages: 412,
+      aggregateRating: { value: 3.9574468, count: 47 },
       cover: {
         uri: "https://covers.openlibrary.org/b/id/8188413-L.jpg",
         mediaType: "image/jpeg",

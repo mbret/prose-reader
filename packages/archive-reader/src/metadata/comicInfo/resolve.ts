@@ -1,5 +1,6 @@
 import type { Exhaustive } from "../../types/exhaustive.ts"
 import type {
+  ResolvedAggregateRating,
   ResolvedCollection,
   ResolvedComicInfoMetadata,
   ResolvedContributor,
@@ -213,7 +214,6 @@ const comicCornerFromComicInfo = (
     volume: parseNonNegativeInt(info.Volume),
     format: trimToUndefined(info.Format),
     ageRating: trimToUndefined(info.AgeRating),
-    communityRating: parseDecimal(info.CommunityRating),
     notes: trimToUndefined(info.Notes),
     review: trimToUndefined(info.Review),
     web: emptyToUndefined(webValues),
@@ -227,6 +227,19 @@ const comicCornerFromComicInfo = (
   } satisfies Exhaustive<ResolvedComicInfoMetadata>)
 
   return Object.keys(corner).length > 0 ? corner : undefined
+}
+
+/**
+ * `CommunityRating` is already the schema's 0–5 star mean, so it needs no
+ * rescaling — only the range check the field promises. The sidecar states no
+ * number of ratings.
+ */
+const aggregateRatingFromComicInfo = (
+  info: ComicInfo,
+): ResolvedAggregateRating | undefined => {
+  const value = parseDecimal(info.CommunityRating)
+
+  return value !== undefined && value <= 5 ? { value } : undefined
 }
 
 const belongsToFromComicInfo = (
@@ -279,6 +292,7 @@ export const resolveComicInfo = (info: ComicInfo): ResolvedMetadata => {
     contributors: emptyToUndefined(contributorsFromComicInfo(info)),
     readingDirection: readingDirection(info),
     numberOfPages: parseNonNegativeInt(info.PageCount),
+    aggregateRating: aggregateRatingFromComicInfo(info),
     identifiers: emptyToUndefined(identifiers),
     belongsTo: belongsToFromComicInfo(info),
     comicInfo: comicCornerFromComicInfo(info, web),
