@@ -46,18 +46,36 @@ export const resolveOpenLibraryDoc = (
     readonly matchedProjectGutenbergIdentifier?: MetadataIdentifier
   },
 ): ResolvedMetadata => {
+  const {
+    title,
+    subtitle,
+    language,
+    key,
+    author_name,
+    first_publish_year,
+    subject,
+    number_of_pages_median,
+    cover_i,
+    id_project_gutenberg,
+    ...unhandled
+  } = doc
+
+  // Naming every parsed field is the contract: adding one to
+  // `OpenLibraryDoc` fails here until someone decides what becomes of it.
+  unhandled satisfies Record<string, never>
+
   const titles = emptyToUndefined([
-    ...(doc.title !== undefined ? [{ value: doc.title }] : []),
-    ...(doc.subtitle !== undefined
-      ? [{ value: doc.subtitle, type: "subtitle" as const }]
+    ...(title !== undefined ? [{ value: title }] : []),
+    ...(subtitle !== undefined
+      ? [{ value: subtitle, type: "subtitle" as const }]
       : []),
   ])
 
   const languages = emptyToUndefined([
     ...new Set(
-      (doc.language ?? [])
+      (language ?? [])
         .map(marcLanguageToBcp47)
-        .filter((language): language is string => language !== undefined),
+        .filter((value): value is string => value !== undefined),
     ),
   ])
 
@@ -68,42 +86,42 @@ export const resolveOpenLibraryDoc = (
     ...(options.matchedProjectGutenbergIdentifier !== undefined
       ? [options.matchedProjectGutenbergIdentifier]
       : []),
-    ...(doc.id_project_gutenberg ?? []).map((value) => ({
+    ...(id_project_gutenberg ?? []).map((value) => ({
       value,
       scheme: PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
     })),
-    ...(doc.key !== undefined
-      ? [{ value: doc.key, scheme: OPEN_LIBRARY_IDENTIFIER_SCHEME }]
+    ...(key !== undefined
+      ? [{ value: key, scheme: OPEN_LIBRARY_IDENTIFIER_SCHEME }]
       : []),
   ]
 
   return omitUndefined({
     titles,
     cover:
-      doc.cover_i !== undefined
+      cover_i !== undefined
         ? {
             // absolute, not container-relative: a catalog addresses its
             // covers in its own space, with nothing to rebase onto
-            uri: `${options.coversBaseUrl}/b/id/${doc.cover_i}-L.jpg`,
+            uri: `${options.coversBaseUrl}/b/id/${cover_i}-L.jpg`,
             mediaType: "image/jpeg",
             confidence: "derived" as const,
           }
         : undefined,
     publication:
-      doc.first_publish_year !== undefined
-        ? { original: { date: { year: doc.first_publish_year } } }
+      first_publish_year !== undefined
+        ? { original: { date: { year: first_publish_year } } }
         : undefined,
     languages,
     subjects: emptyToUndefined(
-      (doc.subject ?? []).slice(0, OPEN_LIBRARY_MAX_SUBJECTS),
+      (subject ?? []).slice(0, OPEN_LIBRARY_MAX_SUBJECTS),
     ),
     contributors: emptyToUndefined(
-      (doc.author_name ?? []).map((name) => ({
+      (author_name ?? []).map((name) => ({
         name,
         roles: ["author" as const],
       })),
     ),
-    numberOfPages: doc.number_of_pages_median,
+    numberOfPages: number_of_pages_median,
     identifiers: emptyToUndefined(identifiers),
   })
 }

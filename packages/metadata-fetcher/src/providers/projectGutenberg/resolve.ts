@@ -152,9 +152,31 @@ export const resolveProjectGutenbergRecord = (
     readonly matchedIdentifier: MetadataIdentifier
   },
 ): ResolvedMetadata => {
+  const {
+    id,
+    title,
+    publisher,
+    issued,
+    originalPublication,
+    rights,
+    description,
+    summary,
+    languages,
+    subjects: recordSubjects,
+    bookshelves,
+    contributors: _contributors,
+    cover: recordCover,
+    ...unhandled
+  } = record
+
+  // Naming every parsed field is the contract: adding one to
+  // `ProjectGutenbergRecord` fails here until someone decides what becomes
+  // of it. `contributors` is read by `resolvedContributors` below.
+  unhandled satisfies Record<string, never>
+
   const identifiers = [
     options.matchedIdentifier,
-    { value: record.id, scheme: PROJECT_GUTENBERG_IDENTIFIER_SCHEME },
+    { value: id, scheme: PROJECT_GUTENBERG_IDENTIFIER_SCHEME },
   ].filter(
     (identifier, index, all) =>
       all.findIndex(
@@ -166,25 +188,25 @@ export const resolveProjectGutenbergRecord = (
       ) === index,
   )
   const subjects = [
-    ...new Set([...(record.subjects ?? []), ...(record.bookshelves ?? [])]),
+    ...new Set([...(recordSubjects ?? []), ...(bookshelves ?? [])]),
   ].slice(0, PROJECT_GUTENBERG_MAX_SUBJECTS)
   const coverUri =
-    record.cover !== undefined
-      ? absoluteHttpUrl(record.cover.uri, options.baseUrl)
+    recordCover !== undefined
+      ? absoluteHttpUrl(recordCover.uri, options.baseUrl)
       : undefined
   const cover: ResolvedCover | undefined =
     coverUri !== undefined
       ? {
           uri: coverUri,
-          mediaType: record.cover?.mediaType,
+          mediaType: recordCover?.mediaType,
           confidence: "derived",
         }
       : undefined
   const edition = omitUndefined({
-    date: resolvedIssuedDate(record.issued),
-    publisher: record.publisher,
+    date: resolvedIssuedDate(issued),
+    publisher,
   })
-  const original = originalPublicationFromMarc260(record.originalPublication)
+  const original = originalPublicationFromMarc260(originalPublication)
   const publication = omitUndefined({
     original,
     edition:
@@ -194,14 +216,14 @@ export const resolveProjectGutenbergRecord = (
   })
 
   return omitUndefined({
-    titles: record.title !== undefined ? [{ value: record.title }] : undefined,
+    titles: title !== undefined ? [{ value: title }] : undefined,
     publication:
       publication.original !== undefined || publication.edition !== undefined
         ? publication
         : undefined,
-    description: record.summary ?? record.description,
-    rights: record.rights,
-    languages: emptyToUndefined([...new Set(record.languages ?? [])]),
+    description: summary ?? description,
+    rights,
+    languages: emptyToUndefined([...new Set(languages ?? [])]),
     subjects: emptyToUndefined(subjects),
     contributors: resolvedContributors(record),
     identifiers,

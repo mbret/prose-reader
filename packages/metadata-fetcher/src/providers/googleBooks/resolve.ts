@@ -12,8 +12,8 @@ import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
 import type {
   GoogleBooksImageLinks,
   GoogleBooksIndustryIdentifier,
+  GoogleBooksSeriesInfo,
   GoogleBooksVolume,
-  GoogleBooksVolumeInfo,
 } from "./parse.ts"
 
 export const GOOGLE_BOOKS_MAX_SUBJECTS = 25
@@ -41,7 +41,7 @@ const dedupeIdentifiers = (
     ),
   )
 
-const industryIdentifiers = (
+const resolvedIndustryIdentifiers = (
   values: ReadonlyArray<GoogleBooksIndustryIdentifier>,
 ): ReadonlyArray<MetadataIdentifier> =>
   values.map((identifier) =>
@@ -56,12 +56,13 @@ const industryIdentifiers = (
  * separate: composing them for display is the consumer's decision.
  */
 const resolvedTitles = (
-  volumeInfo: GoogleBooksVolumeInfo,
+  title: string | undefined,
+  subtitle: string | undefined,
 ): ReadonlyArray<ResolvedTitle> | undefined =>
   emptyToUndefined([
-    ...(volumeInfo.title !== undefined ? [{ value: volumeInfo.title }] : []),
-    ...(volumeInfo.subtitle !== undefined
-      ? [{ value: volumeInfo.subtitle, type: "subtitle" as const }]
+    ...(title !== undefined ? [{ value: title }] : []),
+    ...(subtitle !== undefined
+      ? [{ value: subtitle, type: "subtitle" as const }]
       : []),
   ])
 
@@ -70,27 +71,25 @@ const resolvedTitles = (
  * never states the series name, and inventing one would be fabrication.
  */
 const resolvedSeries = (
-  volumeInfo: GoogleBooksVolumeInfo,
+  seriesInfo: GoogleBooksSeriesInfo | undefined,
 ): ReadonlyArray<ResolvedCollection> | undefined =>
   emptyToUndefined(
-    (volumeInfo.seriesInfo?.volumeSeries ?? []).flatMap<ResolvedCollection>(
-      (series) => {
-        const entry = omitUndefined({
-          identifiers:
-            series.seriesId !== undefined
-              ? [
-                  {
-                    value: series.seriesId,
-                    scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
-                  },
-                ]
-              : undefined,
-          position: series.orderNumber,
-        })
+    (seriesInfo?.volumeSeries ?? []).flatMap<ResolvedCollection>((series) => {
+      const entry = omitUndefined({
+        identifiers:
+          series.seriesId !== undefined
+            ? [
+                {
+                  value: series.seriesId,
+                  scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+                },
+              ]
+            : undefined,
+        position: series.orderNumber,
+      })
 
-        return Object.keys(entry).length > 0 ? [entry] : []
-      },
-    ),
+      return Object.keys(entry).length > 0 ? [entry] : []
+    }),
   )
 
 const absoluteHttpUrl = (value: string | undefined): string | undefined => {
@@ -159,9 +158,34 @@ export const resolveGoogleBooksVolume = (
   volume: GoogleBooksVolume,
   options: ResolveGoogleBooksVolumeOptions = {},
 ): ResolvedMetadata => {
-  const volumeInfo = volume.volumeInfo ?? {}
-  const sourceIndustryIdentifiers = volumeInfo.industryIdentifiers ?? []
-  const sourceIdentifiers = industryIdentifiers(sourceIndustryIdentifiers)
+  const { id, volumeInfo, ...unhandledVolume } = volume
+  const {
+    title,
+    subtitle,
+    authors,
+    publisher,
+    publishedDate,
+    description,
+    industryIdentifiers,
+    pageCount,
+    categories,
+    language,
+    imageLinks,
+    seriesInfo,
+    // read by `googleBooksVolumeUrl`, which builds the match's url
+    infoLink: _infoLink,
+    canonicalVolumeLink: _canonicalVolumeLink,
+    ...unhandledVolumeInfo
+  } = volumeInfo ?? {}
+
+  // Naming every parsed field is the contract: adding one to the parsed
+  // shapes fails here until someone decides what becomes of it.
+  unhandledVolume satisfies Record<string, never>
+  unhandledVolumeInfo satisfies Record<string, never>
+
+  const sourceIdentifiers = resolvedIndustryIdentifiers(
+    industryIdentifiers ?? [],
+  )
   const identifiers = dedupeIdentifiers([
     ...(options.matchedIdentifier !== undefined
       ? [options.matchedIdentifier]
@@ -169,16 +193,16 @@ export const resolveGoogleBooksVolume = (
     ...(options.matchedIsbn !== undefined
       ? [{ value: options.matchedIsbn, scheme: "ISBN" }]
       : []),
-    ...(volume.id !== undefined
-      ? [{ value: volume.id, scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME }]
+    ...(id !== undefined
+      ? [{ value: id, scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME }]
       : []),
     ...sourceIdentifiers,
   ])
   const edition = omitUndefined({
-    date: parseW3cDtfDate(volumeInfo.publishedDate),
-    publisher: volumeInfo.publisher,
+    date: parseW3cDtfDate(publishedDate),
+    publisher,
   })
-  const coverUri = googleBooksCoverUrl(volumeInfo.imageLinks)
+  const coverUri = googleBooksCoverUrl(imageLinks)
   const cover: ResolvedCover | undefined =
     coverUri !== undefined
       ? {
@@ -186,26 +210,25 @@ export const resolveGoogleBooksVolume = (
           confidence: "derived",
         }
       : undefined
-  const subjects = [...new Set(volumeInfo.categories ?? [])].slice(
+  const subjects = [...new Set(categories ?? [])].slice(
     0,
     GOOGLE_BOOKS_MAX_SUBJECTS,
   )
 
-  const series = resolvedSeries(volumeInfo)
+  const series = resolvedSeries(seriesInfo)
 
   return omitUndefined({
-    titles: resolvedTitles(volumeInfo),
-    description: volumeInfo.description,
+    titles: resolvedTitles(title, subtitle),
+    description,
     belongsTo: series !== undefined ? { series } : undefined,
     publication:
       edition.date !== undefined || edition.publisher !== undefined
         ? { edition }
         : undefined,
-    languages:
-      volumeInfo.language !== undefined ? [volumeInfo.language] : undefined,
+    languages: language !== undefined ? [language] : undefined,
     subjects: emptyToUndefined(subjects),
-    contributors: resolvedContributors(volumeInfo.authors ?? []),
-    numberOfPages: volumeInfo.pageCount,
+    contributors: resolvedContributors(authors ?? []),
+    numberOfPages: pageCount,
     identifiers,
     cover,
   })
