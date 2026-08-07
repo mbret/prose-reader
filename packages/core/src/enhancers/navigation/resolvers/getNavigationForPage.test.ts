@@ -17,8 +17,7 @@ import {
   createTestManifestSpineItems,
 } from "../../../tests/utils"
 import { Viewport } from "../../../viewport/Viewport"
-import { getNavigationForLeftOrTopPage } from "./getNavigationForLeftOrTopPage"
-import { getNavigationForRightOrBottomPage } from "./getNavigationForRightOrBottomPage"
+import { getNavigationForPage } from "./getNavigationForPage"
 
 const createContext = () => {
   const context = new Context(
@@ -105,7 +104,7 @@ const createContext = () => {
   }
 }
 
-describe("getNavigationForRightOrBottomPage", () => {
+describe("getNavigationForPage - rightOrBottom", () => {
   it("keeps vertical scrollable turns continuous so the bottom clamps in place", () => {
     const {
       context,
@@ -118,7 +117,7 @@ describe("getNavigationForRightOrBottomPage", () => {
     } = createContext()
     const currentBottomPosition = new UnboundSpinePosition({ x: 0, y: 150 })
 
-    const target = getNavigationForRightOrBottomPage({
+    const target = getNavigationForPage({
       computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,
@@ -128,6 +127,7 @@ describe("getNavigationForRightOrBottomPage", () => {
       spineItemsManager,
       spineLocator: spine.locator,
       viewport,
+      direction: "rightOrBottom",
     })
 
     expect(target).toMatchObject({ x: 0, y: 250 })
@@ -140,7 +140,7 @@ describe("getNavigationForRightOrBottomPage", () => {
   })
 })
 
-describe("getNavigationForLeftOrTopPage", () => {
+describe("getNavigationForPage - leftOrTop", () => {
   it("keeps vertical scrollable turns continuous so the top clamps in place", () => {
     const {
       context,
@@ -153,7 +153,7 @@ describe("getNavigationForLeftOrTopPage", () => {
     } = createContext()
     const currentTopPosition = new UnboundSpinePosition({ x: 12, y: 0 })
 
-    const target = getNavigationForLeftOrTopPage({
+    const target = getNavigationForPage({
       computedPageTurnDirection: settings.values.computedPageTurnDirection,
       context,
       navigationResolver,
@@ -163,6 +163,7 @@ describe("getNavigationForLeftOrTopPage", () => {
       spineItemsManager,
       spineLocator: spine.locator,
       viewport,
+      direction: "leftOrTop",
     })
 
     expect(target).toMatchObject({ x: 12, y: -100 })
