@@ -170,6 +170,7 @@ The rules:
 - **Confirmed identity settles it.** An agreeing ISBN or GTIN pins the score to `1` whatever else disagrees, and a provider-confirmed shared identifier does the same when both sides state the same non-`Unknown` scheme. An `Unknown` raw value is not decisive because it could collide with another catalog's identifier. A *contradicting* ISBN or GTIN scores `0`, which sinks a plausible-looking wrong edition. Disjoint provider-specific identifier lists are not treated as contradictions: catalogs naturally use different id spaces. ISBN-10 and ISBN-13 of the same book compare equal (`toIsbn13` is exported).
 - **Comparisons are fuzzy where the world is.** Titles compare on character bigrams, against both the candidate's main title and that title composed with its `subtitle` entry — a book states `Dune: A Novel` in one `dc:title` where a catalog splits it in two, and only the comparison string is composed, never the returned metadata. The subtitle asymmetry is repaired on top (`Dune` ≡ `Dune: a novel`, but `Dune: Book One` ≠ `Dune: Messiah`). An explicit conflicting volume, part, or book number makes the title score `0` (`Vol. I` ≠ `vol. 2`) — in **any** compared form, so a bare `Irina` cannot launder the candidate's own `Vol. 1` against a query for `Vol. 2`, and a number the query states in its title is also compared against the candidate's series `position`, where a catalog keeps the same fact. Names compare on their token set (`Herbert, Frank` ≡ `Frank Herbert`); diacritics and punctuation are folded (`Les Misérables` ≡ `Les Miserables`); languages compare on their primary subtag (`en-US` ≡ `en`).
 - **Flat publication evidence uses the best candidate value.** `publisher` and `publishedYear` compare against both the candidate's original and edition publication details when present; the closest value supplies the single signal.
+- **A rating is never evidence.** `aggregateRating` is returned but deliberately not scored: how much a crowd liked a book says nothing about whether it is *this* book, and a popular edition must not outrank the right one.
 
 `minScore` (default `0.5`) decides which matches are `accepted`. Rejected matches are **kept and ranked**, not dropped: "the catalog found three books, none convincing" is an answer, and it is exactly what a "did you mean?" picker renders.
 
@@ -238,6 +239,8 @@ Each candidate remains a `ResolvedMetadata`, so it can be handled with the same 
 {% hint style="info" %}
 A remote `cover.uri` is an **absolute url**, not a container-relative uri: a catalog addresses its cover in its own space and there is nothing to rebase it onto. `cover.confidence` is `derived` — the catalog declares it.
 {% endhint %}
+
+`aggregateRating` is each provider's own crowd, normalized to the shared 0–5 scale — Google's mean and Open Library's are different populations of readers, not two measurements of one number, so a picker showing both should attribute them (`match.providerId`) rather than average them. It is also the most volatile thing in a persisted `FetchedMetadata`: a title, an ISBN and a page count do not move, a rating does. Refresh it on its own schedule, or treat a cached one as indicative.
 
 ## Providers
 
@@ -329,12 +332,13 @@ Each request makes at most three total attempts. Network failures and HTTP `500`
 | `description` | `description` | Google may provide simple HTML formatting |
 | `industryIdentifiers` | `identifiers` | ISBN schemes normalize to `ISBN`; every announced identifier is retained |
 | `pageCount` | `numberOfPages` | |
+| `averageRating`, `ratingsCount` | `aggregateRating` | Google's mean is already on the shared 0–5 scale (it rounds to a half star); a count alone states no rating, and a mean over zero ratings is dropped |
 | `categories` | `subjects` | deduped and capped at 25 |
 | `language` | `languages` | Google's best ISO 639-1 language |
 | `imageLinks` | `cover` | largest announced size preferred; upgraded to HTTPS while Google's query parameters are preserved because changing them can yield a placeholder |
 | `canonicalVolumeLink`, then `infoLink` | match `url` | upgraded to HTTPS; a stable Google Books URL is synthesized from `id` when absent |
 
-Google-specific values without a cross-format home (ratings, access and sale data, and so on) remain available on `match.raw` when `includeRaw` is enabled.
+Google-specific values without a cross-format home (access and sale data, reading-mode flags, and so on) remain available on `match.raw` when `includeRaw` is enabled.
 
 ### Open Library
 
@@ -366,6 +370,7 @@ const provider = createOpenLibraryProvider({
 | `language` | `languages` | MARC 21 → BCP 47 (`eng` → `en`); unknown codes pass through, `und`/`mul`/`zxx` are dropped |
 | `subject` | `subjects` | capped at the first 25 — a popular work carries hundreds, most of them long-tail noise |
 | `number_of_pages_median` | `numberOfPages` | |
+| `ratings_average`, `ratings_count` | `aggregateRating` | the catalog's raw 0–5 mean of the *work*'s ratings, unrounded. `ratings_sortable` is deliberately not mapped: it is Open Library's internal ranking key, not a rating it states |
 | `cover_i` | `cover` | absolute url on the cover service, `confidence: "derived"` |
 | `id_project_gutenberg` | `identifiers` | scheme `ProjectGutenberg`; an exact lookup also echoes the book's original Gutenberg URL so the shared scorer can recognize the agreement |
 | `key` | `identifiers` | scheme `OpenLibrary`, e.g. `/works/OL893415W`; also `id` and `url` on the match |

@@ -3,6 +3,7 @@ import type {
   MetadataIdentifier,
   ResolvedMetadata,
 } from "@prose-reader/archive-reader"
+import { resolvedAggregateRating } from "../../utils/aggregateRating.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { marcLanguageToBcp47 } from "./marcLanguage.ts"
 import type { OpenLibraryDoc } from "./parse.ts"
@@ -55,6 +56,8 @@ export const resolveOpenLibraryDoc = (
     first_publish_year,
     subject,
     number_of_pages_median,
+    ratings_average,
+    ratings_count,
     cover_i,
     id_project_gutenberg,
     ...unhandled
@@ -122,6 +125,7 @@ export const resolveOpenLibraryDoc = (
       })),
     ),
     numberOfPages: number_of_pages_median,
+    aggregateRating: resolvedAggregateRating(ratings_average, ratings_count),
     identifiers: emptyToUndefined(identifiers),
   })
 }

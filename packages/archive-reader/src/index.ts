@@ -111,6 +111,7 @@ export type {
   KnownMetadataIdentifierScheme,
   MetadataIdentifier,
   MetadataIdentifierScheme,
+  ResolvedAggregateRating,
   ResolvedAppleMetadata,
   ResolvedCollection,
   ResolvedComicInfoMetadata,

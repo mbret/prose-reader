@@ -190,6 +190,28 @@ export type ResolvedProperty = {
 }
 
 /**
+ * An aggregate community score for the publication (schema.org
+ * `aggregateRating`), on a **0–5 star scale** — the scale every source we read
+ * one from states it on. A source using another scale is rescaled by its
+ * resolver, like MARC languages and W3C-DTF dates; which source stated it is
+ * already structural (`sources.*` on a resolved archive, `providerId` on a
+ * fetched match), so nothing is lost by not carrying the original scale.
+ *
+ * Deliberately *aggregate* only: one owner's personal score — calibre's
+ * `calibre:rating`, on its own 0–10 scale — is a different fact about a
+ * different subject, and stays in {@link ResolvedMetadata.properties}.
+ *
+ * A score outside 0–5, or one announced over zero ratings, is dropped rather
+ * than passed on: it would render as a real star count.
+ */
+export type ResolvedAggregateRating = {
+  /** Mean score, `0` to `5`. */
+  readonly value: number
+  /** How many ratings the mean is over; absent when the source doesn't say. */
+  readonly count?: number
+}
+
+/**
  * ComicInfo-scoped concepts with no cross-format twin. Normalized (typed,
  * parsed), but deliberately not renamed into pseudo-generic fields.
  */
@@ -204,8 +226,6 @@ export type ResolvedComicInfoMetadata = {
   readonly format?: string
   /** `AgeRating` verbatim (trimmed); the schema enum is loose in the wild. */
   readonly ageRating?: string
-  /** `CommunityRating`, when numeric (schema range 0–5). */
-  readonly communityRating?: number
   readonly notes?: string
   readonly review?: string
   /** `Web`, split on whitespace; valid HTTP(S) values also become URL identifiers. */
@@ -368,6 +388,14 @@ export type ResolvedMetadata = {
    * `resolveArchive`.
    */
   readonly numberOfPages?: number
+  /**
+   * Aggregate community score on a 0–5 scale (see
+   * {@link ResolvedAggregateRating}). ComicInfo `CommunityRating`, which states
+   * no count; a catalog's average and count when the metadata comes from
+   * `@prose-reader/metadata-fetcher`. The OPF contributes none: EPUB defines no
+   * rating property, so an authored one arrives through {@link properties}.
+   */
+  readonly aggregateRating?: ResolvedAggregateRating
   /**
    * Raw identifier values, trimmed. OPF contributes every `dc:identifier`,
    * retaining its announced EPUB 2 scheme or EPUB 3 `identifier-type`

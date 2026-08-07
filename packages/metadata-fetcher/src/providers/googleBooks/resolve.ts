@@ -7,6 +7,7 @@ import {
   type ResolvedMetadata,
   type ResolvedTitle,
 } from "@prose-reader/archive-reader"
+import { resolvedAggregateRating } from "../../utils/aggregateRating.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
 import type {
@@ -169,6 +170,8 @@ export const resolveGoogleBooksVolume = (
     industryIdentifiers,
     pageCount,
     categories,
+    averageRating,
+    ratingsCount,
     language,
     imageLinks,
     seriesInfo,
@@ -229,6 +232,7 @@ export const resolveGoogleBooksVolume = (
     subjects: emptyToUndefined(subjects),
     contributors: resolvedContributors(authors ?? []),
     numberOfPages: pageCount,
+    aggregateRating: resolvedAggregateRating(averageRating, ratingsCount),
     identifiers,
     cover,
   })

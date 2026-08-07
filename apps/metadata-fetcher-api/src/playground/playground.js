@@ -38,6 +38,15 @@ const describePublication = (label, publication) => {
   return details.length > 0 ? `${label}: ${details.join(", ")}` : undefined
 }
 
+// the scale is stated because a bare "3.96" reads as a score out of anything
+const describeRating = (rating) => {
+  if (typeof rating?.value !== "number") return undefined
+
+  const mean = `${rating.value.toFixed(1)}/5`
+
+  return rating.count !== undefined ? `${mean} (${rating.count})` : mean
+}
+
 const describe = (metadata) =>
   [
     (metadata.contributors ?? [])
@@ -46,6 +55,7 @@ const describe = (metadata) =>
     describePublication("original", metadata.publication?.original),
     describePublication("edition", metadata.publication?.edition),
     metadata.numberOfPages && `${metadata.numberOfPages} pages`,
+    describeRating(metadata.aggregateRating),
     metadata.languages?.join("/"),
   ]
     .filter(Boolean)

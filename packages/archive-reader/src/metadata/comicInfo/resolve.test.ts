@@ -354,7 +354,6 @@ describe("resolveComicInfo", () => {
       volume: 3,
       format: "TPB",
       ageRating: "Teen",
-      communityRating: 4.5,
       notes: "scanned",
       review: "great",
       web: ["https://a.example", "https://b.example"],
@@ -364,6 +363,32 @@ describe("resolveComicInfo", () => {
       teams: ["Team A"],
       locations: ["City"],
     })
+  })
+
+  it("promotes CommunityRating to the shared aggregate rating, countless", () => {
+    const parsed = parseComicInfo(
+      comicInfoWrap("<CommunityRating>4.5</CommunityRating>"),
+    )
+    const resolved = resolveComicInfo(parsed)
+
+    expect(resolved.aggregateRating).toEqual({ value: 4.5 })
+    expect(resolved.comicInfo).toBeUndefined()
+  })
+
+  it("drops a CommunityRating the schema's 0–5 range cannot hold", () => {
+    const above = parseComicInfo(
+      comicInfoWrap("<CommunityRating>8</CommunityRating>"),
+    )
+    const negative = parseComicInfo(
+      comicInfoWrap("<CommunityRating>-1</CommunityRating>"),
+    )
+    const wording = parseComicInfo(
+      comicInfoWrap("<CommunityRating>great</CommunityRating>"),
+    )
+
+    expect(resolveComicInfo(above).aggregateRating).toBeUndefined()
+    expect(resolveComicInfo(negative).aggregateRating).toBeUndefined()
+    expect(resolveComicInfo(wording).aggregateRating).toBeUndefined()
   })
 
   it("maps PageCount, Summary and Imprint into the shared vocabulary", () => {

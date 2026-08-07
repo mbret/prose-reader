@@ -36,8 +36,8 @@ export type ResolveMetadataSources = {
  * - `identifiers` concatenates (OPF first) — different identifier systems
  *   coexist rather than compete.
  * - Format-scoped corners (`comicInfo`, `apple`, `kobo`) and single-source
- *   fields (`rights`, `properties`, `numberOfPages`…) come from
- *   their only producer.
+ *   fields (`rights`, `properties`, `numberOfPages`, `aggregateRating`…) come
+ *   from their only producer.
  */
 export const resolveMetadata = (
   sources: ResolveMetadataSources,
@@ -86,6 +86,7 @@ export const resolveMetadata = (
     renditionFlow: opf?.renditionFlow,
     renditionSpread: opf?.renditionSpread,
     numberOfPages: comicInfo?.numberOfPages,
+    aggregateRating: comicInfo?.aggregateRating,
     identifiers: identifiers.length > 0 ? identifiers : undefined,
     belongsTo: opf?.belongsTo ?? comicInfo?.belongsTo,
     properties: opf?.properties,
