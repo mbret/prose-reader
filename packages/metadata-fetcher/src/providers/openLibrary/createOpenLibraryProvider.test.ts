@@ -121,9 +121,14 @@ describe("createOpenLibraryProvider", () => {
       "Irina: The Vampire Cosmonaut Vol. 1 Keisuke Makino",
     )
     expect(fallback.searchParams.get("title")).toBeNull()
-    expect(mainTitle(candidates[0]?.metadata)).toBe(
-      "Irina: The Vampire Cosmonaut (Light Novel) Vol. 1",
-    )
+    expect(mainTitle(candidates[0]?.metadata)).toBe("Irina")
+    expect(candidates[0]?.metadata.titles).toEqual([
+      { value: "Irina" },
+      {
+        value: "The Vampire Cosmonaut (Light Novel) Vol. 1",
+        type: "subtitle",
+      },
+    ])
   })
 
   it("looks an official Project Gutenberg URL up by Open Library's external id", async () => {

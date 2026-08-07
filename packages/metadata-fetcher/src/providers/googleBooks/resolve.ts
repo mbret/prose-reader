@@ -1,17 +1,19 @@
 import {
   type MetadataIdentifier,
   parseW3cDtfDate,
+  type ResolvedCollection,
   type ResolvedContributor,
   type ResolvedCover,
   type ResolvedMetadata,
+  type ResolvedTitle,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
 import type {
   GoogleBooksImageLinks,
   GoogleBooksIndustryIdentifier,
+  GoogleBooksSeriesInfo,
   GoogleBooksVolume,
-  GoogleBooksVolumeInfo,
 } from "./parse.ts"
 
 export const GOOGLE_BOOKS_MAX_SUBJECTS = 25
@@ -39,7 +41,7 @@ const dedupeIdentifiers = (
     ),
   )
 
-const industryIdentifiers = (
+const resolvedIndustryIdentifiers = (
   values: ReadonlyArray<GoogleBooksIndustryIdentifier>,
 ): ReadonlyArray<MetadataIdentifier> =>
   values.map((identifier) =>
@@ -49,27 +51,46 @@ const industryIdentifiers = (
     }),
   )
 
-const titleWithSeriesNumber = (
-  volumeInfo: GoogleBooksVolumeInfo,
-): string | undefined => {
-  const title =
-    volumeInfo.title !== undefined && volumeInfo.subtitle !== undefined
-      ? `${volumeInfo.title}: ${volumeInfo.subtitle}`
-      : volumeInfo.title
-  const displayNumber = volumeInfo.seriesInfo?.bookDisplayNumber
-  const hasSeriesNumber =
-    title !== undefined &&
-    (/\bvol(?:ume)?\.?\s*\S+/i.test(title) ||
-      /\b(?:book|part)(?:\s*#\s*|\s+)(?:\d+(?:[.-]\d+)*|[ivxlcdm]+)\b/i.test(
-        title,
-      ))
+/**
+ * Google states the title and the subtitle as separate fields, so they stay
+ * separate: composing them for display is the consumer's decision.
+ */
+const resolvedTitles = (
+  title: string | undefined,
+  subtitle: string | undefined,
+): ReadonlyArray<ResolvedTitle> | undefined =>
+  emptyToUndefined([
+    ...(title !== undefined ? [{ value: title }] : []),
+    ...(subtitle !== undefined
+      ? [{ value: subtitle, type: "subtitle" as const }]
+      : []),
+  ])
 
-  if (title === undefined || displayNumber === undefined || hasSeriesNumber) {
-    return title
-  }
+/**
+ * The volume's place in its series, which Google identifies by id alone — it
+ * never states the series name, and inventing one would be fabrication.
+ */
+const resolvedSeries = (
+  seriesInfo: GoogleBooksSeriesInfo | undefined,
+): ReadonlyArray<ResolvedCollection> | undefined =>
+  emptyToUndefined(
+    (seriesInfo?.volumeSeries ?? []).flatMap<ResolvedCollection>((series) => {
+      const entry = omitUndefined({
+        identifiers:
+          series.seriesId !== undefined
+            ? [
+                {
+                  value: series.seriesId,
+                  scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME,
+                },
+              ]
+            : undefined,
+        position: series.orderNumber,
+      })
 
-  return `${title} Vol ${displayNumber}`
-}
+      return Object.keys(entry).length > 0 ? [entry] : []
+    }),
+  )
 
 const absoluteHttpUrl = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
@@ -137,9 +158,34 @@ export const resolveGoogleBooksVolume = (
   volume: GoogleBooksVolume,
   options: ResolveGoogleBooksVolumeOptions = {},
 ): ResolvedMetadata => {
-  const volumeInfo = volume.volumeInfo ?? {}
-  const sourceIndustryIdentifiers = volumeInfo.industryIdentifiers ?? []
-  const sourceIdentifiers = industryIdentifiers(sourceIndustryIdentifiers)
+  const { id, volumeInfo, ...unhandledVolume } = volume
+  const {
+    title,
+    subtitle,
+    authors,
+    publisher,
+    publishedDate,
+    description,
+    industryIdentifiers,
+    pageCount,
+    categories,
+    language,
+    imageLinks,
+    seriesInfo,
+    // read by `googleBooksVolumeUrl`, which builds the match's url
+    infoLink: _infoLink,
+    canonicalVolumeLink: _canonicalVolumeLink,
+    ...unhandledVolumeInfo
+  } = volumeInfo ?? {}
+
+  // Naming every parsed field is the contract: adding one to the parsed
+  // shapes fails here until someone decides what becomes of it.
+  unhandledVolume satisfies Record<string, never>
+  unhandledVolumeInfo satisfies Record<string, never>
+
+  const sourceIdentifiers = resolvedIndustryIdentifiers(
+    industryIdentifiers ?? [],
+  )
   const identifiers = dedupeIdentifiers([
     ...(options.matchedIdentifier !== undefined
       ? [options.matchedIdentifier]
@@ -147,16 +193,16 @@ export const resolveGoogleBooksVolume = (
     ...(options.matchedIsbn !== undefined
       ? [{ value: options.matchedIsbn, scheme: "ISBN" }]
       : []),
-    ...(volume.id !== undefined
-      ? [{ value: volume.id, scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME }]
+    ...(id !== undefined
+      ? [{ value: id, scheme: GOOGLE_BOOKS_IDENTIFIER_SCHEME }]
       : []),
     ...sourceIdentifiers,
   ])
   const edition = omitUndefined({
-    date: parseW3cDtfDate(volumeInfo.publishedDate),
-    publisher: volumeInfo.publisher,
+    date: parseW3cDtfDate(publishedDate),
+    publisher,
   })
-  const coverUri = googleBooksCoverUrl(volumeInfo.imageLinks)
+  const coverUri = googleBooksCoverUrl(imageLinks)
   const cover: ResolvedCover | undefined =
     coverUri !== undefined
       ? {
@@ -164,25 +210,25 @@ export const resolveGoogleBooksVolume = (
           confidence: "derived",
         }
       : undefined
-  const subjects = [...new Set(volumeInfo.categories ?? [])].slice(
+  const subjects = [...new Set(categories ?? [])].slice(
     0,
     GOOGLE_BOOKS_MAX_SUBJECTS,
   )
 
-  const title = titleWithSeriesNumber(volumeInfo)
+  const series = resolvedSeries(seriesInfo)
 
   return omitUndefined({
-    titles: title !== undefined ? [{ value: title }] : undefined,
-    description: volumeInfo.description,
+    titles: resolvedTitles(title, subtitle),
+    description,
+    belongsTo: series !== undefined ? { series } : undefined,
     publication:
       edition.date !== undefined || edition.publisher !== undefined
         ? { edition }
         : undefined,
-    languages:
-      volumeInfo.language !== undefined ? [volumeInfo.language] : undefined,
+    languages: language !== undefined ? [language] : undefined,
     subjects: emptyToUndefined(subjects),
-    contributors: resolvedContributors(volumeInfo.authors ?? []),
-    numberOfPages: volumeInfo.pageCount,
+    contributors: resolvedContributors(authors ?? []),
+    numberOfPages: pageCount,
     identifiers,
     cover,
   })

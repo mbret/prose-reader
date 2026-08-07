@@ -129,6 +129,97 @@ describe("scoreMetadataCandidate", () => {
     })
   })
 
+  it("compares a book's joined title against a catalog's split one", () => {
+    const candidate: ResolvedMetadata = {
+      titles: [{ value: "Dune" }, { value: "A Novel", type: "subtitle" }],
+    }
+    const { signals } = score({ title: "Dune: A Novel" }, candidate)
+
+    expect(signals[0]).toMatchObject({
+      field: "title",
+      score: 1,
+      candidate: "Dune: A Novel",
+    })
+    // the comparison string is never written back onto the candidate
+    expect(candidate.titles).toEqual([
+      { value: "Dune" },
+      { value: "A Novel", type: "subtitle" },
+    ])
+  })
+
+  it("does not let the bare title launder a conflicting volume number", () => {
+    // "Irina" alone agrees with the query, but the catalog says this record is
+    // Vol. 1 and the query asks for Vol. 2 — the shorter form must not win.
+    const result = score(
+      { title: "Irina: The Vampire Cosmonaut Vol. 2" },
+      {
+        titles: [
+          { value: "Irina" },
+          {
+            value: "The Vampire Cosmonaut (Light Novel) Vol. 1",
+            type: "subtitle",
+          },
+        ],
+      },
+    )
+
+    expect(result.signals[0]).toMatchObject({ field: "title", score: 0 })
+    expect(result.score).toBe(0)
+  })
+
+  it("reads a stated volume number against the candidate's series position", () => {
+    const wrongVolume = score(
+      { title: "BLAME! Vol. 2" },
+      {
+        titles: [{ value: "BLAME!" }],
+        belongsTo: {
+          series: [
+            {
+              identifiers: [{ value: "z5f3Gg", scheme: "GoogleBooks" }],
+              position: 1,
+            },
+          ],
+        },
+      },
+    )
+    const rightVolume = score(
+      { title: "BLAME! Vol. 2" },
+      {
+        titles: [{ value: "BLAME!" }],
+        belongsTo: { series: [{ position: 2 }] },
+      },
+    )
+
+    expect(wrongVolume.signals[0]).toMatchObject({ field: "title", score: 0 })
+    expect(rightVolume.signals[0]?.score).toBeGreaterThan(0.5)
+  })
+
+  it("leaves an unnumbered query alone whatever the series position", () => {
+    expect(
+      score(
+        { title: "BLAME!" },
+        {
+          titles: [{ value: "BLAME!" }],
+          belongsTo: { series: [{ position: 6 }] },
+        },
+      ).signals[0]?.score,
+    ).toBe(1)
+  })
+
+  it("keeps the plain title when it compares better than the composed one", () => {
+    const { signals } = score(
+      { title: "Dune" },
+      {
+        titles: [
+          { value: "Dune" },
+          { value: "The Graphic Novel", type: "subtitle" },
+        ],
+      },
+    )
+
+    expect(signals[0]).toMatchObject({ score: 1, candidate: "Dune" })
+  })
+
   it("tolerates a near publication year and a near page count", () => {
     const near = score(
       {

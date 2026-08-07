@@ -183,6 +183,21 @@ const titleDivisionsContradict = (a: string, b: string): boolean => {
 }
 
 /**
+ * Every volume, part or book number a title states explicitly, whichever
+ * division word introduced it — a catalog states the same fact as a series
+ * `position`, where the division word is implicit.
+ */
+export const titleDivisionNumbers = (value: string): ReadonlySet<number> => {
+  const numbers = new Set<number>()
+
+  for (const division of explicitTitleDivisions(value).values()) {
+    for (const number of division) numbers.add(number)
+  }
+
+  return numbers
+}
+
+/**
  * {@link textSimilarity}, with `Dune` matched against `Dune: a novel`.
  *
  * Only when **one** side states a subtitle: that asymmetry is the same title
@@ -204,6 +219,34 @@ export const titleSimilarity = (a: string, b: string): number => {
     full,
     textSimilarity(left.main, right.main) * SUBTITLE_REPAIR_CEILING,
   )
+}
+
+/**
+ * The best {@link titleSimilarity} over the forms one candidate title takes —
+ * bare, or composed with its subtitle.
+ *
+ * A contradiction in **any** form still scores `0`: `Irina` agreeing with
+ * `Irina: … Vol. 2` is not evidence that the candidate's own `Vol. 1` does.
+ * Taking the plain maximum would let the shorter form launder a stated
+ * disagreement about which volume this is.
+ */
+export const bestTitleSimilarity = (
+  query: string,
+  forms: ReadonlyArray<string>,
+): { readonly score: number; readonly candidate: string } | undefined => {
+  let best: { score: number; candidate: string } | undefined
+
+  for (const form of forms) {
+    if (titleDivisionsContradict(query, form))
+      return { score: 0, candidate: form }
+
+    const score = titleSimilarity(query, form)
+
+    if (best === undefined || score > best.score)
+      best = { score, candidate: form }
+  }
+
+  return best
 }
 
 const sortedTokens = (value: string): string =>

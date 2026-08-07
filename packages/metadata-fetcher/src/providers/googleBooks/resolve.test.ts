@@ -100,7 +100,7 @@ describe("resolveGoogleBooksVolume", () => {
         },
       }),
     ).toEqual({
-      titles: [{ value: "Dune: A Novel" }],
+      titles: [{ value: "Dune" }, { value: "A Novel", type: "subtitle" }],
       description: "<p>A desert epic.</p>",
       publication: {
         edition: {
@@ -157,48 +157,43 @@ describe("resolveGoogleBooksVolume", () => {
     })
   })
 
-  it("appends Google's series display number only when the title lacks one", () => {
-    expect(
-      resolveGoogleBooksVolume({
-        volumeInfo: {
-          title: "Saga",
-          seriesInfo: { bookDisplayNumber: "2" },
+  it("keeps the provider's title verbatim and the series number as data", () => {
+    const resolved = resolveGoogleBooksVolume({
+      id: "Ebb6DQAAQBAJ",
+      volumeInfo: {
+        title: "BLAME!",
+        seriesInfo: {
+          volumeSeries: [{ seriesId: "z5f3GgAAABA5jM", orderNumber: 1 }],
         },
-      }).titles?.[0]?.value,
-    ).toBe("Saga Vol 2")
-    expect(
-      resolveGoogleBooksVolume({
-        volumeInfo: {
-          title: "Saga Vol. 2",
-          seriesInfo: { bookDisplayNumber: "2" },
+      },
+    })
+
+    expect(resolved.titles).toEqual([{ value: "BLAME!" }])
+    expect(resolved.belongsTo).toEqual({
+      series: [
+        {
+          identifiers: [{ value: "z5f3GgAAABA5jM", scheme: "GoogleBooks" }],
+          position: 1,
         },
-      }).titles?.[0]?.value,
-    ).toBe("Saga Vol. 2")
+      ],
+    })
   })
 
-  it.each(["Saga: Book 2", "Saga Part II"])(
-    "does not append another series marker to %s",
-    (title) => {
-      expect(
-        resolveGoogleBooksVolume({
-          volumeInfo: {
-            title,
-            seriesInfo: { bookDisplayNumber: "2" },
-          },
-        }).titles?.[0]?.value,
-      ).toBe(title)
-    },
-  )
+  it("keeps the subtitle as its own title rather than joining it", () => {
+    const resolved = resolveGoogleBooksVolume({
+      volumeInfo: { title: "Dune", subtitle: "A Novel" },
+    })
 
-  it("does not mistake ordinary uses of 'book' for a series marker", () => {
+    expect(resolved.titles).toEqual([
+      { value: "Dune" },
+      { value: "A Novel", type: "subtitle" },
+    ])
+  })
+
+  it("states no series when Google identifies none", () => {
     expect(
-      resolveGoogleBooksVolume({
-        volumeInfo: {
-          title: "The Book Thief",
-          seriesInfo: { bookDisplayNumber: "2" },
-        },
-      }).titles?.[0]?.value,
-    ).toBe("The Book Thief Vol 2")
+      resolveGoogleBooksVolume({ volumeInfo: { title: "Dune" } }).belongsTo,
+    ).toBeUndefined()
   })
 
   it("prefers the largest cover, preserves its query and rejects non-HTTP URLs", () => {

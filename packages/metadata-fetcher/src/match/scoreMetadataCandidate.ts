@@ -12,9 +12,10 @@ import {
 import { metadataAuthors } from "../utils/metadataAuthors.ts"
 import { toIsbn13 } from "../utils/toIsbn13.ts"
 import {
+  bestTitleSimilarity,
   personNameSimilarity,
   textSimilarity,
-  titleSimilarity,
+  titleDivisionNumbers,
 } from "./similarity.ts"
 
 /**
@@ -180,6 +181,49 @@ const bestStringComparison = (
   return best
 }
 
+/**
+ * A comparison string, not a value: a book states `Dune: A Novel` in one
+ * `dc:title` where a catalog states a title and a subtitle, and the query
+ * side has whichever spelling its source used. Composing the two for the
+ * comparison alone keeps that asymmetry from costing score, while the
+ * candidate's own metadata stays exactly as the catalog stated it.
+ */
+const subtitledTitle = (candidate: ResolvedMetadata): string | undefined => {
+  const main = mainTitle(candidate)
+  const subtitle = candidate.titles?.find(
+    (title) => title.type === "subtitle",
+  )?.value
+
+  return main !== undefined && subtitle !== undefined
+    ? `${main}: ${subtitle}`
+    : undefined
+}
+
+/**
+ * A book says `BLAME! Vol. 2` in its title where a catalog says `BLAME!` with
+ * a series `position` of 2 — the same fact in two shapes. Comparing the
+ * shapes against each other keeps a numbered query from accepting the wrong
+ * volume of the right series, which the title comparison alone cannot see
+ * once the number lives in structured data instead of the title string.
+ */
+const seriesPositionContradicts = (
+  queryTitle: string,
+  candidate: ResolvedMetadata,
+): boolean => {
+  const queryNumbers = titleDivisionNumbers(queryTitle)
+
+  if (queryNumbers.size === 0) return false
+
+  const positions = (candidate.belongsTo?.series ?? []).flatMap((series) =>
+    series.position !== undefined ? [series.position] : [],
+  )
+
+  return (
+    positions.length > 0 &&
+    positions.every((position) => !queryNumbers.has(position))
+  )
+}
+
 const bestPublicationYearComparison = (
   query: number | undefined,
   candidates: ReadonlyArray<number | undefined>,
@@ -318,7 +362,29 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  compareStrings("title", query.title, mainTitle(candidate), titleSimilarity)
+  const queryTitle = stated(query.title)
+  const candidateTitleForms = [
+    mainTitle(candidate),
+    subtitledTitle(candidate),
+  ].flatMap((form) => {
+    const value = stated(form)
+
+    return value !== undefined ? [value] : []
+  })
+
+  if (queryTitle !== undefined && candidateTitleForms.length > 0) {
+    const compared = bestTitleSimilarity(queryTitle, candidateTitleForms)
+
+    if (compared !== undefined) {
+      addSignal("title", {
+        score: seriesPositionContradicts(queryTitle, candidate)
+          ? 0
+          : compared.score,
+        query: queryTitle,
+        candidate: compared.candidate,
+      })
+    }
+  }
   addSignal(
     "publisher",
     bestStringComparison(query.publisher, [

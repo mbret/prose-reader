@@ -108,13 +108,16 @@ describe("resolveOpenLibraryDoc", () => {
     })
   })
 
-  it("folds the subtitle into the title", () => {
-    expect(
-      resolveOpenLibraryDoc(
-        { title: "Dune", subtitle: "a novel" },
-        { coversBaseUrl },
-      ).titles?.[0]?.value,
-    ).toBe("Dune: a novel")
+  it("keeps the subtitle as its own title rather than joining it", () => {
+    const resolved = resolveOpenLibraryDoc(
+      { title: "Dune", subtitle: "a novel" },
+      { coversBaseUrl },
+    )
+
+    expect(resolved.titles).toEqual([
+      { value: "Dune" },
+      { value: "a novel", type: "subtitle" },
+    ])
   })
 
   it("states an ISBN identifier only when the record was looked up by one", () => {
