@@ -4,7 +4,6 @@ import {
   type ResolvedContributor,
   type ResolvedCover,
   type ResolvedMetadata,
-  type ResolvedMetadataHome,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { GOOGLE_BOOKS_IDENTIFIER_SCHEME } from "./identifier.ts"
@@ -16,33 +15,6 @@ import type {
 } from "./parse.ts"
 
 export const GOOGLE_BOOKS_MAX_SUBJECTS = 25
-
-/** Compile-enforced homes for the top-level Volume resource fields. */
-export const googleBooksVolumeMetadataHomes = {
-  id: "identifiers",
-  volumeInfo: "metadata",
-} satisfies Record<keyof GoogleBooksVolume, "identifiers" | "metadata">
-
-/** Compile-enforced map from every parsed Google Books field to its home. */
-export const googleBooksVolumeInfoMetadataHomes = {
-  title: "titles",
-  subtitle: "titles",
-  authors: "contributors",
-  publisher: "publication.edition.publisher",
-  publishedDate: "publication.edition.date",
-  description: "description",
-  industryIdentifiers: "identifiers",
-  pageCount: "numberOfPages",
-  categories: "subjects",
-  language: "languages",
-  imageLinks: "cover",
-  infoLink: "candidate.url",
-  canonicalVolumeLink: "candidate.url",
-  seriesInfo: "titles",
-} satisfies Record<
-  keyof GoogleBooksVolumeInfo,
-  ResolvedMetadataHome | "identifiers" | "candidate.url"
->
 
 const emptyToUndefined = <T>(
   values: ReadonlyArray<T>,

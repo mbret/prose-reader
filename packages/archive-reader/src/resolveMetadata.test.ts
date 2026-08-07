@@ -197,7 +197,7 @@ describe("resolveMetadata", () => {
       kobo: { kind: "kobo", renditionLayout: "pre-paginated" },
     })
 
-    expect(resolved.comic).toEqual({ blackAndWhite: true })
+    expect(resolved.comicInfo).toEqual({ blackAndWhite: true })
     expect(resolved.apple).toEqual({
       options: [{ name: "open-to-spread", value: "true" }],
     })
@@ -239,7 +239,7 @@ describe("resolveMetadata", () => {
       renditionLayout: "pre-paginated",
       readingDirection: "rtl",
       numberOfPages: 32,
-      comic: { manga: true },
+      comicInfo: { manga: true },
     })
   })
 })

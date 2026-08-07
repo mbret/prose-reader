@@ -6,8 +6,8 @@
 
 - **Union schema, not intersection.** The shape is rich enough to express what any supported format can say; each source populates the subset it knows. Results are sparse: an absent key means "no source had anything to say", and empty arrays/strings collapse to absent so `field !== undefined` is a reliable presence check.
 - **Vocabulary anchored on prior art.** Field names and semantics follow the [Readium Web Publication Manifest](https://readium.org/webpub-manifest/) where a term exists: `contributors` with role terms, `belongsTo.series`/`belongsTo.collection` with `position`, `numberOfPages`, publication details, `description`…
-- **Normalization ≠ convergence.** Every field is typed/parsed/validated (`BlackAndWhite: "Yes"` → `boolean`, `Year`/`Month`/`Day` → a date shape), but concepts with no cross-format twin live in clearly format-scoped corners (`metadata.comic`, `metadata.apple`, `metadata.kobo`) rather than behind faked generic names.
-- **Losslessness: sources are never load-bearing.** Everything a parser captures has a declared home in the resolved entity. For the closed schemas (ComicInfo, Apple, Kobo) this is compile-enforced by the mapping tables below (exported as `comicInfoMetadataHomes`, `appleMetadataHomes`, `koboMetadataHomes`, `opfMetadataHomes`); for the open-ended OPF `meta` vocabulary, every entry is structurally copied into `metadata.properties`, lossless by construction.
+- **Normalization ≠ convergence.** Every field is typed/parsed/validated (`BlackAndWhite: "Yes"` → `boolean`, `Year`/`Month`/`Day` → a date shape), but concepts with no cross-format twin live in clearly format-scoped corners (`metadata.comicInfo`, `metadata.apple`, `metadata.kobo`) rather than behind faked generic names.
+- **Losslessness: sources are never load-bearing.** Everything a parser captures lands somewhere in the resolved entity, and the tables below say where. Two compile-time checks keep them from drifting: each resolver names every field it was handed (a parser gaining one fails the build until someone decides what becomes of it), and each format-scoped corner is built against `Exhaustive<T>`, so a new field in the vocabulary fails the build in every producer. For the open-ended OPF `meta` vocabulary, every entry is structurally copied into `metadata.properties`, lossless by construction.
 - **`metadata` versus `sources`.** `metadata` says what the resolver believes; `sources` (the verbatim parser outputs) say what the book said. The duplication is the contract: a wrong mapping opinion is revisable in a release because the raw value never left the entity.
 
 ## The vocabulary
@@ -80,7 +80,7 @@ type ResolvedMetadata = {
   /** open-world channel: every OPF <meta>, verbatim */
   properties?: { property?: string; refines?: string; name?: string; content?: string; value?: string }[]
   /** format-scoped corners */
-  comic?: ResolvedComicMetadata
+  comicInfo?: ResolvedComicInfoMetadata
   apple?: { fixedLayout?: boolean; options?: { name?: string; value: string }[] }
   kobo?: { fixedLayout?: boolean }
 }
@@ -124,7 +124,7 @@ When several sources are present, `resolveMetadata` merges field-wise:
 | `identifiers` | concatenated, OPF first (identifier systems coexist) |
 | `cover` | OPF-declared cover, else the first-image fallback for image-content containers (`resolveArchive` only) |
 | `numberOfPages` | declared ComicInfo `PageCount`, else the counted page-like reading-order items (`resolveArchive` only) |
-| corners (`comic`, `apple`, `kobo`) and single-source fields (`rights`, `properties`) | from their only producer |
+| corners (`comicInfo`, `apple`, `kobo`) and single-source fields (`rights`, `properties`) | from their only producer |
 
 ## Mapping tables
 
@@ -149,26 +149,26 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Editor` | `contributors` | role `editor` |
 | `Translator` | `contributors` | role `translator` |
 | `Year`, `Month`, `Day` | `publication.edition.date` | independent optional components |
-| `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comic.manga` |
+| `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comicInfo.manga` |
 | `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
 | `GTIN` | `identifiers` | scheme `GTIN`; ISBN-shaped values remain searchable as ISBNs by metadata-fetcher |
 | `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total; `Number` or `Count` without a `Series` still states this issue's place, so the entry is kept without a name |
 | `SeriesGroup` | `belongsTo.collection` | comma-split |
-| `AlternateSeries`, `AlternateNumber`, `AlternateCount` | `comic.alternateSeries` | |
-| `StoryArc`, `StoryArcNumber` | `comic.storyArcs` | comma-split, zipped positionally |
-| `BlackAndWhite` | `comic.blackAndWhite` | Yes/No → boolean |
-| `Volume` | `comic.volume` | numeric |
-| `Format` | `comic.format` | |
-| `AgeRating` | `comic.ageRating` | |
-| `CommunityRating` | `comic.communityRating` | numeric |
-| `Notes` | `comic.notes` | |
-| `Review` | `comic.review` | |
-| `Web` | `comic.web`, `identifiers` | whitespace-split reference list; valid absolute HTTP(S) values also become scheme `URL` identifiers |
-| `ScanInformation` | `comic.scanInformation` | |
-| `MainCharacterOrTeam` | `comic.mainCharacterOrTeam` | |
-| `Characters` | `comic.characters` | comma-split |
-| `Teams` | `comic.teams` | comma-split |
-| `Locations` | `comic.locations` | comma-split |
+| `AlternateSeries`, `AlternateNumber`, `AlternateCount` | `comicInfo.alternateSeries` | |
+| `StoryArc`, `StoryArcNumber` | `comicInfo.storyArcs` | comma-split, zipped positionally |
+| `BlackAndWhite` | `comicInfo.blackAndWhite` | Yes/No → boolean |
+| `Volume` | `comicInfo.volume` | numeric |
+| `Format` | `comicInfo.format` | |
+| `AgeRating` | `comicInfo.ageRating` | |
+| `CommunityRating` | `comicInfo.communityRating` | numeric |
+| `Notes` | `comicInfo.notes` | |
+| `Review` | `comicInfo.review` | |
+| `Web` | `comicInfo.web`, `identifiers` | whitespace-split reference list; valid absolute HTTP(S) values also become scheme `URL` identifiers |
+| `ScanInformation` | `comicInfo.scanInformation` | |
+| `MainCharacterOrTeam` | `comicInfo.mainCharacterOrTeam` | |
+| `Characters` | `comicInfo.characters` | comma-split |
+| `Teams` | `comicInfo.teams` | comma-split |
+| `Locations` | `comicInfo.locations` | comma-split |
 
 ### OPF → metadata
 

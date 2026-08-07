@@ -4,50 +4,19 @@ import type {
   ResolvedContributor,
   ResolvedContributorRole,
   ResolvedMetadata,
-  ResolvedMetadataHomes,
   ResolvedTitle,
 } from "../../types/resolvedMetadata.ts"
 import { normalizeGtin } from "../../utils/normalizeGtin.ts"
 import { normalizeIsbn } from "../../utils/normalizeIsbn.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
-import type { OpfIdentifier, OpfMetadata, OpfMetaEntry } from "./parse.ts"
-
-/**
- * Losslessness contract: where every parsed OPF field lands. Structural
- * fields belong to sibling parts of the resolved archive entity
- * (`readingOrder`, `toc`); `cover` and `guide` are reserved homes not yet
- * promoted out of `sources`. `metas` is the open-world case: the whole list
- * is copied verbatim into `properties`, so unknown vocabularies (calibre
- * columns, vendor namespaces…) are lossless by construction while known
- * properties (`rendition:*`, `belongs-to-collection`, roles…) additionally
- * get promoted into real vocabulary fields.
- */
-export const opfMetadataHomes = {
-  manifestItems: "readingOrder",
-  spineRows: "readingOrder",
-  spineTocIdref: "toc",
-  identifiers: "identifiers",
-  titles: "titles",
-  creators: "contributors",
-  contributors: "contributors",
-  publisher: "publication.edition.publisher",
-  description: "description",
-  rights: "rights",
-  languages: "languages",
-  subjects: "subjects",
-  date: "publication.edition.date",
-  coverHref: "cover",
-  renditionLayoutMeta: "renditionLayout",
-  renditionFlowMeta: "renditionFlow",
-  renditionSpreadMeta: "renditionSpread",
-  pageProgressionDirection: "readingDirection",
-  guide: "guide",
-  metas: "properties",
-} as const satisfies Record<
-  Exclude<keyof OpfMetadata, "kind">,
-  ResolvedMetadataHomes
->
+import type {
+  OpfContributor,
+  OpfIdentifier,
+  OpfMetadata,
+  OpfMetaEntry,
+  OpfTitle,
+} from "./parse.ts"
 
 const inferredIdentifierScheme = (value: string): string => {
   const trimmed = value.trim()
@@ -118,10 +87,12 @@ const MARC_RELATOR_TO_ROLE: Readonly<
   trl: "translator",
 }
 
-const contributorsFromOpf = (input: OpfMetadata): ResolvedContributor[] =>
+const contributorsFromOpf = (
   // `contributors` already covers every dc:creator (the `creators` list is
   // the plain-text view of the same elements), so it is the single source.
-  input.contributors.map((contributor) => {
+  parsed: ReadonlyArray<OpfContributor>,
+): ResolvedContributor[] =>
+  parsed.map((contributor) => {
     const roles = contributor.roles.map(
       (token) => MARC_RELATOR_TO_ROLE[token.trim().toLowerCase()] ?? token,
     )
@@ -234,17 +205,20 @@ const refiningValue = (
  * document order — the order matters, since the spec makes the first one the
  * main title whatever the refinements say (see `mainTitle`).
  */
-const titlesFromOpf = (input: OpfMetadata): ResolvedTitle[] =>
-  input.titles.map((title) =>
+const titlesFromOpf = (
+  parsed: ReadonlyArray<OpfTitle>,
+  metas: ReadonlyArray<OpfMetaEntry>,
+): ResolvedTitle[] =>
+  parsed.map((title) =>
     omitUndefined({
       value: title.value,
       type: trimToUndefined(
-        refiningValue(input.metas, title.id, "title-type"),
+        refiningValue(metas, title.id, "title-type"),
       )?.toLowerCase(),
       displaySeq: parseNonNegativeInt(
-        refiningValue(input.metas, title.id, "display-seq"),
+        refiningValue(metas, title.id, "display-seq"),
       ),
-      sortAs: trimToUndefined(refiningValue(input.metas, title.id, "file-as")),
+      sortAs: trimToUndefined(refiningValue(metas, title.id, "file-as")),
     }),
   )
 
@@ -378,16 +352,47 @@ const validatedRenditionSpread = (
 }
 
 export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
-  const ppd = input.pageProgressionDirection?.trim().toLowerCase()
+  const {
+    titles: parsedTitles,
+    contributors: parsedContributors,
+    publisher,
+    description,
+    rights,
+    languages,
+    subjects,
+    date,
+    renditionLayoutMeta,
+    renditionFlowMeta,
+    renditionSpreadMeta,
+    pageProgressionDirection,
+    identifiers: parsedIdentifiers,
+    metas,
+    // resolved elsewhere in the archive entity, not from the package alone:
+    // the reading order, the toc, the cover and the guide
+    kind: _kind,
+    creators: _creators,
+    manifestItems: _manifestItems,
+    spineRows: _spineRows,
+    spineTocIdref: _spineTocIdref,
+    coverHref: _coverHref,
+    guide: _guide,
+    ...unhandled
+  } = input
+
+  // Naming every parsed field above is the contract: adding one to
+  // `OpfMetadata` fails here until someone decides what becomes of it.
+  unhandled satisfies Record<string, never>
+
+  const ppd = pageProgressionDirection?.trim().toLowerCase()
   const readingDirection = ppd === "ltr" || ppd === "rtl" ? ppd : undefined
 
-  const rl = input.renditionLayoutMeta?.trim().toLowerCase()
+  const rl = renditionLayoutMeta?.trim().toLowerCase()
   const renditionLayout =
     rl === "reflowable" || rl === "pre-paginated" ? rl : undefined
 
-  const contributors = contributorsFromOpf(input)
-  const titles = titlesFromOpf(input)
-  const { series, collection } = collectionsFromOpfMetas(input.metas)
+  const contributors = contributorsFromOpf(parsedContributors)
+  const titles = titlesFromOpf(parsedTitles, metas)
+  const { series, collection } = collectionsFromOpfMetas(metas)
 
   const belongsTo =
     series.length > 0 || collection.length > 0
@@ -397,33 +402,33 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
         })
       : undefined
   const edition = omitUndefined({
-    date: parseW3cDtfDate(input.date),
-    publisher: input.publisher,
+    date: parseW3cDtfDate(date),
+    publisher,
   })
 
   return omitUndefined({
     titles: titles.length > 0 ? titles : undefined,
-    description: input.description,
+    description,
     publication:
       edition.date !== undefined || edition.publisher !== undefined
         ? { edition }
         : undefined,
-    rights: input.rights,
-    languages: input.languages.length > 0 ? [...input.languages] : undefined,
-    subjects: input.subjects.length > 0 ? [...input.subjects] : undefined,
+    rights,
+    languages: languages.length > 0 ? [...languages] : undefined,
+    subjects: subjects.length > 0 ? [...subjects] : undefined,
     contributors: contributors.length > 0 ? contributors : undefined,
     readingDirection,
     renditionLayout,
-    renditionFlow: validatedRenditionFlow(input.renditionFlowMeta),
-    renditionSpread: validatedRenditionSpread(input.renditionSpreadMeta),
+    renditionFlow: validatedRenditionFlow(renditionFlowMeta),
+    renditionSpread: validatedRenditionSpread(renditionSpreadMeta),
     identifiers:
-      input.identifiers.length > 0
-        ? input.identifiers.map((identifier) =>
+      parsedIdentifiers.length > 0
+        ? parsedIdentifiers.map((identifier) =>
             omitUndefined({
               value: identifier.value,
               scheme: normalizedIdentifierScheme(
                 identifier.scheme ??
-                  refinedIdentifierType(identifier, input.metas) ??
+                  refinedIdentifierType(identifier, metas) ??
                   inferredIdentifierScheme(identifier.value),
               ),
               unique: identifier.unique,
@@ -431,6 +436,6 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
           )
         : undefined,
     belongsTo,
-    properties: input.metas.length > 0 ? [...input.metas] : undefined,
+    properties: metas.length > 0 ? [...metas] : undefined,
   })
 }

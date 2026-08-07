@@ -1,21 +1,10 @@
+import type { Exhaustive } from "../../types/exhaustive.ts"
 import type {
+  ResolvedAppleMetadata,
   ResolvedMetadata,
-  ResolvedMetadataHome,
 } from "../../types/resolvedMetadata.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import type { AppleMetadata } from "./parse.ts"
-
-/**
- * Losslessness contract: the display options list is copied verbatim into
- * the `apple` corner (`apple.options`), with `fixed-layout` additionally
- * normalized into `apple.fixedLayout` and promoted to `renditionLayout`.
- */
-export const appleMetadataHomes = {
-  displayOptions: "apple.options",
-} as const satisfies Record<
-  Exclude<keyof AppleMetadata, "kind">,
-  ResolvedMetadataHome
->
 
 export const resolveApple = (input: AppleMetadata): ResolvedMetadata => {
   const options = input.displayOptions?.platform?.options
@@ -37,7 +26,7 @@ export const resolveApple = (input: AppleMetadata): ResolvedMetadata => {
       options !== undefined && options.length > 0
         ? options.map(({ name, value }) => omitUndefined({ name, value }))
         : undefined,
-  })
+  } satisfies Exhaustive<ResolvedAppleMetadata>)
 
   return omitUndefined({
     renditionLayout:

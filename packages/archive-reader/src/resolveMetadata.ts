@@ -35,7 +35,7 @@ export type ResolveMetadataSources = {
  *   OPF/Apple" are equivalent ranks.
  * - `identifiers` concatenates (OPF first) — different identifier systems
  *   coexist rather than compete.
- * - Format-scoped corners (`comic`, `apple`, `kobo`) and single-source
+ * - Format-scoped corners (`comicInfo`, `apple`, `kobo`) and single-source
  *   fields (`rights`, `properties`, `numberOfPages`…) come from
  *   their only producer.
  */
@@ -89,7 +89,7 @@ export const resolveMetadata = (
     identifiers: identifiers.length > 0 ? identifiers : undefined,
     belongsTo: opf?.belongsTo ?? comicInfo?.belongsTo,
     properties: opf?.properties,
-    comic: comicInfo?.comic,
+    comicInfo: comicInfo?.comicInfo,
     apple: apple?.apple,
     kobo: kobo?.kobo,
   })

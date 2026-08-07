@@ -17,11 +17,13 @@
  * - **Normalization ≠ convergence** — every field is typed/parsed/validated
  *   (booleans are booleans, positions are numbers), but concepts with no
  *   cross-format twin stay in clearly format-scoped corners ({@link
- *   ResolvedComicMetadata}, {@link ResolvedAppleMetadata},
+ *   ResolvedComicInfoMetadata}, {@link ResolvedAppleMetadata},
  *   {@link ResolvedKoboMetadata}) instead of faking generic names.
- * - **Losslessness** — everything a parser captures must have a home either
- *   here or on a sibling part of the resolved archive entity (reading order,
- *   toc…). The open-ended OPF `meta` vocabulary is structurally copied into
+ * - **Losslessness** — everything a parser captures lands either here or on
+ *   a sibling part of the resolved archive entity (reading order, toc…).
+ *   Each resolver names every field it was handed, so a parser gaining one
+ *   fails the build until someone decides what becomes of it. The
+ *   open-ended OPF `meta` vocabulary is structurally copied into
  *   {@link ResolvedMetadata.properties} so unknown properties survive
  *   normalization; known ones get promoted into real fields over time.
  */
@@ -191,7 +193,7 @@ export type ResolvedProperty = {
  * ComicInfo-scoped concepts with no cross-format twin. Normalized (typed,
  * parsed), but deliberately not renamed into pseudo-generic fields.
  */
-export type ResolvedComicMetadata = {
+export type ResolvedComicInfoMetadata = {
   /** `Manga` is `Yes`/`YesAndRightToLeft` → true, `No` → false. */
   readonly manga?: boolean
   /** `BlackAndWhite` `Yes` → true, `No` → false. */
@@ -389,43 +391,7 @@ export type ResolvedMetadata = {
    * (see {@link ResolvedProperty}). Lossless by construction.
    */
   readonly properties?: ReadonlyArray<ResolvedProperty>
-  readonly comic?: ResolvedComicMetadata
+  readonly comicInfo?: ResolvedComicInfoMetadata
   readonly apple?: ResolvedAppleMetadata
   readonly kobo?: ResolvedKoboMetadata
 }
-
-/**
- * Where a parsed source field lands: a {@link ResolvedMetadata} field
- * (dotted paths address the scoped corners), or a sibling part of the
- * resolved archive entity for structural fields (`readingOrder`, `toc`).
- * `guide` is a reserved home for an entity part that only exists as raw
- * `sources` today — tracked, not yet promoted. (`cover` used to be reserved
- * here too; it is now the {@link ResolvedMetadata.cover} field.)
- *
- * Used by the per-format mapping tables (`opfMetadataHomes`,
- * `comicInfoMetadataHomes`, …) that compile-enforce the losslessness rule:
- * adding a parser field without declaring its home is a type error.
- */
-export type ResolvedMetadataHome =
-  | Exclude<
-      keyof ResolvedMetadata,
-      "comic" | "apple" | "kobo" | "belongsTo" | "publication"
-    >
-  | `comic.${keyof ResolvedComicMetadata}`
-  | `apple.${keyof ResolvedAppleMetadata}`
-  | `kobo.${keyof ResolvedKoboMetadata}`
-  | `belongsTo.${"series" | "collection"}`
-  | `publication.${keyof ResolvedPublicationInfo}`
-  | `publication.${keyof ResolvedPublicationInfo}.${keyof ResolvedPublication}`
-  | "readingOrder"
-  | "toc"
-  | "guide"
-
-/**
- * A source field's declared home(s). One field legitimately lands in more
- * than one place — an EPUB's `dc:title` elements populate both `title` (the
- * first of them) and `titles` (all of them) — so the tables accept a list.
- */
-export type ResolvedMetadataHomes =
-  | ResolvedMetadataHome
-  | ReadonlyArray<ResolvedMetadataHome>
