@@ -71,8 +71,6 @@ export type { ResolveGoogleBooksVolumeOptions } from "./providers/googleBooks/re
 export {
   GOOGLE_BOOKS_MAX_SUBJECTS,
   googleBooksCoverUrl,
-  googleBooksVolumeInfoMetadataHomes,
-  googleBooksVolumeMetadataHomes,
   googleBooksVolumeUrl,
   resolveGoogleBooksVolume,
 } from "./providers/googleBooks/resolve.ts"
@@ -87,7 +85,6 @@ export { parseOpenLibrarySearchResponse } from "./providers/openLibrary/parse.ts
 export {
   OPEN_LIBRARY_IDENTIFIER_SCHEME,
   OPEN_LIBRARY_MAX_SUBJECTS,
-  openLibraryMetadataHomes,
   resolveOpenLibraryDoc,
 } from "./providers/openLibrary/resolve.ts"
 export type { ProjectGutenbergProviderOptions } from "./providers/projectGutenberg/createProjectGutenbergProvider.ts"
@@ -107,7 +104,6 @@ export type {
 export { parseProjectGutenbergRdf } from "./providers/projectGutenberg/parse.ts"
 export {
   PROJECT_GUTENBERG_MAX_SUBJECTS,
-  projectGutenbergMetadataHomes,
   resolveProjectGutenbergRecord,
 } from "./providers/projectGutenberg/resolve.ts"
 export {

@@ -106,6 +106,7 @@ export type { ResolveMetadataSources } from "./resolveMetadata.ts"
 export { resolveMetadata } from "./resolveMetadata.ts"
 export { resolveArchiveToc } from "./toc/resolveArchiveToc.ts"
 export type { ArchiveTocItem } from "./toc/types.ts"
+export type { Exhaustive } from "./types/exhaustive.ts"
 export type {
   KnownMetadataIdentifierScheme,
   MetadataIdentifier,
@@ -120,8 +121,6 @@ export type {
   ResolvedDate,
   ResolvedKoboMetadata,
   ResolvedMetadata,
-  ResolvedMetadataHome,
-  ResolvedMetadataHomes,
   ResolvedMetadataIdentifier,
   ResolvedProperty,
   ResolvedPublication,

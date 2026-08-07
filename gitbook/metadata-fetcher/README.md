@@ -267,7 +267,7 @@ const provider = createProjectGutenbergProvider({
 
 The confirmed candidate echoes the book's exact input identifier and adds `{ value: "78139", scheme: "ProjectGutenberg" }`. A shared scheme-scoped identifier makes the match decisive even when the catalog and embedded titles differ. A missing RDF record returns no candidate; a failing or malformed response is reported through `failedProviders` like any other provider failure.
 
-**Mapping** (per-eBook RDF → `ResolvedMetadata`, exported as `projectGutenbergMetadataHomes`):
+**Mapping** (per-eBook RDF → `ResolvedMetadata`):
 
 | Project Gutenberg RDF | Resolved | |
 | --- | --- | --- |
@@ -316,7 +316,7 @@ An official Google Books website/API URL with scheme `URL` is recognized too. An
 
 Each request makes at most three total attempts. Network failures and HTTP `500`, `502`, `503` and `504` responses are retried with abortable exponential backoff and jitter; client errors such as an invalid key are not. When the third attempt fails, or when a successful exact response is malformed, the provider is reported through `failedProviders` normally.
 
-**Mapping** (Google Books Volume → `ResolvedMetadata`, compile-checked by the exported `googleBooksVolumeMetadataHomes` and `googleBooksVolumeInfoMetadataHomes`):
+**Mapping** (Google Books Volume → `ResolvedMetadata`):
 
 | Google Books | Resolved | |
 | --- | --- | --- |
@@ -353,7 +353,7 @@ const provider = createOpenLibraryProvider({
 
 **Lookup strategy**, at most four requests: an ISBN search when the book states one — the catalog then verifies the identity for us; an exact `id_project_gutenberg` search when an identifier is an official Project Gutenberg URL or a numeric `ProjectGutenberg` identifier; then a precise title (+ first author) search when those identifiers are unknown to Open Library or absent. When that precise search is empty, a free-text title-and-author query handles records whose work title and subtitle were indexed separately. The Gutenberg crosswalk is applied explicitly by this provider because `id_project_gutenberg` is Open Library's catalog field, not a generic URL convention in the scorer. A query with none of those terms yields no candidates rather than a fishing expedition.
 
-**Mapping** (`search.json` doc → `ResolvedMetadata`, exported as `openLibraryMetadataHomes`):
+**Mapping** (`search.json` doc → `ResolvedMetadata`):
 
 | Open Library | Resolved | |
 | --- | --- | --- |

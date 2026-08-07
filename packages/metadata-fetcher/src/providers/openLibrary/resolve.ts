@@ -2,7 +2,6 @@ import type {
   KnownMetadataIdentifierScheme,
   MetadataIdentifier,
   ResolvedMetadata,
-  ResolvedMetadataHome,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { marcLanguageToBcp47 } from "./marcLanguage.ts"
@@ -14,28 +13,6 @@ import type { OpenLibraryDoc } from "./parse.ts"
  * consumer persists. The API puts the meaningful ones first.
  */
 export const OPEN_LIBRARY_MAX_SUBJECTS = 25
-
-/**
- * Where every {@link OpenLibraryDoc} field lands in {@link ResolvedMetadata},
- * compile-enforced: adding a field to the parser without declaring its home is
- * a type error. The archive parsers' losslessness contract, and the mapping
- * documentation.
- */
-export const openLibraryMetadataHomes = {
-  key: "identifiers",
-  title: "titles",
-  subtitle: "titles",
-  author_name: "contributors",
-  first_publish_year: "publication.original.date",
-  language: "languages",
-  subject: "subjects",
-  number_of_pages_median: "numberOfPages",
-  cover_i: "cover",
-  id_project_gutenberg: "identifiers",
-} as const satisfies Record<
-  keyof OpenLibraryDoc,
-  ResolvedMetadataHome | "identifiers"
->
 
 export const OPEN_LIBRARY_IDENTIFIER_SCHEME =
   "OpenLibrary" satisfies KnownMetadataIdentifierScheme

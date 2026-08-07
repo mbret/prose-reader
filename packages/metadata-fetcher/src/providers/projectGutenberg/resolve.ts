@@ -5,7 +5,6 @@ import type {
   ResolvedCover,
   ResolvedDate,
   ResolvedMetadata,
-  ResolvedMetadataHome,
   ResolvedPublication,
 } from "@prose-reader/archive-reader"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
@@ -13,26 +12,6 @@ import { PROJECT_GUTENBERG_IDENTIFIER_SCHEME } from "./identifier.ts"
 import type { ProjectGutenbergRecord } from "./parse.ts"
 
 export const PROJECT_GUTENBERG_MAX_SUBJECTS = 25
-
-/** Compile-enforced map from every parsed RDF field to its resolved home. */
-export const projectGutenbergMetadataHomes = {
-  id: "identifiers",
-  title: "titles",
-  publisher: "publication.edition.publisher",
-  issued: "publication.edition.date",
-  originalPublication: "publication.original",
-  rights: "rights",
-  description: "description",
-  summary: "description",
-  languages: "languages",
-  subjects: "subjects",
-  bookshelves: "subjects",
-  contributors: "contributors",
-  cover: "cover",
-} as const satisfies Record<
-  keyof ProjectGutenbergRecord,
-  ResolvedMetadataHome | "identifiers"
->
 
 const MARC_RELATOR_TO_ROLE: Readonly<
   Partial<Record<string, ResolvedContributorRole>>
