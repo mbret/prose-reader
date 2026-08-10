@@ -39,7 +39,8 @@ const collectMatchingRanges = (
     if (subNode.nodeType === 3) {
       // Match against the node data as-is: lowercasing here would shift match
       // indices for characters whose lowercase form has a different length
-      // (e.g. İ), while the regexp already carries the `i` flag.
+      // (e.g. İ), while the regexp already matches case-insensitively with
+      // Unicode simple case folding (`iu` flags).
       const content = (subNode as Text).data
       if (content) {
         let match: RegExpExecArray | null = null
@@ -69,7 +70,11 @@ const escapeRegExp = (text: string) =>
 const searchNodeContainingText = (node: Node, text: string) => {
   const rangeList: Range[] = []
 
-  collectMatchingRanges(node, RegExp(escapeRegExp(text), `gi`), rangeList)
+  // `u` widens the `i` flag to Unicode simple case folding (K/K, Deseret…).
+  // Characters only reachable through full case folding (İ → i̇) stay
+  // unmatched on purpose: mapping their ranges back to the original text
+  // would require a fold-index map on this hot path.
+  collectMatchingRanges(node, RegExp(escapeRegExp(text), `giu`), rangeList)
 
   return rangeList
 }

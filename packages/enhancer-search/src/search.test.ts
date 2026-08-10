@@ -59,6 +59,16 @@ describe("searchInDocument", () => {
     expect(results).toEqual([{ cfi: "Whale@0" }, { cfi: "whale@0" }])
   })
 
+  it("matches characters through Unicode simple case folding", async () => {
+    // U+212A KELVIN SIGN case-folds to "k" only under Unicode folding, which
+    // the `u` flag enables.
+    const doc = createDoc(`<p>300K</p>`)
+
+    const results = await search(doc, "k")
+
+    expect(results).toEqual([{ cfi: "K@3" }])
+  })
+
   it("computes offsets against the original text, not its lowercased form", async () => {
     // "İ".toLowerCase() expands to two code units, which used to shift every
     // subsequent match index and push ranges out of bounds.
