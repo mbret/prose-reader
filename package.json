@@ -26,6 +26,9 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "tar": "^7.5.22"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
     "@rolldown/plugin-babel": "^0.2.3",
