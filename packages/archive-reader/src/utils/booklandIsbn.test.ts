@@ -17,6 +17,12 @@ describe("booklandIsbn", () => {
     expect(booklandIsbn("0036000291452")).toBeUndefined()
   })
 
+  it("rejects a barcode of another GTIN length, ISBN-shaped prefix and all", () => {
+    expect(booklandIsbn("036180592125")).toBeUndefined()
+    expect(booklandIsbn("00971400005051")).toBeUndefined()
+    expect(booklandIsbn("97800000000000")).toBeUndefined()
+  })
+
   it("rejects values carrying no ISBN at all", () => {
     expect(booklandIsbn(undefined)).toBeUndefined()
     expect(booklandIsbn("")).toBeUndefined()

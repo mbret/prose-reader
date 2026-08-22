@@ -1,4 +1,5 @@
-const ISBN_CANDIDATE_PATTERN = /(?:97[89])?\d{9}[\dXx]/
+const NUMBER_PATTERN = /[0-9Xx]+/g
+const ISBN_NUMBER_PATTERN = /^(?:97[89])?\d{9}[\dXx]$/
 
 /**
  * Normalize a raw ISBN-ish string into a canonical 10- or 13-character
@@ -7,8 +8,12 @@ const ISBN_CANDIDATE_PATTERN = /(?:97[89])?\d{9}[\dXx]/
  *  - Strips the common `urn:isbn:` / `isbn:` prefixes.
  *  - Drops everything that isn't a digit or `X`.
  *  - Validates the resulting length (10 or 13).
- *  - Falls back to a lax regex scan so publishers that stuff free text
- *    around the number still yield a usable value.
+ *  - Falls back to scanning the numbers in the string, so publishers that
+ *    stuff free text around the ISBN still yield a usable value.
+ *
+ * Only a *whole* number is a candidate in that fallback: carving ten digits
+ * out of a longer barcode (`036180592125` — a GTIN-12) would invent an ISBN
+ * the publication never printed.
  */
 export const normalizeIsbn = (
   raw: string | number | undefined | null,
@@ -26,8 +31,9 @@ export const normalizeIsbn = (
     return digitsOnly.toUpperCase()
   }
 
-  const match = stripped.match(ISBN_CANDIDATE_PATTERN)
-  if (match) return match[0].toUpperCase()
+  for (const number of stripped.match(NUMBER_PATTERN) ?? []) {
+    if (ISBN_NUMBER_PATTERN.test(number)) return number.toUpperCase()
+  }
 
   return undefined
 }

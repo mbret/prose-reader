@@ -44,7 +44,7 @@ Both accept `ISBN` **and** `GTIN` identifiers, because the two are one namespace
 
 The authored `value` needs normalizing before use: it is preserved as the publication wrote it, so it arrives hyphenated (`978-0-441-01359-3`), prefixed (`urn:isbn:9780441013593`), or padded with free text. The helpers return the canonical form — 10 or 13 characters for an ISBN, digits only for a GTIN.
 
-`isbnIdentifierValue` also declines a value that is not a book number, whichever scheme announced it. A retail barcode scanned off a comic's cover (`4006381333931`) is a valid GTIN-13 but sits outside the Bookland range, so it is not reported as an ISBN even when the publication labels it `opf:scheme="ISBN"`. Only the derivation declines: the identifier itself stays in `identifiers` exactly as authored, so nothing is lost. Check digits are not verified — a mistyped one still identifies the intended book.
+`isbnIdentifierValue` also declines a value that is not a book number, whichever scheme announced it. A retail barcode scanned off a comic's cover (`4006381333931`) is a valid GTIN-13 but sits outside the Bookland range, so it is not reported as an ISBN even when the publication labels it `opf:scheme="ISBN"`. A barcode of another GTIN length is not reduced to its leading digits either: no ISBN is carved out of a longer number the publication printed. Only the derivation declines — the identifier itself stays in `identifiers` exactly as authored, so nothing is lost. Check digits are not verified: a mistyped one still identifies the intended book.
 
 ## EPUB and OPF
 
