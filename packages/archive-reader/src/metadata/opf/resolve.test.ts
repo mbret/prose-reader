@@ -220,6 +220,21 @@ describe("resolveOpf", () => {
     ).toEqual([{ value: "4006381333931", scheme: "GTIN" }])
   })
 
+  it("infers GTIN-12 and GTIN-14 barcodes as GTIN, not as their leading digits", () => {
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [{ value: "036180592125" }],
+      }).identifiers,
+    ).toEqual([{ value: "036180592125", scheme: "GTIN" }])
+    expect(
+      resolveOpf({
+        ...emptyOpf(),
+        identifiers: [{ value: "00971400005051" }],
+      }).identifiers,
+    ).toEqual([{ value: "00971400005051", scheme: "GTIN" }])
+  })
+
   it("keeps an authored ISBN scheme even when its value does not normalize", () => {
     expect(
       resolveOpf({

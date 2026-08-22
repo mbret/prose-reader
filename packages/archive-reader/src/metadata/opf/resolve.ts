@@ -6,8 +6,8 @@ import type {
   ResolvedMetadata,
   ResolvedTitle,
 } from "../../types/resolvedMetadata.ts"
+import { booklandIsbn } from "../../utils/booklandIsbn.ts"
 import { normalizeGtin } from "../../utils/normalizeGtin.ts"
-import { normalizeIsbn } from "../../utils/normalizeIsbn.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
 import type {
@@ -36,11 +36,7 @@ const inferredIdentifierScheme = (value: string): string => {
     }
   }
 
-  const isbn = normalizeIsbn(trimmed)
-
-  if (isbn !== undefined && (isbn.length === 10 || /^97[89]/.test(isbn))) {
-    return "ISBN"
-  }
+  if (booklandIsbn(trimmed) !== undefined) return "ISBN"
   if (normalizeGtin(trimmed) !== undefined) return "GTIN"
 
   return "Unknown"
