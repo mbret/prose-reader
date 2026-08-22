@@ -91,7 +91,7 @@ curl -X POST "http://localhost:6382/metadata?limit=3" \
   -d '{"title":"Dune","authors":["Frank Herbert"],"identifiers":[{"value":"9780441013593","scheme":"ISBN"}],"publishedYear":1965}'
 ```
 
-Supported fields are `title`, `authors`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Every identifier has `{ "value": string, "scheme": string }`; known schemes include `ISBN`, `GTIN`, `GoogleBooks`, `ProjectGutenberg`, `OpenLibrary`, `URL`, `DOI`, and `Unknown`, while custom scheme strings are accepted. A missing or blank scheme in untyped JSON normalizes to `Unknown`. Unknown body fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
+Supported fields are `title`, `authors`, `identifiers`, `series`, `publisher`, `publishedYear`, `languages` and `numberOfPages`. Every identifier has `{ "value": string, "scheme": string }`; known schemes include `ISBN`, `GTIN`, `GoogleBooks`, `ProjectGutenberg`, `OpenLibrary`, `URL`, `DOI`, and `Unknown`, while custom scheme strings are accepted. A missing or blank scheme in untyped JSON normalizes to `Unknown`. Schemes are matched by their canonical spelling, so send `ISBN` rather than `isbn`: a body scheme is forwarded to the SDK as authored, and an unrecognized spelling is treated as a custom namespace instead of an ISBN or GTIN lookup. Unknown body fields are ignored. JavaScript callers starting with archive-reader can use `metadataInputFromResolvedArchive(resolved)` before posting the result.
 
 ### Options (both metadata routes)
 

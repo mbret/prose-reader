@@ -1,14 +1,13 @@
 import {
+  gtinIdentifierValue,
+  isbnIdentifierValue,
+  isIsbnBearingScheme,
   type MetadataIdentifier,
   mainTitle,
   type ResolvedMetadata,
 } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../types/fetchMetadataInput.ts"
 import type { MetadataMatchField, MetadataMatchSignal } from "../types/match.ts"
-import {
-  gtinIdentifierValue,
-  isbnIdentifierValue,
-} from "../utils/identifierValues.ts"
 import { metadataAuthors } from "../utils/metadataAuthors.ts"
 import { toIsbn13 } from "../utils/toIsbn13.ts"
 import {
@@ -71,12 +70,6 @@ const identifierScheme = (
 
 const identifierLabel = (identifier: MetadataIdentifier): string =>
   `${identifier.scheme}:${identifier.value}`
-
-const isIsbnOrGtinIdentifier = (identifier: MetadataIdentifier): boolean => {
-  const scheme = identifier.scheme.trim().toLowerCase()
-
-  return scheme === "isbn" || scheme === "gtin"
-}
 
 /**
  * An `Unknown` scheme is not a contradiction; a `DOI` and an `ISBN` carrying
@@ -339,10 +332,10 @@ export const scoreMetadataCandidate = (
   // ISBN and GTIN have normalized comparisons above. Comparing their raw
   // spellings again would emit a false generic mismatch for hyphenated ISBNs.
   const queryIdentifiers = (query.identifiers ?? []).filter(
-    (identifier) => !isIsbnOrGtinIdentifier(identifier),
+    (identifier) => !isIsbnBearingScheme(identifier.scheme),
   )
   const candidateIdentifiers = (candidate.identifiers ?? []).filter(
-    (identifier) => !isIsbnOrGtinIdentifier(identifier),
+    (identifier) => !isIsbnBearingScheme(identifier.scheme),
   )
   const decisiveIdentifierAgreement = queryIdentifiers.some((identifier) =>
     candidateIdentifiers.some((other) =>

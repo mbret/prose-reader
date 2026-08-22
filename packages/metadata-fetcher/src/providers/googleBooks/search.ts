@@ -1,10 +1,10 @@
+import { isbnIdentifierValue } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataCandidate,
   MetadataProvider,
   MetadataProviderContext,
 } from "../../types/provider.ts"
-import { isbnIdentifierValue } from "../../utils/identifierValues.ts"
 import { isJsonRecord, readRecordArray } from "../../utils/json.ts"
 import { retryWithBackoff } from "../../utils/retryWithBackoff.ts"
 import {

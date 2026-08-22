@@ -129,6 +129,11 @@ export type {
   ResolvedTitle,
   ResolvedTitleType,
 } from "./types/resolvedMetadata.ts"
+export {
+  gtinIdentifierValue,
+  isbnIdentifierValue,
+  isIsbnBearingScheme,
+} from "./utils/identifierValues.ts"
 export { mainTitle } from "./utils/mainTitle.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
