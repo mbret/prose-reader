@@ -1,6 +1,6 @@
 # Demo & Showcase
 
-You can see prose in action in our official [demo](https://demo.prose-reader.com/) or in a real app such as [oboku](https://oboku.me/).
+You can see prose in action in our official [demo](https://prose-reader.com/demo) or in a real app such as [oboku](https://oboku.me/).
 
 ## Web Demo
 
@@ -8,7 +8,7 @@ The purpose of the demo is to pack as many features as possible in order to give
 
 The demo uses **react** and **chakraui** as base libraries.
 
-The code is available at [https://github.com/mbret/prose-reader/tree/master/apps/demo](https://github.com/mbret/prose-reader/tree/master/apps/demo) and we encourage you to check it out to help you implement your own reader.
+The code is available at [https://github.com/mbret/prose-reader/tree/master/apps/front/src/demo](https://github.com/mbret/prose-reader/tree/master/apps/front/src/demo) and we encourage you to check it out to help you implement your own reader.
 
 {% hint style="success" %}
 Feel free to copy the code as much as you want. You can even use it as it is for your own product if it suits you.

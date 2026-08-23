@@ -1,0 +1,94 @@
+import { DEMO_BASE_PATH } from "../../constants"
+
+export const COMICS = [
+  {
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}`,
+    name: "Manga, horizontal scrolling",
+    type: `FXL - LTR`,
+  },
+  {
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?vertical`,
+    name: "Manga, vertical scrolling",
+    type: `FXL - LTR`,
+  },
+  {
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-comic.zip`)}?free&vertical`,
+    name: "Manga, vertical free scrolling",
+    type: `FXL - LTR`,
+  },
+  {
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon-one-page.epub`)}?free&vertical`,
+    name: "Webtoon (one big image), vertical free scrolling",
+    type: `FXL - LTR`,
+  },
+  {
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/rendition-flow-webtoon.epub`)}?free&vertical`,
+    name: "Webtoon, vertical free scrolling",
+    type: `FXL - LTR`,
+  },
+]
+
+export const PDFS = [
+  {
+    name: `sample-3.pdf`,
+    type: `EN - LTR - FXL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sample-3.pdf`)}`,
+  },
+]
+
+export const AUDIOBOOKS = [
+  {
+    name: `Aesop Fables, Volume One (LibriVox)`,
+    type: `EN - LTR - AUDIO`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/aesop_fables_volume_one_librivox.zip`)}`,
+  },
+]
+
+export const EPUBS = [
+  {
+    name: `accessible_epub_3.epub`,
+    type: `EN - LTR - RFL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/accessible_epub_3.epub`)}`,
+  },
+  {
+    name: `sous-le-vent.epub`,
+    type: `EN - LTR - FXL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sous-le-vent.epub`)}`,
+  },
+  {
+    name: `moby-dick_txt.txt`,
+    type: `EN - LTR - TXT`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/moby-dick_txt.txt`)}`,
+  },
+
+  {
+    name: `sample.cbz`,
+    type: `EN - LTR - FXL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/sample.cbz`)}`,
+  },
+  {
+    name: `cc-shared-culture.epub`,
+    type: `EN - LTR - MEDIA`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/cc-shared-culture.epub`)}`,
+  },
+  {
+    name: `Accessibility-Tests-Mathematics.epub`,
+    type: `EN - LTR - RFL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/Accessibility-Tests-Mathematics.epub`)}`,
+  },
+  {
+    name: `regime-anticancer-arabic.epub`,
+    type: `AR - RTL - RFL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/regime-anticancer-arabic.epub`)}`,
+  },
+  {
+    name: `mymedia_lite.epub`,
+    type: `JP - RTL - RFL`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/mymedia_lite.epub`)}`,
+  },
+  {
+    name: `haruko-html-jpeg.epub`,
+    type: `JP - RTL - FXL(P)`,
+    link: `${DEMO_BASE_PATH}/reader/${btoa(`${window.location.origin}/epubs/haruko-html-jpeg.epub`)}`,
+  },
+]

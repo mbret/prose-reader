@@ -22,3 +22,24 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# demo books are copied in by hand, only the checked-in ones are kept
+public/epubs/*
+!public/epubs/accessible_epub_3.epub
+!public/epubs/haruko-html-jpeg.epub
+!public/epubs/moby-dick_txt.txt
+!public/epubs/Accessibility-Tests-Mathematics.epub
+!public/epubs/mymedia_lite.epub
+!public/epubs/sample.cbz
+!public/epubs/regime-anticancer-arabic.epub
+!public/epubs/sous-le-vent.epub
+!public/epubs/haruko-comic.zip
+!public/epubs/cc-shared-culture.epub
+!public/epubs/rendition-flow-webtoon-one-page.epub
+!public/epubs/rendition-flow-webtoon.epub
+!public/epubs/sample-3.pdf
+!public/epubs/aesop_fables_volume_one_librivox.zip
+
+# built by the service worker dev/build step
+public/service-worker.js
+public/service-worker.js.map

@@ -1,0 +1,26 @@
+/**
+ * The reader takes over the whole viewport and must never let the document
+ * scroll (on mobile the collapsing address bar leaves a blank area behind).
+ * `#root` is therefore the single scroll container of the app: pages that are
+ * taller than the viewport (the landing page) scroll inside it.
+ */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html,
+body {
+  overflow: hidden;
+}
+
+#root {
+  overflow: auto;
+}
+
+* {
+  box-sizing: border-box;
+}

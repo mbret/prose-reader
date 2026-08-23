@@ -37,7 +37,7 @@ const createAppReader = gesturesEnhancer(
 ```
 
 {% hint style="info" %}
-We encourage you to visit the [prose reader demo repository](https://github.com/mbret/prose-reader/tree/master/apps/demo) to see how the enhancer is being used in a real world example.
+We encourage you to visit the [prose reader demo](https://github.com/mbret/prose-reader/tree/master/apps/front/src/demo) to see how the enhancer is being used in a real world example.
 {% endhint %}
 
 ### How It Works

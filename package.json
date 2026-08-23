@@ -6,10 +6,9 @@
   "author": "Maxime Bret <bret.maxime@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "lerna run start --stream --ignore prose-reader-front",
+    "start": "lerna run start --stream",
     "start:lib": "lerna run start --stream --scope @prose-reader/* --concurrency 15",
-    "start:front": "lerna run dev --stream --scope prose-reader-front",
-    "start:demo": "lerna run start --stream --scope demo",
+    "start:front": "lerna run start --stream --scope prose-reader-front",
     "start:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml up --build",
     "stop:metadata-fetcher": "docker compose -f apps/metadata-fetcher-api/docker-compose.yml down",
     "build": "lerna run build --stream",

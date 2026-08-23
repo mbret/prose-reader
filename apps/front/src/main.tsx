@@ -1,14 +1,24 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "./index.css"
-import App from "./App.tsx"
-import { Provider } from "./components/ui/provider.tsx"
+import { App } from "./App"
 
-// biome-ignore lint/style/noNonNullAssertion: TODO
-createRoot(document.getElementById("root")!).render(
+const container = document.getElementById("root")
+
+if (!container) {
+  throw new Error(`Unable to find the app container`)
+}
+
+createRoot(container).render(
   <StrictMode>
-    <Provider>
-      <App />
-    </Provider>
+    <App />
   </StrictMode>,
 )
+
+if (import.meta.env.DEV) {
+  const script = document.createElement("script")
+  script.src = "//unpkg.com/react-scan/dist/auto.global.js"
+  script.async = true
+
+  document.head.appendChild(script)
+}
