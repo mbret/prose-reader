@@ -173,7 +173,7 @@ describe("createGoogleBooksProvider", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(3)
     expect(requestedUrl(fetchMock, 2).searchParams.get("q")).toBe(
-      'intitle:"Dune" inauthor:"Frank Herbert"',
+      "intitle:Dune inauthor:Frank Herbert",
     )
     expect(mainTitle(candidates[0]?.metadata)).toBe("Dune")
   })
@@ -194,11 +194,93 @@ describe("createGoogleBooksProvider", () => {
     )
 
     expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
-      'intitle:"Dune" inauthor:"A misspelled author"',
+      "intitle:Dune inauthor:A misspelled author",
     )
     expect(requestedUrl(fetchMock, 1).searchParams.get("q")).toBe(
-      'intitle:"Dune"',
+      "intitle:Dune",
     )
+  })
+
+  it("sends a multi-word title unquoted, so Google ranks instead of filtering", async () => {
+    const fetchMock = fetchReturning(jsonResponse({ items: [DUNE_VOLUME] }))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search({ title: "Dune  Messiah v02 (Digital)" }, context)
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "intitle:Dune Messiah v02 (Digital)",
+    )
+  })
+
+  it("drops quotes a title carries, which would unbalance the query", async () => {
+    const fetchMock = fetchReturning(jsonResponse({ items: [DUNE_VOLUME] }))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search({ title: 'The "Dune" \\ Companion' }, context)
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "intitle:The Dune Companion",
+    )
+  })
+
+  it("keeps a colon in a term from promoting the rest into another field", async () => {
+    const fetchMock = fetchReturning(jsonResponse({ items: [DUNE_VOLUME] }))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search(
+      { title: "Dune inauthor:Asimov", authors: ["isbn:9780441013593"] },
+      context,
+    )
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "intitle:Dune inauthor Asimov inauthor:isbn 9780441013593",
+    )
+  })
+
+  it("keeps a hyphenated title from excluding its own words", async () => {
+    const fetchMock = fetchReturning(jsonResponse({ items: [DUNE_VOLUME] }))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search({ title: "BLAME! -Master Edition-" }, context)
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("q")).toBe(
+      "intitle:BLAME! Master Edition-",
+    )
+  })
+
+  it("returns nothing, without asking, when a title is all query syntax", async () => {
+    const fetchMock = vi.fn<typeof globalThis.fetch>()
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    expect(await provider.search({ title: ' -: "" ' }, context)).toEqual([])
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("asks a title search for more than the caller keeps, letting the matcher rank", async () => {
+    const fetchMock = fetchReturning(jsonResponse({ totalItems: 0 }))
+    const provider = createGoogleBooksProvider({
+      apiKey: "secret",
+      fetch: fetchMock,
+    })
+
+    await provider.search({ title: "Dune" }, { limit: 5 })
+
+    expect(requestedUrl(fetchMock, 0).searchParams.get("maxResults")).toBe("20")
   })
 
   it("returns nothing, without asking, when no lookup term exists", async () => {

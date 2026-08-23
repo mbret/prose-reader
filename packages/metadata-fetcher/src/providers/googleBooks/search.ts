@@ -20,6 +20,8 @@ import {
 } from "./resolve.ts"
 
 const GOOGLE_BOOKS_MAX_RESULTS = 40
+const GOOGLE_BOOKS_EXACT_OVERSAMPLE = 1
+const GOOGLE_BOOKS_TITLE_OVERSAMPLE = 4
 const GOOGLE_BOOKS_REQUEST_ATTEMPTS = 3
 const GOOGLE_BOOKS_INITIAL_RETRY_DELAY_MS = 1_000
 const GOOGLE_BOOKS_MAX_RETRY_DELAY_MS = 3_000
@@ -36,20 +38,44 @@ type GoogleBooksVolumeRecord = {
   readonly raw: unknown
 }
 
-const quotedTerm = (value: string): string =>
-  `"${value
-    .replace(/["\\]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()}"`
+const QUERY_BREAKING_CHARACTERS = /["\\]+/g
+const FIELD_OPERATOR_SEPARATOR = /:/g
+const TERM_EXCLUSION_PREFIX = /(^|\s)-+/g
+const REPEATED_WHITESPACE = /\s+/g
+
+/**
+ * Terms reach Google's field operators unquoted on purpose: `intitle:"…"`
+ * demands the phrase verbatim, which a title carrying a volume marker, a
+ * scanner tag or a translated subtitle never satisfies, and no query
+ * relaxation follows to recover with — the lookup would report nothing for a
+ * book Google holds. Loose ranking here, precision in the scorer.
+ *
+ * Unquoted, though, the term is parsed as query syntax rather than carried as
+ * a literal, so anything Google would read as an instruction goes: a colon
+ * would promote the rest of a scanner-derived title into another field
+ * (`Dune inauthor:Asimov` searching authors), a leading hyphen would exclude
+ * the word behind it (`BLAME! -Master Edition-` demanding books *without*
+ * "Master"), and both mutations can return results, which also robs the
+ * title-only fallback of its turn.
+ */
+const searchTerm = (value: string): string =>
+  value
+    .replace(QUERY_BREAKING_CHARACTERS, " ")
+    .replace(FIELD_OPERATOR_SEPARATOR, " ")
+    .replace(TERM_EXCLUSION_PREFIX, " ")
+    .replace(REPEATED_WHITESPACE, " ")
+    .trim()
+
+const isSearchable = (term: string): boolean => term.length > 0
 
 const titleSearchTerms = (
   input: FetchMetadataInput,
 ): { readonly title: string; readonly author?: string } | undefined => {
-  const title = input.title?.trim()
+  const title = searchTerm(input.title ?? "")
 
-  if (title === undefined || title.length === 0) return undefined
+  if (title.length === 0) return undefined
 
-  const author = input.authors?.find((value) => value.trim().length > 0)?.trim()
+  const author = input.authors?.map(searchTerm).find(isSearchable)
 
   return {
     title,
@@ -91,6 +117,9 @@ const toCandidates = (
 /**
  * Creates the Google Books lookup pipeline. Lookup order is an exact volume
  * identifier, ISBN, then title plus first author with a title-only fallback.
+ * A title search asks for several pages worth of `limit` because Google ranks
+ * it, not the matcher: the edition the caller described can sit below the ones
+ * Google finds most popular, and `fetchMetadata` trims to `limit` after scoring.
  */
 export const createGoogleBooksSearch = (
   options: GoogleBooksSearchOptions,
@@ -164,16 +193,19 @@ export const createGoogleBooksSearch = (
   const searchVolumes = async (
     query: string,
     context: MetadataProviderContext,
+    oversample: number,
   ): Promise<ReadonlyArray<GoogleBooksVolumeRecord>> => {
-    if (context.limit <= 0) return []
+    const pageSize = Math.min(
+      Math.ceil(context.limit * oversample),
+      GOOGLE_BOOKS_MAX_RESULTS,
+    )
+
+    if (pageSize <= 0) return []
 
     const url = new URL(volumesUrl)
 
     url.searchParams.set("q", query)
-    url.searchParams.set(
-      "maxResults",
-      String(Math.min(Math.ceil(context.limit), GOOGLE_BOOKS_MAX_RESULTS)),
-    )
+    url.searchParams.set("maxResults", String(pageSize))
     url.searchParams.set("orderBy", "relevance")
     url.searchParams.set("printType", "books")
 
@@ -200,7 +232,11 @@ export const createGoogleBooksSearch = (
     const isbn = isbnIdentifierValue(input.identifiers)
 
     if (isbn !== undefined) {
-      const volumes = await searchVolumes(`isbn:${isbn}`, context)
+      const volumes = await searchVolumes(
+        `isbn:${isbn}`,
+        context,
+        GOOGLE_BOOKS_EXACT_OVERSAMPLE,
+      )
 
       if (volumes.length > 0) {
         return toCandidates(volumes, { matchedIsbn: isbn })
@@ -211,17 +247,23 @@ export const createGoogleBooksSearch = (
 
     if (terms === undefined) return []
 
-    const titleQuery = `intitle:${quotedTerm(terms.title)}`
+    const titleQuery = `intitle:${terms.title}`
     const preciseQuery =
       terms.author !== undefined
-        ? `${titleQuery} inauthor:${quotedTerm(terms.author)}`
+        ? `${titleQuery} inauthor:${terms.author}`
         : titleQuery
-    const volumes = await searchVolumes(preciseQuery, context)
+    const volumes = await searchVolumes(
+      preciseQuery,
+      context,
+      GOOGLE_BOOKS_TITLE_OVERSAMPLE,
+    )
 
     if (volumes.length > 0 || terms.author === undefined) {
       return toCandidates(volumes)
     }
 
-    return toCandidates(await searchVolumes(titleQuery, context))
+    return toCandidates(
+      await searchVolumes(titleQuery, context, GOOGLE_BOOKS_TITLE_OVERSAMPLE),
+    )
   }
 }
