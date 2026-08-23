@@ -38,28 +38,44 @@ type GoogleBooksVolumeRecord = {
   readonly raw: unknown
 }
 
+const QUERY_BREAKING_CHARACTERS = /["\\]+/g
+const FIELD_OPERATOR_SEPARATOR = /:/g
+const TERM_EXCLUSION_PREFIX = /(^|\s)-+/g
+const REPEATED_WHITESPACE = /\s+/g
+
 /**
  * Terms reach Google's field operators unquoted on purpose: `intitle:"…"`
  * demands the phrase verbatim, which a title carrying a volume marker, a
  * scanner tag or a translated subtitle never satisfies, and no query
  * relaxation follows to recover with — the lookup would report nothing for a
- * book Google holds. Loose ranking here, precision in the scorer. Quotes and
- * backslashes are still dropped: they would unbalance the query.
+ * book Google holds. Loose ranking here, precision in the scorer.
+ *
+ * Unquoted, though, the term is parsed as query syntax rather than carried as
+ * a literal, so anything Google would read as an instruction goes: a colon
+ * would promote the rest of a scanner-derived title into another field
+ * (`Dune inauthor:Asimov` searching authors), a leading hyphen would exclude
+ * the word behind it (`BLAME! -Master Edition-` demanding books *without*
+ * "Master"), and both mutations can return results, which also robs the
+ * title-only fallback of its turn.
  */
 const searchTerm = (value: string): string =>
   value
-    .replace(/["\\]+/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(QUERY_BREAKING_CHARACTERS, " ")
+    .replace(FIELD_OPERATOR_SEPARATOR, " ")
+    .replace(TERM_EXCLUSION_PREFIX, " ")
+    .replace(REPEATED_WHITESPACE, " ")
     .trim()
+
+const isSearchable = (term: string): boolean => term.length > 0
 
 const titleSearchTerms = (
   input: FetchMetadataInput,
 ): { readonly title: string; readonly author?: string } | undefined => {
-  const title = input.title?.trim()
+  const title = searchTerm(input.title ?? "")
 
-  if (title === undefined || title.length === 0) return undefined
+  if (title.length === 0) return undefined
 
-  const author = input.authors?.find((value) => value.trim().length > 0)?.trim()
+  const author = input.authors?.map(searchTerm).find(isSearchable)
 
   return {
     title,
@@ -231,10 +247,10 @@ export const createGoogleBooksSearch = (
 
     if (terms === undefined) return []
 
-    const titleQuery = `intitle:${searchTerm(terms.title)}`
+    const titleQuery = `intitle:${terms.title}`
     const preciseQuery =
       terms.author !== undefined
-        ? `${titleQuery} inauthor:${searchTerm(terms.author)}`
+        ? `${titleQuery} inauthor:${terms.author}`
         : titleQuery
     const volumes = await searchVolumes(
       preciseQuery,
