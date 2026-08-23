@@ -304,7 +304,11 @@ const provider = createGoogleBooksProvider({
 | `baseUrl` | `https://www.googleapis.com/books/v1` | API root; override for a stub |
 | `fetch` | the global one | for tests, a custom agent, or a caching layer |
 
-**Lookup strategy**, from most exact to broadest: an authored `GoogleBooks` identifier (or official Google Books/API URL), an `ISBN` identifier, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and request at most 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
+**Lookup strategy**, from most exact to broadest: an authored `GoogleBooks` identifier (or official Google Books/API URL), an `ISBN` identifier, then title plus first author. When the author makes a title query too narrow, the provider tries title alone. Search requests ask only for books, preserve Google's relevance order, and never exceed 40 results — the API's maximum. A query with none of these terms returns no candidates without making a request.
+
+Title and author reach `intitle:`/`inauthor:` **unquoted**. A quoted phrase makes Google demand the catalog title contain it verbatim, which a title carrying a volume marker, a scanner tag or a translated subtitle never does — and with no query relaxation to retry with, the lookup would report nothing for a book Google holds. Unquoted, the catalog ranks loosely and the matcher decides, which is where precision belongs. Only the characters that would unbalance the query, quotes and backslashes, are stripped from the terms.
+
+For the same reason a title search asks Google for four times `limit`: those candidates arrive in Google's relevance order rather than the matcher's, so the edition the caller described can sit below the ones Google finds most popular. `fetchMetadata` scores the wider page and trims to `limit` afterwards. Exact identifier and ISBN lookups need no such room and ask for `limit`.
 
 To replace Oboku's `googleVolumeId`, pass it directly:
 
