@@ -129,6 +129,11 @@ export type {
   ResolvedTitle,
   ResolvedTitleType,
 } from "./types/resolvedMetadata.ts"
+export type { MetadataCatalogScheme } from "./utils/catalogIdentifiers.ts"
+export {
+  catalogIdentifierFromUrl,
+  catalogIdentifierValue,
+} from "./utils/catalogIdentifiers.ts"
 export {
   gtinIdentifierValue,
   isbnIdentifierValue,

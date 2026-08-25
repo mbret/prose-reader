@@ -42,6 +42,28 @@ const gtin = gtinIdentifierValue(metadata.identifiers) // "9780441013593" | unde
 
 Both accept `ISBN` **and** `GTIN` identifiers, because the two are one namespace in practice: an ISBN-13 *is* a GTIN-13 in the Bookland (`978`/`979`) range, and [ComicInfo](#comicinfo) has no ISBN field at all — a comic announces its ISBN through `GTIN`, which stays labelled `GTIN` because that is what the source said. Filtering on `scheme === "ISBN"` therefore silently misses every comic ISBN, and filtering on `GTIN` misses every EPUB one. `isIsbnBearingScheme(scheme)` is exported for code that needs the same scheme test on its own.
 
+### Catalog identifiers
+
+The same applies to a catalog that addresses its records by URL. A publication can state `GoogleBooks` outright, or carry `https://books.google.com/books?id=k028AAAACAAJ` as a `URL` — a comic has no choice but the second, since ComicInfo's only reference field is `Web`. `catalogIdentifierValue` answers for both:
+
+```typescript
+import { catalogIdentifierValue } from "@prose-reader/archive-reader"
+
+const volume = catalogIdentifierValue(metadata.identifiers, "GoogleBooks")
+// "k028AAAACAAJ" | undefined
+```
+
+It accepts `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI`, canonicalizing the authored value — a padded Gutenberg number, a bare Open Library id, a `doi:`-prefixed name. A reference URL is only read when the publication left the identifier untyped (`URL`, `Unknown`, or a `uri` custom scheme): an identifier another catalog already claims is left alone.
+
+`catalogIdentifierFromUrl` exposes the same crosswalk for a single URL, for code holding a link rather than a metadata list:
+
+```typescript
+catalogIdentifierFromUrl("https://www.gutenberg.org/ebooks/78139")
+// { value: "78139", scheme: "ProjectGutenberg" }
+```
+
+Both derive without rewriting anything: `identifiers` still reports the authored URL as a `URL` identifier, because whether that link *is* the publication's catalog identifier is the application's call, not archive-reader's.
+
 The authored `value` needs normalizing before use: it is preserved as the publication wrote it, so it arrives hyphenated (`978-0-441-01359-3`), prefixed (`urn:isbn:9780441013593`), or padded with free text. The helpers return the canonical form — 10 or 13 characters for an ISBN, digits only for a GTIN.
 
 `isbnIdentifierValue` also declines a value that is not a book number, whichever scheme announced it. A retail barcode scanned off a comic's cover (`4006381333931`) is a valid GTIN-13 but sits outside the Bookland range, so it is not reported as an ISBN even when the publication labels it `opf:scheme="ISBN"`. A barcode of another GTIN length is not reduced to its leading digits either: no ISBN is carved out of a longer number the publication printed. Only the derivation declines — the identifier itself stays in `identifiers` exactly as authored, so nothing is lost. Check digits are not verified: a mistyped one still identifies the intended book.

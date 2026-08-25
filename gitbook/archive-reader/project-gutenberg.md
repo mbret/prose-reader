@@ -60,4 +60,17 @@ Both resolve to the literal URL:
 
 Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and preserves the complete authored value. ComicInfo keeps it under `metadata.comicInfo.web` as well, and its `Web` field can contain multiple space-separated reference URLs.
 
+## Reading the ebook number
+
+Because the same identifier arrives either explicitly typed or as a reference URL, read it with `catalogIdentifierValue` rather than filtering on the scheme:
+
+```typescript
+import { catalogIdentifierValue } from "@prose-reader/archive-reader"
+
+const id = catalogIdentifierValue(metadata.identifiers, "ProjectGutenberg")
+// "78139" | undefined
+```
+
+That answers for both representations above. Filtering on `scheme === "ProjectGutenberg"` misses every publication — comics especially — that stated the reference as a URL.
+
 See [Publication identifiers](identifiers.md) for the shared scheme resolution rules, custom schemes, URLs, and the `Unknown` fallback.
