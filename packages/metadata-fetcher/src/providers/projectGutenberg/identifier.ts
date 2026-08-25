@@ -1,5 +1,5 @@
 import {
-  catalogIdentifierValue,
+  identifierValue,
   type KnownMetadataIdentifierScheme,
   type MetadataIdentifier,
 } from "@prose-reader/archive-reader"
@@ -23,7 +23,7 @@ export const projectGutenbergLookupFromInput = (
   input: FetchMetadataInput,
 ): ProjectGutenbergLookup | undefined => {
   for (const identifier of input.identifiers ?? []) {
-    const id = catalogIdentifierValue(
+    const id = identifierValue(
       [identifier],
       PROJECT_GUTENBERG_IDENTIFIER_SCHEME,
     )

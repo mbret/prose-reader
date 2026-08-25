@@ -3,6 +3,11 @@ import type {
   MetadataIdentifierScheme,
 } from "../types/resolvedMetadata.ts"
 import { booklandIsbn } from "./booklandIsbn.ts"
+import {
+  catalogRule,
+  isUntypedReferenceScheme,
+  type MetadataCatalogScheme,
+} from "./catalogIdentifiers.ts"
 import { normalizeGtin } from "./normalizeGtin.ts"
 
 /**
@@ -20,41 +25,97 @@ export const isIsbnBearingScheme = (
   scheme: MetadataIdentifierScheme,
 ): boolean => scheme === "ISBN" || scheme === "GTIN"
 
-const firstNormalizedValue = (
+/**
+ * Schemes a publication's value can be derived for. Narrower than
+ * {@link MetadataIdentifierScheme}: a scheme is here only when knowing it lets
+ * us both recognize the identifiers that carry it and canonicalize what they
+ * authored. `URL` and `Unknown` describe how a value was stated rather than
+ * what assigned it, so there is nothing to derive for them.
+ */
+export type DerivableIdentifierScheme =
+  | Extract<MetadataIdentifierScheme, "ISBN" | "GTIN">
+  | MetadataCatalogScheme
+
+type DerivationRule = {
+  /** Whether an identifier of this scheme can carry the derived value. */
+  readonly carries: (scheme: MetadataIdentifierScheme) => boolean
+  readonly normalizeValue: (value: string) => string | undefined
+  /** Reads the value out of an untyped reference URL, for catalogs that have one. */
+  readonly valueFromUrl?: (value: string) => string | undefined
+}
+
+const isbnBearingRule = (
+  normalizeValue: (value: string) => string | undefined,
+): DerivationRule => ({ carries: isIsbnBearingScheme, normalizeValue })
+
+const catalogDerivationRule = (
+  scheme: MetadataCatalogScheme,
+): DerivationRule => ({
+  carries: (candidate) =>
+    candidate.trim().toLowerCase() === scheme.toLowerCase(),
+  ...catalogRule(scheme),
+})
+
+const DERIVATION_RULES: Record<DerivableIdentifierScheme, DerivationRule> = {
+  ISBN: isbnBearingRule(booklandIsbn),
+  GTIN: isbnBearingRule(normalizeGtin),
+  GoogleBooks: catalogDerivationRule("GoogleBooks"),
+  OpenLibrary: catalogDerivationRule("OpenLibrary"),
+  ProjectGutenberg: catalogDerivationRule("ProjectGutenberg"),
+  DOI: catalogDerivationRule("DOI"),
+}
+
+/**
+ * The publication's value for one scheme, canonicalized — the first identifier
+ * that can carry it and whose value really is one. Use this rather than
+ * filtering `identifiers` yourself: which identifiers can answer for a scheme
+ * is rarely just the ones labelled with it.
+ *
+ * - `ISBN` and `GTIN` read each other, because they are one namespace: an
+ *   ISBN-13 is a GTIN-13 in the Bookland range, and a comic announces its
+ *   ISBN through ComicInfo's `GTIN` field. A value the scheme claims is an
+ *   ISBN but which is some other barcode — a retail EAN scanned off a cover —
+ *   is not reported as one.
+ * - A catalog scheme also reads an untyped reference URL it addresses, since a
+ *   comic can only state one as a `Web` link. An identifier another catalog
+ *   already claims is left alone.
+ *
+ * A derivation that declines to answer loses nothing: the identifier itself
+ * stays in `identifiers` exactly as authored.
+ */
+export const identifierValue = (
   identifiers: ReadonlyArray<MetadataIdentifier> | undefined,
-  normalize: (value: string) => string | undefined,
+  scheme: DerivableIdentifierScheme,
 ): string | undefined => {
+  const rule = DERIVATION_RULES[scheme]
+
   for (const identifier of identifiers ?? []) {
-    if (!isIsbnBearingScheme(identifier.scheme)) continue
+    if (rule.carries(identifier.scheme)) {
+      /**
+       * A publication that states the scheme may still write the value as the
+       * catalog's own resolver URL, so both spellings answer once the scheme
+       * says which catalog assigned it.
+       */
+      const value =
+        rule.normalizeValue(identifier.value) ??
+        rule.valueFromUrl?.(identifier.value)
 
-    const normalized = normalize(identifier.value)
+      if (value !== undefined) return value
 
-    if (normalized !== undefined) return normalized
+      continue
+    }
+
+    /**
+     * Untyped identifiers only answer through a URL: a bare opaque string is
+     * never reinterpreted as some catalog's id just because it could be one.
+     */
+    if (rule.valueFromUrl === undefined) continue
+    if (!isUntypedReferenceScheme(identifier.scheme)) continue
+
+    const value = rule.valueFromUrl(identifier.value)
+
+    if (value !== undefined) return value
   }
 
   return undefined
 }
-
-/**
- * The publication's ISBN, in canonical 10- or 13-character form — the first
- * identifier whose scheme can carry one and whose value really is one. Use
- * this rather than filtering on `scheme === "ISBN"`: ComicInfo announces ISBNs
- * through its broader `GTIN` field, so that filter silently misses them.
- *
- * A value the scheme claims is an ISBN but which is some other barcode (a
- * retail EAN scanned off a comic's cover) is not reported as one, whichever
- * scheme announced it — the identifier itself is still preserved verbatim in
- * `identifiers`, so nothing is lost by the derivation declining to answer.
- */
-export const isbnIdentifierValue = (
-  identifiers: ReadonlyArray<MetadataIdentifier> | undefined,
-): string | undefined => firstNormalizedValue(identifiers, booklandIsbn)
-
-/**
- * The publication's GTIN, digits only — the first identifier whose scheme can
- * carry one and whose value is a GS1-sized number. An ISBN-13 announced as an
- * `ISBN` is a valid GTIN-13 and is reported as one.
- */
-export const gtinIdentifierValue = (
-  identifiers: ReadonlyArray<MetadataIdentifier> | undefined,
-): string | undefined => firstNormalizedValue(identifiers, normalizeGtin)

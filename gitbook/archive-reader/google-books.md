@@ -64,12 +64,12 @@ Archive-reader normalizes an absolute HTTP(S) value generically as `URL` and pre
 
 ## Reading the volume id
 
-Because the same identifier arrives either explicitly typed or as a reference URL, read it with `catalogIdentifierValue` rather than filtering on the scheme:
+Because the same identifier arrives either explicitly typed or as a reference URL, read it with `identifierValue` rather than filtering on the scheme:
 
 ```typescript
-import { catalogIdentifierValue } from "@prose-reader/archive-reader"
+import { identifierValue } from "@prose-reader/archive-reader"
 
-const id = catalogIdentifierValue(metadata.identifiers, "GoogleBooks")
+const id = identifierValue(metadata.identifiers, "GoogleBooks")
 // "k028AAAACAAJ" | undefined
 ```
 

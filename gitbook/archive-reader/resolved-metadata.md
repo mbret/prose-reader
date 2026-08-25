@@ -67,7 +67,7 @@ type ResolvedMetadata = {
   numberOfPages?: number
   /** aggregate community score, 0–5 (schema.org `aggregateRating`) */
   aggregateRating?: { value: number; count?: number }
-  /** every stated identifier — `isbnIdentifierValue(metadata.identifiers)` reads a specific one out */
+  /** every stated identifier — `identifierValue(metadata.identifiers, "ISBN")` reads a specific one out */
   identifiers?: {
     value: string
     scheme: "ISBN" | "GTIN" | "DOI" | "GoogleBooks" |
@@ -123,7 +123,7 @@ Every non-empty OPF `dc:identifier` is preserved in document order. The identifi
 
 Normalized identifiers retain an explicitly authored EPUB 2 `opf:scheme`, or the value of an EPUB 3 `meta property="identifier-type"` that refines the identifier. Types expressed through `scheme="onix:codelist5"` are normalized to their named identifier system (`06` → `DOI`, `15` → `ISBN`, and the other standard codes used by the resolver). Known scheme spellings are canonicalized while custom strings remain valid. The direct EPUB 2 attribute wins when a hybrid file states both. Without an authored type, recognizable ISBN and GTIN values become `ISBN`/`GTIN`, a valid absolute HTTP(S) value becomes `URL`, and the lossless fallback is `Unknown`.
 
-The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. Reading one identifier out of the list is a derivation, not a field: `isbnIdentifierValue(metadata.identifiers)` and `gtinIdentifierValue(metadata.identifiers)` are exported for it — use them rather than re-deriving the rule, which has to accept both the `ISBN` and `GTIN` schemes and reject a non-book barcode. See [Publication identifiers](identifiers.md) for the complete resolution model, with [Google Books](google-books.md) and [Project Gutenberg](project-gutenberg.md) as concrete catalog examples.
+The shared `MetadataIdentifier`, `MetadataIdentifierScheme`, and `KnownMetadataIdentifierScheme` types are exported. `ResolvedMetadataIdentifier` adds only EPUB's optional `unique` marker. Reading one identifier out of the list is a derivation, not a field: `identifierValue(metadata.identifiers, scheme)` is exported for it — use it rather than re-deriving the rule, which has to accept both the `ISBN` and `GTIN` schemes for either, reject a non-book barcode, and read a catalog id out of the reference URL that carries it. See [Publication identifiers](identifiers.md) for the complete resolution model, with [Google Books](google-books.md) and [Project Gutenberg](project-gutenberg.md) as concrete catalog examples.
 
 ## Precedence
 
@@ -165,7 +165,7 @@ These mirror the compile-enforced tables shipped next to each resolver — the l
 | `Year`, `Month`, `Day` | `publication.edition.date` | independent optional components |
 | `Manga` | `readingDirection` | `YesAndRightToLeft` → `rtl`; also `comicInfo.manga` |
 | `PageCount` | `numberOfPages` | declared count; a page-like container without it is counted at the archive level |
-| `GTIN` | `identifiers` | scheme `GTIN`, the field being broader than an ISBN; `isbnIdentifierValue` still reads an ISBN-shaped value out of it |
+| `GTIN` | `identifiers` | scheme `GTIN`, the field being broader than an ISBN; `identifierValue(…, "ISBN")` still reads an ISBN-shaped value out of it |
 | `Series`, `Number`, `Count` | `belongsTo.series` | name / position / total; `Number` or `Count` without a `Series` still states this issue's place, so the entry is kept without a name |
 | `SeriesGroup` | `belongsTo.collection` | comma-split |
 | `AlternateSeries`, `AlternateNumber`, `AlternateCount` | `comicInfo.alternateSeries` | |

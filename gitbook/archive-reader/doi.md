@@ -53,12 +53,12 @@ Both resolve to the literal URL:
 
 ## Reading the name
 
-Because the same identifier arrives either explicitly typed or as a resolver URL, read it with `catalogIdentifierValue` rather than filtering on the scheme:
+Because the same identifier arrives either explicitly typed or as a resolver URL, read it with `identifierValue` rather than filtering on the scheme:
 
 ```typescript
-import { catalogIdentifierValue } from "@prose-reader/archive-reader"
+import { identifierValue } from "@prose-reader/archive-reader"
 
-const doi = catalogIdentifierValue(metadata.identifiers, "DOI")
+const doi = identifierValue(metadata.identifiers, "DOI")
 // "10.1000/182" | undefined
 ```
 

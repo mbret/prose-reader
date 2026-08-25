@@ -1,5 +1,5 @@
 import {
-  catalogIdentifierValue,
+  identifierValue,
   type KnownMetadataIdentifierScheme,
   type MetadataIdentifier,
 } from "@prose-reader/archive-reader"
@@ -23,10 +23,7 @@ export const googleBooksLookupFromInput = (
   input: FetchMetadataInput,
 ): GoogleBooksLookup | undefined => {
   for (const identifier of input.identifiers ?? []) {
-    const id = catalogIdentifierValue(
-      [identifier],
-      GOOGLE_BOOKS_IDENTIFIER_SCHEME,
-    )
+    const id = identifierValue([identifier], GOOGLE_BOOKS_IDENTIFIER_SCHEME)
 
     if (id !== undefined) {
       return {

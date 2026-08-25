@@ -65,12 +65,12 @@ Both resolve to the literal URL:
 
 ## Reading the key
 
-Because the same identifier arrives either explicitly typed or as a reference URL, read it with `catalogIdentifierValue` rather than filtering on the scheme:
+Because the same identifier arrives either explicitly typed or as a reference URL, read it with `identifierValue` rather than filtering on the scheme:
 
 ```typescript
-import { catalogIdentifierValue } from "@prose-reader/archive-reader"
+import { identifierValue } from "@prose-reader/archive-reader"
 
-const key = catalogIdentifierValue(metadata.identifiers, "OpenLibrary")
+const key = identifierValue(metadata.identifiers, "OpenLibrary")
 // "/works/OL45883W" | undefined
 ```
 

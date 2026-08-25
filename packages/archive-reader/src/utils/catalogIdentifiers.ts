@@ -27,6 +27,19 @@ const isUntypedReferenceScheme = (
   )
 }
 
+/**
+ * `new URL` accepts a malformed percent escape that `decodeURIComponent`
+ * rejects, and these helpers read authored metadata — a book carrying
+ * `https://doi.org/10.1000/%` must decline, not throw.
+ */
+const decodePercentEncoding = (value: string): string | undefined => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return undefined
+  }
+}
+
 const httpUrl = (value: string): URL | undefined => {
   try {
     const url = new URL(value.trim())
@@ -76,8 +89,9 @@ const googleBooksIdFromUrl = (value: string): string | undefined => {
 
   if (GOOGLE_BOOKS_API_HOSTS.has(url.hostname.toLowerCase())) {
     const id = GOOGLE_BOOKS_API_PATH.exec(url.pathname)?.[1]
+    const decoded = id === undefined ? undefined : decodePercentEncoding(id)
 
-    return id === undefined ? undefined : googleBooksId(decodeURIComponent(id))
+    return decoded === undefined ? undefined : googleBooksId(decoded)
   }
 
   return googleBooksId(url.searchParams.get("id") ?? "")
@@ -163,10 +177,12 @@ const doiName = (value: string): string | undefined => {
 
 const doiNameFromUrl = (value: string): string | undefined => {
   const url = urlOnHost(value, (hostname) => DOI_HOSTS.has(hostname))
+  const decoded =
+    url === undefined
+      ? undefined
+      : decodePercentEncoding(url.pathname.replace(/^\//, ""))
 
-  return url === undefined
-    ? undefined
-    : doiName(decodeURIComponent(url.pathname.replace(/^\//, "")))
+  return decoded === undefined ? undefined : doiName(decoded)
 }
 
 type Catalog = {
@@ -216,41 +232,21 @@ export const catalogIdentifierFromUrl = (
 }
 
 /**
- * The value a publication carries for one catalog: the first identifier that
- * either states the scheme outright, or is an untyped reference URL the
- * catalog addresses. The authored value is canonicalized, so an id arrives
- * padded or prefixed and still answers.
- *
- * Scheme spellings are compared loosely. Resolving metadata canonicalizes
- * them, but this also answers for input a caller assembled by hand.
+ * How one catalog recognizes its own identifiers, for the derivation table in
+ * `identifierValues.ts` to read.
  */
-export const catalogIdentifierValue = (
-  identifiers: ReadonlyArray<MetadataIdentifier> | undefined,
+export const catalogRule = (
   scheme: MetadataCatalogScheme,
-): string | undefined => {
+): Pick<Catalog, "normalizeValue" | "valueFromUrl"> => {
   const catalog = CATALOGS.find(function matchesScheme(candidate) {
     return candidate.scheme === scheme
   })
 
-  if (catalog === undefined) return undefined
-
-  const schemeKey = scheme.toLowerCase()
-
-  for (const identifier of identifiers ?? []) {
-    if (identifier.scheme.trim().toLowerCase() === schemeKey) {
-      const value = catalog.normalizeValue(identifier.value)
-
-      if (value !== undefined) return value
-
-      continue
-    }
-
-    if (!isUntypedReferenceScheme(identifier.scheme)) continue
-
-    const value = catalog.valueFromUrl(identifier.value)
-
-    if (value !== undefined) return value
+  if (catalog === undefined) {
+    throw new Error(`No catalog rule for scheme ${scheme}`)
   }
 
-  return undefined
+  return catalog
 }
+
+export { isUntypedReferenceScheme }
