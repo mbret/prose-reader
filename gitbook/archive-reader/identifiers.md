@@ -128,14 +128,18 @@ The scheme attribute is read under every prefix the document binds to the OPF na
   <dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>
 ```
 
-`opfNamespacePrefixes` reads those bindings off the package element, and `opfIdentifierSchemeAttribute` takes them as its second argument — defaulting to `opf` alone when omitted:
+Bindings are scoped to the element that declares them and inherited by its descendants, so they are accumulated while descending — a package may declare the prefix on `<package>`, on `<metadata>`, or on the identifier itself, and a descendant may rebind one its ancestor bound. `xmlNamespaceScope` layers one element's declarations over the scope it was reached under, and `opfNamespacePrefixes` answers which prefixes name the OPF namespace there:
 
 ```typescript
-const prefixes = opfNamespacePrefixes(packageAttributes) // ["opf", "pkg"]
-opfIdentifierSchemeAttribute(elementAttributes, prefixes) // "GoogleBooks"
+const packageScope = xmlNamespaceScope(packageAttributes)
+const scope = xmlNamespaceScope(elementAttributes, packageScope)
+
+opfIdentifierSchemeAttribute(elementAttributes, opfNamespacePrefixes(scope))
 ```
 
-`opf` is accepted whether or not the package declares it, since using it undeclared is invalid but common. A prefix bound to some other namespace is not read. The unprefixed `scheme` is a deliberate fallback for EPUB 2 documents rather than an equivalent name — an unprefixed attribute is in no namespace at all.
+`opfIdentifierSchemeAttribute` takes the prefixes as its second argument, defaulting to `opf` alone when omitted.
+
+`opf` is accepted whether or not a package declares it, since using it undeclared is invalid but common — but a document that explicitly binds `opf` to another namespace is honoured, and it is then not read. A prefix bound to some other namespace is never read. The unprefixed `scheme` is a deliberate fallback for EPUB 2 documents rather than an equivalent name — an unprefixed attribute is in no namespace at all.
 
 `OPF_IDENTIFIER_SCHEME_LOCAL_NAMES` is the ordered list of local names — `scheme`, then the `Scheme` capitalization some producers emit — for a consumer resolving namespaces itself, as anything holding a DOM can with `getAttributeNS(OPF_NAMESPACE, …)`. `OPF_IDENTIFIER_SCHEME_ATTRIBUTES` remains the literal `opf`-prefixed spellings, which do not cover an aliased prefix.
 

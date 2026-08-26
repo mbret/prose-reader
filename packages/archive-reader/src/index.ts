@@ -85,10 +85,12 @@ export {
   opfIdentifierTypeScheme,
 } from "./metadata/opf/identifierScheme.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
+export type { XmlNamespaceScope } from "./metadata/opf/opfNamespace.ts"
 export {
   OPF_NAMESPACE,
   opfNamespacedAttribute,
   opfNamespacePrefixes,
+  xmlNamespaceScope,
 } from "./metadata/opf/opfNamespace.ts"
 export type {
   OpfContributor,

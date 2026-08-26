@@ -767,3 +767,69 @@ describe("OPF namespace prefix aliases", () => {
     })
   })
 })
+
+describe("OPF namespace bindings declared below the package element", () => {
+  const withMetadata = (metadataAttrs: string, metadata: string) =>
+    `<?xml version="1.0"?>` +
+    `<package version="3.0" unique-identifier="bookid"` +
+    ` xmlns="http://www.idpf.org/2007/opf"` +
+    ` xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+    `<metadata ${metadataAttrs}>${metadata}</metadata><manifest/><spine/>` +
+    `</package>`
+
+  it("reads a prefix declared on the metadata element", () => {
+    const xml = withMetadata(
+      'xmlns:pkg="http://www.idpf.org/2007/opf"',
+      '<dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    ])
+  })
+
+  it("reads a prefix declared on the identifier itself", () => {
+    const xml = withMetadata(
+      "",
+      '<dc:identifier xmlns:pkg="http://www.idpf.org/2007/opf" pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    ])
+  })
+
+  it("reads a prefix declared on a creator itself", () => {
+    const xml = withMetadata(
+      "",
+      '<dc:creator xmlns:pkg="http://www.idpf.org/2007/opf" pkg:role="ill">Haruki Murakami</dc:creator>',
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      { name: "Haruki Murakami", source: "creator", roles: ["ill"] },
+    ])
+  })
+
+  it("honours a descendant rebinding the conventional prefix elsewhere", () => {
+    const xml = withMetadata(
+      'xmlns:opf="http://example.com/not-opf"',
+      '<dc:identifier opf:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([{ value: "zyTCAlFPjgYC" }])
+  })
+
+  it("honours a descendant rebinding an aliased prefix elsewhere", () => {
+    const xml =
+      `<?xml version="1.0"?>` +
+      `<package version="3.0" unique-identifier="bookid"` +
+      ` xmlns="http://www.idpf.org/2007/opf"` +
+      ` xmlns:dc="http://purl.org/dc/elements/1.1/"` +
+      ` xmlns:pkg="http://www.idpf.org/2007/opf">` +
+      `<metadata xmlns:pkg="http://example.com/not-opf">` +
+      '<dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>' +
+      `</metadata><manifest/><spine/></package>`
+
+    expect(parseOpf(xml).identifiers).toEqual([{ value: "zyTCAlFPjgYC" }])
+  })
+})

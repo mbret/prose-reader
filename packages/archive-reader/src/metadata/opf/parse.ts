@@ -2,7 +2,12 @@ import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
 import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
 import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
-import { opfNamespacedAttribute, opfNamespacePrefixes } from "./opfNamespace.ts"
+import {
+  opfNamespacedAttribute,
+  opfNamespacePrefixes,
+  type XmlNamespaceScope,
+  xmlNamespaceScope,
+} from "./opfNamespace.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {
@@ -125,7 +130,7 @@ const childrenNamedLocal = (
 const identifiersFromMetadata = (
   metadataEl: XmlElement,
   uniqueIdentifierId: string | undefined,
-  opfPrefixes: ReadonlyArray<string>,
+  metadataScope: XmlNamespaceScope,
 ): OpfIdentifier[] => {
   const identifiers: OpfIdentifier[] = []
 
@@ -135,7 +140,10 @@ const identifiersFromMetadata = (
     const value = child.val.trim()
     if (value.length === 0) return
 
-    const scheme = opfIdentifierSchemeAttribute(child.attr, opfPrefixes)
+    const scheme = opfIdentifierSchemeAttribute(
+      child.attr,
+      opfNamespacePrefixes(xmlNamespaceScope(child.attr, metadataScope)),
+    )
     const schemeTrimmed = scheme?.trim()
     const idTrimmed = child.attr.id?.trim()
     const id =
@@ -328,7 +336,7 @@ const refinesTargetsId = (refines: string, id: string): boolean =>
 const contributorsFromMetadata = (
   metadataEl: XmlElement,
   metas: ReadonlyArray<OpfMetaEntry>,
-  opfPrefixes: ReadonlyArray<string>,
+  metadataScope: XmlNamespaceScope,
 ): OpfContributor[] => {
   const contributors: OpfContributor[] = []
 
@@ -352,6 +360,9 @@ const contributorsFromMetadata = (
               : [],
           )
 
+    const opfPrefixes = opfNamespacePrefixes(
+      xmlNamespaceScope(child.attr, metadataScope),
+    )
     const attributeRole = trimmedOpfAttr(child, opfPrefixes, "role")
     const roles = [
       ...(attributeRole !== undefined ? [attributeRole] : []),
@@ -561,7 +572,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
   const manifestEl = childNamedLocal(doc, "manifest")
   const spineEl = childNamedLocal(doc, "spine")
   const metadataEl = childNamedLocal(doc, "metadata")
-  const opfPrefixes = opfNamespacePrefixes(doc.attr)
+  const packageScope = xmlNamespaceScope(doc.attr)
   const uniqueIdentifierIdRaw = doc.attr["unique-identifier"]?.trim()
   const uniqueIdentifierId =
     uniqueIdentifierIdRaw !== undefined && uniqueIdentifierIdRaw.length > 0
@@ -609,6 +620,8 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
   const identifiers: OpfIdentifier[] = []
 
   if (metadataEl !== undefined) {
+    const metadataScope = xmlNamespaceScope(metadataEl.attr, packageScope)
+
     titles = titlesFromMetadata(metadataEl)
     publisher = firstTextByLocalName(metadataEl, "publisher")
     description = firstTextByLocalName(metadataEl, "description")
@@ -621,9 +634,9 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     renditionFlowMeta = metaValByProperty(metadataEl, "rendition:flow")
     renditionSpreadMeta = metaValByProperty(metadataEl, "rendition:spread")
     metas = metasFromMetadata(metadataEl)
-    contributors = contributorsFromMetadata(metadataEl, metas, opfPrefixes)
+    contributors = contributorsFromMetadata(metadataEl, metas, metadataScope)
     identifiers.push(
-      ...identifiersFromMetadata(metadataEl, uniqueIdentifierId, opfPrefixes),
+      ...identifiersFromMetadata(metadataEl, uniqueIdentifierId, metadataScope),
     )
   }
 
