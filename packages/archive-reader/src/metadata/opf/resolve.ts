@@ -11,6 +11,7 @@ import { normalizeGtin } from "../../utils/normalizeGtin.ts"
 import { normalizeIdentifierScheme } from "../../utils/normalizeIdentifierScheme.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
+import { opfIdentifierTypeScheme } from "./identifierScheme.ts"
 import type {
   OpfContributor,
   OpfIdentifier,
@@ -91,35 +92,6 @@ const contributorsFromOpf = (
 const metaRefinesId = (meta: OpfMetaEntry, id: string): boolean =>
   meta.refines !== undefined && meta.refines.replace(/^#/, "") === id
 
-const ONIX_CODE_LIST_5_IDENTIFIER_TYPES: Readonly<Record<string, string>> = {
-  "02": "ISBN",
-  "03": "GTIN",
-  "04": "UPC",
-  "05": "ISMN",
-  "06": "DOI",
-  "13": "LCCN",
-  "14": "GTIN",
-  "15": "ISBN",
-  "22": "URN",
-  "23": "OCLC",
-  "24": "ISBN",
-  "25": "ISMN",
-  "26": "DOI",
-  "34": "GTIN",
-  "35": "ARK",
-}
-
-const normalizedIdentifierType = (
-  meta: OpfMetaEntry | undefined,
-): string | undefined => {
-  const value = meta?.value?.trim()
-
-  if (value === undefined || value.length === 0) return undefined
-  if (meta?.scheme?.trim().toLowerCase() !== "onix:codelist5") return value
-
-  return ONIX_CODE_LIST_5_IDENTIFIER_TYPES[value] ?? value
-}
-
 const refinedIdentifierType = (
   identifier: OpfIdentifier,
   metas: ReadonlyArray<OpfMetaEntry>,
@@ -128,7 +100,7 @@ const refinedIdentifierType = (
 
   if (id === undefined) return undefined
 
-  return normalizedIdentifierType(
+  return opfIdentifierTypeScheme(
     metas.find(
       (meta) =>
         meta.property === "identifier-type" &&
@@ -216,7 +188,7 @@ const collectionIdentifiers = (
 
     if (value === undefined) return []
 
-    const declaredType = normalizedIdentifierType(
+    const declaredType = opfIdentifierTypeScheme(
       metas.find(
         (candidate) =>
           meta.id !== undefined &&

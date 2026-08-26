@@ -1,6 +1,7 @@
 import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
 import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
+import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {
@@ -132,8 +133,7 @@ const identifiersFromMetadata = (
     const value = child.val.trim()
     if (value.length === 0) return
 
-    const scheme =
-      child.attr["opf:scheme"] ?? child.attr["opf:Scheme"] ?? child.attr.scheme
+    const scheme = opfIdentifierSchemeAttribute(child.attr)
     const schemeTrimmed = scheme?.trim()
     const idTrimmed = child.attr.id?.trim()
     const id =
