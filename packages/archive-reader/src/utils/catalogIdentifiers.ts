@@ -189,6 +189,8 @@ type Catalog = {
   readonly scheme: MetadataCatalogScheme
   readonly normalizeValue: (value: string) => string | undefined
   readonly valueFromUrl: (value: string) => string | undefined
+  /** Builds the catalog's own URL for an already-normalized value. */
+  readonly toUrl: (value: string) => string
 }
 
 const CATALOGS: ReadonlyArray<Catalog> = [
@@ -196,19 +198,50 @@ const CATALOGS: ReadonlyArray<Catalog> = [
     scheme: "GoogleBooks",
     normalizeValue: googleBooksId,
     valueFromUrl: googleBooksIdFromUrl,
+    toUrl: (value) =>
+      `https://books.google.com/books?id=${encodeURIComponent(value)}`,
   },
   {
     scheme: "ProjectGutenberg",
     normalizeValue: projectGutenbergId,
     valueFromUrl: projectGutenbergIdFromUrl,
+    toUrl: (value) => `https://www.gutenberg.org/ebooks/${value}`,
   },
   {
     scheme: "OpenLibrary",
     normalizeValue: openLibraryKey,
     valueFromUrl: openLibraryKeyFromUrl,
+    toUrl: (value) => `https://openlibrary.org${value}`,
   },
-  { scheme: "DOI", normalizeValue: doiName, valueFromUrl: doiNameFromUrl },
+  {
+    scheme: "DOI",
+    normalizeValue: doiName,
+    valueFromUrl: doiNameFromUrl,
+    toUrl: (value) => `https://doi.org/${value}`,
+  },
 ]
+
+/**
+ * Every scheme whose catalog addresses a record by URL, so a publication can
+ * state the identifier either explicitly or as a reference link.
+ */
+export const METADATA_CATALOG_SCHEMES: ReadonlyArray<MetadataCatalogScheme> =
+  CATALOGS.map(function toScheme(catalog) {
+    return catalog.scheme
+  })
+
+const catalogFor = (scheme: MetadataIdentifierScheme): Catalog | undefined => {
+  const schemeKey = scheme.trim().toLowerCase()
+
+  return CATALOGS.find(function matchesScheme(catalog) {
+    return catalog.scheme.toLowerCase() === schemeKey
+  })
+}
+
+/** Whether a scheme's catalog addresses its records by URL. */
+export const isMetadataCatalogScheme = (
+  scheme: MetadataIdentifierScheme,
+): boolean => catalogFor(scheme) !== undefined
 
 /**
  * The catalog identifier a reference URL stands for, or `undefined` when no
@@ -229,6 +262,30 @@ export const catalogIdentifierFromUrl = (
   }
 
   return undefined
+}
+
+/**
+ * The catalog's own URL for an identifier — the inverse of
+ * {@link catalogIdentifierFromUrl}, for writing a reference into a container
+ * whose only identifier slot is a list of links.
+ *
+ * `undefined` when the scheme has no catalog, or when the value is not one
+ * that catalog can address. The pair is checked rather than assumed: a URL is
+ * only returned once reading it back yields the value it was built from, so
+ * the two directions cannot drift apart unnoticed.
+ */
+export const catalogUrlFromIdentifier = ({
+  scheme,
+  value,
+}: MetadataIdentifier): string | undefined => {
+  const catalog = catalogFor(scheme)
+  const normalized = catalog?.normalizeValue(value)
+
+  if (catalog === undefined || normalized === undefined) return undefined
+
+  const url = catalog.toUrl(normalized)
+
+  return catalog.valueFromUrl(url) === normalized ? url : undefined
 }
 
 /**

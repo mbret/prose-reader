@@ -61,7 +61,18 @@ catalogIdentifierFromUrl("https://www.gutenberg.org/ebooks/78139")
 // { value: "78139", scheme: "ProjectGutenberg" }
 ```
 
-Both derive without rewriting anything: `identifiers` still reports the authored URL as a `URL` identifier, because whether that link *is* the publication's catalog identifier is the application's call, not archive-reader's.
+`catalogUrlFromIdentifier` is its inverse, for writing a reference into a container whose only identifier slot is a list of links:
+
+```typescript
+catalogUrlFromIdentifier({ value: "OL7353617M", scheme: "OpenLibrary" })
+// "https://openlibrary.org/books/OL7353617M"
+```
+
+It canonicalizes the value on the way out and returns a URL only once reading it back yields what it was built from, so a value the catalog cannot address — a non-numeric Gutenberg id — declines rather than producing a link nothing recovers. The two directions are defined together and tested against each other, so they cannot drift apart.
+
+`METADATA_CATALOG_SCHEMES` lists the schemes that have a link form, and `isMetadataCatalogScheme` tests one, for code deciding whether a container can carry a given scheme at all.
+
+None of this rewrites anything: `identifiers` still reports the authored URL as a `URL` identifier, because whether that link *is* the publication's catalog identifier is the application's call, not archive-reader's.
 
 The authored `value` needs normalizing before use: it is preserved as the publication wrote it, so it arrives hyphenated (`978-0-441-01359-3`), prefixed (`urn:isbn:9780441013593`), or padded with free text. It returns the canonical form — 10 or 13 characters for an ISBN, digits only for a GTIN.
 

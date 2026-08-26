@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { catalogIdentifierFromUrl } from "./catalogIdentifiers.ts"
+import {
+  catalogIdentifierFromUrl,
+  catalogUrlFromIdentifier,
+  isMetadataCatalogScheme,
+  METADATA_CATALOG_SCHEMES,
+} from "./catalogIdentifiers.ts"
 
 describe("catalogIdentifierFromUrl", () => {
   it("reads a Google Books volume from its site and API URLs", () => {
@@ -77,5 +82,106 @@ describe("catalogIdentifierFromUrl", () => {
     expect(
       catalogIdentifierFromUrl("ftp://books.google.com/books?id=k028AAAACAAJ"),
     ).toBeUndefined()
+  })
+})
+
+describe("catalogUrlFromIdentifier", () => {
+  it.each([
+    [
+      "GoogleBooks",
+      "k028AAAACAAJ",
+      "https://books.google.com/books?id=k028AAAACAAJ",
+    ],
+    ["ProjectGutenberg", "2701", "https://www.gutenberg.org/ebooks/2701"],
+    [
+      "OpenLibrary",
+      "/works/OL45883W",
+      "https://openlibrary.org/works/OL45883W",
+    ],
+    ["DOI", "10.1000/182", "https://doi.org/10.1000/182"],
+  ])("builds the %s reference URL", (scheme, value, expected) => {
+    expect(catalogUrlFromIdentifier({ scheme, value })).toBe(expected)
+  })
+
+  it("canonicalizes the value on the way out", () => {
+    expect(
+      catalogUrlFromIdentifier({
+        scheme: "ProjectGutenberg",
+        value: " 0002701 ",
+      }),
+    ).toBe("https://www.gutenberg.org/ebooks/2701")
+    expect(
+      catalogUrlFromIdentifier({ scheme: "OpenLibrary", value: "OL7353617M" }),
+    ).toBe("https://openlibrary.org/books/OL7353617M")
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "doi:10.1000/182" }),
+    ).toBe("https://doi.org/10.1000/182")
+  })
+
+  it("matches the scheme case-insensitively", () => {
+    expect(
+      catalogUrlFromIdentifier({
+        scheme: "googlebooks",
+        value: "k028AAAACAAJ",
+      }),
+    ).toBe("https://books.google.com/books?id=k028AAAACAAJ")
+  })
+
+  it("declines a value its catalog cannot address", () => {
+    expect(
+      catalogUrlFromIdentifier({
+        scheme: "ProjectGutenberg",
+        value: "not-a-number",
+      }),
+    ).toBeUndefined()
+    expect(
+      catalogUrlFromIdentifier({ scheme: "OpenLibrary", value: "not-a-key" }),
+    ).toBeUndefined()
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "just text" }),
+    ).toBeUndefined()
+    expect(
+      catalogUrlFromIdentifier({ scheme: "GoogleBooks", value: "has spaces" }),
+    ).toBeUndefined()
+  })
+
+  it("declines a scheme with no catalog behind it", () => {
+    expect(
+      catalogUrlFromIdentifier({ scheme: "ISBN", value: "9780441013593" }),
+    ).toBeUndefined()
+    expect(
+      catalogUrlFromIdentifier({ scheme: "AcmeCatalog", value: "acme-42" }),
+    ).toBeUndefined()
+  })
+})
+
+describe("the two directions agree", () => {
+  it.each([
+    ["GoogleBooks", "k028AAAACAAJ"],
+    ["ProjectGutenberg", "2701"],
+    ["OpenLibrary", "/works/OL45883W"],
+    ["OpenLibrary", "/books/OL7353617M"],
+    ["DOI", "10.1000/182"],
+  ])("round-trips a %s identifier through its URL", (scheme, value) => {
+    const url = catalogUrlFromIdentifier({ scheme, value })
+
+    expect(url).toBeDefined()
+    expect(url && catalogIdentifierFromUrl(url)).toEqual({ scheme, value })
+  })
+
+  it("covers every catalog scheme in both directions", () => {
+    expect([...METADATA_CATALOG_SCHEMES]).toEqual([
+      "GoogleBooks",
+      "ProjectGutenberg",
+      "OpenLibrary",
+      "DOI",
+    ])
+
+    for (const scheme of METADATA_CATALOG_SCHEMES) {
+      expect(isMetadataCatalogScheme(scheme)).toBe(true)
+    }
+
+    expect(isMetadataCatalogScheme("ISBN")).toBe(false)
+    expect(isMetadataCatalogScheme("AcmeCatalog")).toBe(false)
   })
 })
