@@ -9,6 +9,7 @@ import {
   type MetadataCatalogScheme,
 } from "./catalogIdentifiers.ts"
 import { normalizeGtin } from "./normalizeGtin.ts"
+import { normalizeIdentifierScheme } from "./normalizeIdentifierScheme.ts"
 
 /**
  * Whether a scheme can carry an ISBN or a GTIN. The two are one namespace in
@@ -18,12 +19,16 @@ import { normalizeGtin } from "./normalizeGtin.ts"
  * therefore misses every comic ISBN, and filtering on `GTIN` alone misses
  * every EPUB one.
  *
- * Schemes are canonicalized while metadata is resolved, so only the canonical
- * spellings are compared.
+ * Resolving metadata canonicalizes spellings, but this also answers for a
+ * scheme a caller assembled by hand.
  */
 export const isIsbnBearingScheme = (
   scheme: MetadataIdentifierScheme,
-): boolean => scheme === "ISBN" || scheme === "GTIN"
+): boolean => {
+  const normalized = normalizeIdentifierScheme(scheme)
+
+  return normalized === "ISBN" || normalized === "GTIN"
+}
 
 /**
  * Schemes a publication's value can be derived for. Narrower than
@@ -51,8 +56,7 @@ const isbnBearingRule = (
 const catalogDerivationRule = (
   scheme: MetadataCatalogScheme,
 ): DerivationRule => ({
-  carries: (candidate) =>
-    candidate.trim().toLowerCase() === scheme.toLowerCase(),
+  carries: (candidate) => normalizeIdentifierScheme(candidate) === scheme,
   ...catalogRule(scheme),
 })
 

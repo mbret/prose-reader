@@ -8,6 +8,7 @@ import type {
 } from "../../types/resolvedMetadata.ts"
 import { booklandIsbn } from "../../utils/booklandIsbn.ts"
 import { normalizeGtin } from "../../utils/normalizeGtin.ts"
+import { normalizeIdentifierScheme } from "../../utils/normalizeIdentifierScheme.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
 import type {
@@ -40,29 +41,6 @@ const inferredIdentifierScheme = (value: string): string => {
   if (normalizeGtin(trimmed) !== undefined) return "GTIN"
 
   return "Unknown"
-}
-
-const normalizedIdentifierScheme = (scheme: string): string => {
-  switch (scheme.trim().toLowerCase()) {
-    case "isbn":
-      return "ISBN"
-    case "gtin":
-      return "GTIN"
-    case "doi":
-      return "DOI"
-    case "googlebooks":
-      return "GoogleBooks"
-    case "openlibrary":
-      return "OpenLibrary"
-    case "projectgutenberg":
-      return "ProjectGutenberg"
-    case "url":
-      return "URL"
-    case "unknown":
-      return "Unknown"
-    default:
-      return scheme.trim()
-  }
 }
 
 /**
@@ -250,7 +228,7 @@ const collectionIdentifiers = (
     return [
       {
         value,
-        scheme: normalizedIdentifierScheme(
+        scheme: normalizeIdentifierScheme(
           declaredType ?? inferredIdentifierScheme(value),
         ),
       },
@@ -422,7 +400,7 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
         ? parsedIdentifiers.map((identifier) =>
             omitUndefined({
               value: identifier.value,
-              scheme: normalizedIdentifierScheme(
+              scheme: normalizeIdentifierScheme(
                 identifier.scheme ??
                   refinedIdentifierType(identifier, metas) ??
                   inferredIdentifierScheme(identifier.value),

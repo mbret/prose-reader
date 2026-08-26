@@ -39,7 +39,7 @@ const gtin = identifierValue(metadata.identifiers, "GTIN") // "9780441013593" | 
 
 One function answers for every scheme it can derive — `ISBN`, `GTIN`, `GoogleBooks`, `OpenLibrary`, `ProjectGutenberg` and `DOI` — so the options are visible at the call site rather than being separate exports to discover.
 
-Asking for either reads `ISBN` **and** `GTIN` identifiers, because the two are one namespace in practice: an ISBN-13 *is* a GTIN-13 in the Bookland (`978`/`979`) range, and [ComicInfo](#comicinfo) has no ISBN field at all — a comic announces its ISBN through `GTIN`, which stays labelled `GTIN` because that is what the source said. Filtering on `scheme === "ISBN"` therefore silently misses every comic ISBN, and filtering on `GTIN` misses every EPUB one. `isIsbnBearingScheme(scheme)` is exported for code that needs the same scheme test on its own.
+Asking for either reads `ISBN` **and** `GTIN` identifiers, because the two are one namespace in practice: an ISBN-13 *is* a GTIN-13 in the Bookland (`978`/`979`) range, and [ComicInfo](#comicinfo) has no ISBN field at all — a comic announces its ISBN through `GTIN`, which stays labelled `GTIN` because that is what the source said. Filtering on `scheme === "ISBN"` therefore silently misses every comic ISBN, and filtering on `GTIN` misses every EPUB one. `isIsbnBearingScheme(scheme)` is exported for code that needs the same scheme test on its own, and `normalizeIdentifierScheme(scheme)` for code comparing a scheme it was handed: publications author these by hand, so `opf:scheme="isbn"` and an `identifier-type` of `ISBN` name the one namespace. A scheme outside the vocabulary keeps the spelling the publication chose.
 
 ### Catalog identifiers
 

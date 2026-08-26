@@ -73,6 +73,8 @@ describe("identifierValue for ISBN and GTIN", () => {
   it("treats ISBN and GTIN as the one ISBN-bearing namespace", () => {
     expect(isIsbnBearingScheme("ISBN")).toBe(true)
     expect(isIsbnBearingScheme("GTIN")).toBe(true)
+    expect(isIsbnBearingScheme("isbn")).toBe(true)
+    expect(isIsbnBearingScheme(" gtin ")).toBe(true)
     expect(isIsbnBearingScheme("DOI")).toBe(false)
     expect(isIsbnBearingScheme("Unknown")).toBe(false)
     expect(isIsbnBearingScheme("ObokuCatalog")).toBe(false)
