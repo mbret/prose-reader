@@ -80,10 +80,18 @@ export { getSpineItemFilesFromArchive } from "./metadata/opf/getSpineItemFilesFr
 export type { OpfIdentifierTypeMeta } from "./metadata/opf/identifierScheme.ts"
 export {
   OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
+  OPF_IDENTIFIER_SCHEME_LOCAL_NAMES,
   opfIdentifierSchemeAttribute,
   opfIdentifierTypeScheme,
 } from "./metadata/opf/identifierScheme.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
+export type { XmlNamespaceScope } from "./metadata/opf/opfNamespace.ts"
+export {
+  OPF_NAMESPACE,
+  opfNamespacedAttribute,
+  opfNamespacePrefixes,
+  xmlNamespaceScope,
+} from "./metadata/opf/opfNamespace.ts"
 export type {
   OpfContributor,
   OpfGuideReference,
