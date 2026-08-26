@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
-import { waitForSpineItemReady } from "../../../utils"
+import {
+  expectSpineItemsInViewport,
+  waitForSpineItemReady,
+} from "../../../utils"
 
 test("should navigate to second page and back to first page", async ({
   page,
@@ -21,7 +24,15 @@ test("should navigate to second page and back to first page", async ({
     ;((window as any).reader as Reader).navigation.goToNextSpineItem()
   })
 
-  await page.waitForTimeout(100)
+  /**
+   * A PDF page is only painted once pdf.js resolves its render task, which the
+   * spine item reports through `data-is-ready`. Until then the item still shows
+   * the "loading <id>" placeholder, and a screenshot taken against it is stable
+   * enough for Playwright to stop retrying and fail. Gate on the item being
+   * ready *and* scrolled into view rather than on a fixed delay.
+   */
+  await waitForSpineItemReady(page, [1])
+  await expectSpineItemsInViewport({ page, indexes: [1] })
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 
@@ -30,7 +41,8 @@ test("should navigate to second page and back to first page", async ({
     ;((window as any).reader as Reader).navigation.goToTopSpineItem()
   })
 
-  await page.waitForTimeout(100)
+  await waitForSpineItemReady(page, [0])
+  await expectSpineItemsInViewport({ page, indexes: [0] })
 
   await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.01 })
 })
