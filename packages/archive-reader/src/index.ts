@@ -130,7 +130,12 @@ export type {
   ResolvedTitleType,
 } from "./types/resolvedMetadata.ts"
 export type { MetadataCatalogScheme } from "./utils/catalogIdentifiers.ts"
-export { catalogIdentifierFromUrl } from "./utils/catalogIdentifiers.ts"
+export {
+  catalogIdentifierFromUrl,
+  catalogUrlFromIdentifier,
+  isMetadataCatalogScheme,
+  METADATA_CATALOG_SCHEMES,
+} from "./utils/catalogIdentifiers.ts"
 export type { DerivableIdentifierScheme } from "./utils/identifierValues.ts"
 export {
   identifierValue,
