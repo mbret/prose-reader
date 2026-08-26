@@ -100,6 +100,29 @@ This resolves to:
 
 The identifier referenced by the OPF package's `unique-identifier` attribute also receives `unique: true` in resolved archive metadata.
 
+### Reading a scheme out of an OPF yourself
+
+Resolved metadata already answers *what scheme is this identifier on*, so most consumers need nothing else. A consumer holding the package document itself — one editing it in place, and needing to agree with archive-reader about which element is which — can read the two vocabularies directly instead of restating them:
+
+```typescript
+import {
+  OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
+  opfIdentifierSchemeAttribute,
+  opfIdentifierTypeScheme,
+} from "@prose-reader/archive-reader"
+
+// the scheme attribute an element carries, whichever spelling it used
+opfIdentifierSchemeAttribute({ "opf:Scheme": "ISBN" }) // "ISBN"
+
+// the scheme an `identifier-type` refinement names
+opfIdentifierTypeScheme({ value: "15", scheme: "onix:codelist5" }) // "ISBN"
+opfIdentifierTypeScheme({ value: "ExampleCatalog" }) // "ExampleCatalog"
+```
+
+`OPF_IDENTIFIER_SCHEME_ATTRIBUTES` is the ordered list of spellings — `opf:scheme`, `opf:Scheme`, `scheme` — and the first one an element states wins, so a document using only the legacy form keeps it. `opfIdentifierTypeScheme` translates a code stated against `onix:codelist5` and passes anything else through verbatim, including a code that list does not define.
+
+These are what the parser and resolver use, so a consumer reading through them cannot drift from what `identifiers` reports.
+
 For EPUBs that include Apple or Kobo display-option files, the OPF package document remains the identifier source. Those sidecars describe presentation and do not define bibliographic identifier fields.
 
 ## ComicInfo
