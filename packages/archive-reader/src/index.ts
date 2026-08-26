@@ -143,6 +143,7 @@ export {
 } from "./utils/identifierValues.ts"
 export { mainTitle } from "./utils/mainTitle.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"
+export { normalizeIdentifierScheme } from "./utils/normalizeIdentifierScheme.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
 export { parseW3cDtfDate } from "./utils/parseW3cDtfDate.ts"
 export { tokenizeXmlSpaceSeparatedList } from "./utils/tokenizeXmlSpaceSeparatedList.ts"
