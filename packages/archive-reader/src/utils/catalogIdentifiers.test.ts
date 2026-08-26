@@ -127,6 +127,24 @@ describe("catalogUrlFromIdentifier", () => {
     ).toBe("https://books.google.com/books?id=k028AAAACAAJ")
   })
 
+  it("encodes a DOI suffix that reserves URL characters", () => {
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "10.1000/foo?bar" }),
+    ).toBe("https://doi.org/10.1000/foo%3Fbar")
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "10.1000/foo%bar" }),
+    ).toBe("https://doi.org/10.1000/foo%25bar")
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "10.1000/a#b" }),
+    ).toBe("https://doi.org/10.1000/a%23b")
+  })
+
+  it("leaves the prefix separator literal, doi.org addressing by path", () => {
+    expect(
+      catalogUrlFromIdentifier({ scheme: "DOI", value: "10.1000/182" }),
+    ).toBe("https://doi.org/10.1000/182")
+  })
+
   it("declines a value its catalog cannot address", () => {
     expect(
       catalogUrlFromIdentifier({
@@ -162,6 +180,8 @@ describe("the two directions agree", () => {
     ["OpenLibrary", "/works/OL45883W"],
     ["OpenLibrary", "/books/OL7353617M"],
     ["DOI", "10.1000/182"],
+    ["DOI", "10.1000/foo?bar"],
+    ["DOI", "10.1038/nphys1170"],
   ])("round-trips a %s identifier through its URL", (scheme, value) => {
     const url = catalogUrlFromIdentifier({ scheme, value })
 

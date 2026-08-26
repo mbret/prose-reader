@@ -175,6 +175,15 @@ const doiName = (value: string): string | undefined => {
   return DOI_NAME.test(trimmed) ? trimmed : undefined
 }
 
+/**
+ * DOI suffixes are opaque and may contain characters a URL reserves — a `?`
+ * would otherwise start a query string and drop the rest of the name. Each
+ * path segment is encoded while the separators stay literal, since doi.org
+ * addresses a name by path rather than as one encoded blob.
+ */
+const doiUrlPath = (name: string): string =>
+  name.split("/").map(encodeURIComponent).join("/")
+
 const doiNameFromUrl = (value: string): string | undefined => {
   const url = urlOnHost(value, (hostname) => DOI_HOSTS.has(hostname))
   const decoded =
@@ -217,7 +226,7 @@ const CATALOGS: ReadonlyArray<Catalog> = [
     scheme: "DOI",
     normalizeValue: doiName,
     valueFromUrl: doiNameFromUrl,
-    toUrl: (value) => `https://doi.org/${value}`,
+    toUrl: (value) => `https://doi.org/${doiUrlPath(value)}`,
   },
 ]
 
