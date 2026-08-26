@@ -119,7 +119,27 @@ opfIdentifierTypeScheme({ value: "15", scheme: "onix:codelist5" }) // "ISBN"
 opfIdentifierTypeScheme({ value: "ExampleCatalog" }) // "ExampleCatalog"
 ```
 
-`OPF_IDENTIFIER_SCHEME_ATTRIBUTES` is the ordered list of spellings — `opf:scheme`, `opf:Scheme`, `scheme` — and the first one an element states wins, so a document using only the legacy form keeps it. `opfIdentifierTypeScheme` translates a code stated against `onix:codelist5` and passes anything else through verbatim, including a code that list does not define.
+`opfIdentifierTypeScheme` translates a code stated against `onix:codelist5` and passes anything else through verbatim, including a code that list does not define.
+
+The scheme attribute is read under every prefix the document binds to the OPF namespace, because the prefix is arbitrary — `opf` by convention, but a package is free to bind the namespace to another one and it names the same attribute:
+
+```xml
+<package xmlns:pkg="http://www.idpf.org/2007/opf" ...>
+  <dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>
+```
+
+`opfNamespacePrefixes` reads those bindings off the package element, and `opfIdentifierSchemeAttribute` takes them as its second argument — defaulting to `opf` alone when omitted:
+
+```typescript
+const prefixes = opfNamespacePrefixes(packageAttributes) // ["opf", "pkg"]
+opfIdentifierSchemeAttribute(elementAttributes, prefixes) // "GoogleBooks"
+```
+
+`opf` is accepted whether or not the package declares it, since using it undeclared is invalid but common. A prefix bound to some other namespace is not read. The unprefixed `scheme` is a deliberate fallback for EPUB 2 documents rather than an equivalent name — an unprefixed attribute is in no namespace at all.
+
+`OPF_IDENTIFIER_SCHEME_LOCAL_NAMES` is the ordered list of local names — `scheme`, then the `Scheme` capitalization some producers emit — for a consumer resolving namespaces itself, as anything holding a DOM can with `getAttributeNS(OPF_NAMESPACE, …)`. `OPF_IDENTIFIER_SCHEME_ATTRIBUTES` remains the literal `opf`-prefixed spellings, which do not cover an aliased prefix.
+
+`opf:role` and `opf:file-as` are read the same way.
 
 These are what the parser and resolver use, so a consumer reading through them cannot drift from what `identifiers` reports.
 

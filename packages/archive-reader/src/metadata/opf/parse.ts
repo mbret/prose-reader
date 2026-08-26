@@ -2,6 +2,7 @@ import type { XmlElement, XmlNodeBase } from "xmldoc"
 import { XmlDocument } from "xmldoc"
 import { tokenizeXmlSpaceSeparatedList } from "../../utils/tokenizeXmlSpaceSeparatedList.ts"
 import { opfIdentifierSchemeAttribute } from "./identifierScheme.ts"
+import { opfNamespacedAttribute, opfNamespacePrefixes } from "./opfNamespace.ts"
 import { layoutHintsFromItemrefProperties } from "./spineItemrefProperties.ts"
 
 export type OpfSpineManifestItem = {
@@ -124,6 +125,7 @@ const childrenNamedLocal = (
 const identifiersFromMetadata = (
   metadataEl: XmlElement,
   uniqueIdentifierId: string | undefined,
+  opfPrefixes: ReadonlyArray<string>,
 ): OpfIdentifier[] => {
   const identifiers: OpfIdentifier[] = []
 
@@ -133,7 +135,7 @@ const identifiersFromMetadata = (
     const value = child.val.trim()
     if (value.length === 0) return
 
-    const scheme = opfIdentifierSchemeAttribute(child.attr)
+    const scheme = opfIdentifierSchemeAttribute(child.attr, opfPrefixes)
     const schemeTrimmed = scheme?.trim()
     const idTrimmed = child.attr.id?.trim()
     const id =
@@ -273,6 +275,19 @@ const trimmedAttr = (el: XmlElement, name: string): string | undefined => {
   return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
 }
 
+/** {@link trimmedAttr} for an attribute in the OPF namespace. */
+const trimmedOpfAttr = (
+  el: XmlElement,
+  opfPrefixes: ReadonlyArray<string>,
+  localName: string,
+): string | undefined => {
+  const trimmed = opfNamespacedAttribute(el.attr, opfPrefixes, [
+    localName,
+  ])?.trim()
+
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined
+}
+
 const metasFromMetadata = (metadataEl: XmlElement): OpfMetaEntry[] => {
   const metas: OpfMetaEntry[] = []
 
@@ -313,6 +328,7 @@ const refinesTargetsId = (refines: string, id: string): boolean =>
 const contributorsFromMetadata = (
   metadataEl: XmlElement,
   metas: ReadonlyArray<OpfMetaEntry>,
+  opfPrefixes: ReadonlyArray<string>,
 ): OpfContributor[] => {
   const contributors: OpfContributor[] = []
 
@@ -336,17 +352,14 @@ const contributorsFromMetadata = (
               : [],
           )
 
-    const attributeRole =
-      trimmedAttr(child, "opf:role") ?? trimmedAttr(child, "role")
+    const attributeRole = trimmedOpfAttr(child, opfPrefixes, "role")
     const roles = [
       ...(attributeRole !== undefined ? [attributeRole] : []),
       ...refinesFor("role"),
     ]
 
     const fileAs =
-      trimmedAttr(child, "opf:file-as") ??
-      trimmedAttr(child, "file-as") ??
-      refinesFor("file-as")[0]
+      trimmedOpfAttr(child, opfPrefixes, "file-as") ?? refinesFor("file-as")[0]
 
     contributors.push({
       name,
@@ -548,6 +561,7 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
   const manifestEl = childNamedLocal(doc, "manifest")
   const spineEl = childNamedLocal(doc, "spine")
   const metadataEl = childNamedLocal(doc, "metadata")
+  const opfPrefixes = opfNamespacePrefixes(doc.attr)
   const uniqueIdentifierIdRaw = doc.attr["unique-identifier"]?.trim()
   const uniqueIdentifierId =
     uniqueIdentifierIdRaw !== undefined && uniqueIdentifierIdRaw.length > 0
@@ -607,8 +621,10 @@ export const parseOpf = (opfXml: string): OpfMetadata => {
     renditionFlowMeta = metaValByProperty(metadataEl, "rendition:flow")
     renditionSpreadMeta = metaValByProperty(metadataEl, "rendition:spread")
     metas = metasFromMetadata(metadataEl)
-    contributors = contributorsFromMetadata(metadataEl, metas)
-    identifiers.push(...identifiersFromMetadata(metadataEl, uniqueIdentifierId))
+    contributors = contributorsFromMetadata(metadataEl, metas, opfPrefixes)
+    identifiers.push(
+      ...identifiersFromMetadata(metadataEl, uniqueIdentifierId, opfPrefixes),
+    )
   }
 
   const coverHref = coverHrefFromManifestAndMetadata({

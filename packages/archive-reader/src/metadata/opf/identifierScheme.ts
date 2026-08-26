@@ -1,3 +1,5 @@
+import { opfNamespacedAttribute } from "./opfNamespace.ts"
+
 /**
  * How an OPF states a `dc:identifier`'s scheme. Both halves are facts about
  * what a package document can say, so the parser and the resolver read them
@@ -5,10 +7,22 @@
  */
 
 /**
- * Attribute names an identifier's scheme can be stated on, in the order a read
- * prefers them: EPUB 3's namespaced form, the capitalization some producers
- * emit, and the bare EPUB 2 form. The first one present wins, so a document
- * that uses only the legacy spelling keeps it.
+ * Local names an identifier's scheme can be stated under, in the order a read
+ * prefers them. `Scheme` is not a second name the spec defines — it is the
+ * capitalization some producers emit, read because the value it carries is
+ * unambiguous.
+ */
+export const OPF_IDENTIFIER_SCHEME_LOCAL_NAMES: ReadonlyArray<string> =
+  Object.freeze(["scheme", "Scheme"])
+
+/**
+ * Attribute names an identifier's scheme can be stated on under the
+ * conventional `opf` prefix, in the order a read prefers them, ending with the
+ * bare EPUB 2 form.
+ *
+ * Prefer {@link opfIdentifierSchemeAttribute} with the document's own prefixes:
+ * a package may bind the OPF namespace to another prefix, which these literal
+ * names do not cover.
  */
 export const OPF_IDENTIFIER_SCHEME_ATTRIBUTES: ReadonlyArray<string> =
   Object.freeze(["opf:scheme", "opf:Scheme", "scheme"])
@@ -60,17 +74,16 @@ export const opfIdentifierTypeScheme = (
 }
 
 /**
- * The scheme attribute an element carries, if any — the first spelling of
- * {@link OPF_IDENTIFIER_SCHEME_ATTRIBUTES} it states.
+ * The scheme attribute an element carries, if any. `prefixes` are the ones the
+ * document binds to the OPF namespace — `opfNamespacePrefixes` reads them off
+ * the package element — and default to the conventional `opf` alone.
  */
 export const opfIdentifierSchemeAttribute = (
   attributes: Readonly<Record<string, string | undefined>>,
-): string | undefined => {
-  for (const name of OPF_IDENTIFIER_SCHEME_ATTRIBUTES) {
-    const value = attributes[name]
-
-    if (value !== undefined) return value
-  }
-
-  return undefined
-}
+  prefixes: ReadonlyArray<string> = ["opf"],
+): string | undefined =>
+  opfNamespacedAttribute(
+    attributes,
+    prefixes,
+    OPF_IDENTIFIER_SCHEME_LOCAL_NAMES,
+  )
