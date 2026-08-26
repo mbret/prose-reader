@@ -10,11 +10,8 @@
  * emit, and the bare EPUB 2 form. The first one present wins, so a document
  * that uses only the legacy spelling keeps it.
  */
-export const OPF_IDENTIFIER_SCHEME_ATTRIBUTES = [
-  "opf:scheme",
-  "opf:Scheme",
-  "scheme",
-] as const
+export const OPF_IDENTIFIER_SCHEME_ATTRIBUTES: ReadonlyArray<string> =
+  Object.freeze(["opf:scheme", "opf:Scheme", "scheme"])
 
 /**
  * ONIX codelist 5 codes, which is the list an `identifier-type` refinement

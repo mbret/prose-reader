@@ -67,3 +67,13 @@ describe("opfIdentifierSchemeAttribute", () => {
     }
   })
 })
+
+describe("OPF_IDENTIFIER_SCHEME_ATTRIBUTES", () => {
+  it("cannot be mutated by a consumer", () => {
+    expect(Object.isFrozen(OPF_IDENTIFIER_SCHEME_ATTRIBUTES)).toBe(true)
+    expect(() =>
+      (OPF_IDENTIFIER_SCHEME_ATTRIBUTES as string[]).reverse(),
+    ).toThrow()
+    expect(opfIdentifierSchemeAttribute({ "opf:scheme": "ISBN" })).toBe("ISBN")
+  })
+})
