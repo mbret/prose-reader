@@ -2,6 +2,7 @@ import type { Manifest } from "@prose-reader/shared"
 import {
   buildChapterInfoFromChain,
   buildTocIndex,
+  getSpineItemIndexByHref,
   isPossibleTocItemCandidateForHref,
   stripAnchor,
 } from "./shared"
@@ -26,17 +27,15 @@ const shouldSkipAnchorSubChapter = ({
 const findChapterChainByHref = ({
   href,
   tocIndex,
-  manifest,
+  spineItemIndexByHref,
 }: {
   href: string
   tocIndex: FlatTocEntry[]
-  manifest: Manifest
+  spineItemIndexByHref: Map<string, number>
 }): TocPathEntry[] | undefined => {
   const hrefWithoutAnchor = stripAnchor(href)
   const hrefHasAnchor = href.includes(`#`)
-  const spineItemIndex = manifest.spineItems.findIndex(
-    (item) => item.href === hrefWithoutAnchor,
-  )
+  const spineItemIndex = spineItemIndexByHref.get(hrefWithoutAnchor) ?? -1
 
   let bestChain: TocPathEntry[] | undefined
 
@@ -66,37 +65,67 @@ export const buildChaptersInfo = (
   manifest: Manifest,
 ): ChapterInfo | undefined => {
   const tocIndex = buildTocIndex(tocItem, manifest)
-  const chapterChain = findChapterChainByHref({ href, tocIndex, manifest })
+  const spineItemIndexByHref = getSpineItemIndexByHref(manifest)
+  const chapterChain = findChapterChainByHref({
+    href,
+    tocIndex,
+    spineItemIndexByHref,
+  })
 
   return chapterChain ? buildChapterInfoFromChain(chapterChain) : undefined
 }
 
-const buildChapterInfoFromSpineItem = (
-  manifest: Manifest,
-  tocIndex: TocIndex,
-  item: Manifest[`spineItems`][number],
-) => {
-  const { href } = item
-
-  const chapterChain = findChapterChainByHref({ href, tocIndex, manifest })
-
-  return chapterChain ? buildChapterInfoFromChain(chapterChain) : undefined
+export type StaticChaptersResolver = {
+  /**
+   * Fallback chapter info for a spine item, resolved from its own href against
+   * the TOC. Returns `undefined` for spine items not present in the TOC.
+   */
+  get: (spineItemId: string) => ChapterInfo | undefined
 }
 
-export const buildStaticChaptersInfo = (
+/**
+ * Lazily resolve the static (href-based) fallback chapter info per spine item.
+ *
+ * This fallback is only read for the few spine items actually displayed (see
+ * `mapChapterInfo`), yet the previous implementation eagerly resolved it for
+ * *every* spine item at book open — an O(spineItems × tocEntries) pass whose
+ * result was mostly thrown away on large books. Resolving on demand and caching
+ * per id makes the cost proportional to the items the reader visits, and each
+ * resolution avoids an O(spineItems) `findIndex` by reusing a prebuilt
+ * href → index map.
+ */
+export const createStaticChaptersResolver = (
   manifest: Manifest,
   tocIndex: TocIndex,
-): { [key: string]: ChapterInfo | undefined } => {
-  if (!manifest) return {}
+): StaticChaptersResolver => {
+  const spineItemIndexByHref = getSpineItemIndexByHref(manifest)
 
-  const chaptersInfo = manifest.spineItems.reduce(
-    (acc, item) => {
-      acc[item.id] = buildChapterInfoFromSpineItem(manifest, tocIndex, item)
+  // Last write wins, matching the previous `record[item.id] = …` assignment
+  // semantics when several spine items share an id.
+  const hrefBySpineItemId = new Map<string, string>()
+  manifest.spineItems.forEach((item) => {
+    hrefBySpineItemId.set(item.id, item.href)
+  })
 
-      return acc
+  const cache = new Map<string, ChapterInfo | undefined>()
+
+  return {
+    get: (spineItemId) => {
+      const cached = cache.get(spineItemId)
+      if (cached !== undefined || cache.has(spineItemId)) return cached
+
+      const href = hrefBySpineItemId.get(spineItemId)
+      const chapterChain =
+        href !== undefined
+          ? findChapterChainByHref({ href, tocIndex, spineItemIndexByHref })
+          : undefined
+      const chapterInfo = chapterChain
+        ? buildChapterInfoFromChain(chapterChain)
+        : undefined
+
+      cache.set(spineItemId, chapterInfo)
+
+      return chapterInfo
     },
-    {} as { [key: string]: ChapterInfo | undefined },
-  )
-
-  return chaptersInfo
+  }
 }
