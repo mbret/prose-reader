@@ -6,8 +6,7 @@ import type {
   ResolvedMetadata,
   ResolvedTitle,
 } from "../../types/resolvedMetadata.ts"
-import { booklandIsbn } from "../../utils/booklandIsbn.ts"
-import { normalizeGtin } from "../../utils/normalizeGtin.ts"
+import { inferIdentifierScheme } from "../../utils/inferIdentifierScheme.ts"
 import { normalizeIdentifierScheme } from "../../utils/normalizeIdentifierScheme.ts"
 import { omitUndefined } from "../../utils/omitUndefined.ts"
 import { parseW3cDtfDate } from "../../utils/parseW3cDtfDate.ts"
@@ -19,30 +18,6 @@ import type {
   OpfMetaEntry,
   OpfTitle,
 } from "./parse.ts"
-
-const inferredIdentifierScheme = (value: string): string => {
-  const trimmed = value.trim()
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      const url = new URL(trimmed)
-
-      if (
-        (url.protocol === "http:" || url.protocol === "https:") &&
-        url.hostname.length > 0
-      ) {
-        return "URL"
-      }
-    } catch {
-      // Continue with identifier-specific inference.
-    }
-  }
-
-  if (booklandIsbn(trimmed) !== undefined) return "ISBN"
-  if (normalizeGtin(trimmed) !== undefined) return "GTIN"
-
-  return "Unknown"
-}
 
 /**
  * Common MARC relator codes normalized into the Readium role vocabulary;
@@ -201,7 +176,7 @@ const collectionIdentifiers = (
       {
         value,
         scheme: normalizeIdentifierScheme(
-          declaredType ?? inferredIdentifierScheme(value),
+          declaredType ?? inferIdentifierScheme(value),
         ),
       },
     ]
@@ -375,7 +350,7 @@ export const resolveOpf = (input: OpfMetadata): ResolvedMetadata => {
               scheme: normalizeIdentifierScheme(
                 identifier.scheme ??
                   refinedIdentifierType(identifier, metas) ??
-                  inferredIdentifierScheme(identifier.value),
+                  inferIdentifierScheme(identifier.value),
               ),
               unique: identifier.unique,
             }),

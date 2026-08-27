@@ -145,6 +145,16 @@ opfIdentifierSchemeAttribute(elementAttributes, opfNamespacePrefixes(scope))
 
 `opf:role` and `opf:file-as` are read the same way.
 
+An identifier that announces no scheme at all is given one by its own syntax, and `inferIdentifierScheme` is that reading:
+
+```typescript
+inferIdentifierScheme("9783161484100") // "ISBN"
+inferIdentifierScheme("https://example.com/book") // "URL"
+inferIdentifierScheme("catalog-42") // "Unknown"
+```
+
+A consumer editing a container needs it for the same reason it needs the two above: an untyped `<dc:identifier>` holding a Bookland number is an `ISBN` in `identifiers`, so a writer that reads it as untagged would build a second element beside the one the reader reported.
+
 These are what the parser and resolver use, so a consumer reading through them cannot drift from what `identifiers` reports.
 
 For EPUBs that include Apple or Kobo display-option files, the OPF package document remains the identifier source. Those sidecars describe presentation and do not define bibliographic identifier fields.
