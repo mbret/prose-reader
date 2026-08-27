@@ -3,8 +3,8 @@ import type { Reader } from "../../../reader"
 import { SpinePosition } from "../../../spine/types"
 import type { SpineItemReference } from "../../../spineItem/SpineItem"
 import { navigationReport } from "../report"
-import { getNavigationForLeftOrTopPage } from "../resolvers/getNavigationForLeftOrTopPage"
-import { getNavigationForRightOrBottomPage } from "../resolvers/getNavigationForRightOrBottomPage"
+import { getNavigationForPage } from "../resolvers/getNavigationForPage"
+import type { PageNavigationDirection } from "../resolvers/pageNavigationDirection"
 
 export class ManualNavigator {
   movingLastDelta = { x: 0, y: 0 }
@@ -29,11 +29,7 @@ export class ManualNavigator {
     return this.turnRightOrBottom()
   }
 
-  protected turnWith(
-    getNavigationForPage:
-      | typeof getNavigationForLeftOrTopPage
-      | typeof getNavigationForRightOrBottomPage,
-  ) {
+  protected turnWith(direction: PageNavigationDirection) {
     const navigation = this.reader.navigation.getNavigation()
     const spineItem = this.reader.spineItemsManager.get(navigation.spineItem)
 
@@ -50,6 +46,7 @@ export class ManualNavigator {
       spineLocator: this.reader.spine.locator,
       viewport: this.reader.viewport,
       settings: this.reader.settings,
+      direction,
     })
 
     return this.reader.navigation.navigate({
@@ -58,11 +55,11 @@ export class ManualNavigator {
   }
 
   turnRightOrBottom() {
-    return this.turnWith(getNavigationForRightOrBottomPage)
+    return this.turnWith("rightOrBottom")
   }
 
   turnLeftOrTop() {
-    return this.turnWith(getNavigationForLeftOrTopPage)
+    return this.turnWith("leftOrTop")
   }
 
   goToCfi(cfi: string, options: { animate: boolean } = { animate: true }) {
