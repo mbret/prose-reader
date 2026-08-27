@@ -155,6 +155,7 @@ export {
   identifierValue,
   isIsbnBearingScheme,
 } from "./utils/identifierValues.ts"
+export type { InferredIdentifierScheme } from "./utils/inferIdentifierScheme.ts"
 export { inferIdentifierScheme } from "./utils/inferIdentifierScheme.ts"
 export { mainTitle } from "./utils/mainTitle.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"

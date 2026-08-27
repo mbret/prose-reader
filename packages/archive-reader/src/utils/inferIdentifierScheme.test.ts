@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import type { KnownMetadataIdentifierScheme } from "../types/resolvedMetadata"
 import { inferIdentifierScheme } from "./inferIdentifierScheme"
 
 describe("inferIdentifierScheme", () => {
@@ -28,5 +29,14 @@ describe("inferIdentifierScheme", () => {
     expect(inferIdentifierScheme("catalog-42")).toBe("Unknown")
     expect(inferIdentifierScheme("")).toBe("Unknown")
     expect(inferIdentifierScheme("   ")).toBe("Unknown")
+  })
+})
+
+describe("InferredIdentifierScheme", () => {
+  it("is assignable to the known scheme union", () => {
+    const scheme: KnownMetadataIdentifierScheme =
+      inferIdentifierScheme("9783161484100")
+
+    expect(scheme).toBe("ISBN")
   })
 })

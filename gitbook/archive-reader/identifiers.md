@@ -153,6 +153,8 @@ inferIdentifierScheme("https://example.com/book") // "URL"
 inferIdentifierScheme("catalog-42") // "Unknown"
 ```
 
+It returns `InferredIdentifierScheme` — the four members of `KnownMetadataIdentifierScheme` a value can announce on its own — so the result narrows exhaustively and assigns straight into a scheme field.
+
 A consumer editing a container needs it for the same reason it needs the two above: an untyped `<dc:identifier>` holding a Bookland number is an `ISBN` in `identifiers`, so a writer that reads it as untagged would build a second element beside the one the reader reported.
 
 These are what the parser and resolver use, so a consumer reading through them cannot drift from what `identifiers` reports.

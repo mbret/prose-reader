@@ -1,5 +1,16 @@
+import type { KnownMetadataIdentifierScheme } from "../types/resolvedMetadata.ts"
 import { booklandIsbn } from "./booklandIsbn.ts"
 import { normalizeGtin } from "./normalizeGtin.ts"
+
+/**
+ * The schemes a value can announce by itself. Drawn from
+ * {@link KnownMetadataIdentifierScheme} rather than restated, so renaming one
+ * there fails to compile here.
+ */
+export type InferredIdentifierScheme = Extract<
+  KnownMetadataIdentifierScheme,
+  "ISBN" | "GTIN" | "URL" | "Unknown"
+>
 
 /**
  * The scheme a value announces by its own syntax, for an identifier that
@@ -12,7 +23,9 @@ import { normalizeGtin } from "./normalizeGtin.ts"
  * rather than restating it, and cannot disagree with `identifiers` about which
  * element carries which scheme.
  */
-export const inferIdentifierScheme = (value: string): string => {
+export const inferIdentifierScheme = (
+  value: string,
+): InferredIdentifierScheme => {
   const trimmed = value.trim()
 
   if (/^https?:\/\//i.test(trimmed)) {
