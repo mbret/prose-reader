@@ -11,6 +11,7 @@ export default defineConfig((env) =>
   mergeConfig(libConfig(env), {
     plugins: [dts({ entryRoot: "src", include: ["src/**/*"] })],
     test: {
+      environment: "jsdom",
       coverage: {
         reportsDirectory: `./.test/coverage`,
       },

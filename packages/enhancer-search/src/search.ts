@@ -19,7 +19,6 @@ export type SearchResult = ResultItem[]
 const collectMatchingRanges = (
   node: Node,
   regexp: RegExp,
-  matchLength: number,
   rangeList: Range[],
 ) => {
   if (node.nodeName === `head`) return
@@ -34,11 +33,15 @@ const collectMatchingRanges = (
     }
 
     if (subNode.hasChildNodes()) {
-      collectMatchingRanges(subNode, regexp, matchLength, rangeList)
+      collectMatchingRanges(subNode, regexp, rangeList)
     }
 
     if (subNode.nodeType === 3) {
-      const content = (subNode as Text).data.toLowerCase()
+      // Match against the node data as-is: lowercasing here would shift match
+      // indices for characters whose lowercase form has a different length
+      // (e.g. İ), while the regexp already matches case-insensitively with
+      // Unicode simple case folding (`iu` flags).
+      const content = (subNode as Text).data
       if (content) {
         let match: RegExpExecArray | null = null
         regexp.lastIndex = 0
@@ -48,7 +51,7 @@ const collectMatchingRanges = (
           if (match.index >= 0 && subNode.ownerDocument) {
             const range = subNode.ownerDocument.createRange()
             range.setStart(subNode, match.index)
-            range.setEnd(subNode, match.index + matchLength)
+            range.setEnd(subNode, match.index + match[0].length)
 
             rangeList.push(range)
           }
@@ -58,10 +61,20 @@ const collectMatchingRanges = (
   }
 }
 
+// The user query is literal text, not a pattern: metacharacters left
+// unescaped either throw at RegExp construction (`c++`) or match the wrong
+// content (`c.t`).
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`)
+
 const searchNodeContainingText = (node: Node, text: string) => {
   const rangeList: Range[] = []
 
-  collectMatchingRanges(node, RegExp(`(${text})`, `gi`), text.length, rangeList)
+  // `u` widens the `i` flag to Unicode simple case folding (K/K, Deseret…).
+  // Characters only reachable through full case folding (İ → i̇) stay
+  // unmatched on purpose: mapping their ranges back to the original text
+  // would require a fold-index map on this hot path.
+  collectMatchingRanges(node, RegExp(escapeRegExp(text), `giu`), rangeList)
 
   return rangeList
 }
