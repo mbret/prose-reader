@@ -8,8 +8,10 @@ import type { ParsedXPointer } from "./types"
  * `/body/DocFragment[N]/body`.
  *
  * `serializeXPointer(parseXPointer(s))` is `s` for every pointer crengine
- * emits in that shape. `generateXPointer` decides where an index is needed;
- * this function never looks at a DOM.
+ * writes in that shape for a book with several spine items; the single-item
+ * prefix `/body/DocFragment/body` and the explicit `body[1]` prefixes come
+ * back normalised. `generateXPointer` decides where an index is needed; this
+ * function never looks at a DOM.
  */
 export const serializeXPointer = (parsed: ParsedXPointer): string => {
   let output = `/body/DocFragment[${parsed.spineItemIndex + 1}]/body`
