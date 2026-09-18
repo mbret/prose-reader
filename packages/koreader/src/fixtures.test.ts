@@ -331,7 +331,6 @@ describe.each(FIXTURES)("CFI bridge: %s", (name) => {
     const getSpineItem = lookupOf(book)
     const failures: string[] = []
     let checked = 0
-    let cfiNonIdentity = 0
 
     for (const fragment of oracle.fragments) {
       const spineItem = book.spineItems[fragment.index]
@@ -363,9 +362,6 @@ describe.each(FIXTURES)("CFI bridge: %s", (name) => {
           continue
         }
 
-        // @prose-reader/cfi does not always take its own CFI back to the
-        // same node (text after an element child, CDATA sections): the
-        // bridge can only be as exact as the CFI it is given.
         const theirs = resolveCfi(cfi, spineItem.document)
 
         if (
@@ -373,7 +369,7 @@ describe.each(FIXTURES)("CFI bridge: %s", (name) => {
           theirs.node !== position.node ||
           (theirs.offset ?? 0) !== (position.offset ?? 0)
         ) {
-          cfiNonIdentity++
+          failures.push(`${xp}: ${cfi} resolves elsewhere in @prose-reader/cfi`)
           continue
         }
 
@@ -384,9 +380,7 @@ describe.each(FIXTURES)("CFI bridge: %s", (name) => {
       }
     }
 
-    console.info(
-      `${name}: ${checked} pointers through the CFI bridge (${cfiNonIdentity} CFIs @prose-reader/cfi resolves elsewhere)`,
-    )
+    console.info(`${name}: ${checked} pointers through the CFI bridge`)
     expect(failures.slice(0, 20)).toEqual([])
   })
 

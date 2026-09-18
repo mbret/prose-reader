@@ -74,3 +74,28 @@ export const rangeText = (
 
   return range.toString()
 }
+
+/** The child at `index`, which the test markup guarantees exists. */
+export const childOf = (parent: Node, index: number): Node => {
+  const child = parent.childNodes[index]
+
+  if (!child) throw new Error(`no child ${index} in ${parent.nodeName}`)
+
+  return child
+}
+
+export const lastChildOf = (parent: Node): Node => {
+  const child = parent.lastChild
+
+  if (!child) throw new Error(`no child in ${parent.nodeName}`)
+
+  return child
+}
+
+export const firstElementChildOf = (parent: Element): Element => {
+  const child = parent.firstElementChild
+
+  if (!child) throw new Error(`no element child in ${parent.nodeName}`)
+
+  return child
+}

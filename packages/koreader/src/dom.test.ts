@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest"
 import { generateXPointer } from "./generate"
 import { resolveXPointer } from "./resolve"
 import {
+  childOf,
   documentWithBody,
   elementOf,
+  firstElementChildOf,
+  lastChildOf,
   parseSvgDocument,
   rangeText,
   textNodeOf,
@@ -72,7 +75,7 @@ describe("whitespace-only text nodes crengine does not keep", () => {
 
     for (const index of [0, 2, 4]) {
       expect(
-        generateXPointer({ node: div.childNodes[index] as Node, offset: 0 }, 0),
+        generateXPointer({ node: childOf(div, index), offset: 0 }, 0),
       ).toBeUndefined()
     }
   })
@@ -89,16 +92,16 @@ describe("whitespace-only text nodes crengine does not keep", () => {
       offset: 0,
     })
     expect(resolveXPointer(`${prefix}/div/text()[2]`, document)).toBeUndefined()
+    expect(generateXPointer({ node: childOf(div, 3), offset: 0 }, 0)).toBe(
+      `${prefix}/div/text().0`,
+    )
     expect(
-      generateXPointer({ node: div.childNodes[3] as Node, offset: 0 }, 0),
-    ).toBe(`${prefix}/div/text().0`)
-    expect(
-      generateXPointer({ node: div.childNodes[1] as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(div, 1), offset: 0 }, 0),
     ).toBeUndefined()
     expect(
-      generateXPointer({ node: div.childNodes[5] as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(div, 5), offset: 0 }, 0),
     ).toBeUndefined()
-    expect(generateXPointer({ node: div.childNodes[6] as Node }, 0)).toBe(
+    expect(generateXPointer({ node: childOf(div, 6) }, 0)).toBe(
       `${prefix}/div/p[2]`,
     )
 
@@ -186,7 +189,7 @@ describe("whitespace-only text nodes crengine does not keep", () => {
       offset: 0,
     })
     expect(
-      generateXPointer({ node: span.childNodes[1] as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(span, 1), offset: 0 }, 0),
     ).toBeUndefined()
 
     // no inline element and only whitespace text: kept
@@ -200,16 +203,16 @@ describe("whitespace-only text nodes crengine does not keep", () => {
 
   it("drops every leading whitespace text separated by comments", () => {
     const document = documentWithBody("<div>\n<!-- c -->\n<p>a</p></div>")
-    const div = document.body.firstChild as Element
+    const div = firstElementChildOf(document.body)
 
     expect(
-      generateXPointer({ node: div.childNodes[0] as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(div, 0), offset: 0 }, 0),
     ).toBeUndefined()
     expect(
-      generateXPointer({ node: div.childNodes[2] as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(div, 2), offset: 0 }, 0),
     ).toBeUndefined()
     expect(resolveXPointer(`${prefix}/div/text()`, document)).toBeUndefined()
-    expect(generateXPointer({ node: div.childNodes[3] as Node }, 0)).toBe(
+    expect(generateXPointer({ node: childOf(div, 3) }, 0)).toBe(
       `${prefix}/div/p`,
     )
   })
@@ -474,14 +477,11 @@ describe("empty elements and sibling counts", () => {
       node: elementOf(document, "p").childNodes[6],
     })
     expect(
-      generateXPointer(
-        { node: elementOf(document, "p").childNodes[6] as Node },
-        0,
-      ),
+      generateXPointer({ node: childOf(elementOf(document, "p"), 6) }, 0),
     ).toBe(`${prefix}/p[1]/br[3]`)
-    expect(
-      generateXPointer({ node: document.body.childNodes[1] as Node }, 0),
-    ).toBe(`${prefix}/hr`)
+    expect(generateXPointer({ node: childOf(document.body, 1) }, 0)).toBe(
+      `${prefix}/hr`,
+    )
   })
 })
 
@@ -504,13 +504,13 @@ describe("elements that take no text", () => {
     })
     expect(
       generateXPointer(
-        { node: elementOf(document, "t").firstChild as Node, offset: 3 },
+        { node: childOf(elementOf(document, "t"), 0), offset: 3 },
         0,
       ),
     ).toBeUndefined()
     expect(
       generateXPointer(
-        { node: elementOf(document, "r").firstChild as Node, offset: 0 },
+        { node: childOf(elementOf(document, "r"), 0), offset: 0 },
         0,
       ),
     ).toBeUndefined()
@@ -599,7 +599,7 @@ describe("nesting", () => {
     expect(generateXPointer({ node: document }, 0)).toBe(prefix)
     expect(generateXPointer({ node: text }, 0)).toBeUndefined()
     expect(
-      generateXPointer({ node: text.firstChild as Node, offset: 0 }, 0),
+      generateXPointer({ node: childOf(text, 0), offset: 0 }, 0),
     ).toBeUndefined()
   })
 })
@@ -653,7 +653,7 @@ describe("node index steps", () => {
     const document = documentWithBody(
       '<div>\n<p>a</p><em>x</em> <em id="e">y</em> <p id="p">b</p></div>',
     )
-    const div = document.body.firstChild as Element
+    const div = firstElementChildOf(document.body)
 
     // crengine children of div: p, em, " ", em, p
     expect(resolveXPointer(`${prefix}/div/5/text().0`, document)).toEqual({
@@ -701,11 +701,11 @@ describe("MathML", () => {
     expect(
       resolveXPointer(`${prefix}/p/math/mrow/mo/text()[2]`, document),
     ).toBeUndefined()
+    expect(generateXPointer({ node: childOf(mo, 0), offset: 3 }, 0)).toBe(
+      `${prefix}/p/math/mrow/mo/text().0`,
+    )
     expect(
-      generateXPointer({ node: mo.firstChild as Node, offset: 3 }, 0),
-    ).toBe(`${prefix}/p/math/mrow/mo/text().0`)
-    expect(
-      generateXPointer({ node: mo.lastChild as Node, offset: 0 }, 0),
+      generateXPointer({ node: lastChildOf(mo), offset: 0 }, 0),
     ).toBeUndefined()
     expect(
       resolveXPointer(`${prefix}/p/math/mrow/text()`, document),
@@ -784,8 +784,9 @@ describe("rejections", () => {
   it("never resolves nodes outside the body", () => {
     const title = document.getElementsByTagName("title")[0]
 
-    expect(title).toBeDefined()
-    expect(generateXPointer({ node: title as Node }, 0)).toBeUndefined()
+    if (!title) throw new Error("no title element")
+
+    expect(generateXPointer({ node: title }, 0)).toBeUndefined()
     expect(
       generateXPointer({ node: document.documentElement }, 0),
     ).toBeUndefined()

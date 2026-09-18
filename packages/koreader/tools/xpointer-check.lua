@@ -7,7 +7,7 @@
 --   KO_HOME=/tmp/ko-oracle ./luajit xpointer-check.lua <book.epub> <pairs.json> <out.json>
 --
 -- pairs.json: {"pairs": [[xp0, xp1], ...]} (xp1 may be null: xp0 alone is
--- checked). out.json: {"epub", "dom_version", "results": [{"xp0", "xp1",
+-- checked). out.json: {"epub", "domVersion", "results": [{"xp0", "xp1",
 -- "valid0", "valid1", "text"}]}.
 require("setupkoenv")
 package.path = "spec/unit/?.lua;" .. package.path
@@ -35,7 +35,7 @@ doc:render()
 
 local result = {
     epub = epub:match("([^/]+)$"),
-    dom_version = doc:getLatestDomVersion(),
+    domVersion = doc:getLatestDomVersion(),
     results = InitArray({}),
 }
 

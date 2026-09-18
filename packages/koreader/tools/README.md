@@ -27,19 +27,21 @@ harness). Then, from `lib/koreader/`:
 export KO_HOME=/tmp/ko-oracle SDL_VIDEODRIVER=dummy LD_LIBRARY_PATH=$PWD/libs
 cp <prose-reader>/packages/koreader/tools/*.lua .
 
-# 1. crengine's pointers for the words of a fixture (every word; sample when committing)
-./luajit xpointer-oracle.lua <fixtures>/synthetic.epub /tmp/synthetic.words.json 1
+# 1. crengine's pointers for the words of a fixture, at most 120 per spine item
+./luajit xpointer-oracle.lua <fixtures>/synthetic.epub <fixtures>/synthetic.crengine.json 120
 
-# 2. crengine's verdict on the pointers this package emits
-XPOINTER_CHECK_EMIT_DIR=/tmp/pairs npx vitest run src/crengineCheck.test.ts   # in packages/koreader
+# 2. crengine's verdict on the pointers this package emits: the test suite
+#    writes the pairs from the repository, then crengine checks them from here
+(cd <prose-reader>/packages/koreader && XPOINTER_CHECK_EMIT_DIR=/tmp/pairs npx vitest run src/crengineCheck.test.ts)
 ./luajit xpointer-check.lua <fixtures>/synthetic.epub /tmp/pairs/synthetic.pairs.json <fixtures>/synthetic.crengine-check.json
 ```
 
-`xpointer-oracle.lua` takes an optional DOM version as its fourth argument
-(`20180528` reproduces the non-normalised V1 pointers of books first opened
-before 2020, with their `autoBoxing` steps). The committed
-`<fixture>.crengine.json` files are sampled to at most 120 words per spine
-item; a full dump of a long book is several megabytes.
+Both scripts write the files as the tests read them. `xpointer-oracle.lua`
+takes the cap on words per spine item as its third argument (the words are
+sampled evenly, `0` keeps them all; a full dump of a long book is several
+megabytes) and an optional DOM version as its fourth (`20180528` reproduces
+the non-normalised V1 pointers of books first opened before 2020, with
+their `autoBoxing` steps).
 
 Adding a fixture: put the EPUB in the fixtures directory (`strip_epub.py
 <in.epub> <out.epub>` keeps only its package, navigation and content

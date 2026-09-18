@@ -95,7 +95,10 @@ export type OracleWord = [xp: string, xpEnd: string, text: string]
 
 export type OracleFragment = {
   index: number
+  /** Visible words crengine found in the spine item */
   wordCount: number
+  /** One word in `every` was kept, evenly from the start */
+  every: number
   words: OracleWord[]
 }
 
@@ -108,7 +111,7 @@ export type Oracle = {
   epub: string
   domVersion: number
   stylesheet: string
-  every: number
+  blockRenderingFlags: number
   fragments: OracleFragment[]
 }
 
