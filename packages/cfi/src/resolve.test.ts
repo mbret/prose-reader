@@ -142,52 +142,6 @@ describe("EPUB CFI Resolve", () => {
   })
 
   describe("text node handling", () => {
-    it.skip("should handle text nodes according to CFI spec", () => {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(
-        `<html xmlns="http://www.w3.org/1999/xhtml">
-          <body id="body01">
-            <p id="para01">First<em>Emphasized</em>Last</p>
-          </body>
-        </html>`,
-        "application/xhtml+xml",
-      )
-
-      // First, create a paragraph with proper text content
-      const newPara = doc.createElement("p")
-      newPara.id = "para02"
-      newPara.textContent = "First"
-      doc.getElementById("body01")?.appendChild(newPara)
-
-      // Text in the first paragraph - use para02 instead
-      const cfiToFirstTextNode = "epubcfi(/4[body01]/4[para02]/1:2)"
-      const result1 = resolve(cfiToFirstTextNode, doc)
-      expect(result1.node).toBeTruthy()
-
-      // Check that we get a text node with the correct content
-      if (result1.node instanceof Node) {
-        expect(result1.node.textContent).toBe("First")
-        expect(result1.offset).toBe(2)
-      }
-
-      // Add another paragraph for the second test
-      const lastPara = doc.createElement("p")
-      lastPara.id = "para03"
-      lastPara.textContent = "Last"
-      doc.getElementById("body01")?.appendChild(lastPara)
-
-      // Text in the second paragraph
-      const cfiToLastTextNode = "epubcfi(/4[body01]/6[para03]/1:2)"
-      const result2 = resolve(cfiToLastTextNode, doc)
-      expect(result2.node).toBeTruthy()
-
-      // Check that we get a text node with the correct content
-      if (result2.node instanceof Node) {
-        expect(result2.node.textContent).toBe("Last")
-        expect(result2.offset).toBe(2)
-      }
-    })
-
     it("should handle virtual positions", () => {
       const parser = new DOMParser()
       const doc = parser.parseFromString(

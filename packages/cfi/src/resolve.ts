@@ -1,9 +1,11 @@
 import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
 import {
+  findCharacterDataChunk,
+  isCharacterData,
   isIndirectionOnly,
   isNode,
   isParsedCfiRange,
-  isTextNode,
+  locateInCharacterDataChunk,
 } from "./utils"
 
 /**
@@ -172,7 +174,7 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
   }
 
   // If parentNode is a text node, use it directly for start/end
-  const isParentTextNode = parentNode.nodeType === Node.TEXT_NODE
+  const isParentTextNode = isCharacterData(parentNode)
 
   let startNode: Node
   let endNode: Node
@@ -210,12 +212,14 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
       const traversed = traverseNodePath(parentNode, startPath, 0, true)
       if (!traversed)
         throw new Error("Failed to resolve start node in CFI range")
-      startNode = traversed
+      startNode = traversed.node
       const lastStartPart = startPath[startPath.length - 1]
       startOffset =
+        traversed.childIndex ??
         (Array.isArray(lastStartPart?.offset)
           ? lastStartPart.offset[0]
-          : lastStartPart?.offset) ?? 0
+          : lastStartPart?.offset) ??
+        0
     }
 
     if (isEndOffsetOnly) {
@@ -226,24 +230,31 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
     } else {
       const traversed = traverseNodePath(parentNode, endPath, 0, true)
       if (!traversed) throw new Error("Failed to resolve end node in CFI range")
-      endNode = traversed
+      endNode = traversed.node
       const lastEndPart = endPath[endPath.length - 1]
       endOffset =
+        traversed.childIndex ??
         (Array.isArray(lastEndPart?.offset)
           ? lastEndPart.offset[0]
-          : lastEndPart?.offset) ?? 0
+          : lastEndPart?.offset) ??
+        0
     }
   }
 
+  // A chunk offset can fall in a node after the chunk's first one
+  const start = locate(startNode, startOffset)
+  const end = locate(endNode, endOffset)
+
   // Create and return a DOM range
   const domRange = document.createRange()
-  domRange.setStart(startNode, startOffset)
-  domRange.setEnd(endNode, endOffset)
+  domRange.setStart(start.node, start.offset ?? 0)
+  domRange.setEnd(end.node, end.offset ?? 0)
 
   return {
     ...createBaseResultObject(startPath[startPath.length - 1]),
     node: domRange,
     isRange: true,
+    offset: start.offset,
   }
 }
 
@@ -270,12 +281,10 @@ function extractSideBias(part: CfiPart | undefined): string | undefined {
 }
 
 /**
- * Determines if a step in a CFI path is for a text node
- * Text nodes have indices that are not doubled (odd numbers in CFI)
+ * Whether a step addresses a chunk of character data: per the CFI spec,
+ * element steps are even and character data steps odd.
  */
-function isTextNodeStep(part: CfiPart): boolean {
-  // Per the CFI spec, element indices are always even numbers
-  // So if we have an odd number, it's likely a text node or other non-element node
+function isCharacterDataStep(part: CfiPart): boolean {
   return part.index % 2 !== 0
 }
 
@@ -338,13 +347,36 @@ function createRangeForNode(
 
   if (offset !== undefined) {
     const offsetValue = Array.isArray(offset) ? offset[0] : offset
-    if (isTextNode(node)) {
+    if (isCharacterData(node)) {
       range.setStart(node, offsetValue || 0)
     }
   }
 
   return range
 }
+
+/**
+ * The node and offset a character offset lands on. An offset on a chunk step
+ * counts across the whole chunk, so it can fall in a node after the first one.
+ */
+function locate(
+  node: Node,
+  offset: number | number[] | undefined,
+): { node: Node; offset: number | undefined } {
+  const offsetValue = Array.isArray(offset) ? offset[0] : offset
+
+  if (offsetValue === undefined || !isCharacterData(node)) {
+    return { node, offset: offsetValue }
+  }
+
+  return locateInCharacterDataChunk(node, offsetValue)
+}
+
+/**
+ * Where a path lands: a node, or, for a step into an empty chunk of character
+ * data, the boundary that chunk stands for in its parent (a child index).
+ */
+type PathTarget = { node: Node; childIndex?: number }
 
 /**
  * Traverses the DOM tree based on CFI path parts
@@ -354,24 +386,38 @@ function traverseNodePath(
   path: CfiPart[],
   startIndex: number,
   throwOnError: boolean,
-): Node | null {
+): PathTarget | null {
   let _currentNode = currentNode
 
   for (let i = startIndex; i < path.length; i++) {
     const part = path[i]
     if (!_currentNode || !part) break
 
-    if (isTextNodeStep(part)) {
-      const nodeIndex = part.index - 1
-      if (nodeIndex >= 0 && nodeIndex < _currentNode.childNodes.length) {
-        _currentNode = _currentNode.childNodes[nodeIndex] as Node
-      } else {
+    if (isCharacterDataStep(part)) {
+      const chunk = findCharacterDataChunk(_currentNode, part.index)
+
+      if (!chunk) {
         if (throwOnError) {
-          throw new Error(`Invalid text node index: ${part.index}`)
+          throw new Error(`No character data chunk: ${part.index}`)
         }
         _currentNode = null
         break
       }
+
+      if (chunk.kind === "boundary") {
+        // Nothing lies below an empty chunk
+        if (i < path.length - 1) {
+          if (throwOnError) {
+            throw new Error(`Empty character data chunk: ${part.index}`)
+          }
+          _currentNode = null
+          break
+        }
+
+        return { node: chunk.parent, childIndex: chunk.childIndex }
+      }
+
+      _currentNode = chunk.node
     } else {
       const childElements: Node[] = Array.from(_currentNode.childNodes).filter(
         (node) => node.nodeType === Node.ELEMENT_NODE,
@@ -393,7 +439,7 @@ function traverseNodePath(
     }
   }
 
-  return _currentNode
+  return _currentNode ? { node: _currentNode } : null
 }
 
 /**
@@ -420,14 +466,6 @@ function resolvePath(
   if (nodeById && remainingPathIndex >= path.length) {
     const lastPart = path.at(-1)
 
-    if (lastPart && isTextNodeStep(lastPart)) {
-      const childIndex = lastPart.index - 1
-      if (childIndex >= 0 && childIndex < nodeById.childNodes.length) {
-        const childNode = nodeById.childNodes[childIndex] as Node
-        return createNodeResultObject(childNode, lastPart)
-      }
-    }
-
     if (asRange) {
       const range = createRangeForNode(document, nodeById, lastPart?.offset)
       return createRangeResultObject(range, lastPart)
@@ -437,13 +475,13 @@ function resolvePath(
   }
 
   // Start traversal from the ID node if found, otherwise start from the document root
-  let currentNode: Node | null = nodeById || document.documentElement
+  const currentNode: Node | null = nodeById || document.documentElement
   const startIndex = nodeById ? remainingPathIndex : 0
 
   // Handle virtual positions
   if (asRange && path.length > 0) {
     const lastPart = path[path.length - 1]
-    if (lastPart && !isTextNodeStep(lastPart)) {
+    if (lastPart && !isCharacterDataStep(lastPart)) {
       // Handle position before first element (index 0)
       if (lastPart.index === 0 && currentNode) {
         const range = document.createRange()
@@ -458,7 +496,7 @@ function resolvePath(
         path.slice(0, -1),
         startIndex,
         throwOnError,
-      )
+      )?.node
       if (parentNode) {
         const childElements: Node[] = Array.from(parentNode.childNodes).filter(
           (node) => node.nodeType === Node.ELEMENT_NODE,
@@ -476,9 +514,9 @@ function resolvePath(
     }
   }
 
-  currentNode = traverseNodePath(currentNode, path, startIndex, throwOnError)
+  const target = traverseNodePath(currentNode, path, startIndex, throwOnError)
 
-  if (!currentNode) {
+  if (!target) {
     if (throwOnError) {
       throw new Error("Failed to resolve CFI path")
     }
@@ -486,12 +524,40 @@ function resolvePath(
   }
 
   const lastPart = path.at(-1)
+  const located =
+    target.childIndex === undefined
+      ? locate(target.node, lastPart?.offset)
+      : { node: target.node, offset: target.childIndex }
+
   if (asRange) {
-    const range = createRangeForNode(document, currentNode, lastPart?.offset)
-    return createRangeResultObject(range, lastPart)
+    const range =
+      target.childIndex === undefined
+        ? createRangeForNode(document, located.node, located.offset)
+        : createCollapsedRange(document, target.node, target.childIndex)
+    return {
+      ...createRangeResultObject(range, lastPart),
+      offset: located.offset,
+    }
   }
 
-  return createNodeResultObject(currentNode, lastPart)
+  return {
+    ...createNodeResultObject(located.node, lastPart),
+    offset: located.offset,
+  }
+}
+
+/**
+ * A range collapsed on a boundary of a node's children
+ */
+function createCollapsedRange(
+  document: Document,
+  node: Node,
+  childIndex: number,
+): Range {
+  const range = document.createRange()
+  range.setStart(node, childIndex)
+  range.setEnd(node, childIndex)
+  return range
 }
 
 /**

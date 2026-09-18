@@ -6,7 +6,7 @@ import type { ParsedXPointer, XPointerStep } from "./types"
  * `pseudoElem` it creates for `::before` / `::after`. None exists in the source
  * XHTML, so a pointer naming one cannot be resolved in a browser DOM.
  */
-export const XPOINTER_BOXING_ELEMENT_NAMES = [
+export const XPOINTER_BOXING_ELEMENT_NAMES: readonly string[] = [
   "autoBoxing",
   "tabularBox",
   "rubyBox",
@@ -14,7 +14,7 @@ export const XPOINTER_BOXING_ELEMENT_NAMES = [
   "floatBox",
   "inlineBox",
   "pseudoElem",
-] as const
+]
 
 const boxingElementNames = new Set<string>(
   XPOINTER_BOXING_ELEMENT_NAMES.map((name) => name.toLowerCase()),

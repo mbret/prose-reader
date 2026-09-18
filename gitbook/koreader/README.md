@@ -63,7 +63,7 @@ serializeXPointer(parsed) === "/body/DocFragment[14]/body/div/p[3]/text().42"
 | Function | What it does |
 | --- | --- |
 | `parseXPointer(input)` | `ParsedXPointer` or `undefined`. Accepts every shape crengine has written (see below) and the bare `/body/DocFragment[N]` third parties write for the start of an item. |
-| `serializeXPointer(parsed)` | The string back, in the classic shape, keeping the indexes the structure carries. |
+| `serializeXPointer(parsed)` | The string back, in the classic shape: the prefix normalised to `/body/DocFragment[N]/body`, the steps with the indexes the structure carries. |
 | `resolveXPointer(pointer, document)` | The `DomPosition` a pointer names in a spine item document, or `undefined` when crengine would fail too. |
 | `generateXPointer(position, spineItemIndex)` | The pointer crengine itself writes for a DOM position, or `undefined` for positions crengine has no node for. |
 | `xPointerToCfi(pointer, getSpineItem)` | The CFI prose generates for that position, built with `@prose-reader/cfi`. |
@@ -96,7 +96,7 @@ crengine has written three shapes:
 - **Classic V2** (`toStringV2`, DOM 20200223 to 20260811, what every device runs today): wrappers skipped, `[N]` written only when more than one sibling shares the name, `text()` without index when the parent holds a single text node. Example: `/body/DocFragment[22]/body/div/div[1]/blockquote[3]/p[1]/span/text().0`. A book with a single spine item gets `/body/DocFragment/body/…`.
 - **Explicit V2** (crengine bumped its DOM version to 20260812 in August 2026): the same structure with `[N]` on every element and text step, `body[1]` included, e.g. `/body[1]/DocFragment[22]/body[1]/div[1]/p[3]/text()[1].42`. Read from the code; no KOReader release carried it when this package was written.
 
-This package **emits the classic V2 shape**, always with `DocFragment[N]`. crengine resolves it whatever the book's DOM version, and every third-party consumer was written against it, several with a regex or a `split('/')` that `body[1]` would break. `serializeXPointer(parseXPointer(s))` gives `s` back for every classic pointer; an explicit-shape pointer keeps its `[1]`s through `serializeXPointer`, and takes the classic shape by going through the DOM (`generateXPointer(resolveXPointer(s, document))`), since only the DOM knows which indexes are needed.
+This package **emits the classic V2 shape**, always with `DocFragment[N]`. crengine resolves it whatever the book's DOM version, and every third-party consumer was written against it, several with a regex or a `split('/')` that `body[1]` would break. `serializeXPointer` always writes the prefix as `/body/DocFragment[N]/body`, whatever shape it was parsed from, and keeps the indexes the steps carry: `serializeXPointer(parseXPointer(s))` gives `s` back for every classic pointer of a multi-item book, while the single-item form `/body/DocFragment/body/…` comes back with `DocFragment[1]`, and an explicit-shape pointer loses the `[1]` on its `body` steps but keeps the ones on its element and text steps. A pointer takes the classic shape everywhere by going through the DOM (`generateXPointer(resolveXPointer(s, document))`), since only the DOM knows which indexes are needed.
 
 ### What crengine does to text
 
@@ -126,7 +126,6 @@ The package's `src/tests/fixtures/` holds seven EPUBs (a synthetic one built to 
 - **Book CSS is not applied.** See above: a `<span style="display:block">` keeps its whitespace for this package where crengine drops it. The consequence is a pointer off by one text node, never off by a chapter.
 - **V1 pointers** (with boxing elements) parse but do not resolve; fall back to the spine item.
 - **Entities.** crengine decodes `&#32;` after its whitespace pass, so such spaces are not collapsed there; and it splits long text nodes on the source, where `&amp;` is five characters. Books with `&#32;` runs or entity-heavy paragraphs longer than 8192 characters can be off by a few characters.
-- **CDATA sections** are text nodes to crengine and to this package, but `@prose-reader/cfi` does not know them, so `xPointerToCfi` produces no useful CFI for a position inside one.
 - **Element points inside `<ruby>` and `<math>`**, and on table parts holding elements that do not belong there (a `<span>` directly in a `<table>`), are not emitted beyond `.0`: crengine's own wrappers there make the child count unknowable without its layout.
 - **`<style>` and `<script>` in the body** are raw text to crengine's parser; nothing inside them is modelled.
 - **SVG spine items** are addressed as a whole (`/body/DocFragment[N]/body`): crengine wraps the file in a body of its own and parses its XML declaration as an element, a structure the DOM cannot show, and KOReader shows such an item as one page anyway.

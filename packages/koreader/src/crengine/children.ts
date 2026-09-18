@@ -153,8 +153,13 @@ const renderChildren = (
 
       let end = index
 
-      while (end < children.length && isRunItem(children[end] as ParsedChild))
+      while (end < children.length) {
+        const next = children[end]
+
+        if (!next || !isRunItem(next)) break
+
         end++
+      }
 
       let run = children.slice(index, end)
 
