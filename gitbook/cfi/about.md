@@ -24,6 +24,10 @@ const parsed = parse('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)')
 const rangeParsed = parse('epubcfi(/6/4[chap01ref]!/4[body01],/6/4[chap01ref]!/4[body01]/10[para05])')
 ```
 
+### Character data
+
+Steps with an odd index address character data the way the specification defines it: the text and CDATA nodes between two element children form one chunk (`/1` before the first element, `/3` after it, and so on), comments are ignored, and a character offset counts UTF-16 code units from the start of the chunk. `generate` numbers text nodes that way and `resolve` maps an offset back to the DOM node it falls in, so a CFI stays valid when a parser splits or merges adjacent text nodes.
+
 ### Resolve
 
 Resolve a CFI to a DOM node or range.

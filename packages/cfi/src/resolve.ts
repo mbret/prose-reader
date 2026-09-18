@@ -1,9 +1,11 @@
 import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
 import {
+  getCharacterDataChunkStart,
+  isCharacterData,
   isIndirectionOnly,
   isNode,
   isParsedCfiRange,
-  isTextNode,
+  locateInCharacterDataChunk,
 } from "./utils"
 
 /**
@@ -172,7 +174,7 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
   }
 
   // If parentNode is a text node, use it directly for start/end
-  const isParentTextNode = parentNode.nodeType === Node.TEXT_NODE
+  const isParentTextNode = isCharacterData(parentNode)
 
   let startNode: Node
   let endNode: Node
@@ -235,10 +237,14 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
     }
   }
 
+  // A chunk offset can fall in a node after the chunk's first one
+  const start = locate(startNode, startOffset)
+  const end = locate(endNode, endOffset)
+
   // Create and return a DOM range
   const domRange = document.createRange()
-  domRange.setStart(startNode, startOffset)
-  domRange.setEnd(endNode, endOffset)
+  domRange.setStart(start.node, start.offset ?? 0)
+  domRange.setEnd(end.node, end.offset ?? 0)
 
   return {
     ...createBaseResultObject(startPath[startPath.length - 1]),
@@ -270,12 +276,10 @@ function extractSideBias(part: CfiPart | undefined): string | undefined {
 }
 
 /**
- * Determines if a step in a CFI path is for a text node
- * Text nodes have indices that are not doubled (odd numbers in CFI)
+ * Whether a step addresses a chunk of character data: per the CFI spec,
+ * element steps are even and character data steps odd.
  */
-function isTextNodeStep(part: CfiPart): boolean {
-  // Per the CFI spec, element indices are always even numbers
-  // So if we have an odd number, it's likely a text node or other non-element node
+function isCharacterDataStep(part: CfiPart): boolean {
   return part.index % 2 !== 0
 }
 
@@ -338,12 +342,29 @@ function createRangeForNode(
 
   if (offset !== undefined) {
     const offsetValue = Array.isArray(offset) ? offset[0] : offset
-    if (isTextNode(node)) {
+    if (isCharacterData(node)) {
       range.setStart(node, offsetValue || 0)
     }
   }
 
   return range
+}
+
+/**
+ * The node and offset a character offset lands on. An offset on a chunk step
+ * counts across the whole chunk, so it can fall in a node after the first one.
+ */
+function locate(
+  node: Node,
+  offset: number | number[] | undefined,
+): { node: Node; offset: number | undefined } {
+  const offsetValue = Array.isArray(offset) ? offset[0] : offset
+
+  if (offsetValue === undefined || !isCharacterData(node)) {
+    return { node, offset: offsetValue }
+  }
+
+  return locateInCharacterDataChunk(node, offsetValue)
 }
 
 /**
@@ -361,13 +382,14 @@ function traverseNodePath(
     const part = path[i]
     if (!_currentNode || !part) break
 
-    if (isTextNodeStep(part)) {
-      const nodeIndex = part.index - 1
-      if (nodeIndex >= 0 && nodeIndex < _currentNode.childNodes.length) {
-        _currentNode = _currentNode.childNodes[nodeIndex] as Node
+    if (isCharacterDataStep(part)) {
+      const chunkStart = getCharacterDataChunkStart(_currentNode, part.index)
+
+      if (chunkStart) {
+        _currentNode = chunkStart
       } else {
         if (throwOnError) {
-          throw new Error(`Invalid text node index: ${part.index}`)
+          throw new Error(`Empty character data chunk: ${part.index}`)
         }
         _currentNode = null
         break
@@ -420,14 +442,6 @@ function resolvePath(
   if (nodeById && remainingPathIndex >= path.length) {
     const lastPart = path.at(-1)
 
-    if (lastPart && isTextNodeStep(lastPart)) {
-      const childIndex = lastPart.index - 1
-      if (childIndex >= 0 && childIndex < nodeById.childNodes.length) {
-        const childNode = nodeById.childNodes[childIndex] as Node
-        return createNodeResultObject(childNode, lastPart)
-      }
-    }
-
     if (asRange) {
       const range = createRangeForNode(document, nodeById, lastPart?.offset)
       return createRangeResultObject(range, lastPart)
@@ -443,7 +457,7 @@ function resolvePath(
   // Handle virtual positions
   if (asRange && path.length > 0) {
     const lastPart = path[path.length - 1]
-    if (lastPart && !isTextNodeStep(lastPart)) {
+    if (lastPart && !isCharacterDataStep(lastPart)) {
       // Handle position before first element (index 0)
       if (lastPart.index === 0 && currentNode) {
         const range = document.createRange()
@@ -486,12 +500,17 @@ function resolvePath(
   }
 
   const lastPart = path.at(-1)
+  const located = locate(currentNode, lastPart?.offset)
+
   if (asRange) {
-    const range = createRangeForNode(document, currentNode, lastPart?.offset)
+    const range = createRangeForNode(document, located.node, located.offset)
     return createRangeResultObject(range, lastPart)
   }
 
-  return createNodeResultObject(currentNode, lastPart)
+  return {
+    ...createNodeResultObject(located.node, lastPart),
+    offset: located.offset,
+  }
 }
 
 /**
