@@ -20,7 +20,7 @@ import {
  * `XPOINTER_CHECK_EMIT_DIR=<dir> vitest run src/crengineCheck.test.ts` writes
  * the pairs to send (`<dir>/<fixture>.pairs.json`); the Lua script's answers,
  * saved as `src/tests/fixtures/<fixture>.crengine-check.json`, are what the
- * test asserts against. Fixtures without an answer file are skipped loudly.
+ * test asserts against. A fixture without an answer file fails the test.
  */
 const FIXTURES = [
   "synthetic",
@@ -162,7 +162,11 @@ describe.each(FIXTURES)(
         await mkdir(emitDir, { recursive: true })
         await writeFile(
           join(emitDir, `${name}.pairs.json`),
-          JSON.stringify({ pairs: pairs.map((pair) => [pair.xp0, pair.xp1]) }),
+          JSON.stringify({
+            pairs: pairs.map((pair) =>
+              pair.xp1 === null ? [pair.xp0] : [pair.xp0, pair.xp1],
+            ),
+          }),
         )
         console.info(
           `${name}: ${pairs.length} pairs written for tools/xpointer-check.lua`,
@@ -172,11 +176,9 @@ describe.each(FIXTURES)(
       }
 
       if (!existsSync(answers)) {
-        console.warn(
+        throw new Error(
           `${name}: no crengine answers at ${answers}, run tools/xpointer-check.lua (see tools/README.md)`,
         )
-
-        return
       }
 
       const results: CheckResult[] = JSON.parse(
