@@ -17,7 +17,8 @@
       "!**/CfiHandler.ts",
       "!**/playwright-report",
       "!**/Pods",
-      "!**/prose-react-native-demo/assets/index.html"
+      "!**/prose-react-native-demo/assets/index.html",
+      "!**/packages/koreader/src/tests/fixtures"
     ]
   },
   "formatter": {
@@ -25,7 +26,13 @@
     "indentStyle": "space",
     "indentWidth": 2
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {

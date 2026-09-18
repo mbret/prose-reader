@@ -1,0 +1,35 @@
+{
+  "name": "@prose-reader/koreader",
+  "version": "1.362.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "/dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "start": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@prose-reader/cfi": "^1.362.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.0.0",
+    "jszip": "^3.10.1",
+    "typescript": "*",
+    "vite": "^8"
+  }
+}
