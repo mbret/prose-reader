@@ -1,6 +1,6 @@
 import { type CfiPart, type CfiRange, type ParsedCfi, parse } from "./parse"
 import {
-  getCharacterDataChunkStart,
+  findCharacterDataChunk,
   isCharacterData,
   isIndirectionOnly,
   isNode,
@@ -212,12 +212,14 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
       const traversed = traverseNodePath(parentNode, startPath, 0, true)
       if (!traversed)
         throw new Error("Failed to resolve start node in CFI range")
-      startNode = traversed
+      startNode = traversed.node
       const lastStartPart = startPath[startPath.length - 1]
       startOffset =
+        traversed.childIndex ??
         (Array.isArray(lastStartPart?.offset)
           ? lastStartPart.offset[0]
-          : lastStartPart?.offset) ?? 0
+          : lastStartPart?.offset) ??
+        0
     }
 
     if (isEndOffsetOnly) {
@@ -228,12 +230,14 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
     } else {
       const traversed = traverseNodePath(parentNode, endPath, 0, true)
       if (!traversed) throw new Error("Failed to resolve end node in CFI range")
-      endNode = traversed
+      endNode = traversed.node
       const lastEndPart = endPath[endPath.length - 1]
       endOffset =
+        traversed.childIndex ??
         (Array.isArray(lastEndPart?.offset)
           ? lastEndPart.offset[0]
-          : lastEndPart?.offset) ?? 0
+          : lastEndPart?.offset) ??
+        0
     }
   }
 
@@ -369,6 +373,12 @@ function locate(
 }
 
 /**
+ * Where a path lands: a node, or, for a step into an empty chunk of character
+ * data, the boundary that chunk stands for in its parent (a child index).
+ */
+type PathTarget = { node: Node; childIndex?: number }
+
+/**
  * Traverses the DOM tree based on CFI path parts
  */
 function traverseNodePath(
@@ -376,7 +386,7 @@ function traverseNodePath(
   path: CfiPart[],
   startIndex: number,
   throwOnError: boolean,
-): Node | null {
+): PathTarget | null {
   let _currentNode = currentNode
 
   for (let i = startIndex; i < path.length; i++) {
@@ -384,17 +394,30 @@ function traverseNodePath(
     if (!_currentNode || !part) break
 
     if (isCharacterDataStep(part)) {
-      const chunkStart = getCharacterDataChunkStart(_currentNode, part.index)
+      const chunk = findCharacterDataChunk(_currentNode, part.index)
 
-      if (chunkStart) {
-        _currentNode = chunkStart
-      } else {
+      if (!chunk) {
         if (throwOnError) {
-          throw new Error(`Empty character data chunk: ${part.index}`)
+          throw new Error(`No character data chunk: ${part.index}`)
         }
         _currentNode = null
         break
       }
+
+      if (chunk.kind === "boundary") {
+        // Nothing lies below an empty chunk
+        if (i < path.length - 1) {
+          if (throwOnError) {
+            throw new Error(`Empty character data chunk: ${part.index}`)
+          }
+          _currentNode = null
+          break
+        }
+
+        return { node: chunk.parent, childIndex: chunk.childIndex }
+      }
+
+      _currentNode = chunk.node
     } else {
       const childElements: Node[] = Array.from(_currentNode.childNodes).filter(
         (node) => node.nodeType === Node.ELEMENT_NODE,
@@ -416,7 +439,7 @@ function traverseNodePath(
     }
   }
 
-  return _currentNode
+  return _currentNode ? { node: _currentNode } : null
 }
 
 /**
@@ -452,7 +475,7 @@ function resolvePath(
   }
 
   // Start traversal from the ID node if found, otherwise start from the document root
-  let currentNode: Node | null = nodeById || document.documentElement
+  const currentNode: Node | null = nodeById || document.documentElement
   const startIndex = nodeById ? remainingPathIndex : 0
 
   // Handle virtual positions
@@ -473,7 +496,7 @@ function resolvePath(
         path.slice(0, -1),
         startIndex,
         throwOnError,
-      )
+      )?.node
       if (parentNode) {
         const childElements: Node[] = Array.from(parentNode.childNodes).filter(
           (node) => node.nodeType === Node.ELEMENT_NODE,
@@ -491,9 +514,9 @@ function resolvePath(
     }
   }
 
-  currentNode = traverseNodePath(currentNode, path, startIndex, throwOnError)
+  const target = traverseNodePath(currentNode, path, startIndex, throwOnError)
 
-  if (!currentNode) {
+  if (!target) {
     if (throwOnError) {
       throw new Error("Failed to resolve CFI path")
     }
@@ -501,10 +524,16 @@ function resolvePath(
   }
 
   const lastPart = path.at(-1)
-  const located = locate(currentNode, lastPart?.offset)
+  const located =
+    target.childIndex === undefined
+      ? locate(target.node, lastPart?.offset)
+      : { node: target.node, offset: target.childIndex }
 
   if (asRange) {
-    const range = createRangeForNode(document, located.node, located.offset)
+    const range =
+      target.childIndex === undefined
+        ? createRangeForNode(document, located.node, located.offset)
+        : createCollapsedRange(document, target.node, target.childIndex)
     return {
       ...createRangeResultObject(range, lastPart),
       offset: located.offset,
@@ -515,6 +544,20 @@ function resolvePath(
     ...createNodeResultObject(located.node, lastPart),
     offset: located.offset,
   }
+}
+
+/**
+ * A range collapsed on a boundary of a node's children
+ */
+function createCollapsedRange(
+  document: Document,
+  node: Node,
+  childIndex: number,
+): Range {
+  const range = document.createRange()
+  range.setStart(node, childIndex)
+  range.setEnd(node, childIndex)
+  return range
 }
 
 /**

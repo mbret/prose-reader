@@ -134,15 +134,23 @@ export const getCharacterDataStep = (
 }
 
 /**
- * The first node of the character data chunk an odd step addresses under
- * `parent`, or `undefined` when that chunk is empty.
+ * What an odd step addresses under `parent`: the first node of its chunk of
+ * character data, or, when that chunk is empty, the boundary it stands for in
+ * the parent (the child index right after the preceding element, 0 before
+ * the first one). `undefined` when the parent has fewer element children
+ * than the step needs.
  */
-export const getCharacterDataChunkStart = (
+export type CharacterDataChunk =
+  | { kind: "node"; node: CharacterData }
+  | { kind: "boundary"; parent: Node; childIndex: number }
+
+export const findCharacterDataChunk = (
   parent: Node,
   step: number,
-): CharacterData | undefined => {
+): CharacterDataChunk | undefined => {
   const chunk = (step - 1) / 2
   let elementsBefore = 0
+  let childIndex = 0
 
   for (let i = 0; i < parent.childNodes.length; i++) {
     const child = parent.childNodes[i]
@@ -152,12 +160,15 @@ export const getCharacterDataChunkStart = (
     if (isElement(child)) {
       elementsBefore++
       if (elementsBefore > chunk) break
+      childIndex = i + 1
     } else if (elementsBefore === chunk && isCharacterData(child)) {
-      return child
+      return { kind: "node", node: child }
     }
   }
 
-  return undefined
+  return elementsBefore < chunk
+    ? undefined
+    : { kind: "boundary", parent, childIndex }
 }
 
 /**

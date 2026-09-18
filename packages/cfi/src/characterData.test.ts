@@ -161,13 +161,57 @@ describe("character data steps", () => {
       expect(result.offset).toBe(1)
     })
 
-    it("has no node for an empty chunk", () => {
+    it("resolves an empty chunk to the boundary it stands for in its parent", () => {
+      const document = parseBody("<p><em>x</em></p>")
+      const paragraph = paragraphOf(document)
+
+      const before = resolve("epubcfi(/4/2/1:0)", document)
+      expect(before.node).toBe(paragraph)
+      expect(before.offset).toBe(0)
+
+      const after = resolve("epubcfi(/4/2/3:0)", document)
+      expect(after.node).toBe(paragraph)
+      expect(after.offset).toBe(1)
+
+      const asRange = resolve("epubcfi(/4/2/3)", document, { asRange: true })
+      expect(asRange.node?.startContainer).toBe(paragraph)
+      expect(asRange.node?.startOffset).toBe(1)
+      expect(asRange.node?.collapsed).toBe(true)
+      expect(asRange.offset).toBe(1)
+
+      const range = resolve("epubcfi(/4/2,/1,/3)", document)
+      if (!(range.node instanceof Range)) throw new Error("no range")
+      expect(range.node.startContainer).toBe(paragraph)
+      expect(range.node.startOffset).toBe(0)
+      expect(range.node.endContainer).toBe(paragraph)
+      expect(range.node.endOffset).toBe(1)
+      expect(range.node.toString()).toBe("x")
+    })
+
+    it("has no node for a chunk the parent's elements cannot place", () => {
       const document = parseBody("<p><em>x</em></p>")
 
-      expect(resolve("epubcfi(/4/2/3:0)", document).node).toBeNull()
+      expect(resolve("epubcfi(/4/2/5:0)", document).node).toBeNull()
       expect(() =>
-        resolve("epubcfi(/4/2/3:0)", document, { throwOnError: true }),
+        resolve("epubcfi(/4/2/5:0)", document, { throwOnError: true }),
       ).toThrow()
+      // nothing lies below an empty chunk
+      expect(resolve("epubcfi(/4/2/3/1:0)", document).node).toBeNull()
+    })
+
+    it("lands a step the old generator wrote for text after two elements next to that text", () => {
+      // The old generator numbered "c" by its raw child index plus one (/3);
+      // the spec's step is /5, and /3 is the empty chunk between the two elements
+      const document = parseBody("<p><em>x</em><em>y</em>c</p>")
+      const paragraph = paragraphOf(document)
+
+      const legacy = resolve("epubcfi(/4/2/3:0)", document)
+      expect(legacy.node).toBe(paragraph)
+      expect(legacy.offset).toBe(1)
+
+      const current = resolve("epubcfi(/4/2/5:0)", document)
+      expect(current.node).toBe(characterDataAt(paragraph, 2))
+      expect(current.offset).toBe(0)
     })
 
     it("builds ranges with chunk offsets", () => {
