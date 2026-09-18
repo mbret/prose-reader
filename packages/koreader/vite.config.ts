@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, mergeConfig } from "vite"
 import dts from "vite-plugin-dts"
 import { createLibConfig } from "../../config/vite-lib"
@@ -15,5 +16,11 @@ export default defineConfig((env) =>
         exclude: ["src/**/*.test.ts", "src/tests/**/*"],
       }),
     ],
+    test: {
+      environment: "jsdom",
+      coverage: {
+        reportsDirectory: `./.test/coverage`,
+      },
+    },
   }),
 )
