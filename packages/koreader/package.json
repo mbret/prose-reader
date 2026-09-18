@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/koreader",
-  "version": "1.362.0",
+  "version": "1.364.0",
   "type": "module",
   "license": "MIT",
   "files": [
@@ -22,7 +22,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/cfi": "^1.362.0"
+    "@prose-reader/cfi": "^1.364.0"
   },
   "devDependencies": {
     "typescript": "*",
