@@ -2,7 +2,15 @@
  * EPUB Canonical Fragment Identifier (CFI) utilities
  */
 
-import { cfiEscape, findCommonAncestor, isElement, isNode } from "./utils"
+import {
+  cfiEscape,
+  findCommonAncestor,
+  getCharacterDataStep,
+  getElementStep,
+  isCharacterData,
+  isElement,
+  isNode,
+} from "./utils"
 
 /**
  * Options for generating CFIs
@@ -172,48 +180,25 @@ function generatePoint(
   let cfi = ""
   let currentNode: Node | null = node
   let textNode: Node | null = null
+  let cfiOffset = offset
 
-  // Handle text nodes specially
-  if (node?.nodeType === Node.TEXT_NODE) {
-    // If this is a text node, we need to remember it for text assertions
-    // but for path construction, we'll work with the parent
-    textNode = node
-
-    // Store the offset value for later
+  // Character data is addressed through the chunk of its parent it belongs
+  // to, and the offset counts from the start of that chunk (EPUB CFI 3.1.1).
+  // Any other non-element node (a comment) is ignored by the spec, so it gets
+  // the position of the chunk it sits in.
+  if (node && !isElement(node)) {
     const parentNode = node.parentNode
+
     if (!parentNode) {
       throw new Error("Text node doesn't have a parent")
     }
 
-    // Find position of text node among its parent's children
-    const siblings = Array.from(parentNode.childNodes)
-    const nodeIndex = siblings.indexOf(node as ChildNode)
+    const { step, base } = getCharacterDataStep(node)
 
-    if (nodeIndex === -1) {
-      throw new Error("Node not found in parent's children")
-    }
-
-    // Add the text node reference to the parent element's CFI
-    // Text nodes are referenced by their index + 1 (CFI is 1-based)
-    cfi = `/${nodeIndex + 1}`
-
-    // If the parent has an ID, include it in the path
-    if (isElement(parentNode) && parentNode.id) {
-      const parentId = parentNode.id
-      // Find the parent's index in its parent's children
-      const parentSiblings = Array.from(parentNode.parentNode?.childNodes || [])
-      const elementsBefore = parentSiblings
-        .slice(0, parentSiblings.indexOf(parentNode as ChildNode) + 1)
-        .filter((n) => n.nodeType === Node.ELEMENT_NODE)
-
-      const parentIndex = elementsBefore.length * 2
-
-      cfi = `/${parentIndex}[${cfiEscape(parentId)}]${cfi}`
-      currentNode = parentNode.parentNode
-    } else {
-      // Continue with the parent as our current node
-      currentNode = parentNode
-    }
+    cfi = `/${step}`
+    textNode = isCharacterData(node) ? node : null
+    cfiOffset = offset === undefined ? undefined : base + offset
+    currentNode = parentNode
   }
 
   // Set up text assertion if needed
@@ -224,49 +209,13 @@ function generatePoint(
 
   // Build the CFI path from the current node up to the html element
   while (currentNode?.parentNode) {
-    // Skip if we're a text node's parent that's already been handled specially
-    if (
-      !(
-        textNode &&
-        currentNode === textNode.parentNode &&
-        cfi.includes(`[${isElement(currentNode) ? currentNode.id : ""}]`)
-      )
-    ) {
-      const parentNode = currentNode.parentNode
+    const step = getElementStep(currentNode)
 
-      // Find index among parent's children
-      const siblings = Array.from(parentNode.childNodes)
-      const nodeIndex = siblings.indexOf(currentNode as ChildNode)
-
-      if (nodeIndex === -1) {
-        throw new Error("Node not found in parent's children")
-      }
-
-      // Find position among element siblings for CFI (element nodes only)
-      // For CFI, element references are even-numbered (per CFI spec)
-      const elementsBefore = siblings
-        .slice(0, nodeIndex + 1)
-        .filter((n) => n.nodeType === Node.ELEMENT_NODE)
-
-      // Find the position of the current node in element siblings
-      let elementIndex: number
-      if (currentNode.nodeType === Node.ELEMENT_NODE) {
-        elementIndex = elementsBefore.length
-      } else {
-        // For non-element nodes, use the number of elements before it
-        elementIndex = elementsBefore.length
-      }
-
-      // CFI is 1-based, then doubled for element nodes
-      const step = elementIndex * 2
-
-      // Add the node index to the CFI
-      // If the node has an ID, add it to the CFI
-      if (isElement(currentNode) && currentNode.id) {
-        cfi = `/${step}[${cfiEscape(currentNode.id)}]${cfi}`
-      } else {
-        cfi = `/${step}${cfi}`
-      }
+    // If the node has an ID, add it to the CFI
+    if (isElement(currentNode) && currentNode.id) {
+      cfi = `/${step}[${cfiEscape(currentNode.id)}]${cfi}`
+    } else {
+      cfi = `/${step}${cfi}`
     }
 
     // If we've reached the html element, stop traversing up
@@ -278,8 +227,8 @@ function generatePoint(
   }
 
   // Add the character offset if provided
-  if (offset !== undefined) {
-    cfi += `:${offset}`
+  if (cfiOffset !== undefined) {
+    cfi += `:${cfiOffset}`
   }
 
   // Add temporal and spatial offsets using helper
@@ -307,8 +256,11 @@ function generateRelativePath(
   options: GenerateOptions = {},
   position?: CfiPosition,
 ): string {
+  // A character offset counts from the start of the chunk the node belongs to
+  const base = isElement(toNode) ? 0 : getCharacterDataStep(toNode).base
+
   if (fromNode === toNode) {
-    let result = offset !== undefined ? `:${offset}` : ""
+    let result = offset !== undefined ? `:${base + offset}` : ""
     result = addOffsets(result, position?.temporal, position?.spatial)
     return result
   }
@@ -318,28 +270,12 @@ function generateRelativePath(
 
   // Build path from toNode up to fromNode (exclusive)
   while (currentNode && currentNode !== fromNode) {
-    const parentNode = currentNode.parentNode as Node | null
+    const parentNode: Node | null = currentNode.parentNode
     if (!parentNode) break
 
-    const siblings = Array.from(parentNode.childNodes)
-    const index = siblings.indexOf(currentNode as ChildNode)
-
-    if (index === -1) {
-      throw new Error("Node not found in parent's children")
-    }
-
-    let step: number
-    if (currentNode.nodeType === Node.ELEMENT_NODE) {
-      // Find index among element siblings
-      const elementSiblings = siblings.filter(
-        (n) => n.nodeType === Node.ELEMENT_NODE,
-      )
-      const elementIndex = elementSiblings.indexOf(currentNode as ChildNode)
-      step = (elementIndex + 1) * 2
-    } else {
-      // For text nodes, use index among all child nodes (1-based, odd)
-      step = index + 1
-    }
+    const step = isElement(currentNode)
+      ? getElementStep(currentNode)
+      : getCharacterDataStep(currentNode).step
 
     // If the node has an ID, add it
     if (isElement(currentNode) && currentNode.id) {
@@ -355,14 +291,14 @@ function generateRelativePath(
 
   // Add offset if specified
   if (offset !== undefined) {
-    relativePath += `:${offset}`
+    relativePath += `:${base + offset}`
   }
 
   // Add temporal and spatial offsets using helper
   relativePath = addOffsets(relativePath, position?.temporal, position?.spatial)
 
   // Add text assertion and side bias using helper
-  if (options.includeTextAssertions && toNode.nodeType === Node.TEXT_NODE) {
+  if (options.includeTextAssertions && isCharacterData(toNode)) {
     const textAssertion = extractTextAssertion(toNode, offset, options)
     relativePath = addTextAssertionAndSideBias(
       relativePath,

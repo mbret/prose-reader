@@ -70,13 +70,136 @@ export const isNode = (node: any): node is Node =>
   typeof node === "object" &&
   node !== null &&
   "nodeType" in node &&
-  (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE)
+  (node.nodeType === Node.ELEMENT_NODE ||
+    node.nodeType === Node.TEXT_NODE ||
+    node.nodeType === Node.CDATA_SECTION_NODE)
 
 /**
- * Check if a node is a text node
+ * Text and CDATA nodes: the character data a CFI step can address
+ * (EPUB CFI 3.1.1). Comments and processing instructions are ignored.
  */
-export const isTextNode = (node: Node): boolean =>
-  node.nodeType === Node.TEXT_NODE
+export const isCharacterData = (node: Node): node is CharacterData =>
+  node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE
+
+/**
+ * The even step of an element: twice its 1-based position among its parent's
+ * element children.
+ */
+export const getElementStep = (node: Node): number => {
+  const parent = node.parentNode
+  let elements = 0
+
+  for (let i = 0; parent && i < parent.childNodes.length; i++) {
+    const child = parent.childNodes[i]
+
+    if (!child) break
+    if (isElement(child)) elements++
+    if (child === node) break
+  }
+
+  return elements * 2
+}
+
+/**
+ * The step of the character data chunk a node belongs to, and the number of
+ * characters that chunk holds before the node.
+ *
+ * Character data between two element children forms one chunk with an odd
+ * index (1 before the first element, 3 after it, and so on), whatever the
+ * number of DOM nodes it spans: adjacent text nodes, CDATA sections and the
+ * comments between them all belong to the same chunk, and a character offset
+ * counts from its start.
+ */
+export const getCharacterDataStep = (
+  node: Node,
+): { step: number; base: number } => {
+  const parent = node.parentNode
+  let elementsBefore = 0
+  let base = 0
+
+  for (let i = 0; parent && i < parent.childNodes.length; i++) {
+    const child = parent.childNodes[i]
+
+    if (!child || child === node) break
+
+    if (isElement(child)) {
+      elementsBefore++
+      base = 0
+    } else if (isCharacterData(child)) {
+      base += child.data.length
+    }
+  }
+
+  return { step: elementsBefore * 2 + 1, base }
+}
+
+/**
+ * What an odd step addresses under `parent`: the first node of its chunk of
+ * character data, or, when that chunk is empty, the boundary it stands for in
+ * the parent (the child index right after the preceding element, 0 before
+ * the first one). `undefined` when the parent has fewer element children
+ * than the step needs.
+ */
+export type CharacterDataChunk =
+  | { kind: "node"; node: CharacterData }
+  | { kind: "boundary"; parent: Node; childIndex: number }
+
+export const findCharacterDataChunk = (
+  parent: Node,
+  step: number,
+): CharacterDataChunk | undefined => {
+  const chunk = (step - 1) / 2
+  let elementsBefore = 0
+  let childIndex = 0
+
+  for (let i = 0; i < parent.childNodes.length; i++) {
+    const child = parent.childNodes[i]
+
+    if (!child) break
+
+    if (isElement(child)) {
+      elementsBefore++
+      if (elementsBefore > chunk) break
+      childIndex = i + 1
+    } else if (elementsBefore === chunk && isCharacterData(child)) {
+      return { kind: "node", node: child }
+    }
+  }
+
+  return elementsBefore < chunk
+    ? undefined
+    : { kind: "boundary", parent, childIndex }
+}
+
+/**
+ * The node and local offset a chunk offset lands on, counting from `first`,
+ * the chunk's first node. A boundary between two nodes lands at the start of
+ * the later one; an offset past the chunk keeps its excess on the last node.
+ */
+export const locateInCharacterDataChunk = (
+  first: CharacterData,
+  offset: number,
+): { node: CharacterData; offset: number } => {
+  let node = first
+  let base = 0
+  let sibling: Node | null = first
+
+  while (sibling && !isElement(sibling)) {
+    if (isCharacterData(sibling)) {
+      node = sibling
+
+      if (offset < base + sibling.data.length) {
+        return { node, offset: offset - base }
+      }
+
+      base += sibling.data.length
+    }
+
+    sibling = sibling.nextSibling
+  }
+
+  return { node, offset: offset - (base - node.data.length) }
+}
 
 /**
  * Checks if a parsed CFI only contains indirection with no further path
