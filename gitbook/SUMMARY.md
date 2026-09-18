@@ -85,6 +85,10 @@
 
 * [About](cfi/about.md)
 
+## KOReader
+
+* [KOReader positions](koreader/README.md)
+
 ## React Reader
 
 * [Introduction](react-reader/introduction.md)
