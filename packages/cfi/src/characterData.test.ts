@@ -177,6 +177,7 @@ describe("character data steps", () => {
       const asRange = resolve("epubcfi(/4/2/1:3)", document, { asRange: true })
       expect(asRange.node?.startContainer).toBe(characterDataAt(paragraph, 2))
       expect(asRange.node?.startOffset).toBe(1)
+      expect(asRange.offset).toBe(1)
 
       for (const cfi of ["epubcfi(/4/2/1,:1,:3)", "epubcfi(/4/2,/1:1,/1:3)"]) {
         const range = resolve(cfi, document)
@@ -190,6 +191,22 @@ describe("character data steps", () => {
         expect(range.node.endContainer).toBe(characterDataAt(paragraph, 2))
         expect(range.node.endOffset).toBe(1)
         expect(range.node.toString()).toBe("bc")
+      }
+    })
+
+    it("reports the offset of the node a range starts in, not the chunk offset", () => {
+      const document = parseBody("<p>ab<!-- note -->cd</p>")
+      const paragraph = paragraphOf(document)
+
+      for (const cfi of ["epubcfi(/4/2/1,:3,:4)", "epubcfi(/4/2,/1:3,/1:4)"]) {
+        const range = resolve(cfi, document)
+
+        if (!(range.node instanceof Range)) throw new Error("no range")
+
+        expect(range.node.startContainer).toBe(characterDataAt(paragraph, 2))
+        expect(range.node.startOffset).toBe(1)
+        expect(range.offset).toBe(1)
+        expect(range.node.toString()).toBe("d")
       }
     })
   })

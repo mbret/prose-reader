@@ -250,6 +250,7 @@ function resolveRange(range: CfiRange, document: Document): ResolveResult {
     ...createBaseResultObject(startPath[startPath.length - 1]),
     node: domRange,
     isRange: true,
+    offset: start.offset,
   }
 }
 
@@ -504,7 +505,10 @@ function resolvePath(
 
   if (asRange) {
     const range = createRangeForNode(document, located.node, located.offset)
-    return createRangeResultObject(range, lastPart)
+    return {
+      ...createRangeResultObject(range, lastPart),
+      offset: located.offset,
+    }
   }
 
   return {
