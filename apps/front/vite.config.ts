@@ -1,7 +1,71 @@
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import path from "node:path"
+import babel from "@rolldown/plugin-babel"
+import replace from "@rollup/plugin-replace"
+import react, { reactCompilerPreset } from "@vitejs/plugin-react"
+import { defineConfig, type Plugin } from "vite"
+import { VitePWA } from "vite-plugin-pwa"
+import svgr from "vite-plugin-svgr"
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
+export default defineConfig(({ mode }) => ({
+  build: {
+    sourcemap: true,
+    minify: mode !== "development",
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: "index.html",
+      },
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      // Node.js global to browser globalThis
+      // fix sax on browser
+      define: {
+        global: "globalThis",
+      },
+    },
+  },
+  /**
+   * require('events') uses package events which is a web polyfill
+   */
+  resolve: {
+    alias: {
+      stream: path.resolve(__dirname, "./stream-shim.js"),
+    },
+  },
+  plugins: [
+    /**
+     * The service worker streams the demo books. It is registered at the root
+     * scope so that its `/streamer` routes stay reachable from the `/demo`
+     * pages.
+     */
+    VitePWA({
+      base: "/",
+      minify: false,
+      injectRegister: false,
+      strategies: "injectManifest",
+      manifest: false,
+      injectManifest: {
+        injectionPoint: undefined,
+      },
+      srcDir: "src/demo/serviceWorker",
+      filename: "service-worker.ts",
+      ...(mode === "development" && {
+        devOptions: {
+          enabled: true,
+        },
+      }),
+    }),
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
+    }),
+    svgr({}),
+    replace({
+      // fix for util/util.js
+      "process.env.NODE_DEBUG": false,
+      preventAssignment: true,
+    }) as Plugin,
+  ],
+}))
