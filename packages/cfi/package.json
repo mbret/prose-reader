@@ -7,6 +7,10 @@
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
