@@ -86,7 +86,7 @@ type ParsedXPointer = {
 
 ## The dialect
 
-The rules below were read from crengine's source (`crengine/src/lvtinydom.cpp`, `lvxml.cpp`, `epubfmt.cpp`, `mathml.cpp`) and verified against a real KOReader build (v2026.07, crengine DOM 20240114).
+The rules below were read from crengine's source (`crengine/src/lvtinydom.cpp`, `lvxml.cpp`, `epubfmt.cpp`, `mathml.cpp`) and verified against a real KOReader build: the test suite carries, for seven fixture EPUBs, the pointers crengine itself wrote for their visible words and its verdict on the pointers this package emits.
 
 A pointer walks crengine's single DOM for the whole book, `<body><DocFragment><body>…</body></DocFragment>…</body>`, one `DocFragment` per `<itemref>` in spine order (`linear="no"` items, SVG items and items crengine fails to parse included, since DOM version 20240114). Steps count siblings of the same kind, 1-based: `/p[3]` is the third `<p>` child, `/text()[2]` the second text node child, `/4` the fourth child of any kind. A trailing `.N` is a point: a character offset on a text node, a child index on an element; without it the pointer names the node, which is how links and TOC targets are written. The grammar is `ParseXPathStep`, the resolution `createXPointerV2`.
 
@@ -117,6 +117,10 @@ Which elements are blocks, take text or are preformatted comes from crengine's b
 
 `DocFragment[N]` is spine item `N - 1`, by construction, for every book opened with crengine DOM 20240114 or later. Books first opened by KOReader before that got a fragment only for `application/xhtml+xml` items, so their saved pointers can be shifted by the number of non-XHTML items before them; nothing can be done about it here.
 
+## How it is tested
+
+The package's `src/tests/fixtures/` holds seven EPUBs (a synthetic one built to exercise every rule above, plus public-domain and sample books with `linear="no"` items, an SVG spine item, `<pre>` blocks, tables, MathML, ruby, non-ASCII text and emoji) together with two files per book produced by KOReader's own engine: the pointers crengine wrote for a sample of every spine item's words, and its verdict on the pointers this package emits for the book's elements and text nodes. Every word is checked in both directions, every text node and element of every book is round-tripped, and the emitted strings are run through re-implementations of Kavita's, Readest's and Crosspoint's parsers. `packages/koreader/tools/README.md` explains how to regenerate the ground truth from a KOReader Linux release.
+
 ## Known limitations
 
 - **Book CSS is not applied.** See above: a `<span style="display:block">` keeps its whitespace for this package where crengine drops it. The consequence is a pointer off by one text node, never off by a chapter.
@@ -131,8 +135,8 @@ Which elements are blocks, take text or are preformatted comes from crengine's b
 
 Every earlier implementation of this conversion shipped percentages or approximations first and rebuilt around exact pointers after bug reports:
 
-- **KOReader / crengine** — the source of truth. Its sync plugin passes the remote string straight to `GotoXPointer` with no validation, so an emitted pointer must resolve on the first try.
+- **KOReader / crengine** — the source of truth. Its sync plugin passes the remote string straight to `GotoXPointer` with no validation, so an emitted pointer must resolve on the first try; that is what the test suite checks with the engine itself.
 - **Readest** (foliate-js, CFI native, the closest analogue) — emitted pointers KOReader could not read (readest/readest#1857), and re-anchored a pointer that resolved fine in its own spine item to the next chapter because the percentage it came with disagreed with Readest's own (#5980). Its converter now pins its whitespace rules against crengine with a Lua oracle, the approach this package borrows and extends to the engine's own verdict on emitted pointers.
-- **Kavita** — its `split('/')` gave up on pointers with fewer than six segments, such as `/body/DocFragment[28]/body/p[99].0` (Kareadita/Kavita#4932).
-- **Crosspoint** — started with percentage plus an estimated path (crosspoint-reader#232) and rebuilt around exact visible-text offsets with code point counting and text node indexes (#3174); its parser expects digit-only indexes, tag names under 12 characters and at most 16 steps, constraints every pointer this package emits satisfies.
+- **Kavita** — its `split('/')` gave up on pointers with fewer than six segments, such as `/body/DocFragment[28]/body/p[99].0` (Kareadita/Kavita#4932). Its regex and split are re-implemented in the interop test, so a change in emission shape fails here first.
+- **Crosspoint** — started with percentage plus an estimated path (crosspoint-reader#232) and rebuilt around exact visible-text offsets with code point counting and text node indexes (#3174); its parser expects digit-only indexes, tag names under 12 characters and at most 16 steps, which the interop test checks against everything this package emits.
 - **Komga, Calibre-Web Automated, Codexa** — percentage-only comparisons that report "already at the same position" a chapter behind. Percentages are computed per device from its own pagination and never agree; the pointer is the only precise field, which is why this package exists.
