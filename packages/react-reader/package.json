@@ -4,6 +4,10 @@
   "version": "1.365.0",
   "type": "module",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./index.css": "./dist/index.css"

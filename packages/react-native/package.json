@@ -5,6 +5,10 @@
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
   "react-native": "./dist/native/index.cjs",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": {
       "import": "./dist/native/index.js",
