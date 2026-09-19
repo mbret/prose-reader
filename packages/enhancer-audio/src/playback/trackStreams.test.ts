@@ -44,6 +44,7 @@ const createPaginationState = ({
 >): PaginationInfo => ({
   beginPageIndexInSpineItem: undefined,
   beginNumberOfPagesInSpineItem: 0,
+  isSettled: false,
   beginCfi: undefined,
   beginSpineItemIndex,
   endPageIndexInSpineItem: undefined,

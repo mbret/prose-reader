@@ -2,6 +2,7 @@ import {
   filter,
   merge,
   type Observable,
+  share,
   switchMap,
   take,
   takeUntil,
@@ -136,6 +137,7 @@ export class PaginationController extends DestroyableClass {
             const endNumberOfPagesInSpineItem = endSpineItem.numberOfPages
 
             this.pagination.update({
+              isSettled: false,
               beginCfi,
               beginNumberOfPagesInSpineItem,
               beginPageIndexInSpineItem: beginPageIndex,
@@ -149,6 +151,7 @@ export class PaginationController extends DestroyableClass {
           }),
         )
       }),
+      share(),
     )
 
     /**
@@ -190,6 +193,7 @@ export class PaginationController extends DestroyableClass {
 
         // @todo only update long cfi if the item layout change but specifically its content
         this.pagination.update({
+          isSettled: beginSpineItem.value.isReady && endSpineItem.value.isReady,
           beginCfi: beginPageEntry?.firstVisibleNode
             ? this.cfi.generateCfiForSpineItemPage({
                 spineItem: beginSpineItem.item,

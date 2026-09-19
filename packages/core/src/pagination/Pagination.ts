@@ -11,6 +11,7 @@ export class Pagination extends ReactiveEntity<PaginationInfo> {
     super({
       beginPageIndexInSpineItem: undefined,
       beginNumberOfPagesInSpineItem: 0,
+      isSettled: false,
       beginCfi: undefined,
       beginSpineItemIndex: undefined,
       endPageIndexInSpineItem: undefined,

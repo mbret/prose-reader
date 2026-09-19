@@ -6,7 +6,13 @@
  * transition of reader state, many non-final states could be emitted and would not bring much value
  * to the user. This is an opinionated decision for this API
  */
-import { BehaviorSubject, tap } from "rxjs"
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  tap,
+} from "rxjs"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
@@ -26,7 +32,7 @@ export const paginationEnhancer =
   ) =>
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
-    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>({
+    const initialPagination: EnhancerPaginationInto = {
       ...reader.pagination.state,
       beginChapterInfo: undefined,
       beginCfi: undefined,
@@ -41,6 +47,10 @@ export const paginationEnhancer =
       endChapterInfo: undefined,
       endSpineItemReadingDirection: undefined,
       percentageEstimateOfBook: 0,
+    }
+    const enhancedPagination = new BehaviorSubject({
+      source: reader.pagination.state,
+      info: initialPagination,
     })
 
     const resourcesLocator = new ResourcesLocator(reader)
@@ -51,18 +61,34 @@ export const paginationEnhancer =
 
     return {
       ...reader,
+      navigation: {
+        ...reader.navigation,
+        settled$: combineLatest([
+          reader.navigation.settled$,
+          enhancedPagination,
+        ]).pipe(
+          map(
+            ([settled, snapshot]) =>
+              settled &&
+              snapshot.info.isSettled &&
+              snapshot.source === reader.pagination.state,
+          ),
+          distinctUntilChanged(),
+        ),
+      },
       locateResource: resourcesLocator.locateResource.bind(resourcesLocator),
       destroy: () => {
         paginationSub.unsubscribe()
+        enhancedPagination.complete()
         reader.destroy()
       },
       pagination: {
         ...reader.pagination,
         get state() {
-          return enhancedPagination.value
+          return enhancedPagination.value.info
         },
         get state$() {
-          return enhancedPagination
+          return enhancedPagination.pipe(map((snapshot) => snapshot.info))
         },
       },
     } as unknown as PaginationOutput

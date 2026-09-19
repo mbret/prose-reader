@@ -1,11 +1,15 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   map,
   merge,
+  of,
   Subject,
   shareReplay,
+  switchMap,
+  timer,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
@@ -118,13 +122,35 @@ export const createNavigator = ({
     shareReplay(1),
   )
 
+  const settledSubject = new BehaviorSubject(false)
+  const settledSubscription = combineLatest([
+    navigationState$,
+    internalNavigator.navigationSubject,
+  ])
+    .pipe(
+      switchMap(([state, navigation]) => {
+        const item = spineItemsManager.get(navigation.spineItem)
+        return (item?.isReady$ ?? of(false)).pipe(
+          map((ready) => state === "free" && ready),
+        )
+      }),
+      // Defer true until synchronous restoration and pagination notifications finish.
+      switchMap((settled) =>
+        settled ? timer(0).pipe(map(() => true)) : of(false),
+      ),
+    )
+    .subscribe(settledSubject)
+
   const navigate = (to: UserNavigationEntry) => {
+    settledSubject.next(false)
     Report.info("User navigation", to)
 
     userExplicitNavigationSubject.next(to)
   }
 
   const destroy = () => {
+    settledSubscription.unsubscribe()
+    settledSubject.complete()
     navigationModeControllers.forEach((controller) => {
       controller.destroy()
     })
@@ -133,6 +159,7 @@ export const createNavigator = ({
 
   return {
     destroy,
+    settled$: settledSubject.asObservable().pipe(distinctUntilChanged()),
     getNavigation: () => internalNavigator.navigation,
     internalNavigator,
     scrollNavigationController,

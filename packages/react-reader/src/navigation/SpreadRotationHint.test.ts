@@ -38,6 +38,7 @@ const createPagination = (
   index: number,
 ): PaginationInfo & ExtraPaginationInfo => ({
   beginAbsolutePageIndex: 0,
+  isSettled: false,
   beginCfi: undefined,
   beginChapterInfo: undefined,
   beginNumberOfPagesInSpineItem: 1,

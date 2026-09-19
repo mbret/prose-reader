@@ -1,5 +1,12 @@
 import type { Manifest } from "@prose-reader/shared"
-import { merge, type Observable, type ObservedValueOf, of, Subject } from "rxjs"
+import {
+  BehaviorSubject,
+  combineLatest,
+  merge,
+  type Observable,
+  of,
+  Subject,
+} from "rxjs"
 import { distinctUntilChanged, map, skip, takeUntil, tap } from "rxjs/operators"
 import { CfiManager } from "./cfi"
 import {
@@ -116,6 +123,24 @@ export const createReader = ({
     cfi,
   )
 
+  const paginationState = new BehaviorSubject(pagination.value)
+  combineLatest([pagination, navigator.settled$])
+    .pipe(
+      map(([state, settled]) => ({
+        ...state,
+        isSettled:
+          state.isSettled &&
+          settled &&
+          state.navigationId === navigator.getNavigation().id,
+      })),
+      takeUntil(destroy$),
+    )
+    .subscribe(paginationState)
+  const settled$ = paginationState.pipe(
+    map((state) => state.isSettled),
+    distinctUntilChanged(),
+  )
+
   // bridge all navigation stream with reader so they can be shared across app
   navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
   navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
@@ -210,6 +235,7 @@ export const createReader = ({
     features.destroy()
     destroy$.next()
     destroy$.complete()
+    paginationState.complete()
     viewport.destroy()
   }
 
@@ -219,7 +245,7 @@ export const createReader = ({
     spine,
     hookManager,
     cfi,
-    navigation: navigator,
+    navigation: { ...navigator, settled$ },
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
     layout,
@@ -227,10 +253,10 @@ export const createReader = ({
     destroy,
     pagination: {
       get state() {
-        return pagination.value
+        return paginationState.value
       },
-      get state$(): Observable<ObservedValueOf<typeof pagination>> {
-        return pagination
+      get state$(): Observable<typeof pagination.value> {
+        return paginationState.asObservable()
       },
     },
     settings: settingsManager as SettingsInterface<

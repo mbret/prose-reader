@@ -257,6 +257,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     totals$,
   ]).pipe(
     map(([pagination, isUsingSpread, chaptersInfo, totals]) => ({
+      source: pagination,
       ...pagination,
       ...chaptersInfo,
       isUsingSpread,
@@ -294,11 +295,15 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   )
 
   return combineLatest([basePaginationInfo$, progression$]).pipe(
-    map(([basePaginationInfo, progression]) => ({
-      ...basePaginationInfo,
-      ...progression,
+    map(([{ source, ...basePaginationInfo }, progression]) => ({
+      source,
+      info: { ...basePaginationInfo, ...progression },
     })),
-    distinctUntilChanged(isShallowEqual),
+    distinctUntilChanged(
+      (previous, next) =>
+        previous.source === next.source &&
+        isShallowEqual(previous.info, next.info),
+    ),
     auditTime(5),
   )
 }

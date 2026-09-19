@@ -7,6 +7,7 @@
 ## `type PaginationInfo`
 
 <pre class="language-typescript"><code class="lang-typescript">type PaginationInfo = {
+  isSettled: boolean
   beginCfi: string | undefined
   beginSpineItemIndex: number | undefined
   beginChapterInfo: ChapterInfo | undefined
@@ -72,3 +73,19 @@ PaginationInfo
 ```
 
 Static method to return the pagination info. Be careful since it can return an invalid pagination (For example if no book is loaded).
+
+## Saving settled progress
+
+Pagination can describe a temporary item-start position during loading or navigation. Only persist snapshots with `isSettled: true`, after the visible items are ready and their page positions have been generated. `reader.navigation.settled$` emits the corresponding boolean readiness signal, including waiting for the pagination enhancer's delayed snapshot.
+
+```typescript
+import { filter } from "rxjs"
+
+reader.pagination.state$
+  .pipe(filter(state => state.isSettled))
+  .subscribe(({ beginCfi }) => {
+    if (beginCfi) localStorage.setItem("cfi", beginCfi)
+  })
+```
+
+The signal starts false and becomes false again during navigation, layout, or a navigation lock. It describes the current visible position, not completion of all background book loading.
