@@ -136,38 +136,43 @@ export class PaginationController extends DestroyableClass {
     const { endPageIndex = 0 } =
       this.getVisiblePages(endSpineItem, position) ?? {}
 
-    const beginLastCfi = previous.beginCfi
-    const endLastCfi = previous.endCfi
-
-    /**
-     * A carried over cfi is only replaced if it cannot describe this result:
-     * it is missing, it is a root target, or the item changed.
-     */
-    const shouldUpdateBeginCfi =
-      beginLastCfi === undefined ||
-      this.cfi.isRootCfi(beginLastCfi) ||
-      previous.beginSpineItemIndex !== beginSpineItemIndex
-
-    const shouldUpdateEndCfi =
-      previous.endSpineItemIndex !== endSpineItemIndex ||
-      endLastCfi === undefined ||
-      this.cfi.isRootCfi(endLastCfi)
-
     return {
-      beginCfi: shouldUpdateBeginCfi
-        ? this.cfi.generateRootCfi(beginSpineItem.item)
-        : beginLastCfi,
+      beginCfi: this.carryOverCfi(beginSpineItem, beginSpineItemIndex, {
+        cfi: previous.beginCfi,
+        spineItemIndex: previous.beginSpineItemIndex,
+      }),
       beginNumberOfPagesInSpineItem: beginSpineItem.numberOfPages,
       beginPageIndexInSpineItem: beginPageIndex,
       beginSpineItemIndex,
-      endCfi: shouldUpdateEndCfi
-        ? this.cfi.generateRootCfi(endSpineItem.item)
-        : endLastCfi,
+      endCfi: this.carryOverCfi(endSpineItem, endSpineItemIndex, {
+        cfi: previous.endCfi,
+        spineItemIndex: previous.endSpineItemIndex,
+      }),
       endNumberOfPagesInSpineItem: endSpineItem.numberOfPages,
       endPageIndexInSpineItem: endPageIndex,
       endSpineItemIndex,
       navigationId: navigation.id,
     }
+  }
+
+  /**
+   * Keeps the previous cfi unless it cannot describe this result: it is
+   * missing, it is a root target, or the item changed. Otherwise the item
+   * start stands in until {@link resolvePositions} resolves the real page.
+   */
+  private carryOverCfi(
+    spineItem: SpineItem,
+    spineItemIndex: number | undefined,
+    previous: { cfi: string | undefined; spineItemIndex: number | undefined },
+  ) {
+    const canCarryOver =
+      previous.cfi !== undefined &&
+      !this.cfi.isRootCfi(previous.cfi) &&
+      previous.spineItemIndex === spineItemIndex
+
+    return canCarryOver
+      ? previous.cfi
+      : this.cfi.generateRootCfi(spineItem.item)
   }
 
   /**
