@@ -5,18 +5,18 @@ export const useNavigationContext = () => {
   const hasOnlyOnePage = pagination?.numberOfTotalPages === 1
 
   const isBeginWithinChapter =
-    (pagination?.beginNumberOfPagesInSpineItem ?? 0) > 1
+    (pagination?.begin.numberOfPagesInSpineItem ?? 0) > 1
 
-  const isEndWithinChapter = (pagination?.endNumberOfPagesInSpineItem ?? 0) > 1
+  const isEndWithinChapter = (pagination?.end.numberOfPagesInSpineItem ?? 0) > 1
 
   const beginPageIndex =
     (pagination?.hasChapters
-      ? pagination?.beginPageIndexInSpineItem
-      : pagination?.beginAbsolutePageIndex) ?? 0
+      ? pagination?.begin.pageIndexInSpineItem
+      : pagination?.begin.absolutePageIndex) ?? 0
   const endPageIndex =
     (pagination?.hasChapters
-      ? pagination?.endPageIndexInSpineItem
-      : pagination?.endAbsolutePageIndex) ?? 0
+      ? pagination?.end.pageIndexInSpineItem
+      : pagination?.end.absolutePageIndex) ?? 0
 
   const [leftPageIndex = 0, rightPageIndex = 0] = [
     beginPageIndex,
@@ -24,12 +24,12 @@ export const useNavigationContext = () => {
   ].sort((a, b) => a - b)
 
   const beginAndEndAreDifferent =
-    pagination?.beginPageIndexInSpineItem !==
-      pagination?.endPageIndexInSpineItem ||
-    pagination?.beginSpineItemIndex !== pagination?.endSpineItemIndex
+    pagination?.begin.pageIndexInSpineItem !==
+      pagination?.end.pageIndexInSpineItem ||
+    pagination?.begin.spineItemIndex !== pagination?.end.spineItemIndex
 
   const totalApproximatePages = pagination?.hasChapters
-    ? pagination?.beginNumberOfPagesInSpineItem
+    ? pagination?.begin.numberOfPagesInSpineItem
     : pagination?.numberOfTotalPages
 
   return {

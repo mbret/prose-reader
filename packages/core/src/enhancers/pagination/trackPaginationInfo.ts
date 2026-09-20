@@ -9,7 +9,8 @@ import {
   switchMap,
 } from "rxjs"
 import { observeSettledNavigation } from "../../navigation/operators"
-import type { PaginationInfo } from "../../pagination/types"
+import { isSamePaginationResult } from "../../pagination/edges"
+import type { PaginationEdge, PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
 import { Pages, type PagesState } from "../../spine/Pages"
 import type { SpineItem } from "../../spineItem/SpineItem"
@@ -28,13 +29,15 @@ type ChaptersData = {
   chaptersInfo: ReturnType<typeof buildStaticChaptersInfo>
 }
 
-type ChapterPaginationInfo = Pick<
-  PaginationInfo,
-  | "beginSpineItemIndex"
-  | "beginPageIndexInSpineItem"
-  | "endSpineItemIndex"
-  | "endPageIndexInSpineItem"
+type ChapterPaginationEdge = Pick<
+  PaginationEdge,
+  "spineItemIndex" | "pageIndexInSpineItem"
 >
+
+type ChapterPaginationInfo = {
+  begin: ChapterPaginationEdge
+  end: ChapterPaginationEdge
+}
 
 const mapChapterInfo = ({
   beginItem,
@@ -50,11 +53,11 @@ const mapChapterInfo = ({
   pagesState: PagesState
 }) => {
   const beginPageEntry =
-    beginItem && paginationInfo.beginPageIndexInSpineItem !== undefined
+    beginItem && paginationInfo.begin.pageIndexInSpineItem !== undefined
       ? Pages.fromSpineItemPageIndex(
           pagesState,
           beginItem.index,
-          paginationInfo.beginPageIndexInSpineItem,
+          paginationInfo.begin.pageIndexInSpineItem,
         )
       : undefined
   const beginNextPageEntry = beginPageEntry
@@ -62,11 +65,11 @@ const mapChapterInfo = ({
     : undefined
 
   const endPageEntry =
-    endItem && paginationInfo.endPageIndexInSpineItem !== undefined
+    endItem && paginationInfo.end.pageIndexInSpineItem !== undefined
       ? Pages.fromSpineItemPageIndex(
           pagesState,
           endItem.index,
-          paginationInfo.endPageIndexInSpineItem,
+          paginationInfo.end.pageIndexInSpineItem,
         )
       : undefined
   const endNextPageEntry = endPageEntry
@@ -95,16 +98,20 @@ const mapChapterInfo = ({
     : undefined
 
   return {
-    beginChapterInfo:
-      beginChapterInfoFromVisibleNode ??
-      (beginItem ? chaptersData.chaptersInfo[beginItem.item.id] : undefined),
-    beginSpineItemReadingDirection: beginItem?.readingDirection,
-    beginAbsolutePageIndex: beginPageEntry?.absolutePageIndex,
-    endChapterInfo:
-      endChapterInfoFromVisibleNode ??
-      (endItem ? chaptersData.chaptersInfo[endItem.item.id] : undefined),
-    endSpineItemReadingDirection: endItem?.readingDirection,
-    endAbsolutePageIndex: endPageEntry?.absolutePageIndex,
+    begin: {
+      chapterInfo:
+        beginChapterInfoFromVisibleNode ??
+        (beginItem ? chaptersData.chaptersInfo[beginItem.item.id] : undefined),
+      spineItemReadingDirection: beginItem?.readingDirection,
+      absolutePageIndex: beginPageEntry?.absolutePageIndex,
+    },
+    end: {
+      chapterInfo:
+        endChapterInfoFromVisibleNode ??
+        (endItem ? chaptersData.chaptersInfo[endItem.item.id] : undefined),
+      spineItemReadingDirection: endItem?.readingDirection,
+      absolutePageIndex: endPageEntry?.absolutePageIndex,
+    },
   }
 }
 
@@ -161,13 +168,15 @@ const getProgressionForPagination = ({
   navigationPosition: { x: number; y: number }
   manifest: Manifest
 }) => {
-  const endItem = reader.spineItemsManager.get(paginationInfo.endSpineItemIndex)
+  const endItem = reader.spineItemsManager.get(
+    paginationInfo.end.spineItemIndex,
+  )
 
   return endItem
     ? getPercentageEstimate(
         reader,
-        paginationInfo.endSpineItemIndex ?? 0,
-        paginationInfo.endPageIndexInSpineItem || 0,
+        paginationInfo.end.spineItemIndex ?? 0,
+        paginationInfo.end.pageIndexInSpineItem || 0,
         navigationPosition,
         endItem,
         manifest,
@@ -191,13 +200,19 @@ const observeChaptersData = (reader: Reader & LayoutEnhancerOutput) =>
     }),
   )
 
+const mapChapterPaginationEdge = ({
+  spineItemIndex,
+  pageIndexInSpineItem,
+}: PaginationEdge): ChapterPaginationEdge => ({
+  spineItemIndex,
+  pageIndexInSpineItem,
+})
+
 const mapChapterPaginationInfo = (
   paginationInfo: PaginationInfo,
 ): ChapterPaginationInfo => ({
-  beginSpineItemIndex: paginationInfo.beginSpineItemIndex,
-  beginPageIndexInSpineItem: paginationInfo.beginPageIndexInSpineItem,
-  endSpineItemIndex: paginationInfo.endSpineItemIndex,
-  endPageIndexInSpineItem: paginationInfo.endPageIndexInSpineItem,
+  begin: mapChapterPaginationEdge(paginationInfo.begin),
+  end: mapChapterPaginationEdge(paginationInfo.end),
 })
 
 export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
@@ -208,7 +223,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   )
   const chapterPaginationInfo$ = pagination$.pipe(
     map(mapChapterPaginationInfo),
-    distinctUntilChanged(isShallowEqual),
+    distinctUntilChanged(isSamePaginationResult),
   )
 
   const chaptersInfo$ = combineLatest([
@@ -218,10 +233,10 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   ]).pipe(
     map(([paginationInfo, chaptersData, pagesState]) => {
       const beginItem = reader.spineItemsManager.get(
-        paginationInfo.beginSpineItemIndex,
+        paginationInfo.begin.spineItemIndex,
       )
       const endItem = reader.spineItemsManager.get(
-        paginationInfo.endSpineItemIndex,
+        paginationInfo.end.spineItemIndex,
       )
 
       return mapChapterInfo({
@@ -258,7 +273,9 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   ]).pipe(
     map(([pagination, isUsingSpread, chaptersInfo, totals]) => ({
       ...pagination,
-      ...chaptersInfo,
+      // the edges are merged rather than replaced: each side contributes part
+      begin: { ...pagination.begin, ...chaptersInfo.begin },
+      end: { ...pagination.end, ...chaptersInfo.end },
       isUsingSpread,
       ...totals,
     })),
@@ -298,7 +315,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
       ...basePaginationInfo,
       ...progression,
     })),
-    distinctUntilChanged(isShallowEqual),
+    distinctUntilChanged(isSamePaginationResult),
     auditTime(5),
   )
 }

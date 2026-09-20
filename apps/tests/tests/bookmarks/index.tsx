@@ -61,7 +61,8 @@ async function run() {
 
     const bookmarkForPage = consolidatedBookmarks?.find(
       (bookmark) =>
-        bookmark.meta?.absolutePageIndex === pagination?.beginAbsolutePageIndex,
+        bookmark.meta?.absolutePageIndex ===
+        pagination?.begin.absolutePageIndex,
     )
 
     return (
@@ -87,7 +88,7 @@ async function run() {
             )
           } else {
             const annotation = reader.annotations.createAnnotation({
-              absolutePageIndex: pagination?.beginAbsolutePageIndex ?? 0,
+              absolutePageIndex: pagination?.begin.absolutePageIndex ?? 0,
             })
 
             if (annotation) {
@@ -96,7 +97,7 @@ async function run() {
           }
         }}
       >
-        Page {pagination?.beginAbsolutePageIndex}
+        Page {pagination?.begin.absolutePageIndex}
       </button>
     )
   }

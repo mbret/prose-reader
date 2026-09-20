@@ -1,11 +1,6 @@
 import { Box, Presence } from "@chakra-ui/react"
-import {
-  type ExtraPaginationInfo,
-  type PaginationInfo,
-  shouldUseComputedSpreadModeForViewport,
-  watchKeys,
-} from "@prose-reader/core"
-import type { Manifest } from "@prose-reader/shared"
+import { shouldUseComputedSpreadModeForViewport } from "@prose-reader/core"
+import { isShallowEqual, type Manifest } from "@prose-reader/shared"
 import { memo } from "react"
 import { MdScreenRotation } from "react-icons/md"
 import { useObserve } from "reactjrx"
@@ -41,13 +36,16 @@ type ViewportDimensions = {
 
 type ViewportState = `busy` | `free`
 
-type HintPagination = Pick<
-  PaginationInfo & ExtraPaginationInfo,
-  | `beginPageIndexInSpineItem`
-  | `beginSpineItemIndex`
-  | `endPageIndexInSpineItem`
-  | `endSpineItemIndex`
->
+/**
+ * Only these four values matter here, so they are projected flat and compared
+ * as one object rather than as edges rebuilt on every result.
+ */
+type HintPagination = {
+  beginPageIndexInSpineItem: number | undefined
+  beginSpineItemIndex: number | undefined
+  endPageIndexInSpineItem: number | undefined
+  endSpineItemIndex: number | undefined
+}
 
 type ReaderWithSpreadHintStreams = NonNullable<ReturnType<typeof useReader>>
 
@@ -104,12 +102,15 @@ export const getSpreadRotationHintTargetKey = ({
 
 const observeHintPagination = (reader: ReaderWithSpreadHintStreams) =>
   reader.pagination.state$.pipe(
-    watchKeys([
-      `beginPageIndexInSpineItem`,
-      `beginSpineItemIndex`,
-      `endPageIndexInSpineItem`,
-      `endSpineItemIndex`,
-    ]),
+    map(
+      ({ begin, end }): HintPagination => ({
+        beginPageIndexInSpineItem: begin.pageIndexInSpineItem,
+        beginSpineItemIndex: begin.spineItemIndex,
+        endPageIndexInSpineItem: end.pageIndexInSpineItem,
+        endSpineItemIndex: end.spineItemIndex,
+      }),
+    ),
+    distinctUntilChanged(isShallowEqual),
     shareReplay({ bufferSize: 1, refCount: true }),
   )
 

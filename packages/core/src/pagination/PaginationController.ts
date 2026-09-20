@@ -20,7 +20,7 @@ import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { waitForSwitch } from "../utils/rxjs"
 import type { Pagination } from "./Pagination"
-import type { PaginationInfo } from "./types"
+import type { PaginationEdge, PaginationInfo } from "./types"
 
 const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
   type: "percentage",
@@ -120,14 +120,14 @@ export class PaginationController extends DestroyableClass {
     const { position } = navigation
     const previous = this.pagination.value
 
-    const { beginIndex: beginSpineItemIndex, endIndex: endSpineItemIndex } =
+    const { beginIndex, endIndex } =
       this.spine.locator.getVisibleSpineItemsFromPosition({
         position,
         threshold: VISIBILITY_THRESHOLD,
       }) ?? {}
 
-    const beginSpineItem = this.spineItemsManager.get(beginSpineItemIndex)
-    const endSpineItem = this.spineItemsManager.get(endSpineItemIndex)
+    const beginSpineItem = this.spineItemsManager.get(beginIndex)
+    const endSpineItem = this.spineItemsManager.get(endIndex)
 
     if (!beginSpineItem || !endSpineItem) return undefined
 
@@ -137,42 +137,46 @@ export class PaginationController extends DestroyableClass {
       this.getVisiblePages(endSpineItem, position) ?? {}
 
     return {
-      beginCfi: this.carryOverCfi(beginSpineItem, beginSpineItemIndex, {
-        cfi: previous.beginCfi,
-        spineItemIndex: previous.beginSpineItemIndex,
-      }),
-      beginNumberOfPagesInSpineItem: beginSpineItem.numberOfPages,
-      beginPageIndexInSpineItem: beginPageIndex,
-      beginSpineItemIndex,
-      endCfi: this.carryOverCfi(endSpineItem, endSpineItemIndex, {
-        cfi: previous.endCfi,
-        spineItemIndex: previous.endSpineItemIndex,
-      }),
-      endNumberOfPagesInSpineItem: endSpineItem.numberOfPages,
-      endPageIndexInSpineItem: endPageIndex,
-      endSpineItemIndex,
+      begin: this.resolveEdgeMetrics(
+        beginSpineItem,
+        beginIndex,
+        beginPageIndex,
+        previous.begin,
+      ),
+      end: this.resolveEdgeMetrics(
+        endSpineItem,
+        endIndex,
+        endPageIndex,
+        previous.end,
+      ),
       navigationId: navigation.id,
     }
   }
 
   /**
-   * Keeps the previous cfi unless it cannot describe this result: it is
-   * missing, it is a root target, or the item changed. Otherwise the item
+   * The previous cfi is kept while it still describes this edge: it exists, it
+   * is not a root target, and the item has not changed. Otherwise the item
    * start stands in until {@link resolvePositions} resolves the real page.
    */
-  private carryOverCfi(
+  private resolveEdgeMetrics(
     spineItem: SpineItem,
     spineItemIndex: number | undefined,
-    previous: { cfi: string | undefined; spineItemIndex: number | undefined },
-  ) {
-    const canCarryOver =
+    pageIndexInSpineItem: number,
+    previous: PaginationEdge,
+  ): PaginationEdge {
+    const canCarryOverCfi =
       previous.cfi !== undefined &&
       !this.cfi.isRootCfi(previous.cfi) &&
       previous.spineItemIndex === spineItemIndex
 
-    return canCarryOver
-      ? previous.cfi
-      : this.cfi.generateRootCfi(spineItem.item)
+    return {
+      cfi: canCarryOverCfi
+        ? previous.cfi
+        : this.cfi.generateRootCfi(spineItem.item),
+      spineItemIndex,
+      pageIndexInSpineItem,
+      numberOfPagesInSpineItem: spineItem.numberOfPages,
+    }
   }
 
   /**
@@ -182,41 +186,33 @@ export class PaginationController extends DestroyableClass {
   private resolvePositions(
     metrics: PaginationInfo,
   ): PaginationInfo | undefined {
-    const {
-      beginSpineItemIndex,
-      endSpineItemIndex,
-      beginPageIndexInSpineItem,
-      endPageIndexInSpineItem,
-    } = metrics
+    const begin = this.resolveEdgePositions(metrics.begin)
+    const end = this.resolveEdgePositions(metrics.end)
 
-    if (
-      beginPageIndexInSpineItem === undefined ||
-      endPageIndexInSpineItem === undefined ||
-      beginSpineItemIndex === undefined ||
-      endSpineItemIndex === undefined
-    )
+    if (!begin || !end) return undefined
+
+    return { ...metrics, begin, end }
+  }
+
+  // @todo only update long cfi if the item layout change but specifically its content
+  private resolveEdgePositions(
+    edge: PaginationEdge,
+  ): PaginationEdge | undefined {
+    const { spineItemIndex, pageIndexInSpineItem } = edge
+
+    if (spineItemIndex === undefined || pageIndexInSpineItem === undefined)
       return undefined
 
-    const beginSpineItem = this.spineItemsManager.get(beginSpineItemIndex)
-    const endSpineItem = this.spineItemsManager.get(endSpineItemIndex)
+    const spineItem = this.spineItemsManager.get(spineItemIndex)
 
-    if (!beginSpineItem || !endSpineItem) return undefined
+    if (!spineItem) return undefined
 
-    const beginPageEntry = this.spine.pages.fromSpineItemPageIndex(
-      beginSpineItem,
-      beginPageIndexInSpineItem,
-    )
-    const endPageEntry = this.spine.pages.fromSpineItemPageIndex(
-      endSpineItem,
-      endPageIndexInSpineItem,
+    const pageEntry = this.spine.pages.fromSpineItemPageIndex(
+      spineItem,
+      pageIndexInSpineItem,
     )
 
-    // @todo only update long cfi if the item layout change but specifically its content
-    return {
-      ...metrics,
-      beginCfi: this.resolveCfi(beginSpineItem, beginPageEntry),
-      endCfi: this.resolveCfi(endSpineItem, endPageEntry),
-    }
+    return { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) }
   }
 
   /**

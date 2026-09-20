@@ -10,20 +10,22 @@ export const observeState = (reader: Reader) => {
     map(([paginationInfo, { computedPageTurnDirection }]) => {
       const { spineItems, readingDirection } = reader.context.manifest
       const numberOfSpineItems = spineItems.length ?? 0
-      const isAtAbsoluteBeginning = paginationInfo.beginSpineItemIndex === 0
+      const isAtAbsoluteBeginning = paginationInfo.begin.spineItemIndex === 0
       const isAtAbsoluteEnd =
-        paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
+        paginationInfo.end.spineItemIndex ===
+        Math.max(numberOfSpineItems - 1, 0)
 
       const isAtEndSpineItem =
-        paginationInfo.endSpineItemIndex === Math.max(numberOfSpineItems - 1, 0)
+        paginationInfo.end.spineItemIndex ===
+        Math.max(numberOfSpineItems - 1, 0)
 
-      const isAtBeginSpineItem = paginationInfo.beginSpineItemIndex === 0
+      const isAtBeginSpineItem = paginationInfo.begin.spineItemIndex === 0
 
-      const isAtBeginFirstPage = paginationInfo.beginPageIndexInSpineItem === 0
+      const isAtBeginFirstPage = paginationInfo.begin.pageIndexInSpineItem === 0
 
       const isAtEndLastPage =
-        paginationInfo.endPageIndexInSpineItem ===
-        paginationInfo.endNumberOfPagesInSpineItem - 1
+        paginationInfo.end.pageIndexInSpineItem ===
+        paginationInfo.end.numberOfPagesInSpineItem - 1
 
       return {
         canTurnLeft:

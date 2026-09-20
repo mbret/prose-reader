@@ -1,6 +1,10 @@
 /* @vitest-environment happy-dom */
 
-import type { PaginationInfo, ResourceHandler } from "@prose-reader/core"
+import type {
+  PaginationEdge,
+  PaginationInfo,
+  ResourceHandler,
+} from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { BehaviorSubject } from "rxjs"
 import { afterEach, describe, expect, it, vi } from "vitest"
@@ -59,21 +63,24 @@ const createManifest = (spineItems: Manifest["spineItems"] = []): Manifest => ({
   items: [],
 })
 
+const createPaginationEdge = (
+  spineItemIndex: number | undefined,
+): PaginationEdge => ({
+  cfi: undefined,
+  spineItemIndex,
+  pageIndexInSpineItem: undefined,
+  numberOfPagesInSpineItem: 0,
+})
+
 const createPaginationState = ({
   beginSpineItemIndex,
   endSpineItemIndex,
-}: Pick<
-  PaginationInfo,
-  "beginSpineItemIndex" | "endSpineItemIndex"
->): PaginationInfo => ({
-  beginPageIndexInSpineItem: undefined,
-  beginNumberOfPagesInSpineItem: 0,
-  beginCfi: undefined,
-  beginSpineItemIndex,
-  endPageIndexInSpineItem: undefined,
-  endNumberOfPagesInSpineItem: 0,
-  endCfi: undefined,
-  endSpineItemIndex,
+}: {
+  beginSpineItemIndex: number | undefined
+  endSpineItemIndex: number | undefined
+}): PaginationInfo => ({
+  begin: createPaginationEdge(beginSpineItemIndex),
+  end: createPaginationEdge(endSpineItemIndex),
 })
 
 const createUrlResource = (href: string) =>

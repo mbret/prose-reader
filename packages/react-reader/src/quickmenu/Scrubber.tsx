@@ -71,7 +71,7 @@ export const Scrubber = (props: ComponentProps<typeof ThemedSlider>) => {
         } else {
           reader?.navigation.goToPageOfSpineItem({
             pageIndex,
-            spineItemId: reader.pagination.state.beginSpineItemIndex ?? 0,
+            spineItemId: reader.pagination.state.begin.spineItemIndex ?? 0,
             animation: false,
           })
         }
