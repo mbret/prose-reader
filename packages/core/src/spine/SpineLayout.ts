@@ -29,6 +29,9 @@ export class SpineLayout extends DestroyableClass {
   protected externalLayoutTrigger = new Subject<SpineLayoutOptions>()
 
   /**
+   * Layouts of the last completed pass. Replaced as a whole, never written
+   * item by item, so readers always see one coherent layout.
+   *
    * @todo use absolute position for all direction.
    * translation of position should be done elsewhere
    */
@@ -76,67 +79,81 @@ export class SpineLayout extends DestroyableClass {
       // Immediate only skips this artificial delay. Item layout itself can still
       // complete asynchronously depending on the renderer.
       debounce((options) => (options.immediate ? of(undefined) : timer(50))),
-      switchMap(() =>
-        this.spineItemsManager.items.reduce(
-          (acc$, item, itemIndex) =>
-            acc$.pipe(
-              concatMap(({ horizontalOffset, verticalOffset }) => {
-                const isScreenStartItem =
-                  horizontalOffset % viewport.absoluteViewport.width === 0
-                const isLastItem =
-                  itemIndex === spineItemsManager.items.length - 1
-                const isVertical =
-                  settings.values.computedPageTurnDirection === `vertical`
-                const isRTL = context.isRTL()
+      switchMap(() => {
+        /**
+         * Local to this pass. A superseded pass is unsubscribed and its array
+         * discarded, so a cancelled layout can never leave the published
+         * layouts holding a mix of two passes.
+         */
+        const layouts: SpineItemSpineLayout[] = []
 
-                const spreadPosition = this.getSpreadPosition(
-                  isScreenStartItem,
-                  isRTL,
-                )
-                const { edgeX, edgeY } = this.getStartEdges(
-                  isVertical,
-                  isScreenStartItem,
-                  horizontalOffset,
-                  verticalOffset,
-                  viewport.absoluteViewport.height,
-                )
+        return this.spineItemsManager.items
+          .reduce(
+            (acc$, item, itemIndex) =>
+              acc$.pipe(
+                concatMap(({ horizontalOffset, verticalOffset }) => {
+                  const isScreenStartItem =
+                    horizontalOffset % viewport.absoluteViewport.width === 0
+                  const isLastItem =
+                    itemIndex === spineItemsManager.items.length - 1
+                  const isVertical =
+                    settings.values.computedPageTurnDirection === `vertical`
+                  const isRTL = context.isRTL()
 
-                // we trigger an item layout which will update the visual and return
-                // us with the item new eventual layout information.
-                // This step is not yet about moving item or adjusting position.
-                return item
-                  .layout({
-                    spreadPosition,
-                    horizontalOffset,
-                    isLastItem,
-                    edgeX,
-                    edgeY,
-                  })
-                  .pipe(
-                    map(({ width, height }) => {
-                      const layoutPosition = this.createSpineItemLayout(
-                        isVertical,
-                        isRTL,
-                        edgeX,
-                        edgeY,
-                        width,
-                        height,
-                        viewport.absoluteViewport.width,
-                      )
-
-                      this.spineItemsRelativeLayouts[itemIndex] = layoutPosition
-
-                      return {
-                        horizontalOffset: edgeX + width,
-                        verticalOffset: isVertical ? edgeY + height : 0,
-                      }
-                    }),
+                  const spreadPosition = this.getSpreadPosition(
+                    isScreenStartItem,
+                    isRTL,
                   )
-              }),
-            ),
-          of({ horizontalOffset: 0, verticalOffset: 0 }),
-        ),
-      ),
+                  const { edgeX, edgeY } = this.getStartEdges(
+                    isVertical,
+                    isScreenStartItem,
+                    horizontalOffset,
+                    verticalOffset,
+                    viewport.absoluteViewport.height,
+                  )
+
+                  // we trigger an item layout which will update the visual and return
+                  // us with the item new eventual layout information.
+                  // This step is not yet about moving item or adjusting position.
+                  return item
+                    .layout({
+                      spreadPosition,
+                      horizontalOffset,
+                      isLastItem,
+                      edgeX,
+                      edgeY,
+                    })
+                    .pipe(
+                      map(({ width, height }) => {
+                        const layoutPosition = this.createSpineItemLayout(
+                          isVertical,
+                          isRTL,
+                          edgeX,
+                          edgeY,
+                          width,
+                          height,
+                          viewport.absoluteViewport.width,
+                        )
+
+                        layouts[itemIndex] = layoutPosition
+
+                        return {
+                          horizontalOffset: edgeX + width,
+                          verticalOffset: isVertical ? edgeY + height : 0,
+                        }
+                      }),
+                    )
+                }),
+              ),
+            of({ horizontalOffset: 0, verticalOffset: 0 }),
+          )
+          .pipe(
+            // The pass completed: publish it in one assignment.
+            tap(() => {
+              this.spineItemsRelativeLayouts = layouts
+            }),
+          )
+      }),
       takeUntil(this.destroy$),
       share(),
     )
