@@ -39,79 +39,49 @@ type ChapterPaginationInfo = {
   end: ChapterPaginationEdge
 }
 
-const mapChapterInfo = ({
-  beginItem,
-  endItem,
-  paginationInfo,
+/**
+ * Both edges resolve their chapter the same way, so this describes one edge and
+ * is applied to each rather than written out twice side by side.
+ */
+const mapEdgeChapterInfo = ({
+  spineItem,
+  pageIndexInSpineItem,
   chaptersData,
   pagesState,
 }: {
-  beginItem: SpineItem | undefined
-  endItem: SpineItem | undefined
-  paginationInfo: ChapterPaginationInfo
+  spineItem: SpineItem | undefined
+  pageIndexInSpineItem: number | undefined
   chaptersData: ChaptersData
   pagesState: PagesState
 }) => {
-  const beginPageEntry =
-    beginItem && paginationInfo.begin.pageIndexInSpineItem !== undefined
+  const pageEntry =
+    spineItem && pageIndexInSpineItem !== undefined
       ? Pages.fromSpineItemPageIndex(
           pagesState,
-          beginItem.index,
-          paginationInfo.begin.pageIndexInSpineItem,
+          spineItem.index,
+          pageIndexInSpineItem,
         )
       : undefined
-  const beginNextPageEntry = beginPageEntry
-    ? Pages.fromNextPageWithinSameSpineItem(pagesState, beginPageEntry)
-    : undefined
 
-  const endPageEntry =
-    endItem && paginationInfo.end.pageIndexInSpineItem !== undefined
-      ? Pages.fromSpineItemPageIndex(
-          pagesState,
-          endItem.index,
-          paginationInfo.end.pageIndexInSpineItem,
-        )
-      : undefined
-  const endNextPageEntry = endPageEntry
-    ? Pages.fromNextPageWithinSameSpineItem(pagesState, endPageEntry)
-    : undefined
-
-  const beginChapterInfoFromVisibleNode = beginItem
+  const chapterInfoFromVisibleNode = spineItem
     ? resolveChapterInfoFromVisibleNode({
-        node: beginPageEntry?.firstVisibleNode?.node,
-        offset: beginPageEntry?.firstVisibleNode?.offset,
+        node: pageEntry?.firstVisibleNode?.node,
+        offset: pageEntry?.firstVisibleNode?.offset,
         candidates:
-          chaptersData.tocCandidatesBySpineHref.get(beginItem.item.href) ?? [],
-        spineItem: beginItem,
-        nextPageEntry: beginNextPageEntry,
-      })
-    : undefined
-  const endChapterInfoFromVisibleNode = endItem
-    ? resolveChapterInfoFromVisibleNode({
-        node: endPageEntry?.firstVisibleNode?.node,
-        offset: endPageEntry?.firstVisibleNode?.offset,
-        candidates:
-          chaptersData.tocCandidatesBySpineHref.get(endItem.item.href) ?? [],
-        spineItem: endItem,
-        nextPageEntry: endNextPageEntry,
+          chaptersData.tocCandidatesBySpineHref.get(spineItem.item.href) ?? [],
+        spineItem,
+        nextPageEntry: pageEntry
+          ? Pages.fromNextPageWithinSameSpineItem(pagesState, pageEntry)
+          : undefined,
       })
     : undefined
 
   return {
-    begin: {
-      chapterInfo:
-        beginChapterInfoFromVisibleNode ??
-        (beginItem ? chaptersData.chaptersInfo[beginItem.item.id] : undefined),
-      spineItemReadingDirection: beginItem?.readingDirection,
-      absolutePageIndex: beginPageEntry?.absolutePageIndex,
-    },
-    end: {
-      chapterInfo:
-        endChapterInfoFromVisibleNode ??
-        (endItem ? chaptersData.chaptersInfo[endItem.item.id] : undefined),
-      spineItemReadingDirection: endItem?.readingDirection,
-      absolutePageIndex: endPageEntry?.absolutePageIndex,
-    },
+    chapterInfo:
+      chapterInfoFromVisibleNode ??
+      (spineItem ? chaptersData.chaptersInfo[spineItem.item.id] : undefined),
+    spineItemReadingDirection: spineItem?.readingDirection,
+    absolutePageIndex: pageEntry?.absolutePageIndex,
   }
 }
 
@@ -232,20 +202,18 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     pagesState$,
   ]).pipe(
     map(([paginationInfo, chaptersData, pagesState]) => {
-      const beginItem = reader.spineItemsManager.get(
-        paginationInfo.begin.spineItemIndex,
-      )
-      const endItem = reader.spineItemsManager.get(
-        paginationInfo.end.spineItemIndex,
-      )
+      const mapEdge = (edge: ChapterPaginationEdge) =>
+        mapEdgeChapterInfo({
+          spineItem: reader.spineItemsManager.get(edge.spineItemIndex),
+          pageIndexInSpineItem: edge.pageIndexInSpineItem,
+          chaptersData,
+          pagesState,
+        })
 
-      return mapChapterInfo({
-        beginItem,
-        endItem,
-        paginationInfo,
-        chaptersData,
-        pagesState,
-      })
+      return {
+        begin: mapEdge(paginationInfo.begin),
+        end: mapEdge(paginationInfo.end),
+      }
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   )

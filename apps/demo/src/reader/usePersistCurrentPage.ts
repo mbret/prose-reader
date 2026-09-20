@@ -13,8 +13,8 @@ export const usePersistCurrentPagination = () => {
           // skip initial state
           skip(1),
         )
-        .subscribe(({ beginCfi = `` }) => {
-          localStorage.setItem(`cfi`, beginCfi)
+        .subscribe(({ begin }) => {
+          localStorage.setItem(`cfi`, begin.cfi ?? ``)
         }),
     [reader],
   )
