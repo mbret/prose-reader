@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-gallery",
-  "version": "1.366.0",
+  "version": "1.367.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -24,7 +24,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
-    "@prose-reader/core": "^1.366.0"
+    "@prose-reader/core": "^1.367.0"
   },
   "peerDependencies": {
     "rxjs": "*"
