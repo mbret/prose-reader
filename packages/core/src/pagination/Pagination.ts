@@ -21,7 +21,11 @@ export class Pagination extends ReactiveEntity<PaginationInfo> {
     })
   }
 
-  public update(pagination: Partial<PaginationInfo>) {
+  /**
+   * A result is replaced whole rather than merged field by field, so what is
+   * published always describes one coherent moment.
+   */
+  public update(pagination: PaginationInfo) {
     this.mergeCompare(pagination)
   }
 }
