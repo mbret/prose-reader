@@ -10,7 +10,7 @@ import {
   switchMap,
   timeout,
 } from "rxjs"
-import { takeUntilNextNavigationSettled } from "../../navigation/operators"
+import { takeUntilNextFreeNavigation } from "../../navigation/operators"
 import type { Reader } from "../../reader"
 import { type BoundaryReachedEvent, outOfSpineBoundary } from "./boundary"
 
@@ -61,7 +61,7 @@ export const observeBookBoundaryReached = (
               first: itemReadinessTimeoutMs,
               with: () => EMPTY,
             }),
-        takeUntilNextNavigationSettled(reader.navigation),
+        takeUntilNextFreeNavigation(reader.navigation),
       )
     }),
     share(),

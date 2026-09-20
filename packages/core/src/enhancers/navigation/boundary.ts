@@ -1,5 +1,5 @@
 import { filter, map, type Observable, share } from "rxjs"
-import { waitForNavigationSettled } from "../../navigation/operators"
+import { waitForNavigationFree } from "../../navigation/operators"
 import type { Reader } from "../../reader"
 
 export type BoundaryReachedEvent = { boundary: "start" | "end" }
@@ -15,7 +15,7 @@ export const outOfSpineBoundary = (
 ): Observable<BoundaryReachedEvent> =>
   reader.navigation.navigation$.pipe(
     filter((navigation) => navigation.triggeredBy === "user"),
-    waitForNavigationSettled(reader.navigation.navigationState$),
+    waitForNavigationFree(reader.navigation.navigationState$),
     map((navigation) => {
       const requested = navigation.requestedPosition
       const visibleArea = navigation.requestedVisibleArea

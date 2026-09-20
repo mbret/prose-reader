@@ -1,11 +1,11 @@
 /**
  * @important
  *
- * The enhanced pagination state does not emit transient states, it uses a throttling
- * to smooth out the state changes. Pagination is built from many different sources and during
- * transition of reader state, many non-final states could be emitted and would not bring much value
- * to the user. This is an opinionated decision for this API
+ * Chapter and progress calculations are throttled to smooth out layout changes.
+ * Readiness is invalidated immediately, so the retained pagination snapshot cannot
+ * be mistaken for settled progress while its replacement is being calculated.
  */
+import { isShallowEqual } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   combineLatest,
@@ -59,20 +59,39 @@ export const paginationEnhancer =
       .pipe(tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)))
       .subscribe(enhancedPagination)
 
+    const currentPagination = (
+      snapshot: typeof enhancedPagination.value,
+      current: typeof reader.pagination.state,
+    ): EnhancerPaginationInto =>
+      snapshot.source === current && current.isSettled
+        ? snapshot.info
+        : { ...snapshot.info, isSettled: false }
+
+    const pagination$ = combineLatest([
+      enhancedPagination,
+      reader.pagination.state$,
+    ]).pipe(
+      map(([snapshot, current]) => currentPagination(snapshot, current)),
+      distinctUntilChanged(isShallowEqual),
+    )
+    const navigationState$ = combineLatest([
+      reader.navigation.navigationState$,
+      pagination$,
+    ]).pipe(
+      map(([navigation, pagination]) => ({
+        ...navigation,
+        isSettled: navigation.isSettled && pagination.isSettled,
+      })),
+      distinctUntilChanged(isShallowEqual),
+    )
+
     return {
       ...reader,
       navigation: {
         ...reader.navigation,
-        settled$: combineLatest([
-          reader.navigation.settled$,
-          enhancedPagination,
-        ]).pipe(
-          map(
-            ([settled, snapshot]) =>
-              settled &&
-              snapshot.info.isSettled &&
-              snapshot.source === reader.pagination.state,
-          ),
+        navigationState$,
+        settled$: navigationState$.pipe(
+          map((state) => state.isSettled),
           distinctUntilChanged(),
         ),
       },
@@ -85,10 +104,13 @@ export const paginationEnhancer =
       pagination: {
         ...reader.pagination,
         get state() {
-          return enhancedPagination.value.info
+          return currentPagination(
+            enhancedPagination.value,
+            reader.pagination.state,
+          )
         },
         get state$() {
-          return enhancedPagination.pipe(map((snapshot) => snapshot.info))
+          return pagination$
         },
       },
     } as unknown as PaginationOutput

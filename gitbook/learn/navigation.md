@@ -13,7 +13,7 @@ These represent methods such as `goToItem`, `goToPage`, `goToUrl`, etc. They are
 
 
 ```typescript
-type NavigationState {
+type NavigationCapabilities = {
   /**
    * Spatial indicator whether you can turn
    * page to the left to reach a new spine item
@@ -40,10 +40,10 @@ type NavigationState {
 ## `navigation.state$`
 
 ```typescript
-Observable<NavigationState>
+Observable<NavigationCapabilities>
 ```
 
-Emits as soon as you subscribe to it.
+Emits directional navigation capabilities as soon as you subscribe to it. For activity and settlement, use [`navigation.navigationState$`](../core-api/.navigation.md#navigationstate), whose `NavigationState` contains `activity` and `isSettled`.
 
 ## `navigation.goToNextSpineItem()`
 

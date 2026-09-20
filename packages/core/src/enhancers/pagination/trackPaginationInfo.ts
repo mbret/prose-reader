@@ -8,7 +8,7 @@ import {
   shareReplay,
   switchMap,
 } from "rxjs"
-import { observeSettledNavigation } from "../../navigation/operators"
+import { observeFreeNavigation } from "../../navigation/operators"
 import type { PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
 import { Pages, type PagesState } from "../../spine/Pages"
@@ -265,7 +265,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     })),
   )
 
-  const settledPosition$ = observeSettledNavigation(reader.navigation).pipe(
+  const freePosition$ = observeFreeNavigation(reader.navigation).pipe(
     map(({ position }) => position),
     distinctUntilChanged(isShallowEqual),
   )
@@ -273,7 +273,7 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   const progression$ = combineLatest([
     pagination$,
     reader.layout$,
-    settledPosition$,
+    freePosition$,
   ]).pipe(
     switchMap(([paginationInfo, _layout, navigationPosition]) =>
       getProgressionForPagination({

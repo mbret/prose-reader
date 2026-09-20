@@ -1,4 +1,4 @@
-import type { Manifest } from "@prose-reader/shared"
+import { isShallowEqual, type Manifest } from "@prose-reader/shared"
 import {
   BehaviorSubject,
   combineLatest,
@@ -124,25 +124,40 @@ export const createReader = ({
   )
 
   const paginationState = new BehaviorSubject(pagination.value)
-  combineLatest([pagination, navigator.settled$])
+  combineLatest([pagination, navigator.navigationState$])
     .pipe(
-      map(([state, settled]) => ({
+      map(([state, navigation]) => ({
         ...state,
         isSettled:
           state.isSettled &&
-          settled &&
+          navigation.isSettled &&
           state.navigationId === navigator.getNavigation().id,
       })),
       takeUntil(destroy$),
     )
     .subscribe(paginationState)
-  const settled$ = paginationState.pipe(
+  const navigationState$ = combineLatest([
+    navigator.navigationState$,
+    paginationState,
+  ]).pipe(
+    map(([navigation, pagination]) => ({
+      ...navigation,
+      isSettled: navigation.isSettled && pagination.isSettled,
+    })),
+    distinctUntilChanged(isShallowEqual),
+  )
+  const settled$ = navigationState$.pipe(
     map((state) => state.isSettled),
     distinctUntilChanged(),
   )
 
   // bridge all navigation stream with reader so they can be shared across app
-  navigator.navigationState$.subscribe(context.bridgeEvent.viewportStateSubject)
+  navigator.navigationState$
+    .pipe(
+      map((state) => state.activity),
+      distinctUntilChanged(),
+    )
+    .subscribe(context.bridgeEvent.viewportStateSubject)
   navigator.navigation$.subscribe(context.bridgeEvent.navigationSubject)
   navigator.position$.subscribe(context.bridgeEvent.positionSubject)
   pagination.subscribe(context.bridgeEvent.paginationSubject)
@@ -245,7 +260,7 @@ export const createReader = ({
     spine,
     hookManager,
     cfi,
-    navigation: { ...navigator, settled$ },
+    navigation: { ...navigator, navigationState$, settled$ },
     spineItemsObserver: spine.spineItemsObserver,
     spineItemsManager,
     layout,

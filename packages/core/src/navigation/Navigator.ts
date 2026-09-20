@@ -1,6 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
 import {
-  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   map,
@@ -8,7 +7,9 @@ import {
   of,
   Subject,
   shareReplay,
+  startWith,
   switchMap,
+  takeUntil,
   timer,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
@@ -23,6 +24,7 @@ import { ControlledNavigationController } from "./controllers/ControlledNavigati
 import { ScrollNavigationController } from "./controllers/ScrollNavigationController"
 import { InternalNavigator } from "./InternalNavigator"
 import { Locker } from "./Locker"
+import type { NavigationState } from "./operators"
 import { createNavigationResolver } from "./resolvers/NavigationResolver"
 import type { NavigationModeController, UserNavigationEntry } from "./types"
 
@@ -43,6 +45,7 @@ export const createNavigator = ({
   settings: ReaderSettingsManager
   viewport: Viewport
 }) => {
+  const destroy$ = new Subject<void>()
   const userExplicitNavigationSubject = new Subject<UserNavigationEntry>()
   const userNavigation$ = userExplicitNavigationSubject.asObservable()
   const userInteractionLock = new Locker()
@@ -101,14 +104,13 @@ export const createNavigator = ({
     userInteractionLock.isLocked$,
   )
 
-  const navigationState$ = combineLatest([
+  const activity$ = combineLatest([
     ...navigationModeControllers.map((controller) => controller.isNavigating$),
     userInteractionLock.isLocked$,
     internalNavigator.locker.isLocked$,
   ]).pipe(
     map((states) => (states.some((isLocked) => isLocked) ? `busy` : `free`)),
     distinctUntilChanged(),
-    shareReplay(1),
   )
 
   /**
@@ -122,35 +124,50 @@ export const createNavigator = ({
     shareReplay(1),
   )
 
-  const settledSubject = new BehaviorSubject(false)
-  const settledSubscription = combineLatest([
-    navigationState$,
+  const navigationState$ = combineLatest([
+    activity$,
     internalNavigator.navigationSubject,
-  ])
-    .pipe(
-      switchMap(([state, navigation]) => {
-        const item = spineItemsManager.get(navigation.spineItem)
-        return (item?.isReady$ ?? of(false)).pipe(
-          map((ready) => state === "free" && ready),
-        )
-      }),
-      // Defer true until synchronous restoration and pagination notifications finish.
-      switchMap((settled) =>
-        settled ? timer(0).pipe(map(() => true)) : of(false),
-      ),
-    )
-    .subscribe(settledSubject)
+  ]).pipe(
+    switchMap(([activity, navigation]) => {
+      const item = spineItemsManager.get(navigation.spineItem)
+      return (item?.isReady$ ?? of(false)).pipe(
+        switchMap((ready) => {
+          const unsettled: NavigationState = { activity, isSettled: false }
+          if (activity === "busy" || !ready) return of(unsettled)
+
+          // Publish activity immediately so pagination can run. Defer settlement
+          // until synchronous restoration and pagination notifications finish;
+          // any new navigation, lock, or readiness change cancels this timer.
+          return timer(0).pipe(
+            map((): NavigationState => ({ activity, isSettled: true })),
+            startWith(unsettled),
+          )
+        }),
+      )
+    }),
+    distinctUntilChanged(isShallowEqual),
+    takeUntil(destroy$),
+    shareReplay({ bufferSize: 1, refCount: false }),
+  )
+  // Own the state stream for the navigator's lifetime, independent of consumers.
+  navigationState$.subscribe()
 
   const navigate = (to: UserNavigationEntry) => {
-    settledSubject.next(false)
     Report.info("User navigation", to)
 
-    userExplicitNavigationSubject.next(to)
+    // A request is navigation work even if the controller keeps the same position.
+    const unlock = internalNavigator.locker.lock()
+    try {
+      userExplicitNavigationSubject.next(to)
+    } finally {
+      unlock()
+    }
   }
 
   const destroy = () => {
-    settledSubscription.unsubscribe()
-    settledSubject.complete()
+    destroy$.next()
+    destroy$.complete()
+    userExplicitNavigationSubject.complete()
     navigationModeControllers.forEach((controller) => {
       controller.destroy()
     })
@@ -159,7 +176,10 @@ export const createNavigator = ({
 
   return {
     destroy,
-    settled$: settledSubject.asObservable().pipe(distinctUntilChanged()),
+    settled$: navigationState$.pipe(
+      map((state) => state.isSettled),
+      distinctUntilChanged(),
+    ),
     getNavigation: () => internalNavigator.navigation,
     internalNavigator,
     scrollNavigationController,

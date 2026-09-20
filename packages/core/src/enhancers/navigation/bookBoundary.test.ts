@@ -243,7 +243,7 @@ describe("observeBookBoundaryReached", () => {
      * so an in-bounds navigation couldn't cancel it. The pending wait
      * would then spuriously fire when readiness eventually arrived, even
      * though the user had since moved away from the edge. Driving the
-     * `takeUntilNextNavigationSettled` ensures any later non-boundary
+     * `takeUntilNextFreeNavigation` ensures any later non-boundary
      * navigation tears down the pending wait.
      */
     it("cancels the pending wait so it does not fire when readiness eventually arrives", async () => {

@@ -4,7 +4,7 @@ import { CfiManager } from "../../cfi"
 import { Context } from "../../context/Context"
 import { HookManager } from "../../hooks/HookManager"
 import { createNavigator } from "../../navigation/Navigator"
-import { observeSettledNavigation } from "../../navigation/operators"
+import { observeFreeNavigation } from "../../navigation/operators"
 import { mockSpineItemsLayout } from "../../navigation/tests/utils"
 import { Pagination } from "../../pagination/Pagination"
 import type { Reader } from "../../reader"
@@ -582,7 +582,7 @@ describe("outOfSpineBoundary", () => {
       })
       setupRTLLayout(spine, items, reader.spineItemsManager, 100)
 
-      const priorSubscription = observeSettledNavigation(
+      const priorSubscription = observeFreeNavigation(
         reader.navigation,
       ).subscribe()
 
