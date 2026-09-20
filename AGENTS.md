@@ -2,6 +2,13 @@
 
 This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
 
+Guidelines live in `AGENTS.md`, at the root and per package, so every tool reads
+the same file. Claude Code discovers `CLAUDE.md` rather than `AGENTS.md`, so
+each one needs a sibling `CLAUDE.md` whose body is `@AGENTS.md` — otherwise the
+guidance silently reaches some tools and not others. `npm run check:agent-docs`
+enforces the pairing and runs in CI; add both files when you add guidelines for
+a package.
+
 # Raising quality is the job
 
 prose is a library, not a product repository where features get added and
