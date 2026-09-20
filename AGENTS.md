@@ -2,6 +2,73 @@
 
 This repository is a mono-repository and is using lerna. Take it into consideration when you want to check typescript, build or run tests for examples.
 
+# Raising quality is the job
+
+prose is a library, not a product repository where features get added and
+everything else is merely maintained. The code is large, predates AI assistance,
+and is inconsistent in places. Every change is expected to leave it better.
+Disturbing as little as possible is not a goal here, and "it was the smallest
+change" is never a reason on its own.
+
+So:
+
+- **Fight the architecture when it is wrong.** The surrounding code is not a
+  specification. If the shape you were asked to extend is the reason the bug
+  exists, change the shape.
+- **Do not follow a pattern just because it is there**, especially a smelly one.
+  Match the surrounding code on naming, comments and idiom — not on structure
+  that should not have been there.
+- **Ask "what would this look like written fresh?" before "what is the smallest
+  change from here?"** Answer the first question, then decide how much of it to
+  do now. Starting from the second reproduces whatever is already wrong.
+- **Challenge the request.** When a task touches something that deserves a
+  larger rework, say so and propose it instead of quietly doing the narrow
+  thing. You are not expected to stay inside the boundary of what was asked when
+  what you found is bigger than it.
+- **Hunt duplication, redundancy and deletions on every change**, not only when
+  asked. In an rxjs codebase they compound: two sources of the same truth become
+  two subscriptions, two orderings and a race. Removing code is a good outcome.
+
+A smaller, simpler surface that is easier to consume beats a larger one that was
+easier to arrive at. Breaking the API to get there is expected — see *API
+design: breaking changes are not a constraint*.
+
+## Prefer derived state over imperative updates
+
+This is an rxjs codebase and the general principle holds: **if a value can be
+derived, derive it.** Do not assume imperative code is the way to go just
+because that is what is already there.
+
+A value several places write by hand is the recurring bug in this repository.
+Every writer has to remember the rules, one of them eventually does not, and the
+failure surfaces far from its cause. A value produced by a single stream cannot
+have that bug, because there is no second writer to forget anything.
+
+Treat these as smells to rework rather than extend:
+
+- the same field written from more than one place
+- a flag that whoever starts some work has to clear — sooner or later an entry
+  point will not clear it
+- state deposited into a mutable holder mid-stream and re-read downstream,
+  instead of flowing through the pipeline as a value
+- a `tap` that writes state where a `map` could produce it
+
+Imperative code is sometimes genuinely clearer, and readability counts: a `scan`
+nobody can follow is not an improvement. Derive where you can, and say why when
+you deliberately do not.
+
+## Shape is not covered by tests
+
+Tests verify behaviour, not structure — a badly shaped implementation passes all
+of them. Check the shape deliberately:
+
+- A design sentence in your summary or PR description is a claim about the code.
+  Verify it against your own diff before pushing, the same way you verify a test.
+- Adding a call to a mutator is a signal. Look at who else calls it, and whether
+  any of them should.
+- When the surrounding code has just changed, re-derive the design instead of
+  extending the plan you made before it changed.
+
 # Toolchain
 
 Use the Node/npm toolchain the repo pins in `.nvmrc` — do not assume the shell's default Node is correct (web/CI shells may start on a different, older Node). Before running any `npm`, build, test, or lockfile command, activate the pinned version via nvm:
@@ -14,7 +81,7 @@ export NVM_DIR="${NVM_DIR:-/opt/nvm}" && . "$NVM_DIR/nvm.sh" && nvm install && n
 
 # API design: breaking changes are not a constraint
 
-Cleanliness of the design wins. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.
+Cleanliness of the design wins. The goal is a surface that is smaller, simpler and easier to consume; a break is just the cost of getting there. **"I did not do that because it would be a breaking change" is never a valid reason** — do not weigh backward compatibility when choosing a shape, and do not present it as a trade-off. If the cleanest design changes a public type, renames an export, removes an option or reshapes a returned entity, do that.
 
 Concretely, never do these unless explicitly asked:
 
