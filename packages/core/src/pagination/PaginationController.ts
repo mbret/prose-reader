@@ -12,10 +12,10 @@ import {
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
 import type { Navigation } from "../navigation/types"
+import type { PageEntry } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import type { createSpineItemLocator } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { waitForSwitch } from "../utils/rxjs"
@@ -33,7 +33,6 @@ export class PaginationController extends DestroyableClass {
     protected pagination: Pagination,
     protected spineItemsManager: SpineItemsManager,
     protected spine: Spine,
-    protected spineItemLocator: ReturnType<typeof createSpineItemLocator>,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
   ) {
@@ -210,18 +209,21 @@ export class PaginationController extends DestroyableClass {
     // @todo only update long cfi if the item layout change but specifically its content
     return {
       ...metrics,
-      beginCfi: beginPageEntry?.firstVisibleNode
-        ? this.cfi.generateCfiForSpineItemPage({
-            spineItem: beginSpineItem.item,
-            pageNode: beginPageEntry.firstVisibleNode,
-          })
-        : this.cfi.generateRootCfi(beginSpineItem.item),
-      endCfi: endPageEntry?.firstVisibleNode
-        ? this.cfi.generateCfiForSpineItemPage({
-            spineItem: endSpineItem.item,
-            pageNode: endPageEntry.firstVisibleNode,
-          })
-        : this.cfi.generateRootCfi(endSpineItem.item),
+      beginCfi: this.resolveCfi(beginSpineItem, beginPageEntry),
+      endCfi: this.resolveCfi(endSpineItem, endPageEntry),
     }
+  }
+
+  /**
+   * The cfi of a page, falling back to the item itself when the page has no
+   * resolvable first visible node.
+   */
+  private resolveCfi(spineItem: SpineItem, pageEntry: PageEntry | undefined) {
+    return pageEntry?.firstVisibleNode
+      ? this.cfi.generateCfiForSpineItemPage({
+          spineItem: spineItem.item,
+          pageNode: pageEntry.firstVisibleNode,
+        })
+      : this.cfi.generateRootCfi(spineItem.item)
   }
 }
