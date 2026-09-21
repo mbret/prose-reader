@@ -17,15 +17,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  optimizeDeps: {
-    esbuildOptions: {
-      // Node.js global to browser globalThis
-      // fix sax on browser
-      define: {
-        global: "globalThis",
-      },
-    },
-  },
   /**
    * require('events') uses package events which is a web polyfill
    */
