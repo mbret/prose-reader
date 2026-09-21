@@ -13,7 +13,7 @@ The enhancer will hook into the resource loading and rendering process to handle
 ## Getting started
 
 {% hint style="info" %}
-We encourage you to visit the [prose reader demo repository ](https://github.com/mbret/prose-reader/tree/master/packages/demo)to see how the enhancer is being used in a real world example.
+We encourage you to visit the [prose reader demo ](https://github.com/mbret/prose-reader/tree/master/apps/front/src/demo)to see how the enhancer is being used in a real world example.
 {% endhint %}
 
 ```bash
