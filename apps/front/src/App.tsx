@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router"
 import { LazyRouteBoundary } from "./components/LazyRouteBoundary"
+import { RouteLoading } from "./components/RouteLoading"
 import { Provider } from "./components/ui/provider"
 import { DEMO_BASE_PATH } from "./constants"
 import { LandingScreen } from "./landing/LandingScreen"
@@ -41,7 +42,7 @@ export const App = memo(() => {
             path={`${DEMO_BASE_PATH}/*`}
             element={
               <LazyRouteBoundary>
-                <Suspense fallback={null}>
+                <Suspense fallback={<RouteLoading />}>
                   <DemoRoutes />
                 </Suspense>
               </LazyRouteBoundary>
