@@ -15,19 +15,29 @@ export const registerServiceWorker = () => {
     )
   }
 
-  registering ??= navigator.serviceWorker.register(
-    import.meta.env.PROD ||
+  registering ??= navigator.serviceWorker
+    .register(
+      import.meta.env.PROD ||
+        /**
+         * firefox does not support module type for dev service worker.
+         * Please build and copy dist service worker in public when developing with firefox
+         */
+        navigator.userAgent.includes("Firefox/")
+        ? "/service-worker.js"
+        : "/dev-sw.js?dev-sw",
+      {
+        type: import.meta.env.PROD ? "classic" : "module",
+      },
+    )
+    .catch((error: unknown) => {
       /**
-       * firefox does not support module type for dev service worker.
-       * Please build and copy dist service worker in public when developing with firefox
+       * Only a successful registration is worth keeping: caching the rejection
+       * would make every later visit to the demo replay it instead of retrying.
        */
-      navigator.userAgent.includes("Firefox/")
-      ? "/service-worker.js"
-      : "/dev-sw.js?dev-sw",
-    {
-      type: import.meta.env.PROD ? "classic" : "module",
-    },
-  )
+      registering = undefined
+
+      throw error
+    })
 
   return registering
 }
