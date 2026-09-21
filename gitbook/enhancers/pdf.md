@@ -17,8 +17,15 @@ We encourage you to visit the [prose reader demo ](https://github.com/mbret/pros
 {% endhint %}
 
 ```bash
-npm install @prose-reader/enhancer-pdf pdfjs-dist
+npm install @prose-reader/enhancer-pdf "pdfjs-dist@>=6.2.108 <7"
 ```
+
+The enhancer declares `pdfjs-dist` as a `>=6.2.108 <7` peer dependency. The floor
+is the patched release, not the major: every `pdfjs-dist` from `5.6.83` up to but
+excluding `6.2.108` is affected by
+[GHSA-hq66-cqwq-w95j](https://github.com/advisories/GHSA-hq66-cqwq-w95j), which
+lets a malicious PDF execute arbitrary JavaScript, and that range includes `6.0.x`
+and `6.1.x`. `pdfjs-dist` 6 also requires Node `>=22.13`.
 
 The following integration example is simplified and does not use streamers. The prose reader demo uses a client streamer to streamline the process and have a more unified way to stream documents but it's not required. Since the package provides an archive creator helper it can be used as any other archives.
 
