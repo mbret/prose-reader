@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
  * Every demo route is relative to `DEMO_BASE_PATH`, the app mounts them under
  * a splat route.
  */
-export const DemoRoutes = memo(() => {
+const DemoRoutes = memo(() => {
   useRegisterServiceWorker()
   useViewportZoomLock()
 
