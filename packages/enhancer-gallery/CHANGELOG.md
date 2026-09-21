@@ -5,12 +5,4 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [1.374.2](https://github.com/mbret/prose-reader/compare/v1.374.1...v1.374.2) (2026-09-21)
 
-**Note:** Version bump only for package @prose-reader/root
-
-
-
-
-
-## [1.374.1](https://github.com/mbret/prose-reader/compare/v1.374.0...v1.374.1) (2026-09-21)
-
-**Note:** Version bump only for package @prose-reader/root
+**Note:** Version bump only for package @prose-reader/enhancer-gallery
