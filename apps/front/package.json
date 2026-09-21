@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "vite --port 9000",
-    "dev": "vite --port 9000",
     "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "echo",
