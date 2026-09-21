@@ -5,6 +5,7 @@ import { type ComponentProps, memo, useCallback, useRef } from "react"
 import { useLocation, useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { DEMO_BASE_PATH } from "../../constants"
+import { useDocumentTitle } from "../useDocumentTitle"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
 import { restoreAnnotations, usePersistAnnotations } from "./annotations"
 import { BookError } from "./BookError"
@@ -47,6 +48,8 @@ export const ReaderScreen = memo(() => {
     md: "tablet",
     lg: "desktop",
   })
+
+  useDocumentTitle(manifest?.title ?? `Reader - prose reader demo`)
 
   useCreateReader(manifest, readerContainerRef)
   useUpdateReaderSettings({ localSettings })

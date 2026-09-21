@@ -3,8 +3,11 @@ import { Link } from "react-router"
 import { OrDivider } from "../../components/OrDivider"
 import { Button } from "../../components/ui/button"
 import { DEMO_BASE_PATH } from "../../constants"
+import { useDocumentTitle } from "../useDocumentTitle"
 
 export const HomeScreen = () => {
+  useDocumentTitle(`prose reader demo`)
+
   return (
     <Stack height="100%">
       <Stack

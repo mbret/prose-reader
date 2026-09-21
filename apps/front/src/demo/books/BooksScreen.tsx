@@ -11,6 +11,7 @@ import localforage from "localforage"
 import { MdDelete } from "react-icons/md"
 import { Link } from "react-router"
 import { DEMO_BASE_PATH } from "../../constants"
+import { useDocumentTitle } from "../useDocumentTitle"
 import { BookTable } from "./BookTable"
 import { AUDIOBOOKS, COMICS, EPUBS, PDFS } from "./constants"
 import { Glossary } from "./Glossary"
@@ -20,6 +21,8 @@ import { useUploadedBooks } from "./useUploadedBooks"
 
 export const BooksScreen = () => {
   const { data: uploadedBooks, refetch } = useUploadedBooks()
+
+  useDocumentTitle(`Books - prose reader demo`)
 
   return (
     <Container maxW="2xl" py={4} display="flex" flexDirection="column">
