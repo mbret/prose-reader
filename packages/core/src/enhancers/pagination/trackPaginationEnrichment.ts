@@ -196,15 +196,8 @@ const mapChapterPaginationInfo = (
 
 /**
  * What this enhancer adds to a pagination result, alongside the core result it
- * was computed from.
- *
- * It deliberately carries no settlement. Settlement belongs to the core result
- * and is granted once, where this is joined back to the result that is
- * current — an enrichment that never claims settlement can never have one
- * taken back from it.
- *
- * `source` is what makes that join possible. Enrichment is throttled, so by
- * the time one is published the reader may have moved on.
+ * was computed from. It carries no settlement: that is granted where `source`
+ * is joined back to the result that is current.
  */
 export type PaginationEnrichment = ExtraPaginationInfo & {
   source: PaginationInfo
@@ -270,9 +263,10 @@ export const trackPaginationEnrichment = (
   )
 
   /**
-   * Every value comes from the same captured pagination result rather than
-   * from streams sampled independently, so an enrichment cannot pair one
-   * result's pages with another's progression.
+   * Chapter info stays its own stream, deduped on the page pair, because
+   * resolving it walks the document. The audit below absorbs the join's
+   * transient. Progression is cheap enough to compute from the captured
+   * result directly.
    */
   return combineLatest([
     pagination$,
@@ -304,10 +298,8 @@ export const trackPaginationEnrichment = (
         ),
     ),
     /**
-     * The edges are compared by value and `source` by reference, so an
-     * enrichment built from a new core result counts as a change even when
-     * every enriched value is identical — the source is what settlement is
-     * granted against downstream.
+     * `source` compares by reference, so an enrichment built from a new core
+     * result counts as a change even when every enriched value is identical.
      */
     distinctUntilChanged(isSamePaginationResult),
     auditTime(5),
