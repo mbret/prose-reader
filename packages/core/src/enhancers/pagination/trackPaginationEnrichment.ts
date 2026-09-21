@@ -9,10 +9,7 @@ import {
   switchMap,
 } from "rxjs"
 import { observeSettledNavigation } from "../../navigation/operators"
-import {
-  isSamePaginationResult,
-  withSettlementOf,
-} from "../../pagination/edges"
+import { isSamePaginationResult } from "../../pagination/edges"
 import type { PaginationEdge, PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
 import { Pages, type PagesState } from "../../spine/Pages"
@@ -26,6 +23,7 @@ import {
   type TocCandidatesBySpineHref,
 } from "./chapters"
 import { getPercentageEstimate } from "./progression"
+import type { EnhancerPaginationEdge, ExtraPaginationInfo } from "./types"
 
 type ChaptersData = {
   tocCandidatesBySpineHref: TocCandidatesBySpineHref
@@ -42,6 +40,14 @@ type ChapterPaginationInfo = {
   end: ChapterPaginationEdge
 }
 
+/** What this enhancer adds to an edge the core already published. */
+type EdgeEnrichment = Omit<EnhancerPaginationEdge, keyof PaginationEdge>
+
+type ChaptersInfo = {
+  begin: EdgeEnrichment
+  end: EdgeEnrichment
+}
+
 /**
  * Both edges resolve their chapter the same way, so this describes one edge and
  * is applied to each rather than written out twice side by side.
@@ -56,7 +62,7 @@ const mapEdgeChapterInfo = ({
   pageIndexInSpineItem: number | undefined
   chaptersData: ChaptersData
   pagesState: PagesState
-}) => {
+}): EdgeEnrichment => {
   const pageEntry =
     spineItem && pageIndexInSpineItem !== undefined
       ? Pages.fromSpineItemPageIndex(
@@ -188,7 +194,27 @@ const mapChapterPaginationInfo = (
   end: mapChapterPaginationEdge(paginationInfo.end),
 })
 
-export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
+/**
+ * What this enhancer adds to a pagination result, alongside the core result it
+ * was computed from.
+ *
+ * It deliberately carries no settlement. Settlement belongs to the core result
+ * and is granted once, where this is joined back to the result that is
+ * current — an enrichment that never claims settlement can never have one
+ * taken back from it.
+ *
+ * `source` is what makes that join possible. Enrichment is throttled, so by
+ * the time one is published the reader may have moved on.
+ */
+export type PaginationEnrichment = ExtraPaginationInfo & {
+  source: PaginationInfo
+  begin: EdgeEnrichment
+  end: EdgeEnrichment
+}
+
+export const trackPaginationEnrichment = (
+  reader: Reader & LayoutEnhancerOutput,
+) => {
   const pagination$ = reader.pagination.state$
   const pagesState$ = reader.spine.pages.layout$
   const chaptersData$ = observeChaptersData(reader).pipe(
@@ -213,10 +239,12 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
           pagesState,
         })
 
-      return {
+      const chaptersInfo: ChaptersInfo = {
         begin: mapEdge(paginationInfo.begin),
         end: mapEdge(paginationInfo.end),
       }
+
+      return chaptersInfo
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   )
@@ -242,71 +270,46 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
   )
 
   /**
-   * Every field is derived from the same captured pagination result rather
-   * than sampled from streams that move independently, so a published result
-   * cannot pair one result's pages with another's progression.
+   * Every value comes from the same captured pagination result rather than
+   * from streams sampled independently, so an enrichment cannot pair one
+   * result's pages with another's progression.
    */
   return combineLatest([
     pagination$,
     isUsingSpread$,
     chaptersInfo$,
     totals$,
+    // a layout can change the progression without changing the pagination
     reader.layout$,
     settledPosition$,
   ]).pipe(
     switchMap(
-      ([
-        paginationInfo,
-        isUsingSpread,
-        chaptersInfo,
-        totals,
-        _layout,
-        navigationPosition,
-      ]) =>
+      ([source, isUsingSpread, chaptersInfo, totals, , navigationPosition]) =>
         getProgressionForPagination({
           reader,
-          paginationInfo,
+          paginationInfo: source,
           navigationPosition,
           manifest: reader.context.manifest,
         }).pipe(
-          map((progression) => ({
-            /**
-             * The result this enrichment was built from. Enrichment is
-             * throttled, so by the time it is published the reader may have
-             * moved on; keeping the source lets settlement be granted only
-             * while it still describes the current result.
-             */
-            source: paginationInfo,
-            info: {
-              navigationId: paginationInfo.navigationId,
-              /**
-               * The edges are merged rather than replaced: each side
-               * contributes part. Settlement is carried over with them, so
-               * enriching an edge does not lose the guarantee its cfi came
-               * with.
-               */
-              ...withSettlementOf(paginationInfo, {
-                begin: { ...paginationInfo.begin, ...chaptersInfo.begin },
-                end: { ...paginationInfo.end, ...chaptersInfo.end },
-              }),
+          map(
+            (percentageEstimateOfBook): PaginationEnrichment => ({
+              source,
+              begin: chaptersInfo.begin,
+              end: chaptersInfo.end,
               isUsingSpread,
-              ...totals,
-              /**
-               * This percentage is based of the weight (kb) of every items and the number of pages.
-               * It is not accurate but gives a general good idea of the overall progress.
-               * It is recommended to use this progress only for reflow books. For pre-paginated books
-               * the number of pages and current index can be used instead since 1 page = 1 chapter.
-               */
-              percentageEstimateOfBook: progression,
-            },
-          })),
+              numberOfTotalPages: totals.numberOfTotalPages,
+              percentageEstimateOfBook,
+            }),
+          ),
         ),
     ),
-    distinctUntilChanged(
-      (previous, next) =>
-        previous.source === next.source &&
-        isSamePaginationResult(previous.info, next.info),
-    ),
+    /**
+     * The edges are compared by value and `source` by reference, so an
+     * enrichment built from a new core result counts as a change even when
+     * every enriched value is identical — the source is what settlement is
+     * granted against downstream.
+     */
+    distinctUntilChanged(isSamePaginationResult),
     auditTime(5),
   )
 }

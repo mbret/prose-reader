@@ -15,14 +15,17 @@ import {
 } from "rxjs"
 import {
   isSamePaginationResult,
-  withoutSettlement,
+  withSettlementOf,
 } from "../../pagination/edges"
-import type { PaginationEdge } from "../../pagination/types"
+import type {
+  PaginationEdge,
+  PaginationSettlement,
+} from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
-import { trackPaginationInfo } from "./trackPaginationInfo"
+import { trackPaginationEnrichment } from "./trackPaginationEnrichment"
 import type {
   EnhancerPaginationEdge,
   EnhancerPaginationInto,
@@ -42,9 +45,9 @@ export const paginationEnhancer =
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
     /**
-     * Nothing is known about chapters until {@link trackPaginationInfo} emits,
-     * so the seed carries the edges as they are with the enhancer's own fields
-     * left empty.
+     * Nothing is known about chapters until
+     * {@link trackPaginationEnrichment} emits, so the seed carries the edges
+     * as they are with the enhancer's own fields left empty.
      */
     const unenrichedEdge = (edge: PaginationEdge): EnhancerPaginationEdge => ({
       ...edge,
@@ -64,30 +67,46 @@ export const paginationEnhancer =
     }
 
     /**
-     * An enrichment keeps whatever settlement it has only while the result it
-     * was built from is still the current one, so what is published is a
-     * function of both rather than a flag two writers keep in sync.
+     * The published result joins an enrichment back to the core result, and
+     * settlement is decided here, once.
      *
-     * A stale enrichment is downgraded rather than dropped because revocation
-     * has to be immediate while its replacement is throttled. Waiting for the
-     * next enrichment would leave the previous page's position published as
-     * settled for the whole navigation.
+     * It is granted only from the core result the enrichment was built from,
+     * and only while that is still the current one. Enrichment is throttled,
+     * so one built for the previous page can arrive after the reader has
+     * settled on the next; it is simply never granted settlement, rather than
+     * handed one and having it taken back.
      *
-     * Comparing the core's live flag instead of the result it came from would
-     * not do: an enrichment built for the previous page would pass the moment
-     * the reader settled on the next one.
+     * Comparing the core's live flag instead of the result itself would not
+     * do: an enrichment built for the previous page would pass the moment the
+     * reader settled on the next one.
      */
     const enhancedPagination$ = combineLatest([
-      trackPaginationInfo(reader).pipe(
-        tap(({ info }) => Report.log(`Pagination`, info)),
-      ),
+      trackPaginationEnrichment(reader),
       reader.pagination.state$,
     ]).pipe(
-      map(
-        ([{ source, info }, current]): EnhancerPaginationInto =>
-          source === current ? info : withoutSettlement(info),
-      ),
+      map(([{ source, begin, end, ...extras }, current]) => {
+        /**
+         * Each edge is merged rather than replaced: the core contributes the
+         * position, this enhancer the chapter.
+         */
+        const edges = {
+          begin: { ...source.begin, ...begin },
+          end: { ...source.end, ...end },
+        }
+
+        const settlement: PaginationSettlement<EnhancerPaginationEdge> =
+          source === current
+            ? withSettlementOf(current, edges)
+            : { isSettled: false, ...edges }
+
+        return {
+          navigationId: source.navigationId,
+          ...extras,
+          ...settlement,
+        }
+      }),
       distinctUntilChanged(isSamePaginationResult),
+      tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)),
     )
 
     const resourcesLocator = new ResourcesLocator(reader)

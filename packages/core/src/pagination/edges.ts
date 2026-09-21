@@ -56,9 +56,11 @@ export const withSettlementOf = <TEdge extends PaginationEdge>(
  * Drops the claim that a result's positions describe the page being read,
  * keeping its metrics so navigation controls stay responsive.
  *
- * Both layers need this and for the same reason, so it is one function: the
- * controller withdraws settlement when a trigger arrives, and the enhancer
- * when an enrichment outlives the result it was built from.
+ * This is the withdrawing counterpart to {@link withSettlementOf}, and the
+ * controller is the only caller: it holds a result over time, so a trigger
+ * has something to withdraw from. The enhancer has no use for it — it builds
+ * each published result from an enrichment that never claimed settlement, so
+ * there is nothing to take back.
  */
 export const withoutSettlement = <
   TResult extends PaginationSettlement<PaginationEdge>,
