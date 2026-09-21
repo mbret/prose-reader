@@ -21,7 +21,8 @@
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test": "lerna run test --parallel",
     "publish-packages": "npm test && npm run build && lerna publish minor --yes",
-    "prepare": "husky"
+    "prepare": "husky",
+    "version": "node scripts/sync-internal-peer-ranges.mjs"
   },
   "workspaces": [
     "apps/*",
