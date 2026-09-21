@@ -17,6 +17,7 @@
     "tsc": "lerna run tsc --parallel",
     "format": "npx @biomejs/biome format .",
     "lint": "npx @biomejs/biome lint .",
+    "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test": "lerna run test --parallel",
     "publish-packages": "npm test && npm run build && lerna publish minor --yes",
     "prepare": "husky"
@@ -25,6 +26,9 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "tar": "^7.5.22"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
     "@rolldown/plugin-babel": "^0.2.3",

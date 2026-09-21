@@ -1,9 +1,13 @@
 {
   "name": "@prose-reader/streamer",
-  "version": "1.356.0",
+  "version": "1.370.0",
   "type": "module",
   "main": "./dist/index/index.cjs",
   "module": "./dist/index/index.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -24,8 +28,8 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/archive-reader": "^1.356.0",
-    "@prose-reader/shared": "^1.356.0",
+    "@prose-reader/archive-reader": "^1.370.0",
+    "@prose-reader/shared": "^1.370.0",
     "xmldoc": "^2.0.0"
   },
   "peerDependencies": {

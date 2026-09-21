@@ -101,7 +101,7 @@ describe("Given a book with one chapter", () => {
         reader.mount(document.getElementById("test-container")!)
       })
 
-      expect(value.beginChapterInfo).toEqual({
+      expect(value.begin.chapterInfo).toEqual({
         path: "/chapter_1/page_1.jpg",
         title: "Chapter 1",
       })
@@ -166,7 +166,7 @@ describe("Given a book with one chapter", () => {
         reader.navigation.goToSpineItem({ indexOrId: 1 })
       })
 
-      expect(value.beginChapterInfo).toEqual({
+      expect(value.begin.chapterInfo).toEqual({
         path: "/chapter_1/page_1.jpg",
         title: "Chapter 1",
       })
@@ -240,7 +240,7 @@ describe("Given a book with one chapter", () => {
             reader.navigation.goToSpineItem({ indexOrId: 1 })
           })
 
-          expect(value.beginChapterInfo).toEqual({
+          expect(value.begin.chapterInfo).toEqual({
             path: "OEBPS/part0006.xhtml",
             title: "Part 1",
             subChapter: { title: "Chapter 1", path: "OEBPS/part0006.xhtml" },
@@ -311,7 +311,7 @@ describe("Given a book with two chapters", () => {
         reader.mount(document.getElementById("test-container")!)
       })
 
-      expect(value.beginChapterInfo).toEqual({
+      expect(value.begin.chapterInfo).toEqual({
         path: "/OPS/page_1.jpg",
         title: "Chapter 1",
       })
@@ -382,7 +382,7 @@ describe("Given a book with two chapters", () => {
   //       reader.navigation.goToSpineItem(1)
   //     })
 
-  //     expect(value.beginChapterInfo).toEqual({
+  //     expect(value.begin.chapterInfo).toEqual({
   //       path: "/OPS/page_2.jpg",
   //       title: "Chapter 2",
   //     })

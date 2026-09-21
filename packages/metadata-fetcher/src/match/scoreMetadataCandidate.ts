@@ -1,6 +1,5 @@
 import {
-  gtinIdentifierValue,
-  isbnIdentifierValue,
+  identifierValue,
   isIsbnBearingScheme,
   type MetadataIdentifier,
   mainTitle,
@@ -298,8 +297,8 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryIsbn = isbnIdentifierValue(query.identifiers)
-  const candidateIsbn = isbnIdentifierValue(candidate.identifiers)
+  const queryIsbn = identifierValue(query.identifiers, "ISBN")
+  const candidateIsbn = identifierValue(candidate.identifiers, "ISBN")
   const queryIsbn13 = queryIsbn !== undefined ? toIsbn13(queryIsbn) : undefined
   const candidateIsbn13 =
     candidateIsbn !== undefined ? toIsbn13(candidateIsbn) : undefined
@@ -318,8 +317,8 @@ export const scoreMetadataCandidate = (
     })
   }
 
-  const queryGtin = gtinIdentifierValue(query.identifiers)
-  const candidateGtin = gtinIdentifierValue(candidate.identifiers)
+  const queryGtin = identifierValue(query.identifiers, "GTIN")
+  const candidateGtin = identifierValue(candidate.identifiers, "GTIN")
 
   if (!comparedIsbn && queryGtin !== undefined && candidateGtin !== undefined) {
     addSignal("gtin", {

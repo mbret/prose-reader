@@ -1,6 +1,7 @@
-import type {
-  KnownMetadataIdentifierScheme,
-  MetadataIdentifier,
+import {
+  identifierValue,
+  type KnownMetadataIdentifierScheme,
+  type MetadataIdentifier,
 } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 
@@ -13,45 +14,6 @@ export type GoogleBooksLookup = {
   readonly identifier: MetadataIdentifier
 }
 
-const GOOGLE_BOOKS_API_HOSTS: ReadonlySet<string> = new Set([
-  "books.googleapis.com",
-  "www.googleapis.com",
-])
-const GOOGLE_BOOKS_SITE_HOST =
-  /^books\.google\.(?:com|[a-z]{2}|com\.[a-z]{2}|co\.[a-z]{2})$/i
-
-const normalizedGoogleBooksId = (value: string): string | undefined => {
-  const trimmed = value.trim()
-
-  return /^[a-z0-9_-]+$/i.test(trimmed) ? trimmed : undefined
-}
-
-const googleBooksIdFromUrl = (value: string): string | undefined => {
-  try {
-    const url = new URL(value.trim())
-
-    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
-
-    const hostname = url.hostname.toLowerCase()
-
-    if (GOOGLE_BOOKS_SITE_HOST.test(hostname)) {
-      return normalizedGoogleBooksId(url.searchParams.get("id") ?? "")
-    }
-
-    if (GOOGLE_BOOKS_API_HOSTS.has(hostname)) {
-      const id = /^\/books\/v1\/volumes\/([^/]+)\/?$/i.exec(url.pathname)?.[1]
-
-      return id !== undefined
-        ? normalizedGoogleBooksId(decodeURIComponent(id))
-        : undefined
-    }
-  } catch {
-    return undefined
-  }
-
-  return undefined
-}
-
 /**
  * Recognizes an authored Google Books volume id and the official Google Books
  * website/API URL forms. Arbitrary scheme-less strings are not reinterpreted
@@ -61,22 +23,13 @@ export const googleBooksLookupFromInput = (
   input: FetchMetadataInput,
 ): GoogleBooksLookup | undefined => {
   for (const identifier of input.identifiers ?? []) {
-    const scheme = identifier.scheme.trim().toLowerCase()
-    const id =
-      scheme === GOOGLE_BOOKS_IDENTIFIER_SCHEME.toLowerCase()
-        ? normalizedGoogleBooksId(identifier.value)
-        : scheme === "unknown" || scheme === "url" || scheme === "uri"
-          ? googleBooksIdFromUrl(identifier.value)
-          : undefined
+    const id = identifierValue([identifier], GOOGLE_BOOKS_IDENTIFIER_SCHEME)
 
-    if (id === undefined) continue
-
-    return {
-      id,
-      identifier: {
-        value: identifier.value,
-        scheme: identifier.scheme,
-      },
+    if (id !== undefined) {
+      return {
+        id,
+        identifier: { value: identifier.value, scheme: identifier.scheme },
+      }
     }
   }
 

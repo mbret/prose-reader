@@ -74,6 +74,8 @@
   * [Publication identifiers](archive-reader/identifiers.md)
   * [Google Books identifiers](archive-reader/google-books.md)
   * [Project Gutenberg identifiers](archive-reader/project-gutenberg.md)
+  * [Open Library identifiers](archive-reader/open-library.md)
+  * [DOI identifiers](archive-reader/doi.md)
 
 ## Metadata Fetcher
 
@@ -82,6 +84,10 @@
 ## CFI
 
 * [About](cfi/about.md)
+
+## KOReader
+
+* [KOReader positions](koreader/README.md)
 
 ## React Reader
 

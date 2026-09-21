@@ -1,9 +1,13 @@
 {
   "name": "@prose-reader/react-reader",
   "private": false,
-  "version": "1.356.0",
+  "version": "1.370.0",
   "type": "module",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./index.css": "./dist/index.css"

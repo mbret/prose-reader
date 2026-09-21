@@ -1,10 +1,9 @@
 {
   "npmClient": "npm",
-  "version": "1.356.0",
+  "version": "1.370.0",
   "command": {
     "publish": {
-      "graphType": "all",
-      "access": "public"
+      "graphType": "all"
     }
   },
   "$schema": "node_modules/lerna/schemas/lerna-schema.json"

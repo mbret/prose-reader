@@ -77,7 +77,21 @@ export {
 export { readArchiveKobo } from "./metadata/kobo/readArchiveKobo.ts"
 export { getArchiveOpfInfo } from "./metadata/opf/getArchiveOpfInfo.ts"
 export { getSpineItemFilesFromArchive } from "./metadata/opf/getSpineItemFilesFromArchive.ts"
+export type { OpfIdentifierTypeMeta } from "./metadata/opf/identifierScheme.ts"
+export {
+  OPF_IDENTIFIER_SCHEME_ATTRIBUTES,
+  OPF_IDENTIFIER_SCHEME_LOCAL_NAMES,
+  opfIdentifierSchemeAttribute,
+  opfIdentifierTypeScheme,
+} from "./metadata/opf/identifierScheme.ts"
 export { isArchiveEpub } from "./metadata/opf/isArchiveEpub.ts"
+export type { XmlNamespaceScope } from "./metadata/opf/opfNamespace.ts"
+export {
+  OPF_NAMESPACE,
+  opfNamespacedAttribute,
+  opfNamespacePrefixes,
+  xmlNamespaceScope,
+} from "./metadata/opf/opfNamespace.ts"
 export type {
   OpfContributor,
   OpfGuideReference,
@@ -129,13 +143,23 @@ export type {
   ResolvedTitle,
   ResolvedTitleType,
 } from "./types/resolvedMetadata.ts"
+export type { MetadataCatalogScheme } from "./utils/catalogIdentifiers.ts"
 export {
-  gtinIdentifierValue,
-  isbnIdentifierValue,
+  catalogIdentifierFromUrl,
+  catalogUrlFromIdentifier,
+  isMetadataCatalogScheme,
+  METADATA_CATALOG_SCHEMES,
+} from "./utils/catalogIdentifiers.ts"
+export type { DerivableIdentifierScheme } from "./utils/identifierValues.ts"
+export {
+  identifierValue,
   isIsbnBearingScheme,
 } from "./utils/identifierValues.ts"
+export type { InferredIdentifierScheme } from "./utils/inferIdentifierScheme.ts"
+export { inferIdentifierScheme } from "./utils/inferIdentifierScheme.ts"
 export { mainTitle } from "./utils/mainTitle.ts"
 export { normalizeGtin } from "./utils/normalizeGtin.ts"
+export { normalizeIdentifierScheme } from "./utils/normalizeIdentifierScheme.ts"
 export { normalizeIsbn } from "./utils/normalizeIsbn.ts"
 export { parseW3cDtfDate } from "./utils/parseW3cDtfDate.ts"
 export { tokenizeXmlSpaceSeparatedList } from "./utils/tokenizeXmlSpaceSeparatedList.ts"

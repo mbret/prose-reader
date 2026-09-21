@@ -94,7 +94,7 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
     const updateStateOnLoaded$ = this.renderer.state$.pipe(
       tap(({ state, error }) => {
-        this.mergeCompare({
+        this.updateState({
           isLoaded: state === "loaded",
           isError: state === "error",
           error: state === "error" ? error : undefined,
@@ -104,9 +104,11 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
 
     this.didLayout$ = this._layout.didLayout$.pipe(
       tap(() => {
-        this.mergeCompare({
+        // Grants the layout half of readiness. `updateState` keeps it only if
+        // the document half holds too.
+        this.updateState({
           isDirty: false,
-          isReady: this.renderer.value.state === "loaded",
+          isReady: true,
         })
       }),
       share(),
@@ -151,8 +153,25 @@ export class SpineItem extends ReactiveEntity<SpineItemState> {
   }
 
   public markDirty = () => {
-    this.mergeCompare({
+    this.updateState({
       isDirty: true,
+    })
+  }
+
+  /**
+   * Every state change goes through here so the invariants hold whoever
+   * writes, rather than each writer having to remember them.
+   *
+   * Readiness means the renderer is loaded *and* a layout completed for it.
+   * The two halves are granted by different streams, so a writer that drops
+   * the document must not be able to leave readiness standing over it.
+   */
+  private updateState(update: Partial<SpineItemState>) {
+    const nextState = { ...this.value, ...update }
+
+    this.mergeCompare({
+      ...nextState,
+      isReady: nextState.isReady && nextState.isLoaded,
     })
   }
 

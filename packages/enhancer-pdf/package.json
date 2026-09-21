@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/enhancer-pdf",
-  "version": "1.356.0",
+  "version": "1.370.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -8,6 +8,10 @@
   "files": [
     "/dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",

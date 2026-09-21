@@ -111,7 +111,6 @@ export const createReader = ({
     pagination,
     spineItemsManager,
     spine,
-    spineItemLocator,
     navigator.isLocked$,
     cfi,
   )

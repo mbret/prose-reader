@@ -1,4 +1,4 @@
-import { isbnIdentifierValue } from "@prose-reader/archive-reader"
+import { identifierValue } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataCandidate,
@@ -229,7 +229,7 @@ export const createGoogleBooksSearch = (
       }
     }
 
-    const isbn = isbnIdentifierValue(input.identifiers)
+    const isbn = identifierValue(input.identifiers, "ISBN")
 
     if (isbn !== undefined) {
       const volumes = await searchVolumes(

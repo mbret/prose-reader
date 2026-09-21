@@ -692,3 +692,144 @@ describe("parseOpf — description", () => {
     expect(parseOpf(xml).description).toBe("A story about tests.")
   })
 })
+
+describe("OPF namespace prefix aliases", () => {
+  const packaged = (packageAttrs: string, metadata: string) =>
+    `<?xml version="1.0"?>` +
+    `<package version="3.0" unique-identifier="bookid"` +
+    ` xmlns="http://www.idpf.org/2007/opf"` +
+    ` xmlns:dc="http://purl.org/dc/elements/1.1/"` +
+    ` ${packageAttrs}>` +
+    `<metadata>${metadata}</metadata><manifest/><spine/>` +
+    `</package>`
+
+  it("reads a scheme stated under another prefix bound to the OPF namespace", () => {
+    const xml = packaged(
+      'xmlns:pkg="http://www.idpf.org/2007/opf"',
+      '<dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    ])
+  })
+
+  it("ignores the same local name under a prefix bound elsewhere", () => {
+    const xml = packaged(
+      'xmlns:other="http://example.com/not-opf"',
+      '<dc:identifier other:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([{ value: "zyTCAlFPjgYC" }])
+  })
+
+  it("still reads the conventional prefix a package left undeclared", () => {
+    const xml = packaged(
+      'id="pkg"',
+      '<dc:identifier opf:scheme="ISBN">9783161484100</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "9783161484100", scheme: "ISBN" },
+    ])
+  })
+
+  it("reads a role and a sort name under an aliased prefix", () => {
+    const xml = packaged(
+      'xmlns:pkg="http://www.idpf.org/2007/opf"',
+      '<dc:creator pkg:role="ill" pkg:file-as="Murakami, Haruki">Haruki Murakami</dc:creator>',
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      {
+        name: "Haruki Murakami",
+        source: "creator",
+        roles: ["ill"],
+        fileAs: "Murakami, Haruki",
+      },
+    ])
+  })
+
+  it("keeps reading the unprefixed EPUB 2 spellings", () => {
+    const xml = packaged(
+      'id="pkg"',
+      '<dc:identifier scheme="ISBN">9783161484100</dc:identifier>' +
+        '<dc:creator role="aut" file-as="Murakami, Haruki">Haruki Murakami</dc:creator>',
+    )
+    const parsed = parseOpf(xml)
+
+    expect(parsed.identifiers).toEqual([
+      { value: "9783161484100", scheme: "ISBN" },
+    ])
+    expect(parsed.contributors[0]).toMatchObject({
+      roles: ["aut"],
+      fileAs: "Murakami, Haruki",
+    })
+  })
+})
+
+describe("OPF namespace bindings declared below the package element", () => {
+  const withMetadata = (metadataAttrs: string, metadata: string) =>
+    `<?xml version="1.0"?>` +
+    `<package version="3.0" unique-identifier="bookid"` +
+    ` xmlns="http://www.idpf.org/2007/opf"` +
+    ` xmlns:dc="http://purl.org/dc/elements/1.1/">` +
+    `<metadata ${metadataAttrs}>${metadata}</metadata><manifest/><spine/>` +
+    `</package>`
+
+  it("reads a prefix declared on the metadata element", () => {
+    const xml = withMetadata(
+      'xmlns:pkg="http://www.idpf.org/2007/opf"',
+      '<dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    ])
+  })
+
+  it("reads a prefix declared on the identifier itself", () => {
+    const xml = withMetadata(
+      "",
+      '<dc:identifier xmlns:pkg="http://www.idpf.org/2007/opf" pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([
+      { value: "zyTCAlFPjgYC", scheme: "GoogleBooks" },
+    ])
+  })
+
+  it("reads a prefix declared on a creator itself", () => {
+    const xml = withMetadata(
+      "",
+      '<dc:creator xmlns:pkg="http://www.idpf.org/2007/opf" pkg:role="ill">Haruki Murakami</dc:creator>',
+    )
+
+    expect(parseOpf(xml).contributors).toEqual([
+      { name: "Haruki Murakami", source: "creator", roles: ["ill"] },
+    ])
+  })
+
+  it("honours a descendant rebinding the conventional prefix elsewhere", () => {
+    const xml = withMetadata(
+      'xmlns:opf="http://example.com/not-opf"',
+      '<dc:identifier opf:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>',
+    )
+
+    expect(parseOpf(xml).identifiers).toEqual([{ value: "zyTCAlFPjgYC" }])
+  })
+
+  it("honours a descendant rebinding an aliased prefix elsewhere", () => {
+    const xml =
+      `<?xml version="1.0"?>` +
+      `<package version="3.0" unique-identifier="bookid"` +
+      ` xmlns="http://www.idpf.org/2007/opf"` +
+      ` xmlns:dc="http://purl.org/dc/elements/1.1/"` +
+      ` xmlns:pkg="http://www.idpf.org/2007/opf">` +
+      `<metadata xmlns:pkg="http://example.com/not-opf">` +
+      '<dc:identifier pkg:scheme="GoogleBooks">zyTCAlFPjgYC</dc:identifier>' +
+      `</metadata><manifest/><spine/></package>`
+
+    expect(parseOpf(xml).identifiers).toEqual([{ value: "zyTCAlFPjgYC" }])
+  })
+})

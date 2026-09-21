@@ -1,23 +1,31 @@
 import {
   filter,
+  map,
   merge,
   type Observable,
+  share,
   switchMap,
   take,
   takeUntil,
-  tap,
   withLatestFrom,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
 import type { Context } from "../context/Context"
+import type { Navigation } from "../navigation/types"
+import type { PageEntry } from "../spine/Pages"
 import type { Spine } from "../spine/Spine"
 import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
-import type { createSpineItemLocator } from "../spineItem/locationResolver"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
 import { waitForSwitch } from "../utils/rxjs"
 import type { Pagination } from "./Pagination"
+import type { PaginationEdge, PaginationInfo } from "./types"
+
+const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
+  type: "percentage",
+  value: 0.5,
+}
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -25,189 +33,198 @@ export class PaginationController extends DestroyableClass {
     protected pagination: Pagination,
     protected spineItemsManager: SpineItemsManager,
     protected spine: Spine,
-    protected spineItemLocator: ReturnType<typeof createSpineItemLocator>,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
   ) {
     super()
 
     /**
-     * Adjust heavier pagination once the navigation and items are updated.
-     * This is also cancelled if the layout changes, because the layout will
-     * trigger a new navigation adjustment and pagination again.
+     * Results are produced by the pipeline rather than written into the
+     * entity from side effects, but the stream shape is kept as it was: the
+     * metrics pass feeds the positions pass, and both publish.
      *
-     * This adjustment is used to update the pagination with the most up to date values we can.
-     * It needs to be ran only when viewport is free because some operation such as looking up cfi can
-     * be really heavy.
-     *
-     * The cfi will only be updated if it needs to be:
-     * - cfi is a root target
-     * - cfi is undefined
-     * - items are different
+     * `share()` is what removes the duplicated work. Previously the two were
+     * subscribed separately, and the metrics chain is cold, so its visible
+     * item and page lookups ran once per subscriber.
      */
-    const updatePagination$ = merge(
+    const metrics$ = merge(
       this.context.bridgeEvent.navigation$,
       spine.layout$,
     ).pipe(
-      switchMap(() => {
-        const getVisiblePagesFromViewportPosition = ({
-          spineItem,
-          position,
-        }: {
-          spineItem: SpineItem
-          position: SpinePosition | UnboundSpinePosition
-        }) =>
-          this.spine.locator.getVisiblePagesFromViewportPosition({
-            spineItem: spineItem,
-            position,
-            threshold: { type: "percentage", value: 0.5 },
-          })
-
+      switchMap(() =>
         /**
          * @important
          *
-         * It's important to soft update pagination immediately.
-         * This will avoid delay in potential user feedbacks (navigation buttons).
+         * Metrics are resolved immediately so user feedback (navigation
+         * buttons) is not delayed. Nothing there is heavier than a layout
+         * lookup.
          *
-         * However we wait for the navigator to be unlocked, this avoid updating the pagination
-         * while the user is panning for example. We consider a locked navigator as unfinished
-         * navigation.
-         *
-         * Nothing here should be heavier than layout lookup.
+         * We wait for the navigator to be unlocked first, which avoids
+         * resolving while the user is panning for example. A locked navigator
+         * is an unfinished navigation.
          */
-        return this.isNavigationLocked$.pipe(
+        this.isNavigationLocked$.pipe(
           filter((isLocked) => !isLocked),
           take(1),
           withLatestFrom(this.context.bridgeEvent.navigation$),
-          tap(([, navigation]) => {
-            const { position } = navigation
-            const previousPagination = this.pagination.value
-
-            const {
-              beginIndex: beginSpineItemIndex,
-              endIndex: endSpineItemIndex,
-            } =
-              this.spine.locator.getVisibleSpineItemsFromPosition({
-                position,
-                threshold: { type: "percentage", value: 0.5 },
-              }) ?? {}
-
-            const beginSpineItem =
-              this.spineItemsManager.get(beginSpineItemIndex)
-            const endSpineItem = this.spineItemsManager.get(endSpineItemIndex)
-
-            if (!beginSpineItem || !endSpineItem) return
-
-            const beginLastCfi = previousPagination.beginCfi
-            const endLastCfi = previousPagination.endCfi
-
-            const { beginPageIndex = 0 } =
-              getVisiblePagesFromViewportPosition({
-                spineItem: beginSpineItem,
-                position,
-              }) ?? {}
-
-            const { endPageIndex = 0 } =
-              getVisiblePagesFromViewportPosition({
-                spineItem: endSpineItem,
-                position,
-              }) ?? {}
-
-            const shouldUpdateBeginCfi =
-              beginLastCfi === undefined ||
-              this.cfi.isRootCfi(beginLastCfi) ||
-              previousPagination.beginSpineItemIndex !== beginSpineItemIndex
-
-            const shouldUpdateEndCfi =
-              previousPagination.endSpineItemIndex !== endSpineItemIndex ||
-              endLastCfi === undefined ||
-              this.cfi.isRootCfi(endLastCfi)
-
-            const beginCfi = shouldUpdateBeginCfi
-              ? this.cfi.generateRootCfi(beginSpineItem.item)
-              : beginLastCfi
-
-            const endCfi = shouldUpdateEndCfi
-              ? this.cfi.generateRootCfi(endSpineItem.item)
-              : endLastCfi
-
-            const beginNumberOfPagesInSpineItem = beginSpineItem.numberOfPages
-
-            const endNumberOfPagesInSpineItem = endSpineItem.numberOfPages
-
-            this.pagination.update({
-              beginCfi,
-              beginNumberOfPagesInSpineItem,
-              beginPageIndexInSpineItem: beginPageIndex,
-              beginSpineItemIndex,
-              endCfi,
-              endNumberOfPagesInSpineItem,
-              endPageIndexInSpineItem: endPageIndex,
-              endSpineItemIndex,
-              navigationId: navigation.id,
-            })
+          map(([, navigation]) => {
+            /**
+             * When the visible items cannot be resolved, the previous result
+             * is carried through unchanged. That keeps the behaviour this
+             * refactor found: the positions pass used to run in this case too,
+             * against whatever the entity already held.
+             */
+            return this.resolveMetrics(navigation) ?? this.pagination.value
           }),
-        )
-      }),
+        ),
+      ),
+      share(),
     )
 
     /**
      * Heavy operation, needs to be optimized as much as possible.
      *
-     * @todo add more optimization, comparing item before, after with position, etc
+     * @todo add more optimization, comparing item before, after with position,
+     * etc
      */
-    const updateCfi$ = updatePagination$.pipe(
+    const positions$ = metrics$.pipe(
       waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      tap(() => {
-        const {
-          beginSpineItemIndex,
-          endSpineItemIndex,
-          beginPageIndexInSpineItem,
-          endPageIndexInSpineItem,
-        } = this.pagination.value
-
-        if (
-          beginPageIndexInSpineItem === undefined ||
-          endPageIndexInSpineItem === undefined ||
-          beginSpineItemIndex === undefined ||
-          endSpineItemIndex === undefined
-        )
-          return
-
-        const beginSpineItem = this.spineItemsManager.get(beginSpineItemIndex)
-        const endSpineItem = this.spineItemsManager.get(endSpineItemIndex)
-
-        if (beginSpineItem === undefined || endSpineItem === undefined) return
-
-        const beginPageEntry = this.spine.pages.fromSpineItemPageIndex(
-          beginSpineItem,
-          beginPageIndexInSpineItem,
-        )
-        const endPageEntry = this.spine.pages.fromSpineItemPageIndex(
-          endSpineItem,
-          endPageIndexInSpineItem,
-        )
-
-        // @todo only update long cfi if the item layout change but specifically its content
-        this.pagination.update({
-          beginCfi: beginPageEntry?.firstVisibleNode
-            ? this.cfi.generateCfiForSpineItemPage({
-                spineItem: beginSpineItem.item,
-                pageNode: beginPageEntry?.firstVisibleNode,
-              })
-            : this.cfi.generateRootCfi(beginSpineItem.item),
-          endCfi: endPageEntry?.firstVisibleNode
-            ? this.cfi.generateCfiForSpineItemPage({
-                spineItem: endSpineItem.item,
-                pageNode: endPageEntry?.firstVisibleNode,
-              })
-            : this.cfi.generateRootCfi(endSpineItem.item),
-        })
-      }),
+      map((metrics) => this.resolvePositions(metrics)),
+      filter((result): result is PaginationInfo => result !== undefined),
     )
 
-    merge(updatePagination$, updateCfi$)
+    merge(metrics$, positions$)
       .pipe(takeUntil(this.destroy$))
-      .subscribe()
+      .subscribe((result) => {
+        this.pagination.update(result)
+      })
+  }
+
+  private getVisiblePages(
+    spineItem: SpineItem,
+    position: SpinePosition | UnboundSpinePosition,
+  ) {
+    return this.spine.locator.getVisiblePagesFromViewportPosition({
+      spineItem,
+      position,
+      threshold: VISIBILITY_THRESHOLD,
+    })
+  }
+
+  /**
+   * Cheap pass: which items and pages are visible. Positions are carried over
+   * from the previous result, or fall back to the item start, and are only
+   * resolved properly by {@link resolvePositions}.
+   */
+  private resolveMetrics(navigation: Navigation): PaginationInfo | undefined {
+    const { position } = navigation
+    const previous = this.pagination.value
+
+    const { beginIndex, endIndex } =
+      this.spine.locator.getVisibleSpineItemsFromPosition({
+        position,
+        threshold: VISIBILITY_THRESHOLD,
+      }) ?? {}
+
+    const beginSpineItem = this.spineItemsManager.get(beginIndex)
+    const endSpineItem = this.spineItemsManager.get(endIndex)
+
+    if (!beginSpineItem || !endSpineItem) return undefined
+
+    const { beginPageIndex = 0 } =
+      this.getVisiblePages(beginSpineItem, position) ?? {}
+    const { endPageIndex = 0 } =
+      this.getVisiblePages(endSpineItem, position) ?? {}
+
+    return {
+      begin: this.resolveEdgeMetrics(
+        beginSpineItem,
+        beginIndex,
+        beginPageIndex,
+        previous.begin,
+      ),
+      end: this.resolveEdgeMetrics(
+        endSpineItem,
+        endIndex,
+        endPageIndex,
+        previous.end,
+      ),
+      navigationId: navigation.id,
+    }
+  }
+
+  /**
+   * The previous cfi is kept while it still describes this edge: it exists, it
+   * is not a root target, and the item has not changed. Otherwise the item
+   * start stands in until {@link resolvePositions} resolves the real page.
+   */
+  private resolveEdgeMetrics(
+    spineItem: SpineItem,
+    spineItemIndex: number | undefined,
+    pageIndexInSpineItem: number,
+    previous: PaginationEdge,
+  ): PaginationEdge {
+    const canCarryOverCfi =
+      previous.cfi !== undefined &&
+      !this.cfi.isRootCfi(previous.cfi) &&
+      previous.spineItemIndex === spineItemIndex
+
+    return {
+      cfi: canCarryOverCfi
+        ? previous.cfi
+        : this.cfi.generateRootCfi(spineItem.item),
+      spineItemIndex,
+      pageIndexInSpineItem,
+      numberOfPagesInSpineItem: spineItem.numberOfPages,
+    }
+  }
+
+  /**
+   * Resolves the positions of the metrics it is given, rather than of whatever
+   * the reader happens to hold by the time the viewport frees up.
+   */
+  private resolvePositions(
+    metrics: PaginationInfo,
+  ): PaginationInfo | undefined {
+    const begin = this.resolveEdgePositions(metrics.begin)
+    const end = this.resolveEdgePositions(metrics.end)
+
+    if (!begin || !end) return undefined
+
+    return { ...metrics, begin, end }
+  }
+
+  // @todo only update long cfi if the item layout change but specifically its content
+  private resolveEdgePositions(
+    edge: PaginationEdge,
+  ): PaginationEdge | undefined {
+    const { spineItemIndex, pageIndexInSpineItem } = edge
+
+    if (spineItemIndex === undefined || pageIndexInSpineItem === undefined)
+      return undefined
+
+    const spineItem = this.spineItemsManager.get(spineItemIndex)
+
+    if (!spineItem) return undefined
+
+    const pageEntry = this.spine.pages.fromSpineItemPageIndex(
+      spineItem,
+      pageIndexInSpineItem,
+    )
+
+    return { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) }
+  }
+
+  /**
+   * The cfi of a page, falling back to the item itself when the page has no
+   * resolvable first visible node.
+   */
+  private resolveCfi(spineItem: SpineItem, pageEntry: PageEntry | undefined) {
+    return pageEntry?.firstVisibleNode
+      ? this.cfi.generateCfiForSpineItemPage({
+          spineItem: spineItem.item,
+          pageNode: pageEntry.firstVisibleNode,
+        })
+      : this.cfi.generateRootCfi(spineItem.item)
   }
 }

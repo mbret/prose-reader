@@ -13,9 +13,9 @@ export const TableOfContentsDialogContent = memo(
     const { nav } = manifest ?? {}
     const pagination = usePagination()
     const toc = nav?.toc || []
-    const absolutePageIndex = pagination?.beginAbsolutePageIndex
+    const absolutePageIndex = pagination?.begin.absolutePageIndex
 
-    let currentSubChapter = pagination?.beginChapterInfo
+    let currentSubChapter = pagination?.begin.chapterInfo
 
     while (currentSubChapter?.subChapter) {
       currentSubChapter = currentSubChapter?.subChapter

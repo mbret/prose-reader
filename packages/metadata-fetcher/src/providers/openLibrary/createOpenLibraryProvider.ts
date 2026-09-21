@@ -1,4 +1,4 @@
-import { isbnIdentifierValue } from "@prose-reader/archive-reader"
+import { identifierValue } from "@prose-reader/archive-reader"
 import type { FetchMetadataInput } from "../../types/fetchMetadataInput.ts"
 import type {
   MetadataCandidate,
@@ -148,7 +148,7 @@ export const createOpenLibraryProvider = (
     id: OPEN_LIBRARY_PROVIDER_ID,
     name: "Open Library",
     search: async (input, context) => {
-      const isbn = isbnIdentifierValue(input.identifiers)
+      const isbn = identifierValue(input.identifiers, "ISBN")
       const projectGutenberg = projectGutenbergLookupFromInput(input)
 
       if (isbn !== undefined) {
