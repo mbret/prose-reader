@@ -1,5 +1,5 @@
 import type { Observable } from "rxjs"
-import type { PaginationEdge } from "../../pagination/types"
+import type { PaginationEdge, VisibleRange } from "../../pagination/types"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { ChapterInfo } from "./chapters"
@@ -29,11 +29,14 @@ export type ExtraPaginationInfo = {
   // numberOfSpineItems: number | undefined
 }
 
+/**
+ * The enriched result discriminates on settlement exactly as the core one
+ * does, over its own edge type — settlement is a property of the two edges'
+ * positions, so it is expressed once and reused rather than restated here.
+ */
 export type EnhancerPaginationInto = ExtraPaginationInfo & {
-  begin: EnhancerPaginationEdge
-  end: EnhancerPaginationEdge
   navigationId?: symbol
-}
+} & VisibleRange<EnhancerPaginationEdge>
 
 export type PaginationEnhancerAPI<
   InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,

@@ -6,13 +6,23 @@
  * transition of reader state, many non-final states could be emitted and would not bring much value
  * to the user. This is an opinionated decision for this API
  */
-import { BehaviorSubject, tap } from "rxjs"
+import {
+  BehaviorSubject,
+  distinctUntilChanged,
+  map,
+  switchMap,
+  tap,
+} from "rxjs"
+import { isSamePaginationResult } from "../../pagination/edges"
 import type { PaginationEdge } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
-import { trackPaginationInfo } from "./trackPaginationInfo"
+import {
+  type PaginationEnrichment,
+  trackPaginationEnrichment,
+} from "./trackPaginationEnrichment"
 import type {
   EnhancerPaginationEdge,
   EnhancerPaginationInto,
@@ -20,6 +30,33 @@ import type {
 } from "./types"
 
 export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
+
+/**
+ * Two returns rather than one spread: the settled variant types each edge's
+ * cfi as present, and TypeScript only sees that when the edges are built
+ * under the narrowing of `source`.
+ */
+const publishEnrichment = (
+  { source, begin, end, ...extras }: PaginationEnrichment,
+  describesCurrentResult: boolean,
+): EnhancerPaginationInto => {
+  if (source.isSettled && describesCurrentResult) {
+    return {
+      ...extras,
+      ...source,
+      begin: { ...source.begin, ...begin },
+      end: { ...source.end, ...end },
+    }
+  }
+
+  return {
+    ...extras,
+    ...source,
+    isSettled: false,
+    begin: { ...source.begin, ...begin },
+    end: { ...source.end, ...end },
+  }
+}
 
 export const paginationEnhancer =
   <
@@ -31,11 +68,6 @@ export const paginationEnhancer =
   ) =>
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
-    /**
-     * Nothing is known about chapters until {@link trackPaginationInfo} emits,
-     * so the seed carries the edges as they are with the enhancer's own fields
-     * left empty.
-     */
     const unenrichedEdge = (edge: PaginationEdge): EnhancerPaginationEdge => ({
       ...edge,
       chapterInfo: undefined,
@@ -43,20 +75,45 @@ export const paginationEnhancer =
       absolutePageIndex: 0,
     })
 
-    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>({
+    const unenrichedPagination: EnhancerPaginationInto = {
       ...reader.pagination.state,
+      isSettled: false,
       begin: unenrichedEdge(reader.pagination.state.begin),
       end: unenrichedEdge(reader.pagination.state.end),
       isUsingSpread: false,
       numberOfTotalPages: 0,
       percentageEstimateOfBook: 0,
-    })
+    }
+
+    const enhancedPagination$ = trackPaginationEnrichment(reader).pipe(
+      switchMap((enrichment) =>
+        /**
+         * Enrichment is throttled, so it can describe a core result the reader
+         * has since replaced. That is the only thing about the core the
+         * published value depends on, so it rebuilds only when that changes.
+         */
+        reader.pagination.state$.pipe(
+          map((current) => enrichment.source === current),
+          distinctUntilChanged(),
+          map((describesCurrentResult) =>
+            publishEnrichment(enrichment, describesCurrentResult),
+          ),
+        ),
+      ),
+      distinctUntilChanged(isSamePaginationResult),
+      tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)),
+    )
 
     const resourcesLocator = new ResourcesLocator(reader)
 
-    const paginationSub = trackPaginationInfo(reader)
-      .pipe(tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)))
-      .subscribe(enhancedPagination)
+    /**
+     * `state` is read synchronously, so the derived result is kept here.
+     * Nothing writes to it but the stream above.
+     */
+    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>(
+      unenrichedPagination,
+    )
+    const paginationSub = enhancedPagination$.subscribe(enhancedPagination)
 
     return {
       ...reader,
@@ -71,7 +128,7 @@ export const paginationEnhancer =
           return enhancedPagination.value
         },
         get state$() {
-          return enhancedPagination
+          return enhancedPagination.asObservable()
         },
       },
     } as unknown as PaginationOutput

@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import type { PaginationEdge } from "./types"
+import type { PaginationEdge, VisibleRange } from "./types"
 
 export const createEmptyPaginationEdge = (): PaginationEdge => ({
   cfi: undefined,
@@ -31,3 +31,11 @@ export const isSamePaginationResult = <
     isShallowEqual(restA, restB)
   )
 }
+
+/**
+ * Drops the claim that a result's positions describe the page being read,
+ * keeping its metrics so navigation controls stay responsive.
+ */
+export const withoutSettlement = <TResult extends VisibleRange<PaginationEdge>>(
+  result: TResult,
+) => ({ ...result, isSettled: false as const })

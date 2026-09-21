@@ -7,7 +7,17 @@ import type {
 import type { Bridge, BridgeStore } from "@webview-bridge/react-native"
 
 type ReaderOptions = Parameters<typeof createReader>[0]
-type RnPaginationState = Omit<EnhancerPaginationInto, "navigationId">
+/**
+ * `navigationId` is a symbol, which does not survive the bridge.
+ *
+ * The omit distributes over the union so the settled and provisional variants
+ * stay distinguishable: a plain `Omit` would collapse them into one object
+ * with `isSettled: boolean`, and consumers could no longer narrow to reach a
+ * position.
+ */
+type RnPaginationState = EnhancerPaginationInto extends unknown
+  ? Omit<EnhancerPaginationInto, "navigationId">
+  : never
 type RnContextState = Omit<ContextState, "rootElement">
 
 export interface BridgeState extends Bridge {

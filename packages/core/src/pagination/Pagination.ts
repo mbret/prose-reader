@@ -10,6 +10,7 @@ export class Pagination extends ReactiveEntity<PaginationInfo> {
     protected spineItemsManager: SpineItemsManager,
   ) {
     super({
+      isSettled: false,
       begin: createEmptyPaginationEdge(),
       end: createEmptyPaginationEdge(),
       navigationId: undefined,

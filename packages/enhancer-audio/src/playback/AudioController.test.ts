@@ -79,6 +79,7 @@ const createPaginationState = ({
   beginSpineItemIndex: number | undefined
   endSpineItemIndex: number | undefined
 }): PaginationInfo => ({
+  isSettled: false,
   begin: createPaginationEdge(beginSpineItemIndex),
   end: createPaginationEdge(endSpineItemIndex),
 })

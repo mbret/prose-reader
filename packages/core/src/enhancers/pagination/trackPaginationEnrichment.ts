@@ -23,6 +23,7 @@ import {
   type TocCandidatesBySpineHref,
 } from "./chapters"
 import { getPercentageEstimate } from "./progression"
+import type { EnhancerPaginationEdge, ExtraPaginationInfo } from "./types"
 
 type ChaptersData = {
   tocCandidatesBySpineHref: TocCandidatesBySpineHref
@@ -39,6 +40,14 @@ type ChapterPaginationInfo = {
   end: ChapterPaginationEdge
 }
 
+/** What this enhancer adds to an edge the core already published. */
+type EdgeEnrichment = Omit<EnhancerPaginationEdge, keyof PaginationEdge>
+
+type ChaptersInfo = {
+  begin: EdgeEnrichment
+  end: EdgeEnrichment
+}
+
 /**
  * Both edges resolve their chapter the same way, so this describes one edge and
  * is applied to each rather than written out twice side by side.
@@ -53,7 +62,7 @@ const mapEdgeChapterInfo = ({
   pageIndexInSpineItem: number | undefined
   chaptersData: ChaptersData
   pagesState: PagesState
-}) => {
+}): EdgeEnrichment => {
   const pageEntry =
     spineItem && pageIndexInSpineItem !== undefined
       ? Pages.fromSpineItemPageIndex(
@@ -185,7 +194,20 @@ const mapChapterPaginationInfo = (
   end: mapChapterPaginationEdge(paginationInfo.end),
 })
 
-export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
+/**
+ * What this enhancer adds to a pagination result, alongside the core result it
+ * was computed from. It carries no settlement: that is granted where `source`
+ * is joined back to the result that is current.
+ */
+export type PaginationEnrichment = ExtraPaginationInfo & {
+  source: PaginationInfo
+  begin: EdgeEnrichment
+  end: EdgeEnrichment
+}
+
+export const trackPaginationEnrichment = (
+  reader: Reader & LayoutEnhancerOutput,
+) => {
   const pagination$ = reader.pagination.state$
   const pagesState$ = reader.spine.pages.layout$
   const chaptersData$ = observeChaptersData(reader).pipe(
@@ -210,10 +232,12 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
           pagesState,
         })
 
-      return {
+      const chaptersInfo: ChaptersInfo = {
         begin: mapEdge(paginationInfo.begin),
         end: mapEdge(paginationInfo.end),
       }
+
+      return chaptersInfo
     }),
     shareReplay({ bufferSize: 1, refCount: true }),
   )
@@ -233,56 +257,50 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     distinctUntilChanged(areTotalsEqual),
   )
 
-  const basePaginationInfo$ = combineLatest([
-    pagination$,
-    isUsingSpread$,
-    chaptersInfo$,
-    totals$,
-  ]).pipe(
-    map(([pagination, isUsingSpread, chaptersInfo, totals]) => ({
-      ...pagination,
-      // the edges are merged rather than replaced: each side contributes part
-      begin: { ...pagination.begin, ...chaptersInfo.begin },
-      end: { ...pagination.end, ...chaptersInfo.end },
-      isUsingSpread,
-      ...totals,
-    })),
-  )
-
   const settledPosition$ = observeSettledNavigation(reader.navigation).pipe(
     map(({ position }) => position),
     distinctUntilChanged(isShallowEqual),
   )
 
-  const progression$ = combineLatest([
+  /**
+   * Chapter info stays its own stream, deduped on the page pair, because
+   * resolving it walks the document. The audit below absorbs the join's
+   * transient. Progression is cheap enough to compute from the captured
+   * result directly.
+   */
+  return combineLatest([
     pagination$,
+    isUsingSpread$,
+    chaptersInfo$,
+    totals$,
+    // a layout can change the progression without changing the pagination
     reader.layout$,
     settledPosition$,
   ]).pipe(
-    switchMap(([paginationInfo, _layout, navigationPosition]) =>
-      getProgressionForPagination({
-        reader,
-        paginationInfo,
-        navigationPosition,
-        manifest: reader.context.manifest,
-      }),
+    switchMap(
+      ([source, isUsingSpread, chaptersInfo, totals, , navigationPosition]) =>
+        getProgressionForPagination({
+          reader,
+          paginationInfo: source,
+          navigationPosition,
+          manifest: reader.context.manifest,
+        }).pipe(
+          map(
+            (percentageEstimateOfBook): PaginationEnrichment => ({
+              source,
+              begin: chaptersInfo.begin,
+              end: chaptersInfo.end,
+              isUsingSpread,
+              numberOfTotalPages: totals.numberOfTotalPages,
+              percentageEstimateOfBook,
+            }),
+          ),
+        ),
     ),
-    map((progression) => ({
-      /**
-       * This percentage is based of the weight (kb) of every items and the number of pages.
-       * It is not accurate but gives a general good idea of the overall progress.
-       * It is recommended to use this progress only for reflow books. For pre-paginated books
-       * the number of pages and current index can be used instead since 1 page = 1 chapter.
-       */
-      percentageEstimateOfBook: progression,
-    })),
-  )
-
-  return combineLatest([basePaginationInfo$, progression$]).pipe(
-    map(([basePaginationInfo, progression]) => ({
-      ...basePaginationInfo,
-      ...progression,
-    })),
+    /**
+     * `source` compares by reference, so an enrichment built from a new core
+     * result counts as a change even when every enriched value is identical.
+     */
     distinctUntilChanged(isSamePaginationResult),
     auditTime(5),
   )
