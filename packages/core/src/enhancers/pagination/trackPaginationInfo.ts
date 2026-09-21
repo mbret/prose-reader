@@ -9,7 +9,10 @@ import {
   switchMap,
 } from "rxjs"
 import { observeSettledNavigation } from "../../navigation/operators"
-import { isSamePaginationResult } from "../../pagination/edges"
+import {
+  isSamePaginationResult,
+  withSettlementOf,
+} from "../../pagination/edges"
 import type { PaginationEdge, PaginationInfo } from "../../pagination/types"
 import type { Reader } from "../../reader"
 import { Pages, type PagesState } from "../../spine/Pages"
@@ -233,57 +236,77 @@ export const trackPaginationInfo = (reader: Reader & LayoutEnhancerOutput) => {
     distinctUntilChanged(areTotalsEqual),
   )
 
-  const basePaginationInfo$ = combineLatest([
-    pagination$,
-    isUsingSpread$,
-    chaptersInfo$,
-    totals$,
-  ]).pipe(
-    map(([pagination, isUsingSpread, chaptersInfo, totals]) => ({
-      ...pagination,
-      // the edges are merged rather than replaced: each side contributes part
-      begin: { ...pagination.begin, ...chaptersInfo.begin },
-      end: { ...pagination.end, ...chaptersInfo.end },
-      isUsingSpread,
-      ...totals,
-    })),
-  )
-
   const settledPosition$ = observeSettledNavigation(reader.navigation).pipe(
     map(({ position }) => position),
     distinctUntilChanged(isShallowEqual),
   )
 
-  const progression$ = combineLatest([
+  /**
+   * Every field is derived from the same captured pagination result rather
+   * than sampled from streams that move independently, so a published result
+   * cannot pair one result's pages with another's progression.
+   */
+  return combineLatest([
     pagination$,
+    isUsingSpread$,
+    chaptersInfo$,
+    totals$,
     reader.layout$,
     settledPosition$,
   ]).pipe(
-    switchMap(([paginationInfo, _layout, navigationPosition]) =>
-      getProgressionForPagination({
-        reader,
+    switchMap(
+      ([
         paginationInfo,
+        isUsingSpread,
+        chaptersInfo,
+        totals,
+        _layout,
         navigationPosition,
-        manifest: reader.context.manifest,
-      }),
+      ]) =>
+        getProgressionForPagination({
+          reader,
+          paginationInfo,
+          navigationPosition,
+          manifest: reader.context.manifest,
+        }).pipe(
+          map((progression) => ({
+            /**
+             * The result this enrichment was built from. Enrichment is
+             * throttled, so by the time it is published the reader may have
+             * moved on; keeping the source lets settlement be granted only
+             * while it still describes the current result.
+             */
+            source: paginationInfo,
+            info: {
+              navigationId: paginationInfo.navigationId,
+              /**
+               * The edges are merged rather than replaced: each side
+               * contributes part. Settlement is carried over with them, so
+               * enriching an edge does not lose the guarantee its cfi came
+               * with.
+               */
+              ...withSettlementOf(paginationInfo, {
+                begin: { ...paginationInfo.begin, ...chaptersInfo.begin },
+                end: { ...paginationInfo.end, ...chaptersInfo.end },
+              }),
+              isUsingSpread,
+              ...totals,
+              /**
+               * This percentage is based of the weight (kb) of every items and the number of pages.
+               * It is not accurate but gives a general good idea of the overall progress.
+               * It is recommended to use this progress only for reflow books. For pre-paginated books
+               * the number of pages and current index can be used instead since 1 page = 1 chapter.
+               */
+              percentageEstimateOfBook: progression,
+            },
+          })),
+        ),
     ),
-    map((progression) => ({
-      /**
-       * This percentage is based of the weight (kb) of every items and the number of pages.
-       * It is not accurate but gives a general good idea of the overall progress.
-       * It is recommended to use this progress only for reflow books. For pre-paginated books
-       * the number of pages and current index can be used instead since 1 page = 1 chapter.
-       */
-      percentageEstimateOfBook: progression,
-    })),
-  )
-
-  return combineLatest([basePaginationInfo$, progression$]).pipe(
-    map(([basePaginationInfo, progression]) => ({
-      ...basePaginationInfo,
-      ...progression,
-    })),
-    distinctUntilChanged(isSamePaginationResult),
+    distinctUntilChanged(
+      (previous, next) =>
+        previous.source === next.source &&
+        isSamePaginationResult(previous.info, next.info),
+    ),
     auditTime(5),
   )
 }

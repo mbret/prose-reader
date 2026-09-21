@@ -6,7 +6,14 @@
  * transition of reader state, many non-final states could be emitted and would not bring much value
  * to the user. This is an opinionated decision for this API
  */
-import { BehaviorSubject, tap } from "rxjs"
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  tap,
+} from "rxjs"
+import { isSamePaginationResult } from "../../pagination/edges"
 import type { PaginationEdge } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
@@ -43,20 +50,51 @@ export const paginationEnhancer =
       absolutePageIndex: 0,
     })
 
-    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>({
+    const unenrichedPagination: EnhancerPaginationInto = {
       ...reader.pagination.state,
+      isSettled: false,
       begin: unenrichedEdge(reader.pagination.state.begin),
       end: unenrichedEdge(reader.pagination.state.end),
       isUsingSpread: false,
       numberOfTotalPages: 0,
       percentageEstimateOfBook: 0,
-    })
+    }
+
+    /**
+     * Settlement is granted by the enrichment and revoked by the core result,
+     * so the published result is a function of both rather than something two
+     * writers keep in sync.
+     *
+     * An enrichment carries its settlement only while the result it was built
+     * from is still the current one. Enrichment is throttled, so one built for
+     * the previous page can arrive after the reader has settled on the next,
+     * and comparing the live flag alone would let it through.
+     */
+    const enhancedPagination$ = combineLatest([
+      trackPaginationInfo(reader).pipe(
+        tap(({ info }) => Report.log(`Pagination`, info)),
+      ),
+      reader.pagination.state$,
+    ]).pipe(
+      map(
+        ([{ source, info }, current]): EnhancerPaginationInto =>
+          info.isSettled && source === current
+            ? info
+            : { ...info, isSettled: false },
+      ),
+      distinctUntilChanged(isSamePaginationResult),
+    )
 
     const resourcesLocator = new ResourcesLocator(reader)
 
-    const paginationSub = trackPaginationInfo(reader)
-      .pipe(tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)))
-      .subscribe(enhancedPagination)
+    /**
+     * `state` is read synchronously, so the derived result is kept here.
+     * Nothing writes to it but the stream above.
+     */
+    const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>(
+      unenrichedPagination,
+    )
+    const paginationSub = enhancedPagination$.subscribe(enhancedPagination)
 
     return {
       ...reader,
@@ -71,7 +109,7 @@ export const paginationEnhancer =
           return enhancedPagination.value
         },
         get state$() {
-          return enhancedPagination
+          return enhancedPagination.asObservable()
         },
       },
     } as unknown as PaginationOutput

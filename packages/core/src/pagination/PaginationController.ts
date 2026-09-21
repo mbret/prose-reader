@@ -1,9 +1,12 @@
 import {
+  concat,
   filter,
+  first,
   map,
   merge,
+  mergeMap,
   type Observable,
-  share,
+  of,
   switchMap,
   take,
   takeUntil,
@@ -18,14 +21,19 @@ import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
-import { waitForSwitch } from "../utils/rxjs"
 import type { Pagination } from "./Pagination"
-import type { PaginationEdge, PaginationInfo } from "./types"
+import type {
+  PaginationEdge,
+  PaginationInfo,
+  SettledPaginationEdge,
+} from "./types"
 
 const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
   type: "percentage",
   value: 0.5,
 }
+
+type PaginationTrigger = "resolve" | "invalidate"
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -35,69 +43,115 @@ export class PaginationController extends DestroyableClass {
     protected spine: Spine,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
+    protected layoutRequest$: Observable<unknown>,
   ) {
     super()
 
     /**
-     * Results are produced by the pipeline rather than written into the
-     * entity from side effects, but the stream shape is kept as it was: the
-     * metrics pass feeds the positions pass, and both publish.
+     * Every result comes from this one stream, so settlement describes where a
+     * result came from rather than being a flag kept in sync by its writers.
      *
-     * `share()` is what removes the duplicated work. Previously the two were
-     * subscribed separately, and the metrics chain is cold, so its visible
-     * item and page lookups ran once per subscriber.
+     * A trigger always drops settlement first, so no entry point can forget
+     * to, and a newer trigger cancels whatever is still pending, so a
+     * superseded result can never reach the reader.
+     *
+     * One subscription also means the metrics lookups run once. They used to
+     * be shared explicitly because a cold metrics chain was subscribed twice;
+     * here the provisional result and its resolved positions are two emissions
+     * of the same chain, so there is nothing to share.
      */
-    const metrics$ = merge(
-      this.context.bridgeEvent.navigation$,
-      spine.layout$,
-    ).pipe(
-      switchMap(() =>
-        /**
-         * @important
-         *
-         * Metrics are resolved immediately so user feedback (navigation
-         * buttons) is not delayed. Nothing there is heavier than a layout
-         * lookup.
-         *
-         * We wait for the navigator to be unlocked first, which avoids
-         * resolving while the user is panning for example. A locked navigator
-         * is an unfinished navigation.
-         */
-        this.isNavigationLocked$.pipe(
-          filter((isLocked) => !isLocked),
-          take(1),
-          withLatestFrom(this.context.bridgeEvent.navigation$),
-          map(([, navigation]) => {
-            /**
-             * When the visible items cannot be resolved, the previous result
-             * is carried through unchanged. That keeps the behaviour this
-             * refactor found: the positions pass used to run in this case too,
-             * against whatever the entity already held.
-             */
-            return this.resolveMetrics(navigation) ?? this.pagination.value
-          }),
-        ),
+    merge(
+      this.context.bridgeEvent.navigation$.pipe(
+        map((): PaginationTrigger => "resolve"),
       ),
-      share(),
+      spine.layout$.pipe(map((): PaginationTrigger => "resolve")),
+      /**
+       * A layout that has only been requested invalidates and then waits. Item
+       * layout is debounced, so resolving now would describe the spine that is
+       * about to be replaced, and `spine.layout$` will resolve it once the new
+       * one exists.
+       */
+      layoutRequest$.pipe(map((): PaginationTrigger => "invalidate")),
     )
+      .pipe(
+        switchMap((trigger) => {
+          const invalidated = of(this.withoutSettlement(this.pagination.value))
 
-    /**
-     * Heavy operation, needs to be optimized as much as possible.
-     *
-     * @todo add more optimization, comparing item before, after with position,
-     * etc
-     */
-    const positions$ = metrics$.pipe(
-      waitForSwitch(this.context.bridgeEvent.viewportFree$),
-      map((metrics) => this.resolvePositions(metrics)),
-      filter((result): result is PaginationInfo => result !== undefined),
-    )
-
-    merge(metrics$, positions$)
-      .pipe(takeUntil(this.destroy$))
+          return trigger === "invalidate"
+            ? invalidated
+            : concat(invalidated, this.resolve$())
+        }),
+        takeUntil(this.destroy$),
+      )
       .subscribe((result) => {
         this.pagination.update(result)
       })
+  }
+
+  /**
+   * Resolves a result in two steps: cheap metrics once the navigator is free,
+   * then positions once the viewport is free.
+   */
+  private resolve$(): Observable<PaginationInfo> {
+    /**
+     * @important
+     *
+     * Metrics are resolved immediately so user feedback (navigation buttons)
+     * is not delayed. Nothing there is heavier than a layout lookup.
+     *
+     * We wait for the navigator to be unlocked first, which avoids resolving
+     * while the user is panning for example. A locked navigator is an
+     * unfinished navigation.
+     */
+    return this.isNavigationLocked$.pipe(
+      filter((isLocked) => !isLocked),
+      take(1),
+      withLatestFrom(this.context.bridgeEvent.navigation$),
+      mergeMap(([, navigation]) => {
+        const metrics = this.resolveMetrics(navigation)
+
+        /**
+         * When the visible items cannot be resolved the previous metrics are
+         * carried through and the positions pass still runs against them, as
+         * it did before this stream existed.
+         *
+         * Settlement is the one thing that path cannot have: it claims the
+         * result describes the pages now visible, and which those are is
+         * exactly what failed to resolve.
+         */
+        const provisional =
+          metrics ?? this.withoutSettlement(this.pagination.value)
+
+        return concat(
+          of(provisional),
+          /**
+           * Heavy operation: resolving a cfi can cost a lot, so it waits for a
+           * free viewport.
+           *
+           * @todo add more optimization, comparing item before, after with
+           * position, etc
+           */
+          this.context.bridgeEvent.viewportFree$.pipe(
+            first(),
+            map(() =>
+              this.resolvePositions({
+                metrics: provisional,
+                visibleRangeIsKnown: metrics !== undefined,
+              }),
+            ),
+            filter((result): result is PaginationInfo => result !== undefined),
+          ),
+        )
+      }),
+    )
+  }
+
+  /**
+   * Keeps the metrics, so navigation controls stay responsive, and drops the
+   * claim that the positions describe the page being read.
+   */
+  private withoutSettlement(current: PaginationInfo): PaginationInfo {
+    return { ...current, isSettled: false }
   }
 
   private getVisiblePages(
@@ -137,6 +191,7 @@ export class PaginationController extends DestroyableClass {
       this.getVisiblePages(endSpineItem, position) ?? {}
 
     return {
+      isSettled: false,
       begin: this.resolveEdgeMetrics(
         beginSpineItem,
         beginIndex,
@@ -182,22 +237,44 @@ export class PaginationController extends DestroyableClass {
   /**
    * Resolves the positions of the metrics it is given, rather than of whatever
    * the reader happens to hold by the time the viewport frees up.
+   *
+   * The result belongs to the current layout by construction, since a newer
+   * trigger cancels this one, so settlement only has to ask whether the
+   * visible content is ready. An item that is loaded and laid out may
+   * legitimately resolve to its root cfi; an unloaded one is not settled
+   * merely because a root cfi can be generated for it.
    */
-  private resolvePositions(
-    metrics: PaginationInfo,
-  ): PaginationInfo | undefined {
+  private resolvePositions({
+    metrics,
+    visibleRangeIsKnown,
+  }: {
+    metrics: PaginationInfo
+    visibleRangeIsKnown: boolean
+  }): PaginationInfo | undefined {
     const begin = this.resolveEdgePositions(metrics.begin)
     const end = this.resolveEdgePositions(metrics.end)
 
     if (!begin || !end) return undefined
 
-    return { ...metrics, begin, end }
+    const { navigationId } = metrics
+
+    return visibleRangeIsKnown && begin.isReady && end.isReady
+      ? { isSettled: true, begin: begin.edge, end: end.edge, navigationId }
+      : { isSettled: false, begin: begin.edge, end: end.edge, navigationId }
   }
 
+  /**
+   * An edge's resolved position, alongside whether the content it describes is
+   * ready — settlement is the two edges' readiness together, so it cannot be
+   * decided one edge at a time.
+   */
   // @todo only update long cfi if the item layout change but specifically its content
-  private resolveEdgePositions(
-    edge: PaginationEdge,
-  ): PaginationEdge | undefined {
+  private resolveEdgePositions(edge: PaginationEdge):
+    | {
+        edge: SettledPaginationEdge<PaginationEdge>
+        isReady: boolean
+      }
+    | undefined {
     const { spineItemIndex, pageIndexInSpineItem } = edge
 
     if (spineItemIndex === undefined || pageIndexInSpineItem === undefined)
@@ -212,7 +289,10 @@ export class PaginationController extends DestroyableClass {
       pageIndexInSpineItem,
     )
 
-    return { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) }
+    return {
+      edge: { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) },
+      isReady: spineItem.value.isReady,
+    }
   }
 
   /**

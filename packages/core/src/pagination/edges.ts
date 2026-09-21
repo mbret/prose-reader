@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import type { PaginationEdge } from "./types"
+import type { PaginationEdge, PaginationSettlement } from "./types"
 
 export const createEmptyPaginationEdge = (): PaginationEdge => ({
   cfi: undefined,
@@ -31,3 +31,23 @@ export const isSamePaginationResult = <
     isShallowEqual(restA, restB)
   )
 }
+
+/**
+ * Carries a result's settlement onto edges rebuilt from it.
+ *
+ * Rebuilding an edge widens its cfi back to `string | undefined`, so the
+ * settled variant has to be reconstructed under its own narrowing. That is
+ * what keeps a settled result's positions typed as present once a layer has
+ * enriched its edges.
+ */
+export const withSettlementOf = <TEdge extends PaginationEdge>(
+  source: PaginationSettlement<PaginationEdge>,
+  { begin, end }: { begin: TEdge; end: TEdge },
+): PaginationSettlement<TEdge> =>
+  source.isSettled
+    ? {
+        isSettled: true,
+        begin: { ...begin, cfi: source.begin.cfi },
+        end: { ...end, cfi: source.end.cfi },
+      }
+    : { isSettled: false, begin, end }
