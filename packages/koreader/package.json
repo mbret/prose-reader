@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "jsdom": "^29.0.0",
-    "jszip": "^3.10.1",
+    "jszip": "^3.10.2",
     "typescript": "*",
     "vite": "^8"
   }

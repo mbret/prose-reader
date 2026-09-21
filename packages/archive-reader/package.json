@@ -95,7 +95,7 @@
     "@types/unzipper": "^0.10.11",
     "@zip.js/zip.js": "^2.8.51",
     "buffer": "^6.0.3",
-    "jszip": "^3.10.0",
+    "jszip": "^3.10.2",
     "libarchive.js": "^2.0.2",
     "node-unrar-js": "^2.0.2",
     "unzipper": "^0.12.3"
