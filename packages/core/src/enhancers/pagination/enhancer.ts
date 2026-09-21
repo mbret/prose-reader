@@ -13,11 +13,8 @@ import {
   switchMap,
   tap,
 } from "rxjs"
-import {
-  isSamePaginationResult,
-  withSettlementOf,
-} from "../../pagination/edges"
-import type { PaginationEdge, VisibleRange } from "../../pagination/types"
+import { isSamePaginationResult } from "../../pagination/edges"
+import type { PaginationEdge } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
@@ -36,34 +33,39 @@ export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
 
 /**
  * The published result: the core's edges with this enhancer's fields merged
- * onto them.
+ * onto them — the core contributes the position, this enhancer the chapter.
  *
- * Settlement is decided here and nowhere else. It is granted only from the
- * core result the enrichment was built from, and only while that is still the
- * current one. Enrichment is throttled, so one built for the previous page can
- * arrive after the reader has settled on the next — it is simply never granted
- * settlement, rather than handed one and having it taken back. Comparing the
- * core's live flag instead of the result itself would let it through.
+ * Settlement is decided here and nowhere else. A result publishes as settled
+ * only when the core settled it *and* it is still the core's current result.
+ * Enrichment is throttled, so one built for the previous page can arrive
+ * after the reader has settled on the next; checking the core's live flag
+ * instead of the result itself would let it through.
+ *
+ * The two returns differ only in `isSettled`. That is the union: the settled
+ * variant types each edge's cfi as present, which TypeScript only sees when
+ * the edges are spread under the narrowing of `source`.
  */
 const publishEnrichment = (
   { source, begin, end, ...extras }: PaginationEnrichment,
   describesCurrentResult: boolean,
 ): EnhancerPaginationInto => {
-  /**
-   * Each edge is merged rather than replaced: the core contributes the
-   * position, this enhancer the chapter.
-   */
-  const edges = {
+  if (source.isSettled && describesCurrentResult) {
+    return {
+      ...extras,
+      navigationId: source.navigationId,
+      isSettled: true,
+      begin: { ...source.begin, ...begin },
+      end: { ...source.end, ...end },
+    }
+  }
+
+  return {
+    ...extras,
+    navigationId: source.navigationId,
+    isSettled: false,
     begin: { ...source.begin, ...begin },
     end: { ...source.end, ...end },
   }
-
-  const visibleRange: VisibleRange<EnhancerPaginationEdge> =
-    describesCurrentResult
-      ? withSettlementOf(source, edges)
-      : { isSettled: false, ...edges }
-
-  return { navigationId: source.navigationId, ...extras, ...visibleRange }
 }
 
 export const paginationEnhancer =
