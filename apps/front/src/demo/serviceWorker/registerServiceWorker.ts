@@ -15,20 +15,18 @@ export const registerServiceWorker = () => {
     )
   }
 
+  /**
+   * firefox does not support module type for dev service worker, so it reads
+   * the built classic worker instead. Please build and copy dist service
+   * worker in public when developing with firefox.
+   */
+  const useBuiltWorker =
+    import.meta.env.PROD || navigator.userAgent.includes("Firefox/")
+
   registering ??= navigator.serviceWorker
-    .register(
-      import.meta.env.PROD ||
-        /**
-         * firefox does not support module type for dev service worker.
-         * Please build and copy dist service worker in public when developing with firefox
-         */
-        navigator.userAgent.includes("Firefox/")
-        ? "/service-worker.js"
-        : "/dev-sw.js?dev-sw",
-      {
-        type: import.meta.env.PROD ? "classic" : "module",
-      },
-    )
+    .register(useBuiltWorker ? "/service-worker.js" : "/dev-sw.js?dev-sw", {
+      type: useBuiltWorker ? "classic" : "module",
+    })
     .catch((error: unknown) => {
       /**
        * Only a successful registration is worth keeping: caching the rejection
