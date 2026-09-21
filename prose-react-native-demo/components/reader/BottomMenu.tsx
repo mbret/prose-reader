@@ -10,7 +10,7 @@ export const BottomMenu = () => {
       <View style={styles.buttons}>
         <Button title="<" onPress={() => reader.turnLeft()} />
         <Text>
-          {pagination?.beginAbsolutePageIndex} /{" "}
+          {pagination?.begin.absolutePageIndex} /{" "}
           {pagination?.numberOfTotalPages}
         </Text>
         <Button title=">" onPress={() => reader.turnRight()} />

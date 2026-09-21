@@ -1,4 +1,3 @@
-import { mapKeysTo } from "@prose-reader/core"
 import { arrayEqual, isShallowEqual } from "@prose-reader/shared"
 import {
   combineLatest,
@@ -59,8 +58,17 @@ export function createTrackStreams(
     }))
   const tracks$ = of(tracks)
 
+  /**
+   * Only the two item indexes matter here, so they are projected flat and
+   * compared as a pair rather than as two edge objects rebuilt every result.
+   */
   const pagination$ = reader.pagination.state$.pipe(
-    mapKeysTo([`beginSpineItemIndex`, `endSpineItemIndex`]),
+    map(
+      ({ begin, end }): PaginationTrackWindow => ({
+        beginSpineItemIndex: begin.spineItemIndex,
+        endSpineItemIndex: end.spineItemIndex,
+      }),
+    ),
     distinctUntilChanged(isShallowEqual),
     shareReplay({ bufferSize: 1, refCount: true }),
   )

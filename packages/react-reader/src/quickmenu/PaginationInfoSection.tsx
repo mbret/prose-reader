@@ -19,7 +19,7 @@ export const PaginationInfoSection = () => {
   const progress = Math.round((pagination?.percentageEstimateOfBook ?? 0) * 100)
 
   const buildTitleChain = (
-    chapterInfo: NonNullable<typeof pagination>["beginChapterInfo"],
+    chapterInfo: NonNullable<typeof pagination>["begin"]["chapterInfo"],
   ): string => {
     if (chapterInfo?.subChapter) {
       return `${chapterInfo.title} / ${buildTitleChain(chapterInfo.subChapter)}`
@@ -27,7 +27,7 @@ export const PaginationInfoSection = () => {
     return chapterInfo?.title || ""
   }
 
-  const chapterTitle = buildTitleChain(pagination?.beginChapterInfo)
+  const chapterTitle = buildTitleChain(pagination?.begin.chapterInfo)
 
   return (
     <Stack alignItems="center" gap={1} maxW="100%" overflow="auto">
@@ -51,7 +51,7 @@ export const PaginationInfoSection = () => {
             <>
               <Text>-</Text>
               <Text fontSize="xs">
-                ({(pagination?.beginAbsolutePageIndex ?? 0) + 1})
+                ({(pagination?.begin.absolutePageIndex ?? 0) + 1})
               </Text>
             </>
           )}

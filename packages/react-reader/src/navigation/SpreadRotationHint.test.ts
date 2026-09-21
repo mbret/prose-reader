@@ -1,6 +1,5 @@
 /* @vitest-environment happy-dom */
 
-import type { ExtraPaginationInfo, PaginationInfo } from "@prose-reader/core"
 import type { Manifest } from "@prose-reader/shared"
 import { describe, expect, it } from "vitest"
 import {
@@ -34,26 +33,11 @@ const createManifest = (
   ...overrides,
 })
 
-const createPagination = (
-  index: number,
-): PaginationInfo & ExtraPaginationInfo => ({
-  beginAbsolutePageIndex: 0,
-  beginCfi: undefined,
-  beginChapterInfo: undefined,
-  beginNumberOfPagesInSpineItem: 1,
+const createPagination = (index: number) => ({
   beginPageIndexInSpineItem: 0,
-  beginSpineItemReadingDirection: `ltr`,
   beginSpineItemIndex: index,
-  endAbsolutePageIndex: 0,
-  endCfi: undefined,
-  endChapterInfo: undefined,
-  endNumberOfPagesInSpineItem: 1,
   endPageIndexInSpineItem: 0,
-  endSpineItemReadingDirection: `ltr`,
   endSpineItemIndex: index,
-  isUsingSpread: false,
-  numberOfTotalPages: 1,
-  percentageEstimateOfBook: 0,
 })
 
 describe(`SpreadRotationHint`, () => {

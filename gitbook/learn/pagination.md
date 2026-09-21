@@ -6,21 +6,24 @@
 
 ## `type PaginationInfo`
 
-<pre class="language-typescript"><code class="lang-typescript">type PaginationInfo = {
-  beginCfi: string | undefined
-  beginSpineItemIndex: number | undefined
-  beginChapterInfo: ChapterInfo | undefined
-  beginPageIndexInSpineItem: number | undefined
-  beginNumberOfPagesInSpineItem: number | undefined
-  beginSpineItemReadingDirection: `rtl` | `ltr` | undefined
-  beginAbsolutePageIndex: number | undefined
-  endCfi: string | undefined
-  endSpineItemIndex: number | undefined
-  endChapterInfo: ChapterInfo | undefined
-  endPageIndexInSpineItem: number | undefined
-  endNumberOfPagesInSpineItem: number
-  endSpineItemReadingDirection: `rtl` | `ltr` | undefined
-  endAbsolutePageIndex: number | undefined
+A pagination result describes the two edges of what is visible. Both edges are
+the same shape, so they are the same type rather than two sets of prefixed
+fields: read `pagination.begin.cfi` rather than `pagination.beginCfi`.
+
+<pre class="language-typescript"><code class="lang-typescript">type PaginationEdge = {
+  cfi: string | undefined
+  spineItemIndex: number | undefined
+  pageIndexInSpineItem: number | undefined
+  numberOfPagesInSpineItem: number
+  // added by the pagination enhancer
+  chapterInfo: ChapterInfo | undefined
+  spineItemReadingDirection: `rtl` | `ltr` | undefined
+  absolutePageIndex: number | undefined
+}
+
+type PaginationInfo = {
+  begin: PaginationEdge
+  end: PaginationEdge
   /*
    * This percentage is based of the weight (kb) of every items and the number of pages.
    * It is not accurate but gives a general good idea of the overall progress.
@@ -53,7 +56,7 @@ Save current cfi into localStorage for opening a book at the previous location:
 
 <pre class="language-typescript"><code class="lang-typescript">// save cfi into localstorage
 reader.pagination.paginationInfo$.subscribe((paginationInfo) => {
-<strong>    localStorage.setItem(`cfi`, paginationInfo.beginCfi)
+<strong>    localStorage.setItem(`cfi`, paginationInfo.begin.cfi)
 </strong>})
 
 // when we create the reader for the book

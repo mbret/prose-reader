@@ -28,7 +28,7 @@ const cfi = xPointerToCfi("/body/DocFragment[14]/body/div/p[3]/text().42", getSp
 // => "epubcfi(/6/28[chap05]!/4/2/6/1:42)"
 
 // prose's current position, into what the server and e-readers expect
-const xpointer = cfiToXPointer(reader.pagination.state.beginCfi, getSpineItem)
+const xpointer = cfiToXPointer(reader.pagination.state.begin.cfi, getSpineItem)
 // => "/body/DocFragment[14]/body/div/p[3]/text().42"
 ```
 

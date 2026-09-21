@@ -15,7 +15,7 @@ export const withPaginationInfo =
         return {
           navigation: {
             ...navigation,
-            paginationBeginCfi: pagination.beginCfi,
+            paginationBeginCfi: pagination.begin.cfi,
           },
           ...rest,
         } as N

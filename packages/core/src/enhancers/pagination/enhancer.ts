@@ -7,12 +7,17 @@
  * to the user. This is an opinionated decision for this API
  */
 import { BehaviorSubject, tap } from "rxjs"
+import type { PaginationEdge } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
 import { trackPaginationInfo } from "./trackPaginationInfo"
-import type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
+import type {
+  EnhancerPaginationEdge,
+  EnhancerPaginationInto,
+  PaginationEnhancerAPI,
+} from "./types"
 
 export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
 
@@ -26,20 +31,24 @@ export const paginationEnhancer =
   ) =>
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
+    /**
+     * Nothing is known about chapters until {@link trackPaginationInfo} emits,
+     * so the seed carries the edges as they are with the enhancer's own fields
+     * left empty.
+     */
+    const unenrichedEdge = (edge: PaginationEdge): EnhancerPaginationEdge => ({
+      ...edge,
+      chapterInfo: undefined,
+      spineItemReadingDirection: undefined,
+      absolutePageIndex: 0,
+    })
+
     const enhancedPagination = new BehaviorSubject<EnhancerPaginationInto>({
       ...reader.pagination.state,
-      beginChapterInfo: undefined,
-      beginCfi: undefined,
-      beginPageIndexInSpineItem: undefined,
+      begin: unenrichedEdge(reader.pagination.state.begin),
+      end: unenrichedEdge(reader.pagination.state.end),
       isUsingSpread: false,
-      beginAbsolutePageIndex: 0,
-      endAbsolutePageIndex: 0,
       numberOfTotalPages: 0,
-      beginSpineItemReadingDirection: undefined,
-      beginSpineItemIndex: undefined,
-      endCfi: undefined,
-      endChapterInfo: undefined,
-      endSpineItemReadingDirection: undefined,
       percentageEstimateOfBook: 0,
     })
 
