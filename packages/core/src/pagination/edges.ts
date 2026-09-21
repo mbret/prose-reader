@@ -51,3 +51,17 @@ export const withSettlementOf = <TEdge extends PaginationEdge>(
         end: { ...end, cfi: source.end.cfi },
       }
     : { isSettled: false, begin, end }
+
+/**
+ * Drops the claim that a result's positions describe the page being read,
+ * keeping its metrics so navigation controls stay responsive.
+ *
+ * Both layers need this and for the same reason, so it is one function: the
+ * controller withdraws settlement when a trigger arrives, and the enhancer
+ * when an enrichment outlives the result it was built from.
+ */
+export const withoutSettlement = <
+  TResult extends PaginationSettlement<PaginationEdge>,
+>(
+  result: TResult,
+) => ({ ...result, isSettled: false as const })

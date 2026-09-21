@@ -13,7 +13,10 @@ import {
   map,
   tap,
 } from "rxjs"
-import { isSamePaginationResult } from "../../pagination/edges"
+import {
+  isSamePaginationResult,
+  withoutSettlement,
+} from "../../pagination/edges"
 import type { PaginationEdge } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
@@ -61,14 +64,18 @@ export const paginationEnhancer =
     }
 
     /**
-     * Settlement is granted by the enrichment and revoked by the core result,
-     * so the published result is a function of both rather than something two
-     * writers keep in sync.
+     * An enrichment keeps whatever settlement it has only while the result it
+     * was built from is still the current one, so what is published is a
+     * function of both rather than a flag two writers keep in sync.
      *
-     * An enrichment carries its settlement only while the result it was built
-     * from is still the current one. Enrichment is throttled, so one built for
-     * the previous page can arrive after the reader has settled on the next,
-     * and comparing the live flag alone would let it through.
+     * A stale enrichment is downgraded rather than dropped because revocation
+     * has to be immediate while its replacement is throttled. Waiting for the
+     * next enrichment would leave the previous page's position published as
+     * settled for the whole navigation.
+     *
+     * Comparing the core's live flag instead of the result it came from would
+     * not do: an enrichment built for the previous page would pass the moment
+     * the reader settled on the next one.
      */
     const enhancedPagination$ = combineLatest([
       trackPaginationInfo(reader).pipe(
@@ -78,9 +85,7 @@ export const paginationEnhancer =
     ]).pipe(
       map(
         ([{ source, info }, current]): EnhancerPaginationInto =>
-          info.isSettled && source === current
-            ? info
-            : { ...info, isSettled: false },
+          source === current ? info : withoutSettlement(info),
       ),
       distinctUntilChanged(isSamePaginationResult),
     )

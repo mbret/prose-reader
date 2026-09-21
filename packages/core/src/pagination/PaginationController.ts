@@ -21,6 +21,7 @@ import type { SpineItemsManager } from "../spine/SpineItemsManager"
 import type { SpinePosition, UnboundSpinePosition } from "../spine/types"
 import type { SpineItem } from "../spineItem/SpineItem"
 import { DestroyableClass } from "../utils/DestroyableClass"
+import { withoutSettlement } from "./edges"
 import type { Pagination } from "./Pagination"
 import type {
   PaginationEdge,
@@ -75,7 +76,7 @@ export class PaginationController extends DestroyableClass {
     )
       .pipe(
         switchMap((trigger) => {
-          const invalidated = of(this.withoutSettlement(this.pagination.value))
+          const invalidated = of(withoutSettlement(this.pagination.value))
 
           return trigger === "invalidate"
             ? invalidated
@@ -119,8 +120,7 @@ export class PaginationController extends DestroyableClass {
          * result describes the pages now visible, and which those are is
          * exactly what failed to resolve.
          */
-        const provisional =
-          metrics ?? this.withoutSettlement(this.pagination.value)
+        const provisional = metrics ?? withoutSettlement(this.pagination.value)
 
         return concat(
           of(provisional),
@@ -144,14 +144,6 @@ export class PaginationController extends DestroyableClass {
         )
       }),
     )
-  }
-
-  /**
-   * Keeps the metrics, so navigation controls stay responsive, and drops the
-   * claim that the positions describe the page being read.
-   */
-  private withoutSettlement(current: PaginationInfo): PaginationInfo {
-    return { ...current, isSettled: false }
   }
 
   private getVisiblePages(
