@@ -12,6 +12,7 @@ import { BooksScreen } from "./books/BooksScreen"
 import { HomeScreen } from "./home/HomeScreen"
 import { ReaderScreen } from "./reader/ReaderScreen"
 import { useRegisterServiceWorker } from "./serviceWorker/useRegisterServiceWorker"
+import { useViewportZoomLock } from "./useViewportZoomLock"
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -25,6 +26,7 @@ const queryClient = new QueryClient({
  */
 export const DemoRoutes = memo(() => {
   useRegisterServiceWorker()
+  useViewportZoomLock()
 
   return (
     <QueryClientProvider client={queryClient}>
