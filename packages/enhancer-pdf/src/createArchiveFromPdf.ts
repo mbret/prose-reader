@@ -24,7 +24,9 @@ export const createArchiveFromPdf = async (
   file: Blob,
   filename: string,
 ): Promise<Archive> => {
-  const loadingTask = pdfjsLib.getDocument(await file.arrayBuffer())
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+  })
 
   const pdf = await loadingTask.promise
 
