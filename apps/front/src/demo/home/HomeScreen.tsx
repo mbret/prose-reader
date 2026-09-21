@@ -1,4 +1,5 @@
 import { Box, Link as ChakraLink, Heading, Stack, Text } from "@chakra-ui/react"
+import { FaArrowLeft } from "react-icons/fa"
 import { Link } from "react-router"
 import { OrDivider } from "../../components/OrDivider"
 import { Button } from "../../components/ui/button"
@@ -48,7 +49,10 @@ export const HomeScreen = () => {
         </Button>
         <OrDivider opacity={0.5} />
         <Button size="lg" width="100%" asChild mt={2}>
-          <Link to="/">landing page</Link>
+          <Link to="/">
+            <FaArrowLeft />
+            landing page
+          </Link>
         </Button>
       </Stack>
       <Box as="footer" paddingBottom={8} textAlign="center">
