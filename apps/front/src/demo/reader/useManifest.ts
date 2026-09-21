@@ -4,25 +4,18 @@ import { STREAMER_URL_PREFIX } from "../constants.shared"
 import { getStreamerBaseUrl } from "../streamer/utils.shared"
 import { webStreamer } from "../streamer/webStreamer"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
+import { isClientStreamedBook } from "./streaming"
 
 export const useManifest = (epubKey: string) => {
   const serviceWorkerReady = useServiceWorkerReady()
-  const isPdf = atob(epubKey).endsWith(".pdf")
+  const isClientStreamed = isClientStreamedBook(epubKey)
 
   return useQuery({
     queryKey: ["manifest", epubKey],
     retry: false,
-    enabled: isPdf || serviceWorkerReady,
+    enabled: isClientStreamed || serviceWorkerReady,
     queryFn: async () => {
-      const demoEpubUrl = atob(epubKey)
-
-      /**
-       * Some books cannot be manipulated through service workers.
-       * For such specific cases we have the client streamer.
-       * This is usually for when we have book that cannot return
-       * serialized resources (eg: pdfjs).
-       */
-      if (demoEpubUrl.endsWith(`.pdf`)) {
+      if (isClientStreamed) {
         const response = await webStreamer.fetchManifest({
           key: epubKey,
           baseUrl: `${getStreamerBaseUrl(new URL(window.location.href))}/${epubKey}/`,

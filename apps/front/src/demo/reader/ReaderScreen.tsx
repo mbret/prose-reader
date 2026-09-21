@@ -16,6 +16,7 @@ import { useFontSizeSettings } from "./settings/useFontSizeSettings"
 import { useSettings } from "./settings/useSettings"
 import { useUpdateReaderSettings } from "./settings/useUpdateReaderSettings"
 import { isQuickMenuOpenSignal, useResetStateOnUnMount } from "./states"
+import { isClientStreamedBook } from "./streaming"
 import { useCreateReader } from "./useCreateReader"
 import { useManifest } from "./useManifest"
 import { usePersistCurrentPagination } from "./usePersistCurrentPage"
@@ -26,6 +27,8 @@ export const ReaderScreen = memo(() => {
   const { reader } = useReader()
   const epubKey = url
   const serviceWorkerReady = useServiceWorkerReady()
+  const waitingForServiceWorker =
+    !isClientStreamedBook(epubKey) && !serviceWorkerReady
   const { data: manifest, error: manifestError } = useManifest(epubKey)
   const readerContainerRef = useRef<HTMLDivElement | null>(null)
   const [localSettings, setLocalSettings] = useSettings()
@@ -125,7 +128,7 @@ export const ReaderScreen = memo(() => {
         <Box width="100%" height="100%" ref={readerContainerRef} />
         {!!manifestError && <BookError url={url} />}
         {!isReaderMounted && !manifestError && (
-          <BookLoading serviceWorkerReady={serviceWorkerReady} />
+          <BookLoading waitingForServiceWorker={waitingForServiceWorker} />
         )}
         <MenuDialog
           localSettings={localSettings}

@@ -2,9 +2,9 @@ import { Stack, Text } from "@chakra-ui/react"
 import { SERVICE_WORKER_SUPPORTED } from "../serviceWorker/registerServiceWorker"
 
 export const BookLoading = ({
-  serviceWorkerReady,
+  waitingForServiceWorker,
 }: {
-  serviceWorkerReady: boolean
+  waitingForServiceWorker: boolean
 }) => {
   return (
     <Stack
@@ -24,7 +24,7 @@ export const BookLoading = ({
       px={4}
     >
       <Text fontSize="1xl">Loading book</Text>
-      {!serviceWorkerReady && (
+      {waitingForServiceWorker && (
         <Text fontSize="sm" color="gray.500">
           {SERVICE_WORKER_SUPPORTED
             ? `The service worker is still loading. This can take a moment on some
