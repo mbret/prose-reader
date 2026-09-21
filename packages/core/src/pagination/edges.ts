@@ -35,11 +35,6 @@ export const isSamePaginationResult = <
 /**
  * Drops the claim that a result's positions describe the page being read,
  * keeping its metrics so navigation controls stay responsive.
- *
- * The controller is the only caller: it holds a result over time, so a
- * trigger has something to withdraw from. The enhancer builds each published
- * result from an enrichment that never claimed settlement, so it has nothing
- * to take back.
  */
 export const withoutSettlement = <TResult extends VisibleRange<PaginationEdge>>(
   result: TResult,

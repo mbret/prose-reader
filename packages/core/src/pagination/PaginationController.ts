@@ -49,17 +49,9 @@ export class PaginationController extends DestroyableClass {
     super()
 
     /**
-     * Every result comes from this one stream, so settlement describes where a
-     * result came from rather than being a flag kept in sync by its writers.
-     *
      * A trigger always drops settlement first, so no entry point can forget
      * to, and a newer trigger cancels whatever is still pending, so a
      * superseded result can never reach the reader.
-     *
-     * One subscription also means the metrics lookups run once. They used to
-     * be shared explicitly because a cold metrics chain was subscribed twice;
-     * here the provisional result and its resolved positions are two emissions
-     * of the same chain, so there is nothing to share.
      */
     merge(
       this.context.bridgeEvent.navigation$.pipe(
@@ -113,12 +105,10 @@ export class PaginationController extends DestroyableClass {
 
         /**
          * When the visible items cannot be resolved the previous metrics are
-         * carried through and the positions pass still runs against them, as
-         * it did before this stream existed.
-         *
-         * Settlement is the one thing that path cannot have: it claims the
-         * result describes the pages now visible, and which those are is
-         * exactly what failed to resolve.
+         * carried through and the positions pass still runs against them.
+         * That path cannot settle: settlement claims the result describes the
+         * pages now visible, and which those are is exactly what failed to
+         * resolve.
          */
         const provisional = metrics ?? withoutSettlement(this.pagination.value)
 

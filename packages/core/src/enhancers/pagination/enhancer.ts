@@ -32,18 +32,9 @@ import type {
 export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
 
 /**
- * The published result: the core's edges with this enhancer's fields merged
- * onto them — the core contributes the position, this enhancer the chapter.
- *
- * Settlement is decided here and nowhere else. A result publishes as settled
- * only when the core settled it *and* it is still the core's current result.
- * Enrichment is throttled, so one built for the previous page can arrive
- * after the reader has settled on the next; checking the core's live flag
- * instead of the result itself would let it through.
- *
- * The two returns differ only in `isSettled`. That is the union: the settled
- * variant types each edge's cfi as present, which TypeScript only sees when
- * the edges are spread under the narrowing of `source`.
+ * Two returns rather than one spread: the settled variant types each edge's
+ * cfi as present, and TypeScript only sees that when the edges are built
+ * under the narrowing of `source`.
  */
 const publishEnrichment = (
   { source, begin, end, ...extras }: PaginationEnrichment,
@@ -52,8 +43,7 @@ const publishEnrichment = (
   if (source.isSettled && describesCurrentResult) {
     return {
       ...extras,
-      navigationId: source.navigationId,
-      isSettled: true,
+      ...source,
       begin: { ...source.begin, ...begin },
       end: { ...source.end, ...end },
     }
@@ -61,7 +51,7 @@ const publishEnrichment = (
 
   return {
     ...extras,
-    navigationId: source.navigationId,
+    ...source,
     isSettled: false,
     begin: { ...source.begin, ...begin },
     end: { ...source.end, ...end },
@@ -78,11 +68,6 @@ export const paginationEnhancer =
   ) =>
   (options: InheritOptions): PaginationOutput => {
     const reader = next(options)
-    /**
-     * Nothing is known about chapters until
-     * {@link trackPaginationEnrichment} emits, so the seed carries the edges
-     * as they are with the enhancer's own fields left empty.
-     */
     const unenrichedEdge = (edge: PaginationEdge): EnhancerPaginationEdge => ({
       ...edge,
       chapterInfo: undefined,
@@ -103,9 +88,9 @@ export const paginationEnhancer =
     const enhancedPagination$ = trackPaginationEnrichment(reader).pipe(
       switchMap((enrichment) =>
         /**
-         * Whether this enrichment still describes the current core result is
-         * the only thing about the core that the published value depends on,
-         * so the core moving on rebuilds only when that answer changes.
+         * Enrichment is throttled, so it can describe a core result the reader
+         * has since replaced. That is the only thing about the core the
+         * published value depends on, so it rebuilds only when that changes.
          */
         reader.pagination.state$.pipe(
           map((current) => enrichment.source === current),
