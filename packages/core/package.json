@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/core",
-  "version": "1.370.0",
+  "version": "1.371.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -27,8 +27,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@prose-reader/cfi": "^1.370.0",
-    "@prose-reader/shared": "^1.370.0"
+    "@prose-reader/cfi": "^1.371.0",
+    "@prose-reader/shared": "^1.371.0"
   },
   "peerDependencies": {
     "rxjs": "*"
