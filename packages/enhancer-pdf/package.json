@@ -26,8 +26,8 @@
     "pdfjs-dist": "^6.2.108"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^1.320.0",
-    "@prose-reader/core": "^1.117.0",
+    "@prose-reader/archive-reader": "*",
+    "@prose-reader/core": "*",
     "pdfjs-dist": ">=6.2.108 <7",
     "rxjs": "*"
   }
