@@ -49,9 +49,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # The bump below is computed from the commits since the last release
-          # tag, so this job needs real history and tags rather than the default
-          # shallow clone.
+          # Reading the bump from the commits since the last release tag needs
+          # real history and tags, not the default shallow clone.
           fetch-depth: 0
 
       - uses: actions/setup-node@v6
@@ -72,59 +71,17 @@ jobs:
           npm ci
           npx lerna run build --stream --scope @prose-reader/*
 
-      # Every push to master publishes, so `minor` stays the default and the
-      # release cadence is unchanged. A breaking change is the one case that
-      # must not ship as a minor: consumers sit on caret ranges and would pick
-      # it up without asking for it. Such a change announces itself with the
-      # conventional-commit markers — `feat!:` / `fix(scope)!:` in a subject, or
-      # a `BREAKING CHANGE:` footer in a body — so look for those across
-      # everything merged since the last release tag.
-      #
-      # This reads what the author wrote: an unmarked breaking change still
-      # ships as a minor. Marking it is the contract.
-      - name: Choose the version bump
-        id: bump
-        run: |
-          # With no tag to bound it, scanning would walk the whole history and
-          # find an old `!:` every time, making every release a major. Fall back
-          # to the merged commit alone instead — master takes one squashed
-          # commit per pull request.
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          range=${last_tag:+$last_tag..HEAD}
-          range=${range:-HEAD~1..HEAD}
-
-          # `--no-private` below means the demo, the front and the test app are
-          # never released, so a breaking change confined to one of them must
-          # not turn a library release into a major. Ignore commits that touch
-          # nothing else; one spanning a private workspace and a published one
-          # still counts. The paths come from lerna rather than a hardcoded
-          # `apps/`, so the filter cannot drift when a workspace is added or its
-          # private flag changes. Workspace directories carry no spaces, so the
-          # unquoted expansion is safe, and `mapfile` is avoided because the
-          # macOS runner can still be on bash 3.2.
-          private_paths=$(
-            npx lerna list --all --json \
-              | node -p "JSON.parse(require('fs').readFileSync(0,'utf8'))
-                  .filter(p => p.private)
-                  .map(p => ':(exclude)' + require('path').relative(process.cwd(), p.location) + '/')
-                  .join(' ')"
-          )
-
-          if git log "$range" --format=%B -- . $private_paths \
-            | grep -qE '^[a-z]+(\([^)]*\))?!:|^BREAKING[ -]CHANGE:'; then
-            bump=major
-          else
-            bump=minor
-          fi
-
-          echo "bump=$bump" >> "$GITHUB_OUTPUT"
-          echo "Publishing a $bump release (scanned $range, ignoring: $private_paths)"
-
+      # The bump comes from the commit messages rather than being hardcoded, so
+      # a breaking change cannot ship as a minor. Every merge still publishes:
+      # lerna's angular preset starts at patch and only escalates, so `chore`,
+      # `docs` and an unparseable subject all still cut a release, `feat` gives
+      # a minor, and `feat!:` / a `BREAKING CHANGE:` footer gives a major.
+      # Changelogs come along with it.
       - name: Publish
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          npx lerna publish ${{ steps.bump.outputs.bump }} --no-private --yes
+          npx lerna publish --conventional-commits --no-private --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
