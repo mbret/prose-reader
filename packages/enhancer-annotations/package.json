@@ -23,6 +23,6 @@
     "build": "tsc && vite build"
   },
   "peerDependencies": {
-    "@prose-reader/core": "*"
+    "@prose-reader/core": "^1.372.0"
   }
 }
