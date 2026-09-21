@@ -2,7 +2,7 @@ import { Box, useBreakpointValue } from "@chakra-ui/react"
 import { ReactReader } from "@prose-reader/react-reader"
 import "@prose-reader/react-reader/index.css"
 import { type ComponentProps, memo, useCallback, useRef } from "react"
-import { useNavigate, useParams } from "react-router"
+import { useLocation, useNavigate, useParams } from "react-router"
 import { signal, useObserve, useSignalState, useSignalValue } from "reactjrx"
 import { DEMO_BASE_PATH } from "../../constants"
 import { useServiceWorkerReady } from "../useServiceWorkerReady"
@@ -38,6 +38,7 @@ export const ReaderScreen = memo(() => {
   const { data: isReaderMounted } = useObserve(() => reader?.mounted$, [reader])
   const isQuickMenuOpen = useSignalValue(isQuickMenuOpenSignal)
   const navigate = useNavigate()
+  const { key: locationKey } = useLocation()
   const breakpointValue = useBreakpointValue<"mobile" | "tablet" | "desktop">({
     base: "mobile",
     md: "tablet",
@@ -69,17 +70,19 @@ export const ReaderScreen = memo(() => {
         isMenuOpenSignal.next(true)
       }
       if (item === "back") {
-        if (
-          window.history.state === null &&
-          window.location.pathname !== DEMO_BASE_PATH
-        ) {
+        /**
+         * `default` is the key react-router gives an entry it did not create
+         * itself, which means the reader was opened directly (a shared link,
+         * a reload) and there is no in-app history to go back to.
+         */
+        if (locationKey === "default") {
           navigate(DEMO_BASE_PATH)
         } else {
           navigate(-1)
         }
       }
     },
-    [navigate],
+    [navigate, locationKey],
   )
 
   return (
