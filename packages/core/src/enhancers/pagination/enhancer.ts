@@ -8,24 +8,24 @@
  */
 import {
   BehaviorSubject,
-  combineLatest,
   distinctUntilChanged,
   map,
+  switchMap,
   tap,
 } from "rxjs"
 import {
   isSamePaginationResult,
   withSettlementOf,
 } from "../../pagination/edges"
-import type {
-  PaginationEdge,
-  PaginationSettlement,
-} from "../../pagination/types"
+import type { PaginationEdge, VisibleRange } from "../../pagination/types"
 import { Report } from "../../report"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import { ResourcesLocator } from "./ResourcesLocator"
-import { trackPaginationEnrichment } from "./trackPaginationEnrichment"
+import {
+  type PaginationEnrichment,
+  trackPaginationEnrichment,
+} from "./trackPaginationEnrichment"
 import type {
   EnhancerPaginationEdge,
   EnhancerPaginationInto,
@@ -33,6 +33,38 @@ import type {
 } from "./types"
 
 export type { EnhancerPaginationInto, PaginationEnhancerAPI } from "./types"
+
+/**
+ * The published result: the core's edges with this enhancer's fields merged
+ * onto them.
+ *
+ * Settlement is decided here and nowhere else. It is granted only from the
+ * core result the enrichment was built from, and only while that is still the
+ * current one. Enrichment is throttled, so one built for the previous page can
+ * arrive after the reader has settled on the next — it is simply never granted
+ * settlement, rather than handed one and having it taken back. Comparing the
+ * core's live flag instead of the result itself would let it through.
+ */
+const publishEnrichment = (
+  { source, begin, end, ...extras }: PaginationEnrichment,
+  describesCurrentResult: boolean,
+): EnhancerPaginationInto => {
+  /**
+   * Each edge is merged rather than replaced: the core contributes the
+   * position, this enhancer the chapter.
+   */
+  const edges = {
+    begin: { ...source.begin, ...begin },
+    end: { ...source.end, ...end },
+  }
+
+  const visibleRange: VisibleRange<EnhancerPaginationEdge> =
+    describesCurrentResult
+      ? withSettlementOf(source, edges)
+      : { isSettled: false, ...edges }
+
+  return { navigationId: source.navigationId, ...extras, ...visibleRange }
+}
 
 export const paginationEnhancer =
   <
@@ -66,45 +98,21 @@ export const paginationEnhancer =
       percentageEstimateOfBook: 0,
     }
 
-    /**
-     * The published result joins an enrichment back to the core result, and
-     * settlement is decided here, once.
-     *
-     * It is granted only from the core result the enrichment was built from,
-     * and only while that is still the current one. Enrichment is throttled,
-     * so one built for the previous page can arrive after the reader has
-     * settled on the next; it is simply never granted settlement, rather than
-     * handed one and having it taken back.
-     *
-     * Comparing the core's live flag instead of the result itself would not
-     * do: an enrichment built for the previous page would pass the moment the
-     * reader settled on the next one.
-     */
-    const enhancedPagination$ = combineLatest([
-      trackPaginationEnrichment(reader),
-      reader.pagination.state$,
-    ]).pipe(
-      map(([{ source, begin, end, ...extras }, current]) => {
+    const enhancedPagination$ = trackPaginationEnrichment(reader).pipe(
+      switchMap((enrichment) =>
         /**
-         * Each edge is merged rather than replaced: the core contributes the
-         * position, this enhancer the chapter.
+         * Whether this enrichment still describes the current core result is
+         * the only thing about the core that the published value depends on,
+         * so the core moving on rebuilds only when that answer changes.
          */
-        const edges = {
-          begin: { ...source.begin, ...begin },
-          end: { ...source.end, ...end },
-        }
-
-        const settlement: PaginationSettlement<EnhancerPaginationEdge> =
-          source === current
-            ? withSettlementOf(current, edges)
-            : { isSettled: false, ...edges }
-
-        return {
-          navigationId: source.navigationId,
-          ...extras,
-          ...settlement,
-        }
-      }),
+        reader.pagination.state$.pipe(
+          map((current) => enrichment.source === current),
+          distinctUntilChanged(),
+          map((describesCurrentResult) =>
+            publishEnrichment(enrichment, describesCurrentResult),
+          ),
+        ),
+      ),
       distinctUntilChanged(isSamePaginationResult),
       tap((paginationInfo) => Report.log(`Pagination`, paginationInfo)),
     )

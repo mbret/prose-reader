@@ -1,5 +1,5 @@
 import { isShallowEqual } from "@prose-reader/shared"
-import type { PaginationEdge, PaginationSettlement } from "./types"
+import type { PaginationEdge, VisibleRange } from "./types"
 
 export const createEmptyPaginationEdge = (): PaginationEdge => ({
   cfi: undefined,
@@ -41,9 +41,9 @@ export const isSamePaginationResult = <
  * enriched its edges.
  */
 export const withSettlementOf = <TEdge extends PaginationEdge>(
-  source: PaginationSettlement<PaginationEdge>,
+  source: VisibleRange<PaginationEdge>,
   { begin, end }: { begin: TEdge; end: TEdge },
-): PaginationSettlement<TEdge> =>
+): VisibleRange<TEdge> =>
   source.isSettled
     ? {
         isSettled: true,
@@ -62,8 +62,6 @@ export const withSettlementOf = <TEdge extends PaginationEdge>(
  * each published result from an enrichment that never claimed settlement, so
  * there is nothing to take back.
  */
-export const withoutSettlement = <
-  TResult extends PaginationSettlement<PaginationEdge>,
->(
+export const withoutSettlement = <TResult extends VisibleRange<PaginationEdge>>(
   result: TResult,
 ) => ({ ...result, isSettled: false as const })

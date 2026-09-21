@@ -1,8 +1,5 @@
 import type { Observable } from "rxjs"
-import type {
-  PaginationEdge,
-  PaginationSettlement,
-} from "../../pagination/types"
+import type { PaginationEdge, VisibleRange } from "../../pagination/types"
 import type { LayoutEnhancerOutput } from "../layout/layoutEnhancer"
 import type { EnhancerOutput, RootEnhancer } from "../types/enhancer"
 import type { ChapterInfo } from "./chapters"
@@ -39,7 +36,7 @@ export type ExtraPaginationInfo = {
  */
 export type EnhancerPaginationInto = ExtraPaginationInfo & {
   navigationId?: symbol
-} & PaginationSettlement<EnhancerPaginationEdge>
+} & VisibleRange<EnhancerPaginationEdge>
 
 export type PaginationEnhancerAPI<
   InheritOutput extends EnhancerOutput<RootEnhancer> & LayoutEnhancerOutput,
