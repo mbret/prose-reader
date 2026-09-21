@@ -48,6 +48,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Reading the bump from the commits since the last release tag needs
+          # real history and tags, not the default shallow clone.
+          fetch-depth: 0
+
       - uses: actions/setup-node@v6
         with:
           node-version: 25
@@ -66,11 +71,17 @@ jobs:
           npm ci
           npx lerna run build --stream --scope @prose-reader/*
 
+      # The bump comes from the commit messages rather than being hardcoded, so
+      # a breaking change cannot ship as a minor. Every merge still publishes:
+      # lerna's angular preset starts at patch and only escalates, so `chore`,
+      # `docs` and an unparseable subject all still cut a release, `feat` gives
+      # a minor, and `feat!:` / a `BREAKING CHANGE:` footer gives a major.
+      # Changelogs come along with it.
       - name: Publish
         run: |
           git config --global user.email "bret.maxime@gmail.com"
           git config --global user.name "Maxime Bret"
-          npx lerna publish minor --no-private --yes
+          npx lerna publish --conventional-commits --no-private --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
