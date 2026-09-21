@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://demo.prose-reader.com/"><b>🚀 Live demo</b></a>
+  <a href="https://prose-reader.com/demo"><b>🚀 Live demo</b></a>
   ·
   <a href="https://doc.prose-reader.com/"><b>📖 Documentation</b></a>
   ·
@@ -44,7 +44,7 @@ Developers and teams building **reading apps, ebook stores, document viewers, or
 
 ## Try it now
 
-**No install required** — open the [live demo](https://demo.prose-reader.com/) and load your own EPUB, CBZ, or PDF.
+**No install required** — open the [live demo](https://prose-reader.com/demo) and load your own EPUB, CBZ, or PDF.
 
 Ready to build? Follow the **[Getting started guide](https://doc.prose-reader.com/get-started/getting-started)** to create your first reader in a few minutes.
 
@@ -55,7 +55,7 @@ This is a [Lerna](https://lerna.js.org/) monorepo.
 ```bash
 npm install
 npm run build:lib   # build all packages
-npm run start:demo  # run the demo app locally
+npm run start:front # run the website (landing page + demo) locally
 npm test            # run the test suites
 ```
 
