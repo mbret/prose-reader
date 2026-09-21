@@ -91,8 +91,26 @@ jobs:
           # commit per pull request.
           last_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
           range=${last_tag:+$last_tag..HEAD}
+          range=${range:-HEAD~1..HEAD}
 
-          if git log ${range:--1} --format=%B \
+          # `--no-private` below means the demo, the front and the test app are
+          # never released, so a breaking change confined to one of them must
+          # not turn a library release into a major. Ignore commits that touch
+          # nothing else; one spanning a private workspace and a published one
+          # still counts. The paths come from lerna rather than a hardcoded
+          # `apps/`, so the filter cannot drift when a workspace is added or its
+          # private flag changes. Workspace directories carry no spaces, so the
+          # unquoted expansion is safe, and `mapfile` is avoided because the
+          # macOS runner can still be on bash 3.2.
+          private_paths=$(
+            npx lerna list --all --json \
+              | node -p "JSON.parse(require('fs').readFileSync(0,'utf8'))
+                  .filter(p => p.private)
+                  .map(p => ':(exclude)' + require('path').relative(process.cwd(), p.location) + '/')
+                  .join(' ')"
+          )
+
+          if git log "$range" --format=%B -- . $private_paths \
             | grep -qE '^[a-z]+(\([^)]*\))?!:|^BREAKING[ -]CHANGE:'; then
             bump=major
           else
@@ -100,7 +118,7 @@ jobs:
           fi
 
           echo "bump=$bump" >> "$GITHUB_OUTPUT"
-          echo "Publishing a $bump release (scanned: ${range:-HEAD~1..HEAD})"
+          echo "Publishing a $bump release (scanned $range, ignoring: $private_paths)"
 
       - name: Publish
         run: |
