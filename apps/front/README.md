@@ -33,6 +33,13 @@ Firefox does not support module service workers in development. To work on it
 with Firefox, build the app and copy the generated `service-worker.js` into
 `public/`.
 
+## Viewport
+
+The app ships a single, zoomable viewport. The demo deliberately does not lock
+browser zoom the way it did as a standalone app: the engine owns touch over the
+book content itself, and the host-side gap that motivated the lock is tracked in
+https://github.com/mbret/prose-reader/issues/357.
+
 ## Work on your own book
 
 Visit http://localhost:9000/demo/books and upload your own book, which you can
