@@ -52,7 +52,7 @@
   "dependencies": {
     "@rollup/plugin-replace": "^6.0.1",
     "reactjrx": "^1.126.0",
-    "typescript": "*"
+    "typescript": "^6.0.0"
   },
   "lint-staged": {
     "*": [
