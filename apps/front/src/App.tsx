@@ -6,6 +6,7 @@ import {
   Routes,
   useLocation,
 } from "react-router"
+import { LazyRouteBoundary } from "./components/LazyRouteBoundary"
 import { Provider } from "./components/ui/provider"
 import { DEMO_BASE_PATH } from "./constants"
 import { LandingScreen } from "./landing/LandingScreen"
@@ -34,13 +35,20 @@ export const App = memo(() => {
   return (
     <Router>
       <ColorScheme>
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<LandingScreen />} />
-            <Route path={`${DEMO_BASE_PATH}/*`} element={<DemoRoutes />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <Routes>
+          <Route path="/" element={<LandingScreen />} />
+          <Route
+            path={`${DEMO_BASE_PATH}/*`}
+            element={
+              <LazyRouteBoundary>
+                <Suspense fallback={null}>
+                  <DemoRoutes />
+                </Suspense>
+              </LazyRouteBoundary>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </ColorScheme>
     </Router>
   )
