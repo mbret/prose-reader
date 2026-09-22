@@ -18,17 +18,14 @@ add to them rather than copying a wait or a locator into a second spec.
 
 ## Waiting
 
-Wait on something the reader says, never on time. `waitForSpineItemReady`
-waits for an item, and a page is final once `reader.pagination.state.isSettled`
-is true. A wait for settlement has to be tied to the action it follows, in two
-ways. Arm it before the action: a result whose content is already ready
-settles synchronously inside the action, and a wait set up afterwards misses
-it. And make it wait for a result from after the action: the state stream
-replays its current value on subscription, and a polling check sees the page
-you were already on, so skip that replayed value and, where the destination is
-known, check it too — which item, which page. A wait that only asks whether
-the state is settled accepts the previous page. A `waitForTimeout` is a guess
-about a machine's speed and fails on a slower one.
+A timer is a guess about how fast a machine is. A wrong guess fails on a slower
+runner, or passes before the thing it was waiting for has happened, and either
+way the failure points at the wrong place. Wait on something the reader says
+instead: a readiness attribute on an element, a state the reader exposes, an
+event it emits. Tie the wait to the action it follows, so it cannot be
+satisfied by a state that was already there. If the signal a spec needs does
+not exist, add it to the reader or to the shared helpers rather than sleeping
+past the gap.
 
 ## Assertions
 
