@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/metadata-fetcher",
-  "version": "1.374.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -29,8 +29,8 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@prose-reader/archive-reader": "^1.374.0",
-    "@prose-reader/shared": "^1.374.0",
+    "@prose-reader/archive-reader": "^2.0.0",
+    "@prose-reader/shared": "^2.0.0",
     "xmldoc": "^3.0.0"
   },
   "engines": {

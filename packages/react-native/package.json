@@ -1,6 +1,6 @@
 {
   "name": "@prose-reader/react-native",
-  "version": "1.374.2",
+  "version": "2.0.0",
   "type": "module",
   "main": "./dist/native/index.cjs",
   "module": "./dist/native/index.js",
@@ -37,10 +37,10 @@
     "@webview-bridge/react-native": "^1.7.7"
   },
   "peerDependencies": {
-    "@prose-reader/archive-reader": "^1.374.0",
-    "@prose-reader/core": "^1.374.0",
-    "@prose-reader/shared": "^1.374.0",
-    "@prose-reader/streamer": "^1.374.0",
+    "@prose-reader/archive-reader": "^2.0.0",
+    "@prose-reader/core": "^2.0.0",
+    "@prose-reader/shared": "^2.0.0",
+    "@prose-reader/streamer": "^2.0.0",
     "@webview-bridge/react-native": "^1.7.7",
     "@webview-bridge/web": "^1.7.7",
     "expo-file-system": "^56.0.7",

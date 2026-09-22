@@ -5,12 +5,4 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [2.0.0](https://github.com/mbret/prose-reader/compare/v1.374.2...v2.0.0) (2026-09-22)
 
-**Note:** Version bump only for package @prose-reader/enhancer-search
-
-
-
-
-
-## [1.374.2](https://github.com/mbret/prose-reader/compare/v1.374.1...v1.374.2) (2026-09-21)
-
-**Note:** Version bump only for package @prose-reader/enhancer-search
+**Note:** Version bump only for package @prose-reader/koreader
