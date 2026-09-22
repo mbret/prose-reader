@@ -20,11 +20,15 @@ add to them rather than copying a wait or a locator into a second spec.
 
 Wait on something the reader says, never on time. `waitForSpineItemReady`
 waits for an item, and a page is final once `reader.pagination.state.isSettled`
-is true. Arm a wait for settlement before the action that changes the page: a
-result whose content is already ready settles synchronously inside that
-action, and a wait set up afterwards either misses it or accepts the settled
-state from before. A `waitForTimeout` is a guess about a machine's speed and
-fails on a slower one.
+is true. A wait for settlement has to be tied to the action it follows, in two
+ways. Arm it before the action: a result whose content is already ready
+settles synchronously inside the action, and a wait set up afterwards misses
+it. And make it wait for a result from after the action: the state stream
+replays its current value on subscription, and a polling check sees the page
+you were already on, so skip that replayed value and, where the destination is
+known, check it too — which item, which page. A wait that only asks whether
+the state is settled accepts the previous page. A `waitForTimeout` is a guess
+about a machine's speed and fails on a slower one.
 
 ## Assertions
 
@@ -37,7 +41,11 @@ then names the step that went wrong.
 
 ## Snapshots
 
-A `*-snapshots` folder holds one image per browser project, rendered on the CI
-runner's platform. They compare only against the same browser build, which is
-why the suite installs its own browsers rather than using whatever a machine
-has, and why they are regenerated in CI rather than locally.
+A `*-snapshots` folder holds one image per browser project, suffixed with the
+platform it was rendered on; the committed ones are `-darwin`, from CI's macOS
+runners. An image compares only against the same browser build on the same
+platform, which is why the suite installs its own browsers rather than using
+whatever a machine has. No CI job rewrites them. To change a baseline, run the
+spec with `--update-snapshots` on macOS with the pinned browsers and commit the
+result, or take the `-actual` image from the `playwright-report` artifact CI
+uploads when a comparison fails.

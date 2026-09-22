@@ -97,14 +97,20 @@ npx lerna run build --stream --scope "@prose-reader/*"
 `apps/tests` (`prose-reader-tests`) is a Playwright suite, and the root
 `npm test` runs it alongside the vitest suites, so CI runs every spec in it on
 Chromium, Firefox, WebKit and two mobile profiles. It needs the browser builds
-its Playwright version pins, so install them once per environment, the way CI
+its Playwright version pins. Install them once per environment, the way CI
 does before `npm test`:
+
+```sh
+npx playwright install --with-deps
+```
+
+Chromium alone is enough while you work on a spec and run only its project:
 
 ```sh
 npx playwright install chromium
 ```
 
-Do not point the suite at a Chromium the machine already has. A different build
+Never point the suite at a browser the machine already has. A different build
 is not the one the snapshots were rendered with, and a pass on it is not a pass
 in CI.
 
