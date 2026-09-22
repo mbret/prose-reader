@@ -83,9 +83,12 @@ export type InternalNavigationEntry = {
    *
    * Each entry's `requestedPosition` reflects only that entry's intent:
    * - User entries: the raw user position (may be out of bounds).
-   * - Restoration / pagination entries: the resolved `position` itself,
-   *   because the entry's "request" *is* the resolved snap-back / page
-   *   anchor — there is no separate intent to preserve.
+   * - Restoration entries: the resolved `position` itself, because the
+   *   entry's "request" *is* the resolved snap-back — there is no separate
+   *   intent to preserve.
+   * - Pagination entries: whatever the entry they anchor asked for. They
+   *   record a cfi, not a navigation, and leaving the request untouched is
+   *   what keeps them out of `navigation$`.
    *
    * Consumers needing the user's latest raw intent (e.g. boundary
    * detection for a pan past start/end whose clamping was deferred

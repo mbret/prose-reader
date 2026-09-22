@@ -1,122 +1,17 @@
 // @vitest-environment jsdom
-import type { Manifest } from "@prose-reader/shared"
-import { filter, firstValueFrom, of, skip, timeout } from "rxjs"
+import { skip } from "rxjs"
+import { describe, expect, it } from "vitest"
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest"
-import { htmlEnhancer } from "../enhancers/html/enhancer"
-import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
-import { navigationEnhancer } from "../enhancers/navigation"
-import { paginationEnhancer } from "../enhancers/pagination/enhancer"
-import { themeEnhancer } from "../enhancers/theme"
-import { createReader } from "../reader"
-import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+  createEnhancedTestReader,
+  createTestReader,
+  installReaderTestEnvironment,
+  mountTestReader,
+  settledOn,
+} from "../tests/readerHarness"
+import { waitFor } from "../tests/utils"
 import type { PaginationInfo } from "./types"
 
-window.__PROSE_READER_DEBUG = false
-
-const BASE_MANIFEST: Manifest = {
-  filename: "",
-  items: [],
-  readingDirection: "ltr",
-  renditionLayout: "pre-paginated",
-  renditionSpread: "auto",
-  spineItems: [],
-  title: "",
-}
-
-beforeAll(() => {
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
-  )
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    get: () => 100,
-  })
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get: () => 200,
-  })
-})
-
-afterAll(() => vi.unstubAllGlobals())
-
-beforeEach(() => {
-  const element = document.createElement("div")
-  element.id = "test-container"
-  document.body.appendChild(element)
-})
-
-afterEach(() => {
-  document.getElementById("test-container")?.remove()
-})
-
-const createTestReader = () =>
-  navigationEnhancer(htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))))(
-    {
-      getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: () => of(new Response("", { status: 200 })),
-      manifest: {
-        ...BASE_MANIFEST,
-        spineItems: [0, 1].map((index) => ({
-          href: `/page_${index}.jpg`,
-          id: `${index}`,
-          pageSpreadLeft: true,
-          pageSpreadRight: true,
-          progressionWeight: 0.5,
-          renditionLayout: "pre-paginated",
-          index,
-        })),
-      },
-    },
-  )
-
-const createEnhancedReader = () =>
-  navigationEnhancer(
-    htmlEnhancer(
-      paginationEnhancer(layoutEnhancer(themeEnhancer(createReader))),
-    ),
-  )({
-    getRenderer: () => (props) => new DefaultRenderer(props),
-    getResource: () => of(new Response("", { status: 200 })),
-    manifest: {
-      ...BASE_MANIFEST,
-      spineItems: [0, 1].map((index) => ({
-        href: `/page_${index}.jpg`,
-        id: `${index}`,
-        pageSpreadLeft: true,
-        pageSpreadRight: true,
-        progressionWeight: 0.5,
-        renditionLayout: "pre-paginated",
-        index,
-      })),
-    },
-  })
-
-const mount = (reader: ReturnType<typeof createTestReader>) => {
-  // biome-ignore lint/style/noNonNullAssertion: test
-  reader.mount(document.getElementById("test-container")!)
-}
-
-const settled = (reader: ReturnType<typeof createTestReader>) =>
-  firstValueFrom(
-    reader.pagination.state$.pipe(
-      filter((state) => state.isSettled),
-      timeout(2000),
-    ),
-  )
+installReaderTestEnvironment()
 
 describe("pagination settlement", () => {
   it("starts provisional and settles on a position for the ready item", async () => {
@@ -124,9 +19,9 @@ describe("pagination settlement", () => {
 
     expect(reader.pagination.state.isSettled).toBe(false)
 
-    mount(reader)
+    mountTestReader(reader)
 
-    const state = await settled(reader)
+    const state = await settledOn(reader)
 
     expect(state.isSettled).toBe(true)
     expect(reader.spineItemsManager.items[0]?.value.isReady).toBe(true)
@@ -137,8 +32,6 @@ describe("pagination settlement", () => {
      * that has not loaded.
      */
     expect(reader.cfi.parseCfi(state.begin.cfi).itemIndex).toBe(0)
-
-    reader.destroy()
   })
 
   it("never settles while the visible content is not ready", async () => {
@@ -154,23 +47,21 @@ describe("pagination settlement", () => {
       })
     })
 
-    mount(reader)
-    await settled(reader)
+    mountTestReader(reader)
+    await settledOn(reader)
 
     expect(
       samples.filter(
         ({ isSettled, beginIsReady }) => isSettled && !beginIsReady,
       ),
     ).toEqual([])
-
-    reader.destroy()
   })
 
   it("ends settlement when a navigation starts, before the next result resolves", async () => {
     const reader = createTestReader()
 
-    mount(reader)
-    await settled(reader)
+    mountTestReader(reader)
+    await settledOn(reader)
 
     const states: PaginationInfo[] = []
     // skip the replayed current result
@@ -184,18 +75,16 @@ describe("pagination settlement", () => {
     // any result for the new page, however quickly that result follows.
     expect(states[0]?.isSettled).toBe(false)
 
-    const next = await settled(reader)
+    const next = await settledOn(reader, 1)
 
     expect(next.begin.spineItemIndex).toBe(1)
-
-    reader.destroy()
   })
 
   it("does not resolve again when a result anchors the navigation", async () => {
     const reader = createTestReader()
 
-    mount(reader)
-    await settled(reader)
+    mountTestReader(reader)
+    await settledOn(reader)
 
     const states: PaginationInfo[] = []
     reader.pagination.state$
@@ -203,34 +92,26 @@ describe("pagination settlement", () => {
       .subscribe((state) => states.push(state))
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
-
-    await firstValueFrom(
-      reader.pagination.state$.pipe(
-        filter((state) => state.isSettled && state.begin.spineItemIndex === 1),
-        timeout(2000),
-      ),
-    )
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    await settledOn(reader, 1)
+    await waitFor(50)
 
     /**
-     * A settled result anchors the navigation, and the anchored entry comes
-     * back through the navigation stream. It is not a trigger: resolving on it
-     * would withdraw and re-grant settlement over nothing.
+     * A settled result anchors the navigation. The anchor is not a navigation
+     * and never reaches the navigation stream, so it cannot trigger another
+     * resolution, which would withdraw and re-grant settlement over nothing.
      */
     const firstSettled = states.findIndex(
       (state) => state.isSettled && state.begin.spineItemIndex === 1,
     )
 
     expect(states.slice(firstSettled + 1)).toEqual([])
-
-    reader.destroy()
   })
 
   it("ends settlement when a layout is requested, not when it completes", async () => {
     const reader = createTestReader()
 
-    mount(reader)
-    await settled(reader)
+    mountTestReader(reader)
+    await settledOn(reader)
 
     expect(reader.pagination.state.isSettled).toBe(true)
 
@@ -243,30 +124,21 @@ describe("pagination settlement", () => {
      */
     expect(reader.pagination.state.isSettled).toBe(false)
 
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    await waitFor(20)
 
     expect(reader.pagination.state.isSettled).toBe(false)
 
     // It comes back once the relayout has produced a result.
-    const next = await settled(reader)
+    const next = await settledOn(reader)
 
     expect(next.isSettled).toBe(true)
-
-    reader.destroy()
   })
 
   it("never republishes a previous page as settled after moving on", async () => {
-    const reader = createEnhancedReader()
+    const reader = createEnhancedTestReader()
 
-    // biome-ignore lint/style/noNonNullAssertion: test
-    reader.mount(document.getElementById("test-container")!)
-
-    await firstValueFrom(
-      reader.pagination.state$.pipe(
-        filter((state) => state.isSettled),
-        timeout(2000),
-      ),
-    )
+    mountTestReader(reader)
+    await settledOn(reader)
 
     const settledItems: (number | undefined)[] = []
     // skip the replayed current result, which is legitimately item 0
@@ -276,7 +148,7 @@ describe("pagination settlement", () => {
 
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await waitFor(100)
 
     /**
      * Enrichment is throttled, so one built for item 0 can arrive after the
@@ -284,22 +156,13 @@ describe("pagination settlement", () => {
      * previous page's position as the current one.
      */
     expect(settledItems.filter((index) => index === 0)).toEqual([])
-
-    reader.destroy()
   })
 
   it("withdraws enriched settlement as soon as the core result does", async () => {
-    const reader = createEnhancedReader()
+    const reader = createEnhancedTestReader()
 
-    // biome-ignore lint/style/noNonNullAssertion: test
-    reader.mount(document.getElementById("test-container")!)
-
-    await firstValueFrom(
-      reader.pagination.state$.pipe(
-        filter((state) => state.isSettled),
-        timeout(2000),
-      ),
-    )
+    mountTestReader(reader)
+    await settledOn(reader)
 
     const states: boolean[] = []
     reader.pagination.state$.subscribe((state) => states.push(state.isSettled))
@@ -310,7 +173,5 @@ describe("pagination settlement", () => {
     // enriched result cannot keep claiming a settlement the core has dropped.
     expect(reader.pagination.state.isSettled).toBe(false)
     expect(states.at(-1)).toBe(false)
-
-    reader.destroy()
   })
 })

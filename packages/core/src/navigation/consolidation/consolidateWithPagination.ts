@@ -13,6 +13,10 @@ import type { InternalNavigationEntry } from "../types"
  * to it. Only a settled result qualifies: a provisional one stands in with the
  * item start, and anchoring on that would restore the reader to the top of the
  * item.
+ *
+ * The anchor is written as a new entry, but it is not a navigation. It keeps
+ * the entry's position and request, which is what keeps it out of
+ * `navigation$` and away from every consumer that would treat it as one.
  */
 export const consolidateWithPagination = (
   context: Context,
@@ -21,19 +25,20 @@ export const consolidateWithPagination = (
   context.bridgeEvent.pagination$.pipe(
     filter((pagination) => pagination.isSettled),
     withLatestFrom(navigation$),
-    map(([pagination, navigation]) => ({
-      ...navigation,
-      paginationBeginCfi: pagination.begin.cfi,
-    })),
+    /**
+     * Per entry, not per cfi: a fresh navigation that lands on the same page
+     * still needs its own anchor.
+     */
     distinctUntilChanged(
-      (previous, next) =>
-        previous.paginationBeginCfi === next.paginationBeginCfi,
+      ([previousPagination, previousNavigation], [pagination, navigation]) =>
+        previousNavigation.id === navigation.id &&
+        previousPagination.begin.cfi === pagination.begin.cfi,
     ),
     map(
-      (navigation): InternalNavigationEntry => ({
+      ([pagination, navigation]): InternalNavigationEntry => ({
         ...navigation,
+        paginationBeginCfi: pagination.begin.cfi,
         meta: { triggeredBy: "pagination" },
-        requestedPosition: navigation.position,
       }),
     ),
   )

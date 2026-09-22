@@ -53,13 +53,7 @@ export class PaginationController extends DestroyableClass {
      * superseded result can never reach the reader.
      */
     merge(
-      /**
-       * A pagination-triggered entry only records the anchor a result just
-       * produced. Resolving on it would loop pagination through navigation
-       * and back, withdrawing and re-granting settlement over nothing.
-       */
       this.context.bridgeEvent.navigation$.pipe(
-        filter((navigation) => navigation.triggeredBy !== "pagination"),
         map((): PaginationTrigger => "resolve"),
       ),
       spine.layout$.pipe(map((): PaginationTrigger => "resolve")),
