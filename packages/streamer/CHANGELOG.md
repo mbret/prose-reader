@@ -47,28 +47,7 @@ Both reported by Codex review.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01DBqLS9PKYZf3fPBLPYkezW
-* **release:** only from a `BREAKING CHANGE:` footer and ignores the
-`!` subject marker entirely. So `feat!:` resolved to a patch.
 
 ### Features
 
 * **deps:** upgrade xmldoc to 3.x ([#370](https://github.com/mbret/prose-reader/issues/370)) ([1d06cbe](https://github.com/mbret/prose-reader/commit/1d06cbe375e1a16f087e9a00d96a9767adec3e8d))
-
-
-### Bug Fixes
-
-* **release:** recognise the `!` breaking marker ([#368](https://github.com/mbret/prose-reader/issues/368)) ([bc95a4a](https://github.com/mbret/prose-reader/commit/bc95a4a6bcef8bd23df1a5c98bda4508d0bca961)), closes [#342](https://github.com/mbret/prose-reader/issues/342) [#356](https://github.com/mbret/prose-reader/issues/356)
-
-
-
-## [1.374.2](https://github.com/mbret/prose-reader/compare/v1.374.1...v1.374.2) (2026-09-21)
-
-**Note:** Version bump only for package @prose-reader/root
-
-
-
-
-
-## [1.374.1](https://github.com/mbret/prose-reader/compare/v1.374.0...v1.374.1) (2026-09-21)
-
-**Note:** Version bump only for package @prose-reader/root
