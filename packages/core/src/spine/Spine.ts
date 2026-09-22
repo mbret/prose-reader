@@ -1,5 +1,11 @@
-import { BehaviorSubject, merge } from "rxjs"
-import { filter, takeUntil, tap } from "rxjs/operators"
+import { BehaviorSubject, combineLatest, merge, type Observable } from "rxjs"
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  takeUntil,
+  tap,
+} from "rxjs/operators"
 import { HTML_PREFIX } from "../constants"
 import type { Context } from "../context/Context"
 import type { Pagination } from "../pagination/Pagination"
@@ -27,6 +33,18 @@ export class Spine extends DestroyableClass {
   public spineItemsObserver: SpineItemsObserver
   public pages: Pages
   public element$ = this.elementSubject.asObservable()
+
+  /**
+   * Whether the pages describe the latest layout requested. A request makes
+   * them stale at once, whether it came through `reader.layout()` or from an
+   * item loading or unloading, and they are current again only once pages
+   * computed from a pass started after it are published.
+   *
+   * Item flags cannot tell this: a pass clears an item's dirty flag as soon as
+   * it lays that item out, long before the pages are recomputed, and a pass
+   * still finishing for an older request clears flags a newer one set.
+   */
+  public readonly isLayoutCurrent$: Observable<boolean>
 
   constructor(
     protected context: Context,
@@ -73,6 +91,17 @@ export class Spine extends DestroyableClass {
       this.context,
       this.locator,
       this.viewport,
+    )
+
+    this.isLayoutCurrent$ = combineLatest([
+      this.spineLayout.latestRequest$,
+      this.pages.watch("layoutRequest"),
+    ]).pipe(
+      map(
+        ([latestRequest, describedRequest]) =>
+          latestRequest === describedRequest,
+      ),
+      distinctUntilChanged(),
     )
 
     const spineElementUpdate$ = context.watch(`rootElement`).pipe(

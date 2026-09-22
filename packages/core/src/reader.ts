@@ -113,7 +113,6 @@ export const createReader = ({
     spine,
     navigator.isLocked$,
     cfi,
-    layoutSubject,
   )
 
   // bridge all navigation stream with reader so they can be shared across app

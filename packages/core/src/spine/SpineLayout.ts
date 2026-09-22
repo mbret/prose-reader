@@ -7,6 +7,8 @@ import {
   of,
   Subject,
   share,
+  shareReplay,
+  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -38,9 +40,17 @@ export class SpineLayout extends DestroyableClass {
   protected spineItemsRelativeLayouts: SpineItemSpineLayout[] = []
 
   /**
-   * Emit layout info after each layout is done.
+   * The number of the latest layout request, counting from 1; 0 before the
+   * first. Replays the current number.
    */
-  public readonly layout$: Observable<unknown>
+  public readonly latestRequest$: Observable<number>
+
+  /**
+   * Emits once a pass completes, with the number of the request it laid out
+   * for. A pass serves the latest request at the time it starts, so a number
+   * lower than {@link latestRequest$} means a newer request will replace it.
+   */
+  public readonly layout$: Observable<number>
 
   constructor(
     protected spineItemsManager: SpineItemsManager,
@@ -65,12 +75,21 @@ export class SpineLayout extends DestroyableClass {
       ),
     )
 
-    const layoutTrigger$ = merge(
+    const layoutRequest$ = merge(
       this.externalLayoutTrigger,
       spineItemNeedsLayout$,
+    ).pipe(
+      map((options, index) => ({ options, request: index + 1 })),
+      share(),
     )
 
-    this.layout$ = layoutTrigger$.pipe(
+    this.latestRequest$ = layoutRequest$.pipe(
+      map(({ request }) => request),
+      startWith(0),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    )
+
+    this.layout$ = layoutRequest$.pipe(
       tap(() => {
         this.spineItemsManager.items.forEach((item) => {
           item.markDirty()
@@ -78,8 +97,10 @@ export class SpineLayout extends DestroyableClass {
       }),
       // Immediate only skips this artificial delay. Item layout itself can still
       // complete asynchronously depending on the renderer.
-      debounce((options) => (options.immediate ? of(undefined) : timer(50))),
-      switchMap(() => {
+      debounce(({ options }) =>
+        options.immediate ? of(undefined) : timer(50),
+      ),
+      switchMap(({ request }) => {
         /**
          * Local to this pass. A superseded pass is unsubscribed and its array
          * discarded, so a cancelled layout can never leave the published
@@ -152,12 +173,15 @@ export class SpineLayout extends DestroyableClass {
             tap(() => {
               this.spineItemsRelativeLayouts = layouts
             }),
+            map(() => request),
           )
       }),
       takeUntil(this.destroy$),
       share(),
     )
 
+    // Subscribed first, so a request is counted before anything reacts to it.
+    this.latestRequest$.pipe(takeUntil(this.destroy$)).subscribe()
     this.layout$.subscribe()
 
     this.watchForVerticalWritingUpdate()

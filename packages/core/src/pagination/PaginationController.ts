@@ -1,5 +1,8 @@
 import {
+  combineLatest,
   concat,
+  distinctUntilChanged,
+  EMPTY,
   filter,
   first,
   map,
@@ -7,10 +10,10 @@ import {
   mergeMap,
   type Observable,
   of,
-  scan,
   switchMap,
   take,
   takeUntil,
+  takeWhile,
   withLatestFrom,
 } from "rxjs"
 import type { CfiManager } from "../cfi"
@@ -34,23 +37,9 @@ const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
   value: 0.5,
 }
 
-type PaginationTrigger = "navigation" | "layout" | "layoutRequest"
-
-/**
- * A requested layout withholds settlement until a layout completes, whatever
- * triggers in between: a navigation in that window resolves against the spine
- * the layout is about to replace, and nothing it finds there describes the
- * current layout. Only a completed layout clears it.
- */
-const isLayoutPending = (wasPending: boolean, trigger: PaginationTrigger) =>
-  trigger === "layoutRequest" || (trigger === "navigation" && wasPending)
-
-type TriggerState = { trigger: PaginationTrigger; layoutPending: boolean }
-
-/** Nothing has been requested yet, so nothing is pending. */
-const initialTriggerState: TriggerState = {
-  trigger: "layout",
-  layoutPending: false,
+type ResolvedEdges = {
+  begin: SettledPaginationEdge<PaginationEdge>
+  end: SettledPaginationEdge<PaginationEdge>
 }
 
 export class PaginationController extends DestroyableClass {
@@ -61,43 +50,22 @@ export class PaginationController extends DestroyableClass {
     protected spine: Spine,
     protected isNavigationLocked$: Observable<boolean>,
     protected cfi: CfiManager,
-    protected layoutRequest$: Observable<unknown>,
   ) {
     super()
 
     /**
-     * A trigger always drops settlement first, so no entry point can forget
-     * to, and a newer trigger cancels whatever is still pending, so a
-     * superseded result can never reach the reader.
+     * A navigation or a completed layout resolves a new result. A trigger
+     * always drops settlement first, so no entry point can forget to, and a
+     * newer trigger cancels whatever is still pending, so a superseded result
+     * can never reach the reader. Everything else that ends settlement is the
+     * content changing under a result, which {@link settledWhileContentHolds}
+     * watches for.
      */
-    merge(
-      this.context.bridgeEvent.navigation$.pipe(
-        map((): PaginationTrigger => "navigation"),
-      ),
-      spine.layout$.pipe(map((): PaginationTrigger => "layout")),
-      /**
-       * A layout that has only been requested invalidates and then waits. Item
-       * layout is debounced, so resolving now would describe the spine that is
-       * about to be replaced, and `spine.layout$` will resolve it once the new
-       * one exists.
-       */
-      layoutRequest$.pipe(map((): PaginationTrigger => "layoutRequest")),
-    )
+    merge(this.context.bridgeEvent.navigation$, spine.layout$)
       .pipe(
-        scan(
-          ({ layoutPending }, trigger): TriggerState => ({
-            trigger,
-            layoutPending: isLayoutPending(layoutPending, trigger),
-          }),
-          initialTriggerState,
+        switchMap(() =>
+          concat(of(withoutSettlement(this.pagination.value)), this.resolve$()),
         ),
-        switchMap(({ trigger, layoutPending }) => {
-          const invalidated = of(withoutSettlement(this.pagination.value))
-
-          return trigger === "layoutRequest"
-            ? invalidated
-            : concat(invalidated, this.resolve$({ layoutPending }))
-        }),
         takeUntil(this.destroy$),
       )
       .subscribe((result) => {
@@ -109,11 +77,7 @@ export class PaginationController extends DestroyableClass {
    * Resolves a result in two steps: cheap metrics once the navigator is free,
    * then positions once the viewport is free.
    */
-  private resolve$({
-    layoutPending,
-  }: {
-    layoutPending: boolean
-  }): Observable<PaginationInfo> {
+  private resolve$(): Observable<PaginationInfo> {
     /**
      * @important
      *
@@ -151,14 +115,12 @@ export class PaginationController extends DestroyableClass {
            */
           this.context.bridgeEvent.viewportFree$.pipe(
             first(),
-            map(() =>
+            switchMap(() =>
               this.resolvePositions({
                 metrics: provisional,
                 visibleRangeIsKnown: metrics !== undefined,
-                layoutPending,
               }),
             ),
-            filter((result): result is PaginationInfo => result !== undefined),
           ),
         )
       }),
@@ -247,44 +209,72 @@ export class PaginationController extends DestroyableClass {
 
   /**
    * Resolves the positions of the metrics it is given, rather than of whatever
-   * the reader happens to hold by the time the viewport frees up.
-   *
-   * A newer trigger cancels this one, so the result is for the latest request.
-   * It describes the current layout only when no requested layout is pending,
-   * and settlement then asks whether the visible content is ready. An item that
-   * is loaded and laid out may legitimately resolve to its root cfi; an
-   * unloaded one is not settled merely because a root cfi can be generated for
-   * it.
+   * the reader happens to hold by the time the viewport frees up. A newer
+   * trigger cancels this one, so the result is for the latest request.
    */
   private resolvePositions({
     metrics,
     visibleRangeIsKnown,
-    layoutPending,
   }: {
     metrics: PaginationInfo
     visibleRangeIsKnown: boolean
-    layoutPending: boolean
-  }): PaginationInfo | undefined {
+  }): Observable<PaginationInfo> {
     const begin = this.resolveEdgePositions(metrics.begin)
     const end = this.resolveEdgePositions(metrics.end)
 
-    if (!begin || !end) return undefined
+    if (!begin || !end) return EMPTY
 
-    return visibleRangeIsKnown && !layoutPending && begin.isReady && end.isReady
-      ? { isSettled: true, begin: begin.edge, end: end.edge }
-      : { isSettled: false, begin: begin.edge, end: end.edge }
+    const resolved: ResolvedEdges = { begin: begin.edge, end: end.edge }
+
+    if (!visibleRangeIsKnown) return of({ isSettled: false, ...resolved })
+
+    return this.settledWhileContentHolds(resolved, [
+      begin.spineItem,
+      end.spineItem,
+    ])
   }
 
   /**
-   * An edge's resolved position, alongside whether the content it describes is
-   * ready — settlement is the two edges' readiness together, so it cannot be
-   * decided one edge at a time.
+   * Settled for as long as what the positions were resolved over holds: pages
+   * that describe the latest layout requested, over visible items that are
+   * ready. It is watched rather than read once, so the result is withdrawn the
+   * moment either stops being true. A layout request makes the pages stale,
+   * whether it came through `reader.layout()` or from the spine laying itself
+   * out again because an item loaded or unloaded, and an unload drops
+   * readiness. One rule covers every entry point.
+   *
+   * An item that is loaded and laid out may legitimately resolve to its root
+   * cfi; an unloaded one is not settled merely because a root cfi can be
+   * generated for it.
+   *
+   * Withdrawal is final for this result. The pages become current again when
+   * the new ones are published, and those are what `spine.layout$` resolves a
+   * new result over; settling this one again would present positions resolved
+   * over the layout that was replaced.
    */
+  private settledWhileContentHolds(
+    resolved: ResolvedEdges,
+    items: SpineItem[],
+  ): Observable<PaginationInfo> {
+    const settled: PaginationInfo = { isSettled: true, ...resolved }
+
+    return combineLatest([
+      this.spine.isLayoutCurrent$,
+      ...[...new Set(items)].map((item) => item.isReady$),
+    ]).pipe(
+      map((conditions) => conditions.every(Boolean)),
+      distinctUntilChanged(),
+      takeWhile((holds) => holds, true),
+      map((holds) => (holds ? settled : withoutSettlement(settled))),
+    )
+  }
+
+  /** An edge's resolved position, and the item whose content it describes. */
   // @todo only update long cfi if the item layout change but specifically its content
   private resolveEdgePositions(edge: PaginationEdge):
     | {
         edge: SettledPaginationEdge<PaginationEdge>
-        isReady: boolean
+        spineItem: SpineItem
       }
     | undefined {
     const { spineItemIndex, pageIndexInSpineItem } = edge
@@ -303,7 +293,7 @@ export class PaginationController extends DestroyableClass {
 
     return {
       edge: { ...edge, cfi: this.resolveCfi(spineItem, pageEntry) },
-      isReady: spineItem.value.isReady,
+      spineItem,
     }
   }
 

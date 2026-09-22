@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { skip } from "rxjs"
+import { distinctUntilChanged, filter, first, map, skip } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createEnhancedTestReader,
   createTestReader,
   holdItem,
+  holdItemLayout,
   installReaderTestEnvironment,
   mountTestReader,
   setTestViewport,
@@ -256,9 +257,9 @@ describe("pagination settlement", () => {
     reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
 
     /**
-     * The navigation resolves at once, against the spine the requested layout
-     * is about to replace: the items are still loaded, so readiness alone would
-     * let it settle. Nothing it finds there describes the current layout.
+     * The navigation resolves at once, against the pages the requested layout
+     * is about to replace. The items are still loaded and ready: only the
+     * request itself says the pages no longer describe the layout.
      */
     expect(reader.pagination.state.isSettled).toBe(false)
 
@@ -268,7 +269,7 @@ describe("pagination settlement", () => {
     expect(settledOverDirtyItems).toEqual([])
   })
 
-  it("ends settlement when a visible item unloads and settles again once it reloads", async () => {
+  it("ends settlement the moment a visible item unloads, and settles again once it reloads", async () => {
     const reader = createTestReader({ numberOfAdjacentSpineItemToPreLoad: 0 })
 
     mountTestReader(reader)
@@ -281,23 +282,190 @@ describe("pagination settlement", () => {
 
     if (!item) throw new Error("item 1 is missing")
 
-    item.unload()
-    await vi.waitFor(() => expect(item.value.isReady).toBe(false))
-
     /**
-     * The page has no content again, so the result cannot keep claiming to
-     * describe it. Readiness is read when a result resolves, so the withdrawal
-     * comes with the layout that follows the unload rather than with the
-     * readiness change itself.
+     * Read inside the notification that drops readiness, not some time after
+     * it. This subscriber is added after the result settled, so it runs after
+     * the reader's own subscribers to the item: the earliest anyone can
+     * observe the change is also when the result must already be withdrawn.
      */
-    await vi.waitFor(() =>
-      expect(reader.pagination.state.isSettled).toBe(false),
-    )
+    const settledWhenReadinessDropped: boolean[] = []
+    item.isReady$
+      .pipe(
+        filter((isReady) => !isReady),
+        first(),
+      )
+      .subscribe(() => {
+        settledWhenReadinessDropped.push(reader.pagination.state.isSettled)
+      })
+
+    item.unload()
+    await vi.waitFor(() => expect(settledWhenReadinessDropped).toHaveLength(1))
+
+    // The page has no content any more, so the result cannot keep claiming to
+    // describe it.
+    expect(settledWhenReadinessDropped).toEqual([false])
 
     // The loader reloads a visible item, and the result comes back with it.
     const reloaded = await settledOn(reader, 1)
 
     expect(item.value.isReady).toBe(true)
     expect(reloaded.begin.spineItemIndex).toBe(1)
+  })
+
+  it("withdraws settlement while the spine relays out for another item, and settles again once on the new layout", async () => {
+    /**
+     * Item 1 is not visible. When its load finishes, the spine lays every item
+     * out again on its own, without any request through `reader.layout()`.
+     */
+    const otherItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: otherItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const visibleItem = reader.spineItemsManager.get(0)
+
+    if (!visibleItem) throw new Error("item 0 is missing")
+
+    const settlement: boolean[] = []
+    reader.pagination.state$
+      .pipe(
+        skip(1),
+        map((state) => state.isSettled),
+        distinctUntilChanged(),
+      )
+      .subscribe((isSettled) => settlement.push(isSettled))
+
+    otherItem.release()
+    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+
+    // The pages are about to be recomputed, so what the result says about the
+    // page being read may no longer hold.
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    await settledOn(reader, 0)
+    await waitFor(50)
+
+    /**
+     * Withdrawn once, settled once. The pages become current again a moment
+     * before the result for them resolves, and granting settlement back to
+     * the withdrawn result in that moment would publish positions resolved
+     * over the replaced layout, then withdraw them again.
+     */
+    expect(settlement).toEqual([false, true])
+  })
+
+  it("does not settle a navigation while the spine relays out for another item", async () => {
+    const otherItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: otherItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const visibleItem = reader.spineItemsManager.get(0)
+
+    if (!visibleItem) throw new Error("item 0 is missing")
+
+    otherItem.release()
+    await vi.waitFor(() => expect(visibleItem.value.isDirty).toBe(true))
+
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+
+    // Nothing was requested through `reader.layout()`, but the pages it would
+    // resolve over are about to be replaced all the same.
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+  })
+
+  it("does not settle while the spine is still laying out, even once the visible item has been laid out", async () => {
+    const laterItem = holdItemLayout("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: laterItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const visibleItem = reader.spineItemsManager.get(0)
+    const nextItem = reader.spineItemsManager.get(1)
+
+    if (!visibleItem || !nextItem) throw new Error("an item is missing")
+
+    laterItem.hold()
+    reader.layout()
+
+    // The pass lays the visible item out, then waits on the next one.
+    await vi.waitFor(() => {
+      expect(visibleItem.value.isDirty).toBe(false)
+      expect(nextItem.value.isDirty).toBe(true)
+    })
+
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+
+    /**
+     * Nothing about the visible item says the layout is unfinished: it is laid
+     * out and ready. The pages a result would be resolved over are still the
+     * previous layout's, and are recomputed only once the pass completes.
+     */
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    laterItem.release()
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
+  })
+
+  it("does not settle on pages from a pass that a newer layout request replaces", async () => {
+    const laterItem = holdItemLayout("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: laterItem.getRenderer })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    const visibleItem = reader.spineItemsManager.get(0)
+    const nextItem = reader.spineItemsManager.get(1)
+
+    if (!visibleItem || !nextItem) throw new Error("an item is missing")
+
+    const pagesBefore = reader.spine.pages.value.layoutRequest
+
+    // A first pass starts and waits on the next item.
+    laterItem.hold()
+    reader.layout()
+    await vi.waitFor(() => {
+      expect(visibleItem.value.isDirty).toBe(false)
+      expect(nextItem.value.isDirty).toBe(true)
+    })
+
+    /**
+     * A second request arrives while the first pass is still running. Item
+     * layout is debounced, so the first pass completes and its pages are
+     * published before the second pass starts, which is held on the same item.
+     */
+    reader.layout()
+    laterItem.release()
+    laterItem.hold()
+    await vi.waitFor(() =>
+      expect(reader.spine.pages.value.layoutRequest).toBeGreaterThan(
+        pagesBefore,
+      ),
+    )
+
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: false })
+
+    /**
+     * Pages were just published, so "has a layout finished since the last
+     * request" would say yes. They describe the first request, and the second
+     * is about to replace them.
+     */
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    laterItem.release()
+
+    const next = await settledOn(reader, 0)
+
+    expect(next.begin.spineItemIndex).toBe(0)
   })
 })

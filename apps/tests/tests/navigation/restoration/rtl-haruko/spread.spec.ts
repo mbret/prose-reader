@@ -13,27 +13,42 @@ const url =
 const landscape = { width: 723, height: 671 }
 const portrait = { width: 400, height: 671 }
 
-const readVisibleRange = (page: Page) =>
-  page.evaluate(() => {
-    // @ts-expect-error window.reader is set by this scenario's index.tsx
-    const reader = window.reader as Reader
-    const pagination = reader.pagination.state
+/**
+ * The settled visible range. Settlement drops for a moment whenever the spine
+ * lays itself out again for an item loading nearby, so this waits for a
+ * settled result and reads it in the same evaluation.
+ */
+const readVisibleRange = async (page: Page) => {
+  const handle = await page.waitForFunction(
+    () => {
+      // @ts-expect-error window.reader is set by this scenario's index.tsx
+      const reader = window.reader as Reader
+      const pagination = reader.pagination.state
 
-    if (!pagination.isSettled) throw new Error("pagination is not settled")
+      if (!pagination.isSettled) return undefined
 
-    const isReady = (index: number | undefined) =>
-      reader.spineItemsManager.get(index)?.value.isReady ?? false
+      const isReady = (index: number | undefined) =>
+        reader.spineItemsManager.get(index)?.value.isReady ?? false
 
-    return {
-      items: [pagination.begin.spineItemIndex, pagination.end.spineItemIndex],
-      ready: [
-        isReady(pagination.begin.spineItemIndex),
-        isReady(pagination.end.spineItemIndex),
-      ],
-      beginCfi: pagination.begin.cfi,
-      anchor: reader.navigation.getNavigation().paginationBeginCfi,
-    }
-  })
+      return {
+        items: [pagination.begin.spineItemIndex, pagination.end.spineItemIndex],
+        ready: [
+          isReady(pagination.begin.spineItemIndex),
+          isReady(pagination.end.spineItemIndex),
+        ],
+        beginCfi: pagination.begin.cfi,
+        anchor: reader.navigation.getNavigation().paginationBeginCfi,
+      }
+    },
+    undefined,
+    { timeout: 10_000 },
+  )
+  const range = await handle.jsonValue()
+
+  if (!range) throw new Error("no settled pagination result")
+
+  return range
+}
 
 test.describe("Given a spread reached by cfi", () => {
   test("settles with both items ready, anchors the entry, and comes back after a resize", async ({

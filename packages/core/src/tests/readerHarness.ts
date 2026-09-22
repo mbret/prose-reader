@@ -1,9 +1,11 @@
 import type { Manifest } from "@prose-reader/shared"
 import {
+  BehaviorSubject,
   filter,
   first,
   firstValueFrom,
   ignoreElements,
+  map,
   type Observable,
   of,
   ReplaySubject,
@@ -82,6 +84,35 @@ export const holdItem = (href: string) => {
       released.next()
       released.complete()
     },
+  }
+}
+
+/**
+ * Lets a test stop the spine's layout pass at one item: while held, that item's
+ * layout does not complete, so the pass has laid out the items before it and
+ * waits. Layouts run normally until `hold` is called.
+ */
+export const holdItemLayout = (href: string) => {
+  const isHeld = new BehaviorSubject(false)
+
+  class HeldLayoutRenderer extends DefaultRenderer {
+    onLayout() {
+      return isHeld.pipe(
+        first((held) => !held),
+        map(() => undefined),
+      )
+    }
+  }
+
+  return {
+    getRenderer:
+      (item: Manifest["spineItems"][number]) =>
+      (props: DocumentRendererParams) =>
+        item.href === href
+          ? new HeldLayoutRenderer(props)
+          : new DefaultRenderer(props),
+    hold: () => isHeld.next(true),
+    release: () => isHeld.next(false),
   }
 }
 

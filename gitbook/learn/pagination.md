@@ -112,8 +112,11 @@ reader.pagination.state$.subscribe((state) => {
 })
 ```
 
-Settlement ends as soon as a navigation or a layout starts, and returns once the
-replacement result has resolved. Page metrics such as
+Settlement ends as soon as a navigation starts, a layout starts, or a visible
+item stops being ready, and returns once a replacement result has resolved over
+the new state. A layout is not only one you request: the reader lays the spine
+out again whenever an item finishes loading or unloads, so settlement can drop
+briefly while the book loads around the page being read. Page metrics such as
 `begin.pageIndexInSpineItem` stay available throughout, so navigation controls
 keep working on estimates while a result is pending.
 
