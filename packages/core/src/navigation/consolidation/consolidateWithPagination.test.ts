@@ -6,6 +6,7 @@ import {
   mountTestReader,
   settledOn,
 } from "../../tests/readerHarness"
+import { waitFor } from "../../tests/utils"
 
 installReaderTestEnvironment()
 
@@ -64,5 +65,50 @@ describe("navigation consolidation with pagination", () => {
     expect(
       reader.navigation.internalNavigator.navigation.paginationBeginCfi,
     ).toBe(anchor)
+  })
+
+  it("anchors the entry the result was computed for", async () => {
+    const reader = createTestReader()
+    const userIds: symbol[] = []
+    const anchoredIds: symbol[] = []
+
+    reader.navigation.internalNavigator.navigationSubject.subscribe((entry) => {
+      if (entry.meta.triggeredBy === "user") userIds.push(entry.id)
+      if (entry.meta.triggeredBy === "pagination") anchoredIds.push(entry.id)
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    /**
+     * When the new page is already ready, its result settles synchronously,
+     * inside the navigation's own notification. The anchor has to land on that
+     * navigation and not on the one it replaced.
+     */
+    expect(anchoredIds.at(-1)).toBe(userIds.at(-1))
+  })
+
+  it("does not re-anchor when a relayout leaves the page unchanged", async () => {
+    const reader = createTestReader()
+    let anchors = 0
+
+    reader.navigation.internalNavigator.navigationSubject.subscribe((entry) => {
+      if (entry.meta.triggeredBy === "pagination") anchors += 1
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader)
+
+    const anchorsBeforeLayout = anchors
+
+    reader.layout()
+    await settledOn(reader)
+    await waitFor(50)
+
+    // Same entry, same page: the settled result after the relayout is not news.
+    expect(anchors).toBe(anchorsBeforeLayout)
   })
 })
