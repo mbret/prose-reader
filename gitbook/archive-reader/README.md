@@ -1,5 +1,12 @@
 # Archive Reader
 
+{% hint style="warning" %}
+On Node, this package requires `>=22.12`. It parses XML with
+[`xmldoc`](https://www.npmjs.com/package/xmldoc), which is ESM-only from version 3,
+so reaching this package through `require()` needs the `require(esm)` support that
+landed unflagged in Node 22.12. `import` and bundler builds are unaffected.
+{% endhint %}
+
 **`@prose-reader/archive-reader`** is the "book container in → resolved publication out" package: a standalone library usable by any reading or library app, prose or not. An **archive** is its environment-agnostic view of a book's container (an EPUB zip, a CBZ, a folder of images, a PDF, a list of URLs…) — the `Archive` type, the `createArchiveFrom*` creators and the whole resolve layer live here. The [streamer](../learn/streamer/README.md) is one consumer among others: its `generateManifestFromArchive` is `resolveArchive` plus a mapping into serving space.
 
 Whatever the source, the first step is always to turn it into an `Archive` with a `createArchiveFrom*` creator; the flagship second step is `resolveArchive`:

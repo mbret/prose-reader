@@ -30,10 +30,13 @@
   "dependencies": {
     "@prose-reader/archive-reader": "^1.374.0",
     "@prose-reader/shared": "^1.374.0",
-    "xmldoc": "^2.0.0"
+    "xmldoc": "^3.0.0"
   },
   "peerDependencies": {
     "rxjs": "*"
   },
-  "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc"
+  "gitHead": "4601e14dcacf50b2295cb343582a7ef2c7e1eedc",
+  "engines": {
+    "node": ">=22.12"
+  }
 }
