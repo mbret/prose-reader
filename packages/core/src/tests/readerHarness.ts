@@ -1,13 +1,23 @@
 import type { Manifest } from "@prose-reader/shared"
-import { filter, firstValueFrom, type Observable, of, timeout } from "rxjs"
+import {
+  filter,
+  first,
+  firstValueFrom,
+  ignoreElements,
+  type Observable,
+  of,
+  ReplaySubject,
+  timeout,
+} from "rxjs"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import { htmlEnhancer } from "../enhancers/html/enhancer"
 import { layoutEnhancer } from "../enhancers/layout/layoutEnhancer"
 import { navigationEnhancer } from "../enhancers/navigation"
 import { paginationEnhancer } from "../enhancers/pagination/enhancer"
 import { themeEnhancer } from "../enhancers/theme"
-import { createReader } from "../reader"
+import { type CreateReaderOptions, createReader } from "../reader"
 import { DefaultRenderer } from "../spineItem/renderer/DefaultRenderer"
+import type { DocumentRendererParams } from "../spineItem/renderer/DocumentRenderer"
 import { createTestManifest } from "./utils"
 
 /**
@@ -33,26 +43,66 @@ const createPrePaginatedManifest = (): Manifest =>
 
 const createdReaders: { destroy: () => void }[] = []
 
+/** jsdom has no layout, so element sizes come from here. */
+const defaultViewport = { width: 100, height: 200 }
+let viewport = { ...defaultViewport }
+
 const track = <TReader extends { destroy: () => void }>(reader: TReader) => {
   createdReaders.push(reader)
 
   return reader
 }
 
+/** Every resource resolves at once with an empty document. */
+const resolvedResource = () => of(new Response("", { status: 200 }))
+
+/**
+ * Keeps one item from becoming ready: its renderer finishes loading only when
+ * `release` is called. Everything else runs as usual, so the item is loading
+ * for exactly as long as the test needs.
+ */
+export const holdItem = (href: string) => {
+  const released = new ReplaySubject<void>(1)
+
+  class HeldRenderer extends DefaultRenderer {
+    /** Loads nothing, and completes when released. */
+    onLoadDocument() {
+      return released.pipe(first(), ignoreElements())
+    }
+  }
+
+  return {
+    getRenderer:
+      (item: Manifest["spineItems"][number]) =>
+      (props: DocumentRendererParams) =>
+        item.href === href
+          ? new HeldRenderer(props)
+          : new DefaultRenderer(props),
+    release: () => {
+      released.next()
+      released.complete()
+    },
+  }
+}
+
+/** Settings a test may override, on top of the pre-paginated manifest. */
+type TestReaderOptions = Omit<CreateReaderOptions, "manifest">
+
 /** A reader without the pagination enhancer: `pagination` is the core result. */
-export const createTestReader = () =>
+export const createTestReader = (options: TestReaderOptions = {}) =>
   track(
     navigationEnhancer(
       htmlEnhancer(layoutEnhancer(themeEnhancer(createReader))),
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: () => of(new Response("", { status: 200 })),
+      getResource: resolvedResource,
+      ...options,
       manifest: createPrePaginatedManifest(),
     }),
   )
 
 /** A reader with the pagination enhancer: `pagination` is the enriched result. */
-export const createEnhancedTestReader = () =>
+export const createEnhancedTestReader = (options: TestReaderOptions = {}) =>
   track(
     navigationEnhancer(
       htmlEnhancer(
@@ -60,7 +110,8 @@ export const createEnhancedTestReader = () =>
       ),
     )({
       getRenderer: () => (props) => new DefaultRenderer(props),
-      getResource: () => of(new Response("", { status: 200 })),
+      getResource: resolvedResource,
+      ...options,
       manifest: createPrePaginatedManifest(),
     }),
   )
@@ -83,11 +134,11 @@ export const installReaderTestEnvironment = () => {
     )
     Object.defineProperty(HTMLElement.prototype, "clientWidth", {
       configurable: true,
-      get: () => 100,
+      get: () => viewport.width,
     })
     Object.defineProperty(HTMLElement.prototype, "clientHeight", {
       configurable: true,
-      get: () => 200,
+      get: () => viewport.height,
     })
   })
 
@@ -102,7 +153,16 @@ export const installReaderTestEnvironment = () => {
   afterEach(() => {
     for (const reader of createdReaders.splice(0)) reader.destroy()
     document.getElementById("test-container")?.remove()
+    viewport = { ...defaultViewport }
   })
+}
+
+/**
+ * The size every element reports, for the current test. Portrait by default;
+ * a landscape size turns the pre-paginated manifest into a spread.
+ */
+export const setTestViewport = (size: { width: number; height: number }) => {
+  viewport = { ...size }
 }
 
 export const mountTestReader = (reader: {

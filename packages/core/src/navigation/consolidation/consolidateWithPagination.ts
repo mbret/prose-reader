@@ -26,13 +26,16 @@ export const consolidateWithPagination = (
     filter((pagination) => pagination.isSettled),
     withLatestFrom(navigation$),
     /**
-     * Per entry, not per cfi: a fresh navigation that lands on the same page
-     * still needs its own anchor.
+     * One anchor per entry: the page its navigation settled on. A fresh
+     * navigation onto the same page is a new entry and gets its own. A
+     * restoration keeps the entry, so the page it lands on does not move the
+     * anchor: anchoring the restored page's own first character would restore
+     * to the page before it at the next relayout, and every round trip through
+     * a resize would walk the reader backwards.
      */
     distinctUntilChanged(
-      ([previousPagination, previousNavigation], [pagination, navigation]) =>
-        previousNavigation.id === navigation.id &&
-        previousPagination.begin.cfi === pagination.begin.cfi,
+      ([, previousNavigation], [, navigation]) =>
+        previousNavigation.id === navigation.id,
     ),
     map(
       ([pagination, navigation]): InternalNavigationEntry => ({

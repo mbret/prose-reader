@@ -2,7 +2,8 @@ import { expect, type Page, test } from "@playwright/test"
 import type { Reader } from "@prose-reader/core"
 import {
   isCfiPositionVisible,
-  settleAfter,
+  navigateAndSettle,
+  resizeAndSettle,
   waitForReader,
 } from "../../../utils/pagination"
 
@@ -50,7 +51,7 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
 
   expect(chapterIndex).toBeGreaterThan(0)
 
-  await settleAfter(page, () =>
+  await navigateAndSettle(page, () =>
     page.evaluate((indexOrId) => {
       // @ts-expect-error window.reader is set by this scenario's index.tsx
       const reader = window.reader as Reader
@@ -60,7 +61,7 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
   )
 
   for (let turn = 0; turn < 2; turn++) {
-    await settleAfter(page, () =>
+    await navigateAndSettle(page, () =>
       page.evaluate(() => {
         // @ts-expect-error window.reader is set by this scenario's index.tsx
         const reader = window.reader as Reader
@@ -82,12 +83,17 @@ const turnToThirdPageOfLongChapter = async (page: Page) => {
   return position
 }
 
-const shrinkAndExpectAnchorVisible = async (page: Page, cfi: string) => {
-  // Fewer, narrower pages: the same character lands on another page index,
-  // so restoring by page or by offset within the item would miss it.
-  await settleAfter(page, () =>
-    page.setViewportSize({ width: 375, height: 667 }),
-  )
+const initialSize = { width: 690, height: 1294 }
+// Fewer, narrower pages: the same character lands on another page index, so
+// restoring by page or by offset within the item would miss it.
+const narrowSize = { width: 375, height: 667 }
+
+const resizeAndExpectAnchorVisible = async (
+  page: Page,
+  size: { width: number; height: number },
+  cfi: string,
+) => {
+  await resizeAndSettle(page, size)
 
   // Restoration is a navigation of its own, so give it a moment to land.
   await expect
@@ -97,7 +103,7 @@ const shrinkAndExpectAnchorVisible = async (page: Page, cfi: string) => {
 
 test.describe("Given a page reached by turning pages", () => {
   test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 690, height: 1294 })
+    await page.setViewportSize(initialSize)
     await page.goto(url)
     await waitForReader(page)
   })
@@ -109,7 +115,7 @@ test.describe("Given a page reached by turning pages", () => {
 
     expect(position.anchor).toBe(position.cfi)
 
-    await shrinkAndExpectAnchorVisible(page, position.cfi)
+    await resizeAndExpectAnchorVisible(page, narrowSize, position.cfi)
   })
 
   test("navigating to the same page again re-anchors it, and a resize restores to it", async ({
@@ -120,7 +126,7 @@ test.describe("Given a page reached by turning pages", () => {
     // A navigation to the position already shown is a fresh entry. It starts
     // without an anchor, and restoration reads the anchor off the current
     // entry, so it needs one of its own even though nothing moved.
-    await settleAfter(page, () =>
+    await navigateAndSettle(page, () =>
       page.evaluate(() => {
         // @ts-expect-error window.reader is set by this scenario's index.tsx
         const reader = window.reader as Reader
@@ -136,6 +142,32 @@ test.describe("Given a page reached by turning pages", () => {
     expect(renavigated.cfi).toBe(position.cfi)
     expect(renavigated.anchor).toBe(position.cfi)
 
-    await shrinkAndExpectAnchorVisible(page, position.cfi)
+    await resizeAndExpectAnchorVisible(page, narrowSize, position.cfi)
+  })
+
+  test("repeated resizes keep the page, and the original size shows the original page again", async ({
+    page,
+  }) => {
+    const position = await turnToThirdPageOfLongChapter(page)
+
+    /**
+     * The anchor is the page the user turned to. Each restoration lands on the
+     * page that now holds it, but must not move the anchor to that page's own
+     * first character: at the next resize that would restore to the page
+     * before, and every round trip would walk the reader backwards.
+     */
+    for (const size of [
+      narrowSize,
+      initialSize,
+      { width: 500, height: 900 },
+      initialSize,
+    ]) {
+      await resizeAndExpectAnchorVisible(page, size, position.cfi)
+    }
+
+    const restored = await readPosition(page)
+
+    expect(restored.pageIndex).toBe(position.pageIndex)
+    expect(restored.cfi).toBe(position.cfi)
   })
 })

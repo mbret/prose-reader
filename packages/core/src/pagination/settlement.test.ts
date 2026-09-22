@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { skip } from "rxjs"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createEnhancedTestReader,
   createTestReader,
+  holdItem,
   installReaderTestEnvironment,
   mountTestReader,
+  setTestViewport,
   settledOn,
 } from "../tests/readerHarness"
 import { waitFor } from "../tests/utils"
@@ -173,5 +175,88 @@ describe("pagination settlement", () => {
     // enriched result cannot keep claiming a settlement the core has dropped.
     expect(reader.pagination.state.isSettled).toBe(false)
     expect(states.at(-1)).toBe(false)
+  })
+
+  it("never settles a spread before both of its items are ready", async () => {
+    // Landscape: the layout enhancer turns the pre-paginated pages into a spread.
+    setTestViewport({ width: 200, height: 100 })
+
+    const secondItem = holdItem("/page_1.jpg")
+    const reader = createTestReader({ getRenderer: secondItem.getRenderer })
+    const isReady = (index: number | undefined) =>
+      reader.spineItemsManager.get(index)?.value.isReady ?? false
+
+    const settledWithSecondItemNotReady: number[] = []
+    reader.pagination.state$.subscribe((state) => {
+      if (state.isSettled && !isReady(state.end.spineItemIndex)) {
+        settledWithSecondItemNotReady.push(state.end.spineItemIndex ?? -1)
+      }
+    })
+
+    /**
+     * Pagination resolves when the spine lays out, synchronously and ahead of
+     * this subscriber, so once the layout that follows the first item's
+     * readiness reaches here the result for it is in place.
+     */
+    let layoutsWithOnlyTheFirstItemReady = 0
+    reader.spine.layout$.subscribe(() => {
+      if (isReady(0) && !isReady(1)) layoutsWithOnlyTheFirstItemReady += 1
+    })
+
+    mountTestReader(reader)
+    await vi.waitFor(() =>
+      expect(layoutsWithOnlyTheFirstItemReady).toBeGreaterThan(0),
+    )
+
+    /**
+     * A spread shows two items, and the second one is still loading. A result
+     * that settled now would anchor the entry to a spread whose right page has
+     * no content yet.
+     */
+    expect(reader.pagination.state.begin.spineItemIndex).toBe(0)
+    expect(reader.pagination.state.end.spineItemIndex).toBe(1)
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    secondItem.release()
+
+    const state = await settledOn(reader)
+
+    expect([state.begin.spineItemIndex, state.end.spineItemIndex]).toEqual([
+      0, 1,
+    ])
+    expect(settledWithSecondItemNotReady).toEqual([])
+  })
+
+  it("ends settlement when a visible item unloads and settles again once it reloads", async () => {
+    const reader = createTestReader({ numberOfAdjacentSpineItemToPreLoad: 0 })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    await settledOn(reader, 1)
+
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
+    item.unload()
+    await vi.waitFor(() => expect(item.value.isReady).toBe(false))
+
+    /**
+     * The page has no content again, so the result cannot keep claiming to
+     * describe it. Readiness is read when a result resolves, so the withdrawal
+     * comes with the layout that follows the unload rather than with the
+     * readiness change itself.
+     */
+    await vi.waitFor(() =>
+      expect(reader.pagination.state.isSettled).toBe(false),
+    )
+
+    // The loader reloads a visible item, and the result comes back with it.
+    const reloaded = await settledOn(reader, 1)
+
+    expect(item.value.isReady).toBe(true)
+    expect(reloaded.begin.spineItemIndex).toBe(1)
   })
 })

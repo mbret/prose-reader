@@ -39,6 +39,11 @@ export type NavigationConsolidation = {
   spineItemLeft?: number
   spineItemIsReady?: boolean
   spineItemIsUsingVerticalWriting?: boolean
+  /**
+   * The first visible node of the page this entry's navigation settled on,
+   * written once per entry by pagination. Restoration falls back to it when
+   * the entry has no `cfi` of its own.
+   */
   paginationBeginCfi?: string
   /**
    * Useful for restoration to anchor back at an accurate

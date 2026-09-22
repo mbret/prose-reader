@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
   installReaderTestEnvironment,
@@ -91,7 +91,7 @@ describe("navigation consolidation with pagination", () => {
     expect(anchoredIds.at(-1)).toBe(userIds.at(-1))
   })
 
-  it("does not re-anchor when a relayout leaves the page unchanged", async () => {
+  it("does not re-anchor an entry a relayout kept", async () => {
     const reader = createTestReader()
     let anchors = 0
 
@@ -108,7 +108,53 @@ describe("navigation consolidation with pagination", () => {
     await settledOn(reader)
     await waitFor(50)
 
-    // Same entry, same page: the settled result after the relayout is not news.
+    // A relayout keeps the entry, and an entry is anchored once.
     expect(anchors).toBe(anchorsBeforeLayout)
+  })
+
+  it("keeps the anchor while its item is unloaded", async () => {
+    const reader = createTestReader({ numberOfAdjacentSpineItemToPreLoad: 0 })
+    const anchors: (string | undefined)[] = []
+
+    reader.navigation.internalNavigator.navigationSubject.subscribe((entry) => {
+      anchors.push(entry.paginationBeginCfi)
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+    const settled = await settledOn(reader, 1)
+
+    const anchor =
+      reader.navigation.internalNavigator.navigation.paginationBeginCfi
+
+    expect(anchor).toBe(settled.begin.cfi)
+
+    const item = reader.spineItemsManager.get(1)
+
+    if (!item) throw new Error("item 1 is missing")
+
+    const entriesBeforeUnload = anchors.length
+
+    item.unload()
+    await vi.waitFor(() => expect(item.value.isReady).toBe(false))
+
+    /**
+     * An unloaded item has nothing to anchor to, and a provisional result
+     * stands in with the item start. The entry keeps the anchor it had, which
+     * is what restoration will need once the item is back.
+     */
+    expect(
+      reader.navigation.internalNavigator.navigation.paginationBeginCfi,
+    ).toBe(anchor)
+    expect(anchors.slice(entriesBeforeUnload)).not.toContain(undefined)
+
+    // The loader reloads a visible item; the anchor is the same page.
+    await settledOn(reader, 1)
+
+    expect(
+      reader.navigation.internalNavigator.navigation.paginationBeginCfi,
+    ).toBe(anchor)
   })
 })

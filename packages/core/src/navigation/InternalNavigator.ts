@@ -313,11 +313,6 @@ export class InternalNavigator extends DestroyableClass {
       share(),
     )
 
-    // @todo export
-    // @todo we should only update the cfi if the content of the
-    // item change, because otherwise every time the viewport get bigger
-    // the pagination cfi will change and thus this one too, indefinitely
-    // pulling the user back since we always use the first visible node
     const navigationUpdateOnPaginationUpdate$ = consolidateWithPagination(
       context,
       this.navigationSubject,
