@@ -216,15 +216,56 @@ describe("pagination settlement", () => {
     expect(reader.pagination.state.begin.spineItemIndex).toBe(0)
     expect(reader.pagination.state.end.spineItemIndex).toBe(1)
     expect(reader.pagination.state.isSettled).toBe(false)
+    expect(reader.navigation.getNavigation().paginationBeginCfi).toBeUndefined()
 
     secondItem.release()
 
+    // Recovery, not just withholding: an implementation that never settles
+    // would pass everything above.
     const state = await settledOn(reader)
 
     expect([state.begin.spineItemIndex, state.end.spineItemIndex]).toEqual([
       0, 1,
     ])
+    expect(reader.navigation.getNavigation().paginationBeginCfi).toBe(
+      state.begin.cfi,
+    )
     expect(settledWithSecondItemNotReady).toEqual([])
+  })
+
+  it("does not settle a navigation while a requested layout is pending", async () => {
+    const reader = createTestReader()
+
+    mountTestReader(reader)
+    await settledOn(reader)
+
+    const isDirty = (index: number | undefined) =>
+      reader.spineItemsManager.get(index)?.value.isDirty ?? false
+    const settledOverDirtyItems: PaginationInfo[] = []
+    reader.pagination.state$.subscribe((state) => {
+      if (
+        state.isSettled &&
+        (isDirty(state.begin.spineItemIndex) ||
+          isDirty(state.end.spineItemIndex))
+      ) {
+        settledOverDirtyItems.push(state)
+      }
+    })
+
+    reader.layout()
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: false })
+
+    /**
+     * The navigation resolves at once, against the spine the requested layout
+     * is about to replace: the items are still loaded, so readiness alone would
+     * let it settle. Nothing it finds there describes the current layout.
+     */
+    expect(reader.pagination.state.isSettled).toBe(false)
+
+    const next = await settledOn(reader, 1)
+
+    expect(next.begin.spineItemIndex).toBe(1)
+    expect(settledOverDirtyItems).toEqual([])
   })
 
   it("ends settlement when a visible item unloads and settles again once it reloads", async () => {

@@ -7,6 +7,7 @@ import {
   mergeMap,
   type Observable,
   of,
+  scan,
   switchMap,
   take,
   takeUntil,
@@ -33,7 +34,24 @@ const VISIBILITY_THRESHOLD: { type: "percentage"; value: number } = {
   value: 0.5,
 }
 
-type PaginationTrigger = "resolve" | "invalidate"
+type PaginationTrigger = "navigation" | "layout" | "layoutRequest"
+
+/**
+ * A requested layout withholds settlement until a layout completes, whatever
+ * triggers in between: a navigation in that window resolves against the spine
+ * the layout is about to replace, and nothing it finds there describes the
+ * current layout. Only a completed layout clears it.
+ */
+const isLayoutPending = (wasPending: boolean, trigger: PaginationTrigger) =>
+  trigger === "layoutRequest" || (trigger === "navigation" && wasPending)
+
+type TriggerState = { trigger: PaginationTrigger; layoutPending: boolean }
+
+/** Nothing has been requested yet, so nothing is pending. */
+const initialTriggerState: TriggerState = {
+  trigger: "layout",
+  layoutPending: false,
+}
 
 export class PaginationController extends DestroyableClass {
   constructor(
@@ -54,24 +72,31 @@ export class PaginationController extends DestroyableClass {
      */
     merge(
       this.context.bridgeEvent.navigation$.pipe(
-        map((): PaginationTrigger => "resolve"),
+        map((): PaginationTrigger => "navigation"),
       ),
-      spine.layout$.pipe(map((): PaginationTrigger => "resolve")),
+      spine.layout$.pipe(map((): PaginationTrigger => "layout")),
       /**
        * A layout that has only been requested invalidates and then waits. Item
        * layout is debounced, so resolving now would describe the spine that is
        * about to be replaced, and `spine.layout$` will resolve it once the new
        * one exists.
        */
-      layoutRequest$.pipe(map((): PaginationTrigger => "invalidate")),
+      layoutRequest$.pipe(map((): PaginationTrigger => "layoutRequest")),
     )
       .pipe(
-        switchMap((trigger) => {
+        scan(
+          ({ layoutPending }, trigger): TriggerState => ({
+            trigger,
+            layoutPending: isLayoutPending(layoutPending, trigger),
+          }),
+          initialTriggerState,
+        ),
+        switchMap(({ trigger, layoutPending }) => {
           const invalidated = of(withoutSettlement(this.pagination.value))
 
-          return trigger === "invalidate"
+          return trigger === "layoutRequest"
             ? invalidated
-            : concat(invalidated, this.resolve$())
+            : concat(invalidated, this.resolve$({ layoutPending }))
         }),
         takeUntil(this.destroy$),
       )
@@ -84,7 +109,11 @@ export class PaginationController extends DestroyableClass {
    * Resolves a result in two steps: cheap metrics once the navigator is free,
    * then positions once the viewport is free.
    */
-  private resolve$(): Observable<PaginationInfo> {
+  private resolve$({
+    layoutPending,
+  }: {
+    layoutPending: boolean
+  }): Observable<PaginationInfo> {
     /**
      * @important
      *
@@ -126,6 +155,7 @@ export class PaginationController extends DestroyableClass {
               this.resolvePositions({
                 metrics: provisional,
                 visibleRangeIsKnown: metrics !== undefined,
+                layoutPending,
               }),
             ),
             filter((result): result is PaginationInfo => result !== undefined),
@@ -219,25 +249,28 @@ export class PaginationController extends DestroyableClass {
    * Resolves the positions of the metrics it is given, rather than of whatever
    * the reader happens to hold by the time the viewport frees up.
    *
-   * The result belongs to the current layout by construction, since a newer
-   * trigger cancels this one, so settlement only has to ask whether the
-   * visible content is ready. An item that is loaded and laid out may
-   * legitimately resolve to its root cfi; an unloaded one is not settled
-   * merely because a root cfi can be generated for it.
+   * A newer trigger cancels this one, so the result is for the latest request.
+   * It describes the current layout only when no requested layout is pending,
+   * and settlement then asks whether the visible content is ready. An item that
+   * is loaded and laid out may legitimately resolve to its root cfi; an
+   * unloaded one is not settled merely because a root cfi can be generated for
+   * it.
    */
   private resolvePositions({
     metrics,
     visibleRangeIsKnown,
+    layoutPending,
   }: {
     metrics: PaginationInfo
     visibleRangeIsKnown: boolean
+    layoutPending: boolean
   }): PaginationInfo | undefined {
     const begin = this.resolveEdgePositions(metrics.begin)
     const end = this.resolveEdgePositions(metrics.end)
 
     if (!begin || !end) return undefined
 
-    return visibleRangeIsKnown && begin.isReady && end.isReady
+    return visibleRangeIsKnown && !layoutPending && begin.isReady && end.isReady
       ? { isSettled: true, begin: begin.edge, end: end.edge }
       : { isSettled: false, begin: begin.edge, end: end.edge }
   }

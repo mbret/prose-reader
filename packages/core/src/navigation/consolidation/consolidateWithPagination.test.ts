@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { filter, firstValueFrom } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import {
   createTestReader,
@@ -156,5 +157,51 @@ describe("navigation consolidation with pagination", () => {
     expect(
       reader.navigation.internalNavigator.navigation.paginationBeginCfi,
     ).toBe(anchor)
+  })
+
+  it("never anchors a navigation that was superseded while its result was pending", async () => {
+    const reader = createTestReader()
+    /** Spine item each user entry navigated to, by entry id. */
+    const targets = new Map<symbol, number | string | undefined>()
+    const anchors: { id: symbol; item: number }[] = []
+
+    reader.navigation.internalNavigator.navigationSubject.subscribe((entry) => {
+      if (entry.meta.triggeredBy === "user")
+        targets.set(entry.id, entry.spineItem)
+
+      if (entry.meta.triggeredBy === "pagination" && entry.paginationBeginCfi) {
+        anchors.push({
+          id: entry.id,
+          item: reader.cfi.parseCfi(entry.paginationBeginCfi).itemIndex,
+        })
+      }
+    })
+
+    mountTestReader(reader)
+    await settledOn(reader, 0)
+    anchors.length = 0
+
+    // The turn keeps the viewport busy, so the positions pass for item 1 is
+    // still pending when the next navigation supersedes it.
+    reader.navigation.goToSpineItem({ indexOrId: 1, animation: "turn" })
+    reader.navigation.goToSpineItem({ indexOrId: 0, animation: "turn" })
+
+    await settledOn(reader, 0)
+    await firstValueFrom(
+      reader.navigation.navigationState$.pipe(
+        filter((state) => state === "free"),
+      ),
+    )
+
+    /**
+     * A superseded resolution must be cancelled, not merely outrun: had it
+     * completed, it would have anchored the page it was computed for onto
+     * whichever entry was current by then.
+     */
+    expect(anchors.map(({ item }) => item)).not.toContain(1)
+    expect(anchors.map(({ item }) => item)).toContain(0)
+    expect(anchors.filter(({ id, item }) => targets.get(id) !== item)).toEqual(
+      [],
+    )
   })
 })
